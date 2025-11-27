@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/react-hava-durumu/static/css/main.b13adf59.css",
+    "main.js": "/react-hava-durumu/static/js/main.2055eb7e.js",
+    "index.html": "/react-hava-durumu/index.html",
+    "main.b13adf59.css.map": "/react-hava-durumu/static/css/main.b13adf59.css.map",
+    "main.2055eb7e.js.map": "/react-hava-durumu/static/js/main.2055eb7e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b13adf59.css",
+    "static/js/main.2055eb7e.js"
+  ]
+}
