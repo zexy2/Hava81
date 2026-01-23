@@ -114,7 +114,7 @@ export const weatherService = {
     }
 
     const response = await httpClient.get<WeatherResponse>(
-      `${config.api.baseUrl}${API_ENDPOINTS.weather.current}`,
+      API_ENDPOINTS.weather.current,
       {
         lat,
         lon,
