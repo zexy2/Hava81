@@ -134,8 +134,10 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
 
   // Fetch current location weather
   const fetchCurrentLocation = useCallback(async () => {
+    // Clear previous weather data so location data takes precedence
+    weatherAsync.reset();
     return locationAsync.execute();
-  }, [locationAsync]);
+  }, [locationAsync, weatherAsync]);
 
   // Clear error
   const clearError = useCallback(() => {
