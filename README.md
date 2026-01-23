@@ -1,70 +1,83 @@
-# Getting Started with Create React App
+# Weather Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Modern weather application built with React and TypeScript. Provides real-time weather data for Turkish cities using the OpenWeather API.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Real-time weather data via OpenWeather API
+- Autocomplete search for 81 Turkish cities with keyboard navigation
+- Geolocation support
+- Request caching and retry logic with exponential backoff
+- Responsive design with glassmorphism UI
+- Accessible (WCAG 2.1 compliant)
+- Docker support with multi-stage builds
+- CI/CD via GitHub Actions
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- React 19, TypeScript 5.3
+- Custom hooks for state management
+- Zod for runtime validation
+- Jest + React Testing Library + MSW
+- Docker, nginx, GitHub Actions
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Getting Started
 
-### `npm test`
+### Prerequisites
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Node.js 18+
+- OpenWeather API key - [Get one here](https://openweathermap.org/api)
 
-### `npm run build`
+### Installation
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+git clone https://github.com/zexy2/react-hava-durumu.git
+cd react-hava-durumu
+npm install
+cp .env.example .env
+# Add your REACT_APP_OPENWEATHER_KEY to .env
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Docker
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+docker build -t weather-dashboard \
+  --build-arg REACT_APP_OPENWEATHER_KEY=your_key .
+docker run -p 3000:80 weather-dashboard
+```
 
-### `npm run eject`
+## Project Structure
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```
+src/
+├── api/                 # HTTP client, weather service, error handling
+├── components/          # React components (SearchBar, WeatherCard, etc.)
+├── config/              # Environment and API configuration
+├── hooks/               # Custom hooks (useWeather, useAsync, useDebounce)
+├── types/               # TypeScript definitions
+└── __tests__/           # Test suites
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Scripts
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+| Command                 | Description              |
+| ----------------------- | ------------------------ |
+| `npm start`             | Start development server |
+| `npm run build`         | Production build         |
+| `npm test`              | Run tests                |
+| `npm run test:coverage` | Tests with coverage      |
+| `npm run type-check`    | TypeScript check         |
+| `npm run lint`          | ESLint                   |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Environment Variables
 
-## Learn More
+| Variable                    | Required | Default | Description         |
+| --------------------------- | -------- | ------- | ------------------- |
+| `REACT_APP_OPENWEATHER_KEY` | Yes      | -       | OpenWeather API key |
+| `REACT_APP_CACHE_TTL`       | No       | 300000  | Cache TTL (ms)      |
+| `REACT_APP_MAX_RETRIES`     | No       | 3       | Max retry attempts  |
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## License
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT

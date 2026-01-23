@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  weather-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_OPENWEATHER_KEY=${REACT_APP_OPENWEATHER_KEY}
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - weather-network
+
+  # Development service
+  weather-app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_OPENWEATHER_KEY=${REACT_APP_OPENWEATHER_KEY}
+      - CHOKIDAR_USEPOLLING=true
+    profiles:
+      - dev
+    networks:
+      - weather-network
+
+networks:
+  weather-network:
+    driver: bridge
