@@ -12,6 +12,8 @@ const mockWeatherData: NormalizedWeatherData = {
   country: 'TR',
   temperature: 22,
   feelsLike: 21,
+  tempMin: 18,
+  tempMax: 25,
   humidity: 65,
   pressure: 1015,
   visibility: 10000,
@@ -23,6 +25,7 @@ const mockWeatherData: NormalizedWeatherData = {
   sunset: new Date('2024-01-01T18:00:00'),
   timestamp: new Date('2024-01-01T12:00:00'),
   coordinates: { lat: 38.42, lon: 27.14 },
+  clouds: 0,
 };
 
 describe('WeatherCard', () => {
@@ -50,8 +53,8 @@ describe('WeatherCard', () => {
     expect(screen.getByText('açık hava')).toBeInTheDocument();
   });
 
-  it('should render all weather tiles when showExtendedInfo is true', () => {
-    render(<WeatherCard weather={mockWeatherData} showExtendedInfo />);
+  it('should render all weather tiles', () => {
+    render(<WeatherCard weather={mockWeatherData} />);
     
     expect(screen.getByText('Sıcaklık')).toBeInTheDocument();
     expect(screen.getByText('Hissedilen')).toBeInTheDocument();
