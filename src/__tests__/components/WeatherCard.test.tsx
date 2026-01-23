@@ -29,22 +29,16 @@ const mockWeatherData: NormalizedWeatherData = {
 };
 
 describe('WeatherCard', () => {
-  it('should render city name', () => {
+  it('should render city name and country', () => {
     render(<WeatherCard weather={mockWeatherData} />);
     
-    expect(screen.getByText('İzmir')).toBeInTheDocument();
-  });
-
-  it('should render country code', () => {
-    render(<WeatherCard weather={mockWeatherData} />);
-    
-    expect(screen.getByText(', TR')).toBeInTheDocument();
+    expect(screen.getByText('İzmir, TR')).toBeInTheDocument();
   });
 
   it('should render temperature', () => {
     render(<WeatherCard weather={mockWeatherData} />);
     
-    expect(screen.getByText('22')).toBeInTheDocument();
+    expect(screen.getByText('22°')).toBeInTheDocument();
   });
 
   it('should render weather description', () => {
@@ -56,12 +50,12 @@ describe('WeatherCard', () => {
   it('should render all weather tiles', () => {
     render(<WeatherCard weather={mockWeatherData} />);
     
-    expect(screen.getByText('Sıcaklık')).toBeInTheDocument();
     expect(screen.getByText('Hissedilen')).toBeInTheDocument();
     expect(screen.getByText('Nem')).toBeInTheDocument();
     expect(screen.getByText('Rüzgar')).toBeInTheDocument();
     expect(screen.getByText('Basınç')).toBeInTheDocument();
     expect(screen.getByText('Görüş')).toBeInTheDocument();
+    expect(screen.getByText('Gün Doğumu')).toBeInTheDocument();
   });
 
   it('should have proper accessibility attributes', () => {
@@ -77,7 +71,6 @@ describe('WeatherCard', () => {
       <WeatherCard weather={mockWeatherData} className="custom-class" />
     );
     
-    // Weather card region should exist when custom class is applied
     const section = screen.getByRole('region', { name: /İzmir hava durumu/i });
     expect(section).toBeInTheDocument();
   });
