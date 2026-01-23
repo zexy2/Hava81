@@ -1,17 +1,15 @@
-/**
- * Main App Component - Enhanced Version
- */
-
-import React, { useCallback, Suspense } from 'react';
+import React, { useCallback, useEffect, Suspense } from 'react';
 import { 
   ErrorBoundary, 
   SearchBar, 
   WeatherCard, 
-  Lightning,
+  Forecast,
+  AirQuality,
+  Favorites,
   LoadingSpinner,
-  Alert,
 } from './components';
-import { useWeather } from './hooks';
+import { useWeather, useForecast, useLocalStorage } from './hooks';
+import type { FavoriteCity } from './types';
 import './App.css';
 
 const App: React.FC = () => {
@@ -25,8 +23,18 @@ const App: React.FC = () => {
     fetchCurrentLocation,
     clearError,
     recentSearches,
-    lastUpdated,
-  } = useWeather({ initialCity: 'İzmir' });
+  } = useWeather({ initialCity: 'İstanbul' });
+
+  const forecast = useForecast();
+  const [favorites, setFavorites] = useLocalStorage<FavoriteCity[]>('favorites', []);
+
+  // Fetch forecast when weather changes
+  useEffect(() => {
+    if (weather?.coordinates) {
+      forecast.fetch(weather.coordinates);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weather?.coordinates?.lat, weather?.coordinates?.lon]);
 
   const handleSubmit = useCallback((selectedCity?: string) => {
     fetchWeather(selectedCity || city);
@@ -36,12 +44,39 @@ const App: React.FC = () => {
     fetchCurrentLocation();
   }, [fetchCurrentLocation]);
 
+  const handleAddFavorite = useCallback(() => {
+    if (!weather) return;
+    
+    const exists = favorites.some(f => f.name === weather.cityName);
+    if (exists) return;
+    
+    const newFavorite: FavoriteCity = {
+      name: weather.cityName,
+      lat: weather.coordinates.lat,
+      lon: weather.coordinates.lon,
+      temp: weather.temperature,
+      icon: weather.icon,
+    };
+    
+    setFavorites([...favorites, newFavorite]);
+  }, [weather, favorites, setFavorites]);
+
+  const handleRemoveFavorite = useCallback((name: string) => {
+    setFavorites(favorites.filter(f => f.name !== name));
+  }, [favorites, setFavorites]);
+
+  const handleSelectFavorite = useCallback((fav: FavoriteCity) => {
+    fetchWeather(fav.name);
+  }, [fetchWeather]);
+
+  const isFavorite = weather ? favorites.some(f => f.name === weather.cityName) : false;
+
   return (
     <ErrorBoundary
       fallback={(err, reset) => (
         <div className="app app--error">
           <div className="app__error-container">
-            <h1>Bir şeyler yanlış gitti</h1>
+            <h1>Bir hata oluştu</h1>
             <p>{err.message}</p>
             <button onClick={reset} className="app__reset-button">
               Tekrar Dene
@@ -52,77 +87,78 @@ const App: React.FC = () => {
     >
       <div className="app">
         <header className="app__header">
-          {/* Background Effects */}
-          <div className="app__hero" aria-hidden="true">
-            <Lightning hue={220} xOffset={-15} speed={1.2} intensity={1.1} />
-            <Lightning hue={260} xOffset={25} speed={0.9} intensity={0.6} />
-          </div>
-
           <main className="app__content">
-            <h1 className="app__title">
-              Hava Durumu
-              <span className="app__title-accent">Dashboard</span>
-            </h1>
+            <h1 className="app__title">Hava Durumu</h1>
             <p className="app__subtitle">
-              Türkiye şehirleri için gerçek zamanlı hava durumu bilgisi
+              Türkiye için anlık hava durumu
             </p>
 
-            <SearchBar
-              value={city}
-              onChange={setCity}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-              recentSearches={recentSearches}
-              placeholder="Şehir ara..."
-            />
-
-            {/* Location Button */}
-            <button
-              type="button"
-              className="app__location-btn"
-              onClick={handleLocationClick}
-              disabled={isLoading}
-              aria-label="Konumumu kullan"
-            >
-              📍 Konumumu Kullan
-            </button>
-
-            {/* Error State */}
-            {error && (
-              <Alert
-                variant="error"
-                message={error.message}
-                dismissible
-                onDismiss={clearError}
-                action={
-                  error.retryable
-                    ? { label: 'Tekrar Dene', onClick: handleSubmit }
-                    : undefined
-                }
+            <div className="search-row">
+              <SearchBar
+                value={city}
+                onChange={setCity}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+                recentSearches={recentSearches}
+                placeholder="Şehir ara..."
               />
-            )}
 
-            {/* Loading State */}
-            {isLoading && (
-              <div className="app__loading">
-                <LoadingSpinner size="medium" text="Hava durumu yükleniyor..." />
+              <button
+                type="button"
+                className="location-button"
+                onClick={handleLocationClick}
+                disabled={isLoading}
+                title="Konumumu Kullan"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/>
+                </svg>
+              </button>
+            </div>
+
+            {error && (
+              <div className="error-message">
+                <span>{error.message}</span>
+                <button onClick={clearError}>×</button>
               </div>
             )}
 
-            {/* Weather Display */}
+            {isLoading && (
+              <div className="loading-container">
+                <LoadingSpinner />
+              </div>
+            )}
+
             <Suspense fallback={<LoadingSpinner />}>
               {weather && !isLoading && (
-                <>
-                  <WeatherCard weather={weather} showExtendedInfo />
-                  
-                  {lastUpdated && (
-                    <p className="app__last-updated">
-                      Son güncelleme: {lastUpdated.toLocaleTimeString('tr-TR')}
-                    </p>
+                <div className="weather-content">
+                  <div className="main-section">
+                    <WeatherCard weather={weather} />
+                    
+                    {forecast.airQuality && (
+                      <AirQuality data={forecast.airQuality} />
+                    )}
+                  </div>
+
+                  {(forecast.daily.length > 0 || forecast.hourly.length > 0) && (
+                    <Forecast 
+                      daily={forecast.daily} 
+                      hourly={forecast.hourly} 
+                    />
                   )}
-                </>
+                </div>
               )}
             </Suspense>
+
+            <Favorites
+              favorites={favorites}
+              currentCity={weather?.cityName || ''}
+              onSelect={handleSelectFavorite}
+              onRemove={handleRemoveFavorite}
+              onAdd={handleAddFavorite}
+              canAdd={!!weather && !isFavorite}
+            />
           </main>
         </header>
       </div>

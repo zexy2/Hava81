@@ -78,6 +78,8 @@ export interface NormalizedWeatherData {
   country: string;
   temperature: number;
   feelsLike: number;
+  tempMin: number;
+  tempMax: number;
   humidity: number;
   pressure: number;
   visibility: number;
@@ -89,6 +91,88 @@ export interface NormalizedWeatherData {
   sunset: Date;
   timestamp: Date;
   coordinates: Coordinates;
+  clouds: number;
+}
+
+// Forecast types
+export interface ForecastItem {
+  dt: number;
+  main: MainWeatherData;
+  weather: WeatherCondition[];
+  clouds: CloudData;
+  wind: WindData;
+  visibility: number;
+  pop: number; // Probability of precipitation
+  dt_txt: string;
+}
+
+export interface ForecastResponse {
+  cod: string;
+  message: number;
+  cnt: number;
+  list: ForecastItem[];
+  city: {
+    id: number;
+    name: string;
+    coord: Coordinates;
+    country: string;
+    population: number;
+    timezone: number;
+    sunrise: number;
+    sunset: number;
+  };
+}
+
+export interface DailyForecast {
+  date: Date;
+  tempMin: number;
+  tempMax: number;
+  icon: WeatherIconCode;
+  description: string;
+  pop: number;
+}
+
+export interface HourlyForecast {
+  time: Date;
+  temp: number;
+  icon: WeatherIconCode;
+  pop: number;
+}
+
+// Air Quality types
+export interface AirQualityResponse {
+  coord: Coordinates;
+  list: Array<{
+    main: { aqi: number };
+    components: {
+      co: number;
+      no: number;
+      no2: number;
+      o3: number;
+      so2: number;
+      pm2_5: number;
+      pm10: number;
+      nh3: number;
+    };
+    dt: number;
+  }>;
+}
+
+export interface AirQuality {
+  aqi: number;
+  aqiLabel: string;
+  pm25: number;
+  pm10: number;
+  o3: number;
+}
+
+// Favorite city
+export interface FavoriteCity {
+  name: string;
+  lat: number;
+  lon: number;
+  temp?: number;
+  icon?: string;
 }
 
 // Weather fetch params

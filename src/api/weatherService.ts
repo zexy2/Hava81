@@ -9,7 +9,12 @@ import { config, API_ENDPOINTS, DEFAULT_WEATHER_PARAMS } from '../config';
 import type { 
   WeatherResponse, 
   NormalizedWeatherData, 
-  WeatherQueryParams 
+  WeatherQueryParams,
+  ForecastResponse,
+  DailyForecast,
+  HourlyForecast,
+  AirQualityResponse,
+  AirQuality,
 } from '../types';
 
 /**
@@ -23,6 +28,8 @@ const normalizeWeatherData = (raw: WeatherResponse): NormalizedWeatherData => {
     country: raw.sys.country,
     temperature: Math.round(raw.main.temp),
     feelsLike: Math.round(raw.main.feels_like),
+    tempMin: Math.round(raw.main.temp_min),
+    tempMax: Math.round(raw.main.temp_max),
     humidity: raw.main.humidity,
     pressure: raw.main.pressure,
     visibility: raw.visibility,
@@ -34,7 +41,13 @@ const normalizeWeatherData = (raw: WeatherResponse): NormalizedWeatherData => {
     sunset: new Date(raw.sys.sunset * 1000),
     timestamp: new Date(raw.dt * 1000),
     coordinates: raw.coord,
+    clouds: raw.clouds.all,
   };
+};
+
+const getAqiLabel = (aqi: number): string => {
+  const labels = ['', 'İyi', 'Orta', 'Hassas', 'Sağlıksız', 'Çok Sağlıksız'];
+  return labels[aqi] || 'Bilinmiyor';
 };
 
 /**
@@ -147,11 +160,76 @@ export const weatherService = {
         {
           enableHighAccuracy: false,
           timeout: 10000,
-          maximumAge: 300000, // 5 minutes cache
+          maximumAge: 300000,
         }
       );
     });
   },
-};
 
+  getForecast: async (lat: number, lon: number): Promise<{ daily: DailyForecast[]; hourly: HourlyForecast[] }> => {
+    const response = await httpClient.get<ForecastResponse>(
+      API_ENDPOINTS.weather.forecast,
+      {
+        lat,
+        lon,
+        appid: config.api.key,
+        units: DEFAULT_WEATHER_PARAMS.units,
+        lang: DEFAULT_WEATHER_PARAMS.lang,
+      }
+    );
+
+    const hourly: HourlyForecast[] = response.list.slice(0, 8).map(item => ({
+      time: new Date(item.dt * 1000),
+      temp: Math.round(item.main.temp),
+      icon: item.weather[0]?.icon ?? '01d',
+      pop: Math.round(item.pop * 100),
+    }));
+
+    const dailyMap = new Map<string, ForecastResponse['list']>();
+    response.list.forEach(item => {
+      const dateKey = item.dt_txt.split(' ')[0];
+      if (!dailyMap.has(dateKey)) {
+        dailyMap.set(dateKey, []);
+      }
+      dailyMap.get(dateKey)!.push(item);
+    });
+
+    const daily: DailyForecast[] = Array.from(dailyMap.entries())
+      .slice(0, 5)
+      .map(([dateStr, items]) => {
+        const temps = items.map(i => i.main.temp);
+        const midday = items.find(i => i.dt_txt.includes('12:00')) || items[0];
+        return {
+          date: new Date(dateStr),
+          tempMin: Math.round(Math.min(...temps)),
+          tempMax: Math.round(Math.max(...temps)),
+          icon: midday.weather[0]?.icon ?? '01d',
+          description: midday.weather[0]?.description ?? '',
+          pop: Math.round(Math.max(...items.map(i => i.pop)) * 100),
+        };
+      });
+
+    return { daily, hourly };
+  },
+
+  getAirQuality: async (lat: number, lon: number): Promise<AirQuality> => {
+    const response = await httpClient.get<AirQualityResponse>(
+      '/air_pollution',
+      {
+        lat,
+        lon,
+        appid: config.api.key,
+      }
+    );
+
+    const data = response.list[0];
+    return {
+      aqi: data.main.aqi,
+      aqiLabel: getAqiLabel(data.main.aqi),
+      pm25: data.components.pm2_5,
+      pm10: data.components.pm10,
+      o3: data.components.o3,
+    };
+  },
+};
 export default weatherService;

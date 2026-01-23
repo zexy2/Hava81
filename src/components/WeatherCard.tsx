@@ -1,8 +1,3 @@
-/**
- * WeatherCard Component - Enhanced Version
- * Displays weather information with animations and accessibility
- */
-
 import React, { memo, useMemo } from 'react';
 import { getWeatherIcon, formatTime, getWindDirection } from '../utils/weatherIcons';
 import type { NormalizedWeatherData } from '../types/weather.types';
@@ -10,19 +5,16 @@ import type { NormalizedWeatherData } from '../types/weather.types';
 interface WeatherCardProps {
   weather: NormalizedWeatherData;
   className?: string;
-  showExtendedInfo?: boolean;
 }
 
 interface WeatherTile {
   label: string;
   value: string;
-  icon?: string;
 }
 
 export const WeatherCard: React.FC<WeatherCardProps> = memo(({
   weather,
   className = '',
-  showExtendedInfo = true,
 }) => {
   const {
     cityName,
@@ -37,63 +29,16 @@ export const WeatherCard: React.FC<WeatherCardProps> = memo(({
     description,
     icon,
     sunrise,
-    sunset,
   } = weather;
 
-  const tiles = useMemo<WeatherTile[]>(() => {
-    const baseTiles: WeatherTile[] = [
-      {
-        label: 'Sıcaklık',
-        value: `${temperature}°C`,
-        icon: '🌡️',
-      },
-      {
-        label: 'Hissedilen',
-        value: `${feelsLike}°C`,
-        icon: '🤔',
-      },
-      {
-        label: 'Nem',
-        value: `${humidity}%`,
-        icon: '💧',
-      },
-      {
-        label: 'Rüzgar',
-        value: `${windSpeed.toFixed(1)} m/s ${getWindDirection(windDirection)}`,
-        icon: '💨',
-      },
-    ];
-
-    if (showExtendedInfo) {
-      baseTiles.push(
-        {
-          label: 'Basınç',
-          value: `${pressure} hPa`,
-          icon: '📊',
-        },
-        {
-          label: 'Görüş',
-          value: `${(visibility / 1000).toFixed(1)} km`,
-          icon: '👁️',
-        },
-        {
-          label: 'Gün Doğumu',
-          value: formatTime(sunrise),
-          icon: '🌅',
-        },
-        {
-          label: 'Gün Batımı',
-          value: formatTime(sunset),
-          icon: '🌇',
-        }
-      );
-    }
-
-    return baseTiles;
-  }, [
-    temperature, feelsLike, humidity, windSpeed, windDirection,
-    pressure, visibility, sunrise, sunset, showExtendedInfo
-  ]);
+  const tiles = useMemo<WeatherTile[]>(() => [
+    { label: 'Hissedilen', value: `${feelsLike}°C` },
+    { label: 'Nem', value: `${humidity}%` },
+    { label: 'Rüzgar', value: `${windSpeed.toFixed(1)} m/s ${getWindDirection(windDirection)}` },
+    { label: 'Basınç', value: `${pressure} hPa` },
+    { label: 'Görüş', value: `${(visibility / 1000).toFixed(1)} km` },
+    { label: 'Gün Doğumu', value: formatTime(sunrise) },
+  ], [feelsLike, humidity, windSpeed, windDirection, pressure, visibility, sunrise]);
 
   return (
     <section 
@@ -102,46 +47,24 @@ export const WeatherCard: React.FC<WeatherCardProps> = memo(({
       aria-live="polite"
     >
       <div className="weather-card__heading">
-        <span 
-          className="weather-card__icon"
-          role="img"
-          aria-label={description}
-        >
+        <div className="weather-card__icon" aria-label={description}>
           {getWeatherIcon(icon)}
-        </span>
+        </div>
         <div className="weather-card__info">
           <h3 className="weather-card__city">
-            {cityName}
-            {country && <span className="weather-card__country">, {country}</span>}
+            {cityName}, {country}
           </h3>
           <p className="weather-card__description">{description}</p>
         </div>
+        <div className="weather-card__temp">{temperature}°</div>
       </div>
 
-      <div className="weather-card__temperature">
-        <span className="weather-card__temp-value">{temperature}</span>
-        <span className="weather-card__temp-unit">°C</span>
-      </div>
-
-      <div 
-        className="weather-card__grid"
-        role="list"
-        aria-label="Hava durumu detayları"
-      >
+      <div className="weather-card__grid" role="list">
         {tiles.map((tile) => (
-          <article 
-            className="weather-card__tile" 
-            key={tile.label}
-            role="listitem"
-          >
-            {tile.icon && (
-              <span className="weather-card__tile-icon" aria-hidden="true">
-                {tile.icon}
-              </span>
-            )}
+          <div className="weather-card__tile" key={tile.label} role="listitem">
             <p className="weather-card__value">{tile.value}</p>
             <p className="weather-card__label">{tile.label}</p>
-          </article>
+          </div>
         ))}
       </div>
     </section>
