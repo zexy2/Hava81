@@ -185,13 +185,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   font-size: 0.8125rem;
   color: var(--text-secondary);
-  background: transparent;
-  border: 1px dashed var(--border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: var(--transition);
@@ -235,7 +233,6 @@ body {
 
 /* Weather Card */
 .weather-card {
-  margin-top: 2rem;
   padding: 1.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -408,17 +405,20 @@ body {
 .search-row {
   display: flex;
   gap: 0.75rem;
-  align-items: stretch;
+  align-items: flex-end;
 }
 
 .search-row .search-bar {
   flex: 1;
+  min-width: 0;
 }
 
 .search-row .location-button {
   margin-top: 0;
-  padding: 0 1rem;
-  aspect-ratio: 1;
+  padding: 1rem;
+  width: auto;
+  height: 54px;
+  flex-shrink: 0;
 }
 
 /* Weather Content */
@@ -426,12 +426,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-.main-section {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .loading-container {
@@ -654,7 +649,6 @@ body {
 
 /* Favorites */
 .favorites-container {
-  margin-top: 2rem;
   padding: 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -782,12 +776,8 @@ body {
   
   .search-row .location-button {
     width: 100%;
-    aspect-ratio: auto;
+    height: auto;
     padding: 0.75rem;
-  }
-  
-  .search-row .location-button svg {
-    margin-right: 0.5rem;
   }
   
   .daily-item {

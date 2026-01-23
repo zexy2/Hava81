@@ -133,13 +133,11 @@ const App: React.FC = () => {
             <Suspense fallback={<LoadingSpinner />}>
               {weather && !isLoading && (
                 <div className="weather-content">
-                  <div className="main-section">
-                    <WeatherCard weather={weather} />
-                    
-                    {forecast.airQuality && (
-                      <AirQuality data={forecast.airQuality} />
-                    )}
-                  </div>
+                  <WeatherCard weather={weather} />
+                  
+                  {forecast.airQuality && (
+                    <AirQuality data={forecast.airQuality} />
+                  )}
 
                   {(forecast.daily.length > 0 || forecast.hourly.length > 0) && (
                     <Forecast 
@@ -147,18 +145,18 @@ const App: React.FC = () => {
                       hourly={forecast.hourly} 
                     />
                   )}
+
+                  <Favorites
+                    favorites={favorites}
+                    currentCity={weather.cityName}
+                    onSelect={handleSelectFavorite}
+                    onRemove={handleRemoveFavorite}
+                    onAdd={handleAddFavorite}
+                    canAdd={!isFavorite}
+                  />
                 </div>
               )}
             </Suspense>
-
-            <Favorites
-              favorites={favorites}
-              currentCity={weather?.cityName || ''}
-              onSelect={handleSelectFavorite}
-              onRemove={handleRemoveFavorite}
-              onAdd={handleAddFavorite}
-              canAdd={!!weather && !isFavorite}
-            />
           </main>
         </header>
       </div>
