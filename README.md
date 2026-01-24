@@ -1,52 +1,67 @@
 ﻿# Weather Dashboard
 
-Modern weather app for Turkish cities with dynamic themes and animated backgrounds.
+A modern, responsive weather application for Turkish cities built with React and TypeScript. Features real-time weather data, dynamic theming based on current conditions, and smooth canvas-based animations.
 
-<p align="center">
-  <a href="https://zexy2.github.io/react-hava-durumu/">
-    <img src="https://img.shields.io/badge/🌤️_Live_Demo-Visit_Site-blue?style=for-the-badge" alt="Live Demo" />
-  </a>
-</p>
-
-> **[👉 https://zexy2.github.io/react-hava-durumu/](https://zexy2.github.io/react-hava-durumu/)**
+**Live Demo:** [zexy2.github.io/react-hava-durumu](https://zexy2.github.io/react-hava-durumu/)
 
 ## Features
 
-- 🎨 Dynamic themes based on weather (sunny, rainy, snowy, etc.)
-- ✨ Animated backgrounds (rain drops, snowflakes, stars)
-- 🔍 Search with autocomplete for 81 Turkish cities
-- 📍 Geolocation support
-- 📊 5-day forecast with hourly details
-- 💨 Air quality index (AQI)
-- ⭐ Favorite cities
-- 📱 Responsive glassmorphism UI
+- **Dynamic Theming** - UI colors and backgrounds adapt to current weather conditions (clear, cloudy, rain, snow, thunderstorm, etc.)
+- **Canvas Animations** - Particle-based weather effects: rain drops, snowflakes, moving clouds, stars at night
+- **City Search** - Autocomplete search supporting all 81 Turkish provinces
+- **Geolocation** - Automatic location detection with user permission
+- **5-Day Forecast** - Extended forecast with daily breakdown
+- **Air Quality Index** - Real-time AQI data from OpenWeather
+- **Favorites** - Save frequently checked cities to local storage
+- **Glassmorphism UI** - Modern frosted-glass design with smooth transitions
 
-## Setup
+## Tech Stack
+
+| Category | Technologies |
+|----------|-------------|
+| Frontend | React 19, TypeScript 5.3 |
+| Styling | CSS3 (Custom Properties, Backdrop Filter) |
+| Validation | Zod |
+| Testing | Jest, React Testing Library, MSW |
+| Build | Create React App |
+| Deployment | GitHub Pages, Docker |
+
+## Getting Started
 
 ```bash
+# Install dependencies
 npm install
+
+# Configure environment
 cp .env.example .env
-# Add your OpenWeather API key
+# Add REACT_APP_WEATHER_API_KEY=your_api_key
+
+# Start development server
 npm start
 ```
 
-Get an API key from [OpenWeather](https://openweathermap.org/api).
+Requires an API key from [OpenWeather](https://openweathermap.org/api).
 
-## Tech
+## Available Scripts
 
-- React 19, TypeScript
-- Zod for validation
-- Jest + RTL + MSW for testing
-- Docker support
+```bash
+npm start       # Start dev server on localhost:3000
+npm run build   # Create optimized production build
+npm test        # Run test suite
+npm run lint    # Run ESLint
+```
 
-## Scripts
+## Project Structure
 
-| Command | Description |
-|---------|-------------|
-| `npm start` | Dev server |
-| `npm run build` | Production build |
-| `npm test` | Run tests |
-| `npm run lint` | ESLint |
+```
+src/
+├── api/          # HTTP client, weather service, error handling
+├── components/   # React components (SearchBar, WeatherCard, etc.)
+├── config/       # Environment and API configuration
+├── hooks/        # Custom hooks (useWeather, useDebounce, etc.)
+├── types/        # TypeScript type definitions
+└── utils/        # Helper functions, theme utilities
+```
 
 ## License
 
