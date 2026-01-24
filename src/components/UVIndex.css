@@ -1,0 +1,81 @@
+/* UV Index Gauge Component */
+
+.uv-index {
+  background: var(--theme-card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.uv-index__title {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--theme-text-secondary);
+}
+
+.uv-index__gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.uv-index__svg {
+  width: 180px;
+  height: 105px;
+}
+
+.uv-index__needle {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: 60px 60px;
+}
+
+.uv-index__value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: -20px;
+}
+
+.uv-index__info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.uv-index__level {
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.uv-index__advice {
+  font-size: 0.75rem;
+  color: var(--theme-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .uv-index {
+    padding: 1rem;
+  }
+
+  .uv-index__svg {
+    width: 150px;
+    height: 87.5px;
+  }
+
+  .uv-index__value {
+    font-size: 1.5rem;
+    margin-top: -15px;
+  }
+}

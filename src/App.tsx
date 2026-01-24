@@ -4,12 +4,15 @@ import {
   SearchBar, 
   WeatherCard, 
   Forecast,
-  AirQuality,
-  Favorites,
+  AirQualityPanel,
+  CityTabs,
   WeatherBackground,
   WeatherCardSkeleton,
   ForecastSkeleton,
   AirQualitySkeleton,
+  SunriseSunset,
+  WindCompass,
+  UVIndex,
 } from './components';
 import { useWeather, useForecast, useLocalStorage } from './hooks';
 import { getWeatherTheme, applyThemeToDOM } from './utils';
@@ -162,29 +165,56 @@ const App: React.FC = () => {
               </div>
             }>
               {weather && !isLoading && (
-                <div className="weather-content">
-                  <WeatherCard weather={weather} />
-                  
-                  {forecast.airQuality && (
-                    <AirQuality data={forecast.airQuality} />
-                  )}
-
-                  {(forecast.daily.length > 0 || forecast.hourly.length > 0) && (
-                    <Forecast 
-                      daily={forecast.daily} 
-                      hourly={forecast.hourly} 
+                <>
+                  {/* City Tabs for multi-city support */}
+                  {favorites.length > 0 && (
+                    <CityTabs
+                      cities={favorites}
+                      activeCity={weather.cityName}
+                      onSelect={handleSelectFavorite}
+                      onRemove={handleRemoveFavorite}
+                      onAdd={handleAddFavorite}
+                      canAdd={!isFavorite}
                     />
                   )}
 
-                  <Favorites
-                    favorites={favorites}
-                    currentCity={weather.cityName}
-                    onSelect={handleSelectFavorite}
-                    onRemove={handleRemoveFavorite}
-                    onAdd={handleAddFavorite}
-                    canAdd={!isFavorite}
-                  />
-                </div>
+                  <div className="weather-content">
+                    <WeatherCard weather={weather} />
+                    
+                    {/* Weather Details Grid */}
+                    <div className="weather-details-grid">
+                      <SunriseSunset 
+                        sunrise={weather.sunrise} 
+                        sunset={weather.sunset} 
+                      />
+                      <WindCompass 
+                        speed={weather.windSpeed} 
+                        direction={weather.windDirection} 
+                      />
+                      {forecast.airQuality && (
+                        <AirQualityPanel data={forecast.airQuality} />
+                      )}
+                      <UVIndex value={3.5} />
+                    </div>
+
+                    {(forecast.daily.length > 0 || forecast.hourly.length > 0) && (
+                      <Forecast 
+                        daily={forecast.daily} 
+                        hourly={forecast.hourly} 
+                      />
+                    )}
+
+                    {/* Add to favorites button if not already added */}
+                    {!isFavorite && favorites.length === 0 && (
+                      <button 
+                        className="add-favorite-btn"
+                        onClick={handleAddFavorite}
+                      >
+                        Favorilere Ekle
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </Suspense>
           </main>

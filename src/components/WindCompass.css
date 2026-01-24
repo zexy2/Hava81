@@ -1,0 +1,118 @@
+/* Wind Compass Component */
+
+.wind-compass {
+  background: var(--theme-card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.wind-compass__title {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--theme-text-secondary);
+}
+
+.wind-compass__container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.wind-compass__svg {
+  width: 160px;
+  height: 160px;
+}
+
+.wind-compass__arrow {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: 60px 60px;
+}
+
+.wind-compass__speed {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.wind-compass__speed-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--theme-text-primary);
+  line-height: 1;
+}
+
+.wind-compass__speed-unit {
+  font-size: 0.6rem;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.wind-compass__info {
+  display: flex;
+  justify-content: space-around;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.wind-compass__direction,
+.wind-compass__scale,
+.wind-compass__gust {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wind-compass__info-label {
+  font-size: 0.65rem;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wind-compass__info-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+}
+
+.wind-compass__info-value--gust {
+  color: #f97316;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .wind-compass {
+    padding: 1rem;
+  }
+
+  .wind-compass__svg {
+    width: 140px;
+    height: 140px;
+  }
+
+  .wind-compass__info {
+    flex-wrap: wrap;
+  }
+
+  .wind-compass__direction,
+  .wind-compass__scale,
+  .wind-compass__gust {
+    flex: 1;
+    min-width: 80px;
+  }
+}

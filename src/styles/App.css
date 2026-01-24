@@ -1022,3 +1022,48 @@ body {
   0%, 89%, 91%, 93%, 100% { opacity: 0; }
   90%, 92% { opacity: 0.1; }
 }
+
+/* ========================================
+   WEATHER DETAILS GRID
+   ======================================== */
+
+.weather-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .weather-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   ADD FAVORITE BUTTON
+   ======================================== */
+
+.add-favorite-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--theme-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.add-favorite-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
+}
