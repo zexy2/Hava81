@@ -1,0 +1,162 @@
+/* Temperature Chart Styles */
+
+.temperature-chart {
+  background: var(--theme-card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.temperature-chart__title {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--theme-text-secondary);
+}
+
+.temperature-chart__container {
+  position: relative;
+  height: 180px;
+}
+
+.temperature-chart__svg {
+  width: 100%;
+  height: 100%;
+}
+
+.temperature-chart__fill {
+  opacity: 0;
+  animation: chartFadeIn 0.6s ease-out 0.2s forwards;
+}
+
+.temperature-chart__line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: chartDraw 1.2s ease-out forwards;
+}
+
+.temperature-chart__point {
+  opacity: 0;
+  transform-origin: center;
+  animation: pointPop 0.3s ease-out forwards;
+}
+
+.temperature-chart__point-group:nth-child(1) .temperature-chart__point { animation-delay: 0.1s; }
+.temperature-chart__point-group:nth-child(2) .temperature-chart__point { animation-delay: 0.15s; }
+.temperature-chart__point-group:nth-child(3) .temperature-chart__point { animation-delay: 0.2s; }
+.temperature-chart__point-group:nth-child(4) .temperature-chart__point { animation-delay: 0.25s; }
+.temperature-chart__point-group:nth-child(5) .temperature-chart__point { animation-delay: 0.3s; }
+.temperature-chart__point-group:nth-child(6) .temperature-chart__point { animation-delay: 0.35s; }
+.temperature-chart__point-group:nth-child(7) .temperature-chart__point { animation-delay: 0.4s; }
+.temperature-chart__point-group:nth-child(8) .temperature-chart__point { animation-delay: 0.45s; }
+
+@keyframes chartDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes chartFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pointPop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Labels */
+.temperature-chart__labels {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  pointer-events: none;
+}
+
+.temperature-chart__label {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.temperature-chart__temp {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+}
+
+.temperature-chart__time {
+  font-size: 0.7rem;
+  color: var(--theme-text-secondary);
+}
+
+.temperature-chart__pop {
+  font-size: 0.65rem;
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* Range indicator */
+.temperature-chart__range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.temperature-chart__min,
+.temperature-chart__max {
+  font-size: 0.75rem;
+  color: var(--theme-text-secondary);
+}
+
+.temperature-chart__min {
+  color: #60a5fa;
+}
+
+.temperature-chart__max {
+  color: #f97316;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .temperature-chart {
+    padding: 1rem;
+  }
+
+  .temperature-chart__container {
+    height: 150px;
+  }
+
+  .temperature-chart__temp {
+    font-size: 0.8rem;
+  }
+
+  .temperature-chart__time {
+    font-size: 0.65rem;
+  }
+}

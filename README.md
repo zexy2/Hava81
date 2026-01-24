@@ -17,14 +17,14 @@ A modern, responsive weather application for Turkish cities built with React and
 
 ## Tech Stack
 
-| Category | Technologies |
-|----------|-------------|
-| Frontend | React 19, TypeScript 5.3 |
-| Styling | CSS3 (Custom Properties, Backdrop Filter) |
-| Validation | Zod |
-| Testing | Jest, React Testing Library, MSW |
-| Build | Create React App |
-| Deployment | GitHub Pages, Docker |
+| Category   | Technologies                              |
+| ---------- | ----------------------------------------- |
+| Frontend   | React 19, TypeScript 5.3                  |
+| Styling    | CSS3 (Custom Properties, Backdrop Filter) |
+| Validation | Zod                                       |
+| Testing    | Jest, React Testing Library, MSW          |
+| Build      | Create React App                          |
+| Deployment | GitHub Pages, Docker                      |
 
 ## Getting Started
 

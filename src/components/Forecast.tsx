@@ -1,6 +1,7 @@
 import React from 'react';
 import type { DailyForecast, HourlyForecast } from '../types';
 import { getWeatherIcon } from '../utils/weatherIcons';
+import { TemperatureChart } from './TemperatureChart';
 
 interface ForecastProps {
   daily: DailyForecast[];
@@ -31,6 +32,11 @@ function formatHour(date: Date): string {
 export function Forecast({ daily, hourly }: ForecastProps) {
   return (
     <div className="forecast-container">
+      {/* Temperature Chart */}
+      {hourly.length > 1 && (
+        <TemperatureChart data={hourly.slice(0, 12)} />
+      )}
+
       {/* Hourly Forecast */}
       <div className="forecast-section">
         <h3 className="forecast-title">Saatlik Tahmin</h3>

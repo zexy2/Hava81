@@ -7,6 +7,9 @@ import {
   AirQuality,
   Favorites,
   WeatherBackground,
+  WeatherCardSkeleton,
+  ForecastSkeleton,
+  AirQualitySkeleton,
 } from './components';
 import { useWeather, useForecast, useLocalStorage } from './hooks';
 import { getWeatherTheme, applyThemeToDOM } from './utils';
@@ -144,12 +147,20 @@ const App: React.FC = () => {
             )}
 
             {isLoading && (
-              <div className="loading-container">
-                <div className="loading-spinner" />
+              <div className="weather-content">
+                <WeatherCardSkeleton />
+                <AirQualitySkeleton />
+                <ForecastSkeleton />
               </div>
             )}
 
-            <Suspense fallback={<div className="loading-container"><div className="loading-spinner" /></div>}>
+            <Suspense fallback={
+              <div className="weather-content">
+                <WeatherCardSkeleton />
+                <AirQualitySkeleton />
+                <ForecastSkeleton />
+              </div>
+            }>
               {weather && !isLoading && (
                 <div className="weather-content">
                   <WeatherCard weather={weather} />
