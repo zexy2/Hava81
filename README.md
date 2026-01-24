@@ -1,6 +1,25 @@
 ﻿# Weather Dashboard
 
-Weather app for Turkish cities. Built with React and TypeScript.
+Modern weather app for Turkish cities with dynamic themes and animated backgrounds.
+
+<p align="center">
+  <a href="https://zexy2.github.io/react-hava-durumu/">
+    <img src="https://img.shields.io/badge/🌤️_Live_Demo-Visit_Site-blue?style=for-the-badge" alt="Live Demo" />
+  </a>
+</p>
+
+> **[👉 https://zexy2.github.io/react-hava-durumu/](https://zexy2.github.io/react-hava-durumu/)**
+
+## Features
+
+- 🎨 Dynamic themes based on weather (sunny, rainy, snowy, etc.)
+- ✨ Animated backgrounds (rain drops, snowflakes, stars)
+- 🔍 Search with autocomplete for 81 Turkish cities
+- 📍 Geolocation support
+- 📊 5-day forecast with hourly details
+- 💨 Air quality index (AQI)
+- ⭐ Favorite cities
+- 📱 Responsive glassmorphism UI
 
 ## Setup
 
@@ -12,13 +31,6 @@ npm start
 ```
 
 Get an API key from [OpenWeather](https://openweathermap.org/api).
-
-## Features
-
-- Search with autocomplete for 81 Turkish cities
-- Geolocation support
-- Request caching with retry logic
-- Responsive glassmorphism UI
 
 ## Tech
 
