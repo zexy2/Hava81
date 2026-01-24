@@ -10,3 +10,11 @@ export {
   formatVisibility,
   formatTime,
 } from './weatherIcons';
+
+export {
+  getWeatherTheme,
+  applyThemeToDOM,
+  type WeatherTheme,
+  type ThemeConfig,
+  type ThemeColors,
+} from './weatherTheme';

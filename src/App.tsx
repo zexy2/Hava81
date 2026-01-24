@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, Suspense } from 'react';
+import React, { useCallback, useEffect, useMemo, Suspense } from 'react';
 import { 
   ErrorBoundary, 
   SearchBar, 
@@ -6,11 +6,12 @@ import {
   Forecast,
   AirQuality,
   Favorites,
-  LoadingSpinner,
+  WeatherBackground,
 } from './components';
 import { useWeather, useForecast, useLocalStorage } from './hooks';
+import { getWeatherTheme, applyThemeToDOM } from './utils';
 import type { FavoriteCity } from './types';
-import './App.css';
+import './styles/App.css';
 
 const App: React.FC = () => {
   const {
@@ -27,6 +28,16 @@ const App: React.FC = () => {
 
   const forecast = useForecast();
   const [favorites, setFavorites] = useLocalStorage<FavoriteCity[]>('favorites', []);
+
+  // Get theme based on current weather
+  const themeConfig = useMemo(() => {
+    return getWeatherTheme(weather?.icon);
+  }, [weather?.icon]);
+
+  // Apply theme to DOM when it changes
+  useEffect(() => {
+    applyThemeToDOM(themeConfig);
+  }, [themeConfig]);
 
   // Fetch forecast when weather changes
   useEffect(() => {
@@ -85,7 +96,13 @@ const App: React.FC = () => {
         </div>
       )}
     >
-      <div className="app">
+      <div className="app" data-theme={themeConfig.theme}>
+        {/* Animated Weather Background */}
+        <WeatherBackground config={themeConfig} />
+        
+        {/* Sun glow effect for clear day */}
+        {themeConfig.theme === 'clear-day' && <div className="sun-glow" />}
+
         <header className="app__header">
           <main className="app__content">
             <h1 className="app__title">Hava Durumu</h1>
@@ -93,28 +110,30 @@ const App: React.FC = () => {
               Türkiye için anlık hava durumu
             </p>
 
-            <div className="search-row">
-              <SearchBar
-                value={city}
-                onChange={setCity}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-                recentSearches={recentSearches}
-                placeholder="Şehir ara..."
-              />
+            <div className="search-section">
+              <div className="search-row">
+                <SearchBar
+                  value={city}
+                  onChange={setCity}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  recentSearches={recentSearches}
+                  placeholder="Şehir ara..."
+                />
 
-              <button
-                type="button"
-                className="location-button"
-                onClick={handleLocationClick}
-                disabled={isLoading}
-                title="Konumumu Kullan"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/>
-                </svg>
-              </button>
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={handleLocationClick}
+                  disabled={isLoading}
+                  title="Konumumu Kullan"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -126,11 +145,11 @@ const App: React.FC = () => {
 
             {isLoading && (
               <div className="loading-container">
-                <LoadingSpinner />
+                <div className="loading-spinner" />
               </div>
             )}
 
-            <Suspense fallback={<LoadingSpinner />}>
+            <Suspense fallback={<div className="loading-container"><div className="loading-spinner" /></div>}>
               {weather && !isLoading && (
                 <div className="weather-content">
                   <WeatherCard weather={weather} />
