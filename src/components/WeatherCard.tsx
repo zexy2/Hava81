@@ -1,5 +1,7 @@
 import React, { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getWeatherIcon, formatTime, getWindDirection } from '../utils/weatherIcons';
+import { useSettings } from '../context';
 import type { NormalizedWeatherData } from '../types/weather.types';
 
 interface WeatherCardProps {
@@ -16,6 +18,9 @@ export const WeatherCard: React.FC<WeatherCardProps> = memo(({
   weather,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } = useSettings();
+  
   const {
     cityName,
     country,
@@ -31,14 +36,20 @@ export const WeatherCard: React.FC<WeatherCardProps> = memo(({
     sunrise,
   } = weather;
 
+  const tempSymbol = getTemperatureSymbol();
+  const windSymbol = getWindSpeedSymbol();
+  const displayTemp = convertTemperature(temperature);
+  const displayFeelsLike = convertTemperature(feelsLike);
+  const displayWindSpeed = convertWindSpeed(windSpeed);
+
   const tiles = useMemo<WeatherTile[]>(() => [
-    { label: 'Hissedilen', value: `${feelsLike}°C` },
-    { label: 'Nem', value: `${humidity}%` },
-    { label: 'Rüzgar', value: `${windSpeed.toFixed(1)} m/s ${getWindDirection(windDirection)}` },
-    { label: 'Basınç', value: `${pressure} hPa` },
-    { label: 'Görüş', value: `${(visibility / 1000).toFixed(1)} km` },
-    { label: 'Gün Doğumu', value: formatTime(sunrise) },
-  ], [feelsLike, humidity, windSpeed, windDirection, pressure, visibility, sunrise]);
+    { label: t('weather.feelsLike'), value: `${displayFeelsLike}${tempSymbol}` },
+    { label: t('weather.humidity'), value: `${humidity}%` },
+    { label: t('weather.wind'), value: `${displayWindSpeed} ${windSymbol} ${getWindDirection(windDirection)}` },
+    { label: t('weather.pressure'), value: `${pressure} hPa` },
+    { label: t('weather.visibility'), value: `${(visibility / 1000).toFixed(1)} km` },
+    { label: t('weather.sunrise'), value: formatTime(sunrise) },
+  ], [t, displayFeelsLike, tempSymbol, humidity, displayWindSpeed, windSymbol, windDirection, pressure, visibility, sunrise]);
 
   return (
     <section 
@@ -56,7 +67,7 @@ export const WeatherCard: React.FC<WeatherCardProps> = memo(({
           </h3>
           <p className="weather-card__description">{description}</p>
         </div>
-        <div className="weather-card__temp">{temperature}°</div>
+        <div className="weather-card__temp">{displayTemp}°</div>
       </div>
 
       <div className="weather-card__grid" role="list">

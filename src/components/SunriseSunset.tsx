@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../context';
 import './SunriseSunset.css';
 
 interface SunriseSunsetProps {
@@ -12,6 +14,9 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
   sunset,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  
   const { progress, dayLength, sunPosition } = useMemo(() => {
     const now = new Date();
     const sunriseMs = sunrise.getTime();
@@ -21,6 +26,8 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
     const dayLengthMs = sunsetMs - sunriseMs;
     const dayHours = Math.floor(dayLengthMs / (1000 * 60 * 60));
     const dayMinutes = Math.floor((dayLengthMs % (1000 * 60 * 60)) / (1000 * 60));
+    const hoursLabel = settings.language === 'en' ? 'h' : 's';
+    const minutesLabel = settings.language === 'en' ? 'm' : 'dk';
     
     let progressPercent = 0;
     let isDaytime = false;
@@ -46,19 +53,20 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
     
     return {
       progress: progressPercent,
-      currentTime: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-      dayLength: `${dayHours}s ${dayMinutes}dk`,
+      currentTime: now.toLocaleTimeString(settings.language === 'en' ? 'en-US' : 'tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      dayLength: `${dayHours}${hoursLabel} ${dayMinutes}${minutesLabel}`,
       sunPosition: { x, y, isDaytime },
     };
-  }, [sunrise, sunset]);
+  }, [sunrise, sunset, settings.language]);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
+    return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div className={`sunrise-sunset ${className}`}>
-      <h4 className="sunrise-sunset__title">Gün Işığı</h4>
+      <h4 className="sunrise-sunset__title">{t('daylight.title')}</h4>
       
       <div className="sunrise-sunset__chart">
         <svg viewBox="0 0 160 90" className="sunrise-sunset__svg">
@@ -154,12 +162,12 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
             <circle cx="12" cy="12" r="4"/>
           </svg>
-          <span className="sunrise-sunset__label">Doğuş</span>
+          <span className="sunrise-sunset__label">{t('daylight.sunrise')}</span>
           <span className="sunrise-sunset__value">{formatTime(sunrise)}</span>
         </div>
         
         <div className="sunrise-sunset__day-length">
-          <span className="sunrise-sunset__length-label">Gün Uzunluğu</span>
+          <span className="sunrise-sunset__length-label">{t('daylight.dayLength')}</span>
           <span className="sunrise-sunset__length-value">{dayLength}</span>
         </div>
         
@@ -168,7 +176,7 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
             <circle cx="12" cy="12" r="4"/>
           </svg>
-          <span className="sunrise-sunset__label">Batış</span>
+          <span className="sunrise-sunset__label">{t('daylight.sunset')}</span>
           <span className="sunrise-sunset__value">{formatTime(sunset)}</span>
         </div>
       </div>

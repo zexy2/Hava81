@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import './UVIndex.css';
 
 interface UVIndexProps {
@@ -7,23 +8,24 @@ interface UVIndexProps {
 }
 
 interface UVLevel {
-  label: string;
+  labelKey: string;
   color: string;
-  advice: string;
+  adviceKey: string;
 }
 
 const UV_LEVELS: UVLevel[] = [
-  { label: 'Düşük', color: '#22c55e', advice: 'Koruma gerekmez' },
-  { label: 'Orta', color: '#eab308', advice: 'Gölgede kalın' },
-  { label: 'Yüksek', color: '#f97316', advice: 'Koruma kullanın' },
-  { label: 'Çok Yüksek', color: '#ef4444', advice: 'Dışarı çıkmayın' },
-  { label: 'Aşırı', color: '#7c3aed', advice: 'Tehlikeli!' },
+  { labelKey: 'uv.low', color: '#22c55e', adviceKey: 'uv.noProtection' },
+  { labelKey: 'uv.moderate', color: '#eab308', adviceKey: 'uv.someProtection' },
+  { labelKey: 'uv.high', color: '#f97316', adviceKey: 'uv.protection' },
+  { labelKey: 'uv.veryHigh', color: '#ef4444', adviceKey: 'uv.extraProtection' },
+  { labelKey: 'uv.extreme', color: '#7c3aed', adviceKey: 'uv.danger' },
 ];
 
 export const UVIndex: React.FC<UVIndexProps> = ({
   value,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const { level, rotation, segments } = useMemo(() => {
     let levelIndex = 0;
     if (value < 3) levelIndex = 0;
@@ -61,7 +63,7 @@ export const UVIndex: React.FC<UVIndexProps> = ({
 
   return (
     <div className={`uv-index ${className}`}>
-      <h4 className="uv-index__title">UV İndeksi</h4>
+      <h4 className="uv-index__title">{t('weather.uvIndex')}</h4>
       
       <div className="uv-index__gauge">
         <svg viewBox="0 0 120 70" className="uv-index__svg">
@@ -139,9 +141,9 @@ export const UVIndex: React.FC<UVIndexProps> = ({
           className="uv-index__level"
           style={{ backgroundColor: `${level.color}20`, color: level.color }}
         >
-          {level.label}
+          {t(level.labelKey)}
         </span>
-        <span className="uv-index__advice">{level.advice}</span>
+        <span className="uv-index__advice">{t(level.adviceKey)}</span>
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../context';
 import './WindCompass.css';
 
 interface WindCompassProps {
@@ -8,7 +10,7 @@ interface WindCompassProps {
   className?: string;
 }
 
-const DIRECTION_LABELS = ['K', 'KD', 'D', 'GD', 'G', 'GB', 'B', 'KB'];
+const DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
 
 export const WindCompass: React.FC<WindCompassProps> = ({
   speed,
@@ -16,30 +18,35 @@ export const WindCompass: React.FC<WindCompassProps> = ({
   gust,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const { convertWindSpeed, getWindSpeedSymbol } = useSettings();
+  
+  const directionLabels = DIRECTION_KEYS.map(key => t(`wind.directions.${key}`));
+  
   const { directionLabel, beaufortLabel } = useMemo(() => {
     // Direction label
     const index = Math.round(direction / 45) % 8;
-    const label = DIRECTION_LABELS[index];
+    const label = directionLabels[index];
     
     // Beaufort scale
-    let scaleLabel = 'Sakin';
+    let scaleKey = 'calm';
     
-    if (speed < 0.5) { scaleLabel = 'Sakin'; }
-    else if (speed < 1.6) { scaleLabel = 'Hafif'; }
-    else if (speed < 3.4) { scaleLabel = 'Hafif Esinti'; }
-    else if (speed < 5.5) { scaleLabel = 'Tatlı Esinti'; }
-    else if (speed < 8.0) { scaleLabel = 'Ilımlı'; }
-    else if (speed < 10.8) { scaleLabel = 'Serin'; }
-    else if (speed < 13.9) { scaleLabel = 'Kuvvetli'; }
-    else if (speed < 17.2) { scaleLabel = 'Sert'; }
-    else if (speed < 20.8) { scaleLabel = 'Fırtınamsı'; }
-    else if (speed < 24.5) { scaleLabel = 'Fırtına'; }
-    else if (speed < 28.5) { scaleLabel = 'Şiddetli Fırtına'; }
-    else if (speed < 32.7) { scaleLabel = 'Kasırga'; }
-    else { scaleLabel = 'Tayfun'; }
+    if (speed < 0.5) { scaleKey = 'calm'; }
+    else if (speed < 1.6) { scaleKey = 'lightAir'; }
+    else if (speed < 3.4) { scaleKey = 'lightBreeze'; }
+    else if (speed < 5.5) { scaleKey = 'gentleBreeze'; }
+    else if (speed < 8.0) { scaleKey = 'moderateBreeze'; }
+    else if (speed < 10.8) { scaleKey = 'freshBreeze'; }
+    else if (speed < 13.9) { scaleKey = 'strongBreeze'; }
+    else if (speed < 17.2) { scaleKey = 'nearGale'; }
+    else if (speed < 20.8) { scaleKey = 'gale'; }
+    else if (speed < 24.5) { scaleKey = 'strongGale'; }
+    else if (speed < 28.5) { scaleKey = 'storm'; }
+    else if (speed < 32.7) { scaleKey = 'violentStorm'; }
+    else { scaleKey = 'hurricane'; }
     
-    return { directionLabel: label, beaufortLabel: scaleLabel };
-  }, [speed, direction]);
+    return { directionLabel: label, beaufortLabel: t(`wind.beaufort.${scaleKey}`) };
+  }, [speed, direction, directionLabels, t]);
 
   return (
     <div className={`wind-compass ${className}`}>
@@ -70,7 +77,7 @@ export const WindCompass: React.FC<WindCompassProps> = ({
           <circle cx="60" cy="60" r="25" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
           
           {/* Direction markers */}
-          {DIRECTION_LABELS.map((label, i) => {
+          {directionLabels.map((label, i) => {
             const angle = (i * 45 - 90) * (Math.PI / 180);
             const x = 60 + 48 * Math.cos(angle);
             const y = 60 + 48 * Math.sin(angle);
@@ -136,27 +143,27 @@ export const WindCompass: React.FC<WindCompassProps> = ({
         
         {/* Speed display */}
         <div className="wind-compass__speed">
-          <span className="wind-compass__speed-value">{speed.toFixed(1)}</span>
-          <span className="wind-compass__speed-unit">m/s</span>
+          <span className="wind-compass__speed-value">{convertWindSpeed(speed)}</span>
+          <span className="wind-compass__speed-unit">{getWindSpeedSymbol()}</span>
         </div>
       </div>
       
       <div className="wind-compass__info">
         <div className="wind-compass__direction">
-          <span className="wind-compass__info-label">Yön</span>
+          <span className="wind-compass__info-label">{t('wind.direction')}</span>
           <span className="wind-compass__info-value">{directionLabel} ({direction}°)</span>
         </div>
         
         <div className="wind-compass__scale">
-          <span className="wind-compass__info-label">Şiddet</span>
+          <span className="wind-compass__info-label">{t('wind.intensity')}</span>
           <span className="wind-compass__info-value">{beaufortLabel}</span>
         </div>
         
         {gust && gust > speed && (
           <div className="wind-compass__gust">
-            <span className="wind-compass__info-label">Rüzgar Hızı</span>
+            <span className="wind-compass__info-label">{t('wind.gust')}</span>
             <span className="wind-compass__info-value wind-compass__info-value--gust">
-              {gust.toFixed(1)} m/s
+              {convertWindSpeed(gust)} {getWindSpeedSymbol()}
             </span>
           </div>
         )}
