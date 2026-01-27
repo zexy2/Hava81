@@ -2,7 +2,7 @@
 
 A modern, responsive weather application for Turkish cities built with React and TypeScript. Features real-time weather data, dynamic theming based on current conditions, and smooth canvas-based animations.
 
-**Live Demo:** [zexy2.github.io/react-hava-durumu](https://zexy2.github.io/react-hava-durumu/)
+**Live Demo:** [zexy2.github.io/Weather-app-for-Turkish-cities](https://zexy2.github.io/Weather-app-for-Turkish-cities/)
 
 ## Features
 

@@ -2,7 +2,7 @@
   "name": "weather-dashboard",
   "version": "2.0.0",
   "private": true,
-  "homepage": "https://zexy2.github.io/react-hava-durumu",
+  "homepage": "https://zexy2.github.io/Weather-app-for-Turkish-cities",
   "proxy": "https://api.openweathermap.org",
   "description": "Modern, production-ready weather dashboard with TypeScript, advanced caching, and comprehensive testing",
   "keywords": ["weather", "react", "typescript", "openweather", "dashboard"],
