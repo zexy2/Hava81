@@ -1,4 +1,4 @@
-﻿# Turkiye Hava Durumu
+﻿# Turkiye Weather Dashboard
 
 Modern, responsive weather dashboard for all 81 Turkish provinces. Built with React 19 and TypeScript.
 
