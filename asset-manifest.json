@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/react-hava-durumu/static/css/main.a80c3693.css",
-    "main.js": "/react-hava-durumu/static/js/main.f48cbe99.js",
-    "index.html": "/react-hava-durumu/index.html",
-    "main.a80c3693.css.map": "/react-hava-durumu/static/css/main.a80c3693.css.map",
-    "main.f48cbe99.js.map": "/react-hava-durumu/static/js/main.f48cbe99.js.map"
+    "main.css": "/Weather-app-for-Turkish-cities/static/css/main.4e0c0c9f.css",
+    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.87e23b5a.js",
+    "index.html": "/Weather-app-for-Turkish-cities/index.html",
+    "main.4e0c0c9f.css.map": "/Weather-app-for-Turkish-cities/static/css/main.4e0c0c9f.css.map",
+    "main.87e23b5a.js.map": "/Weather-app-for-Turkish-cities/static/js/main.87e23b5a.js.map"
   },
   "entrypoints": [
-    "static/css/main.a80c3693.css",
-    "static/js/main.f48cbe99.js"
+    "static/css/main.4e0c0c9f.css",
+    "static/js/main.87e23b5a.js"
   ]
 }
