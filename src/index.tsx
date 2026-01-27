@@ -5,8 +5,12 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { SettingsProvider } from './context';
 import { validateConfig } from './config';
+import './i18n';
 import './index.css';
+import 'leaflet/dist/leaflet.css';
+
 
 // Validate configuration before rendering
 const isConfigValid = validateConfig();
@@ -38,6 +42,8 @@ const root = createRoot(container);
 
 root.render(
   <StrictMode>
-    <App />
+    <SettingsProvider>
+      <App />
+    </SettingsProvider>
   </StrictMode>
 );
