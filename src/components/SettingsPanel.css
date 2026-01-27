@@ -1,0 +1,220 @@
+/* Settings Panel Styles */
+
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 998;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 400px;
+  height: 100vh;
+  background: var(--theme-gradient);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid var(--theme-card-border);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--theme-card-shadow);
+}
+
+.settings-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-panel__header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.settings-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-panel__close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.settings-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.settings-section__title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 1rem 0;
+}
+
+.settings-option-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.settings-option-group--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.settings-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--theme-card-border);
+  border-radius: 12px;
+  background: var(--theme-card-bg);
+  box-shadow: var(--theme-card-shadow);
+  color: var(--theme-text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-option:hover {
+  background: var(--theme-card-bg);
+  opacity: 0.9;
+  border-color: var(--theme-accent);
+  color: var(--theme-text-primary);
+}
+
+.settings-option--active {
+  background: var(--theme-accent);
+  border-color: var(--theme-accent);
+  color: white;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.settings-option__flag {
+  font-size: 1.5rem;
+}
+
+.settings-option__icon {
+  font-size: 1.25rem;
+}
+
+/* Toggle Switch */
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid var(--theme-card-border);
+  border-radius: 12px;
+  background: var(--theme-card-bg);
+  box-shadow: var(--theme-card-shadow);
+  cursor: pointer;
+}
+
+.settings-toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--theme-text-primary);
+  font-size: 0.9375rem;
+}
+
+.settings-toggle__text small {
+  font-size: 0.75rem;
+  color: var(--theme-text-secondary);
+}
+
+.settings-toggle input {
+  display: none;
+}
+
+.settings-toggle__slider {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.settings-toggle__slider::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.settings-toggle input:checked + .settings-toggle__slider {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.settings-toggle input:checked + .settings-toggle__slider::before {
+  transform: translateX(24px);
+}
+
+/* Footer */
+.settings-panel__footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.settings-panel__version {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .settings-panel {
+    max-width: 100%;
+  }
+  
+  .settings-option-group--three {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Keyboard Navigation */
+.settings-option:focus-visible,
+.settings-panel__close:focus-visible,
+.settings-toggle:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.8);
+  outline-offset: 2px;
+}
