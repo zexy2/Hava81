@@ -1,0 +1,189 @@
+/* Weather Map Styles */
+
+.weather-map {
+  background: var(--theme-card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--theme-card-border);
+  box-shadow: var(--theme-card-shadow);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.weather-map__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+}
+
+.weather-map__container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+}
+
+.weather-map__leaflet {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* Custom Marker Styles */
+.weather-map__marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.weather-map__marker-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  color: #fff;
+}
+
+.weather-map__marker-content span {
+  transform: rotate(45deg);
+  font-size: 0.875rem;
+}
+
+/* Popup Styles */
+.weather-map__popup .leaflet-popup-content-wrapper {
+  background: rgba(30, 30, 50, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.weather-map__popup .leaflet-popup-content {
+  margin: 0;
+  color: #fff;
+}
+
+.weather-map__popup .leaflet-popup-tip {
+  background: rgba(30, 30, 50, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.weather-map__popup-content {
+  padding: 1rem;
+  text-align: center;
+}
+
+.weather-map__popup-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.weather-map__popup-temp {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.weather-map__popup-desc {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+}
+
+.weather-map__popup-region {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.weather-map__popup-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.weather-map__popup-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+/* Legend */
+.weather-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.weather-map__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.weather-map__legend-item::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .weather-map__container {
+    height: 300px;
+  }
+  
+  .weather-map__legend {
+    gap: 0.5rem;
+  }
+  
+  .weather-map__legend-item {
+    font-size: 0.6875rem;
+  }
+}
+
+/* Override Leaflet default styles for dark theme */
+.weather-map .leaflet-control-zoom a {
+  background: rgba(30, 30, 50, 0.9);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.weather-map .leaflet-control-zoom a:hover {
+  background: rgba(50, 50, 70, 0.9);
+}
+
+.weather-map .leaflet-control-attribution {
+  background: rgba(30, 30, 50, 0.8);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.weather-map .leaflet-control-attribution a {
+  color: rgba(139, 92, 246, 0.8);
+}
