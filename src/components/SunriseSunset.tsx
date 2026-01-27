@@ -4,8 +4,8 @@ import { useSettings } from '../context';
 import './SunriseSunset.css';
 
 interface SunriseSunsetProps {
-  sunrise: Date;
-  sunset: Date;
+  sunrise: Date | string | number;
+  sunset: Date | string | number;
   className?: string;
 }
 
@@ -19,8 +19,12 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
   
   const { progress, dayLength, sunPosition } = useMemo(() => {
     const now = new Date();
-    const sunriseMs = sunrise.getTime();
-    const sunsetMs = sunset.getTime();
+    // Ensure sunrise and sunset are Date objects
+    const sunriseDate = sunrise instanceof Date ? sunrise : new Date(sunrise);
+    const sunsetDate = sunset instanceof Date ? sunset : new Date(sunset);
+    
+    const sunriseMs = sunriseDate.getTime();
+    const sunsetMs = sunsetDate.getTime();
     const nowMs = now.getTime();
     
     const dayLengthMs = sunsetMs - sunriseMs;
@@ -59,9 +63,10 @@ export const SunriseSunset: React.FC<SunriseSunsetProps> = ({
     };
   }, [sunrise, sunset, settings.language]);
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | string | number) => {
     const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
-    return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const dateObj = date instanceof Date ? date : new Date(date);
+    return dateObj.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
