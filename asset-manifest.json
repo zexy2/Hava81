@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/Weather-app-for-Turkish-cities/static/css/main.4e0c0c9f.css",
-    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.87e23b5a.js",
+    "main.css": "/Weather-app-for-Turkish-cities/static/css/main.33d524a7.css",
+    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.2e4d74d7.js",
     "index.html": "/Weather-app-for-Turkish-cities/index.html",
-    "main.4e0c0c9f.css.map": "/Weather-app-for-Turkish-cities/static/css/main.4e0c0c9f.css.map",
-    "main.87e23b5a.js.map": "/Weather-app-for-Turkish-cities/static/js/main.87e23b5a.js.map"
+    "main.33d524a7.css.map": "/Weather-app-for-Turkish-cities/static/css/main.33d524a7.css.map",
+    "main.2e4d74d7.js.map": "/Weather-app-for-Turkish-cities/static/js/main.2e4d74d7.js.map"
   },
   "entrypoints": [
-    "static/css/main.4e0c0c9f.css",
-    "static/js/main.87e23b5a.js"
+    "static/css/main.33d524a7.css",
+    "static/js/main.2e4d74d7.js"
   ]
 }

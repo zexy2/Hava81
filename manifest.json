@@ -1,15 +1,50 @@
 {
   "short_name": "Hava Durumu",
-  "name": "React Hava Durumu Uygulaması",
+  "name": "Türkiye Hava Durumu Dashboard",
+  "description": "Türkiye'nin 81 ili için anlık hava durumu, 5 günlük tahmin ve hava kalitesi bilgisi",
   "icons": [
     {
       "src": "favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#667eea",
-  "background_color": "#667eea"
+  "orientation": "portrait-primary",
+  "theme_color": "#1e1e3f",
+  "background_color": "#0f0f1a",
+  "categories": ["weather", "utilities"],
+  "lang": "tr",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "İstanbul Hava Durumu",
+      "short_name": "İstanbul",
+      "description": "İstanbul için hava durumunu görüntüle",
+      "url": "/?city=istanbul",
+      "icons": [{ "src": "favicon.ico", "sizes": "64x64" }]
+    },
+    {
+      "name": "Ankara Hava Durumu",
+      "short_name": "Ankara",
+      "description": "Ankara için hava durumunu görüntüle",
+      "url": "/?city=ankara",
+      "icons": [{ "src": "favicon.ico", "sizes": "64x64" }]
+    }
+  ]
 }
