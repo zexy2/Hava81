@@ -4,7 +4,8 @@
   background: var(--theme-card-bg);
   backdrop-filter: blur(var(--blur-amount));
   -webkit-backdrop-filter: blur(var(--blur-amount));
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--theme-card-border);
+  box-shadow: var(--theme-card-shadow);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
 }
