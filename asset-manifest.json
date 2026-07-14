@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/Weather-app-for-Turkish-cities/static/css/main.f1f89e65.css",
-    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.e06805de.js",
+    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.991f4878.js",
     "static/css/660.713cd8a9.chunk.css": "/Weather-app-for-Turkish-cities/static/css/660.713cd8a9.chunk.css",
     "static/js/660.42c84e56.chunk.js": "/Weather-app-for-Turkish-cities/static/js/660.42c84e56.chunk.js",
     "static/js/776.1bd0674c.chunk.js": "/Weather-app-for-Turkish-cities/static/js/776.1bd0674c.chunk.js",
@@ -19,13 +19,13 @@
     "static/media/ibm-plex-sans-vietnamese-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-vietnamese-wght-normal.c50c4d9a7935b1984a24.woff2",
     "index.html": "/Weather-app-for-Turkish-cities/index.html",
     "main.f1f89e65.css.map": "/Weather-app-for-Turkish-cities/static/css/main.f1f89e65.css.map",
-    "main.e06805de.js.map": "/Weather-app-for-Turkish-cities/static/js/main.e06805de.js.map",
+    "main.991f4878.js.map": "/Weather-app-for-Turkish-cities/static/js/main.991f4878.js.map",
     "660.713cd8a9.chunk.css.map": "/Weather-app-for-Turkish-cities/static/css/660.713cd8a9.chunk.css.map",
     "660.42c84e56.chunk.js.map": "/Weather-app-for-Turkish-cities/static/js/660.42c84e56.chunk.js.map",
     "776.1bd0674c.chunk.js.map": "/Weather-app-for-Turkish-cities/static/js/776.1bd0674c.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f1f89e65.css",
-    "static/js/main.e06805de.js"
+    "static/js/main.991f4878.js"
   ]
 }
