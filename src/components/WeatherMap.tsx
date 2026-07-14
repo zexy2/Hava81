@@ -1,22 +1,11 @@
-import React, { useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useEffect, useMemo } from 'react';
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
-import type { NormalizedWeatherData } from '../types';
+import { useSettings } from '../context/SettingsContext';
+import type { NormalizedWeatherData } from '../types/weather.types';
 import './WeatherMap.css';
-
-// Fix for default marker icon in React-Leaflet
-// Using CDN URLs instead of imports to avoid TypeScript issues
-const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
 
 interface WeatherMapProps {
   weather: NormalizedWeatherData | null;
@@ -24,41 +13,64 @@ interface WeatherMapProps {
   className?: string;
 }
 
-// Component to recenter map when weather changes
+const DEFAULT_CENTER: [number, number] = [39, 35];
+const FEATURED_CITY_NAMES = new Set([
+  'İstanbul',
+  'Ankara',
+  'İzmir',
+  'Antalya',
+  'Bursa',
+  'Adana',
+  'Trabzon',
+  'Erzurum',
+  'Diyarbakır',
+  'Konya',
+]);
+
 const MapController: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
-  
+
   useEffect(() => {
-    map.flyTo(center, 8, {
-      duration: 1.5,
-    });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      map.setView(center, 8);
+      return;
+    }
+    map.flyTo(center, 8, { duration: 0.4 });
   }, [center, map]);
-  
+
   return null;
 };
 
-// Custom marker icon based on temperature
-const createTemperatureIcon = (temp: number): L.DivIcon => {
-  let bgColor = '#3b82f6'; // blue - cold
-  if (temp >= 30) bgColor = '#ef4444'; // red - hot
-  else if (temp >= 20) bgColor = '#f97316'; // orange - warm
-  else if (temp >= 10) bgColor = '#22c55e'; // green - mild
-  else if (temp >= 0) bgColor = '#06b6d4'; // cyan - cool
-  
+const getTemperatureMarkerColors = (celsius: number) => {
+  if (celsius >= 30) return { background: '#D6543D', foreground: '#FFFFFF' };
+  if (celsius >= 20) return { background: '#E7A531', foreground: '#142524' };
+  if (celsius >= 10) return { background: '#A8C9C5', foreground: '#142524' };
+  if (celsius >= 0) return { background: '#146B73', foreground: '#FFFFFF' };
+  return { background: '#0E2C32', foreground: '#FFFFFF' };
+};
+
+const createTemperatureIcon = (celsius: number, displayTemperature: number): L.DivIcon => {
+  const colors = getTemperatureMarkerColors(celsius);
   return L.divIcon({
     className: 'weather-map__marker',
-    html: `
-      <div class="weather-map__marker-content" style="background: ${bgColor}">
-        <span>${temp}°</span>
-      </div>
-    `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
+    html: `<div class="weather-map__marker-content" style="--marker-bg:${colors.background};--marker-fg:${colors.foreground}"><span>${Math.round(displayTemperature)}°</span></div>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
   });
 };
 
-// Default center: Turkey (defined outside component to prevent re-renders)
-const DEFAULT_CENTER: [number, number] = [39.0, 35.0];
+const createPlateIcon = (plateCode: number): L.DivIcon =>
+  L.divIcon({
+    className: 'weather-map__plate-marker',
+    html: `<span>${String(plateCode).padStart(2, '0')}</span>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+
+const labelMarker = (marker: L.Marker | null, accessibleName: string) => {
+  marker?.getElement()?.setAttribute('aria-label', accessibleName);
+};
 
 export const WeatherMap: React.FC<WeatherMapProps> = ({
   weather,
@@ -66,111 +78,135 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
-  
-  const center = useMemo((): [number, number] => {
-    if (weather?.coordinates) {
-      return [weather.coordinates.lat, weather.coordinates.lon];
-    }
-    return DEFAULT_CENTER;
-  }, [weather?.coordinates]);
+  const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
 
-  // OpenWeather tile layer URL
-  const weatherLayerUrl = `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${process.env.REACT_APP_OPENWEATHER_KEY}`;
+  const center = useMemo<[number, number]>(() => {
+    const lat = weather?.coordinates.lat;
+    const lon = weather?.coordinates.lon;
+    return lat !== undefined && lon !== undefined ? [lat, lon] : DEFAULT_CENTER;
+  }, [weather?.coordinates.lat, weather?.coordinates.lon]);
+
+  const featuredCities = useMemo(
+    () =>
+      TURKISH_CITIES.filter(
+        candidate => FEATURED_CITY_NAMES.has(candidate.name) && candidate.name !== weather?.cityName
+      ),
+    [weather?.cityName]
+  );
+
+  const isDark =
+    settings.themeMode === 'dark' ||
+    (settings.themeMode === 'auto' && Boolean(weather?.icon.endsWith('n')));
+  const tileStyle = isDark ? 'dark_all' : 'light_all';
+  const temperatureSymbol = getTemperatureSymbol();
+  const currentMarkerName = weather
+    ? `${weather.cityName}: ${Math.round(
+        convertTemperature(weather.temperature)
+      )}${temperatureSymbol}`
+    : '';
+  const legendThresholds = {
+    zero: Math.round(convertTemperature(0)),
+    ten: Math.round(convertTemperature(10)),
+    twenty: Math.round(convertTemperature(20)),
+    thirty: Math.round(convertTemperature(30)),
+    unit: temperatureSymbol,
+  };
 
   return (
-    <motion.div 
-      className={`weather-map ${className}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-    >
-      <h3 className="weather-map__title">{t('weather.title')} Haritası</h3>
-      
+    <div className={`weather-map ${className}`}>
+      <h3 className="weather-map__title">{t('weather.mapTitle')}</h3>
+
       <div className="weather-map__container">
-        <MapContainer
-          center={center}
-          zoom={6}
-          scrollWheelZoom={true}
-          className="weather-map__leaflet"
-        >
+        <MapContainer center={center} zoom={6} scrollWheelZoom className="weather-map__leaflet">
           <MapController center={center} />
-          
-          {/* Base map layer */}
+
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CARTO'
+            url={`https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`}
           />
-          
-          {/* Weather temperature layer */}
-          <TileLayer
-            url={weatherLayerUrl}
-            opacity={0.5}
-          />
-          
-          {/* Current city marker */}
+
           {weather && (
-            <Marker 
+            <Marker
               position={[weather.coordinates.lat, weather.coordinates.lon]}
-              icon={createTemperatureIcon(weather.temperature)}
+              ref={marker => labelMarker(marker, currentMarkerName)}
+              title={currentMarkerName}
+              icon={createTemperatureIcon(
+                weather.temperature,
+                convertTemperature(weather.temperature)
+              )}
+              eventHandlers={{
+                add: event => labelMarker(event.target as L.Marker, currentMarkerName),
+              }}
             >
               <Popup className="weather-map__popup">
                 <div className="weather-map__popup-content">
                   <h4>{weather.cityName}</h4>
-                  <p className="weather-map__popup-temp">{weather.temperature}°C</p>
+                  <p className="weather-map__popup-temp">
+                    {convertTemperature(weather.temperature)} {getTemperatureSymbol()}
+                  </p>
                   <p className="weather-map__popup-desc">{weather.description}</p>
                 </div>
               </Popup>
             </Marker>
           )}
-          
-          {/* Major cities markers */}
-          {TURKISH_CITIES.filter(city => 
-            ['İstanbul', 'Ankara', 'İzmir', 'Antalya', 'Bursa', 'Adana', 'Trabzon', 'Erzurum', 'Diyarbakır', 'Konya']
-            .includes(city.name) && city.name !== weather?.cityName
-          ).map(city => (
-            <Marker
-              key={city.plateCode}
-              position={[city.coordinates.lat, city.coordinates.lon]}
-              eventHandlers={{
-                click: () => onCitySelect(city),
-              }}
-            >
-              <Popup>
-                <div className="weather-map__popup-content">
-                  <h4>{city.name}</h4>
-                  <p className="weather-map__popup-region">{city.region}</p>
-                  <button 
-                    className="weather-map__popup-btn"
-                    onClick={() => onCitySelect(city)}
-                  >
-                    Hava Durumunu Gör
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+
+          {featuredCities.map(featuredCity => {
+            const markerName = `${featuredCity.name}: ${t('hava81.decision.plateCodeLabel', {
+              code: String(featuredCity.plateCode).padStart(2, '0'),
+            })}`;
+
+            return (
+              <Marker
+                key={featuredCity.plateCode}
+                ref={marker => labelMarker(marker, markerName)}
+                position={[featuredCity.coordinates.lat, featuredCity.coordinates.lon]}
+                title={markerName}
+                icon={createPlateIcon(featuredCity.plateCode)}
+                eventHandlers={{
+                  add: event => labelMarker(event.target as L.Marker, markerName),
+                  click: () => onCitySelect(featuredCity),
+                }}
+              >
+                <Popup className="weather-map__popup">
+                  <div className="weather-map__popup-content">
+                    <span className="weather-map__popup-plate">
+                      {String(featuredCity.plateCode).padStart(2, '0')}
+                    </span>
+                    <h4>{featuredCity.name}</h4>
+                    <p className="weather-map__popup-region">{featuredCity.region}</p>
+                    <button
+                      type="button"
+                      className="weather-map__popup-btn"
+                      onClick={() => onCitySelect(featuredCity)}
+                    >
+                      {t('weather.viewCityWeather')}
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
-      
-      {/* Legend */}
-      <div className="weather-map__legend">
-        <span className="weather-map__legend-item" style={{ '--color': '#3b82f6' } as React.CSSProperties}>
-          Soğuk (&lt;0°C)
+
+      <div className="weather-map__legend" role="list" aria-label={t('weather.temperatureLegend')}>
+        <span className="weather-map__legend-item weather-map__legend-item--cold" role="listitem">
+          {t('weather.temperatureCold', legendThresholds)}
         </span>
-        <span className="weather-map__legend-item" style={{ '--color': '#06b6d4' } as React.CSSProperties}>
-          Serin (0-10°C)
+        <span className="weather-map__legend-item weather-map__legend-item--cool" role="listitem">
+          {t('weather.temperatureCool', legendThresholds)}
         </span>
-        <span className="weather-map__legend-item" style={{ '--color': '#22c55e' } as React.CSSProperties}>
-          Ilık (10-20°C)
+        <span className="weather-map__legend-item weather-map__legend-item--mild" role="listitem">
+          {t('weather.temperatureMild', legendThresholds)}
         </span>
-        <span className="weather-map__legend-item" style={{ '--color': '#f97316' } as React.CSSProperties}>
-          Sıcak (20-30°C)
+        <span className="weather-map__legend-item weather-map__legend-item--warm" role="listitem">
+          {t('weather.temperatureWarm', legendThresholds)}
         </span>
-        <span className="weather-map__legend-item" style={{ '--color': '#ef4444' } as React.CSSProperties}>
-          Çok Sıcak (&gt;30°C)
+        <span className="weather-map__legend-item weather-map__legend-item--hot" role="listitem">
+          {t('weather.temperatureHot', legendThresholds)}
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

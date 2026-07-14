@@ -12,9 +12,8 @@ RUN npm ci --silent --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Build arguments for environment
-ARG REACT_APP_OPENWEATHER_KEY
-ENV REACT_APP_OPENWEATHER_KEY=$REACT_APP_OPENWEATHER_KEY
+# The package homepage targets GitHub Pages; containers serve the app at /.
+ENV PUBLIC_URL=.
 
 # Build the application
 RUN npm run build

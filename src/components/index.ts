@@ -18,12 +18,11 @@ export { SunriseSunset } from './SunriseSunset';
 export { WindCompass } from './WindCompass';
 export { UVIndex } from './UVIndex';
 export { SettingsPanel } from './SettingsPanel';
-export { WeatherMap } from './WeatherMap';
-export { 
-  MotionCard, 
-  MotionList, 
-  MotionItem, 
-  AnimatedNumber, 
+export {
+  MotionCard,
+  MotionList,
+  MotionItem,
+  AnimatedNumber,
   PageTransition,
   staggerContainer,
   fadeInUp,

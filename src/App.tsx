@@ -1,65 +1,95 @@
-import React, { useCallback, useEffect, useMemo, useState, Suspense, lazy } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { 
-  ErrorBoundary, 
-  SearchBar, 
-  WeatherCard, 
-  Forecast,
-  AirQualityPanel,
-  CityTabs,
-  WeatherBackground,
-  WeatherCardSkeleton,
-  ForecastSkeleton,
-  AirQualitySkeleton,
-  SunriseSunset,
-  WindCompass,
-  UVIndex,
-  SettingsPanel,
-  MotionList,
-  MotionItem,
-} from './components';
-import { useWeather, useForecast, useLocalStorage, useKeyboardShortcuts, createAppShortcuts } from './hooks';
-import { useSettings } from './context';
-import { getWeatherTheme, applyThemeToDOM } from './utils';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { SearchBar } from './components/SearchBar';
+import { CityTabs } from './components/CityTabs';
+import { SettingsPanel } from './components/SettingsPanel';
+import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
+import { ForecastAtlas } from './components/hava81/ForecastAtlas';
+import { EnvironmentRail } from './components/hava81/EnvironmentRail';
+import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
+import { useWeather } from './hooks/useWeather';
+import { useForecast } from './hooks/useForecast';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { createAppShortcuts, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
-import type { FavoriteCity } from './types';
+import type { FavoriteCity } from './types/weather.types';
 import './styles/App.css';
 
-// Lazy load the map component
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-} as const;
+type AtlasNavItem = 'today' | 'map' | 'saved';
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: 'spring' as const,
-      damping: 20,
-      stiffness: 300,
-    },
-  },
-} as const;
+const SearchIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4.25 4.25" />
+  </svg>
+);
+
+const LocationIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+  </svg>
+);
+
+const MapIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <path d="m3 5 5-2 8 3 5-2v15l-5 2-8-3-5 2Z" />
+    <path d="M8 3v15M16 6v15" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" />
+  </svg>
+);
+
+const StarIcon = ({ filled = false }: { filled?: boolean }) => (
+  <svg
+    aria-hidden="true"
+    focusable="false"
+    viewBox="0 0 24 24"
+    className={filled ? 'is-filled' : undefined}
+  >
+    <path d="m12 3 2.7 5.47 6.04.88-4.37 4.26 1.03 6.02L12 16.8l-5.4 2.83 1.03-6.02-4.37-4.26 6.04-.88Z" />
+  </svg>
+);
+
+const AtlasLoadingState = ({ label }: { label: string }) => (
+  <div className="atlas-loading" role="status" aria-live="polite">
+    <span className="sr-only">{label}</span>
+    <section className="atlas-loading__decision" aria-hidden="true">
+      <div className="atlas-loading__line atlas-loading__line--short" />
+      <div className="atlas-loading__temperature" />
+      <div className="atlas-loading__line" />
+      <div className="atlas-loading__signal" />
+      <div className="atlas-loading__rail" />
+    </section>
+    <section className="atlas-loading__forecast" aria-hidden="true">
+      <div className="atlas-loading__line atlas-loading__line--short" />
+      <div className="atlas-loading__chart" />
+      <div className="atlas-loading__rows" />
+    </section>
+  </div>
+);
 
 const App: React.FC = () => {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const [activeNav, setActiveNav] = useState<AtlasNavItem>('today');
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const cityRailRef = useRef<HTMLDivElement>(null);
+  const mapRegionRef = useRef<HTMLElement>(null);
 
   const {
     city,
@@ -71,343 +101,462 @@ const App: React.FC = () => {
     fetchCurrentLocation,
     clearError,
     recentSearches,
-  } = useWeather({ initialCity: 'İstanbul' });
+  } = useWeather({ initialCity: 'İstanbul', language: settings.language });
 
-  const forecast = useForecast();
+  const forecast = useForecast(settings.language);
+  const fetchForecast = forecast.fetch;
   const [favorites, setFavorites] = useLocalStorage<FavoriteCity[]>('favorites', []);
 
-  // Handle add favorite
+  const colorMode = useMemo(() => {
+    if (settings.themeMode !== 'auto') return settings.themeMode;
+    return weather?.icon.endsWith('n') ? 'dark' : 'light';
+  }, [settings.themeMode, weather?.icon]);
+
+  useEffect(() => {
+    document.documentElement.style.colorScheme = colorMode;
+    document.documentElement.dataset.colorMode = colorMode;
+  }, [colorMode]);
+
+  useEffect(() => {
+    const lat = weather?.coordinates.lat;
+    const lon = weather?.coordinates.lon;
+    if (lat !== undefined && lon !== undefined) {
+      fetchForecast({ lat, lon });
+    }
+  }, [fetchForecast, weather?.coordinates.lat, weather?.coordinates.lon]);
+
+  const openSettings = useCallback(() => setIsSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
+  const openSearch = useCallback(() => {
+    setIsMobileSearchOpen(true);
+    requestAnimationFrame(() => searchInputRef.current?.focus());
+  }, []);
+  const toggleMobileSearch = useCallback(() => {
+    if (isMobileSearchOpen) {
+      searchInputRef.current?.blur();
+      setIsMobileSearchOpen(false);
+      return;
+    }
+    openSearch();
+  }, [isMobileSearchOpen, openSearch]);
+
+  const isFavorite = useMemo(
+    () => Boolean(weather && favorites.some(favorite => favorite.name === weather.cityName)),
+    [favorites, weather]
+  );
+
   const handleAddFavorite = useCallback(() => {
     if (!weather) return;
-    
-    const exists = favorites.some(f => f.name === weather.cityName);
-    if (exists) return;
-    
-    const newFavorite: FavoriteCity = {
+
+    const favorite: FavoriteCity = {
       name: weather.cityName,
       lat: weather.coordinates.lat,
       lon: weather.coordinates.lon,
       temp: weather.temperature,
       icon: weather.icon,
     };
-    
-    setFavorites([...favorites, newFavorite]);
-  }, [weather, favorites, setFavorites]);
 
-  // Keyboard shortcuts
-  const shortcuts = useMemo(() => createAppShortcuts({
-    openSearch: () => searchInputRef.current?.focus(),
-    openSettings: () => setIsSettingsOpen(true),
-    closeModal: () => setIsSettingsOpen(false),
-    refreshData: () => weather && fetchWeather(weather.cityName),
-    toggleFavorite: handleAddFavorite,
-  }), [weather, fetchWeather, handleAddFavorite]);
+    setFavorites(current => {
+      if (current.some(item => item.name === weather.cityName)) return current;
+      return [...current, favorite];
+    });
+  }, [setFavorites, weather]);
 
-  useKeyboardShortcuts(shortcuts);
+  const handleRemoveFavorite = useCallback(
+    (name: string) => {
+      setFavorites(current => current.filter(favorite => favorite.name !== name));
+    },
+    [setFavorites]
+  );
 
-  // Get theme based on current weather and user preference
-  const themeConfig = useMemo(() => {
-    const baseTheme = getWeatherTheme(weather?.icon);
-    
-    // Override with user preference if not auto
-    if (settings.themeMode !== 'auto') {
-      const overrideTheme = settings.themeMode === 'dark' ? 'clear-night' : 'clear-day';
-      return {
-        ...baseTheme,
-        theme: overrideTheme as typeof baseTheme.theme,
-      };
+  const handleToggleFavorite = useCallback(() => {
+    if (!weather) return;
+    if (isFavorite) {
+      handleRemoveFavorite(weather.cityName);
+      return;
     }
-    
-    return baseTheme;
-  }, [weather?.icon, settings.themeMode]);
+    handleAddFavorite();
+  }, [handleAddFavorite, handleRemoveFavorite, isFavorite, weather]);
 
-  // Apply theme to DOM when it changes
   useEffect(() => {
-    applyThemeToDOM(themeConfig);
-  }, [themeConfig]);
+    if (!weather) return;
 
-  // Fetch forecast when weather changes
-  useEffect(() => {
-    if (weather?.coordinates) {
-      forecast.fetch(weather.coordinates);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather?.coordinates?.lat, weather?.coordinates?.lon]);
+    setFavorites(current => {
+      const index = current.findIndex(favorite => favorite.name === weather.cityName);
+      if (index < 0) return current;
 
-  const handleSubmit = useCallback((selectedCity?: string) => {
-    fetchWeather(selectedCity || city);
-  }, [city, fetchWeather]);
+      const existing = current[index];
+      if (existing.temp === weather.temperature && existing.icon === weather.icon) {
+        return current;
+      }
 
-  const handleLocationClick = useCallback(() => {
-    fetchCurrentLocation();
-  }, [fetchCurrentLocation]);
+      return current.map((favorite, favoriteIndex) =>
+        favoriteIndex === index
+          ? { ...favorite, temp: weather.temperature, icon: weather.icon }
+          : favorite
+      );
+    });
+  }, [setFavorites, weather]);
 
-  const handleRemoveFavorite = useCallback((name: string) => {
-    setFavorites(favorites.filter(f => f.name !== name));
-  }, [favorites, setFavorites]);
+  const shortcuts = useMemo(
+    () =>
+      createAppShortcuts({
+        openSearch,
+        openSettings,
+        closeModal: closeSettings,
+        refreshData: () => weather && fetchWeather(weather.cityName),
+        toggleFavorite: handleToggleFavorite,
+      }),
+    [closeSettings, fetchWeather, handleToggleFavorite, openSearch, openSettings, weather]
+  );
 
-  const handleSelectFavorite = useCallback((fav: FavoriteCity) => {
-    fetchWeather(fav.name);
-  }, [fetchWeather]);
+  useKeyboardShortcuts(shortcuts, { enabled: !isSettingsOpen });
 
-  const handleMapCitySelect = useCallback((cityData: TurkishCity) => {
-    fetchWeather(cityData.name);
-  }, [fetchWeather]);
+  const handleSubmit = useCallback(
+    (selectedCity?: string) => {
+      setIsMobileSearchOpen(false);
+      fetchWeather(selectedCity || city);
+    },
+    [city, fetchWeather]
+  );
 
-  const isFavorite = weather ? favorites.some(f => f.name === weather.cityName) : false;
+  const handleSelectFavorite = useCallback(
+    (favorite: FavoriteCity) => {
+      setShowMap(false);
+      setActiveNav('today');
+      fetchWeather(favorite.name);
+    },
+    [fetchWeather]
+  );
+
+  const handleMapCitySelect = useCallback(
+    (cityData: TurkishCity) => {
+      fetchWeather(cityData.name);
+      setShowMap(false);
+      setActiveNav('today');
+      requestAnimationFrame(() => overviewRef.current?.scrollIntoView({ behavior: 'smooth' }));
+    },
+    [fetchWeather]
+  );
+
+  const openMap = useCallback(() => {
+    setShowMap(true);
+    setActiveNav('map');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        mapRegionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        mapRegionRef.current?.focus({ preventScroll: true });
+      });
+    });
+  }, []);
+
+  const closeMap = useCallback(() => {
+    setShowMap(false);
+    setActiveNav('today');
+  }, []);
+
+  const handleBottomNav = useCallback(
+    (item: AtlasNavItem) => {
+      if (item === 'map') {
+        openMap();
+        return;
+      }
+
+      if (item === 'saved') {
+        setShowMap(false);
+        setActiveNav('saved');
+        if (favorites.length === 0) {
+          handleAddFavorite();
+        }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() =>
+            cityRailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          );
+        });
+        return;
+      }
+
+      setShowMap(false);
+      setActiveNav('today');
+      overviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    [favorites.length, handleAddFavorite, openMap]
+  );
+
+  const retryCurrentWeather = useCallback(() => {
+    clearError();
+    fetchWeather(city || weather?.cityName || 'İstanbul');
+  }, [city, clearError, fetchWeather, weather?.cityName]);
+
+  const retryForecast = useCallback(() => {
+    if (weather?.coordinates) fetchForecast(weather.coordinates);
+  }, [fetchForecast, weather?.coordinates]);
 
   return (
-    <ErrorBoundary
-      fallback={(err, reset) => (
-        <div className="app app--error">
-          <div className="app__error-container">
+    <MotionConfig reducedMotion="user" transition={{ duration: 0.22 }}>
+      <ErrorBoundary
+        fallback={(caughtError, reset) => (
+          <div className="app-fatal" role="alert">
+            <span className="atlas-kicker">{t('hava81.systemStatus')}</span>
             <h1>{t('common.error')}</h1>
-            <p>{err.message}</p>
-            <button onClick={reset} className="app__reset-button">
+            <p>{caughtError.message}</p>
+            <button type="button" onClick={reset} className="atlas-button atlas-button--primary">
               {t('common.retry')}
             </button>
           </div>
-        </div>
-      )}
-    >
-      <div className="app" data-theme={themeConfig.theme}>
-        {/* Animated Weather Background */}
-        <WeatherBackground config={themeConfig} />
-        
-        {/* Sun glow effect for clear day */}
-        {themeConfig.theme === 'clear-day' && <div className="sun-glow" />}
+        )}
+      >
+        <div className="app" data-color-mode={colorMode} data-active-nav={activeNav}>
+          <a className="skip-link" href="#main-content">
+            {t('common.skipToContent')}
+          </a>
 
-        <header className="app__header">
-          <main className="app__content">
-            {/* Settings Button */}
-            <motion.button
-              className="settings-trigger"
-              onClick={() => setIsSettingsOpen(true)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              aria-label={t('common.settings')}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-              </svg>
-            </motion.button>
+          <header
+            className={`atlas-header${isMobileSearchOpen ? ' atlas-header--search-open' : ''}`}
+          >
+            <div className="atlas-header__inner">
+              <a className="atlas-brand" href="#main-content" aria-label={t('hava81.homeLabel')}>
+                <span className="atlas-brand__name">Hava81</span>
+                <span className="atlas-brand__index" aria-hidden="true">
+                  <b>81</b>
+                  <small>ATLAS</small>
+                </span>
+              </a>
 
-            <motion.h1 
-              className="app__title"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              {t('weather.title')}
-            </motion.h1>
-            <motion.p 
-              className="app__subtitle"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              {t('weather.subtitle')}
-            </motion.p>
-
-            <motion.div 
-              className="search-section"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="search-row">
+              <div className="atlas-header__search" id="atlas-search-region">
                 <SearchBar
+                  ref={searchInputRef}
                   value={city}
                   onChange={setCity}
                   onSubmit={handleSubmit}
                   isLoading={isLoading}
                   recentSearches={recentSearches}
                   placeholder={t('weather.searchPlaceholder')}
+                  label={t('weather.searchLabel')}
+                  submitLabel={t('common.search')}
+                  loadingLabel={t('common.loading')}
+                  suggestionsLabel={t('weather.citySuggestions')}
+                  onDismiss={() => setIsMobileSearchOpen(false)}
                 />
-
-                <motion.button
-                  type="button"
-                  className="location-button"
-                  onClick={handleLocationClick}
-                  disabled={isLoading}
-                  title={t('weather.useMyLocation')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/>
-                  </svg>
-                </motion.button>
-
-                <motion.button
-                  type="button"
-                  className="map-toggle-button"
-                  onClick={() => setShowMap(!showMap)}
-                  title={t('common.map')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  data-active={showMap}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                    <line x1="8" y1="2" x2="8" y2="18" />
-                    <line x1="16" y1="6" x2="16" y2="22" />
-                  </svg>
-                </motion.button>
               </div>
-            </motion.div>
 
-            <AnimatePresence mode="wait">
-              {error && (
-                <motion.div 
-                  className="error-message"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
+              <nav className="atlas-header__actions" aria-label={t('weather.quickActions')}>
+                <button
+                  type="button"
+                  className="atlas-icon-button atlas-icon-button--search"
+                  onClick={toggleMobileSearch}
+                  aria-expanded={isMobileSearchOpen}
+                  aria-controls="atlas-search-region"
+                  aria-label={
+                    isMobileSearchOpen ? t('hava81.closeSearch') : t('weather.searchLabel')
+                  }
                 >
-                  <span>{error.message}</span>
-                  <button onClick={clearError}>×</button>
-                </motion.div>
+                  <SearchIcon />
+                </button>
+                <button
+                  type="button"
+                  className="atlas-icon-button atlas-icon-button--location"
+                  onClick={fetchCurrentLocation}
+                  disabled={isLoading}
+                  aria-label={t('weather.useMyLocation')}
+                  title={t('weather.useMyLocation')}
+                >
+                  <LocationIcon />
+                </button>
+                <button
+                  type="button"
+                  className="atlas-icon-button"
+                  onClick={handleToggleFavorite}
+                  disabled={!weather}
+                  aria-pressed={isFavorite}
+                  aria-label={
+                    isFavorite ? t('weather.removeFromFavorites') : t('weather.addToFavorites')
+                  }
+                  title={
+                    isFavorite ? t('weather.removeFromFavorites') : t('weather.addToFavorites')
+                  }
+                >
+                  <StarIcon filled={isFavorite} />
+                </button>
+                <button
+                  type="button"
+                  className="atlas-icon-button atlas-icon-button--map"
+                  onClick={showMap ? closeMap : openMap}
+                  aria-pressed={showMap}
+                  aria-expanded={showMap}
+                  aria-controls="weather-map-region"
+                  aria-label={showMap ? t('weather.hideMap') : t('weather.showMap')}
+                  title={showMap ? t('weather.hideMap') : t('weather.showMap')}
+                >
+                  <MapIcon />
+                </button>
+                <button
+                  type="button"
+                  className="atlas-icon-button atlas-settings-button"
+                  onClick={openSettings}
+                  aria-label={t('common.settings')}
+                >
+                  <span className="atlas-settings-button__language" aria-hidden="true">
+                    {settings.language.toUpperCase()}
+                  </span>
+                  <SettingsIcon />
+                </button>
+              </nav>
+            </div>
+
+            {favorites.length > 0 && (
+              <div className="atlas-city-rail" ref={cityRailRef}>
+                <CityTabs
+                  cities={favorites}
+                  activeCity={weather?.cityName ?? ''}
+                  onSelect={handleSelectFavorite}
+                  onRemove={handleRemoveFavorite}
+                  onAdd={handleAddFavorite}
+                  canAdd={Boolean(weather && !isFavorite)}
+                />
+              </div>
+            )}
+          </header>
+
+          <main className="atlas-main" id="main-content" aria-busy={isLoading} ref={overviewRef}>
+            <AnimatePresence initial={false}>
+              {error && (
+                <motion.section
+                  className="atlas-message atlas-message--error"
+                  role="alert"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                >
+                  <div>
+                    <span className="atlas-kicker">{t('common.error')}</span>
+                    <p>{error.message}</p>
+                  </div>
+                  <div className="atlas-message__actions">
+                    <button type="button" className="atlas-button" onClick={retryCurrentWeather}>
+                      {t('common.retry')}
+                    </button>
+                    <button type="button" className="atlas-text-button" onClick={clearError}>
+                      {t('common.close')}
+                    </button>
+                  </div>
+                </motion.section>
               )}
             </AnimatePresence>
 
-            {isLoading && (
-              <motion.div 
-                className="weather-content"
+            {isLoading && !weather && <AtlasLoadingState label={t('hava81.loadingWeather')} />}
+
+            {weather && !isLoading && (
+              <motion.div
+                key={weather.cityName}
+                className="atlas-dashboard"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <WeatherCardSkeleton />
-                <AirQualitySkeleton />
-                <ForecastSkeleton />
+                <div className="atlas-dashboard__primary">
+                  <WeatherDecisionField
+                    weather={weather}
+                    hourly={forecast.hourly}
+                    airQuality={forecast.airQuality ?? undefined}
+                  />
+
+                  {forecast.isLoading && forecast.hourly.length === 0 ? (
+                    <section className="atlas-forecast-loading" aria-label={t('common.loading')}>
+                      <div className="atlas-loading__line atlas-loading__line--short" />
+                      <div className="atlas-loading__chart" />
+                      <div className="atlas-loading__rows" />
+                    </section>
+                  ) : (
+                    <ForecastAtlas daily={forecast.daily} hourly={forecast.hourly} />
+                  )}
+                </div>
+
+                {forecast.error && (
+                  <section className="atlas-message atlas-message--inline" role="status">
+                    <p>{t('errors.forecastUnavailable')}</p>
+                    <button type="button" className="atlas-text-button" onClick={retryForecast}>
+                      {t('common.retry')}
+                    </button>
+                  </section>
+                )}
+
+                <EnvironmentRail
+                  weather={weather}
+                  airQuality={forecast.airQuality ?? undefined}
+                  onOpenMap={showMap ? closeMap : openMap}
+                  mapExpanded={showMap}
+                />
+
+                <AnimatePresence initial={false}>
+                  {showMap && (
+                    <motion.section
+                      className="atlas-map-panel"
+                      id="weather-map-region"
+                      ref={mapRegionRef}
+                      tabIndex={-1}
+                      aria-labelledby="weather-map-heading"
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                    >
+                      <div className="atlas-map-panel__header">
+                        <div>
+                          <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
+                          <h2 id="weather-map-heading">{t('common.map')}</h2>
+                        </div>
+                        <button type="button" className="atlas-text-button" onClick={closeMap}>
+                          {t('common.close')}
+                        </button>
+                      </div>
+                      <Suspense
+                        fallback={
+                          <div className="atlas-map-loading" role="status">
+                            {t('common.loading')}
+                          </div>
+                        }
+                      >
+                        <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
+                      </Suspense>
+                    </motion.section>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
 
-            <Suspense fallback={
-              <div className="weather-content">
-                <WeatherCardSkeleton />
-                <AirQualitySkeleton />
-                <ForecastSkeleton />
-              </div>
-            }>
-              <AnimatePresence mode="wait">
-                {weather && !isLoading && (
-                  <motion.div
-                    key={weather.cityName}
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit={{ opacity: 0, y: -20 }}
-                  >
-                    {/* City Tabs for multi-city support */}
-                    {favorites.length > 0 && (
-                      <motion.div variants={itemVariants}>
-                        <CityTabs
-                          cities={favorites}
-                          activeCity={weather.cityName}
-                          onSelect={handleSelectFavorite}
-                          onRemove={handleRemoveFavorite}
-                          onAdd={handleAddFavorite}
-                          canAdd={!isFavorite}
-                        />
-                      </motion.div>
-                    )}
-
-                    <div className="weather-content">
-                      <motion.div variants={itemVariants}>
-                        <WeatherCard weather={weather} />
-                      </motion.div>
-                      
-                      {/* Weather Map */}
-                      <AnimatePresence>
-                        {showMap && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <WeatherMap 
-                              weather={weather}
-                              onCitySelect={handleMapCitySelect}
-                            />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                      
-                      {/* Weather Details Grid */}
-                      <MotionList className="weather-details-grid">
-                        <MotionItem>
-                          <SunriseSunset 
-                            sunrise={weather.sunrise} 
-                            sunset={weather.sunset} 
-                          />
-                        </MotionItem>
-                        <MotionItem>
-                          <WindCompass 
-                            speed={weather.windSpeed} 
-                            direction={weather.windDirection} 
-                          />
-                        </MotionItem>
-                        {forecast.airQuality && (
-                          <MotionItem>
-                            <AirQualityPanel data={forecast.airQuality} />
-                          </MotionItem>
-                        )}
-                        <MotionItem>
-                          <UVIndex value={3.5} />
-                        </MotionItem>
-                      </MotionList>
-
-                      {(forecast.daily.length > 0 || forecast.hourly.length > 0) && (
-                        <motion.div variants={itemVariants}>
-                          <Forecast 
-                            daily={forecast.daily} 
-                            hourly={forecast.hourly} 
-                          />
-                        </motion.div>
-                      )}
-
-                      {/* Add to favorites button if not already added */}
-                      {!isFavorite && favorites.length === 0 && (
-                        <motion.button 
-                          className="add-favorite-btn"
-                          onClick={handleAddFavorite}
-                          variants={itemVariants}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          {t('weather.addToFavorites')}
-                        </motion.button>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Suspense>
-
-            {/* Keyboard shortcuts hint */}
-            <motion.div 
-              className="keyboard-hints"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              <span>⌘K {t('common.keyboardSearch')}</span>
-              <span>⌘, {t('common.keyboardSettings')}</span>
-            </motion.div>
+            {!weather && !isLoading && !error && (
+              <section className="atlas-empty">
+                <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
+                <h1>{t('weather.searchLabel')}</h1>
+                <p>{t('weather.searchPlaceholder')}</p>
+                <button
+                  type="button"
+                  className="atlas-button atlas-button--primary"
+                  onClick={openSearch}
+                >
+                  {t('common.search')}
+                </button>
+              </section>
+            )}
           </main>
-        </header>
 
-        {/* Settings Panel */}
-        <SettingsPanel 
-          isOpen={isSettingsOpen} 
-          onClose={() => setIsSettingsOpen(false)} 
-        />
-      </div>
-    </ErrorBoundary>
+          <footer className="atlas-footer">
+            <span>Hava81 · {t('hava81.tagline')}</span>
+            <span className="atlas-footer__shortcuts">
+              <kbd>⌘K</kbd> {t('common.keyboardSearch')} <kbd>⌘,</kbd>{' '}
+              {t('common.keyboardSettings')}
+            </span>
+          </footer>
+
+          <AtlasBottomNav
+            active={showMap ? 'map' : activeNav === 'saved' ? 'saved' : 'today'}
+            onSelect={handleBottomNav}
+            hasSaved={favorites.length > 0}
+          />
+
+          <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
+        </div>
+      </ErrorBoundary>
+    </MotionConfig>
   );
 };
 

@@ -1,0 +1,312 @@
+.hava81-decision-field {
+  --decision-paper: var(--color-atlas-paper, #ffffff);
+  --decision-field: var(--color-atlas-field, #f3f6f4);
+  --decision-ink: var(--color-atlas-ink, #142524);
+  --decision-muted: var(--color-atlas-muted, #5c6c6a);
+  --decision-line: var(--color-atlas-line, #c8d6d2);
+  --decision-teal: var(--color-aegean, #146b73);
+  --decision-saffron: var(--color-saffron, #e7a531);
+
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  padding: 16px;
+  color: var(--decision-ink);
+  font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
+  background: var(--decision-paper);
+  border: 1px solid var(--decision-line);
+  border-radius: 8px;
+}
+
+.hava81-decision-field__identity {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--decision-line);
+}
+
+.hava81-decision-field__city-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hava81-decision-field__city {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--decision-ink);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.hava81-decision-field__plate {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 32px;
+  overflow: hidden;
+  color: var(--decision-ink);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  background: var(--decision-field);
+  border: 1px solid var(--decision-ink);
+  border-radius: 4px;
+}
+
+.hava81-decision-field__plate span,
+.hava81-decision-field__plate strong {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 8px;
+}
+
+.hava81-decision-field__plate span {
+  color: var(--decision-paper);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  background: var(--decision-teal);
+}
+
+.hava81-decision-field__plate strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.hava81-decision-field__atlas-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  color: var(--decision-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+
+.hava81-decision-field__current {
+  min-width: 0;
+}
+
+.hava81-decision-field__reading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 16px;
+  align-items: center;
+}
+
+.hava81-decision-field__temperature {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--decision-ink);
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 0.88;
+  white-space: nowrap;
+}
+
+.hava81-decision-field__temperature-value {
+  font-family: var(--font-display, 'Source Serif 4 Variable', 'Source Serif 4', Georgia, serif);
+  font-size: 4.5rem;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+}
+
+.hava81-decision-field__temperature-unit {
+  margin-top: 8px;
+  color: var(--decision-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.hava81-decision-field__symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  color: var(--decision-teal);
+}
+
+.hava81-decision-field__weather-symbol {
+  width: 100%;
+  height: 100%;
+}
+
+.hava81-decision-field__condition {
+  max-width: 36ch;
+  margin: 12px 0 0;
+  color: var(--decision-ink);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-transform: capitalize;
+  text-wrap: balance;
+}
+
+.hava81-decision-field__feels-like {
+  margin: 4px 0 0;
+  color: var(--decision-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.hava81-decision-field__change {
+  align-self: end;
+  padding: 16px;
+  color: #142524;
+  background: var(--decision-saffron);
+  border-radius: 4px;
+}
+
+.hava81-decision-field__change-title {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hava81-decision-field__change-copy {
+  max-width: 44ch;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.hava81-decision-field__rail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--decision-line);
+}
+
+.hava81-decision-field__metric {
+  min-width: 0;
+  padding: 16px 12px 0 0;
+}
+
+.hava81-decision-field__metric:nth-child(even) {
+  padding-right: 0;
+  padding-left: 12px;
+  border-left: 1px solid var(--decision-line);
+}
+
+.hava81-decision-field__metric:nth-child(n + 3) {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--decision-line);
+}
+
+.hava81-decision-field__metric dt {
+  margin: 0 0 8px;
+  color: var(--decision-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hava81-decision-field__metric dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--decision-ink);
+  font-size: 1rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.35;
+}
+
+@media (min-width: 40rem) {
+  .hava81-decision-field {
+    padding: 24px;
+  }
+
+  .hava81-decision-field__reading {
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .hava81-decision-field__symbol {
+    width: 112px;
+    height: 112px;
+  }
+
+  .hava81-decision-field__temperature-value {
+    font-size: 6rem;
+  }
+}
+
+@media (min-width: 56rem) {
+  .hava81-decision-field {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 32px;
+    padding: 32px;
+  }
+
+  .hava81-decision-field__identity,
+  .hava81-decision-field__rail {
+    grid-column: 1 / -1;
+  }
+
+  .hava81-decision-field__current {
+    grid-column: 1 / span 5;
+  }
+
+  .hava81-decision-field__change {
+    grid-column: 6 / -1;
+  }
+
+  .hava81-decision-field__temperature-value {
+    font-size: 7.5rem;
+  }
+
+  .hava81-decision-field__rail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .hava81-decision-field__metric,
+  .hava81-decision-field__metric:nth-child(even),
+  .hava81-decision-field__metric:nth-child(n + 3) {
+    margin-top: 0;
+    padding: 0 24px;
+    border-top: 0;
+    border-left: 1px solid var(--decision-line);
+  }
+
+  .hava81-decision-field__metric:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .hava81-decision-field__metric:last-child {
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 24.375rem) {
+  .hava81-decision-field__reading {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: 12px;
+  }
+
+  .hava81-decision-field__symbol {
+    width: 72px;
+    height: 72px;
+  }
+}

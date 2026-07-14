@@ -11,25 +11,25 @@ interface ForecastProps {
 }
 
 export function Forecast({ daily, hourly }: ForecastProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { convertTemperature, settings } = useSettings();
-  
+
   const formatDay = (date: Date): string => {
     const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const daysTr = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
     const days = settings.language === 'en' ? daysEn : daysTr;
     const today = new Date();
-    
+
     if (date.toDateString() === today.toDateString()) {
       return t('days.today');
     }
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     if (date.toDateString() === tomorrow.toDateString()) {
       return t('days.tomorrow');
     }
-    
+
     return days[date.getDay()];
   };
 
@@ -40,9 +40,7 @@ export function Forecast({ daily, hourly }: ForecastProps) {
   return (
     <div className="forecast-container">
       {/* Temperature Chart */}
-      {hourly.length > 1 && (
-        <TemperatureChart data={hourly.slice(0, 12)} />
-      )}
+      {hourly.length > 1 && <TemperatureChart data={hourly.slice(0, 12)} />}
 
       {/* Hourly Forecast */}
       <div className="forecast-section">

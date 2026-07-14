@@ -1,0 +1,310 @@
+.hava81-forecast-atlas {
+  --forecast-paper: var(--atlas-paper, #ffffff);
+  --forecast-field: var(--atlas-field, #f3f6f4);
+  --forecast-ink: var(--atlas-ink, #142524);
+  --forecast-muted: var(--atlas-muted, #5c6c6a);
+  --forecast-line: var(--atlas-line, #c8d6d2);
+  --forecast-teal: var(--aegean-main, #146b73);
+  --forecast-saffron: var(--saffron-signal, #e7a531);
+
+  color: var(--forecast-ink);
+  background: var(--forecast-paper);
+  border: 1px solid var(--forecast-line);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
+}
+
+.hava81-forecast-atlas__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.hava81-forecast-atlas__title,
+.hava81-forecast-atlas__section-title {
+  margin: 0;
+  font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
+  color: var(--forecast-ink);
+}
+
+.hava81-forecast-atlas__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.hava81-forecast-atlas__unit {
+  color: var(--forecast-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.hava81-forecast-atlas__empty {
+  margin: 0;
+  padding: 24px 0 8px;
+  color: var(--forecast-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.hava81-forecast-atlas__section {
+  border-top: 1px solid var(--forecast-line);
+  padding-top: 16px;
+}
+
+.hava81-forecast-atlas__section + .hava81-forecast-atlas__section {
+  margin-top: 24px;
+}
+
+.hava81-forecast-atlas__section-title {
+  margin-bottom: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hava81-forecast-atlas__hourly-viewport {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: var(--forecast-line) transparent;
+  scrollbar-width: thin;
+}
+
+.hava81-forecast-atlas__hourly-viewport:focus-visible {
+  outline: 2px solid var(--forecast-teal);
+  outline-offset: 2px;
+}
+
+.hava81-forecast-atlas__hourly-track {
+  min-width: 100%;
+}
+
+.hava81-forecast-atlas__chart {
+  display: block;
+  height: 104px;
+  overflow: visible;
+}
+
+.hava81-forecast-atlas__curve {
+  fill: none;
+  stroke: var(--forecast-teal);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__point {
+  fill: var(--forecast-paper);
+  stroke: var(--forecast-teal);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__precipitation-marker {
+  color: var(--forecast-saffron);
+}
+
+.hava81-forecast-atlas__precipitation-marker line {
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__precipitation-marker circle {
+  fill: var(--forecast-paper);
+  stroke: currentColor;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__precipitation-marker text {
+  fill: var(--forecast-ink);
+  font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.hava81-forecast-atlas__hours,
+.hava81-forecast-atlas__days {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hava81-forecast-atlas__hours {
+  display: grid;
+  min-width: 100%;
+  border-top: 1px solid var(--forecast-line);
+}
+
+.hava81-forecast-atlas__hour {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-inline-start: 1px solid var(--forecast-line);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.hava81-forecast-atlas__hour:first-child {
+  border-inline-start: 0;
+}
+
+.hava81-forecast-atlas__hour time,
+.hava81-forecast-atlas__hour-pop {
+  color: var(--forecast-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.hava81-forecast-atlas__hour-symbol {
+  color: var(--forecast-muted);
+}
+
+.hava81-forecast-atlas__hour strong {
+  color: var(--forecast-ink);
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.hava81-forecast-atlas__hour-pop.is-signal,
+.hava81-forecast-atlas__day-pop.is-signal {
+  color: var(--color-saffron-ink, #805500);
+  font-weight: 600;
+}
+
+.hava81-forecast-atlas__day {
+  display: grid;
+  grid-template-areas:
+    'day symbol description temperatures'
+    'day symbol precipitation temperatures';
+  grid-template-columns: 64px 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 56px;
+  border-top: 1px solid var(--forecast-line);
+  padding: 12px 0;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.hava81-forecast-atlas__day-name {
+  grid-area: day;
+  color: var(--forecast-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.hava81-forecast-atlas__day-symbol {
+  grid-area: symbol;
+  color: var(--forecast-muted);
+}
+
+.hava81-forecast-atlas__description {
+  grid-area: description;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--forecast-ink);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.hava81-forecast-atlas__day-pop {
+  grid-area: precipitation;
+  color: var(--forecast-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.hava81-forecast-atlas__day-temperatures {
+  grid-area: temperatures;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
+  color: var(--forecast-muted);
+  font-size: 0.875rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.hava81-forecast-atlas__day-temperatures strong {
+  color: var(--forecast-ink);
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.hava81-forecast-atlas__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 40rem) {
+  .hava81-forecast-atlas {
+    padding: 24px;
+  }
+
+  .hava81-forecast-atlas__header {
+    padding-bottom: 24px;
+  }
+
+  .hava81-forecast-atlas__section {
+    padding-top: 24px;
+  }
+
+  .hava81-forecast-atlas__day {
+    grid-template-areas: 'day symbol description precipitation temperatures';
+    grid-template-columns: 104px 32px minmax(0, 1fr) 80px 96px;
+    gap: 16px;
+    min-height: 52px;
+    padding: 12px 0;
+  }
+
+  .hava81-forecast-atlas__day-pop {
+    justify-self: end;
+  }
+}
+
+@media (forced-colors: active) {
+  .hava81-forecast-atlas,
+  .hava81-forecast-atlas__section,
+  .hava81-forecast-atlas__hours,
+  .hava81-forecast-atlas__day,
+  .hava81-forecast-atlas__hour {
+    border-color: CanvasText;
+  }
+
+  .hava81-forecast-atlas__curve,
+  .hava81-forecast-atlas__point {
+    stroke: CanvasText;
+  }
+
+  .hava81-forecast-atlas__precipitation-marker {
+    color: Highlight;
+  }
+}

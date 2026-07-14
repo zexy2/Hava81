@@ -24,8 +24,7 @@ const requestCache = new Map<string, { data: any; timestamp: number }>();
 /**
  * Sleep utility for retry delays
  */
-const sleep = (ms: number): Promise<void> => 
-  new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Calculate exponential backoff delay
@@ -40,14 +39,11 @@ const getRetryDelay = (retryCount: number): number => {
 /**
  * Build URL with query parameters
  */
-const buildUrl = (
-  endpoint: string, 
-  params?: Record<string, string | number | boolean>
-): string => {
+const buildUrl = (endpoint: string, params?: Record<string, string | number | boolean>): string => {
   // For relative URLs (proxy), just append to baseUrl
   // For absolute URLs, use them directly
   let fullUrl: string;
-  
+
   if (endpoint.startsWith('http')) {
     fullUrl = endpoint;
   } else if (config.api.baseUrl.startsWith('http')) {
@@ -55,7 +51,7 @@ const buildUrl = (
   } else {
     // Relative URL for proxy - construct manually
     fullUrl = `${config.api.baseUrl}${endpoint}`;
-    
+
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -65,12 +61,12 @@ const buildUrl = (
       });
       fullUrl += `?${searchParams.toString()}`;
     }
-    
+
     return fullUrl;
   }
-  
+
   const url = new URL(fullUrl);
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -78,7 +74,7 @@ const buildUrl = (
       }
     });
   }
-  
+
   return url.toString();
 };
 
@@ -104,7 +100,11 @@ const fetchWithRetry = async <T>(
   options: RequestConfig = {},
   retryState: RetryState = { count: 0, lastError: null }
 ): Promise<T> => {
-  const { timeout = config.api.timeout, retries = RETRY_CONFIG.maxRetries, ...fetchOptions } = options;
+  const {
+    timeout = config.api.timeout,
+    retries = RETRY_CONFIG.maxRetries,
+    ...fetchOptions
+  } = options;
 
   // Check cache first for GET requests
   const cacheKey = getCacheKey(url, options);
@@ -122,7 +122,7 @@ const fetchWithRetry = async <T>(
 
   // Only add Content-Type for non-GET requests (POST, PUT, etc.)
   const isGetRequest = !fetchOptions.method || fetchOptions.method === 'GET';
-  
+
   try {
     const response = await fetch(url, {
       ...fetchOptions,
@@ -138,23 +138,26 @@ const fetchWithRetry = async <T>(
     // Handle non-OK responses
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      
+      const errorMessage = errorBody?.error?.message ?? errorBody?.message;
+
       // Check if this is a retryable status
       if (
         (RETRY_CONFIG.retryStatusCodes as readonly number[]).includes(response.status) &&
         retryState.count < retries
       ) {
         const delay = getRetryDelay(retryState.count);
-        console.warn(`[HTTP] Retrying request (${retryState.count + 1}/${retries}) after ${delay}ms`);
+        console.warn(
+          `[HTTP] Retrying request (${retryState.count + 1}/${retries}) after ${delay}ms`
+        );
         await sleep(delay);
-        
+
         return fetchWithRetry<T>(url, options, {
           count: retryState.count + 1,
-          lastError: ApiError.fromHttpStatus(response.status, errorBody.message),
+          lastError: ApiError.fromHttpStatus(response.status, errorMessage),
         });
       }
 
-      throw ApiError.fromHttpStatus(response.status, errorBody.message);
+      throw ApiError.fromHttpStatus(response.status, errorMessage);
     }
 
     const data = await response.json();
@@ -182,9 +185,11 @@ const fetchWithRetry = async <T>(
       retryState.count < retries
     ) {
       const delay = getRetryDelay(retryState.count);
-      console.warn(`[HTTP] Network error, retrying (${retryState.count + 1}/${retries}) after ${delay}ms`);
+      console.warn(
+        `[HTTP] Network error, retrying (${retryState.count + 1}/${retries}) after ${delay}ms`
+      );
       await sleep(delay);
-      
+
       return fetchWithRetry<T>(url, options, {
         count: retryState.count + 1,
         lastError: error,

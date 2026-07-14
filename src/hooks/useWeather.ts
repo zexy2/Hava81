@@ -3,7 +3,7 @@
  * Comprehensive weather data fetching with caching and error handling
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
 import { useAsync } from './useAsync';
 import { useLocalStorage } from './useLocalStorage';
@@ -19,6 +19,7 @@ interface UseWeatherOptions {
   enableCache?: boolean;
   cacheKey?: string;
   maxRecentSearches?: number;
+  language?: 'tr' | 'en';
 }
 
 interface UseWeatherReturn {
@@ -27,17 +28,17 @@ interface UseWeatherReturn {
   weather: NormalizedWeatherData | null;
   error: AppError | null;
   isLoading: boolean;
-  
+
   // Actions
   setCity: (city: string) => void;
   fetchWeather: (city?: string) => Promise<NormalizedWeatherData | null>;
   fetchCurrentLocation: () => Promise<NormalizedWeatherData | null>;
   clearError: () => void;
-  
+
   // Cache/History
   recentSearches: RecentSearch[];
   clearRecentSearches: () => void;
-  
+
   // Metadata
   lastUpdated: Date | null;
   isStale: boolean;
@@ -46,12 +47,42 @@ interface UseWeatherReturn {
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 
+interface WeatherCache {
+  data: NormalizedWeatherData;
+  timestamp: number;
+  language?: 'tr' | 'en';
+}
+
+const deserializeWeatherCache = (value: string): WeatherCache | null => {
+  const parsed = JSON.parse(value) as WeatherCache | null;
+  if (!parsed) return null;
+
+  const sunrise = new Date(parsed.data.sunrise);
+  const sunset = new Date(parsed.data.sunset);
+  const timestamp = new Date(parsed.data.timestamp);
+
+  if ([sunrise, sunset, timestamp].some(date => Number.isNaN(date.getTime()))) {
+    throw new Error('Cached weather dates are invalid');
+  }
+
+  return {
+    ...parsed,
+    data: {
+      ...parsed.data,
+      sunrise,
+      sunset,
+      timestamp,
+    },
+  };
+};
+
 export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   const {
     initialCity = '',
     enableCache = true,
     cacheKey = 'weather_cache',
     maxRecentSearches = MAX_RECENT_SEARCHES,
+    language = 'tr',
   } = options;
 
   // City input state
@@ -67,38 +98,36 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   );
 
   // Cached weather data
-  const [cachedWeather, setCachedWeather] = useLocalStorage<{
-    data: NormalizedWeatherData;
-    timestamp: number;
-  } | null>(cacheKey, null);
+  const [cachedWeather, setCachedWeather] = useLocalStorage<WeatherCache | null>(cacheKey, null, {
+    deserializer: deserializeWeatherCache,
+  });
+  const previousLanguageRef = useRef(language);
 
   // Async weather fetching
   const weatherAsync = useAsync(
     async (cityName: string) => {
-      const data = await weatherService.getCurrentWeather({ city: cityName });
+      const data = await weatherService.getCurrentWeather({ city: cityName, lang: language });
       return data;
     },
     {
-      onSuccess: (data) => {
+      onSuccess: data => {
         if (!data) return;
-        
+
         const now = new Date();
         setLastUpdated(now);
-        
+
         // Update cache
         if (enableCache) {
-          setCachedWeather({ data, timestamp: now.getTime() });
+          setCachedWeather({ data, timestamp: now.getTime(), language });
         }
-        
+
         // Update recent searches
         setRecentSearches(prev => {
-          const filtered = prev.filter(s => 
-            s.city.toLowerCase() !== data.cityName.toLowerCase()
+          const filtered = prev.filter(s => s.city.toLowerCase() !== data.cityName.toLowerCase());
+          return [{ city: data.cityName, timestamp: now.getTime() }, ...filtered].slice(
+            0,
+            maxRecentSearches
           );
-          return [
-            { city: data.cityName, timestamp: now.getTime() },
-            ...filtered,
-          ].slice(0, maxRecentSearches);
         });
       },
     }
@@ -111,11 +140,11 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       return data;
     },
     {
-      onSuccess: (data) => {
+      onSuccess: data => {
         setCity(data.cityName);
         setLastUpdated(new Date());
         if (enableCache) {
-          setCachedWeather({ data, timestamp: Date.now() });
+          setCachedWeather({ data, timestamp: Date.now(), language });
         }
       },
     }
@@ -126,7 +155,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     async (cityName?: string): Promise<NormalizedWeatherData | null> => {
       const targetCity = cityName ?? city;
       if (!targetCity.trim()) return null;
-      
+
       return weatherAsync.execute(targetCity.trim());
     },
     [city, weatherAsync]
@@ -146,9 +175,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   }, [weatherAsync, locationAsync]);
 
   // Check if data is stale
-  const isStale = lastUpdated 
-    ? Date.now() - lastUpdated.getTime() > STALE_TIME 
-    : true;
+  const isStale = lastUpdated ? Date.now() - lastUpdated.getTime() > STALE_TIME : true;
 
   // Fetch initial city weather
   useEffect(() => {
@@ -157,8 +184,9 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       if (enableCache && cachedWeather) {
         const cacheAge = Date.now() - cachedWeather.timestamp;
         if (
-          cacheAge < STALE_TIME && 
-          cachedWeather.data.cityName.toLowerCase() === initialCity.toLowerCase()
+          cacheAge < STALE_TIME &&
+          cachedWeather.data.cityName.toLowerCase() === initialCity.toLowerCase() &&
+          (cachedWeather.language ?? 'tr') === language
         ) {
           weatherAsync.setData(cachedWeather.data);
           setLastUpdated(new Date(cachedWeather.timestamp));
@@ -167,8 +195,24 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       }
       fetchWeather(initialCity);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Weather descriptions are localized by the provider, so refresh the active
+  // city whenever the interface language changes.
+  useEffect(() => {
+    if (previousLanguageRef.current === language) return;
+    previousLanguageRef.current = language;
+
+    const activeCity =
+      weatherAsync.data?.cityName ?? locationAsync.data?.cityName ?? city ?? initialCity;
+    if (activeCity.trim()) {
+      fetchWeather(activeCity);
+    }
+    // Only language changes should trigger this refresh; async state objects
+    // intentionally stay out of the dependency list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   // Combine error from both async operations
   const error = weatherAsync.error || locationAsync.error;
@@ -180,17 +224,17 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     weather: weatherAsync.data || locationAsync.data,
     error,
     isLoading,
-    
+
     // Actions
     setCity,
     fetchWeather,
     fetchCurrentLocation,
     clearError,
-    
+
     // Cache/History
     recentSearches,
     clearRecentSearches,
-    
+
     // Metadata
     lastUpdated,
     isStale,

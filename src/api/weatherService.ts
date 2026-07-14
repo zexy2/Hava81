@@ -5,50 +5,33 @@
 
 import { httpClient } from './httpClient';
 import { ApiError } from './errors/ApiError';
-import { config, API_ENDPOINTS, DEFAULT_WEATHER_PARAMS } from '../config';
-import type { 
-  WeatherResponse, 
-  NormalizedWeatherData, 
+import { API_ENDPOINTS, DEFAULT_WEATHER_PARAMS } from '../config';
+import { normalizePrecipitationProbability } from '../utils/precipitation';
+import type {
+  NormalizedWeatherData,
   WeatherQueryParams,
-  ForecastResponse,
   DailyForecast,
   HourlyForecast,
-  AirQualityResponse,
   AirQuality,
 } from '../types';
 
-/**
- * Normalize raw API response to UI-friendly format
- */
-const normalizeWeatherData = (raw: WeatherResponse): NormalizedWeatherData => {
-  const [primaryWeather] = raw.weather;
-  
-  return {
-    cityName: raw.name,
-    country: raw.sys.country,
-    temperature: Math.round(raw.main.temp),
-    feelsLike: Math.round(raw.main.feels_like),
-    tempMin: Math.round(raw.main.temp_min),
-    tempMax: Math.round(raw.main.temp_max),
-    humidity: raw.main.humidity,
-    pressure: raw.main.pressure,
-    visibility: raw.visibility,
-    windSpeed: raw.wind.speed,
-    windDirection: raw.wind.deg,
-    description: primaryWeather?.description ?? 'Bilgi yok',
-    icon: primaryWeather?.icon ?? '01d',
-    sunrise: new Date(raw.sys.sunrise * 1000),
-    sunset: new Date(raw.sys.sunset * 1000),
-    timestamp: new Date(raw.dt * 1000),
-    coordinates: raw.coord,
-    clouds: raw.clouds.all,
-  };
+type SerializedWeatherData = Omit<NormalizedWeatherData, 'sunrise' | 'sunset' | 'timestamp'> & {
+  sunrise: string;
+  sunset: string;
+  timestamp: string;
 };
 
-const getAqiLabel = (aqi: number): string => {
-  const labels = ['', 'İyi', 'Orta', 'Hassas', 'Sağlıksız', 'Çok Sağlıksız'];
-  return labels[aqi] || 'Bilinmiyor';
+type SerializedForecast = {
+  daily: Array<Omit<DailyForecast, 'date'> & { date: string }>;
+  hourly: Array<Omit<HourlyForecast, 'time'> & { time: string }>;
 };
+
+const reviveWeatherDates = (data: SerializedWeatherData): NormalizedWeatherData => ({
+  ...data,
+  sunrise: new Date(data.sunrise),
+  sunset: new Date(data.sunset),
+  timestamp: new Date(data.timestamp),
+});
 
 /**
  * Weather API Service
@@ -57,38 +40,25 @@ export const weatherService = {
   /**
    * Get current weather for a city
    */
-  getCurrentWeather: async (
-    params: WeatherQueryParams
-  ): Promise<NormalizedWeatherData> => {
-    const { city, units = DEFAULT_WEATHER_PARAMS.units, lang = DEFAULT_WEATHER_PARAMS.lang } = params;
+  getCurrentWeather: async (params: WeatherQueryParams): Promise<NormalizedWeatherData> => {
+    const {
+      city,
+      units = DEFAULT_WEATHER_PARAMS.units,
+      lang = DEFAULT_WEATHER_PARAMS.lang,
+    } = params;
 
     if (!city.trim()) {
       throw new ApiError('Şehir adı gereklidir', undefined, { retryable: false });
     }
 
-    if (!config.api.key) {
-      throw new ApiError(
-        'API anahtarı yapılandırılmamış. Lütfen .env dosyasını kontrol edin.',
-        undefined,
-        { retryable: false }
-      );
-    }
-
     try {
-      // Add ,TR to ensure we get Turkish cities (e.g., "Adana,TR" instead of "Ada,US")
-      const cityQuery = `${city.trim()},TR`;
-      
-      const response = await httpClient.get<WeatherResponse>(
-        API_ENDPOINTS.weather.current,
-        {
-          q: cityQuery,
-          appid: config.api.key,
-          units,
-          lang,
-        }
-      );
+      const response = await httpClient.get<SerializedWeatherData>(API_ENDPOINTS.weather.current, {
+        city: city.trim(),
+        units,
+        lang,
+      });
 
-      return normalizeWeatherData(response);
+      return reviveWeatherDates(response);
     } catch (error) {
       // Transform 404 to user-friendly city not found error
       if (error instanceof ApiError && error.statusCode === 404) {
@@ -101,30 +71,15 @@ export const weatherService = {
   /**
    * Get weather by coordinates
    */
-  getWeatherByCoords: async (
-    lat: number,
-    lon: number
-  ): Promise<NormalizedWeatherData> => {
-    if (!config.api.key) {
-      throw new ApiError(
-        'API anahtarı yapılandırılmamış',
-        undefined,
-        { retryable: false }
-      );
-    }
+  getWeatherByCoords: async (lat: number, lon: number): Promise<NormalizedWeatherData> => {
+    const response = await httpClient.get<SerializedWeatherData>(API_ENDPOINTS.weather.current, {
+      lat,
+      lon,
+      units: DEFAULT_WEATHER_PARAMS.units,
+      lang: DEFAULT_WEATHER_PARAMS.lang,
+    });
 
-    const response = await httpClient.get<WeatherResponse>(
-      API_ENDPOINTS.weather.current,
-      {
-        lat,
-        lon,
-        appid: config.api.key,
-        units: DEFAULT_WEATHER_PARAMS.units,
-        lang: DEFAULT_WEATHER_PARAMS.lang,
-      }
-    );
-
-    return normalizeWeatherData(response);
+    return reviveWeatherDates(response);
   },
 
   /**
@@ -138,7 +93,7 @@ export const weatherService = {
       }
 
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        async position => {
           try {
             const weather = await weatherService.getWeatherByCoords(
               position.coords.latitude,
@@ -149,13 +104,15 @@ export const weatherService = {
             reject(error);
           }
         },
-        (error) => {
+        error => {
           const messages: Record<number, string> = {
             1: 'Konum izni reddedildi',
             2: 'Konum bilgisi alınamadı',
             3: 'Konum isteği zaman aşımına uğradı',
           };
-          reject(new ApiError(messages[error.code] || 'Konum hatası', undefined, { retryable: false }));
+          reject(
+            new ApiError(messages[error.code] || 'Konum hatası', undefined, { retryable: false })
+          );
         },
         {
           enableHighAccuracy: false,
@@ -166,70 +123,42 @@ export const weatherService = {
     });
   },
 
-  getForecast: async (lat: number, lon: number): Promise<{ daily: DailyForecast[]; hourly: HourlyForecast[] }> => {
-    const response = await httpClient.get<ForecastResponse>(
-      API_ENDPOINTS.weather.forecast,
-      {
-        lat,
-        lon,
-        appid: config.api.key,
-        units: DEFAULT_WEATHER_PARAMS.units,
-        lang: DEFAULT_WEATHER_PARAMS.lang,
-      }
-    );
-
-    const hourly: HourlyForecast[] = response.list.slice(0, 8).map(item => ({
-      time: new Date(item.dt * 1000),
-      temp: Math.round(item.main.temp),
-      icon: item.weather[0]?.icon ?? '01d',
-      pop: Math.round(item.pop * 100),
-    }));
-
-    const dailyMap = new Map<string, ForecastResponse['list']>();
-    response.list.forEach(item => {
-      const dateKey = item.dt_txt.split(' ')[0];
-      if (!dailyMap.has(dateKey)) {
-        dailyMap.set(dateKey, []);
-      }
-      dailyMap.get(dateKey)!.push(item);
+  getForecast: async (
+    lat: number,
+    lon: number,
+    lang = DEFAULT_WEATHER_PARAMS.lang
+  ): Promise<{ daily: DailyForecast[]; hourly: HourlyForecast[] }> => {
+    const response = await httpClient.get<SerializedForecast>(API_ENDPOINTS.weather.forecast, {
+      lat,
+      lon,
+      units: DEFAULT_WEATHER_PARAMS.units,
+      lang,
     });
 
-    const daily: DailyForecast[] = Array.from(dailyMap.entries())
-      .slice(0, 5)
-      .map(([dateStr, items]) => {
-        const temps = items.map(i => i.main.temp);
-        const midday = items.find(i => i.dt_txt.includes('12:00')) || items[0];
-        return {
-          date: new Date(dateStr),
-          tempMin: Math.round(Math.min(...temps)),
-          tempMax: Math.round(Math.max(...temps)),
-          icon: midday.weather[0]?.icon ?? '01d',
-          description: midday.weather[0]?.description ?? '',
-          pop: Math.round(Math.max(...items.map(i => i.pop)) * 100),
-        };
-      });
-
-    return { daily, hourly };
+    return {
+      daily: response.daily.map(item => ({
+        ...item,
+        date: new Date(item.date),
+        pop: normalizePrecipitationProbability(item.pop),
+      })),
+      hourly: response.hourly.map(item => ({
+        ...item,
+        time: new Date(item.time),
+        pop: normalizePrecipitationProbability(item.pop),
+      })),
+    };
   },
 
-  getAirQuality: async (lat: number, lon: number): Promise<AirQuality> => {
-    const response = await httpClient.get<AirQualityResponse>(
-      '/air_pollution',
-      {
-        lat,
-        lon,
-        appid: config.api.key,
-      }
-    );
-
-    const data = response.list[0];
-    return {
-      aqi: data.main.aqi,
-      aqiLabel: getAqiLabel(data.main.aqi),
-      pm25: data.components.pm2_5,
-      pm10: data.components.pm10,
-      o3: data.components.o3,
-    };
+  getAirQuality: async (
+    lat: number,
+    lon: number,
+    lang = DEFAULT_WEATHER_PARAMS.lang
+  ): Promise<AirQuality> => {
+    return httpClient.get<AirQuality>(API_ENDPOINTS.weather.airQuality, {
+      lat,
+      lon,
+      lang,
+    });
   },
 };
 export default weatherService;

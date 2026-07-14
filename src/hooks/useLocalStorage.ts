@@ -3,7 +3,7 @@
  * Persist state to localStorage with automatic serialization
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 type SetValue<T> = (value: T | ((prev: T) => T)) => void;
 
@@ -17,10 +17,7 @@ export function useLocalStorage<T>(
   initialValue: T,
   options: UseLocalStorageOptions<T> = {}
 ): [T, SetValue<T>, () => void] {
-  const {
-    serializer = JSON.stringify,
-    deserializer = JSON.parse,
-  } = options;
+  const { serializer = JSON.stringify, deserializer = JSON.parse } = options;
 
   // Get stored value or fall back to initial
   const readValue = useCallback((): T => {
@@ -38,25 +35,33 @@ export function useLocalStorage<T>(
   }, [key, initialValue, deserializer]);
 
   const [storedValue, setStoredValue] = useState<T>(readValue);
+  const storedValueRef = useRef(storedValue);
+
+  useEffect(() => {
+    storedValueRef.current = storedValue;
+  }, [storedValue]);
 
   // Update localStorage when value changes
   const setValue: SetValue<T> = useCallback(
-    (value) => {
+    value => {
       try {
-        const newValue = value instanceof Function ? value(storedValue) : value;
+        const newValue = value instanceof Function ? value(storedValueRef.current) : value;
+        storedValueRef.current = newValue;
         window.localStorage.setItem(key, serializer(newValue));
         setStoredValue(newValue);
-        
+
         // Dispatch event so other tabs/windows can sync
-        window.dispatchEvent(new StorageEvent('storage', {
-          key,
-          newValue: serializer(newValue),
-        }));
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key,
+            newValue: serializer(newValue),
+          })
+        );
       } catch (error) {
         console.warn(`Error setting localStorage key "${key}":`, error);
       }
     },
-    [key, serializer, storedValue]
+    [key, serializer]
   );
 
   // Remove from localStorage
@@ -74,9 +79,12 @@ export function useLocalStorage<T>(
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === key && event.newValue !== null) {
         try {
-          setStoredValue(deserializer(event.newValue));
+          const nextValue = deserializer(event.newValue);
+          storedValueRef.current = nextValue;
+          setStoredValue(nextValue);
         } catch {
           setStoredValue(initialValue);
+          storedValueRef.current = initialValue;
         }
       }
     };

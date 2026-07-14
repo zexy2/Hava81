@@ -1,8 +1,11 @@
 :root {
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont,
-    sans-serif;
-  line-height: 1.5;
+  font-family: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Helvetica Neue', sans-serif;
   font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 *,
@@ -11,10 +14,49 @@
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background: var(--color-atlas-field, #f3f6f4);
+}
+
 body {
-  margin: 0;
   min-height: 100vh;
-  background-color: #050a1f;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  color: var(--color-atlas-ink, #142524);
+  background: inherit;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font-size: inherit;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  color: #142524;
+  background: #a8c9c5;
+}
+
+#root {
+  min-height: 100vh;
 }

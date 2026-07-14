@@ -1,8 +1,14 @@
 {
-  "short_name": "Hava Durumu",
-  "name": "Türkiye Hava Durumu Dashboard",
-  "description": "Türkiye'nin 81 ili için anlık hava durumu, 5 günlük tahmin ve hava kalitesi bilgisi",
+  "short_name": "Hava81",
+  "name": "Hava81 — Türkiye'nin Meteorolojik Atlası",
+  "description": "Türkiye'nin 81 ili için anlık koşulları, yaklaşan değişimleri ve hava risklerini karar odaklı bir meteorolojik atlas içinde sunar.",
   "icons": [
+    {
+      "src": "hava81-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
@@ -21,30 +27,45 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#1e1e3f",
-  "background_color": "#0f0f1a",
+  "orientation": "any",
+  "theme_color": "#F3F6F4",
+  "background_color": "#F3F6F4",
   "categories": ["weather", "utilities"],
   "lang": "tr",
   "dir": "ltr",
-  "scope": "/",
   "prefer_related_applications": false,
   "shortcuts": [
     {
       "name": "İstanbul Hava Durumu",
       "short_name": "İstanbul",
       "description": "İstanbul için hava durumunu görüntüle",
-      "url": "/?city=istanbul",
-      "icons": [{ "src": "favicon.ico", "sizes": "64x64" }]
+      "url": "./?city=%C4%B0stanbul",
+      "icons": [
+        {
+          "src": "hava81-mark.svg",
+          "sizes": "any",
+          "type": "image/svg+xml",
+          "purpose": "any"
+        }
+      ]
     },
     {
       "name": "Ankara Hava Durumu",
       "short_name": "Ankara",
       "description": "Ankara için hava durumunu görüntüle",
-      "url": "/?city=ankara",
-      "icons": [{ "src": "favicon.ico", "sizes": "64x64" }]
+      "url": "./?city=Ankara",
+      "icons": [
+        {
+          "src": "hava81-mark.svg",
+          "sizes": "any",
+          "type": "image/svg+xml",
+          "purpose": "any"
+        }
+      ]
     }
   ]
 }

@@ -5,67 +5,40 @@
 
 import { http, HttpResponse } from 'msw';
 
-const API_BASE = 'https://api.openweathermap.org/data/2.5';
+const API_BASE = '*/api/v1';
 
 // Mock weather data
 const mockWeatherData = {
-  coord: { lon: 27.1428, lat: 38.4237 },
-  weather: [
-    {
-      id: 800,
-      main: 'Clear',
-      description: 'açık hava',
-      icon: '01d',
-    },
-  ],
-  base: 'stations',
-  main: {
-    temp: 22,
-    feels_like: 21,
-    temp_min: 20,
-    temp_max: 24,
-    pressure: 1015,
-    humidity: 65,
-  },
+  cityName: 'İzmir',
+  country: 'TR',
+  temperature: 22,
+  feelsLike: 21,
+  tempMin: 20,
+  tempMax: 24,
+  humidity: 65,
+  pressure: 1015,
   visibility: 10000,
-  wind: {
-    speed: 3.5,
-    deg: 180,
-  },
-  clouds: { all: 0 },
-  dt: 1640000000,
-  sys: {
-    type: 2,
-    id: 2038,
-    country: 'TR',
-    sunrise: 1639980000,
-    sunset: 1640020000,
-  },
-  timezone: 10800,
-  id: 311046,
-  name: 'İzmir',
-  cod: 200,
+  windSpeed: 3.5,
+  windDirection: 180,
+  description: 'açık hava',
+  icon: '01d',
+  sunrise: '2024-01-01T06:00:00.000Z',
+  sunset: '2024-01-01T18:00:00.000Z',
+  timestamp: '2024-01-01T12:00:00.000Z',
+  coordinates: { lon: 27.1428, lat: 38.4237 },
+  clouds: 0,
 };
 
 export const handlers = [
   // Current weather endpoint
-  http.get(`${API_BASE}/weather`, ({ request }) => {
+  http.get(`${API_BASE}/weather/current`, ({ request }) => {
     const url = new URL(request.url);
-    const city = url.searchParams.get('q');
-    const apiKey = url.searchParams.get('appid');
-
-    // Check API key
-    if (!apiKey) {
-      return HttpResponse.json(
-        { cod: 401, message: 'Invalid API key' },
-        { status: 401 }
-      );
-    }
+    const city = url.searchParams.get('city');
 
     // Handle not found
     if (city?.toLowerCase() === 'notfound') {
       return HttpResponse.json(
-        { cod: '404', message: 'city not found' },
+        { error: { code: 'LOCATION_NOT_FOUND', message: 'Şehir bulunamadı.', requestId: 'test' } },
         { status: 404 }
       );
     }
@@ -73,28 +46,19 @@ export const handlers = [
     // Return mock data with city name
     return HttpResponse.json({
       ...mockWeatherData,
-      name: city || 'İzmir',
+      cityName: city || 'İzmir',
     });
   }),
 
-  // Forecast endpoint (for future use)
-  http.get(`${API_BASE}/forecast`, ({ request }) => {
-    const url = new URL(request.url);
-    const apiKey = url.searchParams.get('appid');
-
-    if (!apiKey) {
-      return HttpResponse.json(
-        { cod: 401, message: 'Invalid API key' },
-        { status: 401 }
-      );
-    }
-
+  http.get(`${API_BASE}/weather/forecast`, () => {
     return HttpResponse.json({
-      cod: '200',
-      list: [],
-      city: { name: 'İzmir', country: 'TR' },
+      daily: [],
+      hourly: [],
     });
   }),
+  http.get(`${API_BASE}/weather/air-quality`, () =>
+    HttpResponse.json({ aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 })
+  ),
 ];
 
 export default handlers;

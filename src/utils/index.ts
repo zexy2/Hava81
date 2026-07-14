@@ -18,3 +18,5 @@ export {
   type ThemeConfig,
   type ThemeColors,
 } from './weatherTheme';
+
+export { normalizePrecipitationProbability } from './precipitation';

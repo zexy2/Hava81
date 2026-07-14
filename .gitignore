@@ -2,14 +2,22 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.js
 
 # testing
 /coverage
 
+# local agent and browser QA artifacts
+/.agents/
+/.impeccable/
+/.playwright-cli/
+/output/
+
 # production
 /build
+apps/api/dist
 
 # misc
 .DS_Store

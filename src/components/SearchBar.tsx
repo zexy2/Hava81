@@ -3,13 +3,15 @@
  * Autocomplete search with keyboard navigation and accessibility
  */
 
-import React, { 
-  memo, 
-  useState, 
-  useCallback, 
-  useMemo, 
+import React, {
+  forwardRef,
+  memo,
+  useState,
+  useCallback,
+  useMemo,
   useRef,
   useEffect,
+  useImperativeHandle,
   type KeyboardEvent,
   type FormEvent,
   type ChangeEvent,
@@ -26,26 +28,55 @@ interface SearchBarProps {
   disabled?: boolean;
   recentSearches?: Array<{ city: string; timestamp: number }>;
   onSelectRecent?: (city: string) => void;
+  label?: string;
+  submitLabel?: string;
+  loadingLabel?: string;
+  suggestionsLabel?: string;
+  onDismiss?: () => void;
 }
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_SUGGESTIONS = 5;
 
-export const SearchBar: React.FC<SearchBarProps> = memo(({
-  value,
-  onChange,
-  onSubmit,
-  isLoading = false,
-  placeholder = 'Şehir giriniz...',
-  disabled = false,
-  recentSearches = [],
-  onSelectRecent,
-}) => {
+const ClockIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4 4" />
+  </svg>
+);
+
+const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBar(
+  {
+    value,
+    onChange,
+    onSubmit,
+    isLoading = false,
+    placeholder = 'Şehir giriniz...',
+    disabled = false,
+    recentSearches = [],
+    onSelectRecent,
+    label = 'Şehir Ara',
+    submitLabel = 'Ara',
+    loadingLabel = 'Yükleniyor...',
+    suggestionsLabel = 'Şehir önerileri',
+    onDismiss,
+  },
+  forwardedRef
+) {
   const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
-  
+
+  useImperativeHandle(forwardedRef, () => inputRef.current as HTMLInputElement, []);
+
   const debouncedValue = useDebounce(value, 150);
 
   // Generate suggestions based on input
@@ -55,7 +86,7 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
 
     // Normalize Turkish characters for comparison
     // Replace Turkish chars BEFORE toLowerCase to avoid Unicode issues
-    const normalizeTurkish = (str: string) => 
+    const normalizeTurkish = (str: string) =>
       str
         .replace(/İ/g, 'i')
         .replace(/I/g, 'i')
@@ -71,12 +102,12 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
         .replace(/Ç/g, 'c')
         .replace(/ç/g, 'c')
         .toLowerCase();
-    
+
     const normalized = normalizeTurkish(query);
-    
-    return TURKIYE_SEHIRLERI
-      .filter((cityName) => normalizeTurkish(cityName).includes(normalized))
-      .slice(0, MAX_SUGGESTIONS);
+
+    return TURKIYE_SEHIRLERI.filter(cityName =>
+      normalizeTurkish(cityName).includes(normalized)
+    ).slice(0, MAX_SUGGESTIONS);
   }, [debouncedValue]);
 
   // Combine recent searches with suggestions
@@ -84,13 +115,11 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
     if (suggestions.length > 0) {
       return suggestions.map(city => ({ city, isRecent: false }));
     }
-    
+
     if (recentSearches.length > 0 && value.length === 0) {
-      return recentSearches
-        .slice(0, MAX_SUGGESTIONS)
-        .map(({ city }) => ({ city, isRecent: true }));
+      return recentSearches.slice(0, MAX_SUGGESTIONS).map(({ city }) => ({ city, isRecent: true }));
     }
-    
+
     return [];
   }, [suggestions, recentSearches, value]);
 
@@ -109,62 +138,72 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
     }
   }, [highlightedIndex]);
 
-  const handleSubmit = useCallback((event: FormEvent) => {
-    event.preventDefault();
-    if (!isLoading && value.trim()) {
-      onSubmit();
-    }
-  }, [isLoading, value, onSubmit]);
-
-  const selectItem = useCallback((city: string) => {
-    onChange(city);
-    setHighlightedIndex(-1);
-    onSubmit(city);  // Pass the selected city directly
-    inputRef.current?.blur();
-  }, [onChange, onSubmit]);
-
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
-    if (!showDropdown) {
-      if (event.key === 'ArrowDown' && combinedItems.length > 0) {
-        setHighlightedIndex(0);
+  const handleSubmit = useCallback(
+    (event: FormEvent) => {
+      event.preventDefault();
+      if (!isLoading && value.trim()) {
+        onSubmit();
       }
-      return;
-    }
+    },
+    [isLoading, value, onSubmit]
+  );
 
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev < combinedItems.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev > 0 ? prev - 1 : combinedItems.length - 1
-        );
-        break;
-      case 'Enter':
-        if (highlightedIndex >= 0) {
+  const selectItem = useCallback(
+    (city: string, isRecent = false) => {
+      onChange(city);
+      setHighlightedIndex(-1);
+      if (isRecent) {
+        onSelectRecent?.(city);
+      }
+      onSubmit(city); // Pass the selected city directly
+      inputRef.current?.blur();
+    },
+    [onChange, onSelectRecent, onSubmit]
+  );
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (!showDropdown) {
+        if (event.key === 'ArrowDown' && combinedItems.length > 0) {
+          setHighlightedIndex(0);
+        }
+        return;
+      }
+
+      switch (event.key) {
+        case 'ArrowDown':
           event.preventDefault();
-          selectItem(combinedItems[highlightedIndex].city);
-        }
-        break;
-      case 'Escape':
-        setHighlightedIndex(-1);
-        inputRef.current?.blur();
-        break;
-      case 'Tab':
-        if (highlightedIndex >= 0) {
-          selectItem(combinedItems[highlightedIndex].city);
-        }
-        break;
-    }
-  }, [showDropdown, combinedItems, highlightedIndex, selectItem]);
+          setHighlightedIndex(prev => (prev < combinedItems.length - 1 ? prev + 1 : 0));
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          setHighlightedIndex(prev => (prev > 0 ? prev - 1 : combinedItems.length - 1));
+          break;
+        case 'Enter':
+          if (highlightedIndex >= 0) {
+            event.preventDefault();
+            selectItem(
+              combinedItems[highlightedIndex].city,
+              combinedItems[highlightedIndex].isRecent
+            );
+          }
+          break;
+        case 'Escape':
+          setHighlightedIndex(-1);
+          inputRef.current?.blur();
+          onDismiss?.();
+          break;
+      }
+    },
+    [showDropdown, combinedItems, highlightedIndex, onDismiss, selectItem]
+  );
 
-  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value);
+    },
+    [onChange]
+  );
 
   const handleFocus = useCallback(() => setIsFocused(true), []);
   const handleBlur = useCallback(() => {
@@ -173,19 +212,12 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
   }, []);
 
   const listboxId = 'city-suggestions';
-  const activeDescendant = highlightedIndex >= 0 
-    ? `suggestion-${highlightedIndex}` 
-    : undefined;
+  const activeDescendant = highlightedIndex >= 0 ? `suggestion-${highlightedIndex}` : undefined;
 
   return (
-    <form 
-      className="search-bar" 
-      onSubmit={handleSubmit} 
-      autoComplete="off"
-      role="search"
-    >
+    <form className="search-bar" onSubmit={handleSubmit} autoComplete="off" role="search">
       <label className="search-bar__label" htmlFor="city-search">
-        Şehir Ara
+        {label}
       </label>
 
       <div className="search-bar__controls">
@@ -202,10 +234,12 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             disabled={disabled}
+            role="combobox"
             aria-autocomplete="list"
             aria-controls={showDropdown ? listboxId : undefined}
             aria-activedescendant={activeDescendant}
             aria-haspopup="listbox"
+            aria-expanded={showDropdown}
           />
 
           {showDropdown && (
@@ -214,7 +248,7 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
               id={listboxId}
               className="search-bar__suggestions"
               role="listbox"
-              aria-label="Şehir önerileri"
+              aria-label={suggestionsLabel}
             >
               {combinedItems.map((item, index) => (
                 <li
@@ -225,15 +259,15 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
                   } ${item.isRecent ? 'is-recent' : ''}`}
                   role="option"
                   aria-selected={index === highlightedIndex}
-                  onMouseDown={(e) => {
+                  onMouseDown={e => {
                     e.preventDefault();
-                    selectItem(item.city);
+                    selectItem(item.city, item.isRecent);
                   }}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
                   {item.isRecent && (
-                    <span className="search-bar__recent-icon\" aria-hidden="true">
-                      🕐
+                    <span className="search-bar__recent-icon" aria-hidden="true">
+                      <ClockIcon />
                     </span>
                   )}
                   {item.city}
@@ -245,23 +279,30 @@ export const SearchBar: React.FC<SearchBarProps> = memo(({
 
         <button
           type="submit"
-          className="search-bar__button"
+          className="search-bar__submit"
           disabled={isLoading || disabled || !value.trim()}
           aria-busy={isLoading}
         >
           {isLoading ? (
             <>
               <span className="search-bar__spinner" aria-hidden="true" />
-              Yükleniyor...
+              {loadingLabel}
             </>
           ) : (
-            'Ara'
+            <>
+              <span className="search-bar__submit-icon" aria-hidden="true">
+                <SearchIcon />
+              </span>
+              <span>{submitLabel}</span>
+            </>
           )}
         </button>
       </div>
     </form>
   );
 });
+
+export const SearchBar = memo(SearchBarComponent);
 
 SearchBar.displayName = 'SearchBar';
 

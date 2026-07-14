@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+apps/api/node_modules/
 .pnp/
 .pnp.js
 
@@ -9,6 +10,7 @@ coverage/
 # Production
 build/
 dist/
+apps/api/dist/
 
 # Environment files
 .env
@@ -40,3 +42,7 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+.agents/
+.impeccable/
+.playwright-cli/
+output/

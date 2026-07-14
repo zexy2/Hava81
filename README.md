@@ -1,12 +1,12 @@
-﻿# Türkiye Weather Dashboard
+﻿# Hava81 — Türkiye'nin Meteorolojik Atlası
 
-Modern, responsive weather dashboard for all 81 Turkish provinces. Built with React 19 and TypeScript.
+Decision-first weather intelligence for all 81 Turkish provinces. Built with React 19 and a TypeScript Fastify BFF.
 
 ---
 
 ## Overview
 
-A production-grade weather application featuring real-time weather data, interactive maps, and a dynamic theming system that adapts to current weather conditions. The project demonstrates modern frontend architecture patterns including custom hooks, context-based state management, and comprehensive internationalization.
+Hava81 turns raw forecast data into a calm, local and immediately readable meteorological atlas. Its primary surface answers what the weather is doing now and what materially changes next, then supports that decision with hourly trends, five-day context, air quality and an interactive map. The project demonstrates production frontend architecture, a server-side API boundary, internationalization and comprehensive testing.
 
 **Live Demo:** [https://zexy2.github.io/Weather-app-for-Turkish-cities/](https://zexy2.github.io/Weather-app-for-Turkish-cities/)
 
@@ -15,27 +15,32 @@ A production-grade weather application featuring real-time weather data, interac
 ## Features
 
 ### Core Functionality
+
 - Real-time weather data for 81 Turkish provinces
+- Decision field with the next material precipitation or temperature change
 - 5-day forecast with hourly breakdown
 - Air quality index monitoring
-- Wind speed and direction compass
-- UV index gauge with recommendations
-- Sunrise/sunset times with visual arc
+- Daylight, wind and air-quality environmental rail
+- Persistent favorite cities and recent searches
 
 ### User Interface
-- Weather-adaptive theme system (clear, cloudy, rain, snow, etc.)
-- Glassmorphism design with backdrop blur effects
-- Smooth animations via Framer Motion
+
+- Original atlas-inspired visual system with topographic texture and local plate codes
+- Responsive editorial layout with dedicated mobile bottom navigation
+- Deterministic inline SVG weather symbols instead of emoji or remote icon assets
+- Accessible light, dark and automatic themes
+- Restrained, reduced-motion-aware animation via Framer Motion
 - Full keyboard navigation support
 - Responsive layout for mobile, tablet, and desktop
 
 ### Map Integration
+
 - Interactive Turkey map powered by Leaflet.js
-- Temperature overlay from OpenWeather
 - Click-to-navigate city markers
 - Temperature-based color coding
 
 ### Settings
+
 - Language support: Turkish and English (i18next)
 - Temperature units: Celsius / Fahrenheit
 - Wind speed units: m/s, km/h, mph
@@ -45,16 +50,19 @@ A production-grade weather application featuring real-time weather data, interac
 
 ## Tech Stack
 
-| Category | Technologies |
-|----------|-------------|
-| Framework | React 19.1, TypeScript 5.x |
-| Styling | CSS3, CSS Variables, Glassmorphism |
-| Animation | Framer Motion 11 |
-| Maps | Leaflet.js, React-Leaflet |
-| i18n | react-i18next |
-| HTTP | Custom httpClient with caching and retry logic |
-| Testing | Jest, React Testing Library, MSW |
-| Build | Create React App, Docker |
+| Category   | Technologies                                                  |
+| ---------- | ------------------------------------------------------------- |
+| Framework  | React 19.1, TypeScript 5.x                                    |
+| Styling    | CSS, semantic design tokens, responsive atlas layout          |
+| Typography | IBM Plex Sans Variable, Source Serif 4 Variable               |
+| Animation  | Framer Motion 12                                              |
+| Maps       | Leaflet.js, React-Leaflet                                     |
+| i18n       | react-i18next                                                 |
+| HTTP       | Custom httpClient with caching and retry logic                |
+| Backend    | Fastify 5, Zod, OpenAPI                                       |
+| Security   | Helmet, CORS, server-side provider credentials, rate limiting |
+| Testing    | Jest, React Testing Library, MSW, Fastify inject              |
+| Build      | Create React App, Docker                                      |
 
 ---
 
@@ -63,32 +71,35 @@ A production-grade weather application featuring real-time weather data, interac
 ```
 src/
 ├── api/                    # HTTP client, weather service, error handling
-├── components/             # UI components (WeatherCard, Map, Settings, etc.)
+├── components/hava81/      # Decision field, forecast atlas, environment rail
+├── components/             # Search, map, settings and supporting UI
 ├── context/                # React Context for global state (SettingsContext)
 ├── hooks/                  # Custom hooks (useWeather, useForecast, useDebounce)
 ├── i18n/                   # Internationalization config and locale files
 ├── constants/              # Static data (city list)
 ├── types/                  # TypeScript type definitions
-├── utils/                  # Theme system, weather icons, helpers
+├── utils/                  # Weather helpers and transport normalization
 └── styles/                 # Global CSS
+
+apps/api/
+├── src/providers/          # OpenWeather adapter and runtime response schemas
+├── src/modules/weather/    # Versioned routes and normalized weather service
+├── src/core/               # TTL cache, in-flight dedupe and structured errors
+└── test/                   # Fastify inject integration tests
 ```
 
 ### Data Flow
 
 ```
-OpenWeather API
-      |
-      v
-  httpClient (caching, retry, error handling)
-      |
-      v
-  weatherService (data transformation)
-      |
-      v
-  useWeather / useForecast hooks
-      |
-      v
-  React Components
+React Components -> hooks -> frontend weatherService
+                               |
+                               v
+                    Fastify API (/api/v1)
+                    | validation, rate limit
+                    | TTL cache + request dedupe
+                               |
+                               v
+                    OpenWeather provider adapter
 ```
 
 ---
@@ -97,7 +108,7 @@ OpenWeather API
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- Node.js 20 or higher
 - npm or yarn
 - OpenWeather API key ([Get one here](https://openweathermap.org/api))
 
@@ -110,75 +121,108 @@ cd Weather-app-for-Turkish-cities
 
 # Install dependencies
 npm install --legacy-peer-deps
+npm install --prefix apps/api
 
 # Configure environment
 cp .env.example .env
-# Add your API key to .env file
+# Add the server-only OpenWeather key to .env
 
-# Start development server
+# Terminal 1: start the API on port 4000
+npm run api:dev
+
+# Terminal 2: start the web app on port 3000
 npm start
 ```
 
 ### Environment Variables
 
 ```
-REACT_APP_OPENWEATHER_KEY=your_api_key
+OPENWEATHER_API_KEY=your_server_only_api_key
+REACT_APP_API_BASE_URL=/api/v1
 ```
+
+`OPENWEATHER_API_KEY` is read only by `apps/api`; it must never use a
+`REACT_APP_` prefix. The relative web URL is forwarded to port 4000 by the CRA
+development proxy and to the API container by Nginx in production.
+
+### API
+
+| Endpoint                                              | Description                       |
+| ----------------------------------------------------- | --------------------------------- |
+| `GET /api/v1/weather/current?city=İzmir`              | Current conditions by city        |
+| `GET /api/v1/weather/current?lat=38.42&lon=27.13`     | Current conditions by coordinates |
+| `GET /api/v1/weather/forecast?lat=38.42&lon=27.13`    | Hourly and five-day forecast      |
+| `GET /api/v1/weather/air-quality?lat=38.42&lon=27.13` | Air-quality snapshot              |
+| `GET /api/v1/health/live`                             | Liveness probe                    |
+| `GET /api/v1/health/ready`                            | Readiness probe                   |
+
+Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 
 ---
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm start` | Run development server on port 3000 |
-| `npm run build` | Create production build |
-| `npm test` | Run test suite |
-| `npm run test:coverage` | Generate coverage report |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Auto-fix linting issues |
-| `npm run type-check` | TypeScript type checking |
+| Command                  | Description                         |
+| ------------------------ | ----------------------------------- |
+| `npm start`              | Run development server on port 3000 |
+| `npm run build`          | Create production build             |
+| `npm test`               | Run test suite                      |
+| `npm run test:coverage`  | Generate coverage report            |
+| `npm run lint`           | Run ESLint                          |
+| `npm run lint:fix`       | Auto-fix linting issues             |
+| `npm run type-check`     | TypeScript type checking            |
+| `npm run api:dev`        | Run the Fastify API on port 4000    |
+| `npm run api:test`       | Run API inject tests                |
+| `npm run api:type-check` | Type-check the API                  |
 
 ---
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl/Cmd + K` | Open search |
-| `Ctrl/Cmd + ,` | Open settings |
-| `Escape` | Close modal |
-| `Ctrl/Cmd + Shift + R` | Refresh data |
+| Shortcut               | Action        |
+| ---------------------- | ------------- |
+| `Ctrl/Cmd + K`         | Open search   |
+| `Ctrl/Cmd + ,`         | Open settings |
+| `Escape`               | Close modal   |
+| `Ctrl/Cmd + Shift + R` | Refresh data  |
 
 ---
 
 ## Docker
 
 ```bash
-# Production
-docker build -t weather-dashboard .
-docker run -p 80:80 weather-dashboard
+# Production web + API
+cp .env.example .env
+# Set OPENWEATHER_API_KEY in .env, then:
+docker compose up --build
 
 # Development
-docker-compose --profile dev up
+npm run docker:dev
 ```
+
+Static hosts such as GitHub Pages must set `REACT_APP_API_BASE_URL` to the
+absolute URL of a separately deployed API. The provider key remains only in the
+API deployment environment.
 
 ---
 
 ## Project Structure Decisions
 
 **Why custom httpClient instead of axios?**
+
 - Smaller bundle size
 - Built-in caching layer
 - Custom retry logic with exponential backoff
 - Type-safe error handling
 
 **Why CSS instead of CSS-in-JS?**
+
 - Better performance (no runtime overhead)
 - Native CSS variables for theming
 - Smaller bundle size
 
 **Why Context API instead of Redux?**
+
 - Simpler mental model for this scale
 - No boilerplate
 - Built into React

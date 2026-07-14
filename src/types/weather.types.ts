@@ -62,15 +62,24 @@ export interface WeatherResponse {
 
 // Weather Icon Codes from OpenWeather
 export type WeatherIconCode =
-  | '01d' | '01n'  // clear sky
-  | '02d' | '02n'  // few clouds
-  | '03d' | '03n'  // scattered clouds
-  | '04d' | '04n'  // broken clouds
-  | '09d' | '09n'  // shower rain
-  | '10d' | '10n'  // rain
-  | '11d' | '11n'  // thunderstorm
-  | '13d' | '13n'  // snow
-  | '50d' | '50n'; // mist
+  | '01d'
+  | '01n' // clear sky
+  | '02d'
+  | '02n' // few clouds
+  | '03d'
+  | '03n' // scattered clouds
+  | '04d'
+  | '04n' // broken clouds
+  | '09d'
+  | '09n' // shower rain
+  | '10d'
+  | '10n' // rain
+  | '11d'
+  | '11n' // thunderstorm
+  | '13d'
+  | '13n' // snow
+  | '50d'
+  | '50n'; // mist
 
 // Processed/Normalized weather data for UI
 export interface NormalizedWeatherData {
@@ -129,14 +138,14 @@ export interface DailyForecast {
   tempMax: number;
   icon: WeatherIconCode;
   description: string;
-  pop: number;
+  pop: number; // Frontend-domain ratio from 0 to 1
 }
 
 export interface HourlyForecast {
   time: Date;
   temp: number;
   icon: WeatherIconCode;
-  pop: number;
+  pop: number; // Frontend-domain ratio from 0 to 1
 }
 
 // Air Quality types

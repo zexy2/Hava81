@@ -5,7 +5,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { WeatherCard } from '../../components/WeatherCard';
+import { SettingsProvider } from '../../context';
 import type { NormalizedWeatherData } from '../../types';
+import '../../i18n';
 
 const mockWeatherData: NormalizedWeatherData = {
   cityName: 'İzmir',
@@ -28,28 +30,35 @@ const mockWeatherData: NormalizedWeatherData = {
   clouds: 0,
 };
 
+const renderWeatherCard = (className?: string) =>
+  render(
+    <SettingsProvider>
+      <WeatherCard weather={mockWeatherData} className={className} />
+    </SettingsProvider>
+  );
+
 describe('WeatherCard', () => {
   it('should render city name and country', () => {
-    render(<WeatherCard weather={mockWeatherData} />);
-    
+    renderWeatherCard();
+
     expect(screen.getByText('İzmir, TR')).toBeInTheDocument();
   });
 
   it('should render temperature', () => {
-    render(<WeatherCard weather={mockWeatherData} />);
-    
+    renderWeatherCard();
+
     expect(screen.getByText('22°')).toBeInTheDocument();
   });
 
   it('should render weather description', () => {
-    render(<WeatherCard weather={mockWeatherData} />);
-    
+    renderWeatherCard();
+
     expect(screen.getByText('açık hava')).toBeInTheDocument();
   });
 
   it('should render all weather tiles', () => {
-    render(<WeatherCard weather={mockWeatherData} />);
-    
+    renderWeatherCard();
+
     expect(screen.getByText('Hissedilen')).toBeInTheDocument();
     expect(screen.getByText('Nem')).toBeInTheDocument();
     expect(screen.getByText('Rüzgar')).toBeInTheDocument();
@@ -59,18 +68,16 @@ describe('WeatherCard', () => {
   });
 
   it('should have proper accessibility attributes', () => {
-    render(<WeatherCard weather={mockWeatherData} />);
-    
+    renderWeatherCard();
+
     const section = screen.getByRole('region', { name: /İzmir hava durumu/i });
     expect(section).toBeInTheDocument();
     expect(section).toHaveAttribute('aria-live', 'polite');
   });
 
   it('should apply custom className', () => {
-    render(
-      <WeatherCard weather={mockWeatherData} className="custom-class" />
-    );
-    
+    renderWeatherCard('custom-class');
+
     const section = screen.getByRole('region', { name: /İzmir hava durumu/i });
     expect(section).toBeInTheDocument();
   });

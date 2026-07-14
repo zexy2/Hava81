@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { HourlyForecast } from '../types';
+import { normalizePrecipitationProbability } from '../utils/precipitation';
 import './TemperatureChart.css';
 
 interface TemperatureChartProps {
@@ -7,10 +8,7 @@ interface TemperatureChartProps {
   className?: string;
 }
 
-export const TemperatureChart: React.FC<TemperatureChartProps> = ({
-  data,
-  className = '',
-}) => {
+export const TemperatureChart: React.FC<TemperatureChartProps> = ({ data, className = '' }) => {
   const chartData = useMemo(() => {
     if (data.length === 0) return null;
 
@@ -18,7 +16,7 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({
     const minTemp = Math.min(...temps);
     const maxTemp = Math.max(...temps);
     const range = maxTemp - minTemp || 1;
-    
+
     const padding = { top: 40, right: 20, bottom: 50, left: 20 };
     const width = 100;
     const height = 100;
@@ -28,17 +26,24 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({
     const points = data.map((d, i) => {
       const x = padding.left + (i / (data.length - 1)) * chartWidth;
       const y = padding.top + chartHeight - ((d.temp - minTemp) / range) * chartHeight;
-      return { x, y, temp: d.temp, time: d.time, icon: d.icon, pop: d.pop };
+      return {
+        x,
+        y,
+        temp: d.temp,
+        time: d.time,
+        icon: d.icon,
+        pop: normalizePrecipitationProbability(d.pop),
+      };
     });
 
     // Create smooth curve path
     const linePath = points.reduce((path, point, i) => {
       if (i === 0) return `M ${point.x} ${point.y}`;
-      
+
       const prev = points[i - 1];
       const cpx1 = prev.x + (point.x - prev.x) / 3;
       const cpx2 = point.x - (point.x - prev.x) / 3;
-      
+
       return `${path} C ${cpx1} ${prev.y}, ${cpx2} ${point.y}, ${point.x} ${point.y}`;
     }, '');
 
@@ -59,13 +64,9 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({
   return (
     <div className={`temperature-chart ${className}`}>
       <h4 className="temperature-chart__title">Saatlik Sıcaklık</h4>
-      
+
       <div className="temperature-chart__container">
-        <svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          className="temperature-chart__svg"
-        >
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="temperature-chart__svg">
           <defs>
             <linearGradient id="tempGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="var(--theme-accent)" stopOpacity="0.4" />
@@ -130,21 +131,23 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({
 
         {/* Labels */}
         <div className="temperature-chart__labels">
-          {chartData.points.filter((_, i) => i % Math.ceil(data.length / 6) === 0 || i === data.length - 1).map((point, i) => (
-            <div
-              key={i}
-              className="temperature-chart__label"
-              style={{
-                left: `${(point.x / 100) * 100}%`,
-              }}
-            >
-              <span className="temperature-chart__temp">{Math.round(point.temp)}°</span>
-              <span className="temperature-chart__time">{formatHour(point.time)}</span>
-              {point.pop > 0.1 && (
-                <span className="temperature-chart__pop">{Math.round(point.pop * 100)}%</span>
-              )}
-            </div>
-          ))}
+          {chartData.points
+            .filter((_, i) => i % Math.ceil(data.length / 6) === 0 || i === data.length - 1)
+            .map((point, i) => (
+              <div
+                key={i}
+                className="temperature-chart__label"
+                style={{
+                  left: `${(point.x / 100) * 100}%`,
+                }}
+              >
+                <span className="temperature-chart__temp">{Math.round(point.temp)}°</span>
+                <span className="temperature-chart__time">{formatHour(point.time)}</span>
+                {point.pop > 0.1 && (
+                  <span className="temperature-chart__pop">{Math.round(point.pop * 100)}%</span>
+                )}
+              </div>
+            ))}
         </div>
       </div>
 

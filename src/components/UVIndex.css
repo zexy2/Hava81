@@ -52,6 +52,30 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.uv-index__empty {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  color: var(--theme-text-secondary);
+}
+
+.uv-index__empty-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--theme-text-primary);
+}
+
+.uv-index__empty-label {
+  max-width: 22ch;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 .uv-index__level {
   padding: 0.35rem 1rem;
   border-radius: 9999px;

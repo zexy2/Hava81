@@ -6,9 +6,9 @@ import { config } from './env.config';
 
 export const API_ENDPOINTS = {
   weather: {
-    current: '/weather',
-    forecast: '/forecast',
-    oneCall: '/onecall',
+    current: '/weather/current',
+    forecast: '/weather/forecast',
+    airQuality: '/weather/air-quality',
   },
 } as const;
 
@@ -29,7 +29,8 @@ export const HTTP_STATUS = {
 export const RETRY_CONFIG = {
   maxRetries: config.api.maxRetries,
   retryDelay: 1000,
-  retryStatusCodes: [408, 429, 500, 502, 503, 504],
+  // Do not retry BFF rate limits; retrying 429 multiplies client pressure.
+  retryStatusCodes: [408, 500, 502, 503, 504],
 } as const;
 
 export const apiConfig = {
