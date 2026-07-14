@@ -2,13 +2,32 @@
 
 Decision-first weather intelligence for all 81 Turkish provinces. Built with React 19 and a TypeScript Fastify BFF.
 
+[![CI/CD Pipeline](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live-GitHub%20Pages-146B73?style=flat-square)](https://zexy2.github.io/Weather-app-for-Turkish-cities/)
+[![API](https://img.shields.io/badge/API-Render-E7A531?style=flat-square)](https://hava81-api.onrender.com/api/v1/health/ready)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0E2C32?style=flat-square)](LICENSE)
+
 ---
 
 ## Overview
 
 Hava81 turns raw forecast data into a calm, local and immediately readable meteorological atlas. Its primary surface answers what the weather is doing now and what materially changes next, then supports that decision with hourly trends, five-day context, air quality and an interactive map. The project demonstrates production frontend architecture, a server-side API boundary, internationalization and comprehensive testing.
 
-**Live Demo:** [https://zexy2.github.io/Weather-app-for-Turkish-cities/](https://zexy2.github.io/Weather-app-for-Turkish-cities/)
+**Live Demo:** [Hava81 on GitHub Pages](https://zexy2.github.io/Weather-app-for-Turkish-cities/) · **API:** [Render readiness endpoint](https://hava81-api.onrender.com/api/v1/health/ready)
+
+---
+
+## Product Preview
+
+### Desktop meteorological atlas
+
+![Hava81 desktop interface showing the İstanbul decision field, hourly rhythm, five-day forecast and environment rail](docs/images/hava81-desktop.png)
+
+### Mobile decision view
+
+<p align="center">
+  <img src="docs/images/hava81-mobile.png" width="390" alt="Hava81 mobile interface showing the İstanbul weather decision field and bottom navigation" />
+</p>
 
 ---
 
@@ -174,6 +193,7 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 | `npm run api:dev`        | Run the Fastify API on port 4000    |
 | `npm run api:test`       | Run API inject tests                |
 | `npm run api:type-check` | Type-check the API                  |
+| `npm run api:build`      | Build the production API bundle     |
 
 ---
 
@@ -185,6 +205,41 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 | `Ctrl/Cmd + ,`         | Open settings |
 | `Escape`               | Close modal   |
 | `Ctrl/Cmd + Shift + R` | Refresh data  |
+
+---
+
+## Production Deployment
+
+| Surface          | Platform       | Production address                                                                                        |
+| ---------------- | -------------- | --------------------------------------------------------------------------------------------------------- |
+| React web app    | GitHub Pages   | [zexy2.github.io/Weather-app-for-Turkish-cities](https://zexy2.github.io/Weather-app-for-Turkish-cities/) |
+| Fastify BFF      | Render         | [hava81-api.onrender.com/api/v1](https://hava81-api.onrender.com/api/v1/health/ready)                     |
+| Weather provider | OpenWeather    | Accessed only by the server-side provider adapter                                                         |
+| CI/CD            | GitHub Actions | Frontend, API, tests, Docker image and Pages deployment                                                   |
+
+```text
+GitHub Pages browser
+        │ public API base URL
+        ▼
+Render Fastify BFF
+        │ server-only provider credential
+        ▼
+OpenWeather
+```
+
+The browser bundle receives only the public Render base URL through the GitHub
+repository variable `API_BASE_URL`. `OPENWEATHER_API_KEY` remains a server-only
+Render environment secret, while `CORS_ORIGINS=https://zexy2.github.io` limits
+browser access to the deployed web origin.
+
+Production probes:
+
+- [`GET /api/v1/health/live`](https://hava81-api.onrender.com/api/v1/health/live)
+- [`GET /api/v1/health/ready`](https://hava81-api.onrender.com/api/v1/health/ready)
+- [Interactive OpenAPI documentation](https://hava81-api.onrender.com/docs)
+
+> The current Render Free instance can spin down while idle, so the first
+> request after a period of inactivity may take longer than subsequent calls.
 
 ---
 
