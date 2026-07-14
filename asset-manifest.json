@@ -1,13 +1,31 @@
 {
   "files": {
-    "main.css": "/Weather-app-for-Turkish-cities/static/css/main.33d524a7.css",
-    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.941ca048.js",
+    "main.css": "/Weather-app-for-Turkish-cities/static/css/main.f1f89e65.css",
+    "main.js": "/Weather-app-for-Turkish-cities/static/js/main.e06805de.js",
+    "static/css/660.713cd8a9.chunk.css": "/Weather-app-for-Turkish-cities/static/css/660.713cd8a9.chunk.css",
+    "static/js/660.42c84e56.chunk.js": "/Weather-app-for-Turkish-cities/static/js/660.42c84e56.chunk.js",
+    "static/js/776.1bd0674c.chunk.js": "/Weather-app-for-Turkish-cities/static/js/776.1bd0674c.chunk.js",
+    "static/media/source-serif-4-latin-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/source-serif-4-latin-wght-normal.dd8c875965856623374a.woff2",
+    "static/media/ibm-plex-sans-latin-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-latin-wght-normal.b33a81b76947ac354369.woff2",
+    "static/media/source-serif-4-latin-ext-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/source-serif-4-latin-ext-wght-normal.2c4c47d12ed20ad5f489.woff2",
+    "static/media/source-serif-4-cyrillic-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/source-serif-4-cyrillic-wght-normal.fd8df442bf6c2754c457.woff2",
+    "static/media/ibm-plex-sans-latin-ext-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-latin-ext-wght-normal.57bde7cafd4d43a2790a.woff2",
+    "static/media/ibm-plex-sans-cyrillic-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-cyrillic-wght-normal.aea82cd4f679901006f5.woff2",
+    "static/media/ibm-plex-sans-cyrillic-ext-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-cyrillic-ext-wght-normal.a17fb865bc3d94f6a763.woff2",
+    "static/media/source-serif-4-greek-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/source-serif-4-greek-wght-normal.cc187f0f19748c05a912.woff2",
+    "static/media/ibm-plex-sans-greek-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-greek-wght-normal.5a744c182883df2756e4.woff2",
+    "static/media/source-serif-4-cyrillic-ext-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/source-serif-4-cyrillic-ext-wght-normal.782cacf73ecf0f43817c.woff2",
+    "static/media/source-serif-4-vietnamese-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/source-serif-4-vietnamese-wght-normal.58ea4bb3777a1e2b4602.woff2",
+    "static/media/ibm-plex-sans-vietnamese-wght-normal.woff2": "/Weather-app-for-Turkish-cities/static/media/ibm-plex-sans-vietnamese-wght-normal.c50c4d9a7935b1984a24.woff2",
     "index.html": "/Weather-app-for-Turkish-cities/index.html",
-    "main.33d524a7.css.map": "/Weather-app-for-Turkish-cities/static/css/main.33d524a7.css.map",
-    "main.941ca048.js.map": "/Weather-app-for-Turkish-cities/static/js/main.941ca048.js.map"
+    "main.f1f89e65.css.map": "/Weather-app-for-Turkish-cities/static/css/main.f1f89e65.css.map",
+    "main.e06805de.js.map": "/Weather-app-for-Turkish-cities/static/js/main.e06805de.js.map",
+    "660.713cd8a9.chunk.css.map": "/Weather-app-for-Turkish-cities/static/css/660.713cd8a9.chunk.css.map",
+    "660.42c84e56.chunk.js.map": "/Weather-app-for-Turkish-cities/static/js/660.42c84e56.chunk.js.map",
+    "776.1bd0674c.chunk.js.map": "/Weather-app-for-Turkish-cities/static/js/776.1bd0674c.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.33d524a7.css",
-    "static/js/main.941ca048.js"
+    "static/css/main.f1f89e65.css",
+    "static/js/main.e06805de.js"
   ]
 }
