@@ -2,7 +2,7 @@
   "name": "hava81-weather-atlas",
   "version": "2.0.0",
   "private": true,
-  "homepage": "https://zexy2.github.io/Weather-app-for-Turkish-cities",
+  "homepage": ".",
   "proxy": "http://localhost:4000",
   "description": "Hava81: a decision-first meteorological atlas for all 81 Turkish provinces",
   "keywords": [
