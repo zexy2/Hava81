@@ -65,6 +65,7 @@ export const tr = {
     homeLabel: 'Hava81 ana görünüm',
     systemStatus: 'Hava81 · Sistem durumu',
     loadingWeather: 'Hava verileri hazırlanıyor',
+    serverWaking: 'Sunucu uyanıyor; ilk yükleme 30–60 saniye sürebilir.',
     mapEyebrow: '81 il · İstasyon haritası',
     emptyEyebrow: 'Hava81 · 81 il',
     decision: {

@@ -548,6 +548,28 @@ input:focus-visible {
   gap: var(--space-lg);
 }
 
+.atlas-loading__copy {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-xs);
+  margin-bottom: calc(var(--space-sm) * -1);
+}
+
+.atlas-loading__status,
+.atlas-loading__notice {
+  margin: 0;
+  color: var(--color-atlas-muted);
+}
+
+.atlas-loading__status {
+  color: var(--color-atlas-ink);
+  font-weight: 700;
+}
+
+.atlas-loading__notice {
+  max-width: 42rem;
+}
+
 .atlas-loading__decision,
 .atlas-loading__forecast,
 .atlas-forecast-loading {

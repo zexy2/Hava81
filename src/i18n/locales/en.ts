@@ -65,6 +65,7 @@ export const en = {
     homeLabel: 'Hava81 home view',
     systemStatus: 'Hava81 · System status',
     loadingWeather: 'Preparing weather data',
+    serverWaking: 'The server is waking up; the first load may take 30–60 seconds.',
     mapEyebrow: '81 provinces · Station map',
     emptyEyebrow: 'Hava81 · 81 provinces',
     decision: {

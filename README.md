@@ -4,7 +4,7 @@ Decision-first weather intelligence for all 81 Turkish provinces. Built with Rea
 
 [![CI/CD Pipeline](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Live-GitHub%20Pages-146B73?style=flat-square)](https://zexy2.github.io/Weather-app-for-Turkish-cities/)
-[![API](https://img.shields.io/badge/API-Render-E7A531?style=flat-square)](https://hava81-api.onrender.com/api/v1/health/ready)
+[![API](https://img.shields.io/badge/API-Oracle%20Cloud-E7A531?style=flat-square)](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0E2C32?style=flat-square)](LICENSE)
 
 ---
@@ -13,7 +13,7 @@ Decision-first weather intelligence for all 81 Turkish provinces. Built with Rea
 
 Hava81 turns raw forecast data into a calm, local and immediately readable meteorological atlas. Its primary surface answers what the weather is doing now and what materially changes next, then supports that decision with hourly trends, five-day context, air quality and an interactive map. The project demonstrates production frontend architecture, a server-side API boundary, internationalization and comprehensive testing.
 
-**Live Demo:** [Hava81 on GitHub Pages](https://zexy2.github.io/Weather-app-for-Turkish-cities/) · **API:** [Render readiness endpoint](https://hava81-api.onrender.com/api/v1/health/ready)
+**Live Demo:** [Hava81 on GitHub Pages](https://zexy2.github.io/Weather-app-for-Turkish-cities/) · **API:** [Oracle readiness endpoint](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
 
 ---
 
@@ -213,7 +213,7 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 | Surface          | Platform       | Production address                                                                                        |
 | ---------------- | -------------- | --------------------------------------------------------------------------------------------------------- |
 | React web app    | GitHub Pages   | [zexy2.github.io/Weather-app-for-Turkish-cities](https://zexy2.github.io/Weather-app-for-Turkish-cities/) |
-| Fastify BFF      | Render         | [hava81-api.onrender.com/api/v1](https://hava81-api.onrender.com/api/v1/health/ready)                     |
+| Fastify BFF      | Oracle Cloud VPS | [api.hava81.zekiakgul.dev/api/v1](https://api.hava81.zekiakgul.dev/api/v1/health/ready)                 |
 | Weather provider | OpenWeather    | Accessed only by the server-side provider adapter                                                         |
 | CI/CD            | GitHub Actions | Frontend, API, tests, Docker image and Pages deployment                                                   |
 
@@ -221,25 +221,25 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 GitHub Pages browser
         │ public API base URL
         ▼
-Render Fastify BFF
+Oracle Cloud Fastify BFF
         │ server-only provider credential
         ▼
 OpenWeather
 ```
 
-The browser bundle receives only the public Render base URL through the GitHub
-repository variable `API_BASE_URL`. `OPENWEATHER_API_KEY` remains a server-only
-Render environment secret, while `CORS_ORIGINS=https://zexy2.github.io` limits
+The browser bundle uses `https://api.hava81.zekiakgul.dev/api/v1` as its public
+API base URL. `OPENWEATHER_API_KEY` remains a server-only Oracle environment
+secret, while `CORS_ORIGINS=https://hava81.zekiakgul.dev,https://zexy2.github.io` limits
 browser access to the deployed web origin.
 
 Production probes:
 
-- [`GET /api/v1/health/live`](https://hava81-api.onrender.com/api/v1/health/live)
-- [`GET /api/v1/health/ready`](https://hava81-api.onrender.com/api/v1/health/ready)
-- [Interactive OpenAPI documentation](https://hava81-api.onrender.com/docs)
+- [`GET /api/v1/health/live`](https://api.hava81.zekiakgul.dev/api/v1/health/live)
+- [`GET /api/v1/health/ready`](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
+- [Interactive OpenAPI documentation](https://api.hava81.zekiakgul.dev/docs)
 
-> The current Render Free instance can spin down while idle, so the first
-> request after a period of inactivity may take longer than subsequent calls.
+> The API runs on the Oracle VPS, so it does not depend on Render Free tier
+> cold starts.
 
 ---
 

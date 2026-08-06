@@ -61,9 +61,12 @@ const StarIcon = ({ filled = false }: { filled?: boolean }) => (
   </svg>
 );
 
-const AtlasLoadingState = ({ label }: { label: string }) => (
+const AtlasLoadingState = ({ label, slowMessage }: { label: string; slowMessage?: string }) => (
   <div className="atlas-loading" role="status" aria-live="polite">
-    <span className="sr-only">{label}</span>
+    <div className="atlas-loading__copy">
+      <p className="atlas-loading__status">{label}</p>
+      {slowMessage ? <p className="atlas-loading__notice">{slowMessage}</p> : null}
+    </div>
     <section className="atlas-loading__decision" aria-hidden="true">
       <div className="atlas-loading__line atlas-loading__line--short" />
       <div className="atlas-loading__temperature" />
@@ -90,6 +93,7 @@ const App: React.FC = () => {
   const overviewRef = useRef<HTMLDivElement>(null);
   const cityRailRef = useRef<HTMLDivElement>(null);
   const mapRegionRef = useRef<HTMLElement>(null);
+  const [isSlowLoading, setIsSlowLoading] = useState(false);
 
   const {
     city,
@@ -106,6 +110,16 @@ const App: React.FC = () => {
   const forecast = useForecast(settings.language);
   const fetchForecast = forecast.fetch;
   const [favorites, setFavorites] = useLocalStorage<FavoriteCity[]>('favorites', []);
+
+  useEffect(() => {
+    if (!isLoading || weather) {
+      setIsSlowLoading(false);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => setIsSlowLoading(true), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoading, weather]);
 
   const colorMode = useMemo(() => {
     if (settings.themeMode !== 'auto') return settings.themeMode;
@@ -444,7 +458,12 @@ const App: React.FC = () => {
               )}
             </AnimatePresence>
 
-            {isLoading && !weather && <AtlasLoadingState label={t('hava81.loadingWeather')} />}
+            {isLoading && !weather && (
+              <AtlasLoadingState
+                label={t('hava81.loadingWeather')}
+                slowMessage={isSlowLoading ? t('hava81.serverWaking') : undefined}
+              />
+            )}
 
             {weather && !isLoading && (
               <motion.div
