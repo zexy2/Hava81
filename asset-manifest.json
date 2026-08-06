@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.ee8ccad2.css",
-    "main.js": "./static/js/main.56e04ad3.js",
+    "main.css": "./static/css/main.735eafb7.css",
+    "main.js": "./static/js/main.c3b3274d.js",
     "static/css/660.713cd8a9.chunk.css": "./static/css/660.713cd8a9.chunk.css",
     "static/js/660.42c84e56.chunk.js": "./static/js/660.42c84e56.chunk.js",
     "static/js/776.1bd0674c.chunk.js": "./static/js/776.1bd0674c.chunk.js",
@@ -18,14 +18,14 @@
     "static/media/source-serif-4-vietnamese-wght-normal.woff2": "./static/media/source-serif-4-vietnamese-wght-normal.58ea4bb3777a1e2b4602.woff2",
     "static/media/ibm-plex-sans-vietnamese-wght-normal.woff2": "./static/media/ibm-plex-sans-vietnamese-wght-normal.c50c4d9a7935b1984a24.woff2",
     "index.html": "./index.html",
-    "main.ee8ccad2.css.map": "./static/css/main.ee8ccad2.css.map",
-    "main.56e04ad3.js.map": "./static/js/main.56e04ad3.js.map",
+    "main.735eafb7.css.map": "./static/css/main.735eafb7.css.map",
+    "main.c3b3274d.js.map": "./static/js/main.c3b3274d.js.map",
     "660.713cd8a9.chunk.css.map": "./static/css/660.713cd8a9.chunk.css.map",
     "660.42c84e56.chunk.js.map": "./static/js/660.42c84e56.chunk.js.map",
     "776.1bd0674c.chunk.js.map": "./static/js/776.1bd0674c.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.ee8ccad2.css",
-    "static/js/main.56e04ad3.js"
+    "static/css/main.735eafb7.css",
+    "static/js/main.c3b3274d.js"
   ]
 }
