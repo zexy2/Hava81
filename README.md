@@ -3,7 +3,7 @@
 Decision-first weather intelligence for all 81 Turkish provinces. Built with React 19 and a TypeScript Fastify BFF.
 
 [![CI/CD Pipeline](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml)
-[![Live Demo](https://img.shields.io/badge/Live-GitHub%20Pages-146B73?style=flat-square)](https://zexy2.github.io/Weather-app-for-Turkish-cities/)
+[![Live Demo](https://img.shields.io/badge/Live-Hava81-146B73?style=flat-square)](https://hava81.zekiakgul.dev/)
 [![API](https://img.shields.io/badge/API-Oracle%20Cloud-E7A531?style=flat-square)](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0E2C32?style=flat-square)](LICENSE)
 
@@ -11,9 +11,9 @@ Decision-first weather intelligence for all 81 Turkish provinces. Built with Rea
 
 ## Overview
 
-Hava81 turns raw forecast data into a calm, local and immediately readable meteorological atlas. Its primary surface answers what the weather is doing now and what materially changes next, then supports that decision with hourly trends, five-day context, air quality and an interactive map. The project demonstrates production frontend architecture, a server-side API boundary, internationalization and comprehensive testing.
+Hava81 turns raw forecast data into a calm, local and immediately readable meteorological atlas. Its primary surface answers what the weather is doing now and what materially changes next, then supports that decision with three-hour forecast intervals, five-day context, air quality and an interactive map. The project demonstrates production frontend architecture, a server-side API boundary, internationalization and comprehensive testing.
 
-**Live Demo:** [Hava81 on GitHub Pages](https://zexy2.github.io/Weather-app-for-Turkish-cities/) · **API:** [Oracle readiness endpoint](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
+**Live Demo:** [hava81.zekiakgul.dev](https://hava81.zekiakgul.dev/) · **API:** [Oracle readiness endpoint](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
 
 ---
 
@@ -36,11 +36,14 @@ Hava81 turns raw forecast data into a calm, local and immediately readable meteo
 ### Core Functionality
 
 - Real-time weather data for 81 Turkish provinces
-- Decision field with the next material precipitation or temperature change
-- 5-day forecast with hourly breakdown
+- Decision engine for rain, strong wind, heat, cold, poor air quality and a suitable outdoor window
+- 5-day forecast with honest three-hour provider intervals
 - Air quality index monitoring
 - Daylight, wind and air-quality environmental rail
 - Persistent favorite cities and recent searches
+- Up-to-three-city comparison from saved cities
+- Shareable canonical province URLs such as `/istanbul` and `/sanliurfa`
+- Visible provider, cache and freshness metadata
 
 ### User Interface
 
@@ -71,7 +74,7 @@ Hava81 turns raw forecast data into a calm, local and immediately readable meteo
 
 | Category   | Technologies                                                  |
 | ---------- | ------------------------------------------------------------- |
-| Framework  | React 19.1, TypeScript 5.x                                    |
+| Framework  | React 19.1, TypeScript 6                                      |
 | Styling    | CSS, semantic design tokens, responsive atlas layout          |
 | Typography | IBM Plex Sans Variable, Source Serif 4 Variable               |
 | Animation  | Framer Motion 12                                              |
@@ -80,8 +83,8 @@ Hava81 turns raw forecast data into a calm, local and immediately readable meteo
 | HTTP       | Custom httpClient with caching and retry logic                |
 | Backend    | Fastify 5, Zod, OpenAPI                                       |
 | Security   | Helmet, CORS, server-side provider credentials, rate limiting |
-| Testing    | Jest, React Testing Library, MSW, Fastify inject              |
-| Build      | Create React App, Docker                                      |
+| Testing    | Vitest, Testing Library, MSW, Playwright, Fastify inject      |
+| Build      | Vite 8, Lighthouse CI, Docker                                 |
 
 ---
 
@@ -103,7 +106,7 @@ src/
 apps/api/
 ├── src/providers/          # OpenWeather adapter and runtime response schemas
 ├── src/modules/weather/    # Versioned routes and normalized weather service
-├── src/core/               # TTL cache, in-flight dedupe and structured errors
+├── src/core/               # TTL cache, dedupe, resilience/circuit breaker and errors
 └── test/                   # Fastify inject integration tests
 ```
 
@@ -116,9 +119,11 @@ React Components -> hooks -> frontend weatherService
                     Fastify API (/api/v1)
                     | validation, rate limit
                     | TTL cache + request dedupe
+                    | retries + circuit breaker
                                |
                                v
                     OpenWeather provider adapter
+                    | optional compatible fallback endpoint
 ```
 
 ---
@@ -127,7 +132,7 @@ React Components -> hooks -> frontend weatherService
 
 ### Prerequisites
 
-- Node.js 20 or higher
+- Node.js 22 or higher
 - npm or yarn
 - OpenWeather API key ([Get one here](https://openweathermap.org/api))
 
@@ -139,8 +144,8 @@ git clone https://github.com/zexy2/Weather-app-for-Turkish-cities.git
 cd Weather-app-for-Turkish-cities
 
 # Install dependencies
-npm install --legacy-peer-deps
-npm install --prefix apps/api
+npm ci
+npm ci --prefix apps/api
 
 # Configure environment
 cp .env.example .env
@@ -149,20 +154,20 @@ cp .env.example .env
 # Terminal 1: start the API on port 4000
 npm run api:dev
 
-# Terminal 2: start the web app on port 3000
-npm start
+# Terminal 2: start the Vite web app on port 5173
+npm run dev
 ```
 
 ### Environment Variables
 
 ```
 OPENWEATHER_API_KEY=your_server_only_api_key
-REACT_APP_API_BASE_URL=/api/v1
+VITE_API_BASE_URL=/api/v1
 ```
 
-`OPENWEATHER_API_KEY` is read only by `apps/api`; it must never use a
-`REACT_APP_` prefix. The relative web URL is forwarded to port 4000 by the CRA
-development proxy and to the API container by Nginx in production.
+`OPENWEATHER_API_KEY` is read only by `apps/api`; it must never use a `VITE_` prefix.
+Only values prefixed with `VITE_` are browser-visible. The relative web URL is forwarded
+to port 4000 by the Vite development proxy and to the API container by Nginx in production.
 
 ### API
 
@@ -170,7 +175,7 @@ development proxy and to the API container by Nginx in production.
 | ----------------------------------------------------- | --------------------------------- |
 | `GET /api/v1/weather/current?city=İzmir`              | Current conditions by city        |
 | `GET /api/v1/weather/current?lat=38.42&lon=27.13`     | Current conditions by coordinates |
-| `GET /api/v1/weather/forecast?lat=38.42&lon=27.13`    | Hourly and five-day forecast      |
+| `GET /api/v1/weather/forecast?lat=38.42&lon=27.13`    | Three-hour and five-day forecast  |
 | `GET /api/v1/weather/air-quality?lat=38.42&lon=27.13` | Air-quality snapshot              |
 | `GET /api/v1/health/live`                             | Liveness probe                    |
 | `GET /api/v1/health/ready`                            | Readiness probe                   |
@@ -183,7 +188,7 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 
 | Command                  | Description                         |
 | ------------------------ | ----------------------------------- |
-| `npm start`              | Run development server on port 3000 |
+| `npm run dev`            | Run Vite development server        |
 | `npm run build`          | Create production build             |
 | `npm test`               | Run test suite                      |
 | `npm run test:coverage`  | Generate coverage report            |
@@ -194,6 +199,17 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 | `npm run api:test`       | Run API inject tests                |
 | `npm run api:type-check` | Type-check the API                  |
 | `npm run api:build`      | Build the production API bundle     |
+| `npm run e2e`            | Run Playwright browser flows         |
+| `npm run lighthouse`     | Run Lighthouse performance/a11y CI  |
+
+---
+
+## Quality Gates
+
+The CI pipeline runs type checking, zero-error ESLint, Vitest coverage, API tests/build,
+Playwright flows at 390/768/1280 px, Lighthouse budgets, and the production build.
+Provider secrets stay server-side; frontend production dependencies and API dependencies
+are audited separately.
 
 ---
 
@@ -212,7 +228,7 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 
 | Surface          | Platform       | Production address                                                                                        |
 | ---------------- | -------------- | --------------------------------------------------------------------------------------------------------- |
-| React web app    | GitHub Pages   | [zexy2.github.io/Weather-app-for-Turkish-cities](https://zexy2.github.io/Weather-app-for-Turkish-cities/) |
+| React web app    | GitHub Pages   | [hava81.zekiakgul.dev](https://hava81.zekiakgul.dev/)                                              |
 | Fastify BFF      | Oracle Cloud VPS | [api.hava81.zekiakgul.dev/api/v1](https://api.hava81.zekiakgul.dev/api/v1/health/ready)                 |
 | Weather provider | OpenWeather    | Accessed only by the server-side provider adapter                                                         |
 | CI/CD            | GitHub Actions | Frontend, API, tests, Docker image and Pages deployment                                                   |
@@ -255,8 +271,9 @@ docker compose up --build
 npm run docker:dev
 ```
 
-Static hosts such as GitHub Pages must set `REACT_APP_API_BASE_URL` to the
-absolute URL of a separately deployed API. The provider key remains only in the
+Static hosts such as GitHub Pages must set `VITE_API_BASE_URL` to the
+absolute URL of a separately deployed API. The build also emits `404.html` as an SPA
+fallback so direct city URLs such as `/ankara` remain shareable. The provider key remains only in the
 API deployment environment.
 
 ---

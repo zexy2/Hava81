@@ -24,44 +24,43 @@ export function useKeyboardShortcuts(
 ) {
   const { enabled = true } = options;
   const shortcutsRef = useRef(shortcuts);
-  
+
   // Keep shortcuts ref updated
   useEffect(() => {
     shortcutsRef.current = shortcuts;
   }, [shortcuts]);
 
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!enabled) return;
-    
-    // Don't trigger shortcuts when typing in inputs
-    const target = event.target as HTMLElement;
-    if (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.isContentEditable
-    ) {
-      // Allow Escape to work even in inputs
-      if (event.key !== 'Escape') {
-        return;
-      }
-    }
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!enabled) return;
 
-    for (const shortcut of shortcutsRef.current) {
-      const ctrlOrMeta = shortcut.ctrlKey || shortcut.metaKey;
-      const eventCtrlOrMeta = event.ctrlKey || event.metaKey;
-      
-      const keyMatches = event.key.toLowerCase() === shortcut.key.toLowerCase();
-      const ctrlMatches = ctrlOrMeta ? eventCtrlOrMeta : !eventCtrlOrMeta;
-      const shiftMatches = shortcut.shiftKey ? event.shiftKey : !event.shiftKey;
-      const altMatches = shortcut.altKey ? event.altKey : !event.altKey;
-
-      if (keyMatches && ctrlMatches && shiftMatches && altMatches) {
-        event.preventDefault();
-        shortcut.action();
-        return;
+      // Don't trigger shortcuts when typing in inputs
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        // Allow Escape to work even in inputs
+        if (event.key !== 'Escape') {
+          return;
+        }
       }
-    }
-  }, [enabled]);
+
+      for (const shortcut of shortcutsRef.current) {
+        const ctrlOrMeta = shortcut.ctrlKey || shortcut.metaKey;
+        const eventCtrlOrMeta = event.ctrlKey || event.metaKey;
+
+        const keyMatches = event.key.toLowerCase() === shortcut.key.toLowerCase();
+        const ctrlMatches = ctrlOrMeta ? eventCtrlOrMeta : !eventCtrlOrMeta;
+        const shiftMatches = shortcut.shiftKey ? event.shiftKey : !event.shiftKey;
+        const altMatches = shortcut.altKey ? event.altKey : !event.altKey;
+
+        if (keyMatches && ctrlMatches && shiftMatches && altMatches) {
+          event.preventDefault();
+          shortcut.action();
+          return;
+        }
+      }
+    },
+    [enabled]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -72,7 +71,7 @@ export function useKeyboardShortcuts(
   const getShortcutDisplay = useCallback((shortcut: KeyboardShortcut): string => {
     const parts: string[] = [];
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    
+
     if (shortcut.ctrlKey || shortcut.metaKey) {
       parts.push(isMac ? '⌘' : 'Ctrl');
     }
@@ -82,19 +81,17 @@ export function useKeyboardShortcuts(
     if (shortcut.altKey) {
       parts.push(isMac ? '⌥' : 'Alt');
     }
-    
-    // Format special keys
-    let keyDisplay = shortcut.key;
-    switch (shortcut.key.toLowerCase()) {
-      case 'escape': keyDisplay = 'Esc'; break;
-      case 'arrowup': keyDisplay = '↑'; break;
-      case 'arrowdown': keyDisplay = '↓'; break;
-      case 'arrowleft': keyDisplay = '←'; break;
-      case 'arrowright': keyDisplay = '→'; break;
-      case 'enter': keyDisplay = '↵'; break;
-      default: keyDisplay = shortcut.key.toUpperCase();
-    }
-    
+
+    const specialKeys: Record<string, string> = {
+      escape: 'Esc',
+      arrowup: '↑',
+      arrowdown: '↓',
+      arrowleft: '←',
+      arrowright: '→',
+      enter: '↵',
+    };
+    const keyDisplay = specialKeys[shortcut.key.toLowerCase()] ?? shortcut.key.toUpperCase();
+
     parts.push(keyDisplay);
     return parts.join(isMac ? '' : '+');
   }, []);

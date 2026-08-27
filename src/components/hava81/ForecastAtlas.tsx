@@ -1,7 +1,7 @@
 import { useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
-import type { DailyForecast, HourlyForecast } from '../../types';
+import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
 import { normalizePrecipitationProbability } from '../../utils/precipitation';
 import { WeatherSymbol } from './WeatherSymbol';
 import './ForecastAtlas.css';
@@ -9,6 +9,7 @@ import './ForecastAtlas.css';
 export interface ForecastAtlasProps {
   daily: DailyForecast[];
   hourly: HourlyForecast[];
+  meta?: ForecastMeta | null;
   className?: string;
 }
 
@@ -20,7 +21,7 @@ const CHART_TOP = 16;
 const CHART_BOTTOM = 16;
 const PRECIPITATION_THRESHOLD = 0.35;
 
-export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasProps) {
+export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const id = useId();
@@ -31,13 +32,22 @@ export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasPr
   const chartDescriptionId = `${id}-chart-description`;
 
   const timeFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }),
+    () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
     [locale]
   );
   const dayFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }),
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      }),
     [locale]
   );
+  const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
+  const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
+  const intervalHours = meta?.intervalHours ?? 3;
 
   const hourlyData = useMemo(
     () =>
@@ -90,13 +100,15 @@ export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasPr
   }, [hourlyData]);
 
   const formatDay = (date: Date): string => {
-    const now = new Date();
-    const dateStamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-    const todayStamp = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    const dayDifference = Math.round((dateStamp - todayStamp) / 86_400_000);
+    const nowAtLocation = atLocationTime(new Date());
+    const dateKey = date.toISOString().slice(0, 10);
+    const todayKey = nowAtLocation.toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.parse(`${todayKey}T12:00:00.000Z`) + 86_400_000)
+      .toISOString()
+      .slice(0, 10);
 
-    if (dayDifference === 0) return t('days.today');
-    if (dayDifference === 1) return t('days.tomorrow');
+    if (dateKey === todayKey) return t('days.today');
+    if (dateKey === tomorrow) return t('days.tomorrow');
     return dayFormatter.format(date);
   };
 
@@ -117,7 +129,10 @@ export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasPr
       {hourlyData.length > 0 ? (
         <section className="hava81-forecast-atlas__section" aria-labelledby={`${id}-hourly-title`}>
           <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
-            {t('weather.hourlyForecast')}
+            {t('hava81.forecastAtlas.intervalForecast', {
+              defaultValue: '{{hours}} saatlik tahmin',
+              hours: intervalHours,
+            })}
           </h3>
 
           <div
@@ -139,7 +154,12 @@ export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasPr
                   role="img"
                   aria-labelledby={`${chartTitleId} ${chartDescriptionId}`}
                 >
-                  <title id={chartTitleId}>{t('weather.hourlyForecast')}</title>
+                  <title id={chartTitleId}>
+                    {t('hava81.forecastAtlas.intervalForecast', {
+                      defaultValue: '{{hours}} saatlik tahmin',
+                      hours: intervalHours,
+                    })}
+                  </title>
                   <desc id={chartDescriptionId}>
                     {t('hava81.forecastAtlas.chartSummary', {
                       min: chart.min,
@@ -191,7 +211,7 @@ export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasPr
               {chart?.firstPrecipitation ? (
                 <span className="hava81-forecast-atlas__sr-only">
                   {t('hava81.forecastAtlas.precipitationAt', {
-                    time: timeFormatter.format(chart.firstPrecipitation.time),
+                    time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
                     percent: Math.round(chart.firstPrecipitation.precipitation * 100),
                   })}
                 </span>
@@ -208,7 +228,7 @@ export function ForecastAtlas({ daily, hourly, className = '' }: ForecastAtlasPr
                   return (
                     <li className="hava81-forecast-atlas__hour" key={`hour-${hour.timestamp}`}>
                       <time dateTime={hour.time.toISOString()}>
-                        {timeFormatter.format(hour.time)}
+                        {timeFormatter.format(atLocationTime(hour.time))}
                       </time>
                       <WeatherSymbol
                         code={hour.icon}

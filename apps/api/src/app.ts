@@ -8,6 +8,7 @@ import { ZodError } from 'zod';
 import { parseEnv, type AppConfig } from './config/env';
 import { MemoryTtlCache, type AsyncCache } from './core/cache';
 import { AppError, toErrorEnvelope } from './core/errors';
+import { ResilientWeatherProvider } from './core/resilient-provider';
 import { registerHealthRoutes } from './modules/health/health.routes';
 import { registerWeatherRoutes } from './modules/weather/weather.routes';
 import { WeatherService } from './modules/weather/weather.service';
@@ -122,12 +123,34 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
   });
 
   const cache = options.cache ?? new MemoryTtlCache(env.CACHE_MAX_ENTRIES);
-  const provider = options.provider ?? new OpenWeatherProvider(env);
+  const provider = options.provider ?? (() => {
+    const primary = new OpenWeatherProvider(env);
+    const fallback = env.OPENWEATHER_FALLBACK_API_KEY
+      ? new OpenWeatherProvider(
+          {
+            ...env,
+            OPENWEATHER_API_KEY: env.OPENWEATHER_FALLBACK_API_KEY,
+            OPENWEATHER_BASE_URL: env.OPENWEATHER_FALLBACK_BASE_URL ?? env.OPENWEATHER_BASE_URL,
+          },
+          fetch,
+          'OpenWeatherFallback',
+        )
+      : undefined;
+    return new ResilientWeatherProvider(primary, fallback, {
+      retryCount: env.PROVIDER_RETRY_COUNT,
+      failureThreshold: env.PROVIDER_CIRCUIT_FAILURE_THRESHOLD,
+      resetMs: env.PROVIDER_CIRCUIT_RESET_MS,
+    });
+  })();
   const weatherService = new WeatherService(provider, cache, env);
 
   await app.register(
     async (api) => {
-      await registerHealthRoutes(api, cache);
+      await registerHealthRoutes(
+        api,
+        cache,
+        provider instanceof ResilientWeatherProvider ? () => provider.getHealth() : () => ({ name: provider.name ?? 'custom-provider' }),
+      );
       await registerWeatherRoutes(api, weatherService);
     },
     { prefix: '/api/v1' },

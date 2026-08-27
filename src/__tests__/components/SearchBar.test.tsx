@@ -2,6 +2,7 @@
  * SearchBar Component Tests
  */
 
+import { vi } from 'vitest';
 import React from 'react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,12 +11,12 @@ import { SearchBar } from '../../components/SearchBar';
 describe('SearchBar', () => {
   const defaultProps = {
     value: '',
-    onChange: jest.fn(),
-    onSubmit: jest.fn(),
+    onChange: vi.fn(),
+    onSubmit: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render input field', () => {
@@ -31,7 +32,7 @@ describe('SearchBar', () => {
   });
 
   it('should call onChange when typing', async () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<SearchBar {...defaultProps} onChange={onChange} />);
 
     const input = screen.getByRole('combobox');
@@ -41,7 +42,7 @@ describe('SearchBar', () => {
   });
 
   it('should call onSubmit when form is submitted', async () => {
-    const onSubmit = jest.fn();
+    const onSubmit = vi.fn();
     render(<SearchBar {...defaultProps} value="İzmir" onSubmit={onSubmit} />);
 
     const form = screen.getByRole('search');

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { CacheStatus } from '../../core/cache';
 
 const latitudeSchema = z.coerce.number().min(-90).max(90);
 const longitudeSchema = z.coerce.number().min(-180).max(180);
@@ -51,6 +52,15 @@ export type CurrentWeatherQueryInput = z.infer<typeof currentWeatherQuerySchema>
 export type ForecastQueryInput = z.infer<typeof forecastQuerySchema>;
 export type AirQualityQueryInput = z.infer<typeof airQualityQuerySchema>;
 
+export interface DataMetaDto {
+  provider: string;
+  fetchedAt: string;
+  timezoneOffsetSeconds?: number;
+  intervalHours?: number;
+  cacheStatus?: CacheStatus;
+  freshForSeconds?: number;
+}
+
 export interface CurrentWeatherDto {
   cityName: string;
   country: string;
@@ -70,6 +80,7 @@ export interface CurrentWeatherDto {
   timestamp: string;
   coordinates: { lat: number; lon: number };
   clouds: number;
+  meta: DataMetaDto;
 }
 
 export interface ForecastDto {
@@ -85,8 +96,11 @@ export interface ForecastDto {
     time: string;
     temp: number;
     icon: string;
+    description: string;
     pop: number;
+    windSpeed: number;
   }>;
+  meta: DataMetaDto;
 }
 
 export interface AirQualityDto {
@@ -95,4 +109,5 @@ export interface AirQualityDto {
   pm25: number;
   pm10: number;
   o3: number;
+  meta: DataMetaDto;
 }

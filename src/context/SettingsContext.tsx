@@ -37,34 +37,40 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useLocalStorage<UserSettings>('user-settings', defaultSettings);
 
-  const updateSetting = useCallback(<K extends keyof UserSettings>(
-    key: K, 
-    value: UserSettings[K]
-  ) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  }, [setSettings]);
+  const updateSetting = useCallback(
+    <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+      setSettings(prev => ({ ...prev, [key]: value }));
+    },
+    [setSettings]
+  );
 
   const resetSettings = useCallback(() => {
     setSettings(defaultSettings);
   }, [setSettings]);
 
-  const convertTemperature = useCallback((celsius: number): number => {
-    if (settings.temperatureUnit === 'imperial') {
-      return Math.round((celsius * 9/5) + 32);
-    }
-    return celsius;
-  }, [settings.temperatureUnit]);
+  const convertTemperature = useCallback(
+    (celsius: number): number => {
+      if (settings.temperatureUnit === 'imperial') {
+        return Math.round((celsius * 9) / 5 + 32);
+      }
+      return celsius;
+    },
+    [settings.temperatureUnit]
+  );
 
-  const convertWindSpeed = useCallback((metersPerSecond: number): number => {
-    switch (settings.windSpeedUnit) {
-      case 'kmh':
-        return Math.round(metersPerSecond * 3.6);
-      case 'mph':
-        return Math.round(metersPerSecond * 2.237);
-      default:
-        return Math.round(metersPerSecond * 10) / 10;
-    }
-  }, [settings.windSpeedUnit]);
+  const convertWindSpeed = useCallback(
+    (metersPerSecond: number): number => {
+      switch (settings.windSpeedUnit) {
+        case 'kmh':
+          return Math.round(metersPerSecond * 3.6);
+        case 'mph':
+          return Math.round(metersPerSecond * 2.237);
+        default:
+          return Math.round(metersPerSecond * 10) / 10;
+      }
+    },
+    [settings.windSpeedUnit]
+  );
 
   const getTemperatureSymbol = useCallback((): string => {
     return settings.temperatureUnit === 'imperial' ? '°F' : '°C';
@@ -72,37 +78,40 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const getWindSpeedSymbol = useCallback((): string => {
     switch (settings.windSpeedUnit) {
-      case 'kmh': return 'km/h';
-      case 'mph': return 'mph';
-      default: return 'm/s';
+      case 'kmh':
+        return 'km/h';
+      case 'mph':
+        return 'mph';
+      default:
+        return 'm/s';
     }
   }, [settings.windSpeedUnit]);
 
-  const value = useMemo(() => ({
-    settings,
-    updateSetting,
-    resetSettings,
-    convertTemperature,
-    convertWindSpeed,
-    getTemperatureSymbol,
-    getWindSpeedSymbol,
-  }), [
-    settings, 
-    updateSetting, 
-    resetSettings, 
-    convertTemperature, 
-    convertWindSpeed,
-    getTemperatureSymbol,
-    getWindSpeedSymbol,
-  ]);
-
-  return (
-    <SettingsContext.Provider value={value}>
-      {children}
-    </SettingsContext.Provider>
+  const value = useMemo(
+    () => ({
+      settings,
+      updateSetting,
+      resetSettings,
+      convertTemperature,
+      convertWindSpeed,
+      getTemperatureSymbol,
+      getWindSpeedSymbol,
+    }),
+    [
+      settings,
+      updateSetting,
+      resetSettings,
+      convertTemperature,
+      convertWindSpeed,
+      getTemperatureSymbol,
+      getWindSpeedSymbol,
+    ]
   );
+
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSettings = (): SettingsContextType => {
   const context = useContext(SettingsContext);
   if (!context) {

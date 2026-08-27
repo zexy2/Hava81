@@ -26,6 +26,8 @@ i18n.use(initReactI18next).init({
   },
   lng: getStoredLanguage(),
   fallbackLng: 'tr',
+  debug: false,
+  showSupportNotice: false,
   interpolation: {
     escapeValue: false,
   },

@@ -19,6 +19,7 @@ import {
 type FetchImplementation = typeof fetch;
 
 export class OpenWeatherProvider implements WeatherProvider {
+  readonly name: string;
   private readonly baseUrl: string;
 
   constructor(
@@ -27,7 +28,9 @@ export class OpenWeatherProvider implements WeatherProvider {
       'OPENWEATHER_API_KEY' | 'OPENWEATHER_BASE_URL' | 'OPENWEATHER_TIMEOUT_MS'
     >,
     private readonly fetchImpl: FetchImplementation = fetch,
+    name = 'OpenWeather',
   ) {
+    this.name = name;
     this.baseUrl = config.OPENWEATHER_BASE_URL.replace(/\/$/, '');
   }
 

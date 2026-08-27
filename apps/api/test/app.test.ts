@@ -226,3 +226,26 @@ test('OpenWeather adapter rejects malformed upstream responses', async () => {
     (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
   );
 });
+
+
+test('OpenWeather forecast accepts entries without optional visibility', async () => {
+  const payload = structuredClone(forecastFixture);
+  delete payload.list[0].visibility;
+
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  const result = await provider.getForecast({
+    lat: 41.01,
+    lon: 28.97,
+    units: 'metric',
+    lang: 'tr',
+  });
+
+  assert.equal(result.list.length, 1);
+  assert.equal(result.list[0].visibility, undefined);
+});

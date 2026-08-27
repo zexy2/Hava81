@@ -1,9 +1,9 @@
-import { useId, useMemo } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
-import { normalizePrecipitationProbability } from '../../utils/precipitation';
+import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherSymbol } from './WeatherSymbol';
 import './WeatherDecisionField.css';
 
@@ -14,13 +14,6 @@ export interface WeatherDecisionFieldProps {
   className?: string;
 }
 
-type MaterialChange =
-  | { kind: 'precipitation'; point: HourlyForecast; probability: number }
-  | { kind: 'warming'; point: HourlyForecast }
-  | { kind: 'cooling'; point: HourlyForecast }
-  | { kind: 'stable' }
-  | { kind: 'unavailable' };
-
 const AIR_QUALITY_LABEL_KEYS = [
   'airQuality.good',
   'airQuality.moderate',
@@ -28,35 +21,6 @@ const AIR_QUALITY_LABEL_KEYS = [
   'airQuality.unhealthy',
   'airQuality.veryUnhealthy',
 ] as const;
-
-const getMaterialChange = (
-  currentTemperature: number,
-  hourly: HourlyForecast[]
-): MaterialChange => {
-  const forecastWindow = hourly.slice(0, 12);
-
-  if (forecastWindow.length === 0) {
-    return { kind: 'unavailable' };
-  }
-
-  for (const point of forecastWindow) {
-    const probability = normalizePrecipitationProbability(point.pop);
-    if (probability >= 0.35) {
-      return { kind: 'precipitation', point, probability };
-    }
-
-    const temperatureDelta = point.temp - currentTemperature;
-    if (temperatureDelta >= 4) {
-      return { kind: 'warming', point };
-    }
-
-    if (temperatureDelta <= -4) {
-      return { kind: 'cooling', point };
-    }
-  }
-
-  return { kind: 'stable' };
-};
 
 export function WeatherDecisionField({
   weather,
@@ -77,9 +41,9 @@ export function WeatherDecisionField({
 
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const cityMetadata = useMemo(() => getCityMetadata(weather.cityName), [weather.cityName]);
-  const materialChange = useMemo(
-    () => getMaterialChange(weather.temperature, hourly),
-    [hourly, weather.temperature]
+  const decisions = useMemo(
+    () => getWeatherDecisions({ weather, hourly, airQuality }),
+    [airQuality, hourly, weather]
   );
 
   const temperatureSymbol = getTemperatureSymbol();
@@ -101,65 +65,103 @@ export function WeatherDecisionField({
         month: 'long',
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'UTC',
       }),
     [locale]
   );
   const timeFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }),
-    [locale]
-  );
-  const percentageFormatter = useMemo(
-    () => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }),
+    () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
     [locale]
   );
 
   const formatTemperature = (temperature: number): string =>
     `${numberFormatter.format(Math.round(convertTemperature(temperature)))}${temperatureSymbol}`;
 
+  const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
+
   const formatForecastTime = (time: Date): string => {
     const date = time instanceof Date ? time : new Date(time);
-    return Number.isNaN(date.getTime()) ? '—' : timeFormatter.format(date);
+    return Number.isNaN(date.getTime()) ? '—' : timeFormatter.format(atLocationTime(date));
   };
 
   const observedAt =
     weather.timestamp instanceof Date ? weather.timestamp : new Date(weather.timestamp);
   const observedAtText = Number.isNaN(observedAt.getTime())
     ? '—'
-    : dateFormatter.format(observedAt);
+    : dateFormatter.format(atLocationTime(observedAt));
   const observedAtDateTime = Number.isNaN(observedAt.getTime())
     ? undefined
     : observedAt.toISOString();
 
-  const nextChangeCopy = (() => {
-    switch (materialChange.kind) {
-      case 'precipitation':
-        return t('hava81.decision.change.precipitation', {
-          defaultValue: '{{time}} civarında yağış olasılığı {{probability}}.',
-          time: formatForecastTime(materialChange.point.time),
-          probability: percentageFormatter.format(materialChange.probability),
+  const decisionCopy = (decision: WeatherDecision): string => {
+    switch (decision.kind) {
+      case 'rain':
+        return t('hava81.decision.actions.rain', {
+          defaultValue: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
+          time: decision.time ? formatForecastTime(decision.time) : '—',
+          probability: Math.round((decision.value ?? 0) * 100),
         });
-      case 'warming':
-        return t('hava81.decision.change.warming', {
-          defaultValue: '{{time}} civarında sıcaklık {{temperature}} değerine çıkacak.',
-          time: formatForecastTime(materialChange.point.time),
-          temperature: formatTemperature(materialChange.point.temp),
+      case 'wind':
+        return t('hava81.decision.actions.wind', {
+          defaultValue: 'Rüzgâr {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
+          speed: (decision.value ?? 0).toFixed(1),
         });
-      case 'cooling':
-        return t('hava81.decision.change.cooling', {
-          defaultValue: '{{time}} civarında sıcaklık {{temperature}} değerine inecek.',
-          time: formatForecastTime(materialChange.point.time),
-          temperature: formatTemperature(materialChange.point.temp),
+      case 'heat':
+        return t('hava81.decision.actions.heat', {
+          defaultValue: 'Sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
+          temperature: Math.round(decision.value ?? 0),
+        });
+      case 'cold':
+        return t('hava81.decision.actions.cold', {
+          defaultValue: 'Sıcaklık {{temperature}}°C seviyesine inebilir; buzlanmaya karşı dikkat.',
+          temperature: Math.round(decision.value ?? 0),
+        });
+      case 'air-quality':
+        return t('hava81.decision.actions.airQuality', {
+          defaultValue: 'Hava kalitesi zayıf (AQI {{aqi}}/5); uzun süreli dış aktiviteyi azalt.',
+          aqi: decision.value ?? '—',
+        });
+      case 'uv':
+        return t('hava81.decision.actions.uv', {
+          defaultValue: 'UV indeksi {{uv}}; güneş koruması kullan.',
+          uv: decision.value ?? '—',
+        });
+      case 'outdoor-window':
+        return t('hava81.decision.actions.outdoor', {
+          defaultValue: '{{time}} civarı dışarıda olmak için daha sakin bir pencere görünüyor.',
+          time: decision.time ? formatForecastTime(decision.time) : '—',
         });
       case 'stable':
-        return t('hava81.decision.change.stable', {
-          defaultValue: 'Yakın tahmin aralığında belirgin bir değişim görünmüyor.',
-        });
-      case 'unavailable':
-        return t('hava81.decision.change.unavailable', {
-          defaultValue: 'Yakın saatler için değişim verisi henüz hazır değil.',
+        return t('hava81.decision.actions.stable', {
+          defaultValue: 'Yakın tahmin aralığında belirgin bir risk görünmüyor.',
         });
     }
-  })();
+  };
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const fetchedAt =
+    weather.meta.fetchedAt instanceof Date
+      ? weather.meta.fetchedAt
+      : new Date(weather.meta.fetchedAt);
+  const ageMinutes = Number.isNaN(fetchedAt.getTime())
+    ? null
+    : Math.max(0, Math.floor((now - fetchedAt.getTime()) / 60_000));
+  const staleAfterMs = (weather.meta.freshForSeconds ?? 300) * 1000;
+  const isStale = !Number.isNaN(fetchedAt.getTime()) && now - fetchedAt.getTime() > staleAfterMs;
+  const freshnessText =
+    ageMinutes === null
+      ? t('hava81.decision.freshness.unknown', { defaultValue: 'Güncellik bilinmiyor' })
+      : ageMinutes < 1
+        ? t('hava81.decision.freshness.now', { defaultValue: 'şimdi güncellendi' })
+        : t('hava81.decision.freshness.minutes', {
+            defaultValue: '{{count}} dk önce',
+            count: ageMinutes,
+          });
 
   const plateCode = cityMetadata ? String(cityMetadata.plateCode).padStart(2, '0') : '--';
   const currentTemperature = numberFormatter.format(
@@ -210,6 +212,14 @@ export function WeatherDecisionField({
             {t('hava81.decision.longitude', { defaultValue: 'Boylam' })}{' '}
             {coordinateFormatter.format(weather.coordinates.lon)}°
           </span>
+          <span aria-hidden="true">·</span>
+          <span>{weather.meta.provider}</span>
+          <span aria-hidden="true">·</span>
+          <span className={isStale ? 'is-stale' : undefined}>
+            {isStale
+              ? t('hava81.decision.freshness.stale', { defaultValue: 'Eski veri' })
+              : freshnessText}
+          </span>
         </div>
       </header>
 
@@ -242,7 +252,13 @@ export function WeatherDecisionField({
         <h3 id={changeHeadingId} className="hava81-decision-field__change-title">
           {t('hava81.decision.nextChange', { defaultValue: 'Sıradaki değişim' })}
         </h3>
-        <p className="hava81-decision-field__change-copy">{nextChangeCopy}</p>
+        <ul className="hava81-decision-field__decision-list">
+          {decisions.map((decision, index) => (
+            <li key={`${decision.kind}-${index}`} data-severity={decision.severity}>
+              {decisionCopy(decision)}
+            </li>
+          ))}
+        </ul>
       </aside>
 
       <dl className="hava81-decision-field__rail">

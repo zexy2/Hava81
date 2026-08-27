@@ -14,6 +14,11 @@ export const envSchema = z.object({
   OPENWEATHER_API_KEY: z.string().min(1, 'OPENWEATHER_API_KEY is required'),
   OPENWEATHER_BASE_URL: z.url().default('https://api.openweathermap.org/data/2.5'),
   OPENWEATHER_TIMEOUT_MS: integerFromEnv(8_000, 500, 30_000),
+  OPENWEATHER_FALLBACK_API_KEY: z.string().min(1).optional(),
+  OPENWEATHER_FALLBACK_BASE_URL: z.url().optional(),
+  PROVIDER_RETRY_COUNT: integerFromEnv(1, 0, 5),
+  PROVIDER_CIRCUIT_FAILURE_THRESHOLD: integerFromEnv(3, 1, 20),
+  PROVIDER_CIRCUIT_RESET_MS: integerFromEnv(30_000, 1_000, 300_000),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3000')

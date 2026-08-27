@@ -136,7 +136,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   // Location-based weather
   const locationAsync = useAsync(
     async () => {
-      const data = await weatherService.getCurrentLocationWeather();
+      const data = await weatherService.getCurrentLocationWeather(language);
       return data;
     },
     {

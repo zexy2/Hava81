@@ -1,22 +1,29 @@
+import { vi, type Mock } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { weatherService } from '../../api/weatherService';
 import { useForecast } from '../../hooks/useForecast';
 
-jest.mock('../../api/weatherService', () => ({
+vi.mock('../../api/weatherService', () => ({
   weatherService: {
-    getForecast: jest.fn(),
-    getAirQuality: jest.fn(),
+    getForecast: vi.fn(),
+    getAirQuality: vi.fn(),
   },
 }));
 
 describe('useForecast', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (weatherService.getForecast as jest.Mock).mockResolvedValue({
+    vi.clearAllMocks();
+    (weatherService.getForecast as Mock).mockResolvedValue({
       daily: [],
       hourly: [{ time: new Date('2026-07-14T12:00:00.000Z'), temp: 24, icon: '01d', pop: 0.1 }],
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 3,
+      },
     });
-    (weatherService.getAirQuality as jest.Mock).mockResolvedValue({
+    (weatherService.getAirQuality as Mock).mockResolvedValue({
       aqi: 1,
       aqiLabel: 'Good',
       pm25: 5,
@@ -39,21 +46,17 @@ describe('useForecast', () => {
   });
 
   it('keeps only the latest city request when responses complete out of order', async () => {
-    let resolveFirst: (value: {
-      daily: never[];
-      hourly: Array<{ time: Date; temp: number; icon: string; pop: number }>;
-    }) => void;
+    type ForecastResponse = Awaited<ReturnType<typeof weatherService.getForecast>>;
+    let resolveFirst: (value: ForecastResponse) => void;
     let resolveSecond: typeof resolveFirst;
-    const first = new Promise<any>(resolve => {
+    const first = new Promise<ForecastResponse>(resolve => {
       resolveFirst = resolve;
     });
-    const second = new Promise<any>(resolve => {
+    const second = new Promise<ForecastResponse>(resolve => {
       resolveSecond = resolve;
     });
 
-    (weatherService.getForecast as jest.Mock)
-      .mockReturnValueOnce(first)
-      .mockReturnValueOnce(second);
+    (weatherService.getForecast as Mock).mockReturnValueOnce(first).mockReturnValueOnce(second);
 
     const { result } = renderHook(() => useForecast('tr'));
 
@@ -66,6 +69,12 @@ describe('useForecast', () => {
       resolveSecond!({
         daily: [],
         hourly: [{ time: new Date(), temp: 30, icon: '01d', pop: 0 }],
+        meta: {
+          provider: 'OpenWeather',
+          fetchedAt: new Date(),
+          timezoneOffsetSeconds: 10800,
+          intervalHours: 3,
+        },
       });
     });
     await waitFor(() => expect(result.current.hourly[0]?.temp).toBe(30));
@@ -74,6 +83,12 @@ describe('useForecast', () => {
       resolveFirst!({
         daily: [],
         hourly: [{ time: new Date(), temp: 10, icon: '01d', pop: 0 }],
+        meta: {
+          provider: 'OpenWeather',
+          fetchedAt: new Date(),
+          timezoneOffsetSeconds: 10800,
+          intervalHours: 3,
+        },
       });
     });
 

@@ -17,6 +17,7 @@
 
 # production
 /build
+/dist
 apps/api/dist
 
 # misc
@@ -30,3 +31,7 @@ apps/api/dist
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/graphify-out
+/playwright-report
+/test-results
+/.lighthouseci

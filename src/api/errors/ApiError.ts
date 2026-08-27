@@ -29,22 +29,22 @@ export class ApiError extends Error implements AppError {
     this.details = options.details;
     this.timestamp = new Date();
     this.retryable = options.retryable ?? this.isRetryableError(code, options.statusCode);
-    
+
     // Maintain proper stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ApiError);
     }
-    
+
     // Preserve original error cause
     if (options.cause) {
-      (this as any).cause = options.cause;
+      (this as Error & { cause?: Error }).cause = options.cause;
     }
   }
 
   private isRetryableError(code: ErrorCode, statusCode?: number): boolean {
     const retryableCodes = [ErrorCode.NETWORK_ERROR, ErrorCode.RATE_LIMIT];
     const retryableStatusCodes = [408, 429, 500, 502, 503, 504];
-    
+
     return (
       retryableCodes.includes(code) ||
       (statusCode !== undefined && retryableStatusCodes.includes(statusCode))
@@ -82,14 +82,10 @@ export class ApiError extends Error implements AppError {
   }
 
   static networkError(originalError?: Error): ApiError {
-    return new ApiError(
-      'İnternet bağlantınızı kontrol edin',
-      ErrorCode.NETWORK_ERROR,
-      {
-        retryable: true,
-        cause: originalError,
-      }
-    );
+    return new ApiError('İnternet bağlantınızı kontrol edin', ErrorCode.NETWORK_ERROR, {
+      retryable: true,
+      cause: originalError,
+    });
   }
 
   static cityNotFound(city: string): ApiError {

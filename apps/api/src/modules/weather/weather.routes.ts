@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import type { CacheStatus } from '../../core/cache';
 import {
   airQualityQuerySchema,
   currentWeatherQuerySchema,
@@ -19,6 +20,15 @@ const cacheHeaders = (reply: { header(name: string, value: string): unknown }, s
   reply.header('cache-control', `public, max-age=${maxAge}`);
 };
 
+const withCacheMeta = <T extends { meta: object }>(
+  value: T,
+  cacheStatus: CacheStatus,
+  freshForSeconds: number,
+): T => ({
+  ...value,
+  meta: { ...value.meta, cacheStatus, freshForSeconds },
+});
+
 export const registerWeatherRoutes = async (
   app: FastifyInstance,
   service: WeatherService,
@@ -37,7 +47,7 @@ export const registerWeatherRoutes = async (
       const query = currentWeatherQuerySchema.parse(request.query);
       const result = await service.getCurrent(query);
       cacheHeaders(reply, result.status, 60);
-      return result.value;
+      return withCacheMeta(result.value, result.status, 60);
     },
   );
 
@@ -46,7 +56,7 @@ export const registerWeatherRoutes = async (
     {
       schema: {
         tags: ['Weather'],
-        summary: 'Koordinata göre saatlik ve beş günlük tahmini getirir',
+        summary: 'Koordinata göre üç saatlik ve beş günlük tahmini getirir',
         querystring: forecastQueryJsonSchema,
         response: { 200: forecastResponseJsonSchema },
       },
@@ -55,7 +65,7 @@ export const registerWeatherRoutes = async (
       const query = forecastQuerySchema.parse(request.query);
       const result = await service.getForecast(query);
       cacheHeaders(reply, result.status, 300);
-      return result.value;
+      return withCacheMeta(result.value, result.status, 300);
     },
   );
 
@@ -73,7 +83,7 @@ export const registerWeatherRoutes = async (
       const query = airQualityQuerySchema.parse(request.query);
       const result = await service.getAirQuality(query);
       cacheHeaders(reply, result.status, 120);
-      return result.value;
+      return withCacheMeta(result.value, result.status, 120);
     },
   );
 };
