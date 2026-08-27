@@ -19,6 +19,9 @@ const coordinateKey = (lat: number, lon: number): string =>
 
 const normalizeCity = (city: string): string => city.toLocaleLowerCase('tr-TR').trim();
 
+const dateKeyAtOffset = (unixSeconds: number, offsetSeconds: number): string =>
+  new Date((unixSeconds + offsetSeconds) * 1_000).toISOString().slice(0, 10);
+
 export class WeatherService {
   constructor(
     private readonly provider: WeatherProvider,
@@ -66,6 +69,11 @@ export class WeatherService {
         timestamp: new Date(raw.dt * 1_000).toISOString(),
         coordinates: raw.coord,
         clouds: raw.clouds.all,
+        meta: {
+          provider: this.provider.name ?? 'weather-provider',
+          fetchedAt: new Date().toISOString(),
+          timezoneOffsetSeconds: raw.timezone,
+        },
       };
     });
   }
@@ -96,21 +104,28 @@ export class WeatherService {
         pm25: sample.components.pm2_5,
         pm10: sample.components.pm10,
         o3: sample.components.o3,
+        meta: {
+          provider: this.provider.name ?? 'weather-provider',
+          fetchedAt: new Date().toISOString(),
+        },
       };
     });
   }
 
   private normalizeForecast(raw: ForecastUpstream): ForecastDto {
+    const timezoneOffsetSeconds = raw.city.timezone ?? 0;
     const hourly = raw.list.slice(0, 8).map((item) => ({
       time: new Date(item.dt * 1_000).toISOString(),
       temp: Math.round(item.main.temp),
       icon: item.weather[0].icon,
+      description: item.weather[0].description,
       pop: Math.round(item.pop * 100),
+      windSpeed: item.wind.speed,
     }));
 
     const dailyGroups = new Map<string, ForecastUpstream['list']>();
     for (const item of raw.list) {
-      const dateKey = item.dt_txt.split(' ')[0];
+      const dateKey = dateKeyAtOffset(item.dt, timezoneOffsetSeconds);
       const group = dailyGroups.get(dateKey) ?? [];
       group.push(item);
       dailyGroups.set(dateKey, group);
@@ -120,10 +135,14 @@ export class WeatherService {
       .slice(0, 5)
       .map(([date, items]) => {
         const temperatures = items.map((item) => item.main.temp);
-        const representative = items.find((item) => item.dt_txt.includes('12:00')) ?? items[0];
+        const representative = items.reduce((best, item) => {
+          const localHour = new Date((item.dt + timezoneOffsetSeconds) * 1_000).getUTCHours();
+          const bestHour = new Date((best.dt + timezoneOffsetSeconds) * 1_000).getUTCHours();
+          return Math.abs(localHour - 12) < Math.abs(bestHour - 12) ? item : best;
+        }, items[0]);
 
         return {
-          date: new Date(`${date}T00:00:00.000Z`).toISOString(),
+          date,
           tempMin: Math.round(Math.min(...temperatures)),
           tempMax: Math.round(Math.max(...temperatures)),
           icon: representative.weather[0].icon,
@@ -132,6 +151,15 @@ export class WeatherService {
         };
       });
 
-    return { daily, hourly };
+    return {
+      daily,
+      hourly,
+      meta: {
+        provider: this.provider.name ?? 'weather-provider',
+        fetchedAt: new Date().toISOString(),
+        timezoneOffsetSeconds,
+        intervalHours: 3,
+      },
+    };
   }
 }

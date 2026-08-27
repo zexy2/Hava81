@@ -21,9 +21,10 @@ export interface ForecastQuery extends CoordinateQuery {
   lang: WeatherLanguage;
 }
 
-export interface AirQualityQuery extends CoordinateQuery {}
+export type AirQualityQuery = CoordinateQuery;
 
 export interface WeatherProvider {
+  readonly name?: string;
   getCurrent(query: CurrentWeatherQuery): Promise<CurrentWeatherUpstream>;
   getForecast(query: ForecastQuery): Promise<ForecastUpstream>;
   getAirQuality(query: AirQualityQuery): Promise<AirQualityUpstream>;

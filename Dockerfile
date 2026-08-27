@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -7,13 +7,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --silent --legacy-peer-deps
+RUN npm ci --silent
 
 # Copy source code
 COPY . .
 
 # The package homepage targets GitHub Pages; containers serve the app at /.
-ENV PUBLIC_URL=.
 
 # Build the application
 RUN npm run build
@@ -25,7 +24,7 @@ FROM nginx:alpine AS production
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder
-COPY --from=builder /app/build /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

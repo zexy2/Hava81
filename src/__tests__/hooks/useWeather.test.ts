@@ -2,14 +2,15 @@
  * useWeather Hook Tests
  */
 
+import { vi, type Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useWeather } from '../../hooks/useWeather';
 import { weatherService } from '../../api/weatherService';
 
 // Mock the API
-jest.mock('../../api/weatherService', () => ({
+vi.mock('../../api/weatherService', () => ({
   weatherService: {
-    getCurrentWeather: jest.fn().mockResolvedValue({
+    getCurrentWeather: vi.fn().mockResolvedValue({
       cityName: 'İzmir',
       country: 'TR',
       temperature: 22,
@@ -26,7 +27,7 @@ jest.mock('../../api/weatherService', () => ({
       timestamp: new Date(),
       coordinates: { lat: 38.42, lon: 27.14 },
     }),
-    getCurrentLocationWeather: jest.fn().mockResolvedValue({
+    getCurrentLocationWeather: vi.fn().mockResolvedValue({
       cityName: 'Ankara',
       country: 'TR',
       temperature: 18,
@@ -48,15 +49,15 @@ jest.mock('../../api/weatherService', () => ({
 
 describe('useWeather', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
-    (weatherService.getCurrentWeather as jest.Mock).mockResolvedValue({
+    (weatherService.getCurrentWeather as Mock).mockResolvedValue({
       cityName: 'İzmir',
       country: 'TR',
       temperature: 22,
       coordinates: { lat: 38.42, lon: 27.14 },
     });
-    (weatherService.getCurrentLocationWeather as jest.Mock).mockResolvedValue({
+    (weatherService.getCurrentLocationWeather as Mock).mockResolvedValue({
       cityName: 'Ankara',
       country: 'TR',
       temperature: 18,

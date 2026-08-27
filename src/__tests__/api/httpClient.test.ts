@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { httpClient } from '../../api/httpClient';
 import { ErrorCode } from '../../types';
 
@@ -7,23 +8,23 @@ const mockResponse = (body: unknown, init: { ok?: boolean; status?: number } = {
   ({
     ok: init.ok ?? true,
     status: init.status ?? 200,
-    json: jest.fn().mockResolvedValue(body),
+    json: vi.fn().mockResolvedValue(body),
   }) as unknown as Response;
 
 describe('httpClient BFF transport', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'debug').mockImplementation(() => undefined);
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
     httpClient.clearCache();
-    global.fetch = jest.fn();
+    global.fetch = vi.fn();
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('builds a relative BFF URL and reuses a valid GET cache entry', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue(mockResponse({ cityName: 'Izmir' }));
+    (global.fetch as Mock).mockResolvedValue(mockResponse({ cityName: 'Izmir' }));
 
     const first = await httpClient.get('/weather/current', { city: 'Izmir', units: 'metric' });
     const second = await httpClient.get('/weather/current', { city: 'Izmir', units: 'metric' });
@@ -39,7 +40,7 @@ describe('httpClient BFF transport', () => {
   });
 
   it('serializes JSON posts and sets their content type', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue(mockResponse({ accepted: true }));
+    (global.fetch as Mock).mockResolvedValue(mockResponse({ accepted: true }));
 
     await expect(httpClient.post('/events', { city: 'Izmir' })).resolves.toEqual({
       accepted: true,
@@ -57,7 +58,7 @@ describe('httpClient BFF transport', () => {
   });
 
   it('uses the structured BFF error message without retrying a 404', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue(
+    (global.fetch as Mock).mockResolvedValue(
       mockResponse(
         { error: { code: 'LOCATION_NOT_FOUND', message: 'City is outside Turkey' } },
         { ok: false, status: 404 }
@@ -74,9 +75,9 @@ describe('httpClient BFF transport', () => {
   });
 
   it('wraps unexpected transport failures as retryable network errors', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const transportError = new Error('socket closed');
-    (global.fetch as jest.Mock).mockRejectedValue(transportError);
+    (global.fetch as Mock).mockRejectedValue(transportError);
 
     await expect(httpClient.get('/weather/current', { city: 'Bursa' })).rejects.toMatchObject({
       code: ErrorCode.NETWORK_ERROR,

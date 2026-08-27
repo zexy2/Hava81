@@ -19,7 +19,7 @@ interface RetryState {
 }
 
 // Simple in-memory request cache
-const requestCache = new Map<string, { data: any; timestamp: number }>();
+const requestCache = new Map<string, { data: unknown; timestamp: number }>();
 
 /**
  * Sleep utility for retry delays
@@ -112,7 +112,7 @@ const fetchWithRetry = async <T>(
     const cached = requestCache.get(cacheKey);
     if (cached && isCacheValid(cached.timestamp)) {
       console.debug('[HTTP] Cache hit:', cacheKey);
-      return cached.data;
+      return cached.data as T;
     }
   }
 

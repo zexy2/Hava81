@@ -46,3 +46,7 @@ Thumbs.db
 .impeccable/
 .playwright-cli/
 output/
+graphify-out/
+playwright-report/
+test-results/
+.lighthouseci/

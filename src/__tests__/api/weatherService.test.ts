@@ -2,18 +2,19 @@
  * Weather Service Tests
  */
 
+import { vi, type Mock } from 'vitest';
 import { ApiError } from '../../api/errors/ApiError';
 import { httpClient } from '../../api/httpClient';
 import { weatherService } from '../../api/weatherService';
 import { ErrorCode } from '../../types';
 
-jest.mock('../../api/httpClient', () => ({
+vi.mock('../../api/httpClient', () => ({
   httpClient: {
-    get: jest.fn(),
+    get: vi.fn(),
   },
 }));
 
-const mockGet = httpClient.get as jest.Mock;
+const mockGet = httpClient.get as Mock;
 
 const serializedWeather = {
   cityName: 'Izmir',
@@ -34,6 +35,13 @@ const serializedWeather = {
   timestamp: '2026-07-14T12:00:00.000Z',
   coordinates: { lat: 38.42, lon: 27.14 },
   clouds: 0,
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: '2026-07-14T12:00:01.000Z',
+    timezoneOffsetSeconds: 10800,
+    cacheStatus: 'MISS',
+    freshForSeconds: 60,
+  },
 };
 
 const originalGeolocation = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
@@ -207,7 +215,7 @@ describe('weatherService BFF client', () => {
 
   it('uses browser coordinates with the expected geolocation options', async () => {
     mockGet.mockResolvedValue(serializedWeather);
-    const getCurrentPosition = jest.fn((success: PositionCallback) => {
+    const getCurrentPosition = vi.fn((success: PositionCallback) => {
       success({
         coords: { latitude: 41.01, longitude: 28.97 },
       } as GeolocationPosition);
@@ -244,7 +252,7 @@ describe('weatherService BFF client', () => {
     [1, 'Konum izni reddedildi'],
     [99, 'Konum hatası'],
   ])('maps geolocation error code %s', async (code, message) => {
-    const getCurrentPosition = jest.fn(
+    const getCurrentPosition = vi.fn(
       (_success: PositionCallback, failure: PositionErrorCallback) => {
         failure({ code } as GeolocationPositionError);
       }
@@ -261,7 +269,7 @@ describe('weatherService BFF client', () => {
     mockGet.mockResolvedValue({
       daily: [
         {
-          date: '2026-07-14T00:00:00.000Z',
+          date: '2026-07-14',
           tempMin: 18,
           tempMax: 27,
           icon: '01d',
@@ -275,8 +283,18 @@ describe('weatherService BFF client', () => {
           temp: 24,
           icon: '01d',
           pop: 5,
+          description: 'clear',
+          windSpeed: 3.2,
         },
       ],
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: '2026-07-14T12:00:01.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 3,
+        cacheStatus: 'MISS',
+        freshForSeconds: 300,
+      },
     });
 
     const result = await weatherService.getForecast(38.42, 27.14);
@@ -294,10 +312,20 @@ describe('weatherService BFF client', () => {
   });
 
   it('returns normalized air quality from the BFF', async () => {
-    const airQuality = { aqi: 1, aqiLabel: 'Good', pm25: 5, pm10: 8, o3: 20 };
+    const airQuality = {
+      aqi: 1,
+      aqiLabel: 'Good',
+      pm25: 5,
+      pm10: 8,
+      o3: 20,
+      meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:01.000Z' },
+    };
     mockGet.mockResolvedValue(airQuality);
 
-    await expect(weatherService.getAirQuality(38.42, 27.14)).resolves.toEqual(airQuality);
+    await expect(weatherService.getAirQuality(38.42, 27.14)).resolves.toMatchObject({
+      ...airQuality,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date('2026-07-14T12:00:01.000Z') },
+    });
     expect(mockGet).toHaveBeenCalledWith('/weather/air-quality', {
       lat: 38.42,
       lon: 27.14,

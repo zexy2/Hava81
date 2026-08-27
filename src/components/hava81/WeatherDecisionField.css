@@ -310,3 +310,26 @@
     height: 72px;
   }
 }
+
+.hava81-decision-field__decision-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hava81-decision-field__decision-list li {
+  padding-left: 0.75rem;
+  border-left: 2px solid currentColor;
+}
+
+.hava81-decision-field__decision-list li[data-severity='high'] {
+  font-weight: 650;
+}
+
+.hava81-decision-field__atlas-meta .is-stale {
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}

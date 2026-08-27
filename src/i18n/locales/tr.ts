@@ -86,6 +86,8 @@ export const tr = {
     },
     forecastAtlas: {
       title: 'Bugünün ritmi',
+
+      intervalForecast: '{{hours}} saatlik tahmin',
       hourlyRegion: 'Kaydırılabilir saatlik tahmin grafiği ve değerleri',
       chartSummary: 'Saatlik sıcaklık {{min}}{{unit}} ile {{max}}{{unit}} arasında değişiyor.',
       precipitationAt: '{{time}} saatinde yağış olasılığı yüzde {{percent}}.',

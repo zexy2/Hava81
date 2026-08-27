@@ -27,14 +27,17 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "./",
-  "start_url": "./",
-  "scope": "./",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#F3F6F4",
   "background_color": "#F3F6F4",
-  "categories": ["weather", "utilities"],
+  "categories": [
+    "weather",
+    "utilities"
+  ],
   "lang": "tr",
   "dir": "ltr",
   "prefer_related_applications": false,
@@ -43,7 +46,7 @@
       "name": "İstanbul Hava Durumu",
       "short_name": "İstanbul",
       "description": "İstanbul için hava durumunu görüntüle",
-      "url": "./?city=%C4%B0stanbul",
+      "url": "/istanbul",
       "icons": [
         {
           "src": "hava81-mark.svg",
@@ -57,7 +60,7 @@
       "name": "Ankara Hava Durumu",
       "short_name": "Ankara",
       "description": "Ankara için hava durumunu görüntüle",
-      "url": "./?city=Ankara",
+      "url": "/ankara",
       "icons": [
         {
           "src": "hava81-mark.svg",

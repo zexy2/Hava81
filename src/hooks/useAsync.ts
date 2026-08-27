@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { LoadingState, type AppError } from '../types';
+import { ErrorCode, LoadingState, type AppError } from '../types';
 import { ApiError } from '../api/errors/ApiError';
 
 interface AsyncState<T> {
@@ -33,7 +33,7 @@ export function useAsync<T, Args extends unknown[] = []>(
   } = {}
 ): UseAsyncReturn<T, Args> {
   const { immediate = false, immediateArgs, onSuccess, onError } = options;
-  
+
   const [state, setState] = useState<AsyncState<T>>({
     data: null,
     error: null,
@@ -71,7 +71,7 @@ export function useAsync<T, Args extends unknown[] = []>(
 
       try {
         const result = await asyncFunction(...args);
-        
+
         // Only update state if this is the latest call and component is mounted
         if (mountedRef.current && callId === lastCallIdRef.current) {
           setState({
@@ -85,17 +85,18 @@ export function useAsync<T, Args extends unknown[] = []>(
           });
           onSuccess?.(result);
         }
-        
+
         return result;
       } catch (error) {
-        const appError: AppError = error instanceof ApiError 
-          ? error.toJSON()
-          : {
-              code: 'UNKNOWN' as any,
-              message: error instanceof Error ? error.message : 'Beklenmeyen hata',
-              timestamp: new Date(),
-              retryable: false,
-            };
+        const appError: AppError =
+          error instanceof ApiError
+            ? error.toJSON()
+            : {
+                code: ErrorCode.UNKNOWN,
+                message: error instanceof Error ? error.message : 'Beklenmeyen hata',
+                timestamp: new Date(),
+                retryable: false,
+              };
 
         if (mountedRef.current && callId === lastCallIdRef.current) {
           setState({
@@ -109,7 +110,7 @@ export function useAsync<T, Args extends unknown[] = []>(
           });
           onError?.(appError);
         }
-        
+
         return null;
       }
     },
@@ -137,7 +138,7 @@ export function useAsync<T, Args extends unknown[] = []>(
     if (immediate && immediateArgs) {
       execute(...immediateArgs);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [immediate]);
 
   return {

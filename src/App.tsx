@@ -9,13 +9,15 @@ import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { ForecastAtlas } from './components/hava81/ForecastAtlas';
 import { EnvironmentRail } from './components/hava81/EnvironmentRail';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
+import { ComparePanel } from './components/hava81/ComparePanel';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useFavorites } from './hooks/useFavorites';
 import { createAppShortcuts, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
 import type { FavoriteCity } from './types/weather.types';
+import { cityFromPathname, cityPath } from './utils/cityRoute';
 import './styles/App.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
@@ -95,6 +97,10 @@ const App: React.FC = () => {
   const mapRegionRef = useRef<HTMLElement>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
 
+  const [initialCity] = useState(
+    () => cityFromPathname(window.location.pathname)?.name ?? 'İstanbul'
+  );
+
   const {
     city,
     setCity,
@@ -105,11 +111,17 @@ const App: React.FC = () => {
     fetchCurrentLocation,
     clearError,
     recentSearches,
-  } = useWeather({ initialCity: 'İstanbul', language: settings.language });
+  } = useWeather({ initialCity, language: settings.language });
 
   const forecast = useForecast(settings.language);
   const fetchForecast = forecast.fetch;
-  const [favorites, setFavorites] = useLocalStorage<FavoriteCity[]>('favorites', []);
+  const {
+    favorites,
+    isFavorite,
+    addFavorite: handleAddFavorite,
+    removeFavorite: handleRemoveFavorite,
+    toggleFavorite: handleToggleFavorite,
+  } = useFavorites(weather);
 
   useEffect(() => {
     if (!isLoading || weather) {
@@ -154,63 +166,32 @@ const App: React.FC = () => {
     openSearch();
   }, [isMobileSearchOpen, openSearch]);
 
-  const isFavorite = useMemo(
-    () => Boolean(weather && favorites.some(favorite => favorite.name === weather.cityName)),
-    [favorites, weather]
-  );
-
-  const handleAddFavorite = useCallback(() => {
-    if (!weather) return;
-
-    const favorite: FavoriteCity = {
-      name: weather.cityName,
-      lat: weather.coordinates.lat,
-      lon: weather.coordinates.lon,
-      temp: weather.temperature,
-      icon: weather.icon,
+  useEffect(() => {
+    const handlePopState = () => {
+      const routeCity = cityFromPathname(window.location.pathname);
+      if (routeCity) fetchWeather(routeCity.name);
     };
-
-    setFavorites(current => {
-      if (current.some(item => item.name === weather.cityName)) return current;
-      return [...current, favorite];
-    });
-  }, [setFavorites, weather]);
-
-  const handleRemoveFavorite = useCallback(
-    (name: string) => {
-      setFavorites(current => current.filter(favorite => favorite.name !== name));
-    },
-    [setFavorites]
-  );
-
-  const handleToggleFavorite = useCallback(() => {
-    if (!weather) return;
-    if (isFavorite) {
-      handleRemoveFavorite(weather.cityName);
-      return;
-    }
-    handleAddFavorite();
-  }, [handleAddFavorite, handleRemoveFavorite, isFavorite, weather]);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [fetchWeather]);
 
   useEffect(() => {
     if (!weather) return;
-
-    setFavorites(current => {
-      const index = current.findIndex(favorite => favorite.name === weather.cityName);
-      if (index < 0) return current;
-
-      const existing = current[index];
-      if (existing.temp === weather.temperature && existing.icon === weather.icon) {
-        return current;
+    const path = cityPath(weather.cityName);
+    if (path && window.location.pathname !== path) {
+      window.history.replaceState({ city: weather.cityName }, '', path);
+    }
+    document.title = `${weather.cityName} hava durumu — Hava81`;
+    if (path) {
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
       }
-
-      return current.map((favorite, favoriteIndex) =>
-        favoriteIndex === index
-          ? { ...favorite, temp: weather.temperature, icon: weather.icon }
-          : favorite
-      );
-    });
-  }, [setFavorites, weather]);
+      canonical.href = new URL(path, window.location.origin).toString();
+    }
+  }, [weather]);
 
   const shortcuts = useMemo(
     () =>
@@ -433,6 +414,9 @@ const App: React.FC = () => {
           </header>
 
           <main className="atlas-main" id="main-content" aria-busy={isLoading} ref={overviewRef}>
+            {activeNav === 'saved' ? (
+              <ComparePanel cities={favorites} language={settings.language} />
+            ) : null}
             <AnimatePresence initial={false}>
               {error && (
                 <motion.section
@@ -486,7 +470,11 @@ const App: React.FC = () => {
                       <div className="atlas-loading__rows" />
                     </section>
                   ) : (
-                    <ForecastAtlas daily={forecast.daily} hourly={forecast.hourly} />
+                    <ForecastAtlas
+                      daily={forecast.daily}
+                      hourly={forecast.hourly}
+                      meta={forecast.meta}
+                    />
                   )}
                 </div>
 

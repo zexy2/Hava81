@@ -81,6 +81,15 @@ export type WeatherIconCode =
   | '50d'
   | '50n'; // mist
 
+export interface WeatherDataMeta {
+  provider: string;
+  fetchedAt: Date;
+  timezoneOffsetSeconds?: number;
+  intervalHours?: number;
+  cacheStatus?: 'HIT' | 'MISS' | 'COALESCED';
+  freshForSeconds?: number;
+}
+
 // Processed/Normalized weather data for UI
 export interface NormalizedWeatherData {
   cityName: string;
@@ -101,6 +110,7 @@ export interface NormalizedWeatherData {
   timestamp: Date;
   coordinates: Coordinates;
   clouds: number;
+  meta: WeatherDataMeta;
 }
 
 // Forecast types
@@ -145,7 +155,9 @@ export interface HourlyForecast {
   time: Date;
   temp: number;
   icon: WeatherIconCode;
+  description?: string;
   pop: number; // Frontend-domain ratio from 0 to 1
+  windSpeed?: number;
 }
 
 // Air Quality types
@@ -173,6 +185,12 @@ export interface AirQuality {
   pm25: number;
   pm10: number;
   o3: number;
+  meta?: WeatherDataMeta;
+}
+
+export interface ForecastMeta extends WeatherDataMeta {
+  timezoneOffsetSeconds: number;
+  intervalHours: number;
 }
 
 // Favorite city
