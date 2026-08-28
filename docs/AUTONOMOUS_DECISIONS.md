@@ -117,3 +117,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Disk-pressure cleanup may remove only unattached rebuildable cache images without explicit approval. Preserve active Hava81 production and rollback/canary images, running containers, volumes and unrelated user data.
 
 - 2026-08-28 — Static SEO structured data describes stable page/product identity only. Do not serialize live weather, UV, health, warning or decision values into GitHub Pages HTML where they can become stale between deploys.
+
+- 2026-08-28 — CI action major upgrades must be validated in the same PR path where possible. Do not opportunistically major-upgrade main-only Docker publishing actions when pull-request CI skips that job; handle those with a separately validated release path.
