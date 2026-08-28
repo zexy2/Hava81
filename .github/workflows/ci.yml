@@ -151,3 +151,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+      - name: Verify public static shell
+        env:
+          HAVA81_PUBLIC_URL: https://hava81.zekiakgul.dev
+        run: bash scripts/verify-public-shell.sh
