@@ -245,9 +245,9 @@ export function WeatherDecisionField({
       </div>
 
       <aside className="hava81-decision-field__change" aria-labelledby={changeHeadingId}>
-        <h3 id={changeHeadingId} className="hava81-decision-field__change-title">
+        <h2 id={changeHeadingId} className="hava81-decision-field__change-title">
           {t('hava81.decision.nextChange', { defaultValue: 'Plan için öne çıkanlar' })}
-        </h3>
+        </h2>
         <ul className="hava81-decision-field__decision-list">
           {decisions.map((decision, index) => (
             <li key={`${decision.kind}-${index}`} data-severity={decision.severity}>

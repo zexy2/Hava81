@@ -156,15 +156,14 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-28 — Open-Meteo `uvIndexMax`/pollen context values are modeled next-24-hour maxima, not current observations. User-facing copy must state the model/window explicitly. UV presentation follows WHO bands (Low <3, Moderate 3–5, High 6–7, Very high 8–10, Extreme 11+) and sun-protection guidance starts at UVI 3; do not collapse 11+ into “Very high”. Decision-action translations must exist in both Turkish and English rather than relying on a Turkish component fallback.
 
-
 - 2026-08-28 — API production promotion uses exact-image blue-green semantics: validate the candidate on 4001, temporarily route public traffic to the healthy canary, recreate 4002 from that exact validated image without rebuilding, verify it directly, return Nginx to 4002, then restore the previous production image on 4001 so rollback remains a one-port switch rather than an image rebuild.
 
 - 2026-08-28 — Service-worker update checks must bypass the HTTP cache. Production currently serves `sw.js` with a 10-minute cache lifetime, so registration uses `updateViaCache: 'none'` to reduce stale-worker risk after deploys without depending on GitHub Pages response-header control.
 
 - 2026-08-28 — City comparison cards are exposed as a named list, not a partial ARIA table. A table/row role pair without cell semantics creates a misleading accessibility contract; use list/listitem for the actual card collection structure.
 
-
 - 2026-08-28 — Reusable recovery controls must declare type=button unless submission is intentional; ErrorBoundary retry must never inherit HTML button submit semantics from an ancestor form.
 
-
 - 2026-08-28 — Installable PWA raster icons use Hava81-specific asset URLs instead of scaffold-generic logo192.png/logo512.png names. Unique branded URLs reduce stale browser/PWA icon-cache collisions and make React-template regressions easier to detect.
+
+- 2026-08-28 — The primary decision surface keeps a sequential heading hierarchy: province name is the page `h1`, and its decision-change/planning-signals subregion is `h2`, not `h3`. Visual styling remains class-driven rather than heading-level-driven.
