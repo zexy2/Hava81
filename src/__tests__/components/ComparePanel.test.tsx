@@ -7,6 +7,7 @@ import '../../i18n';
 const api = vi.hoisted(() => ({
   getCurrentWeather: vi.fn(),
   getForecast: vi.fn(),
+  getHourlyForecast: vi.fn(),
   getAirQuality: vi.fn(),
 }));
 vi.mock('../../api/weatherService', () => ({ weatherService: api }));
@@ -67,6 +68,20 @@ describe('ComparePanel', () => {
         Promise.resolve(makeWeather(city, city === 'İstanbul' ? 24 : 28))
       );
     api.getForecast.mockReset().mockResolvedValue(forecast);
+    api.getHourlyForecast.mockReset().mockResolvedValue({
+      hourly: forecast.hourly.map((item, index) => ({
+        ...item,
+        time: new Date(item.time.getTime() + index * 60 * 60 * 1000),
+        apparentTemperature: item.temp,
+        humidity: 55,
+        precipitationMm: 0,
+        windGust: (item.windSpeed ?? 0) + 2,
+        uvIndex: 3,
+        visibility: 20000,
+        weatherCode: 0,
+      })),
+      meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
+    });
     api.getAirQuality
       .mockReset()
       .mockResolvedValue({ aqi: 2, aqiLabel: 'Orta', pm25: 8, pm10: 12, o3: 30 });
@@ -101,6 +116,7 @@ describe('ComparePanel', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
     expect(api.getForecast).toHaveBeenCalledTimes(2);
+    expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
 });

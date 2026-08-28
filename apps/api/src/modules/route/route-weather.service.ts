@@ -49,18 +49,30 @@ const interpolate = (
     return { lat: a.lat + (b.lat - a.lat) * f, lon: a.lon + (b.lon - a.lon) * f, fraction: f };
   });
 
-const scoreConditions = (temp: number, popPercent: number, wind: number) => {
-  let score = 100;
-  if (popPercent >= 80) score -= 45;
-  else if (popPercent >= 50) score -= 30;
-  else if (popPercent >= 25) score -= 12;
-  if (wind >= 17.2) score -= 35;
-  else if (wind >= 10.8) score -= 20;
-  else if (wind >= 8) score -= 8;
-  if (temp >= 40 || temp <= -5) score -= 45;
-  else if (temp >= 36 || temp <= 0) score -= 30;
-  else if (temp >= 32 || temp <= 5) score -= 15;
-  return Math.max(0, Math.min(100, Math.round(score)));
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+const smoothstep = (value: number, start: number, end: number) => {
+  const t = clamp((value - start) / (end - start), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+export const scoreRouteConditions = (temp: number, popPercent: number, wind: number) => {
+  const pop = clamp(popPercent / 100, 0, 1);
+  const thermal =
+    temp > 25
+      ? 48 * smoothstep(temp, 25, 43)
+      : temp < 18
+        ? 48 * smoothstep(18 - temp, 0, 28)
+        : 0;
+  const rain = 30 * smoothstep(pop, 0.12, 0.9);
+  const windPenalty = 34 * smoothstep(Math.max(0, wind), 4, 18);
+  const material = [thermal, rain, windPenalty].filter(value => value >= 8).length;
+  const compound = material >= 2 ? Math.min(8, (material - 1) * 4) : 0;
+  let score = Math.round(100 - thermal - rain - windPenalty - compound);
+  score = clamp(score, 0, 100);
+  if (temp >= 43 || temp <= -20) score = Math.min(score, 25);
+  else if (temp >= 40 || temp <= -10) score = Math.min(score, 40);
+  if (wind >= 20) score = Math.min(score, 30);
+  return score;
 };
 const pickNearest = (forecast: ForecastDto, timeMs: number) =>
   forecast.hourly.reduce(
@@ -97,7 +109,7 @@ export class RouteWeatherService {
       const segments = points.map((point, index) => {
         const etaMs = departure.getTime() + durationMinutes * 60_000 * point.fraction;
         const sample = pickNearest(forecasts[index], etaMs);
-        const score = scoreConditions(sample.temp, sample.pop, sample.windSpeed);
+        const score = scoreRouteConditions(sample.temp, sample.pop, sample.windSpeed);
         return {
           fraction: point.fraction,
           lat: point.lat,
@@ -108,14 +120,16 @@ export class RouteWeatherService {
           windSpeed: sample.windSpeed,
           description: sample.description,
           score,
-          risk: (score < 50
+          risk: (score < 55
             ? 'high'
-            : score < 70
+            : score < 75
               ? 'caution'
               : 'low') as RouteSegmentWeather['risk'],
         };
       });
-      const score = Math.round(segments.reduce((sum, s) => sum + s.score, 0) / segments.length);
+      const meanScore = segments.reduce((sum, segment) => sum + segment.score, 0) / segments.length;
+      const worstScore = Math.min(...segments.map(segment => segment.score));
+      const score = Math.round(meanScore * 0.8 + worstScore * 0.2);
       return { segments, score };
     };
 
@@ -132,7 +146,7 @@ export class RouteWeatherService {
       score: primary.score,
       segments: primary.segments,
       betterDeparture:
-        improvement >= 10
+        improvement >= 8
           ? { departure: laterDate.toISOString(), score: later.score, improvement }
           : undefined,
       disclaimer:

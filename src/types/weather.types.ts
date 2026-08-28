@@ -160,6 +160,13 @@ export interface HourlyForecast {
   description?: string;
   pop: number; // Frontend-domain ratio from 0 to 1
   windSpeed?: number;
+  apparentTemperature?: number;
+  humidity?: number;
+  precipitationMm?: number;
+  windGust?: number;
+  uvIndex?: number;
+  visibility?: number;
+  weatherCode?: number;
 }
 
 // Air Quality types

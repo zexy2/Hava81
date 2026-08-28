@@ -210,7 +210,7 @@ export const weatherService = {
       lang,
     });
     return {
-      hourly: response.hourly.slice(0, 24).map(item => ({
+      hourly: response.hourly.slice(0, 48).map(item => ({
         ...item,
         time: new Date(item.time),
         pop: normalizePrecipitationProbability(item.pop),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getWeatherDecisions } from '../../utils/weatherDecisions';
-import type { NormalizedWeatherData } from '../../types';
+import type { HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -24,43 +24,60 @@ const weather: NormalizedWeatherData = {
   meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
 };
 
-const point = (overrides: Partial<{ temp: number; pop: number; windSpeed: number }> = {}) => ({
+const point = (overrides: Partial<HourlyForecast> = {}): HourlyForecast => ({
   time: new Date('2026-08-28T12:00:00Z'),
-  temp: overrides.temp ?? 24,
-  icon: '01d' as const,
-  pop: overrides.pop ?? 0.1,
-  windSpeed: overrides.windSpeed ?? 4,
+  temp: 24,
+  icon: '01d',
+  pop: 0.1,
+  windSpeed: 4,
+  ...overrides,
 });
 
 describe('getWeatherDecisions', () => {
-  it('prioritizes heavy rain as a user action', () => {
-    const result = getWeatherDecisions({ weather, hourly: [point({ pop: 0.8 })] });
-    expect(result[0]).toMatchObject({ kind: 'rain', severity: 'high' });
+  it('uses actual hourly amount to recognize material rain even below the old probability threshold', () => {
+    const result = getWeatherDecisions({
+      weather,
+      hourly: [point({ pop: 0.55, precipitationMm: 5 })],
+    });
+    expect(result[0]).toMatchObject({ kind: 'rain', severity: 'high', amount: 5 });
   });
 
-  it('detects strong wind and heat', () => {
-    const result = getWeatherDecisions({ weather, hourly: [point({ temp: 36, windSpeed: 13 })] });
+  it('uses gusts and apparent temperature for wind and heat decisions', () => {
+    const result = getWeatherDecisions({
+      weather,
+      hourly: [point({ temp: 30, apparentTemperature: 41, windSpeed: 5, windGust: 20 })],
+    });
     expect(result.map(item => item.kind)).toEqual(expect.arrayContaining(['wind', 'heat']));
+    expect(result.find(item => item.kind === 'wind')?.value).toBe(20);
+    expect(result.find(item => item.kind === 'heat')).toMatchObject({ severity: 'high', value: 41 });
   });
 
-  it('flags poor air quality and proposes a calm outdoor window', () => {
+  it('does not advertise a good outdoor window while current air quality is poor', () => {
     const result = getWeatherDecisions({
       weather,
       hourly: [point({ temp: 20, pop: 0.05, windSpeed: 2 })],
       airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 30, pm10: 50, o3: 70 },
     });
-    expect(result.map(item => item.kind)).toEqual(
-      expect.arrayContaining(['air-quality', 'outdoor-window'])
-    );
+    expect(result.map(item => item.kind)).toContain('air-quality');
+    expect(result.map(item => item.kind)).not.toContain('outdoor-window');
   });
 
-  it('treats UV input as a modeled next-24-hour maximum, not a current reading', () => {
+  it('treats UV input as a modeled next-24-hour maximum when richer hourly UV is absent', () => {
     const result = getWeatherDecisions({
       weather,
       hourly: [],
       uvIndexMax: 7.2,
     });
     expect(result[0]).toMatchObject({ kind: 'uv', severity: 'moderate', value: 7.2 });
+  });
+
+  it('uses rich hourly UV when it is stronger than the context maximum', () => {
+    const result = getWeatherDecisions({
+      weather,
+      hourly: [point({ uvIndex: 9 })],
+      uvIndexMax: 6,
+    });
+    expect(result.find(item => item.kind === 'uv')).toMatchObject({ severity: 'high', value: 9 });
   });
 
   it('returns stable when no actionable signal exists and no outdoor point is present', () => {

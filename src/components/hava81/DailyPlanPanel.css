@@ -231,3 +231,94 @@
     justify-content: space-between;
   }
 }
+
+.daily-plan__explain {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: color-mix(in srgb, var(--color-atlas-field) 72%, transparent);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-md);
+}
+
+.daily-plan__explain-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.daily-plan__explain-head > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.daily-plan__explain-head span,
+.daily-plan__explain-head small {
+  color: var(--color-atlas-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.daily-plan__explain-head small {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-atlas-line);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.daily-plan__explain-head small[data-confidence='high'] {
+  color: var(--color-aegean);
+  border-color: color-mix(in srgb, var(--color-aegean) 45%, var(--color-atlas-line));
+}
+
+.daily-plan__impacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.daily-plan__impacts li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-atlas-paper);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-sm);
+}
+
+.daily-plan__impacts span {
+  color: var(--color-atlas-muted);
+  font-size: 0.78rem;
+}
+
+.daily-plan__impacts strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.daily-plan__explain > p,
+.daily-plan__stable {
+  margin: 0;
+  color: var(--color-atlas-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 47.99rem) {
+  .daily-plan__explain-head {
+    align-items: center;
+  }
+
+  .daily-plan__impacts {
+    grid-template-columns: 1fr;
+  }
+}

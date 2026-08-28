@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { buildDecisionShare } from '../../utils/shareDecision';
-import type { DecisionReasonCode, Hava81ScoreBand } from '../../domain/decision/types';
+import type {
+  DecisionReasonCode,
+  Hava81ScoreBand,
+  Hava81ScoreFactor,
+} from '../../domain/decision/types';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DailyPlanPanel.css';
 
@@ -29,8 +33,23 @@ const reasonKey: Record<DecisionReasonCode, string> = {
   'rain-risk': 'rainRisk',
   'strong-wind': 'strongWind',
   windy: 'windy',
+  'gusty-wind': 'gustyWind',
   'poor-air-quality': 'poorAirQuality',
   'sensitive-air-quality': 'sensitiveAirQuality',
+  'high-uv': 'highUv',
+  'low-visibility': 'lowVisibility',
+  'severe-weather': 'severeWeather',
+};
+
+const factorKey: Record<Hava81ScoreFactor, string> = {
+  thermal: 'thermal',
+  precipitation: 'precipitation',
+  wind: 'wind',
+  'air-quality': 'airQuality',
+  uv: 'uv',
+  visibility: 'visibility',
+  'severe-weather': 'severeWeather',
+  compound: 'compound',
 };
 
 export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelProps) {
@@ -121,10 +140,33 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         <strong>{nowOrLaterText}</strong>
         {plan.bestWindow ? (
-          <small>
-            {t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindow.time) })}
-          </small>
+          <small>{t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindow.time) })}</small>
         ) : null}
+      </div>
+
+      <div className="daily-plan__explain" aria-label={t('hava81.dailyPlan.explain.label')}>
+        <div className="daily-plan__explain-head">
+          <div>
+            <span>{t('hava81.dailyPlan.explain.eyebrow')}</span>
+            <strong>{t('hava81.dailyPlan.explain.title')}</strong>
+          </div>
+          <small data-confidence={plan.confidence}>
+            {t(`hava81.dailyPlan.confidence.${plan.confidence}`)}
+          </small>
+        </div>
+        {plan.impacts.length ? (
+          <ul className="daily-plan__impacts">
+            {plan.impacts.slice(0, 3).map(impact => (
+              <li key={impact.factor}>
+                <span>{t(`hava81.dailyPlan.factors.${factorKey[impact.factor]}`)}</span>
+                <strong>≈−{Math.max(1, Math.round(impact.penalty))}</strong>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="daily-plan__stable">{t('hava81.dailyPlan.explain.stable')}</p>
+        )}
+        <p>{t('hava81.dailyPlan.explain.method')}</p>
       </div>
 
       <div

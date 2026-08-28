@@ -52,18 +52,27 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     Promise.allSettled(
       selected.map(async city => {
         const weather = await weatherService.getCurrentWeather({ city: city.name, lang: language });
-        const [forecastResult, airResult] = await Promise.allSettled([
+        const [forecastResult, hourlyResult, airResult] = await Promise.allSettled([
           weatherService.getForecast(weather.coordinates.lat, weather.coordinates.lon, language),
+          weatherService.getHourlyForecast(weather.coordinates.lat, weather.coordinates.lon, language),
           weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language),
         ]);
         if (forecastResult.status !== 'fulfilled') throw forecastResult.reason;
         const airQuality = airResult.status === 'fulfilled' ? airResult.value : undefined;
-        const plan = buildDailyPlan({ weather, hourly: forecastResult.value.hourly, airQuality });
+        const decisionHourly =
+          hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
+            ? hourlyResult.value.hourly
+            : forecastResult.value.hourly;
+        const decisionMeta =
+          hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
+            ? hourlyResult.value.meta
+            : forecastResult.value.meta;
+        const plan = buildDailyPlan({ weather, hourly: decisionHourly, airQuality });
         const activityPlan = primaryActivity
           ? buildActivityPlan({
               activity: primaryActivity,
               weather,
-              hourly: forecastResult.value.hourly,
+              hourly: decisionHourly,
               airQuality,
               sensitivity: profile.temperatureSensitivity,
             })
@@ -71,8 +80,8 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
         return {
           weather,
           airQuality,
-          hourly: forecastResult.value.hourly,
-          meta: forecastResult.value.meta,
+          hourly: decisionHourly,
+          meta: decisionMeta,
           plan,
           activityPlan,
         } satisfies CompareRow;

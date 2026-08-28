@@ -92,24 +92,32 @@ export function WeatherDecisionField({
   const decisionCopy = (decision: WeatherDecision): string => {
     switch (decision.kind) {
       case 'rain':
-        return t('hava81.decision.actions.rain', {
-          defaultValue: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
-          time: decision.time ? formatForecastTime(decision.time) : '—',
-          probability: Math.round((decision.value ?? 0) * 100),
-        });
+        return decision.amount !== undefined
+          ? t('hava81.decision.actions.rainWithAmount', {
+              defaultValue:
+                '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} mm yağış bekleniyor.',
+              time: decision.time ? formatForecastTime(decision.time) : '—',
+              probability: Math.round((decision.value ?? 0) * 100),
+              amount: decision.amount.toFixed(1),
+            })
+          : t('hava81.decision.actions.rain', {
+              defaultValue: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
+              time: decision.time ? formatForecastTime(decision.time) : '—',
+              probability: Math.round((decision.value ?? 0) * 100),
+            });
       case 'wind':
         return t('hava81.decision.actions.wind', {
-          defaultValue: 'Rüzgâr {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
+          defaultValue: 'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
           speed: (decision.value ?? 0).toFixed(1),
         });
       case 'heat':
         return t('hava81.decision.actions.heat', {
-          defaultValue: 'Sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
+          defaultValue: 'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
           temperature: Math.round(decision.value ?? 0),
         });
       case 'cold':
         return t('hava81.decision.actions.cold', {
-          defaultValue: 'Sıcaklık {{temperature}}°C seviyesine inebilir; buzlanmaya karşı dikkat.',
+          defaultValue: 'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',
           temperature: Math.round(decision.value ?? 0),
         });
       case 'air-quality':
