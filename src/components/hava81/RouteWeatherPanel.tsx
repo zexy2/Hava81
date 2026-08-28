@@ -162,7 +162,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   <time>{formatTime(segment.eta)}</time>
                   <strong>{segment.score}</strong>
                   <span>
-                    {segment.temperature}° · %{segment.precipitationProbability}
+                    {segment.temperature}° · %{segment.precipitationProbability} ·{' '}
+                    {t('weather.wind')} {segment.windSpeed.toFixed(1)} m/s
                   </span>
                   <small>{segment.description}</small>
                 </article>

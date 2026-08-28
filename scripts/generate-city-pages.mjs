@@ -36,19 +36,28 @@ for (const name of names) {
   const slug = slugify(name);
   const title = `${name} hava durumu ve gün planı — Hava81`;
   const description = `${name} için güncel hava, 3 saatlik tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.`;
-  const canonical = `${baseUrl}/${slug}`;
+  const canonical = `${baseUrl}/${slug}/`;
   let html = baseHtml
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/?>)/, `$1${description}$2`);
-  html = html.replace(
-    '</head>',
-    `    <link rel="canonical" href="${canonical}" />\n    <meta property="og:type" content="website" />\n    <meta property="og:site_name" content="Hava81" />\n    <meta property="og:title" content="${title}" />\n    <meta property="og:description" content="${description}" />\n    <meta property="og:url" content="${canonical}" />\n    <meta name="twitter:card" content="summary" />\n  </head>`
-  );
+  html = html
+    .replace(
+      /<link rel="canonical" href="[^"]+" \/>/,
+      `<link rel="canonical" href="${canonical}" />`
+    )
+    .replace(
+      /<meta property="og:url" content="[^"]+" \/>/,
+      `<meta property="og:url" content="${canonical}" />`
+    )
+    .replace(
+      '</head>',
+      `    <meta property="og:type" content="website" />\n    <meta property="og:site_name" content="Hava81" />\n    <meta property="og:title" content="${title}" />\n    <meta property="og:description" content="${description}" />\n    <meta name="twitter:card" content="summary" />\n  </head>`
+    );
   await mkdir(join(dist, slug), { recursive: true });
   await writeFile(join(dist, slug, 'index.html'), html);
 }
 
-const urls = [`${baseUrl}/`, ...names.map(name => `${baseUrl}/${slugify(name)}`)];
+const urls = [`${baseUrl}/`, ...names.map(name => `${baseUrl}/${slugify(name)}/`)];
 await writeFile(
   join(dist, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(url => `  <url><loc>${url}</loc></url>`).join('\n')}\n</urlset>\n`

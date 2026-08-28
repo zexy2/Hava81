@@ -187,6 +187,9 @@ export const en = {
       pollenNote: 'Higher value across grass/olive pollen.',
       sea: 'Nearby coast',
       wave: 'Wave: {{height}} {{unit}}',
+      waveDetails:
+        'Wave {{height}} {{unit}} · period {{period}} {{periodUnit}} · direction {{direction}}{{directionUnit}}',
+      fetchedAt: 'model {{time}}',
       waveUnavailable: 'Wave data unavailable',
       next24h: 'Model maximum over the next 24 hours.',
       note: 'UV, dust, pollen and marine values are Open-Meteo model outputs; they are not local measurements or health/navigation safety guarantees.',
@@ -207,6 +210,12 @@ export const en = {
       blocked: 'Notifications blocked',
       rainTitle: '{{city}} · Umbrella alert',
       rainBody: 'There is a meaningful rain risk in the next hours; add an umbrella to your plan.',
+      windTitle: '{{city}} · Strong wind',
+      windBody:
+        'A strong-wind signal appears in the next hours; adjust outdoor plans and transport accordingly.',
+      airTitle: '{{city}} · Poor air quality',
+      airBody:
+        'Current air quality is poor in the Hava81 decision layer; reconsider prolonged outdoor plans.',
       waitTitle: '{{city}} · Waiting looks better',
       waitBody: 'The weather score improves by about {{improvement}} points in the next hours.',
       difficultTitle: '{{city}} · Difficult weather',

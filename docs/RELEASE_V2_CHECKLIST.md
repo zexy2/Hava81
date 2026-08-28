@@ -19,14 +19,14 @@ Target production window: 2026-08-31 14:00 TRT. If any blocker fails, defer to 2
 
 ## Blue/green production procedure
 
-1. Keep current API on `127.0.0.1:4000` untouched.
-2. Run `sudo deploy/oracle/deploy-green.sh` to build and start the release candidate on `127.0.0.1:4001`.
-3. Run `BASE_URL=http://127.0.0.1:4001/api/v1 node scripts/verify-81-cities.mjs`.
-4. Smoke-test current weather, forecast, air quality and health endpoints on port 4001.
-5. Run `sudo deploy/oracle/switch-api-traffic.sh 4001`.
-6. Observe the old frontend against the new API for at least 20 minutes.
-7. Only then merge/deploy the new frontend.
-8. Keep the old API on port 4000 for at least 24 hours.
+1. Read the active proxy target first; after v2.1 it is expected to be `127.0.0.1:4002`. Keep it untouched during canary build.
+2. Use the inactive slot as canary (currently `GREEN_PORT=4001 GREEN_PROJECT=hava81-green sudo -E deploy/oracle/deploy-green.sh`).
+3. Run `BASE_URL=http://127.0.0.1:4001/api/v1 node scripts/verify-81-cities.mjs` against the canary slot.
+4. Smoke-test current weather, forecast, air quality, context, route and health endpoints on the canary slot.
+5. Switch with `sudo deploy/oracle/switch-api-traffic.sh 4001` only after all canary gates pass.
+6. Verify public readiness, CORS, core city API and mobile frontend immediately after switching.
+7. Keep the previous 4002 API container intact as rollback until a later explicit cleanup decision.
+8. For the next API release, reverse the slot roles rather than deploying over the active port.
 
 ## Rollback
 

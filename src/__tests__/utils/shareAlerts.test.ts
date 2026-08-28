@@ -40,6 +40,13 @@ describe('sharing and alerts', () => {
     );
   });
 
+  it('prioritizes strong wind and poor air-quality thresholds before generic difficult-day alerts', () => {
+    expect(buildAlertCandidate('Ankara', plan({ wind: 'strong', score: 40 }))?.kind).toBe('wind');
+    expect(buildAlertCandidate('Ankara', plan({ airQuality: 'poor', score: 40 }))?.kind).toBe(
+      'air-quality'
+    );
+  });
+
   it('alerts when waiting materially improves the plan', () => {
     const candidate = buildAlertCandidate(
       'İzmir',

@@ -9,7 +9,7 @@ describe('city routes', () => {
   });
 
   it('resolves canonical city routes both ways', () => {
-    expect(cityPath('İstanbul')).toBe('/istanbul');
+    expect(cityPath('İstanbul')).toBe('/istanbul/');
     expect(cityFromPathname('/sanliurfa')?.name).toBe('Şanlıurfa');
   });
 

@@ -1,7 +1,7 @@
 import type { DailyPlan } from '../decision/types';
 
 export interface AlertCandidate {
-  kind: 'rain' | 'wait' | 'difficult';
+  kind: 'rain' | 'wind' | 'air-quality' | 'wait' | 'difficult';
   titleKey: string;
   bodyKey: string;
   data: Record<string, string | number>;
@@ -16,6 +16,24 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       bodyKey: 'hava81.alerts.rainBody',
       data: { city: cityName },
       signature: `${cityName}:rain`,
+    };
+  }
+  if (plan.wind === 'strong') {
+    return {
+      kind: 'wind',
+      titleKey: 'hava81.alerts.windTitle',
+      bodyKey: 'hava81.alerts.windBody',
+      data: { city: cityName },
+      signature: `${cityName}:wind`,
+    };
+  }
+  if (plan.airQuality === 'poor') {
+    return {
+      kind: 'air-quality',
+      titleKey: 'hava81.alerts.airTitle',
+      bodyKey: 'hava81.alerts.airBody',
+      data: { city: cityName },
+      signature: `${cityName}:air-quality`,
     };
   }
   if (plan.nowOrLater.kind === 'later' && (plan.nowOrLater.improvement ?? 0) >= 20) {
