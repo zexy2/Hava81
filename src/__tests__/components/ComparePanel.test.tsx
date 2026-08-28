@@ -96,6 +96,9 @@ describe('ComparePanel', () => {
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
     expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
+    expect(screen.getByRole('list', { name: /şehir karşılaştırması/i })).toBeVisible();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(api.getForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });

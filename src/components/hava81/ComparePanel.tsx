@@ -133,13 +133,13 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
       ) : loading && rows.length === 0 ? (
         <p role="status">{t('common.loading')}</p>
       ) : (
-        <div className="hava81-compare__table" role="table" aria-label={t('hava81.compare.title')}>
+        <div className="hava81-compare__table" role="list" aria-label={t('hava81.compare.title')}>
           {rows.map(row => {
             const maxPop = Math.max(0, ...row.hourly.slice(0, 6).map(point => point.pop));
             return (
-              <article
+              <div
                 className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
-                role="row"
+                role="listitem"
                 key={row.weather.cityName}
               >
                 <header>
@@ -181,7 +181,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                   ) : null}
                 </div>
                 <small>{row.weather.description}</small>
-              </article>
+              </div>
             );
           })}
         </div>

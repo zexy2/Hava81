@@ -353,7 +353,6 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Aligned UV categories with WHO guidance: added the missing Extreme 11+ band and applies sun-protection guidance from the Moderate band (UVI 3) upward without calling Moderate values “high”. Added boundary/component/i18n regression coverage.
 - Local gates after rebasing onto main with provider-resilience tests: lint, type-check and targeted decision/context/app integration tests pass. The branch is intentionally held from release until the API next-24-hour timestamp window is made timezone-safe; labeling an imprecise window as exact would undermine the trust correction.
 
-
 ## 2026-08-28 17:34 TRT — timezone-safe API blue-green promotion
 
 - Built the API candidate containing the timezone-safe Open-Meteo rolling-window fix and validated it on port 4001 before production traffic: live/ready 200 with `Cache-Control: no-store`, provider circuit closed, production-origin CORS allowed, zero restarts, five geographically varied city current-weather checks passed, İzmir marine context returned attributed modeled data, İstanbul→Ankara route returned five corridor segments, and the too-short route guard still returned 400.
@@ -365,3 +364,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 
 - After the timezone-safe API was promoted and document-language synchronization landed on main, rebased the modeled-context UI correction onto the combined baseline.
 - Final local gates pass: lint, type-check, 99/99 frontend tests, production dependency audit 0 vulnerabilities, production build with all 81 city pages, plus a desktop browser regression proving a persisted English session declares `html[lang=en]`, renders `Planning signals`, and contains no Turkish fallback phrases in the decision list.
+
+## 2026-08-28 18:03 TRT — comparison accessibility semantics
+
+- Audited the city-comparison card grid and found it exposed `role="table"` / `role="row"` without the cell/header semantics a real accessibility table requires. The visual UI is a set of peer city cards, not a tabular matrix.
+- Replaced the incomplete ARIA table model with a named `list` / `listitem` structure and added regression coverage asserting the comparison has exactly two list items and no table role.
+- Final combined gates after rebasing onto the modeled-UV main: lint, type-check, 100/100 frontend tests, production build with all 81 city pages, and production dependency audit with 0 vulnerabilities. The focused accessibility assertions also pass.
