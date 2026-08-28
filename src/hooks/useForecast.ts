@@ -13,6 +13,8 @@ import type {
 interface UseForecastReturn {
   daily: DailyForecast[];
   hourly: HourlyForecast[];
+  displayHourly: HourlyForecast[];
+  displayMeta: ForecastMeta | null;
   airQuality: AirQuality | null;
   contextSignals: ContextSignals | null;
   meta: ForecastMeta | null;
@@ -24,6 +26,8 @@ interface UseForecastReturn {
 export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [daily, setDaily] = useState<DailyForecast[]>([]);
   const [hourly, setHourly] = useState<HourlyForecast[]>([]);
+  const [displayHourly, setDisplayHourly] = useState<HourlyForecast[]>([]);
+  const [displayMeta, setDisplayMeta] = useState<ForecastMeta | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
   const [contextSignals, setContextSignals] = useState<ContextSignals | null>(null);
   const [meta, setMeta] = useState<ForecastMeta | null>(null);
@@ -45,22 +49,44 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       setError(null);
       setDaily([]);
       setHourly([]);
+      setDisplayHourly([]);
+      setDisplayMeta(null);
       setAirQuality(null);
       setContextSignals(null);
       setMeta(null);
 
       try {
-        const [forecastData, aqData, contextData] = await Promise.all([
-          weatherService.getForecast(coords.lat, coords.lon, language),
-          weatherService.getAirQuality(coords.lat, coords.lon, language).catch(() => null),
-          weatherService
-            .getContextSignals(coords.lat, coords.lon, supportsMarineContext(cityName))
-            .catch(() => null),
-        ]);
+        const hourlyRequest = weatherService
+          .getHourlyForecast(coords.lat, coords.lon, language)
+          .catch(() => null);
+        const airQualityRequest = weatherService
+          .getAirQuality(coords.lat, coords.lon, language)
+          .catch(() => null);
+        const contextRequest = weatherService
+          .getContextSignals(coords.lat, coords.lon, supportsMarineContext(cityName))
+          .catch(() => null);
+
+        const forecastData = await weatherService.getForecast(coords.lat, coords.lon, language);
         if (requestId !== requestIdRef.current) return;
+
+        // The three-hour OpenWeather forecast is the resilient baseline. Render it immediately;
+        // the optional real-hourly layer may upgrade the Atlas later without blocking decisions.
         setDaily(forecastData.daily);
         setHourly(forecastData.hourly);
+        setDisplayHourly(forecastData.hourly);
+        setDisplayMeta(forecastData.meta);
         setMeta(forecastData.meta);
+
+        const [hourlyData, aqData, contextData] = await Promise.all([
+          hourlyRequest,
+          airQualityRequest,
+          contextRequest,
+        ]);
+        if (requestId !== requestIdRef.current) return;
+        if (hourlyData?.hourly.length) {
+          setDisplayHourly(hourlyData.hourly);
+          setDisplayMeta(hourlyData.meta);
+        }
         setAirQuality(aqData);
         setContextSignals(contextData);
       } catch (err) {
@@ -73,7 +99,18 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
     [language]
   );
 
-  return { daily, hourly, airQuality, contextSignals, meta, isLoading, error, fetch };
+  return {
+    daily,
+    hourly,
+    displayHourly,
+    displayMeta,
+    airQuality,
+    contextSignals,
+    meta,
+    isLoading,
+    error,
+    fetch,
+  };
 }
 
 export default useForecast;

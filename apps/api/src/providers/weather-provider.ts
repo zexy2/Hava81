@@ -21,6 +21,29 @@ export interface ForecastQuery extends CoordinateQuery {
   lang: WeatherLanguage;
 }
 
+export interface HourlyForecastQuery extends CoordinateQuery {
+  lang: WeatherLanguage;
+}
+
+export interface HourlyForecastProviderResult {
+  timezoneOffsetSeconds: number;
+  hourly: Array<{
+    time: string;
+    temp: number;
+    icon: string;
+    description: string;
+    pop: number;
+    windSpeed: number;
+  }>;
+}
+
+export interface HourlyForecastProvider {
+  readonly name: string;
+  readonly attribution?: string;
+  readonly sourceUrl?: string;
+  getHourly(query: HourlyForecastQuery): Promise<HourlyForecastProviderResult>;
+}
+
 export type AirQualityQuery = CoordinateQuery;
 
 export interface WeatherProvider {

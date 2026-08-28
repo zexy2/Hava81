@@ -86,6 +86,8 @@ export interface WeatherDataMeta {
   fetchedAt: Date;
   timezoneOffsetSeconds?: number;
   intervalHours?: number;
+  attribution?: string;
+  sourceUrl?: string;
   cacheStatus?: 'HIT' | 'MISS' | 'COALESCED';
   freshForSeconds?: number;
 }

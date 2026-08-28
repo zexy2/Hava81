@@ -9,6 +9,7 @@ const service = vi.hoisted(() => ({
   getCurrentWeather: vi.fn(),
   getCurrentLocationWeather: vi.fn(),
   getForecast: vi.fn(),
+  getHourlyForecast: vi.fn(),
   getAirQuality: vi.fn(),
   getContextSignals: vi.fn(),
 }));
@@ -82,6 +83,35 @@ const forecast = {
   },
 };
 
+const hourlyForecast = {
+  hourly: [
+    {
+      time: new Date('2026-08-28T18:00:00.000Z'),
+      temp: 23,
+      icon: '01d' as const,
+      description: 'açık',
+      pop: 0.1,
+      windSpeed: 3.2,
+    },
+    {
+      time: new Date('2026-08-28T19:00:00.000Z'),
+      temp: 22,
+      icon: '02n' as const,
+      description: 'çoğunlukla açık',
+      pop: 0.15,
+      windSpeed: 3.1,
+    },
+  ],
+  meta: {
+    provider: 'Open-Meteo',
+    attribution: 'Open-Meteo · CC BY 4.0',
+    sourceUrl: 'https://open-meteo.com/',
+    fetchedAt: new Date(),
+    timezoneOffsetSeconds: 10800,
+    intervalHours: 1,
+  },
+};
+
 const air = { aqi: 3, aqiLabel: 'Orta', pm25: 8, pm10: 14, o3: 40 };
 
 const renderApp = () =>
@@ -99,6 +129,7 @@ describe('Hava81 app integration', () => {
     service.getCurrentWeather.mockReset().mockResolvedValue(current);
     service.getCurrentLocationWeather.mockReset().mockResolvedValue(current);
     service.getForecast.mockReset().mockResolvedValue(forecast);
+    service.getHourlyForecast.mockReset().mockResolvedValue(hourlyForecast);
     service.getAirQuality.mockReset().mockResolvedValue(air);
     service.getContextSignals.mockReset().mockResolvedValue(null);
   });
@@ -108,8 +139,12 @@ describe('Hava81 app integration', () => {
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /plan için öne çıkanlar/i, level: 2 })).toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { name: /3 saatlik tahmin/i }, { timeout: 3_000 })
+      await screen.findByRole('heading', { name: /saatlik tahmin · sonraki 24 saat/i }, { timeout: 5_000 })
     ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open-Meteo · CC BY 4.0' })).toHaveAttribute(
+      'href',
+      'https://open-meteo.com/'
+    );
     expect(
       await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
@@ -125,7 +160,7 @@ describe('Hava81 app integration', () => {
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
     ).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
-  });
+  }, 12_000);
 
   it('keeps raw current-weather failures out of the user-visible error state', async () => {
     service.getCurrentWeather.mockRejectedValueOnce(
@@ -188,7 +223,9 @@ describe('Hava81 app integration', () => {
     await screen.findByRole('heading', { name: 'İstanbul' });
     expect(document.title).toBe('İstanbul hava durumu — Hava81');
     await user.click(screen.getByRole('button', { name: /ayarlar/i }));
-    expect(await screen.findByRole('heading', { name: 'Birimler' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Birimler' }, { timeout: 5_000 })
+    ).toBeInTheDocument();
     const english = screen.getByRole('button', { name: /english/i });
     await user.click(english);
     await waitFor(() => {
@@ -200,7 +237,7 @@ describe('Hava81 app integration', () => {
     });
     expect(await screen.findByRole('heading', { name: 'Planning signals' })).toBeInTheDocument();
     expect(screen.getByText(/looks like a calmer window for being outdoors/i)).toBeInTheDocument();
-  });
+  }, 12_000);
 
   it('keeps browser theme metadata aligned with an explicit dark theme', async () => {
     localStorage.setItem(

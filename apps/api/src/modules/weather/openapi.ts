@@ -15,6 +15,8 @@ const metaSchema = {
     fetchedAt: { type: 'string', format: 'date-time' },
     timezoneOffsetSeconds: { type: 'number' },
     intervalHours: { type: 'number' },
+    attribution: { type: 'string' },
+    sourceUrl: { type: 'string', format: 'uri' },
     cacheStatus: { type: 'string', enum: ['HIT', 'MISS', 'COALESCED'] },
     freshForSeconds: { type: 'number' },
   },
@@ -38,6 +40,16 @@ export const forecastQueryJsonSchema = {
     lat: { type: 'number', minimum: -90, maximum: 90 },
     lon: { type: 'number', minimum: -180, maximum: 180 },
     units: { type: 'string', enum: ['metric', 'imperial', 'standard'], default: 'metric' },
+    lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
+  },
+} as const;
+
+export const hourlyForecastQueryJsonSchema = {
+  type: 'object',
+  required: ['lat', 'lon'],
+  properties: {
+    lat: { type: 'number', minimum: -90, maximum: 90 },
+    lon: { type: 'number', minimum: -180, maximum: 180 },
     lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
   },
 } as const;
@@ -87,6 +99,29 @@ export const forecastResponseJsonSchema = {
         properties: {
           time: { type: 'string', format: 'date-time' }, temp: { type: 'number' }, icon: { type: 'string' },
           description: { type: 'string' }, pop: { type: 'number' }, windSpeed: { type: 'number' },
+        },
+      },
+    },
+    meta: metaSchema,
+  },
+} as const;
+
+export const hourlyForecastResponseJsonSchema = {
+  type: 'object',
+  required: ['hourly', 'meta'],
+  properties: {
+    hourly: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['time', 'temp', 'icon', 'description', 'pop', 'windSpeed'],
+        properties: {
+          time: { type: 'string', format: 'date-time' },
+          temp: { type: 'number' },
+          icon: { type: 'string' },
+          description: { type: 'string' },
+          pop: { type: 'number', minimum: 0, maximum: 100 },
+          windSpeed: { type: 'number' },
         },
       },
     },

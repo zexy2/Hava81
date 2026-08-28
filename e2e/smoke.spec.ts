@@ -58,6 +58,27 @@ const forecast = {
     freshForSeconds: 300,
   },
 };
+const hourlyForecast = {
+  hourly: Array.from({ length: 24 }, (_, index) => ({
+    time: new Date(Date.parse('2026-08-28T17:00:00.000Z') + index * 60 * 60_000).toISOString(),
+    temp: 22 - Math.floor(index / 6),
+    icon: index < 3 ? '01d' : '02n',
+    description: index < 3 ? 'açık' : 'çoğunlukla açık',
+    pop: index === 4 ? 45 : 10,
+    windSpeed: 3 + index * 0.05,
+  })),
+  meta: {
+    provider: 'Open-Meteo',
+    attribution: 'Open-Meteo · CC BY 4.0',
+    sourceUrl: 'https://open-meteo.com/',
+    fetchedAt: new Date().toISOString(),
+    timezoneOffsetSeconds: 10800,
+    intervalHours: 1,
+    cacheStatus: 'MISS',
+    freshForSeconds: 300,
+  },
+};
+
 const air = {
   aqi: 2,
   aqiLabel: 'Orta',
@@ -113,6 +134,7 @@ const routeResult = {
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourlyForecast }));
   await page.route('**/api/v1/weather/air-quality**', route => route.fulfill({ json: air }));
   await page.route('**/api/v1/weather/context**', route => route.fulfill({ json: context }));
   await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
@@ -124,11 +146,28 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page).toHaveURL(/\/istanbul\/$/);
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open-Meteo · CC BY 4.0' })).toHaveAttribute(
+    'href',
+    'https://open-meteo.com/'
+  );
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
   await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
   await expect(page.getByText('UV · 24s model maksimumu', { exact: true })).toBeVisible();
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
+});
+
+test('hourly display falls back to the existing three-hour forecast when the hourly source fails', async ({ page }) => {
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ status: 503, json: { error: { code: 'HOURLY_PROVIDER_ERROR' } } })
+  );
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: /3 saat aralıklarla tahmin/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
 });
 
 test('browser and install surfaces use Hava81 branding assets', async ({ page }, testInfo) => {

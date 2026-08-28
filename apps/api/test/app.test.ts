@@ -13,6 +13,9 @@ import type {
   AirQualityQuery,
   CurrentWeatherQuery,
   ForecastQuery,
+  HourlyForecastProvider,
+  HourlyForecastQuery,
+  HourlyForecastProviderResult,
   WeatherProvider,
 } from '../src/providers/weather-provider';
 
@@ -79,6 +82,38 @@ const airQualityFixture: AirQualityUpstream = {
     },
   ],
 };
+
+class FakeHourlyForecastProvider implements HourlyForecastProvider {
+  readonly name = 'FakeHourly';
+  readonly attribution = 'FakeHourly · test';
+  readonly sourceUrl = 'https://example.test/hourly';
+  calls = 0;
+
+  async getHourly(_query: HourlyForecastQuery): Promise<HourlyForecastProviderResult> {
+    this.calls += 1;
+    return {
+      timezoneOffsetSeconds: 10_800,
+      hourly: [
+        {
+          time: '2026-08-28T18:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          description: 'açık',
+          pop: 10,
+          windSpeed: 3.4,
+        },
+        {
+          time: '2026-08-28T19:00:00.000Z',
+          temp: 23,
+          icon: '02n',
+          description: 'çoğunlukla açık',
+          pop: 15,
+          windSpeed: 3.1,
+        },
+      ],
+    };
+  }
+}
 
 class FakeWeatherProvider implements WeatherProvider {
   currentCalls = 0;
@@ -202,6 +237,33 @@ test('forecast and air-quality endpoints normalize provider data', async (contex
   assert.equal(airQualityTr.json().aqiLabel, 'Orta');
   assert.equal(provider.forecastCalls, 1);
   assert.equal(provider.airQualityCalls, 2);
+});
+
+test('hourly forecast endpoint exposes real one-hour cadence metadata and caches it', async (context) => {
+  const hourlyProvider = new FakeHourlyForecastProvider();
+  const app = await buildApp({
+    env: createEnv(),
+    provider: new FakeWeatherProvider(),
+    hourlyProvider,
+    logger: false,
+  });
+  context.after(() => app.close());
+
+  const url = '/api/v1/weather/hourly?lat=41.01&lon=28.97&lang=tr';
+  const first = await app.inject({ method: 'GET', url });
+  const second = await app.inject({ method: 'GET', url });
+
+  assert.equal(first.statusCode, 200);
+  assert.equal(first.headers['x-cache'], 'MISS');
+  assert.equal(first.json().meta.provider, 'FakeHourly');
+  assert.equal(first.json().meta.attribution, 'FakeHourly · test');
+  assert.equal(first.json().meta.sourceUrl, 'https://example.test/hourly');
+  assert.equal(first.json().meta.intervalHours, 1);
+  assert.equal(first.json().meta.timezoneOffsetSeconds, 10_800);
+  assert.equal(first.json().hourly.length, 2);
+  assert.equal(first.json().hourly[1].time, '2026-08-28T19:00:00.000Z');
+  assert.equal(second.headers['x-cache'], 'HIT');
+  assert.equal(hourlyProvider.calls, 1);
 });
 
 test('rate limiter returns the structured error envelope', async (context) => {

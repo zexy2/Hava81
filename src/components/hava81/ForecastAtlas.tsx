@@ -13,7 +13,8 @@ export interface ForecastAtlasProps {
   className?: string;
 }
 
-const HOUR_LIMIT = 12;
+const LEGACY_HOUR_LIMIT = 12;
+const REAL_HOURLY_LIMIT = 24;
 const MIN_CHART_WIDTH = 320;
 const MIN_COLUMN_WIDTH = 72;
 const CHART_HEIGHT = 104;
@@ -48,16 +49,21 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
+  const hourLimit = intervalHours === 1 ? REAL_HOURLY_LIMIT : LEGACY_HOUR_LIMIT;
+  const hourlyHeading =
+    intervalHours === 1
+      ? t('hava81.forecastAtlas.hourlyForecast')
+      : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 
   const hourlyData = useMemo(
     () =>
-      hourly.slice(0, HOUR_LIMIT).map(hour => ({
+      hourly.slice(0, hourLimit).map(hour => ({
         ...hour,
         timestamp: hour.time.getTime(),
         convertedTemp: Math.round(convertTemperature(hour.temp)),
         precipitation: normalizePrecipitationProbability(hour.pop),
       })),
-    [convertTemperature, hourly]
+    [convertTemperature, hourLimit, hourly]
   );
 
   const dailyData = useMemo(
@@ -129,11 +135,18 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       {hourlyData.length > 0 ? (
         <section className="hava81-forecast-atlas__section" aria-labelledby={`${id}-hourly-title`}>
           <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
-            {t('hava81.forecastAtlas.intervalForecast', {
-              defaultValue: '{{hours}} saatlik tahmin',
-              hours: intervalHours,
-            })}
+            {hourlyHeading}
           </h3>
+          {intervalHours === 1 && meta?.provider ? (
+            <p className="hava81-forecast-atlas__source">
+              {t('hava81.forecastAtlas.hourlySource')} {' '}
+              {meta.sourceUrl ? (
+                <a href={meta.sourceUrl}>{meta.attribution ?? meta.provider}</a>
+              ) : (
+                <span>{meta.attribution ?? meta.provider}</span>
+              )}
+            </p>
+          ) : null}
 
           <div
             className="hava81-forecast-atlas__hourly-viewport"
@@ -154,12 +167,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   role="img"
                   aria-labelledby={`${chartTitleId} ${chartDescriptionId}`}
                 >
-                  <title id={chartTitleId}>
-                    {t('hava81.forecastAtlas.intervalForecast', {
-                      defaultValue: '{{hours}} saatlik tahmin',
-                      hours: intervalHours,
-                    })}
-                  </title>
+                  <title id={chartTitleId}>{hourlyHeading}</title>
                   <desc id={chartDescriptionId}>
                     {t('hava81.forecastAtlas.chartSummary', {
                       min: chart.min,

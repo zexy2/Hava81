@@ -496,8 +496,8 @@ const App: React.FC = () => {
                     <Suspense fallback={null}>
                       <ForecastAtlas
                         daily={forecast.daily}
-                        hourly={forecast.hourly}
-                        meta={forecast.meta}
+                        hourly={forecast.displayHourly}
+                        meta={forecast.displayMeta}
                       />
                     </Suspense>
                   )}
