@@ -40,8 +40,9 @@ self.addEventListener('fetch', event => {
   }
 
   const cacheableStaticAsset =
-    ['style', 'font', 'image'].includes(request.destination) ||
-    (request.destination === 'script' && CORE_SCRIPT_PATTERN.test(url.pathname));
+    url.pathname.startsWith('/assets/') &&
+    (['style', 'font', 'image'].includes(request.destination) ||
+      (request.destination === 'script' && CORE_SCRIPT_PATTERN.test(url.pathname)));
   if (!cacheableStaticAsset) return;
 
   event.respondWith(
