@@ -263,7 +263,7 @@ export const en = {
       window: {
         label: 'Activity time range',
         title: 'Which hours work for you?',
-        help: 'Choose both times to recalculate the score and best time only inside that range.',
+        help: 'Choose both times to score only that range. An earlier end wraps past midnight; matching times evaluate that single clock time.',
         start: 'Start',
         end: 'End',
         clear: 'Clear range',
