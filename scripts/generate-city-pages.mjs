@@ -36,7 +36,7 @@ for (const name of names) {
   const slug = slugify(name);
   const title = `${name} hava durumu ve gün planı — Hava81`;
   const description = `${name} için güncel hava, 3 saatlik tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.`;
-  const canonical = `${baseUrl}/${slug}`;
+  const canonical = `${baseUrl}/${slug}/`;
   let html = baseHtml
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/?>)/, `$1${description}$2`);
@@ -57,7 +57,7 @@ for (const name of names) {
   await writeFile(join(dist, slug, 'index.html'), html);
 }
 
-const urls = [`${baseUrl}/`, ...names.map(name => `${baseUrl}/${slugify(name)}`)];
+const urls = [`${baseUrl}/`, ...names.map(name => `${baseUrl}/${slugify(name)}/`)];
 await writeFile(
   join(dist, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(url => `  <url><loc>${url}</loc></url>`).join('\n')}\n</urlset>\n`

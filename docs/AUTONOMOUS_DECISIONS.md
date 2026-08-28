@@ -27,3 +27,5 @@ This log records product and engineering decisions made during the autonomous im
 - Route cards must show wind because wind contributes to route score; users should be able to see why a segment is penalized.
 - Root and province HTML must each emit exactly one canonical and one og:url; the static generator replaces root metadata instead of appending duplicates.
 - Treat ports 4001/4002 as reversible blue-green slots. Never overwrite the active slot during a release.
+
+- Canonical province URLs use a trailing slash because GitHub Pages serves generated province directories that way. This removes the observed `/istanbul` -> `/istanbul/` 301/canonical disagreement.

@@ -121,7 +121,7 @@ test.beforeEach(async ({ page }) => {
 test('core city experience renders and uses a shareable city URL', async ({ page }) => {
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
-  await expect(page).toHaveURL(/\/istanbul$/);
+  await expect(page).toHaveURL(/\/istanbul\/$/);
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
   await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
