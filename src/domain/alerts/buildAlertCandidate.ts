@@ -15,7 +15,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.rainTitle',
       bodyKey: 'hava81.alerts.rainBody',
       data: { city: cityName },
-      signature: `${cityName}:rain:${plan.score}`,
+      signature: `${cityName}:rain`,
     };
   }
   if (plan.nowOrLater.kind === 'later' && (plan.nowOrLater.improvement ?? 0) >= 20) {
@@ -33,7 +33,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.difficultTitle',
       bodyKey: 'hava81.alerts.difficultBody',
       data: { city: cityName, score: plan.score },
-      signature: `${cityName}:difficult:${plan.score}`,
+      signature: `${cityName}:difficult`,
     };
   }
   return null;

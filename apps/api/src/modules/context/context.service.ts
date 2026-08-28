@@ -19,6 +19,8 @@ const marineSchema = z.object({
     .object({
       time: z.string(),
       wave_height: z.number().nullable().optional(),
+      wave_direction: z.number().nullable().optional(),
+      wave_period: z.number().nullable().optional(),
       sea_surface_temperature: z.number().nullable().optional(),
     })
     .optional(),
@@ -44,11 +46,15 @@ export interface ContextSignals {
     grassPollen?: string;
     olivePollen?: string;
     waveHeight?: string;
+    waveDirection?: string;
+    wavePeriod?: string;
     seaSurfaceTemperature?: string;
   };
   marine?: {
     observedAt: string;
     waveHeight?: number;
+    waveDirection?: number;
+    wavePeriod?: number;
     seaSurfaceTemperature?: number;
   };
 }
@@ -93,7 +99,7 @@ export class ContextSignalsService {
           const marineUrl = new URL('https://marine-api.open-meteo.com/v1/marine');
           marineUrl.searchParams.set('latitude', String(lat));
           marineUrl.searchParams.set('longitude', String(lon));
-          marineUrl.searchParams.set('current', 'wave_height,sea_surface_temperature');
+          marineUrl.searchParams.set('current', 'wave_height,wave_direction,wave_period,sea_surface_temperature');
           marineUrl.searchParams.set('timezone', 'auto');
           return getJson(marineUrl, this.fetchImpl)
             .then(data => marineSchema.parse(data))
@@ -115,12 +121,16 @@ export class ContextSignalsService {
         grassPollen: air.hourly_units?.grass_pollen,
         olivePollen: air.hourly_units?.olive_pollen,
         waveHeight: marine?.current_units?.wave_height,
+        waveDirection: marine?.current_units?.wave_direction,
+        wavePeriod: marine?.current_units?.wave_period,
         seaSurfaceTemperature: marine?.current_units?.sea_surface_temperature,
       },
       marine: marine?.current
         ? {
             observedAt: marine.current.time,
             waveHeight: marine.current.wave_height ?? undefined,
+            waveDirection: marine.current.wave_direction ?? undefined,
+            wavePeriod: marine.current.wave_period ?? undefined,
             seaSurfaceTemperature: marine.current.sea_surface_temperature ?? undefined,
           }
         : undefined,

@@ -22,8 +22,8 @@ const fakeFetch = (async (input: Parameters<typeof fetch>[0]) => {
   }
   return new Response(
     JSON.stringify({
-      current_units: { wave_height: 'm', sea_surface_temperature: '°C' },
-      current: { time: '2026-08-28T03:30', wave_height: 0.4, sea_surface_temperature: 25.1 },
+      current_units: { wave_height: 'm', wave_direction: '°', wave_period: 's', sea_surface_temperature: '°C' },
+      current: { time: '2026-08-28T03:30', wave_height: 0.4, wave_direction: 315, wave_period: 4.8, sea_surface_temperature: 25.1 },
     }),
     { status: 200, headers: { 'content-type': 'application/json' } }
   );
@@ -36,5 +36,7 @@ test('context service normalizes UV, dust, pollen and marine signals', async () 
   assert.equal(result.dustMax, 12);
   assert.equal(result.grassPollenMax, 8);
   assert.equal(result.marine?.waveHeight, 0.4);
+  assert.equal(result.marine?.waveDirection, 315);
+  assert.equal(result.marine?.wavePeriod, 4.8);
   assert.equal(result.marine?.seaSurfaceTemperature, 25.1);
 });

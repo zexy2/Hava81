@@ -13,6 +13,11 @@ describe('city routes', () => {
     expect(cityFromPathname('/sanliurfa')?.name).toBe('Şanlıurfa');
   });
 
+  it('rejects non-canonical nested deep links instead of treating them as a city page', () => {
+    expect(cityFromPathname('/istanbul/anything')).toBeUndefined();
+    expect(cityFromPathname('/istanbul/')).toEqual(expect.objectContaining({ name: 'İstanbul' }));
+  });
+
   it('does not invent routes for provider-only locations', () => {
     expect(cityPath('London')).toBeNull();
   });
