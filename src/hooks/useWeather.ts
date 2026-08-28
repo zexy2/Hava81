@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
 import { useAsync } from './useAsync';
 import { useLocalStorage } from './useLocalStorage';
-import type { NormalizedWeatherData, AppError } from '../types';
+import { ErrorCode, type NormalizedWeatherData, type AppError } from '../types';
 
 interface RecentSearch {
   city: string;
@@ -214,8 +214,25 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  // Combine error from both async operations
-  const error = weatherAsync.error || locationAsync.error;
+  // Combine error from both async operations while keeping raw provider/exception details out of the UI.
+  const rawError = weatherAsync.error || locationAsync.error;
+  const error = rawError
+    ? {
+        ...rawError,
+        message:
+          rawError.code === ErrorCode.NETWORK_ERROR
+            ? language === 'en'
+              ? 'Connection error. Check your internet connection.'
+              : 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.'
+            : rawError.code === ErrorCode.NOT_FOUND
+              ? language === 'en'
+                ? 'City not found'
+                : 'Şehir bulunamadı'
+              : language === 'en'
+                ? 'Something went wrong'
+                : 'Bir şeyler ters gitti',
+      }
+    : null;
   const isLoading = weatherAsync.isLoading || locationAsync.isLoading;
 
   return {

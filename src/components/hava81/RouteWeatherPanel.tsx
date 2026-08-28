@@ -51,8 +51,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
         score: value.score,
         kind: value.kind,
       });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('hava81.route.error'));
+    } catch {
+      setError(t('hava81.route.error'));
     } finally {
       setLoading(false);
     }

@@ -127,6 +127,19 @@ describe('Hava81 app integration', () => {
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   });
 
+  it('keeps raw current-weather failures out of the user-visible error state', async () => {
+    service.getCurrentWeather.mockRejectedValueOnce(
+      new Error('secret upstream endpoint detail: api.internal.example')
+    );
+
+    renderApp();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Bir şeyler ters gitti');
+    expect(alert).not.toHaveTextContent('secret upstream endpoint detail');
+    expect(screen.getByRole('button', { name: /tekrar dene/i })).toBeInTheDocument();
+  });
+
   it('adds a favorite and exposes saved-city comparison navigation', async () => {
     const user = userEvent.setup();
     renderApp();
