@@ -58,3 +58,21 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Production proxy intentionally remains on 4002 per current topology instruction; no traffic switch was made in this run.
 
 - Loop 6 SEO/deep-link: production smoke exposed GitHub Pages 301 from slashless province paths to directory URLs. Canonical route generation, app history, sitemap and tests now consistently use trailing-slash province URLs.
+
+## 2026-08-28 10:44 TRT run checkpoint
+
+- Loop 1 data quality: next-24h Open-Meteo context maxima now exclude elapsed and beyond-window rows.
+- Loop 2 API cost resilience: route weather has a stricter 12/minute endpoint budget before five-point fan-out.
+- Loop 3 browser reliability: Playwright no longer reuses unrelated listeners on its preview port.
+- Loop 4 CI/CD: superseded runs on the same PR/ref are cancelled automatically.
+- Loop 5 PWA/SEO: İstanbul/Ankara shortcuts use the same trailing-slash route contract as GitHub Pages.
+- Research: MGM remains the authoritative hazard source, but no stable official machine-readable feed was verified; Open-Meteo 15-minute precipitation outside supported high-resolution regions is interpolated and will not be labeled nowcast.
+
+## 2026-08-28 morning cumulative summary (through 10:44 TRT)
+
+- Completed improvement work across decision UX, route resilience, model transparency, alerts, canonical/deep-link SEO, performance, testing and CI reliability.
+- Merged PR #4 after green CI; PR #5 also reached green CI and was merged.
+- Quality baseline now includes 82 frontend tests and 10 API tests before this run's new data-quality test; prior browser gate passed all 7 applicable flows with 8 intentional project skips; dependency audits reported 0 vulnerabilities.
+- API release validation: 4001 canary passed live/ready, CORS, route guards, Open-Meteo context and 81/81 province current+forecast checks. Public production remains deliberately on port 4002, preserving the requested topology.
+- Notable decisions: official MGM hazards must remain explicitly attributed and freshness-aware; no scraping-derived pseudo-official warning layer; Open-Meteo 15-minute precipitation in Türkiye is interpolated and must not be called radar nowcast; modeled marine data is decision context, not navigation safety guidance.
+- Remaining risks/priorities: verify a stable official MGM machine-readable warning feed; add favorite-city pollen thresholds only with documented source semantics; preserve 4002/4001 rollback topology; continue reducing first-load JS/LCP and expand panel/browser regression coverage.

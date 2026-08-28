@@ -43,7 +43,7 @@
       "name": "İstanbul Hava Durumu",
       "short_name": "İstanbul",
       "description": "İstanbul için hava durumunu görüntüle",
-      "url": "/istanbul",
+      "url": "/istanbul/",
       "icons": [
         {
           "src": "hava81-mark.svg",
@@ -57,7 +57,7 @@
       "name": "Ankara Hava Durumu",
       "short_name": "Ankara",
       "description": "Ankara için hava durumunu görüntüle",
-      "url": "/ankara",
+      "url": "/ankara/",
       "icons": [
         {
           "src": "hava81-mark.svg",

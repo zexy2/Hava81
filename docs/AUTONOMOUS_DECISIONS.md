@@ -29,3 +29,12 @@ This log records product and engineering decisions made during the autonomous im
 - Treat ports 4001/4002 as reversible blue-green slots. Never overwrite the active slot during a release.
 
 - Canonical province URLs use a trailing slash because GitHub Pages serves generated province directories that way. This removes the observed `/istanbul` -> `/istanbul/` 301/canonical disagreement.
+
+## 2026-08-28 10:44 TRT — God Mode run
+
+- Treat Open-Meteo 15-minute precipitation in Türkiye as interpolated model guidance, not radar nowcast; do not market it as nowcast.
+- Calculate UV/dust/pollen maxima from the actual next 24 hours rather than the first 24 provider rows, which may include elapsed local-day hours.
+- Cap route-weather requests at 12/minute per rate-limit key because each accepted route fans out to five forecast samples.
+- Never let Playwright reuse an arbitrary process occupying the preview port; fail fast instead of producing misleading browser results.
+- Cancel superseded CI runs for the same PR/ref to reduce queue time and wasted runner work.
+- Keep PWA shortcut URLs aligned with GitHub Pages trailing-slash canonical province URLs.
