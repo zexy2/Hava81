@@ -543,3 +543,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added `role="group"` and regression coverage requiring the localized explanation label to be exposed as the group's accessible name. Weather data, scoring, copy and visual styling are unchanged.
 - Validation on main `4663ee5e`: focused DailyPlanPanel 2/2, lint, type-check, full frontend suite 134/134, production build with all 81 city pages, production dependency audit 0 vulnerabilities, full Playwright smoke 21 applicable passed / 30 intentional viewport skips, and `git diff --check` clean.
 - Operationally, production readiness was rechecked directly and remained ready with the OpenWeather circuit closed on the intended 4002 topology. Root disk remained under pressure at that checkpoint; the later CI-determinism checkpoint records the subsequent safe disk recovery.
+
+## 2026-08-29 03:01 TRT — map label matches rendered data
+
+- Audited the map surface against `WeatherMap`: it renders the selected city's weather marker plus province/plate shortcuts, not meteorological observation stations.
+- Replaced the misleading `İstasyon haritası` / `Station map` eyebrow with `Türkiye · İl haritası` / `Türkiye · Province map`. Map tiles, weather values, city coordinates and interaction behavior are unchanged.
+- Validation: lint, type-check, App integration 6/6, and `git diff --check`.

@@ -229,3 +229,5 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-29 — named explanation groups
 
 - A visible explanatory cluster that has its own `aria-label` must expose a grouping semantic rather than attaching an inaccessible name to a generic container. Daily Plan's score explanation uses `role="group"`; no scoring or visual behavior changes.
+
+- 2026-08-29 — Product labels must describe the geographic/data objects actually rendered. A province/city marker map must not be called a station map unless real meteorological station entities are present.
