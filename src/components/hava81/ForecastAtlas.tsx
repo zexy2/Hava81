@@ -21,6 +21,7 @@ const CHART_HEIGHT = 104;
 const CHART_TOP = 16;
 const CHART_BOTTOM = 16;
 const PRECIPITATION_THRESHOLD = 0.35;
+const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 
 export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
   const { t } = useTranslation();
@@ -141,10 +142,20 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
             <p className="hava81-forecast-atlas__source">
               {t('hava81.forecastAtlas.hourlySource')}{' '}
               {meta.sourceUrl ? (
-                <a href={meta.sourceUrl}>{meta.attribution ?? meta.provider}</a>
+                <a href={meta.sourceUrl}>{meta.provider}</a>
               ) : (
-                <span>{meta.attribution ?? meta.provider}</span>
+                <span>{meta.provider}</span>
               )}
+              {meta.provider === 'Open-Meteo' ? (
+                <>
+                  {' · '}
+                  <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
+                  {' · '}
+                  {t('hava81.forecastAtlas.hourlySourceModified')}
+                </>
+              ) : meta.attribution && meta.attribution !== meta.provider ? (
+                <> · {meta.attribution}</>
+              ) : null}
             </p>
           ) : null}
 

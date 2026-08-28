@@ -149,10 +149,15 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'açık' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'çoğunlukla açık' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open-Meteo · CC BY 4.0' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
       'href',
       'https://open-meteo.com/'
     );
+    expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+      'href',
+      'https://creativecommons.org/licenses/by/4.0/'
+    );
+    expect(screen.getByText('Hava81 tarafından biçimlendirildi')).toBeInTheDocument();
     expect(
       await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
