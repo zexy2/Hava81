@@ -95,8 +95,15 @@ const buildWindow = (
   const scored = scoreWeatherWindow({
     time: point.time,
     temperature: point.temp,
+    apparentTemperature: point.apparentTemperature,
+    humidity: point.humidity,
     precipitationProbability: point.pop,
+    precipitationMm: point.precipitationMm,
     windSpeed: point.windSpeed,
+    windGust: point.windGust,
+    uvIndex: point.uvIndex,
+    visibility: point.visibility,
+    weatherCode: point.weatherCode,
   });
 
   return {

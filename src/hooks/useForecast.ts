@@ -84,7 +84,10 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         ]);
         if (requestId !== requestIdRef.current) return;
         if (hourlyData?.hourly.length) {
-          setDisplayHourly(hourlyData.hourly);
+          // Upgrade both the visual atlas and the decision engine to the richer one-hour model.
+          // The OpenWeather three-hour series remains the immediate/failure fallback above.
+          setHourly(hourlyData.hourly);
+          setDisplayHourly(hourlyData.hourly.slice(0, 24));
           setDisplayMeta(hourlyData.meta);
         }
         setAirQuality(aqData);

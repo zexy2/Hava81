@@ -58,7 +58,7 @@ describe('useForecast', () => {
     expect(weatherService.getAirQuality).toHaveBeenCalledWith(41.01, 28.97, 'en');
     expect(weatherService.getContextSignals).toHaveBeenCalledWith(41.01, 28.97, false);
     expect(result.current.hourly).toHaveLength(1);
-    expect(result.current.hourly[0].temp).toBe(24);
+    expect(result.current.hourly[0].temp).toBe(25);
     expect(result.current.displayHourly[0].temp).toBe(25);
     expect(result.current.displayMeta?.intervalHours).toBe(1);
     expect(result.current.isLoading).toBe(false);
@@ -97,7 +97,43 @@ describe('useForecast', () => {
     });
 
     expect(result.current.displayMeta?.intervalHours).toBe(1);
+    expect(result.current.hourly[0]?.temp).toBe(26);
     expect(result.current.displayHourly[0]?.temp).toBe(26);
+  });
+
+  it('keeps up to 48 hourly decision points while the visible atlas stays at 24 hours', async () => {
+    const richHourly = Array.from({ length: 30 }, (_, index) => ({
+      time: new Date(Date.parse('2026-07-14T13:00:00.000Z') + index * 60 * 60_000),
+      temp: 25,
+      icon: '01d' as const,
+      pop: 0.1,
+      windSpeed: 3,
+      apparentTemperature: 25,
+      humidity: 55,
+      precipitationMm: 0,
+      windGust: 5,
+      uvIndex: 2,
+      visibility: 20000,
+      weatherCode: 0,
+    }));
+    (weatherService.getHourlyForecast as Mock).mockResolvedValueOnce({
+      hourly: richHourly,
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    const { result } = renderHook(() => useForecast('tr'));
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    expect(result.current.hourly).toHaveLength(30);
+    expect(result.current.displayHourly).toHaveLength(24);
+    expect(result.current.displayMeta?.intervalHours).toBe(1);
   });
 
   it('falls back to the existing three-hour display when the hourly source is unavailable', async () => {
@@ -145,7 +181,7 @@ describe('useForecast', () => {
         },
       });
     });
-    await waitFor(() => expect(result.current.hourly[0]?.temp).toBe(30));
+    await waitFor(() => expect(result.current.hourly[0]?.temp).toBe(25));
 
     await act(async () => {
       resolveFirst!({
@@ -160,6 +196,6 @@ describe('useForecast', () => {
       });
     });
 
-    expect(result.current.hourly[0]?.temp).toBe(30);
+    expect(result.current.hourly[0]?.temp).toBe(25);
   });
 });

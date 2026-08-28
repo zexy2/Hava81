@@ -60,7 +60,7 @@ const forecast = {
 };
 const hourlyForecast = {
   hourly: Array.from({ length: 24 }, (_, index) => ({
-    time: new Date(Date.parse('2026-08-28T17:00:00.000Z') + index * 60 * 60_000).toISOString(),
+    time: new Date(Date.parse('2026-08-28T09:00:00.000Z') + index * 60 * 60_000).toISOString(),
     temp: 22 - Math.floor(index / 6),
     icon: index < 3 ? '01d' : '02n',
     description: index < 3 ? 'açık' : 'çoğunlukla açık',

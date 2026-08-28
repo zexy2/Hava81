@@ -194,3 +194,12 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Hava81 may use Open-Meteo as an explicitly attributed secondary provider for true one-hour forecast presentation, but decision engines remain on the established OpenWeather three-hour series until separately validated for provider-semantic changes. Optional hourly enrichment must never block the baseline forecast: render the three-hour data as soon as it is available, then upgrade the Atlas asynchronously when hourly data succeeds; on failure retain the baseline without surfacing provider internals to users.
 
 - 2026-08-28 — Clipboard-success feedback for the Gün planı share action is an asynchronous UI result and must be exposed through an atomic polite status without moving focus. The visible button-label change remains, but assistive-technology users should receive the same successful-copy feedback.
+
+## 2026-08-28 — Hava81 Score v2 uses continuous, explainable multi-signal suitability
+
+- Replace threshold-step deductions with smooth risk curves so tiny changes around 32°C, 50% rain, or similar boundaries cannot create artificial score jumps.
+- Prefer true one-hour Open-Meteo decision signals (apparent temperature, humidity, precipitation amount, gusts, UV, visibility, WMO code) while preserving the existing three-hour OpenWeather forecast as a non-blocking fallback.
+- Keep precipitation probability separate from precipitation amount; probability is confidence that precipitation occurs, not intensity.
+- Aggregate the next 12 hours by elapsed time and add bounded downside weighting, making the result stable across one-hour and three-hour forecast cadences.
+- Expose dominant approximate factor impacts and data coverage in the UI; do not present the score as a safety guarantee.
+- Align activity, commute, comparison, and limited-signal route scoring with the same continuous-score philosophy instead of maintaining independent hard cliffs.

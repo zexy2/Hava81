@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { validateRouteDistance } from '../src/modules/route/route-weather.routes';
-import { RouteWeatherService } from '../src/modules/route/route-weather.service';
+import { RouteWeatherService, scoreRouteConditions } from '../src/modules/route/route-weather.service';
 import type { ForecastDto } from '../src/modules/weather/contracts';
 
 const forecast: ForecastDto = {
@@ -42,4 +42,21 @@ test('route safeguards reject wasteful or meaningless corridors before forecast 
   assert.throws(() => validateRouteDistance(0.2), /başlangıç ve varış/);
   assert.throws(() => validateRouteDistance(2000.1), /en fazla 2000 km/);
   assert.doesNotThrow(() => validateRouteDistance(1650));
+});
+
+
+test('route score changes smoothly around former hard thresholds', () => {
+  const belowHeat = scoreRouteConditions(31.9, 20, 5);
+  const aboveHeat = scoreRouteConditions(32.1, 20, 5);
+  const belowRain = scoreRouteConditions(24, 49, 5);
+  const aboveRain = scoreRouteConditions(24, 51, 5);
+  assert.ok(Math.abs(belowHeat - aboveHeat) <= 2);
+  assert.ok(Math.abs(belowRain - aboveRain) <= 2);
+});
+
+test('route score reflects compound rain and wind risk', () => {
+  const calm = scoreRouteConditions(22, 10, 3);
+  const rough = scoreRouteConditions(22, 80, 14);
+  assert.ok(calm >= 90);
+  assert.ok(rough <= 60);
 });

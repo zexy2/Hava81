@@ -100,6 +100,13 @@ export interface HourlyForecastDto {
     description: string;
     pop: number;
     windSpeed: number;
+    apparentTemperature?: number;
+    humidity?: number;
+    precipitationMm?: number;
+    windGust?: number;
+    uvIndex?: number;
+    visibility?: number;
+    weatherCode?: number;
   }>;
   meta: DataMetaDto;
 }

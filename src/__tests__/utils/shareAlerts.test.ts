@@ -11,6 +11,8 @@ const plan = (overrides: Partial<DailyPlan> = {}): DailyPlan => ({
   wind: 'normal',
   airQuality: 'good',
   nowOrLater: { kind: 'similar', currentScore: 80, targetScore: 82, reasons: [] },
+  impacts: [],
+  confidence: 'basic',
   ...overrides,
 });
 

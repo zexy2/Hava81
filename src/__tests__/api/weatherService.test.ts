@@ -355,6 +355,13 @@ describe('weatherService BFF client', () => {
           description: 'açık',
           pop: 35,
           windSpeed: 3.2,
+          apparentTemperature: 25.1,
+          humidity: 58,
+          precipitationMm: 0.4,
+          windGust: 7.2,
+          uvIndex: 5.7,
+          visibility: 22000,
+          weatherCode: 1,
         },
       ],
       meta: {
@@ -372,6 +379,15 @@ describe('weatherService BFF client', () => {
     expect(mockGet).toHaveBeenCalledWith('/weather/hourly', { lat: 41.01, lon: 28.97, lang: 'tr' });
     expect(result.hourly[0].time).toBeInstanceOf(Date);
     expect(result.hourly[0].pop).toBe(0.35);
+    expect(result.hourly[0]).toMatchObject({
+      apparentTemperature: 25.1,
+      humidity: 58,
+      precipitationMm: 0.4,
+      windGust: 7.2,
+      uvIndex: 5.7,
+      visibility: 22000,
+      weatherCode: 1,
+    });
     expect(result.meta.intervalHours).toBe(1);
     expect(result.meta.attribution).toBe('Open-Meteo · CC BY 4.0');
     expect(result.meta.sourceUrl).toBe('https://open-meteo.com/');

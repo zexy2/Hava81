@@ -101,6 +101,13 @@ class FakeHourlyForecastProvider implements HourlyForecastProvider {
           description: 'açık',
           pop: 10,
           windSpeed: 3.4,
+          apparentTemperature: 25.2,
+          humidity: 58,
+          precipitationMm: 0,
+          windGust: 6.8,
+          uvIndex: 5.4,
+          visibility: 24000,
+          weatherCode: 0,
         },
         {
           time: '2026-08-28T19:00:00.000Z',
@@ -287,6 +294,13 @@ test('hourly forecast endpoint exposes real one-hour cadence metadata and caches
   assert.equal(first.json().meta.intervalHours, 1);
   assert.equal(first.json().meta.timezoneOffsetSeconds, 10_800);
   assert.equal(first.json().hourly.length, 2);
+  assert.equal(first.json().hourly[0].apparentTemperature, 25.2);
+  assert.equal(first.json().hourly[0].humidity, 58);
+  assert.equal(first.json().hourly[0].precipitationMm, 0);
+  assert.equal(first.json().hourly[0].windGust, 6.8);
+  assert.equal(first.json().hourly[0].uvIndex, 5.4);
+  assert.equal(first.json().hourly[0].visibility, 24000);
+  assert.equal(first.json().hourly[0].weatherCode, 0);
   assert.equal(first.json().hourly[1].time, '2026-08-28T19:00:00.000Z');
   assert.equal(second.headers['x-cache'], 'HIT');
   assert.equal(hourlyProvider.calls, 1);

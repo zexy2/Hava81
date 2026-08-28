@@ -23,8 +23,12 @@ const reasonKey: Record<DecisionReasonCode, string> = {
   'rain-risk': 'rainRisk',
   'strong-wind': 'strongWind',
   windy: 'windy',
+  'gusty-wind': 'gustyWind',
   'poor-air-quality': 'poorAirQuality',
   'sensitive-air-quality': 'sensitiveAirQuality',
+  'high-uv': 'highUv',
+  'low-visibility': 'lowVisibility',
+  'severe-weather': 'severeWeather',
 };
 
 export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
