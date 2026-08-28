@@ -4,8 +4,7 @@ import App from './App';
 import { SettingsProvider } from './context';
 import { validateConfig } from './config';
 import './i18n';
-import '@fontsource-variable/ibm-plex-sans';
-import '@fontsource-variable/source-serif-4';
+import './fonts.css';
 import './index.css';
 
 const CHUNK_RECOVERY_PARAM = '__hava81_chunk_reload';
