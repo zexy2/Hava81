@@ -190,3 +190,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Every map disclosure that exposes `aria-expanded` must also identify the controlled lazy map region with `aria-controls="weather-map-region"`; keep duplicate entry points semantically consistent even when they share the same open/close handler.
 
 - 2026-08-28 — Asynchronous route-weather success results are exposed as one atomic polite status region. Keep provider failures as alerts, but announce successful corridor decisions without moving focus so the decision-first workflow remains usable with assistive technology.
+
+- 2026-08-28 — Hava81 may use Open-Meteo as an explicitly attributed secondary provider for true one-hour forecast presentation, but decision engines remain on the established OpenWeather three-hour series until separately validated for provider-semantic changes. Optional hourly enrichment must never block the baseline forecast: render the three-hour data as soon as it is available, then upgrade the Atlas asynchronously when hourly data succeeds; on failure retain the baseline without surfacing provider internals to users.
