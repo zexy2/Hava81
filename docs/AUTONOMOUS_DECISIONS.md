@@ -131,3 +131,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — GitHub Pages post-deploy smoke must distinguish the newly published artifact from a healthy stale CDN response. When `dist/` is available, compare SHA-256 of the fetched shell/assets with the exact build artifact and cache-bust each retry; also assert Hava81 branding surfaces rather than accepting a generic 200/Hava81 substring.
 
 - 2026-08-28 — Service-worker cache-first behavior is restricted to fingerprinted Vite `/assets/` resources. Stable root branding URLs such as `hava81-mark.svg`, favicon/social assets and other replace-in-place files must remain network-fresh so a previous brand asset cannot survive indefinitely after a deploy.
+
+- 2026-08-28 — Provider resilience tests must preserve the distinction between retryable upstream outages and non-retryable client/provider validation errors. Only exhausted retryable failures advance the circuit; while the circuit is open, a configured fallback serves requests without probing the known-failing primary until the reset window.
