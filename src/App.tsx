@@ -14,6 +14,7 @@ import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
 import type { FavoriteCity } from './types/weather.types';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
+import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 
@@ -236,7 +237,9 @@ const App: React.FC = () => {
       fetchWeather(cityData.name);
       setShowMap(false);
       setActiveNav('today');
-      requestAnimationFrame(() => overviewRef.current?.scrollIntoView({ behavior: 'smooth' }));
+      requestAnimationFrame(() => {
+        if (overviewRef.current) scrollIntoViewRespectingMotion(overviewRef.current);
+      });
     },
     [fetchWeather]
   );
@@ -246,7 +249,9 @@ const App: React.FC = () => {
     setActiveNav('map');
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        mapRegionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (mapRegionRef.current) {
+          scrollIntoViewRespectingMotion(mapRegionRef.current, { block: 'start' });
+        }
         mapRegionRef.current?.focus({ preventScroll: true });
       });
     });
@@ -272,16 +277,20 @@ const App: React.FC = () => {
           handleAddFavorite();
         }
         requestAnimationFrame(() => {
-          requestAnimationFrame(() =>
-            cityRailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          );
+          requestAnimationFrame(() => {
+            if (cityRailRef.current) {
+              scrollIntoViewRespectingMotion(cityRailRef.current, { block: 'start' });
+            }
+          });
         });
         return;
       }
 
       setShowMap(false);
       setActiveNav('today');
-      overviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (overviewRef.current) {
+        scrollIntoViewRespectingMotion(overviewRef.current, { block: 'start' });
+      }
     },
     [favorites.length, handleAddFavorite, openMap]
   );
