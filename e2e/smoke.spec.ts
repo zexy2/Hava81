@@ -130,6 +130,67 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
+test('browser and install surfaces use Hava81 branding assets', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for brand assets');
+
+  await page.goto('/istanbul');
+
+  const iconHrefs = await page.locator('link[rel="icon"]').evaluateAll(elements =>
+    elements.map(element => (element as HTMLLinkElement).getAttribute('href'))
+  );
+  expect(iconHrefs).toEqual(
+    expect.arrayContaining(['/hava81-mark.svg?v=20260828', '/hava81-favicon.ico?v=20260828'])
+  );
+
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    'href',
+    '/apple-touch-icon.png?v=20260828'
+  );
+
+  const samples = await page.evaluate(async () => {
+    const readImage = async (src: string) => {
+      const image = new Image();
+      image.src = src;
+      await image.decode();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('2D canvas unavailable');
+      context.drawImage(image, 0, 0);
+
+      return {
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        center: Array.from(
+          context.getImageData(
+            Math.floor(image.naturalWidth / 2),
+            Math.floor(image.naturalHeight / 2),
+            1,
+            1
+          ).data
+        ),
+      };
+    };
+
+    return Promise.all([
+      readImage('/logo192.png'),
+      readImage('/logo512.png'),
+      readImage('/apple-touch-icon.png?v=20260828'),
+      readImage('/hava81-favicon.ico?v=20260828'),
+    ]);
+  });
+
+  expect(samples[0]).toMatchObject({ width: 192, height: 192, center: [231, 165, 49, 255] });
+  expect(samples[1]).toMatchObject({ width: 512, height: 512, center: [231, 165, 49, 255] });
+  expect(samples[2]).toMatchObject({ width: 180, height: 180, center: [231, 165, 49, 255] });
+  expect(samples[3].width).toBeGreaterThanOrEqual(32);
+  expect(samples[3].center[0]).toBeGreaterThan(200);
+  expect(samples[3].center[1]).toBeGreaterThan(120);
+  expect(samples[3].center[2]).toBeLessThan(100);
+});
+
 test('production HTML bootstraps current weather without a duplicate app request', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for early current weather');
 

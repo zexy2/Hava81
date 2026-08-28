@@ -69,3 +69,9 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-28 — Start the first city current-weather BFF request from generated production HTML before the main module only when no matching fresh 5-minute local cache exists. Read the saved UI language, keep units metric for normalized decision logic, and let weatherService consume the same promise so early fetch never becomes a duplicate app request.
 - 2026-08-28 — Bound the generated early weather bootstrap fetch to 10 seconds with AbortController. If it cannot resolve in that window, return null and let the normal httpClient path handle retry/timeout semantics instead of allowing app initialization to wait on an unbounded bootstrap promise.
+
+## 2026-08-28 13:13 TRT — brand surfaces
+
+- Treat browser chrome, install icons, Apple touch icons and social-preview images as first-class production UI, not build scaffolding. All of them must use the Hava81 mark; default React/Vite/CRA assets are regressions.
+- When favicon artwork changes, use a Hava81-specific versioned URL in HTML in addition to replacing `/favicon.ico`, because browsers cache favicons unusually aggressively. Keep `/favicon.ico` branded as a fallback for clients that probe it implicitly.
+- Keep a browser-level brand asset regression that checks both references and decoded image pixels/dimensions; HTML-only assertions are insufficient because a correct link can still point to stale scaffold artwork.
