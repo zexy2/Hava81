@@ -64,6 +64,7 @@ export const tr = {
     tagline: "Türkiye'nin Meteorolojik Atlası",
     homeLabel: 'Hava81 ana görünüm',
     systemStatus: 'Hava81 · Sistem durumu',
+    cityDocumentTitle: '{{city}} hava durumu — Hava81',
     loadingWeather: 'Hava verileri hazırlanıyor',
     serverWaking: 'Sunucu uyanıyor; ilk yükleme 30–60 saniye sürebilir.',
     mapEyebrow: '81 il · İstasyon haritası',

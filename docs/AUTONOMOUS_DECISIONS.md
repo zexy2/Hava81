@@ -169,3 +169,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — The primary decision surface keeps a sequential heading hierarchy: province name is the page `h1`, and its decision-change/planning-signals subregion is `h2`, not `h3`. Visual styling remains class-driven rather than heading-level-driven.
 
 - 2026-08-28 — Do not label the general Hava81 app artwork as `maskable` unless all important pixels fit the Web App Manifest safe zone. Keep the normal SVG/PNG icons at purpose `any` and provide a dedicated padded 512×512 PNG for purpose `maskable`; the browser regression enforces the W3C 40%-radius safe-zone boundary from actual pixels.
+
+- 2026-08-28 — Runtime browser title language follows the active Hava81 UI language. Keep statically generated province SEO metadata deterministic in Turkish, but when a user switches/persists English, synchronize the live document title with the same language as `html[lang]` and visible UI copy rather than leaving a Turkish tab title.
