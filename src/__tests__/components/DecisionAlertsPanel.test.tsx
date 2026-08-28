@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { DecisionAlertsPanel } from '../../components/hava81/DecisionAlertsPanel';
@@ -43,5 +43,27 @@ describe('DecisionAlertsPanel', () => {
     expect(requestPermission).not.toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+
+  it('does not mark a decision alert as sent when notification delivery fails', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn(function NotificationMock() {
+      throw new Error('delivery failed');
+    });
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+
+    await waitFor(() => expect(notification).toHaveBeenCalled());
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(false);
+
+    vi.unstubAllGlobals();
+    localStorage.clear();
   });
 });
