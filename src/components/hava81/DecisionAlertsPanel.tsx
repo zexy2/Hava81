@@ -44,7 +44,6 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     const day = new Date().toISOString().slice(0, 10);
     const key = `hava81-alert-sent:${day}:${candidate.signature}`;
     if (localStorage.getItem(key)) return;
-    localStorage.setItem(key, '1');
     const title = t(candidate.titleKey, candidate.data);
     const body = t(candidate.bodyKey, candidate.data);
     void (async () => {
@@ -59,8 +58,9 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         } else {
           new Notification(title, { body, tag: candidate.signature });
         }
+        localStorage.setItem(key, '1');
       } catch {
-        // Notifications are optional; failure must never block weather data.
+        // Notifications are optional; failure must never block weather data or suppress a later retry.
       }
     })();
   }, [candidate, enabled, permission, t]);
