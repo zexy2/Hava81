@@ -1,6 +1,6 @@
 # Hava81 v2.0 Release Checklist
 
-Target production window: 2026-08-31 14:00 TRT. If any blocker fails, defer to 2026-09-01 14:00 TRT.
+Production is already live as of 2026-08-28. Treat this checklist as the continuous release gate for subsequent v2 hardening; do not hold a healthy, fully gated improvement for the superseded 2026-08-31 window.
 
 ## Release blockers
 
