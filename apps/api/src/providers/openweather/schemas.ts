@@ -33,7 +33,7 @@ export const currentWeatherUpstreamSchema = z.object({
   coord: coordinatesSchema,
   weather: z.array(weatherConditionSchema).min(1),
   main: mainWeatherSchema,
-  visibility: z.number(),
+  visibility: z.number().optional(),
   wind: windSchema,
   clouds: cloudsSchema,
   dt: z.number(),

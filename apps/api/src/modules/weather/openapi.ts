@@ -66,7 +66,7 @@ export const airQualityQueryJsonSchema = {
 
 export const currentResponseJsonSchema = {
   type: 'object',
-  required: ['cityName','country','temperature','feelsLike','tempMin','tempMax','humidity','pressure','visibility','windSpeed','windDirection','description','icon','sunrise','sunset','timestamp','coordinates','clouds','meta'],
+  required: ['cityName','country','temperature','feelsLike','tempMin','tempMax','humidity','pressure','windSpeed','windDirection','description','icon','sunrise','sunset','timestamp','coordinates','clouds','meta'],
   properties: {
     cityName: { type: 'string' }, country: { type: 'string' }, temperature: { type: 'number' }, feelsLike: { type: 'number' },
     tempMin: { type: 'number' }, tempMax: { type: 'number' }, humidity: { type: 'number' }, pressure: { type: 'number' },

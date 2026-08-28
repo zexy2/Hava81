@@ -49,7 +49,7 @@ export interface WeatherResponse {
   weather: WeatherCondition[];
   base: string;
   main: MainWeatherData;
-  visibility: number;
+  visibility?: number;
   wind: WindData;
   clouds: CloudData;
   dt: number;
@@ -102,7 +102,7 @@ export interface NormalizedWeatherData {
   tempMax: number;
   humidity: number;
   pressure: number;
-  visibility: number;
+  visibility?: number;
   windSpeed: number;
   windDirection: number;
   description: string;
