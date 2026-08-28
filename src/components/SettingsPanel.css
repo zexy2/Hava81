@@ -3,6 +3,7 @@
   z-index: 998;
   inset: 0;
   background: var(--color-overlay, rgb(14 44 50 / 0.52));
+  animation: settings-fade-in 180ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .settings-panel {
@@ -19,6 +20,20 @@
   background: var(--color-atlas-paper, #fff);
   border-left: 1px solid var(--color-atlas-line, #c8d6d2);
   box-shadow: var(--shadow-overlay, 0 16px 48px rgb(14 44 50 / 0.16));
+  animation: settings-slide-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes settings-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes settings-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
 }
 
 .settings-panel__header {
@@ -296,5 +311,12 @@
   .settings-panel__footer {
     padding-inline: 1rem;
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-backdrop,
+  .settings-panel {
+    animation: none;
   }
 }
