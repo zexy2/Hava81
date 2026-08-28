@@ -90,3 +90,7 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-28 13:31 TRT — social preview truthfulness
 
 - Social-preview artwork may communicate Hava81's stable product promise and brand identity, but it must not contain a current temperature, warning, UV level, or other live condition unless that image is generated from freshness-aware verified data. The default share card therefore stays weather-data-neutral.
+
+## 2026-08-28 13:50 TRT — service-worker cache safety
+
+- Never serve `/sw.js` with the immutable one-year static-asset policy. Service workers must revalidate so browsers can discover notification/navigation behavior updates; keep fingerprinted JS/CSS/images immutable, but give the worker an exact-match no-cache policy.

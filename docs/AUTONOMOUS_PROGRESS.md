@@ -175,3 +175,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The generated city-page pipeline inherits the same share surface; verified all 82 generated HTML entry pages (root + 81 cities) point to the large Hava81 card.
 - Extended the existing browser brand regression to decode the social image and verify its dimensions alongside favicon/install assets.
 - Validation: browser-suite lint passes, production build and 81-city generation pass, all 82 generated HTML entry pages carry the expected metadata, and the targeted desktop branding browser test passes.
+
+## 2026-08-28 13:50 TRT — service-worker cache reliability
+
+- Audited the production nginx template and found `/sw.js` was accidentally captured by the generic `.js` rule, giving the service worker a one-year immutable cache lifetime.
+- Added an exact-match `/sw.js` location with `no-cache, no-store, must-revalidate` while preserving one-year immutable caching for ordinary static assets.
+- Validated the updated nginx configuration inside the project’s nginx runtime image with `nginx -t` successfully.
