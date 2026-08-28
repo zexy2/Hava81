@@ -150,9 +150,19 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
       });
     })();
   const hourlyProvider =
-    options.hourlyProvider ?? new OpenMeteoHourlyProvider(fetch, env.OPENWEATHER_TIMEOUT_MS);
+    options.hourlyProvider ??
+    new OpenMeteoHourlyProvider(
+      fetch,
+      env.OPENWEATHER_TIMEOUT_MS,
+      env.OPEN_METEO_FORECAST_BASE_URL,
+      env.OPEN_METEO_API_KEY
+    );
   const weatherService = new WeatherService(provider, cache, env, hourlyProvider);
-  const contextService = new ContextSignalsService(fetch);
+  const contextService = new ContextSignalsService(fetch, {
+    airQualityBaseUrl: env.OPEN_METEO_AIR_QUALITY_BASE_URL,
+    marineBaseUrl: env.OPEN_METEO_MARINE_BASE_URL,
+    apiKey: env.OPEN_METEO_API_KEY,
+  });
   const routeWeatherService = new RouteWeatherService(weatherService);
 
   await app.register(

@@ -102,3 +102,44 @@ test('Open-Meteo hourly adapter keeps the core forecast usable when optional dec
   assert.equal(result.hourly[0].apparentTemperature, undefined);
   assert.equal(result.hourly[0].uvIndex, undefined);
 });
+
+
+test('Open-Meteo hourly adapter supports the paid customer host and API key without changing request semantics', async () => {
+  let requested: URL | undefined;
+  const fakeFetch = (async (input: string | URL | Request) => {
+    requested = new URL(String(input));
+    return new Response(
+      JSON.stringify({
+        utc_offset_seconds: 10800,
+        hourly: {
+          time: [1787936400],
+          temperature_2m: [24],
+          apparent_temperature: [24],
+          relative_humidity_2m: [50],
+          precipitation_probability: [0],
+          precipitation: [0],
+          weather_code: [0],
+          wind_speed_10m: [2],
+          wind_gusts_10m: [4],
+          visibility: [20000],
+          uv_index: [5],
+          is_day: [1],
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+  }) as typeof fetch;
+
+  const provider = new OpenMeteoHourlyProvider(
+    fakeFetch,
+    1_000,
+    'https://customer-api.open-meteo.com',
+    'paid-test-key',
+  );
+  await provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' });
+
+  assert.equal(requested?.hostname, 'customer-api.open-meteo.com');
+  assert.equal(requested?.pathname, '/v1/forecast');
+  assert.equal(requested?.searchParams.get('apikey'), 'paid-test-key');
+  assert.equal(requested?.searchParams.get('forecast_hours'), '48');
+});

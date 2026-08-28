@@ -77,10 +77,12 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
   constructor(
     private readonly fetchImpl: typeof fetch = fetch,
     private readonly timeoutMs = 8_000,
+    private readonly baseUrl = "https://api.open-meteo.com",
+    private readonly apiKey?: string,
   ) {}
 
   async getHourly(query: HourlyForecastQuery): Promise<HourlyForecastProviderResult> {
-    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    const url = new URL("/v1/forecast", this.baseUrl);
     url.searchParams.set("latitude", String(query.lat));
     url.searchParams.set("longitude", String(query.lon));
     url.searchParams.set(
@@ -105,6 +107,7 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
     url.searchParams.set("temperature_unit", "celsius");
     url.searchParams.set("wind_speed_unit", "ms");
     url.searchParams.set("precipitation_unit", "mm");
+    if (this.apiKey) url.searchParams.set("apikey", this.apiKey);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);

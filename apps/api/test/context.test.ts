@@ -86,3 +86,26 @@ test('context 24h maxima exclude past and beyond-window GMT model slots', () => 
   ];
   assert.equal(finiteMaxForWindow(times, [99, 4, 8, 77], now), 8);
 });
+
+
+test('context service supports customer-prefixed Open-Meteo hosts and API keys', async () => {
+  const requested: URL[] = [];
+  const recordingFetch = (async (input: Parameters<typeof fetch>[0]) => {
+    requested.push(new URL(String(input)));
+    return fakeFetch(input);
+  }) as typeof fetch;
+
+  const service = new ContextSignalsService(recordingFetch, {
+    airQualityBaseUrl: 'https://customer-air-quality-api.open-meteo.com',
+    marineBaseUrl: 'https://customer-marine-api.open-meteo.com',
+    apiKey: 'paid-test-key',
+  });
+  await service.get(38.42, 27.14, true);
+
+  assert.equal(requested[0]?.hostname, 'customer-air-quality-api.open-meteo.com');
+  assert.equal(requested[0]?.pathname, '/v1/air-quality');
+  assert.equal(requested[0]?.searchParams.get('apikey'), 'paid-test-key');
+  assert.equal(requested[1]?.hostname, 'customer-marine-api.open-meteo.com');
+  assert.equal(requested[1]?.pathname, '/v1/marine');
+  assert.equal(requested[1]?.searchParams.get('apikey'), 'paid-test-key');
+});
