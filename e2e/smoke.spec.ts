@@ -130,6 +130,19 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
+test('lazy forecast chunk does not block the decision-first view', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for lazy chunk timing');
+
+  await page.route('**/assets/ForecastAtlas-*.js', async route => {
+    await new Promise(resolve => setTimeout(resolve, 350));
+    await route.continue();
+  });
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible();
+});
+
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
   await page.goto('/istanbul');
