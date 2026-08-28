@@ -254,6 +254,7 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for deploy recovery');
 
   let forecastChunkRequests = 0;
+  await page.route('**/sw.js', route => route.abort());
   await page.route('**/assets/ForecastAtlas-*.js', async route => {
     forecastChunkRequests += 1;
     if (forecastChunkRequests === 1) {
@@ -379,4 +380,15 @@ test('production shell exposes an installable PWA contract', async ({ page, requ
   });
   expect(registration?.active).toBe(true);
   expect(registration?.scope).toMatch(/\/$/);
+
+  // Reload once under service-worker control so the visited city shell and hashed assets are cached.
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  await page.context().setOffline(true);
+  try {
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  } finally {
+    await page.context().setOffline(false);
+  }
 });

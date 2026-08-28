@@ -121,3 +121,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — CI action major upgrades must be validated in the same PR path where possible. Do not opportunistically major-upgrade main-only Docker publishing actions when pull-request CI skips that job; handle those with a separately validated release path.
 
 - 2026-08-28 — Do not retain a stale Lighthouse CI wrapper solely for convenience when its transitive toolchain carries known advisories. Hava81 owns a minimal Lighthouse runner that preserves release thresholds, fails closed on accessibility/missing scores, refuses ambiguous occupied preview ports, and does not publish reports to third-party temporary storage.
+
+- 2026-08-28 — PWA offline caching is limited to same-origin navigation HTML, the tiny install shell, and core boot assets. Never service-worker-cache cross-origin weather/API responses as an offline substitute for fresh weather; keep lazy feature chunks on the normal network/deploy-recovery path.
