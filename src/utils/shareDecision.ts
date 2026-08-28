@@ -5,6 +5,7 @@ interface ShareDecisionInput {
   score: number;
   bestTime?: string;
   umbrella: 'yes' | 'maybe' | 'no';
+  recommendation?: string;
   language: string;
 }
 
@@ -13,6 +14,7 @@ export const buildDecisionShare = ({
   score,
   bestTime,
   umbrella,
+  recommendation,
   language,
 }: ShareDecisionInput) => {
   const path = cityPath(cityName) ?? '/';
@@ -35,12 +37,13 @@ export const buildDecisionShare = ({
   const title = tr ? `${cityName} · Hava81 ${score}/100` : `${cityName} · Hava81 ${score}/100`;
   const text = [
     title,
+    recommendation ? (tr ? `Öneri: ${recommendation}` : `Recommendation: ${recommendation}`) : null,
     bestTime ? (tr ? `En iyi saat: ${bestTime}` : `Best time: ${bestTime}`) : null,
     umbrellaText,
     tr ? 'Havayı değil, gününü planla.' : 'Plan your day, not just the weather.',
-    url,
   ]
     .filter(Boolean)
     .join('\n');
-  return { title, text, url };
+  const clipboardText = `${text}\n${url}`;
+  return { title, text, url, clipboardText };
 };
