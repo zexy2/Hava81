@@ -36,7 +36,13 @@
   color: var(--color-atlas-ink);
   background: var(--color-atlas-field);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+.activity-planner__sensitivity select:hover {
+  border-color: var(--color-aegean);
 }
 .activity-planner__chips {
   display: flex;
@@ -53,6 +59,15 @@
   cursor: pointer;
   font: inherit;
   font-size: 0.84rem;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.activity-planner__chips button:hover {
+  border-color: var(--color-aegean);
+  transform: translateY(-1px);
 }
 .activity-planner__chips button.is-active {
   color: var(--color-atlas-paper);
