@@ -24,5 +24,6 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Bir şeyler yanlış gitti');
     expect(screen.queryByText('secret implementation detail')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tekrar Dene' })).toHaveAttribute('type', 'button');
   });
 });
