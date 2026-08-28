@@ -137,10 +137,18 @@ describe('Hava81 app integration', () => {
   it('renders the decision-first city view and forecast metadata', async () => {
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /plan için öne çıkanlar/i, level: 2 })).toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { name: /saatlik tahmin · sonraki 24 saat/i }, { timeout: 5_000 })
+      screen.getByRole('heading', { name: /plan için öne çıkanlar/i, level: 2 })
     ).toBeInTheDocument();
+    expect(
+      await screen.findByRole(
+        'heading',
+        { name: /saatlik tahmin · sonraki 24 saat/i },
+        { timeout: 5_000 }
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'açık' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'çoğunlukla açık' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open-Meteo · CC BY 4.0' })).toHaveAttribute(
       'href',
       'https://open-meteo.com/'
@@ -153,9 +161,9 @@ describe('Hava81 app integration', () => {
     expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hava81' })).toBeInTheDocument();
     const timeline = screen.getByRole('list', { name: /uygunluk zaman çizelgesi/i });
-    expect([...timeline.querySelectorAll('[role="listitem"]')].every(item => item.tagName === 'DIV')).toBe(
-      true
-    );
+    expect(
+      [...timeline.querySelectorAll('[role="listitem"]')].every(item => item.tagName === 'DIV')
+    ).toBe(true);
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
     ).toBeInTheDocument();

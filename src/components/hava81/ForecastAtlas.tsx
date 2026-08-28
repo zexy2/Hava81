@@ -139,7 +139,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           </h3>
           {intervalHours === 1 && meta?.provider ? (
             <p className="hava81-forecast-atlas__source">
-              {t('hava81.forecastAtlas.hourlySource')} {' '}
+              {t('hava81.forecastAtlas.hourlySource')}{' '}
               {meta.sourceUrl ? (
                 <a href={meta.sourceUrl}>{meta.attribution ?? meta.provider}</a>
               ) : (
@@ -241,6 +241,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       <WeatherSymbol
                         code={hour.icon}
                         size={24}
+                        label={hour.description}
                         className="hava81-forecast-atlas__hour-symbol"
                       />
                       <strong>{hour.convertedTemp}°</strong>
