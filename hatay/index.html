@@ -36,7 +36,51 @@
     <meta name="twitter:description" content="Hatay için güncel hava, 3 saatlik tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri." />
     <meta name="twitter:image" content="https://hava81.zekiakgul.dev/logo512.png" />
     <title>Hatay hava durumu ve gün planı — Hava81</title>
-    <script type="module" crossorigin src="/assets/index-BZ7Uhi-z.js"></script>
+    <script>
+      (() => {
+        const city = "Hatay";
+        const expectedPath = "/hatay/";
+        if (window.location.pathname !== expectedPath) return;
+
+        let lang = 'tr';
+        try {
+          const settings = JSON.parse(window.localStorage.getItem('user-settings') || 'null');
+          if (settings?.language === 'en') lang = 'en';
+        } catch {}
+
+        try {
+          const cached = JSON.parse(window.localStorage.getItem('weather_cache') || 'null');
+          const cacheCity = cached?.data?.cityName;
+          const cacheLanguage = cached?.language || 'tr';
+          const cacheAge = Date.now() - Number(cached?.timestamp || 0);
+          if (
+            cacheCity &&
+            cacheAge < 300000 &&
+            cacheLanguage === lang &&
+            cacheCity.toLocaleLowerCase('tr-TR') === city.toLocaleLowerCase('tr-TR')
+          ) {
+            return;
+          }
+        } catch {}
+
+        const url = new URL("https://api.hava81.zekiakgul.dev/api/v1/weather/current");
+        url.searchParams.set('city', city);
+        url.searchParams.set('units', 'metric');
+        url.searchParams.set('lang', lang);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 10000);
+        const promise = window
+          .fetch(url.toString(), {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          })
+          .then(response => (response.ok ? response.json() : null))
+          .catch(() => null)
+          .finally(() => window.clearTimeout(timeoutId));
+        window.__HAVA81_BOOTSTRAP_WEATHER__ = { city, lang, units: 'metric', promise };
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-ZE5_jCWf.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-CbXtAM7H.js">
     <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-CEuv_zDX.js">
     <link rel="modulepreload" crossorigin href="/assets/cities-CPHWYFED.js">
