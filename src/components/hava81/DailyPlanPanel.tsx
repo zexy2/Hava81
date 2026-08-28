@@ -203,7 +203,10 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
             <strong>{slot.score}</strong>
             <span>{t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`)}</span>
             <small>
-              {Math.round(slot.temperature)}° · %{Math.round(slot.precipitationProbability * 100)}
+              {Math.round(slot.temperature)}°
+              {Math.round(slot.precipitationProbability * 100) > 0
+                ? ` · %${Math.round(slot.precipitationProbability * 100)}`
+                : ''}
             </small>
             {slot.reasons[0] ? (
               <em>{t(`hava81.dailyPlan.reasons.${reasonKey[slot.reasons[0]]}`)}</em>

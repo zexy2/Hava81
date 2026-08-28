@@ -204,4 +204,13 @@ This log records product and engineering decisions made during the autonomous im
 - Expose dominant approximate factor impacts and data coverage in the UI; do not present the score as a safety guarantee.
 - Align activity, commute, comparison, and limited-signal route scoring with the same continuous-score philosophy instead of maintaining independent hard cliffs.
 
+
 - 2026-08-29 — Do not enable ads, subscriptions, promotional commercial use, or other monetization while Hava81 is using Open-Meteo's free hosted endpoints. The API BFF supports server-only customer-prefixed forecast/air-quality/marine hosts and `OPEN_METEO_API_KEY`; switch those production variables to a paid Open-Meteo plan before commercial activation. Keep CC BY 4.0 attribution/modification disclosure even on the paid endpoint.
+
+
+## 2026-08-29 — decision UI semantics follow the data actually being scored
+
+- Never label OpenWeather current-response `temp_min/temp_max` as a daily high/low. The primary weather rail uses the normalized daily forecast for that label; absence is preferable to a misleading same-value range.
+- Zero precipitation probability remains available to assistive technology but is visually suppressed in repeated forecast/timeline rows. Non-zero probabilities remain visible.
+- A user-selected activity clock range is a scoring constraint, not a display-only filter: best-window selection, aggregate activity score and dominant reasons are all derived from eligible slots in that range. The UI states the evaluated range and the activity-specific criteria so nearby 100/98-style scores are explainable.
+- Commute preparation is multi-factor. Umbrella advice remains a rain-specific signal, but the headline may instead be heat/cold, wind/gust or air-quality guidance; saved temperature sensitivity shifts commute heat/cold thresholds consistently with personal activity planning.

@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, DailyForecast, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherSymbol } from './WeatherSymbol';
@@ -11,6 +11,7 @@ import './WeatherDecisionField.css';
 export interface WeatherDecisionFieldProps {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
+  daily?: DailyForecast[];
   airQuality?: AirQuality;
   uvIndexMax?: number;
   className?: string;
@@ -19,6 +20,7 @@ export interface WeatherDecisionFieldProps {
 export function WeatherDecisionField({
   weather,
   hourly,
+  daily = [],
   airQuality,
   uvIndexMax,
   className = '',
@@ -74,6 +76,9 @@ export function WeatherDecisionField({
 
   const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
+  const todayKey = atLocationTime(new Date()).toISOString().slice(0, 10);
+  const todayDaily =
+    daily.find(day => day.date.toISOString().slice(0, 10) === todayKey) ?? daily[0];
 
   const formatForecastTime = (time: Date): string => {
     const date = time instanceof Date ? time : new Date(time);
@@ -267,9 +272,11 @@ export function WeatherDecisionField({
 
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
-          <dt>{t('hava81.decision.highLow', { defaultValue: 'Yüksek / düşük' })}</dt>
+          <dt>{t('hava81.decision.highLow', { defaultValue: 'Bugünün yüksek / düşük' })}</dt>
           <dd>
-            {formatTemperature(weather.tempMax)} / {formatTemperature(weather.tempMin)}
+            {todayDaily
+              ? `${formatTemperature(todayDaily.tempMax)} / ${formatTemperature(todayDaily.tempMin)}`
+              : '—'}
           </dd>
         </div>
         <div className="hava81-decision-field__metric">

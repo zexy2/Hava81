@@ -1,4 +1,5 @@
 import type { HourlyForecast } from '../../types';
+import type { TemperatureSensitivity } from '../activity/types';
 import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
 import type { Hava81ScoreBand } from '../decision/types';
 
@@ -14,14 +15,25 @@ export type CommuteChangeKind =
   | 'temperature-drop'
   | 'temperature-rise'
   | 'stable';
+export type CommuteAdviceCode =
+  | 'umbrella-take'
+  | 'umbrella-consider'
+  | 'heat'
+  | 'cold'
+  | 'strong-wind'
+  | 'wind-caution'
+  | 'poor-air'
+  | 'stable';
 
 export interface CommuteWindow {
   targetClock: string;
   targetTime: Date;
   forecastTime: Date;
   temperature: number;
+  apparentTemperature: number;
   precipitationProbability: number;
   windSpeed: number;
+  windGust?: number;
   score: number;
   band: Hava81ScoreBand;
 }
@@ -32,6 +44,14 @@ export interface CommutePlan {
   umbrella: CommuteUmbrellaAdvice;
   change: CommuteChangeKind;
   changeValue?: number;
+  advice: CommuteAdviceCode[];
+  primaryAdvice: CommuteAdviceCode;
+  summary: {
+    maxApparentTemperature: number;
+    minApparentTemperature: number;
+    maxEffectiveWind: number;
+    airQualityIndex?: number;
+  };
 }
 
 interface BuildCommutePlanInput {
@@ -40,6 +60,8 @@ interface BuildCommutePlanInput {
   commuteEnd?: string;
   timezoneOffsetSeconds?: number;
   now?: Date;
+  airQualityIndex?: number;
+  temperatureSensitivity?: TemperatureSensitivity;
 }
 
 const parseClockMinutes = (clock?: string): number | null => {
@@ -111,12 +133,28 @@ const buildWindow = (
     targetTime: toActualDate(targetShiftedMs, timezoneOffsetSeconds),
     forecastTime: point.time,
     temperature: point.temp,
+    apparentTemperature: scored.apparentTemperature,
     precipitationProbability: point.pop,
     windSpeed: point.windSpeed ?? 0,
+    windGust: point.windGust,
     score: scored.score,
     band: getScoreBand(scored.score),
   };
 };
+
+const effectiveWind = (window: CommuteWindow) =>
+  Math.max(window.windSpeed, Number.isFinite(window.windGust) ? (window.windGust as number) * 0.72 : 0);
+
+const advicePriority: CommuteAdviceCode[] = [
+  'umbrella-take',
+  'strong-wind',
+  'heat',
+  'cold',
+  'poor-air',
+  'umbrella-consider',
+  'wind-caution',
+  'stable',
+];
 
 export const buildCommutePlan = ({
   hourly,
@@ -124,6 +162,8 @@ export const buildCommutePlan = ({
   commuteEnd,
   timezoneOffsetSeconds = 0,
   now = new Date(),
+  airQualityIndex,
+  temperatureSensitivity = 'balanced',
 }: BuildCommutePlanInput): CommutePlan | null => {
   const startMinutes = parseClockMinutes(commuteStart);
   const endMinutes = parseClockMinutes(commuteEnd);
@@ -158,18 +198,26 @@ export const buildCommutePlan = ({
   const umbrella: CommuteUmbrellaAdvice =
     maxRain >= 0.5 ? 'take' : maxRain >= 0.25 ? 'consider' : 'no';
 
-  const maxWind = Math.max(outbound.windSpeed, returnWindow.windSpeed);
+  const maxEffectiveWind = Math.max(effectiveWind(outbound), effectiveWind(returnWindow));
+  const maxApparentTemperature = Math.max(
+    outbound.apparentTemperature,
+    returnWindow.apparentTemperature
+  );
+  const minApparentTemperature = Math.min(
+    outbound.apparentTemperature,
+    returnWindow.apparentTemperature
+  );
   const rainIncrease = returnWindow.precipitationProbability - outbound.precipitationProbability;
-  const temperatureDelta = returnWindow.temperature - outbound.temperature;
+  const temperatureDelta = returnWindow.apparentTemperature - outbound.apparentTemperature;
 
   let change: CommuteChangeKind = 'stable';
   let changeValue: number | undefined;
   if (rainIncrease >= 0.25) {
     change = 'rain-increase';
     changeValue = Math.round(rainIncrease * 100);
-  } else if (maxWind >= 17.2) {
+  } else if (maxEffectiveWind >= 17.2) {
     change = 'strong-wind';
-  } else if (maxWind >= 10.8) {
+  } else if (maxEffectiveWind >= 10.8) {
     change = 'wind-caution';
   } else if (temperatureDelta <= -6) {
     change = 'temperature-drop';
@@ -179,11 +227,36 @@ export const buildCommutePlan = ({
     changeValue = Math.round(temperatureDelta);
   }
 
+  const heatThreshold =
+    temperatureSensitivity === 'heat' ? 27 : temperatureSensitivity === 'cold' ? 33 : 30;
+  const coldThreshold =
+    temperatureSensitivity === 'cold' ? 10 : temperatureSensitivity === 'heat' ? 4 : 7;
+  const advice: CommuteAdviceCode[] = [];
+  if (umbrella === 'take') advice.push('umbrella-take');
+  else if (umbrella === 'consider') advice.push('umbrella-consider');
+  if (maxEffectiveWind >= 17.2) advice.push('strong-wind');
+  else if (maxEffectiveWind >= 10.8) advice.push('wind-caution');
+  if (maxApparentTemperature >= heatThreshold) advice.push('heat');
+  if (minApparentTemperature <= coldThreshold) advice.push('cold');
+  if ((airQualityIndex ?? 0) >= 4) advice.push('poor-air');
+  if (advice.length === 0) advice.push('stable');
+
+  const uniqueAdvice = [...new Set(advice)];
+  const primaryAdvice = advicePriority.find(code => uniqueAdvice.includes(code)) ?? 'stable';
+
   return {
     outbound,
     return: returnWindow,
     umbrella,
     change,
     changeValue,
+    advice: uniqueAdvice,
+    primaryAdvice,
+    summary: {
+      maxApparentTemperature,
+      minApparentTemperature,
+      maxEffectiveWind,
+      airQualityIndex,
+    },
   };
 };

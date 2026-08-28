@@ -86,4 +86,46 @@ describe('activity plans', () => {
     });
     expect(heatSensitive.score).toBeLessThan(coldSensitive.score);
   });
+
+  it('recalculates the score and best time inside a user-selected clock range', () => {
+    const points: HourlyForecast[] = [
+      { time: new Date('2026-08-28T09:00:00Z'), temp: 18, apparentTemperature: 18, pop: 0, windSpeed: 2, icon: '01d' },
+      { time: new Date('2026-08-28T15:00:00Z'), temp: 30, apparentTemperature: 31, pop: 0, windSpeed: 4, icon: '01d' },
+      { time: new Date('2026-08-28T16:00:00Z'), temp: 31, apparentTemperature: 32, pop: 0, windSpeed: 4, icon: '01d' },
+      { time: new Date('2026-08-28T17:00:00Z'), temp: 32, apparentTemperature: 33, pop: 0, windSpeed: 4, icon: '01d' },
+    ];
+    const unfiltered = buildActivityPlan({ activity: 'run', weather, hourly: points });
+    const filtered = buildActivityPlan({
+      activity: 'run',
+      weather,
+      hourly: points,
+      preferredStart: '18:00',
+      preferredEnd: '20:00',
+    });
+
+    expect(filtered.windowApplied).toEqual({ start: '18:00', end: '20:00' });
+    expect(filtered.windowUnavailable).toBe(false);
+    expect(filtered.score).toBeLessThan(unfiltered.score);
+    expect(filtered.bestWindow).toBeDefined();
+    const localBest = new Date(filtered.bestWindow!.time.getTime() + 3 * 60 * 60_000);
+    expect(localBest.getUTCHours()).toBeGreaterThanOrEqual(18);
+    expect(localBest.getUTCHours()).toBeLessThanOrEqual(20);
+  });
+
+  it('reports an unavailable selected window instead of inventing a best time', () => {
+    const points: HourlyForecast[] = [
+      { time: new Date('2026-08-28T09:00:00Z'), temp: 20, pop: 0, windSpeed: 2, icon: '01d' },
+      { time: new Date('2026-08-28T10:00:00Z'), temp: 21, pop: 0, windSpeed: 2, icon: '01d' },
+    ];
+    const filtered = buildActivityPlan({
+      activity: 'walk',
+      weather,
+      hourly: points,
+      preferredStart: '23:00',
+      preferredEnd: '23:30',
+    });
+    expect(filtered.windowUnavailable).toBe(true);
+    expect(filtered.bestWindow).toBeUndefined();
+  });
+
 });

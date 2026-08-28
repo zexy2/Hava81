@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
-import { buildCommutePlan } from '../../domain/commute/buildCommutePlan';
+import {
+  buildCommutePlan,
+  type CommuteAdviceCode,
+} from '../../domain/commute/buildCommutePlan';
 import { useSettings } from '../../context/SettingsContext';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './CommutePlanPanel.css';
 
 interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
+  airQuality?: AirQuality;
 }
 
-export function CommutePlanPanel({ weather, hourly }: Props) {
+export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
@@ -26,8 +30,17 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
         commuteStart: profile.commuteStart,
         commuteEnd: profile.commuteEnd,
         timezoneOffsetSeconds,
+        airQualityIndex: airQuality?.aqi,
+        temperatureSensitivity: profile.temperatureSensitivity,
       }),
-    [hourly, profile.commuteEnd, profile.commuteStart, timezoneOffsetSeconds]
+    [
+      airQuality?.aqi,
+      hourly,
+      profile.commuteEnd,
+      profile.commuteStart,
+      profile.temperatureSensitivity,
+      timezoneOffsetSeconds,
+    ]
   );
 
   useEffect(() => {
@@ -41,6 +54,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
       commuteEnd: profile.commuteEnd,
       umbrella: plan.umbrella,
       change: plan.change,
+      primaryAdvice: plan.primaryAdvice,
     });
   }, [plan, profile.commuteEnd, profile.commuteStart, weather.cityName]);
 
@@ -57,6 +71,18 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
         value: plan.changeValue,
       })
     : '';
+
+  const adviceText = (code: CommuteAdviceCode) => {
+    if (!plan) return '';
+    return t(`hava81.commute.preparation.${code}`, {
+      temperature: Math.round(convertTemperature(plan.summary.maxApparentTemperature)),
+      coldTemperature: Math.round(convertTemperature(plan.summary.minApparentTemperature)),
+      temperatureUnit: getTemperatureSymbol(),
+      wind: convertWindSpeed(plan.summary.maxEffectiveWind),
+      windUnit: getWindSpeedSymbol(),
+      aqi: plan.summary.airQualityIndex ?? '—',
+    });
+  };
 
   return (
     <section className="commute-plan" aria-labelledby="commute-plan-title">
@@ -96,7 +122,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
         <>
           <div
             className="commute-plan__verdict"
-            data-umbrella={plan.umbrella}
+            data-advice={plan.primaryAdvice}
             role="status"
             aria-live="polite"
             aria-atomic="true"
@@ -108,7 +134,15 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
                 return: formatLocalWindowTime(plan.return.targetTime),
               })}
             </small>
-            <strong>{t(`hava81.commute.umbrella.${plan.umbrella}`)}</strong>
+            <strong>{adviceText(plan.primaryAdvice)}</strong>
+            {plan.advice.length > 1 ? (
+              <ul className="commute-plan__advice" aria-label={t('hava81.commute.adviceLabel')}>
+                {plan.advice
+                  .filter(code => code !== plan.primaryAdvice)
+                  .slice(0, 3)
+                  .map(code => <li key={code}>{adviceText(code)}</li>)}
+              </ul>
+            ) : null}
             <p>{changeText}</p>
           </div>
 
@@ -127,15 +161,19 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
                 </p>
                 <dl>
                   <div>
-                    <dt>{t('hava81.commute.temperature')}</dt>
+                    <dt>{t('hava81.commute.feelsLike')}</dt>
                     <dd>
-                      {Math.round(convertTemperature(window.temperature))}
+                      {Math.round(convertTemperature(window.apparentTemperature))}
                       {getTemperatureSymbol()}
                     </dd>
                   </div>
                   <div>
                     <dt>{t('hava81.commute.rain')}</dt>
-                    <dd>%{Math.round(window.precipitationProbability * 100)}</dd>
+                    <dd>
+                      {window.precipitationProbability === 0
+                        ? t('hava81.commute.noRain')
+                        : `%${Math.round(window.precipitationProbability * 100)}`}
+                    </dd>
                   </div>
                   <div>
                     <dt>{t('hava81.commute.wind')}</dt>

@@ -8,6 +8,8 @@ export interface DecisionProfile {
   temperatureSensitivity: TemperatureSensitivity;
   commuteStart?: string;
   commuteEnd?: string;
+  activityStart?: string;
+  activityEnd?: string;
 }
 
 export interface ActivityWindowScore extends ScoredWeatherWindow {
@@ -18,6 +20,8 @@ export interface ActivityWindowScore extends ScoredWeatherWindow {
 export interface ActivityPlan {
   activity: ActivityKind;
   score: number;
+  windowApplied?: { start: string; end: string };
+  windowUnavailable?: boolean;
   band: Hava81ScoreBand;
   bestWindow?: ActivityWindowScore;
   slots: ActivityWindowScore[];

@@ -55,11 +55,25 @@ export function useDecisionProfile() {
     setProfile(current => ({ ...current, commuteStart: undefined, commuteEnd: undefined }));
     trackProductEvent('commute_schedule_cleared');
   }, [setProfile]);
+  const setActivityWindow = useCallback(
+    (kind: 'start' | 'end', value?: string) => {
+      const key = kind === 'start' ? 'activityStart' : 'activityEnd';
+      setProfile(current => ({ ...current, [key]: value }));
+      trackProductEvent('activity_window_changed', { kind, value: value ?? null });
+    },
+    [setProfile]
+  );
+  const clearActivityWindow = useCallback(() => {
+    setProfile(current => ({ ...current, activityStart: undefined, activityEnd: undefined }));
+    trackProductEvent('activity_window_cleared');
+  }, [setProfile]);
   return {
     profile,
     toggleActivity,
     setTemperatureSensitivity,
     setCommuteTime,
     clearCommuteTimes,
+    setActivityWindow,
+    clearActivityWindow,
   };
 }

@@ -185,14 +185,43 @@ export interface BuildActivityPlanInput {
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
   sensitivity?: TemperatureSensitivity;
+  preferredStart?: string;
+  preferredEnd?: string;
 }
 
-const weightedActivityScore = (slots: ActivityWindowScore[]) => {
+const parseClockMinutes = (clock?: string): number | null => {
+  if (!clock) return null;
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(clock);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+};
+
+const localClockMinutes = (date: Date, timezoneOffsetSeconds: number) => {
+  const local = new Date(date.getTime() + timezoneOffsetSeconds * 1000);
+  return local.getUTCHours() * 60 + local.getUTCMinutes();
+};
+
+const clockInRange = (value: number, start: number, end: number) => {
+  if (start === end) return true;
+  return start < end ? value >= start && value <= end : value >= start || value <= end;
+};
+
+const weightedActivityScore = (slots: ActivityWindowScore[], horizonHours = HORIZON_HOURS) => {
   if (!slots.length) return 0;
-  const start = slots[0].time.getTime();
-  const end = start + HORIZON_HOURS * HOUR_MS;
+  if (slots.length === 1) return slots[0].score;
+
+  const diffs = slots
+    .slice(1)
+    .map((slot, index) => (slot.time.getTime() - slots[index].time.getTime()) / HOUR_MS)
+    .filter(value => value > 0 && Number.isFinite(value))
+    .sort((a, b) => a - b);
+  const cadenceHours = diffs.length ? diffs[Math.floor(diffs.length / 2)] : 1;
+  const naturalEnd = slots[slots.length - 1].time.getTime() + cadenceHours * HOUR_MS;
+  const hardEnd = slots[0].time.getTime() + horizonHours * HOUR_MS;
+  const end = Math.min(naturalEnd, hardEnd);
   const selected = slots.filter(slot => slot.time.getTime() < end);
   if (!selected.length) return slots[0].score;
+
   const weighted = selected.map((slot, index) => {
     const current = slot.time.getTime();
     const next = selected[index + 1]?.time.getTime() ?? end;
@@ -221,8 +250,10 @@ export const buildActivityPlan = ({
   hourly,
   airQuality,
   sensitivity = 'balanced',
+  preferredStart,
+  preferredEnd,
 }: BuildActivityPlanInput): ActivityPlan => {
-  const source = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 24);
+  const source = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 48);
   const points = source.length
     ? source
     : [
@@ -276,22 +307,49 @@ export const buildActivityPlan = ({
     };
   });
 
-  const horizonEnd = slots[0]?.time.getTime() + HORIZON_HOURS * HOUR_MS;
-  const horizonSlots = horizonEnd
-    ? slots.filter(slot => slot.time.getTime() < horizonEnd)
+  const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds ?? 0;
+  const startMinutes = parseClockMinutes(preferredStart);
+  const endMinutes = parseClockMinutes(preferredEnd);
+  const windowApplied =
+    startMinutes !== null && endMinutes !== null && preferredStart && preferredEnd
+      ? { start: preferredStart, end: preferredEnd }
+      : undefined;
+
+  const defaultEnd = slots[0]?.time.getTime() + HORIZON_HOURS * HOUR_MS;
+  const defaultSlots = defaultEnd
+    ? slots.filter(slot => slot.time.getTime() < defaultEnd)
     : slots;
-  const bestWindow = (horizonSlots.length ? horizonSlots : slots).reduce<ActivityWindowScore | undefined>(
+  const nextDayEnd = slots[0]?.time.getTime() + 24 * HOUR_MS;
+  const filteredSlots = windowApplied && nextDayEnd
+    ? slots.filter(slot =>
+        slot.time.getTime() < nextDayEnd &&
+        clockInRange(localClockMinutes(slot.time, timezoneOffsetSeconds), startMinutes!, endMinutes!)
+      )
+    : defaultSlots;
+  const evaluatedSlots = windowApplied ? filteredSlots : defaultSlots;
+
+  const bestWindow = evaluatedSlots.reduce<ActivityWindowScore | undefined>(
     (best, slot) => (!best || slot.score > best.score ? slot : best),
     undefined
   );
-  const score = weightedActivityScore(slots);
+  const score = weightedActivityScore(evaluatedSlots, windowApplied ? 24 : HORIZON_HOURS);
   const reasonCounts = new Map<DecisionReasonCode, number>();
-  (horizonSlots.length ? horizonSlots : slots).forEach(slot =>
+  evaluatedSlots.forEach(slot =>
     slot.reasons.forEach(reason => reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1))
   );
   const reasons = [...reasonCounts.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason]) => reason);
-  return { activity, score, band: getScoreBand(score), bestWindow, slots, reasons };
+
+  return {
+    activity,
+    score,
+    band: getScoreBand(score),
+    bestWindow,
+    slots,
+    reasons,
+    windowApplied,
+    windowUnavailable: Boolean(windowApplied && evaluatedSlots.length === 0),
+  };
 };

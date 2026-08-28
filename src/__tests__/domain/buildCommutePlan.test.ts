@@ -61,4 +61,39 @@ describe('buildCommutePlan', () => {
 
     expect(plan).toBeNull();
   });
+
+  it('gives heat preparation guidance even when an umbrella is unnecessary', () => {
+    const hourly: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 31,
+        apparentTemperature: 33,
+        pop: 0,
+        windSpeed: 4,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 33,
+        apparentTemperature: 35,
+        pop: 0,
+        windSpeed: 5,
+        icon: '01d',
+      },
+    ];
+    const plan = buildCommutePlan({
+      hourly,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+      airQualityIndex: 4,
+    });
+
+    expect(plan?.umbrella).toBe('no');
+    expect(plan?.advice).toContain('heat');
+    expect(plan?.advice).toContain('poor-air');
+    expect(plan?.primaryAdvice).toBe('heat');
+    expect(plan?.summary.maxApparentTemperature).toBe(35);
+  });
 });
