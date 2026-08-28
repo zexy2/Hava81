@@ -444,3 +444,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the lower Environment Rail map control and found it exposed `aria-expanded` but did not identify the region it expands, unlike the primary header map control.
 - Added `aria-controls="weather-map-region"` so assistive technology can associate the disclosure button with the lazy map panel, plus a focused component regression.
 - Validation on `origin/main` 9bf06a4: focused Environment Rail test 1/1; lint; type-check; full frontend suite 110/110 with bounded workers; production build with all 81 city pages; `git diff --check` clean.
+
+## 2026-08-28 20:58 TRT — route decision live announcement
+
+- Audited the asynchronous Rota havası result flow and found that a completed corridor decision appeared visually after the check button resolved but was not announced as a result to screen-reader users.
+- Exposed the completed route result as one atomic polite status region so the score, corridor summary and guidance are announced without moving focus. Existing provider-error alert behavior remains unchanged.
+- Validation on main `bc2b296`: focused route tests 2/2; lint; type-check; full frontend suite 111/111 with bounded workers; production build with all 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check` clean.

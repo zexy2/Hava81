@@ -188,3 +188,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Commute-plan empty states must distinguish incomplete user input from insufficient forecast coverage. Once both routine times are present, never tell the user to select them again; explain that no sufficiently close forecast window is available instead of implying a plan can be computed from unavailable data.
 
 - 2026-08-28 — Every map disclosure that exposes `aria-expanded` must also identify the controlled lazy map region with `aria-controls="weather-map-region"`; keep duplicate entry points semantically consistent even when they share the same open/close handler.
+
+- 2026-08-28 — Asynchronous route-weather success results are exposed as one atomic polite status region. Keep provider failures as alerts, but announce successful corridor decisions without moving focus so the decision-first workflow remains usable with assistive technology.
