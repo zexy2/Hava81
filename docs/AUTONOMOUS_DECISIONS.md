@@ -87,3 +87,6 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-28 13:27 TRT — scaffold identity hygiene
 
 - Remove unused starter-brand assets instead of merely hiding them from rendered surfaces. Keep historical baseline documentation intact when it is explicitly labeled as a before-state, but current package metadata and current roadmap statements must use the Hava81 identity and current toolchain.
+## 2026-08-28 13:31 TRT — social preview truthfulness
+
+- Social-preview artwork may communicate Hava81's stable product promise and brand identity, but it must not contain a current temperature, warning, UV level, or other live condition unless that image is generated from freshness-aware verified data. The default share card therefore stays weather-data-neutral.
