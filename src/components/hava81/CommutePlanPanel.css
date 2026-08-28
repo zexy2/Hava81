@@ -66,6 +66,7 @@
 }
 
 .commute-plan__verdict span,
+.commute-plan__verdict-window,
 .commute-plan__verdict p {
   color: var(--color-atlas-muted);
 }

@@ -171,6 +171,7 @@ export const en = {
       return: 'Return',
       reset: 'Clear times',
       verdictLabel: 'Preparation decision',
+      planWindow: 'Planned window: {{outbound}} → {{return}}',
       umbrella: {
         take: 'Take an umbrella',
         consider: 'Keep an umbrella with you',

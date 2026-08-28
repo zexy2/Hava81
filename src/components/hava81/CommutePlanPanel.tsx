@@ -44,7 +44,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
     });
   }, [plan, profile.commuteEnd, profile.commuteStart, weather.cityName]);
 
-  const formatForecastTime = (date: Date) =>
+  const formatLocalWindowTime = (date: Date) =>
     new Date(date.getTime() + timezoneOffsetSeconds * 1000).toLocaleString(i18n.language, {
       weekday: 'short',
       hour: '2-digit',
@@ -96,6 +96,12 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
         <>
           <div className="commute-plan__verdict" data-umbrella={plan.umbrella}>
             <span>{t('hava81.commute.verdictLabel')}</span>
+            <small className="commute-plan__verdict-window">
+              {t('hava81.commute.planWindow', {
+                outbound: formatLocalWindowTime(plan.outbound.targetTime),
+                return: formatLocalWindowTime(plan.return.targetTime),
+              })}
+            </small>
             <strong>{t(`hava81.commute.umbrella.${plan.umbrella}`)}</strong>
             <p>{changeText}</p>
           </div>
@@ -111,7 +117,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
                   <strong>{window.targetClock}</strong>
                 </header>
                 <p>
-                  {t('hava81.commute.forecastUsed', { time: formatForecastTime(window.forecastTime) })}
+                  {t('hava81.commute.forecastUsed', { time: formatLocalWindowTime(window.forecastTime) })}
                 </p>
                 <dl>
                   <div>

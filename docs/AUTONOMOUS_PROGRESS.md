@@ -413,3 +413,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt PR #70 from its final intended diff on current main `577b73f9`, discarding the corrupted intermediate Git-object transfer history from the working branch rather than replaying it. Current-weather raw errors are sanitized at `useWeather`; route provider failures use localized recovery copy; App integration coverage injects a secret upstream string and requires it to stay out of the DOM.
 - The prior CI transfer failure was traced to misuse of GitHub blob encoding, not product code. HTTPS repo-owner push authentication is now verified and is the preferred path for future branch publication.
 - Combined validation on current main: lint/type-check passed; complete serial frontend suite 108/108; production build generated all 81 city pages; production dependency audit found 0 vulnerabilities; `git diff --check` clean.
+
+## 2026-08-28 19:54 TRT — commute target-window clarity
+
+- Audited the newly merged Çıkış planı after-hours semantics. `buildCommutePlan` intentionally selects the next leave/return pair, so a morning routine opened in the evening targets tomorrow; the verdict previously omitted the target weekday and could be misread as today's guidance.
+- Added a localized planned-window line directly above the preparation verdict using the city's provider timezone offset. The component regression now freezes an evening Friday case and requires `Cmt 08:30 → Cmt 18:00`, proving the rollover is visible rather than implicit.
+- Validation: commute component/domain focused coverage passes; lint and type-check pass; production build generated all 81 city pages; production dependency audit found 0 vulnerabilities; `git diff --check` clean. Full CI/browser gates remain required before merge.

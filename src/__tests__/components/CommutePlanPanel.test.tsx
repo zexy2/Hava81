@@ -58,6 +58,7 @@ describe('CommutePlanPanel', () => {
     fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '18:00' } });
 
     expect(screen.getByText('Şemsiyeyi al')).toBeInTheDocument();
+    expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Cmt 08:30 → Cmt 18:00');
     expect(screen.getByText(/Dönüşte yağmur riski/i)).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })).toBeInTheDocument();
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('08:30');
