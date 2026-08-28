@@ -12,7 +12,7 @@ export default defineConfig({
     port: 4173,
   },
   build: {
-    sourcemap: true,
+    sourcemap: process.env.ANALYZE === "true",
   },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],

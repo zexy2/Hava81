@@ -64,6 +64,8 @@ jobs:
       - run: npm run build
         env:
           VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
+      - name: Reject public source maps
+        run: test -z "$(find dist -type f -name *.map -print -quit)"
       - uses: actions/upload-artifact@v6
         with:
           name: dist
