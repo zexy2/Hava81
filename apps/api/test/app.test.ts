@@ -125,7 +125,9 @@ test('health endpoints and OpenAPI docs are available', async (context) => {
   assert.equal(live.statusCode, 200);
   assert.deepEqual(live.json(), { status: 'ok' });
   assert.equal(live.headers['x-content-type-options'], 'nosniff');
+  assert.equal(live.headers['cache-control'], 'no-store');
   assert.equal(ready.statusCode, 200);
+  assert.equal(ready.headers['cache-control'], 'no-store');
   assert.equal(ready.json().status, 'ready');
   assert.equal(docs.statusCode, 200);
   assert.ok(docs.json().paths['/api/v1/weather/current']);
