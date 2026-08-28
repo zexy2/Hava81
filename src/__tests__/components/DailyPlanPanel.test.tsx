@@ -54,6 +54,12 @@ describe('DailyPlanPanel sharing', () => {
     });
   });
 
+  it('exposes the explanation as a named accessibility group', () => {
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+
+    expect(screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })).toBeInTheDocument();
+  });
+
   it('announces clipboard success without moving focus', async () => {
     const user = userEvent.setup();
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);
