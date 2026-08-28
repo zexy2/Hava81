@@ -48,3 +48,8 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-28 — Visual polish batch 3 keeps data/decision logic unchanged: Forecast, Environment, Compare and Search now share the established surface/token system. CI downstream jobs reuse the production `dist` artifact rather than rebuilding identical frontend output; the build job remains the single artifact producer.
 - 2026-08-28 — Browser notification permission `denied` is treated as a non-actionable state: Hava81 shows the blocked label but disables the opt-in button instead of repeatedly invoking a browser permission request that cannot succeed.
+
+
+## 2026-08-28 11:46 TRT — performance split
+
+- Keep the current-conditions decision field synchronous, but code-split Forecast Atlas, Daily Plan and Environment Rail. Forecast data already arrives asynchronously, so these presentation modules do not need to inflate the initial application bundle; browser smoke tests remain the guard against visible regressions.
