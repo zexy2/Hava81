@@ -34,6 +34,39 @@ type SerializedForecast = {
 
 type SerializedAirQuality = Omit<AirQuality, 'meta'> & { meta: SerializedMeta };
 
+type BootstrapWeatherRequest = {
+  city: string;
+  lang: string;
+  units: string;
+  promise: Promise<SerializedWeatherData | null>;
+};
+
+declare global {
+  interface Window {
+    __HAVA81_BOOTSTRAP_WEATHER__?: BootstrapWeatherRequest;
+  }
+}
+
+const cityKey = (value: string) => value.trim().toLocaleLowerCase('tr-TR');
+const takeBootstrapWeather = (
+  city: string,
+  lang: string,
+  units: string
+): Promise<SerializedWeatherData | null> | null => {
+  if (typeof window === 'undefined') return null;
+  const bootstrap = window.__HAVA81_BOOTSTRAP_WEATHER__;
+  if (
+    !bootstrap ||
+    cityKey(bootstrap.city) !== cityKey(city) ||
+    bootstrap.lang !== lang ||
+    bootstrap.units !== units
+  ) {
+    return null;
+  }
+  delete window.__HAVA81_BOOTSTRAP_WEATHER__;
+  return bootstrap.promise;
+};
+
 const reviveMeta = (meta: SerializedMeta): WeatherDataMeta => ({
   ...meta,
   fetchedAt: new Date(meta.fetchedAt),
@@ -60,11 +93,16 @@ export const weatherService = {
     }
 
     try {
-      const response = await httpClient.get<SerializedWeatherData>(API_ENDPOINTS.weather.current, {
-        city: city.trim(),
-        units,
-        lang,
-      });
+      const normalizedCity = city.trim();
+      const bootstrapPromise = takeBootstrapWeather(normalizedCity, lang, units);
+      const bootstrapResponse = bootstrapPromise ? await bootstrapPromise : null;
+      const response =
+        bootstrapResponse ??
+        (await httpClient.get<SerializedWeatherData>(API_ENDPOINTS.weather.current, {
+          city: normalizedCity,
+          units,
+          lang,
+        }));
       return reviveWeatherDates(response);
     } catch (error) {
       if (error instanceof ApiError && error.statusCode === 404) {

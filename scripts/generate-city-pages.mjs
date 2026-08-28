@@ -31,6 +31,67 @@ const slugify = name =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 const baseUrl = 'https://hava81.zekiakgul.dev';
+const apiBaseUrl = 'https://api.hava81.zekiakgul.dev/api/v1';
+const weatherCacheMaxAgeMs = 5 * 60 * 1000;
+const bootstrapTimeoutMs = 10_000;
+
+const safeJson = value => JSON.stringify(value).replace(/</g, '\u003c');
+const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
+      (() => {
+        const city = ${safeJson(cityName)};
+        const expectedPath = ${safeJson(expectedPath)};
+        if (window.location.pathname !== expectedPath) return;
+
+        let lang = 'tr';
+        try {
+          const settings = JSON.parse(window.localStorage.getItem('user-settings') || 'null');
+          if (settings?.language === 'en') lang = 'en';
+        } catch {}
+
+        try {
+          const cached = JSON.parse(window.localStorage.getItem('weather_cache') || 'null');
+          const cacheCity = cached?.data?.cityName;
+          const cacheLanguage = cached?.language || 'tr';
+          const cacheAge = Date.now() - Number(cached?.timestamp || 0);
+          if (
+            cacheCity &&
+            cacheAge < ${weatherCacheMaxAgeMs} &&
+            cacheLanguage === lang &&
+            cacheCity.toLocaleLowerCase('tr-TR') === city.toLocaleLowerCase('tr-TR')
+          ) {
+            return;
+          }
+        } catch {}
+
+        const url = new URL(${safeJson(apiBaseUrl + '/weather/current')});
+        url.searchParams.set('city', city);
+        url.searchParams.set('units', 'metric');
+        url.searchParams.set('lang', lang);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), ${bootstrapTimeoutMs});
+        const promise = window
+          .fetch(url.toString(), {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          })
+          .then(response => (response.ok ? response.json() : null))
+          .catch(() => null)
+          .finally(() => window.clearTimeout(timeoutId));
+        window.__HAVA81_BOOTSTRAP_WEATHER__ = { city, lang, units: 'metric', promise };
+      })();
+    </script>`;
+
+const injectBootstrapWeather = (html, cityName, expectedPath) => {
+  const moduleScriptIndex = html.indexOf('    <script type="module"');
+  if (moduleScriptIndex < 0) throw new Error('Production HTML is missing the Vite module entry script');
+  const script = bootstrapWeatherScript(cityName, expectedPath);
+  const output = `${html.slice(0, moduleScriptIndex)}${script}
+${html.slice(moduleScriptIndex)}`;
+  if (output.indexOf('__HAVA81_BOOTSTRAP_WEATHER__') > output.indexOf('    <script type="module"')) {
+    throw new Error('Weather bootstrap must precede the application module script');
+  }
+  return output;
+};
 
 for (const name of names) {
   const slug = slugify(name);
@@ -78,9 +139,12 @@ for (const name of names) {
     const count = html.match(pattern)?.length ?? 0;
     if (count !== 1) throw new Error(`${name}: expected exactly one ${label}, found ${count}`);
   }
+  html = injectBootstrapWeather(html, name, `/${slug}/`);
   await mkdir(join(dist, slug), { recursive: true });
   await writeFile(join(dist, slug, 'index.html'), html);
 }
+
+await writeFile(join(dist, 'index.html'), injectBootstrapWeather(baseHtml, 'İstanbul', '/'));
 
 const urls = [`${baseUrl}/`, ...names.map(name => `${baseUrl}/${slugify(name)}/`)];
 await writeFile(

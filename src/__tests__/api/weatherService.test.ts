@@ -29,7 +29,7 @@ const serializedWeather = {
   windSpeed: 3.5,
   windDirection: 180,
   description: 'acik hava',
-  icon: '01d',
+  icon: '01d' as const,
   sunrise: '2026-07-14T02:45:00.000Z',
   sunset: '2026-07-14T17:35:00.000Z',
   timestamp: '2026-07-14T12:00:00.000Z',
@@ -39,7 +39,7 @@ const serializedWeather = {
     provider: 'OpenWeather',
     fetchedAt: '2026-07-14T12:00:01.000Z',
     timezoneOffsetSeconds: 10800,
-    cacheStatus: 'MISS',
+    cacheStatus: 'MISS' as const,
     freshForSeconds: 60,
   },
 };
@@ -133,6 +133,7 @@ describe('weatherService - ApiError', () => {
 describe('weatherService BFF client', () => {
   beforeEach(() => {
     mockGet.mockReset();
+    Reflect.deleteProperty(window, '__HAVA81_BOOTSTRAP_WEATHER__');
   });
 
   afterEach(() => {
@@ -156,6 +157,39 @@ describe('weatherService BFF client', () => {
     expect(result.sunrise).toEqual(new Date(serializedWeather.sunrise));
     expect(result.sunset).toEqual(new Date(serializedWeather.sunset));
     expect(result.timestamp).toEqual(new Date(serializedWeather.timestamp));
+  });
+
+  it('consumes a matching early weather bootstrap without duplicating the BFF request', async () => {
+    window.__HAVA81_BOOTSTRAP_WEATHER__ = {
+      city: 'Izmir',
+      lang: 'tr',
+      units: 'metric',
+      promise: Promise.resolve(serializedWeather),
+    };
+
+    const result = await weatherService.getCurrentWeather({ city: '  Izmir  ' });
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(result.timestamp).toEqual(new Date(serializedWeather.timestamp));
+    expect(window.__HAVA81_BOOTSTRAP_WEATHER__).toBeUndefined();
+  });
+
+  it('falls back to the BFF when the early bootstrap does not match request preferences', async () => {
+    window.__HAVA81_BOOTSTRAP_WEATHER__ = {
+      city: 'Izmir',
+      lang: 'tr',
+      units: 'metric',
+      promise: Promise.resolve(serializedWeather),
+    };
+    mockGet.mockResolvedValue(serializedWeather);
+
+    await weatherService.getCurrentWeather({ city: 'Izmir', lang: 'en' });
+
+    expect(mockGet).toHaveBeenCalledWith('/weather/current', {
+      city: 'Izmir',
+      units: 'metric',
+      lang: 'en',
+    });
   });
 
   it('forwards explicit unit and language preferences', async () => {

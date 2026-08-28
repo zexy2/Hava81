@@ -66,3 +66,6 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Keep first-party GitHub Actions on current supported majors when runner deprecation warnings are active. Node 20-backed v4 checkout/setup-node/artifact actions are upgraded to v6 rather than relying on GitHub temporary forced Node 24 compatibility mode.
 
 - 2026-08-28 — Keep Leaflet's framework CSS behind the same lazy boundary as WeatherMap. The map is user-triggered and should not make its CSS render-blocking for the decision-first city view.
+
+- 2026-08-28 — Start the first city current-weather BFF request from generated production HTML before the main module only when no matching fresh 5-minute local cache exists. Read the saved UI language, keep units metric for normalized decision logic, and let weatherService consume the same promise so early fetch never becomes a duplicate app request.
+- 2026-08-28 — Bound the generated early weather bootstrap fetch to 10 seconds with AbortController. If it cannot resolve in that window, return null and let the normal httpClient path handle retry/timeout semantics instead of allowing app initialization to wait on an unbounded bootstrap promise.
