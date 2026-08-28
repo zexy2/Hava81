@@ -104,3 +104,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Treat PWA manifest availability and active service-worker registration as release contracts because browser decision alerts depend on the worker even though Hava81 does not claim offline weather freshness.
 
 - 2026-08-28 — Ship only Latin and Latin Extended font subsets. They cover Hava81s Turkish/English interface; unrelated Greek, Cyrillic and Vietnamese subsets add transfer/storage cost without product value.
+
+- 2026-08-28 — A successful Pages publish step is not sufficient evidence of a healthy frontend. The release workflow must verify the public custom-domain shell with bounded retries after publish, covering root, a canonical province entry page, manifest and service worker without asserting live weather values.
