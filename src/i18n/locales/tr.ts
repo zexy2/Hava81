@@ -171,6 +171,7 @@ export const tr = {
       return: 'Dönüş',
       reset: 'Saatleri temizle',
       verdictLabel: 'Hazırlık kararı',
+      planWindow: 'Planlanan pencere: {{outbound}} → {{return}}',
       umbrella: {
         take: 'Şemsiyeyi al',
         consider: 'Şemsiye yanında olsun',
