@@ -144,4 +144,7 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-28 — Top-level render failures must not expose raw JavaScript error messages in the production UI. Preserve technical errors for logging/diagnostics, but show users localized generic recovery copy.
 
+
 - 2026-08-28 — Interactive activity toggles are exposed as one named accessibility group. An `aria-label` on a generic container is not sufficient by itself; use an explicit grouping role so assistive technology receives the relationship between the label and toggle buttons.
+
+- 2026-08-28 — Named quick-guidance clusters must expose an accessibility role whenever they use `aria-label`; visual grouping alone does not guarantee an accessible group name.

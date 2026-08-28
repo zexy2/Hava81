@@ -325,8 +325,15 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Kept errors available to the existing ErrorBoundary logging path but replaced the user-visible fatal copy with the localized generic recovery message.
 - Validation: lint, type-check, 96/96 frontend tests, production build and all 81 generated city pages pass.
 
+
 ## 2026-08-28 17:38 TRT — activity selector accessibility
 
 - Audited the Activity Planner toggle cluster and found its localized `aria-label` attached to a generic `div` without an accessibility role, so the group name was not reliably represented in the accessibility tree.
 - Added `role="group"` while preserving the existing localized group label and individual `aria-pressed` toggle states.
 - Validation after rebasing onto current main: lint, type-check and 96/96 frontend tests pass. Production build also passes with all 81 generated city pages.
+
+## 2026-08-28 17:40 TRT — quick guidance accessibility
+
+- Found the Daily Plan umbrella/wind/air quick-guidance cluster had a localized `aria-label` on a generic container without a semantic role.
+- Added an explicit accessibility grouping role without changing decision data or visual presentation.
+- Validation: lint, type-check and 96/96 frontend tests pass.

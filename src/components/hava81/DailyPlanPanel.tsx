@@ -124,7 +124,11 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         ) : null}
       </div>
 
-      <div className="daily-plan__quick" aria-label={t('hava81.dailyPlan.quickLabel')}>
+      <div
+        className="daily-plan__quick"
+        role="group"
+        aria-label={t('hava81.dailyPlan.quickLabel')}
+      >
         <div>
           <span>{t('hava81.dailyPlan.quick.umbrella.label')}</span>
           <strong>{t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)}</strong>
