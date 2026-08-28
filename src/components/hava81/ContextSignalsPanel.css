@@ -3,8 +3,9 @@
   gap: var(--space-md);
   padding: var(--space-xl);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card, var(--radius-md));
   background: var(--color-atlas-paper);
+  box-shadow: var(--shadow-card, none);
 }
 .context-signals > header {
   display: flex;
@@ -20,6 +21,16 @@
 .context-signals__note {
   color: var(--color-atlas-muted);
 }
+.context-signals__source {
+  max-width: 28rem;
+  padding: 0.35rem 0.55rem;
+  background: var(--color-atlas-field);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 1.3;
+  text-align: right;
+}
 .context-signals__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -31,7 +42,8 @@
   padding: var(--space-md);
   background: var(--color-atlas-field);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  min-height: 9rem;
 }
 .context-signal > span {
   color: var(--color-atlas-muted);
@@ -72,6 +84,10 @@
   }
   .context-signals > header {
     flex-direction: column;
+  }
+  .context-signals__source {
+    max-width: 100%;
+    text-align: left;
   }
   .context-signals__grid {
     grid-template-columns: 1fr;

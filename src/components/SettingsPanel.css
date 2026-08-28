@@ -115,7 +115,7 @@
   cursor: pointer;
   background: var(--color-atlas-field, #f3f6f4);
   border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: var(--radius-sm, 4px);
+  border-radius: var(--radius-md, 8px);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.25;
@@ -131,9 +131,15 @@
 }
 
 .settings-option--active {
-  color: #fff;
-  background: #0e2c32;
-  border-color: #0e2c32;
+  color: #ffffff;
+  background: var(--color-aegean-deep, #0f555c);
+  border-color: var(--color-aegean-deep, #0f555c);
+  box-shadow: 0 6px 18px rgb(14 44 50 / 0.12);
+}
+[data-color-mode='dark'] .settings-option--active {
+  color: #0e2c32;
+  background: #9acdd0;
+  border-color: #9acdd0;
 }
 
 .settings-option__flag {
@@ -280,5 +286,22 @@
     min-height: 4.75rem;
     padding: 0.5rem;
     font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .settings-panel__content {
+    padding: 1rem;
+  }
+  .settings-panel__header {
+    min-height: 4.5rem;
+    padding-inline: 1rem;
+  }
+  .settings-option {
+    min-height: 4.75rem;
+    padding: 0.65rem;
+  }
+  .settings-option-group--three {
+    gap: 0.4rem;
   }
 }
