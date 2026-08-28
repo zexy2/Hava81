@@ -5,7 +5,8 @@
   padding: var(--space-xl);
   background: var(--color-atlas-paper);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .daily-plan__header {
@@ -69,7 +70,9 @@
   gap: var(--space-xs);
   padding: var(--space-lg);
   background: var(--color-atlas-field);
+  border: 1px solid var(--color-atlas-line);
   border-inline-start: 4px solid var(--color-aegean);
+  border-radius: var(--radius-md);
 }
 
 .daily-plan__decision > span,
@@ -110,6 +113,7 @@
   grid-template-columns: repeat(6, minmax(8rem, 1fr));
   overflow-x: auto;
   border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-md);
   scrollbar-width: thin;
 }
 
