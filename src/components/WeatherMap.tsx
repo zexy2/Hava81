@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useTranslation } from 'react-i18next';
 import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
+import { useResolvedColorMode } from '../hooks/useResolvedColorMode';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import './WeatherMap.css';
 
@@ -80,6 +81,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
 }) => {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
+  const colorMode = useResolvedColorMode(settings.themeMode);
 
   const center = useMemo<[number, number]>(() => {
     const lat = weather?.coordinates.lat;
@@ -95,10 +97,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     [weather?.cityName]
   );
 
-  const isDark =
-    settings.themeMode === 'dark' ||
-    (settings.themeMode === 'auto' && Boolean(weather?.icon.endsWith('n')));
-  const tileStyle = isDark ? 'dark_all' : 'light_all';
+  const tileStyle = colorMode === 'dark' ? 'dark_all' : 'light_all';
   const temperatureSymbol = getTemperatureSymbol();
   const currentMarkerName = weather
     ? `${weather.cityName}: ${Math.round(

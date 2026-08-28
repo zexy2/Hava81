@@ -247,7 +247,7 @@ export const tr = {
     theme: 'Tema',
     metric: 'Santigrat (°C)',
     imperial: 'Fahrenhayt (°F)',
-    auto: 'Otomatik (Hava Durumuna Göre)',
+    auto: 'Otomatik (Cihaz Ayarına Göre)',
     light: 'Açık',
     dark: 'Koyu',
     notifications: 'Bildirimler',
