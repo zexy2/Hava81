@@ -123,7 +123,12 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           </p>
         ) : null}
         {result ? (
-          <div className="route-weather__result">
+          <div
+            className="route-weather__result"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <header>
               <div>
                 <span className="atlas-kicker">{t('hava81.route.corridor')}</span>
