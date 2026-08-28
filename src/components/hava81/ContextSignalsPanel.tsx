@@ -7,18 +7,20 @@ interface Props {
   signals: ContextSignals;
 }
 
-type Level = 'low' | 'moderate' | 'high' | 'veryHigh';
+type Level = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
 const normalizeMicroUnit = (unit?: string) => unit?.replace(/μ/g, 'µ') ?? '';
 const uvLevel = (uv?: number): Level | undefined =>
   uv === undefined
     ? undefined
-    : uv >= 8
-      ? 'veryHigh'
-      : uv >= 6
-        ? 'high'
-        : uv >= 3
-          ? 'moderate'
-          : 'low';
+    : uv >= 11
+      ? 'extreme'
+      : uv >= 8
+        ? 'veryHigh'
+        : uv >= 6
+          ? 'high'
+          : uv >= 3
+            ? 'moderate'
+            : 'low';
 
 export function ContextSignalsPanel({ signals }: Props) {
   const { t, i18n } = useTranslation();
@@ -55,7 +57,7 @@ export function ContextSignalsPanel({ signals }: Props) {
             <strong>{signals.uvIndexMax.toFixed(1)}</strong>
             <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
             <p>
-              {uv === 'high' || uv === 'veryHigh'
+              {uv && uv !== 'low'
                 ? t('hava81.context.uvProtection')
                 : t('hava81.context.uvNormal')}
             </p>

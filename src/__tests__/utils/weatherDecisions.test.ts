@@ -54,6 +54,15 @@ describe('getWeatherDecisions', () => {
     );
   });
 
+  it('treats UV input as a modeled next-24-hour maximum, not a current reading', () => {
+    const result = getWeatherDecisions({
+      weather,
+      hourly: [],
+      uvIndexMax: 7.2,
+    });
+    expect(result[0]).toMatchObject({ kind: 'uv', severity: 'moderate', value: 7.2 });
+  });
+
   it('returns stable when no actionable signal exists and no outdoor point is present', () => {
     const result = getWeatherDecisions({ weather, hourly: [] });
     expect(result).toEqual([{ kind: 'stable', severity: 'info' }]);

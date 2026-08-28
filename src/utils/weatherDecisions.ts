@@ -16,7 +16,7 @@ export interface WeatherDecisionInput {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
-  uvIndex?: number;
+  uvIndexMax?: number;
 }
 
 const severityRank: Record<WeatherDecisionSeverity, number> = { high: 3, moderate: 2, info: 1 };
@@ -25,7 +25,7 @@ export const getWeatherDecisions = ({
   weather,
   hourly,
   airQuality,
-  uvIndex,
+  uvIndexMax,
 }: WeatherDecisionInput): WeatherDecision[] => {
   const next = hourly.slice(0, 8);
   const decisions: WeatherDecision[] = [];
@@ -93,8 +93,12 @@ export const getWeatherDecisions = ({
     });
   }
 
-  if (uvIndex !== undefined && uvIndex >= 6) {
-    decisions.push({ kind: 'uv', severity: uvIndex >= 8 ? 'high' : 'moderate', value: uvIndex });
+  if (uvIndexMax !== undefined && uvIndexMax >= 6) {
+    decisions.push({
+      kind: 'uv',
+      severity: uvIndexMax >= 8 ? 'high' : 'moderate',
+      value: uvIndexMax,
+    });
   }
 
   const outdoor = next.find(
