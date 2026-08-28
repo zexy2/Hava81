@@ -491,7 +491,6 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Updated the Oracle environment template with an explicit monetization gate: before subscriptions, advertising or other commercial use, configure the paid customer hosts and secret key. No credential was added to the repository or frontend.
 - Validation: API type-check passed; API suite 24/24; API build passed; production API dependency audit found 0 vulnerabilities; `git diff --check` clean.
 
-
 ## 2026-08-29 — decision clarity and personal time-window pass
 
 - Replaced the misleading current-provider `temp_min/temp_max` rail with the actual daily-forecast high/low. Until daily forecast data is available the rail shows no invented daily range.
@@ -499,3 +498,23 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a persisted activity time range. When both bounds are selected, activity score and best-time selection are recomputed only inside that local-clock window; unfiltered plans retain the 12-hour horizon. Activity cards now state whether the score is 12-hour or range-specific, show the best window's feels-like/rain/wind conditions, and disclose concise activity-specific scoring criteria.
 - Expanded Çıkış planı from umbrella-first copy into multi-factor preparation guidance. Rain, feels-like heat/cold, effective wind/gust and air quality can become the primary advice, and temperature sensitivity changes heat/cold thresholds.
 - New regressions cover daily-range source semantics, zero-rain visual suppression, selected activity-window scoring/coverage, persisted range UI, and non-rain commute preparation. Full frontend suite passes 133/133; API suite passes 22/22; lint/type-check, production build, production dependency audits, diff-check, and full Playwright smoke (21 applicable passed / 30 intentional viewport skips) are green before rebase.
+
+## 2026-08-29 00:28 TRT — route departures use Türkiye wall-clock time
+
+- Audited the Türkiye-only route-weather workflow from a non-Türkiye-browser perspective and found `datetime-local` departures were previously interpreted in the visitor device timezone. The same visible `09:00` could therefore be sent as a different UTC instant for users abroad, and segment ETAs were also rendered in device time.
+- Added explicit `Europe/Istanbul` wall-clock conversion helpers. Route departure defaults/min/max, submitted departure instants, better-departure guidance and segment ETAs now consistently refer to Türkiye time regardless of browser timezone.
+- Updated the departure label in Turkish and English to disclose `Türkiye saati` / `Türkiye time` so the fixed timezone is visible rather than implicit.
+- Added conversion regression coverage, including midnight rollover (`2026-08-28T21:30Z` → `2026-08-29T00:30` Türkiye time), strict wall-clock parsing, and malformed-input rejection.
+- Pre-rebase validation: lint/type-check passed; complete frontend suite 130/130; production dependency audit 0 vulnerabilities; production build generated all 81 city pages; targeted desktop route browser smoke passed; `git diff --check` clean. A combined rerun follows after rebasing onto latest main.
+
+## 2026-08-29 00:33 TRT — Open-Meteo endpoint-readiness API production promotion
+
+- Main CI for merge `bc3415a55cb820317e900cbb7221519615973e2b` completed successfully before production changes.
+- Built the exact main API candidate on 4001 and validated readiness/no-store, production-origin CORS, five geographically varied current-weather requests, Open-Meteo context + marine data, 48-hour hourly forecast, route-weather output, zero restarts and clean error logs.
+- Public traffic was moved briefly to the healthy 4001 canary, then the exact validated image `sha256:e705ad2a9f6591425fd8fe0cd43df18acffc4fd3d9edd99fe1721459fbf7fb48` was promoted to 4002 without rebuilding. Direct 4002 and public readiness/CORS/hourly checks passed; container health is healthy and restart count is zero.
+- Nginx is back on 4002. The immediately previous production image `sha256:12f4187631d3d268958c1e597f12c112126d98072b74bb46050fbb34949c216d` is restored and ready on 4001 for one-switch rollback. `/var/lib/hava81/current-api-port` is 4002 and `previous-api-port` is 4001.
+
+## 2026-08-29 00:34 TRT — route Türkiye-time combined gate
+
+- Rebased the route wall-clock correction onto main `bc3415a5`, preserving both append-only autonomous-document checkpoints.
+- Combined post-rebase validation passed: lint, type-check, complete frontend suite 130/130, production dependency audit 0 vulnerabilities, production build with all 81 city pages, targeted desktop route browser smoke, and `git diff --check`.

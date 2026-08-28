@@ -77,7 +77,8 @@ export const tr = {
       nextChange: 'Plan için öne çıkanlar',
       actions: {
         rain: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
-        rainWithAmount: '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} mm yağış bekleniyor.',
+        rainWithAmount:
+          '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} mm yağış bekleniyor.',
         wind: 'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
         heat: 'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
         cold: 'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',
@@ -156,7 +157,8 @@ export const tr = {
         eyebrow: 'Skor kırılımı',
         title: 'Bu puanı ne etkiliyor?',
         stable: 'Belirgin bir hava riski puanı aşağı çekmiyor.',
-        method: 'Skor önümüzdeki 12 saati süreyle ağırlıklandırır; en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir.',
+        method:
+          'Skor önümüzdeki 12 saati süreyle ağırlıklandırır; en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir.',
       },
       confidence: {
         high: 'Zengin saatlik veri',
@@ -301,11 +303,13 @@ export const tr = {
         veryHigh: 'Çok yüksek',
         extreme: 'Aşırı',
       },
-      uvProtection: 'Önümüzdeki 24 saatte UV korunma önerilen seviyeye çıkıyor; güneşten korunma planı yap.',
+      uvProtection:
+        'Önümüzdeki 24 saatte UV korunma önerilen seviyeye çıkıyor; güneşten korunma planı yap.',
       uvNormal: 'Önümüzdeki 24 saatin UV model maksimumu düşük seviyede.',
       dust: 'Toz modeli',
       pollen: 'Polen modeli',
-      pollenNote: 'Önümüzdeki 24 saatte çim/zeytin poleni model maksimumlarından yüksek olan değer.',
+      pollenNote:
+        'Önümüzdeki 24 saatte çim/zeytin poleni model maksimumlarından yüksek olan değer.',
       sea: 'Yakın kıyı',
       wave: 'Dalga: {{height}} {{unit}}',
       waveDetails:
@@ -346,7 +350,7 @@ export const tr = {
       summary: 'İki şehir arasındaki yaklaşık hava koridorunu kontrol et.',
       origin: 'Başlangıç',
       destination: 'Varış',
-      departure: 'Kalkış zamanı',
+      departure: 'Kalkış zamanı · Türkiye saati',
       check: 'Koridoru kontrol et',
       corridor: 'Yaklaşık hava koridoru',
       estimate: 'Yaklaşık {{distance}} km · {{minutes}} dk',

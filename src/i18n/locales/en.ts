@@ -77,7 +77,8 @@ export const en = {
       nextChange: 'Planning signals',
       actions: {
         rain: 'Rain chance reaches {{probability}}% around {{time}}; taking an umbrella is a good idea.',
-        rainWithAmount: 'Rain chance is {{probability}}% around {{time}}, with about {{amount}} mm expected for the hour.',
+        rainWithAmount:
+          'Rain chance is {{probability}}% around {{time}}, with about {{amount}} mm expected for the hour.',
         wind: 'Wind or gusts may reach {{speed}} m/s; use extra care outdoors.',
         heat: 'Feels-like temperature may reach {{temperature}}°C; plan for shade and water.',
         cold: 'Feels-like temperature may fall to {{temperature}}°C; take care with cold stress.',
@@ -156,7 +157,8 @@ export const en = {
         eyebrow: 'Score breakdown',
         title: 'What is moving this score?',
         stable: 'No material weather risk is pulling the score down.',
-        method: 'The score time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap.',
+        method:
+          'The score time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap.',
       },
       confidence: {
         high: 'Rich hourly data',
@@ -349,7 +351,7 @@ export const en = {
       summary: 'Check an approximate weather corridor between two cities.',
       origin: 'Origin',
       destination: 'Destination',
-      departure: 'Departure time',
+      departure: 'Departure time · Türkiye time',
       check: 'Check corridor',
       corridor: 'Approximate weather corridor',
       estimate: 'Approx. {{distance}} km · {{minutes}} min',

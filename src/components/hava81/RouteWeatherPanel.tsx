@@ -4,23 +4,23 @@ import { trackProductEvent } from '../../analytics/productEvents';
 import { weatherService } from '../../api/weatherService';
 import { TURKISH_CITIES } from '../../constants/cities';
 import type { RouteWeatherResult } from '../../types';
+import {
+  formatTurkeyTime,
+  parseTurkeyLocalInputValue,
+  toTurkeyLocalInputValue,
+} from '../../utils/turkeyTime';
 import './RouteWeatherPanel.css';
 
 interface Props {
   currentCityName: string;
 }
-const localInputValue = (date: Date) => {
-  const shifted = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return shifted.toISOString().slice(0, 16);
-};
-
 export function RouteWeatherPanel({ currentCityName }: Props) {
   const { t, i18n } = useTranslation();
   const initialDestination = currentCityName === 'Ankara' ? 'İstanbul' : 'Ankara';
   const [originName, setOriginName] = useState(currentCityName);
   const [destinationName, setDestinationName] = useState(initialDestination);
   const [departure, setDeparture] = useState(() =>
-    localInputValue(new Date(Date.now() + 60 * 60_000))
+    toTurkeyLocalInputValue(new Date(Date.now() + 60 * 60_000))
   );
   const [result, setResult] = useState<RouteWeatherResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,18 +30,22 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     () => TURKISH_CITIES.find(city => city.name === destinationName),
     [destinationName]
   );
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (iso: string) => formatTurkeyTime(new Date(iso), i18n.language);
 
   const submit = async () => {
     if (!origin || !destination || origin.name === destination.name) return;
+    const departureDate = parseTurkeyLocalInputValue(departure);
+    if (!departureDate) {
+      setError(t('hava81.route.error'));
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const value = await weatherService.getRouteWeather(
         origin.coordinates,
         destination.coordinates,
-        new Date(departure),
+        departureDate,
         i18n.language.startsWith('en') ? 'en' : 'tr'
       );
       setResult(value);
@@ -104,8 +108,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             <input
               type="datetime-local"
               value={departure}
-              min={localInputValue(new Date())}
-              max={localInputValue(new Date(Date.now() + 18 * 60 * 60_000))}
+              min={toTurkeyLocalInputValue(new Date())}
+              max={toTurkeyLocalInputValue(new Date(Date.now() + 18 * 60 * 60_000))}
               onChange={e => setDeparture(e.target.value)}
             />
           </label>
