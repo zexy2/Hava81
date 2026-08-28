@@ -9,6 +9,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'tr' } }),
 }));
 
+
 const weather: NormalizedWeatherData = {
   cityName: 'İzmir',
   country: 'TR',
@@ -47,10 +48,7 @@ const hourly: HourlyForecast[] = [6, 9, 12].map(hour => ({
 describe('DailyPlanPanel sharing', () => {
   it('exposes the score explanation as a named accessibility group', () => {
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);
-
-    expect(
-      screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })).toBeInTheDocument();
   });
 
   beforeEach(() => {
