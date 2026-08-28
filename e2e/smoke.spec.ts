@@ -171,6 +171,26 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
       if (!context) throw new Error('2D canvas unavailable');
       context.drawImage(image, 0, 0);
 
+      let maxContentRadius: number | null = null;
+      if (src.includes('maskable')) {
+        const { data } = context.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
+        const background = data.slice(0, 4);
+        const centerX = (image.naturalWidth - 1) / 2;
+        const centerY = (image.naturalHeight - 1) / 2;
+        let measuredRadius = 0;
+        for (let y = 0; y < image.naturalHeight; y += 1) {
+          for (let x = 0; x < image.naturalWidth; x += 1) {
+            const offset = (y * image.naturalWidth + x) * 4;
+            const differsFromBackground = [0, 1, 2].some(
+              channel => Math.abs(data[offset + channel] - background[channel]) > 8
+            );
+            if (!differsFromBackground) continue;
+            measuredRadius = Math.max(measuredRadius, Math.hypot(x - centerX, y - centerY));
+          }
+        }
+        maxContentRadius = measuredRadius;
+      }
+
       return {
         width: image.naturalWidth,
         height: image.naturalHeight,
@@ -182,12 +202,14 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
             1
           ).data
         ),
+        maxContentRadius,
       };
     };
 
     return Promise.all([
       readImage('/hava81-icon-192.png'),
       readImage('/hava81-icon-512.png'),
+      readImage('/hava81-maskable-512.png'),
       readImage('/apple-touch-icon.png?v=20260828'),
       readImage('/hava81-favicon.ico?v=20260828'),
       readImage('/hava81-social-card.png?v=20260828'),
@@ -196,12 +218,15 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
 
   expect(samples[0]).toMatchObject({ width: 192, height: 192, center: [231, 165, 49, 255] });
   expect(samples[1]).toMatchObject({ width: 512, height: 512, center: [231, 165, 49, 255] });
-  expect(samples[2]).toMatchObject({ width: 180, height: 180, center: [231, 165, 49, 255] });
-  expect(samples[3].width).toBeGreaterThanOrEqual(32);
-  expect(samples[3].center[0]).toBeGreaterThan(200);
-  expect(samples[3].center[1]).toBeGreaterThan(120);
-  expect(samples[3].center[2]).toBeLessThan(100);
-  expect(samples[4]).toMatchObject({ width: 1200, height: 630 });
+  expect(samples[2]).toMatchObject({ width: 512, height: 512, center: [231, 165, 49, 255] });
+  expect(samples[2].maxContentRadius).not.toBeNull();
+  expect(samples[2].maxContentRadius ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(512 * 0.4);
+  expect(samples[3]).toMatchObject({ width: 180, height: 180, center: [231, 165, 49, 255] });
+  expect(samples[4].width).toBeGreaterThanOrEqual(32);
+  expect(samples[4].center[0]).toBeGreaterThan(200);
+  expect(samples[4].center[1]).toBeGreaterThan(120);
+  expect(samples[4].center[2]).toBeLessThan(100);
+  expect(samples[5]).toMatchObject({ width: 1200, height: 630 });
 });
 
 test('theme choice keeps browser chrome color in sync', async ({ page }, testInfo) => {

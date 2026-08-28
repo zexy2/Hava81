@@ -167,3 +167,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Installable PWA raster icons use Hava81-specific asset URLs instead of scaffold-generic logo192.png/logo512.png names. Unique branded URLs reduce stale browser/PWA icon-cache collisions and make React-template regressions easier to detect.
 
 - 2026-08-28 — The primary decision surface keeps a sequential heading hierarchy: province name is the page `h1`, and its decision-change/planning-signals subregion is `h2`, not `h3`. Visual styling remains class-driven rather than heading-level-driven.
+
+- 2026-08-28 — Do not label the general Hava81 app artwork as `maskable` unless all important pixels fit the Web App Manifest safe zone. Keep the normal SVG/PNG icons at purpose `any` and provide a dedicated padded 512×512 PNG for purpose `maskable`; the browser regression enforces the W3C 40%-radius safe-zone boundary from actual pixels.

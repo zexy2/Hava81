@@ -7,6 +7,7 @@ interface ManifestIcon {
   src: string;
   sizes?: string;
   type?: string;
+  purpose?: string;
 }
 
 interface WebManifest {
@@ -32,5 +33,29 @@ describe('PWA branding manifest', () => {
       expect(source).toMatch(/^hava81-/);
       expect(existsSync(resolve(publicDir, source))).toBe(true);
     }
+  });
+
+  it('keeps adaptive masking on a dedicated padded 512px icon', () => {
+    const publicDir = resolve(cwd(), 'public');
+    const manifest = JSON.parse(
+      readFileSync(resolve(publicDir, 'manifest.json'), 'utf8')
+    ) as WebManifest;
+    const icons = manifest.icons ?? [];
+    const maskableIcons = icons.filter(icon => icon.purpose?.split(/\s+/).includes('maskable'));
+
+    expect(maskableIcons).toEqual([
+      expect.objectContaining({
+        src: 'hava81-maskable-512.png',
+        type: 'image/png',
+        sizes: '512x512',
+        purpose: 'maskable',
+      }),
+    ]);
+    expect(existsSync(resolve(publicDir, 'hava81-maskable-512.png'))).toBe(true);
+    expect(
+      icons
+        .filter(icon => icon.src !== 'hava81-maskable-512.png')
+        .some(icon => icon.purpose?.split(/\s+/).includes('maskable'))
+    ).toBe(false);
   });
 });
