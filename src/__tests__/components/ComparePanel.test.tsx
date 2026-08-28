@@ -4,8 +4,12 @@ import { ComparePanel } from '../../components/hava81/ComparePanel';
 import { SettingsProvider } from '../../context';
 import '../../i18n';
 
-const getCurrentWeather = vi.hoisted(() => vi.fn());
-vi.mock('../../api/weatherService', () => ({ weatherService: { getCurrentWeather } }));
+const api = vi.hoisted(() => ({
+  getCurrentWeather: vi.fn(),
+  getForecast: vi.fn(),
+  getAirQuality: vi.fn(),
+}));
+vi.mock('../../api/weatherService', () => ({ weatherService: api }));
 
 const makeWeather = (cityName: string, temperature: number) => ({
   cityName,
@@ -23,19 +27,49 @@ const makeWeather = (cityName: string, temperature: number) => ({
   icon: '01d' as const,
   sunrise: new Date(),
   sunset: new Date(),
-  timestamp: new Date(),
-  coordinates: { lat: 40, lon: 30 },
+  timestamp: new Date('2026-08-28T09:00:00Z'),
+  coordinates: cityName === 'İstanbul' ? { lat: 41, lon: 29 } : { lat: 38, lon: 27 },
   clouds: 0,
   meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
 });
+const forecast = {
+  daily: [],
+  hourly: [
+    {
+      time: new Date('2026-08-28T09:00:00Z'),
+      temp: 24,
+      icon: '01d' as const,
+      pop: 0.05,
+      windSpeed: 3,
+    },
+    {
+      time: new Date('2026-08-28T12:00:00Z'),
+      temp: 27,
+      icon: '01d' as const,
+      pop: 0.1,
+      windSpeed: 4,
+    },
+  ],
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: new Date(),
+    timezoneOffsetSeconds: 10800,
+    intervalHours: 3,
+  },
+};
 
 describe('ComparePanel', () => {
   beforeEach(() => {
-    getCurrentWeather
+    localStorage.clear();
+    api.getCurrentWeather
       .mockReset()
       .mockImplementation(({ city }: { city: string }) =>
         Promise.resolve(makeWeather(city, city === 'İstanbul' ? 24 : 28))
       );
+    api.getForecast.mockReset().mockResolvedValue(forecast);
+    api.getAirQuality
+      .mockReset()
+      .mockResolvedValue({ aqi: 2, aqiLabel: 'Orta', pm25: 8, pm10: 12, o3: 30 });
   });
 
   it('explains that two favorites are required', () => {
@@ -47,7 +81,7 @@ describe('ComparePanel', () => {
     expect(screen.getByText(/en az iki şehri/i)).toBeVisible();
   });
 
-  it('loads and renders up to three favorite cities', async () => {
+  it('loads decision metrics and a weather-criteria winner', async () => {
     render(
       <SettingsProvider>
         <ComparePanel
@@ -61,6 +95,8 @@ describe('ComparePanel', () => {
     );
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
     expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
-    expect(getCurrentWeather).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
+    expect(api.getForecast).toHaveBeenCalledTimes(2);
+    expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
 });

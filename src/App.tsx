@@ -4,12 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
 import { CityTabs } from './components/CityTabs';
-import { SettingsPanel } from './components/SettingsPanel';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { ForecastAtlas } from './components/hava81/ForecastAtlas';
 import { EnvironmentRail } from './components/hava81/EnvironmentRail';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
-import { ComparePanel } from './components/hava81/ComparePanel';
+import { DailyPlanPanel } from './components/hava81/DailyPlanPanel';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
 import { useFavorites } from './hooks/useFavorites';
@@ -18,9 +17,16 @@ import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
 import type { FavoriteCity } from './types/weather.types';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
+import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
+const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
+const ActivityPlanner = lazy(() => import('./components/hava81/ActivityPlanner'));
+const ContextSignalsPanel = lazy(() => import('./components/hava81/ContextSignalsPanel'));
+const DecisionAlertsPanel = lazy(() => import('./components/hava81/DecisionAlertsPanel'));
+const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
 type AtlasNavItem = 'today' | 'map' | 'saved';
 
@@ -147,9 +153,9 @@ const App: React.FC = () => {
     const lat = weather?.coordinates.lat;
     const lon = weather?.coordinates.lon;
     if (lat !== undefined && lon !== undefined) {
-      fetchForecast({ lat, lon });
+      fetchForecast({ lat, lon }, weather?.cityName);
     }
-  }, [fetchForecast, weather?.coordinates.lat, weather?.coordinates.lon]);
+  }, [fetchForecast, weather?.cityName, weather?.coordinates.lat, weather?.coordinates.lon]);
 
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
@@ -258,6 +264,7 @@ const App: React.FC = () => {
       }
 
       if (item === 'saved') {
+        trackProductEvent('compare_opened', { favorites: favorites.length });
         setShowMap(false);
         setActiveNav('saved');
         if (favorites.length === 0) {
@@ -284,8 +291,8 @@ const App: React.FC = () => {
   }, [city, clearError, fetchWeather, weather?.cityName]);
 
   const retryForecast = useCallback(() => {
-    if (weather?.coordinates) fetchForecast(weather.coordinates);
-  }, [fetchForecast, weather?.coordinates]);
+    if (weather?.coordinates) fetchForecast(weather.coordinates, weather.cityName);
+  }, [fetchForecast, weather?.cityName, weather?.coordinates]);
 
   return (
     <MotionConfig reducedMotion="user" transition={{ duration: 0.22 }}>
@@ -373,6 +380,17 @@ const App: React.FC = () => {
                 >
                   <StarIcon filled={isFavorite} />
                 </button>
+                {favorites.length >= 2 && (
+                  <button
+                    type="button"
+                    className="atlas-compare-button"
+                    onClick={() => handleBottomNav('saved')}
+                    aria-pressed={activeNav === 'saved'}
+                  >
+                    {t('hava81.compare.action')}
+                    <span aria-hidden="true">{favorites.length}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="atlas-icon-button atlas-icon-button--map"
@@ -415,7 +433,9 @@ const App: React.FC = () => {
 
           <main className="atlas-main" id="main-content" aria-busy={isLoading} ref={overviewRef}>
             {activeNav === 'saved' ? (
-              <ComparePanel cities={favorites} language={settings.language} />
+              <Suspense fallback={<p role="status">{t('common.loading')}</p>}>
+                <ComparePanel cities={favorites} language={settings.language} />
+              </Suspense>
             ) : null}
             <AnimatePresence initial={false}>
               {error && (
@@ -461,6 +481,7 @@ const App: React.FC = () => {
                     weather={weather}
                     hourly={forecast.hourly}
                     airQuality={forecast.airQuality ?? undefined}
+                    uvIndex={forecast.contextSignals?.uvIndexMax}
                   />
 
                   {forecast.isLoading && forecast.hourly.length === 0 ? (
@@ -477,6 +498,44 @@ const App: React.FC = () => {
                     />
                   )}
                 </div>
+
+                {forecast.hourly.length > 0 && (
+                  <DailyPlanPanel
+                    weather={weather}
+                    hourly={forecast.hourly}
+                    airQuality={forecast.airQuality ?? undefined}
+                  />
+                )}
+
+                {forecast.hourly.length > 0 && (
+                  <Suspense fallback={null}>
+                    <ActivityPlanner
+                      weather={weather}
+                      hourly={forecast.hourly}
+                      airQuality={forecast.airQuality ?? undefined}
+                    />
+                  </Suspense>
+                )}
+
+                {forecast.contextSignals && (
+                  <Suspense fallback={null}>
+                    <ContextSignalsPanel signals={forecast.contextSignals} />
+                  </Suspense>
+                )}
+
+                {forecast.hourly.length > 0 && (
+                  <Suspense fallback={null}>
+                    <DecisionAlertsPanel
+                      weather={weather}
+                      hourly={forecast.hourly}
+                      airQuality={forecast.airQuality ?? undefined}
+                    />
+                  </Suspense>
+                )}
+
+                <Suspense fallback={null}>
+                  <RouteWeatherPanel currentCityName={weather.cityName} />
+                </Suspense>
 
                 {forecast.error && (
                   <section className="atlas-message atlas-message--inline" role="status">
@@ -560,7 +619,11 @@ const App: React.FC = () => {
             hasSaved={favorites.length > 0}
           />
 
-          <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
+          {isSettingsOpen ? (
+            <Suspense fallback={null}>
+              <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
+            </Suspense>
+          ) : null}
         </div>
       </ErrorBoundary>
     </MotionConfig>

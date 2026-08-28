@@ -1,6 +1,6 @@
 {
   "name": "hava81-weather-atlas",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Hava81: a decision-first meteorological atlas for all 81 Turkish provinces",
   "keywords": [
@@ -55,7 +55,7 @@
   },
   "scripts": {
     "start": "vite --host 0.0.0.0",
-    "build": "vite build && cp dist/index.html dist/404.html",
+    "build": "vite build && node scripts/generate-city-pages.mjs && cp dist/index.html dist/404.html",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "test": "vitest run",

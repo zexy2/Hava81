@@ -193,6 +193,54 @@ export interface ForecastMeta extends WeatherDataMeta {
   intervalHours: number;
 }
 
+export interface ContextSignals {
+  provider: string;
+  fetchedAt: Date;
+  attribution: string;
+  uvIndexMax?: number;
+  dustMax?: number;
+  grassPollenMax?: number;
+  olivePollenMax?: number;
+  units: {
+    dust?: string;
+    grassPollen?: string;
+    olivePollen?: string;
+    waveHeight?: string;
+    seaSurfaceTemperature?: string;
+  };
+  marine?: {
+    observedAt: string;
+    waveHeight?: number;
+    seaSurfaceTemperature?: number;
+  };
+  cacheStatus?: 'HIT' | 'MISS' | 'COALESCED';
+  freshForSeconds?: number;
+}
+
+export interface RouteWeatherSegment {
+  fraction: number;
+  lat: number;
+  lon: number;
+  eta: string;
+  temperature: number;
+  precipitationProbability: number;
+  windSpeed: number;
+  description: string;
+  score: number;
+  risk: 'low' | 'caution' | 'high';
+}
+
+export interface RouteWeatherResult {
+  kind: 'corridor-estimate';
+  estimatedDistanceKm: number;
+  estimatedDurationMinutes: number;
+  requestedDeparture: string;
+  score: number;
+  segments: RouteWeatherSegment[];
+  betterDeparture?: { departure: string; score: number; improvement: number };
+  disclaimer: string;
+}
+
 // Favorite city
 export interface FavoriteCity {
   name: string;

@@ -1,8 +1,8 @@
-﻿# Hava81 — Türkiye'nin Meteorolojik Atlası
+# Hava81 — Türkiye'nin Meteorolojik Atlası
 
 Decision-first weather intelligence for all 81 Turkish provinces. Built with React 19 and a TypeScript Fastify BFF.
 
-[![CI/CD Pipeline](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zexy2/Weather-app-for-Turkish-cities/actions/workflows/ci.yml)
+[![CI/CD Pipeline](https://github.com/zexy2/Hava81/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zexy2/Hava81/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Live-Hava81-146B73?style=flat-square)](https://hava81.zekiakgul.dev/)
 [![API](https://img.shields.io/badge/API-Oracle%20Cloud-E7A531?style=flat-square)](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0E2C32?style=flat-square)](LICENSE)
@@ -11,7 +11,7 @@ Decision-first weather intelligence for all 81 Turkish provinces. Built with Rea
 
 ## Overview
 
-Hava81 turns raw forecast data into a calm, local and immediately readable meteorological atlas. Its primary surface answers what the weather is doing now and what materially changes next, then supports that decision with three-hour forecast intervals, five-day context, air quality and an interactive map. The project demonstrates production frontend architecture, a server-side API boundary, internationalization and comprehensive testing.
+Hava81 turns weather data into practical decisions for people in Türkiye. Its primary surface answers not only what the weather is doing, but when it is better to go outside, which activity windows are suitable, whether an umbrella is useful, and which risks materially change the day. Raw current conditions and three-hour forecasts remain visible, while a decision layer adds Hava81 Score, activity plans, air quality, real UV/dust/pollen context, optional marine context, city comparison and transparent route-weather estimates.
 
 **Live Demo:** [hava81.zekiakgul.dev](https://hava81.zekiakgul.dev/) · **API:** [Oracle readiness endpoint](https://api.hava81.zekiakgul.dev/api/v1/health/ready)
 
@@ -35,15 +35,17 @@ Hava81 turns raw forecast data into a calm, local and immediately readable meteo
 
 ### Core Functionality
 
-- Real-time weather data for 81 Turkish provinces
-- Decision engine for rain, strong wind, heat, cold, poor air quality and a suitable outdoor window
+- Real-time weather data for all 81 Turkish provinces
+- Hava81 Day Plan with a 0–100 explainable suitability score and “now or later?” guidance
+- Activity-specific planning for walking, running, picnics, children, motorcycles and laundry
 - 5-day forecast with honest three-hour provider intervals
-- Air quality index monitoring
-- Daylight, wind and air-quality environmental rail
-- Persistent favorite cities and recent searches
-- Up-to-three-city comparison from saved cities
-- Shareable canonical province URLs such as `/istanbul` and `/sanliurfa`
-- Visible provider, cache and freshness metadata
+- Air-quality monitoring plus real UV, dust and pollen context from Open-Meteo
+- Optional marine context for supported coastal locations, including wave height and sea-surface temperature
+- Decision-oriented comparison for up to three favorite cities
+- Transparent inter-city weather-corridor estimates with explicit non-navigation disclaimer
+- Shareable decision summaries, installable PWA surface and opt-in browser decision alerts
+- 81 generated city entry pages, canonical URLs and sitemap for reliable deep links and SEO
+- Visible provider, cache, freshness and attribution metadata
 
 ### User Interface
 
@@ -140,8 +142,8 @@ React Components -> hooks -> frontend weatherService
 
 ```bash
 # Clone the repository
-git clone https://github.com/zexy2/Weather-app-for-Turkish-cities.git
-cd Weather-app-for-Turkish-cities
+git clone https://github.com/zexy2/Hava81.git
+cd Hava81
 
 # Install dependencies
 npm ci
@@ -171,14 +173,16 @@ to port 4000 by the Vite development proxy and to the API container by Nginx in 
 
 ### API
 
-| Endpoint                                              | Description                       |
-| ----------------------------------------------------- | --------------------------------- |
-| `GET /api/v1/weather/current?city=İzmir`              | Current conditions by city        |
-| `GET /api/v1/weather/current?lat=38.42&lon=27.13`     | Current conditions by coordinates |
-| `GET /api/v1/weather/forecast?lat=38.42&lon=27.13`    | Three-hour and five-day forecast  |
-| `GET /api/v1/weather/air-quality?lat=38.42&lon=27.13` | Air-quality snapshot              |
-| `GET /api/v1/health/live`                             | Liveness probe                    |
-| `GET /api/v1/health/ready`                            | Readiness probe                   |
+| Endpoint                                              | Description                        |
+| ----------------------------------------------------- | ---------------------------------- |
+| `GET /api/v1/weather/current?city=İzmir`              | Current conditions by city         |
+| `GET /api/v1/weather/current?lat=38.42&lon=27.13`     | Current conditions by coordinates  |
+| `GET /api/v1/weather/forecast?lat=38.42&lon=27.13`    | Three-hour and five-day forecast   |
+| `GET /api/v1/weather/air-quality?lat=38.42&lon=27.13` | Air-quality snapshot               |
+| `GET /api/v1/weather/context?lat=38.42&lon=27.13`     | UV, dust, pollen, optional marine  |
+| `GET /api/v1/weather/route?...`                       | Approximate route-weather corridor |
+| `GET /api/v1/health/live`                             | Liveness probe                     |
+| `GET /api/v1/health/ready`                            | Readiness probe                    |
 
 Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 
@@ -186,21 +190,21 @@ Interactive OpenAPI documentation is available at `http://localhost:4000/docs`.
 
 ## Available Scripts
 
-| Command                  | Description                         |
-| ------------------------ | ----------------------------------- |
+| Command                  | Description                        |
+| ------------------------ | ---------------------------------- |
 | `npm run dev`            | Run Vite development server        |
-| `npm run build`          | Create production build             |
-| `npm test`               | Run test suite                      |
-| `npm run test:coverage`  | Generate coverage report            |
-| `npm run lint`           | Run ESLint                          |
-| `npm run lint:fix`       | Auto-fix linting issues             |
-| `npm run type-check`     | TypeScript type checking            |
-| `npm run api:dev`        | Run the Fastify API on port 4000    |
-| `npm run api:test`       | Run API inject tests                |
-| `npm run api:type-check` | Type-check the API                  |
-| `npm run api:build`      | Build the production API bundle     |
-| `npm run e2e`            | Run Playwright browser flows         |
-| `npm run lighthouse`     | Run Lighthouse performance/a11y CI  |
+| `npm run build`          | Create production build            |
+| `npm test`               | Run test suite                     |
+| `npm run test:coverage`  | Generate coverage report           |
+| `npm run lint`           | Run ESLint                         |
+| `npm run lint:fix`       | Auto-fix linting issues            |
+| `npm run type-check`     | TypeScript type checking           |
+| `npm run api:dev`        | Run the Fastify API on port 4000   |
+| `npm run api:test`       | Run API inject tests               |
+| `npm run api:type-check` | Type-check the API                 |
+| `npm run api:build`      | Build the production API bundle    |
+| `npm run e2e`            | Run Playwright browser flows       |
+| `npm run lighthouse`     | Run Lighthouse performance/a11y CI |
 
 ---
 
@@ -226,12 +230,12 @@ are audited separately.
 
 ## Production Deployment
 
-| Surface          | Platform       | Production address                                                                                        |
-| ---------------- | -------------- | --------------------------------------------------------------------------------------------------------- |
-| React web app    | GitHub Pages   | [hava81.zekiakgul.dev](https://hava81.zekiakgul.dev/)                                              |
-| Fastify BFF      | Oracle Cloud VPS | [api.hava81.zekiakgul.dev/api/v1](https://api.hava81.zekiakgul.dev/api/v1/health/ready)                 |
-| Weather provider | OpenWeather    | Accessed only by the server-side provider adapter                                                         |
-| CI/CD            | GitHub Actions | Frontend, API, tests, Docker image and Pages deployment                                                   |
+| Surface          | Platform         | Production address                                                                      |
+| ---------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| React web app    | GitHub Pages     | [hava81.zekiakgul.dev](https://hava81.zekiakgul.dev/)                                   |
+| Fastify BFF      | Oracle Cloud VPS | [api.hava81.zekiakgul.dev/api/v1](https://api.hava81.zekiakgul.dev/api/v1/health/ready) |
+| Weather provider | OpenWeather      | Accessed only by the server-side provider adapter                                       |
+| CI/CD            | GitHub Actions   | Frontend, API, tests, Docker image and Pages deployment                                 |
 
 ```text
 GitHub Pages browser

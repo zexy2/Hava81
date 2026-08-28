@@ -11,6 +11,7 @@ export interface WeatherDecisionFieldProps {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  uvIndex?: number;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export function WeatherDecisionField({
   weather,
   hourly,
   airQuality,
+  uvIndex,
   className = '',
 }: WeatherDecisionFieldProps) {
   const headingId = useId();
@@ -42,8 +44,8 @@ export function WeatherDecisionField({
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const cityMetadata = useMemo(() => getCityMetadata(weather.cityName), [weather.cityName]);
   const decisions = useMemo(
-    () => getWeatherDecisions({ weather, hourly, airQuality }),
-    [airQuality, hourly, weather]
+    () => getWeatherDecisions({ weather, hourly, airQuality, uvIndex }),
+    [airQuality, hourly, uvIndex, weather]
   );
 
   const temperatureSymbol = getTemperatureSymbol();

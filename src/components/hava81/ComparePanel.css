@@ -25,3 +25,65 @@
 .hava81-compare__city h3 {
   margin: 0;
 }
+
+.hava81-compare__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  align-items: start;
+}
+.hava81-compare__winner {
+  max-width: 28rem;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-aegean-pale);
+  border-radius: var(--radius-sm);
+}
+.hava81-compare__winner span,
+.hava81-compare__winner small {
+  display: block;
+  color: var(--color-atlas-muted);
+  font-size: 0.75rem;
+}
+.hava81-compare__winner strong {
+  display: block;
+  margin: 0.2rem 0;
+}
+.hava81-compare__city.is-winner {
+  border-color: var(--color-aegean);
+}
+.hava81-compare__city header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.hava81-compare__score {
+  font-size: 1.55rem;
+}
+.hava81-compare__score span {
+  font-size: 0.7rem;
+  color: var(--color-atlas-muted);
+}
+.hava81-compare__metrics {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.7rem 0;
+}
+.hava81-compare__metrics span {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-atlas-muted);
+}
+.hava81-compare__metrics b {
+  color: var(--color-atlas-ink);
+}
+@media (max-width: 47.99rem) {
+  .hava81-compare__header {
+    flex-direction: column;
+  }
+  .hava81-compare__winner {
+    max-width: none;
+    width: 100%;
+  }
+}

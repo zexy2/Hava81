@@ -1,0 +1,170 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
+import { trackProductEvent } from '../../analytics/productEvents';
+import { buildDecisionShare } from '../../utils/shareDecision';
+import type { DecisionReasonCode, Hava81ScoreBand } from '../../domain/decision/types';
+import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import './DailyPlanPanel.css';
+
+interface DailyPlanPanelProps {
+  weather: NormalizedWeatherData;
+  hourly: HourlyForecast[];
+  airQuality?: AirQuality;
+}
+
+const bandKey: Record<Hava81ScoreBand, string> = {
+  excellent: 'excellent',
+  good: 'good',
+  caution: 'caution',
+  difficult: 'difficult',
+};
+
+const reasonKey: Record<DecisionReasonCode, string> = {
+  'extreme-heat': 'extremeHeat',
+  heat: 'heat',
+  freezing: 'freezing',
+  cold: 'cold',
+  'heavy-rain': 'heavyRain',
+  'rain-risk': 'rainRisk',
+  'strong-wind': 'strongWind',
+  windy: 'windy',
+  'poor-air-quality': 'poorAirQuality',
+  'sensitive-air-quality': 'sensitiveAirQuality',
+};
+
+export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelProps) {
+  const { t, i18n } = useTranslation();
+  const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
+  const trackedPlanRef = useRef<string | null>(null);
+  const plan = useMemo(
+    () => buildDailyPlan({ weather, hourly, airQuality }),
+    [airQuality, hourly, weather]
+  );
+  const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+
+  const formatTime = (date?: Date) => {
+    if (!date) return '—';
+    return new Date(date.getTime() + timezoneOffsetMs).toLocaleTimeString(i18n.language, {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    });
+  };
+
+  useEffect(() => {
+    const key = `${weather.cityName}:${weather.meta.fetchedAt instanceof Date ? weather.meta.fetchedAt.toISOString() : weather.meta.fetchedAt}`;
+    if (trackedPlanRef.current === key) return;
+    trackedPlanRef.current = key;
+    trackProductEvent('daily_plan_viewed', {
+      city: weather.cityName,
+      score: plan.score,
+      band: plan.band,
+    });
+  }, [plan.band, plan.score, weather.cityName, weather.meta.fetchedAt]);
+
+  const nowOrLaterText =
+    plan.nowOrLater.kind === 'later'
+      ? t('hava81.dailyPlan.nowOrLater.later', { time: formatTime(plan.nowOrLater.targetTime) })
+      : plan.nowOrLater.kind === 'now'
+        ? t('hava81.dailyPlan.nowOrLater.now')
+        : t('hava81.dailyPlan.nowOrLater.similar');
+
+  const shareDecision = async () => {
+    const payload = buildDecisionShare({
+      cityName: weather.cityName,
+      score: plan.score,
+      bestTime: plan.bestWindow ? formatTime(plan.bestWindow.time) : undefined,
+      umbrella: plan.umbrella,
+      language: i18n.language,
+    });
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(payload.text);
+        setShareState('copied');
+        window.setTimeout(() => setShareState('idle'), 1600);
+      }
+      trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
+    } catch {
+      // User cancellation or unavailable share target is harmless.
+    }
+  };
+
+  return (
+    <section className="daily-plan" aria-labelledby="daily-plan-title">
+      <header className="daily-plan__header">
+        <div>
+          <span className="atlas-kicker">{t('hava81.dailyPlan.eyebrow')}</span>
+          <h2 id="daily-plan-title">{t('hava81.dailyPlan.title')}</h2>
+        </div>
+        <div className="daily-plan__header-actions">
+          <button type="button" className="daily-plan__share" onClick={() => void shareDecision()}>
+            {shareState === 'copied' ? t('hava81.share.copied') : t('hava81.share.action')}
+          </button>
+          <div className={`daily-plan__score daily-plan__score--${plan.band}`}>
+            <strong>{plan.score}</strong>
+            <span>/100</span>
+            <small>{t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}</small>
+          </div>
+        </div>
+      </header>
+
+      <div className="daily-plan__decision">
+        <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
+        <strong>{nowOrLaterText}</strong>
+        {plan.bestWindow ? (
+          <small>
+            {t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindow.time) })}
+          </small>
+        ) : null}
+      </div>
+
+      <div className="daily-plan__quick" aria-label={t('hava81.dailyPlan.quickLabel')}>
+        <div>
+          <span>{t('hava81.dailyPlan.quick.umbrella.label')}</span>
+          <strong>{t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)}</strong>
+        </div>
+        <div>
+          <span>{t('hava81.dailyPlan.quick.wind.label')}</span>
+          <strong>{t(`hava81.dailyPlan.quick.wind.${plan.wind}`)}</strong>
+        </div>
+        <div>
+          <span>{t('hava81.dailyPlan.quick.air.label')}</span>
+          <strong>{t(`hava81.dailyPlan.quick.air.${plan.airQuality}`)}</strong>
+        </div>
+      </div>
+
+      <div
+        className="daily-plan__slots"
+        role="list"
+        aria-label={t('hava81.dailyPlan.timelineLabel')}
+      >
+        {plan.slots.slice(0, 6).map(slot => (
+          <article
+            className={`daily-plan__slot daily-plan__slot--${slot.band}`}
+            key={slot.time.toISOString()}
+            role="listitem"
+          >
+            <time dateTime={slot.time.toISOString()}>{formatTime(slot.time)}</time>
+            <strong>{slot.score}</strong>
+            <span>{t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`)}</span>
+            <small>
+              {Math.round(slot.temperature)}° · %{Math.round(slot.precipitationProbability * 100)}
+            </small>
+            {slot.reasons[0] ? (
+              <em>{t(`hava81.dailyPlan.reasons.${reasonKey[slot.reasons[0]]}`)}</em>
+            ) : (
+              <em>{t('hava81.dailyPlan.reasons.clear')}</em>
+            )}
+          </article>
+        ))}
+      </div>
+
+      <p className="daily-plan__note">{t('hava81.dailyPlan.note')}</p>
+    </section>
+  );
+}
+
+export default DailyPlanPanel;

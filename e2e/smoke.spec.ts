@@ -1,26 +1,121 @@
 import { expect, test } from '@playwright/test';
 
 const current = {
-  cityName: 'İstanbul', country: 'TR', temperature: 23, feelsLike: 23, tempMin: 19, tempMax: 27,
-  humidity: 58, pressure: 1012, visibility: 10000, windSpeed: 4.2, windDirection: 180,
-  description: 'açık', icon: '01d', sunrise: '2026-08-28T03:20:00.000Z', sunset: '2026-08-28T16:35:00.000Z',
-  timestamp: '2026-08-28T09:00:00.000Z', coordinates: { lat: 41.01, lon: 28.97 }, clouds: 5,
-  meta: { provider: 'OpenWeather', fetchedAt: new Date().toISOString(), timezoneOffsetSeconds: 10800, cacheStatus: 'MISS', freshForSeconds: 60 },
+  cityName: 'İstanbul',
+  country: 'TR',
+  temperature: 23,
+  feelsLike: 23,
+  tempMin: 19,
+  tempMax: 27,
+  humidity: 58,
+  pressure: 1012,
+  visibility: 10000,
+  windSpeed: 4.2,
+  windDirection: 180,
+  description: 'açık',
+  icon: '01d',
+  sunrise: '2026-08-28T03:20:00.000Z',
+  sunset: '2026-08-28T16:35:00.000Z',
+  timestamp: '2026-08-28T09:00:00.000Z',
+  coordinates: { lat: 41.01, lon: 28.97 },
+  clouds: 5,
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: new Date().toISOString(),
+    timezoneOffsetSeconds: 10800,
+    cacheStatus: 'MISS',
+    freshForSeconds: 60,
+  },
 };
 const forecast = {
-  daily: [{ date: '2026-08-28', tempMin: 19, tempMax: 27, icon: '01d', description: 'açık', pop: 10 }],
-  hourly: [
-    { time: '2026-08-28T09:00:00.000Z', temp: 23, icon: '01d', description: 'açık', pop: 10, windSpeed: 4 },
-    { time: '2026-08-28T12:00:00.000Z', temp: 26, icon: '01d', description: 'açık', pop: 5, windSpeed: 5 },
+  daily: [
+    { date: '2026-08-28', tempMin: 19, tempMax: 27, icon: '01d', description: 'açık', pop: 10 },
   ],
-  meta: { provider: 'OpenWeather', fetchedAt: new Date().toISOString(), timezoneOffsetSeconds: 10800, intervalHours: 3, cacheStatus: 'MISS', freshForSeconds: 300 },
+  hourly: [
+    {
+      time: '2026-08-28T09:00:00.000Z',
+      temp: 23,
+      icon: '01d',
+      description: 'açık',
+      pop: 10,
+      windSpeed: 4,
+    },
+    {
+      time: '2026-08-28T12:00:00.000Z',
+      temp: 26,
+      icon: '01d',
+      description: 'açık',
+      pop: 5,
+      windSpeed: 5,
+    },
+  ],
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: new Date().toISOString(),
+    timezoneOffsetSeconds: 10800,
+    intervalHours: 3,
+    cacheStatus: 'MISS',
+    freshForSeconds: 300,
+  },
 };
-const air = { aqi: 2, aqiLabel: 'Orta', pm25: 9, pm10: 14, o3: 42, meta: { provider: 'OpenWeather', fetchedAt: new Date().toISOString(), cacheStatus: 'MISS', freshForSeconds: 120 } };
+const air = {
+  aqi: 2,
+  aqiLabel: 'Orta',
+  pm25: 9,
+  pm10: 14,
+  o3: 42,
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: new Date().toISOString(),
+    cacheStatus: 'MISS',
+    freshForSeconds: 120,
+  },
+};
+const context = {
+  provider: 'Open-Meteo',
+  fetchedAt: new Date().toISOString(),
+  attribution: 'Open-Meteo · CC BY 4.0',
+  uvIndexMax: 7.1,
+  dustMax: 12,
+  grassPollenMax: 4,
+  olivePollenMax: 1,
+  units: {
+    dust: 'μg/m³',
+    grassPollen: 'grains/m³',
+    olivePollen: 'grains/m³',
+    waveHeight: 'm',
+    seaSurfaceTemperature: '°C',
+  },
+  marine: { observedAt: new Date().toISOString(), waveHeight: 0.3, seaSurfaceTemperature: 24.8 },
+};
+
+const routeResult = {
+  kind: 'corridor-estimate',
+  estimatedDistanceKm: 413,
+  estimatedDurationMinutes: 331,
+  requestedDeparture: new Date().toISOString(),
+  score: 84,
+  segments: [0, 0.25, 0.5, 0.75, 1].map((fraction, index) => ({
+    fraction,
+    lat: 41 - index * 0.25,
+    lon: 29 + index * 0.9,
+    eta: new Date(Date.now() + index * 60 * 60_000).toISOString(),
+    temperature: 22 + index,
+    precipitationProbability: index === 2 ? 30 : 5,
+    windSpeed: 4 + index,
+    description: index === 2 ? 'hafif yağmur' : 'açık',
+    score: index === 2 ? 70 : 88,
+    risk: index === 2 ? 'caution' : 'low',
+  })),
+  disclaimer: 'Bu sonuç gerçek yol/navigasyon rotası değildir.',
+};
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/air-quality**', route => route.fulfill({ json: air }));
+  await page.route('**/api/v1/weather/context**', route => route.fulfill({ json: context }));
+  await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
 });
 
 test('core city experience renders and uses a shareable city URL', async ({ page }) => {
@@ -28,6 +123,11 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
   await expect(page).toHaveURL(/\/istanbul$/);
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
+  await expect(page.getByText('UV indeksi', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
@@ -38,4 +138,42 @@ test('current conditions stay in the first mobile viewport', async ({ page }, te
   const box = await heading.boundingBox();
   expect(box).not.toBeNull();
   expect((box?.y ?? 1000) + (box?.height ?? 0)).toBeLessThan(844);
+});
+
+test('desktop comparison entry works with two saved cities', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop comparison assertion');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+  });
+  await page.goto('/istanbul');
+  await page.getByRole('button', { name: /Karşılaştır/i }).click();
+  await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+});
+
+test('activity preference changes the personalized plan', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop interaction assertion');
+  await page.goto('/istanbul');
+  const picnic = page.getByRole('button', { name: 'Piknik' });
+  await expect(picnic).toHaveAttribute('aria-pressed', 'false');
+  await picnic.click();
+  await expect(picnic).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
+});
+
+test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route assertion');
+  await page.goto('/istanbul');
+  await page.getByText('Rota havası', { exact: true }).click();
+  await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+  await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
+  await expect(page.getByText(/gerçek yol\/navigasyon rotası değildir/i)).toBeVisible();
+  await expect(
+    page.getByRole('list', { name: /rota boyunca hava örnekleri/i }).getByRole('listitem')
+  ).toHaveCount(5);
 });

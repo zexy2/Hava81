@@ -313,23 +313,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </button>
                 </div>
               </section>
-
-              {/* Notifications stay disabled until the account/alert backend ships. */}
-              <section className="settings-section">
-                <h3 className="settings-section__title">{t('settings.notifications')}</h3>
-                <label className="settings-toggle settings-toggle--disabled" aria-disabled="true">
-                  <span className="settings-toggle__text">
-                    {t('settings.enableNotifications')}
-                    <small>{t('settings.notificationDesc')}</small>
-                  </span>
-                  <input type="checkbox" checked={false} disabled />
-                  <span className="settings-toggle__slider" />
-                </label>
-              </section>
             </div>
 
             <footer className="settings-panel__footer">
-              <p className="settings-panel__version">v2.0.0</p>
+              <p className="settings-panel__version">v2.1.0</p>
             </footer>
           </motion.aside>
         </>

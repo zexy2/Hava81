@@ -7,6 +7,7 @@ vi.mock('../../api/weatherService', () => ({
   weatherService: {
     getForecast: vi.fn(),
     getAirQuality: vi.fn(),
+    getContextSignals: vi.fn(),
   },
 }));
 
@@ -23,6 +24,7 @@ describe('useForecast', () => {
         intervalHours: 3,
       },
     });
+    (weatherService.getContextSignals as Mock).mockResolvedValue(null);
     (weatherService.getAirQuality as Mock).mockResolvedValue({
       aqi: 1,
       aqiLabel: 'Good',
@@ -41,6 +43,7 @@ describe('useForecast', () => {
 
     expect(weatherService.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'en');
     expect(weatherService.getAirQuality).toHaveBeenCalledWith(41.01, 28.97, 'en');
+    expect(weatherService.getContextSignals).toHaveBeenCalledWith(41.01, 28.97, false);
     expect(result.current.hourly).toHaveLength(1);
     expect(result.current.isLoading).toBe(false);
   });
