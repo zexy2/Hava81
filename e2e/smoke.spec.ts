@@ -127,7 +127,7 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
-  await expect(page.getByText('UV indeksi', { exact: true })).toBeVisible();
+  await expect(page.getByText('UV · 24s model maksimumu', { exact: true })).toBeVisible();
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
