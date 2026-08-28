@@ -182,3 +182,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Persisted commute routines must make the exact next evaluated leave/return window visible in the verdict. A saved morning routine opened in the evening evaluates the next day by design; the UI must expose that rollover instead of letting users assume the recommendation applies to the current calendar day.
 
 - 2026-08-28 — A persisted alert opt-in must remain locally reversible even if browser Notification permission later becomes denied or unavailable. Block new opt-in attempts in that state, but never trap an already-enabled user by disabling Hava81's own opt-out control.
+
+- 2026-08-28 — Interactive commute-plan verdict updates are exposed as one atomic polite status region. The leave/return controls remain ordinary inputs, but the computed preparation result must be announced when it changes so decision-first UX is available to screen-reader users without forcing focus movement.

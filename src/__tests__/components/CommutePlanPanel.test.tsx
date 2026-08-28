@@ -57,6 +57,10 @@ describe('CommutePlanPanel', () => {
     fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
     fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '18:00' } });
 
+    const verdict = screen.getByRole('status');
+    expect(verdict).toHaveAttribute('aria-live', 'polite');
+    expect(verdict).toHaveAttribute('aria-atomic', 'true');
+    expect(verdict).toHaveTextContent('Şemsiyeyi al');
     expect(screen.getByText('Şemsiyeyi al')).toBeInTheDocument();
     expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Cmt 08:30 → Cmt 18:00');
     expect(screen.getByText(/Dönüşte yağmur riski/i)).toBeInTheDocument();
