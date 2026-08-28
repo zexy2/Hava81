@@ -60,3 +60,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Social/SEO metadata uses one canonical template in `index.html`; static city generation replaces city-specific title/description/URL fields instead of appending duplicate OG/Twitter tags. No weather observations are embedded in static metadata.
 
 - 2026-08-28 — Public Lighthouse after the bundle/settings optimizations improved TBT materially but LCP remained data-bound. Preconnect only to Hava81's own API origin from the HTML shell; do not preload fabricated weather data or add speculative third-party origins.
+
+- 2026-08-28 — Treat Vite lazy-chunk 404s during GitHub Pages deploy/cache races as recoverable once per session window: reload the same city URL with a short-lived cache-busting query, then restore the clean canonical URL. A second failure within 60 seconds is allowed to surface normally to prevent reload loops.

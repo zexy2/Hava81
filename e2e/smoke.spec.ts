@@ -143,6 +143,27 @@ test('lazy forecast chunk does not block the decision-first view', async ({ page
   await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible();
 });
 
+test('recovers once when a lazy chunk disappears during deploy', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for deploy recovery');
+
+  let forecastChunkRequests = 0;
+  await page.route('**/assets/ForecastAtlas-*.js', async route => {
+    forecastChunkRequests += 1;
+    if (forecastChunkRequests === 1) {
+      await route.fulfill({ status: 404, contentType: 'text/javascript', body: '' });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible({ timeout: 10_000 });
+  await expect(page).toHaveURL(/\/istanbul\/$/);
+  expect(forecastChunkRequests).toBeGreaterThanOrEqual(2);
+  await expect(page.locator('.app-fatal')).toHaveCount(0);
+});
+
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
   await page.goto('/istanbul');
