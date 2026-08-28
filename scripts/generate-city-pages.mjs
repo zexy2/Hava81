@@ -33,6 +33,7 @@ const slugify = name =>
 const baseUrl = 'https://hava81.zekiakgul.dev';
 const apiBaseUrl = 'https://api.hava81.zekiakgul.dev/api/v1';
 const weatherCacheMaxAgeMs = 5 * 60 * 1000;
+const bootstrapTimeoutMs = 10_000;
 
 const safeJson = value => JSON.stringify(value).replace(/</g, '\u003c');
 const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
@@ -66,10 +67,16 @@ const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
         url.searchParams.set('city', city);
         url.searchParams.set('units', 'metric');
         url.searchParams.set('lang', lang);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), ${bootstrapTimeoutMs});
         const promise = window
-          .fetch(url.toString(), { headers: { Accept: 'application/json' } })
+          .fetch(url.toString(), {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          })
           .then(response => (response.ok ? response.json() : null))
-          .catch(() => null);
+          .catch(() => null)
+          .finally(() => window.clearTimeout(timeoutId));
         window.__HAVA81_BOOTSTRAP_WEATHER__ = { city, lang, units: 'metric', promise };
       })();
     </script>`;
