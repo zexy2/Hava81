@@ -39,6 +39,19 @@ describe('httpClient BFF transport', () => {
     expect(httpClient.getCacheSize()).toBe(1);
   });
 
+  it('bounds the in-memory GET cache during long browsing sessions', async () => {
+    (global.fetch as Mock).mockImplementation((_url: string) =>
+      Promise.resolve(mockResponse({ ok: true }))
+    );
+
+    for (let index = 0; index < 205; index += 1) {
+      await httpClient.get('/weather/current', { city: `City-${index}` });
+    }
+
+    expect(httpClient.getCacheSize()).toBeLessThanOrEqual(200);
+    expect(global.fetch).toHaveBeenCalledTimes(205);
+  });
+
   it('serializes JSON posts and sets their content type', async () => {
     (global.fetch as Mock).mockResolvedValue(mockResponse({ accepted: true }));
 

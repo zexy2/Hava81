@@ -20,6 +20,23 @@ interface RetryState {
 
 // Simple in-memory request cache
 const requestCache = new Map<string, { data: unknown; timestamp: number }>();
+const MAX_REQUEST_CACHE_ENTRIES = 200;
+
+const pruneExpiredRequestCache = (): void => {
+  for (const [key, entry] of requestCache) {
+    if (!isCacheValid(entry.timestamp)) requestCache.delete(key);
+  }
+};
+
+const setRequestCache = (key: string, data: unknown): void => {
+  pruneExpiredRequestCache();
+  if (!requestCache.has(key) && requestCache.size >= MAX_REQUEST_CACHE_ENTRIES) {
+    const oldestKey = requestCache.keys().next().value as string | undefined;
+    if (oldestKey) requestCache.delete(oldestKey);
+  }
+  requestCache.delete(key);
+  requestCache.set(key, { data, timestamp: Date.now() });
+};
 
 /**
  * Sleep utility for retry delays
@@ -109,6 +126,7 @@ const fetchWithRetry = async <T>(
   // Check cache first for GET requests
   const cacheKey = getCacheKey(url, options);
   if (fetchOptions.method === undefined || fetchOptions.method === 'GET') {
+    pruneExpiredRequestCache();
     const cached = requestCache.get(cacheKey);
     if (cached && isCacheValid(cached.timestamp)) {
       console.debug('[HTTP] Cache hit:', cacheKey);
@@ -164,7 +182,7 @@ const fetchWithRetry = async <T>(
 
     // Cache successful GET responses
     if (fetchOptions.method === undefined || fetchOptions.method === 'GET') {
-      requestCache.set(cacheKey, { data, timestamp: Date.now() });
+      setRequestCache(cacheKey, data);
     }
 
     return data;
