@@ -4,10 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
 import { CityTabs } from './components/CityTabs';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
-import { ForecastAtlas } from './components/hava81/ForecastAtlas';
-import { EnvironmentRail } from './components/hava81/EnvironmentRail';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
-import { DailyPlanPanel } from './components/hava81/DailyPlanPanel';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
 import { useFavorites } from './hooks/useFavorites';
@@ -20,6 +17,9 @@ import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
+const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
+const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
+const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
 const ActivityPlanner = lazy(() => import('./components/hava81/ActivityPlanner'));
@@ -477,20 +477,24 @@ const App: React.FC = () => {
                       <div className="atlas-loading__rows" />
                     </section>
                   ) : (
-                    <ForecastAtlas
-                      daily={forecast.daily}
-                      hourly={forecast.hourly}
-                      meta={forecast.meta}
-                    />
+                    <Suspense fallback={null}>
+                      <ForecastAtlas
+                        daily={forecast.daily}
+                        hourly={forecast.hourly}
+                        meta={forecast.meta}
+                      />
+                    </Suspense>
                   )}
                 </div>
 
                 {forecast.hourly.length > 0 && (
-                  <DailyPlanPanel
-                    weather={weather}
-                    hourly={forecast.hourly}
-                    airQuality={forecast.airQuality ?? undefined}
-                  />
+                  <Suspense fallback={null}>
+                    <DailyPlanPanel
+                      weather={weather}
+                      hourly={forecast.hourly}
+                      airQuality={forecast.airQuality ?? undefined}
+                    />
+                  </Suspense>
                 )}
 
                 {forecast.hourly.length > 0 && (
@@ -532,12 +536,14 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                <EnvironmentRail
-                  weather={weather}
-                  airQuality={forecast.airQuality ?? undefined}
-                  onOpenMap={showMap ? closeMap : openMap}
-                  mapExpanded={showMap}
-                />
+                <Suspense fallback={null}>
+                  <EnvironmentRail
+                    weather={weather}
+                    airQuality={forecast.airQuality ?? undefined}
+                    onOpenMap={showMap ? closeMap : openMap}
+                    mapExpanded={showMap}
+                  />
+                </Suspense>
 
                 {showMap && (
                   <section
