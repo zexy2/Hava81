@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Hava81 — Havayı değil, gününü planla</title>
+  <desc id="desc">Hava81 için 81 il ve günlük karar odaklı hava atlası paylaşım kartı</desc>
+  <rect width="1200" height="630" fill="#F3F6F4"/>
+  <path d="M0 150h1200M0 315h1200M0 480h1200M165 0v630M600 0v630M1035 0v630" fill="none" stroke="#DDE7E4" stroke-width="2"/>
+  <rect x="58" y="54" width="1084" height="522" rx="32" fill="#FFFFFF" stroke="#C8D6D2" stroke-width="2"/>
+
+  <g transform="translate(104 104)">
+    <text x="0" y="0" dominant-baseline="hanging" fill="#146B73" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="3">HAVA81 · TÜRKİYE'NİN METEOROLOJİK ATLASI</text>
+    <text x="0" y="80" dominant-baseline="hanging" fill="#142524" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" letter-spacing="-2">Havayı değil,</text>
+    <text x="0" y="158" dominant-baseline="hanging" fill="#142524" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" letter-spacing="-2">gününü planla.</text>
+    <text x="0" y="286" dominant-baseline="hanging" fill="#506663" font-family="Arial, Helvetica, sans-serif" font-size="27">81 il · Hava81 Skoru · günlük karar önerileri</text>
+    <line x1="0" y1="359" x2="520" y2="359" stroke="#C8D6D2" stroke-width="2"/>
+    <circle cx="10" cy="406" r="9" fill="#E7A531"/>
+    <text x="34" y="390" dominant-baseline="hanging" fill="#146B73" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">hava81.zekiakgul.dev</text>
+  </g>
+
+  <g transform="translate(780 137)">
+    <rect width="300" height="300" rx="36" fill="#F3F6F4"/>
+    <path d="M38 150h224M150 38v224" fill="none" stroke="#C8D6D2" stroke-width="5"/>
+    <rect x="61" y="61" width="178" height="178" rx="19" fill="#FFFFFF" stroke="#146B73" stroke-width="8"/>
+    <path d="M84 128c20-27 49-39 83-32 22 5 36 1 49-11M84 158c25-20 53-24 84-12 18 7 34 6 48-5M84 189c25-13 52-13 80-1 18 8 35 8 52 0" fill="none" stroke="#A8C9C5" stroke-linecap="round" stroke-width="6"/>
+    <circle cx="150" cy="150" r="12" fill="#E7A531" stroke="#142524" stroke-width="5"/>
+    <path d="M150 121v-15M150 194v-15M121 150h-15M194 150h-15" fill="none" stroke="#142524" stroke-linecap="round" stroke-width="6"/>
+    <text x="150" y="249" text-anchor="middle" dominant-baseline="hanging" fill="#146B73" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="700" letter-spacing="1">HAVA81</text>
+  </g>
+</svg>

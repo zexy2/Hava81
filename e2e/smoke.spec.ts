@@ -146,6 +146,16 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
     'href',
     '/apple-touch-icon.png?v=20260828'
   );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    'https://hava81.zekiakgul.dev/hava81-social-card.png?v=20260828'
+  );
+  await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute('content', '1200');
+  await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute('content', '630');
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image'
+  );
 
   const samples = await page.evaluate(async () => {
     const readImage = async (src: string) => {
@@ -179,6 +189,7 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
       readImage('/logo512.png'),
       readImage('/apple-touch-icon.png?v=20260828'),
       readImage('/hava81-favicon.ico?v=20260828'),
+      readImage('/hava81-social-card.png?v=20260828'),
     ]);
   });
 
@@ -189,6 +200,7 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
   expect(samples[3].center[0]).toBeGreaterThan(200);
   expect(samples[3].center[1]).toBeGreaterThan(120);
   expect(samples[3].center[2]).toBeLessThan(100);
+  expect(samples[4]).toMatchObject({ width: 1200, height: 630 });
 });
 
 test('production HTML bootstraps current weather without a duplicate app request', async ({ page }, testInfo) => {
