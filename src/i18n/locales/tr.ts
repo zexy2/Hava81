@@ -66,7 +66,7 @@ export const tr = {
     systemStatus: 'Hava81 · Sistem durumu',
     cityDocumentTitle: '{{city}} hava durumu — Hava81',
     loadingWeather: 'Hava verileri hazırlanıyor',
-    serverWaking: 'Sunucu uyanıyor; ilk yükleme 30–60 saniye sürebilir.',
+    slowLoading: 'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',
     mapEyebrow: '81 il · İstasyon haritası',
     emptyEyebrow: 'Hava81 · 81 il',
     decision: {
