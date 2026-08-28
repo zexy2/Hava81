@@ -127,3 +127,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Main-only Docker action majors may be refreshed when the upstream tagged action.yml is directly verified to retain every used input and declare the target Node runtime. Keep Docker publish semantics unchanged and treat the first main Docker job as the final integration gate; it must not control API traffic switching.
 
 - 2026-08-28 — `themeMode: auto` means follow the device/browser `prefers-color-scheme`, not infer light/dark from the current weather icon. Explicit light/dark choices remain authoritative; map tiles and browser `theme-color` must use the same resolved color mode.
+
+- 2026-08-28 — GitHub Pages post-deploy smoke must distinguish the newly published artifact from a healthy stale CDN response. When `dist/` is available, compare SHA-256 of the fetched shell/assets with the exact build artifact and cache-bust each retry; also assert Hava81 branding surfaces rather than accepting a generic 200/Hava81 substring.
