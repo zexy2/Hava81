@@ -337,6 +337,7 @@ test('English mode updates document language and decision copy', async ({ page }
   });
   await page.goto('/istanbul/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page).toHaveTitle('İstanbul weather — Hava81');
   await expect(page.getByRole('heading', { name: 'Planning signals' })).toBeVisible();
   await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('civarında');
   await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('güneş koruması');

@@ -64,6 +64,7 @@ export const en = {
     tagline: "Turkey's Meteorological Atlas",
     homeLabel: 'Hava81 home view',
     systemStatus: 'Hava81 · System status',
+    cityDocumentTitle: '{{city}} weather — Hava81',
     loadingWeather: 'Preparing weather data',
     serverWaking: 'The server is waking up; the first load may take 30–60 seconds.',
     mapEyebrow: '81 provinces · Station map',

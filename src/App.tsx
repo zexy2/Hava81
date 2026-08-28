@@ -193,7 +193,7 @@ const App: React.FC = () => {
     if (path && window.location.pathname !== path) {
       window.history.replaceState({ city: weather.cityName }, '', path);
     }
-    document.title = `${weather.cityName} hava durumu — Hava81`;
+    document.title = t('hava81.cityDocumentTitle', { city: weather.cityName });
     if (path) {
       let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
       if (!canonical) {
@@ -203,7 +203,7 @@ const App: React.FC = () => {
       }
       canonical.href = new URL(path, window.location.origin).toString();
     }
-  }, [weather]);
+  }, [settings.language, t, weather]);
 
   const shortcuts = useMemo(
     () =>

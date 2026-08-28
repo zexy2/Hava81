@@ -173,12 +173,14 @@ describe('Hava81 app integration', () => {
     const user = userEvent.setup();
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
+    expect(document.title).toBe('İstanbul hava durumu — Hava81');
     await user.click(screen.getByRole('button', { name: /ayarlar/i }));
     expect(await screen.findByRole('heading', { name: 'Birimler' })).toBeInTheDocument();
     const english = screen.getByRole('button', { name: /english/i });
     await user.click(english);
     await waitFor(() => {
       expect(document.documentElement.lang).toBe('en');
+      expect(document.title).toBe('İstanbul weather — Hava81');
       expect(service.getCurrentWeather).toHaveBeenLastCalledWith(
         expect.objectContaining({ lang: 'en' })
       );
