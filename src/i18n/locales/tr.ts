@@ -252,7 +252,8 @@ export const tr = {
     dark: 'Koyu',
     notifications: 'Bildirimler',
     enableNotifications: 'Uyarı bildirimleri',
-    notificationDesc: 'Hesap ve uyarı altyapısıyla yakında kullanıma açılacak',
+    notificationDesc:
+      'Hava81 açıkken yağmur, kuvvetli rüzgâr, zayıf hava kalitesi ve belirgin plan değişikliklerini bildirir',
   },
   airQuality: {
     good: 'İyi',

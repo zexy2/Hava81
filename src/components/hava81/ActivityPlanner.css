@@ -4,7 +4,8 @@
   padding: var(--space-xl);
   background: var(--color-atlas-paper);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 .activity-planner__header {
   display: flex;
@@ -71,7 +72,15 @@
   background: var(--color-atlas-field);
   border: 1px solid var(--color-atlas-line);
   border-top-width: 4px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.activity-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
 }
 .activity-card--excellent {
   border-top-color: var(--color-aegean);

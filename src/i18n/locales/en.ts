@@ -254,7 +254,8 @@ export const en = {
     dark: 'Dark',
     notifications: 'Notifications',
     enableNotifications: 'Weather alerts',
-    notificationDesc: 'Coming with the account and alert infrastructure',
+    notificationDesc:
+      'While Hava81 is open, alerts can surface rain, strong wind, poor air quality and meaningful plan changes',
   },
   airQuality: {
     good: 'Good',

@@ -38,3 +38,8 @@ This log records product and engineering decisions made during the autonomous im
 - Never let Playwright reuse an arbitrary process occupying the preview port; fail fast instead of producing misleading browser results.
 - Cancel superseded CI runs for the same PR/ref to reduce queue time and wasted runner work.
 - Keep PWA shortcut URLs aligned with GitHub Pages trailing-slash canonical province URLs.
+
+## 2026-08-28 10:58 TRT — visual polish
+- Cosmetic work must reinforce the decision hierarchy rather than add decorative chrome: current conditions and the actionable day decision remain visually dominant.
+- Use subtle shared elevation/radius tokens for hierarchy; avoid heavy glassmorphism, large animation dependencies, or effects that cost first-load performance.
+- Notification copy must describe the current foreground-browser behavior only; do not imply account-backed/background delivery before that infrastructure exists.

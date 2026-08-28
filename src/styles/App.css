@@ -42,6 +42,10 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-card: 0 1px 2px rgb(14 44 50 / 0.04), 0 8px 24px rgb(14 44 50 / 0.05);
+  --shadow-card-hover: 0 2px 4px rgb(14 44 50 / 0.06), 0 14px 36px rgb(14 44 50 / 0.08);
 
   --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-panel: cubic-bezier(0.22, 1, 0.36, 1);
@@ -64,6 +68,8 @@
   --color-focus: #e7a531;
   --color-overlay: rgb(3 17 20 / 0.72);
   --shadow-overlay: 0 20px 56px rgb(0 0 0 / 0.32);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.18), 0 10px 30px rgb(0 0 0 / 0.14);
+  --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 0.2), 0 16px 38px rgb(0 0 0 / 0.18);
 }
 
 .app {
@@ -115,7 +121,9 @@ button {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
@@ -157,6 +165,7 @@ input:focus-visible {
   color: var(--color-atlas-ink);
   background: var(--color-atlas-field);
   border-bottom: 1px solid var(--color-atlas-line);
+  box-shadow: 0 1px 0 rgb(14 44 50 / 0.025);
 }
 
 .atlas-header__inner {
@@ -553,7 +562,8 @@ input:focus-visible {
   margin-bottom: var(--space-lg);
   background: var(--color-atlas-paper);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .atlas-message--error {
@@ -615,7 +625,8 @@ input:focus-visible {
   padding: var(--space-xl);
   background: var(--color-atlas-paper);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .atlas-loading__line,
@@ -624,8 +635,14 @@ input:focus-visible {
 .atlas-loading__rail,
 .atlas-loading__chart,
 .atlas-loading__rows {
-  background: var(--color-atlas-line);
-  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--color-atlas-line),
+    var(--color-atlas-field),
+    var(--color-atlas-line)
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
   animation: atlas-pulse 1.4s var(--ease-out) infinite alternate;
 }
 
@@ -773,10 +790,12 @@ kbd {
 
 @keyframes atlas-pulse {
   from {
-    opacity: 0.38;
+    opacity: 0.48;
+    background-position: 100% 0;
   }
   to {
-    opacity: 0.75;
+    opacity: 0.82;
+    background-position: -100% 0;
   }
 }
 
