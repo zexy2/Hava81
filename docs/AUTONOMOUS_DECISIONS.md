@@ -100,3 +100,5 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-28 13:58 TRT — alert dedupe semantics
 
 - Persist a decision alert's same-day dedupe marker only after the browser accepts notification delivery. Delivery failures stay optional/non-blocking, but must not be treated as successful user notification.
+
+- 2026-08-28 — Treat PWA manifest availability and active service-worker registration as release contracts because browser decision alerts depend on the worker even though Hava81 does not claim offline weather freshness.

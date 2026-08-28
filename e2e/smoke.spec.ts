@@ -350,3 +350,32 @@ test('route weather renders a transparent corridor result', async ({ page }, tes
     page.getByRole('list', { name: /rota boyunca hava örnekleri/i }).getByRole('listitem')
   ).toHaveCount(5);
 });
+
+
+test('production shell exposes an installable PWA contract', async ({ page, request }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser PWA coverage');
+
+  const manifestResponse = await request.get('/manifest.json');
+  expect(manifestResponse.ok()).toBeTruthy();
+  const manifest = await manifestResponse.json();
+  expect(manifest).toMatchObject({
+    name: expect.stringContaining('Hava81'),
+    start_url: '/',
+    scope: '/',
+    display: 'standalone',
+  });
+  expect(manifest.icons?.length).toBeGreaterThanOrEqual(2);
+
+  const workerResponse = await request.get('/sw.js');
+  expect(workerResponse.ok()).toBeTruthy();
+  expect(await workerResponse.text()).toContain("self.addEventListener('notificationclick'");
+
+  await page.goto('/istanbul/');
+  const registration = await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) return null;
+    const ready = await navigator.serviceWorker.ready;
+    return { scope: ready.scope, active: Boolean(ready.active) };
+  });
+  expect(registration?.active).toBe(true);
+  expect(registration?.scope).toMatch(/\/$/);
+});
