@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
+import { trackProductEvent } from '../../analytics/productEvents';
+import { buildDecisionShare } from '../../utils/shareDecision';
 import type { DecisionReasonCode, Hava81ScoreBand } from '../../domain/decision/types';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DailyPlanPanel.css';
@@ -33,6 +35,8 @@ const reasonKey: Record<DecisionReasonCode, string> = {
 
 export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelProps) {
   const { t, i18n } = useTranslation();
+  const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
+  const trackedPlanRef = useRef<string | null>(null);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
     [airQuality, hourly, weather]
@@ -48,12 +52,45 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     });
   };
 
+  useEffect(() => {
+    const key = `${weather.cityName}:${weather.meta.fetchedAt instanceof Date ? weather.meta.fetchedAt.toISOString() : weather.meta.fetchedAt}`;
+    if (trackedPlanRef.current === key) return;
+    trackedPlanRef.current = key;
+    trackProductEvent('daily_plan_viewed', {
+      city: weather.cityName,
+      score: plan.score,
+      band: plan.band,
+    });
+  }, [plan.band, plan.score, weather.cityName, weather.meta.fetchedAt]);
+
   const nowOrLaterText =
     plan.nowOrLater.kind === 'later'
       ? t('hava81.dailyPlan.nowOrLater.later', { time: formatTime(plan.nowOrLater.targetTime) })
       : plan.nowOrLater.kind === 'now'
         ? t('hava81.dailyPlan.nowOrLater.now')
         : t('hava81.dailyPlan.nowOrLater.similar');
+
+  const shareDecision = async () => {
+    const payload = buildDecisionShare({
+      cityName: weather.cityName,
+      score: plan.score,
+      bestTime: plan.bestWindow ? formatTime(plan.bestWindow.time) : undefined,
+      umbrella: plan.umbrella,
+      language: i18n.language,
+    });
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(payload.text);
+        setShareState('copied');
+        window.setTimeout(() => setShareState('idle'), 1600);
+      }
+      trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
+    } catch {
+      // User cancellation or unavailable share target is harmless.
+    }
+  };
 
   return (
     <section className="daily-plan" aria-labelledby="daily-plan-title">
@@ -62,10 +99,15 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
           <span className="atlas-kicker">{t('hava81.dailyPlan.eyebrow')}</span>
           <h2 id="daily-plan-title">{t('hava81.dailyPlan.title')}</h2>
         </div>
-        <div className={`daily-plan__score daily-plan__score--${plan.band}`}>
-          <strong>{plan.score}</strong>
-          <span>/100</span>
-          <small>{t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}</small>
+        <div className="daily-plan__header-actions">
+          <button type="button" className="daily-plan__share" onClick={() => void shareDecision()}>
+            {shareState === 'copied' ? t('hava81.share.copied') : t('hava81.share.action')}
+          </button>
+          <div className={`daily-plan__score daily-plan__score--${plan.band}`}>
+            <strong>{plan.score}</strong>
+            <span>/100</span>
+            <small>{t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}</small>
+          </div>
         </div>
       </header>
 

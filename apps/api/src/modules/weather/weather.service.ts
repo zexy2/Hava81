@@ -1,9 +1,6 @@
 import type { AppConfig } from '../../config/env';
 import type { AsyncCache, CacheResult } from '../../core/cache';
-import type {
-  CurrentWeatherQuery,
-  WeatherProvider,
-} from '../../providers/weather-provider';
+import type { CurrentWeatherQuery, WeatherProvider } from '../../providers/weather-provider';
 import type { ForecastUpstream } from '../../providers/openweather/schemas';
 import type {
   AirQualityDto,
@@ -14,8 +11,7 @@ import type {
   ForecastQueryInput,
 } from './contracts';
 
-const coordinateKey = (lat: number, lon: number): string =>
-  `${lat.toFixed(3)}:${lon.toFixed(3)}`;
+const coordinateKey = (lat: number, lon: number): string => `${lat.toFixed(3)}:${lon.toFixed(3)}`;
 
 const normalizeCity = (city: string): string => city.toLocaleLowerCase('tr-TR').trim();
 
@@ -29,7 +25,7 @@ export class WeatherService {
     private readonly config: Pick<
       AppConfig,
       'CACHE_CURRENT_TTL_MS' | 'CACHE_FORECAST_TTL_MS' | 'CACHE_AIR_QUALITY_TTL_MS'
-    >,
+    >
   ) {}
 
   getCurrent(query: CurrentWeatherQueryInput): Promise<CacheResult<CurrentWeatherDto>> {
@@ -114,7 +110,7 @@ export class WeatherService {
 
   private normalizeForecast(raw: ForecastUpstream): ForecastDto {
     const timezoneOffsetSeconds = raw.city.timezone ?? 0;
-    const hourly = raw.list.slice(0, 8).map((item) => ({
+    const hourly = raw.list.slice(0, 16).map(item => ({
       time: new Date(item.dt * 1_000).toISOString(),
       temp: Math.round(item.main.temp),
       icon: item.weather[0].icon,
@@ -134,7 +130,7 @@ export class WeatherService {
     const daily = Array.from(dailyGroups.entries())
       .slice(0, 5)
       .map(([date, items]) => {
-        const temperatures = items.map((item) => item.main.temp);
+        const temperatures = items.map(item => item.main.temp);
         const representative = items.reduce((best, item) => {
           const localHour = new Date((item.dt + timezoneOffsetSeconds) * 1_000).getUTCHours();
           const bestHour = new Date((best.dt + timezoneOffsetSeconds) * 1_000).getUTCHours();
@@ -147,7 +143,7 @@ export class WeatherService {
           tempMax: Math.round(Math.max(...temperatures)),
           icon: representative.weather[0].icon,
           description: representative.weather[0].description,
-          pop: Math.round(Math.max(...items.map((item) => item.pop)) * 100),
+          pop: Math.round(Math.max(...items.map(item => item.pop)) * 100),
         };
       });
 

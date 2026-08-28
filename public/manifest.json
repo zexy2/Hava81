@@ -1,7 +1,7 @@
 {
   "short_name": "Hava81",
-  "name": "Hava81 — Türkiye'nin Meteorolojik Atlası",
-  "description": "Türkiye'nin 81 ili için anlık koşulları, yaklaşan değişimleri ve hava risklerini karar odaklı bir meteorolojik atlas içinde sunar.",
+  "name": "Hava81 — Havayı değil, gününü planla",
+  "description": "Türkiye'nin 81 ili için hava durumunu günlük kararlara çevirir: Hava81 Skoru, en iyi zaman, aktivite planları ve yerel hava riskleri.",
   "icons": [
     {
       "src": "hava81-mark.svg",
@@ -34,10 +34,7 @@
   "orientation": "any",
   "theme_color": "#F3F6F4",
   "background_color": "#F3F6F4",
-  "categories": [
-    "weather",
-    "utilities"
-  ],
+  "categories": ["weather", "utilities"],
   "lang": "tr",
   "dir": "ltr",
   "prefer_related_applications": false,

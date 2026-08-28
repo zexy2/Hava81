@@ -120,7 +120,11 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
         }),
       ];
 
-  const score = Math.round(average(slots.slice(0, 6).map(slot => slot.score)));
+  const scoringWindow = slots.slice(0, 6);
+  const averageScore = average(scoringWindow.map(slot => slot.score));
+  const worstScore = Math.min(...scoringWindow.map(slot => slot.score));
+  // A day with one materially difficult period should not look perfect just because the rest is calm.
+  const score = Math.round(averageScore * 0.65 + worstScore * 0.35);
   const bestWindow = slots.reduce<ScoredWeatherWindow | undefined>(
     (best, slot) => (!best || slot.score > best.score ? slot : best),
     undefined

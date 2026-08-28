@@ -2,7 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { weatherService } from '../../api/weatherService';
 import { useSettings } from '../../context';
-import type { FavoriteCity, NormalizedWeatherData } from '../../types';
+import { buildActivityPlan } from '../../domain/activity/buildActivityPlan';
+import type { ActivityPlan } from '../../domain/activity/types';
+import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
+import type { DailyPlan } from '../../domain/decision/types';
+import { useDecisionProfile } from '../../hooks/useDecisionProfile';
+import type {
+  AirQuality,
+  FavoriteCity,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import './ComparePanel.css';
 
 interface ComparePanelProps {
@@ -10,13 +21,24 @@ interface ComparePanelProps {
   language: 'tr' | 'en';
 }
 
+interface CompareRow {
+  weather: NormalizedWeatherData;
+  airQuality?: AirQuality;
+  hourly: HourlyForecast[];
+  meta: ForecastMeta;
+  plan: DailyPlan;
+  activityPlan?: ActivityPlan;
+}
+
 export function ComparePanel({ cities, language }: ComparePanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
+  const { profile } = useDecisionProfile();
   const selected = useMemo(() => cities.slice(0, 3), [cities]);
-  const [rows, setRows] = useState<NormalizedWeatherData[]>([]);
+  const [rows, setRows] = useState<CompareRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const primaryActivity = profile.activities[0];
 
   useEffect(() => {
     let active = true;
@@ -28,7 +50,33 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     }
     setLoading(true);
     Promise.allSettled(
-      selected.map(city => weatherService.getCurrentWeather({ city: city.name, lang: language }))
+      selected.map(async city => {
+        const weather = await weatherService.getCurrentWeather({ city: city.name, lang: language });
+        const [forecastResult, airResult] = await Promise.allSettled([
+          weatherService.getForecast(weather.coordinates.lat, weather.coordinates.lon, language),
+          weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language),
+        ]);
+        if (forecastResult.status !== 'fulfilled') throw forecastResult.reason;
+        const airQuality = airResult.status === 'fulfilled' ? airResult.value : undefined;
+        const plan = buildDailyPlan({ weather, hourly: forecastResult.value.hourly, airQuality });
+        const activityPlan = primaryActivity
+          ? buildActivityPlan({
+              activity: primaryActivity,
+              weather,
+              hourly: forecastResult.value.hourly,
+              airQuality,
+              sensitivity: profile.temperatureSensitivity,
+            })
+          : undefined;
+        return {
+          weather,
+          airQuality,
+          hourly: forecastResult.value.hourly,
+          meta: forecastResult.value.meta,
+          plan,
+          activityPlan,
+        } satisfies CompareRow;
+      })
     )
       .then(results => {
         if (!active) return;
@@ -40,50 +88,102 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     return () => {
       active = false;
     };
-  }, [language, selected]);
+  }, [language, primaryActivity, profile.temperatureSensitivity, selected]);
+
+  const winner = useMemo(
+    () =>
+      rows.reduce<CompareRow | undefined>(
+        (best, row) => (!best || row.plan.score > best.plan.score ? row : best),
+        undefined
+      ),
+    [rows]
+  );
+  const offsetTime = (row: CompareRow, date?: Date) => {
+    if (!date) return '—';
+    const offset = (row.weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+    return new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    });
+  };
 
   return (
     <section className="hava81-compare" aria-labelledby="hava81-compare-title">
-      <header>
-        <span className="atlas-kicker">{t('weather.favoriteCities')}</span>
-        <h2 id="hava81-compare-title">
-          {t('hava81.compare.title', { defaultValue: 'Şehir karşılaştırması' })}
-        </h2>
+      <header className="hava81-compare__header">
+        <div>
+          <span className="atlas-kicker">{t('weather.favoriteCities')}</span>
+          <h2 id="hava81-compare-title">{t('hava81.compare.title')}</h2>
+        </div>
+        {winner && rows.length >= 2 ? (
+          <div className="hava81-compare__winner" role="status">
+            <span>{t('hava81.compare.winnerLabel')}</span>
+            <strong>
+              {t('hava81.compare.winner', {
+                city: winner.weather.cityName,
+                score: winner.plan.score,
+              })}
+            </strong>
+            <small>{t('hava81.compare.winnerNote')}</small>
+          </div>
+        ) : null}
       </header>
       {selected.length < 2 ? (
-        <p>
-          {t('hava81.compare.needTwo', {
-            defaultValue: 'Karşılaştırmak için en az iki şehri favorilere ekle.',
-          })}
-        </p>
+        <p>{t('hava81.compare.needTwo')}</p>
       ) : loading && rows.length === 0 ? (
         <p role="status">{t('common.loading')}</p>
       ) : (
-        <div
-          className="hava81-compare__table"
-          role="table"
-          aria-label={t('hava81.compare.title', { defaultValue: 'Şehir karşılaştırması' })}
-        >
-          {rows.map(row => (
-            <article className="hava81-compare__city" role="row" key={row.cityName}>
-              <h3>{row.cityName}</h3>
-              <strong>
-                {Math.round(convertTemperature(row.temperature))}
-                {getTemperatureSymbol()}
-              </strong>
-              <span>
-                {t('weather.feelsLike')}: {Math.round(convertTemperature(row.feelsLike))}
-                {getTemperatureSymbol()}
-              </span>
-              <span>
-                {t('weather.humidity')}: {row.humidity}%
-              </span>
-              <span>
-                {t('weather.wind')}: {convertWindSpeed(row.windSpeed)} {getWindSpeedSymbol()}
-              </span>
-              <small>{row.description}</small>
-            </article>
-          ))}
+        <div className="hava81-compare__table" role="table" aria-label={t('hava81.compare.title')}>
+          {rows.map(row => {
+            const maxPop = Math.max(0, ...row.hourly.slice(0, 6).map(point => point.pop));
+            return (
+              <article
+                className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
+                role="row"
+                key={row.weather.cityName}
+              >
+                <header>
+                  <h3>{row.weather.cityName}</h3>
+                  <strong className="hava81-compare__score">
+                    {row.plan.score}
+                    <span>/100</span>
+                  </strong>
+                </header>
+                <div className="hava81-compare__metrics">
+                  <span>
+                    {t('hava81.compare.temp')}{' '}
+                    <b>
+                      {Math.round(convertTemperature(row.weather.temperature))}
+                      {getTemperatureSymbol()}
+                    </b>
+                  </span>
+                  <span>
+                    {t('hava81.compare.rain')} <b>%{Math.round(maxPop * 100)}</b>
+                  </span>
+                  <span>
+                    {t('weather.wind')}{' '}
+                    <b>
+                      {convertWindSpeed(row.weather.windSpeed)} {getWindSpeedSymbol()}
+                    </b>
+                  </span>
+                  <span>
+                    {t('hava81.compare.aqi')} <b>{row.airQuality?.aqi ?? '—'}/5</b>
+                  </span>
+                  <span>
+                    {t('hava81.compare.bestTime')}{' '}
+                    <b>{offsetTime(row, row.plan.bestWindow?.time)}</b>
+                  </span>
+                  {row.activityPlan ? (
+                    <span>
+                      {t(`hava81.activities.names.${row.activityPlan.activity}`)}{' '}
+                      <b>{row.activityPlan.score}/100</b>
+                    </span>
+                  ) : null}
+                </div>
+                <small>{row.weather.description}</small>
+              </article>
+            );
+          })}
         </div>
       )}
     </section>

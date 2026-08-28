@@ -10,6 +10,7 @@ const service = vi.hoisted(() => ({
   getCurrentLocationWeather: vi.fn(),
   getForecast: vi.fn(),
   getAirQuality: vi.fn(),
+  getContextSignals: vi.fn(),
 }));
 
 vi.mock('../../api/weatherService', () => ({ weatherService: service }));
@@ -99,6 +100,7 @@ describe('Hava81 app integration', () => {
     service.getCurrentLocationWeather.mockReset().mockResolvedValue(current);
     service.getForecast.mockReset().mockResolvedValue(forecast);
     service.getAirQuality.mockReset().mockResolvedValue(air);
+    service.getContextSignals.mockReset().mockResolvedValue(null);
   });
 
   it('renders the decision-first city view and forecast metadata', async () => {

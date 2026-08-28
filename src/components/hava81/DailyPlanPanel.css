@@ -190,3 +190,30 @@
     border-block-start: 1px solid var(--color-atlas-line);
   }
 }
+
+.daily-plan__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.daily-plan__share {
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  color: var(--color-aegean);
+  background: transparent;
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.daily-plan__share:hover {
+  background: var(--color-atlas-field);
+}
+@media (max-width: 47.99rem) {
+  .daily-plan__header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

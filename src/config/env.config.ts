@@ -53,7 +53,7 @@ export const config = {
   },
   app: {
     name: 'Hava81',
-    version: '2.0.0',
+    version: '2.1.0',
     environment: env.MODE,
     isDevelopment: env.MODE === 'development',
     isProduction: env.MODE === 'production',

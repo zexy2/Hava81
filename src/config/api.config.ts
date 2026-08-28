@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
     current: '/weather/current',
     forecast: '/weather/forecast',
     airQuality: '/weather/air-quality',
+    context: '/weather/context',
+    route: '/weather/route',
   },
 } as const;
 

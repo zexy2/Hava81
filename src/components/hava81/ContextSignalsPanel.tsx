@@ -1,0 +1,100 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { ContextSignals } from '../../types';
+import './ContextSignalsPanel.css';
+
+interface Props {
+  signals: ContextSignals;
+}
+
+type Level = 'low' | 'moderate' | 'high' | 'veryHigh';
+const uvLevel = (uv?: number): Level | undefined =>
+  uv === undefined
+    ? undefined
+    : uv >= 8
+      ? 'veryHigh'
+      : uv >= 6
+        ? 'high'
+        : uv >= 3
+          ? 'moderate'
+          : 'low';
+
+export function ContextSignalsPanel({ signals }: Props) {
+  const { t } = useTranslation();
+  const uv = uvLevel(signals.uvIndexMax);
+  const pollen = useMemo(
+    () => Math.max(signals.grassPollenMax ?? 0, signals.olivePollenMax ?? 0),
+    [signals.grassPollenMax, signals.olivePollenMax]
+  );
+  const hasPollen = signals.grassPollenMax !== undefined || signals.olivePollenMax !== undefined;
+  const hasMarine = Boolean(
+    signals.marine &&
+    (signals.marine.waveHeight !== undefined || signals.marine.seaSurfaceTemperature !== undefined)
+  );
+
+  return (
+    <section className="context-signals" aria-labelledby="context-signals-title">
+      <header>
+        <div>
+          <span className="atlas-kicker">{t('hava81.context.eyebrow')}</span>
+          <h2 id="context-signals-title">{t('hava81.context.title')}</h2>
+        </div>
+        <small>{signals.attribution}</small>
+      </header>
+      <div className="context-signals__grid">
+        {signals.uvIndexMax !== undefined ? (
+          <article className={`context-signal context-signal--${uv}`}>
+            <span>{t('hava81.context.uv')}</span>
+            <strong>{signals.uvIndexMax.toFixed(1)}</strong>
+            <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
+            <p>
+              {uv === 'high' || uv === 'veryHigh'
+                ? t('hava81.context.uvProtection')
+                : t('hava81.context.uvNormal')}
+            </p>
+          </article>
+        ) : null}
+        {signals.dustMax !== undefined ? (
+          <article className="context-signal">
+            <span>{t('hava81.context.dust')}</span>
+            <strong>
+              {Math.round(signals.dustMax)} <small>{signals.units.dust ?? ''}</small>
+            </strong>
+            <p>{t('hava81.context.next24h')}</p>
+          </article>
+        ) : null}
+        {hasPollen ? (
+          <article className="context-signal">
+            <span>{t('hava81.context.pollen')}</span>
+            <strong>
+              {pollen.toFixed(1)}{' '}
+              <small>{signals.units.grassPollen ?? signals.units.olivePollen ?? ''}</small>
+            </strong>
+            <p>{t('hava81.context.pollenNote')}</p>
+          </article>
+        ) : null}
+        {hasMarine ? (
+          <article className="context-signal context-signal--marine">
+            <span>{t('hava81.context.sea')}</span>
+            <strong>
+              {signals.marine?.seaSurfaceTemperature !== undefined
+                ? `${signals.marine.seaSurfaceTemperature.toFixed(1)}${signals.units.seaSurfaceTemperature ?? '°C'}`
+                : '—'}
+            </strong>
+            <p>
+              {signals.marine?.waveHeight !== undefined
+                ? t('hava81.context.wave', {
+                    height: signals.marine.waveHeight.toFixed(2),
+                    unit: signals.units.waveHeight ?? 'm',
+                  })
+                : t('hava81.context.waveUnavailable')}
+            </p>
+          </article>
+        ) : null}
+      </div>
+      <p className="context-signals__note">{t('hava81.context.note')}</p>
+    </section>
+  );
+}
+
+export default ContextSignalsPanel;

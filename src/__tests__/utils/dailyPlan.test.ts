@@ -47,7 +47,6 @@ describe('Hava81 daily decision engine', () => {
       windSpeed: 3,
       airQualityIndex: 1,
     });
-
     expect(result.score).toBe(100);
     expect(result.band).toBe('excellent');
     expect(result.reasons).toEqual([]);
@@ -61,7 +60,6 @@ describe('Hava81 daily decision engine', () => {
       windSpeed: 18,
       airQualityIndex: 5,
     });
-
     expect(result.score).toBe(0);
     expect(result.band).toBe('difficult');
     expect(result.reasons).toEqual(
@@ -76,34 +74,48 @@ describe('Hava81 daily decision engine', () => {
       point(12, 29, 0.05, 4),
       point(15, 27, 0.05, 3),
     ];
-
     const plan = buildDailyPlan({
       weather,
       hourly,
       airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 },
     });
-
     expect(plan.nowOrLater.kind).toBe('later');
     expect(plan.nowOrLater.improvement).toBeGreaterThanOrEqual(15);
     expect(plan.bestWindow?.score).toBe(100);
   });
 
   it('recommends an umbrella when near-term rain risk reaches fifty percent', () => {
-    const hourly = [point(6, 24, 0.1), point(9, 23, 0.55), point(12, 22, 0.2)];
-    const plan = buildDailyPlan({ weather, hourly });
-
+    const plan = buildDailyPlan({
+      weather,
+      hourly: [point(6, 24, 0.1), point(9, 23, 0.55), point(12, 22, 0.2)],
+    });
     expect(plan.umbrella).toBe('yes');
   });
 
-  it('degrades the day score for unhealthy air without inventing UV advice', () => {
-    const hourly = [point(6, 24), point(9, 25), point(12, 26)];
+  it('degrades the day score for unhealthy air', () => {
     const plan = buildDailyPlan({
       weather,
-      hourly,
+      hourly: [point(6, 24), point(9, 25), point(12, 26)],
       airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90 },
     });
-
     expect(plan.airQuality).toBe('poor');
     expect(plan.score).toBeLessThan(85);
+  });
+
+  it('lets a difficult period pull down the overall day score', () => {
+    const hourly = [
+      point(6, 24, 0.05, 3),
+      point(9, 24, 0.05, 3),
+      point(12, 40, 0.05, 3),
+      point(15, 24, 0.05, 3),
+      point(18, 24, 0.05, 3),
+      point(21, 24, 0.05, 3),
+    ];
+    const plan = buildDailyPlan({ weather, hourly });
+    const simpleAverage = Math.round(
+      plan.slots.slice(0, 6).reduce((sum, slot) => sum + slot.score, 0) / 6
+    );
+    expect(plan.score).toBeLessThan(85);
+    expect(plan.score).toBeLessThan(simpleAverage);
   });
 });

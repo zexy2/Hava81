@@ -11,6 +11,8 @@ import type {
   AirQuality,
   ForecastMeta,
   WeatherDataMeta,
+  ContextSignals,
+  RouteWeatherResult,
 } from '../types';
 
 type SerializedMeta = Omit<WeatherDataMeta, 'fetchedAt'> & { fetchedAt: string };
@@ -142,7 +144,7 @@ export const weatherService = {
         date: new Date(`${item.date}T12:00:00.000Z`),
         pop: normalizePrecipitationProbability(item.pop),
       })),
-      hourly: response.hourly.map(item => ({
+      hourly: response.hourly.slice(0, 8).map(item => ({
         ...item,
         time: new Date(item.time),
         pop: normalizePrecipitationProbability(item.pop),
@@ -153,6 +155,28 @@ export const weatherService = {
       },
     };
   },
+
+  getContextSignals: async (lat: number, lon: number, marine = false): Promise<ContextSignals> => {
+    const response = await httpClient.get<
+      Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
+    >(API_ENDPOINTS.weather.context, { lat, lon, marine: marine ? 'true' : 'false' });
+    return { ...response, fetchedAt: new Date(response.fetchedAt) };
+  },
+
+  getRouteWeather: async (
+    origin: { lat: number; lon: number },
+    destination: { lat: number; lon: number },
+    departure: Date,
+    lang = DEFAULT_WEATHER_PARAMS.lang
+  ): Promise<RouteWeatherResult> =>
+    httpClient.get<RouteWeatherResult>(API_ENDPOINTS.weather.route, {
+      originLat: origin.lat,
+      originLon: origin.lon,
+      destinationLat: destination.lat,
+      destinationLon: destination.lon,
+      departure: departure.toISOString(),
+      lang,
+    }),
 
   getAirQuality: async (
     lat: number,

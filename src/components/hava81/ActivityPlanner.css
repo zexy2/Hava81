@@ -1,0 +1,130 @@
+.activity-planner {
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  background: var(--color-atlas-paper);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-md);
+}
+.activity-planner__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  align-items: end;
+}
+.activity-planner__header h2 {
+  margin: 0.2rem 0;
+  font-size: 1.55rem;
+}
+.activity-planner__header p,
+.activity-planner__note,
+.activity-planner__empty {
+  margin: 0;
+  color: var(--color-atlas-muted);
+}
+.activity-planner__sensitivity {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 12rem;
+  font-size: 0.78rem;
+  color: var(--color-atlas-muted);
+}
+.activity-planner__sensitivity select {
+  min-height: 2.5rem;
+  padding: 0 0.65rem;
+  color: var(--color-atlas-ink);
+  background: var(--color-atlas-field);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-sm);
+}
+.activity-planner__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+.activity-planner__chips button {
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  color: var(--color-atlas-ink);
+  background: transparent;
+  border: 1px solid var(--color-atlas-line);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+}
+.activity-planner__chips button.is-active {
+  color: var(--color-atlas-paper);
+  background: var(--color-aegean);
+  border-color: var(--color-aegean);
+}
+.activity-planner__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+.activity-card {
+  display: grid;
+  gap: 0.65rem;
+  min-height: 9.5rem;
+  padding: var(--space-md);
+  background: var(--color-atlas-field);
+  border: 1px solid var(--color-atlas-line);
+  border-top-width: 4px;
+  border-radius: var(--radius-sm);
+}
+.activity-card--excellent {
+  border-top-color: var(--color-aegean);
+}
+.activity-card--good {
+  border-top-color: var(--color-aegean-pale);
+}
+.activity-card--caution {
+  border-top-color: var(--color-saffron);
+}
+.activity-card--difficult {
+  border-top-color: var(--color-vermilion);
+}
+.activity-card header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.activity-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.activity-card header strong {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.activity-card header strong span {
+  font-size: 0.7rem;
+  color: var(--color-atlas-muted);
+}
+.activity-card p {
+  margin: 0;
+  font-weight: 600;
+}
+.activity-card small {
+  color: var(--color-atlas-muted);
+}
+.activity-planner__note {
+  font-size: 0.76rem;
+}
+@media (max-width: 47.99rem) {
+  .activity-planner {
+    padding: var(--space-lg) var(--space-md);
+  }
+  .activity-planner__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .activity-planner__sensitivity {
+    min-width: 0;
+  }
+  .activity-planner__cards {
+    grid-template-columns: 1fr;
+  }
+}
