@@ -167,6 +167,7 @@ export function EnvironmentRail({
         className="environment-rail__module environment-rail__module--action"
         onClick={onOpenMap}
         aria-expanded={mapExpanded}
+        aria-controls="weather-map-region"
         aria-pressed={mapExpanded}
       >
         <span className="environment-rail__icon">

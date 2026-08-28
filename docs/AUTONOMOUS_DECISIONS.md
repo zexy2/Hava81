@@ -186,3 +186,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Interactive commute-plan verdict updates are exposed as one atomic polite status region. The leave/return controls remain ordinary inputs, but the computed preparation result must be announced when it changes so decision-first UX is available to screen-reader users without forcing focus movement.
 
 - 2026-08-28 — Commute-plan empty states must distinguish incomplete user input from insufficient forecast coverage. Once both routine times are present, never tell the user to select them again; explain that no sufficiently close forecast window is available instead of implying a plan can be computed from unavailable data.
+
+- 2026-08-28 — Every map disclosure that exposes `aria-expanded` must also identify the controlled lazy map region with `aria-controls="weather-map-region"`; keep duplicate entry points semantically consistent even when they share the same open/close handler.
