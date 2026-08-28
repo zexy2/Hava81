@@ -21,11 +21,15 @@ describe('sharing and alerts', () => {
       score: 72,
       bestTime: '19:00',
       umbrella: 'no',
+      recommendation: 'Şimdi çıkmak daha iyi',
       language: 'tr',
     });
     expect(result.url).toContain('/sanliurfa');
     expect(result.text).toContain('72/100');
     expect(result.text).toContain('19:00');
+    expect(result.text).toContain('Öneri: Şimdi çıkmak daha iyi');
+    expect(result.text).not.toContain(result.url);
+    expect(result.clipboardText).toContain(result.url);
   });
   it('prioritizes rain alerts', () => {
     const candidate = buildAlertCandidate('İstanbul', plan({ umbrella: 'yes', score: 45 }));

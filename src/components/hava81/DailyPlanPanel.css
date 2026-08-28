@@ -201,6 +201,7 @@
   gap: var(--space-sm);
 }
 .daily-plan__share {
+  min-width: 6.75rem;
   min-height: 2.5rem;
   padding: 0 0.8rem;
   color: var(--color-aegean);
@@ -211,9 +212,18 @@
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
+
 .daily-plan__share:hover {
   background: var(--color-atlas-field);
+  border-color: var(--color-aegean);
+}
+.daily-plan__share:active {
+  transform: translateY(1px);
 }
 @media (max-width: 47.99rem) {
   .daily-plan__header-actions {

@@ -76,15 +76,18 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       score: plan.score,
       bestTime: plan.bestWindow ? formatTime(plan.bestWindow.time) : undefined,
       umbrella: plan.umbrella,
+      recommendation: nowOrLaterText,
       language: i18n.language,
     });
     try {
       if (navigator.share) {
-        await navigator.share(payload);
+        await navigator.share({ title: payload.title, text: payload.text, url: payload.url });
       } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(payload.text);
+        await navigator.clipboard.writeText(payload.clipboardText);
         setShareState('copied');
         window.setTimeout(() => setShareState('idle'), 1600);
+      } else {
+        return;
       }
       trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
     } catch {
