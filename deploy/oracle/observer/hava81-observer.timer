@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Hava81 deterministic observer every 5 minutes
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=5min
+AccuracySec=15s
+RandomizedDelaySec=10s
+Persistent=true
+Unit=hava81-observer.service
+
+[Install]
+WantedBy=timers.target

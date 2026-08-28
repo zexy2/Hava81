@@ -167,3 +167,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Installable PWA raster icons use Hava81-specific asset URLs instead of scaffold-generic logo192.png/logo512.png names. Unique branded URLs reduce stale browser/PWA icon-cache collisions and make React-template regressions easier to detect.
 
 - 2026-08-28 — The primary decision surface keeps a sequential heading hierarchy: province name is the page `h1`, and its decision-change/planning-signals subregion is `h2`, not `h3`. Visual styling remains class-driven rather than heading-level-driven.
+
+- 2026-08-28 — API readiness observation must verify freshness, not only HTTP 200 and status=ready. The read-only observer requires a parseable readiness timestamp no more than 180 seconds away from observer time and an explicit Cache-Control: no-store; otherwise production health is marked unhealthy even if the payload shape looks valid. The Oracle observer source and hardened systemd units are versioned under deploy/oracle/observer/ to prevent operational drift.

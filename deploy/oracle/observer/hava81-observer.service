@@ -1,0 +1,40 @@
+[Unit]
+Description=Hava81 deterministic CI and production observer
+Documentation=https://github.com/zexy2/Hava81
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+ExecStart=/usr/bin/flock -n /run/hava81-worker/observer.lock /usr/bin/python3 /usr/local/lib/hava81-worker/observer.py
+Environment=PYTHONDONTWRITEBYTECODE=1
+StateDirectory=hava81-worker
+LogsDirectory=hava81-worker
+RuntimeDirectory=hava81-worker
+UMask=0022
+TimeoutStartSec=55s
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
