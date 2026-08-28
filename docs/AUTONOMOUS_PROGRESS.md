@@ -224,3 +224,4 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Production probing found hashed JavaScript source maps publicly reachable from GitHub Pages; after the startup-config deploy, the current main map remained HTTP 200 at roughly 1.13 MB.
 - Changed normal production builds to omit source maps, while the explicit developer `npm run analyze` path opts back into maps for local bundle analysis.
 - This reduces public artifact weight and avoids exposing reconstructed application/source structure without sacrificing intentional diagnostics.
+- Added a CI artifact gate that rejects any production `dist/**/*.map`, preventing a future Vite config change from silently re-exposing maps.
