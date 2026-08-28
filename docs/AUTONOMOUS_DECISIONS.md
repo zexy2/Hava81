@@ -139,3 +139,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Rolling Open-Meteo context maxima must be computed from unambiguous GMT instants. Do not request `timezone=auto` and then feed offset-less local wall-clock strings to `Date.parse`; request `timezone=GMT`, explicitly parse offset-less model timestamps as UTC, and request 25 forecast hours so a rolling 24-hour window starting mid-hour still contains its final partial-hour slot.
 
 - 2026-08-28 — Programmatic navigation must honor `prefers-reduced-motion`; CSS scroll overrides are not sufficient when code explicitly requests smooth scrolling. Centralize motion-aware scrolling so explicit map/overview/saved-city jumps resolve to `auto` for reduced-motion users.
+
+- 2026-08-28 — The root HTML `lang` attribute must track Hava81's active UI language at runtime. Visible translations alone are insufficient because screen readers and other language-sensitive user agents rely on the document language metadata.

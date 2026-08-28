@@ -176,11 +176,12 @@ describe('Hava81 app integration', () => {
     expect(await screen.findByRole('heading', { name: 'Birimler' })).toBeInTheDocument();
     const english = screen.getByRole('button', { name: /english/i });
     await user.click(english);
-    await waitFor(() =>
+    await waitFor(() => {
+      expect(document.documentElement.lang).toBe('en');
       expect(service.getCurrentWeather).toHaveBeenLastCalledWith(
         expect.objectContaining({ lang: 'en' })
-      )
-    );
+      );
+    });
   });
 
   it('keeps browser theme metadata aligned with an explicit dark theme', async () => {

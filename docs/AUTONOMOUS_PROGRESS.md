@@ -312,3 +312,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added one motion-aware scroll helper and routed map, saved-city and overview jumps through it; normal users keep smooth scrolling while reduced-motion users get instant scrolling.
 - Added focused unit coverage for both media-query states.
 - Validation: lint, type-check, 96/96 frontend tests, production build and all 81 generated city pages pass.
+
+## 2026-08-28 17:21 TRT — document language synchronization
+
+- Found that switching Hava81 to English updated visible copy and weather request language but left the root document at `<html lang="tr">`, giving assistive technology the wrong page language.
+- Synchronized `document.documentElement.lang` with the persisted UI language and strengthened the existing language-switch integration test to assert the DOM contract.
+- Validation: targeted App integration 5/5, type-check, lint, production build and all 81 generated city pages pass.
