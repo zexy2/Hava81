@@ -154,3 +154,6 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — ErrorBoundary defaults must follow the same production privacy rule as custom fallbacks: technical error objects stay in diagnostics/onError, never in user-visible fallback copy.
 
 - 2026-08-28 — Open-Meteo `uvIndexMax`/pollen context values are modeled next-24-hour maxima, not current observations. User-facing copy must state the model/window explicitly. UV presentation follows WHO bands (Low <3, Moderate 3–5, High 6–7, Very high 8–10, Extreme 11+) and sun-protection guidance starts at UVI 3; do not collapse 11+ into “Very high”. Decision-action translations must exist in both Turkish and English rather than relying on a Turkish component fallback.
+
+
+- 2026-08-28 — API production promotion uses exact-image blue-green semantics: validate the candidate on 4001, temporarily route public traffic to the healthy canary, recreate 4002 from that exact validated image without rebuilding, verify it directly, return Nginx to 4002, then restore the previous production image on 4001 so rollback remains a one-port switch rather than an image rebuild.

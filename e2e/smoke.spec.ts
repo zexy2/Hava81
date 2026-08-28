@@ -294,6 +294,28 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
   await expect(page.locator('.app-fatal')).toHaveCount(0);
 });
 
+test('English mode updates document language and decision copy', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser language coverage');
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'light',
+        language: 'en',
+        notificationsEnabled: false,
+      })
+    );
+  });
+  await page.goto('/istanbul/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: 'Planning signals' })).toBeVisible();
+  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('civarında');
+  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('güneş koruması');
+});
+
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
   await page.goto('/istanbul');
