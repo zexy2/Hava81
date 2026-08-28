@@ -140,11 +140,17 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         <strong>{nowOrLaterText}</strong>
         {plan.bestWindow ? (
-          <small>{t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindow.time) })}</small>
+          <small>
+            {t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindow.time) })}
+          </small>
         ) : null}
       </div>
 
-      <div className="daily-plan__explain" aria-label={t('hava81.dailyPlan.explain.label')}>
+      <div
+        className="daily-plan__explain"
+        role="group"
+        aria-label={t('hava81.dailyPlan.explain.label')}
+      >
         <div className="daily-plan__explain-head">
           <div>
             <span>{t('hava81.dailyPlan.explain.eyebrow')}</span>
@@ -169,11 +175,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         <p>{t('hava81.dailyPlan.explain.method')}</p>
       </div>
 
-      <div
-        className="daily-plan__quick"
-        role="group"
-        aria-label={t('hava81.dailyPlan.quickLabel')}
-      >
+      <div className="daily-plan__quick" role="group" aria-label={t('hava81.dailyPlan.quickLabel')}>
         <div>
           <span>{t('hava81.dailyPlan.quick.umbrella.label')}</span>
           <strong>{t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)}</strong>
