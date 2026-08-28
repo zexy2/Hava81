@@ -112,3 +112,6 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Do not publish frontend source maps in normal production artifacts. Source-map generation is opt-in for the explicit bundle-analysis command only; operational debugging should not require exposing maps to every public visitor.
 
 - 2026-08-28 — Treat individual Lighthouse accessibility audits as actionable even when the aggregate accessibility category rounds to 100. Interactive accessible names should contain/derive from their visible labels, and ARIA list semantics must use host/role combinations accepted by accessibility APIs rather than visually equivalent but invalid markup.
+
+- 2026-08-28 — A canonical populated city view has exactly one level-1 heading and it is the visible city name. Product sections remain level 2/3; do not add hidden SEO-only headings.
+- 2026-08-28 — Disk-pressure cleanup may remove only unattached rebuildable cache images without explicit approval. Preserve active Hava81 production and rollback/canary images, running containers, volumes and unrelated user data.

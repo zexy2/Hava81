@@ -105,7 +105,7 @@ describe('Hava81 app integration', () => {
 
   it('renders the decision-first city view and forecast metadata', async () => {
     renderApp();
-    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(
       await screen.findByRole('heading', { name: /3 saatlik tahmin/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
