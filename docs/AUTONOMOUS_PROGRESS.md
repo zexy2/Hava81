@@ -438,3 +438,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Split the state so incomplete input still asks for both times, while complete input with insufficient forecast coverage explicitly says that no sufficiently close forecast is available yet and that the plan will calculate as coverage expands. Added Turkish/English copy and regression coverage.
 - Validation on `origin/main` 9bf06a4: focused commute tests 2/2; lint; type-check; full frontend suite 110/110 with bounded workers; production build with all 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check` clean.
 - Operational maintenance in the same run: production observer was healthy on API port 4002 and latest main CI was green; root disk pressure was reduced from 93% to 91% by removing only rebuildable `node_modules` caches from two already-merged Hava81 worktrees. Running containers, volumes, production image and rollback image were untouched.
+
+## 2026-08-28 20:50 TRT — map disclosure relationship
+
+- Audited the lower Environment Rail map control and found it exposed `aria-expanded` but did not identify the region it expands, unlike the primary header map control.
+- Added `aria-controls="weather-map-region"` so assistive technology can associate the disclosure button with the lazy map panel, plus a focused component regression.
+- Validation on `origin/main` 9bf06a4: focused Environment Rail test 1/1; lint; type-check; full frontend suite 110/110 with bounded workers; production build with all 81 city pages; `git diff --check` clean.
