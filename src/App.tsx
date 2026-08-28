@@ -10,6 +10,7 @@ import { ForecastAtlas } from './components/hava81/ForecastAtlas';
 import { EnvironmentRail } from './components/hava81/EnvironmentRail';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { ComparePanel } from './components/hava81/ComparePanel';
+import { DailyPlanPanel } from './components/hava81/DailyPlanPanel';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
 import { useFavorites } from './hooks/useFavorites';
@@ -373,6 +374,17 @@ const App: React.FC = () => {
                 >
                   <StarIcon filled={isFavorite} />
                 </button>
+                {favorites.length >= 2 && (
+                  <button
+                    type="button"
+                    className="atlas-compare-button"
+                    onClick={() => handleBottomNav('saved')}
+                    aria-pressed={activeNav === 'saved'}
+                  >
+                    {t('hava81.compare.action')}
+                    <span aria-hidden="true">{favorites.length}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="atlas-icon-button atlas-icon-button--map"
@@ -477,6 +489,14 @@ const App: React.FC = () => {
                     />
                   )}
                 </div>
+
+                {forecast.hourly.length > 0 && (
+                  <DailyPlanPanel
+                    weather={weather}
+                    hourly={forecast.hourly}
+                    airQuality={forecast.airQuality ?? undefined}
+                  />
+                )}
 
                 {forecast.error && (
                   <section className="atlas-message atlas-message--inline" role="status">

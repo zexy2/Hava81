@@ -105,6 +105,8 @@ describe('Hava81 app integration', () => {
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /3 saatlik tahmin/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /gün planı/i })).toBeInTheDocument();
+    expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   });
@@ -116,6 +118,36 @@ describe('Hava81 app integration', () => {
     await user.click(screen.getByRole('button', { name: /favorilere ekle/i }));
     expect(screen.getByText('İstanbul', { selector: '.city-tabs__name' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /kayıtlı/i }));
+    expect(
+      await screen.findByRole('heading', { name: /şehir karşılaştırması/i })
+    ).toBeInTheDocument();
+  });
+
+  it('exposes desktop comparison when at least two favorites exist', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+    service.getCurrentWeather.mockImplementation(async ({ city }: { city: string }) =>
+      city === 'İzmir'
+        ? {
+            ...current,
+            cityName: 'İzmir',
+            coordinates: { lat: 38.42, lon: 27.14 },
+            temperature: 29,
+          }
+        : current
+    );
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul' });
+    const compare = screen.getByRole('button', { name: /karşılaştır/i });
+    expect(compare).toBeInTheDocument();
+    await user.click(compare);
     expect(
       await screen.findByRole('heading', { name: /şehir karşılaştırması/i })
     ).toBeInTheDocument();

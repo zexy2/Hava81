@@ -412,6 +412,44 @@ input:focus-visible {
   display: none;
 }
 
+.atlas-compare-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 2.75rem;
+  padding: 0 var(--space-sm);
+  color: var(--color-atlas-ink);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.atlas-compare-button span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: 0.25rem;
+  color: var(--color-atlas-paper);
+  background: var(--color-aegean);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+}
+
+.atlas-compare-button:hover,
+.atlas-compare-button[aria-pressed='true'] {
+  color: var(--color-aegean);
+  background: var(--color-atlas-paper);
+}
+
 .atlas-settings-button {
   display: inline-flex;
   width: auto;
@@ -827,7 +865,8 @@ kbd {
   }
 
   .atlas-icon-button--map,
-  .atlas-icon-button--location {
+  .atlas-icon-button--location,
+  .atlas-compare-button {
     display: none;
   }
 
