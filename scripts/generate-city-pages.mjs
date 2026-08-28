@@ -50,9 +50,34 @@ for (const name of names) {
       `<meta property="og:url" content="${canonical}" />`
     )
     .replace(
-      '</head>',
-      `    <meta property="og:type" content="website" />\n    <meta property="og:site_name" content="Hava81" />\n    <meta property="og:title" content="${title}" />\n    <meta property="og:description" content="${description}" />\n    <meta name="twitter:card" content="summary" />\n  </head>`
+      /<meta property="og:title" content="[^"]+" \/>/,
+      `<meta property="og:title" content="${title}" />`
+    )
+    .replace(
+      /<meta\s+property="og:description"\s+content="[^"]*"\s*\/>/,
+      `<meta property="og:description" content="${description}" />`
+    )
+    .replace(
+      /<meta name="twitter:title" content="[^"]+" \/>/,
+      `<meta name="twitter:title" content="${title}" />`
+    )
+    .replace(
+      /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/,
+      `<meta name="twitter:description" content="${description}" />`
     );
+
+  const requiredSingleTags = [
+    ['canonical', /<link rel="canonical" /g],
+    ['og:url', /<meta property="og:url" /g],
+    ['og:title', /<meta property="og:title" /g],
+    ['og:description', /<meta property="og:description" /g],
+    ['twitter:title', /<meta name="twitter:title" /g],
+    ['twitter:description', /<meta name="twitter:description" /g],
+  ];
+  for (const [label, pattern] of requiredSingleTags) {
+    const count = html.match(pattern)?.length ?? 0;
+    if (count !== 1) throw new Error(`${name}: expected exactly one ${label}, found ${count}`);
+  }
   await mkdir(join(dist, slug), { recursive: true });
   await writeFile(join(dist, slug, 'index.html'), html);
 }
