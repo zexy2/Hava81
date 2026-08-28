@@ -62,7 +62,7 @@ export class WeatherService {
         tempMax: Math.round(raw.main.temp_max),
         humidity: raw.main.humidity,
         pressure: raw.main.pressure,
-        visibility: raw.visibility,
+        ...(raw.visibility === undefined ? {} : { visibility: raw.visibility }),
         windSpeed: raw.wind.speed,
         windDirection: raw.wind.deg,
         description: primaryWeather.description,

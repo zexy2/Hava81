@@ -79,7 +79,7 @@ export interface CurrentWeatherDto {
   tempMax: number;
   humidity: number;
   pressure: number;
-  visibility: number;
+  visibility?: number;
   windSpeed: number;
   windDirection: number;
   description: string;

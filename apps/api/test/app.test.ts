@@ -189,6 +189,32 @@ test('current endpoint validates input and returns a normalized response', async
   assert.equal(JSON.stringify(response.json()).includes('server-only-test-key'), false);
 });
 
+test('current endpoint remains available when upstream omits visibility', async (context) => {
+  class MissingVisibilityProvider extends FakeWeatherProvider {
+    override async getCurrent(_query: CurrentWeatherQuery): Promise<CurrentWeatherUpstream> {
+      const payload = structuredClone(currentFixture);
+      delete payload.visibility;
+      return payload;
+    }
+  }
+
+  const app = await buildApp({
+    env: createEnv(),
+    provider: new MissingVisibilityProvider(),
+    logger: false,
+  });
+  context.after(() => app.close());
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/api/v1/weather/current?city=Tokat&lang=tr&units=metric',
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().cityName, 'İstanbul');
+  assert.equal('visibility' in response.json(), false);
+});
+
 test('cache returns hits and coalesces concurrent upstream requests', async (context) => {
   const provider = new FakeWeatherProvider(20);
   const app = await buildApp({ env: createEnv(), provider, logger: false });
@@ -298,6 +324,22 @@ test('OpenWeather adapter rejects malformed upstream responses', async () => {
   );
 });
 
+
+test('OpenWeather current accepts responses without optional visibility', async () => {
+  const payload = structuredClone(currentFixture);
+  delete payload.visibility;
+
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  const result = await provider.getCurrent({ city: 'Tokat', units: 'metric', lang: 'tr' });
+
+  assert.equal(result.visibility, undefined);
+});
 
 test('OpenWeather forecast accepts entries without optional visibility', async () => {
   const payload = structuredClone(forecastFixture);
