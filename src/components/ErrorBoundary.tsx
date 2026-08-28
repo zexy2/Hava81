@@ -56,15 +56,11 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="error-boundary">
+        <div className="error-boundary" role="alert">
           <div className="error-boundary__content">
             <h2>Bir şeyler yanlış gitti</h2>
             <p>Uygulama beklenmeyen bir hatayla karşılaştı.</p>
-            <details className="error-boundary__details">
-              <summary>Hata Detayları</summary>
-              <pre>{error.message}</pre>
-            </details>
-            <button 
+            <button
               className="error-boundary__button"
               onClick={this.handleReset}
             >
