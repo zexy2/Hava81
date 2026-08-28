@@ -106,6 +106,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
           <button type="button" className="daily-plan__share" onClick={() => void shareDecision()}>
             {shareState === 'copied' ? t('hava81.share.copied') : t('hava81.share.action')}
           </button>
+          <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {shareState === 'copied' ? t('hava81.share.copied') : ''}
+          </span>
           <div className={`daily-plan__score daily-plan__score--${plan.band}`}>
             <strong>{plan.score}</strong>
             <span>/100</span>
