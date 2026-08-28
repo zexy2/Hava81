@@ -26,6 +26,12 @@ const marineSchema = z.object({
     .optional(),
 });
 
+export const parseGmtModelTime = (value: string): number => {
+  if (!value) return Number.NaN;
+  const hasExplicitZone = /(?:Z|[+-]\d{2}:\d{2})$/.test(value);
+  return Date.parse(hasExplicitZone ? value : `${value}Z`);
+};
+
 export const finiteMaxForWindow = (
   times: string[],
   values?: Array<number | null>,
@@ -36,7 +42,7 @@ export const finiteMaxForWindow = (
   const end = start + hours * 60 * 60_000;
   const filtered = (values ?? []).filter((value, index): value is number => {
     if (typeof value !== 'number' || !Number.isFinite(value)) return false;
-    const time = Date.parse(times[index] ?? '');
+    const time = parseGmtModelTime(times[index] ?? '');
     return Number.isFinite(time) && time >= start && time < end;
   });
   return filtered.length ? Math.max(...filtered) : undefined;
@@ -99,8 +105,11 @@ export class ContextSignalsService {
     airUrl.searchParams.set('latitude', String(lat));
     airUrl.searchParams.set('longitude', String(lon));
     airUrl.searchParams.set('hourly', 'uv_index,dust,grass_pollen,olive_pollen');
-    airUrl.searchParams.set('forecast_days', '2');
-    airUrl.searchParams.set('timezone', 'auto');
+    airUrl.searchParams.set('forecast_hours', '25');
+    // Keep model timestamps unambiguous for the rolling 24-hour window. Open-Meteo's
+    // `auto` timezone returns local wall-clock strings without an offset; GMT plus the
+    // explicit parser above avoids shifting the window when the API host runs in UTC.
+    airUrl.searchParams.set('timezone', 'GMT');
 
     const airPromise = getJson(airUrl, this.fetchImpl).then(data => airSchema.parse(data));
     const marinePromise = includeMarine

@@ -135,3 +135,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Provider resilience tests must preserve the distinction between retryable upstream outages and non-retryable client/provider validation errors. Only exhausted retryable failures advance the circuit; while the circuit is open, a configured fallback serves requests without probing the known-failing primary until the reset window.
 
 - 2026-08-28 — Health and readiness endpoints are operational truth surfaces and must be explicitly non-cacheable. Emit `Cache-Control: no-store` so deployment/observer checks cannot be satisfied by stale intermediary responses.
+
+- 2026-08-28 — Rolling Open-Meteo context maxima must be computed from unambiguous GMT instants. Do not request `timezone=auto` and then feed offset-less local wall-clock strings to `Date.parse`; request `timezone=GMT`, explicitly parse offset-less model timestamps as UTC, and request 25 forecast hours so a rolling 24-hour window starting mid-hour still contains its final partial-hour slot.
