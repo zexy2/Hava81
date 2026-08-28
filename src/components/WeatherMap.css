@@ -21,7 +21,8 @@
   overflow: hidden;
   background: var(--color-atlas-field, #f3f6f4);
   border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: 4px;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-card, none);
 }
 
 .weather-map__leaflet {
@@ -77,7 +78,7 @@
 
 .weather-map__popup .leaflet-popup-content-wrapper {
   border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: 4px;
+  border-radius: var(--radius-md, 8px);
   box-shadow: var(--shadow-overlay, 0 16px 48px rgb(14 44 50 / 0.16));
 }
 
@@ -124,16 +125,21 @@
   margin-top: 0.75rem;
   color: #fff;
   cursor: pointer;
-  background: #146b73;
-  border: 1px solid #146b73;
-  border-radius: 4px;
+  background: var(--color-aegean, #146b73);
+  border: 1px solid var(--color-aegean, #146b73);
+  border-radius: var(--radius-md, 8px);
   font-size: 0.875rem;
   font-weight: 600;
 }
 
 .weather-map__popup-btn:hover {
-  background: #0f555c;
-  border-color: #0f555c;
+  background: var(--color-aegean-deep, #0f555c);
+  border-color: var(--color-aegean-deep, #0f555c);
+}
+
+.weather-map__popup-btn:focus-visible {
+  outline: 2px solid var(--color-focus, #146b73);
+  outline-offset: 2px;
 }
 
 .weather-map__legend {
