@@ -130,6 +130,39 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
+test('production HTML bootstraps current weather without a duplicate app request', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for early current weather');
+
+  let currentRequests = 0;
+  page.on('request', request => {
+    if (request.url().includes('/api/v1/weather/current')) currentRequests += 1;
+  });
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  expect(currentRequests).toBe(1);
+});
+
+test('fresh cached weather suppresses the generated bootstrap request', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for bootstrap cache guard');
+
+  await page.addInitScript(cachedWeather => {
+    window.localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({ data: cachedWeather, timestamp: Date.now(), language: 'tr' })
+    );
+  }, current);
+
+  let currentRequests = 0;
+  page.on('request', request => {
+    if (request.url().includes('/api/v1/weather/current')) currentRequests += 1;
+  });
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  expect(currentRequests).toBe(0);
+});
+
 test('lazy forecast chunk does not block the decision-first view', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for lazy chunk timing');
 
