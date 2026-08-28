@@ -294,6 +294,7 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
   await expect(page.locator('.app-fatal')).toHaveCount(0);
 });
 
+
 test('English mode updates document language and decision copy', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser language coverage');
 
@@ -315,6 +316,20 @@ test('English mode updates document language and decision copy', async ({ page }
   await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('civarında');
   await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('güneş koruması');
 });
+
+
+test('service worker update checks bypass the HTTP cache', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser PWA coverage');
+  await page.goto('/');
+  await page.waitForFunction(async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+    return registration?.updateViaCache === 'none';
+  });
+  const updateViaCache = await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+    return registration?.updateViaCache;
+  });
+  expect(updateViaCache).toBe('none');});
 
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
