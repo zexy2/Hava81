@@ -29,7 +29,7 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test:ci
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -66,7 +66,7 @@ jobs:
           VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
       - name: Reject public source maps
         run: test -z "$(find dist -type f -name *.map -print -quit)"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -84,7 +84,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -101,7 +101,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -146,7 +146,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
