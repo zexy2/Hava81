@@ -425,3 +425,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the alert recovery change on current main `577b73f9`: a user whose Hava81 alert preference is already enabled can still clear it after browser notification permission becomes denied; blocked browsers remain non-clickable for new opt-ins.
 - Regression coverage requires local opt-out to clear `hava81-alerts-v1` without calling `requestPermission`, then disables the control once the local preference is off and permission remains blocked.
 - Combined validation: lint/type-check passed; complete serial frontend suite 107/107; production build generated all 81 city pages; production dependency audit found 0 vulnerabilities; `git diff --check` clean.
+
+## 2026-08-28 20:28 TRT — commute verdict live-region accessibility
+
+- Audited the interactive Çıkış planı with assistive-technology semantics. Changing leave/return times updates the preparation verdict immediately, but the result container was not a live region, so screen-reader users could miss the newly computed umbrella/risk decision.
+- Exposed the bounded verdict as an atomic polite status region while leaving inputs, forecast semantics, thresholds, weather data, and visual styling unchanged. Added component regression coverage for the status/live/atomic contract and decision copy.
+- Validation on main `a8863a7e`: focused commute component 1/1; lint and type-check pass; complete serial frontend suite 108/108; production build generated all 81 city pages; production dependency audit found 0 vulnerabilities; `git diff --check` clean.

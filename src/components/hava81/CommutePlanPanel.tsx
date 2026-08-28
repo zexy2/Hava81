@@ -94,7 +94,13 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
 
       {plan ? (
         <>
-          <div className="commute-plan__verdict" data-umbrella={plan.umbrella}>
+          <div
+            className="commute-plan__verdict"
+            data-umbrella={plan.umbrella}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <span>{t('hava81.commute.verdictLabel')}</span>
             <small className="commute-plan__verdict-window">
               {t('hava81.commute.planWindow', {
