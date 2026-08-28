@@ -40,10 +40,19 @@ for (const name of names) {
   let html = baseHtml
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/?>)/, `$1${description}$2`);
-  html = html.replace(
-    '</head>',
-    `    <link rel="canonical" href="${canonical}" />\n    <meta property="og:type" content="website" />\n    <meta property="og:site_name" content="Hava81" />\n    <meta property="og:title" content="${title}" />\n    <meta property="og:description" content="${description}" />\n    <meta property="og:url" content="${canonical}" />\n    <meta name="twitter:card" content="summary" />\n  </head>`
-  );
+  html = html
+    .replace(
+      /<link rel="canonical" href="[^"]+" \/>/,
+      `<link rel="canonical" href="${canonical}" />`
+    )
+    .replace(
+      /<meta property="og:url" content="[^"]+" \/>/,
+      `<meta property="og:url" content="${canonical}" />`
+    )
+    .replace(
+      '</head>',
+      `    <meta property="og:type" content="website" />\n    <meta property="og:site_name" content="Hava81" />\n    <meta property="og:title" content="${title}" />\n    <meta property="og:description" content="${description}" />\n    <meta name="twitter:card" content="summary" />\n  </head>`
+    );
   await mkdir(join(dist, slug), { recursive: true });
   await writeFile(join(dist, slug, 'index.html'), html);
 }

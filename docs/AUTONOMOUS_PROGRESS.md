@@ -33,6 +33,7 @@
 - Main JS fell from 499.69 kB / 152.62 kB gzip to 373.75 kB / 112.07 kB gzip (~26% less main JavaScript).
 
 ## 2026-08-28 09:43 TRT run checkpoint
+
 1. Notification reliability: stabilized same-day rain/difficult deduplication signatures and added regression coverage.
 2. Route resilience/cost: added 1–2,000 km corridor guard before provider fan-out plus boundary tests.
 3. Marine intelligence: added Open-Meteo wave direction/period to the API contract, backed by provider documentation and API tests.
@@ -42,3 +43,16 @@
 
 First local gate: 80 frontend tests passed, 9 API tests passed, type-check/lint/frontend+API builds passed, production dependency audit found 0 vulnerabilities. A second full gate follows before commit/deploy.
 Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, frontend/API builds, dependency audit (0 vulnerabilities), and Playwright smoke (7 passed, 8 intentionally project-skipped). Main JS remains ~373.78 kB minified / 112.07 kB gzip.
+
+## Follow-up autonomous checkpoint
+
+- Loop 1 alerts: added strong-wind and poor-AQI decision notifications with stable same-day dedupe and tests.
+- Loop 2 model transparency: context panel now exposes fetch freshness plus modeled wave period/direction.
+- Loop 3 route transparency: segment cards now show wind, a variable already used by the route score.
+- Loop 4 SEO: root canonical/og:url added and city generator changed to replace them, preventing duplicate canonical metadata.
+- Loop 5 operations: blue-green release checklist aligned to active 4002 / rollback 4001 topology.
+- MGM MeteoUyarı remains intentionally deferred until a stable official machine-readable freshness-aware feed is verified.
+- Quality gates after the five loops: 82/82 frontend tests, 10/10 API tests, frontend/API type-check + lint + builds, production dependency audit 0 vulnerabilities, SEO canonical assertions pass, Playwright 7/7 applicable smoke checks pass (8 intentional project skips).
+- Browser false-negative diagnosed: a stale local docs HTTP server occupied Playwright port 4173; after removing the stale process, the real Vite preview passed all applicable browser flows. No product rollback was needed.
+- API canary on 4001: readiness/live pass, OpenWeather circuit closed, CORS pass, 81/81 provinces current+forecast pass, Open-Meteo context returns attributed wave height/direction/period, route too-short guard returns 400.
+- Production proxy intentionally remains on 4002 per current topology instruction; no traffic switch was made in this run.

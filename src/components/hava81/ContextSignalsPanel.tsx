@@ -20,7 +20,10 @@ const uvLevel = (uv?: number): Level | undefined =>
           : 'low';
 
 export function ContextSignalsPanel({ signals }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const fetchedTime = Number.isNaN(signals.fetchedAt.getTime())
+    ? null
+    : signals.fetchedAt.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
   const uv = uvLevel(signals.uvIndexMax);
   const pollen = useMemo(
     () => Math.max(signals.grassPollenMax ?? 0, signals.olivePollenMax ?? 0),
@@ -39,7 +42,10 @@ export function ContextSignalsPanel({ signals }: Props) {
           <span className="atlas-kicker">{t('hava81.context.eyebrow')}</span>
           <h2 id="context-signals-title">{t('hava81.context.title')}</h2>
         </div>
-        <small>{signals.attribution}</small>
+        <small>
+          {signals.attribution}
+          {fetchedTime ? ` · ${t('hava81.context.fetchedAt', { time: fetchedTime })}` : ''}
+        </small>
       </header>
       <div className="context-signals__grid">
         {signals.uvIndexMax !== undefined ? (
@@ -83,9 +89,16 @@ export function ContextSignalsPanel({ signals }: Props) {
             </strong>
             <p>
               {signals.marine?.waveHeight !== undefined
-                ? t('hava81.context.wave', {
+                ? t('hava81.context.waveDetails', {
                     height: signals.marine.waveHeight.toFixed(2),
                     unit: signals.units.waveHeight ?? 'm',
+                    period: signals.marine.wavePeriod?.toFixed(1) ?? '—',
+                    periodUnit: signals.units.wavePeriod ?? 's',
+                    direction:
+                      signals.marine.waveDirection !== undefined
+                        ? Math.round(signals.marine.waveDirection)
+                        : '—',
+                    directionUnit: signals.units.waveDirection ?? '°',
                   })
                 : t('hava81.context.waveUnavailable')}
             </p>

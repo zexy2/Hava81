@@ -186,6 +186,9 @@ export const tr = {
       pollenNote: 'Çim/zeytin poleni içinde yüksek olan değer.',
       sea: 'Yakın kıyı',
       wave: 'Dalga: {{height}} {{unit}}',
+      waveDetails:
+        'Dalga {{height}} {{unit}} · periyot {{period}} {{periodUnit}} · yön {{direction}}{{directionUnit}}',
+      fetchedAt: 'model {{time}}',
       waveUnavailable: 'Dalga verisi yok',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
@@ -205,6 +208,12 @@ export const tr = {
       blocked: 'Bildirim engelli',
       rainTitle: '{{city}} · Şemsiye uyarısı',
       rainBody: 'Yakın saatlerde belirgin yağış riski var; şemsiyeyi planına ekle.',
+      windTitle: '{{city}} · Kuvvetli rüzgâr',
+      windBody:
+        'Yakın saatlerde kuvvetli rüzgâr sinyali var; dışarıdaki planını ve ulaşımını buna göre ayarla.',
+      airTitle: '{{city}} · Hava kalitesi zayıf',
+      airBody:
+        'Mevcut hava kalitesi Hava81 karar katmanında zayıf görünüyor; açık hava planını yeniden değerlendir.',
       waitTitle: '{{city}} · Biraz beklersen daha iyi',
       waitBody: 'Yakın saatlerde hava skoru yaklaşık {{improvement}} puan iyileşiyor.',
       difficultTitle: '{{city}} · Zorlayıcı hava',
