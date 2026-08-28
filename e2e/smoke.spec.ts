@@ -127,7 +127,7 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
-  await expect(page.getByText('UV indeksi', { exact: true })).toBeVisible();
+  await expect(page.getByText('UV · 24s model maksimumu', { exact: true })).toBeVisible();
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
@@ -292,6 +292,28 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
   await expect(page).toHaveURL(/\/istanbul\/$/);
   expect(forecastChunkRequests).toBeGreaterThanOrEqual(2);
   await expect(page.locator('.app-fatal')).toHaveCount(0);
+});
+
+test('English mode updates document language and decision copy', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser language coverage');
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'light',
+        language: 'en',
+        notificationsEnabled: false,
+      })
+    );
+  });
+  await page.goto('/istanbul/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: 'Planning signals' })).toBeVisible();
+  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('civarında');
+  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('güneş koruması');
 });
 
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {

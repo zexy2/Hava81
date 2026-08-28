@@ -29,8 +29,48 @@ describe('ContextSignalsPanel', () => {
       />
     );
     expect(screen.getByText(/Open-Meteo · CC BY 4.0/)).toBeInTheDocument();
+    expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(
+      screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('25.1°C')).toBeInTheDocument();
     expect(screen.getByText(/0.40 m.*4.8 s.*315°/)).toBeInTheDocument();
+  });
+
+  it('recommends protection from the WHO moderate UV band upward', () => {
+    render(
+      <ContextSignalsPanel
+        signals={{
+          provider: 'Open-Meteo',
+          fetchedAt: new Date('2026-08-28T06:00:00Z'),
+          attribution: 'Open-Meteo · CC BY 4.0',
+          uvIndexMax: 4,
+          units: {},
+        }}
+      />
+    );
+
+    expect(screen.getByText('Orta')).toBeInTheDocument();
+    expect(screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)).toBeInTheDocument();
+  });
+
+  it('keeps the WHO extreme UV category distinct at 11 and above', () => {
+    render(
+      <ContextSignalsPanel
+        signals={{
+          provider: 'Open-Meteo',
+          fetchedAt: new Date('2026-08-28T06:00:00Z'),
+          attribution: 'Open-Meteo · CC BY 4.0',
+          uvIndexMax: 11.2,
+          units: {},
+        }}
+      />
+    );
+
+    expect(screen.getByText('Aşırı')).toBeInTheDocument();
+    expect(
+      screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)
+    ).toBeInTheDocument();
   });
 
   it('normalizes modeled micro units without requiring a Greek font glyph', () => {

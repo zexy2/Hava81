@@ -63,7 +63,8 @@
   font-size: 0.83rem;
 }
 .context-signal--high,
-.context-signal--veryHigh {
+.context-signal--veryHigh,
+.context-signal--extreme {
   border-top: 4px solid var(--color-saffron);
 }
 .context-signal--marine {

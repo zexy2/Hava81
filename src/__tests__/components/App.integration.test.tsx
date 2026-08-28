@@ -182,6 +182,8 @@ describe('Hava81 app integration', () => {
         expect.objectContaining({ lang: 'en' })
       );
     });
+    expect(await screen.findByRole('heading', { name: 'Planning signals' })).toBeInTheDocument();
+    expect(screen.getByText(/looks like a calmer window for being outdoors/i)).toBeInTheDocument();
   });
 
   it('keeps browser theme metadata aligned with an explicit dark theme', async () => {

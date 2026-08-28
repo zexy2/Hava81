@@ -482,7 +482,7 @@ const App: React.FC = () => {
                     weather={weather}
                     hourly={forecast.hourly}
                     airQuality={forecast.airQuality ?? undefined}
-                    uvIndex={forecast.contextSignals?.uvIndexMax}
+                    uvIndexMax={forecast.contextSignals?.uvIndexMax}
                   />
 
                   {forecast.isLoading && forecast.hourly.length === 0 ? (

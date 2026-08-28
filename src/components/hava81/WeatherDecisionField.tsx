@@ -12,7 +12,7 @@ export interface WeatherDecisionFieldProps {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
-  uvIndex?: number;
+  uvIndexMax?: number;
   className?: string;
 }
 
@@ -20,7 +20,7 @@ export function WeatherDecisionField({
   weather,
   hourly,
   airQuality,
-  uvIndex,
+  uvIndexMax,
   className = '',
 }: WeatherDecisionFieldProps) {
   const headingId = useId();
@@ -37,8 +37,8 @@ export function WeatherDecisionField({
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const cityMetadata = useMemo(() => getCityMetadata(weather.cityName), [weather.cityName]);
   const decisions = useMemo(
-    () => getWeatherDecisions({ weather, hourly, airQuality, uvIndex }),
-    [airQuality, hourly, uvIndex, weather]
+    () => getWeatherDecisions({ weather, hourly, airQuality, uvIndexMax }),
+    [airQuality, hourly, uvIndexMax, weather]
   );
 
   const temperatureSymbol = getTemperatureSymbol();
@@ -119,7 +119,8 @@ export function WeatherDecisionField({
         });
       case 'uv':
         return t('hava81.decision.actions.uv', {
-          defaultValue: 'UV indeksi {{uv}}; güneş koruması kullan.',
+          defaultValue:
+            'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
           uv: decision.value ?? '—',
         });
       case 'outdoor-window':
@@ -245,7 +246,7 @@ export function WeatherDecisionField({
 
       <aside className="hava81-decision-field__change" aria-labelledby={changeHeadingId}>
         <h3 id={changeHeadingId} className="hava81-decision-field__change-title">
-          {t('hava81.decision.nextChange', { defaultValue: 'Sıradaki değişim' })}
+          {t('hava81.decision.nextChange', { defaultValue: 'Plan için öne çıkanlar' })}
         </h3>
         <ul className="hava81-decision-field__decision-list">
           {decisions.map((decision, index) => (
