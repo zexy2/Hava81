@@ -311,11 +311,11 @@ const App: React.FC = () => {
   return (
     <>
       <ErrorBoundary
-        fallback={(caughtError, reset) => (
+        fallback={(_caughtError, reset) => (
           <div className="app-fatal" role="alert">
             <span className="atlas-kicker">{t('hava81.systemStatus')}</span>
             <h1>{t('common.error')}</h1>
-            <p>{caughtError.message}</p>
+            <p>{t('errors.genericError')}</p>
             <button type="button" onClick={reset} className="atlas-button atlas-button--primary">
               {t('common.retry')}
             </button>
