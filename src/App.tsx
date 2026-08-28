@@ -1,5 +1,4 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
@@ -295,7 +294,7 @@ const App: React.FC = () => {
   }, [fetchForecast, weather?.cityName, weather?.coordinates]);
 
   return (
-    <MotionConfig reducedMotion="user" transition={{ duration: 0.22 }}>
+    <>
       <ErrorBoundary
         fallback={(caughtError, reset) => (
           <div className="app-fatal" role="alert">
@@ -437,30 +436,22 @@ const App: React.FC = () => {
                 <ComparePanel cities={favorites} language={settings.language} />
               </Suspense>
             ) : null}
-            <AnimatePresence initial={false}>
-              {error && (
-                <motion.section
-                  className="atlas-message atlas-message--error"
-                  role="alert"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                >
-                  <div>
-                    <span className="atlas-kicker">{t('common.error')}</span>
-                    <p>{error.message}</p>
-                  </div>
-                  <div className="atlas-message__actions">
-                    <button type="button" className="atlas-button" onClick={retryCurrentWeather}>
-                      {t('common.retry')}
-                    </button>
-                    <button type="button" className="atlas-text-button" onClick={clearError}>
-                      {t('common.close')}
-                    </button>
-                  </div>
-                </motion.section>
-              )}
-            </AnimatePresence>
+            {error && (
+              <section className="atlas-message atlas-message--error" role="alert">
+                <div>
+                  <span className="atlas-kicker">{t('common.error')}</span>
+                  <p>{error.message}</p>
+                </div>
+                <div className="atlas-message__actions">
+                  <button type="button" className="atlas-button" onClick={retryCurrentWeather}>
+                    {t('common.retry')}
+                  </button>
+                  <button type="button" className="atlas-text-button" onClick={clearError}>
+                    {t('common.close')}
+                  </button>
+                </div>
+              </section>
+            )}
 
             {isLoading && !weather && (
               <AtlasLoadingState
@@ -470,12 +461,7 @@ const App: React.FC = () => {
             )}
 
             {weather && !isLoading && (
-              <motion.div
-                key={weather.cityName}
-                className="atlas-dashboard"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
+              <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
                   <WeatherDecisionField
                     weather={weather}
@@ -553,40 +539,35 @@ const App: React.FC = () => {
                   mapExpanded={showMap}
                 />
 
-                <AnimatePresence initial={false}>
-                  {showMap && (
-                    <motion.section
-                      className="atlas-map-panel"
-                      id="weather-map-region"
-                      ref={mapRegionRef}
-                      tabIndex={-1}
-                      aria-labelledby="weather-map-heading"
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                    >
-                      <div className="atlas-map-panel__header">
-                        <div>
-                          <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
-                          <h2 id="weather-map-heading">{t('common.map')}</h2>
-                        </div>
-                        <button type="button" className="atlas-text-button" onClick={closeMap}>
-                          {t('common.close')}
-                        </button>
+                {showMap && (
+                  <section
+                    className="atlas-map-panel"
+                    id="weather-map-region"
+                    ref={mapRegionRef}
+                    tabIndex={-1}
+                    aria-labelledby="weather-map-heading"
+                  >
+                    <div className="atlas-map-panel__header">
+                      <div>
+                        <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
+                        <h2 id="weather-map-heading">{t('common.map')}</h2>
                       </div>
-                      <Suspense
-                        fallback={
-                          <div className="atlas-map-loading" role="status">
-                            {t('common.loading')}
-                          </div>
-                        }
-                      >
-                        <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
-                      </Suspense>
-                    </motion.section>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                      <button type="button" className="atlas-text-button" onClick={closeMap}>
+                        {t('common.close')}
+                      </button>
+                    </div>
+                    <Suspense
+                      fallback={
+                        <div className="atlas-map-loading" role="status">
+                          {t('common.loading')}
+                        </div>
+                      }
+                    >
+                      <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
+                    </Suspense>
+                  </section>
+                )}
+              </div>
             )}
 
             {!weather && !isLoading && !error && (
@@ -626,7 +607,7 @@ const App: React.FC = () => {
           ) : null}
         </div>
       </ErrorBoundary>
-    </MotionConfig>
+    </>
   );
 };
 

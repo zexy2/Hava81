@@ -25,3 +25,9 @@
 - Lighthouse gate passed; most recent measured scores before commit were performance >90, accessibility 100, best practices >90, SEO 100.
 - Frontend and API production dependency audits: 0 vulnerabilities.
 - Main JS: 499.69 kB minified, below the configured 500 kB warning threshold.
+
+## 2026-08-28 autonomous loop: first-load performance
+
+- Production Lighthouse baseline on `/izmir`: performance 80, accessibility 100, best-practices 100, SEO 100; LCP 3.4 s and TBT 370 ms identified as the next highest-value issue.
+- Removed eager `framer-motion` dependency from `App.tsx`; secondary Settings animation remains lazy-loaded.
+- Main JS fell from 499.69 kB / 152.62 kB gzip to 373.75 kB / 112.07 kB gzip (~26% less main JavaScript).
