@@ -526,3 +526,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed equal start/end semantics to evaluate only that clock instant and added regression coverage for both `22:00–02:00` overnight wrapping and `18:00–18:00` single-clock filtering.
 - Clarified Turkish/English helper copy so users know an earlier end crosses midnight and matching clocks target one time rather than a hidden full-day evaluation.
 - Validation on main `806dac0a`: focused activity-plan 8/8, lint, type-check, full frontend suite 139/139, production build generated all 81 city pages, production dependency audit 0 vulnerabilities. Browser/CI remain release gates before merge.
+
+
+## 2026-08-29 01:20 TRT — notification quiet-hours CI determinism and host recovery
+
+- Main CI run #275 failed only in `DecisionAlertsPanel` coverage: the test expected notification delivery while the hosted runner happened to execute during Hava81’s real 22:00–07:00 local quiet-hours gate. Product behavior was correct; the test was wall-clock dependent.
+- Decision Alerts coverage now freezes only `Date` at local noon by default, restores browser/global state after every case, and explicitly verifies that 23:00 suppresses delivery. This preserves the quiet-hours contract instead of weakening it for CI.
+- Focused alert coverage passes 4/4. Bounded full validation on the same main base passes lint, type-check, complete frontend coverage with one worker, production build with all 81 city pages, dependency audit with 0 vulnerabilities, and `git diff --check`.
+- Root disk pressure was reduced from 95% used / ~2.4 GiB free to 83% used / ~7.9 GiB free by removing only Docker images unused by every container plus rebuildable build cache. Active Hava81 production and rollback/canary containers/images remained healthy and untouched.
+- Pending after this checkpoint: publish the CI-determinism hotfix PR; once its exact head is green, merge and verify main. Then rebase open PR #87 onto the recovered main and rerun combined gates before merge.

@@ -221,3 +221,6 @@ This log records product and engineering decisions made during the autonomous im
 
 - A preferred activity range may cross midnight: when the end clock is earlier than the start clock, evaluate the late-evening and following early-morning slots as one continuous local-clock range.
 - Equal start/end clocks mean the selected clock instant, not a hidden full-day range. The UI must not say a score is limited to `18:00–18:00` while silently evaluating the whole day.
+
+
+- 2026-08-29 — Tests for clock-gated notification behavior must not depend on the runner’s wall clock. Freeze only `Date` to a known daytime instant for ordinary alert tests and keep a separate explicit quiet-hours case; do not disable or weaken the production 22:00–07:00 suppression to make CI pass.
