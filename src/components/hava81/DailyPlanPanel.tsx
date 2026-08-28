@@ -145,7 +145,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         aria-label={t('hava81.dailyPlan.timelineLabel')}
       >
         {plan.slots.slice(0, 6).map(slot => (
-          <article
+          <div
             className={`daily-plan__slot daily-plan__slot--${slot.band}`}
             key={slot.time.toISOString()}
             role="listitem"
@@ -161,7 +161,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
             ) : (
               <em>{t('hava81.dailyPlan.reasons.clear')}</em>
             )}
-          </article>
+          </div>
         ))}
       </div>
 

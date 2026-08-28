@@ -115,6 +115,14 @@ describe('Hava81 app integration', () => {
     expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
     expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Hava81' })).toBeInTheDocument();
+    const timeline = screen.getByRole('list', { name: /uygunluk zaman çizelgesi/i });
+    expect([...timeline.querySelectorAll('[role="listitem"]')].every(item => item.tagName === 'DIV')).toBe(
+      true
+    );
+    expect(
+      screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
+    ).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   });
 
