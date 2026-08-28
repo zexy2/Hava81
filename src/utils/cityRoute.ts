@@ -29,8 +29,12 @@ export const citySlug = (name: string): string =>
 const cityBySlug = new Map(TURKISH_CITIES.map(city => [citySlug(city.name), city]));
 
 export const cityFromPathname = (pathname: string): TurkishCity | undefined => {
-  const slug = pathname.replace(/^\/+|\/+$/g, '').split('/')[0];
-  return slug ? cityBySlug.get(slug) : undefined;
+  const segments = pathname
+    .replace(/^\/+|\/+$/g, '')
+    .split('/')
+    .filter(Boolean);
+  if (segments.length !== 1) return undefined;
+  return cityBySlug.get(segments[0]);
 };
 
 export const cityPath = (name: string): string | null => {

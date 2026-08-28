@@ -206,11 +206,15 @@ export interface ContextSignals {
     grassPollen?: string;
     olivePollen?: string;
     waveHeight?: string;
+    waveDirection?: string;
+    wavePeriod?: string;
     seaSurfaceTemperature?: string;
   };
   marine?: {
     observedAt: string;
     waveHeight?: number;
+    waveDirection?: number;
+    wavePeriod?: number;
     seaSurfaceTemperature?: number;
   };
   cacheStatus?: 'HIT' | 'MISS' | 'COALESCED';

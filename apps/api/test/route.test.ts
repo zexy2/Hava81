@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { validateRouteDistance } from '../src/modules/route/route-weather.routes';
 import { RouteWeatherService } from '../src/modules/route/route-weather.service';
 import type { ForecastDto } from '../src/modules/weather/contracts';
 
@@ -34,4 +35,11 @@ test('route weather returns five transparent corridor samples', async () => {
   assert.equal(result.segments.length, 5);
   assert.ok(result.estimatedDistanceKm > 300);
   assert.ok(result.disclaimer.includes('gerçek yol'));
+});
+
+
+test('route safeguards reject wasteful or meaningless corridors before forecast fan-out', () => {
+  assert.throws(() => validateRouteDistance(0.2), /başlangıç ve varış/);
+  assert.throws(() => validateRouteDistance(2000.1), /en fazla 2000 km/);
+  assert.doesNotThrow(() => validateRouteDistance(1650));
 });

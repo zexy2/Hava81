@@ -1,7 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError } from '../../core/errors';
-import type { RouteWeatherService } from './route-weather.service';
+import { haversine, type RouteWeatherService } from './route-weather.service';
+
+export const validateRouteDistance = (distanceKm: number) => {
+  if (distanceKm < 1) throw new AppError(400, 'ROUTE_TOO_SHORT', 'Rota başlangıç ve varış noktaları farklı olmalıdır.');
+  if (distanceKm > 2_000) throw new AppError(400, 'ROUTE_TOO_LONG', 'Rota hava tahmini en fazla 2000 km kuş uçuşu mesafe için kullanılabilir.');
+};
 
 const querySchema = z.object({
   originLat: z.coerce.number().min(-90).max(90),
@@ -27,6 +32,11 @@ export const registerRouteWeatherRoutes = async (
     async (request, reply) => {
       const q = querySchema.parse(request.query);
       const departure = new Date(q.departure);
+      const directDistanceKm = haversine(
+        { lat: q.originLat, lon: q.originLon },
+        { lat: q.destinationLat, lon: q.destinationLon }
+      );
+      validateRouteDistance(directDistanceKm);
       const now = Date.now();
       if (departure.getTime() < now - 60 * 60_000 || departure.getTime() > now + 18 * 60 * 60_000) {
         throw new AppError(

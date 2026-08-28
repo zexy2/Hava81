@@ -31,7 +31,7 @@ export interface RouteWeatherResult {
 
 const earthRadiusKm = 6371;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
-const haversine = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
+export const haversine = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
   const dLat = toRad(b.lat - a.lat);
   const dLon = toRad(b.lon - a.lon);
   const aa =

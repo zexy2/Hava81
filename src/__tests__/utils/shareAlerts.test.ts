@@ -31,6 +31,15 @@ describe('sharing and alerts', () => {
     const candidate = buildAlertCandidate('İstanbul', plan({ umbrella: 'yes', score: 45 }));
     expect(candidate?.kind).toBe('rain');
   });
+  it('keeps same-day rain and difficult alert signatures stable as scores change', () => {
+    expect(buildAlertCandidate('İstanbul', plan({ umbrella: 'yes', score: 45 }))?.signature).toBe(
+      buildAlertCandidate('İstanbul', plan({ umbrella: 'yes', score: 30 }))?.signature
+    );
+    expect(buildAlertCandidate('Ankara', plan({ score: 45 }))?.signature).toBe(
+      buildAlertCandidate('Ankara', plan({ score: 30 }))?.signature
+    );
+  });
+
   it('alerts when waiting materially improves the plan', () => {
     const candidate = buildAlertCandidate(
       'İzmir',
