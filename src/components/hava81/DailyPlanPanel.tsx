@@ -144,7 +144,11 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         ) : null}
       </div>
 
-      <div className="daily-plan__explain" aria-label={t('hava81.dailyPlan.explain.label')}>
+      <div
+        className="daily-plan__explain"
+        role="group"
+        aria-label={t('hava81.dailyPlan.explain.label')}
+      >
         <div className="daily-plan__explain-head">
           <div>
             <span>{t('hava81.dailyPlan.explain.eyebrow')}</span>

@@ -224,3 +224,8 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-29 — Tests for clock-gated notification behavior must not depend on the runner’s wall clock. Freeze only `Date` to a known daytime instant for ordinary alert tests and keep a separate explicit quiet-hours case; do not disable or weaken the production 22:00–07:00 suppression to make CI pass.
+
+
+## 2026-08-29 — named explanation groups
+
+- A visible explanatory cluster that has its own `aria-label` must expose a grouping semantic rather than attaching an inaccessible name to a generic container. Daily Plan's score explanation uses `role="group"`; no scoring or visual behavior changes.

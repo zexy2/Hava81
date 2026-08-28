@@ -535,3 +535,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Focused alert coverage passes 4/4. Bounded full validation on the same main base passes lint, type-check, complete frontend coverage with one worker, production build with all 81 city pages, dependency audit with 0 vulnerabilities, and `git diff --check`.
 - Root disk pressure was reduced from 95% used / ~2.4 GiB free to 83% used / ~7.9 GiB free by removing only Docker images unused by every container plus rebuildable build cache. Active Hava81 production and rollback/canary containers/images remained healthy and untouched.
 - Pending after this checkpoint: publish the CI-determinism hotfix PR; once its exact head is green, merge and verify main. Then rebase open PR #87 onto the recovered main and rerun combined gates before merge.
+
+
+## 2026-08-29 00:49 TRT — Daily Plan explanation accessibility
+
+- Audited generic elements carrying accessibility names and found the Daily Plan score-explanation cluster had `aria-label` on a plain `div`, so assistive technology was not guaranteed to receive that name as a group.
+- Added `role="group"` and regression coverage requiring the localized explanation label to be exposed as the group's accessible name. Weather data, scoring, copy and visual styling are unchanged.
+- Validation on main `4663ee5e`: focused DailyPlanPanel 2/2, lint, type-check, full frontend suite 134/134, production build with all 81 city pages, production dependency audit 0 vulnerabilities, full Playwright smoke 21 applicable passed / 30 intentional viewport skips, and `git diff --check` clean.
+- Operationally, production readiness was rechecked directly and remained ready with the OpenWeather circuit closed on the intended 4002 topology. Root disk remained under pressure at that checkpoint; the later CI-determinism checkpoint records the subsequent safe disk recovery.
