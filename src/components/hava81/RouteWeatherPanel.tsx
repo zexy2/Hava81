@@ -65,7 +65,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           <b>{t('hava81.route.title')}</b>
           <small>{t('hava81.route.summary')}</small>
         </span>
-        <span aria-hidden="true">↗</span>
+        <span className="route-weather__chevron" aria-hidden="true">
+          ⌄
+        </span>
       </summary>
       <div className="route-weather__body">
         <div className="route-weather__form">
