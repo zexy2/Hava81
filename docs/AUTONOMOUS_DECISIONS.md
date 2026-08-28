@@ -123,3 +123,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Do not retain a stale Lighthouse CI wrapper solely for convenience when its transitive toolchain carries known advisories. Hava81 owns a minimal Lighthouse runner that preserves release thresholds, fails closed on accessibility/missing scores, refuses ambiguous occupied preview ports, and does not publish reports to third-party temporary storage.
 
 - 2026-08-28 — PWA offline caching is limited to same-origin navigation HTML, the tiny install shell, and core boot assets. Never service-worker-cache cross-origin weather/API responses as an offline substitute for fresh weather; keep lazy feature chunks on the normal network/deploy-recovery path.
+
+- 2026-08-28 — Main-only Docker action majors may be refreshed when the upstream tagged action.yml is directly verified to retain every used input and declare the target Node runtime. Keep Docker publish semantics unchanged and treat the first main Docker job as the final integration gate; it must not control API traffic switching.
