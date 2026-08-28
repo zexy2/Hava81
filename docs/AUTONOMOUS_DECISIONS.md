@@ -141,3 +141,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Programmatic navigation must honor `prefers-reduced-motion`; CSS scroll overrides are not sufficient when code explicitly requests smooth scrolling. Centralize motion-aware scrolling so explicit map/overview/saved-city jumps resolve to `auto` for reduced-motion users.
 
 - 2026-08-28 — The root HTML `lang` attribute must track Hava81's active UI language at runtime. Visible translations alone are insufficient because screen readers and other language-sensitive user agents rely on the document language metadata.
+
+- 2026-08-28 — Top-level render failures must not expose raw JavaScript error messages in the production UI. Preserve technical errors for logging/diagnostics, but show users localized generic recovery copy.

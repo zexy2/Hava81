@@ -318,3 +318,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Found that switching Hava81 to English updated visible copy and weather request language but left the root document at `<html lang="tr">`, giving assistive technology the wrong page language.
 - Synchronized `document.documentElement.lang` with the persisted UI language and strengthened the existing language-switch integration test to assert the DOM contract.
 - Validation: targeted App integration 5/5, type-check, lint, production build and all 81 generated city pages pass.
+
+## 2026-08-28 17:25 TRT — fatal error privacy hardening
+
+- Reviewed the top-level render failure surface and found raw JavaScript error messages were exposed directly in the production UI. Lazy-chunk, browser, or implementation errors can contain technical internals that do not help end users.
+- Kept errors available to the existing ErrorBoundary logging path but replaced the user-visible fatal copy with the localized generic recovery message.
+- Validation: lint, type-check, 96/96 frontend tests, production build and all 81 generated city pages pass.
