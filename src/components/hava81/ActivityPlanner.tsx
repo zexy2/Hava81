@@ -76,7 +76,11 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
         </label>
       </header>
 
-      <div className="activity-planner__chips" aria-label={t('hava81.activities.choose')}>
+      <div
+        className="activity-planner__chips"
+        role="group"
+        aria-label={t('hava81.activities.choose')}
+      >
         {activities.map(activity => {
           const active = profile.activities.includes(activity);
           return (
