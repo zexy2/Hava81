@@ -61,6 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h2>Bir şeyler yanlış gitti</h2>
             <p>Uygulama beklenmeyen bir hatayla karşılaştı.</p>
             <button
+              type="button"
               className="error-boundary__button"
               onClick={this.handleReset}
             >
