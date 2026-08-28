@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   weather: {
     current: '/weather/current',
     forecast: '/weather/forecast',
+    hourly: '/weather/hourly',
     airQuality: '/weather/air-quality',
     context: '/weather/context',
     route: '/weather/route',

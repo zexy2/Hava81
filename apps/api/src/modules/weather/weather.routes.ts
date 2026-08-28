@@ -4,6 +4,7 @@ import {
   airQualityQuerySchema,
   currentWeatherQuerySchema,
   forecastQuerySchema,
+  hourlyForecastQuerySchema,
 } from './contracts';
 import {
   airQualityQueryJsonSchema,
@@ -12,6 +13,8 @@ import {
   currentResponseJsonSchema,
   forecastQueryJsonSchema,
   forecastResponseJsonSchema,
+  hourlyForecastQueryJsonSchema,
+  hourlyForecastResponseJsonSchema,
 } from './openapi';
 import type { WeatherService } from './weather.service';
 
@@ -64,6 +67,24 @@ export const registerWeatherRoutes = async (
     async (request, reply) => {
       const query = forecastQuerySchema.parse(request.query);
       const result = await service.getForecast(query);
+      cacheHeaders(reply, result.status, 300);
+      return withCacheMeta(result.value, result.status, 300);
+    },
+  );
+
+  app.get(
+    '/weather/hourly',
+    {
+      schema: {
+        tags: ['Weather'],
+        summary: 'Koordinata göre gerçek bir saatlik tahmini getirir',
+        querystring: hourlyForecastQueryJsonSchema,
+        response: { 200: hourlyForecastResponseJsonSchema },
+      },
+    },
+    async (request, reply) => {
+      const query = hourlyForecastQuerySchema.parse(request.query);
+      const result = await service.getHourlyForecast(query);
       cacheHeaders(reply, result.status, 300);
       return withCacheMeta(result.value, result.status, 300);
     },

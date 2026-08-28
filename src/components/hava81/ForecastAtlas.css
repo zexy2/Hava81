@@ -73,6 +73,18 @@
   text-transform: uppercase;
 }
 
+.hava81-forecast-atlas__source {
+  margin: -8px 0 14px;
+  color: var(--forecast-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.hava81-forecast-atlas__source a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
 .hava81-forecast-atlas__hourly-viewport {
   overflow-x: auto;
   overscroll-behavior-inline: contain;

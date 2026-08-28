@@ -16,12 +16,14 @@ import { registerWeatherRoutes } from './modules/weather/weather.routes';
 import { registerRouteWeatherRoutes } from './modules/route/route-weather.routes';
 import { RouteWeatherService } from './modules/route/route-weather.service';
 import { WeatherService } from './modules/weather/weather.service';
+import { OpenMeteoHourlyProvider } from './providers/openmeteo/openmeteo-hourly.provider';
 import { OpenWeatherProvider } from './providers/openweather/openweather.provider';
-import type { WeatherProvider } from './providers/weather-provider';
+import type { HourlyForecastProvider, WeatherProvider } from './providers/weather-provider';
 
 export interface BuildAppOptions {
   env?: AppConfig;
   provider?: WeatherProvider;
+  hourlyProvider?: HourlyForecastProvider;
   cache?: AsyncCache;
   logger?: boolean;
 }
@@ -147,7 +149,9 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
         resetMs: env.PROVIDER_CIRCUIT_RESET_MS,
       });
     })();
-  const weatherService = new WeatherService(provider, cache, env);
+  const hourlyProvider =
+    options.hourlyProvider ?? new OpenMeteoHourlyProvider(fetch, env.OPENWEATHER_TIMEOUT_MS);
+  const weatherService = new WeatherService(provider, cache, env, hourlyProvider);
   const contextService = new ContextSignalsService(fetch);
   const routeWeatherService = new RouteWeatherService(weatherService);
 

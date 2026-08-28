@@ -1,6 +1,10 @@
 import type { AppConfig } from '../../config/env';
 import type { AsyncCache, CacheResult } from '../../core/cache';
-import type { CurrentWeatherQuery, WeatherProvider } from '../../providers/weather-provider';
+import type {
+  CurrentWeatherQuery,
+  HourlyForecastProvider,
+  WeatherProvider,
+} from '../../providers/weather-provider';
 import type { ForecastUpstream } from '../../providers/openweather/schemas';
 import type {
   AirQualityDto,
@@ -9,6 +13,8 @@ import type {
   CurrentWeatherQueryInput,
   ForecastDto,
   ForecastQueryInput,
+  HourlyForecastDto,
+  HourlyForecastQueryInput,
 } from './contracts';
 
 const coordinateKey = (lat: number, lon: number): string => `${lat.toFixed(3)}:${lon.toFixed(3)}`;
@@ -25,7 +31,8 @@ export class WeatherService {
     private readonly config: Pick<
       AppConfig,
       'CACHE_CURRENT_TTL_MS' | 'CACHE_FORECAST_TTL_MS' | 'CACHE_AIR_QUALITY_TTL_MS'
-    >
+    >,
+    private readonly hourlyProvider: HourlyForecastProvider
   ) {}
 
   getCurrent(query: CurrentWeatherQueryInput): Promise<CacheResult<CurrentWeatherDto>> {
@@ -80,6 +87,25 @@ export class WeatherService {
     return this.cache.getOrLoad(key, this.config.CACHE_FORECAST_TTL_MS, async () => {
       const raw = await this.provider.getForecast(query);
       return this.normalizeForecast(raw);
+    });
+  }
+
+  getHourlyForecast(query: HourlyForecastQueryInput): Promise<CacheResult<HourlyForecastDto>> {
+    const key = `weather:hourly:${coordinateKey(query.lat, query.lon)}:${query.lang}`;
+
+    return this.cache.getOrLoad(key, this.config.CACHE_FORECAST_TTL_MS, async () => {
+      const result = await this.hourlyProvider.getHourly(query);
+      return {
+        hourly: result.hourly.slice(0, 48),
+        meta: {
+          provider: this.hourlyProvider.name,
+          attribution: this.hourlyProvider.attribution,
+          sourceUrl: this.hourlyProvider.sourceUrl,
+          fetchedAt: new Date().toISOString(),
+          timezoneOffsetSeconds: result.timezoneOffsetSeconds,
+          intervalHours: 1,
+        },
+      };
     });
   }
 

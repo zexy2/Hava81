@@ -98,7 +98,9 @@ export const en = {
     forecastAtlas: {
       title: "Today's rhythm",
 
-      intervalForecast: '{{hours}}-hour forecast',
+      hourlyForecast: 'Hourly forecast · next 24 hours',
+      intervalForecast: 'Forecast every {{hours}} hours',
+      hourlySource: 'Source:',
       hourlyRegion: 'Scrollable hourly forecast chart and values',
       chartSummary: 'Hourly temperature ranges from {{min}}{{unit}} to {{max}}{{unit}}.',
       precipitationAt: 'Precipitation chance is {{percent}} percent at {{time}}.',

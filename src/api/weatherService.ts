@@ -32,6 +32,11 @@ type SerializedForecast = {
   meta: Omit<ForecastMeta, 'fetchedAt'> & { fetchedAt: string };
 };
 
+type SerializedHourlyForecast = {
+  hourly: Array<Omit<HourlyForecast, 'time'> & { time: string }>;
+  meta: Omit<ForecastMeta, 'fetchedAt'> & { fetchedAt: string };
+};
+
 type SerializedAirQuality = Omit<AirQuality, 'meta'> & { meta: SerializedMeta };
 
 type BootstrapWeatherRequest = {
@@ -191,6 +196,26 @@ export const weatherService = {
         ...response.meta,
         fetchedAt: new Date(response.meta.fetchedAt),
       },
+    };
+  },
+
+  getHourlyForecast: async (
+    lat: number,
+    lon: number,
+    lang = DEFAULT_WEATHER_PARAMS.lang
+  ): Promise<{ hourly: HourlyForecast[]; meta: ForecastMeta }> => {
+    const response = await httpClient.get<SerializedHourlyForecast>(API_ENDPOINTS.weather.hourly, {
+      lat,
+      lon,
+      lang,
+    });
+    return {
+      hourly: response.hourly.slice(0, 24).map(item => ({
+        ...item,
+        time: new Date(item.time),
+        pop: normalizePrecipitationProbability(item.pop),
+      })),
+      meta: { ...response.meta, fetchedAt: new Date(response.meta.fetchedAt) },
     };
   },
 

@@ -345,6 +345,38 @@ describe('weatherService BFF client', () => {
     expect(result.hourly[0].pop).toBe(0.05);
   });
 
+  it('revives the one-hour forecast returned by the BFF', async () => {
+    mockGet.mockResolvedValue({
+      hourly: [
+        {
+          time: '2026-08-28T18:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          description: 'açık',
+          pop: 35,
+          windSpeed: 3.2,
+        },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0',
+    sourceUrl: 'https://open-meteo.com/',
+        fetchedAt: '2026-08-28T17:00:00.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    const result = await weatherService.getHourlyForecast(41.01, 28.97, 'tr');
+
+    expect(mockGet).toHaveBeenCalledWith('/weather/hourly', { lat: 41.01, lon: 28.97, lang: 'tr' });
+    expect(result.hourly[0].time).toBeInstanceOf(Date);
+    expect(result.hourly[0].pop).toBe(0.35);
+    expect(result.meta.intervalHours).toBe(1);
+    expect(result.meta.attribution).toBe('Open-Meteo · CC BY 4.0');
+    expect(result.meta.sourceUrl).toBe('https://open-meteo.com/');
+  });
+
   it('returns normalized air quality from the BFF', async () => {
     const airQuality = {
       aqi: 1,

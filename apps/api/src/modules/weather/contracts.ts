@@ -42,6 +42,12 @@ export const forecastQuerySchema = z.object({
   lang: languageSchema,
 });
 
+export const hourlyForecastQuerySchema = z.object({
+  lat: latitudeSchema,
+  lon: longitudeSchema,
+  lang: languageSchema,
+});
+
 export const airQualityQuerySchema = z.object({
   lat: latitudeSchema,
   lon: longitudeSchema,
@@ -50,6 +56,7 @@ export const airQualityQuerySchema = z.object({
 
 export type CurrentWeatherQueryInput = z.infer<typeof currentWeatherQuerySchema>;
 export type ForecastQueryInput = z.infer<typeof forecastQuerySchema>;
+export type HourlyForecastQueryInput = z.infer<typeof hourlyForecastQuerySchema>;
 export type AirQualityQueryInput = z.infer<typeof airQualityQuerySchema>;
 
 export interface DataMetaDto {
@@ -57,6 +64,8 @@ export interface DataMetaDto {
   fetchedAt: string;
   timezoneOffsetSeconds?: number;
   intervalHours?: number;
+  attribution?: string;
+  sourceUrl?: string;
   cacheStatus?: CacheStatus;
   freshForSeconds?: number;
 }
@@ -80,6 +89,18 @@ export interface CurrentWeatherDto {
   timestamp: string;
   coordinates: { lat: number; lon: number };
   clouds: number;
+  meta: DataMetaDto;
+}
+
+export interface HourlyForecastDto {
+  hourly: Array<{
+    time: string;
+    temp: number;
+    icon: string;
+    description: string;
+    pop: number;
+    windSpeed: number;
+  }>;
   meta: DataMetaDto;
 }
 

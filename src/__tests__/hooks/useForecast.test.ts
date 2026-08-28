@@ -6,6 +6,7 @@ import { useForecast } from '../../hooks/useForecast';
 vi.mock('../../api/weatherService', () => ({
   weatherService: {
     getForecast: vi.fn(),
+    getHourlyForecast: vi.fn(),
     getAirQuality: vi.fn(),
     getContextSignals: vi.fn(),
   },
@@ -22,6 +23,17 @@ describe('useForecast', () => {
         fetchedAt: new Date(),
         timezoneOffsetSeconds: 10800,
         intervalHours: 3,
+      },
+    });
+    (weatherService.getHourlyForecast as Mock).mockResolvedValue({
+      hourly: [{ time: new Date('2026-07-14T13:00:00.000Z'), temp: 25, icon: '01d', pop: 0.2 }],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0',
+        sourceUrl: 'https://open-meteo.com/',
+        fetchedAt: new Date(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
       },
     });
     (weatherService.getContextSignals as Mock).mockResolvedValue(null);
@@ -42,10 +54,63 @@ describe('useForecast', () => {
     });
 
     expect(weatherService.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'en');
+    expect(weatherService.getHourlyForecast).toHaveBeenCalledWith(41.01, 28.97, 'en');
     expect(weatherService.getAirQuality).toHaveBeenCalledWith(41.01, 28.97, 'en');
     expect(weatherService.getContextSignals).toHaveBeenCalledWith(41.01, 28.97, false);
     expect(result.current.hourly).toHaveLength(1);
+    expect(result.current.hourly[0].temp).toBe(24);
+    expect(result.current.displayHourly[0].temp).toBe(25);
+    expect(result.current.displayMeta?.intervalHours).toBe(1);
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('renders the three-hour baseline before a slow hourly upgrade completes', async () => {
+    type HourlyResponse = Awaited<ReturnType<typeof weatherService.getHourlyForecast>>;
+    let resolveHourly: (value: HourlyResponse) => void;
+    const pendingHourly = new Promise<HourlyResponse>(resolve => {
+      resolveHourly = resolve;
+    });
+    (weatherService.getHourlyForecast as Mock).mockReturnValueOnce(pendingHourly);
+
+    const { result } = renderHook(() => useForecast('tr'));
+    let fetchPromise: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    await waitFor(() => expect(result.current.displayMeta?.intervalHours).toBe(3));
+    expect(result.current.displayHourly[0]?.temp).toBe(24);
+
+    await act(async () => {
+      resolveHourly!({
+        hourly: [{ time: new Date('2026-07-14T13:00:00.000Z'), temp: 26, icon: '01d', pop: 0.2 }],
+        meta: {
+          provider: 'Open-Meteo',
+          attribution: 'Open-Meteo · CC BY 4.0',
+          sourceUrl: 'https://open-meteo.com/',
+          fetchedAt: new Date(),
+          timezoneOffsetSeconds: 10800,
+          intervalHours: 1,
+        },
+      });
+      await fetchPromise!;
+    });
+
+    expect(result.current.displayMeta?.intervalHours).toBe(1);
+    expect(result.current.displayHourly[0]?.temp).toBe(26);
+  });
+
+  it('falls back to the existing three-hour display when the hourly source is unavailable', async () => {
+    (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(new Error('hourly unavailable'));
+    const { result } = renderHook(() => useForecast('tr'));
+
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    expect(result.current.displayHourly[0].temp).toBe(24);
+    expect(result.current.displayMeta?.intervalHours).toBe(3);
+    expect(result.current.error).toBeNull();
   });
 
   it('keeps only the latest city request when responses complete out of order', async () => {
