@@ -1,8 +1,9 @@
 .route-weather {
   background: var(--color-atlas-paper);
   border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card, var(--radius-md));
   overflow: hidden;
+  box-shadow: var(--shadow-card, none);
 }
 .route-weather summary {
   display: flex;
@@ -11,6 +12,23 @@
   gap: 1rem;
   padding: var(--space-lg) var(--space-xl);
   cursor: pointer;
+  list-style: none;
+}
+.route-weather summary::-webkit-details-marker {
+  display: none;
+}
+.route-weather__chevron {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-atlas-muted);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: 999px;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.route-weather[open] .route-weather__chevron {
+  transform: rotate(180deg);
 }
 .route-weather summary > span:first-child {
   display: grid;
@@ -41,7 +59,7 @@
 }
 .route-weather__form select,
 .route-weather__form input {
-  min-height: 2.6rem;
+  min-height: 2.75rem;
   padding: 0 0.65rem;
   color: var(--color-atlas-ink);
   background: var(--color-atlas-field);
@@ -50,7 +68,7 @@
   font: inherit;
 }
 .route-weather__form button {
-  min-height: 2.6rem;
+  min-height: 2.75rem;
   padding: 0 1rem;
   color: var(--color-atlas-paper);
   background: var(--color-aegean);
@@ -79,7 +97,15 @@
   font-size: 1.35rem;
 }
 .route-weather__result > header > strong {
+  min-width: 5rem;
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-display);
   font-size: 1.8rem;
+  line-height: 1;
+  text-align: center;
+  background: var(--color-atlas-field);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-md);
 }
 .route-weather__result > header > strong span {
   font-size: 0.75rem;
@@ -144,6 +170,11 @@
     grid-template-columns: 1fr;
   }
   .route-weather__segments {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(5, minmax(9rem, 1fr));
+    margin-inline: calc(var(--space-md) * -1);
+    padding-inline: var(--space-md);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
   }
 }

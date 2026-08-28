@@ -42,7 +42,7 @@ export function ContextSignalsPanel({ signals }: Props) {
           <span className="atlas-kicker">{t('hava81.context.eyebrow')}</span>
           <h2 id="context-signals-title">{t('hava81.context.title')}</h2>
         </div>
-        <small>
+        <small className="context-signals__source">
           {signals.attribution}
           {fetchedTime ? ` · ${t('hava81.context.fetchedAt', { time: fetchedTime })}` : ''}
         </small>
