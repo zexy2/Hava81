@@ -21,6 +21,7 @@ import './styles/App.css';
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
+const CommutePlanPanel = lazy(() => import('./components/hava81/CommutePlanPanel'));
 const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
@@ -509,6 +510,12 @@ const App: React.FC = () => {
                       hourly={forecast.hourly}
                       airQuality={forecast.airQuality ?? undefined}
                     />
+                  </Suspense>
+                )}
+
+                {forecast.hourly.length > 0 && (
+                  <Suspense fallback={null}>
+                    <CommutePlanPanel weather={weather} hourly={forecast.hourly} />
                   </Suspense>
                 )}
 

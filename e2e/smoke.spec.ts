@@ -494,3 +494,22 @@ test('production shell exposes an installable PWA contract', async ({ page, requ
     await page.context().setOffline(false);
   }
 });
+
+
+test('out-and-back plan persists routine times and produces a preparation decision', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser routine-plan coverage');
+
+  await page.clock.setFixedTime(new Date('2026-08-28T08:00:00Z'));
+  await page.goto('/istanbul/');
+  await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill('12:00');
+  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill('15:00');
+  await expect(
+    page.getByText(/Şemsiyeyi al|Şemsiye yanında olsun|Şemsiye gerekmiyor/)
+  ).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue('12:00');
+  await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue('15:00');
+});
