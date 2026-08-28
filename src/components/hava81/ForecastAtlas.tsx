@@ -151,7 +151,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   {' · '}
                   <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
                   {' · '}
-                  {t('hava81.forecastAtlas.hourlySourceModified')}
+                  {settings.language === 'en' ? 'Formatted by Hava81' : 'Hava81 tarafından biçimlendirildi'}
                 </>
               ) : meta.attribution && meta.attribution !== meta.provider ? (
                 <> · {meta.attribution}</>

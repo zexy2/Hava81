@@ -102,7 +102,6 @@ export const tr = {
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
       intervalForecast: '{{hours}} saat aralıklarla tahmin',
       hourlySource: 'Kaynak:',
-      hourlySourceModified: 'Hava81 tarafından biçimlendirildi',
       hourlyRegion: 'Kaydırılabilir saatlik tahmin grafiği ve değerleri',
       chartSummary: 'Saatlik sıcaklık {{min}}{{unit}} ile {{max}}{{unit}} arasında değişiyor.',
       precipitationAt: '{{time}} saatinde yağış olasılığı yüzde {{percent}}.',
@@ -240,7 +239,7 @@ export const tr = {
       },
       bestTime: 'En iyi saat: {{time}}',
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',
-      empty: 'Kişisel skor görmek için en az bir aktivite seä.',
+      empty: 'Kişisel skor görmek için en az bir aktivite seç.',
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
       sensitivity: {
         label: 'Sıcaklık hassasiyeti',

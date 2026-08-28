@@ -102,7 +102,6 @@ export const en = {
       hourlyForecast: 'Hourly forecast Â· next 24 hours',
       intervalForecast: 'Forecast every {{hours}} hours',
       hourlySource: 'Source:',
-      hourlySourceModified: 'Formatted by Hava81',
       hourlyRegion: 'Scrollable hourly forecast chart and values',
       chartSummary: 'Hourly temperature ranges from {{min}}{{unit}} to {{max}}{{unit}}.',
       precipitationAt: 'Precipitation chance is {{percent}} percent at {{time}}.',
@@ -193,7 +192,7 @@ export const en = {
     },
     commute: {
       eyebrow: 'Personal routine',
-      title: 'Out-and-back plan ¬
+      title: 'Out-and-back plan',
       subtitle:
         'Save when you leave and return; Hava81 will compare those two windows and tell you what is worth carrying today.',
       timesLabel: 'Departure and return times',
