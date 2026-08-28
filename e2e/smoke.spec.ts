@@ -186,8 +186,8 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
     };
 
     return Promise.all([
-      readImage('/logo192.png'),
-      readImage('/logo512.png'),
+      readImage('/hava81-icon-192.png'),
+      readImage('/hava81-icon-512.png'),
       readImage('/apple-touch-icon.png?v=20260828'),
       readImage('/hava81-favicon.ico?v=20260828'),
       readImage('/hava81-social-card.png?v=20260828'),

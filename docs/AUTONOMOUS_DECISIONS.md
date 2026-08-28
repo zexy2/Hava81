@@ -165,3 +165,6 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-28 — Reusable recovery controls must declare type=button unless submission is intentional; ErrorBoundary retry must never inherit HTML button submit semantics from an ancestor form.
+
+
+- 2026-08-28 — Installable PWA raster icons use Hava81-specific asset URLs instead of scaffold-generic logo192.png/logo512.png names. Unique branded URLs reduce stale browser/PWA icon-cache collisions and make React-template regressions easier to detect.
