@@ -143,3 +143,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — The root HTML `lang` attribute must track Hava81's active UI language at runtime. Visible translations alone are insufficient because screen readers and other language-sensitive user agents rely on the document language metadata.
 
 - 2026-08-28 — Top-level render failures must not expose raw JavaScript error messages in the production UI. Preserve technical errors for logging/diagnostics, but show users localized generic recovery copy.
+
+- 2026-08-28 — Interactive activity toggles are exposed as one named accessibility group. An `aria-label` on a generic container is not sufficient by itself; use an explicit grouping role so assistive technology receives the relationship between the label and toggle buttons.

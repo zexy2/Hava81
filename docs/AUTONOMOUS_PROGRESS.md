@@ -324,3 +324,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Reviewed the top-level render failure surface and found raw JavaScript error messages were exposed directly in the production UI. Lazy-chunk, browser, or implementation errors can contain technical internals that do not help end users.
 - Kept errors available to the existing ErrorBoundary logging path but replaced the user-visible fatal copy with the localized generic recovery message.
 - Validation: lint, type-check, 96/96 frontend tests, production build and all 81 generated city pages pass.
+
+## 2026-08-28 17:38 TRT — activity selector accessibility
+
+- Audited the Activity Planner toggle cluster and found its localized `aria-label` attached to a generic `div` without an accessibility role, so the group name was not reliably represented in the accessibility tree.
+- Added `role="group"` while preserving the existing localized group label and individual `aria-pressed` toggle states.
+- Validation after rebasing onto current main: lint, type-check and 96/96 frontend tests pass. Production build also passes with all 81 generated city pages.
