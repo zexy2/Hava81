@@ -84,3 +84,6 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-28 13:24 TRT — touch-target enforcement
 
 - The documented 44 px touch-target rule is now an executable mobile browser gate rather than a visual guideline. New interactive controls must preserve at least 44×44 px rendered dimensions at the 390 px viewport unless a deliberately reviewed exception is introduced.
+## 2026-08-28 13:27 TRT — scaffold identity hygiene
+
+- Remove unused starter-brand assets instead of merely hiding them from rendered surfaces. Keep historical baseline documentation intact when it is explicitly labeled as a before-state, but current package metadata and current roadmap statements must use the Hava81 identity and current toolchain.

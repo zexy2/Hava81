@@ -1,8 +1,8 @@
 {
-  "name": "@weather-dashboard/api",
+  "name": "@hava81/api",
   "version": "1.0.0",
   "private": true,
-  "description": "Fastify BFF for the Turkey Weather Dashboard",
+  "description": "Fastify weather API and BFF for Hava81",
   "engines": {
     "node": ">=20"
   },

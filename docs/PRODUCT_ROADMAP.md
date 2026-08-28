@@ -81,7 +81,7 @@ Exit criteria:
 - Add deterministic decision helpers: umbrella, UV protection, strong wind, poor air quality, and best outdoor window.
 - Add compare mode for up to three provinces.
 - Add shareable, canonical city views.
-- Migrate the aging CRA toolchain to Vite in a dedicated change.
+- Maintain the completed Vite migration with supported build and test tooling.
 
 Exit criteria:
 
