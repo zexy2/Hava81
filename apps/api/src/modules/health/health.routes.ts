@@ -12,7 +12,10 @@ export const registerHealthRoutes = async (
       config: { rateLimit: false },
       schema: { tags: ['Health'], summary: 'Process liveness check' },
     },
-    async () => ({ status: 'ok' }),
+    async (_request, reply) => {
+      reply.header('Cache-Control', 'no-store');
+      return { status: 'ok' };
+    },
   );
 
   app.get(
@@ -21,12 +24,15 @@ export const registerHealthRoutes = async (
       config: { rateLimit: false },
       schema: { tags: ['Health'], summary: 'API readiness and runtime health' },
     },
-    async () => ({
-      status: 'ready',
-      checks: { configuration: 'ok', cache: 'ok' },
-      cache: { entries: cache.size, inFlight: cache.inFlightSize },
-      provider: providerHealth?.() ?? null,
-      timestamp: new Date().toISOString(),
-    }),
+    async (_request, reply) => {
+      reply.header('Cache-Control', 'no-store');
+      return {
+        status: 'ready',
+        checks: { configuration: 'ok', cache: 'ok' },
+        cache: { entries: cache.size, inFlight: cache.inFlightSize },
+        provider: providerHealth?.() ?? null,
+        timestamp: new Date().toISOString(),
+      };
+    },
   );
 };

@@ -133,3 +133,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Service-worker cache-first behavior is restricted to fingerprinted Vite `/assets/` resources. Stable root branding URLs such as `hava81-mark.svg`, favicon/social assets and other replace-in-place files must remain network-fresh so a previous brand asset cannot survive indefinitely after a deploy.
 
 - 2026-08-28 — Provider resilience tests must preserve the distinction between retryable upstream outages and non-retryable client/provider validation errors. Only exhausted retryable failures advance the circuit; while the circuit is open, a configured fallback serves requests without probing the known-failing primary until the reset window.
+
+- 2026-08-28 — Health and readiness endpoints are operational truth surfaces and must be explicitly non-cacheable. Emit `Cache-Control: no-store` so deployment/observer checks cannot be satisfied by stale intermediary responses.
