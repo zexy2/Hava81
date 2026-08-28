@@ -406,6 +406,23 @@ test('production shell exposes an installable PWA contract', async ({ page, requ
   // Reload once under service-worker control so the visited city shell and hashed assets are cached.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+
+  // Stable root branding URLs must stay network-fresh; only fingerprinted /assets/ resources are
+  // cache-first. This prevents an old logo/icon from surviving a later brand refresh indefinitely.
+  await page.evaluate(async () => {
+    await fetch('/hava81-mark.svg?sw-cache-probe=1');
+  });
+  const cachedUrls = await page.evaluate(async () => {
+    const urls: string[] = [];
+    for (const key of await caches.keys()) {
+      const cache = await caches.open(key);
+      urls.push(...(await cache.keys()).map(request => request.url));
+    }
+    return urls;
+  });
+  expect(cachedUrls.some(url => new URL(url).pathname === '/hava81-mark.svg')).toBe(false);
+  expect(cachedUrls.some(url => new URL(url).pathname.startsWith('/assets/'))).toBe(true);
+
   await page.context().setOffline(true);
   try {
     await page.reload();
