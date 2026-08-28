@@ -98,6 +98,20 @@ for (const name of names) {
   const title = `${name} hava durumu ve gün planı — Hava81`;
   const description = `${name} için güncel hava, 3 saatlik tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.`;
   const canonical = `${baseUrl}/${slug}/`;
+  const structuredData = safeJson({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description,
+    url: canonical,
+    isPartOf: { '@type': 'WebSite', name: 'Hava81', url: `${baseUrl}/` },
+    about: {
+      '@type': 'City',
+      name,
+      address: { '@type': 'PostalAddress', addressCountry: 'TR' },
+    },
+    inLanguage: ['tr', 'en'],
+  });
   let html = baseHtml
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/?>)/, `$1${description}$2`);
@@ -126,6 +140,10 @@ for (const name of names) {
       /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/,
       `<meta name="twitter:description" content="${description}" />`
     );
+  html = html.replace(
+    /(<script type="application\/ld\+json">\s*)\{.*?\}(\s*<\/script>)/s,
+    `$1${structuredData}$2`
+  );
 
   const requiredSingleTags = [
     ['canonical', /<link rel="canonical" /g],
@@ -134,6 +152,7 @@ for (const name of names) {
     ['og:description', /<meta property="og:description" /g],
     ['twitter:title', /<meta name="twitter:title" /g],
     ['twitter:description', /<meta name="twitter:description" /g],
+    ['structured data', /<script type="application\/ld\+json">/g],
   ];
   for (const [label, pattern] of requiredSingleTags) {
     const count = html.match(pattern)?.length ?? 0;
