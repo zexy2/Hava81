@@ -182,4 +182,33 @@ describe('Hava81 app integration', () => {
       )
     );
   });
+
+  it('keeps browser theme metadata aligned with an explicit dark theme', async () => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'dark',
+        language: 'tr',
+        notificationsEnabled: false,
+      })
+    );
+    const themeTags = Array.from({ length: 2 }, () => {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = '#F3F6F4';
+      document.head.appendChild(meta);
+      return meta;
+    });
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul' });
+
+    expect(document.documentElement.dataset.colorMode).toBe('dark');
+    expect(document.documentElement.style.colorScheme).toBe('dark');
+    expect(themeTags.map(meta => meta.content)).toEqual(['#0E2C32', '#0E2C32']);
+
+    themeTags.forEach(meta => meta.remove());
+  });
 });

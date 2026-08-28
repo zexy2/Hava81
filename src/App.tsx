@@ -8,6 +8,7 @@ import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
 import { useFavorites } from './hooks/useFavorites';
+import { useResolvedColorMode } from './hooks/useResolvedColorMode';
 import { createAppShortcuts, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
@@ -138,14 +139,15 @@ const App: React.FC = () => {
     return () => window.clearTimeout(timeoutId);
   }, [isLoading, weather]);
 
-  const colorMode = useMemo(() => {
-    if (settings.themeMode !== 'auto') return settings.themeMode;
-    return weather?.icon.endsWith('n') ? 'dark' : 'light';
-  }, [settings.themeMode, weather?.icon]);
+  const colorMode = useResolvedColorMode(settings.themeMode);
 
   useEffect(() => {
+    const themeColor = colorMode === 'dark' ? '#0E2C32' : '#F3F6F4';
     document.documentElement.style.colorScheme = colorMode;
     document.documentElement.dataset.colorMode = colorMode;
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach(meta => {
+      meta.content = themeColor;
+    });
   }, [colorMode]);
 
   useEffect(() => {

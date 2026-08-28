@@ -204,6 +204,28 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
   expect(samples[4]).toMatchObject({ width: 1200, height: 630 });
 });
 
+test('theme choice keeps browser chrome color in sync', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser theme metadata coverage');
+
+  await page.goto('/istanbul');
+  await expect(page.locator('html')).toHaveAttribute('data-color-mode', 'light');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(2);
+  expect(
+    await page.locator('meta[name="theme-color"]').evaluateAll(elements =>
+      elements.map(element => (element as HTMLMetaElement).content)
+    )
+  ).toEqual(['#F3F6F4', '#F3F6F4']);
+
+  await page.getByRole('button', { name: /ayarlar/i }).click();
+  await page.getByRole('button', { name: 'Koyu' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-color-mode', 'dark');
+  expect(
+    await page.locator('meta[name="theme-color"]').evaluateAll(elements =>
+      elements.map(element => (element as HTMLMetaElement).content)
+    )
+  ).toEqual(['#0E2C32', '#0E2C32']);
+});
+
 test('production HTML bootstraps current weather without a duplicate app request', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for early current weather');
 

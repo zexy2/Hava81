@@ -249,7 +249,7 @@ export const en = {
     theme: 'Theme',
     metric: 'Celsius (°C)',
     imperial: 'Fahrenheit (°F)',
-    auto: 'Auto (Weather-based)',
+    auto: 'Auto (System setting)',
     light: 'Light',
     dark: 'Dark',
     notifications: 'Notifications',

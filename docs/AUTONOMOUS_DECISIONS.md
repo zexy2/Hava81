@@ -125,3 +125,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — PWA offline caching is limited to same-origin navigation HTML, the tiny install shell, and core boot assets. Never service-worker-cache cross-origin weather/API responses as an offline substitute for fresh weather; keep lazy feature chunks on the normal network/deploy-recovery path.
 
 - 2026-08-28 — Main-only Docker action majors may be refreshed when the upstream tagged action.yml is directly verified to retain every used input and declare the target Node runtime. Keep Docker publish semantics unchanged and treat the first main Docker job as the final integration gate; it must not control API traffic switching.
+
+- 2026-08-28 — `themeMode: auto` means follow the device/browser `prefers-color-scheme`, not infer light/dark from the current weather icon. Explicit light/dark choices remain authoritative; map tiles and browser `theme-color` must use the same resolved color mode.
