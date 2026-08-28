@@ -262,7 +262,7 @@ export const tr = {
       window: {
         label: 'Aktivite saat aralığı',
         title: 'Hangi saatler arasında?',
-        help: 'İki saati de seçersen skor ve en iyi saat yalnız bu aralıkta hesaplanır.',
+        help: 'İki saati de seçersen skor yalnız bu aralıkta hesaplanır. Bitiş daha erkense aralık gece yarısını aşar; aynı iki saat yalnız o saati değerlendirir.',
         start: 'Başlangıç',
         end: 'Bitiş',
         clear: 'Aralığı temizle',

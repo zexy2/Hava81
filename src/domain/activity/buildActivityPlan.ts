@@ -202,7 +202,7 @@ const localClockMinutes = (date: Date, timezoneOffsetSeconds: number) => {
 };
 
 const clockInRange = (value: number, start: number, end: number) => {
-  if (start === end) return true;
+  if (start === end) return value === start;
   return start < end ? value >= start && value <= end : value >= start || value <= end;
 };
 

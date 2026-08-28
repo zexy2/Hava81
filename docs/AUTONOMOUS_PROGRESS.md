@@ -518,3 +518,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 
 - Rebased the route wall-clock correction onto main `bc3415a5`, preserving both append-only autonomous-document checkpoints.
 - Combined post-rebase validation passed: lint, type-check, complete frontend suite 130/130, production dependency audit 0 vulnerabilities, production build with all 81 city pages, targeted desktop route browser smoke, and `git diff --check`.
+
+
+## 2026-08-29 00:57 TRT — activity time-range boundary correctness
+
+- Audited the newly persisted activity clock filter for boundary cases. Overnight ranges were already modeled as wrap-around local-clock windows, but equal start/end values incorrectly matched every hour while the UI claimed the score was limited to that selected range.
+- Changed equal start/end semantics to evaluate only that clock instant and added regression coverage for both `22:00–02:00` overnight wrapping and `18:00–18:00` single-clock filtering.
+- Clarified Turkish/English helper copy so users know an earlier end crosses midnight and matching clocks target one time rather than a hidden full-day evaluation.
+- Validation on main `806dac0a`: focused activity-plan 8/8, lint, type-check, full frontend suite 139/139, production build generated all 81 city pages, production dependency audit 0 vulnerabilities. Browser/CI remain release gates before merge.

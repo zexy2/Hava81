@@ -112,6 +112,43 @@ describe('activity plans', () => {
     expect(localBest.getUTCHours()).toBeLessThanOrEqual(20);
   });
 
+  it('wraps a selected clock range across midnight', () => {
+    const points: HourlyForecast[] = [
+      { time: new Date('2026-08-28T18:00:00Z'), temp: 35, pop: 0, windSpeed: 2, icon: '01n' },
+      { time: new Date('2026-08-28T19:00:00Z'), temp: 22, pop: 0, windSpeed: 2, icon: '01n' },
+      { time: new Date('2026-08-28T22:00:00Z'), temp: 18, pop: 0, windSpeed: 2, icon: '01n' },
+      { time: new Date('2026-08-29T00:00:00Z'), temp: 36, pop: 0, windSpeed: 2, icon: '01n' },
+    ];
+    const filtered = buildActivityPlan({
+      activity: 'run',
+      weather,
+      hourly: points,
+      preferredStart: '22:00',
+      preferredEnd: '02:00',
+    });
+
+    expect(filtered.windowUnavailable).toBe(false);
+    expect(filtered.bestWindow?.time.toISOString()).toBe('2026-08-28T19:00:00.000Z');
+  });
+
+  it('treats equal start and end clocks as that selected instant, not a hidden full-day range', () => {
+    const points: HourlyForecast[] = [
+      { time: new Date('2026-08-28T15:00:00Z'), temp: 36, pop: 0, windSpeed: 2, icon: '01d' },
+      { time: new Date('2026-08-28T16:00:00Z'), temp: 18, pop: 0, windSpeed: 2, icon: '01d' },
+    ];
+    const filtered = buildActivityPlan({
+      activity: 'run',
+      weather,
+      hourly: points,
+      preferredStart: '18:00',
+      preferredEnd: '18:00',
+    });
+
+    expect(filtered.windowUnavailable).toBe(false);
+    expect(filtered.bestWindow?.time.toISOString()).toBe('2026-08-28T15:00:00.000Z');
+    expect(filtered.score).toBe(filtered.bestWindow?.score);
+  });
+
   it('reports an unavailable selected window instead of inventing a best time', () => {
     const points: HourlyForecast[] = [
       { time: new Date('2026-08-28T09:00:00Z'), temp: 20, pop: 0, windSpeed: 2, icon: '01d' },

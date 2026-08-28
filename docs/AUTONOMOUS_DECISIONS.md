@@ -215,3 +215,9 @@ This log records product and engineering decisions made during the autonomous im
 - Commute preparation is multi-factor. Umbrella advice remains a rain-specific signal, but the headline may instead be heat/cold, wind/gust or air-quality guidance; saved temperature sensitivity shifts commute heat/cold thresholds consistently with personal activity planning.
 
 - 2026-08-29 — Rota havası is a Türkiye intercity product, so its `datetime-local` departure contract and displayed route ETAs use explicit `Europe/Istanbul` wall-clock time rather than the visitor device timezone. Make the timezone visible in the departure label; never let travel/browser timezone silently change the absolute forecast instant being evaluated.
+
+
+## 2026-08-29 — activity clock-range boundary semantics
+
+- A preferred activity range may cross midnight: when the end clock is earlier than the start clock, evaluate the late-evening and following early-morning slots as one continuous local-clock range.
+- Equal start/end clocks mean the selected clock instant, not a hidden full-day range. The UI must not say a score is limited to `18:00–18:00` while silently evaluating the whole day.
