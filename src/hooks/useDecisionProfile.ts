@@ -43,5 +43,23 @@ export function useDecisionProfile() {
     },
     [setProfile]
   );
-  return { profile, toggleActivity, setTemperatureSensitivity };
+  const setCommuteTime = useCallback(
+    (kind: 'start' | 'end', value?: string) => {
+      const key = kind === 'start' ? 'commuteStart' : 'commuteEnd';
+      setProfile(current => ({ ...current, [key]: value }));
+      trackProductEvent('commute_schedule_changed', { kind, value: value ?? null });
+    },
+    [setProfile]
+  );
+  const clearCommuteTimes = useCallback(() => {
+    setProfile(current => ({ ...current, commuteStart: undefined, commuteEnd: undefined }));
+    trackProductEvent('commute_schedule_cleared');
+  }, [setProfile]);
+  return {
+    profile,
+    toggleActivity,
+    setTemperatureSensitivity,
+    setCommuteTime,
+    clearCommuteTimes,
+  };
 }
