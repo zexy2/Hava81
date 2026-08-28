@@ -160,3 +160,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — API production promotion uses exact-image blue-green semantics: validate the candidate on 4001, temporarily route public traffic to the healthy canary, recreate 4002 from that exact validated image without rebuilding, verify it directly, return Nginx to 4002, then restore the previous production image on 4001 so rollback remains a one-port switch rather than an image rebuild.
 
 - 2026-08-28 — Service-worker update checks must bypass the HTTP cache. Production currently serves `sw.js` with a 10-minute cache lifetime, so registration uses `updateViaCache: 'none'` to reduce stale-worker risk after deploys without depending on GitHub Pages response-header control.
+
+- 2026-08-28 — City comparison cards are exposed as a named list, not a partial ARIA table. A table/row role pair without cell semantics creates a misleading accessibility contract; use list/listitem for the actual card collection structure.

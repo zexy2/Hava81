@@ -95,6 +95,10 @@ describe('ComparePanel', () => {
     );
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
     expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
+    const cityList = screen.getByRole('list', { name: /şehir karşılaştırması/i });
+    expect(cityList).toBeVisible();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
     expect(api.getForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
