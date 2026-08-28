@@ -278,8 +278,8 @@ textarea:focus-visible {
   padding: 0 var(--space-md);
   color: #ffffff;
   cursor: pointer;
-  background: #146b73;
-  border: 1px solid #146b73;
+  background: var(--color-aegean);
+  border: 1px solid var(--color-aegean);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: 0.875rem;
   font-weight: 600;
@@ -306,8 +306,8 @@ textarea:focus-visible {
 }
 
 .search-bar__submit:hover:not(:disabled) {
-  background: #0f555c;
-  border-color: #0f555c;
+  background: var(--color-aegean-deep);
+  border-color: var(--color-aegean-deep);
 }
 
 .search-bar__submit:disabled {
@@ -339,6 +339,7 @@ textarea:focus-visible {
   border: 1px solid var(--color-atlas-line);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-overlay);
+  scroll-padding-block: var(--space-xs);
 }
 
 .search-bar__suggestion {
@@ -351,11 +352,16 @@ textarea:focus-visible {
   cursor: pointer;
   border-radius: var(--radius-sm);
   font-size: 0.9375rem;
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .search-bar__suggestion:hover,
 .search-bar__suggestion.is-active {
   background: var(--color-aegean-pale);
+}
+
+.search-bar__suggestion.is-active {
+  box-shadow: inset 3px 0 0 var(--color-aegean);
 }
 
 .search-bar__recent-icon {

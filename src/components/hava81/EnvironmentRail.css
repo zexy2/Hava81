@@ -8,7 +8,12 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
+  overflow: hidden;
   color: var(--environment-ink);
+  background: var(--color-atlas-paper);
+  border: 1px solid var(--environment-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   font-family: var(
     --font-ui,
     'IBM Plex Sans Variable',
@@ -16,7 +21,6 @@
     'Helvetica Neue',
     sans-serif
   );
-  border-block: 1px solid var(--environment-line);
 }
 
 .environment-rail__module {
@@ -119,8 +123,16 @@
     transform 150ms ease-out;
 }
 
+.environment-rail__module--action {
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
 .environment-rail__module--action:hover {
   color: var(--environment-accent-deep);
+  background: var(--color-atlas-field);
 }
 
 .environment-rail__module--action[aria-expanded='true']::after {
