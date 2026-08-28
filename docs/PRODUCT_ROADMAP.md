@@ -4,7 +4,7 @@ Hava81 is a Turkey-first weather product for people who want to understand the d
 
 > Know what the weather means for your day in any of Turkey's 81 provinces.
 
-The name is provisional until the brand pass is complete.
+The Hava81 name and brand are now the active production identity; future brand work should refine that identity rather than treat the product name as provisional.
 
 ## Product thesis
 
