@@ -11,7 +11,6 @@ export interface UserSettings {
   windSpeedUnit: WindSpeedUnit;
   themeMode: ThemeMode;
   language: Language;
-  notificationsEnabled: boolean;
 }
 
 const defaultSettings: UserSettings = {
@@ -19,7 +18,6 @@ const defaultSettings: UserSettings = {
   windSpeedUnit: 'ms',
   themeMode: 'auto',
   language: 'tr',
-  notificationsEnabled: false,
 };
 
 interface SettingsContextType {

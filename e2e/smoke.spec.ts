@@ -400,7 +400,6 @@ test('English mode updates document language and decision copy', async ({ page }
         windSpeedUnit: 'ms',
         themeMode: 'light',
         language: 'en',
-        notificationsEnabled: false,
       })
     );
   });

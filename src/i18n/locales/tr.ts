@@ -376,10 +376,6 @@ export const tr = {
     auto: 'Otomatik (Cihaz Ayarına Göre)',
     light: 'Açık',
     dark: 'Koyu',
-    notifications: 'Bildirimler',
-    enableNotifications: 'Uyarı bildirimleri',
-    notificationDesc:
-      'Hava81 açıkken yağmur, kuvvetli rüzgâr, zayıf hava kalitesi ve belirgin plan değişikliklerini bildirir',
   },
   airQuality: {
     good: 'İyi',
