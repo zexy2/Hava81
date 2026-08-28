@@ -68,4 +68,18 @@ describe('CommutePlanPanel', () => {
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('08:30');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
   });
+
+  it('explains when both saved times are outside available forecast coverage', () => {
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={[]} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '18:00' } });
+
+    expect(screen.getByText(/yeterince yakın tahmin henüz yok/i)).toBeInTheDocument();
+    expect(screen.queryByText(/İki saati de seçtiğinde/i)).not.toBeInTheDocument();
+  });
 });

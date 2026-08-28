@@ -153,7 +153,11 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
           </div>
         </>
       ) : (
-        <p className="commute-plan__empty">{t('hava81.commute.empty')}</p>
+        <p className="commute-plan__empty">
+          {profile.commuteStart && profile.commuteEnd
+            ? t('hava81.commute.forecastUnavailable')
+            : t('hava81.commute.empty')}
+        </p>
       )}
 
       <p className="commute-plan__note">{t('hava81.commute.note')}</p>
