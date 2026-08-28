@@ -4,8 +4,18 @@ import { AppError } from '../../core/errors';
 import { haversine, type RouteWeatherService } from './route-weather.service';
 
 export const validateRouteDistance = (distanceKm: number) => {
-  if (distanceKm < 1) throw new AppError(400, 'ROUTE_TOO_SHORT', 'Rota başlangıç ve varış noktaları farklı olmalıdır.');
-  if (distanceKm > 2_000) throw new AppError(400, 'ROUTE_TOO_LONG', 'Rota hava tahmini en fazla 2000 km kuş uçuşu mesafe için kullanılabilir.');
+  if (distanceKm < 1)
+    throw new AppError(
+      400,
+      'ROUTE_TOO_SHORT',
+      'Rota başlangıç ve varış noktaları farklı olmalıdır.'
+    );
+  if (distanceKm > 2_000)
+    throw new AppError(
+      400,
+      'ROUTE_TOO_LONG',
+      'Rota hava tahmini en fazla 2000 km kuş uçuşu mesafe için kullanılabilir.'
+    );
 };
 
 const querySchema = z.object({
@@ -24,6 +34,7 @@ export const registerRouteWeatherRoutes = async (
   app.get(
     '/weather/route',
     {
+      config: { rateLimit: { max: 12, timeWindow: '1 minute' } },
       schema: {
         tags: ['Weather'],
         summary: 'İki şehir arasındaki yaklaşık hava koridorunu değerlendirir',

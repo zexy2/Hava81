@@ -26,10 +26,19 @@ const marineSchema = z.object({
     .optional(),
 });
 
-const finiteMax = (values?: Array<number | null>) => {
-  const filtered = (values ?? [])
-    .slice(0, 24)
-    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+export const finiteMaxForWindow = (
+  times: string[],
+  values?: Array<number | null>,
+  now = new Date(),
+  hours = 24
+) => {
+  const start = now.getTime();
+  const end = start + hours * 60 * 60_000;
+  const filtered = (values ?? []).filter((value, index): value is number => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return false;
+    const time = Date.parse(times[index] ?? '');
+    return Number.isFinite(time) && time >= start && time < end;
+  });
   return filtered.length ? Math.max(...filtered) : undefined;
 };
 
@@ -99,7 +108,10 @@ export class ContextSignalsService {
           const marineUrl = new URL('https://marine-api.open-meteo.com/v1/marine');
           marineUrl.searchParams.set('latitude', String(lat));
           marineUrl.searchParams.set('longitude', String(lon));
-          marineUrl.searchParams.set('current', 'wave_height,wave_direction,wave_period,sea_surface_temperature');
+          marineUrl.searchParams.set(
+            'current',
+            'wave_height,wave_direction,wave_period,sea_surface_temperature'
+          );
           marineUrl.searchParams.set('timezone', 'auto');
           return getJson(marineUrl, this.fetchImpl)
             .then(data => marineSchema.parse(data))
@@ -112,10 +124,10 @@ export class ContextSignalsService {
       provider: 'Open-Meteo',
       fetchedAt: new Date().toISOString(),
       attribution: 'Open-Meteo · CC BY 4.0',
-      uvIndexMax: finiteMax(air.hourly.uv_index),
-      dustMax: finiteMax(air.hourly.dust),
-      grassPollenMax: finiteMax(air.hourly.grass_pollen),
-      olivePollenMax: finiteMax(air.hourly.olive_pollen),
+      uvIndexMax: finiteMaxForWindow(air.hourly.time, air.hourly.uv_index),
+      dustMax: finiteMaxForWindow(air.hourly.time, air.hourly.dust),
+      grassPollenMax: finiteMaxForWindow(air.hourly.time, air.hourly.grass_pollen),
+      olivePollenMax: finiteMaxForWindow(air.hourly.time, air.hourly.olive_pollen),
       units: {
         dust: air.hourly_units?.dust,
         grassPollen: air.hourly_units?.grass_pollen,
