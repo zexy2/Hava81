@@ -64,7 +64,7 @@ const airQualityFixture: AirQualityUpstream = {
   coord: currentFixture.coord,
   list: [
     {
-      main: { aqi: 2 },
+      main: { aqi: 3 },
       components: {
         co: 200,
         no: 0.1,
@@ -190,9 +190,16 @@ test('forecast and air-quality endpoints normalize provider data', async (contex
   assert.equal(forecast.json().daily[0].pop, 25);
   assert.equal(forecast.json().hourly[0].temp, 22);
   assert.equal(airQuality.statusCode, 200);
-  assert.equal(airQuality.json().aqiLabel, 'Fair');
+  assert.equal(airQuality.json().aqiLabel, 'Moderate');
+
+  const airQualityTr = await app.inject({
+    method: 'GET',
+    url: '/api/v1/weather/air-quality?lat=41.01&lon=28.97&lang=tr',
+  });
+  assert.equal(airQualityTr.statusCode, 200);
+  assert.equal(airQualityTr.json().aqiLabel, 'Orta');
   assert.equal(provider.forecastCalls, 1);
-  assert.equal(provider.airQualityCalls, 1);
+  assert.equal(provider.airQualityCalls, 2);
 });
 
 test('rate limiter returns the structured error envelope', async (context) => {

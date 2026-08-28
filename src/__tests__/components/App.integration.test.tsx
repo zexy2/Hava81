@@ -82,7 +82,7 @@ const forecast = {
   },
 };
 
-const air = { aqi: 2, aqiLabel: 'Orta', pm25: 8, pm10: 14, o3: 40 };
+const air = { aqi: 3, aqiLabel: 'Orta', pm25: 8, pm10: 14, o3: 40 };
 
 const renderApp = () =>
   render(
@@ -110,6 +110,7 @@ describe('Hava81 app integration', () => {
     expect(await screen.findByRole('heading', { name: /gün planı/i })).toBeInTheDocument();
     expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
+    expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   });
 

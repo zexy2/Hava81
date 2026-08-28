@@ -75,3 +75,8 @@ This log records product and engineering decisions made during the autonomous im
 - Treat browser chrome, install icons, Apple touch icons and social-preview images as first-class production UI, not build scaffolding. All of them must use the Hava81 mark; default React/Vite/CRA assets are regressions.
 - When favicon artwork changes, use a Hava81-specific versioned URL in HTML in addition to replacing `/favicon.ico`, because browsers cache favicons unusually aggressively. Keep `/favicon.ico` branded as a fallback for clients that probe it implicitly.
 - Keep a browser-level brand asset regression that checks both references and decoded image pixels/dimensions; HTML-only assertions are insufficient because a correct link can still point to stale scaffold artwork.
+
+## 2026-08-28 13:21 TRT — provider AQI semantics
+
+- Treat OpenWeather `main.aqi` strictly as OpenWeather's own five-level qualitative index (1 Good, 2 Fair, 3 Moderate, 4 Poor, 5 Very Poor). Do not relabel those ordinal values as US AQI health categories such as "Unhealthy for Sensitive Groups" without actually calculating that separate standard from pollutant concentrations.
+- Never clamp out-of-range AQI values to the nearest qualitative label. Invalid provider indices are unavailable data until validated, not an opportunity to infer a health category.

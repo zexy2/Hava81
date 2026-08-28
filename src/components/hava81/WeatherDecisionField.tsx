@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherSymbol } from './WeatherSymbol';
 import './WeatherDecisionField.css';
@@ -14,14 +15,6 @@ export interface WeatherDecisionFieldProps {
   uvIndex?: number;
   className?: string;
 }
-
-const AIR_QUALITY_LABEL_KEYS = [
-  'airQuality.good',
-  'airQuality.moderate',
-  'airQuality.sensitive',
-  'airQuality.unhealthy',
-  'airQuality.veryUnhealthy',
-] as const;
 
 export function WeatherDecisionField({
   weather,
@@ -171,7 +164,7 @@ export function WeatherDecisionField({
   );
   const windSpeed = `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${windSpeedSymbol}`;
   const airQualityLabelKey = airQuality
-    ? AIR_QUALITY_LABEL_KEYS[Math.min(Math.max(airQuality.aqi - 1, 0), 4)]
+    ? getOpenWeatherAqiLabelKey(airQuality.aqi)
     : undefined;
   const airQualityValue =
     airQuality && airQualityLabelKey
