@@ -191,6 +191,8 @@ export const en = {
       rain: 'Rain',
       wind: 'Wind',
       empty: 'Choose both times and Hava81 will compare your next departure–return pair.',
+      forecastUnavailable:
+        'There is not yet a forecast close enough to both selected times. The plan will calculate automatically as forecast coverage expands.',
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     activities: {
