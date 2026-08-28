@@ -482,6 +482,7 @@ const App: React.FC = () => {
                   <WeatherDecisionField
                     weather={weather}
                     hourly={forecast.hourly}
+                    daily={forecast.daily}
                     airQuality={forecast.airQuality ?? undefined}
                     uvIndexMax={forecast.contextSignals?.uvIndexMax}
                   />
@@ -515,7 +516,11 @@ const App: React.FC = () => {
 
                 {forecast.hourly.length > 0 && (
                   <Suspense fallback={null}>
-                    <CommutePlanPanel weather={weather} hourly={forecast.hourly} />
+                    <CommutePlanPanel
+                      weather={weather}
+                      hourly={forecast.hourly}
+                      airQuality={forecast.airQuality ?? undefined}
+                    />
                   </Suspense>
                 )}
 

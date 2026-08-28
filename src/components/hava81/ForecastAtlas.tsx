@@ -256,17 +256,25 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                         className="hava81-forecast-atlas__hour-symbol"
                       />
                       <strong>{hour.convertedTemp}°</strong>
-                      <span
-                        className={
-                          precipitation >= PRECIPITATION_THRESHOLD * 100
-                            ? 'hava81-forecast-atlas__hour-pop is-signal'
-                            : 'hava81-forecast-atlas__hour-pop'
-                        }
-                        role="group"
-                        aria-label={`${t('weather.precipitation')}: ${precipitation}%`}
-                      >
-                        {precipitation}%
-                      </span>
+                      {precipitation > 0 ? (
+                        <span
+                          className={
+                            precipitation >= PRECIPITATION_THRESHOLD * 100
+                              ? 'hava81-forecast-atlas__hour-pop is-signal'
+                              : 'hava81-forecast-atlas__hour-pop'
+                          }
+                          role="group"
+                          aria-label={`${t('weather.precipitation')}: ${precipitation}%`}
+                        >
+                          {precipitation}%
+                        </span>
+                      ) : (
+                        <span className="hava81-forecast-atlas__sr-only">
+                          {t('hava81.forecastAtlas.noHourlyPrecipitation', {
+                            time: timeFormatter.format(atLocationTime(hour.time)),
+                          })}
+                        </span>
+                      )}
                     </li>
                   );
                 })}
@@ -298,17 +306,23 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     className="hava81-forecast-atlas__day-symbol"
                   />
                   <span className="hava81-forecast-atlas__description">{day.description}</span>
-                  <span
-                    className={
-                      precipitation >= PRECIPITATION_THRESHOLD * 100
-                        ? 'hava81-forecast-atlas__day-pop is-signal'
-                        : 'hava81-forecast-atlas__day-pop'
-                    }
-                    role="group"
-                    aria-label={`${t('weather.precipitation')}: ${precipitation}%`}
-                  >
-                    {precipitation}%
-                  </span>
+                  {precipitation > 0 ? (
+                    <span
+                      className={
+                        precipitation >= PRECIPITATION_THRESHOLD * 100
+                          ? 'hava81-forecast-atlas__day-pop is-signal'
+                          : 'hava81-forecast-atlas__day-pop'
+                      }
+                      role="group"
+                      aria-label={`${t('weather.precipitation')}: ${precipitation}%`}
+                    >
+                      {precipitation}%
+                    </span>
+                  ) : (
+                    <span className="hava81-forecast-atlas__sr-only">
+                      {t('hava81.forecastAtlas.noDailyPrecipitation', { day: formatDay(day.date) })}
+                    </span>
+                  )}
                   <span
                     className="hava81-forecast-atlas__day-temperatures"
                     role="group"

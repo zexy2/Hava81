@@ -489,7 +489,7 @@ test('desktop comparison entry works with two saved cities', async ({ page }, te
   await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
 });
 
-test('activity preference changes the personalized plan', async ({ page }, testInfo) => {
+test('activity preference and time range change the personalized plan', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop interaction assertion');
   await page.goto('/istanbul');
   const picnic = page.getByRole('button', { name: 'Piknik' });
@@ -497,6 +497,11 @@ test('activity preference changes the personalized plan', async ({ page }, testI
   await picnic.click();
   await expect(picnic).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
+
+  await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
+  await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
+  await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
+  await expect(page.getByText(/Koşuda 10–22°C/)).toBeVisible();
 });
 
 test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
@@ -581,7 +586,9 @@ test('out-and-back plan persists routine times and produces a preparation decisi
   await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill('12:00');
   await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill('15:00');
   await expect(
-    page.getByText(/Şemsiyeyi al|Şemsiye yanında olsun|Şemsiye gerekmiyor/)
+    page.getByText(
+      /Şemsiyeyi al|Şemsiye yanında olsun|Ekstra hava hazırlığı gerekmiyor|su ve gölge planla|Rüzgâr\/hamle/
+    )
   ).toBeVisible();
   await expect(page.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })).toBeVisible();
 

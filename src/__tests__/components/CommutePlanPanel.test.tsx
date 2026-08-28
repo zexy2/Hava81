@@ -69,6 +69,44 @@ describe('CommutePlanPanel', () => {
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
   });
 
+  it('makes heat the preparation headline when rain is absent but the selected windows are hot', () => {
+    const hotHourly: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 31,
+        apparentTemperature: 33,
+        pop: 0,
+        windSpeed: 4,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 33,
+        apparentTemperature: 35,
+        pop: 0,
+        windSpeed: 5,
+        icon: '01d',
+      },
+    ];
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel
+          weather={weather}
+          hourly={hotHourly}
+          airQuality={{ aqi: 4, aqiLabel: 'Sağlıksız', pm25: 35, pm10: 50, o3: 70 }}
+        />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '12:00' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
+
+    const verdict = screen.getByRole('status');
+    expect(verdict).toHaveTextContent(/Hissedilen 35°C; su ve gölge planla/i);
+    expect(verdict).toHaveTextContent(/Hava kalitesi AQI 4\/5/i);
+    expect(verdict).not.toHaveTextContent('Şemsiye gerekmiyor');
+  });
+
   it('explains when both saved times are outside available forecast coverage', () => {
     render(
       <SettingsProvider>

@@ -75,6 +75,8 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
               hourly: decisionHourly,
               airQuality,
               sensitivity: profile.temperatureSensitivity,
+              preferredStart: profile.activityStart,
+              preferredEnd: profile.activityEnd,
             })
           : undefined;
         return {
@@ -97,7 +99,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     return () => {
       active = false;
     };
-  }, [language, primaryActivity, profile.temperatureSensitivity, selected]);
+  }, [language, primaryActivity, profile.activityEnd, profile.activityStart, profile.temperatureSensitivity, selected]);
 
   const winner = useMemo(
     () =>

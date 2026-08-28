@@ -142,3 +142,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+.commute-plan__verdict[data-advice='umbrella-take'],
+.commute-plan__verdict[data-advice='strong-wind'] {
+  border-inline-start-color: var(--color-vermilion);
+}
+.commute-plan__verdict[data-advice='umbrella-consider'],
+.commute-plan__verdict[data-advice='heat'],
+.commute-plan__verdict[data-advice='cold'],
+.commute-plan__verdict[data-advice='poor-air'],
+.commute-plan__verdict[data-advice='wind-caution'] {
+  border-inline-start-color: var(--color-saffron);
+}
+.commute-plan__advice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 4px 0 0;
+  padding-inline-start: 20px;
+  color: var(--color-atlas-muted);
+  font-size: 0.84rem;
+}
