@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   useSettings,
@@ -14,25 +13,6 @@ interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const backdropVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-} as const;
-
-const panelVariants = {
-  hidden: { x: '100%', opacity: 0 },
-  visible: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-  },
-  exit: {
-    x: '100%',
-    opacity: 0,
-    transition: { duration: 0.2, ease: [0.25, 1, 0.5, 1] },
-  },
-} as const;
 
 const AutoThemeIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
@@ -137,28 +117,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
   };
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            className="settings-backdrop"
-            aria-hidden="true"
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            onClick={onClose}
-          />
+          <div className="settings-backdrop" aria-hidden="true" onClick={onClose} />
 
-          {/* Panel */}
-          <motion.aside
+          <aside
             ref={panelRef}
             className="settings-panel"
-            variants={panelVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
             role="dialog"
             aria-modal="true"
             aria-labelledby="settings-panel-title"
@@ -318,10 +284,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             <footer className="settings-panel__footer">
               <p className="settings-panel__version">v2.1.0</p>
             </footer>
-          </motion.aside>
+          </aside>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 };
 

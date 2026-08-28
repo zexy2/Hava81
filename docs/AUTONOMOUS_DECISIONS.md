@@ -54,3 +54,6 @@ This log records product and engineering decisions made during the autonomous im
 
 - Keep the current-conditions decision field synchronous, but code-split Forecast Atlas, Daily Plan and Environment Rail. Forecast data already arrives asynchronously, so these presentation modules do not need to inflate the initial application bundle; browser smoke tests remain the guard against visible regressions.
 - Normalize provider micro-unit glyphs to the SI micro sign at presentation boundaries. This is visually/semantically equivalent for units such as µg/m³ and prevents a Greek font subset from being fetched solely for U+03BC.
+
+
+- Do not carry a ~125 kB animation runtime solely for the Settings drawer. CSS entry animation plus reduced-motion handling is sufficient; the prior component was unmounted by its parent on close anyway, so its internal AnimatePresence could not provide a meaningful exit lifecycle.
