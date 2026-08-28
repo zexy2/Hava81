@@ -94,6 +94,10 @@ const AtlasLoadingState = ({ label, slowMessage }: { label: string; slowMessage?
 const App: React.FC = () => {
   const { t } = useTranslation();
   const { settings } = useSettings();
+  useEffect(() => {
+    document.documentElement.lang = settings.language;
+  }, [settings.language]);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [activeNav, setActiveNav] = useState<AtlasNavItem>('today');
