@@ -146,10 +146,19 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page).toHaveURL(/\/istanbul\/$/);
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open-Meteo · CC BY 4.0' })).toHaveAttribute(
+  await expect(
+    page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
     'href',
     'https://open-meteo.com/'
+  );
+  await expect(page.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+    'href',
+    'https://creativecommons.org/licenses/by/4.0/'
+  );
+  await expect(page.locator('.hava81-forecast-atlas__source')).toContainText(
+    'Hava81 tarafından biçimlendirildi'
   );
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
   await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
@@ -159,7 +168,9 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
-test('hourly display falls back to the existing three-hour forecast when the hourly source fails', async ({ page }) => {
+test('hourly display falls back to the existing three-hour forecast when the hourly source fails', async ({
+  page,
+}) => {
   await page.unroute('**/api/v1/weather/hourly**');
   await page.route('**/api/v1/weather/hourly**', route =>
     route.fulfill({ status: 503, json: { error: { code: 'HOURLY_PROVIDER_ERROR' } } })
@@ -175,9 +186,11 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
 
   await page.goto('/istanbul');
 
-  const iconHrefs = await page.locator('link[rel="icon"]').evaluateAll(elements =>
-    elements.map(element => (element as HTMLLinkElement).getAttribute('href'))
-  );
+  const iconHrefs = await page
+    .locator('link[rel="icon"]')
+    .evaluateAll(elements =>
+      elements.map(element => (element as HTMLLinkElement).getAttribute('href'))
+    );
   expect(iconHrefs).toEqual(
     expect.arrayContaining(['/hava81-mark.svg?v=20260828', '/hava81-favicon.ico?v=20260828'])
   );
@@ -275,23 +288,28 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
   await expect(page.locator('html')).toHaveAttribute('data-color-mode', 'light');
   await expect(page.locator('meta[name="theme-color"]')).toHaveCount(2);
   expect(
-    await page.locator('meta[name="theme-color"]').evaluateAll(elements =>
-      elements.map(element => (element as HTMLMetaElement).content)
-    )
+    await page
+      .locator('meta[name="theme-color"]')
+      .evaluateAll(elements => elements.map(element => (element as HTMLMetaElement).content))
   ).toEqual(['#F3F6F4', '#F3F6F4']);
 
   await page.getByRole('button', { name: /ayarlar/i }).click();
   await page.getByRole('button', { name: 'Koyu' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-color-mode', 'dark');
   expect(
-    await page.locator('meta[name="theme-color"]').evaluateAll(elements =>
-      elements.map(element => (element as HTMLMetaElement).content)
-    )
+    await page
+      .locator('meta[name="theme-color"]')
+      .evaluateAll(elements => elements.map(element => (element as HTMLMetaElement).content))
   ).toEqual(['#0E2C32', '#0E2C32']);
 });
 
-test('production HTML bootstraps current weather without a duplicate app request', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for early current weather');
+test('production HTML bootstraps current weather without a duplicate app request', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'desktop-1280',
+    'single browser coverage for early current weather'
+  );
 
   let currentRequests = 0;
   page.on('request', request => {
@@ -303,8 +321,13 @@ test('production HTML bootstraps current weather without a duplicate app request
   expect(currentRequests).toBe(1);
 });
 
-test('fresh cached weather suppresses the generated bootstrap request', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for bootstrap cache guard');
+test('fresh cached weather suppresses the generated bootstrap request', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'desktop-1280',
+    'single browser coverage for bootstrap cache guard'
+  );
 
   await page.addInitScript(cachedWeather => {
     window.localStorage.setItem(
@@ -324,7 +347,10 @@ test('fresh cached weather suppresses the generated bootstrap request', async ({
 });
 
 test('lazy forecast chunk does not block the decision-first view', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for lazy chunk timing');
+  test.skip(
+    testInfo.project.name !== 'desktop-1280',
+    'single browser coverage for lazy chunk timing'
+  );
 
   await page.route('**/assets/ForecastAtlas-*.js', async route => {
     await new Promise(resolve => setTimeout(resolve, 350));
@@ -337,7 +363,10 @@ test('lazy forecast chunk does not block the decision-first view', async ({ page
 });
 
 test('recovers once when a lazy chunk disappears during deploy', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser coverage for deploy recovery');
+  test.skip(
+    testInfo.project.name !== 'desktop-1280',
+    'single browser coverage for deploy recovery'
+  );
 
   let forecastChunkRequests = 0;
   await page.route('**/sw.js', route => route.abort());
@@ -352,12 +381,13 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
 
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible({
+    timeout: 10_000,
+  });
   await expect(page).toHaveURL(/\/istanbul\/$/);
   expect(forecastChunkRequests).toBeGreaterThanOrEqual(2);
   await expect(page.locator('.app-fatal')).toHaveCount(0);
 });
-
 
 test('English mode updates document language and decision copy', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser language coverage');
@@ -378,10 +408,13 @@ test('English mode updates document language and decision copy', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page).toHaveTitle('İstanbul weather — Hava81');
   await expect(page.getByRole('heading', { name: 'Planning signals' })).toBeVisible();
-  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('civarında');
-  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText('güneş koruması');
+  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText(
+    'civarında'
+  );
+  await expect(page.locator('.hava81-decision-field__decision-list')).not.toContainText(
+    'güneş koruması'
+  );
 });
-
 
 test('service worker update checks bypass the HTTP cache', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser PWA coverage');
@@ -394,7 +427,8 @@ test('service worker update checks bypass the HTTP cache', async ({ page }, test
     const registration = await navigator.serviceWorker.getRegistration();
     return registration?.updateViaCache;
   });
-  expect(updateViaCache).toBe('none');});
+  expect(updateViaCache).toBe('none');
+});
 
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
@@ -477,8 +511,10 @@ test('route weather renders a transparent corridor result', async ({ page }, tes
   ).toHaveCount(5);
 });
 
-
-test('production shell exposes an installable PWA contract', async ({ page, request }, testInfo) => {
+test('production shell exposes an installable PWA contract', async ({
+  page,
+  request,
+}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser PWA coverage');
 
   const manifestResponse = await request.get('/manifest.json');
@@ -534,8 +570,9 @@ test('production shell exposes an installable PWA contract', async ({ page, requ
   }
 });
 
-
-test('out-and-back plan persists routine times and produces a preparation decision', async ({ page }, testInfo) => {
+test('out-and-back plan persists routine times and produces a preparation decision', async ({
+  page,
+}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser routine-plan coverage');
 
   await page.clock.setFixedTime(new Date('2026-08-28T08:00:00Z'));
