@@ -106,3 +106,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Ship only Latin and Latin Extended font subsets. They cover Hava81s Turkish/English interface; unrelated Greek, Cyrillic and Vietnamese subsets add transfer/storage cost without product value.
 
 - 2026-08-28 — A successful Pages publish step is not sufficient evidence of a healthy frontend. The release workflow must verify the public custom-domain shell with bounded retries after publish, covering root, a canonical province entry page, manifest and service worker without asserting live weather values.
+
+- 2026-08-28 — Browser startup configuration is intentionally validated with narrow typed parsers rather than a general-purpose schema runtime. The frontend has only a handful of public Vite fields; keeping Zod in the initial bundle costs more than this use case justifies, while API/server schemas remain unaffected.

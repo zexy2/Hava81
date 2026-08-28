@@ -1,38 +1,33 @@
 /** Browser configuration validated from Vite's public environment. */
-import { z } from 'zod';
 
-const envSchema = z.object({
-  VITE_API_BASE_URL: z.string().min(1).optional(),
-  VITE_CACHE_TTL: z
-    .string()
-    .optional()
-    .transform(value => (value ? Number.parseInt(value, 10) : 300000)),
-  VITE_MAX_RETRIES: z
-    .string()
-    .optional()
-    .transform(value => (value ? Number.parseInt(value, 10) : 3)),
-  VITE_ENABLE_ANALYTICS: z
-    .string()
-    .optional()
-    .transform(value => value === 'true'),
-  MODE: z.enum(['development', 'production', 'test']).catch('development'),
-});
+type AppMode = 'development' | 'production' | 'test';
 
-type BrowserEnv = z.infer<typeof envSchema>;
+interface BrowserEnv {
+  VITE_API_BASE_URL?: string;
+  VITE_CACHE_TTL: number;
+  VITE_MAX_RETRIES: number;
+  VITE_ENABLE_ANALYTICS: boolean;
+  MODE: AppMode;
+}
+
+const parsePositiveInteger = (value: string | undefined, fallback: number): number => {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const parseMode = (value: string): AppMode =>
+  value === 'production' || value === 'test' || value === 'development' ? value : 'development';
 
 const parseEnv = (): BrowserEnv => {
-  const result = envSchema.safeParse({
-    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-    VITE_CACHE_TTL: import.meta.env.VITE_CACHE_TTL,
-    VITE_MAX_RETRIES: import.meta.env.VITE_MAX_RETRIES,
-    VITE_ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS,
-    MODE: import.meta.env.MODE,
-  });
-  if (!result.success) {
-    console.error('Environment validation failed:', result.error.flatten().fieldErrors);
-    return { MODE: import.meta.env.MODE as BrowserEnv['MODE'] } as BrowserEnv;
-  }
-  return result.data;
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  return {
+    VITE_API_BASE_URL: apiBaseUrl || undefined,
+    VITE_CACHE_TTL: parsePositiveInteger(import.meta.env.VITE_CACHE_TTL, 300000),
+    VITE_MAX_RETRIES: parsePositiveInteger(import.meta.env.VITE_MAX_RETRIES, 3),
+    VITE_ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
+    MODE: parseMode(import.meta.env.MODE),
+  };
 };
 
 const env = parseEnv();
@@ -41,14 +36,14 @@ export const config = {
   api: {
     baseUrl: env.VITE_API_BASE_URL || '/api/v1',
     timeout: 30000,
-    maxRetries: env.VITE_MAX_RETRIES || 3,
+    maxRetries: env.VITE_MAX_RETRIES,
   },
   cache: {
-    ttl: env.VITE_CACHE_TTL || 300000,
+    ttl: env.VITE_CACHE_TTL,
     staleTime: 60000,
   },
   features: {
-    enableAnalytics: env.VITE_ENABLE_ANALYTICS || false,
+    enableAnalytics: env.VITE_ENABLE_ANALYTICS,
     enableOfflineMode: false,
   },
   app: {
