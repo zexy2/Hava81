@@ -457,3 +457,17 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The Forecast Atlas now upgrades to the next 24 true hourly slots when that source is available, while the existing OpenWeather three-hour forecast remains the decision-engine baseline and immediate UI fallback. A slow or failing optional hourly request no longer blocks the baseline forecast; the Atlas upgrades asynchronously if/when hourly data arrives.
 - Added Turkish/English hourly copy and source attribution, plus API/frontend integration and browser coverage for the 24-hour display and provider-failure fallback.
 - Rebased cleanly onto main `12595290` after PR #76 merged. Final combined gates: lint, frontend type-check, full serial frontend suite, API type-check/test/build, production build with 81 city pages, production dependency audits, `git diff --check`, and full Playwright smoke (21 applicable passed, 30 viewport-intentional skips) all pass.
+
+## 2026-08-28 21:55 TRT — real-hourly production promotion and live verification
+
+- Merged PR #77 at exact head `d366bf34777353257d025c08cc6270842039d71f`; main merge commit `79004827e54dc60261a7c7f44aee9d1964dc895b` passed CI/CD run #251 including frontend/API quality, production build, browser flows, Lighthouse, Docker and Pages deployment.
+- Built the API candidate once from exact main and validated image `sha256:8466ebd90f686bc2ec202810331f2f44e36c2fce10472fe9182e47b24f654ed8` on 4001: readiness/CORS/current/forecast/context/route probes passed, route returned five corridor segments, restart count stayed zero, and the hourly endpoint returned 48 one-hour Open-Meteo slots with explicit attribution.
+- Public traffic was briefly switched to the healthy canary for external verification, then the exact same validated image was promoted to 4002 without rebuilding. Production is back on normal port 4002; direct/public hourly checks return 48 Open-Meteo points and readiness is healthy with zero restarts.
+- Restored previous production image `sha256:90792e2a1dcb1ef0379aa26c6ce8432c569ab6039470323e44428457540365e1` on 4001 as immediate rollback. Observer subsequently reports production healthy, Nginx 4002 and no issues.
+- Live 390×844 production browser smoke on `/istanbul/` verified the visible `Saatlik tahmin · sonraki 24 saat` heading, exactly 24 hourly columns, the Open-Meteo attribution link, İstanbul as the sole H1, and zero page errors.
+
+## 2026-08-28 22:01 TRT — share-copy live announcement
+
+- The Gün planı share control already changed its visible label to `Kopyalandı` after clipboard fallback, but screen-reader users received no explicit asynchronous status announcement.
+- Added a visually hidden atomic polite status that announces successful copy while leaving focus on the share button. No weather/share payload semantics or visual layout changed.
+- Validation on main `79004827`: focused DailyPlanPanel coverage 1/1, lint, type-check, complete serial frontend suite, production build with all 81 city pages, production dependency audit 0 vulnerabilities and `git diff --check` all pass.
