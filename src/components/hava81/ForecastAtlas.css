@@ -10,8 +10,9 @@
   color: var(--forecast-ink);
   background: var(--forecast-paper);
   border: 1px solid var(--forecast-line);
-  border-radius: 8px;
+  border-radius: var(--radius-lg, 12px);
   padding: 16px;
+  box-shadow: var(--shadow-card);
   font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
 }
 
@@ -75,6 +76,7 @@
 .hava81-forecast-atlas__hourly-viewport {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
   scrollbar-color: var(--forecast-line) transparent;
   scrollbar-width: thin;
 }
@@ -155,6 +157,7 @@
   gap: 8px;
   padding: 12px 8px;
   border-inline-start: 1px solid var(--forecast-line);
+  scroll-snap-align: start;
   font-variant-numeric: tabular-nums lining-nums;
 }
 

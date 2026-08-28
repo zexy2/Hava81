@@ -45,3 +45,5 @@ This log records product and engineering decisions made during the autonomous im
 - Notification copy must describe the current foreground-browser behavior only; do not imply account-backed/background delivery before that infrastructure exists.
 
 - 2026-08-28 polish-2: Keep cosmetic changes bounded to presentation and interaction affordances; do not alter weather thresholds or modeled-data semantics while polishing UI. Mobile route segments use horizontal scanning instead of compressing five risk cards into two narrow columns.
+
+- 2026-08-28 — Visual polish batch 3 keeps data/decision logic unchanged: Forecast, Environment, Compare and Search now share the established surface/token system. CI downstream jobs reuse the production `dist` artifact rather than rebuilding identical frontend output; the build job remains the single artifact producer.
