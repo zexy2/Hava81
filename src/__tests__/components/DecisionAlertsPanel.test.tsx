@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { DecisionAlertsPanel } from '../../components/hava81/DecisionAlertsPanel';
@@ -43,6 +44,28 @@ describe('DecisionAlertsPanel', () => {
     expect(requestPermission).not.toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+
+  it('lets a previously enabled user turn alerts off after browser permission becomes blocked', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const requestPermission = vi.fn();
+    vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+
+    const button = screen.getByRole('button');
+    expect(button).toBeEnabled();
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+    await user.click(button);
+
+    expect(localStorage.getItem('hava81-alerts-v1')).toBeNull();
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    expect(button).toBeDisabled();
+    expect(requestPermission).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+    localStorage.clear();
   });
 
   it('does not mark a decision alert as sent when notification delivery fails', async () => {

@@ -180,3 +180,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Current-weather error privacy is enforced at the `useWeather` boundary rather than by individual renderers. Provider/internal exception text is sanitized before UI consumers receive it, while network/not-found remain useful localized categories; route-weather failures likewise use localized recovery copy.
 
 - 2026-08-28 — Persisted commute routines must make the exact next evaluated leave/return window visible in the verdict. A saved morning routine opened in the evening evaluates the next day by design; the UI must expose that rollover instead of letting users assume the recommendation applies to the current calendar day.
+
+- 2026-08-28 — A persisted alert opt-in must remain locally reversible even if browser Notification permission later becomes denied or unavailable. Block new opt-in attempts in that state, but never trap an already-enabled user by disabling Hava81's own opt-out control.

@@ -93,7 +93,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         type="button"
         onClick={() => void toggle()}
         aria-pressed={enabled}
-        disabled={typeof Notification === 'undefined' || permission === 'denied'}
+        disabled={!enabled && (typeof Notification === 'undefined' || permission === 'denied')}
       >
         {enabled
           ? t('hava81.alerts.disable')
