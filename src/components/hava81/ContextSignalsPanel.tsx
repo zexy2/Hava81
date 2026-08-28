@@ -8,6 +8,7 @@ interface Props {
 }
 
 type Level = 'low' | 'moderate' | 'high' | 'veryHigh';
+const normalizeMicroUnit = (unit?: string) => unit?.replace(/μ/g, 'µ') ?? '';
 const uvLevel = (uv?: number): Level | undefined =>
   uv === undefined
     ? undefined
@@ -64,7 +65,7 @@ export function ContextSignalsPanel({ signals }: Props) {
           <article className="context-signal">
             <span>{t('hava81.context.dust')}</span>
             <strong>
-              {Math.round(signals.dustMax)} <small>{signals.units.dust ?? ''}</small>
+              {Math.round(signals.dustMax)} <small>{normalizeMicroUnit(signals.units.dust)}</small>
             </strong>
             <p>{t('hava81.context.next24h')}</p>
           </article>
@@ -74,7 +75,9 @@ export function ContextSignalsPanel({ signals }: Props) {
             <span>{t('hava81.context.pollen')}</span>
             <strong>
               {pollen.toFixed(1)}{' '}
-              <small>{signals.units.grassPollen ?? signals.units.olivePollen ?? ''}</small>
+              <small>
+                {normalizeMicroUnit(signals.units.grassPollen ?? signals.units.olivePollen)}
+              </small>
             </strong>
             <p>{t('hava81.context.pollenNote')}</p>
           </article>

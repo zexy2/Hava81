@@ -164,7 +164,7 @@ export function EnvironmentRail({
           {airQuality
             ? `${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
                 airQuality.pm25
-              )} μg/m³`
+              )} µg/m³`
             : t('weather.noData')}
         </span>
       </div>
