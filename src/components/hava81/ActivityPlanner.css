@@ -31,7 +31,7 @@
   color: var(--color-atlas-muted);
 }
 .activity-planner__sensitivity select {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0 0.65rem;
   color: var(--color-atlas-ink);
   background: var(--color-atlas-field);
@@ -50,7 +50,7 @@
   gap: var(--space-xs);
 }
 .activity-planner__chips button {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0 0.8rem;
   color: var(--color-atlas-ink);
   background: transparent;

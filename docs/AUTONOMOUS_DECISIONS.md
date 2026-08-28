@@ -80,3 +80,7 @@ This log records product and engineering decisions made during the autonomous im
 
 - Treat OpenWeather `main.aqi` strictly as OpenWeather's own five-level qualitative index (1 Good, 2 Fair, 3 Moderate, 4 Poor, 5 Very Poor). Do not relabel those ordinal values as US AQI health categories such as "Unhealthy for Sensitive Groups" without actually calculating that separate standard from pollutant concentrations.
 - Never clamp out-of-range AQI values to the nearest qualitative label. Invalid provider indices are unavailable data until validated, not an opportunity to infer a health category.
+
+## 2026-08-28 13:24 TRT — touch-target enforcement
+
+- The documented 44 px touch-target rule is now an executable mobile browser gate rather than a visual guideline. New interactive controls must preserve at least 44×44 px rendered dimensions at the 390 px viewport unless a deliberately reviewed exception is introduced.

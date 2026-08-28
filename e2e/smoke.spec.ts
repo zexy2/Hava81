@@ -268,6 +268,39 @@ test('current conditions stay in the first mobile viewport', async ({ page }, te
   expect((box?.y ?? 1000) + (box?.height ?? 0)).toBeLessThan(844);
 });
 
+test('mobile interactive controls preserve 44px touch targets', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile touch target coverage');
+
+  await page.goto('/istanbul');
+
+  const undersized = await page
+    .locator('button, a, input, select, textarea, [role="button"]')
+    .evaluateAll(elements =>
+      elements
+        .map(element => {
+          const rect = element.getBoundingClientRect();
+          const style = window.getComputedStyle(element);
+          const visible =
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.display !== 'none' &&
+            style.visibility !== 'hidden';
+          return {
+            label:
+              element.getAttribute('aria-label') ||
+              element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 60) ||
+              element.tagName,
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            visible,
+          };
+        })
+        .filter(target => target.visible && (target.width < 44 || target.height < 44))
+    );
+
+  expect(undersized).toEqual([]);
+});
+
 test('desktop comparison entry works with two saved cities', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop comparison assertion');
   await page.addInitScript(() => {
