@@ -102,3 +102,5 @@ This log records product and engineering decisions made during the autonomous im
 - Persist a decision alert's same-day dedupe marker only after the browser accepts notification delivery. Delivery failures stay optional/non-blocking, but must not be treated as successful user notification.
 
 - 2026-08-28 — Treat PWA manifest availability and active service-worker registration as release contracts because browser decision alerts depend on the worker even though Hava81 does not claim offline weather freshness.
+
+- 2026-08-28 — Ship only Latin and Latin Extended font subsets. They cover Hava81s Turkish/English interface; unrelated Greek, Cyrillic and Vietnamese subsets add transfer/storage cost without product value.
