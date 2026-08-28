@@ -21,6 +21,8 @@ EVENTS_FILE = LOG_DIR / 'events.jsonl'
 NGINX_SITE = Path('/etc/nginx/sites-enabled/api.hava81.zekiakgul.dev')
 EXPECTED_API_PORT = 4002
 REPO = 'zexy2/Hava81'
+MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
+MAXIMUM_ROOT_USED_PERCENT = 92.0
 USER_AGENT = 'Hava81-Deterministic-Observer/1.0'
 SSL_CONTEXT = ssl.create_default_context()
 
@@ -166,17 +168,27 @@ def collect_host() -> dict[str, Any]:
     free_bytes = usage.f_bavail * usage.f_frsize
     total_bytes = usage.f_blocks * usage.f_frsize
     used_percent = round((1 - (usage.f_bavail / usage.f_blocks)) * 100, 1) if usage.f_blocks else 0.0
-    disk_ok = free_bytes >= 2 * 1024 * 1024 * 1024
+    free_ok = free_bytes >= MINIMUM_ROOT_FREE_BYTES
+    usage_ok = used_percent < MAXIMUM_ROOT_USED_PERCENT
+    disk_ok = free_ok and usage_ok
+    issues: list[str] = []
+    if not free_ok:
+        issues.append('root_disk_low')
+    if not usage_ok:
+        issues.append('root_disk_pressure')
     return {
         'disk': {
             'free_bytes': free_bytes,
             'total_bytes': total_bytes,
             'used_percent': used_percent,
-            'minimum_free_bytes': 2 * 1024 * 1024 * 1024,
+            'minimum_free_bytes': MINIMUM_ROOT_FREE_BYTES,
+            'maximum_used_percent': MAXIMUM_ROOT_USED_PERCENT,
+            'free_ok': free_ok,
+            'usage_ok': usage_ok,
             'ok': disk_ok,
         },
         'healthy': disk_ok,
-        'issues': [] if disk_ok else ['root_disk_low'],
+        'issues': issues,
     }
 
 
