@@ -203,3 +203,5 @@ This log records product and engineering decisions made during the autonomous im
 - Aggregate the next 12 hours by elapsed time and add bounded downside weighting, making the result stable across one-hour and three-hour forecast cadences.
 - Expose dominant approximate factor impacts and data coverage in the UI; do not present the score as a safety guarantee.
 - Align activity, commute, comparison, and limited-signal route scoring with the same continuous-score philosophy instead of maintaining independent hard cliffs.
+
+- 2026-08-29 — Do not enable ads, subscriptions, promotional commercial use, or other monetization while Hava81 is using Open-Meteo's free hosted endpoints. The API BFF supports server-only customer-prefixed forecast/air-quality/marine hosts and `OPEN_METEO_API_KEY`; switch those production variables to a paid Open-Meteo plan before commercial activation. Keep CC BY 4.0 attribution/modification disclosure even on the paid endpoint.

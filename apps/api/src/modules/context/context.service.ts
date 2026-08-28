@@ -97,11 +97,25 @@ const getJson = async (url: URL, fetchImpl: typeof fetch, timeoutMs = 8_000) => 
   }
 };
 
+interface OpenMeteoContextConfig {
+  airQualityBaseUrl: string;
+  marineBaseUrl: string;
+  apiKey?: string;
+}
+
+const defaultOpenMeteoContextConfig: OpenMeteoContextConfig = {
+  airQualityBaseUrl: 'https://air-quality-api.open-meteo.com',
+  marineBaseUrl: 'https://marine-api.open-meteo.com',
+};
+
 export class ContextSignalsService {
-  constructor(private readonly fetchImpl: typeof fetch = fetch) {}
+  constructor(
+    private readonly fetchImpl: typeof fetch = fetch,
+    private readonly openMeteo: OpenMeteoContextConfig = defaultOpenMeteoContextConfig
+  ) {}
 
   async get(lat: number, lon: number, includeMarine: boolean): Promise<ContextSignals> {
-    const airUrl = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
+    const airUrl = new URL('/v1/air-quality', this.openMeteo.airQualityBaseUrl);
     airUrl.searchParams.set('latitude', String(lat));
     airUrl.searchParams.set('longitude', String(lon));
     airUrl.searchParams.set('hourly', 'uv_index,dust,grass_pollen,olive_pollen');
@@ -110,11 +124,12 @@ export class ContextSignalsService {
     // `auto` timezone returns local wall-clock strings without an offset; GMT plus the
     // explicit parser above avoids shifting the window when the API host runs in UTC.
     airUrl.searchParams.set('timezone', 'GMT');
+    if (this.openMeteo.apiKey) airUrl.searchParams.set('apikey', this.openMeteo.apiKey);
 
     const airPromise = getJson(airUrl, this.fetchImpl).then(data => airSchema.parse(data));
     const marinePromise = includeMarine
       ? (() => {
-          const marineUrl = new URL('https://marine-api.open-meteo.com/v1/marine');
+          const marineUrl = new URL('/v1/marine', this.openMeteo.marineBaseUrl);
           marineUrl.searchParams.set('latitude', String(lat));
           marineUrl.searchParams.set('longitude', String(lon));
           marineUrl.searchParams.set(
@@ -122,6 +137,7 @@ export class ContextSignalsService {
             'wave_height,wave_direction,wave_period,sea_surface_temperature'
           );
           marineUrl.searchParams.set('timezone', 'auto');
+          if (this.openMeteo.apiKey) marineUrl.searchParams.set('apikey', this.openMeteo.apiKey);
           return getJson(marineUrl, this.fetchImpl)
             .then(data => marineSchema.parse(data))
             .catch(() => null);

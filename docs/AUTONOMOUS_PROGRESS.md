@@ -481,3 +481,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Aligned activity scoring, commute scoring, city comparison, decision copy, and API route-weather scoring with the same continuous-risk philosophy. The Gün planı now exposes dominant approximate factor impacts plus data-coverage confidence instead of presenting a bare opaque number.
 - Calibration probes on live provider data produced plausible current bands across İstanbul, Ankara, İzmir, Şanlıurfa and Erzurum; synthetic probes separately exercised humid heat, drizzle-vs-material rain, gusts, UV, low visibility, poor air and hail/thunderstorm combinations.
 - Final local gates before rebase: frontend lint/type-check pass; full frontend suite 126/126; API type-check/build and 22/22 API tests pass; production frontend build generated all 81 city pages; frontend/API production dependency audits report 0 vulnerabilities; git diff --check clean; full Playwright smoke on isolated port 4192 passed 21 applicable tests with 30 intentional viewport skips and 0 failures. The isolated port avoids an unrelated Postify preview already using 4173.
+
+## 2026-08-29 00:18 TRT — Open-Meteo commercial-endpoint readiness
+
+- Re-verified Open-Meteo's current terms before changing provider wiring: the free hosted API is limited to non-commercial use, while paid plans use customer-prefixed hosts plus an `apikey` with otherwise compatible request semantics.
+- Added server-only configuration for forecast, air-quality and marine Open-Meteo base URLs plus an optional API key. Defaults remain the existing free endpoints, so current non-commercial production behavior does not change.
+- Added regression coverage proving both hourly forecast and context services preserve their request semantics when switched to paid customer hosts and attach the key only server-side.
+- Updated the Oracle environment template with an explicit monetization gate: before subscriptions, advertising or other commercial use, configure the paid customer hosts and secret key. No credential was added to the repository or frontend.
+- Validation: API type-check passed; API suite 24/24; API build passed; production API dependency audit found 0 vulnerabilities; `git diff --check` clean.
