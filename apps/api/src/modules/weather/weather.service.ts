@@ -92,7 +92,7 @@ export class WeatherService {
       const labels =
         query.lang === 'en'
           ? ['', 'Good', 'Fair', 'Moderate', 'Poor', 'Very Poor']
-          : ['', 'İyi', 'Orta', 'Hassas', 'Sağlıksız', 'Çok Sağlıksız'];
+          : ['', 'İyi', 'Makul', 'Orta', 'Kötü', 'Çok kötü'];
 
       return {
         aqi: sample.main.aqi,

@@ -2,16 +2,10 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { AirQuality, NormalizedWeatherData } from '../../types';
+import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import './EnvironmentRail.css';
 
 const WIND_DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
-const AIR_QUALITY_LABEL_KEYS = [
-  'airQuality.good',
-  'airQuality.moderate',
-  'airQuality.sensitive',
-  'airQuality.unhealthy',
-  'airQuality.veryUnhealthy',
-] as const;
 
 export interface EnvironmentRailProps {
   weather: NormalizedWeatherData;
@@ -115,9 +109,8 @@ export function EnvironmentRail({
   const windSpeed = hasValidWind
     ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${getWindSpeedSymbol()}`
     : t('weather.noData');
-  const airQualityLabel = airQuality
-    ? t(AIR_QUALITY_LABEL_KEYS[Math.min(Math.max(airQuality.aqi - 1, 0), 4)])
-    : t('weather.noData');
+  const airQualityLabelKey = airQuality ? getOpenWeatherAqiLabelKey(airQuality.aqi) : undefined;
+  const airQualityLabel = airQualityLabelKey ? t(airQualityLabelKey) : t('weather.noData');
 
   const sectionLabel = [
     t('daylight.title'),
@@ -158,10 +151,10 @@ export function EnvironmentRail({
         </span>
         <span className="environment-rail__label">{t('weather.airQuality')}</span>
         <strong className="environment-rail__value">
-          {airQuality ? `${airQuality.aqi} / 5` : '—'}
+          {airQualityLabelKey ? `${airQuality?.aqi} / 5` : '—'}
         </strong>
         <span className="environment-rail__detail">
-          {airQuality
+          {airQuality && airQualityLabelKey
             ? `${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
                 airQuality.pm25
               )} µg/m³`
