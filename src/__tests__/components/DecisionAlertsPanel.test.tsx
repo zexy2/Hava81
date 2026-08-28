@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { DecisionAlertsPanel } from '../../components/hava81/DecisionAlertsPanel';
 import type { HourlyForecast, NormalizedWeatherData } from '../../types';
@@ -33,6 +33,17 @@ const hourly: HourlyForecast[] = [
 ];
 
 describe('DecisionAlertsPanel', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 7, 28, 12, 0, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
   it('does not present a clickable opt-in when browser permission is blocked', () => {
     const requestPermission = vi.fn();
     vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
@@ -42,8 +53,6 @@ describe('DecisionAlertsPanel', () => {
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
     expect(requestPermission).not.toHaveBeenCalled();
-
-    vi.unstubAllGlobals();
   });
 
   it('lets a previously enabled user turn alerts off after browser permission becomes blocked', async () => {
@@ -63,9 +72,6 @@ describe('DecisionAlertsPanel', () => {
     expect(button).toHaveAttribute('aria-pressed', 'false');
     expect(button).toBeDisabled();
     expect(requestPermission).not.toHaveBeenCalled();
-
-    vi.unstubAllGlobals();
-    localStorage.clear();
   });
 
   it('does not mark a decision alert as sent when notification delivery fails', async () => {
@@ -85,8 +91,19 @@ describe('DecisionAlertsPanel', () => {
         key?.startsWith('hava81-alert-sent:')
       )
     ).toBe(false);
+  });
 
-    vi.unstubAllGlobals();
-    localStorage.clear();
+  it('does not deliver a decision alert during quiet hours', async () => {
+    vi.setSystemTime(new Date(2026, 7, 28, 23, 0, 0));
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+
+    await Promise.resolve();
+    expect(notification).not.toHaveBeenCalled();
   });
 });
