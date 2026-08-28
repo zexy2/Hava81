@@ -9,6 +9,39 @@ import '@fontsource-variable/source-serif-4';
 import './index.css';
 import 'leaflet/dist/leaflet.css';
 
+const CHUNK_RECOVERY_PARAM = '__hava81_chunk_reload';
+const CHUNK_RECOVERY_STORAGE_KEY = 'hava81:chunk-recovery-at';
+const CHUNK_RECOVERY_WINDOW_MS = 60_000;
+
+const bootUrl = new URL(window.location.href);
+if (bootUrl.searchParams.has(CHUNK_RECOVERY_PARAM)) {
+  bootUrl.searchParams.delete(CHUNK_RECOVERY_PARAM);
+  window.history.replaceState(window.history.state, '', bootUrl);
+}
+
+window.addEventListener('vite:preloadError', event => {
+  const now = Date.now();
+  let previousAttempt = 0;
+  try {
+    previousAttempt = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_STORAGE_KEY) ?? 0);
+  } catch {
+    // Storage can be unavailable in privacy-restricted contexts; the URL guard still limits loops.
+  }
+
+  if (previousAttempt && now - previousAttempt < CHUNK_RECOVERY_WINDOW_MS) return;
+
+  try {
+    window.sessionStorage.setItem(CHUNK_RECOVERY_STORAGE_KEY, String(now));
+  } catch {
+    // Best effort only.
+  }
+
+  event.preventDefault();
+  const recoveryUrl = new URL(window.location.href);
+  recoveryUrl.searchParams.set(CHUNK_RECOVERY_PARAM, String(now));
+  window.location.replace(recoveryUrl.toString());
+});
+
 if (!validateConfig() && import.meta.env.PROD) {
   console.error('Application cannot start due to invalid configuration');
 }
