@@ -168,7 +168,6 @@ export function EnvironmentRail({
         onClick={onOpenMap}
         aria-expanded={mapExpanded}
         aria-pressed={mapExpanded}
-        aria-label={mapExpanded ? t('weather.hideMap') : t('weather.showMap')}
       >
         <span className="environment-rail__icon">
           <MapIcon />

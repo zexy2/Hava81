@@ -110,3 +110,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-28 — Browser startup configuration is intentionally validated with narrow typed parsers rather than a general-purpose schema runtime. The frontend has only a handful of public Vite fields; keeping Zod in the initial bundle costs more than this use case justifies, while API/server schemas remain unaffected.
 
 - 2026-08-28 — Do not publish frontend source maps in normal production artifacts. Source-map generation is opt-in for the explicit bundle-analysis command only; operational debugging should not require exposing maps to every public visitor.
+
+- 2026-08-28 — Treat individual Lighthouse accessibility audits as actionable even when the aggregate accessibility category rounds to 100. Interactive accessible names should contain/derive from their visible labels, and ARIA list semantics must use host/role combinations accepted by accessibility APIs rather than visually equivalent but invalid markup.
