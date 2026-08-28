@@ -132,3 +132,6 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 
 ## 2026-08-28 12:40 TRT — CI runtime maintenance
 - GitHub-hosted jobs now warn that Node.js 20-backed JavaScript actions are deprecated and will be removed from runners on 16 September 2026. Updated checkout/setup-node plus artifact upload/download actions from v4 to their current v6 majors so Hava81 CI runs on the supported Node 24 action runtime.
+
+## 2026-08-28 map-CSS split checkpoint
+- Lighthouse identified the main stylesheet as render-blocking while WeatherMap is already lazy. Moved Leaflet framework CSS from the app entrypoint into the lazy WeatherMap module so map styles load only with the map. Validation pending.
