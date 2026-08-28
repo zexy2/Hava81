@@ -7,7 +7,6 @@ import './i18n';
 import '@fontsource-variable/ibm-plex-sans';
 import '@fontsource-variable/source-serif-4';
 import './index.css';
-import 'leaflet/dist/leaflet.css';
 
 const CHUNK_RECOVERY_PARAM = '__hava81_chunk_reload';
 const CHUNK_RECOVERY_STORAGE_KEY = 'hava81:chunk-recovery-at';
