@@ -106,8 +106,12 @@ describe('Hava81 app integration', () => {
   it('renders the decision-first city view and forecast metadata', async () => {
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: /3 saatlik tahmin/i })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: /gün planı/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /3 saatlik tahmin/i }, { timeout: 3_000 })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
+    ).toBeInTheDocument();
     expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
     expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();

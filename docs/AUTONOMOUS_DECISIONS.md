@@ -94,3 +94,6 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-28 13:50 TRT — service-worker cache safety
 
 - Never serve `/sw.js` with the immutable one-year static-asset policy. Service workers must revalidate so browsers can discover notification/navigation behavior updates; keep fingerprinted JS/CSS/images immutable, but give the worker an exact-match no-cache policy.
+## 2026-08-28 13:53 TRT — async test timing
+
+- Do not globally relax frontend async-test timeouts to hide CI slowness. Code-split UI boundaries may use a narrowly scoped 3 s wait in integration coverage; synchronous decision-critical rendering keeps the default timeout so regressions remain visible.
