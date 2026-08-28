@@ -229,3 +229,5 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-29 — named explanation groups
 
 - A visible explanatory cluster that has its own `aria-label` must expose a grouping semantic rather than attaching an inaccessible name to a generic container. Daily Plan's score explanation uses `role="group"`; no scoring or visual behavior changes.
+
+- 2026-08-29 — Open-Meteo modeled-context surfaces follow the same explicit attribution contract as hourly data: provider link, CC BY 4.0 license link, and a visible indication that Hava81 summarizes/transforms the provider output. Do not rely on an unlinked combined attribution string when the transformed values are displayed to users.

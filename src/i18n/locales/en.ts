@@ -313,6 +313,7 @@ export const en = {
       wave: 'Wave: {{height}} {{unit}}',
       waveDetails:
         'Wave {{height}} {{unit}} · period {{period}} {{periodUnit}} · direction {{direction}}{{directionUnit}}',
+      sourceModified: 'summarized by Hava81',
       fetchedAt: 'model {{time}}',
       waveUnavailable: 'Wave data unavailable',
       next24h: 'Model maximum over the next 24 hours.',

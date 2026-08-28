@@ -28,7 +28,15 @@ describe('ContextSignalsPanel', () => {
         }}
       />
     );
-    expect(screen.getByText(/Open-Meteo · CC BY 4.0/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
+      'href',
+      'https://open-meteo.com/'
+    );
+    expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+      'href',
+      'https://creativecommons.org/licenses/by/4.0/'
+    );
+    expect(screen.getByText(/Hava81 tarafından özetlendi/)).toBeInTheDocument();
     expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
     expect(
       screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)
