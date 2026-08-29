@@ -583,3 +583,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited comparison refresh state and found that changing language/profile/selected cities could leave the previous rows visible while the replacement request was still loading.
 - New comparison loads now clear old rows before entering the loading state, preventing stale city cards from being presented as if they belonged to the new selection. Partial-success and total-failure behavior remain unchanged.
 - Added regression coverage that loads two cities, changes the comparison context, holds the replacement request pending, and requires the old city headings to disappear while the loading status is visible.
+
+## 2026-08-29 05:05 TRT — async reset invalidates late weather responses
+
+- Audited the city-to-current-location handoff and found that `useAsync.reset()` cleared visible state without invalidating an already-running call. A slow city request could therefore resolve after a successful location request and repopulate the higher-priority city slot with stale data.
+- `useAsync.reset()` now advances the call generation before clearing state. The underlying request may still finish, but its result/error/success callback can no longer mutate state after reset.
+- Added a product regression that starts a delayed İzmir request, switches to current-location Ankara, then resolves İzmir late and requires Ankara to remain authoritative.

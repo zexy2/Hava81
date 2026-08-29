@@ -118,6 +118,9 @@ export function useAsync<T, Args extends unknown[] = []>(
   );
 
   const reset = useCallback(() => {
+    // Reset is also a cancellation boundary for stale result delivery. The underlying
+    // request may still finish, but it must no longer be allowed to repopulate state.
+    lastCallIdRef.current += 1;
     setState({
       data: null,
       error: null,

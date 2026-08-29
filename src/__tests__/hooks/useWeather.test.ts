@@ -122,6 +122,43 @@ describe('useWeather', () => {
     expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
   });
 
+
+  it('keeps a location result authoritative when an older city request resolves late', async () => {
+    let resolveCity: ((value: { cityName: string; country: string; temperature: number; coordinates: { lat: number; lon: number } }) => void) | undefined;
+    (weatherService.getCurrentWeather as Mock).mockImplementationOnce(
+      () => new Promise(resolve => { resolveCity = resolve; })
+    );
+    (weatherService.getCurrentLocationWeather as Mock).mockResolvedValueOnce({
+      cityName: 'Ankara',
+      country: 'TR',
+      temperature: 18,
+      coordinates: { lat: 39.93, lon: 32.86 },
+    });
+
+    const { result } = renderHook(() => useWeather());
+    let cityRequest: Promise<unknown>;
+    act(() => {
+      cityRequest = result.current.fetchWeather('İzmir');
+    });
+
+    await act(async () => {
+      await result.current.fetchCurrentLocation();
+    });
+    expect(result.current.weather?.cityName).toBe('Ankara');
+
+    await act(async () => {
+      resolveCity?.({
+        cityName: 'İzmir',
+        country: 'TR',
+        temperature: 22,
+        coordinates: { lat: 38.42, lon: 27.14 },
+      });
+      await cityRequest!;
+    });
+
+    expect(result.current.weather?.cityName).toBe('Ankara');
+  });
+
   it('should update city when setCity is called', () => {
     const { result } = renderHook(() => useWeather());
 
