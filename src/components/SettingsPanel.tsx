@@ -113,7 +113,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
   const handleLanguageChange = (lang: Language) => {
     updateSetting('language', lang);
     i18n.changeLanguage(lang);
-    localStorage.setItem('app-language', lang);
   };
 
   return (
