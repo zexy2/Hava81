@@ -805,3 +805,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Daily forecast cards no longer render duplicated values such as `24° / 24°` when high and low round to the same displayed temperature; they show a single temperature with a dedicated accessible label.
 - Distinct rounded extrema still keep the familiar high/low pair. Turkish and English labels were added explicitly rather than inferring meaning from punctuation.
 - Rebuilt this bounded change onto current main after the original PR became conflict-stale; focused and combined gates are rerun on the rebuilt exact head before merge.
+
+## 2026-08-29 21:46 TRT — route-weather browser trust boundary rebuild
+
+- Rebuilt the conflict-stale route response validation onto current main in an isolated branch while the equal-temperature PR validated independently.
+- Route results fail closed on malformed departure/ETA timestamps, invalid corridor kind, non-finite/negative distance or duration, score/risk domain violations, impossible coordinates/fractions, precipitation outside 0–100%, negative wind, blank descriptions/disclaimer, and invalid better-departure metadata.
+- No route value is corrected or fabricated. Invalid BFF route data uses the existing retryable forecast-data error path. Combined validation was rerun on the rebuilt exact head before publication.
