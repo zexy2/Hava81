@@ -122,11 +122,20 @@ describe('useWeather', () => {
     expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
   });
 
-
   it('keeps a location result authoritative when an older city request resolves late', async () => {
-    let resolveCity: ((value: { cityName: string; country: string; temperature: number; coordinates: { lat: number; lon: number } }) => void) | undefined;
+    let resolveCity:
+      | ((value: {
+          cityName: string;
+          country: string;
+          temperature: number;
+          coordinates: { lat: number; lon: number };
+        }) => void)
+      | undefined;
     (weatherService.getCurrentWeather as Mock).mockImplementationOnce(
-      () => new Promise(resolve => { resolveCity = resolve; })
+      () =>
+        new Promise(resolve => {
+          resolveCity = resolve;
+        })
     );
     (weatherService.getCurrentLocationWeather as Mock).mockResolvedValueOnce({
       cityName: 'Ankara',
@@ -183,5 +192,33 @@ describe('useWeather', () => {
     const { result } = renderHook(() => useWeather());
 
     expect(Array.isArray(result.current.recentSearches)).toBe(true);
+  });
+
+  it('deduplicates recent searches across localized provider city labels', async () => {
+    (weatherService.getCurrentWeather as Mock)
+      .mockResolvedValueOnce({
+        cityName: 'İstanbul',
+        country: 'TR',
+        temperature: 20,
+        coordinates: { lat: 41.01, lon: 28.97 },
+      })
+      .mockResolvedValueOnce({
+        cityName: 'Istanbul',
+        country: 'TR',
+        temperature: 20,
+        coordinates: { lat: 41.01, lon: 28.97 },
+      });
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('İstanbul');
+    });
+    await act(async () => {
+      await result.current.fetchWeather('Istanbul');
+    });
+
+    expect(result.current.recentSearches).toHaveLength(1);
+    expect(result.current.recentSearches[0].city).toBe('Istanbul');
   });
 });

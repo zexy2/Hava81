@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
+import { citySlug } from '../utils/cityRoute';
 import { useAsync } from './useAsync';
 import { useLocalStorage } from './useLocalStorage';
 import { ErrorCode, type NormalizedWeatherData, type AppError } from '../types';
@@ -46,6 +47,7 @@ interface UseWeatherReturn {
 
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
+const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
 
 interface WeatherCache {
   data: NormalizedWeatherData;
@@ -121,9 +123,10 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
           setCachedWeather({ data, timestamp: now.getTime(), language });
         }
 
-        // Update recent searches
+        // Update recent searches using a stable province identity across localized provider labels.
         setRecentSearches(prev => {
-          const filtered = prev.filter(s => s.city.toLowerCase() !== data.cityName.toLowerCase());
+          const dataIdentity = cityIdentity(data.cityName);
+          const filtered = prev.filter(s => cityIdentity(s.city) !== dataIdentity);
           return [{ city: data.cityName, timestamp: now.getTime() }, ...filtered].slice(
             0,
             maxRecentSearches
@@ -185,7 +188,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
         const cacheAge = Date.now() - cachedWeather.timestamp;
         if (
           cacheAge < STALE_TIME &&
-          cachedWeather.data.cityName.toLowerCase() === initialCity.toLowerCase() &&
+          cityIdentity(cachedWeather.data.cityName) === cityIdentity(initialCity) &&
           (cachedWeather.language ?? 'tr') === language
         ) {
           weatherAsync.setData(cachedWeather.data);
