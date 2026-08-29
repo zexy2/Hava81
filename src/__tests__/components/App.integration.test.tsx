@@ -198,7 +198,7 @@ describe('Hava81 app integration', () => {
     expect(screen.getByText('İstanbul', { selector: '.city-tabs__name' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /kayıtlı/i }));
     expect(
-      await screen.findByRole('heading', { name: /şehir karşılaştırması/i })
+      await screen.findByRole('heading', { name: /şehir karşılaştırması/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
   });
 

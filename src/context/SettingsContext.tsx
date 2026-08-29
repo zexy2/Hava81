@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import i18n from '../i18n';
 
 export type TemperatureUnit = 'metric' | 'imperial';
 export type WindSpeedUnit = 'ms' | 'kmh' | 'mph';
@@ -20,6 +21,31 @@ const defaultSettings: UserSettings = {
   language: 'tr',
 };
 
+const isTemperatureUnit = (value: unknown): value is TemperatureUnit =>
+  value === 'metric' || value === 'imperial';
+const isWindSpeedUnit = (value: unknown): value is WindSpeedUnit =>
+  value === 'ms' || value === 'kmh' || value === 'mph';
+const isThemeMode = (value: unknown): value is ThemeMode =>
+  value === 'auto' || value === 'light' || value === 'dark';
+const isLanguage = (value: unknown): value is Language => value === 'tr' || value === 'en';
+
+const deserializeSettings = (serialized: string, fallback: UserSettings): UserSettings => {
+  const parsed = JSON.parse(serialized) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fallback;
+
+  const candidate = parsed as Partial<Record<keyof UserSettings, unknown>>;
+  return {
+    temperatureUnit: isTemperatureUnit(candidate.temperatureUnit)
+      ? candidate.temperatureUnit
+      : fallback.temperatureUnit,
+    windSpeedUnit: isWindSpeedUnit(candidate.windSpeedUnit)
+      ? candidate.windSpeedUnit
+      : fallback.windSpeedUnit,
+    themeMode: isThemeMode(candidate.themeMode) ? candidate.themeMode : fallback.themeMode,
+    language: isLanguage(candidate.language) ? candidate.language : fallback.language,
+  };
+};
+
 interface SettingsContextType {
   settings: UserSettings;
   updateSetting: <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => void;
@@ -33,7 +59,20 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | null>(null);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useLocalStorage<UserSettings>('user-settings', defaultSettings);
+  const initialSettings = useMemo<UserSettings>(
+    () => ({
+      ...defaultSettings,
+      language: i18n.resolvedLanguage === 'en' ? 'en' : 'tr',
+    }),
+    []
+  );
+  const deserializePersistedSettings = useCallback(
+    (serialized: string) => deserializeSettings(serialized, initialSettings),
+    [initialSettings]
+  );
+  const [settings, setSettings] = useLocalStorage<UserSettings>('user-settings', initialSettings, {
+    deserializer: deserializePersistedSettings,
+  });
 
   const updateSetting = useCallback(
     <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
