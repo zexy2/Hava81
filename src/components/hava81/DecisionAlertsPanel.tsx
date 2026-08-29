@@ -19,8 +19,9 @@ const readEnabled = () => {
     return false;
   }
 };
-const inQuietHours = () => {
-  const hour = new Date().getHours();
+const inQuietHours = (timezoneOffsetSeconds = 0) => {
+  const locationNow = new Date(Date.now() + timezoneOffsetSeconds * 1000);
+  const hour = locationNow.getUTCHours();
   return hour >= 22 || hour < 7;
 };
 
@@ -40,7 +41,13 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   );
 
   useEffect(() => {
-    if (!enabled || permission !== 'granted' || !candidate || inQuietHours()) return;
+    if (
+      !enabled ||
+      permission !== 'granted' ||
+      !candidate ||
+      inQuietHours(weather.meta.timezoneOffsetSeconds)
+    )
+      return;
     const day = new Date().toISOString().slice(0, 10);
     const key = `hava81-alert-sent:${day}:${candidate.signature}`;
     if (localStorage.getItem(key)) return;
@@ -63,7 +70,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         // Notifications are optional; failure must never block weather data or suppress a later retry.
       }
     })();
-  }, [candidate, enabled, permission, t]);
+  }, [candidate, enabled, permission, t, weather.meta.timezoneOffsetSeconds]);
 
   const toggle = async () => {
     if (enabled) {
