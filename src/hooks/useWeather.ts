@@ -49,6 +49,34 @@ const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
 
+const deserializeRecentSearches = (value: string): RecentSearch[] => {
+  const parsed = JSON.parse(value) as unknown;
+  if (!Array.isArray(parsed)) return [];
+
+  const seen = new Set<string>();
+  const sanitized: RecentSearch[] = [];
+  for (const entry of parsed) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const candidate = entry as Partial<Record<keyof RecentSearch, unknown>>;
+    if (
+      typeof candidate.city !== 'string' ||
+      !candidate.city.trim() ||
+      typeof candidate.timestamp !== 'number' ||
+      !Number.isFinite(candidate.timestamp)
+    ) {
+      continue;
+    }
+
+    const city = candidate.city.trim();
+    const identity = cityIdentity(city);
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    sanitized.push({ city, timestamp: candidate.timestamp });
+  }
+
+  return sanitized;
+};
+
 interface WeatherCache {
   data: NormalizedWeatherData;
   timestamp: number;
@@ -94,9 +122,14 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Recent searches history
+  const deserializeStoredRecentSearches = useCallback(
+    (value: string) => deserializeRecentSearches(value).slice(0, maxRecentSearches),
+    [maxRecentSearches]
+  );
   const [recentSearches, setRecentSearches, clearRecentSearches] = useLocalStorage<RecentSearch[]>(
     'recent_weather_searches',
-    []
+    [],
+    { deserializer: deserializeStoredRecentSearches }
   );
 
   // Cached weather data
