@@ -167,6 +167,20 @@ describe('weatherService BFF client', () => {
     expect(result.timestamp).toEqual(new Date(serializedWeather.timestamp));
   });
 
+  it.each([
+    ['sunrise', { sunrise: 'invalid' }],
+    ['sunset', { sunset: 'invalid' }],
+    ['observation timestamp', { timestamp: 'invalid' }],
+    ['metadata timestamp', { meta: { ...serializedWeather.meta, fetchedAt: 'invalid' } }],
+  ])('rejects malformed current-weather %s dates from the BFF', async (_label, invalidField) => {
+    mockGet.mockResolvedValue({ ...serializedWeather, ...invalidField });
+
+    await expect(weatherService.getCurrentWeather({ city: 'Izmir' })).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it('consumes a matching early weather bootstrap without duplicating the BFF request', async () => {
     window.__HAVA81_BOOTSTRAP_WEATHER__ = {
       city: 'Izmir',

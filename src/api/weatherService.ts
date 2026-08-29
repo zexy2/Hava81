@@ -54,6 +54,19 @@ declare global {
   }
 }
 
+const invalidWeatherPayload = (field: string): never => {
+  throw new ApiError('Hava verisi doğrulanamadı', ErrorCode.API_ERROR, {
+    retryable: true,
+    details: { field },
+  });
+};
+
+const reviveWeatherDate = (value: string, field: string): Date => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return invalidWeatherPayload(field);
+  return date;
+};
+
 const invalidForecastPayload = (field: string): never => {
   throw new ApiError('Tahmin verisi doğrulanamadı', ErrorCode.API_ERROR, {
     retryable: true,
@@ -96,14 +109,14 @@ const takeBootstrapWeather = (
 
 const reviveMeta = (meta: SerializedMeta): WeatherDataMeta => ({
   ...meta,
-  fetchedAt: new Date(meta.fetchedAt),
+  fetchedAt: reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt'),
 });
 
 const reviveWeatherDates = (data: SerializedWeatherData): NormalizedWeatherData => ({
   ...data,
-  sunrise: new Date(data.sunrise),
-  sunset: new Date(data.sunset),
-  timestamp: new Date(data.timestamp),
+  sunrise: reviveWeatherDate(data.sunrise, 'current.sunrise'),
+  sunset: reviveWeatherDate(data.sunset, 'current.sunset'),
+  timestamp: reviveWeatherDate(data.timestamp, 'current.timestamp'),
   meta: reviveMeta(data.meta),
 });
 
