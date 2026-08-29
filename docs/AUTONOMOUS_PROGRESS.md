@@ -666,3 +666,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Current change: reject optional one-hour enrichment if normalization would create a gap between required hourly rows; the existing three-hour baseline remains the safe fallback. API type-check and 25/25 API tests pass.
 - Main run #400 for `df73628c...` is still in progress at this checkpoint; frontend quality, API test/build, production build and Lighthouse jobs are already green, browser-flow job is the remaining gate.
 - Next action: push/open the continuity PR, verify exact-head CI, then merge only after run #400 remains green/production smoke is healthy. After deploy, prioritize measured first-viewport/mobile polish or another bounded data-truth/reliability issue.
+
+### 2026-08-29 13:36 TRT — freshness contract audit
+- Live production inspection found server cache TTLs of 300s current / 1800s forecast+hourly / 900s AQI while response metadata advertised 60s / 300s / 120s. This could make UI freshness state disagree with the cache actually serving the payload.
+- Branch `automation/hava81-hourly-stale-guard` now carries the configured cache TTL through `CacheResult.freshForSeconds` and uses it in weather/context metadata; HTTP Cache-Control remains independently bounded.
+- Added regression coverage with deliberately non-default TTLs. API type-check, 26/26 API tests, dependency audit (0 vulnerabilities), and diff-check pass.
+- Exact main `1b0bd1484530791979df1020e8719685960272f1` passed main CI #402. Its API candidate is being built independently on the inactive 4001 canary before any production traffic change.

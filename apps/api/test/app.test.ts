@@ -242,6 +242,32 @@ test('cache returns hits and coalesces concurrent upstream requests', async (con
   assert.equal(provider.currentCalls, 1);
 });
 
+test('weather freshness metadata follows the configured server cache TTLs', async (context) => {
+  const app = await buildApp({
+    env: createEnv({
+      CACHE_CURRENT_TTL_MS: 7_000,
+      CACHE_FORECAST_TTL_MS: 11_000,
+      CACHE_AIR_QUALITY_TTL_MS: 13_000,
+    }),
+    provider: new FakeWeatherProvider(),
+    hourlyProvider: new FakeHourlyForecastProvider(),
+    logger: false,
+  });
+  context.after(() => app.close());
+
+  const [current, forecast, hourly, airQuality] = await Promise.all([
+    app.inject({ method: 'GET', url: '/api/v1/weather/current?city=Ankara' }),
+    app.inject({ method: 'GET', url: '/api/v1/weather/forecast?lat=41.01&lon=28.97' }),
+    app.inject({ method: 'GET', url: '/api/v1/weather/hourly?lat=41.01&lon=28.97&lang=tr' }),
+    app.inject({ method: 'GET', url: '/api/v1/weather/air-quality?lat=41.01&lon=28.97&lang=tr' }),
+  ]);
+
+  assert.equal(current.json().meta.freshForSeconds, 7);
+  assert.equal(forecast.json().meta.freshForSeconds, 11);
+  assert.equal(hourly.json().meta.freshForSeconds, 11);
+  assert.equal(airQuality.json().meta.freshForSeconds, 13);
+});
+
 test('forecast and air-quality endpoints normalize provider data', async (context) => {
   const provider = new FakeWeatherProvider();
   const app = await buildApp({ env: createEnv(), provider, logger: false });

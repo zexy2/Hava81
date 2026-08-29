@@ -3,6 +3,7 @@ export type CacheStatus = 'HIT' | 'MISS' | 'COALESCED';
 export interface CacheResult<T> {
   value: T;
   status: CacheStatus;
+  freshForSeconds: number;
 }
 
 export interface AsyncCache {
@@ -36,10 +37,11 @@ export class MemoryTtlCache implements AsyncCache {
   }
 
   async getOrLoad<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<CacheResult<T>> {
+    const freshForSeconds = ttlMs / 1_000;
     const cached = this.entries.get(key);
 
     if (cached && cached.expiresAt > this.now()) {
-      return { value: cached.value as T, status: 'HIT' };
+      return { value: cached.value as T, status: 'HIT', freshForSeconds };
     }
 
     if (cached) {
@@ -48,7 +50,7 @@ export class MemoryTtlCache implements AsyncCache {
 
     const pending = this.inFlight.get(key);
     if (pending) {
-      return { value: (await pending) as T, status: 'COALESCED' };
+      return { value: (await pending) as T, status: 'COALESCED', freshForSeconds };
     }
 
     const loadPromise = loader()
@@ -61,7 +63,7 @@ export class MemoryTtlCache implements AsyncCache {
       });
 
     this.inFlight.set(key, loadPromise);
-    return { value: await loadPromise, status: 'MISS' };
+    return { value: await loadPromise, status: 'MISS', freshForSeconds };
   }
 
   clear(): void {
