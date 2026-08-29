@@ -111,6 +111,7 @@ const WEATHER_ICON_CODES = new Set([
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+const validCacheStatuses = new Set(['HIT', 'MISS', 'COALESCED']);
 
 const deserializeWeatherCache = (value: string): WeatherCache | null => {
   const parsed = JSON.parse(value) as unknown;
@@ -126,6 +127,14 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
 
   const coordinates = data.coordinates;
   const meta = data.meta;
+  const metaRecord =
+    meta && typeof meta === 'object' && !Array.isArray(meta)
+      ? (meta as Record<string, unknown>)
+      : null;
+  const timezoneOffsetSeconds = metaRecord?.timezoneOffsetSeconds;
+  const intervalHours = metaRecord?.intervalHours;
+  const freshForSeconds = metaRecord?.freshForSeconds;
+  const cacheStatus = metaRecord?.cacheStatus;
   if (
     typeof data.cityName !== 'string' ||
     !data.cityName.trim() ||
@@ -148,11 +157,20 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     Array.isArray(coordinates) ||
     !isFiniteNumber((coordinates as Record<string, unknown>).lat) ||
     !isFiniteNumber((coordinates as Record<string, unknown>).lon) ||
-    !meta ||
-    typeof meta !== 'object' ||
-    Array.isArray(meta) ||
-    typeof (meta as Record<string, unknown>).provider !== 'string' ||
-    typeof (meta as Record<string, unknown>).fetchedAt !== 'string' ||
+    !metaRecord ||
+    typeof metaRecord.provider !== 'string' ||
+    !metaRecord.provider.trim() ||
+    typeof metaRecord.fetchedAt !== 'string' ||
+    (timezoneOffsetSeconds !== undefined &&
+      (!isFiniteNumber(timezoneOffsetSeconds) ||
+        timezoneOffsetSeconds < -43_200 ||
+        timezoneOffsetSeconds > 50_400)) ||
+    (intervalHours !== undefined &&
+      (!isFiniteNumber(intervalHours) || intervalHours <= 0 || intervalHours > 24)) ||
+    (freshForSeconds !== undefined &&
+      (!isFiniteNumber(freshForSeconds) || freshForSeconds <= 0 || freshForSeconds > 86_400)) ||
+    (cacheStatus !== undefined &&
+      (typeof cacheStatus !== 'string' || !validCacheStatuses.has(cacheStatus))) ||
     !isFiniteNumber(candidate.timestamp) ||
     candidate.timestamp > Date.now() + MAX_CACHE_FUTURE_SKEW_MS ||
     (candidate.language !== undefined && candidate.language !== 'tr' && candidate.language !== 'en')
@@ -163,7 +181,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
   const sunrise = new Date(String(data.sunrise));
   const sunset = new Date(String(data.sunset));
   const timestamp = new Date(String(data.timestamp));
-  const fetchedAt = new Date(String((meta as Record<string, unknown>).fetchedAt));
+  const fetchedAt = new Date(String(metaRecord.fetchedAt));
   if ([sunrise, sunset, timestamp, fetchedAt].some(date => Number.isNaN(date.getTime())))
     return null;
 
@@ -178,7 +196,8 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
       sunset,
       timestamp,
       meta: {
-        ...(meta as unknown as NormalizedWeatherData['meta']),
+        ...(metaRecord as unknown as NormalizedWeatherData['meta']),
+        provider: metaRecord.provider.trim(),
         fetchedAt,
       },
     },
