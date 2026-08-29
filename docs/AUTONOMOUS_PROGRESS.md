@@ -550,3 +550,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The production Oracle API is operated as an always-on service, and a slow request can also come from network or upstream-provider latency; the UI cannot truthfully diagnose a wake-up from elapsed time alone.
 - Renamed the translation contract from `serverWaking` to `slowLoading` and replaced the claim with neutral Turkish/English copy stating only that weather data is taking longer than usual and that connection/provider delay may be involved.
 - No timeout, retry, provider, score, or weather semantics changed. Validation: lint, type-check, App integration 6/6, production build with all 81 city pages, production dependency audit 0 vulnerabilities, and `git diff --check`.
+
+
+## 2026-08-29 03:16 TRT — map label rebuilt on current main
+
+- Rebuilt the stale map-label correction on current main `e196bfd4` rather than force-updating the older conflicted PR branch.
+- The map eyebrow now says `Türkiye · İl haritası` / `Türkiye · Province map`, matching the province/city marker surface instead of implying meteorological station entities that are not rendered.
+- Combined local validation on the current baseline passed: lint, type-check, complete frontend suite 141/141, production dependency audit 0 vulnerabilities, production build generated all 81 city pages, and host-side `git diff --check` was clean. Map tiles, coordinates, weather values and interactions are unchanged.
