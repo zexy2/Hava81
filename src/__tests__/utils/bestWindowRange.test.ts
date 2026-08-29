@@ -29,6 +29,18 @@ describe('findBestWindowRange', () => {
     expect(range?.end.time.toISOString()).toBe('2026-08-29T20:00:00.000Z');
   });
 
+  it('does not extend a risk-free best range into a neighboring slot with a surfaced risk', () => {
+    const cleanPeak = slot(22, 98);
+    const cleanNeighbor = slot(23, 97);
+    const rainyNeighbor = { ...slot(0, 96), reasons: ['rain-risk' as const] };
+    rainyNeighbor.time = new Date(Date.UTC(2026, 7, 30, 0));
+
+    const range = findBestWindowRange([cleanPeak, cleanNeighbor, rainyNeighbor]);
+
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T22:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T23:00:00.000Z');
+  });
+
   it('does not bridge a forecast gap just because both sides have similar scores', () => {
     const range = findBestWindowRange([
       slot(18, 94),
