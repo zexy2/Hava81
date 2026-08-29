@@ -1,9 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 
 describe('useLocalStorage synchronization', () => {
   beforeEach(() => localStorage.clear());
+  afterEach(() => vi.restoreAllMocks());
 
   it('resets other hook consumers when the key is removed', () => {
     const first = renderHook(() => useLocalStorage('shared-pref', ['istanbul'] as string[]));
@@ -27,6 +28,23 @@ describe('useLocalStorage synchronization', () => {
       result.current[2]();
       result.current[1](previous => previous + 1);
     });
+
+    expect(result.current[0]).toBe(2);
+    expect(localStorage.getItem('counter-pref')).toBe('2');
+  });
+
+  it('does not advance functional-update state when persistence fails', () => {
+    const { result } = renderHook(() => useLocalStorage('counter-pref', 1));
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    setItem.mockImplementationOnce(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+
+    act(() => result.current[1](5));
+    expect(result.current[0]).toBe(1);
+
+    setItem.mockRestore();
+    act(() => result.current[1](previous => previous + 1));
 
     expect(result.current[0]).toBe(2);
     expect(localStorage.getItem('counter-pref')).toBe('2');
