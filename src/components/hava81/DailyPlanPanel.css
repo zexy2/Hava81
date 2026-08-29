@@ -356,3 +356,42 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (min-width: 64rem) {
+  .daily-plan {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'header header'
+      'decision explain'
+      'quick quick'
+      'slots slots'
+      'note note';
+    gap: var(--space-md);
+    margin-top: 0;
+    padding: var(--space-lg);
+  }
+
+  .daily-plan__header {
+    grid-area: header;
+  }
+
+  .daily-plan__decision {
+    grid-area: decision;
+  }
+
+  .daily-plan__explain {
+    grid-area: explain;
+  }
+
+  .daily-plan__quick {
+    grid-area: quick;
+  }
+
+  .daily-plan__slots {
+    grid-area: slots;
+  }
+
+  .daily-plan__note {
+    grid-area: note;
+  }
+}

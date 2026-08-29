@@ -506,6 +506,42 @@ textarea:focus-visible {
   align-items: start;
 }
 
+@media (min-width: 64rem) {
+  .atlas-dashboard {
+    grid-template-columns: minmax(0, 1.55fr) minmax(22rem, 0.9fr);
+    align-items: start;
+  }
+
+  .atlas-dashboard__primary {
+    display: contents;
+  }
+
+  .atlas-dashboard__primary > .hava81-decision-field {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .atlas-dashboard__primary > .hava81-forecast-atlas,
+  .atlas-dashboard__primary > .atlas-forecast-loading {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .atlas-dashboard > .commute-plan {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .atlas-dashboard > .daily-plan {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .atlas-dashboard > :not(.atlas-dashboard__primary):not(.commute-plan):not(.daily-plan) {
+    grid-column: 1 / -1;
+  }
+}
+
 .atlas-kicker {
   display: block;
   color: var(--color-atlas-muted);

@@ -611,6 +611,43 @@ test('desktop daily forecast keeps full condition labels readable', async ({ pag
   ).toEqual([]);
 });
 
+test('desktop dashboard uses the decision column instead of leaving dead space', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop composition assertion');
+  await page.goto('/istanbul');
+  await expect(page.locator('.commute-plan')).toBeVisible();
+  await expect(page.locator('.activity-card')).toHaveCount(2);
+
+  const layout = await page.evaluate(() => {
+    const rect = (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) throw new Error(`Missing ${selector}`);
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width };
+    };
+    const activity = rect('.activity-planner__cards');
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('.activity-card')).map(element => {
+      const box = element.getBoundingClientRect();
+      return { width: box.width, left: box.left, right: box.right };
+    });
+    return {
+      decision: rect('.hava81-decision-field'),
+      forecast: rect('.hava81-forecast-atlas'),
+      commute: rect('.commute-plan'),
+      daily: rect('.daily-plan'),
+      activity,
+      cards,
+    };
+  });
+
+  expect(Math.abs(layout.commute.left - layout.decision.left)).toBeLessThan(2);
+  expect(layout.commute.top).toBeGreaterThanOrEqual(layout.decision.bottom + 8);
+  expect(layout.forecast.left).toBeGreaterThanOrEqual(layout.decision.right + 8);
+  expect(layout.daily.top).toBeGreaterThanOrEqual(
+    Math.max(layout.commute.bottom, layout.forecast.bottom) + 8
+  );
+  expect(Math.min(...layout.cards.map(card => card.width))).toBeGreaterThan(layout.activity.width * 0.45);
+});
+
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
   await page.goto('/istanbul');
