@@ -74,6 +74,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
+  const blurTimeoutRef = useRef<number | null>(null);
 
   useImperativeHandle(forwardedRef, () => inputRef.current as HTMLInputElement, []);
 
@@ -137,6 +138,13 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
       highlighted?.scrollIntoView({ block: 'nearest' });
     }
   }, [highlightedIndex]);
+
+  useEffect(
+    () => () => {
+      if (blurTimeoutRef.current !== null) window.clearTimeout(blurTimeoutRef.current);
+    },
+    []
+  );
 
   const handleSubmit = useCallback(
     (event: FormEvent) => {
@@ -205,10 +213,19 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
     [onChange]
   );
 
-  const handleFocus = useCallback(() => setIsFocused(true), []);
+  const handleFocus = useCallback(() => {
+    if (blurTimeoutRef.current !== null) {
+      window.clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setIsFocused(true);
+  }, []);
   const handleBlur = useCallback(() => {
-    // Delay to allow click on suggestions
-    setTimeout(() => setIsFocused(false), 150);
+    // Delay to allow click on suggestions, but cancel it if the user refocuses first.
+    blurTimeoutRef.current = window.setTimeout(() => {
+      blurTimeoutRef.current = null;
+      setIsFocused(false);
+    }, 150);
   }, []);
 
   const listboxId = 'city-suggestions';
