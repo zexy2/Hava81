@@ -2,7 +2,7 @@ import { useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
-import { normalizePrecipitationProbability } from '../../utils/precipitation';
+import { formatPrecipitationAmount, normalizePrecipitationProbability } from '../../utils/precipitation';
 import { WeatherSymbol } from './WeatherSymbol';
 import './ForecastAtlas.css';
 
@@ -41,10 +41,6 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
     [locale]
   );
-  const precipitationFormatter = useMemo(
-    () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    [locale]
-  );
   const dayFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {
@@ -55,12 +51,6 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       }),
     [locale]
   );
-  const formatPrecipitationAmount = (amount?: number): string | null => {
-    if (!Number.isFinite(amount) || (amount ?? 0) <= 0) return null;
-    return (amount as number) < 0.1
-      ? `<${precipitationFormatter.format(0.1)} mm`
-      : `${precipitationFormatter.format(amount as number)} mm`;
-  };
   const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
@@ -282,7 +272,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       >
                         {Math.round(chart.firstPrecipitation.precipitation * 100) > 0
                           ? `${Math.round(chart.firstPrecipitation.precipitation * 100)}%`
-                          : formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm)}
+                          : formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale)}
                       </text>
                     </g>
                   ) : null}
@@ -291,11 +281,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
               {chart?.firstPrecipitation ? (
                 <span className="hava81-forecast-atlas__sr-only">
-                  {formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm)
+                  {formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale)
                     ? t('hava81.forecastAtlas.precipitationAtWithAmount', {
                         time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
                         percent: Math.round(chart.firstPrecipitation.precipitation * 100),
-                        amount: formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm),
+                        amount: formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale),
                       })
                     : t('hava81.forecastAtlas.precipitationAt', {
                         time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
@@ -312,7 +302,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               >
                 {hourlyData.map((hour, index) => {
                   const precipitation = Math.round(hour.precipitation * 100);
-                  const precipitationAmount = formatPrecipitationAmount(hour.precipitationMm);
+                  const precipitationAmount = formatPrecipitationAmount(hour.precipitationMm, locale);
                   const localTime = atLocationTime(hour.time);
                   const previousLocalTime =
                     index > 0 ? atLocationTime(hourlyData[index - 1].time) : null;

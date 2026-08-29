@@ -5,6 +5,7 @@ import { weatherService } from '../../api/weatherService';
 import { TURKISH_CITIES } from '../../constants/cities';
 import type { RouteWeatherResult } from '../../types';
 import { citySlug } from '../../utils/cityRoute';
+import { formatPrecipitationAmount } from '../../utils/precipitation';
 import {
   formatTurkeyTime,
   parseTurkeyLocalInputValue,
@@ -43,22 +44,11 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     [destinationName]
   );
   const formatTime = (iso: string) => formatTurkeyTime(new Date(iso), i18n.language);
-  const precipitationFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    [i18n.language]
-  );
   const formatPrecipitation = (probabilityPercent: number, amount?: number) => {
     const probability = Math.round(probabilityPercent);
     const parts = [i18n.language.startsWith('en') ? `${probability}%` : `%${probability}`];
-    if (Number.isFinite(amount) && (amount ?? 0) > 0) {
-      const value = amount as number;
-      parts.push(
-        value < 0.1
-          ? `<${precipitationFormatter.format(0.1)} mm`
-          : `${precipitationFormatter.format(value)} mm`
-      );
-    }
+    const amountText = formatPrecipitationAmount(amount, i18n.language);
+    if (amountText) parts.push(amountText);
     return parts.join(' · ');
   };
   const invalidateRequest = () => {
