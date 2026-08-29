@@ -66,10 +66,13 @@ export const useFavorites = (weather: NormalizedWeatherData | null) => {
   const addFavorite = useCallback(() => {
     if (!weather) return;
     const weatherKey = favoriteCityKey(weather.cityName);
+    const canonicalCity = cityByFavoriteKey.get(weatherKey);
+    if (!canonicalCity) return;
+
     const favorite: FavoriteCity = {
-      name: weather.cityName,
-      lat: weather.coordinates.lat,
-      lon: weather.coordinates.lon,
+      name: canonicalCity.name,
+      lat: canonicalCity.coordinates.lat,
+      lon: canonicalCity.coordinates.lon,
       temp: weather.temperature,
       icon: weather.icon,
     };
