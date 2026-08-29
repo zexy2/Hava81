@@ -120,6 +120,43 @@ describe('ComparePanel', () => {
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
 
+
+  it('clears stale city cards while a changed comparison is loading', async () => {
+    const { rerender } = render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
+
+    api.getCurrentWeather.mockImplementationOnce(() => new Promise(() => {}));
+
+    rerender(
+      <SettingsProvider>
+        <ComparePanel
+          language="en"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.queryByRole('heading', { name: 'İstanbul' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'İzmir' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Yükleniyor...');
+
+  });
+
   it('explains partial failures while keeping successful city results usable', async () => {
     api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
       city === 'İzmir'
