@@ -6,6 +6,12 @@ describe('motion utilities', () => {
     vi.unstubAllGlobals();
   });
 
+  it('returns false when evaluated outside a browser environment', () => {
+    vi.stubGlobal('window', undefined);
+
+    expect(prefersReducedMotion()).toBe(false);
+  });
+
   it('uses smooth scrolling when reduced motion is not requested', () => {
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
     const scrollIntoView = vi.fn();
