@@ -96,7 +96,7 @@ ${html.slice(moduleScriptIndex)}`;
 for (const name of names) {
   const slug = slugify(name);
   const title = `${name} hava durumu ve gün planı — Hava81`;
-  const description = `${name} için güncel hava, 3 saatlik tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.`;
+  const description = `${name} için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.`;
   const canonical = `${baseUrl}/${slug}/`;
   const structuredData = safeJson({
     '@context': 'https://schema.org',

@@ -607,3 +607,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited Decision Alerts after earlier timezone fixes and found quiet hours still used the visitor device clock. A user abroad could therefore receive a Hava81 alert during 22:00–07:00 in the active Turkish province, or have a daytime alert suppressed by their own local night.
 - Quiet-hour evaluation now shifts the current instant by `weather.meta.timezoneOffsetSeconds` and reads the resulting location hour in UTC, matching the established provider-location time contract without changing alert thresholds, candidates, permission behavior or delivery transport.
 - Added a deterministic regression proving `19:30Z` is treated as `22:30` for İstanbul (+03:00) and suppresses delivery.
+
+
+## 2026-08-29 07:48 TRT — province SEO copy matches current forecast capability
+
+- Audited generated province metadata after the one-hour forecast rollout and found city descriptions still advertised only a `3 saatlik tahmin`, a stale implementation detail from the former OpenWeather-only presentation.
+- Generated city meta description, Open Graph/Twitter description and structured WebPage description now use the capability-level wording `saatlik ve günlük tahmin`, which remains truthful across the one-hour enrichment plus resilient fallback design and avoids presenting a provider cadence as the product identity.
+- Validation: production build generated all 81 province pages; generated İstanbul HTML contains the new phrase in all four metadata surfaces and no stale `3 saatlik tahmin`; lint, type-check and `git diff --check` pass.
