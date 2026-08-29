@@ -299,3 +299,7 @@ This log records product and engineering decisions made during the autonomous im
 
 - End-to-end weather fixtures must be relative to the test run rather than hard-coded calendar dates when application code intentionally filters stale forecast rows. This keeps browser tests validating the intended current/fallback behavior instead of failing as time passes.
 - Keep the high-resolution hourly success contract and three-hour fallback contract as separate browser assertions so a provider failure cannot masquerade as an empty forecast surface.
+## 2026-08-29 — PWA cache scope
+
+- Cache same-origin Vite `/assets/` scripts, styles, fonts and images after a successful fetch rather than maintaining a filename-prefix list. Vite assets are content-hashed, so broadening the visited-asset cache does not make HTML/navigation stale; navigation requests remain network-first with `cache: no-store`, and every build receives a distinct service-worker cache namespace.
+- Disk-pressure recovery may remove Docker images that are not referenced by active containers, but must not remove active container images, volumes, or alter the 4002 production / 4001 rollback topology.

@@ -812,3 +812,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Refreshed E2E current/forecast fixture timestamps from fixed 28 August values to run-relative times so fallback forecast tests do not silently expire as wall-clock time advances.
 - The existing three-hour fallback contract remains asserted separately when the high-resolution hourly endpoint fails.
 - Full Playwright smoke after the change: 28 passed, 38 intentional project-specific skips; focused lazy/fallback matrix: 6/6 passed.
+## 2026-08-29 late run — storage recovery and PWA asset resilience
+
+- Observer detected root disk pressure at 93.4% used while public production remained healthy on API port 4002.
+- Removed only Docker images not referenced by active containers; reclaimed ~982 MB and returned root usage to ~86% without touching running containers or rollback ports.
+- PWA service worker now caches every visited same-origin hashed `/assets/` script/style/font/image instead of a narrow hand-maintained script-name allowlist. This makes already-visited lazy UI modules available to repeat/offline sessions while keeping navigations network-fresh and build-versioned.
+- Added a regression assertion that the static asset policy covers lazy JavaScript without restoring a filename-specific core-script list.
+- Focused service-worker tests, type-check, lint and production build passed; generated service worker received a fresh build-derived cache namespace.

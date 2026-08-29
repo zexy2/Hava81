@@ -21,4 +21,11 @@ describe('service worker notification navigation', () => {
     expect(source).toContain("client.navigate(client.url)");
   });
 
+  it('caches any visited hashed application asset for resilient repeat/offline use', () => {
+    const source = readFileSync('public/sw.js', 'utf8');
+
+    expect(source).toContain("url.pathname.startsWith('/assets/')");
+    expect(source).toContain("['script', 'style', 'font', 'image'].includes(request.destination)");
+    expect(source).not.toContain('CORE_SCRIPT_PATTERN');
+  });
 });
