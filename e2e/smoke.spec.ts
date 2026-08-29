@@ -169,30 +169,27 @@ test('core city experience renders and uses a shareable city URL', async ({ page
 });
 
 
-test('hourly horizon controls change the visible density and include a one-hour view', async ({
-  page,
-}) => {
-  test.skip(page.viewportSize()?.width !== 1280, 'density assertion is desktop-specific');
+test('hourly interval controls resample the same 24-hour forecast', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');
 
-  const range = page.getByRole('group', { name: 'Gösterilecek saat aralığı' });
-  await expect(range.getByRole('button', { name: '1 saat' })).toBeVisible();
+  const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
+  await expect(interval.getByRole('button', { name: '1 saatlik' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(interval.getByRole('button', { name: '3 saatlik' })).toBeVisible();
+  await expect(interval.getByRole('button', { name: '6 saatlik' })).toBeVisible();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
 
-  const firstHour = page.locator('.hava81-forecast-atlas__hour').first();
-  const widths: Record<string, number> = {};
+  const displayedTimes = async () =>
+    page.locator('.hava81-forecast-atlas__hour time').allTextContents();
 
-  for (const hours of [24, 12, 6, 1]) {
-    await range.getByRole('button', { name: `${hours} saat` }).click();
-    await expect(
-      page.getByRole('heading', { name: new RegExp(`Saatlik tahmin · sonraki ${hours} saat`, 'i') })
-    ).toBeVisible();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(hours);
-    widths[String(hours)] = (await firstHour.boundingBox())?.width ?? 0;
-  }
+  await interval.getByRole('button', { name: '3 saatlik' }).click();
+  await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(8);
+  expect((await displayedTimes()).slice(0, 4)).toEqual(['12:00', '15:00', '18:00', '21:00']);
 
-  expect(widths['12']).toBeGreaterThan(widths['24']);
-  expect(widths['6']).toBeGreaterThan(widths['12']);
-  expect(widths['1']).toBeGreaterThan(widths['6']);
+  await interval.getByRole('button', { name: '6 saatlik' }).click();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(4);
+  expect(await displayedTimes()).toEqual(['12:00', '18:00', '00:00', '06:00']);
 });
 
 test('hourly display falls back to the existing three-hour forecast when the hourly source fails', async ({
@@ -594,7 +591,9 @@ test('production shell exposes an installable PWA contract', async ({
 
   const workerResponse = await request.get('/sw.js');
   expect(workerResponse.ok()).toBeTruthy();
-  expect(await workerResponse.text()).toContain("self.addEventListener('notificationclick'");
+  const workerSource = await workerResponse.text();
+  expect(workerSource).toContain("self.addEventListener('notificationclick'");
+  expect(workerSource).toContain("fetch(request, { cache: 'no-store' })");
 
   await page.goto('/istanbul/');
   const registration = await page.evaluate(async () => {
