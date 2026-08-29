@@ -601,3 +601,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the Environment Rail from a visitor outside Türkiye and found sunset was formatted in the browser/device timezone even though the weather payload carries the city timezone offset. The primary decision field already formats provider timestamps in the location timezone, so the two surfaces could disagree.
 - Sunset display now applies `weather.meta.timezoneOffsetSeconds` and formats the shifted instant in UTC, matching the established location-time contract without changing the underlying sunrise/sunset instants or daylight-duration calculation.
 - Added regression coverage for İstanbul: provider sunset `16:30Z` with `+03:00` offset must render as `19:30`, not the runner/device `16:30`. Focused Environment Rail coverage 2/2, lint, type-check and `git diff --check` pass.
+
+## 2026-08-29 06:52 TRT — notification quiet hours follow the weather location
+
+- Audited Decision Alerts after earlier timezone fixes and found quiet hours still used the visitor device clock. A user abroad could therefore receive a Hava81 alert during 22:00–07:00 in the active Turkish province, or have a daytime alert suppressed by their own local night.
+- Quiet-hour evaluation now shifts the current instant by `weather.meta.timezoneOffsetSeconds` and reads the resulting location hour in UTC, matching the established provider-location time contract without changing alert thresholds, candidates, permission behavior or delivery transport.
+- Added a deterministic regression proving `19:30Z` is treated as `22:30` for İstanbul (+03:00) and suppresses delivery.

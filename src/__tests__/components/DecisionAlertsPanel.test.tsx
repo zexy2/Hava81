@@ -35,7 +35,7 @@ const hourly: HourlyForecast[] = [
 describe('DecisionAlertsPanel', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(2026, 7, 28, 12, 0, 0));
+    vi.setSystemTime(new Date('2026-08-28T09:00:00Z')); // 12:00 in İstanbul
   });
 
   afterEach(() => {
@@ -93,8 +93,8 @@ describe('DecisionAlertsPanel', () => {
     ).toBe(false);
   });
 
-  it('does not deliver a decision alert during quiet hours', async () => {
-    vi.setSystemTime(new Date(2026, 7, 28, 23, 0, 0));
+  it('uses the weather location timezone for quiet hours', async () => {
+    vi.setSystemTime(new Date('2026-08-28T19:30:00Z')); // 22:30 in İstanbul
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
