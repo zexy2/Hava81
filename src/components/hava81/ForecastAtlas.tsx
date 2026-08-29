@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
@@ -26,6 +26,7 @@ const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
+  const [hourRange, setHourRange] = useState(REAL_HOURLY_LIMIT);
   const id = useId();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const temperatureSymbol = getTemperatureSymbol();
@@ -50,10 +51,13 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
-  const hourLimit = intervalHours === 1 ? REAL_HOURLY_LIMIT : LEGACY_HOUR_LIMIT;
+  const hourLimit =
+    intervalHours === 1 ? Math.min(hourRange, REAL_HOURLY_LIMIT) : LEGACY_HOUR_LIMIT;
   const hourlyHeading =
     intervalHours === 1
-      ? t('hava81.forecastAtlas.hourlyForecast')
+      ? settings.language === 'en'
+        ? `Hourly forecast · next ${hourLimit} hours`
+        : `Saatlik tahmin · sonraki ${hourLimit} saat`
       : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 
   const hourlyData = useMemo(
@@ -138,6 +142,27 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
             {hourlyHeading}
           </h3>
+          {intervalHours === 1 && hourly.length > 6 ? (
+            <div
+              className="hava81-forecast-atlas__range"
+              role="group"
+              aria-label={
+                settings.language === 'en' ? 'Hours to display' : 'Gösterilecek saat aralığı'
+              }
+            >
+              {[6, 12, 24].map(hours => (
+                <button
+                  key={hours}
+                  type="button"
+                  className="hava81-forecast-atlas__range-button"
+                  aria-pressed={hourRange === hours}
+                  onClick={() => setHourRange(hours)}
+                >
+                  {settings.language === 'en' ? `${hours} hours` : `${hours} saat`}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {intervalHours === 1 && meta?.provider ? (
             <p className="hava81-forecast-atlas__source">
               {t('hava81.forecastAtlas.hourlySource')}{' '}
@@ -151,7 +176,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   {' · '}
                   <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
                   {' · '}
-                  {settings.language === 'en' ? 'Formatted by Hava81' : 'Hava81 tarafından biçimlendirildi'}
+                  {settings.language === 'en'
+                    ? 'Formatted by Hava81'
+                    : 'Hava81 tarafından biçimlendirildi'}
                 </>
               ) : meta.attribution && meta.attribution !== meta.provider ? (
                 <> · {meta.attribution}</>
