@@ -11,6 +11,7 @@ const SCORE_CHANGE_THRESHOLD = 8;
 export type CommuteUmbrellaAdvice = 'take' | 'consider' | 'no';
 export type CommuteChangeKind =
   | 'rain-increase'
+  | 'rain-amount-increase'
   | 'strong-wind'
   | 'wind-caution'
   | 'temperature-drop'
@@ -35,6 +36,7 @@ export interface CommuteWindow {
   temperature: number;
   apparentTemperature: number;
   precipitationProbability: number;
+  precipitationMm?: number;
   windSpeed: number;
   windGust?: number;
   score: number;
@@ -77,11 +79,7 @@ const parseClockMinutes = (clock?: string): number | null => {
 const shiftedMs = (date: Date, timezoneOffsetSeconds: number) =>
   date.getTime() + timezoneOffsetSeconds * 1000;
 
-const nextOccurrence = (
-  clockMinutes: number,
-  now: Date,
-  timezoneOffsetSeconds: number
-) => {
+const nextOccurrence = (clockMinutes: number, now: Date, timezoneOffsetSeconds: number) => {
   const localNow = shiftedMs(now, timezoneOffsetSeconds);
   const dayStart = Math.floor(localNow / DAY_MS) * DAY_MS;
   let target = dayStart + clockMinutes * MINUTE_MS;
@@ -140,6 +138,7 @@ const buildWindow = (
     temperature: point.temp,
     apparentTemperature: scored.apparentTemperature,
     precipitationProbability: point.pop,
+    precipitationMm: point.precipitationMm,
     windSpeed: point.windSpeed ?? 0,
     windGust: point.windGust,
     score: scored.score,
@@ -148,7 +147,10 @@ const buildWindow = (
 };
 
 const effectiveWind = (window: CommuteWindow) =>
-  Math.max(window.windSpeed, Number.isFinite(window.windGust) ? (window.windGust as number) * 0.72 : 0);
+  Math.max(
+    window.windSpeed,
+    Number.isFinite(window.windGust) ? (window.windGust as number) * 0.72 : 0
+  );
 
 const advicePriority: CommuteAdviceCode[] = [
   'umbrella-take',
@@ -202,8 +204,13 @@ export const buildCommutePlan = ({
     outbound.precipitationProbability,
     returnWindow.precipitationProbability
   );
+  const maxRainAmount = Math.max(outbound.precipitationMm ?? 0, returnWindow.precipitationMm ?? 0);
   const umbrella: CommuteUmbrellaAdvice =
-    maxRain >= 0.5 ? 'take' : maxRain >= 0.25 ? 'consider' : 'no';
+    maxRainAmount >= 1 || maxRain >= 0.5
+      ? 'take'
+      : maxRainAmount >= 0.2 || maxRain >= 0.25
+        ? 'consider'
+        : 'no';
 
   const maxEffectiveWind = Math.max(effectiveWind(outbound), effectiveWind(returnWindow));
   const maxApparentTemperature = Math.max(
@@ -215,6 +222,7 @@ export const buildCommutePlan = ({
     returnWindow.apparentTemperature
   );
   const rainIncrease = returnWindow.precipitationProbability - outbound.precipitationProbability;
+  const rainAmountIncrease = (returnWindow.precipitationMm ?? 0) - (outbound.precipitationMm ?? 0);
   const temperatureDelta = returnWindow.apparentTemperature - outbound.apparentTemperature;
   const scoreDelta = returnWindow.score - outbound.score;
 
@@ -223,6 +231,9 @@ export const buildCommutePlan = ({
   if (rainIncrease >= 0.25) {
     change = 'rain-increase';
     changeValue = Math.round(rainIncrease * 100);
+  } else if (rainAmountIncrease >= 0.2) {
+    change = 'rain-amount-increase';
+    changeValue = Math.round(rainAmountIncrease * 10) / 10;
   } else if (maxEffectiveWind >= 17.2) {
     change = 'strong-wind';
   } else if (maxEffectiveWind >= 10.8) {

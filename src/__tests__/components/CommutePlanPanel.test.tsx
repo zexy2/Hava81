@@ -64,9 +64,77 @@ describe('CommutePlanPanel', () => {
     expect(screen.getByText('Şemsiyeyi al')).toBeInTheDocument();
     expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Cmt 08:30 → Cmt 18:00');
     expect(screen.getByText(/Dönüşte yağmur riski/i)).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })
+    ).toBeInTheDocument();
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('08:30');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
+  });
+
+  it('shows measurable rain amount instead of saying precipitation is not expected at 0%', () => {
+    const measurableRain: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        pop: 0,
+        precipitationMm: 0.4,
+        windSpeed: 3,
+        icon: '10d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        pop: 0,
+        precipitationMm: 0.4,
+        windSpeed: 3,
+        icon: '10d',
+      },
+    ];
+
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={measurableRain} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '12:00' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
+
+    expect(screen.queryByText('Beklenmiyor')).not.toBeInTheDocument();
+    expect(screen.getAllByText('0,4 mm')).toHaveLength(2);
+    expect(screen.getByRole('status')).toHaveTextContent('Şemsiye yanında olsun');
+  });
+
+  it('shows precipitation probability and amount together in commute windows', () => {
+    const rainy: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        pop: 0.35,
+        precipitationMm: 0.8,
+        windSpeed: 3,
+        icon: '10d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        pop: 0.35,
+        precipitationMm: 0.8,
+        windSpeed: 3,
+        icon: '10d',
+      },
+    ];
+
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={rainy} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '12:00' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
+
+    expect(screen.getAllByText('%35 · 0,8 mm')).toHaveLength(2);
   });
 
   it('makes heat the preparation headline when rain is absent but the selected windows are hot', () => {
@@ -151,8 +219,9 @@ describe('CommutePlanPanel', () => {
     fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '12:00' } });
     fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
 
-    expect(screen.getByRole('status')).toHaveTextContent(/Dönüşün Hava81 puanı çıkıştan yaklaşık \d+ puan daha yüksek/i);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /Dönüşün Hava81 puanı çıkıştan yaklaşık \d+ puan daha yüksek/i
+    );
     expect(screen.getByRole('status')).toHaveTextContent(/hava açısından daha rahat görünüyor/i);
   });
-
 });

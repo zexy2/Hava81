@@ -233,6 +233,8 @@ export const en = {
       },
       change: {
         'rain-increase': 'Rain risk is about {{value}} points higher when you return.',
+        'rain-amount-increase':
+          'Hourly precipitation is about {{value}} mm higher when you return.',
         'strong-wind': 'Strong wind appears in either the departure or return window.',
         'wind-caution': 'Wind is worth accounting for in either the departure or return window.',
         'temperature-drop': 'It will be about {{value}}° cooler when you return.',
