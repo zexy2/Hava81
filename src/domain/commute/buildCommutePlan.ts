@@ -6,6 +6,7 @@ import type { Hava81ScoreBand } from '../decision/types';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
 const MAX_MATCH_DISTANCE_MS = 2 * 60 * 60 * 1000;
+const SCORE_CHANGE_THRESHOLD = 8;
 
 export type CommuteUmbrellaAdvice = 'take' | 'consider' | 'no';
 export type CommuteChangeKind =
@@ -14,6 +15,8 @@ export type CommuteChangeKind =
   | 'wind-caution'
   | 'temperature-drop'
   | 'temperature-rise'
+  | 'comfort-worsens'
+  | 'comfort-improves'
   | 'stable';
 export type CommuteAdviceCode =
   | 'umbrella-take'
@@ -112,7 +115,8 @@ const buildWindow = (
   point: HourlyForecast,
   targetClock: string,
   targetShiftedMs: number,
-  timezoneOffsetSeconds: number
+  timezoneOffsetSeconds: number,
+  airQualityIndex?: number
 ): CommuteWindow => {
   const scored = scoreWeatherWindow({
     time: point.time,
@@ -123,6 +127,7 @@ const buildWindow = (
     precipitationMm: point.precipitationMm,
     windSpeed: point.windSpeed,
     windGust: point.windGust,
+    airQualityIndex,
     uvIndex: point.uvIndex,
     visibility: point.visibility,
     weatherCode: point.weatherCode,
@@ -182,13 +187,15 @@ export const buildCommutePlan = ({
     outboundPoint,
     commuteStart!,
     startTarget,
-    timezoneOffsetSeconds
+    timezoneOffsetSeconds,
+    airQualityIndex
   );
   const returnWindow = buildWindow(
     returnPoint,
     commuteEnd!,
     endTarget,
-    timezoneOffsetSeconds
+    timezoneOffsetSeconds,
+    airQualityIndex
   );
 
   const maxRain = Math.max(
@@ -209,6 +216,7 @@ export const buildCommutePlan = ({
   );
   const rainIncrease = returnWindow.precipitationProbability - outbound.precipitationProbability;
   const temperatureDelta = returnWindow.apparentTemperature - outbound.apparentTemperature;
+  const scoreDelta = returnWindow.score - outbound.score;
 
   let change: CommuteChangeKind = 'stable';
   let changeValue: number | undefined;
@@ -225,6 +233,12 @@ export const buildCommutePlan = ({
   } else if (temperatureDelta >= 6) {
     change = 'temperature-rise';
     changeValue = Math.round(temperatureDelta);
+  } else if (scoreDelta <= -SCORE_CHANGE_THRESHOLD) {
+    change = 'comfort-worsens';
+    changeValue = Math.round(Math.abs(scoreDelta));
+  } else if (scoreDelta >= SCORE_CHANGE_THRESHOLD) {
+    change = 'comfort-improves';
+    changeValue = Math.round(scoreDelta);
   }
 
   const heatThreshold =

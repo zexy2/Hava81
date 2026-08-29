@@ -96,4 +96,65 @@ describe('buildCommutePlan', () => {
     expect(plan?.primaryAdvice).toBe('heat');
     expect(plan?.summary.maxApparentTemperature).toBe(35);
   });
+
+  it('uses the return-vs-outbound Hava81 score when visibility creates a meaningful change', () => {
+    const worsening: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        apparentTemperature: 22,
+        pop: 0,
+        windSpeed: 3,
+        visibility: 10000,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        apparentTemperature: 22,
+        pop: 0,
+        windSpeed: 3,
+        visibility: 300,
+        icon: '50d',
+      },
+    ];
+    const plan = buildCommutePlan({
+      hourly: worsening,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+    });
+
+    expect(plan?.change).toBe('comfort-worsens');
+    expect(plan?.changeValue).toBeGreaterThanOrEqual(8);
+    expect(plan!.return.score).toBeLessThan(plan!.outbound.score);
+  });
+
+  it('includes air quality in the displayed commute Hava81 window scores', () => {
+    const clear: HourlyForecast[] = [
+      point('2026-08-29T09:00:00Z', 22, 0, 3),
+      point('2026-08-29T12:00:00Z', 22, 0, 3),
+    ];
+    const goodAir = buildCommutePlan({
+      hourly: clear,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+      airQualityIndex: 1,
+    });
+    const poorAir = buildCommutePlan({
+      hourly: clear,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+      airQualityIndex: 4,
+    });
+
+    expect(poorAir!.outbound.score).toBeLessThan(goodAir!.outbound.score);
+    expect(poorAir!.return.score).toBeLessThan(goodAir!.return.score);
+  });
+
 });

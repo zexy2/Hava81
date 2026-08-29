@@ -120,4 +120,39 @@ describe('CommutePlanPanel', () => {
     expect(screen.getByText(/yeterince yakın tahmin henüz yok/i)).toBeInTheDocument();
     expect(screen.queryByText(/İki saati de seçtiğinde/i)).not.toBeInTheDocument();
   });
+
+  it('explains a meaningful Hava81 score improvement even when no special gear is needed', () => {
+    const improving: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        apparentTemperature: 22,
+        pop: 0,
+        windSpeed: 3,
+        visibility: 300,
+        icon: '50d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        apparentTemperature: 22,
+        pop: 0,
+        windSpeed: 3,
+        visibility: 10000,
+        icon: '01d',
+      },
+    ];
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={improving} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '12:00' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
+
+    expect(screen.getByRole('status')).toHaveTextContent(/Dönüşün Hava81 puanı çıkıştan yaklaşık \d+ puan daha yüksek/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/hava açısından daha rahat görünüyor/i);
+  });
+
 });
