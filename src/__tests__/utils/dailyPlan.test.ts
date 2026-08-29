@@ -321,6 +321,22 @@ describe('Hava81 daily decision engine v2', () => {
     expect(measurable.umbrella).toBe('yes');
   });
 
+  it('keeps the quick air-quality label aligned with OpenWeather AQI levels', () => {
+    const fair = buildDailyPlan({
+      weather,
+      hourly: [point(6, 24), point(9, 25), point(12, 26)],
+      airQuality: { aqi: 2, aqiLabel: 'Makul', pm25: 10, pm10: 15, o3: 40 },
+    });
+    const good = buildDailyPlan({
+      weather,
+      hourly: [point(6, 24), point(9, 25), point(12, 26)],
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 },
+    });
+
+    expect(fair.airQuality).toBe('fair');
+    expect(good.airQuality).toBe('good');
+  });
+
   it('degrades the day score for unhealthy air', () => {
     const plan = buildDailyPlan({
       weather,

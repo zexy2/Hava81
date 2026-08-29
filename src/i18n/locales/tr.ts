@@ -152,6 +152,7 @@ export const tr = {
           label: 'Hava kalitesi',
           poor: 'Dikkat',
           sensitive: 'Hassas gruplar dikkat',
+          fair: 'Makul',
           good: 'İyi',
           unknown: 'Veri yok',
         },

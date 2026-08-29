@@ -133,6 +133,7 @@ const pickAirQualityAdvice = (airQuality?: AirQuality): AirQualityAdvice => {
   if (!airQuality) return "unknown";
   if (airQuality.aqi >= 4) return "poor";
   if (airQuality.aqi >= 3) return "sensitive";
+  if (airQuality.aqi >= 2) return "fair";
   return "good";
 };
 
