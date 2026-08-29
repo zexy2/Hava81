@@ -192,6 +192,75 @@ class ObserverApiDeploymentTests(unittest.TestCase):
         self.assertFalse(deployment['pending'])
 
 
+class ObserverStateSignatureTests(unittest.TestCase):
+    def test_api_lookup_latency_does_not_create_a_change_event(self) -> None:
+        base_deployment = {
+            'main_revision': 'main-sha',
+            'main_tree': 'api-tree',
+            'deployed_revision': 'deployed-sha',
+            'deployed_tree': 'api-tree',
+            'known': True,
+            'pending': False,
+            'error': None,
+        }
+        first = {
+            'github': {
+                'open_automation_prs': [],
+                'latest_main_run': {'head_sha': 'main-sha', 'status': 'completed'},
+                'api_deployment': {
+                    **base_deployment,
+                    'lookup': {'ok': True, 'status': 200, 'elapsed_ms': 309, 'error': None},
+                },
+            },
+            'production': {'healthy': True, 'issues': [], 'nginx': {'port': 4002}},
+            'host': {'disk': {'ok': True}},
+        }
+        second = {
+            **first,
+            'github': {
+                **first['github'],
+                'api_deployment': {
+                    **base_deployment,
+                    'lookup': {'ok': True, 'status': 200, 'elapsed_ms': 72, 'error': None},
+                },
+            },
+        }
+
+        self.assertEqual(observer.state_signature(first), observer.state_signature(second))
+
+    def test_api_tree_change_remains_part_of_the_change_signature(self) -> None:
+        base = {
+            'github': {
+                'open_automation_prs': [],
+                'latest_main_run': {'head_sha': 'main-sha', 'status': 'completed'},
+                'api_deployment': {
+                    'main_revision': 'main-sha',
+                    'main_tree': 'api-tree-a',
+                    'deployed_revision': 'deployed-sha',
+                    'deployed_tree': 'api-tree-a',
+                    'known': True,
+                    'pending': False,
+                    'error': None,
+                },
+            },
+            'production': {'healthy': True, 'issues': [], 'nginx': {'port': 4002}},
+            'host': {'disk': {'ok': True}},
+        }
+        changed = {
+            **base,
+            'github': {
+                **base['github'],
+                'api_deployment': {
+                    **base['github']['api_deployment'],
+                    'main_tree': 'api-tree-b',
+                    'pending': True,
+                },
+            },
+        }
+
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
+
+
 class ObserverHostDiskTests(unittest.TestCase):
     class _Statvfs:
         f_frsize = 4096
