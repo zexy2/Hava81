@@ -716,3 +716,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - ContextSignalsPanel now suppresses only fetch times more than one minute ahead of the client clock, while preserving Open-Meteo, CC BY 4.0 and Hava81-transformation attribution. Small clock skew and normal past timestamps remain visible.
 - Local gates: focused ContextSignalsPanel 5/5, frontend type-check, lint, full frontend suite 221/221, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check all pass.
 - Main merge b4969a719bd4cc5ca86ea5f1292e2df936efa264 entered pipeline #444 while this independent branch was prepared; re-verify current observer/GitHub state immediately before merge.
+
+## 2026-08-29 17:21 TRT — isolated Lighthouse port
+
+- A local Lighthouse run correctly refused to reuse occupied port 4173 while another Hava81 workstream owned that listener. Rather than terminating the unrelated preview, added `HAVA81_LIGHTHOUSE_PORT` using the same bounded 1024–65535 override pattern as Playwright; default behavior remains 4173.
+- This keeps concurrent autonomous worktrees independent and preserves the existing fail-closed occupied-port check. Validation uses an isolated port plus the normal frontend quality gates before publication.
+- Follow-up validation exposed an orphaned Vite preview after a successful Lighthouse audit because terminating the npm wrapper did not reliably terminate its child preview. The runner now spawns Vite directly with Node, so the existing `finally` termination targets the actual preview process and releases the isolated port after every audit.
+- Validation on the isolated branch: Lighthouse on port 4199 scored performance 96 / accessibility 100 / best-practices 100 / SEO 100 and the port was confirmed released after completion; `node --check`, type-check, lint, 223/223 frontend tests, production build, production dependency audit 0 vulnerabilities, and diff-check pass.
