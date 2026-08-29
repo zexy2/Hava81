@@ -217,3 +217,20 @@
     grid-column: 1 / -1;
   }
 }
+
+.activity-planner__score-explanation {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-atlas-field);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: var(--radius-md);
+}
+.activity-planner__score-explanation summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.activity-planner__score-explanation p {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-atlas-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}

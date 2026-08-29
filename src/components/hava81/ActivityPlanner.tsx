@@ -150,7 +150,12 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
       </div>
 
       {plans.length > 0 ? (
-        <div className="activity-planner__cards">
+        <>
+          <details className="activity-planner__score-explanation">
+            <summary>{t('hava81.activities.score.explanationTitle')}</summary>
+            <p>{t('hava81.activities.score.explanation')}</p>
+          </details>
+          <div className="activity-planner__cards">
           {plans.map(plan => {
             const best = plan.bestWindow;
             const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
@@ -211,7 +216,8 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
               </article>
             );
           })}
-        </div>
+          </div>
+        </>
       ) : (
         <p className="activity-planner__empty">{t('hava81.activities.empty')}</p>
       )}

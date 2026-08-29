@@ -557,3 +557,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the stale map-label correction on current main `e196bfd4` rather than force-updating the older conflicted PR branch.
 - The map eyebrow now says `Türkiye · İl haritası` / `Türkiye · Province map`, matching the province/city marker surface instead of implying meteorological station entities that are not rendered.
 - Combined local validation on the current baseline passed: lint, type-check, complete frontend suite 141/141, production dependency audit 0 vulnerabilities, production build generated all 81 city pages, and host-side `git diff --check` was clean. Map tiles, coordinates, weather values and interactions are unchanged.
+
+
+## 2026-08-29 03:28 TRT — activity-score differences are explainable in-place
+
+- Audited the personalized activity cards against the recurring user question “why is walking 100 while running is 98?”. The cards exposed per-activity criteria, but there was no concise explanation that the same forecast hours are deliberately re-scored with different thresholds and weights.
+- Added a collapsed `Skorlar neden farklı?` / `Why are the scores different?` disclosure above activity results. It explains the concrete distinctions without adding permanent visual density: running weighs heat/air quality more than walking, picnics weigh rain/wind more, and motorcycling weighs rain/wind/visibility more.
+- No activity thresholds, score math, selected-hour filtering, weather data or safety semantics changed.
+- Validation on main `4bdbcb6`: lint, type-check, focused activity coverage 9/9 and production build pass. A full frontend run on the same semantic patch passed 141/141 with production dependency audit 0 vulnerabilities; after reducing formatter-only diff churn, lint/type/focused coverage were rerun on the final minimal diff.

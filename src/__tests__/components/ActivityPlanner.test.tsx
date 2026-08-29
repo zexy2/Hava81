@@ -45,6 +45,13 @@ describe('ActivityPlanner time range', () => {
     );
 
     expect(screen.getAllByText('12 saatlik uygunluk').length).toBeGreaterThan(0);
+    const scoreExplanation = screen.getByText('Skorlar neden farklı?');
+    expect(scoreExplanation).toBeInTheDocument();
+    fireEvent.click(scoreExplanation);
+    expect(
+      screen.getByText(/aynı hava saatleri her aktivitenin kendi eşik ve ağırlıklarıyla/i)
+    ).toBeVisible();
+
     fireEvent.change(screen.getByLabelText('Başlangıç'), { target: { value: '18:00' } });
     fireEvent.change(screen.getByLabelText('Bitiş'), { target: { value: '20:00' } });
 
