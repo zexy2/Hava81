@@ -267,3 +267,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Frontend in-memory weather cache age must be monotonic-safe at its trust boundary: negative wall-clock age is invalid, not fresh. If the client clock moves behind a cached response timestamp, refetch rather than extending weather freshness beyond the configured TTL.
 
 - 2026-08-29 — User-facing freshness labels must not convert materially future provider timestamps into “just updated.” Allow only the same one-minute clock-skew tolerance used at persisted-weather boundaries; beyond it, report freshness as unknown rather than inventing recency.
+
+- 2026-08-29 — Modeled-context provenance must not publish a materially future provider fetch clock time. Reuse the same one-minute clock-skew tolerance as primary weather freshness; when the fetch timestamp is farther ahead, omit the displayed fetch time while retaining provider/license attribution.

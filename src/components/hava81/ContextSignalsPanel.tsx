@@ -9,6 +9,7 @@ interface Props {
 
 type Level = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
 const normalizeMicroUnit = (unit?: string) => unit?.replace(/μ/g, 'µ') ?? '';
+const FUTURE_FETCH_TOLERANCE_MS = 60_000;
 const uvLevel = (uv?: number): Level | undefined =>
   uv === undefined
     ? undefined
@@ -24,9 +25,11 @@ const uvLevel = (uv?: number): Level | undefined =>
 
 export function ContextSignalsPanel({ signals }: Props) {
   const { t, i18n } = useTranslation();
-  const fetchedTime = Number.isNaN(signals.fetchedAt.getTime())
-    ? null
-    : signals.fetchedAt.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
+  const fetchedAtMs = signals.fetchedAt.getTime();
+  const fetchedTime =
+    Number.isNaN(fetchedAtMs) || fetchedAtMs - Date.now() > FUTURE_FETCH_TOLERANCE_MS
+      ? null
+      : signals.fetchedAt.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
   const uv = uvLevel(signals.uvIndexMax);
   const pollen = useMemo(
     () => Math.max(signals.grassPollenMax ?? 0, signals.olivePollenMax ?? 0),
