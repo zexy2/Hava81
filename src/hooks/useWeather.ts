@@ -267,9 +267,12 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       const targetCity = cityName ?? city;
       if (!targetCity.trim()) return null;
 
+      // City search is a handoff from location mode. Clear and invalidate any
+      // existing/in-flight location result so it cannot remain visible or win a late race.
+      locationAsync.reset();
       return weatherAsync.execute(targetCity.trim());
     },
-    [city, weatherAsync]
+    [city, locationAsync, weatherAsync]
   );
 
   // Fetch current location weather
