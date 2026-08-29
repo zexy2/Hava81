@@ -67,6 +67,17 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
     ]
   );
   const offset = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const precipitationFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [i18n.language]
+  );
+  const formatPrecipitationAmount = (amount?: number) => {
+    if (!Number.isFinite(amount) || (amount ?? 0) <= 0) return null;
+    return (amount as number) < 0.1
+      ? `<${precipitationFormatter.format(0.1)} mm`
+      : `${precipitationFormatter.format(amount as number)} mm`;
+  };
   const formatTime = (date?: Date) =>
     date
       ? new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {
@@ -101,7 +112,11 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
         </label>
       </header>
 
-      <div className="activity-planner__window" role="group" aria-label={t('hava81.activities.window.label')}>
+      <div
+        className="activity-planner__window"
+        role="group"
+        aria-label={t('hava81.activities.window.label')}
+      >
         <div className="activity-planner__window-copy">
           <strong>{t('hava81.activities.window.title')}</strong>
           <span>{t('hava81.activities.window.help')}</span>
@@ -157,77 +172,88 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
             <p>{t('hava81.activities.score.explanation')}</p>
           </details>
           <div className="activity-planner__cards">
-          {plans.map(plan => {
-            const best = plan.bestWindow;
-            const bestRange = plan.bestWindowRange;
-            const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
-            const rainText =
-              precipitation === 0
-                ? t('hava81.activities.conditions.dry')
-                : t('hava81.activities.conditions.rain', { value: precipitation });
-            const scoreLabel = hasWindow
-              ? t('hava81.activities.score.filtered', {
-                  start: profile.activityStart,
-                  end: profile.activityEnd,
-                })
-              : t('hava81.activities.score.default');
-            return (
-              <article key={plan.activity} className={`activity-card activity-card--${plan.band}`}>
-                <header>
-                  <h3>{t(`hava81.activities.names.${plan.activity}`)}</h3>
-                  <div className="activity-card__score">
-                    <small>{scoreLabel}</small>
-                    <strong>
-                      {plan.windowUnavailable ? '—' : plan.score}
-                      <span>/100</span>
-                    </strong>
-                  </div>
-                </header>
-                <p>
-                  {bestRange
-                    ? bestRange.start.time.getTime() === bestRange.end.time.getTime()
-                      ? t('hava81.activities.bestTime', { time: formatTime(bestRange.peak.time) })
-                      : t('hava81.activities.bestRange', {
-                          start: formatTime(bestRange.start.time),
-                          end: formatTime(bestRange.end.time),
-                        })
-                    : t('hava81.activities.noWindow')}
-                </p>
-                {best ? (
-                  <div className="activity-card__conditions">
-                    <span>
-                      {t('hava81.activities.conditions.feelsLike', {
-                        value: Math.round(convertTemperature(best.apparentTemperature)),
-                        unit: getTemperatureSymbol(),
-                      })}
-                    </span>
-                    <span>{rainText}</span>
-                    <span>
-                      {t('hava81.activities.conditions.wind', {
-                        value: convertWindSpeed(best.windSpeed),
-                        unit: getWindSpeedSymbol(),
-                      })}
-                    </span>
-                  </div>
-                ) : null}
-                <small className="activity-card__impact">
-                  {t('hava81.activities.score.activityImpact', {
-                    value: plan.activityImpact > 0 ? `+${plan.activityImpact}` : plan.activityImpact,
-                  })}
-                </small>
-                <small className="activity-card__criteria">
-                  {t(`hava81.activities.criteria.${plan.activity}`)}
-                </small>
-                {plan.reasons[0] ? (
-                  <small className="activity-card__risk">
-                    {t('hava81.activities.mainRisk', {
-                      risk: t(`hava81.dailyPlan.reasons.${reasonKey[plan.reasons[0]]}`),
+            {plans.map(plan => {
+              const best = plan.bestWindow;
+              const bestRange = plan.bestWindowRange;
+              const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
+              const precipitationAmount = formatPrecipitationAmount(best?.precipitationMm);
+              const rainText = precipitationAmount
+                ? precipitation > 0
+                  ? t('hava81.activities.conditions.rainWithAmount', {
+                      value: precipitation,
+                      amount: precipitationAmount,
+                    })
+                  : t('hava81.activities.conditions.rainAmount', { amount: precipitationAmount })
+                : precipitation === 0
+                  ? t('hava81.activities.conditions.dry')
+                  : t('hava81.activities.conditions.rain', { value: precipitation });
+              const scoreLabel = hasWindow
+                ? t('hava81.activities.score.filtered', {
+                    start: profile.activityStart,
+                    end: profile.activityEnd,
+                  })
+                : t('hava81.activities.score.default');
+              return (
+                <article
+                  key={plan.activity}
+                  className={`activity-card activity-card--${plan.band}`}
+                >
+                  <header>
+                    <h3>{t(`hava81.activities.names.${plan.activity}`)}</h3>
+                    <div className="activity-card__score">
+                      <small>{scoreLabel}</small>
+                      <strong>
+                        {plan.windowUnavailable ? '—' : plan.score}
+                        <span>/100</span>
+                      </strong>
+                    </div>
+                  </header>
+                  <p>
+                    {bestRange
+                      ? bestRange.start.time.getTime() === bestRange.end.time.getTime()
+                        ? t('hava81.activities.bestTime', { time: formatTime(bestRange.peak.time) })
+                        : t('hava81.activities.bestRange', {
+                            start: formatTime(bestRange.start.time),
+                            end: formatTime(bestRange.end.time),
+                          })
+                      : t('hava81.activities.noWindow')}
+                  </p>
+                  {best ? (
+                    <div className="activity-card__conditions">
+                      <span>
+                        {t('hava81.activities.conditions.feelsLike', {
+                          value: Math.round(convertTemperature(best.apparentTemperature)),
+                          unit: getTemperatureSymbol(),
+                        })}
+                      </span>
+                      <span>{rainText}</span>
+                      <span>
+                        {t('hava81.activities.conditions.wind', {
+                          value: convertWindSpeed(best.windSpeed),
+                          unit: getWindSpeedSymbol(),
+                        })}
+                      </span>
+                    </div>
+                  ) : null}
+                  <small className="activity-card__impact">
+                    {t('hava81.activities.score.activityImpact', {
+                      value:
+                        plan.activityImpact > 0 ? `+${plan.activityImpact}` : plan.activityImpact,
                     })}
                   </small>
-                ) : null}
-              </article>
-            );
-          })}
+                  <small className="activity-card__criteria">
+                    {t(`hava81.activities.criteria.${plan.activity}`)}
+                  </small>
+                  {plan.reasons[0] ? (
+                    <small className="activity-card__risk">
+                      {t('hava81.activities.mainRisk', {
+                        risk: t(`hava81.dailyPlan.reasons.${reasonKey[plan.reasons[0]]}`),
+                      })}
+                    </small>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         </>
       ) : (
