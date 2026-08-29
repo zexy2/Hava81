@@ -263,3 +263,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — API freshness metadata must describe the server cache TTL that produced the payload, not a duplicated route constant. Browser/proxy Cache-Control may intentionally be shorter, but UI stale-state logic compares payload fetchedAt with freshForSeconds and therefore needs the actual backend cache lifetime.
 
 - 2026-08-29 — Deploy-time chunk recovery must remain loop-bounded even when browser storage is unavailable. Capture the one-shot recovery timestamp from the temporary URL marker before cleaning the canonical URL; sessionStorage is an optimization/persistence aid, not the only loop guard.
+
+- 2026-08-29 — Frontend in-memory weather cache age must be monotonic-safe at its trust boundary: negative wall-clock age is invalid, not fresh. If the client clock moves behind a cached response timestamp, refetch rather than extending weather freshness beyond the configured TTL.

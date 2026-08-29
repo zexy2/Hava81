@@ -39,6 +39,29 @@ describe('httpClient BFF transport', () => {
     expect(httpClient.getCacheSize()).toBe(1);
   });
 
+  it('does not reuse a cache entry after the client clock moves behind its timestamp', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-29T13:00:00Z'));
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Izmir', temperature: 23 }))
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Izmir', temperature: 22 }));
+
+      await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toMatchObject({
+        temperature: 23,
+      });
+
+      vi.setSystemTime(new Date('2026-08-29T12:59:00Z'));
+
+      await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toMatchObject({
+        temperature: 22,
+      });
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('serializes JSON posts and sets their content type', async () => {
     (global.fetch as Mock).mockResolvedValue(mockResponse({ accepted: true }));
 
