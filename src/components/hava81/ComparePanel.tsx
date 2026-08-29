@@ -30,6 +30,16 @@ interface CompareRow {
   activityPlan?: ActivityPlan;
 }
 
+const formatPrecipitationSummary = (locale: string, probability: number, amount: number) => {
+  const probabilityText = locale.startsWith('en')
+    ? `${Math.round(probability * 100)}%`
+    : `%${Math.round(probability * 100)}`;
+  if (amount <= 0) return probabilityText;
+  const formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const amountText = amount < 0.1 ? `<${formatter.format(0.1)} mm` : `${formatter.format(amount)} mm`;
+  return `${probabilityText} · ${amountText}`;
+};
+
 export function ComparePanel({ cities, language }: ComparePanelProps) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
@@ -166,7 +176,9 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
             aria-label={t('hava81.compare.title')}
           >
           {rows.map(row => {
-            const maxPop = Math.max(0, ...row.hourly.slice(0, 6).map(point => point.pop));
+            const nearTerm = row.hourly.slice(0, 6);
+            const maxPop = Math.max(0, ...nearTerm.map(point => point.pop));
+            const maxPrecipitationMm = Math.max(0, ...nearTerm.map(point => point.precipitationMm ?? 0));
             return (
               <article
                 className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
@@ -189,7 +201,8 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                     </b>
                   </span>
                   <span>
-                    {t('hava81.compare.rain')} <b>%{Math.round(maxPop * 100)}</b>
+                    {t('hava81.compare.rain')}{' '}
+                    <b>{formatPrecipitationSummary(i18n.language, maxPop, maxPrecipitationMm)}</b>
                   </span>
                   <span>
                     {t('weather.wind')}{' '}
