@@ -94,6 +94,36 @@ describe('DecisionAlertsPanel', () => {
     ).toBe(false);
   });
 
+  it('keeps a delivered alert deduped for the session when its marker cannot be persisted', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key: string, value: string) {
+      if (key.startsWith('hava81-alert-sent:')) throw new DOMException('quota', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <DecisionAlertsPanel
+        weather={{ ...weather, meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') } }}
+        hourly={rainyHourly}
+      />
+    );
+    await Promise.resolve();
+
+    expect(notification).toHaveBeenCalledTimes(1);
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(false);
+  });
 
   it('fails closed when alert dedupe storage becomes unavailable', async () => {
     const originalGetItem = Storage.prototype.getItem;
