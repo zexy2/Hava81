@@ -53,7 +53,7 @@ Hava81 turns weather data into practical decisions for people in Türkiye. Its p
 - Responsive editorial layout with dedicated mobile bottom navigation
 - Deterministic inline SVG weather symbols instead of emoji or remote icon assets
 - Accessible light, dark and automatic themes
-- Restrained, reduced-motion-aware animation via Framer Motion
+- Restrained CSS animation with explicit reduced-motion handling
 - Full keyboard navigation support
 - Responsive layout for mobile, tablet, and desktop
 
@@ -79,7 +79,7 @@ Hava81 turns weather data into practical decisions for people in Türkiye. Its p
 | Framework  | React 19.1, TypeScript 6                                      |
 | Styling    | CSS, semantic design tokens, responsive atlas layout          |
 | Typography | IBM Plex Sans Variable, Source Serif 4 Variable               |
-| Animation  | Framer Motion 12                                              |
+| Animation  | CSS keyframes/transitions with reduced-motion handling        |
 | Maps       | Leaflet.js, React-Leaflet                                     |
 | i18n       | react-i18next                                                 |
 | HTTP       | Custom httpClient with caching and retry logic                |
@@ -325,4 +325,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - [OpenWeather](https://openweathermap.org/) for the weather API
 - [Leaflet](https://leafletjs.com/) for the mapping library
-- [Framer Motion](https://www.framer.com/motion/) for animations
+- Browser-native CSS animation primitives for lightweight motion
