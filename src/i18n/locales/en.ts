@@ -151,6 +151,7 @@ export const en = {
           label: 'Air quality',
           poor: 'Caution',
           sensitive: 'Sensitive groups take care',
+          fair: 'Fair',
           good: 'Good',
           unknown: 'No data',
         },

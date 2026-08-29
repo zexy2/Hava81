@@ -86,6 +86,37 @@ describe('DailyPlanPanel sharing', () => {
     expect(within(timeline).getAllByText('hava81.dailyPlan.tomorrow')).toHaveLength(1);
   });
 
+  it('shows precipitation probability and measurable amount together when both explain the risk', () => {
+    const rainyHourly: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-28T18:00:00.000Z'),
+        temp: 23,
+        pop: 0.15,
+        precipitationMm: 0.2,
+        windSpeed: 3,
+        windGust: 5,
+        apparentTemperature: 23,
+        humidity: 60,
+        uvIndex: 0,
+        visibility: 20000,
+        weatherCode: 61,
+        icon: '10n',
+        description: 'hafif yağmur',
+      },
+    ];
+
+    render(<DailyPlanPanel weather={weather} hourly={rainyHourly} />);
+
+    const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    expect(within(timeline).getByText(/23° · %15 · 0,2 mm/)).toBeInTheDocument();
+    expect(within(timeline).getByText('hava81.dailyPlan.reasons.rainRisk')).toBeInTheDocument();
+    expect(
+      within(timeline).getByRole('listitem', {
+        name: /%15.*0,2 mm.*hava81\.dailyPlan\.reasons\.rainRisk/,
+      })
+    ).toBeInTheDocument();
+  });
+
   it('announces clipboard success without moving focus', async () => {
     const user = userEvent.setup();
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);

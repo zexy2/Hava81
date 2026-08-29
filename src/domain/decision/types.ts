@@ -58,7 +58,7 @@ export interface BestWindowRange<T extends ScoredWeatherWindow = ScoredWeatherWi
 
 export type UmbrellaAdvice = "yes" | "maybe" | "no";
 export type WindAdvice = "strong" | "caution" | "normal";
-export type AirQualityAdvice = "poor" | "sensitive" | "good" | "unknown";
+export type AirQualityAdvice = "poor" | "sensitive" | "fair" | "good" | "unknown";
 export type ScoreConfidence = "high" | "medium" | "basic";
 
 export interface NowOrLaterAdvice {

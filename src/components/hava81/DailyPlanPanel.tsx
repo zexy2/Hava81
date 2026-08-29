@@ -70,6 +70,26 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       timeZone: 'UTC',
     });
   };
+  const precipitationFormatter = useMemo(
+    () => new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [i18n.language]
+  );
+  const formatSlotPrecipitation = (probability: number, amount?: number) => {
+    const probabilityPercent = Math.round(probability * 100);
+    const parts: string[] = [];
+    if (probabilityPercent > 0) {
+      parts.push(i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`);
+    }
+    if (Number.isFinite(amount) && (amount ?? 0) > 0) {
+      const amountValue = amount as number;
+      const amountText =
+        amountValue < 0.1
+          ? `<${precipitationFormatter.format(0.1)} mm`
+          : `${precipitationFormatter.format(amountValue)} mm`;
+      parts.push(amountText);
+    }
+    return parts.join(' · ');
+  };
 
   useEffect(() => {
     const key = `${weather.cityName}:${weather.meta.fetchedAt instanceof Date ? weather.meta.fetchedAt.toISOString() : weather.meta.fetchedAt}`;
@@ -229,12 +249,29 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
             previous && localDateKey(previous.time) !== localDateKey(slot.time)
           );
           const primaryReason = slot.reasons[0];
+          const primaryReasonText = primaryReason
+            ? t(`hava81.dailyPlan.reasons.${reasonKey[primaryReason]}`)
+            : undefined;
+          const precipitationDetail = formatSlotPrecipitation(
+            slot.precipitationProbability,
+            slot.precipitationMm
+          );
+          const slotAriaLabel = [
+            formatTime(slot.time),
+            `${slot.score}/100`,
+            t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`),
+            `${Math.round(slot.temperature)}°`,
+            precipitationDetail || undefined,
+            primaryReasonText,
+          ]
+            .filter(Boolean)
+            .join(', ');
           return (
             <div
               className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}`}
               key={slot.time.toISOString()}
               role="listitem"
-              aria-label={`${formatTime(slot.time)}, ${slot.score}/100, ${t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`)}`}
+              aria-label={slotAriaLabel}
             >
               <time dateTime={slot.time.toISOString()}>
                 {isDayBoundary ? (
@@ -243,14 +280,10 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
                 <span>{formatTime(slot.time)}</span>
               </time>
               <strong>{slot.score}</strong>
-              {primaryReason ? (
-                <em>{t(`hava81.dailyPlan.reasons.${reasonKey[primaryReason]}`)}</em>
-              ) : null}
+              {primaryReasonText ? <em>{primaryReasonText}</em> : null}
               <small>
                 {Math.round(slot.temperature)}°
-                {Math.round(slot.precipitationProbability * 100) > 0
-                  ? ` · %${Math.round(slot.precipitationProbability * 100)}`
-                  : ''}
+                {precipitationDetail ? ` · ${precipitationDetail}` : ''}
               </small>
             </div>
           );
