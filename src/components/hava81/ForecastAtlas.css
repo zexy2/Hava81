@@ -81,7 +81,7 @@
 }
 
 .hava81-forecast-atlas__range-button {
-  min-height: 36px;
+  min-height: 44px;
   border: 1px solid var(--forecast-line);
   border-radius: 999px;
   padding: 6px 11px;
