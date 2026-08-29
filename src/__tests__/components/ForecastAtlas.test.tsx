@@ -38,12 +38,12 @@ const renderAtlas = () =>
     </SettingsProvider>
   );
 
-const renderRangeAtlas = () =>
+const renderRangeAtlas = (count = 24) =>
   render(
     <SettingsProvider>
       <ForecastAtlas
         daily={[]}
-        hourly={Array.from({ length: 24 }, (_, index) => ({
+        hourly={Array.from({ length: count }, (_, index) => ({
           time: new Date(Date.UTC(2026, 7, 29, index)),
           temp: 20 + index / 10,
           icon: '01d',
@@ -70,6 +70,21 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(region).getByText(/00:00 saatinde yağış beklenmiyor/i)).toHaveClass(
       'hava81-forecast-atlas__sr-only'
     );
+  });
+
+  it('describes and selects the actual available horizon when fewer than 24 hours are returned', () => {
+    renderRangeAtlas(8);
+
+    expect(
+      screen.getByRole('heading', { name: /saatlik tahmin · sonraki 8 saat/i })
+    ).toBeInTheDocument();
+    const range = screen.getByRole('group', { name: /gösterilecek saat aralığı/i });
+    expect(within(range).getByRole('button', { name: '8 saat' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(within(range).queryByRole('button', { name: '12 saat' })).not.toBeInTheDocument();
+    expect(within(range).queryByRole('button', { name: '24 saat' })).not.toBeInTheDocument();
   });
 
   it('lets users narrow the real-hourly display without changing forecast data', async () => {

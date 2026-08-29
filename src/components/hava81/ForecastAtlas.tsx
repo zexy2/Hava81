@@ -52,7 +52,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
   const hourLimit =
-    intervalHours === 1 ? Math.min(hourRange, REAL_HOURLY_LIMIT) : LEGACY_HOUR_LIMIT;
+    intervalHours === 1
+      ? Math.min(hourRange, REAL_HOURLY_LIMIT, hourly.length)
+      : Math.min(LEGACY_HOUR_LIMIT, hourly.length);
   const hourlyHeading =
     intervalHours === 1
       ? settings.language === 'en'
@@ -150,17 +152,19 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                 settings.language === 'en' ? 'Hours to display' : 'Gösterilecek saat aralığı'
               }
             >
-              {[6, 12, 24].map(hours => (
-                <button
-                  key={hours}
-                  type="button"
-                  className="hava81-forecast-atlas__range-button"
-                  aria-pressed={hourRange === hours}
-                  onClick={() => setHourRange(hours)}
-                >
-                  {settings.language === 'en' ? `${hours} hours` : `${hours} saat`}
-                </button>
-              ))}
+              {Array.from(new Set([6, 12, Math.min(REAL_HOURLY_LIMIT, hourly.length)]))
+                .filter(hours => hours <= hourly.length)
+                .map(hours => (
+                  <button
+                    key={hours}
+                    type="button"
+                    className="hava81-forecast-atlas__range-button"
+                    aria-pressed={hourLimit === hours}
+                    onClick={() => setHourRange(hours)}
+                  >
+                    {settings.language === 'en' ? `${hours} hours` : `${hours} saat`}
+                  </button>
+                ))}
             </div>
           ) : null}
           {intervalHours === 1 && meta?.provider ? (

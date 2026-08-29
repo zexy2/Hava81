@@ -143,7 +143,7 @@ describe('Hava81 app integration', () => {
     expect(
       await screen.findByRole(
         'heading',
-        { name: /saatlik tahmin · sonraki 24 saat/i },
+        { name: /saatlik tahmin · sonraki 2 saat/i },
         { timeout: 5_000 }
       )
     ).toBeInTheDocument();
