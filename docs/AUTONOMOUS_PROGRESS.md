@@ -643,3 +643,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Preserved the existing weather score and activity thresholds, but now retain the weather-only baseline for each evaluated slot and aggregate it with the exact same cadence/downside weighting as the final activity score. Each plan exposes `baselineScore` and the exact bounded `activityImpact = final - baseline`.
 - Activity cards now show the activity-criteria impact as a signed point value in Turkish/English, directly explaining why walking, running, picnic, motorcycle, children and laundry can differ for the same hours. No provider data, thresholds, safety language or recommendation bands changed.
 - Focused domain/component coverage 9/9, type-check and `git diff --check` pass. Full release gates remain required before publication.
+
+
+## 2026-08-29 11:20 TRT — persisted decision-profile sanitization
+
+- Audited `hava81-decision-profile-v1` after hardening settings and recent searches. The generic local-storage cast allowed malformed activities, temperature sensitivity, or clock strings to reach `.includes()` and schedule/scoring logic.
+- Added a DecisionProfile-specific deserializer: allowlisted six activity kinds and three temperature sensitivities, strict `HH:mm` validation for commute/activity windows, duplicate removal and the existing three-activity cap, preservation of an intentional empty activity selection, and safe omission of malformed optional clocks. Wrong-shape JSON falls back to the default profile.
+- Added deterministic persistence and cross-tab regressions covering wrong-shape JSON, mixed invalid fields, explicit empty activities, and sanitized storage events. Validation on main `21ee3e55`: focused coverage 4/4, lint, type-check, complete frontend suite 177/177, production build generated all 81 city pages, production dependency audit found 0 vulnerabilities, and `git diff --check` passed. Exact-head CI remains the merge gate.
