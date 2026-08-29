@@ -46,15 +46,16 @@ export function useLocalStorage<T>(
     value => {
       try {
         const newValue = value instanceof Function ? value(storedValueRef.current) : value;
+        const serializedValue = serializer(newValue);
+        window.localStorage.setItem(key, serializedValue);
         storedValueRef.current = newValue;
-        window.localStorage.setItem(key, serializer(newValue));
         setStoredValue(newValue);
 
         // Dispatch event so other tabs/windows can sync
         window.dispatchEvent(
           new StorageEvent('storage', {
             key,
-            newValue: serializer(newValue),
+            newValue: serializedValue,
           })
         );
       } catch (error) {
