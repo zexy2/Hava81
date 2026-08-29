@@ -11,6 +11,15 @@ import type {
 
 const HOUR_MS = 60 * 60 * 1000;
 const HORIZON_HOURS = 12;
+
+export const ACTIVITY_COMFORT_RANGES_C: Partial<
+  Record<ActivityKind, readonly [number, number]>
+> = {
+  walk: [12, 26],
+  run: [10, 22],
+  picnic: [16, 27],
+  children: [14, 25],
+};
 const clamp = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 const unit = (value: number) => Math.max(0, Math.min(1, value));
 const smoothstep = (value: number, start: number, end: number) => {
