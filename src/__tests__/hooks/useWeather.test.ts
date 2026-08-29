@@ -313,6 +313,9 @@ describe('useWeather', () => {
         { city: 'Istanbul', timestamp: 9 },
         { city: '', timestamp: 8 },
         { city: 'Ankara', timestamp: 'bad' },
+        { city: 'Atlantis', timestamp: 8 },
+        { city: 'Bursa', timestamp: Date.now() + 120_000 },
+        { city: 'Adana', timestamp: -1 },
         null,
         { city: 'İzmir', timestamp: 7, unexpected: 'ignored' },
       ])
