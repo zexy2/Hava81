@@ -6,6 +6,7 @@ import type {
   WeatherProvider,
 } from '../../providers/weather-provider';
 import type { ForecastUpstream } from '../../providers/openweather/schemas';
+import { weatherCityIdentity } from './city-identity';
 import type {
   AirQualityDto,
   AirQualityQueryInput,
@@ -18,8 +19,6 @@ import type {
 } from './contracts';
 
 const coordinateKey = (lat: number, lon: number): string => `${lat.toFixed(3)}:${lon.toFixed(3)}`;
-
-const normalizeCity = (city: string): string => city.toLocaleLowerCase('tr-TR').trim();
 
 const dateKeyAtOffset = (unixSeconds: number, offsetSeconds: number): string =>
   new Date((unixSeconds + offsetSeconds) * 1_000).toISOString().slice(0, 10);
@@ -45,7 +44,7 @@ export class WeatherService {
           lang: query.lang,
         };
     const locationKey = query.city
-      ? `city:${normalizeCity(query.city)}`
+      ? `city:${weatherCityIdentity(query.city)}`
       : `coords:${coordinateKey(query.lat as number, query.lon as number)}`;
     const key = `weather:current:${locationKey}:${query.units}:${query.lang}`;
 
