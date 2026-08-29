@@ -168,6 +168,33 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByText(/Rota havası/i)).toBeVisible();
 });
 
+
+test('hourly horizon controls change the visible density and include a one-hour view', async ({
+  page,
+}) => {
+  test.skip(page.viewportSize()?.width !== 1280, 'density assertion is desktop-specific');
+  await page.goto('/istanbul');
+
+  const range = page.getByRole('group', { name: 'Gösterilecek saat aralığı' });
+  await expect(range.getByRole('button', { name: '1 saat' })).toBeVisible();
+
+  const firstHour = page.locator('.hava81-forecast-atlas__hour').first();
+  const widths: Record<string, number> = {};
+
+  for (const hours of [24, 12, 6, 1]) {
+    await range.getByRole('button', { name: `${hours} saat` }).click();
+    await expect(
+      page.getByRole('heading', { name: new RegExp(`Saatlik tahmin · sonraki ${hours} saat`, 'i') })
+    ).toBeVisible();
+    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(hours);
+    widths[String(hours)] = (await firstHour.boundingBox())?.width ?? 0;
+  }
+
+  expect(widths['12']).toBeGreaterThan(widths['24']);
+  expect(widths['6']).toBeGreaterThan(widths['12']);
+  expect(widths['1']).toBeGreaterThan(widths['6']);
+});
+
 test('hourly display falls back to the existing three-hour forecast when the hourly source fails', async ({
   page,
 }) => {

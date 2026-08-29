@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
@@ -16,7 +16,8 @@ export interface ForecastAtlasProps {
 const LEGACY_HOUR_LIMIT = 12;
 const REAL_HOURLY_LIMIT = 24;
 const MIN_CHART_WIDTH = 320;
-const MIN_COLUMN_WIDTH = 72;
+const CHART_COLUMN_UNITS = 100;
+const displayColumnWidth = (hours: number) => (hours <= 6 ? 56 : hours <= 12 ? 52 : 48);
 const CHART_HEIGHT = 104;
 const CHART_TOP = 16;
 const CHART_BOTTOM = 16;
@@ -27,6 +28,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const [hourRange, setHourRange] = useState(REAL_HOURLY_LIMIT);
+  const hourlyViewportRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const temperatureSymbol = getTemperatureSymbol();
@@ -58,7 +60,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const hourlyHeading =
     intervalHours === 1
       ? settings.language === 'en'
-        ? `Hourly forecast · next ${hourLimit} hours`
+        ? `Hourly forecast · next ${hourLimit} ${hourLimit === 1 ? 'hour' : 'hours'}`
         : `Saatlik tahmin · sonraki ${hourLimit} saat`
       : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 
@@ -92,7 +94,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     const min = Math.min(...temperatures);
     const max = Math.max(...temperatures);
     const range = max - min;
-    const columnWidth = Math.max(MIN_COLUMN_WIDTH, MIN_CHART_WIDTH / hourlyData.length);
+    const columnWidth = CHART_COLUMN_UNITS;
     const width = columnWidth * hourlyData.length;
     const drawableHeight = CHART_HEIGHT - CHART_TOP - CHART_BOTTOM;
 
@@ -125,6 +127,23 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     return dayFormatter.format(date);
   };
 
+  const rangeOptions = useMemo(() => {
+    if (intervalHours !== 1 || hourly.length <= 1) return [];
+    const available = Math.min(REAL_HOURLY_LIMIT, hourly.length);
+    return Array.from(new Set([1, 6, 12, REAL_HOURLY_LIMIT, available]))
+      .filter(hours => hours <= available)
+      .sort((a, b) => a - b);
+  }, [hourly.length, intervalHours]);
+  const minDisplayColumnWidth = displayColumnWidth(hourLimit);
+  const trackWidth = `max(100%, ${Math.max(
+    MIN_CHART_WIDTH,
+    hourlyData.length * minDisplayColumnWidth
+  )}px)`;
+  const selectHourRange = (hours: number) => {
+    setHourRange(hours);
+    if (hourlyViewportRef.current) hourlyViewportRef.current.scrollLeft = 0;
+  };
+
   const rootClasses = ['hava81-forecast-atlas', className].filter(Boolean).join(' ');
   const hasData = hourlyData.length > 0 || dailyData.length > 0;
 
@@ -144,7 +163,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
             {hourlyHeading}
           </h3>
-          {intervalHours === 1 && hourly.length > 6 ? (
+          {rangeOptions.length > 1 ? (
             <div
               className="hava81-forecast-atlas__range"
               role="group"
@@ -152,17 +171,15 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                 settings.language === 'en' ? 'Hours to display' : 'Gösterilecek saat aralığı'
               }
             >
-              {Array.from(new Set([6, 12, Math.min(REAL_HOURLY_LIMIT, hourly.length)]))
-                .filter(hours => hours <= hourly.length)
-                .map(hours => (
+              {rangeOptions.map(hours => (
                   <button
                     key={hours}
                     type="button"
                     className="hava81-forecast-atlas__range-button"
                     aria-pressed={hourLimit === hours}
-                    onClick={() => setHourRange(hours)}
+                    onClick={() => selectHourRange(hours)}
                   >
-                    {settings.language === 'en' ? `${hours} hours` : `${hours} saat`}
+                    {settings.language === 'en' ? `${hours} ${hours === 1 ? 'hour' : 'hours'}` : `${hours} saat`}
                   </button>
                 ))}
             </div>
@@ -191,6 +208,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           ) : null}
 
           <div
+            ref={hourlyViewportRef}
             className="hava81-forecast-atlas__hourly-viewport"
             role="region"
             aria-label={t('hava81.forecastAtlas.hourlyRegion')}
@@ -198,13 +216,13 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           >
             <div
               className="hava81-forecast-atlas__hourly-track"
-              style={{ width: chart?.width ?? MIN_CHART_WIDTH }}
+              style={{ width: trackWidth }}
             >
               {chart ? (
                 <svg
                   className="hava81-forecast-atlas__chart"
                   viewBox={`0 0 ${chart.width} ${CHART_HEIGHT}`}
-                  width={chart.width}
+                  width="100%"
                   height={CHART_HEIGHT}
                   role="img"
                   aria-labelledby={`${chartTitleId} ${chartDescriptionId}`}
@@ -270,7 +288,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               <ol
                 className="hava81-forecast-atlas__hours"
                 style={{
-                  gridTemplateColumns: `repeat(${hourlyData.length}, ${chart?.columnWidth ?? MIN_COLUMN_WIDTH}px)`,
+                  gridTemplateColumns: `repeat(${hourlyData.length}, minmax(0, 1fr))`,
                 }}
               >
                 {hourlyData.map(hour => {
