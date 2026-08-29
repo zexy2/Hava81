@@ -20,6 +20,8 @@ HISTORY_FILE = LOG_DIR / 'history.jsonl'
 EVENTS_FILE = LOG_DIR / 'events.jsonl'
 NGINX_SITE = Path('/etc/nginx/sites-enabled/api.hava81.zekiakgul.dev')
 CURRENT_API_PORT_FILE = Path('/var/lib/hava81/current-api-port')
+DEPLOYED_API_REVISION_FILE = Path('/var/lib/hava81/current-api-revision')
+DEPLOYED_API_TREE_FILE = Path('/var/lib/hava81/current-api-tree')
 DEFAULT_API_PORT = 4002
 ALLOWED_API_PORTS = {4000, 4001, 4002}
 REPO = 'zexy2/Hava81'
@@ -207,6 +209,55 @@ def collect_host() -> dict[str, Any]:
     }
 
 
+def read_optional_marker(path: Path) -> str | None:
+    try:
+        value = path.read_text(encoding='utf-8').strip()
+        return value or None
+    except OSError:
+        return None
+
+
+def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]:
+    main_sha = latest_main.get('head_sha') if latest_main else None
+    deployed_revision = read_optional_marker(DEPLOYED_API_REVISION_FILE)
+    deployed_tree = read_optional_marker(DEPLOYED_API_TREE_FILE)
+    main_tree: str | None = None
+    error: str | None = None
+    lookup: dict[str, Any] | None = None
+
+    if isinstance(main_sha, str) and main_sha:
+        lookup = http_get(f'https://api.github.com/repos/{REPO}/contents/apps?ref={main_sha}')
+        contents = lookup.get('json') if isinstance(lookup.get('json'), list) else []
+        api_entry = next(
+            (
+                item
+                for item in contents
+                if isinstance(item, dict)
+                and item.get('name') == 'api'
+                and item.get('path') == 'apps/api'
+                and item.get('type') == 'dir'
+            ),
+            None,
+        )
+        if api_entry and isinstance(api_entry.get('sha'), str):
+            main_tree = api_entry['sha']
+        else:
+            error = lookup.get('error') or 'apps/api tree SHA was not returned by GitHub'
+
+    known = bool(main_tree and deployed_tree)
+    pending = bool(known and main_tree != deployed_tree)
+    return {
+        'main_revision': main_sha,
+        'main_tree': main_tree,
+        'deployed_revision': deployed_revision,
+        'deployed_tree': deployed_tree,
+        'known': known,
+        'pending': pending,
+        'error': error,
+        'lookup': slim_http(lookup) if lookup else None,
+    }
+
+
 def collect_github() -> dict[str, Any]:
     pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
     runs_result = http_get(f'https://api.github.com/repos/{REPO}/actions/runs?per_page=20')
@@ -264,6 +315,7 @@ def collect_github() -> dict[str, Any]:
     ci_green = [pr['number'] for pr in automation_prs if pr['ci']['status'] == 'completed' and pr['ci']['conclusion'] == 'success']
     ci_failed = [pr['number'] for pr in automation_prs if pr['ci']['status'] == 'completed' and pr['ci']['conclusion'] not in (None, 'success')]
     ci_running = [pr['number'] for pr in automation_prs if pr['ci']['status'] in ('queued', 'in_progress', 'waiting', 'pending') or pr['ci']['run_id'] is None]
+    api_deployment = collect_api_deployment(latest_main)
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
     return {
@@ -272,11 +324,14 @@ def collect_github() -> dict[str, Any]:
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
         'open_automation_prs': automation_prs,
         'latest_main_run': slim_run(latest_main),
+        'api_deployment': api_deployment,
         'signals': {
             'ci_green_prs': ci_green,
             'ci_failed_prs': ci_failed,
             'ci_running_prs': ci_running,
             'main_pipeline_pending': bool(latest_main and latest_main.get('status') != 'completed'),
+            'api_deploy_pending': api_deployment['pending'],
+            'api_deploy_unknown': not api_deployment['known'],
         },
     }
 
@@ -301,6 +356,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
             for pr in prs
         ],
         'main': github.get('latest_main_run'),
+        'api_deployment': github.get('api_deployment'),
     }
 
 
@@ -377,7 +433,7 @@ def main() -> int:
             'current': state_signature(state),
         })
     level = 'OK' if production['healthy'] else 'WARN'
-    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} main_pending={github['signals']['main_pipeline_pending']}")
+    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
     return 0
 
 
