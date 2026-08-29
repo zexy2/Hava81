@@ -74,6 +74,7 @@ export function EnvironmentRail({
       new Intl.DateTimeFormat(locale, {
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'UTC',
       }),
     [locale]
   );
@@ -87,7 +88,11 @@ export function EnvironmentRail({
   );
 
   const hasValidDaylight = isValidDate(weather.sunrise) && isValidDate(weather.sunset);
-  const sunsetTime = hasValidDaylight ? timeFormatter.format(weather.sunset) : t('weather.noData');
+  const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
+  const sunsetTime = hasValidDaylight
+    ? timeFormatter.format(atLocationTime(weather.sunset))
+    : t('weather.noData');
 
   const daylightLength = useMemo(() => {
     if (!hasValidDaylight) return t('weather.noData');

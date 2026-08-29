@@ -595,3 +595,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the route-weather interaction after a successful corridor check and found that changing the departure time left the old result visible; starting a replacement request also kept the prior corridor on screen until the new request completed.
 - Departure/origin/destination edits now invalidate the old result immediately and advance a request generation; every new route request clears the previous result before entering the loading state. Late responses from an invalidated request are ignored, so guidance for an old departure instant cannot reappear under new inputs.
 - Route calculation, Türkiye-time parsing, provider data, scores and error semantics are unchanged. Added regressions for input invalidation, in-flight refresh clearing, and a late stale response.
+
+## 2026-08-29 05:18 TRT — daylight rail uses location timezone
+
+- Audited the Environment Rail from a visitor outside Türkiye and found sunset was formatted in the browser/device timezone even though the weather payload carries the city timezone offset. The primary decision field already formats provider timestamps in the location timezone, so the two surfaces could disagree.
+- Sunset display now applies `weather.meta.timezoneOffsetSeconds` and formats the shifted instant in UTC, matching the established location-time contract without changing the underlying sunrise/sunset instants or daylight-duration calculation.
+- Added regression coverage for İstanbul: provider sunset `16:30Z` with `+03:00` offset must render as `19:30`, not the runner/device `16:30`. Focused Environment Rail coverage 2/2, lint, type-check and `git diff --check` pass.
