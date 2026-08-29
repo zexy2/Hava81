@@ -226,6 +226,59 @@ const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
   };
 };
 
+const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResult => {
+  const invalid = (condition: boolean, field: string) => {
+    if (condition) invalidForecastPayload(field);
+  };
+  const validScore = (value: unknown) => isFiniteNumber(value) && value >= 0 && value <= 100;
+  const validDateString = (value: unknown) =>
+    typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
+
+  invalid(data.kind !== 'corridor-estimate', 'route.kind');
+  invalid(
+    !isFiniteNumber(data.estimatedDistanceKm) || data.estimatedDistanceKm < 0,
+    'route.estimatedDistanceKm'
+  );
+  invalid(
+    !isFiniteNumber(data.estimatedDurationMinutes) || data.estimatedDurationMinutes <= 0,
+    'route.estimatedDurationMinutes'
+  );
+  invalid(!validDateString(data.requestedDeparture), 'route.requestedDeparture');
+  invalid(!validScore(data.score), 'route.score');
+  invalid(!Array.isArray(data.segments) || data.segments.length === 0, 'route.segments');
+  invalid(typeof data.disclaimer !== 'string' || !data.disclaimer.trim(), 'route.disclaimer');
+
+  for (const [index, segment] of data.segments.entries()) {
+    const prefix = `route.segments.${index}`;
+    invalid(!isFiniteNumber(segment.fraction) || segment.fraction < 0 || segment.fraction > 1, `${prefix}.fraction`);
+    invalid(!isFiniteNumber(segment.lat) || segment.lat < -90 || segment.lat > 90, `${prefix}.lat`);
+    invalid(!isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180, `${prefix}.lon`);
+    invalid(!validDateString(segment.eta), `${prefix}.eta`);
+    invalid(!isFiniteNumber(segment.temperature), `${prefix}.temperature`);
+    invalid(
+      !isFiniteNumber(segment.precipitationProbability) ||
+        segment.precipitationProbability < 0 ||
+        segment.precipitationProbability > 100,
+      `${prefix}.precipitationProbability`
+    );
+    invalid(!isFiniteNumber(segment.windSpeed) || segment.windSpeed < 0, `${prefix}.windSpeed`);
+    invalid(typeof segment.description !== 'string' || !segment.description.trim(), `${prefix}.description`);
+    invalid(!validScore(segment.score), `${prefix}.score`);
+    invalid(!['low', 'caution', 'high'].includes(segment.risk), `${prefix}.risk`);
+  }
+
+  if (data.betterDeparture) {
+    invalid(!validDateString(data.betterDeparture.departure), 'route.betterDeparture.departure');
+    invalid(!validScore(data.betterDeparture.score), 'route.betterDeparture.score');
+    invalid(
+      !isFiniteNumber(data.betterDeparture.improvement) || data.betterDeparture.improvement <= 0,
+      'route.betterDeparture.improvement'
+    );
+  }
+
+  return data;
+};
+
 const cityKey = (value: string) => value.trim().toLocaleLowerCase('tr-TR');
 const takeBootstrapWeather = (
   city: string,
@@ -422,15 +475,17 @@ export const weatherService = {
     destination: { lat: number; lon: number },
     departure: Date,
     lang = DEFAULT_WEATHER_PARAMS.lang
-  ): Promise<RouteWeatherResult> =>
-    httpClient.get<RouteWeatherResult>(API_ENDPOINTS.weather.route, {
+  ): Promise<RouteWeatherResult> => {
+    const response = await httpClient.get<RouteWeatherResult>(API_ENDPOINTS.weather.route, {
       originLat: origin.lat,
       originLon: origin.lon,
       destinationLat: destination.lat,
       destinationLon: destination.lon,
       departure: departure.toISOString(),
       lang,
-    }),
+    });
+    return validateRouteWeatherPayload(response);
+  },
 
   getAirQuality: async (
     lat: number,
