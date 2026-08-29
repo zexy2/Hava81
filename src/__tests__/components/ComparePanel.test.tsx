@@ -126,6 +126,46 @@ describe('ComparePanel', () => {
     expect(screen.getAllByText('Yağış')).toHaveLength(2);
   });
 
+  it('keeps precipitation probability and amount tied to the same forecast hour', async () => {
+    api.getHourlyForecast.mockResolvedValue({
+      hourly: [
+        {
+          time: new Date('2026-08-28T09:00:00Z'),
+          temp: 24,
+          icon: '10d',
+          pop: 0.8,
+          windSpeed: 3,
+          precipitationMm: 0,
+        },
+        {
+          time: new Date('2026-08-28T10:00:00Z'),
+          temp: 24,
+          icon: '10d',
+          pop: 0.2,
+          windSpeed: 3,
+          precipitationMm: 6,
+        },
+      ],
+      meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
+    });
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getAllByText('%20 · 6,0 mm')).toHaveLength(2);
+    expect(screen.queryByText('%80 · 6,0 mm')).not.toBeInTheDocument();
+  });
+
   it('loads decision metrics and a weather-criteria winner', async () => {
     render(
       <SettingsProvider>

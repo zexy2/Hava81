@@ -1,5 +1,6 @@
 import { scoreWeatherWindow } from '../domain/decision/scoreWeatherWindow';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../types';
+import { pickMostSignificantPrecipitation } from './precipitation';
 
 export type WeatherDecisionKind =
   | 'rain'
@@ -51,13 +52,7 @@ export const getWeatherDecisions = ({
   const next = nextHours(hourly, 12);
   const decisions: WeatherDecision[] = [];
 
-  const rainiest = next.reduce<HourlyForecast | undefined>((best, point) => {
-    const amount = point.precipitationMm ?? 0;
-    const bestAmount = best?.precipitationMm ?? 0;
-    const severity = amount * 0.12 + point.pop;
-    const bestSeverity = best ? bestAmount * 0.12 + best.pop : -1;
-    return !best || severity > bestSeverity ? point : best;
-  }, undefined);
+  const rainiest = pickMostSignificantPrecipitation(next);
   if (rainiest && (rainiest.pop >= 0.5 || (rainiest.precipitationMm ?? 0) >= 0.8)) {
     const amount = rainiest.precipitationMm ?? 0;
     decisions.push({
