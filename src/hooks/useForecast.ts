@@ -84,11 +84,13 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         ]);
         if (requestId !== requestIdRef.current) return;
         if (hourlyData?.hourly.length) {
-          // Upgrade both the visual atlas and the decision engine to the richer one-hour model.
-          // The OpenWeather three-hour series remains the immediate/failure fallback above.
+          // Upgrade the visible/decision hourly series and the calendar-day extrema together.
+          // OpenWeather remains the immediate/failure fallback while Open-Meteo supplies complete
+          // local-day min/max values even when the page is opened late in the day.
           setHourly(hourlyData.hourly);
           setDisplayHourly(hourlyData.hourly.slice(0, 24));
           setDisplayMeta(hourlyData.meta);
+          if (hourlyData.daily?.length) setDaily(hourlyData.daily);
         }
         setAirQuality(aqData);
         setContextSignals(contextData);

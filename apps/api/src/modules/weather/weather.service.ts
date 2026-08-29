@@ -96,6 +96,7 @@ export class WeatherService {
     return this.cache.getOrLoad(key, this.config.CACHE_FORECAST_TTL_MS, async () => {
       const result = await this.hourlyProvider.getHourly(query);
       return {
+        ...(result.daily?.length ? { daily: result.daily.slice(0, 5) } : {}),
         hourly: result.hourly.slice(0, 48),
         meta: {
           provider: this.hourlyProvider.name,

@@ -26,6 +26,16 @@ describe('useForecast', () => {
       },
     });
     (weatherService.getHourlyForecast as Mock).mockResolvedValue({
+      daily: [
+        {
+          date: new Date('2026-07-14T12:00:00.000Z'),
+          tempMin: 18.4,
+          tempMax: 27.6,
+          icon: '02d',
+          description: 'partly cloudy',
+          pop: 0.1,
+        },
+      ],
       hourly: [{ time: new Date('2026-07-14T13:00:00.000Z'), temp: 25, icon: '01d', pop: 0.2 }],
       meta: {
         provider: 'Open-Meteo',
@@ -57,6 +67,8 @@ describe('useForecast', () => {
     expect(weatherService.getHourlyForecast).toHaveBeenCalledWith(41.01, 28.97, 'en');
     expect(weatherService.getAirQuality).toHaveBeenCalledWith(41.01, 28.97, 'en');
     expect(weatherService.getContextSignals).toHaveBeenCalledWith(41.01, 28.97, false);
+    expect(result.current.daily).toHaveLength(1);
+    expect(result.current.daily[0]).toMatchObject({ tempMin: 18.4, tempMax: 27.6 });
     expect(result.current.hourly).toHaveLength(1);
     expect(result.current.hourly[0].temp).toBe(25);
     expect(result.current.displayHourly[0].temp).toBe(25);

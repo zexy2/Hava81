@@ -9,6 +9,13 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     return new Response(
       JSON.stringify({
         utc_offset_seconds: 10800,
+        daily: {
+          time: [1787950800, 1788037200],
+          temperature_2m_max: [24.6, 27.5],
+          temperature_2m_min: [20, 19.9],
+          weather_code: [3, 3],
+          precipitation_probability_max: [23, 0],
+        },
         hourly: {
           time: [1787936400, 1787940000],
           temperature_2m: [24.4, 23.2],
@@ -33,6 +40,16 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
 
   assert.equal(requested?.hostname, 'api.open-meteo.com');
   assert.equal(requested?.searchParams.get('forecast_hours'), '48');
+  assert.equal(requested?.searchParams.get('forecast_days'), '5');
+  const dailyFields = new Set(requested?.searchParams.get('daily')?.split(','));
+  for (const field of [
+    'temperature_2m_max',
+    'temperature_2m_min',
+    'weather_code',
+    'precipitation_probability_max',
+  ]) {
+    assert.equal(dailyFields.has(field), true, `missing daily ${field}`);
+  }
   assert.equal(requested?.searchParams.get('timeformat'), 'unixtime');
   assert.equal(requested?.searchParams.get('timezone'), 'auto');
   assert.equal(requested?.searchParams.get('wind_speed_unit'), 'ms');
@@ -49,6 +66,14 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
   }
 
   assert.equal(result.timezoneOffsetSeconds, 10800);
+  assert.deepEqual(result.daily?.[0], {
+    date: '2026-08-29',
+    tempMin: 20,
+    tempMax: 24.6,
+    icon: '04d',
+    description: 'kapalı',
+    pop: 23,
+  });
   assert.deepEqual(result.hourly[0], {
     time: new Date(1787936400 * 1000).toISOString(),
     temp: 24.4,
@@ -96,6 +121,7 @@ test('Open-Meteo hourly adapter keeps the core forecast usable when optional dec
   const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
   const result = await provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' });
 
+  assert.equal(result.daily, undefined);
   assert.equal(result.hourly.length, 1);
   assert.equal(result.hourly[0].temp, 20);
   assert.equal(result.hourly[0].weatherCode, 2);

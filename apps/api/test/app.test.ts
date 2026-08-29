@@ -93,6 +93,16 @@ class FakeHourlyForecastProvider implements HourlyForecastProvider {
     this.calls += 1;
     return {
       timezoneOffsetSeconds: 10_800,
+      daily: [
+        {
+          date: '2026-08-29',
+          tempMin: 20,
+          tempMax: 24.6,
+          icon: '04d',
+          description: 'kapalı',
+          pop: 23,
+        },
+      ],
       hourly: [
         {
           time: '2026-08-28T18:00:00.000Z',
@@ -319,6 +329,15 @@ test('hourly forecast endpoint exposes real one-hour cadence metadata and caches
   assert.equal(first.json().meta.sourceUrl, 'https://example.test/hourly');
   assert.equal(first.json().meta.intervalHours, 1);
   assert.equal(first.json().meta.timezoneOffsetSeconds, 10_800);
+  assert.equal(first.json().daily.length, 1);
+  assert.deepEqual(first.json().daily[0], {
+    date: '2026-08-29',
+    tempMin: 20,
+    tempMax: 24.6,
+    icon: '04d',
+    description: 'kapalı',
+    pop: 23,
+  });
   assert.equal(first.json().hourly.length, 2);
   assert.equal(first.json().hourly[0].apparentTemperature, 25.2);
   assert.equal(first.json().hourly[0].humidity, 58);

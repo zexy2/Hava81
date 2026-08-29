@@ -93,6 +93,14 @@ export interface CurrentWeatherDto {
 }
 
 export interface HourlyForecastDto {
+  daily?: Array<{
+    date: string;
+    tempMin: number;
+    tempMax: number;
+    icon: string;
+    description: string;
+    pop: number;
+  }>;
   hourly: Array<{
     time: string;
     temp: number;

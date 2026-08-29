@@ -345,8 +345,18 @@ describe('weatherService BFF client', () => {
     expect(result.hourly[0].pop).toBe(0.05);
   });
 
-  it('revives the one-hour forecast returned by the BFF', async () => {
+  it('revives the one-hour forecast and calendar-day extrema returned by the BFF', async () => {
     mockGet.mockResolvedValue({
+      daily: [
+        {
+          date: '2026-08-29',
+          tempMin: 20,
+          tempMax: 24.6,
+          icon: '04d',
+          description: 'kapalı',
+          pop: 23,
+        },
+      ],
       hourly: [
         {
           time: '2026-08-28T18:00:00.000Z',
@@ -377,6 +387,8 @@ describe('weatherService BFF client', () => {
     const result = await weatherService.getHourlyForecast(41.01, 28.97, 'tr');
 
     expect(mockGet).toHaveBeenCalledWith('/weather/hourly', { lat: 41.01, lon: 28.97, lang: 'tr' });
+    expect(result.daily?.[0].date).toBeInstanceOf(Date);
+    expect(result.daily?.[0]).toMatchObject({ tempMin: 20, tempMax: 24.6, pop: 0.23 });
     expect(result.hourly[0].time).toBeInstanceOf(Date);
     expect(result.hourly[0].pop).toBe(0.35);
     expect(result.hourly[0]).toMatchObject({

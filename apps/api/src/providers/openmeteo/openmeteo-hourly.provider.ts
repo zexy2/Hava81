@@ -12,6 +12,15 @@ const ONE_HOUR_MS = 60 * 60 * 1_000;
 
 const hourlySchema = z.object({
   utc_offset_seconds: z.number().int(),
+  daily: z
+    .object({
+      time: z.array(z.number().int()),
+      temperature_2m_max: z.array(z.number().nullable()),
+      temperature_2m_min: z.array(z.number().nullable()),
+      weather_code: z.array(z.number().int().nullable()),
+      precipitation_probability_max: z.array(z.number().nullable()),
+    })
+    .optional(),
   hourly: z.object({
     time: z.array(z.number().int()),
     temperature_2m: z.array(z.number().nullable()),
@@ -102,7 +111,17 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         "is_day",
       ].join(","),
     );
+    url.searchParams.set(
+      "daily",
+      [
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "weather_code",
+        "precipitation_probability_max",
+      ].join(","),
+    );
     url.searchParams.set("forecast_hours", "48");
+    url.searchParams.set("forecast_days", "5");
     url.searchParams.set("timeformat", "unixtime");
     url.searchParams.set("timezone", "auto");
     url.searchParams.set("temperature_unit", "celsius");
@@ -178,7 +197,44 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           "Saatlik tahmin verisi şu anda kesintisiz kullanılamıyor.",
         );
       }
-      return { timezoneOffsetSeconds: parsed.data.utc_offset_seconds, hourly };
+
+      const dailyRaw = parsed.data.daily;
+      const daily: NonNullable<HourlyForecastProviderResult["daily"]> = [];
+      if (dailyRaw) {
+        const dailyLength = Math.min(
+          dailyRaw.time.length,
+          dailyRaw.temperature_2m_max.length,
+          dailyRaw.temperature_2m_min.length,
+          dailyRaw.weather_code.length,
+          dailyRaw.precipitation_probability_max.length,
+        );
+        for (let index = 0; index < dailyLength; index += 1) {
+          const tempMax = dailyRaw.temperature_2m_max[index];
+          const tempMin = dailyRaw.temperature_2m_min[index];
+          const code = dailyRaw.weather_code[index];
+          const pop = dailyRaw.precipitation_probability_max[index];
+          if (tempMax === null || tempMin === null || code === null || pop === null) continue;
+          const localDate = new Date(
+            (dailyRaw.time[index] + parsed.data.utc_offset_seconds) * 1_000,
+          )
+            .toISOString()
+            .slice(0, 10);
+          daily.push({
+            date: localDate,
+            tempMin: Math.round(tempMin * 10) / 10,
+            tempMax: Math.round(tempMax * 10) / 10,
+            icon: iconForCode(code, true),
+            description: descriptionForCode(code, query.lang),
+            pop: Math.max(0, Math.min(100, Math.round(pop))),
+          });
+        }
+      }
+
+      return {
+        timezoneOffsetSeconds: parsed.data.utc_offset_seconds,
+        ...(daily.length ? { daily } : {}),
+        hourly,
+      };
     } catch (error) {
       if (error instanceof AppError) throw error;
       if (controller.signal.aborted) {
