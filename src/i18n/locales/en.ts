@@ -67,7 +67,7 @@ export const en = {
     cityDocumentTitle: '{{city}} weather — Hava81',
     loadingWeather: 'Preparing weather data',
     slowLoading: 'Weather data is taking longer than usual; the connection or data provider may be delayed.',
-    mapEyebrow: '81 provinces · Station map',
+    mapEyebrow: 'Türkiye · Province map',
     emptyEyebrow: 'Hava81 · 81 provinces',
     decision: {
       plateCodeLabel: 'Province plate code {{code}}',

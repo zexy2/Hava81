@@ -67,7 +67,7 @@ export const tr = {
     cityDocumentTitle: '{{city}} hava durumu — Hava81',
     loadingWeather: 'Hava verileri hazırlanıyor',
     slowLoading: 'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',
-    mapEyebrow: '81 il · İstasyon haritası',
+    mapEyebrow: 'Türkiye · İl haritası',
     emptyEyebrow: 'Hava81 · 81 il',
     decision: {
       plateCodeLabel: 'Plaka kodu {{code}}',
