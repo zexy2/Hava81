@@ -114,20 +114,31 @@ export function WeatherDecisionField({
     switch (decision.kind) {
       case 'rain': {
         const precipitationAmount = formatPrecipitationAmount(decision.amount, locale);
-        return precipitationAmount
-          ? t('hava81.decision.actions.rainWithAmount', {
-              defaultValue:
-                '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} yağış bekleniyor.',
-              time: decision.time ? formatForecastTime(decision.time) : '—',
-              probability: Math.round((decision.value ?? 0) * 100),
-              amount: precipitationAmount,
-            })
-          : t('hava81.decision.actions.rain', {
-              defaultValue:
-                '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
-              time: decision.time ? formatForecastTime(decision.time) : '—',
-              probability: Math.round((decision.value ?? 0) * 100),
-            });
+        const probability = Math.round((decision.value ?? 0) * 100);
+        const time = decision.time ? formatForecastTime(decision.time) : '—';
+        if (precipitationAmount && probability > 0) {
+          return t('hava81.decision.actions.rainWithAmount', {
+            defaultValue:
+              '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} yağış bekleniyor.',
+            time,
+            probability,
+            amount: precipitationAmount,
+          });
+        }
+        if (precipitationAmount) {
+          return t('hava81.decision.actions.rainAmount', {
+            defaultValue:
+              '{{time}} civarında saatlik yaklaşık {{amount}} yağış bekleniyor; şemsiye iyi fikir.',
+            time,
+            amount: precipitationAmount,
+          });
+        }
+        return t('hava81.decision.actions.rain', {
+          defaultValue:
+            '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
+          time,
+          probability,
+        });
       }
       case 'wind':
         return t('hava81.decision.actions.wind', {
