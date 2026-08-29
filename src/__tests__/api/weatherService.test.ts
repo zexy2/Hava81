@@ -181,6 +181,43 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it.each([
+    ['non-finite temperature', { temperature: Number.NaN }],
+    ['humidity above 100%', { humidity: 101 }],
+    ['non-positive pressure', { pressure: 0 }],
+    ['negative visibility', { visibility: -1 }],
+    ['negative wind speed', { windSpeed: -0.1 }],
+    ['wind direction above 360°', { windDirection: 361 }],
+    ['cloud cover above 100%', { clouds: 101 }],
+    ['latitude outside the globe', { coordinates: { ...serializedWeather.coordinates, lat: 91 } }],
+    ['longitude outside the globe', { coordinates: { ...serializedWeather.coordinates, lon: 181 } }],
+    ['blank city name', { cityName: '   ' }],
+    ['blank country', { country: '   ' }],
+    ['blank provider', { meta: { ...serializedWeather.meta, provider: '   ' } }],
+    ['timezone outside global offset bounds', { meta: { ...serializedWeather.meta, timezoneOffsetSeconds: 50_401 } }],
+    ['unbounded freshness window', { meta: { ...serializedWeather.meta, freshForSeconds: 86_401 } }],
+  ])('rejects impossible current-weather %s from the BFF', async (_label, invalidField) => {
+    mockGet.mockResolvedValue({ ...serializedWeather, ...invalidField });
+
+    await expect(weatherService.getCurrentWeather({ city: 'Izmir' })).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
+  it('trims trusted current-weather identity fields after validation', async () => {
+    mockGet.mockResolvedValue({
+      ...serializedWeather,
+      cityName: '  Izmir  ',
+      country: ' TR ',
+    });
+
+    const result = await weatherService.getCurrentWeather({ city: 'Izmir' });
+
+    expect(result.cityName).toBe('Izmir');
+    expect(result.country).toBe('TR');
+  });
+
   it('consumes a matching early weather bootstrap without duplicating the BFF request', async () => {
     window.__HAVA81_BOOTSTRAP_WEATHER__ = {
       city: 'Izmir',

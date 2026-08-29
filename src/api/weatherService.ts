@@ -67,6 +67,67 @@ const reviveWeatherDate = (value: string, field: string): Date => {
   return date;
 };
 
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const validateCurrentWeatherPayload = (data: SerializedWeatherData): void => {
+  const invalid = (condition: boolean, field: string) => {
+    if (condition) invalidWeatherPayload(field);
+  };
+
+  invalid(typeof data.cityName !== 'string' || !data.cityName.trim(), 'current.cityName');
+  invalid(typeof data.country !== 'string' || !data.country.trim(), 'current.country');
+  for (const field of ['temperature', 'feelsLike', 'tempMin', 'tempMax'] as const) {
+    invalid(!isFiniteNumber(data[field]), `current.${field}`);
+  }
+  invalid(
+    !isFiniteNumber(data.humidity) || data.humidity < 0 || data.humidity > 100,
+    'current.humidity'
+  );
+  invalid(!isFiniteNumber(data.pressure) || data.pressure <= 0, 'current.pressure');
+  invalid(
+    data.visibility !== undefined && (!isFiniteNumber(data.visibility) || data.visibility < 0),
+    'current.visibility'
+  );
+  invalid(!isFiniteNumber(data.windSpeed) || data.windSpeed < 0, 'current.windSpeed');
+  invalid(
+    !isFiniteNumber(data.windDirection) || data.windDirection < 0 || data.windDirection > 360,
+    'current.windDirection'
+  );
+  invalid(!isFiniteNumber(data.clouds) || data.clouds < 0 || data.clouds > 100, 'current.clouds');
+  invalid(
+    !isFiniteNumber(data.coordinates?.lat) ||
+      data.coordinates.lat < -90 ||
+      data.coordinates.lat > 90,
+    'current.coordinates.lat'
+  );
+  invalid(
+    !isFiniteNumber(data.coordinates?.lon) ||
+      data.coordinates.lon < -180 ||
+      data.coordinates.lon > 180,
+    'current.coordinates.lon'
+  );
+  invalid(typeof data.description !== 'string', 'current.description');
+  invalid(
+    typeof data.meta?.provider !== 'string' || !data.meta.provider.trim(),
+    'current.meta.provider'
+  );
+  invalid(
+    data.meta.timezoneOffsetSeconds !== undefined &&
+      (!isFiniteNumber(data.meta.timezoneOffsetSeconds) ||
+        data.meta.timezoneOffsetSeconds < -43_200 ||
+        data.meta.timezoneOffsetSeconds > 50_400),
+    'current.meta.timezoneOffsetSeconds'
+  );
+  invalid(
+    data.meta.freshForSeconds !== undefined &&
+      (!isFiniteNumber(data.meta.freshForSeconds) ||
+        data.meta.freshForSeconds <= 0 ||
+        data.meta.freshForSeconds > 86_400),
+    'current.meta.freshForSeconds'
+  );
+};
+
 const invalidForecastPayload = (field: string): never => {
   throw new ApiError('Tahmin verisi doğrulanamadı', ErrorCode.API_ERROR, {
     retryable: true,
@@ -112,13 +173,18 @@ const reviveMeta = (meta: SerializedMeta): WeatherDataMeta => ({
   fetchedAt: reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt'),
 });
 
-const reviveWeatherDates = (data: SerializedWeatherData): NormalizedWeatherData => ({
-  ...data,
-  sunrise: reviveWeatherDate(data.sunrise, 'current.sunrise'),
-  sunset: reviveWeatherDate(data.sunset, 'current.sunset'),
-  timestamp: reviveWeatherDate(data.timestamp, 'current.timestamp'),
-  meta: reviveMeta(data.meta),
-});
+const reviveWeatherDates = (data: SerializedWeatherData): NormalizedWeatherData => {
+  validateCurrentWeatherPayload(data);
+  return {
+    ...data,
+    cityName: data.cityName.trim(),
+    country: data.country.trim(),
+    sunrise: reviveWeatherDate(data.sunrise, 'current.sunrise'),
+    sunset: reviveWeatherDate(data.sunset, 'current.sunset'),
+    timestamp: reviveWeatherDate(data.timestamp, 'current.timestamp'),
+    meta: reviveMeta(data.meta),
+  };
+};
 
 export const weatherService = {
   getCurrentWeather: async (params: WeatherQueryParams): Promise<NormalizedWeatherData> => {

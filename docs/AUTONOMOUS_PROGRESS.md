@@ -753,3 +753,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - `switch-api-traffic.sh` now requires the requested local slot to pass repeated bounded readiness checks before nginx is mutated. Nginx validation/reload failures restore the exact pre-switch configuration, and repeated public-readiness failure after reload automatically restores and reloads the previous target.
 - State markers are still updated only after public readiness succeeds, so a failed switch cannot falsely record the target as active.
 - Live topology was inspected without switching traffic: port 4002 ready, port 4001 ready, public readiness ready, and nginx remains on 4002. `bash -n` and `git diff --check` pass. Exact-head CI remains the publication gate.
+
+- Current worktree/branch: `/home/ubuntu/hava81-auto-run11-persisted-cache-clock-1925`, `automation/hava81-run11-current-dates-1925`, based on main `56c9b175...`. Next action is to re-verify #474 production health, rebase/rebuild #189 onto that green main, complete API canary validation, and in parallel publish this bounded current-date guard through exact-head CI.
+
+## 2026-08-29 19:50 TRT — frontend current-weather domain boundary
+
+- Continued the BFF trust-boundary audit on an isolated worktree from main `6dd8e7dad8e05e0aff067f1093ea8d14ad05302c` while its production pipeline runs independently.
+- Current-weather payload revival now rejects non-finite temperatures and unit-independent impossible domains before they can reach rendering/scoring: humidity/cloud percentages, positive pressure, non-negative visibility/wind speed, wind direction, global coordinates, provider identity, timezone offset and freshness window.
+- Temperature values are checked only for finiteness here because the BFF client supports metric/imperial/standard units; no Celsius-specific bounds are applied at this transport boundary. Persisted metric cache retains its separate broad Celsius sanity envelope.
+- Focused weather-service coverage is 53/53; frontend type-check, lint and diff-check pass. Full frontend/build/audit gates follow before publication.
