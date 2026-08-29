@@ -3,6 +3,7 @@ import { httpClient } from './httpClient';
 import { ApiError } from './errors/ApiError';
 import { API_ENDPOINTS, DEFAULT_WEATHER_PARAMS } from '../config';
 import { normalizePrecipitationProbability } from '../utils/precipitation';
+import { ErrorCode } from '../types';
 import type {
   NormalizedWeatherData,
   WeatherQueryParams,
@@ -52,6 +53,26 @@ declare global {
     __HAVA81_BOOTSTRAP_WEATHER__?: BootstrapWeatherRequest;
   }
 }
+
+const invalidForecastPayload = (field: string): never => {
+  throw new ApiError('Tahmin verisi doğrulanamadı', ErrorCode.API_ERROR, {
+    retryable: true,
+    details: { field },
+  });
+};
+
+const reviveForecastDate = (value: string, field: string, dateOnly = false): Date => {
+  const date = new Date(dateOnly ? `${value}T12:00:00.000Z` : value);
+  if (Number.isNaN(date.getTime())) return invalidForecastPayload(field);
+  return date;
+};
+
+const normalizeBffPrecipitationProbability = (value: number, field: string): number => {
+  if (!Number.isFinite(value) || value < 0 || value > 100) {
+    return invalidForecastPayload(field);
+  }
+  return normalizePrecipitationProbability(value);
+};
 
 const cityKey = (value: string) => value.trim().toLocaleLowerCase('tr-TR');
 const takeBootstrapWeather = (
@@ -185,17 +206,17 @@ export const weatherService = {
       daily: response.daily.map(item => ({
         ...item,
         // Noon UTC prevents a date-only forecast from shifting a calendar day in western/eastern clients.
-        date: new Date(`${item.date}T12:00:00.000Z`),
-        pop: normalizePrecipitationProbability(item.pop),
+        date: reviveForecastDate(item.date, 'forecast.daily.date', true),
+        pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.daily.pop'),
       })),
       hourly: response.hourly.slice(0, 8).map(item => ({
         ...item,
-        time: new Date(item.time),
-        pop: normalizePrecipitationProbability(item.pop),
+        time: reviveForecastDate(item.time, 'forecast.hourly.time'),
+        pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.hourly.pop'),
       })),
       meta: {
         ...response.meta,
-        fetchedAt: new Date(response.meta.fetchedAt),
+        fetchedAt: reviveForecastDate(response.meta.fetchedAt, 'forecast.meta.fetchedAt'),
       },
     };
   },
@@ -215,17 +236,20 @@ export const weatherService = {
         ? {
             daily: response.daily.slice(0, 5).map(item => ({
               ...item,
-              date: new Date(`${item.date}T12:00:00.000Z`),
-              pop: normalizePrecipitationProbability(item.pop),
+              date: reviveForecastDate(item.date, 'hourly.daily.date', true),
+              pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.daily.pop'),
             })),
           }
         : {}),
       hourly: response.hourly.slice(0, 48).map(item => ({
         ...item,
-        time: new Date(item.time),
-        pop: normalizePrecipitationProbability(item.pop),
+        time: reviveForecastDate(item.time, 'hourly.hourly.time'),
+        pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
       })),
-      meta: { ...response.meta, fetchedAt: new Date(response.meta.fetchedAt) },
+      meta: {
+        ...response.meta,
+        fetchedAt: reviveForecastDate(response.meta.fetchedAt, 'hourly.meta.fetchedAt'),
+      },
     };
   },
 

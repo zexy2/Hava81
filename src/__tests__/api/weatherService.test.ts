@@ -44,6 +44,14 @@ const serializedWeather = {
   },
 };
 
+interface InvalidForecastFields {
+  dailyPop?: number;
+  hourlyPop?: number;
+  dailyDate?: string;
+  hourlyTime?: string;
+  fetchedAt?: string;
+}
+
 const originalGeolocation = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
 
 const setGeolocation = (geolocation: Geolocation | undefined) => {
@@ -345,6 +353,49 @@ describe('weatherService BFF client', () => {
     expect(result.hourly[0].pop).toBe(0.05);
   });
 
+  it.each([
+    ['daily precipitation', { dailyPop: 140 }],
+    ['hourly precipitation', { hourlyPop: -1 }],
+    ['daily date', { dailyDate: 'not-a-date' }],
+    ['hourly time', { hourlyTime: 'not-a-date' }],
+    ['metadata timestamp', { fetchedAt: 'not-a-date' }],
+  ])('rejects malformed BFF forecast %s instead of clamping or reviving it', async (_label, fixture) => {
+    const invalid = fixture as InvalidForecastFields;
+    mockGet.mockResolvedValue({
+      daily: [
+        {
+          date: invalid.dailyDate ?? '2026-07-14',
+          tempMin: 18,
+          tempMax: 27,
+          icon: '01d',
+          description: 'clear',
+          pop: invalid.dailyPop ?? 5,
+        },
+      ],
+      hourly: [
+        {
+          time: invalid.hourlyTime ?? '2026-07-14T12:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          pop: invalid.hourlyPop ?? 5,
+          description: 'clear',
+          windSpeed: 3.2,
+        },
+      ],
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: invalid.fetchedAt ?? '2026-07-14T12:00:01.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 3,
+      },
+    });
+
+    await expect(weatherService.getForecast(38.42, 27.14)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it('revives the one-hour forecast and calendar-day extrema returned by the BFF', async () => {
     mockGet.mockResolvedValue({
       daily: [
@@ -403,6 +454,49 @@ describe('weatherService BFF client', () => {
     expect(result.meta.intervalHours).toBe(1);
     expect(result.meta.attribution).toBe('Open-Meteo · CC BY 4.0');
     expect(result.meta.sourceUrl).toBe('https://open-meteo.com/');
+  });
+
+  it.each([
+    ['daily precipitation', { dailyPop: 140 }],
+    ['hourly precipitation', { hourlyPop: -1 }],
+    ['daily date', { dailyDate: 'invalid' }],
+    ['hourly time', { hourlyTime: 'invalid' }],
+    ['metadata timestamp', { fetchedAt: 'invalid' }],
+  ])('rejects malformed one-hour BFF %s instead of fabricating a usable value', async (_label, fixture) => {
+    const invalid = fixture as InvalidForecastFields;
+    mockGet.mockResolvedValue({
+      daily: [
+        {
+          date: invalid.dailyDate ?? '2026-08-29',
+          tempMin: 20,
+          tempMax: 24.6,
+          icon: '04d',
+          description: 'kapalı',
+          pop: invalid.dailyPop ?? 23,
+        },
+      ],
+      hourly: [
+        {
+          time: invalid.hourlyTime ?? '2026-08-28T18:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          description: 'açık',
+          pop: invalid.hourlyPop ?? 35,
+          windSpeed: 3.2,
+        },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: invalid.fetchedAt ?? '2026-08-28T17:00:00.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    await expect(weatherService.getHourlyForecast(41.01, 28.97, 'tr')).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
   });
 
   it('returns normalized air quality from the BFF', async () => {
