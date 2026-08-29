@@ -616,3 +616,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a desktop production-page browser regression that persists English settings plus a fresh `Istanbul` cache and requires zero `/weather/current` bootstrap requests while the city view still renders.
 - Targeted validation passed: production build with all 81 generated city pages, the new desktop Playwright regression, lint, type-check, and `git diff --check`.
 - The first combined browser run exposed an unrelated nondeterministic existing smoke selector: two independently attributed Open-Meteo surfaces can both be present by the time the assertion runs, making a page-global provider-link lookup ambiguous. Scoped the assertion to the hourly forecast section rather than weakening attribution coverage; the previously failing tablet case now passes. Complete frontend/API suites, audits and build had already passed; full browser coverage is rerun before publication.
+
+
+## 2026-08-29 08:55 TRT — province SEO copy matches current forecast capability
+
+- Re-applied the small province metadata correction on current main after the original green PR became non-mergeable due to concurrent main progress.
+- Generated city meta description, Open Graph/Twitter description and structured WebPage description now use capability-level `saatlik ve günlük tahmin` instead of stale provider-cadence wording `3 saatlik tahmin`. Runtime weather, scoring, providers and UI behavior are unchanged.
+- Release gate: regenerate all 81 city pages and require Istanbul metadata to contain the new wording with no stale phrase, then lint, type-check, diff-check and exact-head CI before merge.
