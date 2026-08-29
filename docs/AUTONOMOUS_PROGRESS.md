@@ -577,3 +577,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the modeled UV/dust/pollen/marine attribution improvement on current main after the map-label merge rather than mutating the stale green branch.
 - The source line links Open-Meteo and CC BY 4.0 separately and states that Hava81 summarizes the provider output; non-Open-Meteo attribution remains unchanged.
 - Weather/model values, 24-hour windows, marine data, health wording and decision logic are unchanged. Combined validation is rerun before publication.
+
+## 2026-08-29 04:54 TRT — comparison refresh clears stale cards
+
+- Audited comparison refresh state and found that changing language/profile/selected cities could leave the previous rows visible while the replacement request was still loading.
+- New comparison loads now clear old rows before entering the loading state, preventing stale city cards from being presented as if they belonged to the new selection. Partial-success and total-failure behavior remain unchanged.
+- Added regression coverage that loads two cities, changes the comparison context, holds the replacement request pending, and requires the old city headings to disappear while the loading status is visible.

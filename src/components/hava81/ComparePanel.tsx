@@ -50,6 +50,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
         active = false;
       };
     }
+    setRows([]);
     setLoading(true);
     setFailedCount(0);
     Promise.allSettled(

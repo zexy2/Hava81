@@ -240,3 +240,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Local persisted preferences must treat removal as a first-class synchronized state change. Clearing a localStorage-backed setting resets the in-memory functional-update ref immediately and propagates a `storage` event with `newValue: null`; consumers interpret that removal as the configured initial value instead of retaining stale cross-tab state.
 
 - 2026-08-29 — Open-Meteo modeled-context surfaces follow the same explicit attribution contract as hourly data: provider link, CC BY 4.0 license link, and a visible indication that Hava81 summarizes/transforms the provider output. Do not rely on an unlinked combined attribution string when the transformed values are displayed to users.
+
+- 2026-08-29 — Comparison refreshes must not present stale result cards under a new selection/language/profile context. Clear prior rows when a new comparison request starts, then show the bounded loading state until replacement data resolves; partial-success preservation applies to the current request only.
