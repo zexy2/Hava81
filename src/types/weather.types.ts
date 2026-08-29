@@ -237,6 +237,7 @@ export interface RouteWeatherSegment {
   eta: string;
   temperature: number;
   precipitationProbability: number;
+  precipitationMm?: number;
   windSpeed: number;
   description: string;
   score: number;

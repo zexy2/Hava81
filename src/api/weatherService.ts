@@ -333,6 +333,11 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
         segment.precipitationProbability > 100,
       `${prefix}.precipitationProbability`
     );
+    invalid(
+      segment.precipitationMm !== undefined &&
+        (!isFiniteNumber(segment.precipitationMm) || segment.precipitationMm < 0),
+      `${prefix}.precipitationMm`
+    );
     invalid(!isFiniteNumber(segment.windSpeed) || segment.windSpeed < 0, `${prefix}.windSpeed`);
     invalid(typeof segment.description !== 'string' || !segment.description.trim(), `${prefix}.description`);
     invalid(!validScore(segment.score), `${prefix}.score`);
