@@ -557,3 +557,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the stale map-label correction on current main `e196bfd4` rather than force-updating the older conflicted PR branch.
 - The map eyebrow now says `Türkiye · İl haritası` / `Türkiye · Province map`, matching the province/city marker surface instead of implying meteorological station entities that are not rendered.
 - Combined local validation on the current baseline passed: lint, type-check, complete frontend suite 141/141, production dependency audit 0 vulnerabilities, production build generated all 81 city pages, and host-side `git diff --check` was clean. Map tiles, coordinates, weather values and interactions are unchanged.
+
+## 2026-08-29 03:17 TRT — comparison partial-failure state clarity
+
+- Audited saved-city comparison failure behavior. `Promise.allSettled` correctly preserved successful cities, but failed cities disappeared silently; if every city failed, users received an empty comparison list with no explanation.
+- Added bounded state tracking: partial failures keep successful city cards visible with a generic localized notice, while total failures show a localized comparison-unavailable state. Raw provider/internal exception text is never rendered.
+- Added regressions for one-city failure and all-city failure, including injected secret upstream strings that must stay out of the DOM.
+- Rebuilt onto current main after the map-label merge; combined validation is rerun before publication.

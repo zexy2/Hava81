@@ -38,17 +38,20 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
   const selected = useMemo(() => cities.slice(0, 3), [cities]);
   const [rows, setRows] = useState<CompareRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [failedCount, setFailedCount] = useState(0);
   const primaryActivity = profile.activities[0];
 
   useEffect(() => {
     let active = true;
     if (selected.length < 2) {
       setRows([]);
+      setFailedCount(0);
       return () => {
         active = false;
       };
     }
     setLoading(true);
+    setFailedCount(0);
     Promise.allSettled(
       selected.map(async city => {
         const weather = await weatherService.getCurrentWeather({ city: city.name, lang: language });
@@ -91,7 +94,11 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     )
       .then(results => {
         if (!active) return;
-        setRows(results.flatMap(result => (result.status === 'fulfilled' ? [result.value] : [])));
+        const successfulRows = results.flatMap(result =>
+          result.status === 'fulfilled' ? [result.value] : []
+        );
+        setRows(successfulRows);
+        setFailedCount(results.length - successfulRows.length);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -143,8 +150,20 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
         <p>{t('hava81.compare.needTwo')}</p>
       ) : loading && rows.length === 0 ? (
         <p role="status">{t('common.loading')}</p>
+      ) : failedCount === selected.length ? (
+        <p role="status">{t('hava81.compare.unavailable')}</p>
       ) : (
-        <div className="hava81-compare__table" role="list" aria-label={t('hava81.compare.title')}>
+        <>
+          {failedCount > 0 ? (
+            <p className="hava81-compare__partial" role="status">
+              {t('hava81.compare.partialUnavailable')}
+            </p>
+          ) : null}
+          <div
+            className="hava81-compare__table"
+            role="list"
+            aria-label={t('hava81.compare.title')}
+          >
           {rows.map(row => {
             const maxPop = Math.max(0, ...row.hourly.slice(0, 6).map(point => point.pop));
             return (
@@ -195,7 +214,8 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
               </article>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

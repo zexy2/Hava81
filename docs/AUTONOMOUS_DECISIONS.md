@@ -234,3 +234,5 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-29 — Product labels must describe the geographic/data objects actually rendered. A province/city marker map must not be called a station map unless real meteorological station entities are present.
+
+- 2026-08-29 — Multi-city comparison uses graceful partial availability: successful cities remain usable when another city fails, but the missing data must be explained. If every selected city fails, show a bounded localized unavailable state; never expose raw provider exceptions while explaining partial/total failure.
