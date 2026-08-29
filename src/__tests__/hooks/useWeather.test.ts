@@ -377,6 +377,23 @@ describe('useWeather', () => {
     expect(result.current.recentSearches[0].city).toBe('İzmir');
   });
 
+  it('does not persist an unsupported provider city as a recent search', async () => {
+    (weatherService.getCurrentWeather as Mock).mockResolvedValueOnce({
+      cityName: 'Atlantis',
+      country: 'TR',
+      temperature: 20,
+      coordinates: { lat: 0, lon: 0 },
+    });
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('İzmir');
+    });
+
+    expect(result.current.recentSearches).toEqual([]);
+  });
+
   it('falls back to an empty recent-search list when persisted JSON has the wrong shape', () => {
     localStorage.setItem('recent_weather_searches', JSON.stringify({ city: 'İstanbul' }));
 
