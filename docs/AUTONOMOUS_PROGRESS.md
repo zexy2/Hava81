@@ -709,3 +709,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the visible freshness label separately from cache validity. A provider/server `fetchedAt` more than one minute ahead of the client clock was previously clamped to age zero and rendered as “şimdi güncellendi,” even though that freshness claim could not be established.
 - Reused the existing one-minute clock-skew tolerance already applied to persisted weather timestamps: beyond that tolerance, visible freshness becomes `Güncellik bilinmiyor` / its localized equivalent rather than pretending the payload was just refreshed. Small normal clock skew still renders as current; real old data keeps the existing stale treatment.
 - Added deterministic component coverage for a two-minute future timestamp. No weather values, provider semantics, TTLs or safety guidance changed.
+
+## 2026-08-29 17:14 TRT — modeled-context future timestamp guard
+
+- After merging PR #176, audited the secondary Open-Meteo context provenance surface for the same clock-skew truthfulness class. It could display a provider fetch clock time materially in the future even though the primary weather surface now treats that condition as unknown freshness.
+- ContextSignalsPanel now suppresses only fetch times more than one minute ahead of the client clock, while preserving Open-Meteo, CC BY 4.0 and Hava81-transformation attribution. Small clock skew and normal past timestamps remain visible.
+- Local gates: focused ContextSignalsPanel 5/5, frontend type-check, lint, full frontend suite 221/221, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check all pass.
+- Main merge b4969a719bd4cc5ca86ea5f1292e2df936efa264 entered pipeline #444 while this independent branch was prepared; re-verify current observer/GitHub state immediately before merge.

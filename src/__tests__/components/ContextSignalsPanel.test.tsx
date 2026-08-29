@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ContextSignalsPanel } from '../../components/hava81/ContextSignalsPanel';
 
@@ -45,6 +45,29 @@ describe('ContextSignalsPanel', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('25.1°C')).toBeInTheDocument();
     expect(screen.getByText(/0.40 m.*4.8 s.*315°/)).toBeInTheDocument();
+  });
+
+  it('does not publish a materially future provider fetch time', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-28T06:00:00Z'));
+      render(
+        <ContextSignalsPanel
+          signals={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date('2026-08-28T06:02:00Z'),
+            attribution: 'Open-Meteo · CC BY 4.0',
+            uvIndexMax: 4,
+            units: {},
+          }}
+        />
+      );
+
+      expect(screen.queryByText(/veri alındı/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/Hava81 tarafından özetlendi/)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('recommends protection from the WHO moderate UV band upward', () => {
