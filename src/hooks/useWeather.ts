@@ -238,6 +238,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
         // Update recent searches using a stable province identity across localized provider labels.
         setRecentSearches(prev => {
           const dataIdentity = cityIdentity(data.cityName);
+          if (!supportedCityIdentities.has(dataIdentity)) return prev;
           const filtered = prev.filter(s => cityIdentity(s.city) !== dataIdentity);
           return [{ city: data.cityName, timestamp: now.getTime() }, ...filtered].slice(
             0,
