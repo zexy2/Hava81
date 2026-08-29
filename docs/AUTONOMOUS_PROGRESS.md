@@ -703,3 +703,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the frontend HTTP cache under client clock corrections. Cache validity previously accepted every negative age because `Date.now() - timestamp < ttl`, so if the device clock moved backward after a response was cached, that response could remain reusable longer than the configured TTL.
 - Cache validity now requires a non-negative age as well as age below TTL. A backward clock jump therefore fails closed to a fresh BFF request instead of extending stale weather data.
 - Added deterministic transport coverage that caches a response, moves the client clock backward one minute, and requires a second network request. Provider data, API cache TTLs and normal cache-hit behavior are unchanged.
+
+## 2026-08-29 17:05 TRT — future provider timestamps no longer claim fresh data
+
+- Audited the visible freshness label separately from cache validity. A provider/server `fetchedAt` more than one minute ahead of the client clock was previously clamped to age zero and rendered as “şimdi güncellendi,” even though that freshness claim could not be established.
+- Reused the existing one-minute clock-skew tolerance already applied to persisted weather timestamps: beyond that tolerance, visible freshness becomes `Güncellik bilinmiyor` / its localized equivalent rather than pretending the payload was just refreshed. Small normal clock skew still renders as current; real old data keeps the existing stale treatment.
+- Added deterministic component coverage for a two-minute future timestamp. No weather values, provider semantics, TTLs or safety guidance changed.

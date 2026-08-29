@@ -176,11 +176,15 @@ export function WeatherDecisionField({
     weather.meta.fetchedAt instanceof Date
       ? weather.meta.fetchedAt
       : new Date(weather.meta.fetchedAt);
-  const ageMinutes = Number.isNaN(fetchedAt.getTime())
-    ? null
-    : Math.max(0, Math.floor((now - fetchedAt.getTime()) / 60_000));
+  const fetchedAtMs = fetchedAt.getTime();
+  const ageMs = now - fetchedAtMs;
+  const hasInvalidFutureTimestamp = !Number.isNaN(fetchedAtMs) && ageMs < -60_000;
+  const ageMinutes =
+    Number.isNaN(fetchedAtMs) || hasInvalidFutureTimestamp
+      ? null
+      : Math.max(0, Math.floor(ageMs / 60_000));
   const staleAfterMs = (weather.meta.freshForSeconds ?? 300) * 1000;
-  const isStale = !Number.isNaN(fetchedAt.getTime()) && now - fetchedAt.getTime() > staleAfterMs;
+  const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && ageMs > staleAfterMs;
   const freshnessText =
     ageMinutes === null
       ? t('hava81.decision.freshness.unknown', { defaultValue: 'Güncellik bilinmiyor' })
