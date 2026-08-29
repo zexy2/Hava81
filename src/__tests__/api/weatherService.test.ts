@@ -447,6 +447,52 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it.each([
+    ['non-finite daily minimum', { daily: { tempMin: Number.NaN } }],
+    ['blank daily description', { daily: { description: '   ' } }],
+    ['negative hourly wind speed', { hourly: { windSpeed: -1 } }],
+    ['humidity above 100%', { hourly: { humidity: 101 } }],
+    ['invalid forecast timezone offset', { meta: { timezoneOffsetSeconds: 50_401 } }],
+    ['non-positive forecast interval', { meta: { intervalHours: 0 } }],
+  ])('rejects impossible forecast domain value: %s', async (_label, invalid) => {
+    mockGet.mockResolvedValue({
+      daily: [
+        {
+          date: '2026-07-14',
+          tempMin: 18,
+          tempMax: 27,
+          icon: '01d',
+          description: 'clear',
+          pop: 5,
+          ...('daily' in invalid ? invalid.daily : {}),
+        },
+      ],
+      hourly: [
+        {
+          time: '2026-07-14T12:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          pop: 5,
+          description: 'clear',
+          windSpeed: 3.2,
+          ...('hourly' in invalid ? invalid.hourly : {}),
+        },
+      ],
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: '2026-07-14T12:00:01.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 3,
+        ...('meta' in invalid ? invalid.meta : {}),
+      },
+    });
+
+    await expect(weatherService.getForecast(38.42, 27.14)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it('revives the one-hour forecast and calendar-day extrema returned by the BFF', async () => {
     mockGet.mockResolvedValue({
       daily: [
@@ -479,7 +525,7 @@ describe('weatherService BFF client', () => {
       meta: {
         provider: 'Open-Meteo',
         attribution: 'Open-Meteo · CC BY 4.0',
-    sourceUrl: 'https://open-meteo.com/',
+        sourceUrl: 'https://open-meteo.com/',
         fetchedAt: '2026-08-28T17:00:00.000Z',
         timezoneOffsetSeconds: 10800,
         intervalHours: 1,
@@ -539,6 +585,40 @@ describe('weatherService BFF client', () => {
       meta: {
         provider: 'Open-Meteo',
         fetchedAt: invalid.fetchedAt ?? '2026-08-28T17:00:00.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    await expect(weatherService.getHourlyForecast(41.01, 28.97, 'tr')).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
+  it.each([
+    ['negative precipitation', { precipitationMm: -0.1 }],
+    ['negative wind gust', { windGust: -1 }],
+    ['negative UV index', { uvIndex: -0.1 }],
+    ['negative visibility', { visibility: -1 }],
+    ['weather code above WMO range', { weatherCode: 100 }],
+  ])('rejects impossible one-hour forecast domain value: %s', async (_label, hourlyOverride) => {
+    mockGet.mockResolvedValue({
+      daily: [],
+      hourly: [
+        {
+          time: '2026-08-28T18:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          description: 'açık',
+          pop: 35,
+          windSpeed: 3.2,
+          ...hourlyOverride,
+        },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: '2026-08-28T17:00:00.000Z',
         timezoneOffsetSeconds: 10800,
         intervalHours: 1,
       },
