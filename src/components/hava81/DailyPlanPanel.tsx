@@ -26,8 +26,8 @@ const bandKey: Record<Hava81ScoreBand, string> = {
 };
 
 const bandRange: Record<Hava81ScoreBand, string> = {
-  excellent: '90–100',
-  good: '75–89',
+  excellent: '97–100',
+  good: '75–96',
   caution: '55–74',
   difficult: '0–54',
 };
