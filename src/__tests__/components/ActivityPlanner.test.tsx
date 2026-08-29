@@ -92,6 +92,29 @@ describe('ActivityPlanner time range', () => {
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('20:00');
   });
 
+  it('shows comfort criteria and sensitivity shifts in the selected temperature unit', () => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'imperial',
+        windSpeedUnit: 'ms',
+        themeMode: 'auto',
+        language: 'tr',
+      })
+    );
+
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/Koşuda 50–72°F/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
+    expect(screen.getByText('Sıcak uyarıları yaklaşık 5°F daha erken başlar.')).toBeInTheDocument();
+    expect(screen.queryByText(/Koşuda 10–22°C/i)).not.toBeInTheDocument();
+  });
+
   it('does not call an activity window dry when measurable precipitation exists at 0%', () => {
     const measurableRain: HourlyForecast[] = [15, 16, 17].map(hour => ({
       time: new Date(Date.UTC(2026, 7, 29, hour)),

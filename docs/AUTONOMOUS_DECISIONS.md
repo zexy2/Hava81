@@ -299,3 +299,5 @@ This log records product and engineering decisions made during the autonomous im
 
 - End-to-end weather fixtures must be relative to the test run rather than hard-coded calendar dates when application code intentionally filters stale forecast rows. This keeps browser tests validating the intended current/fallback behavior instead of failing as time passes.
 - Keep the high-resolution hourly success contract and three-hour fallback contract as separate browser assertions so a provider failure cannot masquerade as an empty forecast surface.
+
+- 2026-08-30 — User-facing activity thresholds and sensitivity offsets must follow the selected temperature unit. Convert absolute comfort thresholds with the normal temperature conversion, but convert sensitivity shifts as deltas (difference of converted endpoints), never as absolute temperatures; otherwise a 3°C shift would incorrectly become 37°F.

@@ -80,7 +80,8 @@ export const en = {
         rain: 'Rain chance reaches {{probability}}% around {{time}}; taking an umbrella is a good idea.',
         rainWithAmount:
           'Rain chance is {{probability}}% around {{time}}, with about {{amount}} expected for the hour.',
-        rainAmount: 'About {{amount}} of precipitation is expected for the hour around {{time}}; taking an umbrella is a good idea.',
+        rainAmount:
+          'About {{amount}} of precipitation is expected for the hour around {{time}}; taking an umbrella is a good idea.',
         wind: 'Wind or gusts may reach {{speed}}; use extra care outdoors.',
         heat: 'Feels-like temperature may reach {{temperature}}; plan for shade and water.',
         cold: 'Feels-like temperature may fall to {{temperature}}; take care with cold stress.',
@@ -302,10 +303,11 @@ export const en = {
         wind: 'Wind {{value}} {{unit}}',
       },
       criteria: {
-        walk: 'Walking favors 12–26°C, low rain risk and calmer wind.',
-        run: 'Running favors 10–22°C, low rain risk, calmer wind and better air quality.',
-        picnic: 'Picnics favor dry weather, 16–27°C and calmer wind.',
-        children: 'For children, 14–25°C, better air quality and lower UV matter more.',
+        walk: 'Walking favors {{minimum}}–{{maximum}}{{unit}}, low rain risk and calmer wind.',
+        run: 'Running favors {{minimum}}–{{maximum}}{{unit}}, low rain risk, calmer wind and better air quality.',
+        picnic: 'Picnics favor dry weather, {{minimum}}–{{maximum}}{{unit}} and calmer wind.',
+        children:
+          'For children, {{minimum}}–{{maximum}}{{unit}}, better air quality and lower UV matter more.',
         motorcycle: 'Motorcycling penalizes rain, strong wind and low visibility more heavily.',
         laundry: 'Laundry favors dry, lower-humidity hours with a light breeze.',
       },
@@ -320,8 +322,8 @@ export const en = {
         heat: 'Sensitive to heat',
         help: {
           balanced: 'Uses the standard comfort ranges.',
-          cold: 'Cold penalties begin about 3°C earlier.',
-          heat: 'Heat penalties begin about 3°C earlier.',
+          cold: 'Cold penalties begin about {{value}}{{unit}} earlier.',
+          heat: 'Heat penalties begin about {{value}}{{unit}} earlier.',
         },
       },
     },

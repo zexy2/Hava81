@@ -812,3 +812,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Refreshed E2E current/forecast fixture timestamps from fixed 28 August values to run-relative times so fallback forecast tests do not silently expire as wall-clock time advances.
 - The existing three-hour fallback contract remains asserted separately when the high-resolution hourly endpoint fails.
 - Full Playwright smoke after the change: 28 passed, 38 intentional project-specific skips; focused lazy/fallback matrix: 6/6 passed.
+
+## 2026-08-30 02:14 TRT — activity guidance unit consistency
+
+- Audited personalized activity guidance after decision-message unit support landed and found activity comfort criteria plus temperature-sensitivity help still hard-coded Celsius even when the user selected Fahrenheit.
+- Activity cards now render their established comfort thresholds in the selected temperature unit, and the 3°C sensitivity offset is converted as a temperature delta (5°F in imperial) rather than applying an absolute-temperature conversion.
+- Rebased onto main `ff233272d33372f450e0a48788f605e6085048cd` after concurrent merges #232/#233, preserving their unit-message and forecast-readability changes. Focused ActivityPlanner + WeatherDecisionField coverage passes 14/14; type-check, lint, 81-city production build, production dependency audit (0 vulnerabilities), and diff-check pass.
+- Host disk pressure crossed the observer threshold during isolated dependency installation. This worktree's `node_modules`/`dist` were removed immediately after validation; production stayed healthy. No production merge is permitted until exact-head CI and a fresh production/host check are green.
