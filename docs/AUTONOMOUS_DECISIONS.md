@@ -261,3 +261,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — A surface labeled as a real one-hour forecast must receive a contiguous one-hour core series. If required Open-Meteo fields are missing such that normalization would create a timestamp gap, reject that optional hourly enrichment and retain Hava81’s established three-hour fallback rather than presenting sparse points under one-hour semantics. Optional enrichment fields may still be absent without invalidating the core series.
 
 - 2026-08-29 — API freshness metadata must describe the server cache TTL that produced the payload, not a duplicated route constant. Browser/proxy Cache-Control may intentionally be shorter, but UI stale-state logic compares payload fetchedAt with freshForSeconds and therefore needs the actual backend cache lifetime.
+
+- 2026-08-29 — Deploy-time chunk recovery must remain loop-bounded even when browser storage is unavailable. Capture the one-shot recovery timestamp from the temporary URL marker before cleaning the canonical URL; sessionStorage is an optimization/persistence aid, not the only loop guard.
