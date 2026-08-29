@@ -50,7 +50,18 @@
     <script>
       (() => {
         const city = "Ağrı";
+        const cityKey = "agri";
         const expectedPath = "/agri/";
+        const cityAscii = {"ç":"c","Ç":"c","ğ":"g","Ğ":"g","ı":"i","İ":"i","ö":"o","Ö":"o","ş":"s","Ş":"s","ü":"u","Ü":"u"};
+        const normalizeCity = value =>
+          [...value]
+            .map(char => cityAscii[char] || char)
+            .join('')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
         if (window.location.pathname !== expectedPath) return;
 
         let lang = 'tr';
@@ -68,7 +79,7 @@
             cacheCity &&
             cacheAge < 300000 &&
             cacheLanguage === lang &&
-            cacheCity.toLocaleLowerCase('tr-TR') === city.toLocaleLowerCase('tr-TR')
+            normalizeCity(cacheCity) === cityKey
           ) {
             return;
           }
