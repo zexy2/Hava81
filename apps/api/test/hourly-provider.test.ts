@@ -104,6 +104,37 @@ test('Open-Meteo hourly adapter keeps the core forecast usable when optional dec
 });
 
 
+test('Open-Meteo hourly adapter rejects gaps in required one-hour data instead of mislabeling a sparse series', async () => {
+  const fakeFetch = (async () =>
+    new Response(
+      JSON.stringify({
+        utc_offset_seconds: 10800,
+        hourly: {
+          time: [1787936400, 1787940000, 1787943600],
+          temperature_2m: [24, null, 22],
+          precipitation_probability: [5, 10, 15],
+          weather_code: [0, 1, 2],
+          wind_speed_10m: [3, 3, 3],
+          is_day: [1, 1, 1],
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )) as typeof fetch;
+
+  const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
+
+  await assert.rejects(
+    () => provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' }),
+    (error: unknown) => {
+      assert.equal(
+        (error as { code?: string }).code,
+        'NON_CONTIGUOUS_HOURLY_PROVIDER_RESPONSE'
+      );
+      return true;
+    }
+  );
+});
+
 test('Open-Meteo hourly adapter supports the paid customer host and API key without changing request semantics', async () => {
   let requested: URL | undefined;
   const fakeFetch = (async (input: string | URL | Request) => {
