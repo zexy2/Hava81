@@ -582,9 +582,15 @@ test('mobile interactive controls preserve 44px touch targets', async ({ page },
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile touch target coverage');
 
   await page.goto('/istanbul');
+  await expect(
+    page.locator('.hava81-forecast-atlas__source').getByRole('link', { name: 'Open-Meteo' })
+  ).toBeVisible();
+  await expect(
+    page.locator('.context-signals__source').getByRole('link', { name: 'Open-Meteo' })
+  ).toBeVisible();
 
   const undersized = await page
-    .locator('button, a, input, select, textarea, [role="button"]')
+    .locator('button, a, input, select, textarea, summary, [role="button"]')
     .evaluateAll(elements =>
       elements
         .map(element => {
