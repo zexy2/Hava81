@@ -189,7 +189,6 @@ export function WeatherDecisionField({
     <section
       className={`hava81-decision-field ${className}`.trim()}
       aria-labelledby={headingId}
-      aria-live="polite"
     >
       <header className="hava81-decision-field__identity">
         <div className="hava81-decision-field__city-row">
