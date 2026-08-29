@@ -66,7 +66,8 @@ export const tr = {
     systemStatus: 'Hava81 · Sistem durumu',
     cityDocumentTitle: '{{city}} hava durumu — Hava81',
     loadingWeather: 'Hava verileri hazırlanıyor',
-    slowLoading: 'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',
+    slowLoading:
+      'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',
     mapEyebrow: 'Türkiye · İl haritası',
     emptyEyebrow: 'Hava81 · 81 il',
     decision: {
@@ -106,6 +107,9 @@ export const tr = {
       hourlyRegion: 'Kaydırılabilir saatlik tahmin grafiği ve değerleri',
       chartSummary: 'Saatlik sıcaklık {{min}}{{unit}} ile {{max}}{{unit}} arasında değişiyor.',
       precipitationAt: '{{time}} saatinde yağış olasılığı yüzde {{percent}}.',
+      precipitationAtWithAmount:
+        '{{time}} saatinde yağış olasılığı yüzde {{percent}}; saatlik yağış miktarı {{amount}}.',
+      hourlyPrecipitationWithAmount: 'Yağış olasılığı %{{percent}}; saatlik miktar {{amount}}',
       noHourlyPrecipitation: '{{time}} saatinde yağış beklenmiyor.',
       noDailyPrecipitation: '{{day}} için yağış beklenmiyor.',
       dailyRange: 'Yüksek {{high}}{{unit}}, düşük {{low}}{{unit}}',
@@ -234,8 +238,10 @@ export const tr = {
         'wind-caution': 'Çıkış veya dönüş penceresinde rüzgârı hesaba katmak iyi olur.',
         'temperature-drop': 'Dönüşte yaklaşık {{value}}° daha serin olacak.',
         'temperature-rise': 'Dönüşte yaklaşık {{value}}° daha sıcak olacak.',
-        'comfort-worsens': 'Dönüşün Hava81 puanı çıkıştan yaklaşık {{value}} puan daha düşük; hazırlığı dönüş koşullarına göre yap.',
-        'comfort-improves': 'Dönüşün Hava81 puanı çıkıştan yaklaşık {{value}} puan daha yüksek; hava açısından daha rahat görünüyor.',
+        'comfort-worsens':
+          'Dönüşün Hava81 puanı çıkıştan yaklaşık {{value}} puan daha düşük; hazırlığı dönüş koşullarına göre yap.',
+        'comfort-improves':
+          'Dönüşün Hava81 puanı çıkıştan yaklaşık {{value}} puan daha yüksek; hava açısından daha rahat görünüyor.',
         stable: 'Çıkış ve dönüş arasında belirgin bir hava bozulması görünmüyor.',
       },
       windowsLabel: 'Çıkış ve dönüş hava pencereleri',
