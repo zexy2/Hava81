@@ -130,8 +130,8 @@ export const tr = {
       eyebrow: 'Hava81 karar motoru',
       title: 'Gün planı',
       bands: {
-        excellent: 'Çok iyi',
-        good: 'İyi',
+        excellent: 'Çok uygun',
+        good: 'Uygun',
         caution: 'Dikkat',
         difficult: 'Zorlayıcı',
       },
@@ -162,7 +162,7 @@ export const tr = {
         title: 'Bu puanı ne etkiliyor?',
         stable: 'Belirgin bir hava riski puanı aşağı çekmiyor.',
         method:
-          'Skor önümüzdeki 12 saati süreyle ağırlıklandırır; en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir.',
+          'Bu puan genel dışarı uygunluğunu özetler; önümüzdeki 12 saati süreyle ağırlıklandırır, en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir.',
       },
       confidence: {
         high: 'Zengin saatlik veri',
