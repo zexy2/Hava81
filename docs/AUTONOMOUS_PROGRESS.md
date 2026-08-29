@@ -616,3 +616,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a desktop production-page browser regression that persists English settings plus a fresh `Istanbul` cache and requires zero `/weather/current` bootstrap requests while the city view still renders.
 - Targeted validation passed: production build with all 81 generated city pages, the new desktop Playwright regression, lint, type-check, and `git diff --check`.
 - The first combined browser run exposed an unrelated nondeterministic existing smoke selector: two independently attributed Open-Meteo surfaces can both be present by the time the assertion runs, making a page-global provider-link lookup ambiguous. Scoped the assertion to the hourly forecast section rather than weakening attribution coverage; the previously failing tablet case now passes. Complete frontend/API suites, audits and build had already passed; full browser coverage is rerun before publication.
+
+
+## 2026-08-29 09:04 TRT — context freshness label no longer implies model issuance time
+
+- Audited the modeled UV/dust/pollen/marine source line and found `fetchedAt` was labeled `model {{time}}`, even though the API field records when Hava81 fetched the provider response rather than the model run/issuance timestamp.
+- Renamed the label to `veri alındı {{time}}` / `data fetched {{time}}`. Provider attribution, modeled-window wording, values and calculation semantics are unchanged.
+- Added regression coverage requiring the fetched-data wording and rejecting the former model-time implication.
