@@ -321,7 +321,7 @@ export const tr = {
       waveDetails:
         'Dalga {{height}} {{unit}} · periyot {{period}} {{periodUnit}} · yön {{direction}}{{directionUnit}}',
       sourceModified: 'Hava81 tarafından özetlendi',
-      fetchedAt: 'model {{time}}',
+      fetchedAt: 'veri alındı {{time}}',
       waveUnavailable: 'Dalga verisi yok',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',

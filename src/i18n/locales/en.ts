@@ -319,7 +319,7 @@ export const en = {
       waveDetails:
         'Wave {{height}} {{unit}} · period {{period}} {{periodUnit}} · direction {{direction}}{{directionUnit}}',
       sourceModified: 'summarized by Hava81',
-      fetchedAt: 'model {{time}}',
+      fetchedAt: 'data fetched {{time}}',
       waveUnavailable: 'Wave data unavailable',
       next24h: 'Model maximum over the next 24 hours.',
       note: 'UV, dust, pollen and marine values are Open-Meteo model outputs; they are not local measurements or health/navigation safety guarantees.',
