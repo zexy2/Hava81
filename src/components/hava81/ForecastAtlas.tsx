@@ -382,6 +382,8 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           <ol className="hava81-forecast-atlas__days">
             {dailyData.map(day => {
               const precipitation = Math.round(day.precipitation * 100);
+              const precipitationAmount = formatPrecipitationAmount(day.precipitationMm, locale);
+              const hasPrecipitation = precipitation > 0 || Boolean(precipitationAmount);
               return (
                 <li className="hava81-forecast-atlas__day" key={`day-${day.timestamp}`}>
                   <time
@@ -396,17 +398,35 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     className="hava81-forecast-atlas__day-symbol"
                   />
                   <span className="hava81-forecast-atlas__description">{day.description}</span>
-                  {precipitation > 0 ? (
+                  {hasPrecipitation ? (
                     <span
                       className={
-                        precipitation >= PRECIPITATION_THRESHOLD * 100
+                        precipitation >= PRECIPITATION_THRESHOLD * 100 ||
+                        (day.precipitationMm ?? 0) >= 1
                           ? 'hava81-forecast-atlas__day-pop is-signal'
                           : 'hava81-forecast-atlas__day-pop'
                       }
                       role="group"
-                      aria-label={`${t('weather.precipitation')}: ${precipitation}%`}
+                      aria-label={
+                        precipitationAmount
+                          ? precipitation > 0
+                            ? t('hava81.forecastAtlas.dailyPrecipitationWithAmount', {
+                                day: formatDay(day.date),
+                                percent: precipitation,
+                                amount: precipitationAmount,
+                              })
+                            : t('hava81.forecastAtlas.dailyPrecipitationAmount', {
+                                day: formatDay(day.date),
+                                amount: precipitationAmount,
+                              })
+                          : `${t('weather.precipitation')}: ${precipitation}%`
+                      }
                     >
-                      {precipitation}%
+                      {precipitation > 0 ? <span>{precipitation}%</span> : null}
+                      {precipitation > 0 && precipitationAmount ? (
+                        <span aria-hidden="true"> · </span>
+                      ) : null}
+                      {precipitationAmount ? <span>{precipitationAmount}</span> : null}
                     </span>
                   ) : (
                     <span className="hava81-forecast-atlas__sr-only">

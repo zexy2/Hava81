@@ -111,6 +111,9 @@ export const en = {
         'Precipitation chance is {{percent}} percent at {{time}}; hourly amount is {{amount}}.',
       hourlyPrecipitationWithAmount: 'Precipitation chance {{percent}}%; hourly amount {{amount}}',
       noHourlyPrecipitation: 'No precipitation is expected at {{time}}.',
+      dailyPrecipitationWithAmount:
+        'Precipitation chance is {{percent}}% for {{day}}; daily total is {{amount}}.',
+      dailyPrecipitationAmount: 'Daily precipitation total for {{day}} is {{amount}}.',
       noDailyPrecipitation: 'No precipitation is expected for {{day}}.',
       dailyRange: 'High {{high}}{{unit}}, low {{low}}{{unit}}',
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',

@@ -450,6 +450,7 @@ describe('weatherService BFF client', () => {
   it.each([
     ['non-finite daily minimum', { daily: { tempMin: Number.NaN } }],
     ['blank daily description', { daily: { description: '   ' } }],
+    ['negative daily precipitation amount', { daily: { precipitationMm: -0.1 } }],
     ['negative hourly wind speed', { hourly: { windSpeed: -1 } }],
     ['humidity above 100%', { hourly: { humidity: 101 } }],
     ['invalid forecast timezone offset', { meta: { timezoneOffsetSeconds: 50_401 } }],
@@ -503,6 +504,7 @@ describe('weatherService BFF client', () => {
           icon: '04d',
           description: 'kapalı',
           pop: 23,
+          precipitationMm: 1.7,
         },
       ],
       hourly: [
@@ -536,7 +538,12 @@ describe('weatherService BFF client', () => {
 
     expect(mockGet).toHaveBeenCalledWith('/weather/hourly', { lat: 41.01, lon: 28.97, lang: 'tr' });
     expect(result.daily?.[0].date).toBeInstanceOf(Date);
-    expect(result.daily?.[0]).toMatchObject({ tempMin: 20, tempMax: 24.6, pop: 0.23 });
+    expect(result.daily?.[0]).toMatchObject({
+      tempMin: 20,
+      tempMax: 24.6,
+      pop: 0.23,
+      precipitationMm: 1.7,
+    });
     expect(result.hourly[0].time).toBeInstanceOf(Date);
     expect(result.hourly[0].pop).toBe(0.35);
     expect(result.hourly[0]).toMatchObject({

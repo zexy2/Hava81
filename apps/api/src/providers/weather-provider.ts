@@ -34,6 +34,7 @@ export interface HourlyForecastProviderResult {
     icon: string;
     description: string;
     pop: number;
+    precipitationMm?: number;
   }>;
   hourly: Array<{
     time: string;

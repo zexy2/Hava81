@@ -15,6 +15,7 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
           temperature_2m_min: [20, 19.9],
           weather_code: [3, 3],
           precipitation_probability_max: [23, 0],
+          precipitation_sum: [1.7, 0],
         },
         hourly: {
           time: [1787936400, 1787940000],
@@ -47,6 +48,7 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     'temperature_2m_min',
     'weather_code',
     'precipitation_probability_max',
+    'precipitation_sum',
   ]) {
     assert.equal(dailyFields.has(field), true, `missing daily ${field}`);
   }
@@ -73,6 +75,7 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     icon: '04d',
     description: 'kapalı',
     pop: 23,
+    precipitationMm: 1.7,
   });
   assert.deepEqual(result.hourly[0], {
     time: new Date(1787936400 * 1000).toISOString(),

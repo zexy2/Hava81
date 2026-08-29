@@ -19,6 +19,7 @@ const hourlySchema = z.object({
       temperature_2m_min: z.array(z.number().nullable()),
       weather_code: z.array(z.number().int().nullable()),
       precipitation_probability_max: z.array(z.number().nullable()),
+      precipitation_sum: z.array(z.number().nullable()).optional(),
     })
     .optional(),
   hourly: z.object({
@@ -127,6 +128,7 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         "temperature_2m_min",
         "weather_code",
         "precipitation_probability_max",
+        "precipitation_sum",
       ].join(","),
     );
     url.searchParams.set("forecast_hours", "48");
@@ -251,6 +253,7 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
             icon: iconForCode(code, true),
             description: descriptionForCode(code, query.lang),
             pop: Math.max(0, Math.min(100, Math.round(pop))),
+            precipitationMm: finiteInRangeAt(dailyRaw.precipitation_sum, index, 0),
           });
         }
       }
