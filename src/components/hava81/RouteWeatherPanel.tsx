@@ -43,6 +43,24 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     [destinationName]
   );
   const formatTime = (iso: string) => formatTurkeyTime(new Date(iso), i18n.language);
+  const precipitationFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [i18n.language]
+  );
+  const formatPrecipitation = (probabilityPercent: number, amount?: number) => {
+    const probability = Math.round(probabilityPercent);
+    const parts = [i18n.language.startsWith('en') ? `${probability}%` : `%${probability}`];
+    if (Number.isFinite(amount) && (amount ?? 0) > 0) {
+      const value = amount as number;
+      parts.push(
+        value < 0.1
+          ? `<${precipitationFormatter.format(0.1)} mm`
+          : `${precipitationFormatter.format(value)} mm`
+      );
+    }
+    return parts.join(' · ');
+  };
   const invalidateRequest = () => {
     requestIdRef.current += 1;
     setResult(null);
@@ -215,8 +233,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   <time>{formatTime(segment.eta)}</time>
                   <strong>{segment.score}</strong>
                   <span>
-                    {segment.temperature}° · %{segment.precipitationProbability} ·{' '}
-                    {t('weather.wind')} {segment.windSpeed.toFixed(1)} m/s
+                    {segment.temperature}° ·{' '}
+                    {formatPrecipitation(segment.precipitationProbability, segment.precipitationMm)}{' '}
+                    · {t('weather.wind')} {segment.windSpeed.toFixed(1)} m/s
                   </span>
                   <small>{segment.description}</small>
                 </article>

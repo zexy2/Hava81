@@ -32,6 +32,7 @@ describe('RouteWeatherPanel', () => {
           eta: '2026-08-28T18:00:00.000Z',
           temperature: 25,
           precipitationProbability: 20,
+          precipitationMm: 0.4,
           windSpeed: 4,
           description: 'açık',
           score: 82,
@@ -49,6 +50,7 @@ describe('RouteWeatherPanel', () => {
     expect(result).toHaveAttribute('aria-live', 'polite');
     expect(result).toHaveAttribute('aria-atomic', 'true');
     expect(result).toHaveTextContent('78/100');
+    expect(result).toHaveTextContent('%20 · 0,4 mm');
   });
 
   it('removes a stale route result when departure changes', async () => {

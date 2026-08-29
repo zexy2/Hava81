@@ -1,5 +1,5 @@
 import type { WeatherService } from '../weather/weather.service';
-import type { ForecastDto } from '../weather/contracts';
+import type { ForecastDto, HourlyForecastDto } from '../weather/contracts';
 
 export interface RoutePoint {
   lat: number;
@@ -13,6 +13,7 @@ export interface RouteSegmentWeather {
   eta: string;
   temperature: number;
   precipitationProbability: number;
+  precipitationMm?: number;
   windSpeed: number;
   description: string;
   score: number;
@@ -55,15 +56,23 @@ const smoothstep = (value: number, start: number, end: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export const scoreRouteConditions = (temp: number, popPercent: number, wind: number) => {
+export const scoreRouteConditions = (
+  temp: number,
+  popPercent: number,
+  wind: number,
+  precipitationMm?: number
+) => {
   const pop = clamp(popPercent / 100, 0, 1);
   const thermal =
-    temp > 25
-      ? 48 * smoothstep(temp, 25, 43)
-      : temp < 18
-        ? 48 * smoothstep(18 - temp, 0, 28)
-        : 0;
-  const rain = 30 * smoothstep(pop, 0.12, 0.9);
+    temp > 25 ? 48 * smoothstep(temp, 25, 43) : temp < 18 ? 48 * smoothstep(18 - temp, 0, 28) : 0;
+  const chanceRain = 30 * smoothstep(pop, 0.12, 0.9);
+  const amountRain = Number.isFinite(precipitationMm)
+    ? 34 * smoothstep(Math.max(0, precipitationMm as number), 0.2, 6)
+    : 0;
+  const rain = Math.min(
+    42,
+    Math.max(chanceRain, amountRain) + Math.min(chanceRain, amountRain) * 0.2
+  );
   const windPenalty = 34 * smoothstep(Math.max(0, wind), 4, 18);
   const material = [thermal, rain, windPenalty].filter(value => value >= 8).length;
   const compound = material >= 2 ? Math.min(8, (material - 1) * 4) : 0;
@@ -71,10 +80,14 @@ export const scoreRouteConditions = (temp: number, popPercent: number, wind: num
   score = clamp(score, 0, 100);
   if (temp >= 43 || temp <= -20) score = Math.min(score, 25);
   else if (temp >= 40 || temp <= -10) score = Math.min(score, 40);
+  if ((precipitationMm ?? 0) >= 7.5) score = Math.min(score, 35);
   if (wind >= 20) score = Math.min(score, 30);
   return score;
 };
-const pickNearest = (forecast: ForecastDto, timeMs: number) =>
+
+type RouteForecast = Pick<ForecastDto, 'hourly'> | Pick<HourlyForecastDto, 'hourly'>;
+
+const pickNearest = (forecast: RouteForecast, timeMs: number) =>
   forecast.hourly.reduce(
     (best, item) =>
       Math.abs(Date.parse(item.time) - timeMs) < Math.abs(Date.parse(best.time) - timeMs)
@@ -98,18 +111,42 @@ export class RouteWeatherService {
     const durationMinutes = Math.max(45, Math.round((roadLikeDistance / 75) * 60));
     const points = interpolate(input.origin, input.destination, 5);
     const forecasts = await Promise.all(
-      points.map(point =>
-        this.weather
-          .getForecast({ lat: point.lat, lon: point.lon, units: 'metric', lang: input.lang })
-          .then(r => r.value)
-      )
+      points.map(async point => {
+        try {
+          const hourly = await this.weather.getHourlyForecast({
+            lat: point.lat,
+            lon: point.lon,
+            lang: input.lang,
+          });
+          if (hourly.value.hourly.length > 0) return hourly.value;
+        } catch {
+          // Keep route weather available if the richer hourly provider is temporarily unavailable.
+        }
+        return (
+          await this.weather.getForecast({
+            lat: point.lat,
+            lon: point.lon,
+            units: 'metric',
+            lang: input.lang,
+          })
+        ).value;
+      })
     );
 
     const evaluateDeparture = (departure: Date) => {
       const segments = points.map((point, index) => {
         const etaMs = departure.getTime() + durationMinutes * 60_000 * point.fraction;
         const sample = pickNearest(forecasts[index], etaMs);
-        const score = scoreRouteConditions(sample.temp, sample.pop, sample.windSpeed);
+        const precipitationMm =
+          'precipitationMm' in sample && Number.isFinite(sample.precipitationMm)
+            ? sample.precipitationMm
+            : undefined;
+        const score = scoreRouteConditions(
+          sample.temp,
+          sample.pop,
+          sample.windSpeed,
+          precipitationMm
+        );
         return {
           fraction: point.fraction,
           lat: point.lat,
@@ -117,6 +154,7 @@ export class RouteWeatherService {
           eta: new Date(etaMs).toISOString(),
           temperature: sample.temp,
           precipitationProbability: sample.pop,
+          ...(precipitationMm === undefined ? {} : { precipitationMm }),
           windSpeed: sample.windSpeed,
           description: sample.description,
           score,
