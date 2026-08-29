@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
 import { SettingsProvider } from '../../context';
@@ -28,6 +28,15 @@ const weather: NormalizedWeatherData = {
 };
 
 describe('WeatherDecisionField daily range', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-29T13:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {
     render(
       <SettingsProvider>
@@ -88,29 +97,23 @@ describe('WeatherDecisionField daily range', () => {
   });
 
   it('does not present a far-future fetchedAt timestamp as freshly updated', () => {
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(new Date('2026-08-29T13:00:00Z'));
-      render(
-        <SettingsProvider>
-          <WeatherDecisionField
-            weather={{
-              ...weather,
-              meta: {
-                ...weather.meta,
-                fetchedAt: new Date('2026-08-29T13:02:00Z'),
-              },
-            }}
-            hourly={[]}
-          />
-        </SettingsProvider>
-      );
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{
+            ...weather,
+            meta: {
+              ...weather.meta,
+              fetchedAt: new Date('2026-08-29T13:02:00Z'),
+            },
+          }}
+          hourly={[]}
+        />
+      </SettingsProvider>
+    );
 
-      expect(screen.getByText('Güncellik bilinmiyor')).toBeInTheDocument();
-      expect(screen.queryByText('şimdi güncellendi')).not.toBeInTheDocument();
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(screen.getByText('Güncellik bilinmiyor')).toBeInTheDocument();
+    expect(screen.queryByText('şimdi güncellendi')).not.toBeInTheDocument();
   });
 
   it("does not label tomorrow's forecast as today when the current-day daily row is missing", () => {
