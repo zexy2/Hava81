@@ -14,6 +14,7 @@ import type {
   HourlyForecast,
   NormalizedWeatherData,
 } from '../../types';
+import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './ComparePanel.css';
 
 interface ComparePanelProps {
@@ -34,10 +35,8 @@ const formatPrecipitationSummary = (locale: string, probability: number, amount:
   const probabilityText = locale.startsWith('en')
     ? `${Math.round(probability * 100)}%`
     : `%${Math.round(probability * 100)}`;
-  if (amount <= 0) return probabilityText;
-  const formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const amountText = amount < 0.1 ? `<${formatter.format(0.1)} mm` : `${formatter.format(amount)} mm`;
-  return `${probabilityText} · ${amountText}`;
+  const amountText = formatPrecipitationAmount(amount, locale);
+  return amountText ? `${probabilityText} · ${amountText}` : probabilityText;
 };
 
 export function ComparePanel({ cities, language }: ComparePanelProps) {

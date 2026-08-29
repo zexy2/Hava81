@@ -6,6 +6,7 @@ import type { ActivityKind } from '../../domain/activity/types';
 import type { DecisionReasonCode } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './ActivityPlanner.css';
 
 interface Props {
@@ -67,17 +68,6 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
     ]
   );
   const offset = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
-  const precipitationFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    [i18n.language]
-  );
-  const formatPrecipitationAmount = (amount?: number) => {
-    if (!Number.isFinite(amount) || (amount ?? 0) <= 0) return null;
-    return (amount as number) < 0.1
-      ? `<${precipitationFormatter.format(0.1)} mm`
-      : `${precipitationFormatter.format(amount as number)} mm`;
-  };
   const formatTime = (date?: Date) =>
     date
       ? new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {
@@ -176,7 +166,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
               const best = plan.bestWindow;
               const bestRange = plan.bestWindowRange;
               const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
-              const precipitationAmount = formatPrecipitationAmount(best?.precipitationMm);
+              const precipitationAmount = formatPrecipitationAmount(best?.precipitationMm, i18n.language);
               const rainText = precipitationAmount
                 ? precipitation > 0
                   ? t('hava81.activities.conditions.rainWithAmount', {

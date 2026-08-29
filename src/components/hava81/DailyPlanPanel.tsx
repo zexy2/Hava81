@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import { trackProductEvent } from '../../analytics/productEvents';
+import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { buildDecisionShare } from '../../utils/shareDecision';
 import type {
   DecisionReasonCode,
@@ -70,24 +71,14 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       timeZone: 'UTC',
     });
   };
-  const precipitationFormatter = useMemo(
-    () => new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    [i18n.language]
-  );
   const formatSlotPrecipitation = (probability: number, amount?: number) => {
     const probabilityPercent = Math.round(probability * 100);
     const parts: string[] = [];
     if (probabilityPercent > 0) {
       parts.push(i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`);
     }
-    if (Number.isFinite(amount) && (amount ?? 0) > 0) {
-      const amountValue = amount as number;
-      const amountText =
-        amountValue < 0.1
-          ? `<${precipitationFormatter.format(0.1)} mm`
-          : `${precipitationFormatter.format(amountValue)} mm`;
-      parts.push(amountText);
-    }
+    const amountText = formatPrecipitationAmount(amount, i18n.language);
+    if (amountText) parts.push(amountText);
     return parts.join(' · ');
   };
 

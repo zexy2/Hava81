@@ -5,6 +5,7 @@ import { buildCommutePlan, type CommuteAdviceCode } from '../../domain/commute/b
 import { useSettings } from '../../context/SettingsContext';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './CommutePlanPanel.css';
 
 interface Props {
@@ -20,11 +21,6 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
   const { profile, setCommuteTime, clearCommuteTimes } = useDecisionProfile();
   const trackedPlanRef = useRef<string | null>(null);
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds ?? 0;
-  const precipitationFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    [i18n.language]
-  );
   const plan = useMemo(
     () =>
       buildCommutePlan({
@@ -75,14 +71,8 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
         i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`
       );
     }
-    if (Number.isFinite(amount) && (amount ?? 0) > 0) {
-      const value = amount as number;
-      parts.push(
-        value < 0.1
-          ? `<${precipitationFormatter.format(0.1)} mm`
-          : `${precipitationFormatter.format(value)} mm`
-      );
-    }
+    const amountText = formatPrecipitationAmount(amount, i18n.language);
+    if (amountText) parts.push(amountText);
     return parts.length ? parts.join(' · ') : t('hava81.commute.noRain');
   };
 
