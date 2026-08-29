@@ -224,6 +224,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
     // Delay to allow click on suggestions, but cancel it if the user refocuses first.
     blurTimeoutRef.current = window.setTimeout(() => {
       blurTimeoutRef.current = null;
+      setHighlightedIndex(-1);
       setIsFocused(false);
     }, 150);
   }, []);
