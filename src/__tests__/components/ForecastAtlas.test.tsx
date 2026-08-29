@@ -124,4 +124,45 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       '00:00', '06:00', '12:00', '18:00',
     ]);
   });
+  it('marks the local day change without repeating a date on every hourly card', async () => {
+    const user = userEvent.setup();
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={Array.from({ length: 24 }, (_, index) => ({
+            time: new Date(Date.parse('2026-08-29T20:00:00.000Z') + index * 60 * 60_000),
+            temp: 22,
+            icon: '01n',
+            description: 'açık',
+            pop: 0,
+            windSpeed: 2,
+          }))}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const interval = screen.getByRole('group', { name: /tahmin aralığı/i });
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+
+    const boundaryFor = () => region.querySelectorAll('.hava81-forecast-atlas__hour-day');
+
+    expect(boundaryFor()).toHaveLength(1);
+    expect(boundaryFor()[0].closest('li')).toHaveTextContent('00:00');
+
+    await user.click(within(interval).getByRole('button', { name: '3 saatlik' }));
+    expect(boundaryFor()).toHaveLength(1);
+    expect(boundaryFor()[0].closest('li')).toHaveTextContent('02:00');
+
+    await user.click(within(interval).getByRole('button', { name: '6 saatlik' }));
+    expect(boundaryFor()).toHaveLength(1);
+    expect(boundaryFor()[0].closest('li')).toHaveTextContent('02:00');
+  });
+
 });

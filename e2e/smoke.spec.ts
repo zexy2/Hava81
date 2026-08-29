@@ -180,12 +180,16 @@ test('hourly interval controls resample the same 24-hour forecast', async ({ pag
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
 
   const displayedTimes = async () =>
-    page.locator('.hava81-forecast-atlas__hour time').allTextContents();
+    page.locator('.hava81-forecast-atlas__hour time > span:last-child').allTextContents();
 
   await interval.getByRole('button', { name: '3 saatlik' }).click();
   await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(8);
   expect((await displayedTimes()).slice(0, 4)).toEqual(['12:00', '15:00', '18:00', '21:00']);
+  await expect(page.locator('.hava81-forecast-atlas__hour-day')).toHaveCount(1);
+  await expect(
+    page.locator('.hava81-forecast-atlas__hour.is-day-boundary')
+  ).toContainText('00:00');
 
   await interval.getByRole('button', { name: '6 saatlik' }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(4);
