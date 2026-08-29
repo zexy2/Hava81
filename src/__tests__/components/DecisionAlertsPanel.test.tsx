@@ -40,6 +40,7 @@ describe('DecisionAlertsPanel', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
   });
@@ -91,6 +92,40 @@ describe('DecisionAlertsPanel', () => {
         key?.startsWith('hava81-alert-sent:')
       )
     ).toBe(false);
+  });
+
+
+  it('fails closed when alert dedupe storage becomes unavailable', async () => {
+    const originalGetItem = Storage.prototype.getItem;
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, key: string) {
+      if (key === 'hava81-alerts-v1') return 'enabled';
+      if (key.startsWith('hava81-alert-sent:')) throw new DOMException('blocked', 'SecurityError');
+      return originalGetItem.call(this, key);
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+
+    await Promise.resolve();
+    expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
+    expect(notification).not.toHaveBeenCalled();
+  });
+
+  it('does not enable alerts when persisted opt-in cannot be stored', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn().mockResolvedValue('granted') });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    const button = screen.getByRole('button');
+    await user.click(button);
+
+    expect(button).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('uses the weather location timezone for quiet hours', async () => {

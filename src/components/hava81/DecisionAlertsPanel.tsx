@@ -12,13 +12,29 @@ interface Props {
   airQuality?: AirQuality;
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
-const readEnabled = () => {
+const readStorage = (key: string): string | null | undefined => {
   try {
-    return localStorage.getItem(SETTINGS_KEY) === 'enabled';
+    return localStorage.getItem(key);
+  } catch {
+    return undefined;
+  }
+};
+const writeStorage = (key: string, value: string): boolean => {
+  try {
+    localStorage.setItem(key, value);
+    return true;
   } catch {
     return false;
   }
 };
+const removeStorage = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Alerts are optional; current-session state can still be disabled.
+  }
+};
+const readEnabled = () => readStorage(SETTINGS_KEY) === 'enabled';
 const inQuietHours = (timezoneOffsetSeconds = 0) => {
   const locationNow = new Date(Date.now() + timezoneOffsetSeconds * 1000);
   const hour = locationNow.getUTCHours();
@@ -50,7 +66,8 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
       return;
     const day = new Date().toISOString().slice(0, 10);
     const key = `hava81-alert-sent:${day}:${candidate.signature}`;
-    if (localStorage.getItem(key)) return;
+    const sentMarker = readStorage(key);
+    if (sentMarker === undefined || sentMarker) return;
     const title = t(candidate.titleKey, candidate.data);
     const body = t(candidate.bodyKey, candidate.data);
     void (async () => {
@@ -65,7 +82,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         } else {
           new Notification(title, { body, tag: candidate.signature });
         }
-        localStorage.setItem(key, '1');
+        writeStorage(key, '1');
       } catch {
         // Notifications are optional; failure must never block weather data or suppress a later retry.
       }
@@ -74,7 +91,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
 
   const toggle = async () => {
     if (enabled) {
-      localStorage.removeItem(SETTINGS_KEY);
+      removeStorage(SETTINGS_KEY);
       setEnabled(false);
       return;
     }
@@ -82,9 +99,10 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     const next = await Notification.requestPermission();
     setPermission(next);
     if (next === 'granted') {
-      localStorage.setItem(SETTINGS_KEY, 'enabled');
-      setEnabled(true);
-      trackProductEvent('alert_opt_in', { granted: true });
+      if (writeStorage(SETTINGS_KEY, 'enabled')) {
+        setEnabled(true);
+        trackProductEvent('alert_opt_in', { granted: true });
+      }
     }
   };
 

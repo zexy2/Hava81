@@ -623,3 +623,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Re-applied the small province metadata correction on current main after the original green PR became non-mergeable due to concurrent main progress.
 - Generated city meta description, Open Graph/Twitter description and structured WebPage description now use capability-level `saatlik ve günlük tahmin` instead of stale provider-cadence wording `3 saatlik tahmin`. Runtime weather, scoring, providers and UI behavior are unchanged.
 - Release gate: regenerate all 81 city pages and require Istanbul metadata to contain the new wording with no stale phrase, then lint, type-check, diff-check and exact-head CI before merge.
+
+
+## 2026-08-29 09:22 TRT — alert storage failures are non-fatal and fail closed
+
+- Re-applied the Decision Alerts storage hardening on current main while the context-provenance branch validates independently.
+- Alert storage access is now best-effort throughout: unreadable dedupe storage suppresses delivery rather than risking duplicate spam; opt-in becomes active only after its preference is persisted; opt-out still disables the current session if removal is blocked.
+- Added regressions for dedupe read SecurityError and opt-in persistence failure, plus explicit mock restoration so storage spies cannot leak between tests. Weather data, candidate thresholds, quiet hours and permission behavior are unchanged.
