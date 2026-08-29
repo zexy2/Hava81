@@ -89,11 +89,17 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         ? t('hava81.dailyPlan.nowOrLater.now')
         : t('hava81.dailyPlan.nowOrLater.similar');
 
+  const bestWindowShareText = plan.bestWindowRange
+    ? plan.bestWindowRange.start.time.getTime() === plan.bestWindowRange.end.time.getTime()
+      ? formatTime(plan.bestWindowRange.peak.time)
+      : `${formatTime(plan.bestWindowRange.start.time)}–${formatTime(plan.bestWindowRange.end.time)}`
+    : undefined;
+
   const shareDecision = async () => {
     const payload = buildDecisionShare({
       cityName: weather.cityName,
       score: plan.score,
-      bestTime: plan.bestWindow ? formatTime(plan.bestWindow.time) : undefined,
+      bestTime: bestWindowShareText,
       umbrella: plan.umbrella,
       recommendation: nowOrLaterText,
       language: i18n.language,
@@ -139,8 +145,15 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       <div className="daily-plan__decision">
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         <strong>{nowOrLaterText}</strong>
-        {plan.bestWindow ? (
-          <small>{t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindow.time) })}</small>
+        {plan.bestWindowRange ? (
+          <small>
+            {plan.bestWindowRange.start.time.getTime() === plan.bestWindowRange.end.time.getTime()
+              ? t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindowRange.peak.time) })
+              : t('hava81.dailyPlan.bestRange', {
+                  start: formatTime(plan.bestWindowRange.start.time),
+                  end: formatTime(plan.bestWindowRange.end.time),
+                })}
+          </small>
         ) : null}
       </div>
 

@@ -49,6 +49,13 @@ export interface ScoredWeatherWindow {
   impacts: ScoreFactorImpact[];
 }
 
+export interface BestWindowRange<T extends ScoredWeatherWindow = ScoredWeatherWindow> {
+  start: T;
+  end: T;
+  peak: T;
+  tolerance: number;
+}
+
 export type UmbrellaAdvice = "yes" | "maybe" | "no";
 export type WindAdvice = "strong" | "caution" | "normal";
 export type AirQualityAdvice = "poor" | "sensitive" | "good" | "unknown";
@@ -68,6 +75,7 @@ export interface DailyPlan {
   band: Hava81ScoreBand;
   slots: ScoredWeatherWindow[];
   bestWindow?: ScoredWeatherWindow;
+  bestWindowRange?: BestWindowRange;
   umbrella: UmbrellaAdvice;
   wind: WindAdvice;
   airQuality: AirQualityAdvice;

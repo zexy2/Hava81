@@ -141,7 +141,8 @@ export const tr = {
         now: 'Şimdi çıkmak yakın saatlere göre daha avantajlı.',
         similar: 'Yakın saatler arasında belirgin bir avantaj görünmüyor.',
       },
-      bestWindow: 'En iyi görünen pencere: {{time}}',
+      bestWindow: 'En iyi görünen saat: {{time}}',
+      bestRange: 'En uygun görünen aralık: {{start}}–{{end}}',
       quickLabel: 'Pratik hava kararları',
       quick: {
         umbrella: { label: 'Şemsiye', yes: 'Evet', maybe: 'Yanında olsun', no: 'Gerekmez' },
@@ -258,6 +259,7 @@ export const tr = {
         laundry: 'Çamaşır',
       },
       bestTime: 'En iyi saat: {{time}}',
+      bestRange: 'En uygun aralık: {{start}}–{{end}}',
       score: {
         default: '12 saatlik uygunluk',
         filtered: '{{start}}–{{end}} uygunluğu',
@@ -297,6 +299,11 @@ export const tr = {
         cold: 'Soğuğa hassasım',
         balanced: 'Dengeli',
         heat: 'Sıcağa hassasım',
+        help: {
+          balanced: 'Standart konfor aralıkları kullanılır.',
+          cold: 'Soğuk uyarıları yaklaşık 3°C daha erken başlar.',
+          heat: 'Sıcak uyarıları yaklaşık 3°C daha erken başlar.',
+        },
       },
     },
     context: {

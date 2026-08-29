@@ -1,4 +1,5 @@
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { findBestWindowRange } from '../decision/bestWindowRange';
 import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
 import type { DecisionReasonCode } from '../decision/types';
 import type {
@@ -329,10 +330,8 @@ export const buildActivityPlan = ({
     : defaultSlots;
   const evaluatedSlots = windowApplied ? filteredSlots : defaultSlots;
 
-  const bestWindow = evaluatedSlots.reduce<ActivityWindowScore | undefined>(
-    (best, slot) => (!best || slot.score > best.score ? slot : best),
-    undefined
-  );
+  const bestWindowRange = findBestWindowRange(evaluatedSlots);
+  const bestWindow = bestWindowRange?.peak;
   const scoringHorizon = windowApplied ? 24 : HORIZON_HOURS;
   const score = weightedActivityScore(evaluatedSlots, scoringHorizon);
   const baselineScore = weightedActivityScore(
@@ -356,6 +355,7 @@ export const buildActivityPlan = ({
     activityImpact,
     band: getScoreBand(score),
     bestWindow,
+    bestWindowRange,
     slots,
     reasons,
     windowApplied,

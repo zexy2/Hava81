@@ -97,6 +97,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
             <option value="balanced">{t('hava81.activities.sensitivity.balanced')}</option>
             <option value="heat">{t('hava81.activities.sensitivity.heat')}</option>
           </select>
+          <small>{t(`hava81.activities.sensitivity.help.${profile.temperatureSensitivity}`)}</small>
         </label>
       </header>
 
@@ -158,6 +159,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
           <div className="activity-planner__cards">
           {plans.map(plan => {
             const best = plan.bestWindow;
+            const bestRange = plan.bestWindowRange;
             const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
             const rainText =
               precipitation === 0
@@ -182,8 +184,13 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                   </div>
                 </header>
                 <p>
-                  {best
-                    ? t('hava81.activities.bestTime', { time: formatTime(best.time) })
+                  {bestRange
+                    ? bestRange.start.time.getTime() === bestRange.end.time.getTime()
+                      ? t('hava81.activities.bestTime', { time: formatTime(bestRange.peak.time) })
+                      : t('hava81.activities.bestRange', {
+                          start: formatTime(bestRange.start.time),
+                          end: formatTime(bestRange.end.time),
+                        })
                     : t('hava81.activities.noWindow')}
                 </p>
                 {best ? (

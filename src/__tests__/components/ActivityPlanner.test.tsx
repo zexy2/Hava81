@@ -61,4 +61,27 @@ describe('ActivityPlanner time range', () => {
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('20:00');
   });
+
+  it('shows near-best hours as a range and explains what temperature sensitivity changes', () => {
+    const plateau: HourlyForecast[] = [15, 16, 17].map(hour => ({
+      time: new Date(Date.UTC(2026, 7, 29, hour)),
+      temp: 22,
+      apparentTemperature: 22,
+      pop: 0,
+      windSpeed: 2,
+      icon: '01d',
+    }));
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={plateau} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('Standart konfor aralıkları kullanılır.')).toBeInTheDocument();
+    expect(screen.getAllByText('En uygun aralık: 18:00–20:00').length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
+    expect(screen.getByText('Sıcak uyarıları yaklaşık 3°C daha erken başlar.')).toBeInTheDocument();
+  });
+
 });

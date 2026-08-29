@@ -93,8 +93,7 @@ export function WeatherDecisionField({
   const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const todayKey = atLocationTime(new Date()).toISOString().slice(0, 10);
-  const todayDaily =
-    daily.find(day => day.date.toISOString().slice(0, 10) === todayKey) ?? daily[0];
+  const todayDaily = daily.find(day => day.date.toISOString().slice(0, 10) === todayKey);
 
   const formatForecastTime = (time: Date): string => {
     const date = time instanceof Date ? time : new Date(time);
