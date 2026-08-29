@@ -59,7 +59,7 @@ describe('DailyPlanPanel sharing', () => {
     expect(screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        /hava81\.dailyPlan\.bands\.(excellent|good|caution|difficult) · (90–100|75–89|55–74|0–54)/
+        /hava81\.dailyPlan\.bands\.(excellent|good|caution|difficult) · (97–100|75–96|55–74|0–54)/
       )
     ).toBeInTheDocument();
   });
