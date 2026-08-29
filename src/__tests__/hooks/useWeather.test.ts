@@ -242,6 +242,49 @@ describe('useWeather', () => {
     await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
   });
 
+  it.each([
+    ['humidity', { humidity: 140 }],
+    ['cloud cover', { clouds: -1 }],
+    ['visibility', { visibility: -1 }],
+    ['wind speed', { windSpeed: -1 }],
+    ['wind direction', { windDirection: 361 }],
+    ['latitude', { coordinates: { lat: 91, lon: 28.97 } }],
+    ['longitude', { coordinates: { lat: 41.01, lon: 181 } }],
+  ])('ignores cached weather with invalid %s domain values', async (_label, invalidData) => {
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          visibility: 10000,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'açık hava',
+          icon: '01d',
+          sunrise: '2026-07-14T02:43:00.000Z',
+          sunset: '2026-07-14T17:34:00.000Z',
+          timestamp: '2026-07-14T12:00:00.000Z',
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:00.000Z' },
+          ...invalidData,
+        },
+        timestamp: Date.now(),
+        language: 'tr',
+      })
+    );
+
+    renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
+  });
+
   it('ignores cached weather with invalid provider metadata dates', async () => {
     localStorage.setItem(
       'weather_cache',
