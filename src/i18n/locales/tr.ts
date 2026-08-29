@@ -231,6 +231,8 @@ export const tr = {
         'wind-caution': 'Çıkış veya dönüş penceresinde rüzgârı hesaba katmak iyi olur.',
         'temperature-drop': 'Dönüşte yaklaşık {{value}}° daha serin olacak.',
         'temperature-rise': 'Dönüşte yaklaşık {{value}}° daha sıcak olacak.',
+        'comfort-worsens': 'Dönüşün Hava81 puanı çıkıştan yaklaşık {{value}} puan daha düşük; hazırlığı dönüş koşullarına göre yap.',
+        'comfort-improves': 'Dönüşün Hava81 puanı çıkıştan yaklaşık {{value}} puan daha yüksek; hava açısından daha rahat görünüyor.',
         stable: 'Çıkış ve dönüş arasında belirgin bir hava bozulması görünmüyor.',
       },
       windowsLabel: 'Çıkış ve dönüş hava pencereleri',

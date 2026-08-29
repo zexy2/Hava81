@@ -230,6 +230,8 @@ export const en = {
         'wind-caution': 'Wind is worth accounting for in either the departure or return window.',
         'temperature-drop': 'It will be about {{value}}° cooler when you return.',
         'temperature-rise': 'It will be about {{value}}° warmer when you return.',
+        'comfort-worsens': 'The return Hava81 score is about {{value}} points lower; plan for the return conditions.',
+        'comfort-improves': 'The return Hava81 score is about {{value}} points higher; conditions look more comfortable.',
         stable: 'No material weather deterioration appears between leaving and returning.',
       },
       windowsLabel: 'Departure and return weather windows',
