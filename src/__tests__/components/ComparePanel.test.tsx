@@ -96,6 +96,36 @@ describe('ComparePanel', () => {
     expect(screen.getByText(/en az iki şehri/i)).toBeVisible();
   });
 
+  it('shows measurable near-term precipitation even when probability is 0%', async () => {
+    api.getHourlyForecast.mockResolvedValue({
+      hourly: [{
+        time: new Date('2026-08-28T09:00:00Z'),
+        temp: 24,
+        icon: '10d',
+        pop: 0,
+        windSpeed: 3,
+        precipitationMm: 0.4,
+      }],
+      meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
+    });
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getAllByText('%0 · 0,4 mm')).toHaveLength(2);
+    expect(screen.getAllByText('Yağış')).toHaveLength(2);
+  });
+
   it('loads decision metrics and a weather-criteria winner', async () => {
     render(
       <SettingsProvider>

@@ -126,7 +126,7 @@ export const en = {
       winnerNote:
         'This result compares current weather criteria only; it is not a general ranking of the cities.',
       temp: 'Temperature',
-      rain: 'Rain',
+      rain: 'Precipitation',
       aqi: 'Air quality',
       bestTime: 'Best time',
     },

@@ -127,7 +127,7 @@ export const tr = {
       winnerNote:
         'Sonuç yalnızca mevcut hava koşullarına göre; şehrin genel kalitesini değerlendirmez.',
       temp: 'Sıcaklık',
-      rain: 'Yağmur',
+      rain: 'Yağış',
       aqi: 'Hava kalitesi',
       bestTime: 'En iyi saat',
     },
