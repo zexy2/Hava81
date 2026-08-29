@@ -70,6 +70,9 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const validateCurrentWeatherPayload = (data: SerializedWeatherData): void => {
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidWeatherPayload(field);
@@ -146,6 +149,25 @@ const normalizeBffPrecipitationProbability = (value: number, field: string): num
     return invalidForecastPayload(field);
   }
   return normalizePrecipitationProbability(value);
+};
+
+const validateForecastEnvelope = (
+  data: unknown,
+  field: string,
+  dailyOptional = false
+): SerializedForecast | SerializedHourlyForecast => {
+  if (!isRecord(data)) invalidForecastPayload(field);
+  const envelope = data as Record<string, unknown>;
+  if (!isRecord(envelope.meta)) invalidForecastPayload(`${field}.meta`);
+  if (!Array.isArray(envelope.hourly)) invalidForecastPayload(`${field}.hourly`);
+  if (dailyOptional) {
+    if (envelope.daily !== undefined && !Array.isArray(envelope.daily)) {
+      invalidForecastPayload(`${field}.daily`);
+    }
+  } else if (!Array.isArray(envelope.daily)) {
+    invalidForecastPayload(`${field}.daily`);
+  }
+  return envelope as SerializedForecast | SerializedHourlyForecast;
 };
 
 const validateForecastMeta = (meta: SerializedForecast['meta'], field: string): void => {
@@ -455,12 +477,13 @@ export const weatherService = {
     lon: number,
     lang = DEFAULT_WEATHER_PARAMS.lang
   ): Promise<{ daily: DailyForecast[]; hourly: HourlyForecast[]; meta: ForecastMeta }> => {
-    const response = await httpClient.get<SerializedForecast>(API_ENDPOINTS.weather.forecast, {
+    const rawResponse = await httpClient.get<unknown>(API_ENDPOINTS.weather.forecast, {
       lat,
       lon,
       units: DEFAULT_WEATHER_PARAMS.units,
       lang,
     });
+    const response = validateForecastEnvelope(rawResponse, 'forecast') as SerializedForecast;
 
     validateForecastMeta(response.meta, 'forecast.meta');
     response.daily.forEach((item, index) => validateDailyForecastItem(item, `forecast.daily.${index}`));
@@ -490,11 +513,12 @@ export const weatherService = {
     lon: number,
     lang = DEFAULT_WEATHER_PARAMS.lang
   ): Promise<{ daily?: DailyForecast[]; hourly: HourlyForecast[]; meta: ForecastMeta }> => {
-    const response = await httpClient.get<SerializedHourlyForecast>(API_ENDPOINTS.weather.hourly, {
+    const rawResponse = await httpClient.get<unknown>(API_ENDPOINTS.weather.hourly, {
       lat,
       lon,
       lang,
     });
+    const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
     validateForecastMeta(response.meta, 'hourly.meta');
     response.daily?.slice(0, 5).forEach((item, index) => validateDailyForecastItem(item, `hourly.daily.${index}`));
     response.hourly.slice(0, 48).forEach((item, index) => validateHourlyForecastItem(item, `hourly.hourly.${index}`));
