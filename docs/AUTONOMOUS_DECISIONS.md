@@ -282,3 +282,5 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-29 — Treat the browser BFF boundary as untrusted even when the server already validates its upstream provider. Current-weather client revival rejects non-finite numeric data and impossible unit-independent domains before rendering/scoring; do not impose Celsius bounds at this boundary because current-weather requests may use metric, imperial or standard units.
+
+- 2026-08-29 — Do not hide a capability on mobile unless an equivalent mobile control exists. Keep “use my location” reachable in the compact header because the bottom nav has no geolocation action; validate both visibility and no horizontal overflow at 390px and 320px.

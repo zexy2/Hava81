@@ -890,7 +890,6 @@ kbd {
   }
 
   .atlas-icon-button--map,
-  .atlas-icon-button--location,
   .atlas-compare-button {
     display: none;
   }
