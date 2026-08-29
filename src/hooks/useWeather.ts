@@ -113,6 +113,8 @@ const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 const isPercentage = (value: unknown): value is number =>
   isFiniteNumber(value) && value >= 0 && value <= 100;
+const isPlausibleCelsius = (value: unknown): value is number =>
+  isFiniteNumber(value) && value >= -100 && value <= 100;
 const isNonNegativeNumber = (value: unknown): value is number =>
   isFiniteNumber(value) && value >= 0;
 const validCacheStatuses = new Set(['HIT', 'MISS', 'COALESCED']);
@@ -144,10 +146,10 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     !data.cityName.trim() ||
     typeof data.country !== 'string' ||
     !data.country.trim() ||
-    !isFiniteNumber(data.temperature) ||
-    !isFiniteNumber(data.feelsLike) ||
-    !isFiniteNumber(data.tempMin) ||
-    !isFiniteNumber(data.tempMax) ||
+    !isPlausibleCelsius(data.temperature) ||
+    !isPlausibleCelsius(data.feelsLike) ||
+    !isPlausibleCelsius(data.tempMin) ||
+    !isPlausibleCelsius(data.tempMax) ||
     !isPercentage(data.humidity) ||
     !isNonNegativeNumber(data.pressure) ||
     (data.visibility !== undefined && !isNonNegativeNumber(data.visibility)) ||
