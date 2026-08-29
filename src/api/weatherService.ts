@@ -148,6 +148,56 @@ const normalizeBffPrecipitationProbability = (value: number, field: string): num
   return normalizePrecipitationProbability(value);
 };
 
+const validateForecastMeta = (meta: SerializedForecast['meta'], field: string): void => {
+  const invalid = (condition: boolean, suffix: string) => {
+    if (condition) invalidForecastPayload(`${field}.${suffix}`);
+  };
+  invalid(typeof meta.provider !== 'string' || !meta.provider.trim(), 'provider');
+  invalid(
+    !isFiniteNumber(meta.timezoneOffsetSeconds) ||
+      meta.timezoneOffsetSeconds < -43_200 ||
+      meta.timezoneOffsetSeconds > 50_400,
+    'timezoneOffsetSeconds'
+  );
+  invalid(
+    !isFiniteNumber(meta.intervalHours) || meta.intervalHours <= 0 || meta.intervalHours > 24,
+    'intervalHours'
+  );
+  invalid(
+    meta.freshForSeconds !== undefined &&
+      (!isFiniteNumber(meta.freshForSeconds) ||
+        meta.freshForSeconds <= 0 ||
+        meta.freshForSeconds > 86_400),
+    'freshForSeconds'
+  );
+};
+
+const validateDailyForecastItem = (item: SerializedForecast['daily'][number], field: string): void => {
+  if (!isFiniteNumber(item.tempMin)) invalidForecastPayload(`${field}.tempMin`);
+  if (!isFiniteNumber(item.tempMax)) invalidForecastPayload(`${field}.tempMax`);
+  if (typeof item.description !== 'string' || !item.description.trim()) {
+    invalidForecastPayload(`${field}.description`);
+  }
+  if (typeof item.icon !== 'string' || !item.icon.trim()) invalidForecastPayload(`${field}.icon`);
+};
+
+const validateHourlyForecastItem = (item: SerializedForecast['hourly'][number], field: string): void => {
+  const invalid = (condition: boolean, suffix: string) => {
+    if (condition) invalidForecastPayload(`${field}.${suffix}`);
+  };
+  invalid(!isFiniteNumber(item.temp), 'temp');
+  invalid(typeof item.icon !== 'string' || !item.icon.trim(), 'icon');
+  invalid(item.description !== undefined && (!item.description || !item.description.trim()), 'description');
+  invalid(item.windSpeed !== undefined && (!isFiniteNumber(item.windSpeed) || item.windSpeed < 0), 'windSpeed');
+  invalid(item.apparentTemperature !== undefined && !isFiniteNumber(item.apparentTemperature), 'apparentTemperature');
+  invalid(item.humidity !== undefined && (!isFiniteNumber(item.humidity) || item.humidity < 0 || item.humidity > 100), 'humidity');
+  invalid(item.precipitationMm !== undefined && (!isFiniteNumber(item.precipitationMm) || item.precipitationMm < 0), 'precipitationMm');
+  invalid(item.windGust !== undefined && (!isFiniteNumber(item.windGust) || item.windGust < 0), 'windGust');
+  invalid(item.uvIndex !== undefined && (!isFiniteNumber(item.uvIndex) || item.uvIndex < 0), 'uvIndex');
+  invalid(item.visibility !== undefined && (!isFiniteNumber(item.visibility) || item.visibility < 0), 'visibility');
+  invalid(item.weatherCode !== undefined && (!Number.isInteger(item.weatherCode) || item.weatherCode < 0 || item.weatherCode > 99), 'weatherCode');
+};
+
 const validateContextSignalsPayload = (
   data: Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
 ): ContextSignals => {
@@ -412,6 +462,10 @@ export const weatherService = {
       lang,
     });
 
+    validateForecastMeta(response.meta, 'forecast.meta');
+    response.daily.forEach((item, index) => validateDailyForecastItem(item, `forecast.daily.${index}`));
+    response.hourly.slice(0, 8).forEach((item, index) => validateHourlyForecastItem(item, `forecast.hourly.${index}`));
+
     return {
       daily: response.daily.map(item => ({
         ...item,
@@ -441,6 +495,10 @@ export const weatherService = {
       lon,
       lang,
     });
+    validateForecastMeta(response.meta, 'hourly.meta');
+    response.daily?.slice(0, 5).forEach((item, index) => validateDailyForecastItem(item, `hourly.daily.${index}`));
+    response.hourly.slice(0, 48).forEach((item, index) => validateHourlyForecastItem(item, `hourly.hourly.${index}`));
+
     return {
       ...(response.daily?.length
         ? {
