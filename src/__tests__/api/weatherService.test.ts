@@ -550,6 +550,55 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it('validates modeled context timestamps and physical domains at the browser boundary', async () => {
+    const context = {
+      provider: 'Open-Meteo',
+      fetchedAt: '2026-08-29T17:00:00.000Z',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 6,
+      dustMax: 12,
+      grassPollenMax: 3,
+      units: { dust: 'μg/m³', waveHeight: 'm', waveDirection: '°', wavePeriod: 's' },
+      marine: {
+        observedAt: '2026-08-29T17:00:00.000Z',
+        waveHeight: 0.8,
+        waveDirection: 210,
+        wavePeriod: 5.5,
+        seaSurfaceTemperature: 24,
+      },
+      freshForSeconds: 900,
+    };
+    mockGet.mockResolvedValue(context);
+
+    await expect(weatherService.getContextSignals(41.01, 28.97, true)).resolves.toMatchObject({
+      ...context,
+      fetchedAt: new Date(context.fetchedAt),
+    });
+  });
+
+  it.each([
+    ['invalid fetchedAt', { fetchedAt: 'invalid' }],
+    ['negative UV', { uvIndexMax: -1 }],
+    ['negative dust', { dustMax: -1 }],
+    ['invalid marine observation time', { marine: { observedAt: 'invalid', waveHeight: 1 } }],
+    ['negative wave height', { marine: { observedAt: '2026-08-29T17:00:00.000Z', waveHeight: -0.1 } }],
+    ['wave direction above 360°', { marine: { observedAt: '2026-08-29T17:00:00.000Z', waveDirection: 361 } }],
+    ['non-positive wave period', { marine: { observedAt: '2026-08-29T17:00:00.000Z', wavePeriod: 0 } }],
+  ])('rejects impossible modeled context %s from the BFF', async (_label, invalidField) => {
+    mockGet.mockResolvedValue({
+      provider: 'Open-Meteo',
+      fetchedAt: '2026-08-29T17:00:00.000Z',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      units: {},
+      ...invalidField,
+    });
+
+    await expect(weatherService.getContextSignals(41.01, 28.97, true)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it('returns normalized air quality from the BFF', async () => {
     const airQuality = {
       aqi: 1,
@@ -569,6 +618,32 @@ describe('weatherService BFF client', () => {
       lat: 38.42,
       lon: 27.14,
       lang: 'tr',
+    });
+  });
+
+  it.each([
+    ['AQI below provider scale', { aqi: 0 }],
+    ['AQI above provider scale', { aqi: 6 }],
+    ['negative PM2.5', { pm25: -1 }],
+    ['negative PM10', { pm10: -1 }],
+    ['negative ozone', { o3: -1 }],
+    ['blank label', { aqiLabel: '   ' }],
+    ['blank provider', { meta: { provider: '   ', fetchedAt: '2026-07-14T12:00:01.000Z' } }],
+    ['invalid metadata timestamp', { meta: { provider: 'OpenWeather', fetchedAt: 'invalid' } }],
+  ])('rejects impossible air-quality %s from the BFF', async (_label, invalidField) => {
+    mockGet.mockResolvedValue({
+      aqi: 1,
+      aqiLabel: 'Good',
+      pm25: 5,
+      pm10: 8,
+      o3: 20,
+      meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:01.000Z' },
+      ...invalidField,
+    });
+
+    await expect(weatherService.getAirQuality(38.42, 27.14)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
     });
   });
 });

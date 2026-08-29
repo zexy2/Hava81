@@ -290,3 +290,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — OpenWeather pollutant concentration fields are physical concentration measurements and must be non-negative. Reject an upstream air-quality payload containing a negative CO/NO/NO₂/O₃/SO₂/PM2.5/PM10/NH₃ value instead of displaying or scoring an impossible concentration; absence is safer than fabricated correction.
 
 - 2026-08-29 — PWA shell caches must be deploy-scoped rather than a permanent manual version. Stamp the production service worker from generated shell/manifest/hashed-asset identity; fail the build if stamping cannot occur. Continue one forced-tab refresh only for migration from legacy v1/v2 caches, not on every future deploy.
+
+- 2026-08-29 — Browser-side modeled-context and air-quality responses remain untrusted even when the Hava81 BFF validates its own upstream providers. Reject malformed timestamps and impossible physical domains (negative UV/dust/pollen/concentrations, invalid marine geometry/period, AQI outside 1–5) at the browser transport boundary rather than coercing them into plausible-looking guidance.
