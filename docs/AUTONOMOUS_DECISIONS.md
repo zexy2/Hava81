@@ -269,3 +269,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — User-facing freshness labels must not convert materially future provider timestamps into “just updated.” Allow only the same one-minute clock-skew tolerance used at persisted-weather boundaries; beyond it, report freshness as unknown rather than inventing recency.
 
 - 2026-08-29 — Modeled-context provenance must not publish a materially future provider fetch clock time. Reuse the same one-minute clock-skew tolerance as primary weather freshness; when the fetch timestamp is farther ahead, omit the displayed fetch time while retaining provider/license attribution.
+
+- 2026-08-29 — Local Lighthouse quality gates may use an isolated preview port through `HAVA81_LIGHTHOUSE_PORT`, with 4173 retained as the default. Concurrent worktrees must not kill, reuse or mutate another preview listener merely to run performance audits. Invalid/out-of-range overrides fall back to the established default.

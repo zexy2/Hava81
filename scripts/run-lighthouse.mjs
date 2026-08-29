@@ -5,11 +5,17 @@ import { connect } from 'node:net';
 import process from 'node:process';
 
 const host = '127.0.0.1';
-const port = 4173;
+const DEFAULT_PREVIEW_PORT = 4173;
+const requestedPreviewPort = Number(process.env.HAVA81_LIGHTHOUSE_PORT);
+const port =
+  Number.isInteger(requestedPreviewPort) && requestedPreviewPort >= 1024 && requestedPreviewPort <= 65535
+    ? requestedPreviewPort
+    : DEFAULT_PREVIEW_PORT;
 const targetUrl = `http://${host}:${port}/index.html`;
 const resultDir = '.lighthouse-results';
 const resultPath = `${resultDir}/lhr.json`;
 const lighthouseCli = new URL('../node_modules/lighthouse/cli/index.js', import.meta.url).pathname;
+const viteCli = new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname;
 
 const thresholds = [
   { key: 'performance', minimum: 0.75, level: 'warn' },
@@ -78,10 +84,9 @@ await assertPreviewPortIsFree();
 await rm(resultDir, { recursive: true, force: true });
 await mkdir(resultDir, { recursive: true });
 
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const preview = spawn(
-  npmCommand,
-  ['run', 'preview', '--', '--host', host, '--port', String(port)],
+  process.execPath,
+  [viteCli, 'preview', '--host', host, '--port', String(port)],
   { stdio: 'inherit', env: process.env }
 );
 
