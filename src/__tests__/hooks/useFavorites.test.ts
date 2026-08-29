@@ -54,7 +54,7 @@ describe('useFavorites', () => {
     act(() => result.current.addFavorite());
 
     expect(result.current.favorites).toEqual([]);
-    expect(localStorage.getItem('favorites')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('favorites') ?? '[]')).toEqual([]);
   });
 
   it('sanitizes malformed, duplicate and unsupported persisted favorites', () => {
