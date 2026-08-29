@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { buildAlertCandidate } from '../../domain/alerts/buildAlertCandidate';
@@ -47,6 +47,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   const [permission, setPermission] = useState<NotificationPermission>(() =>
     typeof Notification === 'undefined' ? 'denied' : Notification.permission
   );
+  const sessionSentKeys = useRef(new Set<string>());
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
     [weather, hourly, airQuality]
@@ -66,6 +67,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
       return;
     const day = new Date().toISOString().slice(0, 10);
     const key = `hava81-alert-sent:${day}:${candidate.signature}`;
+    if (sessionSentKeys.current.has(key)) return;
     const sentMarker = readStorage(key);
     if (sentMarker === undefined || sentMarker) return;
     const title = t(candidate.titleKey, candidate.data);
@@ -82,6 +84,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         } else {
           new Notification(title, { body, tag: candidate.signature });
         }
+        sessionSentKeys.current.add(key);
         writeStorage(key, '1');
       } catch {
         // Notifications are optional; failure must never block weather data or suppress a later retry.
