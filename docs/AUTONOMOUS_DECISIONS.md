@@ -249,3 +249,5 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-29 — User-facing astronomical clock times must be rendered in the weather location timezone, not the visitor device timezone. Use the provider timezone offset consistently across primary and secondary surfaces; keep duration calculations on absolute instants.
 - 2026-08-29 — Decision Alert quiet hours are evaluated in the active weather location timezone, not the visitor device timezone. Hava81 serves Turkish provinces; 22:00–07:00 silence must follow the province/provider offset so travelers abroad do not receive locally overnight notifications or lose locally daytime alerts.
+
+- 2026-08-29 — Provider fetch timestamps must be labeled as fetch/update times unless the upstream explicitly supplies a model issuance/run timestamp. Never present Hava81 `fetchedAt` as model-run time; that invents provenance precision the payload does not contain.

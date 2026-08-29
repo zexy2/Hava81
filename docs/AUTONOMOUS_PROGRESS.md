@@ -623,3 +623,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Re-applied the small province metadata correction on current main after the original green PR became non-mergeable due to concurrent main progress.
 - Generated city meta description, Open Graph/Twitter description and structured WebPage description now use capability-level `saatlik ve günlük tahmin` instead of stale provider-cadence wording `3 saatlik tahmin`. Runtime weather, scoring, providers and UI behavior are unchanged.
 - Release gate: regenerate all 81 city pages and require Istanbul metadata to contain the new wording with no stale phrase, then lint, type-check, diff-check and exact-head CI before merge.
+
+
+## 2026-08-29 09:18 TRT — context freshness label no longer implies model issuance time
+
+- Re-applied the context provenance correction on current main after the province metadata merge, preserving the new SEO checkpoint.
+- Open-Meteo context `fetchedAt` is now labeled `veri alındı {{time}}` / `data fetched {{time}}`, accurately describing Hava81 fetch time rather than inventing a model run timestamp. Provider attribution, modeled values, next-24-hour windows and calculations are unchanged.
+- Regression requires the fetched-data wording and rejects the former `model HH:MM` implication.
