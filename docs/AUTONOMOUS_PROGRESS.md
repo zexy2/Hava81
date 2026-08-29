@@ -762,3 +762,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Current-weather payload revival now rejects non-finite temperatures and unit-independent impossible domains before they can reach rendering/scoring: humidity/cloud percentages, positive pressure, non-negative visibility/wind speed, wind direction, global coordinates, provider identity, timezone offset and freshness window.
 - Temperature values are checked only for finiteness here because the BFF client supports metric/imperial/standard units; no Celsius-specific bounds are applied at this transport boundary. Persisted metric cache retains its separate broad Celsius sanity envelope.
 - Focused weather-service coverage is 53/53; frontend type-check, lint and diff-check pass. Full frontend/build/audit gates follow before publication.
+
+## 2026-08-29 20:00 TRT — restore mobile current-location access
+
+- Static mobile-layout audit found the header’s current-location action was hidden below 768px while the bottom navigation exposes only Today, Map and Saved. The geolocation capability therefore had no reachable mobile control despite its tested implementation.
+- Restored the location action in the compact header while continuing to hide the map and compare header controls that already have mobile navigation alternatives.
+- Added a real-browser regression at the 390px mobile project and an additional 320px viewport assertion: the location action stays visible and the header does not horizontally overflow at either width.
+- Target browser test passes; type-check, lint, 81-city production build and diff-check pass. Exact-head CI remains required before merge.
