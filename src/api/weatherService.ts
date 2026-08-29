@@ -148,6 +148,84 @@ const normalizeBffPrecipitationProbability = (value: number, field: string): num
   return normalizePrecipitationProbability(value);
 };
 
+const validateContextSignalsPayload = (
+  data: Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
+): ContextSignals => {
+  const fetchedAt = reviveForecastDate(data.fetchedAt, 'context.fetchedAt');
+  const invalid = (condition: boolean, field: string) => {
+    if (condition) invalidForecastPayload(field);
+  };
+
+  invalid(typeof data.provider !== 'string' || !data.provider.trim(), 'context.provider');
+  invalid(typeof data.attribution !== 'string' || !data.attribution.trim(), 'context.attribution');
+  for (const field of ['uvIndexMax', 'dustMax', 'grassPollenMax', 'olivePollenMax'] as const) {
+    const value = data[field];
+    invalid(value !== undefined && (!isFiniteNumber(value) || value < 0), `context.${field}`);
+  }
+  invalid(
+    data.freshForSeconds !== undefined &&
+      (!isFiniteNumber(data.freshForSeconds) ||
+        data.freshForSeconds <= 0 ||
+        data.freshForSeconds > 86_400),
+    'context.freshForSeconds'
+  );
+  if (data.marine) {
+    reviveForecastDate(data.marine.observedAt, 'context.marine.observedAt');
+    invalid(
+      data.marine.waveHeight !== undefined &&
+        (!isFiniteNumber(data.marine.waveHeight) || data.marine.waveHeight < 0),
+      'context.marine.waveHeight'
+    );
+    invalid(
+      data.marine.waveDirection !== undefined &&
+        (!isFiniteNumber(data.marine.waveDirection) ||
+          data.marine.waveDirection < 0 ||
+          data.marine.waveDirection > 360),
+      'context.marine.waveDirection'
+    );
+    invalid(
+      data.marine.wavePeriod !== undefined &&
+        (!isFiniteNumber(data.marine.wavePeriod) || data.marine.wavePeriod <= 0),
+      'context.marine.wavePeriod'
+    );
+    invalid(
+      data.marine.seaSurfaceTemperature !== undefined &&
+        !isFiniteNumber(data.marine.seaSurfaceTemperature),
+      'context.marine.seaSurfaceTemperature'
+    );
+  }
+
+  return { ...data, fetchedAt };
+};
+
+const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
+  const invalid = (condition: boolean, field: string) => {
+    if (condition) invalidWeatherPayload(field);
+  };
+  invalid(!Number.isInteger(data.aqi) || data.aqi < 1 || data.aqi > 5, 'airQuality.aqi');
+  invalid(typeof data.aqiLabel !== 'string' || !data.aqiLabel.trim(), 'airQuality.aqiLabel');
+  for (const field of ['pm25', 'pm10', 'o3'] as const) {
+    invalid(!isFiniteNumber(data[field]) || data[field] < 0, `airQuality.${field}`);
+  }
+  invalid(
+    typeof data.meta?.provider !== 'string' || !data.meta.provider.trim(),
+    'airQuality.meta.provider'
+  );
+  invalid(
+    data.meta?.freshForSeconds !== undefined &&
+      (!isFiniteNumber(data.meta.freshForSeconds) ||
+        data.meta.freshForSeconds <= 0 ||
+        data.meta.freshForSeconds > 86_400),
+    'airQuality.meta.freshForSeconds'
+  );
+
+  return {
+    ...data,
+    aqiLabel: data.aqiLabel.trim(),
+    meta: reviveMeta(data.meta),
+  };
+};
+
 const cityKey = (value: string) => value.trim().toLocaleLowerCase('tr-TR');
 const takeBootstrapWeather = (
   city: string,
@@ -336,7 +414,7 @@ export const weatherService = {
     const response = await httpClient.get<
       Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
     >(API_ENDPOINTS.weather.context, { lat, lon, marine: marine ? 'true' : 'false' });
-    return { ...response, fetchedAt: new Date(response.fetchedAt) };
+    return validateContextSignalsPayload(response);
   },
 
   getRouteWeather: async (
@@ -364,7 +442,7 @@ export const weatherService = {
       lon,
       lang,
     });
-    return { ...response, meta: reviveMeta(response.meta) };
+    return validateAirQualityPayload(response);
   },
 };
 

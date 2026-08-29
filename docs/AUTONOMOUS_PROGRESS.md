@@ -792,3 +792,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a build-time service-worker stamp: each production build derives a deterministic 12-character namespace from the generated root HTML, manifest, and hashed asset filenames, then replaces a required placeholder in `dist/sw.js`. The build fails closed if the placeholder is missing or survives stamping.
 - Old shell namespaces are still deleted on activation, but forced tab navigation is now limited to the legacy v1/v2 migration. Subsequent build-to-build cache rotation no longer forces already-open tabs to reload.
 - Local gates pass: lint, type-check, full 264-test coverage suite, targeted service-worker tests, 81-city production build, stamped-cache assertion, production dependency audit 0 vulnerabilities, and diff-check.
+
+## 2026-08-29 21:15 TRT — browser context/AQI trust boundary
+
+- After PR #197 reached production-green main `21d8223b18254a41fba02393b4ad068be912f103`, continued the data-truth audit in isolated worktree `/home/ubuntu/hava81-auto-run11-next-2110` on `automation/hava81-run11-next-2110`.
+- The browser BFF boundary now validates modeled-context provenance/timestamps, non-negative UV/dust/pollen values, marine wave domains, AQI scale, non-negative PM2.5/PM10/O₃, provider identity and bounded freshness metadata before these values can reach rendering or decision logic.
+- Invalid context/AQI data fails closed with the existing retryable API-data semantics; no weather or health value is synthesized or corrected into a plausible replacement.
+- Focused weather-service coverage passes 69/69. Combined gates pass: frontend type-check, lint, full frontend tests, 81-city production build, production dependency audit with 0 vulnerabilities, and `git diff --check`.
