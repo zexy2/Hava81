@@ -231,3 +231,5 @@ This log records product and engineering decisions made during the autonomous im
 - A visible explanatory cluster that has its own `aria-label` must expose a grouping semantic rather than attaching an inaccessible name to a generic container. Daily Plan's score explanation uses `role="group"`; no scoring or visual behavior changes.
 
 - 2026-08-29 — Loading duration alone must not be presented as a diagnosis of server wake-up. Slow-state copy may state the observed delay and bounded possible causes, but it must not invent infrastructure state that the frontend has not measured.
+
+- 2026-08-29 — Comparison disclosures must describe the actual score inputs. Because city comparison consumes near-hour forecast signals (and AQI when available), do not label it as a current-conditions-only comparison.

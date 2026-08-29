@@ -115,6 +115,9 @@ describe('ComparePanel', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
+    expect(
+      screen.getByText(/hava koşulları ve yakın tahmine göre/i)
+    ).toBeVisible();
     expect(api.getForecast).toHaveBeenCalledTimes(2);
     expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);

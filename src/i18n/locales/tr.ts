@@ -117,7 +117,7 @@ export const tr = {
       winnerLabel: 'Bu hava kriterlerinde öne çıkan',
       winner: '{{city}} · Hava81 {{score}}/100',
       winnerNote:
-        'Sonuç yalnızca mevcut hava koşullarına göre; şehrin genel kalitesini değerlendirmez.',
+        'Sonuç hava koşulları ve yakın tahmine göre; şehrin genel kalitesini değerlendirmez.',
       temp: 'Sıcaklık',
       rain: 'Yağmur',
       aqi: 'Hava kalitesi',

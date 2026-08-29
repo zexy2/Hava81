@@ -550,3 +550,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The production Oracle API is operated as an always-on service, and a slow request can also come from network or upstream-provider latency; the UI cannot truthfully diagnose a wake-up from elapsed time alone.
 - Renamed the translation contract from `serverWaking` to `slowLoading` and replaced the claim with neutral Turkish/English copy stating only that weather data is taking longer than usual and that connection/provider delay may be involved.
 - No timeout, retry, provider, score, or weather semantics changed. Validation: lint, type-check, App integration 6/6, production build with all 81 city pages, production dependency audit 0 vulnerabilities, and `git diff --check`.
+
+## 2026-08-29 03:21 TRT — comparison winner scope copy matches scoring inputs
+
+- Audited the comparison winner disclosure against `buildDailyPlan` inputs. The UI said the result used “current weather criteria only,” but comparison scores also consume the near hourly forecast and air quality when available.
+- Updated Turkish/English copy to state that the comparison uses weather conditions and the near forecast while preserving the existing warning that it is not a general city ranking.
+- Added regression coverage for the corrected scope wording. No score, forecast, AQI, winner-selection, or provider behavior changed.
+- Validation: ComparePanel 3/3 on this baseline, lint, type-check, and `git diff --check`.

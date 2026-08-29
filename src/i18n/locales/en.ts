@@ -117,7 +117,7 @@ export const en = {
       winnerLabel: 'Leading under these weather criteria',
       winner: '{{city}} · Hava81 {{score}}/100',
       winnerNote:
-        'This result compares current weather criteria only; it is not a general ranking of the cities.',
+        'This result compares weather conditions and the near forecast; it is not a general ranking of the cities.',
       temp: 'Temperature',
       rain: 'Rain',
       aqi: 'Air quality',
