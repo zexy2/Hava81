@@ -167,6 +167,49 @@ describe('useWeather', () => {
     expect(result.current.weather?.description).not.toBe('cache injection');
   });
 
+  it.each([
+    ['temperature', { temperature: 999 }],
+    ['feels-like temperature', { feelsLike: -999 }],
+    ['minimum temperature', { tempMin: -999 }],
+    ['maximum temperature', { tempMax: 999 }],
+  ])('rejects cached weather with impossible finite %s values', async (_label, invalidField) => {
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          visibility: 10000,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'impossible finite cache',
+          icon: '01d',
+          sunrise: '2026-07-14T02:43:00.000Z',
+          sunset: '2026-07-14T17:34:00.000Z',
+          timestamp: '2026-07-14T12:00:00.000Z',
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:00.000Z' },
+          ...invalidField,
+        },
+        timestamp: Date.now(),
+        language: 'tr',
+      })
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+    await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(result.current.weather?.description).not.toBe('impossible finite cache');
+  });
+
   it('rejects implausibly future-dated cache entries so they cannot stay fresh indefinitely', async () => {
     localStorage.setItem(
       'weather_cache',

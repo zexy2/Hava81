@@ -271,3 +271,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Modeled-context provenance must not publish a materially future provider fetch clock time. Reuse the same one-minute clock-skew tolerance as primary weather freshness; when the fetch timestamp is farther ahead, omit the displayed fetch time while retaining provider/license attribution.
 
 - 2026-08-29 — Local Lighthouse quality gates may use an isolated preview port through `HAVA81_LIGHTHOUSE_PORT`, with 4173 retained as the default. Concurrent worktrees must not kill, reuse or mutate another preview listener merely to run performance audits. Invalid/out-of-range overrides fall back to the established default.
+
+- 2026-08-29 — Persisted weather temperatures are untrusted input even when they are finite numbers. Current, feels-like, minimum and maximum Celsius values outside a broad `-100..100°C` sanity envelope invalidate the local cache and fall back to a fresh BFF request; do not render or score physically impossible finite cache values merely because JSON parsing succeeds.

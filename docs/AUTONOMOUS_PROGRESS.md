@@ -723,3 +723,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - This keeps concurrent autonomous worktrees independent and preserves the existing fail-closed occupied-port check. Validation uses an isolated port plus the normal frontend quality gates before publication.
 - Follow-up validation exposed an orphaned Vite preview after a successful Lighthouse audit because terminating the npm wrapper did not reliably terminate its child preview. The runner now spawns Vite directly with Node, so the existing `finally` termination targets the actual preview process and releases the isolated port after every audit.
 - Validation on the isolated branch: Lighthouse on port 4199 scored performance 96 / accessibility 100 / best-practices 100 / SEO 100 and the port was confirmed released after completion; `node --check`, type-check, lint, 223/223 frontend tests, production build, production dependency audit 0 vulnerabilities, and diff-check pass.
+
+## 2026-08-29 18:52 TRT — persisted temperature cache bounds
+
+- Continued the persisted-data boundary audit on current main `52e37c83` in an isolated worktree after merging green route-departure PR #183.
+- The weather-cache deserializer already rejected non-finite temperature values, but finite values such as `999°C` or `-999°C` could still cross the localStorage trust boundary and be rendered/scored until cache expiry.
+- Cached current, feels-like, minimum and maximum temperatures must now remain within a deliberately broad `-100..100°C` sanity envelope; values outside it invalidate only the persisted cache and trigger the normal fresh BFF request. Live provider/API contracts are unchanged.
+- Added table-driven regressions for impossible finite values in all four temperature fields. Host-side `git diff --check` passes; exact-head GitHub CI is the test/build/browser release gate because Node/npm are not available on this SSH execution PATH.
