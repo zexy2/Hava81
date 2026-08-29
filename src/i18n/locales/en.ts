@@ -492,6 +492,7 @@ export const en = {
     locationUnavailable: 'Location unavailable',
     locationTimeout: 'Location request timed out',
     genericError: 'Something went wrong',
+    unexpectedError: 'The app encountered an unexpected error.',
     forecastUnavailable:
       'The near forecast could not update right now. Current conditions are still available.',
   },

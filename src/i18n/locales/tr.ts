@@ -494,6 +494,7 @@ export const tr = {
     locationUnavailable: 'Konum bilgisi alınamadı',
     locationTimeout: 'Konum isteği zaman aşımına uğradı',
     genericError: 'Bir şeyler ters gitti',
+    unexpectedError: 'Uygulama beklenmeyen bir hatayla karşılaştı.',
     forecastUnavailable:
       'Yakın tahmin şu anda güncellenemedi. Mevcut koşullar hâlâ kullanılabilir.',
   },
