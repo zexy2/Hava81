@@ -301,3 +301,5 @@ This log records product and engineering decisions made during the autonomous im
 - Keep the high-resolution hourly success contract and three-hour fallback contract as separate browser assertions so a provider failure cannot masquerade as an empty forecast surface.
 
 - 2026-08-30 — User-facing activity thresholds and sensitivity offsets must follow the selected temperature unit. Convert absolute comfort thresholds with the normal temperature conversion, but convert sensitivity shifts as deltas (difference of converted endpoints), never as absolute temperatures; otherwise a 3°C shift would incorrectly become 37°F.
+
+- 2026-08-30 — Explanatory activity comfort ranges must come from the scoring domain's constants rather than duplicating numeric thresholds in UI code. If scoring thresholds change, presentation should follow the same source of truth automatically.

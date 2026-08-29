@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
-import { buildActivityPlan } from '../../domain/activity/buildActivityPlan';
+import {
+  ACTIVITY_COMFORT_RANGES_C,
+  buildActivityPlan,
+} from '../../domain/activity/buildActivityPlan';
 import type { ActivityKind } from '../../domain/activity/types';
 import type { DecisionReasonCode } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
@@ -16,12 +19,6 @@ interface Props {
 }
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
-const comfortRangeCelsius: Partial<Record<ActivityKind, readonly [number, number]>> = {
-  walk: [12, 26],
-  run: [10, 22],
-  picnic: [16, 27],
-  children: [14, 25],
-};
 const reasonKey: Record<DecisionReasonCode, string> = {
   'extreme-heat': 'extremeHeat',
   heat: 'heat',
@@ -87,7 +84,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
   const sensitivityShift = Math.round(Math.abs(convertTemperature(3) - convertTemperature(0)));
 
   const formatComfortCriteria = (activity: ActivityKind) => {
-    const range = comfortRangeCelsius[activity];
+    const range = ACTIVITY_COMFORT_RANGES_C[activity];
     if (!range) return t(`hava81.activities.criteria.${activity}`);
     const [minimum, maximum] = range;
     return t(`hava81.activities.criteria.${activity}`, {
