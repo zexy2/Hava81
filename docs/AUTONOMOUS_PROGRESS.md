@@ -623,3 +623,17 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Re-applied the small province metadata correction on current main after the original green PR became non-mergeable due to concurrent main progress.
 - Generated city meta description, Open Graph/Twitter description and structured WebPage description now use capability-level `saatlik ve günlük tahmin` instead of stale provider-cadence wording `3 saatlik tahmin`. Runtime weather, scoring, providers and UI behavior are unchanged.
 - Release gate: regenerate all 81 city pages and require Istanbul metadata to contain the new wording with no stale phrase, then lint, type-check, diff-check and exact-head CI before merge.
+
+
+## 2026-08-29 09:29 TRT — failed local persistence no longer advances hidden hook state
+
+- Audited `useLocalStorage` write failures and found the functional-update ref advanced before `localStorage.setItem`. If persistence threw, visible state stayed old while the next functional setter calculated from an uncommitted hidden value.
+- Serialize and persist first; only after successful storage write does the hook advance its ref and React state. The serialized payload is reused for the synthetic storage event, avoiding a second serializer call.
+- Added a regression that forces a SecurityError on a write, verifies visible state stays at 1, restores storage, then requires `previous => previous + 1` to produce 2 rather than the ghost value 6.
+
+
+## 2026-08-29 09:34 TRT — rebuildable merged-worktree cache cleanup
+
+- Observer showed root disk at 90.6% used while feature/CI work remained healthy. Inspected the largest Hava81 worktree `node_modules` directories and verified candidate HEADs were ancestors of current `origin/main` before deleting anything.
+- Removed only rebuildable `node_modules` caches from five already-merged Hava81 worktrees, including the merged run-7 SEO branch. Running containers, Docker images/volumes, active unmerged worktrees and production/rollback topology were untouched.
+- Root filesystem improved from 90.6% used (~4.5 GB free) to 87% used (~6.2 GB free), restoring observer headroom without deleting user data or release artifacts.

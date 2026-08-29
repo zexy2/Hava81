@@ -249,3 +249,5 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-29 — User-facing astronomical clock times must be rendered in the weather location timezone, not the visitor device timezone. Use the provider timezone offset consistently across primary and secondary surfaces; keep duration calculations on absolute instants.
 - 2026-08-29 — Decision Alert quiet hours are evaluated in the active weather location timezone, not the visitor device timezone. Hava81 serves Turkish provinces; 22:00–07:00 silence must follow the province/provider offset so travelers abroad do not receive locally overnight notifications or lose locally daytime alerts.
+
+- 2026-08-29 — `useLocalStorage` functional-update refs represent committed local preference state, not attempted writes. Compute and serialize optimistically, but do not advance the ref or React state until persistence succeeds; a failed write must not poison the base of the next functional update.
