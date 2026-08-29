@@ -69,7 +69,8 @@ const activityAdjustment = ({
   visibility,
   sensitivity,
 }: ActivityAdjustmentInput) => {
-  let delta = 0;
+  let penalty = 0;
+  let benefit = 0;
   const reasons: DecisionReasonCode[] = [];
   const rain = rainExposure(pop, precipitationMm);
   const { effective: effectiveWind, exposure: windRisk } = windExposure(wind, gust);
@@ -80,34 +81,34 @@ const activityAdjustment = ({
   const coldShift = sensitivity === 'cold' ? 3 : sensitivity === 'heat' ? -2 : 0;
 
   const addHeat = (start: number, end: number, maxPenalty: number) => {
-    const penalty = maxPenalty * smoothstep(temperature, start + heatShift, end + heatShift);
-    delta -= penalty;
-    if (penalty >= 8) reasons.push(temperature >= end + heatShift - 1 ? 'extreme-heat' : 'heat');
+    const penaltyValue = maxPenalty * smoothstep(temperature, start + heatShift, end + heatShift);
+    penalty += penaltyValue;
+    if (penaltyValue >= 8) reasons.push(temperature >= end + heatShift - 1 ? 'extreme-heat' : 'heat');
   };
   const addCold = (start: number, end: number, maxPenalty: number) => {
-    const penalty = maxPenalty * smoothstep(start + coldShift - temperature, 0, start - end);
-    delta -= penalty;
-    if (penalty >= 7) reasons.push(temperature <= end + 1 ? 'freezing' : 'cold');
+    const penaltyValue = maxPenalty * smoothstep(start + coldShift - temperature, 0, start - end);
+    penalty += penaltyValue;
+    if (penaltyValue >= 7) reasons.push(temperature <= end + 1 ? 'freezing' : 'cold');
   };
   const addRain = (maxPenalty: number) => {
-    const penalty = maxPenalty * rain;
-    delta -= penalty;
-    if (penalty >= 7) reasons.push((precipitationMm ?? 0) >= 2.5 || pop >= 0.6 ? 'heavy-rain' : 'rain-risk');
+    const penaltyValue = maxPenalty * rain;
+    penalty += penaltyValue;
+    if (penaltyValue >= 7) reasons.push((precipitationMm ?? 0) >= 2.5 || pop >= 0.6 ? 'heavy-rain' : 'rain-risk');
   };
   const addWind = (maxPenalty: number) => {
-    const penalty = maxPenalty * windRisk;
-    delta -= penalty;
-    if (penalty >= 7) reasons.push(effectiveWind >= 13 ? 'strong-wind' : 'windy');
+    const penaltyValue = maxPenalty * windRisk;
+    penalty += penaltyValue;
+    if (penaltyValue >= 7) reasons.push(effectiveWind >= 13 ? 'strong-wind' : 'windy');
   };
   const addAir = (maxPenalty: number) => {
-    const penalty = maxPenalty * air;
-    delta -= penalty;
-    if (penalty >= 7) reasons.push((aqi ?? 0) >= 4 ? 'poor-air-quality' : 'sensitive-air-quality');
+    const penaltyValue = maxPenalty * air;
+    penalty += penaltyValue;
+    if (penaltyValue >= 7) reasons.push((aqi ?? 0) >= 4 ? 'poor-air-quality' : 'sensitive-air-quality');
   };
   const addUv = (maxPenalty: number) => {
-    const penalty = maxPenalty * uv;
-    delta -= penalty;
-    if (penalty >= 6) reasons.push('high-uv');
+    const penaltyValue = maxPenalty * uv;
+    penalty += penaltyValue;
+    if (penaltyValue >= 6) reasons.push('high-uv');
   };
 
   switch (activity) {
@@ -119,7 +120,7 @@ const activityAdjustment = ({
       addAir(20);
       addUv(8);
       if (temperature >= 10 && temperature <= 22 && rain < 0.12 && effectiveWind < 7 && air < 0.2) {
-        delta += 6;
+        benefit += 6;
       }
       break;
     case 'walk':
@@ -129,7 +130,7 @@ const activityAdjustment = ({
       addWind(8);
       addAir(10);
       addUv(5);
-      if (temperature >= 12 && temperature <= 26 && rain < 0.18 && effectiveWind < 8) delta += 4;
+      if (temperature >= 12 && temperature <= 26 && rain < 0.18 && effectiveWind < 8) benefit += 4;
       break;
     case 'picnic':
       addHeat(28, 39, 14);
@@ -138,7 +139,7 @@ const activityAdjustment = ({
       addWind(22);
       addAir(8);
       addUv(9);
-      if (temperature >= 16 && temperature <= 27 && rain < 0.08 && effectiveWind < 7) delta += 7;
+      if (temperature >= 16 && temperature <= 27 && rain < 0.08 && effectiveWind < 7) benefit += 7;
       break;
     case 'children':
       addHeat(26, 37, 24);
@@ -147,7 +148,7 @@ const activityAdjustment = ({
       addWind(13);
       addAir(24);
       addUv(13);
-      if (temperature >= 14 && temperature <= 25 && rain < 0.12 && air < 0.15) delta += 5;
+      if (temperature >= 14 && temperature <= 25 && rain < 0.12 && air < 0.15) benefit += 5;
       break;
     case 'motorcycle':
       addHeat(34, 43, 8);
@@ -155,29 +156,29 @@ const activityAdjustment = ({
       addRain(34);
       addWind(34);
       if (visibilityRisk > 0) {
-        const penalty = 22 * visibilityRisk;
-        delta -= penalty;
-        if (penalty >= 7) reasons.push('low-visibility');
+        const penaltyValue = 22 * visibilityRisk;
+        penalty += penaltyValue;
+        if (penaltyValue >= 7) reasons.push('low-visibility');
       }
       break;
     case 'laundry': {
       addRain(42);
       const humidityPenalty = 18 * smoothstep(humidity, 65, 90);
-      delta -= humidityPenalty;
+      penalty += humidityPenalty;
       if (effectiveWind >= 14) {
         const strongWindPenalty = 14 * smoothstep(effectiveWind, 14, 25);
-        delta -= strongWindPenalty;
+        penalty += strongWindPenalty;
         if (strongWindPenalty >= 6) reasons.push('strong-wind');
       } else if (effectiveWind >= 2 && effectiveWind <= 9) {
-        delta += 8;
+        benefit += 8;
       }
-      if (temperature >= 18 && temperature <= 32) delta += 8;
+      if (temperature >= 18 && temperature <= 32) benefit += 8;
       addCold(5, -5, 10);
       break;
     }
   }
 
-  return { delta, reasons: [...new Set(reasons)] };
+  return { penalty, benefit, reasons: [...new Set(reasons)] };
 };
 
 export interface BuildActivityPlanInput {
@@ -297,7 +298,13 @@ export const buildActivityPlan = ({
       visibility: point.visibility,
       sensitivity,
     });
-    const score = clamp(base.score + adj.delta);
+    // Activity comfort can only refund generic penalties that the activity genuinely benefits from.
+    // It must never erase unrelated AQI, UV, precipitation, visibility or severe-weather risk.
+    const reclaimablePenalty = base.impacts
+      .filter(impact => impact.factor === 'thermal' || (activity === 'laundry' && impact.factor === 'wind'))
+      .reduce((sum, impact) => sum + impact.penalty, 0);
+    const reclaimed = Math.min(adj.benefit, reclaimablePenalty);
+    const score = clamp(base.score - adj.penalty + reclaimed);
     return {
       ...base,
       activity,

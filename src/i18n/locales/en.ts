@@ -129,8 +129,8 @@ export const en = {
       eyebrow: 'Hava81 decision engine',
       title: 'Day plan',
       bands: {
-        excellent: 'Excellent',
-        good: 'Good',
+        excellent: 'Very suitable',
+        good: 'Suitable',
         caution: 'Caution',
         difficult: 'Difficult',
       },
@@ -161,7 +161,7 @@ export const en = {
         title: 'What is moving this score?',
         stable: 'No material weather risk is pulling the score down.',
         method:
-          'The score time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap.',
+          'This score summarizes general outdoor suitability, time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap.',
       },
       confidence: {
         high: 'Rich hourly data',

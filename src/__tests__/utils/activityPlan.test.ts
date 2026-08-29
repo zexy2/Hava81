@@ -167,4 +167,34 @@ describe('activity plans', () => {
     expect(filtered.bestWindow).toBeUndefined();
   });
 
+  it('does not let ideal activity comfort erase unrelated air-quality risk', () => {
+    const points = hourly([20, 20, 20]);
+    const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40 };
+    const walk = buildActivityPlan({ activity: 'walk', weather, hourly: points, airQuality: air });
+    const run = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: air });
+
+    expect(walk.baselineScore).toBeLessThan(100);
+    expect(walk.score).toBe(walk.baselineScore);
+    expect(run.score).toBe(run.baselineScore);
+  });
+
+  it('lets a running-friendly cool temperature refund only the generic thermal penalty', () => {
+    const points = hourly([12, 12, 12]);
+    const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40 };
+    const run = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: air });
+
+    expect(run.activityImpact).toBeGreaterThan(0);
+    expect(run.score).toBeGreaterThan(run.baselineScore);
+    expect(run.score).toBeLessThanOrEqual(98);
+  });
+
+  it('lets laundry reclaim thermal and useful-wind friction without erasing poor air quality', () => {
+    const points = hourly([30, 30, 30], [0, 0, 0], [6, 6, 6]);
+    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
+    const laundry = buildActivityPlan({ activity: 'laundry', weather, hourly: points, airQuality: air });
+
+    expect(laundry.activityImpact).toBeGreaterThan(0);
+    expect(laundry.score).toBeLessThanOrEqual(78);
+  });
+
 });
