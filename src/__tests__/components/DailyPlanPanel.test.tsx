@@ -9,7 +9,6 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'tr' } }),
 }));
 
-
 const weather: NormalizedWeatherData = {
   cityName: 'İzmir',
   country: 'TR',
@@ -58,6 +57,11 @@ describe('DailyPlanPanel sharing', () => {
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);
 
     expect(screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /hava81\.dailyPlan\.bands\.(excellent|good|caution|difficult) · (97–100|75–96|55–74|0–54)/
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows the same 12-hour horizon that the score evaluates without repeating band copy in every slot', () => {
