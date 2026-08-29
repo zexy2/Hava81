@@ -19,7 +19,9 @@ STATE_FILE = STATE_DIR / 'state.json'
 HISTORY_FILE = LOG_DIR / 'history.jsonl'
 EVENTS_FILE = LOG_DIR / 'events.jsonl'
 NGINX_SITE = Path('/etc/nginx/sites-enabled/api.hava81.zekiakgul.dev')
-EXPECTED_API_PORT = 4002
+CURRENT_API_PORT_FILE = Path('/var/lib/hava81/current-api-port')
+DEFAULT_API_PORT = 4002
+ALLOWED_API_PORTS = {4000, 4001, 4002}
 REPO = 'zexy2/Hava81'
 MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MAXIMUM_ROOT_USED_PERCENT = 92.0
@@ -85,14 +87,27 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
         }
 
 
-def nginx_target() -> dict[str, Any]:
+def expected_api_port() -> int:
     try:
+        raw = CURRENT_API_PORT_FILE.read_text(encoding='utf-8').strip()
+    except FileNotFoundError:
+        return DEFAULT_API_PORT
+    port = int(raw)
+    if port not in ALLOWED_API_PORTS:
+        raise ValueError(f'unsupported API port: {port}')
+    return port
+
+
+def nginx_target() -> dict[str, Any]:
+    expected: int | None = None
+    try:
+        expected = expected_api_port()
         text = NGINX_SITE.read_text(encoding='utf-8')
         match = re.search(r'proxy_pass\s+http://127\.0\.0\.1:(\d+)\s*;', text)
         port = int(match.group(1)) if match else None
-        return {'port': port, 'expected': EXPECTED_API_PORT, 'ok': port == EXPECTED_API_PORT, 'error': None}
+        return {'port': port, 'expected': expected, 'ok': port == expected, 'error': None}
     except Exception as exc:
-        return {'port': None, 'expected': EXPECTED_API_PORT, 'ok': False, 'error': f'{type(exc).__name__}: {exc}'}
+        return {'port': None, 'expected': expected, 'ok': False, 'error': f'{type(exc).__name__}: {exc}'}
 
 
 def slim_http(result: dict[str, Any]) -> dict[str, Any]:

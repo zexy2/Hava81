@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -66,6 +67,68 @@ class ObserverFreshnessTests(unittest.TestCase):
         self.assertFalse(production['checks']['api_ready_fresh'])
         self.assertTrue(production['checks']['api_ready_no_store'])
         self.assertIn('api_ready_fresh', production['issues'])
+
+
+class ObserverNginxTargetTests(unittest.TestCase):
+    def test_follows_validated_blue_green_state_port(self) -> None:
+        original_site = observer.NGINX_SITE
+        original_port_file = observer.CURRENT_API_PORT_FILE
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            site = root / 'api.conf'
+            port_file = root / 'current-api-port'
+            site.write_text('proxy_pass http://127.0.0.1:4001;\n', encoding='utf-8')
+            port_file.write_text('4001\n', encoding='utf-8')
+            try:
+                observer.NGINX_SITE = site
+                observer.CURRENT_API_PORT_FILE = port_file
+                target = observer.nginx_target()
+            finally:
+                observer.NGINX_SITE = original_site
+                observer.CURRENT_API_PORT_FILE = original_port_file
+
+        self.assertEqual(target['port'], 4001)
+        self.assertEqual(target['expected'], 4001)
+        self.assertTrue(target['ok'])
+        self.assertIsNone(target['error'])
+
+    def test_falls_back_to_legacy_port_when_state_file_is_absent(self) -> None:
+        original_site = observer.NGINX_SITE
+        original_port_file = observer.CURRENT_API_PORT_FILE
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            site = root / 'api.conf'
+            site.write_text('proxy_pass http://127.0.0.1:4002;\n', encoding='utf-8')
+            try:
+                observer.NGINX_SITE = site
+                observer.CURRENT_API_PORT_FILE = root / 'missing-current-api-port'
+                target = observer.nginx_target()
+            finally:
+                observer.NGINX_SITE = original_site
+                observer.CURRENT_API_PORT_FILE = original_port_file
+
+        self.assertEqual(target['expected'], observer.DEFAULT_API_PORT)
+        self.assertTrue(target['ok'])
+
+    def test_rejects_invalid_state_port_instead_of_masking_it(self) -> None:
+        original_site = observer.NGINX_SITE
+        original_port_file = observer.CURRENT_API_PORT_FILE
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            site = root / 'api.conf'
+            port_file = root / 'current-api-port'
+            site.write_text('proxy_pass http://127.0.0.1:4001;\n', encoding='utf-8')
+            port_file.write_text('4999\n', encoding='utf-8')
+            try:
+                observer.NGINX_SITE = site
+                observer.CURRENT_API_PORT_FILE = port_file
+                target = observer.nginx_target()
+            finally:
+                observer.NGINX_SITE = original_site
+                observer.CURRENT_API_PORT_FILE = original_port_file
+
+        self.assertFalse(target['ok'])
+        self.assertIn('unsupported API port', target['error'])
 
 
 class ObserverHostDiskTests(unittest.TestCase):
