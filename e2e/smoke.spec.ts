@@ -146,14 +146,14 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page).toHaveURL(/\/istanbul\/$/);
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })
-  ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
+  const hourlyHeading = page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i });
+  await expect(hourlyHeading).toBeVisible();
+  const hourlySection = hourlyHeading.locator('..');
+  await expect(hourlySection.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
     'href',
     'https://open-meteo.com/'
   );
-  await expect(page.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+  await expect(hourlySection.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
     'href',
     'https://creativecommons.org/licenses/by/4.0/'
   );

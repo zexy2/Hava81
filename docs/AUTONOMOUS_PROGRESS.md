@@ -607,3 +607,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited Decision Alerts after earlier timezone fixes and found quiet hours still used the visitor device clock. A user abroad could therefore receive a Hava81 alert during 22:00–07:00 in the active Turkish province, or have a daytime alert suppressed by their own local night.
 - Quiet-hour evaluation now shifts the current instant by `weather.meta.timezoneOffsetSeconds` and reads the resulting location hour in UTC, matching the established provider-location time contract without changing alert thresholds, candidates, permission behavior or delivery transport.
 - Added a deterministic regression proving `19:30Z` is treated as `22:30` for İstanbul (+03:00) and suppresses delivery.
+
+
+## 2026-08-29 07:46 TRT — localized static bootstrap cache identity rebuilt on current main
+
+- Rebuilt the stale PR #125 behavior on current main `ec20a287` instead of mutating its outdated non-mergeable branch.
+- Static city pages now compare a fresh cached provider city label through the same ASCII/slug identity used by generated province routes, so an English cache such as `Istanbul` matches the canonical `/istanbul/` page for `İstanbul` and suppresses the otherwise duplicate pre-app current-weather request.
+- Added a desktop production-page browser regression that persists English settings plus a fresh `Istanbul` cache and requires zero `/weather/current` bootstrap requests while the city view still renders.
+- Targeted validation passed: production build with all 81 generated city pages, the new desktop Playwright regression, lint, type-check, and `git diff --check`.
+- The first combined browser run exposed an unrelated nondeterministic existing smoke selector: two independently attributed Open-Meteo surfaces can both be present by the time the assertion runs, making a page-global provider-link lookup ambiguous. Scoped the assertion to the hourly forecast section rather than weakening attribution coverage; the previously failing tablet case now passes. Complete frontend/API suites, audits and build had already passed; full browser coverage is rerun before publication.
