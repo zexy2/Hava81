@@ -53,7 +53,7 @@
   },
   "scripts": {
     "start": "vite --host 0.0.0.0",
-    "build": "vite build && node scripts/generate-city-pages.mjs && cp dist/index.html dist/404.html",
+    "build": "vite build && node scripts/stamp-service-worker.mjs && node scripts/generate-city-pages.mjs && cp dist/index.html dist/404.html",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "test": "vitest run",
