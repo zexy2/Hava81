@@ -81,9 +81,9 @@ export const tr = {
         rainWithAmount:
           '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} yağış bekleniyor.',
         rainAmount: '{{time}} civarında saatlik yaklaşık {{amount}} yağış bekleniyor; şemsiye iyi fikir.',
-        wind: 'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
-        heat: 'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
-        cold: 'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',
+        wind: 'Rüzgâr veya hamleler {{speed}} seviyesine çıkabilir; açık alanda dikkat.',
+        heat: 'Hissedilen sıcaklık {{temperature}} seviyesine çıkabilir; gölge ve su planla.',
+        cold: 'Hissedilen sıcaklık {{temperature}} seviyesine inebilir; soğuk stresine karşı dikkat.',
         airQuality: 'Hava kalitesi zayıf (AQI {{aqi}}/5); uzun süreli dış aktiviteyi azalt.',
         uv: 'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
         outdoor: '{{time}} civarı dışarıda olmak için daha sakin bir pencere görünüyor.',
