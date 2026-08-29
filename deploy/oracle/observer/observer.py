@@ -356,7 +356,18 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
             for pr in prs
         ],
         'main': github.get('latest_main_run'),
-        'api_deployment': github.get('api_deployment'),
+        'api_deployment': {
+            key: (github.get('api_deployment') or {}).get(key)
+            for key in (
+                'main_revision',
+                'main_tree',
+                'deployed_revision',
+                'deployed_tree',
+                'known',
+                'pending',
+                'error',
+            )
+        },
     }
 
 
