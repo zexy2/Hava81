@@ -47,10 +47,34 @@ describe('WeatherDecisionField daily range', () => {
         />
       </SettingsProvider>
     );
-    expect(screen.getByText("Bugünün yüksek / düşük")).toBeInTheDocument();
+    expect(screen.getByText('Bugünün yüksek / düşük')).toBeInTheDocument();
     expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
+  it('uses one decimal only when whole-degree rounding would hide a real daily range', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[]}
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00Z'),
+              tempMin: 25.6,
+              tempMax: 26.4,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('26,4°C / 25,6°C')).toBeInTheDocument();
+    expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
+  });
+
   it('does not expose the whole decision surface as a live region', () => {
     const { container } = render(
       <SettingsProvider>
@@ -62,5 +86,4 @@ describe('WeatherDecisionField daily range', () => {
     expect(section).toHaveAttribute('aria-labelledby');
     expect(section).not.toHaveAttribute('aria-live');
   });
-
 });
