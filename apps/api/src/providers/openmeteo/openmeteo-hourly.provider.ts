@@ -74,10 +74,19 @@ const iconForCode = (code: number, isDay: boolean): string => {
   return `03${suffix}`;
 };
 
-const finiteAt = (series: Array<number | null> | undefined, index: number): number | undefined => {
+const finiteInRangeAt = (
+  series: Array<number | null> | undefined,
+  index: number,
+  min: number,
+  max = Number.POSITIVE_INFINITY,
+): number | undefined => {
   const value = series?.[index];
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max
+    ? value
+    : undefined;
 };
+
+const isPlausibleCelsius = (value: number): boolean => value >= -100 && value <= 100;
 
 export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
   readonly name = "Open-Meteo";
@@ -167,6 +176,13 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         if (temp === null || pop === null || code === null || windSpeed === null || isDay === null) {
           continue;
         }
+        if (!isPlausibleCelsius(temp) || pop < 0 || pop > 100 || windSpeed < 0) {
+          throw new AppError(
+            502,
+            "INVALID_HOURLY_PROVIDER_RESPONSE",
+            "Saatlik tahmin sağlayıcısı fiziksel olarak geçersiz bir cevap döndürdü.",
+          );
+        }
         hourly.push({
           time: new Date(raw.time[index] * 1_000).toISOString(),
           temp: Math.round(temp * 10) / 10,
@@ -174,12 +190,12 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           description: descriptionForCode(code, query.lang),
           pop: Math.max(0, Math.min(100, Math.round(pop))),
           windSpeed,
-          apparentTemperature: finiteAt(raw.apparent_temperature, index),
-          humidity: finiteAt(raw.relative_humidity_2m, index),
-          precipitationMm: finiteAt(raw.precipitation, index),
-          windGust: finiteAt(raw.wind_gusts_10m, index),
-          uvIndex: finiteAt(raw.uv_index, index),
-          visibility: finiteAt(raw.visibility, index),
+          apparentTemperature: finiteInRangeAt(raw.apparent_temperature, index, -100, 100),
+          humidity: finiteInRangeAt(raw.relative_humidity_2m, index, 0, 100),
+          precipitationMm: finiteInRangeAt(raw.precipitation, index, 0),
+          windGust: finiteInRangeAt(raw.wind_gusts_10m, index, 0),
+          uvIndex: finiteInRangeAt(raw.uv_index, index, 0),
+          visibility: finiteInRangeAt(raw.visibility, index, 0),
           weatherCode: code,
         });
       }
@@ -214,6 +230,15 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           const code = dailyRaw.weather_code[index];
           const pop = dailyRaw.precipitation_probability_max[index];
           if (tempMax === null || tempMin === null || code === null || pop === null) continue;
+          if (
+            !isPlausibleCelsius(tempMin) ||
+            !isPlausibleCelsius(tempMax) ||
+            tempMin > tempMax ||
+            pop < 0 ||
+            pop > 100
+          ) {
+            continue;
+          }
           const localDate = new Date(
             (dailyRaw.time[index] + parsed.data.utc_offset_seconds) * 1_000,
           )
