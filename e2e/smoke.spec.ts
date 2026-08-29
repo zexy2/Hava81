@@ -438,6 +438,12 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
   );
 
   let forecastChunkRequests = 0;
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator.serviceWorker, 'register', {
+      configurable: true,
+      value: () => Promise.reject(new Error('service worker disabled for cold-cache recovery test')),
+    });
+  });
   await page.route('**/sw.js', route => route.abort());
   await page.route('**/assets/ForecastAtlas-*.js', async route => {
     forecastChunkRequests += 1;
@@ -470,6 +476,10 @@ test('chunk recovery URL guard prevents reload loops without sessionStorage', as
       get() {
         throw new DOMException('Storage blocked', 'SecurityError');
       },
+    });
+    Object.defineProperty(navigator.serviceWorker, 'register', {
+      configurable: true,
+      value: () => Promise.reject(new Error('service worker disabled for cold-cache recovery test')),
     });
   });
 

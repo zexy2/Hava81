@@ -1,7 +1,6 @@
 const CACHE_NAME = 'hava81-shell-__HAVA81_BUILD_ID__';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const APP_SHELL = ['/', '/manifest.json'];
-const CORE_SCRIPT_PATTERN = /\/assets\/(index-|rolldown-runtime-|jsx-runtime-|cities-|useLocalStorage-|SettingsContext-)/;
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -59,8 +58,7 @@ self.addEventListener('fetch', event => {
 
   const cacheableStaticAsset =
     url.pathname.startsWith('/assets/') &&
-    (['style', 'font', 'image'].includes(request.destination) ||
-      (request.destination === 'script' && CORE_SCRIPT_PATTERN.test(url.pathname)));
+    ['script', 'style', 'font', 'image'].includes(request.destination);
   if (!cacheableStaticAsset) return;
 
   event.respondWith(
