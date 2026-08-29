@@ -389,6 +389,39 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
   await expect(page.locator('.app-fatal')).toHaveCount(0);
 });
 
+test('chunk recovery URL guard prevents reload loops without sessionStorage', async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'desktop-1280',
+    'single browser coverage for storage-restricted deploy recovery'
+  );
+
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('Storage blocked', 'SecurityError');
+      },
+    });
+  });
+
+  await page.route('**/sw.js', route => route.abort());
+  await page.route('**/assets/ForecastAtlas-*.js', route =>
+    route.fulfill({ status: 404, contentType: 'text/javascript', body: '' })
+  );
+
+  const mainFrameUrls: string[] = [];
+  page.on('framenavigated', frame => {
+    if (frame === page.mainFrame()) mainFrameUrls.push(frame.url());
+  });
+
+  await page.goto('/istanbul/');
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  await page.waitForTimeout(2_000);
+
+  expect(mainFrameUrls.filter(url => url.includes('__hava81_chunk_reload=')).length).toBe(1);
+  await expect(page).toHaveURL(/\/istanbul\/$/);
+});
+
 test('English mode updates document language and decision copy', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser language coverage');
 

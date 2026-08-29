@@ -12,6 +12,7 @@ const CHUNK_RECOVERY_STORAGE_KEY = 'hava81:chunk-recovery-at';
 const CHUNK_RECOVERY_WINDOW_MS = 60_000;
 
 const bootUrl = new URL(window.location.href);
+const bootRecoveryAttempt = Number(bootUrl.searchParams.get(CHUNK_RECOVERY_PARAM) ?? 0);
 if (bootUrl.searchParams.has(CHUNK_RECOVERY_PARAM)) {
   bootUrl.searchParams.delete(CHUNK_RECOVERY_PARAM);
   window.history.replaceState(window.history.state, '', bootUrl);
@@ -19,7 +20,7 @@ if (bootUrl.searchParams.has(CHUNK_RECOVERY_PARAM)) {
 
 window.addEventListener('vite:preloadError', event => {
   const now = Date.now();
-  let previousAttempt = 0;
+  let previousAttempt = Number.isFinite(bootRecoveryAttempt) ? bootRecoveryAttempt : 0;
   try {
     previousAttempt = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_STORAGE_KEY) ?? 0);
   } catch {
