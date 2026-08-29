@@ -347,10 +347,16 @@
 
   .hava81-forecast-atlas__day {
     grid-template-areas: 'day symbol description precipitation temperatures';
-    grid-template-columns: 104px 32px minmax(0, 1fr) 80px 96px;
-    gap: 16px;
+    grid-template-columns: 88px 28px minmax(0, 1fr) 64px 78px;
+    gap: 12px;
     min-height: 52px;
     padding: 12px 0;
+  }
+
+  .hava81-forecast-atlas__description {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .hava81-forecast-atlas__day-pop {

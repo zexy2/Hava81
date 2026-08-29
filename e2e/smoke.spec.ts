@@ -568,6 +568,49 @@ test('lazy forecast atlas renders hourly and daily guidance after city data load
   await expect(page.getByRole('region', { name: /Kaydırılabilir saatlik tahmin/i })).toBeVisible();
 });
 
+test('desktop daily forecast keeps full condition labels readable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop daily forecast layout assertion');
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.route('**/api/v1/weather/forecast**', route =>
+    route.fulfill({
+      json: {
+        ...forecast,
+        daily: [
+          {
+            date: fixtureLocalDate(),
+            tempMin: 20,
+            tempMax: 28,
+            icon: '02d',
+            description: 'parçalı bulutlu',
+            pop: 10,
+          },
+          {
+            date: fixtureLocalDate(1),
+            tempMin: 17,
+            tempMax: 23,
+            icon: '11d',
+            description: 'gök gürültülü fırtına',
+            pop: 73,
+            precipitationMm: 11.6,
+          },
+        ],
+      },
+    })
+  );
+
+  await page.goto('/istanbul');
+  const conditions = page.locator('.hava81-forecast-atlas__description');
+  await expect(conditions).toHaveCount(2);
+  await expect(conditions.getByText('gök gürültülü fırtına')).toBeVisible();
+  expect(
+    await conditions.evaluateAll(elements =>
+      elements
+        .filter(element => element.scrollWidth > element.clientWidth + 1)
+        .map(element => element.textContent?.trim())
+    )
+  ).toEqual([]);
+});
+
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile viewport assertion');
   await page.goto('/istanbul');
