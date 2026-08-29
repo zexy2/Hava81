@@ -80,7 +80,8 @@ export const tr = {
         rain: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
         rainWithAmount:
           '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} yağış bekleniyor.',
-        rainAmount: '{{time}} civarında saatlik yaklaşık {{amount}} yağış bekleniyor; şemsiye iyi fikir.',
+        rainAmount:
+          '{{time}} civarında saatlik yaklaşık {{amount}} yağış bekleniyor; şemsiye iyi fikir.',
         wind: 'Rüzgâr veya hamleler {{speed}} seviyesine çıkabilir; açık alanda dikkat.',
         heat: 'Hissedilen sıcaklık {{temperature}} seviyesine çıkabilir; gölge ve su planla.',
         cold: 'Hissedilen sıcaklık {{temperature}} seviyesine inebilir; soğuk stresine karşı dikkat.',
@@ -302,10 +303,12 @@ export const tr = {
         wind: 'Rüzgâr {{value}} {{unit}}',
       },
       criteria: {
-        walk: 'Yürüyüşte 12–26°C, düşük yağış ve sakin rüzgâr avantajlı.',
-        run: 'Koşuda 10–22°C, düşük yağış, sakin rüzgâr ve iyi hava kalitesi avantajlı.',
-        picnic: 'Piknikte kuru hava, 16–27°C ve sakin rüzgâr daha yüksek puan alır.',
-        children: 'Çocukla dışarıda 14–25°C, iyi hava kalitesi ve düşük UV daha önemlidir.',
+        walk: 'Yürüyüşte {{minimum}}–{{maximum}}{{unit}}, düşük yağış ve sakin rüzgâr avantajlı.',
+        run: 'Koşuda {{minimum}}–{{maximum}}{{unit}}, düşük yağış, sakin rüzgâr ve iyi hava kalitesi avantajlı.',
+        picnic:
+          'Piknikte kuru hava, {{minimum}}–{{maximum}}{{unit}} ve sakin rüzgâr daha yüksek puan alır.',
+        children:
+          'Çocukla dışarıda {{minimum}}–{{maximum}}{{unit}}, iyi hava kalitesi ve düşük UV daha önemlidir.',
         motorcycle: 'Motosiklette yağış, kuvvetli rüzgâr ve düşük görüş daha ağır cezalandırılır.',
         laundry: 'Çamaşırda yağışsız, daha kuru ve hafif rüzgârlı saatler avantajlıdır.',
       },
@@ -320,8 +323,8 @@ export const tr = {
         heat: 'Sıcağa hassasım',
         help: {
           balanced: 'Standart konfor aralıkları kullanılır.',
-          cold: 'Soğuk uyarıları yaklaşık 3°C daha erken başlar.',
-          heat: 'Sıcak uyarıları yaklaşık 3°C daha erken başlar.',
+          cold: 'Soğuk uyarıları yaklaşık {{value}}{{unit}} daha erken başlar.',
+          heat: 'Sıcak uyarıları yaklaşık {{value}}{{unit}} daha erken başlar.',
         },
       },
     },

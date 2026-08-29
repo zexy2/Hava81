@@ -16,6 +16,12 @@ interface Props {
 }
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
+const comfortRangeCelsius: Partial<Record<ActivityKind, readonly [number, number]>> = {
+  walk: [12, 26],
+  run: [10, 22],
+  picnic: [16, 27],
+  children: [14, 25],
+};
 const reasonKey: Record<DecisionReasonCode, string> = {
   'extreme-heat': 'extremeHeat',
   heat: 'heat',
@@ -77,6 +83,19 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
         })
       : '—';
   const hasWindow = Boolean(profile.activityStart && profile.activityEnd);
+  const temperatureSymbol = getTemperatureSymbol();
+  const sensitivityShift = Math.round(Math.abs(convertTemperature(3) - convertTemperature(0)));
+
+  const formatComfortCriteria = (activity: ActivityKind) => {
+    const range = comfortRangeCelsius[activity];
+    if (!range) return t(`hava81.activities.criteria.${activity}`);
+    const [minimum, maximum] = range;
+    return t(`hava81.activities.criteria.${activity}`, {
+      minimum: Math.round(convertTemperature(minimum)),
+      maximum: Math.round(convertTemperature(maximum)),
+      unit: temperatureSymbol,
+    });
+  };
 
   return (
     <section className="activity-planner" aria-labelledby="activity-planner-title">
@@ -98,7 +117,12 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
             <option value="balanced">{t('hava81.activities.sensitivity.balanced')}</option>
             <option value="heat">{t('hava81.activities.sensitivity.heat')}</option>
           </select>
-          <small>{t(`hava81.activities.sensitivity.help.${profile.temperatureSensitivity}`)}</small>
+          <small>
+            {t(`hava81.activities.sensitivity.help.${profile.temperatureSensitivity}`, {
+              value: sensitivityShift,
+              unit: temperatureSymbol,
+            })}
+          </small>
         </label>
       </header>
 
@@ -166,7 +190,10 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
               const best = plan.bestWindow;
               const bestRange = plan.bestWindowRange;
               const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
-              const precipitationAmount = formatPrecipitationAmount(best?.precipitationMm, i18n.language);
+              const precipitationAmount = formatPrecipitationAmount(
+                best?.precipitationMm,
+                i18n.language
+              );
               const rainText = precipitationAmount
                 ? precipitation > 0
                   ? t('hava81.activities.conditions.rainWithAmount', {
@@ -231,7 +258,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                     })}
                   </small>
                   <small className="activity-card__criteria">
-                    {t(`hava81.activities.criteria.${plan.activity}`)}
+                    {formatComfortCriteria(plan.activity)}
                   </small>
                   {plan.reasons[0] ? (
                     <small className="activity-card__risk">
