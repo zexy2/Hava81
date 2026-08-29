@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../context';
 import type { ContextSignals } from '../../types';
 import './ContextSignalsPanel.css';
 
@@ -25,6 +26,7 @@ const uvLevel = (uv?: number): Level | undefined =>
 
 export function ContextSignalsPanel({ signals }: Props) {
   const { t, i18n } = useTranslation();
+  const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const fetchedAtMs = signals.fetchedAt.getTime();
   const fetchedTime =
     Number.isNaN(fetchedAtMs) || fetchedAtMs - Date.now() > FUTURE_FETCH_TOLERANCE_MS
@@ -40,6 +42,13 @@ export function ContextSignalsPanel({ signals }: Props) {
     signals.marine &&
     (signals.marine.waveHeight !== undefined || signals.marine.seaSurfaceTemperature !== undefined)
   );
+  const seaSurfaceTemperature = signals.marine?.seaSurfaceTemperature;
+  const formattedSeaSurfaceTemperature =
+    seaSurfaceTemperature === undefined
+      ? '—'
+      : settings.temperatureUnit === 'imperial'
+        ? `${Math.round(convertTemperature(seaSurfaceTemperature))}${getTemperatureSymbol()}`
+        : `${seaSurfaceTemperature.toFixed(1)}${getTemperatureSymbol()}`;
 
   return (
     <section className="context-signals" aria-labelledby="context-signals-title">
@@ -101,9 +110,7 @@ export function ContextSignalsPanel({ signals }: Props) {
           <article className="context-signal context-signal--marine">
             <span>{t('hava81.context.sea')}</span>
             <strong>
-              {signals.marine?.seaSurfaceTemperature !== undefined
-                ? `${signals.marine.seaSurfaceTemperature.toFixed(1)}${signals.units.seaSurfaceTemperature ?? '°C'}`
-                : '—'}
+              {formattedSeaSurfaceTemperature}
             </strong>
             <p>
               {signals.marine?.waveHeight !== undefined
