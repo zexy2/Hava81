@@ -1,21 +1,38 @@
-const CACHE_NAME = 'hava81-shell-v1';
+const CACHE_NAME = 'hava81-shell-v2';
 const APP_SHELL = ['/', '/manifest.json'];
 const CORE_SCRIPT_PATTERN = /\/assets\/(index-|rolldown-runtime-|jsx-runtime-|cities-|useLocalStorage-|SettingsContext-)/;
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const path of APP_SHELL) {
+        const response = await fetch(path, { cache: 'no-store' });
+        if (response.ok) await cache.put(path, response.clone());
+      }
+    })
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    Promise.all([
-      caches.keys().then(keys =>
-        Promise.all(keys.filter(key => key.startsWith('hava81-') && key !== CACHE_NAME).map(key => caches.delete(key)))
-      ),
-      self.clients.claim(),
-    ])
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    const oldShellKeys = keys.filter(key => key.startsWith('hava81-') && key !== CACHE_NAME);
+    const upgradingExistingShell = oldShellKeys.length > 0;
+    await Promise.all(oldShellKeys.map(key => caches.delete(key)));
+    await self.clients.claim();
+
+    // One-time migration from older shell workers: reload open Hava81 tabs so they stop rendering
+    // HTML that the browser may still consider fresh for several minutes after a Pages deploy.
+    if (upgradingExistingShell) {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      await Promise.all(
+        windows.map(client =>
+          'navigate' in client ? client.navigate(client.url).catch(() => undefined) : undefined
+        )
+      );
+    }
+  })());
 });
 
 self.addEventListener('fetch', event => {
@@ -26,7 +43,7 @@ self.addEventListener('fetch', event => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then(async response => {
           if (response.ok) {
             const cache = await caches.open(CACHE_NAME);
