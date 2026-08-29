@@ -46,6 +46,7 @@ export function useLocalStorage<T>(
     value => {
       try {
         const newValue = value instanceof Function ? value(storedValueRef.current) : value;
+        if (Object.is(newValue, storedValueRef.current)) return;
         const serializedValue = serializer(newValue);
         window.localStorage.setItem(key, serializedValue);
         storedValueRef.current = newValue;

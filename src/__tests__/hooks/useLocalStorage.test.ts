@@ -50,6 +50,19 @@ describe('useLocalStorage synchronization', () => {
     expect(localStorage.getItem('counter-pref')).toBe('2');
   });
 
+  it('does not persist or broadcast a referentially unchanged functional update', () => {
+    const initial = { enabled: true };
+    const { result } = renderHook(() => useLocalStorage('stable-pref', initial));
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    const dispatchEvent = vi.spyOn(window, 'dispatchEvent');
+
+    act(() => result.current[1](current => current));
+
+    expect(result.current[0]).toBe(initial);
+    expect(setItem).not.toHaveBeenCalled();
+    expect(dispatchEvent).not.toHaveBeenCalled();
+  });
+
   it('treats a native cross-tab removal event as a reset', () => {
     localStorage.setItem('remote-pref', JSON.stringify('dark'));
     const { result } = renderHook(() => useLocalStorage('remote-pref', 'auto'));
