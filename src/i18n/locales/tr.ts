@@ -234,6 +234,8 @@ export const tr = {
       },
       change: {
         'rain-increase': 'Dönüşte yağmur riski çıkışa göre yaklaşık {{value}} puan artıyor.',
+        'rain-amount-increase':
+          'Dönüşte saatlik yağış miktarı çıkışa göre yaklaşık {{value}} mm artıyor.',
         'strong-wind': 'Çıkış veya dönüş penceresinde kuvvetli rüzgâr görünüyor.',
         'wind-caution': 'Çıkış veya dönüş penceresinde rüzgârı hesaba katmak iyi olur.',
         'temperature-drop': 'Dönüşte yaklaşık {{value}}° daha serin olacak.',

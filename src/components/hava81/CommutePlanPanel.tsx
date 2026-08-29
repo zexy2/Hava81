@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
-import {
-  buildCommutePlan,
-  type CommuteAdviceCode,
-} from '../../domain/commute/buildCommutePlan';
+import { buildCommutePlan, type CommuteAdviceCode } from '../../domain/commute/buildCommutePlan';
 import { useSettings } from '../../context/SettingsContext';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
@@ -23,6 +20,11 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
   const { profile, setCommuteTime, clearCommuteTimes } = useDecisionProfile();
   const trackedPlanRef = useRef<string | null>(null);
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds ?? 0;
+  const precipitationFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [i18n.language]
+  );
   const plan = useMemo(
     () =>
       buildCommutePlan({
@@ -65,6 +67,24 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
       minute: '2-digit',
       timeZone: 'UTC',
     });
+  const formatPrecipitation = (probability: number, amount?: number) => {
+    const probabilityPercent = Math.round(probability * 100);
+    const parts: string[] = [];
+    if (probabilityPercent > 0) {
+      parts.push(
+        i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`
+      );
+    }
+    if (Number.isFinite(amount) && (amount ?? 0) > 0) {
+      const value = amount as number;
+      parts.push(
+        value < 0.1
+          ? `<${precipitationFormatter.format(0.1)} mm`
+          : `${precipitationFormatter.format(value)} mm`
+      );
+    }
+    return parts.length ? parts.join(' · ') : t('hava81.commute.noRain');
+  };
 
   const changeText = plan
     ? t(`hava81.commute.change.${plan.change}`, {
@@ -140,54 +160,66 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
                 {plan.advice
                   .filter(code => code !== plan.primaryAdvice)
                   .slice(0, 3)
-                  .map(code => <li key={code}>{adviceText(code)}</li>)}
+                  .map(code => (
+                    <li key={code}>{adviceText(code)}</li>
+                  ))}
               </ul>
             ) : null}
             <p>{changeText}</p>
           </div>
 
-          <div className="commute-plan__windows" role="list" aria-label={t('hava81.commute.windowsLabel')}>
-            {[
-              ['outbound', plan.outbound] as const,
-              ['return', plan.return] as const,
-            ].map(([kind, window]) => (
-              <article className={`commute-window commute-window--${window.band}`} role="listitem" key={kind}>
-                <header>
-                  <span>{t(`hava81.commute.${kind}`)}</span>
-                  <strong>{window.targetClock}</strong>
-                </header>
-                <p>
-                  {t('hava81.commute.forecastUsed', { time: formatLocalWindowTime(window.forecastTime) })}
-                </p>
-                <dl>
-                  <div>
-                    <dt>{t('hava81.commute.feelsLike')}</dt>
-                    <dd>
-                      {Math.round(convertTemperature(window.apparentTemperature))}
-                      {getTemperatureSymbol()}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>{t('hava81.commute.rain')}</dt>
-                    <dd>
-                      {window.precipitationProbability === 0
-                        ? t('hava81.commute.noRain')
-                        : `%${Math.round(window.precipitationProbability * 100)}`}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>{t('hava81.commute.wind')}</dt>
-                    <dd>
-                      {convertWindSpeed(window.windSpeed)} {getWindSpeedSymbol()}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Hava81</dt>
-                    <dd>{window.score}/100</dd>
-                  </div>
-                </dl>
-              </article>
-            ))}
+          <div
+            className="commute-plan__windows"
+            role="list"
+            aria-label={t('hava81.commute.windowsLabel')}
+          >
+            {[['outbound', plan.outbound] as const, ['return', plan.return] as const].map(
+              ([kind, window]) => (
+                <article
+                  className={`commute-window commute-window--${window.band}`}
+                  role="listitem"
+                  key={kind}
+                >
+                  <header>
+                    <span>{t(`hava81.commute.${kind}`)}</span>
+                    <strong>{window.targetClock}</strong>
+                  </header>
+                  <p>
+                    {t('hava81.commute.forecastUsed', {
+                      time: formatLocalWindowTime(window.forecastTime),
+                    })}
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>{t('hava81.commute.feelsLike')}</dt>
+                      <dd>
+                        {Math.round(convertTemperature(window.apparentTemperature))}
+                        {getTemperatureSymbol()}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{t('hava81.commute.rain')}</dt>
+                      <dd>
+                        {formatPrecipitation(
+                          window.precipitationProbability,
+                          window.precipitationMm
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{t('hava81.commute.wind')}</dt>
+                      <dd>
+                        {convertWindSpeed(window.windSpeed)} {getWindSpeedSymbol()}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Hava81</dt>
+                      <dd>{window.score}/100</dd>
+                    </div>
+                  </dl>
+                </article>
+              )
+            )}
           </div>
         </>
       ) : (

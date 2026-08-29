@@ -37,6 +37,76 @@ describe('buildCommutePlan', () => {
     expect(plan?.changeValue).toBe(55);
   });
 
+  it('uses measurable precipitation amount for umbrella advice and return-change detection', () => {
+    const hourly: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        apparentTemperature: 22,
+        pop: 0,
+        precipitationMm: 0,
+        windSpeed: 3,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        apparentTemperature: 22,
+        pop: 0,
+        precipitationMm: 0.4,
+        windSpeed: 3,
+        icon: '10d',
+      },
+    ];
+
+    const plan = buildCommutePlan({
+      hourly,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+    });
+
+    expect(plan?.outbound.precipitationMm).toBe(0);
+    expect(plan?.return.precipitationMm).toBe(0.4);
+    expect(plan?.umbrella).toBe('consider');
+    expect(plan?.primaryAdvice).toBe('umbrella-consider');
+    expect(plan?.change).toBe('rain-amount-increase');
+    expect(plan?.changeValue).toBe(0.4);
+  });
+
+  it('treats at least 1 mm in a commute window as take-an-umbrella rain even at low probability', () => {
+    const hourly: HourlyForecast[] = [
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        pop: 0.05,
+        precipitationMm: 1.2,
+        windSpeed: 3,
+        icon: '10d',
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        pop: 0.05,
+        precipitationMm: 1.2,
+        windSpeed: 3,
+        icon: '10d',
+      },
+    ];
+
+    const plan = buildCommutePlan({
+      hourly,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+    });
+
+    expect(plan?.umbrella).toBe('take');
+    expect(plan?.primaryAdvice).toBe('umbrella-take');
+  });
+
   it('returns null until both times are configured', () => {
     expect(
       buildCommutePlan({
@@ -49,10 +119,7 @@ describe('buildCommutePlan', () => {
 
   it('does not pretend a distant forecast point represents the saved routine time', () => {
     const plan = buildCommutePlan({
-      hourly: [
-        point('2026-08-29T03:00:00Z', 21, 0.05),
-        point('2026-08-29T18:00:00Z', 17, 0.1),
-      ],
+      hourly: [point('2026-08-29T03:00:00Z', 21, 0.05), point('2026-08-29T18:00:00Z', 17, 0.1)],
       commuteStart: '12:00',
       commuteEnd: '15:00',
       timezoneOffsetSeconds: 3 * 60 * 60,
@@ -156,5 +223,4 @@ describe('buildCommutePlan', () => {
     expect(poorAir!.outbound.score).toBeLessThan(goodAir!.outbound.score);
     expect(poorAir!.return.score).toBeLessThan(goodAir!.return.score);
   });
-
 });
