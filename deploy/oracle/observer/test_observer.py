@@ -131,6 +131,67 @@ class ObserverNginxTargetTests(unittest.TestCase):
         self.assertIn('unsupported API port', target['error'])
 
 
+class ObserverApiDeploymentTests(unittest.TestCase):
+    def _collect(self, *, deployed_tree: str | None, github_tree: str | None):  # noqa: ANN201
+        original_http_get = observer.http_get
+        original_tree_file = observer.DEPLOYED_API_TREE_FILE
+        original_revision_file = observer.DEPLOYED_API_REVISION_FILE
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tree_file = root / 'current-api-tree'
+            revision_file = root / 'current-api-revision'
+            if deployed_tree is not None:
+                tree_file.write_text(f'{deployed_tree}\n', encoding='utf-8')
+            revision_file.write_text('deployed-revision\n', encoding='utf-8')
+
+            def fake_http_get(_url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+                contents = []
+                if github_tree is not None:
+                    contents.append({
+                        'name': 'api',
+                        'path': 'apps/api',
+                        'type': 'dir',
+                        'sha': github_tree,
+                    })
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'elapsed_ms': 1,
+                    'headers': {},
+                    'json': contents,
+                    'error': None,
+                }
+
+            try:
+                observer.http_get = fake_http_get
+                observer.DEPLOYED_API_TREE_FILE = tree_file
+                observer.DEPLOYED_API_REVISION_FILE = revision_file
+                return observer.collect_api_deployment({'head_sha': 'main-revision'})
+            finally:
+                observer.http_get = original_http_get
+                observer.DEPLOYED_API_TREE_FILE = original_tree_file
+                observer.DEPLOYED_API_REVISION_FILE = original_revision_file
+
+    def test_reports_matching_api_tree_as_current(self) -> None:
+        deployment = self._collect(deployed_tree='same-tree', github_tree='same-tree')
+        self.assertTrue(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertEqual(deployment['main_tree'], 'same-tree')
+        self.assertEqual(deployment['deployed_revision'], 'deployed-revision')
+
+    def test_reports_api_tree_drift_without_marking_unknown(self) -> None:
+        deployment = self._collect(deployed_tree='old-tree', github_tree='new-tree')
+        self.assertTrue(deployment['known'])
+        self.assertTrue(deployment['pending'])
+        self.assertEqual(deployment['deployed_tree'], 'old-tree')
+        self.assertEqual(deployment['main_tree'], 'new-tree')
+
+    def test_reports_missing_deploy_marker_as_unknown_not_pending(self) -> None:
+        deployment = self._collect(deployed_tree=None, github_tree='main-tree')
+        self.assertFalse(deployment['known'])
+        self.assertFalse(deployment['pending'])
+
+
 class ObserverHostDiskTests(unittest.TestCase):
     class _Statvfs:
         f_frsize = 4096
