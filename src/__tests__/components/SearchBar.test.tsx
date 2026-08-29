@@ -121,6 +121,29 @@ describe('SearchBar', () => {
     }
   });
 
+  it('clears the active descendant when a completed blur closes suggestions', () => {
+    vi.useFakeTimers();
+    try {
+      render(<SearchBar {...defaultProps} value="İz" />);
+
+      const input = screen.getByRole('combobox');
+      fireEvent.focus(input);
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(input).toHaveAttribute('aria-activedescendant', 'suggestion-0');
+
+      fireEvent.blur(input);
+      act(() => vi.advanceTimersByTime(200));
+
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+      expect(input).not.toHaveAttribute('aria-activedescendant');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('should expose the input through its forwarded ref', () => {
     const inputRef = React.createRef<HTMLInputElement>();
     render(<SearchBar {...defaultProps} ref={inputRef} />);
