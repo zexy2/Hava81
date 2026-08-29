@@ -445,6 +445,27 @@ test('OpenWeather forecast still rejects implausible humidity beyond the numeric
   );
 });
 
+test('OpenWeather adapter rejects negative pollutant concentrations', async () => {
+  const pollutants = ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3'] as const;
+
+  for (const pollutant of pollutants) {
+    const payload = structuredClone(airQualityFixture);
+    payload.list[0].components[pollutant] = -0.1;
+    const fakeFetch = (async () =>
+      new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })) as typeof fetch;
+    const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+    await assert.rejects(
+      () => provider.getAirQuality({ lat: 38.42, lon: 27.14 }),
+      (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+      `expected negative ${pollutant} concentration to be rejected`,
+    );
+  }
+});
+
 test('OpenWeather current accepts responses without optional visibility', async () => {
   const payload = structuredClone(currentFixture);
   delete payload.visibility;

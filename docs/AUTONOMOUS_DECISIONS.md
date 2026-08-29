@@ -286,3 +286,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Do not hide a capability on mobile unless an equivalent mobile control exists. Keep “use my location” reachable in the compact header because the bottom nav has no geolocation action; validate both visibility and no horizontal overflow at 390px and 320px.
 
 - 2026-08-29 — Modeled environmental context must fail closed on impossible physical domains without inventing replacements. Filter negative UV/dust/pollen rows out of rolling maxima; if no valid rows remain, omit the signal. Marine wave height must be non-negative, wave period positive and direction 0–360°, while sea-surface temperature is not sign-bounded. Invalid optional marine context degrades to air-only data.
+
+- 2026-08-29 — OpenWeather pollutant concentration fields are physical concentration measurements and must be non-negative. Reject an upstream air-quality payload containing a negative CO/NO/NO₂/O₃/SO₂/PM2.5/PM10/NH₃ value instead of displaying or scoring an impossible concentration; absence is safer than fabricated correction.
