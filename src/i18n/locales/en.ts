@@ -109,6 +109,7 @@ export const en = {
       noHourlyPrecipitation: 'No precipitation is expected at {{time}}.',
       noDailyPrecipitation: 'No precipitation is expected for {{day}}.',
       dailyRange: 'High {{high}}{{unit}}, low {{low}}{{unit}}',
+      dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },
     compare: {
       action: 'Compare',

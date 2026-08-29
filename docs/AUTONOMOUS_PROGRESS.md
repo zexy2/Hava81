@@ -799,3 +799,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The browser BFF boundary now validates modeled-context provenance/timestamps, non-negative UV/dust/pollen values, marine wave domains, AQI scale, non-negative PM2.5/PM10/O₃, provider identity and bounded freshness metadata before these values can reach rendering or decision logic.
 - Invalid context/AQI data fails closed with the existing retryable API-data semantics; no weather or health value is synthesized or corrected into a plausible replacement.
 - Focused weather-service coverage passes 69/69. Combined gates pass: frontend type-check, lint, full frontend tests, 81-city production build, production dependency audit with 0 vulnerabilities, and `git diff --check`.
+
+## 2026-08-29 21:30 TRT — equal daily high/low presentation
+
+- Daily forecast cards no longer render duplicated values such as `24° / 24°` when high and low round to the same displayed temperature; they show a single temperature with a dedicated accessible label.
+- Distinct rounded extrema still keep the familiar high/low pair. Turkish and English labels were added explicitly rather than inferring meaning from punctuation.
+- Rebuilt this bounded change onto current main after the original PR became conflict-stale; focused and combined gates are rerun on the rebuilt exact head before merge.
