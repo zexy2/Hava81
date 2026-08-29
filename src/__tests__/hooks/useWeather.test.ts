@@ -194,6 +194,41 @@ describe('useWeather', () => {
     expect(Array.isArray(result.current.recentSearches)).toBe(true);
   });
 
+  it('sanitizes persisted recent searches before exposing or updating them', async () => {
+    localStorage.setItem(
+      'recent_weather_searches',
+      JSON.stringify([
+        { city: ' İstanbul ', timestamp: 10 },
+        { city: 'Istanbul', timestamp: 9 },
+        { city: '', timestamp: 8 },
+        { city: 'Ankara', timestamp: 'bad' },
+        null,
+        { city: 'İzmir', timestamp: 7, unexpected: 'ignored' },
+      ])
+    );
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.recentSearches).toEqual([
+      { city: 'İstanbul', timestamp: 10 },
+      { city: 'İzmir', timestamp: 7 },
+    ]);
+
+    await act(async () => {
+      await result.current.fetchWeather('İzmir');
+    });
+
+    expect(result.current.recentSearches[0].city).toBe('İzmir');
+  });
+
+  it('falls back to an empty recent-search list when persisted JSON has the wrong shape', () => {
+    localStorage.setItem('recent_weather_searches', JSON.stringify({ city: 'İstanbul' }));
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.recentSearches).toEqual([]);
+  });
+
   it('deduplicates recent searches across localized provider city labels', async () => {
     (weatherService.getCurrentWeather as Mock)
       .mockResolvedValueOnce({
