@@ -106,6 +106,29 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.getByText(/saatlik yaklaşık 0,8 mm yağış bekleniyor/i)).toBeInTheDocument();
   });
 
+  it('does not show a contradictory 0% chance when measurable rain amount triggers the decision', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 24,
+              pop: 0,
+              precipitationMm: 0.8,
+              windSpeed: 3,
+              icon: '10d',
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/saatlik yaklaşık 0,8 mm yağış bekleniyor; şemsiye iyi fikir/i)).toBeInTheDocument();
+    expect(screen.queryByText(/yağış olasılığı %0/i)).not.toBeInTheDocument();
+  });
+
   it('does not claim 0,0 mm when rain probability is high but modeled amount is zero', () => {
     render(
       <SettingsProvider>
