@@ -37,4 +37,33 @@ describe('useFavorites', () => {
     act(() => result.current.removeFavorite('Istanbul'));
     expect(result.current.favorites).toEqual([]);
   });
+
+  it('sanitizes malformed, duplicate and unsupported persisted favorites', () => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'Istanbul', lat: 0, lon: 0, temp: 21.4, icon: '01d', injected: '<script>' },
+        { name: 'İstanbul', lat: 99, lon: 28.97, temp: 99, icon: '01d' },
+        { name: 'Ankara', lat: 0, lon: 0, temp: 'hot', icon: '99d' },
+        { name: 'London', lat: 51.5, lon: -0.1, temp: 12, icon: '04d' },
+        { name: 123, lat: 1, lon: 2 },
+        null,
+      ])
+    );
+
+    const { result } = renderHook(() => useFavorites(null));
+
+    expect(result.current.favorites).toEqual([
+      { name: 'İstanbul', lat: 41.01, lon: 28.97, temp: 21.4, icon: '01d' },
+      { name: 'Ankara', lat: 39.93, lon: 32.86 },
+    ]);
+  });
+
+  it('degrades a wrong-shape persisted favorites payload to an empty list', () => {
+    localStorage.setItem('favorites', JSON.stringify({ name: 'İstanbul' }));
+
+    const { result } = renderHook(() => useFavorites(null));
+
+    expect(result.current.favorites).toEqual([]);
+  });
 });
