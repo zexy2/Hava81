@@ -744,3 +744,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited browser-side current-weather revival while those pipelines run. Invalid serialized sunrise, sunset, observation timestamp or provider `fetchedAt` previously became `Invalid Date` objects and could reach UI/decision/persistence code even though forecast revival now fails closed.
 - Current-weather revival now rejects those malformed BFF timestamps with the same retryable API-data failure semantics used at other browser trust boundaries. Focused weather-service coverage is 38/38; type-check, lint, complete frontend suite 249/249, 81-city production build, production dependency audit (0 vulnerabilities), and diff-check pass.
 - Current worktree/branch: `/home/ubuntu/hava81-auto-run11-persisted-cache-clock-1925`, `automation/hava81-run11-current-dates-1925`, based on main `56c9b175...`. Next action is to re-verify #474 production health, rebase/rebuild #189 onto that green main, complete API canary validation, and in parallel publish this bounded current-date guard through exact-head CI.
+
+- Added adapter regressions across eight invalid domains. API 27/27 tests, API type-check/build, production dependency audit (0 vulnerabilities), and `git diff --check` pass. Exact-head CI plus blue-green canary validation remain required before any production API promotion.
+
+## 2026-08-29 19:47 TRT — API traffic-switch rollback hardening
+
+- Rebased the isolated traffic-switch worktree onto production-green main `611624fc32ba0aa348e66c99e2b78ad28037de3e` without touching the unrelated primary worktree.
+- `switch-api-traffic.sh` now requires the requested local slot to pass repeated bounded readiness checks before nginx is mutated. Nginx validation/reload failures restore the exact pre-switch configuration, and repeated public-readiness failure after reload automatically restores and reloads the previous target.
+- State markers are still updated only after public readiness succeeds, so a failed switch cannot falsely record the target as active.
+- Live topology was inspected without switching traffic: port 4002 ready, port 4001 ready, public readiness ready, and nginx remains on 4002. `bash -n` and `git diff --check` pass. Exact-head CI remains the publication gate.

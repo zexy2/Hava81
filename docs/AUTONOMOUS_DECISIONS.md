@@ -276,3 +276,6 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Upstream weather schemas should reject finite values that violate unit-independent physical/protocol domains rather than normalizing them into plausible-looking guidance. Bound coordinates, humidity/cloud percentages, wind direction, non-negative wind/visibility, positive pressure and timezone offsets at the OpenWeather adapter boundary; do not add temperature bounds there because that adapter also supports metric, imperial and standard units.
 
 - 2026-08-29 — Browser-side current-weather date revival is a data-trust boundary just like forecast revival. Reject invalid sunrise, sunset, observation and metadata fetch timestamps with a retryable API-data error rather than allowing `Invalid Date` to enter rendering, decisions or persistence.
+
+
+- 2026-08-29 — API traffic switching is fail-closed: preflight the requested slot with repeated bounded readiness checks before changing nginx; if nginx validation/reload or repeated public readiness fails, restore the exact saved configuration. Do not update current/previous slot markers until the public endpoint is healthy on the new target.

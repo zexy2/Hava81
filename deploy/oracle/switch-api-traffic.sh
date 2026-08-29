@@ -14,6 +14,34 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$BACKUP_DIR/api.hava81.zekiakgul.dev.${STAMP}.conf"
 cp "$CFG" "$BACKUP"
 
+READY_URL="http://127.0.0.1:${TARGET_PORT}/api/v1/health/ready"
+PUBLIC_READY_URL="https://api.hava81.zekiakgul.dev/api/v1/health/ready"
+
+wait_for_ready() {
+  local url="$1"
+  local output="$2"
+  local attempt
+  for attempt in 1 2 3; do
+    if curl -fsS --max-time 5 "$url" >"$output"; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+restore_previous_config() {
+  echo "restoring previous nginx API configuration from $BACKUP" >&2
+  cp "$BACKUP" "$CFG"
+  nginx -t
+  systemctl reload nginx
+}
+
+if ! wait_for_ready "$READY_URL" /tmp/hava81-target-ready.json; then
+  echo "target API on 127.0.0.1:${TARGET_PORT} failed readiness checks; traffic unchanged" >&2
+  exit 1
+fi
+
 python3 - "$CFG" "$TARGET_PORT" <<'PY'
 from pathlib import Path
 import re, sys
@@ -27,15 +55,22 @@ path.write_text(new)
 PY
 
 if ! nginx -t; then
-  cp "$BACKUP" "$CFG"
-  nginx -t
+  restore_previous_config
   echo "nginx validation failed; configuration restored" >&2
   exit 1
 fi
 
-systemctl reload nginx
+if ! systemctl reload nginx; then
+  restore_previous_config || true
+  echo "nginx reload failed; previous configuration restored" >&2
+  exit 1
+fi
 sleep 1
-curl -fsS "https://api.hava81.zekiakgul.dev/api/v1/health/ready" >/tmp/hava81-public-ready.json
+if ! wait_for_ready "$PUBLIC_READY_URL" /tmp/hava81-public-ready.json; then
+  restore_previous_config
+  echo "public readiness failed; traffic rolled back to the previous API target" >&2
+  exit 1
+fi
 cat /tmp/hava81-public-ready.json
 echo
 mkdir -p /var/lib/hava81
