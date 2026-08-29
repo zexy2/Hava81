@@ -14,12 +14,15 @@ export interface DecisionProfile {
 
 export interface ActivityWindowScore extends ScoredWeatherWindow {
   activity: ActivityKind;
+  baselineScore: number;
   activityReasons: DecisionReasonCode[];
 }
 
 export interface ActivityPlan {
   activity: ActivityKind;
   score: number;
+  baselineScore: number;
+  activityImpact: number;
   windowApplied?: { start: string; end: string };
   windowUnavailable?: boolean;
   band: Hava81ScoreBand;

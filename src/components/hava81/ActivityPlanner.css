@@ -201,6 +201,10 @@
   color: var(--color-atlas-muted);
   font-size: 0.76rem;
 }
+.activity-card__impact {
+  font-weight: 650;
+  color: var(--color-atlas-ink);
+}
 .activity-card__criteria {
   padding-top: 0.55rem;
   border-top: 1px solid var(--color-atlas-line);

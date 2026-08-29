@@ -253,3 +253,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Decision Alerts treat browser storage as an optional capability. Storage exceptions must never escape into the weather experience; if the sent-marker store cannot be read, alert delivery fails closed to avoid duplicate spam, and an opt-in is not considered enabled until its preference is successfully persisted.
 
 - 2026-08-29 — Do not make the entire primary weather/decision surface a live region. Its freshness label updates on a timer, so broad `aria-live` would create repetitive screen-reader announcements unrelated to a new weather decision. Reserve live/status semantics for bounded user-triggered or asynchronously completed results.
+
+- 2026-08-29 — Activity score explainability should expose the measurable effect of activity-specific criteria, not only generic prose. Preserve the weather-only baseline per slot, aggregate baseline and final values with the same time/downside weighting, and show the signed `final - baseline` impact; never imply that the delta is a provider observation or official safety score.

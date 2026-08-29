@@ -636,3 +636,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the primary WeatherDecisionField live-region semantics and found the entire decision/current-conditions surface was `aria-live="polite"` even though its freshness label updates every minute.
 - Removed the broad live-region contract so a minute-by-minute freshness tick cannot cause the whole weather/decision surface to be re-announced. Existing bounded interaction-result status regions (commute, route, share feedback) remain unchanged.
 - Added a focused regression requiring the primary decision section to retain its heading relationship without becoming a live region. Focused test 2/2, type-check, lint and `git diff --check` pass; full gates run before publication.
+
+## 2026-08-29 10:46 TRT — per-activity score impact transparency
+
+- Audited the Activity Planner after its general “Skorlar neden farklı?” explanation and found the remaining trust gap: each card still exposed only the final score, so users could not see how much that activity's own criteria changed the same underlying weather suitability.
+- Preserved the existing weather score and activity thresholds, but now retain the weather-only baseline for each evaluated slot and aggregate it with the exact same cadence/downside weighting as the final activity score. Each plan exposes `baselineScore` and the exact bounded `activityImpact = final - baseline`.
+- Activity cards now show the activity-criteria impact as a signed point value in Turkish/English, directly explaining why walking, running, picnic, motorcycle, children and laundry can differ for the same hours. No provider data, thresholds, safety language or recommendation bands changed.
+- Focused domain/component coverage 9/9, type-check and `git diff --check` pass. Full release gates remain required before publication.

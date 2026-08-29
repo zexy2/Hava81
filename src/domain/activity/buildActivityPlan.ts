@@ -300,6 +300,7 @@ export const buildActivityPlan = ({
     return {
       ...base,
       activity,
+      baselineScore: base.score,
       score,
       band: getScoreBand(score),
       activityReasons: adj.reasons,
@@ -332,7 +333,13 @@ export const buildActivityPlan = ({
     (best, slot) => (!best || slot.score > best.score ? slot : best),
     undefined
   );
-  const score = weightedActivityScore(evaluatedSlots, windowApplied ? 24 : HORIZON_HOURS);
+  const scoringHorizon = windowApplied ? 24 : HORIZON_HOURS;
+  const score = weightedActivityScore(evaluatedSlots, scoringHorizon);
+  const baselineScore = weightedActivityScore(
+    evaluatedSlots.map(slot => ({ ...slot, score: slot.baselineScore })),
+    scoringHorizon
+  );
+  const activityImpact = score - baselineScore;
   const reasonCounts = new Map<DecisionReasonCode, number>();
   evaluatedSlots.forEach(slot =>
     slot.reasons.forEach(reason => reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1))
@@ -345,6 +352,8 @@ export const buildActivityPlan = ({
   return {
     activity,
     score,
+    baselineScore,
+    activityImpact,
     band: getScoreBand(score),
     bestWindow,
     slots,
