@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { weatherService } from '../../api/weatherService';
 import { TURKISH_CITIES } from '../../constants/cities';
 import type { RouteWeatherResult } from '../../types';
+import { citySlug } from '../../utils/cityRoute';
 import {
   formatTurkeyTime,
   parseTurkeyLocalInputValue,
@@ -14,10 +15,17 @@ import './RouteWeatherPanel.css';
 interface Props {
   currentCityName: string;
 }
+
+const canonicalProvinceName = (name: string): string => {
+  const slug = citySlug(name);
+  return TURKISH_CITIES.find(city => citySlug(city.name) === slug)?.name ?? name;
+};
+
 export function RouteWeatherPanel({ currentCityName }: Props) {
   const { t, i18n } = useTranslation();
-  const initialDestination = currentCityName === 'Ankara' ? 'İstanbul' : 'Ankara';
-  const [originName, setOriginName] = useState(currentCityName);
+  const initialOrigin = canonicalProvinceName(currentCityName);
+  const initialDestination = initialOrigin === 'Ankara' ? 'İstanbul' : 'Ankara';
+  const [originName, setOriginName] = useState(initialOrigin);
   const [destinationName, setDestinationName] = useState(initialDestination);
   const [departure, setDeparture] = useState(() =>
     toTurkeyLocalInputValue(new Date(Date.now() + 60 * 60_000))
@@ -38,6 +46,15 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     setError(null);
     setLoading(false);
   };
+
+  useEffect(() => {
+    const nextOrigin = canonicalProvinceName(currentCityName);
+    setOriginName(nextOrigin);
+    requestIdRef.current += 1;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+  }, [currentCityName]);
 
   const submit = async () => {
     if (!origin || !destination || origin.name === destination.name) return;
