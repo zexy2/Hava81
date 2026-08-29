@@ -304,7 +304,9 @@ export const buildActivityPlan = ({
       .filter(impact => impact.factor === 'thermal' || (activity === 'laundry' && impact.factor === 'wind'))
       .reduce((sum, impact) => sum + impact.penalty, 0);
     const reclaimed = Math.min(adj.benefit, reclaimablePenalty);
-    const score = clamp(base.score - adj.penalty + reclaimed);
+    const reasons = [...new Set([...base.reasons, ...adj.reasons])];
+    let score = clamp(base.score - adj.penalty + reclaimed);
+    if (reasons.length > 0) score = Math.min(score, 96);
     return {
       ...base,
       activity,
@@ -312,7 +314,7 @@ export const buildActivityPlan = ({
       score,
       band: getScoreBand(score),
       activityReasons: adj.reasons,
-      reasons: [...new Set([...base.reasons, ...adj.reasons])],
+      reasons,
     };
   });
 
@@ -340,12 +342,11 @@ export const buildActivityPlan = ({
   const bestWindowRange = findBestWindowRange(evaluatedSlots);
   const bestWindow = bestWindowRange?.peak;
   const scoringHorizon = windowApplied ? 24 : HORIZON_HOURS;
-  const score = weightedActivityScore(evaluatedSlots, scoringHorizon);
+  const rawScore = weightedActivityScore(evaluatedSlots, scoringHorizon);
   const baselineScore = weightedActivityScore(
     evaluatedSlots.map(slot => ({ ...slot, score: slot.baselineScore })),
     scoringHorizon
   );
-  const activityImpact = score - baselineScore;
   const reasonCounts = new Map<DecisionReasonCode, number>();
   evaluatedSlots.forEach(slot =>
     slot.reasons.forEach(reason => reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1))
@@ -354,6 +355,8 @@ export const buildActivityPlan = ({
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason]) => reason);
+  const score = reasons.length > 0 ? Math.min(rawScore, 96) : rawScore;
+  const activityImpact = score - baselineScore;
 
   return {
     activity,

@@ -156,6 +156,7 @@ export const tr = {
         },
       },
       timelineLabel: 'Günün hava uygunluk zaman çizelgesi',
+      tomorrow: 'Yarın',
       explain: {
         label: 'Hava81 skor açıklaması',
         eyebrow: 'Skor kırılımı',

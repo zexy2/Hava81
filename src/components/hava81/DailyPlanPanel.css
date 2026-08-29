@@ -110,11 +110,26 @@
 
 .daily-plan__slots {
   display: grid;
-  grid-template-columns: repeat(6, minmax(8rem, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(8rem, 1fr);
   overflow-x: auto;
   border: 1px solid var(--color-atlas-line);
   border-radius: var(--radius-md);
   scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-aegean) 45%, transparent) transparent;
+}
+
+.daily-plan__slots::-webkit-scrollbar {
+  height: 0.4rem;
+}
+
+.daily-plan__slots::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.daily-plan__slots::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-aegean) 45%, transparent);
+  border-radius: 999px;
 }
 
 .daily-plan__slot {
@@ -141,6 +156,25 @@
 .daily-plan__slot small {
   color: var(--color-atlas-muted);
   font-size: 0.75rem;
+}
+
+.daily-plan__slot time {
+  display: grid;
+  min-height: 2rem;
+  align-content: end;
+  gap: 0.15rem;
+}
+
+.daily-plan__slot-day {
+  color: var(--color-aegean);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.daily-plan__slot.is-day-boundary {
+  border-inline-start-color: var(--color-aegean);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--color-aegean) 35%, transparent);
 }
 
 .daily-plan__slot > strong {

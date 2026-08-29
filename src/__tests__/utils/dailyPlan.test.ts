@@ -128,6 +128,60 @@ describe('Hava81 daily decision engine v2', () => {
     expect(humid.score).toBeLessThan(dry.score - 10);
   });
 
+  it('reserves the excellent band for near-ideal windows and keeps named rain risk out of it', () => {
+    const lowChance = scoreWeatherWindow({
+      time: new Date(),
+      temperature: 24,
+      apparentTemperature: 24,
+      humidity: 45,
+      precipitationProbability: 0.18,
+      precipitationMm: 0,
+      windSpeed: 3,
+      windGust: 5,
+      airQualityIndex: 1,
+      uvIndex: 1,
+      visibility: 20000,
+      weatherCode: 0,
+    });
+    const moderateChance = scoreWeatherWindow({
+      time: new Date(),
+      temperature: 24,
+      apparentTemperature: 24,
+      humidity: 45,
+      precipitationProbability: 0.35,
+      precipitationMm: 0,
+      windSpeed: 3,
+      windGust: 5,
+      airQualityIndex: 1,
+      uvIndex: 1,
+      visibility: 20000,
+      weatherCode: 0,
+    });
+    const thresholdChance = scoreWeatherWindow({
+      time: new Date(),
+      temperature: 24,
+      apparentTemperature: 24,
+      humidity: 45,
+      precipitationProbability: 0.25,
+      precipitationMm: 0,
+      windSpeed: 3,
+      windGust: 5,
+      airQualityIndex: 1,
+      uvIndex: 1,
+      visibility: 20000,
+      weatherCode: 0,
+    });
+
+    expect(lowChance.score).toBeGreaterThanOrEqual(97);
+    expect(lowChance.band).toBe('excellent');
+    expect(moderateChance.score).toBeLessThanOrEqual(94);
+    expect(moderateChance.band).toBe('good');
+    expect(moderateChance.reasons).toContain('rain-risk');
+    expect(thresholdChance.score).toBeLessThanOrEqual(96);
+    expect(thresholdChance.band).toBe('good');
+    expect(thresholdChance.reasons).toContain('rain-risk');
+  });
+
   it('separates precipitation probability from actual hourly amount', () => {
     const likelyTrace = scoreWeatherWindow({
       time: new Date(),

@@ -5,7 +5,7 @@ import type { ScoredWeatherWindow } from '../../domain/decision/types';
 const slot = (hour: number, score: number): ScoredWeatherWindow => ({
   time: new Date(Date.UTC(2026, 7, 29, hour)),
   score,
-  band: score >= 90 ? 'excellent' : score >= 75 ? 'good' : score >= 55 ? 'caution' : 'difficult',
+  band: score >= 97 ? 'excellent' : score >= 75 ? 'good' : score >= 55 ? 'caution' : 'difficult',
   temperature: 24,
   apparentTemperature: 24,
   precipitationProbability: 0,

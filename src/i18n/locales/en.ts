@@ -155,6 +155,7 @@ export const en = {
         },
       },
       timelineLabel: 'Daily weather suitability timeline',
+      tomorrow: 'Tomorrow',
       explain: {
         label: 'Hava81 score explanation',
         eyebrow: 'Score breakdown',
