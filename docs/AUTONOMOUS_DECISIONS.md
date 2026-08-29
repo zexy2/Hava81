@@ -246,3 +246,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — `useAsync.reset()` is a logical cancellation boundary, not only a visual reset. Increment the async call generation on reset so any pre-reset result or error is ignored if it arrives later; this protects handoffs such as city search → current location from stale-response takeover without requiring transport-level abort support.
 
 - 2026-08-29 — Route-weather results are bound to the exact route inputs and departure instant that produced them. Editing departure/origin/destination or starting a replacement request must invalidate the previous corridor result immediately and advance a request generation; late responses from older generations are ignored so old guidance can never repopulate under new parameters.
+
+- 2026-08-29 — User-facing astronomical clock times must be rendered in the weather location timezone, not the visitor device timezone. Use the provider timezone offset consistently across primary and secondary surfaces; keep duration calculations on absolute instants.

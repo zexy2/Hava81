@@ -31,16 +31,23 @@ describe('EnvironmentRail', () => {
   it('associates the map disclosure button with the map region', () => {
     render(
       <SettingsProvider>
-        <EnvironmentRail
-          weather={weather}
-          onOpenMap={vi.fn()}
-          mapExpanded={false}
-        />
+        <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
       </SettingsProvider>
     );
 
     const mapButton = screen.getByRole('button', { name: /haritayı göster/i });
     expect(mapButton).toHaveAttribute('aria-controls', 'weather-map-region');
     expect(mapButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('renders sunset in the weather location timezone instead of the device timezone', () => {
+    render(
+      <SettingsProvider>
+        <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('19:30')).toBeInTheDocument();
+    expect(screen.queryByText('16:30')).not.toBeInTheDocument();
   });
 });
