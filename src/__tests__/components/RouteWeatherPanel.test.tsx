@@ -136,6 +136,22 @@ describe('RouteWeatherPanel', () => {
     expect(screen.getByRole('button', { name: 'Yükleniyor...' })).toBeDisabled();
   });
 
+  it('rejects a departure outside the supported horizon before calling the API', async () => {
+    const user = userEvent.setup();
+
+    render(<RouteWeatherPanel currentCityName="İstanbul" />);
+    await user.click(screen.getByText('Rota havası'));
+    fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
+      target: { value: '2099-01-01T12:00' },
+    });
+    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+
+    expect(api.getRouteWeather).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Kalkış zamanı şimdi ile önümüzdeki 18 saat arasında olmalı.'
+    );
+  });
+
   it('keeps raw route-provider failures out of the visible error message', async () => {
     const user = userEvent.setup();
     api.getRouteWeather.mockRejectedValueOnce(
