@@ -291,6 +291,8 @@ export const tr = {
         feelsLike: 'Hissedilen {{value}}{{unit}}',
         dry: 'Yağış beklenmiyor',
         rain: 'Yağış %{{value}}',
+        rainWithAmount: 'Yağış %{{value}} · {{amount}}',
+        rainAmount: 'Yağış {{amount}}',
         wind: 'Rüzgâr {{value}} {{unit}}',
       },
       criteria: {

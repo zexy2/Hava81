@@ -291,6 +291,8 @@ export const en = {
         feelsLike: 'Feels like {{value}}{{unit}}',
         dry: 'No precipitation expected',
         rain: 'Rain {{value}}%',
+        rainWithAmount: 'Rain {{value}}% · {{amount}}',
+        rainAmount: 'Rain {{amount}}',
         wind: 'Wind {{value}} {{unit}}',
       },
       criteria: {

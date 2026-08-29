@@ -28,10 +28,38 @@ const weather: NormalizedWeatherData = {
 };
 
 const hourly: HourlyForecast[] = [
-  { time: new Date('2026-08-29T09:00:00Z'), temp: 19, apparentTemperature: 19, pop: 0, windSpeed: 2, icon: '01d' },
-  { time: new Date('2026-08-29T15:00:00Z'), temp: 29, apparentTemperature: 30, pop: 0, windSpeed: 4, icon: '01d' },
-  { time: new Date('2026-08-29T16:00:00Z'), temp: 30, apparentTemperature: 31, pop: 0.1, windSpeed: 4, icon: '01d' },
-  { time: new Date('2026-08-29T17:00:00Z'), temp: 31, apparentTemperature: 32, pop: 0.1, windSpeed: 5, icon: '01d' },
+  {
+    time: new Date('2026-08-29T09:00:00Z'),
+    temp: 19,
+    apparentTemperature: 19,
+    pop: 0,
+    windSpeed: 2,
+    icon: '01d',
+  },
+  {
+    time: new Date('2026-08-29T15:00:00Z'),
+    temp: 29,
+    apparentTemperature: 30,
+    pop: 0,
+    windSpeed: 4,
+    icon: '01d',
+  },
+  {
+    time: new Date('2026-08-29T16:00:00Z'),
+    temp: 30,
+    apparentTemperature: 31,
+    pop: 0.1,
+    windSpeed: 4,
+    icon: '01d',
+  },
+  {
+    time: new Date('2026-08-29T17:00:00Z'),
+    temp: 31,
+    apparentTemperature: 32,
+    pop: 0.1,
+    windSpeed: 5,
+    icon: '01d',
+  },
 ];
 
 describe('ActivityPlanner time range', () => {
@@ -57,9 +85,52 @@ describe('ActivityPlanner time range', () => {
 
     expect(screen.getAllByText('18:00–20:00 uygunluğu').length).toBeGreaterThan(0);
     expect(screen.getByText(/Koşuda 10–22°C/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Aktivite ölçütlerinin etkisi: [+-]?\d+ puan/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Aktivite ölçütlerinin etkisi: [+-]?\d+ puan/i).length
+    ).toBeGreaterThan(0);
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('20:00');
+  });
+
+  it('does not call an activity window dry when measurable precipitation exists at 0%', () => {
+    const measurableRain: HourlyForecast[] = [15, 16, 17].map(hour => ({
+      time: new Date(Date.UTC(2026, 7, 29, hour)),
+      temp: 22,
+      apparentTemperature: 22,
+      pop: 0,
+      precipitationMm: 0.4,
+      windSpeed: 2,
+      icon: '10d',
+    }));
+
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={measurableRain} />
+      </SettingsProvider>
+    );
+
+    expect(screen.queryByText('Yağış beklenmiyor')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Yağış 0,4 mm')).toHaveLength(2);
+  });
+
+  it('shows probability and amount together in activity conditions', () => {
+    const rainy: HourlyForecast[] = [15, 16, 17].map(hour => ({
+      time: new Date(Date.UTC(2026, 7, 29, hour)),
+      temp: 22,
+      apparentTemperature: 22,
+      pop: 0.35,
+      precipitationMm: 0.8,
+      windSpeed: 2,
+      icon: '10d',
+    }));
+
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={rainy} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getAllByText('Yağış %35 · 0,8 mm')).toHaveLength(2);
   });
 
   it('shows near-best hours as a range and explains what temperature sensitivity changes', () => {
@@ -83,5 +154,4 @@ describe('ActivityPlanner time range', () => {
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
     expect(screen.getByText('Sıcak uyarıları yaklaşık 3°C daha erken başlar.')).toBeInTheDocument();
   });
-
 });
