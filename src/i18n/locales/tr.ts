@@ -374,6 +374,7 @@ export const tr = {
       better:
         '{{time}} civarı kalkış hava açısından yaklaşık {{improvement}} puan daha iyi görünüyor.',
       segments: 'Rota boyunca hava örnekleri',
+      departureRangeError: 'Kalkış zamanı şimdi ile önümüzdeki 18 saat arasında olmalı.',
       error: 'Rota hava verisi alınamadı.',
     },
   },
