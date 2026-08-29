@@ -14,7 +14,7 @@ import type {
   HourlyForecast,
   NormalizedWeatherData,
 } from '../../types';
-import { formatPrecipitationAmount } from '../../utils/precipitation';
+import { formatPrecipitationAmount, pickMostSignificantPrecipitation } from '../../utils/precipitation';
 import './ComparePanel.css';
 
 interface ComparePanelProps {
@@ -176,8 +176,9 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
           >
           {rows.map(row => {
             const nearTerm = row.hourly.slice(0, 6);
-            const maxPop = Math.max(0, ...nearTerm.map(point => point.pop));
-            const maxPrecipitationMm = Math.max(0, ...nearTerm.map(point => point.precipitationMm ?? 0));
+            const precipitationPeak = pickMostSignificantPrecipitation(nearTerm);
+            const peakPop = precipitationPeak?.pop ?? 0;
+            const peakPrecipitationMm = precipitationPeak?.precipitationMm ?? 0;
             return (
               <article
                 className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
@@ -201,7 +202,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                   </span>
                   <span>
                     {t('hava81.compare.rain')}{' '}
-                    <b>{formatPrecipitationSummary(i18n.language, maxPop, maxPrecipitationMm)}</b>
+                    <b>{formatPrecipitationSummary(i18n.language, peakPop, peakPrecipitationMm)}</b>
                   </span>
                   <span>
                     {t('weather.wind')}{' '}

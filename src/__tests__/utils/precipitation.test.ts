@@ -1,4 +1,9 @@
-import { formatPrecipitationAmount, normalizePrecipitationProbability } from '../../utils/precipitation';
+import {
+  formatPrecipitationAmount,
+  normalizePrecipitationProbability,
+  pickMostSignificantPrecipitation,
+  precipitationSignalSeverity,
+} from '../../utils/precipitation';
 
 describe('normalizePrecipitationProbability', () => {
   it.each([
@@ -28,5 +33,22 @@ describe('formatPrecipitationAmount', () => {
     expect(formatPrecipitationAmount(-0.1, 'tr-TR')).toBeNull();
     expect(formatPrecipitationAmount(undefined, 'tr-TR')).toBeNull();
     expect(formatPrecipitationAmount(Number.NaN, 'tr-TR')).toBeNull();
+  });
+});
+
+describe('precipitation signal ranking', () => {
+  it('combines probability and measured amount into one comparable severity signal', () => {
+    expect(precipitationSignalSeverity(0.2, 6)).toBeGreaterThan(
+      precipitationSignalSeverity(0.8, 0)
+    );
+  });
+
+  it('returns one real forecast slot instead of combining maxima from different hours', () => {
+    const points = [
+      { pop: 0.8, precipitationMm: 0, id: 'high-probability' },
+      { pop: 0.2, precipitationMm: 6, id: 'measured-rain' },
+    ];
+
+    expect(pickMostSignificantPrecipitation(points)?.id).toBe('measured-rain');
   });
 });
