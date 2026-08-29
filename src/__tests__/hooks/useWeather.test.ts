@@ -107,6 +107,10 @@ describe('useWeather', () => {
           timestamp: '2026-07-14T12:00:00.000Z',
           coordinates: { lat: 41.01, lon: 28.97 },
           clouds: 0,
+          meta: {
+            provider: 'OpenWeather',
+            fetchedAt: '2026-07-14T12:00:00.000Z',
+          },
         },
         timestamp: Date.now(),
         language: 'tr',
@@ -120,6 +124,113 @@ describe('useWeather', () => {
     expect(result.current.weather?.sunset).toBeInstanceOf(Date);
     expect(result.current.weather?.timestamp).toBeInstanceOf(Date);
     expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
+  });
+
+  it('ignores malformed persisted weather cache instead of rendering untrusted weather values', async () => {
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: '999',
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'cache injection',
+          icon: '01d',
+          sunrise: '2026-07-14T02:43:00.000Z',
+          sunset: '2026-07-14T17:34:00.000Z',
+          timestamp: '2026-07-14T12:00:00.000Z',
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:00.000Z' },
+        },
+        timestamp: Date.now(),
+        language: 'tr',
+      })
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+    await waitFor(() =>
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({
+        city: 'İstanbul',
+        lang: 'tr',
+      })
+    );
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(result.current.weather?.description).not.toBe('cache injection');
+  });
+
+  it('rejects implausibly future-dated cache entries so they cannot stay fresh indefinitely', async () => {
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'future cache',
+          icon: '01d',
+          sunrise: '2026-07-14T02:43:00.000Z',
+          sunset: '2026-07-14T17:34:00.000Z',
+          timestamp: '2026-07-14T12:00:00.000Z',
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:00.000Z' },
+        },
+        timestamp: Date.now() + 10 * 60 * 1000,
+        language: 'tr',
+      })
+    );
+
+    renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
+  });
+
+  it('ignores cached weather with invalid provider metadata dates', async () => {
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'açık hava',
+          icon: '01d',
+          sunrise: '2026-07-14T02:43:00.000Z',
+          sunset: '2026-07-14T17:34:00.000Z',
+          timestamp: '2026-07-14T12:00:00.000Z',
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: { provider: 'OpenWeather', fetchedAt: 'not-a-date' },
+        },
+        timestamp: Date.now(),
+        language: 'tr',
+      })
+    );
+
+    renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
   });
 
   it('keeps a location result authoritative when an older city request resolves late', async () => {

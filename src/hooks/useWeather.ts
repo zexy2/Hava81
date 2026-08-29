@@ -47,6 +47,7 @@ interface UseWeatherReturn {
 
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
+const MAX_CACHE_FUTURE_SKEW_MS = 60_000;
 const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
 
 const deserializeRecentSearches = (value: string): RecentSearch[] => {
@@ -83,25 +84,99 @@ interface WeatherCache {
   language?: 'tr' | 'en';
 }
 
+const WEATHER_ICON_CODES = new Set([
+  '01d',
+  '01n',
+  '02d',
+  '02n',
+  '03d',
+  '03n',
+  '04d',
+  '04n',
+  '09d',
+  '09n',
+  '10d',
+  '10n',
+  '11d',
+  '11n',
+  '13d',
+  '13n',
+  '50d',
+  '50n',
+]);
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
 const deserializeWeatherCache = (value: string): WeatherCache | null => {
-  const parsed = JSON.parse(value) as WeatherCache | null;
-  if (!parsed) return null;
+  const parsed = JSON.parse(value) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
 
-  const sunrise = new Date(parsed.data.sunrise);
-  const sunset = new Date(parsed.data.sunset);
-  const timestamp = new Date(parsed.data.timestamp);
+  const candidate = parsed as {
+    data?: Record<string, unknown>;
+    timestamp?: unknown;
+    language?: unknown;
+  };
+  const data = candidate.data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
 
-  if ([sunrise, sunset, timestamp].some(date => Number.isNaN(date.getTime()))) {
-    throw new Error('Cached weather dates are invalid');
+  const coordinates = data.coordinates;
+  const meta = data.meta;
+  if (
+    typeof data.cityName !== 'string' ||
+    !data.cityName.trim() ||
+    typeof data.country !== 'string' ||
+    !data.country.trim() ||
+    !isFiniteNumber(data.temperature) ||
+    !isFiniteNumber(data.feelsLike) ||
+    !isFiniteNumber(data.tempMin) ||
+    !isFiniteNumber(data.tempMax) ||
+    !isFiniteNumber(data.humidity) ||
+    !isFiniteNumber(data.pressure) ||
+    (data.visibility !== undefined && !isFiniteNumber(data.visibility)) ||
+    !isFiniteNumber(data.windSpeed) ||
+    !isFiniteNumber(data.windDirection) ||
+    typeof data.description !== 'string' ||
+    !WEATHER_ICON_CODES.has(String(data.icon)) ||
+    !isFiniteNumber(data.clouds) ||
+    !coordinates ||
+    typeof coordinates !== 'object' ||
+    Array.isArray(coordinates) ||
+    !isFiniteNumber((coordinates as Record<string, unknown>).lat) ||
+    !isFiniteNumber((coordinates as Record<string, unknown>).lon) ||
+    !meta ||
+    typeof meta !== 'object' ||
+    Array.isArray(meta) ||
+    typeof (meta as Record<string, unknown>).provider !== 'string' ||
+    typeof (meta as Record<string, unknown>).fetchedAt !== 'string' ||
+    !isFiniteNumber(candidate.timestamp) ||
+    candidate.timestamp > Date.now() + MAX_CACHE_FUTURE_SKEW_MS ||
+    (candidate.language !== undefined && candidate.language !== 'tr' && candidate.language !== 'en')
+  ) {
+    return null;
   }
 
+  const sunrise = new Date(String(data.sunrise));
+  const sunset = new Date(String(data.sunset));
+  const timestamp = new Date(String(data.timestamp));
+  const fetchedAt = new Date(String((meta as Record<string, unknown>).fetchedAt));
+  if ([sunrise, sunset, timestamp, fetchedAt].some(date => Number.isNaN(date.getTime())))
+    return null;
+
   return {
-    ...parsed,
+    timestamp: candidate.timestamp,
+    language: candidate.language as WeatherCache['language'],
     data: {
-      ...parsed.data,
+      ...(data as unknown as NormalizedWeatherData),
+      cityName: data.cityName.trim(),
+      country: data.country.trim(),
       sunrise,
       sunset,
       timestamp,
+      meta: {
+        ...(meta as unknown as NormalizedWeatherData['meta']),
+        fetchedAt,
+      },
     },
   };
 };
