@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { FavoriteCity } from '../types/weather.types';
 import { getCityMetadata } from '../constants/cityMetadata';
 import { useSettings } from '../context/SettingsContext';
+import { citySlug } from '../utils/cityRoute';
 import { WeatherSymbol } from './hava81/WeatherSymbol';
 import './CityTabs.css';
 
@@ -30,6 +31,7 @@ const AddIcon = () => (
 export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd }: CityTabsProps) {
   const { t } = useTranslation();
   const { convertTemperature } = useSettings();
+  const activeCityKey = citySlug(activeCity);
 
   if (cities.length === 0 && !canAdd) return null;
 
@@ -37,7 +39,7 @@ export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd
     <div className="city-tabs">
       <div className="city-tabs__scroll" role="group" aria-label={t('weather.favoriteCities')}>
         {cities.map(favorite => {
-          const isActive = favorite.name === activeCity;
+          const isActive = citySlug(favorite.name) === activeCityKey;
           const metadata = getCityMetadata(favorite.name);
           const plateCode = metadata ? String(metadata.plateCode).padStart(2, '0') : '--';
 
