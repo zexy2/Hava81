@@ -8,6 +8,7 @@ import type {
 } from "../weather-provider";
 
 const optionalHourlySeries = z.array(z.number().nullable()).optional();
+const ONE_HOUR_MS = 60 * 60 * 1_000;
 
 const hourlySchema = z.object({
   utc_offset_seconds: z.number().int(),
@@ -165,6 +166,17 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
       }
       if (hourly.length === 0) {
         throw new AppError(502, "EMPTY_HOURLY_PROVIDER_RESPONSE", "Saatlik tahmin verisi şu anda kullanılamıyor.");
+      }
+      const hasHourlyGap = hourly.some((item, index) => {
+        if (index === 0) return false;
+        return new Date(item.time).getTime() - new Date(hourly[index - 1].time).getTime() !== ONE_HOUR_MS;
+      });
+      if (hasHourlyGap) {
+        throw new AppError(
+          502,
+          "NON_CONTIGUOUS_HOURLY_PROVIDER_RESPONSE",
+          "Saatlik tahmin verisi şu anda kesintisiz kullanılamıyor.",
+        );
       }
       return { timezoneOffsetSeconds: parsed.data.utc_offset_seconds, hourly };
     } catch (error) {
