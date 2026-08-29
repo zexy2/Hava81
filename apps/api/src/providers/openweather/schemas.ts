@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 const coordinatesSchema = z.object({
-  lon: z.number(),
-  lat: z.number(),
+  lon: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
 });
 
 const weatherConditionSchema = z.object({
@@ -17,23 +17,23 @@ const mainWeatherSchema = z.object({
   feels_like: z.number(),
   temp_min: z.number(),
   temp_max: z.number(),
-  pressure: z.number(),
-  humidity: z.number(),
+  pressure: z.number().positive(),
+  humidity: z.number().min(0).max(100),
 });
 
 const windSchema = z.object({
-  speed: z.number(),
-  deg: z.number(),
-  gust: z.number().optional(),
+  speed: z.number().nonnegative(),
+  deg: z.number().min(0).max(360),
+  gust: z.number().nonnegative().optional(),
 });
 
-const cloudsSchema = z.object({ all: z.number() });
+const cloudsSchema = z.object({ all: z.number().min(0).max(100) });
 
 export const currentWeatherUpstreamSchema = z.object({
   coord: coordinatesSchema,
   weather: z.array(weatherConditionSchema).min(1),
   main: mainWeatherSchema,
-  visibility: z.number().optional(),
+  visibility: z.number().nonnegative().optional(),
   wind: windSchema,
   clouds: cloudsSchema,
   dt: z.number(),
@@ -42,7 +42,7 @@ export const currentWeatherUpstreamSchema = z.object({
     sunrise: z.number(),
     sunset: z.number(),
   }),
-  timezone: z.number(),
+  timezone: z.number().min(-43_200).max(50_400),
   id: z.number(),
   name: z.string(),
 });
@@ -53,7 +53,7 @@ const forecastItemSchema = z.object({
   weather: z.array(weatherConditionSchema).min(1),
   clouds: cloudsSchema,
   wind: windSchema,
-  visibility: z.number().optional(),
+  visibility: z.number().nonnegative().optional(),
   pop: z.number().min(0).max(1).default(0),
   dt_txt: z.string().min(1),
 });

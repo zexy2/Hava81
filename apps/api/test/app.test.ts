@@ -384,6 +384,37 @@ test('OpenWeather adapter rejects malformed upstream responses', async () => {
 });
 
 
+test('OpenWeather adapter rejects impossible finite current-weather domains', async () => {
+  const cases: Array<[string, (payload: typeof currentFixture) => void]> = [
+    ['latitude', (payload) => { payload.coord.lat = 91; }],
+    ['humidity', (payload) => { payload.main.humidity = 101; }],
+    ['pressure', (payload) => { payload.main.pressure = -1; }],
+    ['wind speed', (payload) => { payload.wind.speed = -1; }],
+    ['wind direction', (payload) => { payload.wind.deg = 361; }],
+    ['cloud cover', (payload) => { payload.clouds.all = 101; }],
+    ['visibility', (payload) => { payload.visibility = -1; }],
+    ['timezone', (payload) => { payload.timezone = 99_999; }],
+  ];
+
+  for (const [label, mutate] of cases) {
+    const payload = structuredClone(currentFixture);
+    mutate(payload);
+    const fakeFetch = (async () =>
+      new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })) as typeof fetch;
+    const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+    await assert.rejects(
+      () => provider.getCurrent({ city: 'İzmir', units: 'metric', lang: 'tr' }),
+      (error: unknown) =>
+        error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+      `expected invalid ${label} to be rejected`,
+    );
+  }
+});
+
 test('OpenWeather current accepts responses without optional visibility', async () => {
   const payload = structuredClone(currentFixture);
   delete payload.visibility;
