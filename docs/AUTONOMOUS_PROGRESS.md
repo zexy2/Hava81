@@ -643,3 +643,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Preserved the existing weather score and activity thresholds, but now retain the weather-only baseline for each evaluated slot and aggregate it with the exact same cadence/downside weighting as the final activity score. Each plan exposes `baselineScore` and the exact bounded `activityImpact = final - baseline`.
 - Activity cards now show the activity-criteria impact as a signed point value in Turkish/English, directly explaining why walking, running, picnic, motorcycle, children and laundry can differ for the same hours. No provider data, thresholds, safety language or recommendation bands changed.
 - Focused domain/component coverage 9/9, type-check and `git diff --check` pass. Full release gates remain required before publication.
+
+
+## 2026-08-29 11:17 TRT — persisted recent-search history sanitization
+
+- Audited `recent_weather_searches` after hardening canonical settings and found the generic local-storage cast still trusted arbitrary syntactically valid JSON as `RecentSearch[]`. A malformed entry could reach `cityIdentity()` during the next successful fetch and turn local preference corruption into a weather-flow error.
+- Added a hook-specific deserializer that accepts only non-empty city strings plus finite numeric timestamps, trims names, deduplicates localized spellings through the existing province identity, drops unexpected/malformed entries, and caps restored history to `maxRecentSearches`. Wrong-shape JSON falls back to an empty list; provider/network behavior is unchanged.
+- Validation on main `21ee3e55`: focused `useWeather` coverage 10/10, lint, type-check, complete frontend suite 175/175, production build generated all 81 city pages, production dependency audit found 0 vulnerabilities, and `git diff --check` passed. Exact-head CI remains the merge gate.

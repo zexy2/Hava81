@@ -255,3 +255,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Do not make the entire primary weather/decision surface a live region. Its freshness label updates on a timer, so broad `aria-live` would create repetitive screen-reader announcements unrelated to a new weather decision. Reserve live/status semantics for bounded user-triggered or asynchronously completed results.
 
 - 2026-08-29 — Activity score explainability should expose the measurable effect of activity-specific criteria, not only generic prose. Preserve the weather-only baseline per slot, aggregate baseline and final values with the same time/downside weighting, and show the signed `final - baseline` impact; never imply that the delta is a provider observation or official safety score.
+
+- 2026-08-29 — Persisted recent-search history is untrusted input. Deserialize only non-empty city strings with finite numeric timestamps, normalize localized city identity for dedupe, and cap restored history to the configured maximum before UI/business logic can consume it; malformed history must degrade to an empty list rather than breaking a successful weather fetch.
