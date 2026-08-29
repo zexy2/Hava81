@@ -290,3 +290,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — OpenWeather pollutant concentration fields are physical concentration measurements and must be non-negative. Reject an upstream air-quality payload containing a negative CO/NO/NO₂/O₃/SO₂/PM2.5/PM10/NH₃ value instead of displaying or scoring an impossible concentration; absence is safer than fabricated correction.
 
 - 2026-08-29 — PWA shell caches must be deploy-scoped rather than a permanent manual version. Stamp the production service worker from generated shell/manifest/hashed-asset identity; fail the build if stamping cannot occur. Continue one forced-tab refresh only for migration from legacy v1/v2 caches, not on every future deploy.
+
+- 2026-08-29 — Route-weather BFF responses are untrusted at the browser boundary. Reject malformed corridor timestamps, impossible coordinates/fractions, precipitation outside 0–100%, negative wind, invalid risk/score ranges, and malformed better-departure metadata rather than rendering or scoring impossible route guidance.

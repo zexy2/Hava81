@@ -792,3 +792,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a build-time service-worker stamp: each production build derives a deterministic 12-character namespace from the generated root HTML, manifest, and hashed asset filenames, then replaces a required placeholder in `dist/sw.js`. The build fails closed if the placeholder is missing or survives stamping.
 - Old shell namespaces are still deleted on activation, but forced tab navigation is now limited to the legacy v1/v2 migration. Subsequent build-to-build cache rotation no longer forces already-open tabs to reload.
 - Local gates pass: lint, type-check, full 264-test coverage suite, targeted service-worker tests, 81-city production build, stamped-cache assertion, production dependency audit 0 vulnerabilities, and diff-check.
+
+## 2026-08-29 21:21 TRT — route-weather browser trust boundary
+
+- While PWA cache release #198 proceeded through its main pipeline, audited the route-weather browser boundary on isolated branch `automation/hava81-run11-route-boundary-2118`.
+- Route results now fail closed on malformed departure/ETA timestamps, invalid corridor kind, non-finite/negative distance or duration, score/risk domain violations, impossible coordinates/fractions, precipitation outside 0–100%, negative wind, blank descriptions/disclaimer, and invalid better-departure metadata.
+- No route value is corrected or fabricated. Invalid BFF route data uses the existing retryable forecast-data error path, preserving the product rule that corridor guidance is approximate modeled weather rather than navigation or road-safety truth.
+- Focused weather-service tests pass 67/67; type-check, lint, full frontend tests, 81-city production build, production dependency audit with 0 vulnerabilities, and diff-check all pass.
