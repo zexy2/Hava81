@@ -143,20 +143,20 @@ export function WeatherDecisionField({
       case 'wind':
         return t('hava81.decision.actions.wind', {
           defaultValue:
-            'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
-          speed: (decision.value ?? 0).toFixed(1),
+            'Rüzgâr veya hamleler {{speed}} seviyesine çıkabilir; açık alanda dikkat.',
+          speed: `${numberFormatter.format(convertWindSpeed(decision.value ?? 0))} ${windSpeedSymbol}`,
         });
       case 'heat':
         return t('hava81.decision.actions.heat', {
           defaultValue:
-            'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
-          temperature: Math.round(decision.value ?? 0),
+            'Hissedilen sıcaklık {{temperature}} seviyesine çıkabilir; gölge ve su planla.',
+          temperature: formatTemperature(decision.value ?? 0),
         });
       case 'cold':
         return t('hava81.decision.actions.cold', {
           defaultValue:
-            'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',
-          temperature: Math.round(decision.value ?? 0),
+            'Hissedilen sıcaklık {{temperature}} seviyesine inebilir; soğuk stresine karşı dikkat.',
+          temperature: formatTemperature(decision.value ?? 0),
         });
       case 'air-quality':
         return t('hava81.decision.actions.airQuality', {

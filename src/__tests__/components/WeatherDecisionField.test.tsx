@@ -29,6 +29,7 @@ const weather: NormalizedWeatherData = {
 
 describe('WeatherDecisionField daily range', () => {
   beforeEach(() => {
+    localStorage.clear();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-29T13:00:00Z'));
   });
@@ -82,6 +83,32 @@ describe('WeatherDecisionField daily range', () => {
 
     expect(screen.getByText('26,4°C / 25,6°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
+  });
+
+  it('uses the selected temperature and wind units in planning messages', () => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'imperial',
+        windSpeedUnit: 'kmh',
+        themeMode: 'auto',
+        language: 'tr',
+      })
+    );
+
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, feelsLike: 35, windSpeed: 10 }}
+          hourly={[]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/Rüzgâr veya hamleler 36 km\/h seviyesine çıkabilir/i)).toBeInTheDocument();
+    expect(screen.getByText(/Hissedilen sıcaklık 95°F seviyesine çıkabilir/i)).toBeInTheDocument();
+    expect(screen.queryByText(/10(?:[,.]0)? m\/s seviyesine çıkabilir/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/35°C seviyesine çıkabilir/i)).not.toBeInTheDocument();
   });
 
   it('formats measurable rain amounts with the active locale', () => {

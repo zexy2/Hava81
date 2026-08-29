@@ -81,9 +81,9 @@ export const en = {
         rainWithAmount:
           'Rain chance is {{probability}}% around {{time}}, with about {{amount}} expected for the hour.',
         rainAmount: 'About {{amount}} of precipitation is expected for the hour around {{time}}; taking an umbrella is a good idea.',
-        wind: 'Wind or gusts may reach {{speed}} m/s; use extra care outdoors.',
-        heat: 'Feels-like temperature may reach {{temperature}}°C; plan for shade and water.',
-        cold: 'Feels-like temperature may fall to {{temperature}}°C; take care with cold stress.',
+        wind: 'Wind or gusts may reach {{speed}}; use extra care outdoors.',
+        heat: 'Feels-like temperature may reach {{temperature}}; plan for shade and water.',
+        cold: 'Feels-like temperature may fall to {{temperature}}; take care with cold stress.',
         airQuality: 'Air quality is poor (AQI {{aqi}}/5); reduce prolonged outdoor activity.',
         uv: 'The modeled UV maximum for the next 24 hours is {{uv}}; plan sun protection.',
         outdoor: 'Around {{time}} looks like a calmer window for being outdoors.',
