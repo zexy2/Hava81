@@ -293,12 +293,30 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   gridTemplateColumns: `repeat(${hourlyData.length}, minmax(0, 1fr))`,
                 }}
               >
-                {hourlyData.map(hour => {
+                {hourlyData.map((hour, index) => {
                   const precipitation = Math.round(hour.precipitation * 100);
+                  const localTime = atLocationTime(hour.time);
+                  const previousLocalTime =
+                    index > 0 ? atLocationTime(hourlyData[index - 1].time) : null;
+                  const dayChanged =
+                    previousLocalTime !== null &&
+                    previousLocalTime.toISOString().slice(0, 10) !==
+                      localTime.toISOString().slice(0, 10);
+                  const dayContext = dayChanged ? formatDay(localTime) : null;
                   return (
-                    <li className="hava81-forecast-atlas__hour" key={`hour-${hour.timestamp}`}>
+                    <li
+                      className={
+                        dayChanged
+                          ? 'hava81-forecast-atlas__hour is-day-boundary'
+                          : 'hava81-forecast-atlas__hour'
+                      }
+                      key={`hour-${hour.timestamp}`}
+                    >
                       <time dateTime={hour.time.toISOString()}>
-                        {timeFormatter.format(atLocationTime(hour.time))}
+                        {dayContext ? (
+                          <span className="hava81-forecast-atlas__hour-day">{dayContext}</span>
+                        ) : null}
+                        <span>{timeFormatter.format(localTime)}</span>
                       </time>
                       <WeatherSymbol
                         code={hour.icon}

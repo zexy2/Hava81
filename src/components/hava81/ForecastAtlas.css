@@ -216,6 +216,28 @@
   line-height: 1.2;
 }
 
+.hava81-forecast-atlas__hour time {
+  display: grid;
+  min-height: 2rem;
+  align-content: end;
+  justify-items: center;
+  gap: 2px;
+}
+
+.hava81-forecast-atlas__hour-day {
+  color: var(--forecast-teal);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hava81-forecast-atlas__hour.is-day-boundary {
+  border-inline-start-color: var(--forecast-teal);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--forecast-teal) 35%, transparent);
+}
+
 .hava81-forecast-atlas__hour-symbol {
   color: var(--forecast-muted);
 }
