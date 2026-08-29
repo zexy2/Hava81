@@ -46,7 +46,17 @@ export function ContextSignalsPanel({ signals }: Props) {
           <h2 id="context-signals-title">{t('hava81.context.title')}</h2>
         </div>
         <small className="context-signals__source">
-          {signals.attribution}
+          {signals.provider === 'Open-Meteo' ? (
+            <>
+              <a href="https://open-meteo.com/">Open-Meteo</a>
+              {' · '}
+              <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+              {' · '}
+              {t('hava81.context.sourceModified')}
+            </>
+          ) : (
+            signals.attribution
+          )}
           {fetchedTime ? ` · ${t('hava81.context.fetchedAt', { time: fetchedTime })}` : ''}
         </small>
       </header>

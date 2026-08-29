@@ -317,6 +317,7 @@ export const tr = {
       wave: 'Dalga: {{height}} {{unit}}',
       waveDetails:
         'Dalga {{height}} {{unit}} · periyot {{period}} {{periodUnit}} · yön {{direction}}{{directionUnit}}',
+      sourceModified: 'Hava81 tarafından özetlendi',
       fetchedAt: 'model {{time}}',
       waveUnavailable: 'Dalga verisi yok',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
