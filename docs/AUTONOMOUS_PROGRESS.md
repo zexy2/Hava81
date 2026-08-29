@@ -697,3 +697,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Boot now captures the recovery timestamp before cleaning the public URL and uses that timestamp as the fallback previous-attempt guard whenever session storage is unavailable. Normal browsers still use the existing sessionStorage marker; clean canonical URLs are preserved after boot.
 - Added desktop browser coverage that blocks sessionStorage, forces the ForecastAtlas chunk to remain unavailable, and requires exactly one recovery navigation rather than a reload loop.
 - Rebased onto main `29fb98f3` after the isolated-Playwright-port merge. Combined gates pass: frontend type-check, lint, complete frontend suite 218/218, 81-city production build, production dependency audit 0 vulnerabilities, git diff check, targeted storage-restricted recovery browser regression, and full Playwright suite on isolated port 4197 (23 applicable passed / 34 intentional project skips).
+
+## 2026-08-29 17:00 TRT — in-memory weather request cache rejects future timestamps
+
+- Audited the frontend HTTP cache under client clock corrections. Cache validity previously accepted every negative age because `Date.now() - timestamp < ttl`, so if the device clock moved backward after a response was cached, that response could remain reusable longer than the configured TTL.
+- Cache validity now requires a non-negative age as well as age below TTL. A backward clock jump therefore fails closed to a fresh BFF request instead of extending stale weather data.
+- Added deterministic transport coverage that caches a response, moves the client clock backward one minute, and requires a second network request. Provider data, API cache TTLs and normal cache-hit behavior are unchanged.

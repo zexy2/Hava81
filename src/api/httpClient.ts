@@ -89,7 +89,8 @@ const getCacheKey = (url: string, options?: RequestConfig): string => {
  * Check if cached response is still valid
  */
 const isCacheValid = (timestamp: number): boolean => {
-  return Date.now() - timestamp < config.cache.ttl;
+  const age = Date.now() - timestamp;
+  return age >= 0 && age < config.cache.ttl;
 };
 
 /**
