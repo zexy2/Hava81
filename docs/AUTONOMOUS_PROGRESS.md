@@ -778,3 +778,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Next-24-hour UV/dust/pollen maxima now ignore negative provider rows rather than turning physically impossible model output into Hava81 guidance. If every in-window value is invalid, that signal remains unavailable.
 - Optional marine context now accepts only non-negative wave height, positive wave period and 0–360° wave direction. Invalid marine payloads retain the existing graceful degradation to air-only context; sea-surface temperature remains unrestricted by sign because sub-zero values can be physically valid.
 - API gates pass: 31/31 tests, type-check, build, production dependency audit 0 vulnerabilities and diff-check. Exact-head CI plus inactive-slot canary validation are required before production merge because this changes API normalization behavior.
+
+## 2026-08-29 20:58 TRT — air-quality physical-domain guard
+
+- Audited OpenWeather air-quality normalization after the current/forecast/context domain hardening and found pollutant concentration fields still accepted negative finite values even though they are surfaced as measured concentration context.
+- Changed all eight upstream pollutant concentration fields (CO, NO, NO₂, O₃, SO₂, PM2.5, PM10, NH₃) to fail closed on negative values rather than carrying physically impossible concentrations into Hava81 health-context presentation.
+- Added adapter regression coverage for every pollutant field. Local API gates pass: 32/32 tests, type-check, production build, production dependency audit 0 vulnerabilities, and diff-check.
+- This is prepared on an isolated branch while the modeled-context canary/CI sequence proceeds; it requires exact-head CI and the normal API canary gate before production merge.
