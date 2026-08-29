@@ -18,9 +18,9 @@ const marineSchema = z.object({
   current: z
     .object({
       time: z.string(),
-      wave_height: z.number().nullable().optional(),
-      wave_direction: z.number().nullable().optional(),
-      wave_period: z.number().nullable().optional(),
+      wave_height: z.number().nonnegative().nullable().optional(),
+      wave_direction: z.number().min(0).max(360).nullable().optional(),
+      wave_period: z.number().positive().nullable().optional(),
       sea_surface_temperature: z.number().nullable().optional(),
     })
     .optional(),
@@ -41,7 +41,7 @@ export const finiteMaxForWindow = (
   const start = now.getTime();
   const end = start + hours * 60 * 60_000;
   const filtered = (values ?? []).filter((value, index): value is number => {
-    if (typeof value !== 'number' || !Number.isFinite(value)) return false;
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return false;
     const time = parseGmtModelTime(times[index] ?? '');
     return Number.isFinite(time) && time >= start && time < end;
   });

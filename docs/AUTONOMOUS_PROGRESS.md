@@ -769,3 +769,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Restored the location action in the compact header while continuing to hide the map and compare header controls that already have mobile navigation alternatives.
 - Added a real-browser regression at the 390px mobile project and an additional 320px viewport assertion: the location action stays visible and the header does not horizontally overflow at either width.
 - Target browser test passes; type-check, lint, 81-city production build and diff-check pass. Exact-head CI remains required before merge.
+
+- Current worktree/branch at the 19:54 TRT checkpoint was `/home/ubuntu/hava81-auto-run11-persisted-cache-clock-1925`, `automation/hava81-run11-current-dates-1925`, based on main `56c9b175...`; that checkpoint queued production re-verification, #189 rebase/canary, and the current-date guard.
+
+## 2026-08-29 19:54 TRT — modeled context physical-domain guard
+
+- Audited the Open-Meteo context service because UV/pollen/dust and marine values feed user decisions but its provider schemas still accepted finite negative physical values and out-of-range wave direction.
+- Next-24-hour UV/dust/pollen maxima now ignore negative provider rows rather than turning physically impossible model output into Hava81 guidance. If every in-window value is invalid, that signal remains unavailable.
+- Optional marine context now accepts only non-negative wave height, positive wave period and 0–360° wave direction. Invalid marine payloads retain the existing graceful degradation to air-only context; sea-surface temperature remains unrestricted by sign because sub-zero values can be physically valid.
+- API gates pass: 31/31 tests, type-check, build, production dependency audit 0 vulnerabilities and diff-check. Exact-head CI plus inactive-slot canary validation are required before production merge because this changes API normalization behavior.
