@@ -96,7 +96,7 @@ describe('ComparePanel', () => {
     expect(screen.getByText(/en az iki şehri/i)).toBeVisible();
   });
 
-  it('loads decision metrics and a weather-criteria winner', async () => {
+  it('loads decision metrics and a weather-criteria winner from the primary forecast baseline', async () => {
     render(
       <SettingsProvider>
         <ComparePanel
@@ -116,10 +116,9 @@ describe('ComparePanel', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
     expect(api.getForecast).toHaveBeenCalledTimes(2);
-    expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
+    expect(api.getHourlyForecast).not.toHaveBeenCalled();
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
-
 
   it('clears stale city cards while a changed comparison is loading', async () => {
     const { rerender } = render(
@@ -154,7 +153,6 @@ describe('ComparePanel', () => {
     expect(screen.queryByRole('heading', { name: 'İstanbul' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'İzmir' })).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Yükleniyor...');
-
   });
 
   it('explains partial failures while keeping successful city results usable', async () => {
