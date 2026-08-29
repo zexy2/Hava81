@@ -14,10 +14,11 @@ export interface ForecastAtlasProps {
 }
 
 const LEGACY_HOUR_LIMIT = 12;
-const REAL_HOURLY_LIMIT = 24;
+const REAL_HOURLY_HORIZON = 24;
+const DISPLAY_INTERVAL_OPTIONS = [1, 3, 6] as const;
 const MIN_CHART_WIDTH = 320;
+const MIN_DISPLAY_COLUMN_WIDTH = 72;
 const CHART_COLUMN_UNITS = 100;
-const displayColumnWidth = (hours: number) => (hours <= 6 ? 56 : hours <= 12 ? 52 : 48);
 const CHART_HEIGHT = 104;
 const CHART_TOP = 16;
 const CHART_BOTTOM = 16;
@@ -27,7 +28,7 @@ const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
-  const [hourRange, setHourRange] = useState(REAL_HOURLY_LIMIT);
+  const [displayIntervalHours, setDisplayIntervalHours] = useState(1);
   const hourlyViewportRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
@@ -53,27 +54,29 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
-  const hourLimit =
-    intervalHours === 1
-      ? Math.min(hourRange, REAL_HOURLY_LIMIT, hourly.length)
-      : Math.min(LEGACY_HOUR_LIMIT, hourly.length);
+  const realHourlyHorizon = Math.min(REAL_HOURLY_HORIZON, hourly.length);
   const hourlyHeading =
     intervalHours === 1
       ? settings.language === 'en'
-        ? `Hourly forecast · next ${hourLimit} ${hourLimit === 1 ? 'hour' : 'hours'}`
-        : `Saatlik tahmin · sonraki ${hourLimit} saat`
+        ? `Hourly forecast · next ${realHourlyHorizon} ${realHourlyHorizon === 1 ? 'hour' : 'hours'}`
+        : `Saatlik tahmin · sonraki ${realHourlyHorizon} saat`
       : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 
-  const hourlyData = useMemo(
-    () =>
-      hourly.slice(0, hourLimit).map(hour => ({
-        ...hour,
-        timestamp: hour.time.getTime(),
-        convertedTemp: Math.round(convertTemperature(hour.temp)),
-        precipitation: normalizePrecipitationProbability(hour.pop),
-      })),
-    [convertTemperature, hourLimit, hourly]
-  );
+  const hourlyData = useMemo(() => {
+    const source =
+      intervalHours === 1
+        ? hourly
+            .slice(0, REAL_HOURLY_HORIZON)
+            .filter((_, index) => index % displayIntervalHours === 0)
+        : hourly.slice(0, LEGACY_HOUR_LIMIT);
+
+    return source.map(hour => ({
+      ...hour,
+      timestamp: hour.time.getTime(),
+      convertedTemp: Math.round(convertTemperature(hour.temp)),
+      precipitation: normalizePrecipitationProbability(hour.pop),
+    }));
+  }, [convertTemperature, displayIntervalHours, hourly, intervalHours]);
 
   const dailyData = useMemo(
     () =>
@@ -127,20 +130,19 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     return dayFormatter.format(date);
   };
 
-  const rangeOptions = useMemo(() => {
-    if (intervalHours !== 1 || hourly.length <= 1) return [];
-    const available = Math.min(REAL_HOURLY_LIMIT, hourly.length);
-    return Array.from(new Set([1, 6, 12, REAL_HOURLY_LIMIT, available]))
-      .filter(hours => hours <= available)
-      .sort((a, b) => a - b);
-  }, [hourly.length, intervalHours]);
-  const minDisplayColumnWidth = displayColumnWidth(hourLimit);
+  const intervalOptions = useMemo(
+    () =>
+      intervalHours === 1 && hourly.length > 1
+        ? DISPLAY_INTERVAL_OPTIONS.filter(hours => hours === 1 || hourly.length > hours)
+        : [],
+    [hourly.length, intervalHours]
+  );
   const trackWidth = `max(100%, ${Math.max(
     MIN_CHART_WIDTH,
-    hourlyData.length * minDisplayColumnWidth
+    hourlyData.length * MIN_DISPLAY_COLUMN_WIDTH
   )}px)`;
-  const selectHourRange = (hours: number) => {
-    setHourRange(hours);
+  const selectDisplayInterval = (hours: number) => {
+    setDisplayIntervalHours(hours);
     if (hourlyViewportRef.current) hourlyViewportRef.current.scrollLeft = 0;
   };
 
@@ -163,23 +165,23 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
             {hourlyHeading}
           </h3>
-          {rangeOptions.length > 1 ? (
+          {intervalOptions.length > 1 ? (
             <div
               className="hava81-forecast-atlas__range"
               role="group"
               aria-label={
-                settings.language === 'en' ? 'Hours to display' : 'Gösterilecek saat aralığı'
+                settings.language === 'en' ? 'Forecast interval' : 'Tahmin aralığı'
               }
             >
-              {rangeOptions.map(hours => (
+              {intervalOptions.map(hours => (
                   <button
                     key={hours}
                     type="button"
                     className="hava81-forecast-atlas__range-button"
-                    aria-pressed={hourLimit === hours}
-                    onClick={() => selectHourRange(hours)}
+                    aria-pressed={displayIntervalHours === hours}
+                    onClick={() => selectDisplayInterval(hours)}
                   >
-                    {settings.language === 'en' ? `${hours} ${hours === 1 ? 'hour' : 'hours'}` : `${hours} saat`}
+                    {settings.language === 'en' ? `${hours}-hour` : `${hours} saatlik`}
                   </button>
                 ))}
             </div>

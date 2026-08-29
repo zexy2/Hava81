@@ -72,72 +72,56 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     );
   });
 
-  it('describes and selects the actual available horizon when fewer than 24 hours are returned', () => {
+  it('keeps the available horizon while exposing 1h, 3h and 6h sampling intervals', () => {
     renderRangeAtlas(8);
 
     expect(
       screen.getByRole('heading', { name: /saatlik tahmin · sonraki 8 saat/i })
     ).toBeInTheDocument();
-    const range = screen.getByRole('group', { name: /gösterilecek saat aralığı/i });
-    expect(within(range).getByRole('button', { name: '8 saat' })).toHaveAttribute(
+    const interval = screen.getByRole('group', { name: /tahmin aralığı/i });
+    expect(within(interval).getByRole('button', { name: '1 saatlik' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
-    expect(within(range).getByRole('button', { name: '1 saat' })).toBeInTheDocument();
-    expect(within(range).queryByRole('button', { name: '12 saat' })).not.toBeInTheDocument();
-    expect(within(range).queryByRole('button', { name: '24 saat' })).not.toBeInTheDocument();
+    expect(within(interval).getByRole('button', { name: '3 saatlik' })).toBeInTheDocument();
+    expect(within(interval).getByRole('button', { name: '6 saatlik' })).toBeInTheDocument();
+    expect(within(interval).queryByRole('button', { name: '12 saat' })).not.toBeInTheDocument();
+    expect(within(interval).queryByRole('button', { name: '24 saat' })).not.toBeInTheDocument();
   });
 
-  it('lets users narrow the real-hourly display without changing forecast data', async () => {
+  it('changes sampling cadence without changing the 24-hour forecast horizon', async () => {
     const user = userEvent.setup();
     renderRangeAtlas();
 
-    const range = screen.getByRole('group', { name: /gösterilecek saat aralığı/i });
-    expect(within(range).getByRole('button', { name: '24 saat' })).toHaveAttribute(
+    const interval = screen.getByRole('group', { name: /tahmin aralığı/i });
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    expect(within(interval).getByRole('button', { name: '1 saatlik' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(within(region).getAllByRole('listitem')).toHaveLength(24);
+
+    await user.click(within(interval).getByRole('button', { name: '3 saatlik' }));
+    expect(within(interval).getByRole('button', { name: '3 saatlik' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
     expect(
-      within(screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i })).getAllByRole(
-        'listitem'
-      )
-    ).toHaveLength(24);
-
-    await user.click(within(range).getByRole('button', { name: '6 saat' }));
-
-    expect(within(range).getByRole('button', { name: '6 saat' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    expect(
-      screen.getByRole('heading', { name: /saatlik tahmin · sonraki 6 saat/i })
+      screen.getByRole('heading', { name: /saatlik tahmin · sonraki 24 saat/i })
     ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i })).getAllByRole(
-        'listitem'
-      )
-    ).toHaveLength(6);
+    expect(within(region).getAllByRole('listitem')).toHaveLength(8);
+    expect(within(region).getAllByRole('listitem').map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])).toEqual([
+      '00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00',
+    ]);
 
-    await user.click(within(range).getByRole('button', { name: '1 saat' }));
-
-    expect(within(range).getByRole('button', { name: '1 saat' })).toHaveAttribute(
+    await user.click(within(interval).getByRole('button', { name: '6 saatlik' }));
+    expect(within(interval).getByRole('button', { name: '6 saatlik' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
-    expect(
-      screen.getByRole('heading', { name: /saatlik tahmin · sonraki 1 saat/i })
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i })).getAllByRole(
-        'listitem'
-      )
-    ).toHaveLength(1);
-
-    await user.click(within(range).getByRole('button', { name: '12 saat' }));
-    expect(
-      within(screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i })).getAllByRole(
-        'listitem'
-      )
-    ).toHaveLength(12);
+    expect(within(region).getAllByRole('listitem')).toHaveLength(4);
+    expect(within(region).getAllByRole('listitem').map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])).toEqual([
+      '00:00', '06:00', '12:00', '18:00',
+    ]);
   });
 });
