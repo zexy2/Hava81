@@ -1,6 +1,8 @@
 import type { BestWindowRange, ScoredWeatherWindow } from "./types";
 
 const DEFAULT_TOLERANCE = 3;
+const DEFAULT_MAX_RANGE_HOURS = 4;
+const HOUR_MS = 60 * 60 * 1000;
 
 const median = (values: number[]) => {
   if (!values.length) return 60 * 60 * 1000;
@@ -29,22 +31,40 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   const maxAdjacentGapMs = cadenceMs * 1.6;
   const floor = peak.score - Math.max(0, tolerance);
 
+  const maxRangeMs = DEFAULT_MAX_RANGE_HOURS * HOUR_MS;
   let startIndex = peakIndex;
-  while (startIndex > 0) {
-    const current = ordered[startIndex];
-    const previous = ordered[startIndex - 1];
-    const gap = current.time.getTime() - previous.time.getTime();
-    if (previous.score < floor || gap > maxAdjacentGapMs) break;
-    startIndex -= 1;
-  }
-
   let endIndex = peakIndex;
-  while (endIndex < ordered.length - 1) {
-    const current = ordered[endIndex];
-    const next = ordered[endIndex + 1];
-    const gap = next.time.getTime() - current.time.getTime();
-    if (next.score < floor || gap > maxAdjacentGapMs) break;
-    endIndex += 1;
+
+  // A mathematically near-flat 12-hour period should not become an unhelpful 10–12 hour
+  // recommendation. Grow around the peak while the neighboring point is still near-best,
+  // contiguous, and keeps the user-facing interval within a practical four-hour span.
+  while (true) {
+    const left = startIndex > 0 ? ordered[startIndex - 1] : undefined;
+    const right = endIndex < ordered.length - 1 ? ordered[endIndex + 1] : undefined;
+    const leftGap = left ? ordered[startIndex].time.getTime() - left.time.getTime() : Number.POSITIVE_INFINITY;
+    const rightGap = right ? right.time.getTime() - ordered[endIndex].time.getTime() : Number.POSITIVE_INFINITY;
+    const canTakeLeft = Boolean(
+      left &&
+        left.score >= floor &&
+        leftGap <= maxAdjacentGapMs &&
+        ordered[endIndex].time.getTime() - left.time.getTime() <= maxRangeMs
+    );
+    const canTakeRight = Boolean(
+      right &&
+        right.score >= floor &&
+        rightGap <= maxAdjacentGapMs &&
+        right.time.getTime() - ordered[startIndex].time.getTime() <= maxRangeMs
+    );
+
+    if (!canTakeLeft && !canTakeRight) break;
+    if (canTakeLeft && canTakeRight) {
+      if ((right?.score ?? -1) > (left?.score ?? -1)) endIndex += 1;
+      else startIndex -= 1;
+    } else if (canTakeLeft) {
+      startIndex -= 1;
+    } else {
+      endIndex += 1;
+    }
   }
 
   return {

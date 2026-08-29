@@ -45,4 +45,27 @@ describe('findBestWindowRange', () => {
     expect(range?.start.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
     expect(range?.end.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
   });
+
+  it('caps a long flat near-best period to a practical four-hour recommendation', () => {
+    const range = findBestWindowRange([
+      slot(17, 97),
+      slot(18, 97),
+      slot(19, 97),
+      slot(20, 97),
+      slot(21, 97),
+      slot(22, 97),
+      slot(23, 97),
+    ]);
+
+    expect(range?.peak.time.toISOString()).toBe('2026-08-29T17:00:00.000Z');
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T17:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T21:00:00.000Z');
+  });
+
+  it('chooses the stronger side of a peak when three-hour cadence cannot fit both neighbors', () => {
+    const range = findBestWindowRange([slot(12, 94), slot(15, 96), slot(18, 95)]);
+
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T18:00:00.000Z');
+  });
 });
