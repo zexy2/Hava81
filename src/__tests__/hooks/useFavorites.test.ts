@@ -38,6 +38,25 @@ describe('useFavorites', () => {
     expect(result.current.favorites).toEqual([]);
   });
 
+  it('writes favorites with canonical province identity and coordinates', () => {
+    const { result } = renderHook(() => useFavorites(weatherFor('Istanbul')));
+
+    act(() => result.current.addFavorite());
+
+    expect(result.current.favorites).toEqual([
+      { name: 'İstanbul', lat: 41.01, lon: 28.97, temp: 20, icon: '01d' },
+    ]);
+  });
+
+  it('does not write an unsupported provider city as a favorite', () => {
+    const { result } = renderHook(() => useFavorites(weatherFor('Atlantis')));
+
+    act(() => result.current.addFavorite());
+
+    expect(result.current.favorites).toEqual([]);
+    expect(JSON.parse(localStorage.getItem('favorites') ?? '[]')).toEqual([]);
+  });
+
   it('sanitizes malformed, duplicate and unsupported persisted favorites', () => {
     localStorage.setItem(
       'favorites',
