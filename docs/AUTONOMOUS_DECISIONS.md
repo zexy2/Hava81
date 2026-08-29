@@ -279,3 +279,6 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-29 — API traffic switching is fail-closed: preflight the requested slot with repeated bounded readiness checks before changing nginx; if nginx validation/reload or repeated public readiness fails, restore the exact saved configuration. Do not update current/previous slot markers until the public endpoint is healthy on the new target.
+
+
+- 2026-08-29 — Treat the browser BFF boundary as untrusted even when the server already validates its upstream provider. Current-weather client revival rejects non-finite numeric data and impossible unit-independent domains before rendering/scoring; do not impose Celsius bounds at this boundary because current-weather requests may use metric, imperial or standard units.
