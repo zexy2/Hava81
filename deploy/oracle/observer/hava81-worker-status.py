@@ -11,6 +11,11 @@ gh = s.get('github', {})
 sig = s.get('signals', {})
 print(f"collected_at: {s.get('collected_at')}")
 print(f"production: {'HEALTHY' if prod.get('healthy') else 'UNHEALTHY'} issues={prod.get('issues', [])}")
+host = s.get('host', {})
+disk = host.get('disk') or {}
+free_bytes = disk.get('free_bytes')
+free_gib = round(free_bytes / (1024 ** 3), 1) if isinstance(free_bytes, (int, float)) else None
+print(f"host_disk: ok={disk.get('ok')} used_pct={disk.get('used_percent')} free_gib={free_gib}")
 print(f"nginx_api_port: {(prod.get('nginx') or {}).get('port')} expected={(prod.get('nginx') or {}).get('expected')}")
 ready = prod.get('api_ready') or {}
 print(f"api_ready: http={ready.get('status')} reported={ready.get('reported_status')} age_s={ready.get('age_seconds')} cache={ready.get('cache_control')} provider={ready.get('provider')} circuit={ready.get('provider_state')}")
