@@ -20,6 +20,8 @@ describe('CityTabs', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /İstanbul/ })).toHaveAttribute('aria-current', 'page');
+    expect(
+      screen.getByRole('button', { name: 'İstanbul hava durumunu göster' })
+    ).toHaveAttribute('aria-current', 'page');
   });
 });
