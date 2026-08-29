@@ -73,6 +73,37 @@
   text-transform: uppercase;
 }
 
+.hava81-forecast-atlas__range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -8px 0 12px;
+}
+
+.hava81-forecast-atlas__range-button {
+  min-height: 44px;
+  border: 1px solid var(--forecast-line);
+  border-radius: 999px;
+  padding: 6px 11px;
+  color: var(--forecast-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hava81-forecast-atlas__range-button[aria-pressed='true'] {
+  border-color: var(--forecast-teal);
+  color: var(--forecast-ink);
+  background: color-mix(in srgb, var(--forecast-teal) 10%, transparent);
+}
+
+.hava81-forecast-atlas__range-button:focus-visible {
+  outline: 2px solid var(--forecast-teal);
+  outline-offset: 2px;
+}
+
 .hava81-forecast-atlas__source {
   margin: -8px 0 14px;
   color: var(--forecast-muted);
