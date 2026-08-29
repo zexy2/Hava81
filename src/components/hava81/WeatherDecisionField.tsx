@@ -73,6 +73,22 @@ export function WeatherDecisionField({
 
   const formatTemperature = (temperature: number): string =>
     `${numberFormatter.format(Math.round(convertTemperature(temperature)))}${temperatureSymbol}`;
+  const formatDailyRange = (high: number, low: number): string => {
+    const convertedHigh = convertTemperature(high);
+    const convertedLow = convertTemperature(low);
+    const roundedHigh = Math.round(convertedHigh);
+    const roundedLow = Math.round(convertedLow);
+
+    if (roundedHigh !== roundedLow || convertedHigh === convertedLow) {
+      return `${numberFormatter.format(roundedHigh)}${temperatureSymbol} / ${numberFormatter.format(roundedLow)}${temperatureSymbol}`;
+    }
+
+    const preciseFormatter = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+    return `${preciseFormatter.format(convertedHigh)}${temperatureSymbol} / ${preciseFormatter.format(convertedLow)}${temperatureSymbol}`;
+  };
 
   const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
@@ -106,23 +122,27 @@ export function WeatherDecisionField({
               amount: decision.amount.toFixed(1),
             })
           : t('hava81.decision.actions.rain', {
-              defaultValue: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
+              defaultValue:
+                '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
               time: decision.time ? formatForecastTime(decision.time) : '—',
               probability: Math.round((decision.value ?? 0) * 100),
             });
       case 'wind':
         return t('hava81.decision.actions.wind', {
-          defaultValue: 'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
+          defaultValue:
+            'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
           speed: (decision.value ?? 0).toFixed(1),
         });
       case 'heat':
         return t('hava81.decision.actions.heat', {
-          defaultValue: 'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
+          defaultValue:
+            'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
           temperature: Math.round(decision.value ?? 0),
         });
       case 'cold':
         return t('hava81.decision.actions.cold', {
-          defaultValue: 'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',
+          defaultValue:
+            'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',
           temperature: Math.round(decision.value ?? 0),
         });
       case 'air-quality':
@@ -177,19 +197,14 @@ export function WeatherDecisionField({
     Math.round(convertTemperature(weather.temperature))
   );
   const windSpeed = `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${windSpeedSymbol}`;
-  const airQualityLabelKey = airQuality
-    ? getOpenWeatherAqiLabelKey(airQuality.aqi)
-    : undefined;
+  const airQualityLabelKey = airQuality ? getOpenWeatherAqiLabelKey(airQuality.aqi) : undefined;
   const airQualityValue =
     airQuality && airQualityLabelKey
       ? `${numberFormatter.format(airQuality.aqi)}/5 · ${t(airQualityLabelKey)}`
       : t('hava81.decision.notAvailable', { defaultValue: '—' });
 
   return (
-    <section
-      className={`hava81-decision-field ${className}`.trim()}
-      aria-labelledby={headingId}
-    >
+    <section className={`hava81-decision-field ${className}`.trim()} aria-labelledby={headingId}>
       <header className="hava81-decision-field__identity">
         <div className="hava81-decision-field__city-row">
           <h1 id={headingId} className="hava81-decision-field__city">
@@ -272,11 +287,7 @@ export function WeatherDecisionField({
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
           <dt>{t('hava81.decision.highLow', { defaultValue: 'Bugünün yüksek / düşük' })}</dt>
-          <dd>
-            {todayDaily
-              ? `${formatTemperature(todayDaily.tempMax)} / ${formatTemperature(todayDaily.tempMin)}`
-              : '—'}
-          </dd>
+          <dd>{todayDaily ? formatDailyRange(todayDaily.tempMax, todayDaily.tempMin) : '—'}</dd>
         </div>
         <div className="hava81-decision-field__metric">
           <dt>{t('weather.humidity')}</dt>
