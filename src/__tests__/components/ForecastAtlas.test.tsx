@@ -124,6 +124,36 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       '00:00', '06:00', '12:00', '18:00',
     ]);
   });
+  it('shows one daily temperature when rounded high and low are identical', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00.000Z'),
+              tempMin: 24.4,
+              tempMax: 24.49,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+            },
+          ]}
+          hourly={[]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const temperature = screen.getByRole('group', { name: /günlük sıcaklık 24°C/i });
+    expect(temperature).toHaveTextContent('24°');
+    expect(temperature).not.toHaveTextContent('/');
+  });
+
   it('marks the local day change without repeating a date on every hourly card', async () => {
     const user = userEvent.setup();
     render(

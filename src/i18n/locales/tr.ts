@@ -109,6 +109,7 @@ export const tr = {
       noHourlyPrecipitation: '{{time}} saatinde yağış beklenmiyor.',
       noDailyPrecipitation: '{{day}} için yağış beklenmiyor.',
       dailyRange: 'Yüksek {{high}}{{unit}}, düşük {{low}}{{unit}}',
+      dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
     compare: {
       action: 'Karşılaştır',

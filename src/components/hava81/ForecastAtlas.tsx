@@ -395,15 +395,26 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   <span
                     className="hava81-forecast-atlas__day-temperatures"
                     role="group"
-                    aria-label={t('hava81.forecastAtlas.dailyRange', {
-                      high: day.convertedMax,
-                      low: day.convertedMin,
-                      unit: temperatureSymbol,
-                    })}
+                    aria-label={
+                      day.convertedMax === day.convertedMin
+                        ? t('hava81.forecastAtlas.dailySingleTemperature', {
+                            value: day.convertedMax,
+                            unit: temperatureSymbol,
+                          })
+                        : t('hava81.forecastAtlas.dailyRange', {
+                            high: day.convertedMax,
+                            low: day.convertedMin,
+                            unit: temperatureSymbol,
+                          })
+                    }
                   >
                     <strong>{day.convertedMax}°</strong>
-                    <span aria-hidden="true">/</span>
-                    <span>{day.convertedMin}°</span>
+                    {day.convertedMax !== day.convertedMin ? (
+                      <>
+                        <span aria-hidden="true">/</span>
+                        <span>{day.convertedMin}°</span>
+                      </>
+                    ) : null}
                   </span>
                 </li>
               );
