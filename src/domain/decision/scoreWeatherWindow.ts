@@ -22,7 +22,9 @@ export interface ScoreWeatherWindowInput {
 }
 
 export const getScoreBand = (score: number): Hava81ScoreBand => {
-  if (score >= 90) return "excellent";
+  // Reserve the top label for genuinely near-ideal windows; 90–96 is still good weather,
+  // but calling the whole range “excellent” makes normal hourly variation disappear.
+  if (score >= 97) return "excellent";
   if (score >= 75) return "good";
   if (score >= 55) return "caution";
   return "difficult";
@@ -100,7 +102,10 @@ const precipitationPenalty = (probability: number, amount?: number) => {
   const pop = clamp(probability, 0, 1);
   if (!Number.isFinite(amount)) return 28 * smoothstep(pop, 0.12, 0.9);
   const mm = Math.max(0, amount as number);
-  const chancePart = 8 * smoothstep(pop, 0.1, 0.85);
+  // A zero measured amount does not mean a moderate forecast probability is irrelevant.
+  // Give probability enough weight to distinguish a dry-looking 15% hour from a 35–50%
+  // “may rain” hour, while measured accumulation still carries the larger penalty.
+  const chancePart = 20 * smoothstep(pop, 0.12, 0.75);
   const amountPart = 30 * smoothstep(mm, 0.2, 6) * (0.55 + 0.45 * pop);
   return Math.min(38, chancePart + amountPart);
 };
@@ -213,6 +218,10 @@ export const scoreWeatherWindow = ({
   if (windSpeed >= 20 || (windGust ?? 0) >= 25) score = Math.min(score, 30);
   if ((airQualityIndex ?? 0) >= 5) score = Math.min(score, 45);
   if (severe >= 28) score = Math.min(score, 25);
+
+  // A named material risk and the “very suitable” label should never coexist. The score
+  // remains continuous, but the top band is reserved for windows with no surfaced warning.
+  if (reasons.length > 0) score = Math.min(score, 96);
 
   return {
     time,

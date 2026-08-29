@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
@@ -58,6 +58,32 @@ describe('DailyPlanPanel sharing', () => {
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);
 
     expect(screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })).toBeInTheDocument();
+  });
+
+  it('shows the same 12-hour horizon that the score evaluates without repeating band copy in every slot', () => {
+    const richHourly: HourlyForecast[] = Array.from({ length: 12 }, (_, index) => ({
+      time: new Date(Date.parse('2026-08-28T18:00:00.000Z') + index * 60 * 60 * 1000),
+      temp: 24,
+      pop: index === 4 ? 0.35 : 0.1,
+      precipitationMm: 0,
+      windSpeed: 3,
+      windGust: 5,
+      apparentTemperature: 24,
+      humidity: 45,
+      uvIndex: 0,
+      visibility: 20000,
+      weatherCode: 0,
+      icon: '01n',
+      description: 'açık',
+    }));
+
+    render(<DailyPlanPanel weather={weather} hourly={richHourly} />);
+
+    const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    expect(within(timeline).getAllByRole('listitem')).toHaveLength(12);
+    expect(within(timeline).queryByText('hava81.dailyPlan.bands.excellent')).not.toBeInTheDocument();
+    expect(within(timeline).getByText('hava81.dailyPlan.reasons.rainRisk')).toBeInTheDocument();
+    expect(within(timeline).getAllByText('hava81.dailyPlan.tomorrow')).toHaveLength(1);
   });
 
   it('announces clipboard success without moving focus', async () => {

@@ -167,6 +167,25 @@ describe('activity plans', () => {
     expect(filtered.bestWindow).toBeUndefined();
   });
 
+  it('does not promote an activity window with a surfaced weather risk into the excellent band', () => {
+    const points = hourly([20, 20, 20], [0.25, 0.25, 0.25], [3, 3, 3]).map(point => ({
+      ...point,
+      precipitationMm: 0,
+      apparentTemperature: 20,
+      humidity: 50,
+      windGust: 5,
+      uvIndex: 0,
+      visibility: 20000,
+      weatherCode: 2,
+    }));
+    const walk = buildActivityPlan({ activity: 'walk', weather, hourly: points });
+
+    expect(walk.reasons).toContain('rain-risk');
+    expect(walk.score).toBeLessThanOrEqual(96);
+    expect(walk.band).toBe('good');
+    expect(walk.slots.every(slot => slot.band !== 'excellent')).toBe(true);
+  });
+
   it('does not let ideal activity comfort erase unrelated air-quality risk', () => {
     const points = hourly([20, 20, 20]);
     const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40 };

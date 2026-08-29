@@ -169,6 +169,37 @@ test('core city experience renders and uses a shareable city URL', async ({ page
 });
 
 
+test('daily plan timeline matches its 12-hour score horizon and shows risk-first slot copy', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser daily-plan coverage');
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({
+      json: {
+        ...hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          ...hourlyForecast.hourly[index],
+          time: new Date(Date.parse('2026-08-28T18:00:00.000Z') + index * 60 * 60_000).toISOString(),
+          pop: index === 4 ? 45 : 10,
+          precipitationMm: 0,
+          windGust: 5,
+          apparentTemperature: 24,
+          humidity: 50,
+          uvIndex: 0,
+          visibility: 20000,
+          weatherCode: 2,
+        })),
+      },
+    })
+  );
+
+  await page.goto('/istanbul');
+  const timeline = page.getByRole('list', { name: 'Günün hava uygunluk zaman çizelgesi' });
+  await expect(timeline.locator('.daily-plan__slot')).toHaveCount(12);
+  await expect(timeline).not.toContainText('Çok uygun');
+  await expect(timeline.getByText('Yağış ihtimali var')).toBeVisible();
+  await expect(timeline.getByText('Yarın')).toHaveCount(1);
+});
+
 test('hourly interval controls resample the same 24-hour forecast', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');

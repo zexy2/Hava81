@@ -95,6 +95,19 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       : `${formatTime(plan.bestWindowRange.start.time)}–${formatTime(plan.bestWindowRange.end.time)}`
     : undefined;
 
+  // Keep the visible timeline aligned with the same 12-hour horizon used by the score.
+  // A fixed six-point slice meant six hours with rich hourly data but eighteen hours with
+  // the three-hour fallback, which made the explanation visually inconsistent.
+  const timelineSlots = useMemo(() => {
+    const first = plan.slots[0];
+    if (!first) return [];
+    const end = first.time.getTime() + 12 * 60 * 60 * 1000;
+    return plan.slots.filter(slot => slot.time.getTime() < end);
+  }, [plan.slots]);
+
+  const localDateKey = (date: Date) =>
+    new Date(date.getTime() + timezoneOffsetMs).toISOString().slice(0, 10);
+
   const shareDecision = async () => {
     const payload = buildDecisionShare({
       cityName: weather.cityName,
@@ -210,28 +223,38 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         role="list"
         aria-label={t('hava81.dailyPlan.timelineLabel')}
       >
-        {plan.slots.slice(0, 6).map(slot => (
-          <div
-            className={`daily-plan__slot daily-plan__slot--${slot.band}`}
-            key={slot.time.toISOString()}
-            role="listitem"
-          >
-            <time dateTime={slot.time.toISOString()}>{formatTime(slot.time)}</time>
-            <strong>{slot.score}</strong>
-            <span>{t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`)}</span>
-            <small>
-              {Math.round(slot.temperature)}°
-              {Math.round(slot.precipitationProbability * 100) > 0
-                ? ` · %${Math.round(slot.precipitationProbability * 100)}`
-                : ''}
-            </small>
-            {slot.reasons[0] ? (
-              <em>{t(`hava81.dailyPlan.reasons.${reasonKey[slot.reasons[0]]}`)}</em>
-            ) : (
-              <em>{t('hava81.dailyPlan.reasons.clear')}</em>
-            )}
-          </div>
-        ))}
+        {timelineSlots.map((slot, index) => {
+          const previous = timelineSlots[index - 1];
+          const isDayBoundary = Boolean(
+            previous && localDateKey(previous.time) !== localDateKey(slot.time)
+          );
+          const primaryReason = slot.reasons[0];
+          return (
+            <div
+              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}`}
+              key={slot.time.toISOString()}
+              role="listitem"
+              aria-label={`${formatTime(slot.time)}, ${slot.score}/100, ${t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`)}`}
+            >
+              <time dateTime={slot.time.toISOString()}>
+                {isDayBoundary ? (
+                  <span className="daily-plan__slot-day">{t('hava81.dailyPlan.tomorrow')}</span>
+                ) : null}
+                <span>{formatTime(slot.time)}</span>
+              </time>
+              <strong>{slot.score}</strong>
+              {primaryReason ? (
+                <em>{t(`hava81.dailyPlan.reasons.${reasonKey[primaryReason]}`)}</em>
+              ) : null}
+              <small>
+                {Math.round(slot.temperature)}°
+                {Math.round(slot.precipitationProbability * 100) > 0
+                  ? ` · %${Math.round(slot.precipitationProbability * 100)}`
+                  : ''}
+              </small>
+            </div>
+          );
+        })}
       </div>
 
       <p className="daily-plan__note">{t('hava81.dailyPlan.note')}</p>
