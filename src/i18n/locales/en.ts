@@ -66,7 +66,7 @@ export const en = {
     systemStatus: 'Hava81 · System status',
     cityDocumentTitle: '{{city}} weather — Hava81',
     loadingWeather: 'Preparing weather data',
-    serverWaking: 'The server is waking up; the first load may take 30–60 seconds.',
+    slowLoading: 'Weather data is taking longer than usual; the connection or data provider may be delayed.',
     mapEyebrow: '81 provinces · Station map',
     emptyEyebrow: 'Hava81 · 81 provinces',
     decision: {

@@ -472,7 +472,7 @@ const App: React.FC = () => {
             {isLoading && !weather && (
               <AtlasLoadingState
                 label={t('hava81.loadingWeather')}
-                slowMessage={isSlowLoading ? t('hava81.serverWaking') : undefined}
+                slowMessage={isSlowLoading ? t('hava81.slowLoading') : undefined}
               />
             )}
 

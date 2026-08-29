@@ -543,3 +543,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added `role="group"` and regression coverage requiring the localized explanation label to be exposed as the group's accessible name. Weather data, scoring, copy and visual styling are unchanged.
 - Validation on main `4663ee5e`: focused DailyPlanPanel 2/2, lint, type-check, full frontend suite 134/134, production build with all 81 city pages, production dependency audit 0 vulnerabilities, full Playwright smoke 21 applicable passed / 30 intentional viewport skips, and `git diff --check` clean.
 - Operationally, production readiness was rechecked directly and remained ready with the OpenWeather circuit closed on the intended 4002 topology. Root disk remained under pressure at that checkpoint; the later CI-determinism checkpoint records the subsequent safe disk recovery.
+
+## 2026-08-29 02:55 TRT — slow-loading copy reflects observable state
+
+- Audited the initial city loading state and found that a request lasting only three seconds was labeled as a server wake-up that could take 30–60 seconds.
+- The production Oracle API is operated as an always-on service, and a slow request can also come from network or upstream-provider latency; the UI cannot truthfully diagnose a wake-up from elapsed time alone.
+- Renamed the translation contract from `serverWaking` to `slowLoading` and replaced the claim with neutral Turkish/English copy stating only that weather data is taking longer than usual and that connection/provider delay may be involved.
+- No timeout, retry, provider, score, or weather semantics changed. Validation: lint, type-check, App integration 6/6, production build with all 81 city pages, production dependency audit 0 vulnerabilities, and `git diff --check`.
