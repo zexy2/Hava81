@@ -4,6 +4,7 @@
  */
 
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
+import i18n from '../i18n';
 
 interface Props {
   children: ReactNode;
@@ -58,14 +59,14 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="error-boundary" role="alert">
           <div className="error-boundary__content">
-            <h2>Bir şeyler yanlış gitti</h2>
-            <p>Uygulama beklenmeyen bir hatayla karşılaştı.</p>
+            <h2>{i18n.t('errors.genericError')}</h2>
+            <p>{i18n.t('errors.unexpectedError')}</p>
             <button
               type="button"
               className="error-boundary__button"
               onClick={this.handleReset}
             >
-              Tekrar Dene
+              {i18n.t('common.retry')}
             </button>
           </div>
         </div>

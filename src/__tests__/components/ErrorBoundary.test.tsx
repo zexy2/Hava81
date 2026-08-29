@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from '../../i18n';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 const ThrowingChild = () => {
@@ -7,7 +8,8 @@ const ThrowingChild = () => {
 };
 
 describe('ErrorBoundary', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('tr');
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
@@ -22,8 +24,24 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Bir şeyler yanlış gitti');
+    expect(screen.getByRole('alert')).toHaveTextContent('Bir şeyler ters gitti');
+    expect(screen.getByRole('alert')).toHaveTextContent('Uygulama beklenmeyen bir hatayla karşılaştı.');
     expect(screen.queryByText('secret implementation detail')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tekrar Dene' })).toHaveAttribute('type', 'button');
   });
+
+  it('uses the active English language for the default recovery screen', async () => {
+    await i18n.changeLanguage('en');
+
+    render(
+      <ErrorBoundary>
+        <ThrowingChild />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong');
+    expect(screen.getByRole('alert')).toHaveTextContent('The app encountered an unexpected error.');
+    expect(screen.getByRole('button', { name: 'Try Again' })).toHaveAttribute('type', 'button');
+  });
+
 });
