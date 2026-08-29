@@ -3,6 +3,7 @@ import { normalizePrecipitationProbability } from '../../utils/precipitation';
 describe('normalizePrecipitationProbability', () => {
   it.each([
     [0.25, 0.25],
+    [1, 0.01],
     [25, 0.25],
     [0, 0],
     [100, 1],
