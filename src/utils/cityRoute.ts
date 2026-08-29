@@ -38,8 +38,6 @@ export const cityFromPathname = (pathname: string): TurkishCity | undefined => {
 };
 
 export const cityPath = (name: string): string | null => {
-  const city = TURKISH_CITIES.find(
-    candidate => candidate.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR')
-  );
+  const city = cityBySlug.get(citySlug(name));
   return city ? `/${citySlug(city.name)}/` : null;
 };
