@@ -72,6 +72,85 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     );
   });
 
+  it('keeps hourly rain amount visible even when probability rounds to zero', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T00:00:00Z'),
+              temp: 22,
+              icon: '10n',
+              description: 'hafif yağmur',
+              pop: 0,
+              precipitationMm: 0.4,
+              windSpeed: 2,
+            },
+            {
+              time: new Date('2026-08-29T01:00:00Z'),
+              temp: 22,
+              icon: '10n',
+              description: 'hafif yağmur',
+              pop: 0.35,
+              precipitationMm: 0.8,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    const hours = within(region).getAllByRole('listitem');
+    expect(hours[0]).toHaveTextContent('0,4 mm');
+    expect(hours[0]).not.toHaveTextContent('0%');
+    expect(within(hours[0]).queryByText(/yağış beklenmiyor/i)).not.toBeInTheDocument();
+    expect(hours[1]).toHaveTextContent('35% · 0,8 mm');
+    expect(
+      within(hours[1]).getByRole('group', {
+        name: /yağış olasılığı %35; saatlik miktar 0,8 mm/i,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('shows trace hourly accumulation without pretending it is zero rain', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T00:00:00Z'),
+              temp: 22,
+              icon: '09n',
+              description: 'çiseleme',
+              pop: 0.01,
+              precipitationMm: 0.04,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    expect(within(region).getByText('<0,1 mm')).toBeInTheDocument();
+    expect(within(region).getByText('1%')).toBeInTheDocument();
+  });
+
   it('keeps the available horizon while exposing 1h, 3h and 6h sampling intervals', () => {
     renderRangeAtlas(8);
 
@@ -110,9 +189,11 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       screen.getByRole('heading', { name: /saatlik tahmin · sonraki 24 saat/i })
     ).toBeInTheDocument();
     expect(within(region).getAllByRole('listitem')).toHaveLength(8);
-    expect(within(region).getAllByRole('listitem').map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])).toEqual([
-      '00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00',
-    ]);
+    expect(
+      within(region)
+        .getAllByRole('listitem')
+        .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
+    ).toEqual(['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00']);
 
     await user.click(within(interval).getByRole('button', { name: '6 saatlik' }));
     expect(within(interval).getByRole('button', { name: '6 saatlik' })).toHaveAttribute(
@@ -120,9 +201,11 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       'true'
     );
     expect(within(region).getAllByRole('listitem')).toHaveLength(4);
-    expect(within(region).getAllByRole('listitem').map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])).toEqual([
-      '00:00', '06:00', '12:00', '18:00',
-    ]);
+    expect(
+      within(region)
+        .getAllByRole('listitem')
+        .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
+    ).toEqual(['00:00', '06:00', '12:00', '18:00']);
   });
   it('shows one daily temperature when rounded high and low are identical', () => {
     render(
@@ -194,5 +277,4 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(boundaryFor()).toHaveLength(1);
     expect(boundaryFor()[0].closest('li')).toHaveTextContent('02:00');
   });
-
 });

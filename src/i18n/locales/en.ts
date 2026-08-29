@@ -66,7 +66,8 @@ export const en = {
     systemStatus: 'Hava81 · System status',
     cityDocumentTitle: '{{city}} weather — Hava81',
     loadingWeather: 'Preparing weather data',
-    slowLoading: 'Weather data is taking longer than usual; the connection or data provider may be delayed.',
+    slowLoading:
+      'Weather data is taking longer than usual; the connection or data provider may be delayed.',
     mapEyebrow: 'Türkiye · Province map',
     emptyEyebrow: 'Hava81 · 81 provinces',
     decision: {
@@ -106,6 +107,9 @@ export const en = {
       hourlyRegion: 'Scrollable hourly forecast chart and values',
       chartSummary: 'Hourly temperature ranges from {{min}}{{unit}} to {{max}}{{unit}}.',
       precipitationAt: 'Precipitation chance is {{percent}} percent at {{time}}.',
+      precipitationAtWithAmount:
+        'Precipitation chance is {{percent}} percent at {{time}}; hourly amount is {{amount}}.',
+      hourlyPrecipitationWithAmount: 'Precipitation chance {{percent}}%; hourly amount {{amount}}',
       noHourlyPrecipitation: 'No precipitation is expected at {{time}}.',
       noDailyPrecipitation: 'No precipitation is expected for {{day}}.',
       dailyRange: 'High {{high}}{{unit}}, low {{low}}{{unit}}',
@@ -233,8 +237,10 @@ export const en = {
         'wind-caution': 'Wind is worth accounting for in either the departure or return window.',
         'temperature-drop': 'It will be about {{value}}° cooler when you return.',
         'temperature-rise': 'It will be about {{value}}° warmer when you return.',
-        'comfort-worsens': 'The return Hava81 score is about {{value}} points lower; plan for the return conditions.',
-        'comfort-improves': 'The return Hava81 score is about {{value}} points higher; conditions look more comfortable.',
+        'comfort-worsens':
+          'The return Hava81 score is about {{value}} points lower; plan for the return conditions.',
+        'comfort-improves':
+          'The return Hava81 score is about {{value}} points higher; conditions look more comfortable.',
         stable: 'No material weather deterioration appears between leaving and returning.',
       },
       windowsLabel: 'Departure and return weather windows',

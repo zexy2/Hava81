@@ -41,6 +41,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
     [locale]
   );
+  const precipitationFormatter = useMemo(
+    () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [locale]
+  );
   const dayFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {
@@ -51,6 +55,12 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       }),
     [locale]
   );
+  const formatPrecipitationAmount = (amount?: number): string | null => {
+    if (!Number.isFinite(amount) || (amount ?? 0) <= 0) return null;
+    return (amount as number) < 0.1
+      ? `<${precipitationFormatter.format(0.1)} mm`
+      : `${precipitationFormatter.format(amount as number)} mm`;
+  };
   const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
@@ -112,7 +122,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     const path = points
       .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
       .join(' ');
-    const firstPrecipitation = points.find(point => point.precipitation >= PRECIPITATION_THRESHOLD);
+    const firstPrecipitation = points.find(
+      point =>
+        point.precipitation >= PRECIPITATION_THRESHOLD ||
+        (Number.isFinite(point.precipitationMm) && (point.precipitationMm ?? 0) >= 0.2)
+    );
 
     return { columnWidth, firstPrecipitation, max, min, path, points, width };
   }, [hourlyData]);
@@ -169,21 +183,19 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
             <div
               className="hava81-forecast-atlas__range"
               role="group"
-              aria-label={
-                settings.language === 'en' ? 'Forecast interval' : 'Tahmin aralığı'
-              }
+              aria-label={settings.language === 'en' ? 'Forecast interval' : 'Tahmin aralığı'}
             >
               {intervalOptions.map(hours => (
-                  <button
-                    key={hours}
-                    type="button"
-                    className="hava81-forecast-atlas__range-button"
-                    aria-pressed={displayIntervalHours === hours}
-                    onClick={() => selectDisplayInterval(hours)}
-                  >
-                    {settings.language === 'en' ? `${hours}-hour` : `${hours} saatlik`}
-                  </button>
-                ))}
+                <button
+                  key={hours}
+                  type="button"
+                  className="hava81-forecast-atlas__range-button"
+                  aria-pressed={displayIntervalHours === hours}
+                  onClick={() => selectDisplayInterval(hours)}
+                >
+                  {settings.language === 'en' ? `${hours}-hour` : `${hours} saatlik`}
+                </button>
+              ))}
             </div>
           ) : null}
           {intervalHours === 1 && meta?.provider ? (
@@ -216,10 +228,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
             aria-label={t('hava81.forecastAtlas.hourlyRegion')}
             tabIndex={0}
           >
-            <div
-              className="hava81-forecast-atlas__hourly-track"
-              style={{ width: trackWidth }}
-            >
+            <div className="hava81-forecast-atlas__hourly-track" style={{ width: trackWidth }}>
               {chart ? (
                 <svg
                   className="hava81-forecast-atlas__chart"
@@ -271,7 +280,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                               : 'middle'
                         }
                       >
-                        {Math.round(chart.firstPrecipitation.precipitation * 100)}%
+                        {Math.round(chart.firstPrecipitation.precipitation * 100) > 0
+                          ? `${Math.round(chart.firstPrecipitation.precipitation * 100)}%`
+                          : formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm)}
                       </text>
                     </g>
                   ) : null}
@@ -280,10 +291,16 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
               {chart?.firstPrecipitation ? (
                 <span className="hava81-forecast-atlas__sr-only">
-                  {t('hava81.forecastAtlas.precipitationAt', {
-                    time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
-                    percent: Math.round(chart.firstPrecipitation.precipitation * 100),
-                  })}
+                  {formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm)
+                    ? t('hava81.forecastAtlas.precipitationAtWithAmount', {
+                        time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
+                        percent: Math.round(chart.firstPrecipitation.precipitation * 100),
+                        amount: formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm),
+                      })
+                    : t('hava81.forecastAtlas.precipitationAt', {
+                        time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
+                        percent: Math.round(chart.firstPrecipitation.precipitation * 100),
+                      })}
                 </span>
               ) : null}
 
@@ -295,6 +312,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               >
                 {hourlyData.map((hour, index) => {
                   const precipitation = Math.round(hour.precipitation * 100);
+                  const precipitationAmount = formatPrecipitationAmount(hour.precipitationMm);
                   const localTime = atLocationTime(hour.time);
                   const previousLocalTime =
                     index > 0 ? atLocationTime(hourlyData[index - 1].time) : null;
@@ -325,17 +343,30 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                         className="hava81-forecast-atlas__hour-symbol"
                       />
                       <strong>{hour.convertedTemp}°</strong>
-                      {precipitation > 0 ? (
+                      {precipitation > 0 || precipitationAmount ? (
                         <span
                           className={
-                            precipitation >= PRECIPITATION_THRESHOLD * 100
+                            precipitation >= PRECIPITATION_THRESHOLD * 100 ||
+                            (Number.isFinite(hour.precipitationMm) &&
+                              (hour.precipitationMm ?? 0) >= 0.2)
                               ? 'hava81-forecast-atlas__hour-pop is-signal'
                               : 'hava81-forecast-atlas__hour-pop'
                           }
                           role="group"
-                          aria-label={`${t('weather.precipitation')}: ${precipitation}%`}
+                          aria-label={
+                            precipitationAmount
+                              ? t('hava81.forecastAtlas.hourlyPrecipitationWithAmount', {
+                                  percent: precipitation,
+                                  amount: precipitationAmount,
+                                })
+                              : `${t('weather.precipitation')}: ${precipitation}%`
+                          }
                         >
-                          {precipitation}%
+                          {precipitation > 0 ? <span>{precipitation}%</span> : null}
+                          {precipitation > 0 && precipitationAmount ? (
+                            <span aria-hidden="true"> · </span>
+                          ) : null}
+                          {precipitationAmount ? <span>{precipitationAmount}</span> : null}
                         </span>
                       ) : (
                         <span className="hava81-forecast-atlas__sr-only">
