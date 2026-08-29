@@ -203,6 +203,11 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                     </span>
                   </div>
                 ) : null}
+                <small className="activity-card__impact">
+                  {t('hava81.activities.score.activityImpact', {
+                    value: plan.activityImpact > 0 ? `+${plan.activityImpact}` : plan.activityImpact,
+                  })}
+                </small>
                 <small className="activity-card__criteria">
                   {t(`hava81.activities.criteria.${plan.activity}`)}
                 </small>

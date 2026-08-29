@@ -57,6 +57,7 @@ describe('ActivityPlanner time range', () => {
 
     expect(screen.getAllByText('18:00–20:00 uygunluğu').length).toBeGreaterThan(0);
     expect(screen.getByText(/Koşuda 10–22°C/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Aktivite ölçütlerinin etkisi: [+-]?\d+ puan/i).length).toBeGreaterThan(0);
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('20:00');
   });

@@ -42,6 +42,8 @@ describe('activity plans', () => {
     const run = buildActivityPlan({ activity: 'run', weather, hourly: points });
     const laundry = buildActivityPlan({ activity: 'laundry', weather, hourly: points });
     expect(run.score).toBeLessThan(laundry.score);
+    expect(run.activityImpact).toBeLessThan(laundry.activityImpact);
+    expect(run.score).toBe(run.baselineScore + run.activityImpact);
   });
 
   it('penalizes wind and rain strongly for motorcycle', () => {

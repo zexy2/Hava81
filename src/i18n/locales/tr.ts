@@ -262,6 +262,7 @@ export const tr = {
         default: '12 saatlik uygunluk',
         filtered: '{{start}}–{{end}} uygunluğu',
         explanationTitle: 'Skorlar neden farklı?',
+        activityImpact: 'Aktivite ölçütlerinin etkisi: {{value}} puan',
         explanation:
           'Aynı hava saatleri her aktivitenin kendi eşik ve ağırlıklarıyla yeniden puanlanır. Örneğin koşu sıcaklık ve hava kalitesine yürüyüşten daha hassastır; piknik yağış ve rüzgârı, motosiklet ise yağış, rüzgâr ve görüşü daha ağır değerlendirir. Bu yüzden aynı saatte iki aktivitenin puanı farklı olabilir.',
       },
