@@ -805,3 +805,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Daily forecast cards no longer render duplicated values such as `24° / 24°` when high and low round to the same displayed temperature; they show a single temperature with a dedicated accessible label.
 - Distinct rounded extrema still keep the familiar high/low pair. Turkish and English labels were added explicitly rather than inferring meaning from punctuation.
 - Rebuilt this bounded change onto current main after the original PR became conflict-stale; focused and combined gates are rerun on the rebuilt exact head before merge.
+
+## 2026-08-29 late run — browser forecast coverage
+
+- Added browser coverage that explicitly waits for the lazy Forecast Atlas and verifies hourly, daily and scrollable forecast surfaces across mobile, tablet and desktop projects.
+- Refreshed E2E current/forecast fixture timestamps from fixed 28 August values to run-relative times so fallback forecast tests do not silently expire as wall-clock time advances.
+- The existing three-hour fallback contract remains asserted separately when the high-resolution hourly endpoint fails.
+- Full Playwright smoke after the change: 28 passed, 38 intentional project-specific skips; focused lazy/fallback matrix: 6/6 passed.
