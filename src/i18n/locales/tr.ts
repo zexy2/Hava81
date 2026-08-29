@@ -114,6 +114,9 @@ export const tr = {
       action: 'Karşılaştır',
       title: 'Şehir karşılaştırması',
       needTwo: 'Karşılaştırmak için en az iki şehri favorilere ekle.',
+      partialUnavailable:
+        'Bazı şehirlerin verisi güncellenemedi; kullanılabilir sonuçlar gösteriliyor.',
+      unavailable: 'Şehir karşılaştırması şu anda güncellenemedi.',
       winnerLabel: 'Bu hava kriterlerinde öne çıkan',
       winner: '{{city}} · Hava81 {{score}}/100',
       winnerNote:

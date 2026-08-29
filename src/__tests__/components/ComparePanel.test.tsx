@@ -119,4 +119,47 @@ describe('ComparePanel', () => {
     expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
+
+  it('explains partial failures while keeping successful city results usable', async () => {
+    api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
+      city === 'İzmir'
+        ? Promise.reject(new Error('SECRET_PROVIDER_FAILURE'))
+        : Promise.resolve(makeWeather(city, 24))
+    );
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getByText(/Bazı şehirlerin verisi güncellenemedi/i)).toBeVisible();
+    expect(screen.queryByText(/SECRET_PROVIDER_FAILURE/)).not.toBeInTheDocument();
+  });
+
+  it('shows a bounded unavailable state when every comparison city fails', async () => {
+    api.getCurrentWeather.mockRejectedValue(new Error('SECRET_TOTAL_FAILURE'));
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByText('Şehir karşılaştırması şu anda güncellenemedi.')).toBeVisible();
+    expect(screen.queryByText(/SECRET_TOTAL_FAILURE/)).not.toBeInTheDocument();
+  });
 });

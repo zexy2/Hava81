@@ -114,6 +114,8 @@ export const en = {
       action: 'Compare',
       title: 'City comparison',
       needTwo: 'Add at least two cities to favorites to compare them.',
+      partialUnavailable: 'Some city data could not update; available results are shown.',
+      unavailable: 'City comparison could not update right now.',
       winnerLabel: 'Leading under these weather criteria',
       winner: '{{city}} · Hava81 {{score}}/100',
       winnerNote:

@@ -229,3 +229,5 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-29 — named explanation groups
 
 - A visible explanatory cluster that has its own `aria-label` must expose a grouping semantic rather than attaching an inaccessible name to a generic container. Daily Plan's score explanation uses `role="group"`; no scoring or visual behavior changes.
+
+- 2026-08-29 — Multi-city comparison uses graceful partial availability: successful cities remain usable when another city fails, but the missing data must be explained. If every selected city fails, show a bounded localized unavailable state; never expose raw provider exceptions while explaining partial/total failure.
