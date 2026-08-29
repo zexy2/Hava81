@@ -87,6 +87,37 @@ test('context 24h maxima exclude past and beyond-window GMT model slots', () => 
   assert.equal(finiteMaxForWindow(times, [99, 4, 8, 77], now), 8);
 });
 
+test('context maxima ignore physically impossible negative modeled values', () => {
+  const now = new Date('2026-08-28T10:00:00Z');
+  const times = ['2026-08-28T11:00', '2026-08-28T12:00'];
+
+  assert.equal(finiteMaxForWindow(times, [-4, 6], now), 6);
+  assert.equal(finiteMaxForWindow(times, [-4, -1], now), undefined);
+});
+
+test('invalid marine physical domains fail closed to air-only context', async () => {
+  const invalidMarineFetch = (async (input: Parameters<typeof fetch>[0]) => {
+    if (String(input).includes('air-quality')) return fakeFetch(input);
+    return new Response(
+      JSON.stringify({
+        current_units: { wave_height: 'm', wave_direction: '°', wave_period: 's' },
+        current: {
+          time: '2026-08-28T03:30',
+          wave_height: -0.4,
+          wave_direction: 361,
+          wave_period: 0,
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } }
+    );
+  }) as typeof fetch;
+
+  const result = await new ContextSignalsService(invalidMarineFetch).get(38.42, 27.14, true);
+
+  assert.equal(result.marine, undefined);
+  assert.equal(result.uvIndexMax, 7);
+});
+
 
 test('context service supports customer-prefixed Open-Meteo hosts and API keys', async () => {
   const requested: URL[] = [];
