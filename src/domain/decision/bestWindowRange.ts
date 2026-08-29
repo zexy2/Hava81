@@ -30,6 +30,7 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   const cadenceMs = median(positiveGaps);
   const maxAdjacentGapMs = cadenceMs * 1.6;
   const floor = peak.score - Math.max(0, tolerance);
+  const isRiskCompatible = (candidate: T) => peak.reasons.length > 0 || candidate.reasons.length === 0;
 
   const maxRangeMs = DEFAULT_MAX_RANGE_HOURS * HOUR_MS;
   let startIndex = peakIndex;
@@ -46,12 +47,14 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
     const canTakeLeft = Boolean(
       left &&
         left.score >= floor &&
+        isRiskCompatible(left) &&
         leftGap <= maxAdjacentGapMs &&
         ordered[endIndex].time.getTime() - left.time.getTime() <= maxRangeMs
     );
     const canTakeRight = Boolean(
       right &&
         right.score >= floor &&
+        isRiskCompatible(right) &&
         rightGap <= maxAdjacentGapMs &&
         right.time.getTime() - ordered[startIndex].time.getTime() <= maxRangeMs
     );
