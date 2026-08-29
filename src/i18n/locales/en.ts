@@ -79,7 +79,7 @@ export const en = {
       actions: {
         rain: 'Rain chance reaches {{probability}}% around {{time}}; taking an umbrella is a good idea.',
         rainWithAmount:
-          'Rain chance is {{probability}}% around {{time}}, with about {{amount}} mm expected for the hour.',
+          'Rain chance is {{probability}}% around {{time}}, with about {{amount}} expected for the hour.',
         wind: 'Wind or gusts may reach {{speed}} m/s; use extra care outdoors.',
         heat: 'Feels-like temperature may reach {{temperature}}°C; plan for shade and water.',
         cold: 'Feels-like temperature may fall to {{temperature}}°C; take care with cold stress.',

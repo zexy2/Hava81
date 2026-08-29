@@ -4,6 +4,7 @@ import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
 import type { AirQuality, DailyForecast, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
+import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherSymbol } from './WeatherSymbol';
 import './WeatherDecisionField.css';
@@ -111,14 +112,15 @@ export function WeatherDecisionField({
 
   const decisionCopy = (decision: WeatherDecision): string => {
     switch (decision.kind) {
-      case 'rain':
-        return decision.amount !== undefined
+      case 'rain': {
+        const precipitationAmount = formatPrecipitationAmount(decision.amount, locale);
+        return precipitationAmount
           ? t('hava81.decision.actions.rainWithAmount', {
               defaultValue:
-                '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} mm yağış bekleniyor.',
+                '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} yağış bekleniyor.',
               time: decision.time ? formatForecastTime(decision.time) : '—',
               probability: Math.round((decision.value ?? 0) * 100),
-              amount: decision.amount.toFixed(1),
+              amount: precipitationAmount,
             })
           : t('hava81.decision.actions.rain', {
               defaultValue:
@@ -126,6 +128,7 @@ export function WeatherDecisionField({
               time: decision.time ? formatForecastTime(decision.time) : '—',
               probability: Math.round((decision.value ?? 0) * 100),
             });
+      }
       case 'wind':
         return t('hava81.decision.actions.wind', {
           defaultValue:
