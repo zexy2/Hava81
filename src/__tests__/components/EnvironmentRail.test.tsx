@@ -40,7 +40,7 @@ describe('EnvironmentRail', () => {
     expect(mapButton).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('renders sunset in the weather location timezone instead of the device timezone', () => {
+  it('renders sunrise and sunset in the weather location timezone instead of the device timezone', () => {
     render(
       <SettingsProvider>
         <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
@@ -48,6 +48,8 @@ describe('EnvironmentRail', () => {
     );
 
     expect(screen.getByText('19:30')).toBeInTheDocument();
+    expect(screen.getByText(/Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk/i)).toBeInTheDocument();
     expect(screen.queryByText('16:30')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Doğuş 03:00/i)).not.toBeInTheDocument();
   });
 });

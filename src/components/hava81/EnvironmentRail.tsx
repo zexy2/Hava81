@@ -90,6 +90,9 @@ export function EnvironmentRail({
   const hasValidDaylight = isValidDate(weather.sunrise) && isValidDate(weather.sunset);
   const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
+  const sunriseTime = hasValidDaylight
+    ? timeFormatter.format(atLocationTime(weather.sunrise))
+    : t('weather.noData');
   const sunsetTime = hasValidDaylight
     ? timeFormatter.format(atLocationTime(weather.sunset))
     : t('weather.noData');
@@ -133,7 +136,7 @@ export function EnvironmentRail({
         <span className="environment-rail__label">{t('daylight.sunset')}</span>
         <strong className="environment-rail__value">{sunsetTime}</strong>
         <span className="environment-rail__detail">
-          {t('daylight.dayLength')} · {daylightLength}
+          {t('daylight.sunrise')} {sunriseTime} · {t('daylight.dayLength')} · {daylightLength}
         </span>
       </div>
 
