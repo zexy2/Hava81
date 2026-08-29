@@ -79,7 +79,7 @@ export const tr = {
       actions: {
         rain: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
         rainWithAmount:
-          '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} mm yağış bekleniyor.',
+          '{{time}} civarında yağış olasılığı %{{probability}}; saatlik yaklaşık {{amount}} yağış bekleniyor.',
         wind: 'Rüzgâr veya hamleler {{speed}} m/s seviyesine çıkabilir; açık alanda dikkat.',
         heat: 'Hissedilen sıcaklık {{temperature}}°C seviyesine çıkabilir; gölge ve su planla.',
         cold: 'Hissedilen sıcaklık {{temperature}}°C seviyesine inebilir; soğuk stresine karşı dikkat.',

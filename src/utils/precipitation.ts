@@ -13,4 +13,15 @@ export const normalizePrecipitationProbability = (value: number): number => {
   return Math.min(1, Math.max(0, ratio));
 };
 
+export const formatPrecipitationAmount = (amount: number | undefined, locale: string): string | null => {
+  if (!Number.isFinite(amount) || (amount ?? 0) <= 0) return null;
+
+  const formatter = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  const value = amount as number;
+  return value < 0.1 ? `<${formatter.format(0.1)} mm` : `${formatter.format(value)} mm`;
+};
+
 export default normalizePrecipitationProbability;

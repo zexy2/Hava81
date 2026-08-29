@@ -84,6 +84,51 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
 
+  it('formats measurable rain amounts with the active locale', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 24,
+              pop: 0.8,
+              precipitationMm: 0.8,
+              windSpeed: 3,
+              icon: '10d',
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/saatlik yaklaşık 0,8 mm yağış bekleniyor/i)).toBeInTheDocument();
+  });
+
+  it('does not claim 0,0 mm when rain probability is high but modeled amount is zero', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 24,
+              pop: 0.8,
+              precipitationMm: 0,
+              windSpeed: 3,
+              icon: '10d',
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/yağış olasılığı %80; şemsiye iyi fikir/i)).toBeInTheDocument();
+    expect(screen.queryByText(/0,0 mm/i)).not.toBeInTheDocument();
+  });
+
   it('does not expose the whole decision surface as a live region', () => {
     const { container } = render(
       <SettingsProvider>
