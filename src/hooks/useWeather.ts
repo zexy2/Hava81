@@ -111,6 +111,10 @@ const WEATHER_ICON_CODES = new Set([
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+const isPercentage = (value: unknown): value is number =>
+  isFiniteNumber(value) && value >= 0 && value <= 100;
+const isNonNegativeNumber = (value: unknown): value is number =>
+  isFiniteNumber(value) && value >= 0;
 const validCacheStatuses = new Set(['HIT', 'MISS', 'COALESCED']);
 
 const deserializeWeatherCache = (value: string): WeatherCache | null => {
@@ -144,19 +148,25 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     !isFiniteNumber(data.feelsLike) ||
     !isFiniteNumber(data.tempMin) ||
     !isFiniteNumber(data.tempMax) ||
-    !isFiniteNumber(data.humidity) ||
-    !isFiniteNumber(data.pressure) ||
-    (data.visibility !== undefined && !isFiniteNumber(data.visibility)) ||
-    !isFiniteNumber(data.windSpeed) ||
+    !isPercentage(data.humidity) ||
+    !isNonNegativeNumber(data.pressure) ||
+    (data.visibility !== undefined && !isNonNegativeNumber(data.visibility)) ||
+    !isNonNegativeNumber(data.windSpeed) ||
     !isFiniteNumber(data.windDirection) ||
+    data.windDirection < 0 ||
+    data.windDirection > 360 ||
     typeof data.description !== 'string' ||
     !WEATHER_ICON_CODES.has(String(data.icon)) ||
-    !isFiniteNumber(data.clouds) ||
+    !isPercentage(data.clouds) ||
     !coordinates ||
     typeof coordinates !== 'object' ||
     Array.isArray(coordinates) ||
     !isFiniteNumber((coordinates as Record<string, unknown>).lat) ||
+    (coordinates as Record<string, number>).lat < -90 ||
+    (coordinates as Record<string, number>).lat > 90 ||
     !isFiniteNumber((coordinates as Record<string, unknown>).lon) ||
+    (coordinates as Record<string, number>).lon < -180 ||
+    (coordinates as Record<string, number>).lon > 180 ||
     !metaRecord ||
     typeof metaRecord.provider !== 'string' ||
     !metaRecord.provider.trim() ||
