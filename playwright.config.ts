@@ -1,5 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const DEFAULT_PREVIEW_PORT = 4173;
+const requestedPreviewPort = Number(process.env.HAVA81_PLAYWRIGHT_PORT);
+const previewPort =
+  Number.isInteger(requestedPreviewPort) && requestedPreviewPort >= 1024 && requestedPreviewPort <= 65535
+    ? requestedPreviewPort
+    : DEFAULT_PREVIEW_PORT;
+const previewUrl = `http://127.0.0.1:${previewPort}`;
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -8,7 +16,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: previewUrl,
     trace: 'on-first-retry',
   },
   projects: [
@@ -26,8 +34,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
+    command: `npm run preview -- --host 127.0.0.1 --port ${previewPort}`,
+    url: previewUrl,
     reuseExistingServer: false,
   },
 });
