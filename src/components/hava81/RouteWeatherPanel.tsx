@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { weatherService } from '../../api/weatherService';
@@ -25,12 +25,19 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [result, setResult] = useState<RouteWeatherResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
   const origin = useMemo(() => TURKISH_CITIES.find(city => city.name === originName), [originName]);
   const destination = useMemo(
     () => TURKISH_CITIES.find(city => city.name === destinationName),
     [destinationName]
   );
   const formatTime = (iso: string) => formatTurkeyTime(new Date(iso), i18n.language);
+  const invalidateRequest = () => {
+    requestIdRef.current += 1;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+  };
 
   const submit = async () => {
     if (!origin || !destination || origin.name === destination.name) return;
@@ -39,6 +46,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
       setError(t('hava81.route.error'));
       return;
     }
+    const requestId = ++requestIdRef.current;
+    setResult(null);
     setLoading(true);
     setError(null);
     try {
@@ -48,6 +57,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
         departureDate,
         i18n.language.startsWith('en') ? 'en' : 'tr'
       );
+      if (requestId !== requestIdRef.current) return;
       setResult(value);
       trackProductEvent('route_checked', {
         origin: origin.name,
@@ -56,9 +66,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
         kind: value.kind,
       });
     } catch {
-      setError(t('hava81.route.error'));
+      if (requestId === requestIdRef.current) setError(t('hava81.route.error'));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
@@ -81,7 +91,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               value={originName}
               onChange={e => {
                 setOriginName(e.target.value);
-                setResult(null);
+                invalidateRequest();
               }}
             >
               {TURKISH_CITIES.map(city => (
@@ -95,7 +105,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               value={destinationName}
               onChange={e => {
                 setDestinationName(e.target.value);
-                setResult(null);
+                invalidateRequest();
               }}
             >
               {TURKISH_CITIES.map(city => (
@@ -110,7 +120,10 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               value={departure}
               min={toTurkeyLocalInputValue(new Date())}
               max={toTurkeyLocalInputValue(new Date(Date.now() + 18 * 60 * 60_000))}
-              onChange={e => setDeparture(e.target.value)}
+              onChange={e => {
+                setDeparture(e.target.value);
+                invalidateRequest();
+              }}
             />
           </label>
           <button

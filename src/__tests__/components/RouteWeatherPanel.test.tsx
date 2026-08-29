@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RouteWeatherPanel } from '../../components/hava81/RouteWeatherPanel';
 import '../../i18n';
+import type { RouteWeatherResult } from '../../types';
 
 const api = vi.hoisted(() => ({
   getRouteWeather: vi.fn(),
@@ -48,6 +49,91 @@ describe('RouteWeatherPanel', () => {
     expect(result).toHaveAttribute('aria-live', 'polite');
     expect(result).toHaveAttribute('aria-atomic', 'true');
     expect(result).toHaveTextContent('78/100');
+  });
+
+  it('removes a stale route result when departure changes', async () => {
+    const user = userEvent.setup();
+    api.getRouteWeather.mockResolvedValueOnce({
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 300,
+      requestedDeparture: '2026-08-28T18:00:00.000Z',
+      score: 78,
+      segments: [],
+      disclaimer: 'Modeled corridor guidance.',
+    });
+
+    render(<RouteWeatherPanel currentCityName="İstanbul" />);
+    await user.click(screen.getByText('Rota havası'));
+    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('78/100');
+
+    fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
+      target: { value: '2026-08-29T10:00' },
+    });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('ignores a late route response after the departure input changes', async () => {
+    const user = userEvent.setup();
+    let resolveRoute!: (value: RouteWeatherResult) => void;
+    api.getRouteWeather.mockImplementationOnce(
+      () =>
+        new Promise<RouteWeatherResult>(resolve => {
+          resolveRoute = resolve;
+        })
+    );
+
+    render(<RouteWeatherPanel currentCityName="İstanbul" />);
+    await user.click(screen.getByText('Rota havası'));
+    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    expect(screen.getByRole('button', { name: 'Yükleniyor...' })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
+      target: { value: '2026-08-29T10:00' },
+    });
+    expect(screen.getByRole('button', { name: 'Koridoru kontrol et' })).toBeEnabled();
+
+    await act(async () => {
+      resolveRoute({
+        kind: 'corridor-estimate',
+        estimatedDistanceKm: 450,
+        estimatedDurationMinutes: 300,
+        requestedDeparture: '2026-08-28T18:00:00.000Z',
+        score: 41,
+        segments: [],
+        disclaimer: 'Old modeled corridor guidance.',
+      });
+    });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('41/100')).not.toBeInTheDocument();
+  });
+
+  it('removes the previous result while a fresh route request is loading', async () => {
+    const user = userEvent.setup();
+    api.getRouteWeather.mockResolvedValueOnce({
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 300,
+      requestedDeparture: '2026-08-28T18:00:00.000Z',
+      score: 78,
+      segments: [],
+      disclaimer: 'Modeled corridor guidance.',
+    });
+
+    render(<RouteWeatherPanel currentCityName="İstanbul" />);
+    await user.click(screen.getByText('Rota havası'));
+    const check = screen.getByRole('button', { name: 'Koridoru kontrol et' });
+    await user.click(check);
+    expect(await screen.findByRole('status')).toHaveTextContent('78/100');
+
+    api.getRouteWeather.mockImplementationOnce(() => new Promise(() => {}));
+    await user.click(check);
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Yükleniyor...' })).toBeDisabled();
   });
 
   it('keeps raw route-provider failures out of the visible error message', async () => {
