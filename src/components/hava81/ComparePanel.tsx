@@ -56,21 +56,14 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     Promise.allSettled(
       selected.map(async city => {
         const weather = await weatherService.getCurrentWeather({ city: city.name, lang: language });
-        const [forecastResult, hourlyResult, airResult] = await Promise.allSettled([
+        const [forecastResult, airResult] = await Promise.allSettled([
           weatherService.getForecast(weather.coordinates.lat, weather.coordinates.lon, language),
-          weatherService.getHourlyForecast(weather.coordinates.lat, weather.coordinates.lon, language),
           weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language),
         ]);
         if (forecastResult.status !== 'fulfilled') throw forecastResult.reason;
         const airQuality = airResult.status === 'fulfilled' ? airResult.value : undefined;
-        const decisionHourly =
-          hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
-            ? hourlyResult.value.hourly
-            : forecastResult.value.hourly;
-        const decisionMeta =
-          hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
-            ? hourlyResult.value.meta
-            : forecastResult.value.meta;
+        const decisionHourly = forecastResult.value.hourly;
+        const decisionMeta = forecastResult.value.meta;
         const plan = buildDailyPlan({ weather, hourly: decisionHourly, airQuality });
         const activityPlan = primaryActivity
           ? buildActivityPlan({
@@ -165,56 +158,56 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
             role="list"
             aria-label={t('hava81.compare.title')}
           >
-          {rows.map(row => {
-            const maxPop = Math.max(0, ...row.hourly.slice(0, 6).map(point => point.pop));
-            return (
-              <article
-                className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
-                role="listitem"
-                key={row.weather.cityName}
-              >
-                <header>
-                  <h3>{row.weather.cityName}</h3>
-                  <strong className="hava81-compare__score">
-                    {row.plan.score}
-                    <span>/100</span>
-                  </strong>
-                </header>
-                <div className="hava81-compare__metrics">
-                  <span>
-                    {t('hava81.compare.temp')}{' '}
-                    <b>
-                      {Math.round(convertTemperature(row.weather.temperature))}
-                      {getTemperatureSymbol()}
-                    </b>
-                  </span>
-                  <span>
-                    {t('hava81.compare.rain')} <b>%{Math.round(maxPop * 100)}</b>
-                  </span>
-                  <span>
-                    {t('weather.wind')}{' '}
-                    <b>
-                      {convertWindSpeed(row.weather.windSpeed)} {getWindSpeedSymbol()}
-                    </b>
-                  </span>
-                  <span>
-                    {t('hava81.compare.aqi')} <b>{row.airQuality?.aqi ?? '—'}/5</b>
-                  </span>
-                  <span>
-                    {t('hava81.compare.bestTime')}{' '}
-                    <b>{offsetTime(row, row.plan.bestWindow?.time)}</b>
-                  </span>
-                  {row.activityPlan ? (
+            {rows.map(row => {
+              const maxPop = Math.max(0, ...row.hourly.slice(0, 6).map(point => point.pop));
+              return (
+                <article
+                  className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
+                  role="listitem"
+                  key={row.weather.cityName}
+                >
+                  <header>
+                    <h3>{row.weather.cityName}</h3>
+                    <strong className="hava81-compare__score">
+                      {row.plan.score}
+                      <span>/100</span>
+                    </strong>
+                  </header>
+                  <div className="hava81-compare__metrics">
                     <span>
-                      {t(`hava81.activities.names.${row.activityPlan.activity}`)}{' '}
-                      <b>{row.activityPlan.score}/100</b>
+                      {t('hava81.compare.temp')}{' '}
+                      <b>
+                        {Math.round(convertTemperature(row.weather.temperature))}
+                        {getTemperatureSymbol()}
+                      </b>
                     </span>
-                  ) : null}
-                </div>
-                <small>{row.weather.description}</small>
-              </article>
-            );
-          })}
+                    <span>
+                      {t('hava81.compare.rain')} <b>%{Math.round(maxPop * 100)}</b>
+                    </span>
+                    <span>
+                      {t('weather.wind')}{' '}
+                      <b>
+                        {convertWindSpeed(row.weather.windSpeed)} {getWindSpeedSymbol()}
+                      </b>
+                    </span>
+                    <span>
+                      {t('hava81.compare.aqi')} <b>{row.airQuality?.aqi ?? '—'}/5</b>
+                    </span>
+                    <span>
+                      {t('hava81.compare.bestTime')}{' '}
+                      <b>{offsetTime(row, row.plan.bestWindow?.time)}</b>
+                    </span>
+                    {row.activityPlan ? (
+                      <span>
+                        {t(`hava81.activities.names.${row.activityPlan.activity}`)}{' '}
+                        <b>{row.activityPlan.score}/100</b>
+                      </span>
+                    ) : null}
+                  </div>
+                  <small>{row.weather.description}</small>
+                </article>
+              );
+            })}
           </div>
         </>
       )}
