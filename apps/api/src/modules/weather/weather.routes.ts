@@ -50,7 +50,7 @@ export const registerWeatherRoutes = async (
       const query = currentWeatherQuerySchema.parse(request.query);
       const result = await service.getCurrent(query);
       cacheHeaders(reply, result.status, 60);
-      return withCacheMeta(result.value, result.status, 60);
+      return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
 
@@ -68,7 +68,7 @@ export const registerWeatherRoutes = async (
       const query = forecastQuerySchema.parse(request.query);
       const result = await service.getForecast(query);
       cacheHeaders(reply, result.status, 300);
-      return withCacheMeta(result.value, result.status, 300);
+      return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
 
@@ -86,7 +86,7 @@ export const registerWeatherRoutes = async (
       const query = hourlyForecastQuerySchema.parse(request.query);
       const result = await service.getHourlyForecast(query);
       cacheHeaders(reply, result.status, 300);
-      return withCacheMeta(result.value, result.status, 300);
+      return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
 
@@ -104,7 +104,7 @@ export const registerWeatherRoutes = async (
       const query = airQualityQuerySchema.parse(request.query);
       const result = await service.getAirQuality(query);
       cacheHeaders(reply, result.status, 120);
-      return withCacheMeta(result.value, result.status, 120);
+      return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
 };

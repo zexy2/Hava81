@@ -44,7 +44,11 @@ export const registerContextRoutes = async (
       );
       reply.header('x-cache', result.status);
       reply.header('cache-control', 'public, max-age=900');
-      return { ...result.value, cacheStatus: result.status, freshForSeconds: 1800 };
+      return {
+        ...result.value,
+        cacheStatus: result.status,
+        freshForSeconds: result.freshForSeconds,
+      };
     }
   );
 };
