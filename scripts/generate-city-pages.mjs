@@ -39,7 +39,18 @@ const safeJson = value => JSON.stringify(value).replace(/</g, '\u003c');
 const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
       (() => {
         const city = ${safeJson(cityName)};
+        const cityKey = ${safeJson(slugify(cityName))};
         const expectedPath = ${safeJson(expectedPath)};
+        const cityAscii = ${safeJson(ascii)};
+        const normalizeCity = value =>
+          [...value]
+            .map(char => cityAscii[char] || char)
+            .join('')
+            .normalize('NFD')
+            .replace(/[\\u0300-\\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
         if (window.location.pathname !== expectedPath) return;
 
         let lang = 'tr';
@@ -57,7 +68,7 @@ const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
             cacheCity &&
             cacheAge < ${weatherCacheMaxAgeMs} &&
             cacheLanguage === lang &&
-            cacheCity.toLocaleLowerCase('tr-TR') === city.toLocaleLowerCase('tr-TR')
+            normalizeCity(cacheCity) === cityKey
           ) {
             return;
           }
@@ -85,8 +96,7 @@ const injectBootstrapWeather = (html, cityName, expectedPath) => {
   const moduleScriptIndex = html.indexOf('    <script type="module"');
   if (moduleScriptIndex < 0) throw new Error('Production HTML is missing the Vite module entry script');
   const script = bootstrapWeatherScript(cityName, expectedPath);
-  const output = `${html.slice(0, moduleScriptIndex)}${script}
-${html.slice(moduleScriptIndex)}`;
+  const output = `${html.slice(0, moduleScriptIndex)}${script}\n${html.slice(moduleScriptIndex)}`;
   if (output.indexOf('__HAVA81_BOOTSTRAP_WEATHER__') > output.indexOf('    <script type="module"')) {
     throw new Error('Weather bootstrap must precede the application module script');
   }
