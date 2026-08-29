@@ -33,6 +33,7 @@ type SerializedForecast = {
 };
 
 type SerializedHourlyForecast = {
+  daily?: Array<Omit<DailyForecast, 'date'> & { date: string }>;
   hourly: Array<Omit<HourlyForecast, 'time'> & { time: string }>;
   meta: Omit<ForecastMeta, 'fetchedAt'> & { fetchedAt: string };
 };
@@ -203,13 +204,22 @@ export const weatherService = {
     lat: number,
     lon: number,
     lang = DEFAULT_WEATHER_PARAMS.lang
-  ): Promise<{ hourly: HourlyForecast[]; meta: ForecastMeta }> => {
+  ): Promise<{ daily?: DailyForecast[]; hourly: HourlyForecast[]; meta: ForecastMeta }> => {
     const response = await httpClient.get<SerializedHourlyForecast>(API_ENDPOINTS.weather.hourly, {
       lat,
       lon,
       lang,
     });
     return {
+      ...(response.daily?.length
+        ? {
+            daily: response.daily.slice(0, 5).map(item => ({
+              ...item,
+              date: new Date(`${item.date}T12:00:00.000Z`),
+              pop: normalizePrecipitationProbability(item.pop),
+            })),
+          }
+        : {}),
       hourly: response.hourly.slice(0, 48).map(item => ({
         ...item,
         time: new Date(item.time),

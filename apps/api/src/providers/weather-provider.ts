@@ -27,6 +27,14 @@ export interface HourlyForecastQuery extends CoordinateQuery {
 
 export interface HourlyForecastProviderResult {
   timezoneOffsetSeconds: number;
+  daily?: Array<{
+    date: string;
+    tempMin: number;
+    tempMax: number;
+    icon: string;
+    description: string;
+    pop: number;
+  }>;
   hourly: Array<{
     time: string;
     temp: number;
