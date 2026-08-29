@@ -16,6 +16,9 @@ interface Props {
   currentCityName: string;
 }
 
+const ROUTE_MAX_DEPARTURE_MS = 18 * 60 * 60_000;
+const ROUTE_DEPARTURE_PAST_TOLERANCE_MS = 60_000;
+
 const canonicalProvinceName = (name: string): string => {
   const slug = citySlug(name);
   return TURKISH_CITIES.find(city => citySlug(city.name) === slug)?.name ?? name;
@@ -61,6 +64,15 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     const departureDate = parseTurkeyLocalInputValue(departure);
     if (!departureDate) {
       setError(t('hava81.route.error'));
+      return;
+    }
+    const now = Date.now();
+    const departureTime = departureDate.getTime();
+    if (
+      departureTime < now - ROUTE_DEPARTURE_PAST_TOLERANCE_MS ||
+      departureTime > now + ROUTE_MAX_DEPARTURE_MS
+    ) {
+      setError(t('hava81.route.departureRangeError'));
       return;
     }
     const requestId = ++requestIdRef.current;
