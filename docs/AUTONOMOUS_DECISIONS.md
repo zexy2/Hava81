@@ -265,3 +265,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Deploy-time chunk recovery must remain loop-bounded even when browser storage is unavailable. Capture the one-shot recovery timestamp from the temporary URL marker before cleaning the canonical URL; sessionStorage is an optimization/persistence aid, not the only loop guard.
 
 - 2026-08-29 — Frontend in-memory weather cache age must be monotonic-safe at its trust boundary: negative wall-clock age is invalid, not fresh. If the client clock moves behind a cached response timestamp, refetch rather than extending weather freshness beyond the configured TTL.
+
+- 2026-08-29 — User-facing freshness labels must not convert materially future provider timestamps into “just updated.” Allow only the same one-minute clock-skew tolerance used at persisted-weather boundaries; beyond it, report freshness as unknown rather than inventing recency.

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
 import { SettingsProvider } from '../../context';
@@ -87,6 +87,32 @@ describe('WeatherDecisionField daily range', () => {
     expect(section).not.toHaveAttribute('aria-live');
   });
 
+  it('does not present a far-future fetchedAt timestamp as freshly updated', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-29T13:00:00Z'));
+      render(
+        <SettingsProvider>
+          <WeatherDecisionField
+            weather={{
+              ...weather,
+              meta: {
+                ...weather.meta,
+                fetchedAt: new Date('2026-08-29T13:02:00Z'),
+              },
+            }}
+            hourly={[]}
+          />
+        </SettingsProvider>
+      );
+
+      expect(screen.getByText('Güncellik bilinmiyor')).toBeInTheDocument();
+      expect(screen.queryByText('şimdi güncellendi')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("does not label tomorrow's forecast as today when the current-day daily row is missing", () => {
     render(
       <SettingsProvider>
@@ -107,9 +133,8 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    const label = screen.getByText("Bugünün yüksek / düşük");
+    const label = screen.getByText('Bugünün yüksek / düşük');
     expect(label.parentElement).toHaveTextContent('—');
     expect(screen.queryByText('34°C / 21°C')).not.toBeInTheDocument();
   });
-
 });
