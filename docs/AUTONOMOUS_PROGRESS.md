@@ -589,3 +589,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the city-to-current-location handoff and found that `useAsync.reset()` cleared visible state without invalidating an already-running call. A slow city request could therefore resolve after a successful location request and repopulate the higher-priority city slot with stale data.
 - `useAsync.reset()` now advances the call generation before clearing state. The underlying request may still finish, but its result/error/success callback can no longer mutate state after reset.
 - Added a product regression that starts a delayed İzmir request, switches to current-location Ankara, then resolves İzmir late and requires Ankara to remain authoritative.
+
+## 2026-08-29 04:59 TRT — route refresh invalidates stale departure results
+
+- Audited the route-weather interaction after a successful corridor check and found that changing the departure time left the old result visible; starting a replacement request also kept the prior corridor on screen until the new request completed.
+- Departure/origin/destination edits now invalidate the old result immediately and advance a request generation; every new route request clears the previous result before entering the loading state. Late responses from an invalidated request are ignored, so guidance for an old departure instant cannot reappear under new inputs.
+- Route calculation, Türkiye-time parsing, provider data, scores and error semantics are unchanged. Added regressions for input invalidation, in-flight refresh clearing, and a late stale response.

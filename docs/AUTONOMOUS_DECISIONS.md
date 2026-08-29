@@ -244,3 +244,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Comparison refreshes must not present stale result cards under a new selection/language/profile context. Clear prior rows when a new comparison request starts, then show the bounded loading state until replacement data resolves; partial-success preservation applies to the current request only.
 
 - 2026-08-29 — `useAsync.reset()` is a logical cancellation boundary, not only a visual reset. Increment the async call generation on reset so any pre-reset result or error is ignored if it arrives later; this protects handoffs such as city search → current location from stale-response takeover without requiring transport-level abort support.
+
+- 2026-08-29 — Route-weather results are bound to the exact route inputs and departure instant that produced them. Editing departure/origin/destination or starting a replacement request must invalidate the previous corridor result immediately and advance a request generation; late responses from older generations are ignored so old guidance can never repopulate under new parameters.
