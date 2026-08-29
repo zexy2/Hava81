@@ -480,6 +480,17 @@ describe('useWeather', () => {
     expect(result.current.recentSearches).toEqual([]);
   });
 
+  it('canonicalizes a persisted ASCII provider city label for display', () => {
+    localStorage.setItem(
+      'recent_weather_searches',
+      JSON.stringify([{ city: 'Istanbul', timestamp: 9 }])
+    );
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.recentSearches).toEqual([{ city: 'İstanbul', timestamp: 9 }]);
+  });
+
   it('falls back to an empty recent-search list when persisted JSON has the wrong shape', () => {
     localStorage.setItem('recent_weather_searches', JSON.stringify({ city: 'İstanbul' }));
 
@@ -513,6 +524,6 @@ describe('useWeather', () => {
     });
 
     expect(result.current.recentSearches).toHaveLength(1);
-    expect(result.current.recentSearches[0].city).toBe('Istanbul');
+    expect(result.current.recentSearches[0].city).toBe('İstanbul');
   });
 });
