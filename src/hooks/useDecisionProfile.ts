@@ -12,10 +12,56 @@ const DEFAULT_PROFILE: DecisionProfile = {
   temperatureSensitivity: 'balanced',
 };
 
+const ACTIVITY_KINDS: readonly ActivityKind[] = [
+  'walk',
+  'run',
+  'picnic',
+  'children',
+  'motorcycle',
+  'laundry',
+];
+const TEMPERATURE_SENSITIVITIES: readonly TemperatureSensitivity[] = ['cold', 'balanced', 'heat'];
+const CLOCK_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+const isActivityKind = (value: unknown): value is ActivityKind =>
+  typeof value === 'string' && ACTIVITY_KINDS.includes(value as ActivityKind);
+const isTemperatureSensitivity = (value: unknown): value is TemperatureSensitivity =>
+  typeof value === 'string' && TEMPERATURE_SENSITIVITIES.includes(value as TemperatureSensitivity);
+const isClockTime = (value: unknown): value is string =>
+  typeof value === 'string' && CLOCK_TIME_PATTERN.test(value);
+
+const deserializeDecisionProfile = (serialized: string): DecisionProfile => {
+  const parsed = JSON.parse(serialized) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return DEFAULT_PROFILE;
+
+  const candidate = parsed as Partial<Record<keyof DecisionProfile, unknown>>;
+  let activities = DEFAULT_PROFILE.activities;
+  if (Array.isArray(candidate.activities)) {
+    const validActivities = candidate.activities.filter(isActivityKind);
+    const uniqueActivities = [...new Set(validActivities)].slice(0, 3);
+    activities =
+      candidate.activities.length === 0 || uniqueActivities.length > 0
+        ? uniqueActivities
+        : DEFAULT_PROFILE.activities;
+  }
+
+  return {
+    activities,
+    temperatureSensitivity: isTemperatureSensitivity(candidate.temperatureSensitivity)
+      ? candidate.temperatureSensitivity
+      : DEFAULT_PROFILE.temperatureSensitivity,
+    ...(isClockTime(candidate.commuteStart) ? { commuteStart: candidate.commuteStart } : {}),
+    ...(isClockTime(candidate.commuteEnd) ? { commuteEnd: candidate.commuteEnd } : {}),
+    ...(isClockTime(candidate.activityStart) ? { activityStart: candidate.activityStart } : {}),
+    ...(isClockTime(candidate.activityEnd) ? { activityEnd: candidate.activityEnd } : {}),
+  };
+};
+
 export function useDecisionProfile() {
   const [profile, setProfile] = useLocalStorage<DecisionProfile>(
     'hava81-decision-profile-v1',
-    DEFAULT_PROFILE
+    DEFAULT_PROFILE,
+    { deserializer: deserializeDecisionProfile }
   );
   const toggleActivity = useCallback(
     (activity: ActivityKind) => {
