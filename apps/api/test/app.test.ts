@@ -415,6 +415,36 @@ test('OpenWeather adapter rejects impossible finite current-weather domains', as
   }
 });
 
+test('OpenWeather forecast normalizes small model humidity overshoots without weakening current observations', async () => {
+  const payload = structuredClone(forecastFixture);
+  payload.list[0].main = { ...payload.list[0].main, humidity: 101 };
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  const result = await provider.getForecast({ lat: 41.01, lon: 28.97, units: 'metric', lang: 'tr' });
+  assert.equal(result.list[0].main.humidity, 100);
+});
+
+test('OpenWeather forecast still rejects implausible humidity beyond the numerical tolerance', async () => {
+  const payload = structuredClone(forecastFixture);
+  payload.list[0].main = { ...payload.list[0].main, humidity: 106 };
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  await assert.rejects(
+    () => provider.getForecast({ lat: 41.01, lon: 28.97, units: 'metric', lang: 'tr' }),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+  );
+});
+
 test('OpenWeather current accepts responses without optional visibility', async () => {
   const payload = structuredClone(currentFixture);
   delete payload.visibility;
