@@ -819,3 +819,5 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - PWA service worker now caches every visited same-origin hashed `/assets/` script/style/font/image instead of a narrow hand-maintained script-name allowlist. This makes already-visited lazy UI modules available to repeat/offline sessions while keeping navigations network-fresh and build-versioned.
 - Added a regression assertion that the static asset policy covers lazy JavaScript without restoring a filename-specific core-script list.
 - Focused service-worker tests, type-check, lint and production build passed; generated service worker received a fresh build-derived cache namespace.
+
+- Rebased PWA cache work onto main after PR #214. The broader visited-asset cache correctly changed deploy-recovery test preconditions, so recovery tests now explicitly disable service-worker registration to exercise a true cold-cache missing-chunk path. Focused deploy-recovery browser checks pass again without weakening the production cache behavior.

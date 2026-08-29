@@ -303,3 +303,5 @@ This log records product and engineering decisions made during the autonomous im
 
 - Cache same-origin Vite `/assets/` scripts, styles, fonts and images after a successful fetch rather than maintaining a filename-prefix list. Vite assets are content-hashed, so broadening the visited-asset cache does not make HTML/navigation stale; navigation requests remain network-first with `cache: no-store`, and every build receives a distinct service-worker cache namespace.
 - Disk-pressure recovery may remove Docker images that are not referenced by active containers, but must not remove active container images, volumes, or alter the 4002 production / 4001 rollback topology.
+
+- Deploy chunk-recovery browser tests must disable service-worker registration when they intend to simulate a cold-cache missing asset. Otherwise the production PWA cache can legitimately satisfy the lazy chunk and invalidate the test setup rather than the recovery mechanism.
