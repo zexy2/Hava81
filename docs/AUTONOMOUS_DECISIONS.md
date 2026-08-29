@@ -251,3 +251,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Decision Alert quiet hours are evaluated in the active weather location timezone, not the visitor device timezone. Hava81 serves Turkish provinces; 22:00–07:00 silence must follow the province/provider offset so travelers abroad do not receive locally overnight notifications or lose locally daytime alerts.
 
 - 2026-08-29 — Decision Alerts treat browser storage as an optional capability. Storage exceptions must never escape into the weather experience; if the sent-marker store cannot be read, alert delivery fails closed to avoid duplicate spam, and an opt-in is not considered enabled until its preference is successfully persisted.
+
+- 2026-08-29 — Do not make the entire primary weather/decision surface a live region. Its freshness label updates on a timer, so broad `aria-live` would create repetitive screen-reader announcements unrelated to a new weather decision. Reserve live/status semantics for bounded user-triggered or asynchronously completed results.

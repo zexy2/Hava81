@@ -51,4 +51,16 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
+  it('does not expose the whole decision surface as a live region', () => {
+    const { container } = render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} />
+      </SettingsProvider>
+    );
+
+    const section = container.querySelector('.hava81-decision-field');
+    expect(section).toHaveAttribute('aria-labelledby');
+    expect(section).not.toHaveAttribute('aria-live');
+  });
+
 });

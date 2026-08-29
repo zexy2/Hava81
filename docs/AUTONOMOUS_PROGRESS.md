@@ -630,3 +630,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Re-applied the Decision Alerts storage hardening on current main while the context-provenance branch validates independently.
 - Alert storage access is now best-effort throughout: unreadable dedupe storage suppresses delivery rather than risking duplicate spam; opt-in becomes active only after its preference is persisted; opt-out still disables the current session if removal is blocked.
 - Added regressions for dedupe read SecurityError and opt-in persistence failure, plus explicit mock restoration so storage spies cannot leak between tests. Weather data, candidate thresholds, quiet hours and permission behavior are unchanged.
+
+## 2026-08-29 09:43 TRT — decision live-region noise reduction
+
+- Audited the primary WeatherDecisionField live-region semantics and found the entire decision/current-conditions surface was `aria-live="polite"` even though its freshness label updates every minute.
+- Removed the broad live-region contract so a minute-by-minute freshness tick cannot cause the whole weather/decision surface to be re-announced. Existing bounded interaction-result status regions (commute, route, share feedback) remain unchanged.
+- Added a focused regression requiring the primary decision section to retain its heading relationship without becoming a live region. Focused test 2/2, type-check, lint and `git diff --check` pass; full gates run before publication.
