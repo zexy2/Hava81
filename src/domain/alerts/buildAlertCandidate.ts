@@ -1,3 +1,4 @@
+import { citySlug } from '../../utils/cityRoute';
 import type { DailyPlan } from '../decision/types';
 
 export interface AlertCandidate {
@@ -9,13 +10,15 @@ export interface AlertCandidate {
 }
 
 export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCandidate | null => {
+  const signatureCity = citySlug(cityName) || cityName.trim().toLocaleLowerCase('tr-TR');
+
   if (plan.umbrella === 'yes') {
     return {
       kind: 'rain',
       titleKey: 'hava81.alerts.rainTitle',
       bodyKey: 'hava81.alerts.rainBody',
       data: { city: cityName },
-      signature: `${cityName}:rain`,
+      signature: `${signatureCity}:rain`,
     };
   }
   if (plan.wind === 'strong') {
@@ -24,7 +27,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.windTitle',
       bodyKey: 'hava81.alerts.windBody',
       data: { city: cityName },
-      signature: `${cityName}:wind`,
+      signature: `${signatureCity}:wind`,
     };
   }
   if (plan.airQuality === 'poor') {
@@ -33,7 +36,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.airTitle',
       bodyKey: 'hava81.alerts.airBody',
       data: { city: cityName },
-      signature: `${cityName}:air-quality`,
+      signature: `${signatureCity}:air-quality`,
     };
   }
   if (plan.nowOrLater.kind === 'later' && (plan.nowOrLater.improvement ?? 0) >= 20) {
@@ -42,7 +45,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.waitTitle',
       bodyKey: 'hava81.alerts.waitBody',
       data: { city: cityName, improvement: plan.nowOrLater.improvement ?? 0 },
-      signature: `${cityName}:wait:${plan.nowOrLater.targetTime?.toISOString() ?? 'later'}`,
+      signature: `${signatureCity}:wait:${plan.nowOrLater.targetTime?.toISOString() ?? 'later'}`,
     };
   }
   if (plan.score < 50) {
@@ -51,7 +54,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.difficultTitle',
       bodyKey: 'hava81.alerts.difficultBody',
       data: { city: cityName, score: plan.score },
-      signature: `${cityName}:difficult`,
+      signature: `${signatureCity}:difficult`,
     };
   }
   return null;
