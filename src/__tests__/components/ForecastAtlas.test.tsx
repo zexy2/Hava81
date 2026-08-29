@@ -83,6 +83,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       'aria-pressed',
       'true'
     );
+    expect(within(range).getByRole('button', { name: '1 saat' })).toBeInTheDocument();
     expect(within(range).queryByRole('button', { name: '12 saat' })).not.toBeInTheDocument();
     expect(within(range).queryByRole('button', { name: '24 saat' })).not.toBeInTheDocument();
   });
@@ -116,5 +117,27 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         'listitem'
       )
     ).toHaveLength(6);
+
+    await user.click(within(range).getByRole('button', { name: '1 saat' }));
+
+    expect(within(range).getByRole('button', { name: '1 saat' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(
+      screen.getByRole('heading', { name: /saatlik tahmin · sonraki 1 saat/i })
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i })).getAllByRole(
+        'listitem'
+      )
+    ).toHaveLength(1);
+
+    await user.click(within(range).getByRole('button', { name: '12 saat' }));
+    expect(
+      within(screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i })).getAllByRole(
+        'listitem'
+      )
+    ).toHaveLength(12);
   });
 });
