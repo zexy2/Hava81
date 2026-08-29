@@ -201,6 +201,12 @@ const validateDailyForecastItem = (item: SerializedForecast['daily'][number], fi
     invalidForecastPayload(`${field}.description`);
   }
   if (typeof item.icon !== 'string' || !item.icon.trim()) invalidForecastPayload(`${field}.icon`);
+  if (
+    item.precipitationMm !== undefined &&
+    (!isFiniteNumber(item.precipitationMm) || item.precipitationMm < 0)
+  ) {
+    invalidForecastPayload(`${field}.precipitationMm`);
+  }
 };
 
 const validateHourlyForecastItem = (item: SerializedForecast['hourly'][number], field: string): void => {

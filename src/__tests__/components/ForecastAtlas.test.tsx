@@ -207,6 +207,55 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
     ).toEqual(['00:00', '06:00', '12:00', '18:00']);
   });
+  it('shows daily precipitation totals without inventing a 0% rain label', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00.000Z'),
+              tempMin: 20,
+              tempMax: 25,
+              icon: '10d',
+              description: 'hafif yağmur',
+              pop: 0,
+              precipitationMm: 0.4,
+            },
+            {
+              date: new Date('2026-08-30T12:00:00.000Z'),
+              tempMin: 19,
+              tempMax: 24,
+              icon: '10d',
+              description: 'yağmurlu',
+              pop: 0.35,
+              precipitationMm: 2.3,
+            },
+          ]}
+          hourly={[]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const days = screen.getAllByRole('listitem');
+    expect(days[0]).toHaveTextContent('0,4 mm');
+    expect(days[0]).not.toHaveTextContent('0%');
+    expect(
+      within(days[0]).getByRole('group', { name: /günlük toplam yağış 0,4 mm/i })
+    ).toBeInTheDocument();
+    expect(days[1]).toHaveTextContent('35% · 2,3 mm');
+    expect(
+      within(days[1]).getByRole('group', {
+        name: /yağış olasılığı %35; günlük toplam 2,3 mm/i,
+      })
+    ).toBeInTheDocument();
+  });
+
   it('shows one daily temperature when rounded high and low are identical', () => {
     render(
       <SettingsProvider>

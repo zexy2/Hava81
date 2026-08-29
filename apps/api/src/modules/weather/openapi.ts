@@ -122,6 +122,7 @@ export const hourlyForecastResponseJsonSchema = {
           icon: { type: 'string' },
           description: { type: 'string' },
           pop: { type: 'number', minimum: 0, maximum: 100 },
+          precipitationMm: { type: 'number', minimum: 0 },
         },
       },
     },

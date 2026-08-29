@@ -151,6 +151,7 @@ export interface DailyForecast {
   icon: WeatherIconCode;
   description: string;
   pop: number; // Frontend-domain ratio from 0 to 1
+  precipitationMm?: number;
 }
 
 export interface HourlyForecast {
