@@ -599,6 +599,94 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it('returns a validated route-weather corridor from the BFF', async () => {
+    const route = {
+      kind: 'corridor-estimate' as const,
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 360,
+      requestedDeparture: '2026-08-29T18:00:00.000Z',
+      score: 82,
+      segments: [
+        {
+          fraction: 0,
+          lat: 41.01,
+          lon: 28.97,
+          eta: '2026-08-29T18:00:00.000Z',
+          temperature: 24,
+          precipitationProbability: 20,
+          windSpeed: 3.5,
+          description: 'açık',
+          score: 88,
+          risk: 'low' as const,
+        },
+      ],
+      betterDeparture: {
+        departure: '2026-08-29T21:00:00.000Z',
+        score: 91,
+        improvement: 9,
+      },
+      disclaimer: 'Yaklaşık hava koridoru.',
+    };
+    mockGet.mockResolvedValue(route);
+
+    await expect(
+      weatherService.getRouteWeather(
+        { lat: 41.01, lon: 28.97 },
+        { lat: 39.93, lon: 32.86 },
+        new Date('2026-08-29T18:00:00.000Z')
+      )
+    ).resolves.toEqual(route);
+  });
+
+  it.each([
+    ['invalid departure', { requestedDeparture: 'invalid' }],
+    ['score above 100', { score: 101 }],
+    ['empty segments', { segments: [] }],
+    ['negative distance', { estimatedDistanceKm: -1 }],
+    ['non-positive duration', { estimatedDurationMinutes: 0 }],
+    ['segment fraction above one', { segment: { fraction: 1.1 } }],
+    ['segment latitude outside globe', { segment: { lat: 91 } }],
+    ['invalid segment ETA', { segment: { eta: 'invalid' } }],
+    ['precipitation above 100%', { segment: { precipitationProbability: 101 } }],
+    ['negative wind speed', { segment: { windSpeed: -1 } }],
+    ['invalid risk enum', { segment: { risk: 'unsafe' } }],
+    ['invalid better departure', { betterDeparture: { departure: 'invalid', score: 90, improvement: 8 } }],
+    ['non-positive better-departure improvement', { betterDeparture: { departure: '2026-08-29T21:00:00.000Z', score: 90, improvement: 0 } }],
+  ])('rejects impossible route-weather %s from the BFF', async (_label, invalidField) => {
+    const segment = {
+      fraction: 0,
+      lat: 41.01,
+      lon: 28.97,
+      eta: '2026-08-29T18:00:00.000Z',
+      temperature: 24,
+      precipitationProbability: 20,
+      windSpeed: 3.5,
+      description: 'açık',
+      score: 88,
+      risk: 'low',
+      ...('segment' in invalidField ? invalidField.segment : {}),
+    };
+    const route = {
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 360,
+      requestedDeparture: '2026-08-29T18:00:00.000Z',
+      score: 82,
+      segments: [segment],
+      disclaimer: 'Yaklaşık hava koridoru.',
+      ...Object.fromEntries(Object.entries(invalidField).filter(([key]) => key !== 'segment')),
+    };
+    mockGet.mockResolvedValue(route);
+
+    await expect(
+      weatherService.getRouteWeather(
+        { lat: 41.01, lon: 28.97 },
+        { lat: 39.93, lon: 32.86 },
+        new Date('2026-08-29T18:00:00.000Z')
+      )
+    ).rejects.toMatchObject({ code: ErrorCode.API_ERROR, retryable: true });
+  });
+
   it('returns normalized air quality from the BFF', async () => {
     const airQuality = {
       aqi: 1,
