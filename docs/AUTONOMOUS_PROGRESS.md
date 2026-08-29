@@ -643,3 +643,18 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Preserved the existing weather score and activity thresholds, but now retain the weather-only baseline for each evaluated slot and aggregate it with the exact same cadence/downside weighting as the final activity score. Each plan exposes `baselineScore` and the exact bounded `activityImpact = final - baseline`.
 - Activity cards now show the activity-criteria impact as a signed point value in Turkish/English, directly explaining why walking, running, picnic, motorcycle, children and laundry can differ for the same hours. No provider data, thresholds, safety language or recommendation bands changed.
 - Focused domain/component coverage 9/9, type-check and `git diff --check` pass. Full release gates remain required before publication.
+
+## 2026-08-29 09:46 TRT — persisted settings normalization
+
+- Audited `user-settings` recovery and found syntactically valid but partial/invalid JSON objects were trusted as a complete `UserSettings` value by the generic local-storage hook.
+- Added a SettingsProvider-specific deserializer that allowlists supported temperature, wind, theme and language values, preserves valid persisted fields, fills missing/invalid fields from defaults, and ignores unexpected fields.
+- Added regressions for mixed-invalid legacy/corrupt settings and a complete valid English/dark/imperial profile. Focused tests 2/2, type-check, lint and `git diff --check` pass; full gates run before publication.
+- Follow-up in the same settings branch: aligned the provider's initial language with the already-initialized i18n language. This preserves the read-only legacy `app-language` migration path for old installs when canonical `user-settings` is absent or has an invalid language, preventing UI/API/document-language divergence. Added 2 focused migration regressions; combined settings coverage 4/4 passes.
+- Post-rebase combined validation exposed a narrow code-split timing assumption in the saved-city navigation integration test: the lazy ComparePanel can resolve after Testing Library's default 1 s query window even though the panel renders correctly. Current `main` reproduces the same flow faster; the rebased settings module graph made the implicit timing dependency visible. The existing project decision permits a 3 s wait only for lazy UI boundaries, so this single assertion now uses that bounded window; no global timeout or product behavior changed.
+
+
+## 2026-08-29 11:15 TRT — persisted settings normalization rebuilt on current main
+
+- Open PR #140 was green but no longer mergeable after concurrent main progress, so its single intended commit was replayed onto isolated branch `automation/hava81-run8-1107` from current main `21ee3e55`; only append-only progress/decision logs conflicted, and both the current Activity Planner checkpoint and the settings checkpoints were preserved.
+- Persisted `user-settings` remains treated as untrusted input: supported enum fields are allowlisted, invalid/missing fields fall back safely, unexpected fields are ignored, and legacy language startup follows i18n's already-validated language without writing the legacy key.
+- Local gates on the rebuilt branch: focused Settings/App coverage 10/10, lint, type-check, complete frontend suite 177/177, production build generated all 81 city pages, production dependency audit found 0 vulnerabilities, and `git diff --check` passed. Exact-head PR CI remains the merge gate.
