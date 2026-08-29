@@ -1,0 +1,90 @@
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { weatherService } from '../../api/weatherService';
+import { useWeather } from '../../hooks/useWeather';
+
+vi.mock('../../api/weatherService', () => ({
+  weatherService: {
+    getCurrentWeather: vi.fn(),
+    getCurrentLocationWeather: vi.fn(),
+  },
+}));
+
+const cityWeather = {
+  cityName: 'İzmir',
+  country: 'TR',
+  temperature: 22,
+  coordinates: { lat: 38.42, lon: 27.14 },
+};
+
+const locationWeather = {
+  cityName: 'Ankara',
+  country: 'TR',
+  temperature: 18,
+  coordinates: { lat: 39.93, lon: 32.86 },
+};
+
+describe('useWeather city/location handoff', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('clears previously shown location weather while a city replacement is loading', async () => {
+    (weatherService.getCurrentLocationWeather as Mock).mockResolvedValueOnce(locationWeather);
+    let resolveCity: ((value: typeof cityWeather) => void) | undefined;
+    (weatherService.getCurrentWeather as Mock).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveCity = resolve;
+        })
+    );
+
+    const { result } = renderHook(() => useWeather());
+    await act(async () => {
+      await result.current.fetchCurrentLocation();
+    });
+    expect(result.current.weather?.cityName).toBe('Ankara');
+
+    let cityRequest: Promise<unknown>;
+    act(() => {
+      cityRequest = result.current.fetchWeather('İzmir');
+    });
+    expect(result.current.weather).toBeNull();
+    expect(result.current.isLoading).toBe(true);
+
+    await act(async () => {
+      resolveCity?.(cityWeather);
+      await cityRequest!;
+    });
+    expect(result.current.weather?.cityName).toBe('İzmir');
+  });
+
+  it('keeps a city result authoritative when an older location request resolves late', async () => {
+    let resolveLocation: ((value: typeof locationWeather) => void) | undefined;
+    (weatherService.getCurrentLocationWeather as Mock).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveLocation = resolve;
+        })
+    );
+    (weatherService.getCurrentWeather as Mock).mockResolvedValueOnce(cityWeather);
+
+    const { result } = renderHook(() => useWeather());
+    let locationRequest: Promise<unknown>;
+    act(() => {
+      locationRequest = result.current.fetchCurrentLocation();
+    });
+
+    await act(async () => {
+      await result.current.fetchWeather('İzmir');
+    });
+    expect(result.current.weather?.cityName).toBe('İzmir');
+
+    await act(async () => {
+      resolveLocation?.(locationWeather);
+      await locationRequest!;
+    });
+    expect(result.current.weather?.cityName).toBe('İzmir');
+  });
+});
