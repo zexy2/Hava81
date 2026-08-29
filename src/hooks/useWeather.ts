@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
+import { TURKISH_CITIES } from '../constants/cities';
 import { citySlug } from '../utils/cityRoute';
 import { useAsync } from './useAsync';
 import { useLocalStorage } from './useLocalStorage';
@@ -49,6 +50,7 @@ const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 const MAX_CACHE_FUTURE_SKEW_MS = 60_000;
 const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
+const supportedCityIdentities = new Set(TURKISH_CITIES.map(city => cityIdentity(city.name)));
 
 const deserializeRecentSearches = (value: string): RecentSearch[] => {
   const parsed = JSON.parse(value) as unknown;
@@ -63,14 +65,16 @@ const deserializeRecentSearches = (value: string): RecentSearch[] => {
       typeof candidate.city !== 'string' ||
       !candidate.city.trim() ||
       typeof candidate.timestamp !== 'number' ||
-      !Number.isFinite(candidate.timestamp)
+      !Number.isFinite(candidate.timestamp) ||
+      candidate.timestamp < 0 ||
+      candidate.timestamp > Date.now() + MAX_CACHE_FUTURE_SKEW_MS
     ) {
       continue;
     }
 
     const city = candidate.city.trim();
     const identity = cityIdentity(city);
-    if (seen.has(identity)) continue;
+    if (!supportedCityIdentities.has(identity) || seen.has(identity)) continue;
     seen.add(identity);
     sanitized.push({ city, timestamp: candidate.timestamp });
   }
