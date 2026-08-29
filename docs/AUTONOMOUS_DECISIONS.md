@@ -294,3 +294,8 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-29 — Browser-side modeled-context and air-quality responses remain untrusted even when the Hava81 BFF validates its own upstream providers. Reject malformed timestamps and impossible physical domains (negative UV/dust/pollen/concentrations, invalid marine geometry/period, AQI outside 1–5) at the browser transport boundary rather than coercing them into plausible-looking guidance.
 
 - 2026-08-29 — When rounded daily high and low temperatures collapse to the same displayed value, show one temperature rather than a duplicated `high / low` pair. Preserve the high/low range only when the displayed values materially differ, and expose an accessible single-temperature label for the equal case.
+
+## 2026-08-29 — browser fixture time semantics
+
+- End-to-end weather fixtures must be relative to the test run rather than hard-coded calendar dates when application code intentionally filters stale forecast rows. This keeps browser tests validating the intended current/fallback behavior instead of failing as time passes.
+- Keep the high-resolution hourly success contract and three-hour fallback contract as separate browser assertions so a provider failure cannot masquerade as an empty forecast surface.

@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
 
+const fixtureNow = Date.now();
+const fixtureIsoAtHour = (offsetHours: number) =>
+  new Date(fixtureNow + offsetHours * 60 * 60_000).toISOString();
+const fixtureLocalDate = (offsetDays = 0) =>
+  new Date(fixtureNow + 3 * 60 * 60_000 + offsetDays * 24 * 60 * 60_000).toISOString().slice(0, 10);
+
 const current = {
   cityName: 'İstanbul',
   country: 'TR',
@@ -14,9 +20,9 @@ const current = {
   windDirection: 180,
   description: 'açık',
   icon: '01d',
-  sunrise: '2026-08-28T03:20:00.000Z',
-  sunset: '2026-08-28T16:35:00.000Z',
-  timestamp: '2026-08-28T09:00:00.000Z',
+  sunrise: fixtureIsoAtHour(-6),
+  sunset: fixtureIsoAtHour(6),
+  timestamp: fixtureIsoAtHour(0),
   coordinates: { lat: 41.01, lon: 28.97 },
   clouds: 5,
   meta: {
@@ -29,11 +35,11 @@ const current = {
 };
 const forecast = {
   daily: [
-    { date: '2026-08-28', tempMin: 19, tempMax: 27, icon: '01d', description: 'açık', pop: 10 },
+    { date: fixtureLocalDate(), tempMin: 19, tempMax: 27, icon: '01d', description: 'açık', pop: 10 },
   ],
   hourly: [
     {
-      time: '2026-08-28T09:00:00.000Z',
+      time: fixtureIsoAtHour(1),
       temp: 23,
       icon: '01d',
       description: 'açık',
@@ -41,7 +47,7 @@ const forecast = {
       windSpeed: 4,
     },
     {
-      time: '2026-08-28T12:00:00.000Z',
+      time: fixtureIsoAtHour(4),
       temp: 26,
       icon: '01d',
       description: 'açık',
@@ -542,6 +548,14 @@ test('mobile header keeps current-location action reachable without horizontal o
   expect(
     await page.locator('.atlas-header__inner').evaluate(element => element.scrollWidth <= element.clientWidth)
   ).toBe(true);
+});
+
+test('lazy forecast atlas renders hourly and daily guidance after city data loads', async ({ page }) => {
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: "Bugünün ritmi" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /5 Günlük Tahmin/i })).toBeVisible();
+  await expect(page.getByRole('region', { name: /Kaydırılabilir saatlik tahmin/i })).toBeVisible();
 });
 
 test('current conditions stay in the first mobile viewport', async ({ page }, testInfo) => {
