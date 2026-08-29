@@ -373,6 +373,7 @@ export const en = {
       estimate: 'Approx. {{distance}} km · {{minutes}} min',
       better: 'Leaving around {{time}} looks about {{improvement}} points better for weather.',
       segments: 'Weather samples along the corridor',
+      departureRangeError: 'Departure must be between now and the next 18 hours.',
       error: 'Route weather data could not be loaded.',
     },
   },
