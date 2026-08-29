@@ -564,3 +564,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added bounded state tracking: partial failures keep successful city cards visible with a generic localized notice, while total failures show a localized comparison-unavailable state. Raw provider/internal exception text is never rendered.
 - Added regressions for one-city failure and all-city failure, including injected secret upstream strings that must stay out of the DOM.
 - Rebuilt onto current main after the map-label merge; combined validation is rerun before publication.
+
+## 2026-08-29 03:32 TRT — local preference removals synchronize correctly
+
+- Audited the shared `useLocalStorage` hook used by Hava81 preferences and found two removal-state gaps: `removeValue()` reset React state but left the functional-update ref stale, and `storage` events with `newValue: null` were ignored, so a removal from another consumer/tab could leave stale UI state.
+- Removal now resets both React state and the in-memory ref, emits the same synthetic storage synchronization event as writes, and treats a native cross-tab removal event as a reset to the configured initial value.
+- Added regressions for cross-consumer removal, immediate functional update after removal, and native cross-tab deletion. No persisted key names or product defaults changed.
+- Validation on main `4bdbcb6`: lint, type-check, focused hook coverage 3/3 and production build with all 81 city pages pass; full CI remains the publication gate.

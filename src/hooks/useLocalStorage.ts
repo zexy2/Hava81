@@ -68,7 +68,14 @@ export function useLocalStorage<T>(
   const removeValue = useCallback(() => {
     try {
       window.localStorage.removeItem(key);
+      storedValueRef.current = initialValue;
       setStoredValue(initialValue);
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key,
+          newValue: null,
+        })
+      );
     } catch (error) {
       console.warn(`Error removing localStorage key "${key}":`, error);
     }
@@ -77,15 +84,19 @@ export function useLocalStorage<T>(
   // Listen for changes from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === key && event.newValue !== null) {
-        try {
-          const nextValue = deserializer(event.newValue);
-          storedValueRef.current = nextValue;
-          setStoredValue(nextValue);
-        } catch {
-          setStoredValue(initialValue);
-          storedValueRef.current = initialValue;
-        }
+      if (event.key !== key) return;
+      if (event.newValue === null) {
+        storedValueRef.current = initialValue;
+        setStoredValue(initialValue);
+        return;
+      }
+      try {
+        const nextValue = deserializer(event.newValue);
+        storedValueRef.current = nextValue;
+        setStoredValue(nextValue);
+      } catch {
+        setStoredValue(initialValue);
+        storedValueRef.current = initialValue;
       }
     };
 
