@@ -101,6 +101,26 @@ describe('SearchBar', () => {
     expect(input).toHaveFocus();
   });
 
+  it('keeps suggestions open when the input is immediately refocused after blur', () => {
+    vi.useFakeTimers();
+    try {
+      render(<SearchBar {...defaultProps} value="İz" />);
+
+      const input = screen.getByRole('combobox');
+      fireEvent.focus(input);
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+      fireEvent.blur(input);
+      fireEvent.focus(input);
+      act(() => vi.advanceTimersByTime(200));
+
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('should expose the input through its forwarded ref', () => {
     const inputRef = React.createRef<HTMLInputElement>();
     render(<SearchBar {...defaultProps} ref={inputRef} />);
