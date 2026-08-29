@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RouteWeatherPanel } from '../../components/hava81/RouteWeatherPanel';
+import { SettingsProvider } from '../../context';
 import '../../i18n';
 
 const api = vi.hoisted(() => ({
@@ -10,14 +11,22 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../api/weatherService', () => ({ weatherService: api }));
 
+const renderPanel = (currentCityName: string) =>
+  render(
+    <SettingsProvider>
+      <RouteWeatherPanel currentCityName={currentCityName} />
+    </SettingsProvider>
+  );
+
 describe('RouteWeatherPanel city identity', () => {
   beforeEach(() => {
+    localStorage.clear();
     api.getRouteWeather.mockReset();
   });
 
   it('maps an ASCII provider city label to the canonical province option', async () => {
     const user = userEvent.setup();
-    render(<RouteWeatherPanel currentCityName="Istanbul" />);
+    renderPanel("Istanbul");
 
     await user.click(screen.getByText('Rota havası'));
 
@@ -27,12 +36,16 @@ describe('RouteWeatherPanel city identity', () => {
 
   it('updates the route origin when the active weather city changes', async () => {
     const user = userEvent.setup();
-    const { rerender } = render(<RouteWeatherPanel currentCityName="İstanbul" />);
+    const { rerender } = renderPanel('İstanbul');
 
     await user.click(screen.getByText('Rota havası'));
     expect(screen.getByLabelText('Başlangıç')).toHaveValue('İstanbul');
 
-    rerender(<RouteWeatherPanel currentCityName="Izmir" />);
+    rerender(
+      <SettingsProvider>
+        <RouteWeatherPanel currentCityName="Izmir" />
+      </SettingsProvider>
+    );
 
     expect(screen.getByLabelText('Başlangıç')).toHaveValue('İzmir');
   });

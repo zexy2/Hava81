@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
+import { useSettings } from '../../context';
 import { weatherService } from '../../api/weatherService';
 import { TURKISH_CITIES } from '../../constants/cities';
 import type { RouteWeatherResult } from '../../types';
@@ -27,6 +28,8 @@ const canonicalProvinceName = (name: string): string => {
 
 export function RouteWeatherPanel({ currentCityName }: Props) {
   const { t, i18n } = useTranslation();
+  const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
+    useSettings();
   const initialOrigin = canonicalProvinceName(currentCityName);
   const initialDestination = initialOrigin === 'Ankara' ? 'İstanbul' : 'Ankara';
   const [originName, setOriginName] = useState(initialOrigin);
@@ -44,6 +47,12 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     [destinationName]
   );
   const formatTime = (iso: string) => formatTurkeyTime(new Date(iso), i18n.language);
+  const numberFormatter = useMemo(
+    () => new Intl.NumberFormat(i18n.language.startsWith('en') ? 'en-US' : 'tr-TR'),
+    [i18n.language]
+  );
+  const temperatureSymbol = getTemperatureSymbol();
+  const windSpeedSymbol = getWindSpeedSymbol();
   const formatPrecipitation = (probabilityPercent: number, amount?: number) => {
     const probability = Math.round(probabilityPercent);
     const parts = [i18n.language.startsWith('en') ? `${probability}%` : `%${probability}`];
@@ -223,9 +232,11 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   <time>{formatTime(segment.eta)}</time>
                   <strong>{segment.score}</strong>
                   <span>
-                    {segment.temperature}° ·{' '}
+                    {numberFormatter.format(Math.round(convertTemperature(segment.temperature)))}
+                    {temperatureSymbol} ·{' '}
                     {formatPrecipitation(segment.precipitationProbability, segment.precipitationMm)}{' '}
-                    · {t('weather.wind')} {segment.windSpeed.toFixed(1)} m/s
+                    · {t('weather.wind')} {numberFormatter.format(convertWindSpeed(segment.windSpeed))}{' '}
+                    {windSpeedSymbol}
                   </span>
                   <small>{segment.description}</small>
                 </article>
