@@ -1,4 +1,5 @@
-const CACHE_NAME = 'hava81-shell-v2';
+const CACHE_NAME = 'hava81-shell-__HAVA81_BUILD_ID__';
+const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const APP_SHELL = ['/', '/manifest.json'];
 const CORE_SCRIPT_PATTERN = /\/assets\/(index-|rolldown-runtime-|jsx-runtime-|cities-|useLocalStorage-|SettingsContext-)/;
 
@@ -18,13 +19,13 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     const oldShellKeys = keys.filter(key => key.startsWith('hava81-') && key !== CACHE_NAME);
-    const upgradingExistingShell = oldShellKeys.length > 0;
+    const upgradingLegacyShell = oldShellKeys.some(key => LEGACY_RELOAD_CACHE_NAMES.has(key));
     await Promise.all(oldShellKeys.map(key => caches.delete(key)));
     await self.clients.claim();
 
     // One-time migration from older shell workers: reload open Hava81 tabs so they stop rendering
     // HTML that the browser may still consider fresh for several minutes after a Pages deploy.
-    if (upgradingExistingShell) {
+    if (upgradingLegacyShell) {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       await Promise.all(
         windows.map(client =>

@@ -785,3 +785,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed all eight upstream pollutant concentration fields (CO, NO, NO₂, O₃, SO₂, PM2.5, PM10, NH₃) to fail closed on negative values rather than carrying physically impossible concentrations into Hava81 health-context presentation.
 - Added adapter regression coverage for every pollutant field. Local API gates pass: 32/32 tests, type-check, production build, production dependency audit 0 vulnerabilities, and diff-check.
 - This is prepared on an isolated branch while the modeled-context canary/CI sequence proceeds; it requires exact-head CI and the normal API canary gate before production merge.
+
+## 2026-08-29 21:03 TRT — deploy-scoped offline shell cache
+
+- Audited PWA update semantics and found the service worker still used a fixed `hava81-shell-v2` namespace, so successful future deploys could leave an old root/manifest offline fallback cached indefinitely even though online navigation is network-first.
+- Added a build-time service-worker stamp: each production build derives a deterministic 12-character namespace from the generated root HTML, manifest, and hashed asset filenames, then replaces a required placeholder in `dist/sw.js`. The build fails closed if the placeholder is missing or survives stamping.
+- Old shell namespaces are still deleted on activation, but forced tab navigation is now limited to the legacy v1/v2 migration. Subsequent build-to-build cache rotation no longer forces already-open tabs to reload.
+- Local gates pass: lint, type-check, full 264-test coverage suite, targeted service-worker tests, 81-city production build, stamped-cache assertion, production dependency audit 0 vulnerabilities, and diff-check.

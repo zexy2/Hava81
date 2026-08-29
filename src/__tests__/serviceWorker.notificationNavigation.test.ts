@@ -14,7 +14,8 @@ describe('service worker notification navigation', () => {
   it('keeps navigations network-fresh across GitHub Pages deploys', () => {
     const source = readFileSync('public/sw.js', 'utf8');
 
-    expect(source).toContain("const CACHE_NAME = 'hava81-shell-v2'");
+    expect(source).toContain("const CACHE_NAME = 'hava81-shell-__HAVA81_BUILD_ID__'");
+    expect(source).toContain("LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2'])");
     expect(source).toContain("fetch(request, { cache: 'no-store' })");
     expect(source).toContain("fetch(path, { cache: 'no-store' })");
     expect(source).toContain("client.navigate(client.url)");
