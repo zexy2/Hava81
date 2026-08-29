@@ -299,4 +299,17 @@ describe('Hava81 daily decision engine v2', () => {
     expect(plan.score).toBeLessThan(simpleAverage);
     expect(plan.score).toBeLessThan(85);
   });
+  it('groups adjacent near-best hours into an honest best-looking range', () => {
+    const plan = buildDailyPlan({
+      weather,
+      hourly: [rich(6, 24), rich(7, 24), rich(8, 24), rich(9, 35, { apparentTemperature: 36 })],
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 },
+    });
+
+    expect(plan.bestWindowRange).toBeDefined();
+    expect(plan.bestWindowRange?.start.time.toISOString()).toBe('2026-08-28T06:00:00.000Z');
+    expect(plan.bestWindowRange?.end.time.toISOString()).toBe('2026-08-28T08:00:00.000Z');
+    expect(plan.bestWindow).toBe(plan.bestWindowRange?.peak);
+  });
+
 });

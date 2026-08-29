@@ -1,0 +1,48 @@
+import { describe, expect, it } from 'vitest';
+import { findBestWindowRange } from '../../domain/decision/bestWindowRange';
+import type { ScoredWeatherWindow } from '../../domain/decision/types';
+
+const slot = (hour: number, score: number): ScoredWeatherWindow => ({
+  time: new Date(Date.UTC(2026, 7, 29, hour)),
+  score,
+  band: score >= 90 ? 'excellent' : score >= 75 ? 'good' : score >= 55 ? 'caution' : 'difficult',
+  temperature: 24,
+  apparentTemperature: 24,
+  precipitationProbability: 0,
+  windSpeed: 3,
+  reasons: [],
+  impacts: [],
+});
+
+describe('findBestWindowRange', () => {
+  it('groups adjacent near-peak hours instead of inventing one uniquely best clock tick', () => {
+    const range = findBestWindowRange([
+      slot(17, 88),
+      slot(18, 92),
+      slot(19, 95),
+      slot(20, 93),
+      slot(21, 87),
+    ]);
+
+    expect(range?.peak.time.toISOString()).toBe('2026-08-29T19:00:00.000Z');
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T18:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T20:00:00.000Z');
+  });
+
+  it('does not bridge a forecast gap just because both sides have similar scores', () => {
+    const range = findBestWindowRange([
+      slot(18, 94),
+      slot(19, 96),
+      slot(23, 95),
+    ]);
+
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T18:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T19:00:00.000Z');
+  });
+
+  it('supports three-hour forecast cadence and keeps a single slot when neighbors are materially worse', () => {
+    const range = findBestWindowRange([slot(12, 80), slot(15, 91), slot(18, 84)]);
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
+  });
+});

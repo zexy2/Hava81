@@ -1,4 +1,4 @@
-import type { DecisionReasonCode, Hava81ScoreBand, ScoredWeatherWindow } from '../decision/types';
+import type { BestWindowRange, DecisionReasonCode, Hava81ScoreBand, ScoredWeatherWindow } from '../decision/types';
 
 export type ActivityKind = 'walk' | 'run' | 'picnic' | 'children' | 'motorcycle' | 'laundry';
 export type TemperatureSensitivity = 'cold' | 'balanced' | 'heat';
@@ -27,6 +27,7 @@ export interface ActivityPlan {
   windowUnavailable?: boolean;
   band: Hava81ScoreBand;
   bestWindow?: ActivityWindowScore;
+  bestWindowRange?: BestWindowRange<ActivityWindowScore>;
   slots: ActivityWindowScore[];
   reasons: DecisionReasonCode[];
 }

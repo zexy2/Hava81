@@ -1,4 +1,5 @@
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from "../../types";
+import { findBestWindowRange } from "./bestWindowRange";
 import { getScoreBand, scoreWeatherWindow } from "./scoreWeatherWindow";
 import type {
   AirQualityAdvice,
@@ -227,16 +228,15 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
   if (minimumScore <= 25) score = Math.min(score, 55);
   else if (minimumScore <= 40) score = Math.min(score, 65);
 
-  const bestWindow = withinHours(slots, SCORE_HORIZON_HOURS).reduce<ScoredWeatherWindow | undefined>(
-    (best, slot) => (!best || slot.score > best.score ? slot : best),
-    undefined
-  );
+  const bestWindowRange = findBestWindowRange(withinHours(slots, SCORE_HORIZON_HOURS));
+  const bestWindow = bestWindowRange?.peak;
 
   return {
     score,
     band: getScoreBand(score),
     slots,
     bestWindow,
+    bestWindowRange,
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
     airQuality: pickAirQualityAdvice(airQuality),

@@ -86,4 +86,30 @@ describe('WeatherDecisionField daily range', () => {
     expect(section).toHaveAttribute('aria-labelledby');
     expect(section).not.toHaveAttribute('aria-live');
   });
+
+  it("does not label tomorrow's forecast as today when the current-day daily row is missing", () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[]}
+          daily={[
+            {
+              date: new Date('2026-08-30T12:00:00Z'),
+              tempMin: 21,
+              tempMax: 34,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    const label = screen.getByText("Bugünün yüksek / düşük");
+    expect(label.parentElement).toHaveTextContent('—');
+    expect(screen.queryByText('34°C / 21°C')).not.toBeInTheDocument();
+  });
+
 });

@@ -44,6 +44,11 @@
 .activity-planner__sensitivity select:hover {
   border-color: var(--color-aegean);
 }
+.activity-planner__sensitivity small {
+  color: var(--color-atlas-muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
 .activity-planner__chips {
   display: flex;
   flex-wrap: wrap;

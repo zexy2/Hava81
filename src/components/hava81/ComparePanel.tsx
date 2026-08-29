@@ -202,7 +202,17 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                   </span>
                   <span>
                     {t('hava81.compare.bestTime')}{' '}
-                    <b>{offsetTime(row, row.plan.bestWindow?.time)}</b>
+                    <b>
+                      {row.plan.bestWindowRange
+                        ? row.plan.bestWindowRange.start.time.getTime() ===
+                          row.plan.bestWindowRange.end.time.getTime()
+                          ? offsetTime(row, row.plan.bestWindowRange.peak.time)
+                          : `${offsetTime(row, row.plan.bestWindowRange.start.time)}–${offsetTime(
+                              row,
+                              row.plan.bestWindowRange.end.time
+                            )}`
+                        : '—'}
+                    </b>
                   </span>
                   {row.activityPlan ? (
                     <span>

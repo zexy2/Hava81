@@ -140,7 +140,8 @@ export const en = {
         now: 'Going out now looks better than the next few hours.',
         similar: 'There is no meaningful advantage between the next few hours.',
       },
-      bestWindow: 'Best-looking window: {{time}}',
+      bestWindow: 'Best-looking time: {{time}}',
+      bestRange: 'Best-looking range: {{start}}–{{end}}',
       quickLabel: 'Practical weather decisions',
       quick: {
         umbrella: { label: 'Umbrella', yes: 'Yes', maybe: 'Take one', no: 'Not needed' },
@@ -258,6 +259,7 @@ export const en = {
         laundry: 'Laundry',
       },
       bestTime: 'Best time: {{time}}',
+      bestRange: 'Best range: {{start}}–{{end}}',
       score: {
         default: '12-hour suitability',
         filtered: '{{start}}–{{end}} suitability',
@@ -297,6 +299,11 @@ export const en = {
         cold: 'Sensitive to cold',
         balanced: 'Balanced',
         heat: 'Sensitive to heat',
+        help: {
+          balanced: 'Uses the standard comfort ranges.',
+          cold: 'Cold penalties begin about 3°C earlier.',
+          heat: 'Heat penalties begin about 3°C earlier.',
+        },
       },
     },
     context: {
