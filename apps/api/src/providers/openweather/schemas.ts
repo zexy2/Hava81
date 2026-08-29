@@ -12,7 +12,7 @@ const weatherConditionSchema = z.object({
   icon: z.string().min(1),
 });
 
-const mainWeatherSchema = z.object({
+const currentMainWeatherSchema = z.object({
   temp: z.number(),
   feels_like: z.number(),
   temp_min: z.number(),
@@ -32,7 +32,7 @@ const cloudsSchema = z.object({ all: z.number().min(0).max(100) });
 export const currentWeatherUpstreamSchema = z.object({
   coord: coordinatesSchema,
   weather: z.array(weatherConditionSchema).min(1),
-  main: mainWeatherSchema,
+  main: currentMainWeatherSchema,
   visibility: z.number().nonnegative().optional(),
   wind: windSchema,
   clouds: cloudsSchema,
@@ -47,9 +47,22 @@ export const currentWeatherUpstreamSchema = z.object({
   name: z.string(),
 });
 
+// Forecast models occasionally overshoot relative humidity by a single percentage point
+// because of interpolation/rounding. Keep current observations strict, but normalize a small
+// forecast-only numerical overshoot instead of failing the entire multi-day forecast.
+const forecastHumiditySchema = z
+  .number()
+  .min(0)
+  .max(105)
+  .transform((value) => Math.min(100, value));
+
+const forecastMainWeatherSchema = currentMainWeatherSchema.extend({
+  humidity: forecastHumiditySchema,
+});
+
 const forecastItemSchema = z.object({
   dt: z.number(),
-  main: mainWeatherSchema,
+  main: forecastMainWeatherSchema,
   weather: z.array(weatherConditionSchema).min(1),
   clouds: cloudsSchema,
   wind: windSchema,
