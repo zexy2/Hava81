@@ -90,6 +90,11 @@
     max-width: 100%;
     text-align: left;
   }
+  .context-signals__source a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
   .context-signals__grid {
     grid-template-columns: 1fr;
   }
