@@ -811,3 +811,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the conflict-stale route response validation onto current main in an isolated branch while the equal-temperature PR validated independently.
 - Route results fail closed on malformed departure/ETA timestamps, invalid corridor kind, non-finite/negative distance or duration, score/risk domain violations, impossible coordinates/fractions, precipitation outside 0–100%, negative wind, blank descriptions/disclaimer, and invalid better-departure metadata.
 - No route value is corrected or fabricated. Invalid BFF route data uses the existing retryable forecast-data error path. Combined validation was rerun on the rebuilt exact head before publication.
+
+## 2026-08-29 21:51 TRT — run handoff checkpoint
+
+- PR #203 (equal daily high/low presentation) merged after exact-head green CI as main `039b5eeb25117524364fc984ba6b19f686a01c4a`; main pipeline #511 is in progress at this checkpoint, while production remains healthy on API port 4002.
+- Conflict-stale PR #204 replacement branch is `automation/hava81-route-boundary-rebuild-2146`, rebased onto main `039b5eeb25117524364fc984ba6b19f686a01c4a`; pre-checkpoint exact head was `00f0ad9f41dfb5397e09f6859043da1a99d8a1c3`. Focused route/weather tests (83/83 route-service set plus ForecastAtlas), type-check, lint, full frontend suite, production build, dependency audit 0 vulnerabilities and diff-check passed across the rebuild/rebase sequence.
+- Next action: let the documentation-only checkpoint commit revalidate on PR #204; when exact-head CI is green and main #511 production is healthy, directly re-verify observer/current PR SHA, merge #204, verify the new main pipeline and public root/city/API readiness, then close superseded PRs #200/#201.
+- Prioritized next queue after #204: continue browser/API trust-boundary audit, mobile first-viewport visual QA, production Lighthouse re-measurement, and disk-pressure-safe cleanup of rebuildable worktree caches only if needed.
