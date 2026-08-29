@@ -66,4 +66,24 @@ describe('useFavorites', () => {
 
     expect(result.current.favorites).toEqual([]);
   });
+
+  it('canonicalizes supported provider labels before persisting a new favorite', () => {
+    const { result } = renderHook(() => useFavorites(weatherFor('Istanbul')));
+
+    act(() => result.current.addFavorite());
+
+    expect(result.current.favorites).toEqual([
+      { name: 'İstanbul', lat: 41.01, lon: 28.97, temp: 20, icon: '01d' },
+    ]);
+    expect(JSON.parse(localStorage.getItem('favorites') ?? '[]')).toEqual(result.current.favorites);
+  });
+
+  it('does not persist an unsupported provider location as a province favorite', () => {
+    const { result } = renderHook(() => useFavorites(weatherFor('London')));
+
+    act(() => result.current.addFavorite());
+
+    expect(result.current.favorites).toEqual([]);
+    expect(localStorage.getItem('favorites')).toBeNull();
+  });
 });
