@@ -144,6 +144,44 @@ describe('DailyPlanPanel sharing', () => {
     expect(within(timeline).getAllByRole('listitem')[0]).toHaveAccessibleName(/75°F/);
   });
 
+  it('falls back to the clipboard when native sharing is present but unavailable', async () => {
+    const user = userEvent.setup();
+    const share = vi.fn().mockRejectedValue(new Error('share target unavailable'));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    await user.click(screen.getByRole('button', { name: 'hava81.share.action' }));
+
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status')).toHaveTextContent('hava81.share.copied');
+  });
+
+  it('does not copy after the user cancels native sharing', async () => {
+    const user = userEvent.setup();
+    const abort = new Error('cancelled');
+    abort.name = 'AbortError';
+    const share = vi.fn().mockRejectedValue(abort);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    await user.click(screen.getByRole('button', { name: 'hava81.share.action' }));
+
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(writeText).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent('');
+  });
+
   it('announces clipboard success without moving focus', async () => {
     const user = userEvent.setup();
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);
