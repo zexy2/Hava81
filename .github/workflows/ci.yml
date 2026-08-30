@@ -50,6 +50,8 @@ jobs:
       - run: npm run api:type-check
       - run: npm run api:test
       - run: npm run api:build
+      - name: Verify API deploy operation locking
+        run: bash scripts/test-api-operation-lock.sh
 
   build:
     name: Production build

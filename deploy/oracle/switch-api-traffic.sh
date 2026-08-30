@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lock/hava81-api-operation.lock}"
+INHERITED_LOCK_FD="${HAVA81_API_OPERATION_LOCK_FD:-}"
+if [[ -n "$INHERITED_LOCK_FD" ]]; then
+  if [[ ! "$INHERITED_LOCK_FD" =~ ^[0-9]+$ ]] || ! flock -n "$INHERITED_LOCK_FD"; then
+    echo "inherited Hava81 API operation lock is invalid or unavailable" >&2
+    exit 1
+  fi
+else
+  exec 9>"$OPERATION_LOCK"
+  if ! flock -n 9; then
+    echo "another Hava81 API deploy/rollback operation is already running; refusing concurrent traffic switch" >&2
+    exit 1
+  fi
+fi
+
 TARGET_PORT="${1:-}"
 case "$TARGET_PORT" in
   4000|4001|4002) ;;
@@ -16,6 +31,12 @@ cp "$CFG" "$BACKUP"
 
 READY_URL="http://127.0.0.1:${TARGET_PORT}/api/v1/health/ready"
 PUBLIC_READY_URL="https://api.hava81.zekiakgul.dev/api/v1/health/ready"
+TARGET_READY_FILE="$(mktemp /tmp/hava81-target-ready.XXXXXX.json)"
+PUBLIC_READY_FILE="$(mktemp /tmp/hava81-public-ready.XXXXXX.json)"
+cleanup() {
+  rm -f "$TARGET_READY_FILE" "$PUBLIC_READY_FILE"
+}
+trap cleanup EXIT
 
 wait_for_ready() {
   local url="$1"
@@ -37,7 +58,7 @@ restore_previous_config() {
   systemctl reload nginx
 }
 
-if ! wait_for_ready "$READY_URL" /tmp/hava81-target-ready.json; then
+if ! wait_for_ready "$READY_URL" "$TARGET_READY_FILE"; then
   echo "target API on 127.0.0.1:${TARGET_PORT} failed readiness checks; traffic unchanged" >&2
   exit 1
 fi
@@ -66,12 +87,12 @@ if ! systemctl reload nginx; then
   exit 1
 fi
 sleep 1
-if ! wait_for_ready "$PUBLIC_READY_URL" /tmp/hava81-public-ready.json; then
+if ! wait_for_ready "$PUBLIC_READY_URL" "$PUBLIC_READY_FILE"; then
   restore_previous_config
   echo "public readiness failed; traffic rolled back to the previous API target" >&2
   exit 1
 fi
-cat /tmp/hava81-public-ready.json
+cat "$PUBLIC_READY_FILE"
 echo
 mkdir -p /var/lib/hava81
 if [[ -f /var/lib/hava81/current-api-port ]]; then

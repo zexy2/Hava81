@@ -3,6 +3,14 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lock/hava81-api-operation.lock}"
+exec 9>"$OPERATION_LOCK"
+if ! flock -n 9; then
+  echo "another Hava81 API deploy/rollback operation is already running; refusing concurrent deploy" >&2
+  exit 1
+fi
+export HAVA81_API_OPERATION_LOCK_FD=9
+
 STATE_FILE="${HAVA81_API_STATE_FILE:-/var/lib/hava81/current-api-port}"
 NGINX_SITE="${HAVA81_NGINX_SITE:-/etc/nginx/sites-enabled/api.hava81.zekiakgul.dev}"
 CURRENT_PORT="${CURRENT_API_PORT:-}"
