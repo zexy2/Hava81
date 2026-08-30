@@ -8,13 +8,15 @@ import type {
 } from "../weather-provider";
 
 const optionalHourlySeries = z.array(z.number().nullable()).optional();
+const providerTimestampSchema = z.number().int().nonnegative();
+const providerTimezoneOffsetSchema = z.number().int().min(-43_200).max(50_400);
 const ONE_HOUR_MS = 60 * 60 * 1_000;
 
 const hourlySchema = z.object({
-  utc_offset_seconds: z.number().int(),
+  utc_offset_seconds: providerTimezoneOffsetSchema,
   daily: z
     .object({
-      time: z.array(z.number().int()),
+      time: z.array(providerTimestampSchema),
       temperature_2m_max: z.array(z.number().nullable()),
       temperature_2m_min: z.array(z.number().nullable()),
       weather_code: z.array(z.number().int().nullable()),
@@ -23,7 +25,7 @@ const hourlySchema = z.object({
     })
     .optional(),
   hourly: z.object({
-    time: z.array(z.number().int()),
+    time: z.array(providerTimestampSchema),
     temperature_2m: z.array(z.number().nullable()),
     apparent_temperature: optionalHourlySeries,
     relative_humidity_2m: optionalHourlySeries,

@@ -164,6 +164,50 @@ test('Open-Meteo hourly adapter rejects gaps in required one-hour data instead o
   );
 });
 
+test('Open-Meteo hourly adapter rejects impossible timezone offsets and negative forecast epochs', async () => {
+  const cases = [
+    { label: 'timezone offset', utcOffset: 50_401, hourlyTime: 1_787_936_400, dailyTime: 1_787_950_800 },
+    { label: 'hourly epoch', utcOffset: 10_800, hourlyTime: -1, dailyTime: 1_787_950_800 },
+    { label: 'daily epoch', utcOffset: 10_800, hourlyTime: 1_787_936_400, dailyTime: -1 },
+  ];
+
+  for (const item of cases) {
+    const fakeFetch = (async () =>
+      new Response(
+        JSON.stringify({
+          utc_offset_seconds: item.utcOffset,
+          daily: {
+            time: [item.dailyTime],
+            temperature_2m_max: [28],
+            temperature_2m_min: [20],
+            weather_code: [0],
+            precipitation_probability_max: [10],
+          },
+          hourly: {
+            time: [item.hourlyTime],
+            temperature_2m: [24],
+            precipitation_probability: [10],
+            weather_code: [0],
+            wind_speed_10m: [3],
+            is_day: [1],
+          },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      )) as typeof fetch;
+
+    const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
+
+    await assert.rejects(
+      () => provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' }),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'INVALID_HOURLY_PROVIDER_RESPONSE');
+        return true;
+      },
+      `expected invalid ${item.label} to be rejected`,
+    );
+  }
+});
+
 test('Open-Meteo hourly adapter rejects impossible finite core forecast values', async () => {
   const cases = [
     { label: 'temperature', temperature: 999, pop: 10, windSpeed: 3 },

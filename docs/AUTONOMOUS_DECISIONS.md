@@ -356,3 +356,5 @@ This log records product and engineering decisions made during the autonomous im
 
 - Hourly low/high labels describe the displayed forecast range, not hidden provider precision. If both extrema resolve to the same displayed degree, two separate cards communicate a distinction the UI does not actually show.
 - Collapse only the display-flat case into one neutral temperature summary card. Preserve separate extrema whenever the displayed values differ, and do not invent decimal precision merely to force visual separation.
+
+- 2026-08-30 — Open-Meteo forecast temporal metadata is an upstream trust boundary. Require non-negative integer Unix epochs for hourly/daily forecast times and constrain `utc_offset_seconds` to the real-world UTC-12..UTC+14 domain already used for OpenWeather. Reject malformed values instead of allowing them to shift forecast grouping into a plausible-looking wrong calendar.
