@@ -464,6 +464,40 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it('rejects materially future forecast metadata timestamps', async () => {
+    mockGet.mockResolvedValue({
+      daily: [
+        {
+          date: '2026-07-14',
+          tempMin: 18,
+          tempMax: 27,
+          icon: '01d',
+          description: 'clear',
+          pop: 5,
+        },
+      ],
+      hourly: [
+        {
+          time: '2026-07-14T12:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          pop: 5,
+        },
+      ],
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 3,
+      },
+    });
+
+    await expect(weatherService.getForecast(38.42, 27.14)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it.each([
     ['non-finite daily minimum', { daily: { tempMin: Number.NaN } }],
     ['blank daily description', { daily: { description: '   ' } }],
@@ -609,6 +643,32 @@ describe('weatherService BFF client', () => {
       meta: {
         provider: 'Open-Meteo',
         fetchedAt: invalid.fetchedAt ?? '2026-08-28T17:00:00.000Z',
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    await expect(weatherService.getHourlyForecast(41.01, 28.97, 'tr')).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
+  it('rejects materially future hourly metadata timestamps', async () => {
+    mockGet.mockResolvedValue({
+      hourly: [
+        {
+          time: '2026-08-28T18:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          description: 'açık',
+          pop: 35,
+          windSpeed: 3.2,
+        },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
         timezoneOffsetSeconds: 10800,
         intervalHours: 1,
       },
