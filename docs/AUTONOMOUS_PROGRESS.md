@@ -1357,3 +1357,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added focused regressions proving a matching ArrowRight shortcut is ignored from a focused select while Escape still triggers. No weather, scoring, provider, navigation-route, or safety semantics changed.
 - Local gates pass in Node 24: focused shortcut tests 2/2, full frontend 48 files / 434 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: after #358 resolves, rebase onto exact current main preserving append-only checkpoints, rerun combined gates, then publish as a separate PR with exact-head CI.
+
+## 2026-08-30 21:26 TRT — keep notification activation alive when a stale window client fails
+
+- Audited the service-worker notification-click path independently from exact main while PR #359 validated. The handler reused the first open Hava81 window, but an exception from `client.navigate()` or `client.focus()` rejected the whole `waitUntil` chain and could swallow the notification activation instead of trying another client or opening the intended same-origin URL.
+- Existing-window reuse is now fail-soft: each focusable client is attempted inside a bounded try/catch; a stale/unavailable client is skipped, another client is tried, and the existing same-origin-validated `openWindow(url)` fallback remains last. External notification URLs are still rejected to `/`.
+- No weather/provider/scoring/alert-threshold semantics changed. Focused service-worker tests 3/3 and pre-rebase full frontend 47 files / 433 tests, TypeScript, ESLint, 81-city build/service-worker stamping, dependency audit 0 vulnerabilities, and diff-check pass.
+- Next action: rebase after #359 onto exact current main, preserve both append-only checkpoints, rerun combined gates, then publish/open an isolated PR with exact-head CI.

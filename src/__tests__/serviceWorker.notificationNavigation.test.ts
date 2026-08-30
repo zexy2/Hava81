@@ -9,6 +9,9 @@ describe('service worker notification navigation', () => {
     expect(source).toContain('new URL(event.notification.data?.url ||');
     expect(source).toContain('candidate.origin === self.location.origin');
     expect(source).toContain("let url = '/';");
+    expect(source).toContain("return await client.focus();");
+    expect(source).toContain("return self.clients.openWindow(url);");
+    expect(source).toContain('A stale/unavailable client must not swallow the notification activation');
   });
 
   it('keeps navigations network-fresh across GitHub Pages deploys', () => {
