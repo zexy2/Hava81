@@ -45,3 +45,11 @@ test('current-weather schema rejects negative and fractional observation timesta
     assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
   }
 });
+
+test('current-weather schema rejects a minimum temperature above the maximum', () => {
+  const payload = sample();
+  payload.main.temp_min = 24;
+  payload.main.temp_max = 18;
+
+  assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+});
