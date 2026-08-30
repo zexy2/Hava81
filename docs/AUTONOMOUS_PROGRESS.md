@@ -1131,3 +1131,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The old #305 CI failure was isolated to the browser-flow job on its stale base; current-main validation now passes end to end: DailyPlanPanel 7/7; full frontend 46 files / 404 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; Chromium Playwright 39 passed / 60 intentionally skipped / 0 failed; `git diff --check`.
 - Product behavior remains bounded: successful native sharing stays native, explicit `AbortError` remains cancellation, other native-share failures may use clipboard, and analytics records only a completed transport. No weather data or safety semantics change.
 - Next action: amend/push with exact lease against remote `6b2ac9b1a2ca0b7c010e1b0b40662a839b62ee27`, require new exact-head CI, and directly reverify current main/observer/production immediately before merge.
+
+
+## 2026-08-30 13:20 TRT — collapse duplicate flat hourly temperature summary
+
+- Audited the newly redesigned Forecast Atlas on exact production-green main `3ca751fae0fb4b1f5a0676255c52f71bdb98f391`. The hourly summary always rendered separate low/high cards, so a display-flat range such as 24.1–24.4°C appeared as the misleading duplicate `En düşük 24°C` / `En yüksek 24°C`.
+- When the displayed hourly minimum and maximum are identical, the summary now uses one two-column localized `Sıcaklık` / `Temperature` card plus the independent rain-peak card. Genuinely different displayed minima/maxima retain the existing separate low/high cards. No forecast values are changed, corrected, or synthesized.
+- Added regression coverage for a sub-degree range that rounds to one displayed degree. Validation passes: ForecastAtlas 10/10, full frontend 46 files / 406 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Fresh observer after main CI #771: main pipeline successful, production root/İstanbul/API readiness/CORS healthy, OpenWeather circuit closed, nginx remains on 4002, no API runtime drift, disk healthy at 82.1% used.
+- Next action: commit/push/open this isolated branch, require exact-head CI, continue a separate non-overlapping audit while CI runs, then reverify PR head/mergeability/observer/production immediately before merge.

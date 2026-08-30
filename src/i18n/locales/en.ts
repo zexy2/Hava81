@@ -108,6 +108,7 @@ export const en = {
       viewLabel: 'View',
       summaryLabel: 'Hourly forecast summary',
       summaryLow: 'Low',
+      summaryTemperature: 'Temperature',
       summaryHigh: 'High',
       summaryRain: 'Rain peak',
       precipitationNone: 'None',

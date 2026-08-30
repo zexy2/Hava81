@@ -192,6 +192,10 @@
   white-space: nowrap;
 }
 
+.hava81-forecast-atlas__summary-item.is-temperature-flat {
+  grid-column: span 2;
+}
+
 .hava81-forecast-atlas__summary-item.is-precipitation strong {
   color: var(--color-saffron-ink, #805500);
 }

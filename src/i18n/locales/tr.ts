@@ -108,6 +108,7 @@ export const tr = {
       viewLabel: 'Görünüm',
       summaryLabel: 'Saatlik tahmin özeti',
       summaryLow: 'En düşük',
+      summaryTemperature: 'Sıcaklık',
       summaryHigh: 'En yüksek',
       summaryRain: 'Yağış piki',
       precipitationNone: 'Yok',
