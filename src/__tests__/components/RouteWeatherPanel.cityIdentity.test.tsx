@@ -34,6 +34,25 @@ describe('RouteWeatherPanel city identity', () => {
     expect(screen.getByLabelText('Varış')).toHaveValue('Ankara');
   });
 
+  it('keeps route endpoints distinct when the active city changes to the selected destination', async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderPanel('İstanbul');
+
+    await user.click(screen.getByText('Rota havası'));
+    expect(screen.getByLabelText('Başlangıç')).toHaveValue('İstanbul');
+    expect(screen.getByLabelText('Varış')).toHaveValue('Ankara');
+
+    rerender(
+      <SettingsProvider>
+        <RouteWeatherPanel currentCityName="Ankara" />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByLabelText('Başlangıç')).toHaveValue('Ankara');
+    expect(screen.getByLabelText('Varış')).toHaveValue('İstanbul');
+    expect(screen.getByRole('button', { name: 'Koridoru kontrol et' })).toBeEnabled();
+  });
+
   it('updates the route origin when the active weather city changes', async () => {
     const user = userEvent.setup();
     const { rerender } = renderPanel('İstanbul');

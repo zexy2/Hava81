@@ -1424,3 +1424,27 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebased `automation/hava81-run11-independent-2251` onto exact current main `1b68c4acf6d0c1f67a057bc2a31705c14e2dd26f` after #365 merged. The only conflict was append-only `docs/AUTONOMOUS_PROGRESS.md`; preserved both the repeated-share checkpoint and the comparison reliability checkpoint.
 - Combined post-rebase gates pass: ComparePanel 10/10; full frontend 48 files / 444 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: publish this exact rebased head only after checking the remote branch lease; require exact-head CI and fresh main/production verification before merge. Continue independent work while CI runs.
+
+
+## 2026-08-30 22:58 TRT — keep route endpoints distinct across active-city changes
+
+- Continued independently from exact main `1b68c4acf6d0c1f67a057bc2a31705c14e2dd26f` in `/home/ubuntu/hava81-auto-run11-third-2256` while PR #366 validated independently.
+- Audited RouteWeatherPanel state handoff when the active weather city changes. If the previous destination became the new active city (for example İstanbul → Ankara while Ankara was the route destination), the effect updated only the origin and left an invalid Ankara → Ankara route, disabling the primary route action until the user manually corrected it.
+- The active-city handoff now preserves the user-selected destination when it remains distinct, but switches to the bounded default alternative only when it would collide with the new origin. In-flight route state is still invalidated exactly as before.
+- Added a city-identity regression proving İstanbul → Ankara produces Ankara → İstanbul and leaves the route check action enabled. No route weather values, scoring, modeled guidance, provider semantics, or departure-window rules changed.
+- Local gates pass: RouteWeatherPanel focused 13/13; full frontend 48 files / 444 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: after #366 resolves and its production pipeline is healthy, rebase this prepared branch onto exact current main, preserve append-only checkpoints, rerun combined gates, then publish as its own bounded PR.
+
+
+## 2026-08-30 23:00 TRT — route endpoint branch rebased and revalidated
+
+- Rebased `automation/hava81-run11-third-2256` onto exact main `14e0146eca727f6f523a2a2bab9907261ccff236` after #366 merged; preserved all append-only comparison checkpoints during the sole documentation conflict.
+- Combined post-rebase gates pass: RouteWeatherPanel focused 13/13; full frontend 48 files / 445 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Main pipeline #891 for `14e0146eca727f6f523a2a2bab9907261ccff236` is still in progress; direct public root and İstanbul route are 200. Keep this branch prepared and do not merge it until #891 and fresh production checks are green.
+- Next action: while #891 runs, continue a separate independent audit. Once #891 is green and production is freshly healthy, publish this exact route branch, require exact-head CI, then merge only after the same gates are re-verified.
+
+
+## 2026-08-30 23:02 TRT — post-#366 production gate cleared for route branch
+
+- Main pipeline #891 for exact main `14e0146eca727f6f523a2a2bab9907261ccff236` completed successfully. Fresh public checks after completion: root 200, İstanbul 200, API readiness 200 with `no-store`, provider OpenWeather circuit closed with zero consecutive failures, and production-origin CORS preflight 204 with the expected allow-origin.
+- The prepared route-endpoint branch remains unchanged apart from this append-only checkpoint. Next action: publish exact head after remote branch lease check, require exact-head CI, and continue an independent forecast fail-soft workstream while it validates.
