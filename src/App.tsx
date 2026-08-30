@@ -109,6 +109,7 @@ const App: React.FC = () => {
   const overviewRef = useRef<HTMLDivElement>(null);
   const cityRailRef = useRef<HTMLDivElement>(null);
   const mapRegionRef = useRef<HTMLElement>(null);
+  const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
 
   const [initialCity] = useState(
@@ -263,19 +264,35 @@ const App: React.FC = () => {
     [fetchWeather]
   );
 
+  const restoreMapTriggerFocus = useCallback(() => {
+    const trigger = mapReturnFocusRef.current;
+    mapReturnFocusRef.current = null;
+    if (!trigger) return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (trigger.isConnected) trigger.focus({ preventScroll: true });
+      });
+    });
+  }, []);
+
   const handleMapCitySelect = useCallback(
     (cityData: TurkishCity) => {
       fetchWeather(cityData.name);
       setShowMap(false);
       setActiveNav('today');
+      restoreMapTriggerFocus();
       requestAnimationFrame(() => {
         if (overviewRef.current) scrollIntoViewRespectingMotion(overviewRef.current);
       });
     },
-    [fetchWeather]
+    [fetchWeather, restoreMapTriggerFocus]
   );
 
   const openMap = useCallback(() => {
+    const activeElement = document.activeElement;
+    mapReturnFocusRef.current =
+      activeElement instanceof HTMLElement && activeElement !== document.body ? activeElement : null;
     setShowMap(true);
     setActiveNav('map');
     requestAnimationFrame(() => {
@@ -289,9 +306,14 @@ const App: React.FC = () => {
   }, []);
 
   const closeMap = useCallback(() => {
+    const activeElement = document.activeElement;
+    const shouldRestoreFocus =
+      activeElement instanceof HTMLElement && Boolean(activeElement.closest('#weather-map-region'));
+
     setShowMap(false);
     setActiveNav('today');
-  }, []);
+    if (shouldRestoreFocus) restoreMapTriggerFocus();
+  }, [restoreMapTriggerFocus]);
 
   const handleBottomNav = useCallback(
     (item: AtlasNavItem) => {
