@@ -303,6 +303,9 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     },
     {
       onSuccess: data => {
+        // Keep the existing city visible while location is pending, then invalidate
+        // any older city request only when a real location result is ready to replace it.
+        weatherAsync.reset();
         setCity(data.cityName);
         setLastUpdated(new Date());
         if (enableCache) {
@@ -336,10 +339,10 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
 
   // Fetch current location weather
   const fetchCurrentLocation = useCallback(async () => {
-    // Clear previous weather data so location data takes precedence
-    weatherAsync.reset();
+    // Preserve the last successful city while permission/network work is pending.
+    // A successful location handoff clears city state in locationAsync.onSuccess.
     return locationAsync.execute();
-  }, [locationAsync, weatherAsync]);
+  }, [locationAsync]);
 
   // Clear error
   const clearError = useCallback(() => {

@@ -87,4 +87,35 @@ describe('useWeather city/location handoff', () => {
     });
     expect(result.current.weather?.cityName).toBe('İzmir');
   });
+
+  it('keeps the current city visible while a location handoff is pending or fails', async () => {
+    (weatherService.getCurrentWeather as Mock).mockResolvedValueOnce(cityWeather);
+    let rejectLocation: ((reason?: unknown) => void) | undefined;
+    (weatherService.getCurrentLocationWeather as Mock).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectLocation = reject;
+        })
+    );
+
+    const { result } = renderHook(() => useWeather());
+    await act(async () => {
+      await result.current.fetchWeather('İzmir');
+    });
+    expect(result.current.weather?.cityName).toBe('İzmir');
+
+    let locationRequest: Promise<unknown>;
+    act(() => {
+      locationRequest = result.current.fetchCurrentLocation();
+    });
+    expect(result.current.weather?.cityName).toBe('İzmir');
+    expect(result.current.isLoading).toBe(true);
+
+    await act(async () => {
+      rejectLocation?.(new Error('location unavailable'));
+      await locationRequest!;
+    });
+    expect(result.current.weather?.cityName).toBe('İzmir');
+    expect(result.current.error).not.toBeNull();
+  });
 });
