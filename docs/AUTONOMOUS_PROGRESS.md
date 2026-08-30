@@ -1155,3 +1155,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt only its measured accessibility fix from exact current main `6ebdf27ec9b69e33d45df846c8ab6d2fcd00db14`: source attribution now uses the solid existing `--forecast-muted` token instead of fading that token toward transparency.
 - This preserves hierarchy and dark-mode token semantics while restoring the previously measured light-mode attribution contrast above WCAG AA normal-text threshold. No weather values, provider attribution, or scoring semantics change.
 - Current-main gates pass: ForecastAtlas 12/12, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+
+
+## 2026-08-30 13:56 TRT — harden Open-Meteo temporal metadata
+
+- While the post-#319 main pipeline ran, audited the independent Open-Meteo hourly provider on exact main `65cc57c8c9bc5b4bdd3a23e6b518e0dafc380874`. Its forecast arrays required integer epochs but still accepted negative timestamps and an unbounded `utc_offset_seconds`, either of which could shift a malformed upstream forecast into a plausible-looking wrong local day/hour.
+- Added fail-closed schema bounds: hourly/daily Unix epochs must be non-negative integers, and timezone offsets must remain within UTC-12..UTC+14, matching the existing OpenWeather trust domain. No time value is corrected or synthesized.
+- Regression coverage exercises an out-of-range timezone offset plus negative hourly and daily epochs. This is API-input validation only; production will require exact-head CI and blue/green validation after merge.
+- Local gates pass: full API suite 51/51, API TypeScript, API build, API dependency audit 0 vulnerabilities, and `git diff --check`.
