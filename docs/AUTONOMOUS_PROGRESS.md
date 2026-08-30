@@ -1268,3 +1268,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Focused RouteWeatherPanel gates pass: 10/10 tests, TypeScript, ESLint, and `git diff --check`.
 - Next action: rebase this bounded frontend-only branch onto current main, preserve append-only checkpoints, then run the full frontend/build/audit gates before publishing a PR.
 
+
+## 2026-08-30 18:05 TRT — preserve browser history across explicit city changes
+
+- Continued independently from exact main `d73eb228e4b1c5bd49dad560b851ea43e79c4382` in `/home/ubuntu/hava81-auto-run11-history-1803` while PRs #346/#347 validate; neither pending branch was mutated.
+- The app already listened for `popstate`, but every weather-driven city URL change used `replaceState`, so explicit city searches could erase the previous city instead of creating navigable browser history. A change between two valid province routes now uses `pushState`; initial/canonical-path normalization still uses `replaceState` so first load does not create a duplicate history entry.
+- Added an integration regression that selects İzmir from İstanbul and asserts an `/izmir/` history entry is pushed. Weather/provider/decision semantics are unchanged.
+- Validation passes: focused App integration 10/10; full frontend 47 files / 424 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../App';
@@ -207,6 +207,38 @@ describe('Hava81 app integration', () => {
     await user.keyboard('{Enter}');
     await waitFor(() => expect(searchToggle).toHaveFocus());
     expect(searchToggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('pushes a history entry for an explicit city change so browser Back can return', async () => {
+    const user = userEvent.setup();
+    const pushState = vi.spyOn(window.history, 'pushState');
+    service.getCurrentWeather.mockImplementation(async ({ city }: { city: string }) =>
+      city === 'İzmir'
+        ? {
+            ...current,
+            cityName: 'İzmir',
+            coordinates: { lat: 38.42, lon: 27.14 },
+          }
+        : current
+    );
+
+    const { container } = renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+    const searchToggle = container.querySelector<HTMLButtonElement>('.atlas-icon-button--search');
+    await user.click(searchToggle!);
+    const searchInput = screen.getByRole('combobox', { name: /şehir ara/i });
+    await user.clear(searchInput);
+    await user.type(searchInput, 'İzmir');
+    const izmirOption = await waitFor(() =>
+      within(screen.getByRole('listbox', { name: 'Şehir önerileri' })).getByRole('option', {
+        name: 'İzmir',
+      })
+    );
+    await user.click(izmirOption);
+
+    await screen.findByRole('heading', { name: 'İzmir', level: 1 });
+    expect(pushState).toHaveBeenCalledWith({ city: 'İzmir' }, '', '/izmir/');
+    expect(window.location.pathname).toBe('/izmir/');
   });
 
   it('keeps raw current-weather failures out of the user-visible error state', async () => {
