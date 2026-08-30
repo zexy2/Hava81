@@ -588,6 +588,13 @@
 }
 
 @media (forced-colors: active) {
+  .hava81-forecast-atlas__range-button[aria-pressed='true'] {
+    color: Highlight;
+    border-color: Highlight;
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+  }
+
   .hava81-forecast-atlas,
   .hava81-forecast-atlas__section,
   .hava81-forecast-atlas__hours,
