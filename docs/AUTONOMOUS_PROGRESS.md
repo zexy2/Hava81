@@ -1170,3 +1170,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt only the bounded accessibility behavior from exact current main `2ed6ccabfe50c292b275c206daf400b4ead02d60`: dry hourly slots no longer repeat a hidden “no precipitation expected” sentence for every hour.
 - The aggregate accessible rain summary remains, and non-zero precipitation probability or measurable accumulation still receives explicit hourly precipitation detail. No weather values, precipitation semantics, provider attribution, or scoring logic change.
 - Next action: run focused/full frontend, type, lint, production build, dependency audit and diff gates; publish as a replacement PR only if all pass, then retire superseded #320/#316 after the replacement is safely represented.
+
+## 2026-08-30 14:25 TRT — reject misaligned Open-Meteo forecast series
+
+- While post-#323 main deployment and PR #324 CI proceed independently, audited the Open-Meteo hourly provider on exact main `7674b2a3581b17e556e21e0f6106cf01641a667d`.
+- The adapter previously used `Math.min(...)` across provider arrays. A malformed response with one required or optional series shorter than the time axis could therefore be silently truncated or partially omitted, turning structurally inconsistent upstream data into a plausible-looking shorter forecast.
+- Hourly required series and every provided optional series must now exactly match the hourly time-axis length. When daily data is present, all required daily series and provided precipitation totals must likewise match the daily time-axis length. Mismatches fail closed with the existing invalid-provider-response contract; no missing forecast value is inferred or padded.
+- Added regressions for mismatched required hourly, optional hourly, and daily series. Local API gates pass: 52/52 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: publish this independent branch as a PR. Do not merge behind pending #324 without rebasing onto production-green main and rerunning combined API gates. API production remains on 4002; any merged runtime API delta must use blue/green validation before traffic changes.

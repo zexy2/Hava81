@@ -133,6 +133,77 @@ test('Open-Meteo hourly adapter keeps the core forecast usable when optional dec
 });
 
 
+test('Open-Meteo hourly adapter rejects misaligned provider series instead of truncating forecast data', async () => {
+  const cases = [
+    {
+      label: 'required hourly series',
+      hourly: {
+        time: [1787936400, 1787940000],
+        temperature_2m: [24],
+        precipitation_probability: [10, 20],
+        weather_code: [0, 1],
+        wind_speed_10m: [3, 4],
+        is_day: [1, 1],
+      },
+      daily: undefined,
+    },
+    {
+      label: 'optional hourly series',
+      hourly: {
+        time: [1787936400, 1787940000],
+        temperature_2m: [24, 23],
+        precipitation_probability: [10, 20],
+        weather_code: [0, 1],
+        wind_speed_10m: [3, 4],
+        is_day: [1, 1],
+        uv_index: [5],
+      },
+      daily: undefined,
+    },
+    {
+      label: 'daily series',
+      hourly: {
+        time: [1787936400],
+        temperature_2m: [24],
+        precipitation_probability: [10],
+        weather_code: [0],
+        wind_speed_10m: [3],
+        is_day: [1],
+      },
+      daily: {
+        time: [1787950800, 1788037200],
+        temperature_2m_max: [28],
+        temperature_2m_min: [20, 21],
+        weather_code: [0, 1],
+        precipitation_probability_max: [10, 20],
+      },
+    },
+  ];
+
+  for (const item of cases) {
+    const fakeFetch = (async () =>
+      new Response(
+        JSON.stringify({
+          utc_offset_seconds: 10800,
+          ...(item.daily ? { daily: item.daily } : {}),
+          hourly: item.hourly,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      )) as typeof fetch;
+
+    const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
+
+    await assert.rejects(
+      () => provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' }),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'INVALID_HOURLY_PROVIDER_RESPONSE');
+        return true;
+      },
+      `expected misaligned ${item.label} to be rejected`,
+    );
+  }
+});
+
 test('Open-Meteo hourly adapter rejects gaps in required one-hour data instead of mislabeling a sparse series', async () => {
   const fakeFetch = (async () =>
     new Response(
