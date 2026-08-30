@@ -199,7 +199,8 @@ const App: React.FC = () => {
     const path = cityPath(weather.cityName);
     if (path && window.location.pathname !== path) {
       const routeCity = cityFromPathname(window.location.pathname);
-      const historyMethod = routeCity && routeCity.name !== weather.cityName ? 'pushState' : 'replaceState';
+      const historyMethod =
+        routeCity && routeCity.name !== weather.cityName ? 'pushState' : 'replaceState';
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
     const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
@@ -513,7 +514,7 @@ const App: React.FC = () => {
               />
             )}
 
-            {activeNav !== 'saved' && weather && !isLoading && (
+            {activeNav !== 'saved' && weather && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
                   <WeatherDecisionField

@@ -20,6 +20,7 @@ interface AsyncState<T> {
 interface UseAsyncReturn<T, Args extends unknown[]> extends AsyncState<T> {
   execute: (...args: Args) => Promise<T | null>;
   reset: () => void;
+  clearError: () => void;
   setData: (data: T | null) => void;
 }
 
@@ -30,9 +31,16 @@ export function useAsync<T, Args extends unknown[] = []>(
     immediateArgs?: Args;
     onSuccess?: (data: T) => void;
     onError?: (error: AppError) => void;
+    preserveDataOnReload?: boolean;
   } = {}
 ): UseAsyncReturn<T, Args> {
-  const { immediate = false, immediateArgs, onSuccess, onError } = options;
+  const {
+    immediate = false,
+    immediateArgs,
+    onSuccess,
+    onError,
+    preserveDataOnReload = false,
+  } = options;
 
   const [state, setState] = useState<AsyncState<T>>({
     data: null,
@@ -59,15 +67,15 @@ export function useAsync<T, Args extends unknown[] = []>(
     async (...args: Args): Promise<T | null> => {
       const callId = ++lastCallIdRef.current;
 
-      setState({
-        data: null,
+      setState(prev => ({
+        data: preserveDataOnReload ? prev.data : null,
         error: null,
         status: LoadingState.LOADING,
         isLoading: true,
         isError: false,
         isSuccess: false,
         isIdle: false,
-      });
+      }));
 
       try {
         const result = await asyncFunction(...args);
@@ -99,22 +107,22 @@ export function useAsync<T, Args extends unknown[] = []>(
               };
 
         if (mountedRef.current && callId === lastCallIdRef.current) {
-          setState({
-            data: null,
+          setState(prev => ({
+            data: preserveDataOnReload ? prev.data : null,
             error: appError,
             status: LoadingState.ERROR,
             isLoading: false,
             isError: true,
             isSuccess: false,
             isIdle: false,
-          });
+          }));
           onError?.(appError);
         }
 
         return null;
       }
     },
-    [asyncFunction, onSuccess, onError]
+    [asyncFunction, onSuccess, onError, preserveDataOnReload]
   );
 
   const reset = useCallback(() => {
@@ -130,6 +138,17 @@ export function useAsync<T, Args extends unknown[] = []>(
       isSuccess: false,
       isIdle: true,
     });
+  }, []);
+
+  const clearError = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      error: null,
+      status: prev.data === null ? LoadingState.IDLE : LoadingState.SUCCESS,
+      isError: false,
+      isSuccess: prev.data !== null,
+      isIdle: prev.data === null,
+    }));
   }, []);
 
   const setData = useCallback((data: T | null) => {
@@ -148,6 +167,7 @@ export function useAsync<T, Args extends unknown[] = []>(
     ...state,
     execute,
     reset,
+    clearError,
     setData,
   };
 }
