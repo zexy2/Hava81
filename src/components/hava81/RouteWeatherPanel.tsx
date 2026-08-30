@@ -75,6 +75,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   useEffect(() => {
     const nextOrigin = canonicalProvinceName(currentCityName);
     setOriginName(nextOrigin);
+    setDestinationName(currentDestination =>
+      currentDestination === nextOrigin ? (nextOrigin === 'Ankara' ? 'İstanbul' : 'Ankara') : currentDestination
+    );
     requestIdRef.current += 1;
     setResult(null);
     setError(null);
