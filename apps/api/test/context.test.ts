@@ -95,6 +95,23 @@ test('context maxima ignore physically impossible negative modeled values', () =
   assert.equal(finiteMaxForWindow(times, [-4, -1], now), undefined);
 });
 
+test('context service reports malformed upstream air payloads as provider failures', async () => {
+  const malformedAirFetch = (async () =>
+    new Response(JSON.stringify({ timezone: 'GMT', hourly: { uv_index: [2, 7] } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+
+  await assert.rejects(
+    () => new ContextSignalsService(malformedAirFetch).get(38.42, 27.14, false),
+    (error: unknown) => {
+      assert.equal((error as { statusCode?: number }).statusCode, 502);
+      assert.equal((error as { code?: string }).code, 'INVALID_CONTEXT_PROVIDER_RESPONSE');
+      return true;
+    }
+  );
+});
+
 test('context service rejects malformed or misaligned air-model timelines instead of understating maxima', async () => {
   const cases = [
     {
