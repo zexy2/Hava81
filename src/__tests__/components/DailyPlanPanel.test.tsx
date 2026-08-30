@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
@@ -219,5 +219,39 @@ describe('DailyPlanPanel sharing', () => {
 
     expect(button).toHaveFocus();
     expect(screen.getByRole('status')).toHaveTextContent('hava81.share.copied');
+  });
+
+  it('keeps repeated share feedback visible for the full interval after the latest share', async () => {
+    vi.useFakeTimers();
+    try {
+      render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+
+      const button = screen.getByRole('button', { name: 'hava81.share.action' });
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+      expect(button).toHaveTextContent('hava81.share.copied');
+
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(700);
+      });
+      expect(button).toHaveTextContent('hava81.share.copied');
+
+      await act(async () => {
+        vi.advanceTimersByTime(900);
+      });
+      expect(button).toHaveTextContent('hava81.share.action');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

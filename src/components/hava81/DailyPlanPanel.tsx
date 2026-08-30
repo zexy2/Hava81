@@ -65,6 +65,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
   const { t, i18n } = useTranslation();
   const { convertTemperature, getTemperatureSymbol } = useSettings();
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'unavailable'>('idle');
+  const shareFeedbackTimerRef = useRef<number | null>(null);
   const trackedPlanRef = useRef<string | null>(null);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
@@ -93,6 +94,14 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     if (amountText) parts.push(amountText);
     return parts.join(' · ');
   };
+
+  useEffect(() => {
+    return () => {
+      if (shareFeedbackTimerRef.current !== null) {
+        window.clearTimeout(shareFeedbackTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const key = `${weather.cityName}:${weather.meta.fetchedAt instanceof Date ? weather.meta.fetchedAt.toISOString() : weather.meta.fetchedAt}`;
@@ -131,6 +140,17 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
   const localDateKey = (date: Date) =>
     new Date(date.getTime() + timezoneOffsetMs).toISOString().slice(0, 10);
 
+  const showShareFeedback = (state: 'copied' | 'unavailable', durationMs: number) => {
+    if (shareFeedbackTimerRef.current !== null) {
+      window.clearTimeout(shareFeedbackTimerRef.current);
+    }
+    setShareState(state);
+    shareFeedbackTimerRef.current = window.setTimeout(() => {
+      setShareState('idle');
+      shareFeedbackTimerRef.current = null;
+    }, durationMs);
+  };
+
   const shareDecision = async () => {
     const payload = buildDecisionShare({
       cityName: weather.cityName,
@@ -153,18 +173,15 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       }
 
       if (!navigator.clipboard) {
-        setShareState('unavailable');
-        window.setTimeout(() => setShareState('idle'), 2400);
+        showShareFeedback('unavailable', 2400);
         return;
       }
       await navigator.clipboard.writeText(payload.clipboardText);
-      setShareState('copied');
-      window.setTimeout(() => setShareState('idle'), 1600);
+      showShareFeedback('copied', 1600);
       trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
     } catch {
       // Sharing is optional; surface transport failure without affecting the daily plan.
-      setShareState('unavailable');
-      window.setTimeout(() => setShareState('idle'), 2400);
+      showShareFeedback('unavailable', 2400);
     }
   };
 
