@@ -94,6 +94,7 @@ describe('ComparePanel', () => {
       </SettingsProvider>
     );
     expect(screen.getByText(/en az iki şehri/i)).toBeVisible();
+    expect(screen.getByRole('heading', { name: /şehir karşılaştırması/i })).toHaveFocus();
   });
 
   it('shows measurable near-term precipitation even when probability is 0%', async () => {
