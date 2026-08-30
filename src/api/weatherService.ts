@@ -146,8 +146,15 @@ const invalidForecastPayload = (field: string): never => {
 };
 
 const reviveForecastDate = (value: string, field: string, dateOnly = false): Date => {
+  if (dateOnly && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return invalidForecastPayload(field);
+  }
+
   const date = new Date(dateOnly ? `${value}T12:00:00.000Z` : value);
   if (Number.isNaN(date.getTime())) return invalidForecastPayload(field);
+  if (dateOnly && date.toISOString().slice(0, 10) !== value) {
+    return invalidForecastPayload(field);
+  }
   return date;
 };
 

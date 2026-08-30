@@ -476,6 +476,7 @@ describe('weatherService BFF client', () => {
     ['daily precipitation', { dailyPop: 140 }],
     ['hourly precipitation', { hourlyPop: -1 }],
     ['daily date', { dailyDate: 'not-a-date' }],
+    ['impossible daily calendar date', { dailyDate: '2026-02-31' }],
     ['hourly time', { hourlyTime: 'not-a-date' }],
     ['metadata timestamp', { fetchedAt: 'not-a-date' }],
   ])('rejects malformed BFF forecast %s instead of clamping or reviving it', async (_label, fixture) => {
@@ -666,6 +667,7 @@ describe('weatherService BFF client', () => {
     ['daily precipitation', { dailyPop: 140 }],
     ['hourly precipitation', { hourlyPop: -1 }],
     ['daily date', { dailyDate: 'invalid' }],
+    ['impossible daily calendar date', { dailyDate: '2026-02-31' }],
     ['hourly time', { hourlyTime: 'invalid' }],
     ['metadata timestamp', { fetchedAt: 'invalid' }],
   ])('rejects malformed one-hour BFF %s instead of fabricating a usable value', async (_label, fixture) => {
