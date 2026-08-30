@@ -221,12 +221,25 @@
   }
 
   .daily-plan__quick {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .daily-plan__quick > div {
+    min-width: 0;
+    padding: var(--space-sm) var(--space-xs);
   }
 
   .daily-plan__quick > div + div {
-    border-inline-start: 0;
-    border-block-start: 1px solid var(--color-atlas-line);
+    border-inline-start: 1px solid var(--color-atlas-line);
+    border-block-start: 0;
+  }
+
+  .daily-plan__quick span {
+    letter-spacing: 0.06em;
+  }
+
+  .daily-plan__quick strong {
+    overflow-wrap: anywhere;
   }
 }
 
