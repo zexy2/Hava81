@@ -806,7 +806,19 @@ test('out-and-back plan persists routine times and produces a preparation decisi
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser routine-plan coverage');
 
-  await page.clock.setFixedTime(new Date('2026-08-28T08:00:00Z'));
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({
+      json: {
+        ...hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          ...hourlyForecast.hourly[index],
+          time: fixtureIsoAtHour(index + 1),
+        })),
+      },
+    })
+  );
+  await page.clock.setFixedTime(new Date(fixtureNow));
   await page.goto('/istanbul/');
   await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
   await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill('12:00');
