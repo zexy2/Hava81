@@ -122,6 +122,30 @@ describe('useWeather', () => {
     }
   });
 
+  it('refreshes preserved stale weather when connectivity returns while the tab is visible', async () => {
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+
+    const now = result.current.lastUpdated?.getTime();
+    expect(now).toBeDefined();
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue((now ?? 0) + 5 * 60 * 1000 + 1);
+    const onlineState = vi.spyOn(window.navigator, 'onLine', 'get');
+    onlineState.mockReturnValue(false);
+    try {
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await Promise.resolve();
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+
+      onlineState.mockReturnValue(true);
+      act(() => window.dispatchEvent(new Event('online')));
+      await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(2));
+    } finally {
+      onlineState.mockRestore();
+      dateNow.mockRestore();
+    }
+  });
+
   it('preserves location mode when stale weather refreshes after returning to the tab', async () => {
     const { result } = renderHook(() => useWeather());
     await act(async () => {

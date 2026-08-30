@@ -899,3 +899,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regression coverage proving a stale visible tab remains on its prior weather result, produces no extra current-weather request, and exposes no new error while offline.
 - Local gates on main `1d89e8ac2c78421b8b63b53308f25bc65e9173a4`: focused useWeather 36/36, full frontend 359/359, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check all pass.
 - PR #249 merged after exact-head green CI and fresh production verification; current main is `1d89e8ac2c78421b8b63b53308f25bc65e9173a4`. Main pipeline `33285382627` is in progress while this offline-guard branch is prepared for PR/CI.
+
+## 2026-08-30 04:26 TRT — refresh stale weather when connectivity returns
+
+- Completed the offline-resume flow after PR #250: if a stale tab was preserved while offline and connectivity returned without another visibility transition, the app previously stayed stale until a manual action.
+- The same bounded stale-refresh handler now listens for the browser `online` event as well as `visibilitychange`; all existing guards still apply (tab visible, data older than five minutes, browser online, no weather/location request already in flight), and city-vs-location acquisition mode remains unchanged.
+- Added regression coverage for offline visibility resume followed by connectivity restoration: no request occurs while offline, then exactly one refresh occurs when the `online` event fires.
+- Local gates on main `f6c7e7a85545d532e02c574a76a5b0b656ec0c0f`: focused useWeather 37/37, full frontend 360/360, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check all pass.
+- PR #250 passed exact-head CI/Lighthouse/browser gates and merged after fresh root/İstanbul/local-4002/public-readiness/CORS verification. Main is `f6c7e7a85545d532e02c574a76a5b0b656ec0c0f`; its deployment pipeline is the next production checkpoint while this branch proceeds independently.

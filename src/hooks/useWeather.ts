@@ -398,7 +398,11 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     };
 
     document.addEventListener('visibilitychange', refreshStaleVisibleWeather);
-    return () => document.removeEventListener('visibilitychange', refreshStaleVisibleWeather);
+    window.addEventListener('online', refreshStaleVisibleWeather);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshStaleVisibleWeather);
+      window.removeEventListener('online', refreshStaleVisibleWeather);
+    };
   }, [
     city,
     fetchCurrentLocation,
