@@ -1040,3 +1040,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - OpenWeather sunrise/sunset epochs were individually validated but a structurally inconsistent `sunset < sunrise` payload could pass the API and the UI would clamp the negative daylight duration to a plausible-looking zero. The upstream schema now fails closed when sunset precedes sunrise; equal epochs remain accepted rather than inventing a nonzero daylight duration.
 - Local gates pass: full API test suite 50/50, API type-check, API build, and `git diff --check`.
 - This branch is isolated from pending frontend metadata/i18n PRs and does not mutate production. Exact-head CI plus fresh production verification are required before merge.
+
+## 2026-08-30 10:32 TRT — align fresh and persisted daylight trust boundaries
+
+- Extended the reversed daylight guard through the browser BFF and persisted-cache boundaries so a stale/corrupt client cache cannot bypass the API-side invariant before the runtime API deployment catches up.
+- Fresh BFF weather now rejects `sunset < sunrise` as a retryable invalid-data response; persisted current weather rejects the same ordering and refetches rather than rendering it. No timestamp is reordered or synthesized.
+- Combined local gates pass: weatherService/useWeather 145/145, frontend TypeScript, frontend ESLint, API 50/50, API type-check, API build, and diff-check.
