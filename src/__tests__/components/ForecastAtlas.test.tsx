@@ -192,6 +192,47 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     ).toBeTruthy();
   });
 
+  it('collapses duplicate hourly low/high values when the displayed range is flat', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T00:00:00Z'),
+              temp: 24.1,
+              icon: '01n',
+              description: 'açık',
+              pop: 0,
+              windSpeed: 2,
+            },
+            {
+              time: new Date('2026-08-29T01:00:00Z'),
+              temp: 24.4,
+              icon: '01n',
+              description: 'açık',
+              pop: 0,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
+    expect(within(summary).getAllByRole('listitem')).toHaveLength(2);
+    expect(summary).toHaveTextContent('Sıcaklık24°C');
+    expect(summary).not.toHaveTextContent('En düşük');
+    expect(summary).not.toHaveTextContent('En yüksek');
+    expect(summary).toHaveTextContent('Yağış piki');
+  });
+
   it('changes sampling cadence without changing the 24-hour forecast horizon', async () => {
     const user = userEvent.setup();
     renderRangeAtlas();

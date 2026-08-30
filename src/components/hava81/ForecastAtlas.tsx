@@ -256,20 +256,35 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               role="list"
               aria-label={t('hava81.forecastAtlas.summaryLabel')}
             >
-              <div className="hava81-forecast-atlas__summary-item" role="listitem">
-                <span>{t('hava81.forecastAtlas.summaryLow')}</span>
-                <strong>
-                  {hourlySummary.min}
-                  {temperatureSymbol}
-                </strong>
-              </div>
-              <div className="hava81-forecast-atlas__summary-item" role="listitem">
-                <span>{t('hava81.forecastAtlas.summaryHigh')}</span>
-                <strong>
-                  {hourlySummary.max}
-                  {temperatureSymbol}
-                </strong>
-              </div>
+              {hourlySummary.min === hourlySummary.max ? (
+                <div
+                  className="hava81-forecast-atlas__summary-item is-temperature-flat"
+                  role="listitem"
+                >
+                  <span>{t('hava81.forecastAtlas.summaryTemperature')}</span>
+                  <strong>
+                    {hourlySummary.min}
+                    {temperatureSymbol}
+                  </strong>
+                </div>
+              ) : (
+                <>
+                  <div className="hava81-forecast-atlas__summary-item" role="listitem">
+                    <span>{t('hava81.forecastAtlas.summaryLow')}</span>
+                    <strong>
+                      {hourlySummary.min}
+                      {temperatureSymbol}
+                    </strong>
+                  </div>
+                  <div className="hava81-forecast-atlas__summary-item" role="listitem">
+                    <span>{t('hava81.forecastAtlas.summaryHigh')}</span>
+                    <strong>
+                      {hourlySummary.max}
+                      {temperatureSymbol}
+                    </strong>
+                  </div>
+                </>
+              )}
               <div className="hava81-forecast-atlas__summary-item is-precipitation" role="listitem">
                 <span>{t('hava81.forecastAtlas.summaryRain')}</span>
                 <strong>

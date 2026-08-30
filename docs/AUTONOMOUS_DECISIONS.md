@@ -350,3 +350,9 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — User-facing Forecast Atlas prose belongs in the shared locale tables even when the text is parameterized by the available horizon or interval. Keep weather/provider values in component logic, but avoid inline TR/EN conditionals for headings, controls, and attribution copy so localization remains one auditable source of truth.
 
 - 2026-08-30 — Native Web Share capability is proven by a successful share, not merely by `navigator.share` being present. Treat explicit `AbortError` as user cancellation with no fallback, but use clipboard after other native-share failures when available. Record share analytics only after one transport succeeds.
+
+
+## 2026-08-30 13:20 TRT — do not present duplicate low/high when display precision is flat
+
+- Hourly low/high labels describe the displayed forecast range, not hidden provider precision. If both extrema resolve to the same displayed degree, two separate cards communicate a distinction the UI does not actually show.
+- Collapse only the display-flat case into one neutral temperature summary card. Preserve separate extrema whenever the displayed values differ, and do not invent decimal precision merely to force visual separation.
