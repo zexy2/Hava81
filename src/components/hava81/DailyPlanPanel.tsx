@@ -142,17 +142,23 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     });
     try {
       if (navigator.share) {
-        await navigator.share({ title: payload.title, text: payload.text, url: payload.url });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(payload.clipboardText);
-        setShareState('copied');
-        window.setTimeout(() => setShareState('idle'), 1600);
-      } else {
-        return;
+        try {
+          await navigator.share({ title: payload.title, text: payload.text, url: payload.url });
+          trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') return;
+          // A present but unusable native share target should still allow the clipboard fallback.
+        }
       }
+
+      if (!navigator.clipboard) return;
+      await navigator.clipboard.writeText(payload.clipboardText);
+      setShareState('copied');
+      window.setTimeout(() => setShareState('idle'), 1600);
       trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
     } catch {
-      // User cancellation or unavailable share target is harmless.
+      // Sharing is optional; clipboard permission/storage failures must not affect the daily plan.
     }
   };
 
