@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 MODULE_PATH = Path(__file__).with_name('observer.py')
@@ -66,6 +67,106 @@ class ObserverFreshnessTests(unittest.TestCase):
         self.assertFalse(production['healthy'])
         self.assertFalse(production['checks']['api_ready_fresh'])
         self.assertTrue(production['checks']['api_ready_no_store'])
+        self.assertIn('api_ready_fresh', production['issues'])
+
+    def test_wildcard_cors_marks_production_unhealthy(self) -> None:
+        original_http_get = observer.http_get
+        original_nginx_target = observer.nginx_target
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/health/ready' in url:
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'elapsed_ms': 1,
+                    'headers': {
+                        'access-control-allow-origin': '*',
+                        'cache-control': 'no-store',
+                    },
+                    'json': {
+                        'status': 'ready',
+                        'timestamp': observer.now_iso(),
+                        'provider': {'name': 'OpenWeather', 'state': 'closed'},
+                    },
+                    'error': None,
+                }
+            return {
+                'ok': True,
+                'status': 200,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.nginx_target = lambda: {
+                'port': 4002,
+                'expected': 4002,
+                'ok': True,
+                'error': None,
+            }
+            production = observer.collect_production()
+        finally:
+            observer.http_get = original_http_get
+            observer.nginx_target = original_nginx_target
+
+        self.assertFalse(production['healthy'])
+        self.assertFalse(production['checks']['cors_ok'])
+        self.assertEqual(production['cors']['allow_origin'], '*')
+        self.assertIn('cors_ok', production['issues'])
+
+    def test_material_future_readiness_timestamp_marks_production_unhealthy(self) -> None:
+        original_http_get = observer.http_get
+        original_nginx_target = observer.nginx_target
+        future_timestamp = (
+            datetime.now(timezone.utc)
+            + timedelta(seconds=observer.MAX_FUTURE_SKEW_SECONDS + 5)
+        ).isoformat().replace('+00:00', 'Z')
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/health/ready' in url:
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'elapsed_ms': 1,
+                    'headers': {
+                        'access-control-allow-origin': 'https://hava81.zekiakgul.dev',
+                        'cache-control': 'no-store',
+                    },
+                    'json': {
+                        'status': 'ready',
+                        'timestamp': future_timestamp,
+                        'provider': {'name': 'OpenWeather', 'state': 'closed'},
+                    },
+                    'error': None,
+                }
+            return {
+                'ok': True,
+                'status': 200,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.nginx_target = lambda: {
+                'port': 4002,
+                'expected': 4002,
+                'ok': True,
+                'error': None,
+            }
+            production = observer.collect_production()
+        finally:
+            observer.http_get = original_http_get
+            observer.nginx_target = original_nginx_target
+
+        self.assertFalse(production['healthy'])
+        self.assertFalse(production['checks']['api_ready_fresh'])
+        self.assertLess(production['api_ready']['age_seconds'], -observer.MAX_FUTURE_SKEW_SECONDS)
         self.assertIn('api_ready_fresh', production['issues'])
 
 

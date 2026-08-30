@@ -27,6 +27,8 @@ ALLOWED_API_PORTS = {4000, 4001, 4002}
 REPO = 'zexy2/Hava81'
 MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MAXIMUM_ROOT_USED_PERCENT = 92.0
+MAX_READY_AGE_SECONDS = 180
+MAX_FUTURE_SKEW_SECONDS = 60
 USER_AGENT = 'Hava81-Deterministic-Observer/1.0'
 SSL_CONTEXT = ssl.create_default_context()
 API_RUNTIME_PATHS = {
@@ -138,7 +140,7 @@ def timestamp_age_seconds(value: Any) -> float | None:
         parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
-        return round(abs((datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds()), 1)
+        return round((datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds(), 1)
     except ValueError:
         return None
 
@@ -153,7 +155,7 @@ def collect_production() -> dict[str, Any]:
     ready_json = ready.get('json') if isinstance(ready.get('json'), dict) else {}
     ready_headers = ready.get('headers') or {}
     cors_value = ready_headers.get('access-control-allow-origin')
-    cors_ok = cors_value in ('*', 'https://hava81.zekiakgul.dev')
+    cors_ok = cors_value == 'https://hava81.zekiakgul.dev'
     ready_timestamp = ready_json.get('timestamp')
     ready_age_seconds = timestamp_age_seconds(ready_timestamp)
     ready_cache_control = ready_headers.get('cache-control') or ''
@@ -163,7 +165,10 @@ def collect_production() -> dict[str, Any]:
         'istanbul_200': city.get('status') == 200,
         'api_ready_200': ready.get('status') == 200,
         'api_reports_ready': ready_json.get('status') == 'ready',
-        'api_ready_fresh': ready_age_seconds is not None and ready_age_seconds <= 180,
+        'api_ready_fresh': (
+            ready_age_seconds is not None
+            and -MAX_FUTURE_SKEW_SECONDS <= ready_age_seconds <= MAX_READY_AGE_SECONDS
+        ),
         'api_ready_no_store': 'no-store' in ready_cache_control.lower(),
         'cors_ok': cors_ok,
         'nginx_port_ok': nginx.get('ok') is True,
