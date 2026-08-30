@@ -101,6 +101,27 @@ describe('useWeather', () => {
     }
   });
 
+  it('keeps stale weather visible and skips resume refresh while the browser is offline', async () => {
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+
+    const now = result.current.lastUpdated?.getTime();
+    expect(now).toBeDefined();
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue((now ?? 0) + 5 * 60 * 1000 + 1);
+    const onLine = vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false);
+    try {
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await Promise.resolve();
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+      expect(result.current.weather?.cityName).toBe('İzmir');
+      expect(result.current.error).toBeNull();
+    } finally {
+      onLine.mockRestore();
+      dateNow.mockRestore();
+    }
+  });
+
   it('preserves location mode when stale weather refreshes after returning to the tab', async () => {
     const { result } = renderHook(() => useWeather());
     await act(async () => {

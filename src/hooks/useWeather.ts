@@ -379,6 +379,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     const refreshStaleVisibleWeather = () => {
       if (
         document.visibilityState !== 'visible' ||
+        navigator.onLine === false ||
         !lastUpdated ||
         Date.now() - lastUpdated.getTime() <= STALE_TIME ||
         weatherAsync.isLoading ||

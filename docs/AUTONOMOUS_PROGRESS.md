@@ -891,3 +891,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Kept the existing deliberate no-retry policy for HTTP 429 so client retries cannot amplify rate-limit pressure. For status codes Hava81 already retries, a valid delta-seconds or HTTP-date `Retry-After` now raises the retry delay above exponential backoff, capped at the existing 30-second maximum; missing/invalid hints retain current backoff behavior.
 - Added regression coverage proving a 503 with `Retry-After: 2` does not retry before two seconds and then succeeds. Local combined gates pass: 356/356 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - PR #248 became green and mergeable during this work; direct local-4002/public readiness, CORS, root and İstanbul checks were fresh/healthy immediately before merge, then #248 merged as main `ae581e3b8053d9ac34e8a8df98d2fe030c22372a`. Main pipeline `33285196407` is in progress while this retry branch is prepared for rebase.
+
+## 2026-08-30 04:21 TRT — offline guard for stale-resume refresh
+
+- Followed the newly merged stale-resume refresh with an offline safety audit. Without a connectivity guard, returning to a stale tab while `navigator.onLine === false` immediately started a network refresh; the async layer clears current data on execute, so usable stale weather could be replaced by a connection error even though no network request could succeed.
+- Resume refresh now skips while the browser reports offline, leaving the existing stale decision surface visible instead of degrading it. No weather value is altered or synthesized.
+- Added regression coverage proving a stale visible tab remains on its prior weather result, produces no extra current-weather request, and exposes no new error while offline.
+- Local gates on main `1d89e8ac2c78421b8b63b53308f25bc65e9173a4`: focused useWeather 36/36, full frontend 359/359, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check all pass.
+- PR #249 merged after exact-head green CI and fresh production verification; current main is `1d89e8ac2c78421b8b63b53308f25bc65e9173a4`. Main pipeline `33285382627` is in progress while this offline-guard branch is prepared for PR/CI.
