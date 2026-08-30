@@ -90,11 +90,11 @@ fi
 cat "$READY_FILE"
 echo
 
-echo "[api] running hourly provider smoke on $TARGET_PORT"
-curl -fsS --max-time 15 \
-  "http://127.0.0.1:${TARGET_PORT}/api/v1/weather/hourly?lat=41.0082&lon=28.9784&lang=tr" \
-  >"$HOURLY_FILE"
-python3 - "$HOURLY_FILE" <<'PY'
+validate_hourly_smoke() {
+  curl -fsS --max-time 15 \
+    "http://127.0.0.1:${TARGET_PORT}/api/v1/weather/hourly?lat=41.0082&lon=28.9784&lang=tr" \
+    >"$HOURLY_FILE" && \
+  python3 - "$HOURLY_FILE" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -106,6 +106,25 @@ if meta.get('provider') != 'Open-Meteo' or meta.get('intervalHours') != 1 or not
     raise SystemExit('hourly provider smoke failed')
 print(f"[api] hourly smoke ok provider={meta.get('provider')} points={len(hourly)}")
 PY
+}
+
+echo "[api] running hourly provider smoke on $TARGET_PORT"
+hourly_ok=0
+for attempt in 1 2 3; do
+  if validate_hourly_smoke; then
+    hourly_ok=1
+    break
+  fi
+  echo "[api] hourly provider smoke attempt $attempt failed" >&2
+  if [[ "$attempt" -lt 3 ]]; then
+    sleep 2
+  fi
+done
+if [[ "$hourly_ok" != "1" ]]; then
+  echo "target API on $TARGET_PORT failed hourly provider smoke after 3 attempts; traffic unchanged" >&2
+  docker compose -p "$PROJECT_NAME" logs --tail=100 weather-api >&2 || true
+  exit 1
+fi
 
 ./switch-api-traffic.sh "$TARGET_PORT"
 
