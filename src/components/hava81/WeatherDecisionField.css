@@ -49,7 +49,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  min-height: 32px;
+  min-height: 2rem;
   overflow: hidden;
   color: var(--decision-ink);
   font-size: 0.75rem;

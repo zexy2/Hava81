@@ -759,6 +759,28 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
   expect(boxes.every(height => height >= 44)).toBe(true);
 });
 
+test('decision plate stays readable at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const plate = page.locator('.hava81-decision-field__plate');
+  await expect(plate).toBeVisible();
+  const layout = await plate.evaluate(element => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+    pageWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+
+  expect(layout.scrollHeight).toBeLessThanOrEqual(layout.clientHeight + 1);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('hourly interval controls resample the same 24-hour forecast', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');
