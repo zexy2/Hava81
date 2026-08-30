@@ -155,7 +155,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     !isPlausibleCelsius(data.tempMax) ||
     data.tempMin > data.tempMax ||
     !isPercentage(data.humidity) ||
-    !isNonNegativeNumber(data.pressure) ||
+    !isFiniteNumber(data.pressure) || data.pressure <= 0 ||
     (data.visibility !== undefined && !isNonNegativeNumber(data.visibility)) ||
     !isNonNegativeNumber(data.windSpeed) ||
     !isFiniteNumber(data.windDirection) ||

@@ -307,3 +307,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Frontend BFF request timeouts cover the full response-consumption boundary, not only time-to-headers. A response body that stalls after headers must remain abortable at the configured deadline rather than hanging weather UI indefinitely.
 
 - 2026-08-30 — Generated city-page bootstrap may reuse a persisted weather cache only within the same one-minute future clock-skew tolerance as the app cache boundary. A materially future cache timestamp must not suppress the early BFF prefetch.
+
+- 2026-08-30 — Persisted current-weather cache pressure must use the same strictly-positive trust boundary as fresh BFF weather. Zero pressure is physically invalid provider/cache data and must fail closed to a fresh request.
