@@ -88,6 +88,7 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData): void => {
   for (const field of ['temperature', 'feelsLike', 'tempMin', 'tempMax'] as const) {
     invalid(!isFiniteNumber(data[field]), `current.${field}`);
   }
+  invalid(data.tempMin > data.tempMax, 'current.tempRange');
   invalid(
     !isFiniteNumber(data.humidity) || data.humidity < 0 || data.humidity > 100,
     'current.humidity'
