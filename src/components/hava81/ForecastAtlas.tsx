@@ -262,7 +262,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       key={hours}
                       type="button"
                       className="hava81-forecast-atlas__range-button"
-                      aria-label={t('hava81.forecastAtlas.intervalOption', { hours })}
+                      aria-label={`${t('hava81.forecastAtlas.intervalOptionCompact', { hours })} ${t(
+                        'hava81.forecastAtlas.intervalOption',
+                        { hours }
+                      )}`}
                       aria-pressed={displayIntervalHours === hours}
                       onClick={() => selectDisplayInterval(hours)}
                     >
