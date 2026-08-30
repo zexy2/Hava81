@@ -101,12 +101,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
         })
       : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 
-  const hourlyData = useMemo(() => {
+  const hourlyHorizonData = useMemo(() => {
     const source =
       intervalHours === 1
-        ? hourly
-            .slice(0, REAL_HOURLY_HORIZON)
-            .filter((_, index) => index % displayIntervalHours === 0)
+        ? hourly.slice(0, REAL_HOURLY_HORIZON)
         : hourly.slice(0, LEGACY_HOUR_LIMIT);
 
     return source.map(hour => ({
@@ -115,7 +113,15 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       convertedTemp: Math.round(convertTemperature(hour.temp)),
       precipitation: normalizePrecipitationProbability(hour.pop),
     }));
-  }, [convertTemperature, displayIntervalHours, hourly, intervalHours]);
+  }, [convertTemperature, hourly, intervalHours]);
+
+  const hourlyData = useMemo(
+    () =>
+      intervalHours === 1
+        ? hourlyHorizonData.filter((_, index) => index % displayIntervalHours === 0)
+        : hourlyHorizonData,
+    [displayIntervalHours, hourlyHorizonData, intervalHours]
+  );
 
   const dailyData = useMemo(
     () =>
@@ -174,18 +180,18 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   };
 
   const hourlySummary = useMemo(() => {
-    if (hourlyData.length === 0) return null;
-    const peakPrecipitation = hourlyData.reduce((peak, hour) => {
+    if (hourlyHorizonData.length === 0) return null;
+    const peakPrecipitation = hourlyHorizonData.reduce((peak, hour) => {
       if (hour.precipitation > peak.precipitation) return hour;
       if (hour.precipitation < peak.precipitation) return peak;
       return (hour.precipitationMm ?? 0) > (peak.precipitationMm ?? 0) ? hour : peak;
     });
     return {
-      min: Math.min(...hourlyData.map(hour => hour.convertedTemp)),
-      max: Math.max(...hourlyData.map(hour => hour.convertedTemp)),
+      min: Math.min(...hourlyHorizonData.map(hour => hour.convertedTemp)),
+      max: Math.max(...hourlyHorizonData.map(hour => hour.convertedTemp)),
       peakPrecipitation,
     };
-  }, [hourlyData]);
+  }, [hourlyHorizonData]);
   const currentLocationHourKey = atLocationTime(new Date()).toISOString().slice(0, 13);
 
   const intervalOptions = useMemo(
