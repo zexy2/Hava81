@@ -319,3 +319,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Air-quality provider metadata `fetchedAt` must fail closed when more than one minute in the future. Hava81 must not present pollutant measurements as trustworthy when their fetch timestamp is materially ahead of the client clock.
 
 - 2026-08-30 — Client/CDN `Cache-Control` max-age must never outlive the remaining in-memory server cache entry. Preserve `freshForSeconds` as the configured freshness window for UI semantics, but expose remaining cache lifetime separately and clamp route max-age to the smaller of the route policy and remaining server freshness.
+
+- 2026-08-30 — API deploy, rollback, and direct traffic-switch operations share one non-blocking host lock. A concurrent operation must fail closed before reading/mutating deployment state rather than racing Docker/nginx/state markers. A deploy passes its inherited lock descriptor to the traffic-switch child; direct rollback/switch invocations acquire the same lock independently. Readiness probe files are unique per switch invocation and removed on exit.

@@ -8,7 +8,7 @@ Recommended deployment from the repository root:
 sudo deploy/oracle/deploy-api-blue-green.sh
 ```
 
-The script reads `/var/lib/hava81/current-api-port`, confirms that state matches the actual Nginx upstream, refuses an uncommitted `apps/api` working tree, builds the inactive slot from the current checkout, waits for readiness, verifies the one-hour Open-Meteo endpoint, and only then calls `switch-api-traffic.sh`. The active slot alternates between 4001 (`hava81-green`) and 4002 (`hava81-v21-canary`). The previous slot remains available for rollback.
+The script acquires a shared non-blocking API-operation lock before it reads deployment state, so a second deploy, rollback, or direct traffic switch fails closed instead of racing the active operation. It then reads `/var/lib/hava81/current-api-port`, confirms that state matches the actual Nginx upstream, refuses an uncommitted `apps/api` working tree, builds the inactive slot from the current checkout, waits for readiness, verifies the one-hour Open-Meteo endpoint with bounded retries, and only then calls `switch-api-traffic.sh`. The active slot alternates between 4001 (`hava81-green`) and 4002 (`hava81-v21-canary`). The previous slot remains available for rollback.
 
 For a plan without changing containers or traffic:
 
