@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../App';
 import { SettingsProvider } from '../../context';
 import i18n from '../../i18n';
+import { ApiError } from '../../api/errors/ApiError';
+import { ErrorCode } from '../../types';
 
 const service = vi.hoisted(() => ({
   getCurrentWeather: vi.fn(),
@@ -176,6 +178,24 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   }, 12_000);
+
+  it('retries a failed location request as location instead of falling back to the typed city', async () => {
+    const user = userEvent.setup();
+    service.getCurrentLocationWeather
+      .mockRejectedValueOnce(new ApiError('Konum reddedildi', ErrorCode.LOCATION_DENIED))
+      .mockResolvedValueOnce(current);
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+
+    await user.click(screen.getByRole('button', { name: /konumumu kullan/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/konum izni reddedildi/i);
+
+    await user.click(screen.getByRole('button', { name: /tekrar dene/i }));
+
+    await waitFor(() => expect(service.getCurrentLocationWeather).toHaveBeenCalledTimes(2));
+    expect(service.getCurrentWeather).toHaveBeenCalledTimes(1);
+  });
 
   it('restores focus to the search toggle when mobile search is dismissed with Escape', async () => {
     const user = userEvent.setup();

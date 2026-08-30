@@ -13,6 +13,7 @@ import { createAppShortcuts, useKeyboardShortcuts } from './hooks/useKeyboardSho
 import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
 import type { FavoriteCity } from './types/weather.types';
+import { ErrorCode } from './types';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { trackProductEvent } from './analytics/productEvents';
@@ -322,9 +323,18 @@ const App: React.FC = () => {
   );
 
   const retryCurrentWeather = useCallback(() => {
+    const isLocationError =
+      error?.code === ErrorCode.LOCATION_DENIED ||
+      error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
+      error?.code === ErrorCode.LOCATION_TIMEOUT;
+
     clearError();
-    fetchWeather(city || weather?.cityName || 'İstanbul');
-  }, [city, clearError, fetchWeather, weather?.cityName]);
+    if (isLocationError) {
+      void fetchCurrentLocation();
+      return;
+    }
+    void fetchWeather(city || weather?.cityName || 'İstanbul');
+  }, [city, clearError, error?.code, fetchCurrentLocation, fetchWeather, weather?.cityName]);
 
   const retryForecast = useCallback(() => {
     if (weather?.coordinates) fetchForecast(weather.coordinates, weather.cityName);
