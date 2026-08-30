@@ -88,7 +88,7 @@ const forecastItemSchema = z.object({
 
 export const forecastUpstreamSchema = z.object({
   cod: z.union([z.string(), z.number()]),
-  list: z.array(forecastItemSchema),
+  list: z.array(forecastItemSchema).min(1),
   city: z.object({
     id: z.number().optional(),
     name: z.string(),

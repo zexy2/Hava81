@@ -1000,3 +1000,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - On isolated branch `automation/hava81-api-domain-audit-0914` from exact new main, audited the OpenWeather forecast provider schema. Forecast item epochs previously accepted negative/fractional values, and forecast-city timezone offsets were unbounded even though the equivalent current-weather boundary already constrains provider offsets.
 - Forecast epochs now require non-negative integer Unix seconds, and provider timezone offsets use the same -12h..+14h bounds as current weather. Invalid upstream data fails closed before date normalization; no forecast value is corrected or fabricated.
 - Added focused regressions for negative/fractional epochs and impossible timezone offsets. `git diff --check` passes. The gateway root shell currently has no Node/npm binary, so executable JS/API gates must run in exact-head CI before merge; no production change is authorized without green CI and fresh production verification.
+
+## 2026-08-30 09:20 TRT — reject empty upstream forecast payloads
+
+- While PR #280 validates independently, audited the same OpenWeather forecast boundary from untouched main `b57204978c57011120888b7abb0b57656ab17126`. The schema accepted an empty forecast list even though downstream normalization assumes provider forecast rows to produce hourly/daily guidance.
+- The provider boundary now requires at least one forecast item and fails closed on an empty upstream payload instead of returning a structurally successful but unusable forecast. Added a focused regression. `git diff --check` passes; executable API gates remain delegated to exact-head CI because Node/npm is not exposed in the gateway root shell.
