@@ -875,3 +875,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Local combined gates pass: 353/353 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - PR #246 remains isolated and was rebased onto #245 main with append-only checkpoints preserved; its post-rebase combined gates pass 354/354 and exact-head CI is being re-established after lease-safe push.
 - Next action: commit/push this submit-focus branch as its own PR; continue independent work while #246/#247 CI runs, merging strictly in current-main order after direct head/production verification.
+
+## 2026-08-30 04:05 TRT — refresh stale weather on resume
+
+- PR #246 passed exact-head CI and was merged as main `a1168e2a6616fd2e30e4da589424003141c042b5`; its main pipeline `33284545783` completed successfully. PR #247 was then rebased on that main, passed 355/355 local combined tests plus exact-head Browser/Lighthouse CI, and merged as main `700e6ec` after a fresh production/API/CORS check.
+- Audited long-lived-tab freshness. Hava81 exposed a stale marker but did not refresh weather simply because a user returned to an old open tab, allowing the decision surface to remain outdated until another explicit action.
+- On isolated branch `automation/hava81-run12-stale-resume` from `700e6ec`, added a visibility-resume refresh boundary: when the document becomes visible, only refresh if the last successful result is older than five minutes and no weather request is already running.
+- Preserved acquisition semantics: city-search state refreshes the active city, while location-derived state reuses the location weather path rather than silently converting it to a city-mode request.
+- Added regression coverage for both stale city resume and stale location resume. Focused useWeather suite passes 35/35; combined local gates pass 357/357 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: commit/push/open PR for the resume refresh, allow exact-head CI to run while continuing an independent audit, and merge only after direct head/mergeability/main-pipeline/production re-verification.
