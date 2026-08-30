@@ -1372,3 +1372,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regressions proving same-city failure retains the prior hourly/meta forecast while a different-city request clears the old forecast as soon as it starts. No weather values are synthesized, repaired, clamped, or reclassified.
 - Pre-rebase local gates pass: focused useForecast 7/7; full frontend 48 files / 437 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; dependency audit 0 vulnerabilities; and diff-check.
 - Next action: serialize after #360, rebase onto exact current main preserving append-only checkpoints, rerun combined gates, then publish as a separate frontend-only PR requiring exact-head green CI and fresh production verification.
+
+## 2026-08-30 21:45 TRT — distinguish unsupported notifications from blocked permission
+
+- Continued from exact production-green main `97c71b799173741ce61d6ded2c1a1f3aa921f235` in isolated worktree `/home/chatgpt/hava81-auto-run11-2140` after direct GitHub verification showed main CI #881 completed successfully.
+- Audited the Decision Alerts capability boundary and found browsers without the Notification API were initialized as if permission had been denied. That rendered "notifications blocked" plus instructions to change browser settings even though no permission setting could make the unsupported API exist.
+- The panel now distinguishes capability absence from permission denial: unsupported browsers get a localized unavailable label and explanation that weather/decision guidance still works; browsers with explicit denied permission retain the existing settings guidance. Persisted opt-in users can still turn alerts off even if capability later disappears.
+- No notification trigger, modeled guidance threshold, MGM distinction, weather/provider data, scoring, or safety semantics changed.
+- Validation on exact main passes: DecisionAlertsPanel 9/9; full frontend 48 files / 438 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: commit/push/open this bounded frontend-only PR and require exact-head CI. While it validates, continue independent disk-pressure/UX reliability work from current main without mutating the pending branch.

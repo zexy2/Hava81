@@ -50,7 +50,21 @@ describe('DecisionAlertsPanel', () => {
 
     render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
 
-    expect(screen.getByText(/hava81 model rehberidir/i)).toHaveTextContent(/resmî MGM MeteoUyarı değildir/i);
+    expect(screen.getByText(/hava81 model rehberidir/i)).toHaveTextContent(
+      /resmî MGM MeteoUyarı değildir/i
+    );
+  });
+
+  it('distinguishes an unsupported browser from blocked notification permission', () => {
+    vi.stubGlobal('Notification', undefined);
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+
+    const button = screen.getByRole('button');
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent(/desteklenmiyor/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/tarayıcı.*desteklemiyor/i);
+    expect(screen.getByRole('status')).not.toHaveTextContent(/tarayıcı ayarlarından/i);
   });
 
   it('does not present a clickable opt-in when browser permission is blocked', () => {
@@ -106,8 +120,13 @@ describe('DecisionAlertsPanel', () => {
   it('keeps a delivered alert deduped for the session when its marker cannot be persisted', async () => {
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const originalSetItem = Storage.prototype.setItem;
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key: string, value: string) {
-      if (key.startsWith('hava81-alert-sent:')) throw new DOMException('quota', 'QuotaExceededError');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (key.startsWith('hava81-alert-sent:'))
+        throw new DOMException('quota', 'QuotaExceededError');
       return originalSetItem.call(this, key, value);
     });
     const notification = vi.fn();
@@ -120,7 +139,10 @@ describe('DecisionAlertsPanel', () => {
 
     rerender(
       <DecisionAlertsPanel
-        weather={{ ...weather, meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') } }}
+        weather={{
+          ...weather,
+          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+        }}
         hourly={rainyHourly}
       />
     );
@@ -136,7 +158,10 @@ describe('DecisionAlertsPanel', () => {
 
   it('fails closed when alert dedupe storage becomes unavailable', async () => {
     const originalGetItem = Storage.prototype.getItem;
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, key: string) {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
+      this: Storage,
+      key: string
+    ) {
       if (key === 'hava81-alerts-v1') return 'enabled';
       if (key.startsWith('hava81-alert-sent:')) throw new DOMException('blocked', 'SecurityError');
       return originalGetItem.call(this, key);
@@ -155,7 +180,10 @@ describe('DecisionAlertsPanel', () => {
 
   it('does not enable alerts when persisted opt-in cannot be stored', async () => {
     const user = userEvent.setup();
-    vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn().mockResolvedValue('granted') });
+    vi.stubGlobal('Notification', {
+      permission: 'default',
+      requestPermission: vi.fn().mockResolvedValue('granted'),
+    });
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('blocked', 'SecurityError');
     });
