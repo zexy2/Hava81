@@ -125,7 +125,6 @@ export const en = {
       precipitationAtWithAmount:
         'Precipitation chance is {{percent}} percent at {{time}}; hourly amount is {{amount}}.',
       hourlyPrecipitationWithAmount: 'Precipitation chance {{percent}}%; hourly amount {{amount}}',
-      noHourlyPrecipitation: 'No precipitation is expected at {{time}}.',
       dailyPrecipitationWithAmount:
         'Precipitation chance is {{percent}}% for {{day}}; daily total is {{amount}}.',
       dailyPrecipitationAmount: 'Daily precipitation total for {{day}} is {{amount}}.',

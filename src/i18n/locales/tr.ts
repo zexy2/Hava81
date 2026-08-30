@@ -125,7 +125,6 @@ export const tr = {
       precipitationAtWithAmount:
         '{{time}} saatinde yağış olasılığı yüzde {{percent}}; saatlik yağış miktarı {{amount}}.',
       hourlyPrecipitationWithAmount: 'Yağış olasılığı %{{percent}}; saatlik miktar {{amount}}',
-      noHourlyPrecipitation: '{{time}} saatinde yağış beklenmiyor.',
       dailyPrecipitationWithAmount:
         '{{day}} için yağış olasılığı %{{percent}}; günlük toplam {{amount}}.',
       dailyPrecipitationAmount: '{{day}} için günlük toplam yağış {{amount}}.',
