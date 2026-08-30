@@ -315,3 +315,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Fresh forecast metadata (`forecast.meta.fetchedAt` and `hourly.meta.fetchedAt`) must use the same one-minute future clock-skew trust boundary as current weather metadata. Materially future provider-fetch timestamps fail closed as retryable API-data errors; forecast observation times themselves remain forecast data and are not constrained by this metadata guard.
 
 - 2026-08-30 — Modeled context fetch timestamps and marine observation timestamps must fail closed when more than one minute in the future. These are observation/fetch times, not forecast horizons, so materially future values are treated as untrustworthy rather than displayed or corrected.
+
+- 2026-08-30 — Air-quality provider metadata `fetchedAt` must fail closed when more than one minute in the future. Hava81 must not present pollutant measurements as trustworthy when their fetch timestamp is materially ahead of the client clock.
