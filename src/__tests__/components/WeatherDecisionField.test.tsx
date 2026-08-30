@@ -61,6 +61,30 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
+  it('shows one temperature when the daily high and low are exactly equal', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[]}
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00Z'),
+              tempMin: 26,
+              tempMax: 26,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('26°C')).toBeInTheDocument();
+    expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
+  });
+
   it('uses one decimal only when whole-degree rounding would hide a real daily range', () => {
     render(
       <SettingsProvider>
