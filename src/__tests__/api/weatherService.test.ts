@@ -167,6 +167,23 @@ describe('weatherService BFF client', () => {
     expect(result.timestamp).toEqual(new Date(serializedWeather.timestamp));
   });
 
+  it.each(['observation timestamp', 'metadata timestamp'])(
+    'rejects materially future current-weather %s from the BFF',
+    async field => {
+      const futureTimestamp = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+      const invalidField =
+        field === 'observation timestamp'
+          ? { timestamp: futureTimestamp }
+          : { meta: { ...serializedWeather.meta, fetchedAt: futureTimestamp } };
+      mockGet.mockResolvedValue({ ...serializedWeather, ...invalidField });
+
+      await expect(weatherService.getCurrentWeather({ city: 'Izmir' })).rejects.toMatchObject({
+        code: ErrorCode.API_ERROR,
+        retryable: true,
+      });
+    }
+  );
+
   it.each([
     ['sunrise', { sunrise: 'invalid' }],
     ['sunset', { sunset: 'invalid' }],

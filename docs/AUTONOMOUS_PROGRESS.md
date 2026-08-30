@@ -931,3 +931,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - While PR #254 validated, compared the persisted current-weather cache validator against `weatherService` and the OpenWeather provider schema. Fresh weather already requires pressure to be strictly positive, but persisted cache revival accepted zero via a generic non-negative check.
 - Persisted pressure now rejects zero/non-finite values and falls back to a fresh BFF request instead of rendering physically impossible cached pressure. No replacement pressure is synthesized.
 - Added zero-pressure cache regression; focused useWeather passes 38/38. After PR #254 merged as main `5dcea418b0c35f11a6a05b11934a0b5b17b5c54f`, this isolated branch rebased onto that exact main; combined gates are rerun before push.
+
+## 2026-08-30 04:59 TRT — fresh BFF current-weather timestamps fail closed when materially future
+
+- Continued the fresh-vs-persisted weather trust-boundary audit while PR #255 validated. Persisted cache already rejected materially future observation/provider-fetch timestamps, but a fresh BFF current-weather response only checked that those dates parsed successfully.
+- Fresh current weather now applies the same one-minute future-clock tolerance to `current.timestamp` and `current.meta.fetchedAt`; sunrise/sunset are intentionally not constrained because future astronomical events are valid. Invalid fresh data raises the existing retryable API-data error rather than being corrected or replaced with fabricated values.
+- Added separate future observation/provider-fetch regressions; focused weatherService passes 98/98. PR #255 then merged as main `a13ae87b1ef9af304043cd641244a52e8013a16e`; this branch rebased onto that exact main and combined gates are rerun before push.

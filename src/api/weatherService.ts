@@ -67,6 +67,8 @@ const reviveWeatherDate = (value: string, field: string): Date => {
   return date;
 };
 
+const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
+
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
@@ -389,14 +391,23 @@ const reviveMeta = (meta: SerializedMeta): WeatherDataMeta => ({
 
 const reviveWeatherDates = (data: SerializedWeatherData): NormalizedWeatherData => {
   validateCurrentWeatherPayload(data);
+  const timestamp = reviveWeatherDate(data.timestamp, 'current.timestamp');
+  const meta = reviveMeta(data.meta);
+  const latestPlausibleCurrentTimestamp = Date.now() + MAX_CURRENT_WEATHER_FUTURE_SKEW_MS;
+  if (timestamp.getTime() > latestPlausibleCurrentTimestamp) {
+    invalidWeatherPayload('current.timestamp');
+  }
+  if (meta.fetchedAt.getTime() > latestPlausibleCurrentTimestamp) {
+    invalidWeatherPayload('current.meta.fetchedAt');
+  }
   return {
     ...data,
     cityName: data.cityName.trim(),
     country: data.country.trim(),
     sunrise: reviveWeatherDate(data.sunrise, 'current.sunrise'),
     sunset: reviveWeatherDate(data.sunset, 'current.sunset'),
-    timestamp: reviveWeatherDate(data.timestamp, 'current.timestamp'),
-    meta: reviveMeta(data.meta),
+    timestamp,
+    meta,
   };
 };
 
