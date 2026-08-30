@@ -395,10 +395,14 @@ test('narrow hourly atlas keeps its interval chip rail and summary readable', as
   const buttonBoxes = await buttons.evaluateAll(elements =>
     elements.map(element => {
       const rect = element.getBoundingClientRect();
-      return { width: rect.width, height: rect.height };
+      return { left: rect.left, right: rect.right, width: rect.width, height: rect.height };
     })
   );
   expect(buttonBoxes.every(box => box.height >= 44 && box.width >= 44)).toBe(true);
+  const intervalBox = await interval.boundingBox();
+  expect(intervalBox).not.toBeNull();
+  const intervalRight = (intervalBox?.x ?? 0) + (intervalBox?.width ?? 0);
+  expect(buttonBoxes.some(box => box.left < intervalRight && box.right > intervalRight)).toBe(true);
   const intervalScroll = await interval.evaluate(element => ({
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,
