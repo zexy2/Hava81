@@ -138,9 +138,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const chart = useMemo(() => {
     if (hourlyData.length < 2) return null;
 
-    const temperatures = hourlyData.map(hour => hour.convertedTemp);
-    const min = Math.min(...temperatures);
-    const max = Math.max(...temperatures);
+    const horizonTemperatures = hourlyHorizonData.map(hour => hour.convertedTemp);
+    const min = Math.min(...horizonTemperatures);
+    const max = Math.max(...horizonTemperatures);
     const range = max - min;
     const columnWidth = CHART_COLUMN_UNITS;
     const width = columnWidth * hourlyData.length;
@@ -170,7 +170,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     }));
 
     return { areaPath, columnWidth, firstPrecipitation, max, min, path, points, width, yTicks };
-  }, [hourlyData]);
+  }, [hourlyData, hourlyHorizonData]);
 
   const formatDay = (date: Date): string => {
     const nowAtLocation = atLocationTime(new Date());
