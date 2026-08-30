@@ -399,3 +399,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30: A visible retry must repeat the failed interaction class. Geolocation-specific errors (`LOCATION_DENIED`, `LOCATION_UNAVAILABLE`, `LOCATION_TIMEOUT`) retry the geolocation flow; unrelated weather errors keep the city retry path. This avoids a successful-looking fallback that does not perform the action the user asked to retry.
 
 - 2026-08-30 — A sanitized `RATE_LIMIT` error should tell the user that request volume is the problem and that a short pause is appropriate. Keep provider detail hidden and do not change automatic retry policy merely to improve copy.
+
+- 2026-08-30 — Notification capability absence is not equivalent to denied permission. If the browser lacks the Notification API, present a localized unsupported/unavailable state and do not instruct the user to change permission settings. Explicit `permission === denied` retains browser-settings guidance; weather and decision guidance must remain fully usable in either case.

@@ -44,8 +44,9 @@ const inQuietHours = (timezoneOffsetSeconds = 0) => {
 export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
+  const notificationsSupported = typeof Notification !== 'undefined';
   const [permission, setPermission] = useState<NotificationPermission>(() =>
-    typeof Notification === 'undefined' ? 'denied' : Notification.permission
+    notificationsSupported ? Notification.permission : 'default'
   );
   const sessionSentKeys = useRef(new Set<string>());
   const plan = useMemo(
@@ -119,7 +120,11 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         <small className="decision-alerts__modeled-note">
           {t('hava81.alerts.modeledDisclosure')}
         </small>
-        {permission === 'denied' ? (
+        {!notificationsSupported ? (
+          <small className="decision-alerts__permission-help" role="status">
+            {t('hava81.alerts.unsupportedHelp')}
+          </small>
+        ) : permission === 'denied' ? (
           <small className="decision-alerts__permission-help" role="status">
             {t('hava81.alerts.blockedHelp')}
           </small>
@@ -129,13 +134,15 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         type="button"
         onClick={() => void toggle()}
         aria-pressed={enabled}
-        disabled={!enabled && (typeof Notification === 'undefined' || permission === 'denied')}
+        disabled={!enabled && (!notificationsSupported || permission === 'denied')}
       >
         {enabled
           ? t('hava81.alerts.disable')
-          : permission === 'denied'
-            ? t('hava81.alerts.blocked')
-            : t('hava81.alerts.enable')}
+          : !notificationsSupported
+            ? t('hava81.alerts.unsupported')
+            : permission === 'denied'
+              ? t('hava81.alerts.blocked')
+              : t('hava81.alerts.enable')}
       </button>
     </section>
   );
