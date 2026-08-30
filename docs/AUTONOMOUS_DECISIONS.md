@@ -317,3 +317,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Modeled context fetch timestamps and marine observation timestamps must fail closed when more than one minute in the future. These are observation/fetch times, not forecast horizons, so materially future values are treated as untrustworthy rather than displayed or corrected.
 
 - 2026-08-30 — Air-quality provider metadata `fetchedAt` must fail closed when more than one minute in the future. Hava81 must not present pollutant measurements as trustworthy when their fetch timestamp is materially ahead of the client clock.
+
+- 2026-08-30 — Upstream OpenWeather air-quality observation timestamps (`dt`) are untrusted current-observation metadata. They must be integer Unix timestamps and fail closed when more than one minute in the future; provider fetch time cannot be used to mask an impossible future observation time.

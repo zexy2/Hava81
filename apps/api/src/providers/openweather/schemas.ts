@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const MAX_AIR_QUALITY_OBSERVATION_FUTURE_SKEW_MS = 60_000;
+
 const coordinatesSchema = z.object({
   lon: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
@@ -99,7 +101,14 @@ export const airQualityUpstreamSchema = z.object({
           pm10: z.number().nonnegative(),
           nh3: z.number().nonnegative(),
         }),
-        dt: z.number(),
+        dt: z
+          .number()
+          .int()
+          .nonnegative()
+          .refine(
+            value => value * 1_000 <= Date.now() + MAX_AIR_QUALITY_OBSERVATION_FUTURE_SKEW_MS,
+            'Air-quality observation timestamp is materially in the future',
+          ),
       }),
     )
     .min(1),

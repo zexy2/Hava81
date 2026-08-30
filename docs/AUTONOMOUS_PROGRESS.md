@@ -956,3 +956,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Observer showed production healthy and PR #259 green but no longer mergeable against current main.
 - Rebuilt the bounded air-quality `meta.fetchedAt` future-skew guard from exact current main on `automation/hava81-run11-air-quality-rebuild`, preserving the one-minute clock-skew tolerance and adding the focused regression.
 - `git diff --check` passes. Local Node/npm tooling is not exposed in the current gateway shell, so JS gates are delegated to exact-head CI before any merge; no production change is authorized until CI is green and production is re-verified.
+
+## 2026-08-30 06:28 TRT — upstream air-quality observation clock guarded
+
+- While main deployment after PR #260 proceeds and PR #261 validates independently, audited OpenWeather air-pollution sample semantics on exact main `0bf1ccbc58c7e233ff0c5c7652cacbafb42849d9`. The BFF used provider fetch time in metadata but accepted any numeric upstream sample `dt`, so a materially future sample could be normalized as apparently current data.
+- Tightened the provider schema: air-quality `dt` must be a non-negative integer and no more than one minute ahead of the server clock. Added a focused future-sample regression. No pollutant value is corrected or synthesized; invalid upstream data fails through the existing `INVALID_PROVIDER_RESPONSE` path.
+- Local API gates pass: 37/37 tests, API type-check, API build, and diff-check. Temporary API dependencies/build artifacts were removed after validation; disk returned to 91%.

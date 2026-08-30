@@ -466,6 +466,22 @@ test('OpenWeather adapter rejects negative pollutant concentrations', async () =
   }
 });
 
+test('OpenWeather adapter rejects materially future air-quality observation timestamps', async () => {
+  const payload = structuredClone(airQualityFixture);
+  payload.list[0].dt = Math.floor((Date.now() + 2 * 60 * 1000) / 1_000);
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  await assert.rejects(
+    () => provider.getAirQuality({ lat: 38.42, lon: 27.14 }),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+  );
+});
+
 test('OpenWeather current accepts responses without optional visibility', async () => {
   const payload = structuredClone(currentFixture);
   delete payload.visibility;
