@@ -29,6 +29,19 @@ const isThemeMode = (value: unknown): value is ThemeMode =>
   value === 'auto' || value === 'light' || value === 'dark';
 const isLanguage = (value: unknown): value is Language => value === 'tr' || value === 'en';
 
+const isValidSettingValue = (key: keyof UserSettings, value: unknown): boolean => {
+  switch (key) {
+    case 'temperatureUnit':
+      return isTemperatureUnit(value);
+    case 'windSpeedUnit':
+      return isWindSpeedUnit(value);
+    case 'themeMode':
+      return isThemeMode(value);
+    case 'language':
+      return isLanguage(value);
+  }
+};
+
 const deserializeSettings = (serialized: string, fallback: UserSettings): UserSettings => {
   const parsed = JSON.parse(serialized) as unknown;
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fallback;
@@ -76,6 +89,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateSetting = useCallback(
     <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+      if (!isValidSettingValue(key, value)) return;
       setSettings(prev => ({ ...prev, [key]: value }));
     },
     [setSettings]

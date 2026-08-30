@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsProvider, useSettings } from '../../context/SettingsContext';
@@ -29,6 +29,38 @@ describe('SettingsProvider persisted settings', () => {
       windSpeedUnit: 'ms',
       themeMode: 'auto',
       language: 'tr',
+    });
+  });
+
+  it('rejects invalid live setting values before state or storage mutation', () => {
+    const { result } = renderHook(() => useSettings(), { wrapper });
+    const unsafeUpdate = result.current.updateSetting as (
+      key: 'temperatureUnit' | 'windSpeedUnit' | 'themeMode' | 'language',
+      value: unknown
+    ) => void;
+
+    act(() => {
+      unsafeUpdate('temperatureUnit', 'kelvin');
+      unsafeUpdate('windSpeedUnit', 'knots');
+      unsafeUpdate('themeMode', 'sepia');
+      unsafeUpdate('language', 'de');
+    });
+
+    expect(result.current.settings).toEqual({
+      temperatureUnit: 'metric',
+      windSpeedUnit: 'ms',
+      themeMode: 'auto',
+      language: 'tr',
+    });
+    expect(localStorage.getItem('user-settings')).toBeNull();
+
+    act(() => {
+      result.current.updateSetting('temperatureUnit', 'imperial');
+    });
+
+    expect(result.current.settings.temperatureUnit).toBe('imperial');
+    expect(JSON.parse(localStorage.getItem('user-settings') ?? 'null')).toMatchObject({
+      temperatureUnit: 'imperial',
     });
   });
 

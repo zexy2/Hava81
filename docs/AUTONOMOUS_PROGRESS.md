@@ -1054,3 +1054,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - `setCommuteTime` and `setActivityWindow` now fail closed for defined values outside the same clock-time domain before mutating state, localStorage, or analytics. Clearing with `undefined` remains supported. No weather or safety value is invented.
 - Added regression coverage for malformed `25:00` and non-zero-padded `9:30`, plus valid write coverage. Local gates pass: focused decision-profile 6/6, frontend TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Disk pressure was also remediated from 95% used (~2.7 GiB free) to 91% (~4.3 GiB free) by removing only reproducible developer caches; production/runtime data was untouched. A conservative worktree cleanup removed only five clean branches whose heads were already ancestors of `origin/main`; open/dirty/unmerged worktrees were preserved.
+
+
+## 2026-08-30 10:54 TRT — reject invalid live user-setting enum writes
+
+- Continued from exact production-green main `d3f33a18730783db0c8d02baf4f93f54fdbc0aa8` while its CI ran. Persisted user settings already normalize untrusted values, but the live `updateSetting` mutator trusted its TypeScript caller and could accept an invalid runtime enum value from an unsafe JS/cast boundary, persisting it until reload.
+- Added a key-aware runtime guard reusing the existing temperature/wind/theme/language validators. Invalid live values now fail closed before state or localStorage mutation; valid typed updates are unchanged.
+- Regression covers invalid Kelvin/knots/sepia/de values and a subsequent valid imperial update. Local gates pass: SettingsContext suites 5/5, frontend TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- The observer sample at 10:50 TRT confirms the prior exact-main API deployment is reconciled: deployed revision `859961db0cf45fd079749989f8c915625d69147c`, current main `d3f33a18730783db0c8d02baf4f93f54fdbc0aa8`, `api_deploy_pending=false`, production healthy on nginx slot 4002, and disk healthy at 91.7% used. Main run #732 and rebased PR #289 CI continue independently.
