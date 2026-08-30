@@ -170,14 +170,27 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
       }
 
       const raw = parsed.data.hourly;
-      const length = Math.min(
-        raw.time.length,
-        raw.temperature_2m.length,
-        raw.precipitation_probability.length,
-        raw.weather_code.length,
-        raw.wind_speed_10m.length,
-        raw.is_day.length,
-      );
+      const length = raw.time.length;
+      const hourlySeries = [
+        raw.temperature_2m,
+        raw.precipitation_probability,
+        raw.weather_code,
+        raw.wind_speed_10m,
+        raw.is_day,
+        raw.apparent_temperature,
+        raw.relative_humidity_2m,
+        raw.precipitation,
+        raw.wind_gusts_10m,
+        raw.visibility,
+        raw.uv_index,
+      ].filter((series): series is Array<number | null> => series !== undefined);
+      if (hourlySeries.some(series => series.length !== length)) {
+        throw new AppError(
+          502,
+          "INVALID_HOURLY_PROVIDER_RESPONSE",
+          "Saatlik tahmin sağlayıcısı tutarsız uzunlukta veri serileri döndürdü.",
+        );
+      }
       const hourly: HourlyForecastProviderResult["hourly"] = [];
       for (let index = 0; index < length; index += 1) {
         const temp = raw.temperature_2m[index];
@@ -229,13 +242,21 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
       const dailyRaw = parsed.data.daily;
       const daily: NonNullable<HourlyForecastProviderResult["daily"]> = [];
       if (dailyRaw) {
-        const dailyLength = Math.min(
-          dailyRaw.time.length,
-          dailyRaw.temperature_2m_max.length,
-          dailyRaw.temperature_2m_min.length,
-          dailyRaw.weather_code.length,
-          dailyRaw.precipitation_probability_max.length,
-        );
+        const dailyLength = dailyRaw.time.length;
+        const dailySeries = [
+          dailyRaw.temperature_2m_max,
+          dailyRaw.temperature_2m_min,
+          dailyRaw.weather_code,
+          dailyRaw.precipitation_probability_max,
+          dailyRaw.precipitation_sum,
+        ].filter((series): series is Array<number | null> => series !== undefined);
+        if (dailySeries.some(series => series.length !== dailyLength)) {
+          throw new AppError(
+            502,
+            "INVALID_HOURLY_PROVIDER_RESPONSE",
+            "Günlük tahmin sağlayıcısı tutarsız uzunlukta veri serileri döndürdü.",
+          );
+        }
         for (let index = 0; index < dailyLength; index += 1) {
           const tempMax = dailyRaw.temperature_2m_max[index];
           const tempMin = dailyRaw.temperature_2m_min[index];
