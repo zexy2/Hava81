@@ -203,10 +203,32 @@
   display: grid;
   gap: 0.25rem;
 }
-.activity-planner__window-copy span,
+.activity-planner__window-copy {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
 .activity-planner__window label span {
   color: var(--color-atlas-muted);
   font-size: 0.76rem;
+}
+.activity-planner__window-help summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  cursor: pointer;
+  color: var(--color-atlas-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+.activity-planner__window-help p {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--space-xs);
+  color: var(--color-atlas-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.activity-planner__window-help[open] {
+  grid-column: 1 / -1;
 }
 .activity-planner__window input {
   width: 100%;

@@ -319,6 +319,32 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
   expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeLessThan(2);
   expect(quickDecisions.cells.every(cell => cell.scrollWidth <= cell.clientWidth + 1)).toBe(true);
 
+  const windowHelp = page.locator('.activity-planner__window-help');
+  await expect(windowHelp.locator('summary')).toHaveText('How it works');
+  await expect(windowHelp.locator('p')).toBeHidden();
+  const closedWindowHelp = await page.locator('.activity-planner__window-copy').evaluate(element => ({
+    height: element.getBoundingClientRect().height,
+    summaryHeight: element.querySelector('summary')?.getBoundingClientRect().height ?? 0,
+  }));
+  expect(closedWindowHelp.height).toBeLessThan(60);
+  expect(closedWindowHelp.summaryHeight).toBeGreaterThanOrEqual(44);
+  await windowHelp.locator('summary').click();
+  await expect(windowHelp.locator('p')).toBeVisible();
+  await expect(windowHelp.locator('p')).toContainText('wraps past midnight');
+  const openWindowHelp = await windowHelp.evaluate(element => {
+    const paragraph = element.querySelector<HTMLElement>('p');
+    const rect = element.getBoundingClientRect();
+    if (!paragraph) throw new Error('Missing activity window help copy');
+    return {
+      right: rect.right,
+      clientWidth: paragraph.clientWidth,
+      scrollWidth: paragraph.scrollWidth,
+    };
+  });
+  expect(openWindowHelp.right).toBeLessThanOrEqual(320);
+  expect(openWindowHelp.scrollWidth).toBeLessThanOrEqual(openWindowHelp.clientWidth + 1);
+  await windowHelp.locator('summary').click();
+
   const activityChips = await page.locator('.activity-planner__chips').evaluate(element => {
     const rail = element.getBoundingClientRect();
     const buttons = Array.from(element.querySelectorAll('button')).map(button => {
