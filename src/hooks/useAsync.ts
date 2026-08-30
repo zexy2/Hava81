@@ -6,6 +6,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ErrorCode, LoadingState, type AppError } from '../types';
 import { ApiError } from '../api/errors/ApiError';
+import i18n from '../i18n';
 
 interface AsyncState<T> {
   data: T | null;
@@ -101,7 +102,7 @@ export function useAsync<T, Args extends unknown[] = []>(
             ? error.toJSON()
             : {
                 code: ErrorCode.UNKNOWN,
-                message: error instanceof Error ? error.message : 'Beklenmeyen hata',
+                message: i18n.t('errors.genericError'),
                 timestamp: new Date(),
                 retryable: false,
               };
