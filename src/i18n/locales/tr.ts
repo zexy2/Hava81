@@ -105,6 +105,11 @@ export const tr = {
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
       intervalControlLabel: 'Tahmin aralığı',
+      hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} saat',
+      hourUnitSingular: 'saat',
+      hourUnitPlural: 'saat',
+      intervalOption: '{{hours}} saatlik',
+      formattedByHava81: 'Hava81 tarafından biçimlendirildi',
       intervalForecast: '{{hours}} saat aralıklarla tahmin',
       hourlySource: 'Kaynak:',
       hourlyRegion: 'Kaydırılabilir saatlik tahmin grafiği ve değerleri',
