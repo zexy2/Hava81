@@ -329,7 +329,7 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
   const hourlyHeading = page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i });
   await expect(hourlyHeading).toBeVisible();
-  const hourlySection = hourlyHeading.locator('..');
+  const hourlySection = page.getByRole('region', { name: /Saatlik tahmin · sonraki 24 saat/i });
   await expect(hourlySection.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
     'href',
     'https://open-meteo.com/'
