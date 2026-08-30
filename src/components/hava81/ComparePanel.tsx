@@ -148,6 +148,11 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
           </div>
         ) : null}
       </header>
+      {cities.length > selected.length ? (
+        <p className="hava81-compare__limit-note">
+          {t('hava81.compare.limitNote', { cities: selected.map(city => city.name).join(', ') })}
+        </p>
+      ) : null}
       {selected.length < 2 ? (
         <p>{t('hava81.compare.needTwo')}</p>
       ) : loading && rows.length === 0 ? (

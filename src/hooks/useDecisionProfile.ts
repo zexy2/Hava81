@@ -67,11 +67,10 @@ export function useDecisionProfile() {
     (activity: ActivityKind) => {
       setProfile(current => {
         const exists = current.activities.includes(activity);
+        if (!exists && current.activities.length >= 3) return current;
         const activities = exists
           ? current.activities.filter(item => item !== activity)
-          : current.activities.length >= 3
-            ? [...current.activities.slice(1), activity]
-            : [...current.activities, activity];
+          : [...current.activities, activity];
         trackProductEvent('activity_preference_changed', {
           activity,
           selected: !exists,

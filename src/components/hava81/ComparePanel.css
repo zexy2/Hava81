@@ -22,6 +22,16 @@
   font-size: 1.5rem;
 }
 
+.hava81-compare__limit-note {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-atlas-muted);
+  background: var(--color-atlas-field);
+  border-inline-start: 3px solid var(--color-aegean);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .hava81-compare__table {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));

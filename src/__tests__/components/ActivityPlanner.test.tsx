@@ -115,6 +115,23 @@ describe('ActivityPlanner time range', () => {
     expect(screen.queryByText(/Koşuda 10–22°C/i)).not.toBeInTheDocument();
   });
 
+  it('disables unselected activities when three are already selected instead of replacing one', () => {
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} />
+      </SettingsProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Piknik' }));
+
+    expect(screen.getByText(/Üç aktivite seçtin/i)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Yürüyüş' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Koşu' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Piknik' })).toBeEnabled();
+  });
+
   it('does not call an activity window dry when measurable precipitation exists at 0%', () => {
     const measurableRain: HourlyForecast[] = [15, 16, 17].map(hour => ({
       time: new Date(Date.UTC(2026, 7, 29, hour)),

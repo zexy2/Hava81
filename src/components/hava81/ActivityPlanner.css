@@ -83,6 +83,17 @@
   background: var(--color-aegean);
   border-color: var(--color-aegean);
 }
+.activity-planner__chips button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  transform: none;
+}
+.activity-planner__selection-limit {
+  margin: calc(var(--space-lg) * -0.65) 0 0;
+  color: var(--color-atlas-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
 .activity-planner__cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
