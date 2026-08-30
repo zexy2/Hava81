@@ -334,3 +334,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — The narrow dashboard must explicitly use a shrinkable `minmax(0, 1fr)` outer grid track and a `min-width: 0` primary wrapper. Hiding horizontal overflow is not a valid mobile-fit fix: 320px browser evidence must prove key card bounds remain inside the viewport.
 
 - 2026-08-30 — A truly equal daily high/low is one displayed temperature, not a duplicated range. If two distinct temperatures only collapse under whole-degree rounding, preserve the real spread with one-decimal precision rather than falsely implying equality.
+
+- 2026-08-30 — Current-weather astronomical epochs must satisfy `sunrise <= sunset` at the upstream trust boundary. Individually valid epochs with sunset earlier than sunrise are internally inconsistent and must fail closed; the UI must not turn that provider defect into a plausible-looking zero daylight duration.
