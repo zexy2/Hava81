@@ -79,7 +79,21 @@ const isFiniteNumber = (value: unknown): value is number =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const validateCurrentWeatherPayload = (data: SerializedWeatherData): void => {
+type WeatherUnits = NonNullable<WeatherQueryParams['units']>;
+
+const plausibleTemperatureRange: Record<WeatherUnits, readonly [number, number]> = {
+  metric: [-100, 100],
+  imperial: [-148, 212],
+  standard: [173.15, 373.15],
+};
+
+const isPlausibleTemperature = (value: unknown, units: WeatherUnits): value is number => {
+  if (!isFiniteNumber(value)) return false;
+  const [min, max] = plausibleTemperatureRange[units];
+  return value >= min && value <= max;
+};
+
+const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: WeatherUnits): void => {
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidWeatherPayload(field);
   };
@@ -87,7 +101,7 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData): void => {
   invalid(typeof data.cityName !== 'string' || !data.cityName.trim(), 'current.cityName');
   invalid(typeof data.country !== 'string' || !data.country.trim(), 'current.country');
   for (const field of ['temperature', 'feelsLike', 'tempMin', 'tempMax'] as const) {
-    invalid(!isFiniteNumber(data[field]), `current.${field}`);
+    invalid(!isPlausibleTemperature(data[field], units), `current.${field}`);
   }
   invalid(data.tempMin > data.tempMax, 'current.tempRange');
   invalid(
@@ -428,8 +442,11 @@ const reviveMeta = (meta: SerializedMeta): WeatherDataMeta => ({
   fetchedAt: reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt'),
 });
 
-const reviveWeatherDates = (data: SerializedWeatherData): NormalizedWeatherData => {
-  validateCurrentWeatherPayload(data);
+const reviveWeatherDates = (
+  data: SerializedWeatherData,
+  units: WeatherUnits
+): NormalizedWeatherData => {
+  validateCurrentWeatherPayload(data, units);
   const sunrise = reviveWeatherDate(data.sunrise, 'current.sunrise');
   const sunset = reviveWeatherDate(data.sunset, 'current.sunset');
   const timestamp = reviveWeatherDate(data.timestamp, 'current.timestamp');
@@ -478,7 +495,7 @@ export const weatherService = {
           units,
           lang,
         }));
-      return reviveWeatherDates(response);
+      return reviveWeatherDates(response, units);
     } catch (error) {
       if (error instanceof ApiError && error.statusCode === 404) {
         throw ApiError.cityNotFound(city);
@@ -498,7 +515,7 @@ export const weatherService = {
       units: DEFAULT_WEATHER_PARAMS.units,
       lang,
     });
-    return reviveWeatherDates(response);
+    return reviveWeatherDates(response, DEFAULT_WEATHER_PARAMS.units);
   },
 
   getCurrentLocationWeather: async (

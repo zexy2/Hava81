@@ -235,6 +235,43 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it.each([
+    ['metric', 101],
+    ['imperial', 213],
+    ['standard', 373.16],
+  ] as const)(
+    'rejects current-weather temperatures outside the %s physical envelope',
+    async (units, temperature) => {
+      mockGet.mockResolvedValue({ ...serializedWeather, temperature });
+
+      await expect(weatherService.getCurrentWeather({ city: 'Izmir', units })).rejects.toMatchObject({
+        code: ErrorCode.API_ERROR,
+        retryable: true,
+      });
+    }
+  );
+
+  it.each([
+    ['metric', 100],
+    ['imperial', 212],
+    ['standard', 373.15],
+  ] as const)(
+    'accepts the equivalent upper physical boundary for %s current weather',
+    async (units, temperature) => {
+      mockGet.mockResolvedValue({
+        ...serializedWeather,
+        temperature,
+        feelsLike: temperature,
+        tempMin: temperature,
+        tempMax: temperature,
+      });
+
+      await expect(weatherService.getCurrentWeather({ city: 'Izmir', units })).resolves.toMatchObject({
+        temperature,
+      });
+    }
+  );
+
   it('trims trusted current-weather identity fields after validation', async () => {
     mockGet.mockResolvedValue({
       ...serializedWeather,
