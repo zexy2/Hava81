@@ -130,6 +130,7 @@
   color: var(--forecast-teal);
   background: var(--forecast-paper);
   box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--forecast-teal) 42%, transparent),
     0 1px 2px rgb(14 44 50 / 0.08),
     0 3px 10px rgb(14 44 50 / 0.06);
 }
@@ -196,7 +197,7 @@
   grid-column: span 2;
 }
 
-.hava81-forecast-atlas__summary-item.is-precipitation strong {
+.hava81-forecast-atlas__summary-item.is-precipitation.has-signal strong {
   color: var(--color-saffron-ink, #805500);
 }
 

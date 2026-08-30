@@ -177,6 +177,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(summary).toHaveTextContent('En yüksek');
     expect(summary).toHaveTextContent('Yağış piki');
     expect(summary).toHaveTextContent('Yok');
+    expect(within(summary).getByText('Yağış piki').closest('[role="listitem"]')).not.toHaveClass(
+      'has-signal'
+    );
 
     const area = container.querySelector('.hava81-forecast-atlas__area');
     const curve = container.querySelector('.hava81-forecast-atlas__curve');
@@ -303,6 +306,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       expect(summary).toHaveTextContent('12°C');
       expect(summary).toHaveTextContent('31°C');
       expect(summary).toHaveTextContent('%80 · 1,2 mm');
+      expect(within(summary).getByText('Yağış piki').closest('[role="listitem"]')).toHaveClass(
+        'has-signal'
+      );
     };
 
     assertFullHorizonSummary();
