@@ -143,7 +143,7 @@
 .environment-rail__module--action:focus-visible {
   z-index: 1;
   outline: 2px solid var(--environment-accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 
 .environment-rail__module--action:active {

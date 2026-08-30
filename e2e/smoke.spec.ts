@@ -226,6 +226,37 @@ test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, t
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mobile environment map action keeps its focus ring inside the clipped rail', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment focus regression');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/istanbul');
+
+  const action = page.locator('.environment-rail__module--action');
+  await expect(action).toBeVisible();
+  const focusState = await action.evaluate(element => {
+    (element as HTMLElement).focus({ focusVisible: true } as FocusOptions & { focusVisible: boolean });
+    const rect = element.getBoundingClientRect();
+    const parent = element.parentElement?.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    if (!parent) throw new Error('Missing environment rail parent');
+    return {
+      focusVisible: element.matches(':focus-visible'),
+      outlineWidth: parseFloat(style.outlineWidth),
+      outlineOffset: parseFloat(style.outlineOffset),
+      rightClearance: parent.right - rect.right,
+      bottomClearance: parent.bottom - rect.bottom,
+      overflow: getComputedStyle(element.parentElement!).overflow,
+    };
+  });
+
+  expect(focusState.focusVisible).toBe(true);
+  expect(focusState.outlineWidth).toBeGreaterThanOrEqual(2);
+  expect(focusState.outlineOffset).toBeLessThan(0);
+  expect(focusState.overflow).toBe('hidden');
+  expect(focusState.rightClearance).toBeLessThan(4);
+  expect(focusState.bottomClearance).toBeLessThan(4);
+});
+
 test('mobile day-plan header stays readable at 390px', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile day-plan header regression');
   await page.setViewportSize({ width: 390, height: 844 });
