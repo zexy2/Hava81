@@ -168,6 +168,30 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(interval).queryByRole('button', { name: '24 saat' })).not.toBeInTheDocument();
   });
 
+  it('presents the hourly trend as a summarized visual forecast surface', () => {
+    const { container } = renderRangeAtlas(8);
+
+    const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
+    expect(within(summary).getAllByRole('listitem')).toHaveLength(3);
+    expect(summary).toHaveTextContent('En düşük');
+    expect(summary).toHaveTextContent('En yüksek');
+    expect(summary).toHaveTextContent('Yağış piki');
+    expect(summary).toHaveTextContent('Yok');
+
+    const area = container.querySelector('.hava81-forecast-atlas__area');
+    const curve = container.querySelector('.hava81-forecast-atlas__curve');
+    expect(area).toBeInTheDocument();
+    expect(container.querySelectorAll('.hava81-forecast-atlas__guide')).toHaveLength(3);
+    expect(curve?.getAttribute('d')).toContain(' C ');
+
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    const source = screen.getByText(/Hava81 tarafından biçimlendirildi/i).closest('p');
+    expect(source).not.toBeNull();
+    expect(
+      region.compareDocumentPosition(source as Node) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it('changes sampling cadence without changing the 24-hour forecast horizon', async () => {
     const user = userEvent.setup();
     renderRangeAtlas();
