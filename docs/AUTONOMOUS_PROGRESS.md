@@ -907,3 +907,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regression coverage for offline visibility resume followed by connectivity restoration: no request occurs while offline, then exactly one refresh occurs when the `online` event fires.
 - Local gates on main `f6c7e7a85545d532e02c574a76a5b0b656ec0c0f`: focused useWeather 37/37, full frontend 360/360, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check all pass.
 - PR #250 passed exact-head CI/Lighthouse/browser gates and merged after fresh root/İstanbul/local-4002/public-readiness/CORS verification. Main is `f6c7e7a85545d532e02c574a76a5b0b656ec0c0f`; its deployment pipeline is the next production checkpoint while this branch proceeds independently.
+
+## 2026-08-30 04:28 TRT — Retry-After date/cap regression coverage
+
+- Hardened regression coverage for the just-shipped bounded `Retry-After` parser while the connectivity-resume PR validates independently.
+- Added an HTTP-date case proving a retryable 503 waits until the server-provided absolute retry time, plus an excessive 120-second delta case proving client delay remains capped at Hava81's existing 30-second retry maximum.
+- This is test-only: no runtime/network behavior changed. Focused HTTP transport coverage is 8/8; combined frontend suite 361/361, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check pass on base `f6c7e7a85545d532e02c574a76a5b0b656ec0c0f`.
