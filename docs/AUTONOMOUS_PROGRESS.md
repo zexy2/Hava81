@@ -1207,3 +1207,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regressions for current visibility above 10,000 m and forecast visibility above 10,000 m; no value is clamped or invented.
 - Local exact-main gates pass: API 55/55 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: publish this isolated branch, require exact-head CI, and serialize it behind earlier API PRs with rebase + explicit lease before merge.
+
+
+## 2026-08-30 16:16 TRT — Open-Meteo daily timeline ordering guard
+
+- After PR #337 merged as main `e397ea3e4633307c97dc8222fa32a50d979c3a51` and main CI #821 completed successfully, continued data-truth hardening from an isolated exact-main worktree.
+- Open-Meteo daily forecast timestamps must now be strictly increasing. Duplicate or backwards daily epochs fail closed as `502 INVALID_HOURLY_PROVIDER_RESPONSE` instead of producing duplicated/out-of-order daily cards or attaching values to an ambiguous day axis.
+- No forecast value is clamped, synthesized, or reordered. Existing partial-row handling and hourly one-hour continuity semantics are unchanged.
+- Local gates: API 57/57 tests, API type-check, API build, production dependency audit 0 vulnerabilities, and `git diff --check` pass.
+- Production remains healthy on port 4002; observer collected at 13:14:27Z reports root/city/API readiness 200, correct CORS, closed provider circuit, and host disk healthy at 89.0% used. API deployment for main `e397ea3...` is still pending, so this branch must not merge until the deployed revision catches up and exact-head PR CI is green.

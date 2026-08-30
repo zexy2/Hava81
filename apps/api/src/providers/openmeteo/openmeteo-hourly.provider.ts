@@ -257,6 +257,16 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
             "Günlük tahmin sağlayıcısı tutarsız uzunlukta veri serileri döndürdü.",
           );
         }
+        const hasNonIncreasingDailyTime = dailyRaw.time.some(
+          (time, index) => index > 0 && time <= dailyRaw.time[index - 1],
+        );
+        if (hasNonIncreasingDailyTime) {
+          throw new AppError(
+            502,
+            "INVALID_HOURLY_PROVIDER_RESPONSE",
+            "Günlük tahmin sağlayıcısı sıralı olmayan bir zaman ekseni döndürdü.",
+          );
+        }
         for (let index = 0; index < dailyLength; index += 1) {
           const tempMax = dailyRaw.temperature_2m_max[index];
           const tempMin = dailyRaw.temperature_2m_min[index];
