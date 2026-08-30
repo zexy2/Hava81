@@ -145,12 +145,20 @@ for (const name of names) {
       `<meta property="og:description" content="${description}" />`
     )
     .replace(
+      /<meta property="og:image:alt" content="[^"]+" \/>/,
+      `<meta property="og:image:alt" content="${title}" />`
+    )
+    .replace(
       /<meta name="twitter:title" content="[^"]+" \/>/,
       `<meta name="twitter:title" content="${title}" />`
     )
     .replace(
       /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/,
       `<meta name="twitter:description" content="${description}" />`
+    )
+    .replace(
+      /<meta name="twitter:image:alt" content="[^"]+" \/>/,
+      `<meta name="twitter:image:alt" content="${title}" />`
     );
   html = html.replace(
     /(<script type="application\/ld\+json">\s*)\{.*?\}(\s*<\/script>)/s,
@@ -162,8 +170,10 @@ for (const name of names) {
     ['og:url', /<meta property="og:url" /g],
     ['og:title', /<meta property="og:title" /g],
     ['og:description', /<meta property="og:description" /g],
+    ['og:image:alt', /<meta property="og:image:alt" /g],
     ['twitter:title', /<meta name="twitter:title" /g],
     ['twitter:description', /<meta name="twitter:description" /g],
+    ['twitter:image:alt', /<meta name="twitter:image:alt" /g],
     ['structured data', /<script type="application\/ld\+json">/g],
   ];
   for (const [label, pattern] of requiredSingleTags) {
