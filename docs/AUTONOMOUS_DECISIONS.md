@@ -385,3 +385,4 @@ This log records product and engineering decisions made during the autonomous im
 - Reject out-of-domain finite values rather than clamping or converting malformed provider/BFF data into plausible guidance.
 
 - 2026-08-30 — Fresh forecast temperatures use the same broad physical metric trust domain as current-weather validation because the browser forecast endpoints currently request/contract metric data. Daily extrema, hourly temperature, and optional apparent temperature outside -100..100°C fail closed rather than being displayed, clamped, or repaired.
+- 2026-08-30 — Hava81 browser decision alerts must visibly identify themselves as modeled Hava81 guidance and explicitly state that they are not official MGM MeteoUyarı warnings. This disclosure is product/safety provenance only; it must not imply an MGM feed or change modeled alert thresholds.

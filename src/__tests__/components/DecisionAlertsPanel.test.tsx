@@ -45,6 +45,14 @@ describe('DecisionAlertsPanel', () => {
     localStorage.clear();
   });
 
+  it('clearly distinguishes modeled alerts from official MGM warnings', () => {
+    vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn() });
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+
+    expect(screen.getByText(/hava81 model rehberidir/i)).toHaveTextContent(/resmî MGM MeteoUyarı değildir/i);
+  });
+
   it('does not present a clickable opt-in when browser permission is blocked', () => {
     const requestPermission = vi.fn();
     vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
