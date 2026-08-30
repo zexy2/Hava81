@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
+import i18n from '../i18n';
 import { TURKISH_CITIES } from '../constants/cities';
 import { citySlug } from '../utils/cityRoute';
 import { useAsync } from './useAsync';
@@ -417,21 +418,16 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
 
   // Combine error from both async operations while keeping raw provider/exception details out of the UI.
   const rawError = weatherAsync.error || locationAsync.error;
+  const translateError = i18n.getFixedT(language);
   const error = rawError
     ? {
         ...rawError,
         message:
           rawError.code === ErrorCode.NETWORK_ERROR
-            ? language === 'en'
-              ? 'Connection error. Check your internet connection.'
-              : 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.'
+            ? translateError('errors.networkError')
             : rawError.code === ErrorCode.NOT_FOUND
-              ? language === 'en'
-                ? 'City not found'
-                : 'Şehir bulunamadı'
-              : language === 'en'
-                ? 'Something went wrong'
-                : 'Bir şeyler ters gitti',
+              ? translateError('weather.cityNotFound')
+              : translateError('errors.genericError'),
       }
     : null;
   const isLoading = weatherAsync.isLoading || locationAsync.isLoading;

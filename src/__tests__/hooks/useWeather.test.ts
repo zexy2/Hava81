@@ -6,6 +6,8 @@ import { vi, type Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useWeather } from '../../hooks/useWeather';
 import { weatherService } from '../../api/weatherService';
+import { ApiError } from '../../api/errors/ApiError';
+import { ErrorCode } from '../../types';
 
 // Mock the API
 vi.mock('../../api/weatherService', () => ({
@@ -581,6 +583,36 @@ describe('useWeather', () => {
     });
 
     expect(result.current.city).toBe('Ankara');
+  });
+
+  it('uses the translation catalog for Turkish network errors', async () => {
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider detail', ErrorCode.NETWORK_ERROR)
+    );
+    const { result } = renderHook(() => useWeather({ language: 'tr' }));
+
+    await act(async () => {
+      await result.current.fetchWeather('İstanbul');
+    });
+
+    expect(result.current.error?.message).toBe(
+      'Bağlantı hatası. İnternet bağlantınızı kontrol edin.'
+    );
+    expect(result.current.error?.message).not.toContain('provider detail');
+  });
+
+  it('uses the translation catalog for English not-found errors', async () => {
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider detail', ErrorCode.NOT_FOUND)
+    );
+    const { result } = renderHook(() => useWeather({ language: 'en' }));
+
+    await act(async () => {
+      await result.current.fetchWeather('Atlantis');
+    });
+
+    expect(result.current.error?.message).toBe('City not found');
+    expect(result.current.error?.message).not.toContain('provider detail');
   });
 
   it('should clear error when clearError is called', async () => {
