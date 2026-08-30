@@ -76,7 +76,7 @@ const forecastMainWeatherSchema = currentMainWeatherSchema.extend({
 });
 
 const forecastItemSchema = z.object({
-  dt: z.number(),
+  dt: z.number().int().nonnegative(),
   main: forecastMainWeatherSchema,
   weather: z.array(weatherConditionSchema).min(1),
   clouds: cloudsSchema,
@@ -94,7 +94,7 @@ export const forecastUpstreamSchema = z.object({
     name: z.string(),
     coord: coordinatesSchema,
     country: z.string(),
-    timezone: z.number().default(0),
+    timezone: z.number().min(-43_200).max(50_400).default(0),
   }),
 });
 
