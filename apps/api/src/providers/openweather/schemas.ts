@@ -50,8 +50,8 @@ export const currentWeatherUpstreamSchema = z
       ),
     sys: z.object({
       country: z.string(),
-      sunrise: z.number(),
-      sunset: z.number(),
+      sunrise: z.number().int().nonnegative(),
+      sunset: z.number().int().nonnegative(),
     }),
     timezone: z.number().min(-43_200).max(50_400),
     id: z.number(),
