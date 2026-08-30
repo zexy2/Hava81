@@ -156,7 +156,8 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     !isPlausibleCelsius(data.tempMax) ||
     data.tempMin > data.tempMax ||
     !isPercentage(data.humidity) ||
-    !isFiniteNumber(data.pressure) || data.pressure <= 0 ||
+    !isFiniteNumber(data.pressure) ||
+    data.pressure <= 0 ||
     (data.visibility !== undefined && !isNonNegativeNumber(data.visibility)) ||
     !isNonNegativeNumber(data.windSpeed) ||
     !isFiniteNumber(data.windDirection) ||
@@ -203,7 +204,10 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     return null;
   if (sunset.getTime() < sunrise.getTime()) return null;
   const latestPlausibleCurrentTimestamp = Date.now() + MAX_CACHE_FUTURE_SKEW_MS;
-  if (timestamp.getTime() > latestPlausibleCurrentTimestamp || fetchedAt.getTime() > latestPlausibleCurrentTimestamp)
+  if (
+    timestamp.getTime() > latestPlausibleCurrentTimestamp ||
+    fetchedAt.getTime() > latestPlausibleCurrentTimestamp
+  )
     return null;
 
   return {
@@ -287,6 +291,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
           );
         });
       },
+      preserveDataOnReload: true,
     }
   );
 
@@ -304,6 +309,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
           setCachedWeather({ data, timestamp: Date.now(), language });
         }
       },
+      preserveDataOnReload: true,
     }
   );
 
@@ -316,7 +322,14 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       // City search is a handoff from location mode. Clear and invalidate any
       // existing/in-flight location result so it cannot remain visible or win a late race.
       locationAsync.reset();
-      return weatherAsync.execute(targetCity.trim());
+      const normalizedTarget = targetCity.trim();
+      if (
+        weatherAsync.data &&
+        cityIdentity(weatherAsync.data.cityName) !== cityIdentity(normalizedTarget)
+      ) {
+        weatherAsync.reset();
+      }
+      return weatherAsync.execute(normalizedTarget);
     },
     [city, locationAsync, weatherAsync]
   );
@@ -330,8 +343,8 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
 
   // Clear error
   const clearError = useCallback(() => {
-    weatherAsync.reset();
-    locationAsync.reset();
+    weatherAsync.clearError();
+    locationAsync.clearError();
   }, [weatherAsync, locationAsync]);
 
   // Check if data is stale
@@ -367,6 +380,10 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     const activeCity =
       weatherAsync.data?.cityName ?? locationAsync.data?.cityName ?? city ?? initialCity;
     if (activeCity.trim()) {
+      // The current payload contains provider-localized descriptions from the old language.
+      // Do not preserve it across a language handoff.
+      weatherAsync.reset();
+      locationAsync.reset();
       fetchWeather(activeCity);
     }
     // Only language changes should trigger this refresh; async state objects

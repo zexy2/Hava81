@@ -103,6 +103,40 @@ describe('useWeather', () => {
     }
   });
 
+  it('keeps the last successful city weather when a same-city refresh fails and error is dismissed', async () => {
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider unavailable', ErrorCode.NETWORK_ERROR)
+    );
+    await act(async () => {
+      await result.current.fetchWeather('İzmir');
+    });
+
+    expect(result.current.weather?.cityName).toBe('İzmir');
+    expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR);
+
+    act(() => result.current.clearError());
+    expect(result.current.error).toBeNull();
+    expect(result.current.weather?.cityName).toBe('İzmir');
+  });
+
+  it('does not retain another city weather when a different-city request fails', async () => {
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider unavailable', ErrorCode.NETWORK_ERROR)
+    );
+    await act(async () => {
+      await result.current.fetchWeather('Ankara');
+    });
+
+    expect(result.current.weather).toBeNull();
+    expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR);
+  });
+
   it('keeps stale weather visible and skips resume refresh while the browser is offline', async () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
@@ -161,7 +195,9 @@ describe('useWeather', () => {
     const dateNow = vi.spyOn(Date, 'now').mockReturnValue((now ?? 0) + 5 * 60 * 1000 + 1);
     try {
       act(() => document.dispatchEvent(new Event('visibilitychange')));
-      await waitFor(() => expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(2)
+      );
       expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
     } finally {
       dateNow.mockRestore();
@@ -388,14 +424,12 @@ describe('useWeather', () => {
             icon: '01d',
             sunrise: '2026-07-14T02:43:00.000Z',
             sunset: '2026-07-14T17:34:00.000Z',
-            timestamp:
-              futureField === 'timestamp' ? futureIso : '2026-07-14T12:00:00.000Z',
+            timestamp: futureField === 'timestamp' ? futureIso : '2026-07-14T12:00:00.000Z',
             coordinates: { lat: 41.01, lon: 28.97 },
             clouds: 0,
             meta: {
               provider: 'OpenWeather',
-              fetchedAt:
-                futureField === 'fetchedAt' ? futureIso : '2026-07-14T12:00:00.000Z',
+              fetchedAt: futureField === 'fetchedAt' ? futureIso : '2026-07-14T12:00:00.000Z',
             },
           },
           timestamp: Date.now(),
@@ -641,19 +675,22 @@ describe('useWeather', () => {
   it.each([
     ['tr', 'Çok fazla istek gönderildi. Kısa bir süre sonra tekrar deneyin.'],
     ['en', 'Too many requests. Try again in a moment.'],
-  ] as const)('localizes %s rate-limit errors without exposing provider details', async (language, expected) => {
-    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
-      new ApiError('provider detail', ErrorCode.RATE_LIMIT, { retryable: true })
-    );
-    const { result } = renderHook(() => useWeather({ language }));
+  ] as const)(
+    'localizes %s rate-limit errors without exposing provider details',
+    async (language, expected) => {
+      (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+        new ApiError('provider detail', ErrorCode.RATE_LIMIT, { retryable: true })
+      );
+      const { result } = renderHook(() => useWeather({ language }));
 
-    await act(async () => {
-      await result.current.fetchWeather('İstanbul');
-    });
+      await act(async () => {
+        await result.current.fetchWeather('İstanbul');
+      });
 
-    expect(result.current.error?.message).toBe(expected);
-    expect(result.current.error?.message).not.toContain('provider detail');
-  });
+      expect(result.current.error?.message).toBe(expected);
+      expect(result.current.error?.message).not.toContain('provider detail');
+    }
+  );
 
   it('uses the translation catalog for English not-found errors', async () => {
     (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(

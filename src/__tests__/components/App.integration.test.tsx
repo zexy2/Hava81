@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../App';
@@ -178,6 +178,33 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   }, 12_000);
+
+  it('keeps the current city decision surface visible while a same-city refresh is pending', async () => {
+    let resolveRefresh!: (value: typeof current) => void;
+    const pendingRefresh = new Promise<typeof current>(resolve => {
+      resolveRefresh = resolve;
+    });
+
+    renderApp();
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+
+    service.getCurrentWeather.mockReturnValueOnce(pendingRefresh);
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 5 * 60 * 1000 + 1);
+    try {
+      act(() => window.dispatchEvent(new Event('online')));
+
+      await waitFor(() => expect(service.getCurrentWeather).toHaveBeenCalledTimes(2));
+      expect(screen.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+      expect(screen.queryByText(/hava durumu yükleniyor/i)).not.toBeInTheDocument();
+
+      await act(async () => {
+        resolveRefresh(current);
+        await pendingRefresh;
+      });
+    } finally {
+      dateNow.mockRestore();
+    }
+  });
 
   it('retries a failed location request as location instead of falling back to the typed city', async () => {
     const user = userEvent.setup();
