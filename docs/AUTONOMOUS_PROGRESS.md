@@ -950,3 +950,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - While PR #257 CI ran, continued independently from `main` `de80d90e53c660cb77fae1d223861d5a4e9d0ebd`; after #257 merged and main #636 passed, this work was rebased onto `5218005e859236514695ab34c0931988f295c46b`, preserving both append-only checkpoints.
 - Modeled context `fetchedAt` and optional marine `observedAt` reject timestamps more than one minute in the future. These are observation/fetch timestamps, so unlike forecast item times they are not allowed to point materially ahead.
 - Pre-rebase gates passed: weatherService 100/100, full frontend 369/369, type-check, lint, 81-city production build, dependency audit 0 vulnerabilities. Combined gates are rerun on the rebased head before lease-protected push.
+
+## 2026-08-30 06:10 TRT — air-quality future metadata guard rebuilt on current main
+
+- Observer showed production healthy and PR #259 green but no longer mergeable against current main.
+- Rebuilt the bounded air-quality `meta.fetchedAt` future-skew guard from exact current main on `automation/hava81-run11-air-quality-rebuild`, preserving the one-minute clock-skew tolerance and adding the focused regression.
+- `git diff --check` passes. Local Node/npm tooling is not exposed in the current gateway shell, so JS gates are delegated to exact-head CI before any merge; no production change is authorized until CI is green and production is re-verified.
