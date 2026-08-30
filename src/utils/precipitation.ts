@@ -48,4 +48,20 @@ export const formatPrecipitationAmount = (amount: number | undefined, locale: st
   return value < 0.1 ? `<${formatter.format(0.1)} mm` : `${formatter.format(value)} mm`;
 };
 
+export const formatPrecipitationSummary = (
+  probability: number,
+  amount: number | undefined,
+  locale: string,
+  dryText: string
+): string => {
+  const probabilityPercent = Math.round(Math.min(1, Math.max(0, probability)) * 100);
+  const parts: string[] = [];
+  if (probabilityPercent > 0) {
+    parts.push(locale.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`);
+  }
+  const amountText = formatPrecipitationAmount(amount, locale);
+  if (amountText) parts.push(amountText);
+  return parts.length ? parts.join(' · ') : dryText;
+};
+
 export default normalizePrecipitationProbability;

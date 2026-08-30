@@ -123,6 +123,7 @@ export const tr = {
     compare: {
       action: 'Karşılaştır',
       title: 'Şehir karşılaştırması',
+      noRain: 'Beklenmiyor',
       needTwo: 'Karşılaştırmak için en az iki şehri favorilere ekle.',
       partialUnavailable:
         'Bazı şehirlerin verisi güncellenemedi; kullanılabilir sonuçlar gösteriliyor.',
@@ -396,6 +397,7 @@ export const tr = {
       segments: 'Rota boyunca hava örnekleri',
       departureRangeError: 'Kalkış zamanı şimdi ile önümüzdeki 18 saat arasında olmalı.',
       error: 'Rota hava verisi alınamadı.',
+      noRain: 'Yağış yok',
     },
   },
   navigation: {

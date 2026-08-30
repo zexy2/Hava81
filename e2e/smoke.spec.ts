@@ -711,6 +711,26 @@ test('desktop comparison entry works with two saved cities', async ({ page }, te
   await page.goto('/istanbul');
   await page.getByRole('button', { name: /Karşılaştır/i }).click();
   await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+  await expect(page.locator('.atlas-dashboard')).toHaveCount(0);
+});
+
+
+test('mobile saved navigation replaces the today dashboard', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-view assertion');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+  });
+  await page.goto('/istanbul');
+  await page.getByRole('button', { name: 'Kayıtlı' }).click();
+  await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+  await expect(page.locator('.atlas-dashboard')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Kayıtlı' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('activity preference and time range change the personalized plan', async ({ page }, testInfo) => {

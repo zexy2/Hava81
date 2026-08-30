@@ -458,7 +458,7 @@ const App: React.FC = () => {
                 <ComparePanel cities={favorites} language={settings.language} />
               </Suspense>
             ) : null}
-            {error && (
+            {activeNav !== 'saved' && error && (
               <section className="atlas-message atlas-message--error" role="alert">
                 <div>
                   <span className="atlas-kicker">{t('common.error')}</span>
@@ -475,14 +475,14 @@ const App: React.FC = () => {
               </section>
             )}
 
-            {isLoading && !weather && (
+            {activeNav !== 'saved' && isLoading && !weather && (
               <AtlasLoadingState
                 label={t('hava81.loadingWeather')}
                 slowMessage={isSlowLoading ? t('hava81.slowLoading') : undefined}
               />
             )}
 
-            {weather && !isLoading && (
+            {activeNav !== 'saved' && weather && !isLoading && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
                   <WeatherDecisionField
@@ -609,7 +609,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {!weather && !isLoading && !error && (
+            {activeNav !== 'saved' && !weather && !isLoading && !error && (
               <section className="atlas-empty">
                 <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
                 <h1>{t('weather.searchLabel')}</h1>

@@ -123,6 +123,7 @@ export const en = {
     compare: {
       action: 'Compare',
       title: 'City comparison',
+      noRain: 'Not expected',
       needTwo: 'Add at least two cities to favorites to compare them.',
       partialUnavailable: 'Some city data could not update; available results are shown.',
       unavailable: 'City comparison could not update right now.',
@@ -394,6 +395,7 @@ export const en = {
       segments: 'Weather samples along the corridor',
       departureRangeError: 'Departure must be between now and the next 18 hours.',
       error: 'Route weather data could not be loaded.',
+      noRain: 'No precipitation',
     },
   },
   navigation: {
