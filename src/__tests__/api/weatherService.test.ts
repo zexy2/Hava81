@@ -347,7 +347,7 @@ describe('weatherService BFF client', () => {
 
     const result = await weatherService.getCurrentLocationWeather();
 
-    expect(result.cityName).toBe('Izmir');
+    expect(result.cityName).toBe('İstanbul');
     expect(mockGet).toHaveBeenCalledWith(
       '/weather/current',
       expect.objectContaining({
@@ -360,6 +360,40 @@ describe('weatherService BFF client', () => {
       timeout: 10000,
       maximumAge: 300000,
     });
+  });
+
+  it('canonicalizes a Turkish provider locality to the nearest province while preserving exact weather coordinates', async () => {
+    mockGet.mockResolvedValue({
+      ...serializedWeather,
+      cityName: 'Ulus',
+      coordinates: { lat: 39.9334, lon: 32.8597 },
+    });
+    const getCurrentPosition = vi.fn((success: PositionCallback) => {
+      success({ coords: { latitude: 39.9334, longitude: 32.8597 } } as GeolocationPosition);
+    });
+    setGeolocation({ getCurrentPosition } as unknown as Geolocation);
+
+    const result = await weatherService.getCurrentLocationWeather();
+
+    expect(result.cityName).toBe('Ankara');
+    expect(result.coordinates).toEqual({ lat: 39.9334, lon: 32.8597 });
+  });
+
+  it('keeps a non-Turkish provider locality instead of inventing a Turkish province', async () => {
+    mockGet.mockResolvedValue({
+      ...serializedWeather,
+      cityName: 'Chios',
+      country: 'GR',
+      coordinates: { lat: 38.37, lon: 26.14 },
+    });
+    const getCurrentPosition = vi.fn((success: PositionCallback) => {
+      success({ coords: { latitude: 38.37, longitude: 26.14 } } as GeolocationPosition);
+    });
+    setGeolocation({ getCurrentPosition } as unknown as Geolocation);
+
+    const result = await weatherService.getCurrentLocationWeather();
+
+    expect(result.cityName).toBe('Chios');
   });
 
   it('rejects when browser geolocation is unavailable', async () => {

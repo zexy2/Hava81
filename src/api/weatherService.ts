@@ -3,6 +3,7 @@ import { httpClient } from './httpClient';
 import { ApiError } from './errors/ApiError';
 import { API_ENDPOINTS, DEFAULT_WEATHER_PARAMS } from '../config';
 import { normalizePrecipitationProbability } from '../utils/precipitation';
+import { nearestTurkishProvince } from '../utils/cityRoute';
 import { ErrorCode } from '../types';
 import type {
   NormalizedWeatherData,
@@ -509,13 +510,14 @@ export const weatherService = {
       navigator.geolocation.getCurrentPosition(
         async position => {
           try {
-            resolve(
-              await weatherService.getWeatherByCoords(
-                position.coords.latitude,
-                position.coords.longitude,
-                lang
-              )
-            );
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const data = await weatherService.getWeatherByCoords(latitude, longitude, lang);
+            const canonicalProvince =
+              data.country.toUpperCase() === 'TR'
+                ? nearestTurkishProvince(latitude, longitude)
+                : undefined;
+            resolve(canonicalProvince ? { ...data, cityName: canonicalProvince.name } : data);
           } catch (error) {
             reject(error);
           }

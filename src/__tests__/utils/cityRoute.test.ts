@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cityFromPathname, cityPath, citySlug } from '../../utils/cityRoute';
+import { cityFromPathname, cityPath, citySlug, nearestTurkishProvince } from '../../utils/cityRoute';
 
 describe('city routes', () => {
   it('creates stable ASCII slugs for Turkish city names', () => {
@@ -25,5 +25,16 @@ describe('city routes', () => {
 
   it('does not invent routes for provider-only locations', () => {
     expect(cityPath('London')).toBeNull();
+  });
+
+  it('maps Turkish coordinates to the nearest canonical province identity', () => {
+    expect(nearestTurkishProvince(39.9334, 32.8597)?.name).toBe('Ankara');
+    expect(nearestTurkishProvince(36.5444, 31.9954)?.name).toBe('Antalya');
+    expect(nearestTurkishProvince(36.6217, 29.1164)?.name).toBe('Muğla');
+  });
+
+  it('rejects invalid coordinates instead of inventing a province', () => {
+    expect(nearestTurkishProvince(Number.NaN, 32)).toBeUndefined();
+    expect(nearestTurkishProvince(95, 32)).toBeUndefined();
   });
 });
