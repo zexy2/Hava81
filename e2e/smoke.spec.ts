@@ -416,6 +416,20 @@ test('narrow hourly atlas keeps its segmented control and summary readable', asy
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
+test('tablet hourly interval controls keep touch-sized targets', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'tablet-768', 'tablet interval touch-target regression');
+  await page.goto('/istanbul');
+
+  const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
+  const buttons = interval.getByRole('button');
+  await expect(buttons).toHaveCount(3);
+  const boxes = await buttons.evaluateAll(elements =>
+    elements.map(element => element.getBoundingClientRect().height)
+  );
+  expect(boxes).toHaveLength(3);
+  expect(boxes.every(height => height >= 44)).toBe(true);
+});
+
 test('hourly interval controls resample the same 24-hour forecast', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');

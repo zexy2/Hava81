@@ -105,7 +105,6 @@ export const tr = {
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
       intervalControlLabel: 'Tahmin aralığı',
-      viewLabel: 'Görünüm',
       summaryLabel: 'Saatlik tahmin özeti',
       summaryLow: 'En düşük',
       summaryTemperature: 'Sıcaklık',

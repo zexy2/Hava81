@@ -105,7 +105,6 @@ export const en = {
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
       intervalControlLabel: 'Forecast interval',
-      viewLabel: 'View',
       summaryLabel: 'Hourly forecast summary',
       summaryLow: 'Low',
       summaryTemperature: 'Temperature',

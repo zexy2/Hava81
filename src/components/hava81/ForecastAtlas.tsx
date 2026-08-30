@@ -238,7 +238,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
             {intervalOptions.length > 1 ? (
               <div className="hava81-forecast-atlas__interval-control">
                 <span className="hava81-forecast-atlas__range-label">
-                  {t('hava81.forecastAtlas.viewLabel')}
+                  {t('hava81.forecastAtlas.intervalControlLabel')}
                 </span>
                 <div
                   className="hava81-forecast-atlas__range"
@@ -466,7 +466,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     .join(' ');
                   return (
                     <li className={hourClasses} key={`hour-${hour.timestamp}`}>
-                      <time dateTime={hour.time.toISOString()}>
+                      <time
+                        dateTime={hour.time.toISOString()}
+                        aria-current={isCurrentHour ? 'time' : undefined}
+                      >
                         {dayContext ? (
                           <span className="hava81-forecast-atlas__hour-day">{dayContext}</span>
                         ) : null}
