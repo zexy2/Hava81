@@ -1349,3 +1349,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Regression coverage asserts 408 status/code/message/retryability. Local gates pass in Node 24 container: focused ApiError/weatherService 118/118, full frontend 47 files / 433 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Host disk pressure was reduced from 93% to 92% by deleting only the ignored `node_modules` directory from an unrelated dirty worktree; its dirty source edit and Git branch were preserved.
 - Next action: publish/open this bounded frontend-only PR, require exact-head green CI, and merge only after direct head/mergeability plus fresh production verification. Continue an independent audit while CI runs.
+
+## 2026-08-30 21:21 TRT — preserve native select keyboard behavior
+
+- While PR #358 validates independently, audited global app keyboard shortcuts from exact stable main `e0f3e45b834e130743f63e4286f2650a0833c150` in a separate worktree.
+- The shortcut hook already ignored input/textarea/contenteditable typing, but not native `<select>` controls. Matching global keys could therefore prevent the browser's own focused select interaction. Selects now receive the same editable-control guard; `Escape` remains intentionally available as the global close affordance.
+- Added focused regressions proving a matching ArrowRight shortcut is ignored from a focused select while Escape still triggers. No weather, scoring, provider, navigation-route, or safety semantics changed.
+- Local gates pass in Node 24: focused shortcut tests 2/2, full frontend 48 files / 434 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: after #358 resolves, rebase onto exact current main preserving append-only checkpoints, rerun combined gates, then publish as a separate PR with exact-head CI.

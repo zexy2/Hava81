@@ -34,10 +34,16 @@ export function useKeyboardShortcuts(
     (event: KeyboardEvent) => {
       if (!enabled) return;
 
-      // Don't trigger shortcuts when typing in inputs
+      // Don't steal keystrokes from editable form controls. Selects are included because
+      // arrow/modifier keys belong to the native picker while it has focus.
       const target = event.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        // Allow Escape to work even in inputs
+      const isEditableTarget =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable;
+      if (isEditableTarget) {
+        // Escape remains a global close affordance even from editable controls.
         if (event.key !== 'Escape') {
           return;
         }
