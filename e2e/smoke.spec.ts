@@ -169,6 +169,83 @@ test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, t
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('narrow English layout keeps decision content readable at 320px', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single English narrow-layout regression');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'light',
+        language: 'en',
+        notificationsEnabled: false,
+      })
+    );
+  });
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.route('**/api/v1/weather/forecast**', route =>
+    route.fulfill({
+      json: {
+        ...forecast,
+        daily: [
+          {
+            date: fixtureLocalDate(),
+            tempMin: 19,
+            tempMax: 27,
+            icon: '02d',
+            description: 'partly cloudy',
+            pop: 10,
+          },
+        ],
+      },
+    })
+  );
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What are you doing today?' })).toBeAttached();
+
+  const layout = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const rect = (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) throw new Error(`Missing ${selector}`);
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, width: box.width };
+    };
+    const description = document.querySelector<HTMLElement>('.hava81-forecast-atlas__description');
+    if (!description) throw new Error('Missing forecast description');
+    const descriptionStyle = getComputedStyle(description);
+    return {
+      viewportWidth,
+      pageWidth: document.documentElement.scrollWidth,
+      daily: rect('.daily-plan'),
+      dailyHeader: rect('.daily-plan__header'),
+      activity: rect('.activity-planner'),
+      activityHeader: rect('.activity-planner__header'),
+      sensitivity: rect('.activity-planner__sensitivity'),
+      description: {
+        clientWidth: description.clientWidth,
+        scrollWidth: description.scrollWidth,
+        whiteSpace: descriptionStyle.whiteSpace,
+        textOverflow: descriptionStyle.textOverflow,
+      },
+    };
+  });
+
+  expect(layout.viewportWidth).toBe(320);
+  expect(layout.pageWidth).toBeLessThanOrEqual(320);
+  for (const item of [layout.daily, layout.dailyHeader, layout.activity, layout.activityHeader, layout.sensitivity]) {
+    expect(item.left).toBeGreaterThanOrEqual(0);
+    expect(item.right).toBeLessThanOrEqual(320);
+  }
+  expect(layout.description.whiteSpace).toBe('normal');
+  expect(layout.description.textOverflow).toBe('clip');
+  expect(layout.description.scrollWidth).toBeLessThanOrEqual(layout.description.clientWidth + 1);
+});
+
 test('core city experience renders and uses a shareable city URL', async ({ page }) => {
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();

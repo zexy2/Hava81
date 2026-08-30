@@ -1,5 +1,6 @@
 .daily-plan {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   margin-top: var(--space-lg);
   padding: var(--space-xl);
@@ -263,6 +264,22 @@
   .daily-plan__header-actions {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 24rem) {
+  .daily-plan__header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .daily-plan__header-actions {
+    gap: var(--space-xs);
+  }
+
+  .daily-plan__share {
+    min-width: 0;
   }
 }
 
