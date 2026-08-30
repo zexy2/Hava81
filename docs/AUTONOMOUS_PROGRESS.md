@@ -1200,3 +1200,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - No provider value is repaired, guessed, or synthesized. Request-query validation remains unchanged. Added a regression for an upstream air payload missing its required time axis.
 - Local exact-main gates pass: API 54/54 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: publish this isolated branch, require exact-head CI, and merge only after current-main production is healthy and any earlier API PR is serialized safely.
+## 2026-08-30 16:04 TRT — bound OpenWeather visibility to provider semantics
+
+- While main `66b80c84d73224f0449083599493e5e4d01731db` and PR #336 validate independently, audited OpenWeather current/5-day forecast visibility semantics from an isolated exact-main worktree.
+- OpenWeather documents `visibility` in meters with a maximum of 10 km. The adapter previously accepted any non-negative finite number, so malformed values such as 100 km could become plausible-looking decision context. Current and forecast OpenWeather schemas now accept only 0..10,000 meters and continue to allow the field to be omitted.
+- Added regressions for current visibility above 10,000 m and forecast visibility above 10,000 m; no value is clamped or invented.
+- Local exact-main gates pass: API 55/55 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: publish this isolated branch, require exact-head CI, and serialize it behind earlier API PRs with rebase + explicit lease before merge.
