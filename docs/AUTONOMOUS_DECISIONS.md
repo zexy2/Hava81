@@ -388,3 +388,4 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Hava81 browser decision alerts must visibly identify themselves as modeled Hava81 guidance and explicitly state that they are not official MGM MeteoUyarı warnings. This disclosure is product/safety provenance only; it must not imply an MGM feed or change modeled alert thresholds.
 
 - 2026-08-30 — Route-weather segment temperatures are metric by service contract and must use the same -100..100°C browser trust domain as other metric forecast values. Reject out-of-domain finite route temperatures rather than allowing them to influence travel guidance or route scores.
+- 2026-08-30 — Route origin/destination reversal should be a single explicit action, and invalid same-city route selection must explain why route checking is unavailable. Keep the swap compact on mobile while preserving an accessible text name.

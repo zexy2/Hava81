@@ -25,6 +25,32 @@ describe('RouteWeatherPanel', () => {
     api.getRouteWeather.mockReset();
   });
 
+  it('swaps origin and destination with one action', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByText('Rota havası'));
+
+    expect(screen.getByLabelText('Başlangıç')).toHaveValue('İstanbul');
+    expect(screen.getByLabelText('Varış')).toHaveValue('Ankara');
+
+    await user.click(screen.getByRole('button', { name: 'Yönü değiştir' }));
+
+    expect(screen.getByLabelText('Başlangıç')).toHaveValue('Ankara');
+    expect(screen.getByLabelText('Varış')).toHaveValue('İstanbul');
+  });
+
+  it('explains why route checking is unavailable for identical cities', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByText('Rota havası'));
+    await user.selectOptions(screen.getByLabelText('Varış'), 'İstanbul');
+
+    const check = screen.getByRole('button', { name: 'Koridoru kontrol et' });
+    expect(check).toBeDisabled();
+    expect(check).toHaveAttribute('aria-describedby', 'route-weather-same-city');
+    expect(screen.getByRole('status')).toHaveTextContent('Başlangıç ve varış için farklı şehirler seç.');
+  });
+
   it('announces a completed route-weather decision without moving focus', async () => {
     const user = userEvent.setup();
     api.getRouteWeather.mockResolvedValueOnce({

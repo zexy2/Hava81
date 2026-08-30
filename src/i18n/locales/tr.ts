@@ -408,6 +408,8 @@ export const tr = {
       summary: 'İki şehir arasındaki yaklaşık hava koridorunu kontrol et.',
       origin: 'Başlangıç',
       destination: 'Varış',
+      swap: 'Yönü değiştir',
+      sameCity: 'Başlangıç ve varış için farklı şehirler seç.',
       departure: 'Kalkış zamanı · Türkiye saati',
       check: 'Koridoru kontrol et',
       corridor: 'Yaklaşık hava koridoru',
