@@ -1186,3 +1186,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Open-Meteo air-context hourly timestamps must parse as finite GMT model times, and every present modeled UV/dust/grass-pollen/olive-pollen series must match the provider time axis length. Malformed or misaligned inputs fail closed with `INVALID_CONTEXT_PROVIDER_RESPONSE`; no context value is truncated, shifted, corrected, or synthesized.
 - Current-main local gates pass: API 53/53 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: commit/push/open replacement PR, require exact-head green CI, then close superseded #326 once the replacement is safely represented. Recheck #333 independently and merge only after its own exact-head gates plus fresh production verification.
+## 2026-08-30 15:49 TRT — rebuild OpenWeather temperature-domain guard on current main
+
+- Legacy PR #327 is conflicted against current main, so it was left untouched. Rebuilt only its provider-boundary temperature validation from exact main `2a66bf3f` in isolated branch `automation/hava81-openweather-temp-domain-rebuild-1547` while PR #334 validates independently.
+- OpenWeather current and forecast temperature fields now use a broad cross-unit physical envelope (-150..400) shared across metric/imperial/standard query modes. Extreme malformed finite values fail closed instead of becoming plausible-looking weather guidance; ordinary terrestrial values across °C/°F/K remain accepted.
+- Current-main gates pass: API 53/53 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: publish/open a replacement PR, then require exact-head green CI and fresh production verification before merge; close superseded #327 only after the replacement is safely represented.
