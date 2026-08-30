@@ -107,6 +107,19 @@ describe('SearchBar', () => {
     expect(screen.getByRole('option', { name: 'Ankara' })).toBeInTheDocument();
   });
 
+  it('does not show suggestions for the previous valid query while the next debounce settles', async () => {
+    const { rerender } = render(<SearchBar {...defaultProps} value="İz" />);
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    await waitFor(() => expect(screen.getByRole('option', { name: 'İzmir' })).toBeInTheDocument());
+
+    rerender(<SearchBar {...defaultProps} value="An" />);
+
+    expect(screen.queryByRole('option', { name: 'İzmir' })).not.toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Ankara' })).toBeInTheDocument());
+  });
+
   it('should have proper accessibility attributes', () => {
     render(<SearchBar {...defaultProps} />);
 
