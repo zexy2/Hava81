@@ -105,6 +105,13 @@ export const en = {
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
       intervalControlLabel: 'Forecast interval',
+      viewLabel: 'View',
+      summaryLabel: 'Hourly forecast summary',
+      summaryLow: 'Low',
+      summaryHigh: 'High',
+      summaryRain: 'Rain peak',
+      precipitationNone: 'None',
+      nowLabel: 'Now',
       hourlyForecastNext: 'Hourly forecast · next {{hours}} {{unit}}',
       hourUnitSingular: 'hour',
       hourUnitPlural: 'hours',
@@ -131,7 +138,8 @@ export const en = {
       title: 'City comparison',
       noRain: 'Not expected',
       needTwo: 'Add at least two cities to favorites to compare them.',
-      limitNote: 'The first 3 saved cities are compared: {{cities}}. Your other saved cities stay in the list.',
+      limitNote:
+        'The first 3 saved cities are compared: {{cities}}. Your other saved cities stay in the list.',
       partialUnavailable: 'Some city data could not update; available results are shown.',
       unavailable: 'City comparison could not update right now.',
       winnerLabel: 'Leading under these weather criteria',

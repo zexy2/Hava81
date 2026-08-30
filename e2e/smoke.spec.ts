@@ -384,6 +384,38 @@ test('daily plan timeline matches its 12-hour score horizon and shows risk-first
   await expect(timeline.getByText('Yarın')).toHaveCount(1);
 });
 
+test('narrow hourly atlas keeps its segmented control and summary readable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single narrow hourly-atlas layout regression');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/istanbul');
+
+  const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
+  const buttons = interval.getByRole('button');
+  await expect(buttons).toHaveCount(3);
+  const buttonBoxes = await buttons.evaluateAll(elements =>
+    elements.map(element => {
+      const rect = element.getBoundingClientRect();
+      return { width: rect.width, height: rect.height, right: rect.right };
+    })
+  );
+  expect(buttonBoxes.every(box => box.height >= 44 && box.right <= 320)).toBe(true);
+  expect(Math.max(...buttonBoxes.map(box => box.width)) - Math.min(...buttonBoxes.map(box => box.width))).toBeLessThan(1);
+
+  const summary = page.getByRole('list', { name: 'Saatlik tahmin özeti' });
+  await expect(summary.getByRole('listitem')).toHaveCount(3);
+  const summaryBoxes = await summary.getByRole('listitem').evaluateAll(elements =>
+    elements.map(element => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, width: rect.width };
+    })
+  );
+  expect(summaryBoxes.every(box => box.left >= 0 && box.right <= 320 && box.width >= 70)).toBe(true);
+  await expect(page.locator('.hava81-forecast-atlas__area')).toHaveCount(1);
+  await expect(page.locator('.hava81-forecast-atlas__guide')).toHaveCount(3);
+  await expect(page.locator('.hava81-forecast-atlas__hourly-viewport')).toHaveCSS('overflow-x', 'auto');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});
+
 test('hourly interval controls resample the same 24-hour forecast', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');

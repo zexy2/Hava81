@@ -105,6 +105,13 @@ export const tr = {
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
       intervalControlLabel: 'Tahmin aralığı',
+      viewLabel: 'Görünüm',
+      summaryLabel: 'Saatlik tahmin özeti',
+      summaryLow: 'En düşük',
+      summaryHigh: 'En yüksek',
+      summaryRain: 'Yağış piki',
+      precipitationNone: 'Yok',
+      nowLabel: 'Şimdi',
       hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} saat',
       hourUnitSingular: 'saat',
       hourUnitPlural: 'saat',
@@ -131,7 +138,8 @@ export const tr = {
       title: 'Şehir karşılaştırması',
       noRain: 'Beklenmiyor',
       needTwo: 'Karşılaştırmak için en az iki şehri favorilere ekle.',
-      limitNote: 'Kayıtlı listedeki ilk 3 şehir karşılaştırılıyor: {{cities}}. Diğer kayıtlı şehirler listende kalır.',
+      limitNote:
+        'Kayıtlı listedeki ilk 3 şehir karşılaştırılıyor: {{cities}}. Diğer kayıtlı şehirler listende kalır.',
       partialUnavailable:
         'Bazı şehirlerin verisi güncellenemedi; kullanılabilir sonuçlar gösteriliyor.',
       unavailable: 'Şehir karşılaştırması şu anda güncellenemedi.',
@@ -276,7 +284,8 @@ export const tr = {
       title: 'Bugün ne yapacaksın?',
       subtitle: 'En fazla üç aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
       choose: 'Aktivite seçimi',
-      limitReached: 'Üç aktivite seçtin. Başka birini seçmek için önce seçili aktivitelerden birini kaldır.',
+      limitReached:
+        'Üç aktivite seçtin. Başka birini seçmek için önce seçili aktivitelerden birini kaldır.',
       names: {
         walk: 'Yürüyüş',
         run: 'Koşu',

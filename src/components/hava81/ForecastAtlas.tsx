@@ -2,7 +2,11 @@ import { useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
-import { formatPrecipitationAmount, normalizePrecipitationProbability } from '../../utils/precipitation';
+import {
+  formatPrecipitationAmount,
+  formatPrecipitationSummary,
+  normalizePrecipitationProbability,
+} from '../../utils/precipitation';
 import { WeatherSymbol } from './WeatherSymbol';
 import './ForecastAtlas.css';
 
@@ -19,11 +23,37 @@ const DISPLAY_INTERVAL_OPTIONS = [1, 3, 6] as const;
 const MIN_CHART_WIDTH = 320;
 const MIN_DISPLAY_COLUMN_WIDTH = 72;
 const CHART_COLUMN_UNITS = 100;
-const CHART_HEIGHT = 104;
-const CHART_TOP = 16;
-const CHART_BOTTOM = 16;
+const CHART_HEIGHT = 132;
+const CHART_TOP = 24;
+const CHART_BOTTOM = 24;
 const PRECIPITATION_THRESHOLD = 0.35;
 const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
+
+interface ChartCoordinate {
+  x: number;
+  y: number;
+}
+
+const buildSmoothPath = (points: readonly ChartCoordinate[]): string => {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const p0 = points[index - 1] ?? points[index];
+    const p1 = points[index];
+    const p2 = points[index + 1];
+    const p3 = points[index + 2] ?? p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const segmentMinY = Math.min(p1.y, p2.y);
+    const segmentMaxY = Math.max(p1.y, p2.y);
+    const cp1y = Math.min(segmentMaxY, Math.max(segmentMinY, p1.y + (p2.y - p0.y) / 6));
+    const cp2y = Math.min(segmentMaxY, Math.max(segmentMinY, p2.y - (p3.y - p1.y) / 6));
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return path;
+};
 
 export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
   const { t } = useTranslation();
@@ -36,6 +66,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const headingId = `${id}-title`;
   const chartTitleId = `${id}-chart-title`;
   const chartDescriptionId = `${id}-chart-description`;
+  const gradientId = `${id.replace(/:/g, '')}-temperature-area`;
 
   const timeFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
@@ -117,16 +148,16 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           ? CHART_TOP + drawableHeight / 2
           : CHART_TOP + ((max - hour.convertedTemp) / range) * drawableHeight,
     }));
-    const path = points
-      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
-      .join(' ');
+    const path = buildSmoothPath(points);
+    const baseline = CHART_HEIGHT - 8;
+    const areaPath = `${path} L ${points[points.length - 1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
     const firstPrecipitation = points.find(
       point =>
         point.precipitation >= PRECIPITATION_THRESHOLD ||
         (Number.isFinite(point.precipitationMm) && (point.precipitationMm ?? 0) >= 0.2)
     );
 
-    return { columnWidth, firstPrecipitation, max, min, path, points, width };
+    return { areaPath, columnWidth, firstPrecipitation, max, min, path, points, width };
   }, [hourlyData]);
 
   const formatDay = (date: Date): string => {
@@ -141,6 +172,21 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     if (dateKey === tomorrow) return t('days.tomorrow');
     return dayFormatter.format(date);
   };
+
+  const hourlySummary = useMemo(() => {
+    if (hourlyData.length === 0) return null;
+    const peakPrecipitation = hourlyData.reduce((peak, hour) => {
+      if (hour.precipitation > peak.precipitation) return hour;
+      if (hour.precipitation < peak.precipitation) return peak;
+      return (hour.precipitationMm ?? 0) > (peak.precipitationMm ?? 0) ? hour : peak;
+    });
+    return {
+      min: Math.min(...hourlyData.map(hour => hour.convertedTemp)),
+      max: Math.max(...hourlyData.map(hour => hour.convertedTemp)),
+      peakPrecipitation,
+    };
+  }, [hourlyData]);
+  const currentLocationHourKey = atLocationTime(new Date()).toISOString().slice(0, 13);
 
   const intervalOptions = useMemo(
     () =>
@@ -174,47 +220,68 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
       {hourlyData.length > 0 ? (
         <section className="hava81-forecast-atlas__section" aria-labelledby={`${id}-hourly-title`}>
-          <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
-            {hourlyHeading}
-          </h3>
-          {intervalOptions.length > 1 ? (
-            <div
-              className="hava81-forecast-atlas__range"
-              role="group"
-              aria-label={t('hava81.forecastAtlas.intervalControlLabel')}
-            >
-              {intervalOptions.map(hours => (
-                <button
-                  key={hours}
-                  type="button"
-                  className="hava81-forecast-atlas__range-button"
-                  aria-pressed={displayIntervalHours === hours}
-                  onClick={() => selectDisplayInterval(hours)}
+          <div className="hava81-forecast-atlas__hourly-toolbar">
+            <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
+              {hourlyHeading}
+            </h3>
+            {intervalOptions.length > 1 ? (
+              <div className="hava81-forecast-atlas__interval-control">
+                <span className="hava81-forecast-atlas__range-label">
+                  {t('hava81.forecastAtlas.viewLabel')}
+                </span>
+                <div
+                  className="hava81-forecast-atlas__range"
+                  role="group"
+                  aria-label={t('hava81.forecastAtlas.intervalControlLabel')}
                 >
-                  {t('hava81.forecastAtlas.intervalOption', { hours })}
-                </button>
-              ))}
+                  {intervalOptions.map(hours => (
+                    <button
+                      key={hours}
+                      type="button"
+                      className="hava81-forecast-atlas__range-button"
+                      aria-pressed={displayIntervalHours === hours}
+                      onClick={() => selectDisplayInterval(hours)}
+                    >
+                      {t('hava81.forecastAtlas.intervalOption', { hours })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {hourlySummary ? (
+            <div
+              className="hava81-forecast-atlas__summary"
+              role="list"
+              aria-label={t('hava81.forecastAtlas.summaryLabel')}
+            >
+              <div className="hava81-forecast-atlas__summary-item" role="listitem">
+                <span>{t('hava81.forecastAtlas.summaryLow')}</span>
+                <strong>
+                  {hourlySummary.min}
+                  {temperatureSymbol}
+                </strong>
+              </div>
+              <div className="hava81-forecast-atlas__summary-item" role="listitem">
+                <span>{t('hava81.forecastAtlas.summaryHigh')}</span>
+                <strong>
+                  {hourlySummary.max}
+                  {temperatureSymbol}
+                </strong>
+              </div>
+              <div className="hava81-forecast-atlas__summary-item is-precipitation" role="listitem">
+                <span>{t('hava81.forecastAtlas.summaryRain')}</span>
+                <strong>
+                  {formatPrecipitationSummary(
+                    hourlySummary.peakPrecipitation.precipitation,
+                    hourlySummary.peakPrecipitation.precipitationMm,
+                    locale,
+                    t('hava81.forecastAtlas.precipitationNone')
+                  )}
+                </strong>
+              </div>
             </div>
-          ) : null}
-          {intervalHours === 1 && meta?.provider ? (
-            <p className="hava81-forecast-atlas__source">
-              {t('hava81.forecastAtlas.hourlySource')}{' '}
-              {meta.sourceUrl ? (
-                <a href={meta.sourceUrl}>{meta.provider}</a>
-              ) : (
-                <span>{meta.provider}</span>
-              )}
-              {meta.provider === 'Open-Meteo' ? (
-                <>
-                  {' · '}
-                  <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
-                  {' · '}
-                  {t('hava81.forecastAtlas.formattedByHava81')}
-                </>
-              ) : meta.attribution && meta.attribution !== meta.provider ? (
-                <> · {meta.attribution}</>
-              ) : null}
-            </p>
           ) : null}
 
           <div
@@ -242,16 +309,47 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       unit: temperatureSymbol,
                     })}
                   </desc>
-                  <path className="hava81-forecast-atlas__curve" d={chart.path} />
-                  {chart.points.map(point => (
-                    <circle
-                      key={`point-${point.timestamp}`}
-                      className="hava81-forecast-atlas__point"
-                      cx={point.x}
-                      cy={point.y}
-                      r="3"
+                  <defs>
+                    <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" className="hava81-forecast-atlas__area-stop is-start" />
+                      <stop offset="100%" className="hava81-forecast-atlas__area-stop is-end" />
+                    </linearGradient>
+                  </defs>
+                  {[0.25, 0.5, 0.75].map(ratio => (
+                    <line
+                      key={`guide-${ratio}`}
+                      className="hava81-forecast-atlas__guide"
+                      x1="0"
+                      x2={chart.width}
+                      y1={CHART_TOP + (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM) * ratio}
+                      y2={CHART_TOP + (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM) * ratio}
+                      aria-hidden="true"
                     />
                   ))}
+                  <path
+                    className="hava81-forecast-atlas__area"
+                    d={chart.areaPath}
+                    fill={`url(#${gradientId})`}
+                  />
+                  <path className="hava81-forecast-atlas__curve" d={chart.path} />
+                  {chart.points.map((point, index) => {
+                    const isCurrentPoint =
+                      atLocationTime(point.time).toISOString().slice(0, 13) ===
+                      currentLocationHourKey;
+                    const isExtrema =
+                      point.convertedTemp === chart.min || point.convertedTemp === chart.max;
+                    const isEndpoint = index === 0 || index === chart.points.length - 1;
+                    if (!isCurrentPoint && !isExtrema && !isEndpoint) return null;
+                    return (
+                      <circle
+                        key={`point-${point.timestamp}`}
+                        className={`hava81-forecast-atlas__point${isCurrentPoint ? ' is-current' : ''}`}
+                        cx={point.x}
+                        cy={point.y}
+                        r={isCurrentPoint ? 4.75 : 3.5}
+                      />
+                    );
+                  })}
                   {chart.firstPrecipitation ? (
                     <g className="hava81-forecast-atlas__precipitation-marker">
                       <line
@@ -278,7 +376,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       >
                         {Math.round(chart.firstPrecipitation.precipitation * 100) > 0
                           ? `${Math.round(chart.firstPrecipitation.precipitation * 100)}%`
-                          : formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale)}
+                          : formatPrecipitationAmount(
+                              chart.firstPrecipitation.precipitationMm,
+                              locale
+                            )}
                       </text>
                     </g>
                   ) : null}
@@ -291,7 +392,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     ? t('hava81.forecastAtlas.precipitationAtWithAmount', {
                         time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
                         percent: Math.round(chart.firstPrecipitation.precipitation * 100),
-                        amount: formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale),
+                        amount: formatPrecipitationAmount(
+                          chart.firstPrecipitation.precipitationMm,
+                          locale
+                        ),
                       })
                     : t('hava81.forecastAtlas.precipitationAt', {
                         time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
@@ -308,7 +412,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               >
                 {hourlyData.map((hour, index) => {
                   const precipitation = Math.round(hour.precipitation * 100);
-                  const precipitationAmount = formatPrecipitationAmount(hour.precipitationMm, locale);
+                  const precipitationAmount = formatPrecipitationAmount(
+                    hour.precipitationMm,
+                    locale
+                  );
                   const localTime = atLocationTime(hour.time);
                   const previousLocalTime =
                     index > 0 ? atLocationTime(hourlyData[index - 1].time) : null;
@@ -317,24 +424,31 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     previousLocalTime.toISOString().slice(0, 10) !==
                       localTime.toISOString().slice(0, 10);
                   const dayContext = dayChanged ? formatDay(localTime) : null;
+                  const isCurrentHour =
+                    localTime.toISOString().slice(0, 13) === currentLocationHourKey;
+                  const hourClasses = [
+                    'hava81-forecast-atlas__hour',
+                    dayChanged ? 'is-day-boundary' : '',
+                    isCurrentHour ? 'is-current' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
                   return (
-                    <li
-                      className={
-                        dayChanged
-                          ? 'hava81-forecast-atlas__hour is-day-boundary'
-                          : 'hava81-forecast-atlas__hour'
-                      }
-                      key={`hour-${hour.timestamp}`}
-                    >
+                    <li className={hourClasses} key={`hour-${hour.timestamp}`}>
                       <time dateTime={hour.time.toISOString()}>
                         {dayContext ? (
                           <span className="hava81-forecast-atlas__hour-day">{dayContext}</span>
+                        ) : null}
+                        {isCurrentHour ? (
+                          <span className="hava81-forecast-atlas__hour-now">
+                            {t('hava81.forecastAtlas.nowLabel')}
+                          </span>
                         ) : null}
                         <span>{timeFormatter.format(localTime)}</span>
                       </time>
                       <WeatherSymbol
                         code={hour.icon}
-                        size={24}
+                        size={28}
                         label={hour.description}
                         className="hava81-forecast-atlas__hour-symbol"
                       />
@@ -377,6 +491,28 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               </ol>
             </div>
           </div>
+          {intervalHours === 1 && meta?.provider ? (
+            <p className="hava81-forecast-atlas__source">
+              <span className="hava81-forecast-atlas__source-label">
+                {t('hava81.forecastAtlas.hourlySource')}
+              </span>{' '}
+              {meta.sourceUrl ? (
+                <a href={meta.sourceUrl}>{meta.provider}</a>
+              ) : (
+                <span>{meta.provider}</span>
+              )}
+              {meta.provider === 'Open-Meteo' ? (
+                <>
+                  {' · '}
+                  <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
+                  {' · '}
+                  {t('hava81.forecastAtlas.formattedByHava81')}
+                </>
+              ) : meta.attribution && meta.attribution !== meta.provider ? (
+                <> · {meta.attribution}</>
+              ) : null}
+            </p>
+          ) : null}
         </section>
       ) : null}
 
