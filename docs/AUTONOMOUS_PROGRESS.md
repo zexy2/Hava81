@@ -1005,3 +1005,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 
 - While PR #280 validates independently, audited the same OpenWeather forecast boundary from untouched main `b57204978c57011120888b7abb0b57656ab17126`. The schema accepted an empty forecast list even though downstream normalization assumes provider forecast rows to produce hourly/daily guidance.
 - The provider boundary now requires at least one forecast item and fails closed on an empty upstream payload instead of returning a structurally successful but unusable forecast. Added a focused regression. `git diff --check` passes; executable API gates remain delegated to exact-head CI because Node/npm is not exposed in the gateway root shell.
+
+
+## 2026-08-30 09:31 TRT — scope service-worker reads to the active Hava81 cache
+
+- While main #687 and PR #282 validate independently, audited the PWA fetch path from exact main `4d01fc656fa988434a5f95b5c5f9adfdf916f05f`. Static and offline-navigation reads used global `caches.match()`, which can search unrelated same-origin Cache Storage namespaces instead of the build-scoped Hava81 cache.
+- Navigation fallback and hashed static-asset reads now open `CACHE_NAME` first and use `cache.match(...)` only inside that active build cache. Writes already used that namespace, so this makes read/write isolation symmetric without changing network-first navigation or cache-first asset policy.
+- Extended the service-worker source regression to require cache-scoped asset reads and reject global request matching. `git diff --check` passes; exact-head CI remains the executable gate because Node/npm is unavailable in the gateway root shell.

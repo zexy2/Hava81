@@ -27,5 +27,8 @@ describe('service worker notification navigation', () => {
     expect(source).toContain("url.pathname.startsWith('/assets/')");
     expect(source).toContain("['script', 'style', 'font', 'image'].includes(request.destination)");
     expect(source).not.toContain('CORE_SCRIPT_PATTERN');
+    expect(source).toContain('caches.open(CACHE_NAME)');
+    expect(source).toContain('cache.match(request)');
+    expect(source).not.toContain('caches.match(request)');
   });
 });
