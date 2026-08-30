@@ -867,7 +867,7 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
   const mapTargets = await page.evaluate(() =>
     [
       ...document.querySelectorAll<HTMLElement>('.leaflet-control-zoom a'),
-      ...document.querySelectorAll<HTMLElement>('.leaflet-control-attribution a'),
+      ...document.querySelectorAll<HTMLElement>('.weather-map__attribution a'),
       ...document.querySelectorAll<HTMLElement>('.weather-map__marker, .weather-map__plate-marker'),
     ].map(element => {
       const rect = element.getBoundingClientRect();
@@ -880,6 +880,9 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
   );
   expect(mapTargets.length).toBeGreaterThanOrEqual(5);
   expect(mapTargets.filter(target => target.width < 44 || target.height < 44)).toEqual([]);
+  await expect(page.locator('.leaflet-control-attribution')).toHaveCount(0);
+  await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap contributors');
+  await expect(page.locator('.weather-map__attribution')).toContainText('CARTO');
 
   await page.locator('.weather-map__marker').click();
   const popupClose = page.locator('.leaflet-popup-close-button');
@@ -896,6 +899,32 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
     return headingRect.top - closeRect.bottom;
   });
   expect(popupClearance).toBeGreaterThanOrEqual(0);
+});
+
+test('mobile map province marker previews the city before switching views', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile map preview assertion');
+  await page.goto('/istanbul');
+  await page.getByRole('button', { name: 'Harita' }).click();
+
+  const bursaMarker = page.locator('.weather-map__plate-marker').filter({ hasText: '16' });
+  await expect(bursaMarker).toBeVisible();
+  await bursaMarker.click();
+
+  await expect(page).toHaveURL(/\/istanbul\/?$/);
+  await expect(page.locator('#weather-map-region')).toBeVisible();
+  const popup = page.locator('.weather-map__popup');
+  await expect(popup.getByRole('heading', { name: 'Bursa' })).toBeVisible();
+  const cityButton = popup.getByRole('button', { name: /şehrin havasını gör/i });
+  await expect(cityButton).toBeVisible();
+
+  const bursaWeatherRequest = page.waitForRequest(request => {
+    const url = new URL(request.url());
+    return url.pathname.endsWith('/api/v1/weather/current') && url.searchParams.get('city') === 'Bursa';
+  });
+  await cityButton.click();
+  await expect(bursaWeatherRequest).resolves.toBeTruthy();
+  await expect(page.locator('#weather-map-region')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('mobile saved navigation does not create a favorite just by opening the view', async ({ page }, testInfo) => {
