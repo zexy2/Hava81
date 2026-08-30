@@ -4,6 +4,7 @@ export interface CacheResult<T> {
   value: T;
   status: CacheStatus;
   freshForSeconds: number;
+  cacheMaxAgeSeconds: number;
 }
 
 export interface AsyncCache {
@@ -39,9 +40,15 @@ export class MemoryTtlCache implements AsyncCache {
   async getOrLoad<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<CacheResult<T>> {
     const freshForSeconds = ttlMs / 1_000;
     const cached = this.entries.get(key);
+    const now = this.now();
 
-    if (cached && cached.expiresAt > this.now()) {
-      return { value: cached.value as T, status: 'HIT', freshForSeconds };
+    if (cached && cached.expiresAt > now) {
+      return {
+        value: cached.value as T,
+        status: 'HIT',
+        freshForSeconds,
+        cacheMaxAgeSeconds: this.cacheMaxAgeSeconds(cached.expiresAt, now),
+      };
     }
 
     if (cached) {
@@ -50,7 +57,13 @@ export class MemoryTtlCache implements AsyncCache {
 
     const pending = this.inFlight.get(key);
     if (pending) {
-      return { value: (await pending) as T, status: 'COALESCED', freshForSeconds };
+      const value = (await pending) as T;
+      return {
+        value,
+        status: 'COALESCED',
+        freshForSeconds,
+        cacheMaxAgeSeconds: this.remainingMaxAgeSeconds(key, ttlMs),
+      };
     }
 
     const loadPromise = loader()
@@ -63,12 +76,28 @@ export class MemoryTtlCache implements AsyncCache {
       });
 
     this.inFlight.set(key, loadPromise);
-    return { value: await loadPromise, status: 'MISS', freshForSeconds };
+    const value = await loadPromise;
+    return {
+      value,
+      status: 'MISS',
+      freshForSeconds,
+      cacheMaxAgeSeconds: this.remainingMaxAgeSeconds(key, ttlMs),
+    };
   }
 
   clear(): void {
     this.entries.clear();
     this.inFlight.clear();
+  }
+
+  private remainingMaxAgeSeconds(key: string, ttlMs: number): number {
+    const entry = this.entries.get(key);
+    if (!entry) return Math.max(0, Math.floor(ttlMs / 1_000));
+    return this.cacheMaxAgeSeconds(entry.expiresAt, this.now());
+  }
+
+  private cacheMaxAgeSeconds(expiresAt: number, now: number): number {
+    return Math.max(0, Math.floor((expiresAt - now) / 1_000));
   }
 
   private set(key: string, value: unknown, ttlMs: number): void {

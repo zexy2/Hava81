@@ -276,6 +276,10 @@ test('weather freshness metadata follows the configured server cache TTLs', asyn
   assert.equal(forecast.json().meta.freshForSeconds, 11);
   assert.equal(hourly.json().meta.freshForSeconds, 11);
   assert.equal(airQuality.json().meta.freshForSeconds, 13);
+  assert.equal(current.headers['cache-control'], 'public, max-age=7');
+  assert.equal(forecast.headers['cache-control'], 'public, max-age=11');
+  assert.equal(hourly.headers['cache-control'], 'public, max-age=11');
+  assert.equal(airQuality.headers['cache-control'], 'public, max-age=13');
 });
 
 test('forecast and air-quality endpoints normalize provider data', async (context) => {

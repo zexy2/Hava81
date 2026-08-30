@@ -18,9 +18,14 @@ import {
 } from './openapi';
 import type { WeatherService } from './weather.service';
 
-const cacheHeaders = (reply: { header(name: string, value: string): unknown }, status: string, maxAge: number) => {
+const cacheHeaders = (
+  reply: { header(name: string, value: string): unknown },
+  status: string,
+  desiredMaxAge: number,
+  cacheMaxAgeSeconds: number,
+) => {
   reply.header('x-cache', status);
-  reply.header('cache-control', `public, max-age=${maxAge}`);
+  reply.header('cache-control', `public, max-age=${Math.min(desiredMaxAge, cacheMaxAgeSeconds)}`);
 };
 
 const withCacheMeta = <T extends { meta: object }>(
@@ -49,7 +54,7 @@ export const registerWeatherRoutes = async (
     async (request, reply) => {
       const query = currentWeatherQuerySchema.parse(request.query);
       const result = await service.getCurrent(query);
-      cacheHeaders(reply, result.status, 60);
+      cacheHeaders(reply, result.status, 60, result.cacheMaxAgeSeconds);
       return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
@@ -67,7 +72,7 @@ export const registerWeatherRoutes = async (
     async (request, reply) => {
       const query = forecastQuerySchema.parse(request.query);
       const result = await service.getForecast(query);
-      cacheHeaders(reply, result.status, 300);
+      cacheHeaders(reply, result.status, 300, result.cacheMaxAgeSeconds);
       return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
@@ -85,7 +90,7 @@ export const registerWeatherRoutes = async (
     async (request, reply) => {
       const query = hourlyForecastQuerySchema.parse(request.query);
       const result = await service.getHourlyForecast(query);
-      cacheHeaders(reply, result.status, 300);
+      cacheHeaders(reply, result.status, 300, result.cacheMaxAgeSeconds);
       return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
@@ -103,7 +108,7 @@ export const registerWeatherRoutes = async (
     async (request, reply) => {
       const query = airQualityQuerySchema.parse(request.query);
       const result = await service.getAirQuality(query);
-      cacheHeaders(reply, result.status, 120);
+      cacheHeaders(reply, result.status, 120, result.cacheMaxAgeSeconds);
       return withCacheMeta(result.value, result.status, result.freshForSeconds);
     },
   );
