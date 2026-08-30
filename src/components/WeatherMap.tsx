@@ -117,13 +117,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       <h3 className="weather-map__title">{t('weather.mapTitle')}</h3>
 
       <div className="weather-map__container">
-        <MapContainer center={center} zoom={6} scrollWheelZoom className="weather-map__leaflet">
+        <MapContainer
+          center={center}
+          zoom={6}
+          scrollWheelZoom
+          attributionControl={false}
+          className="weather-map__leaflet"
+        >
           <MapController center={center} />
 
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CARTO'
-            url={`https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`}
-          />
+          <TileLayer url={`https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`} />
 
           {weather && (
             <Marker
@@ -164,7 +167,6 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                 icon={createPlateIcon(featuredCity.plateCode)}
                 eventHandlers={{
                   add: event => labelMarker(event.target as L.Marker, markerName),
-                  click: () => onCitySelect(featuredCity),
                 }}
               >
                 <Popup className="weather-map__popup">
@@ -188,6 +190,17 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           })}
         </MapContainer>
       </div>
+
+      <p className="weather-map__attribution">
+        <span>©</span>
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+          OpenStreetMap contributors
+        </a>
+        <span>· ©</span>
+        <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">
+          CARTO
+        </a>
+      </p>
 
       <div className="weather-map__legend" role="list" aria-label={t('weather.temperatureLegend')}>
         <span className="weather-map__legend-item weather-map__legend-item--cold" role="listitem">
