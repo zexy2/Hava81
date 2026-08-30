@@ -913,3 +913,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Hardened regression coverage for the just-shipped bounded `Retry-After` parser while the connectivity-resume PR validates independently.
 - Added an HTTP-date case proving a retryable 503 waits until the server-provided absolute retry time, plus an excessive 120-second delta case proving client delay remains capped at Hava81's existing 30-second retry maximum.
 - This is test-only: no runtime/network behavior changed. Focused HTTP transport coverage is 8/8; combined frontend suite 361/361, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check pass on base `f6c7e7a85545d532e02c574a76a5b0b656ec0c0f`.
+
+## 2026-08-30 04:44 TRT — bound frontend response-body reads by request timeout
+
+- After PR #252 merged as main `44b656e1af3767155abcfbf678754ee9e298288e`, audited the frontend BFF transport deadline on a fresh isolated worktree. The timeout was cleared as soon as `fetch()` returned headers, leaving a stalled success/error JSON body able to hang indefinitely.
+- Kept the existing per-request AbortController deadline active through `response.json()`. Aborted error-body reads now surface the established retryable timeout error instead of being mistaken for an HTTP response; ordinary malformed error JSON still degrades to the existing bounded HTTP error path.
+- Added deterministic success-body and error-body stall regressions. Local gates pass: focused httpClient 10/10, full frontend 364/364, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check.
