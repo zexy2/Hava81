@@ -32,30 +32,35 @@ const windSchema = z.object({
 
 const cloudsSchema = z.object({ all: z.number().min(0).max(100) });
 
-export const currentWeatherUpstreamSchema = z.object({
-  coord: coordinatesSchema,
-  weather: z.array(weatherConditionSchema).min(1),
-  main: currentMainWeatherSchema,
-  visibility: z.number().nonnegative().optional(),
-  wind: windSchema,
-  clouds: cloudsSchema,
-  dt: z
-    .number()
-    .int()
-    .nonnegative()
-    .refine(
-      (value) => value * 1_000 <= Date.now() + MAX_CURRENT_WEATHER_OBSERVATION_FUTURE_SKEW_MS,
-      'Current-weather observation timestamp is materially in the future',
-    ),
-  sys: z.object({
-    country: z.string(),
-    sunrise: z.number(),
-    sunset: z.number(),
-  }),
-  timezone: z.number().min(-43_200).max(50_400),
-  id: z.number(),
-  name: z.string(),
-});
+export const currentWeatherUpstreamSchema = z
+  .object({
+    coord: coordinatesSchema,
+    weather: z.array(weatherConditionSchema).min(1),
+    main: currentMainWeatherSchema,
+    visibility: z.number().nonnegative().optional(),
+    wind: windSchema,
+    clouds: cloudsSchema,
+    dt: z
+      .number()
+      .int()
+      .nonnegative()
+      .refine(
+        (value) => value * 1_000 <= Date.now() + MAX_CURRENT_WEATHER_OBSERVATION_FUTURE_SKEW_MS,
+        'Current-weather observation timestamp is materially in the future',
+      ),
+    sys: z.object({
+      country: z.string(),
+      sunrise: z.number(),
+      sunset: z.number(),
+    }),
+    timezone: z.number().min(-43_200).max(50_400),
+    id: z.number(),
+    name: z.string(),
+  })
+  .refine((data) => data.main.temp_min <= data.main.temp_max, {
+    message: 'Current-weather minimum temperature exceeds maximum temperature',
+    path: ['main', 'temp_min'],
+  });
 
 // Forecast models occasionally overshoot relative humidity by a single percentage point
 // because of interpolation/rounding. Keep current observations strict, but normalize a small
