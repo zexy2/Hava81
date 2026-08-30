@@ -320,3 +320,13 @@
     animation: none;
   }
 }
+
+
+@media (forced-colors: active) {
+  .settings-option[aria-pressed='true'] {
+    color: Highlight;
+    border-color: Highlight;
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+  }
+}
