@@ -92,6 +92,21 @@ describe('SearchBar', () => {
     expect(options.some(option => option.textContent === 'Adana')).toBe(true);
   });
 
+  it('does not show debounced suggestions from the previous query after the input is cleared', async () => {
+    const recentSearches = [{ city: 'Ankara', timestamp: Date.now() }];
+    const { rerender } = render(
+      <SearchBar {...defaultProps} value="İz" recentSearches={recentSearches} />
+    );
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    await waitFor(() => expect(screen.getByRole('option', { name: 'İzmir' })).toBeInTheDocument());
+
+    rerender(<SearchBar {...defaultProps} value="" recentSearches={recentSearches} />);
+
+    expect(screen.queryByRole('option', { name: 'İzmir' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Ankara' })).toBeInTheDocument();
+  });
+
   it('should have proper accessibility attributes', () => {
     render(<SearchBar {...defaultProps} />);
 
