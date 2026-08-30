@@ -862,6 +862,40 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
   expect(layout.mapTop).toBeGreaterThanOrEqual(0);
   expect(layout.mapBottom).toBeLessThanOrEqual(layout.navTop + 1);
   expect(layout.documentHeight).toBeLessThan(1600);
+
+  await expect(page.locator('.leaflet-control-zoom-in')).toBeVisible();
+  const mapTargets = await page.evaluate(() =>
+    [
+      ...document.querySelectorAll<HTMLElement>('.leaflet-control-zoom a'),
+      ...document.querySelectorAll<HTMLElement>('.leaflet-control-attribution a'),
+      ...document.querySelectorAll<HTMLElement>('.weather-map__marker, .weather-map__plate-marker'),
+    ].map(element => {
+      const rect = element.getBoundingClientRect();
+      return {
+        label: element.getAttribute('aria-label') || element.textContent?.trim() || element.className,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      };
+    })
+  );
+  expect(mapTargets.length).toBeGreaterThanOrEqual(5);
+  expect(mapTargets.filter(target => target.width < 44 || target.height < 44)).toEqual([]);
+
+  await page.locator('.weather-map__marker').click();
+  const popupClose = page.locator('.leaflet-popup-close-button');
+  await expect(popupClose).toBeVisible();
+  const popupCloseRect = await popupClose.boundingBox();
+  expect(popupCloseRect?.width).toBeGreaterThanOrEqual(44);
+  expect(popupCloseRect?.height).toBeGreaterThanOrEqual(44);
+  const popupClearance = await page.evaluate(() => {
+    const close = document.querySelector<HTMLElement>('.leaflet-popup-close-button');
+    const heading = document.querySelector<HTMLElement>('.weather-map__popup-content h4');
+    if (!close || !heading) throw new Error('Missing map popup controls');
+    const closeRect = close.getBoundingClientRect();
+    const headingRect = heading.getBoundingClientRect();
+    return headingRect.top - closeRect.bottom;
+  });
+  expect(popupClearance).toBeGreaterThanOrEqual(0);
 });
 
 test('mobile saved navigation does not create a favorite just by opening the view', async ({ page }, testInfo) => {

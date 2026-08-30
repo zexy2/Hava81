@@ -219,4 +219,26 @@
   .weather-map__legend {
     padding-inline: 0;
   }
+
+  .weather-map .leaflet-control-zoom a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
+
+  .weather-map .leaflet-control-attribution a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .weather-map a.leaflet-popup-close-button {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
+
+  .weather-map__popup-content {
+    padding-top: 2.75rem;
+  }
 }
