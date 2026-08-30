@@ -104,6 +104,7 @@ const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<AtlasNavItem>('today');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchToggleRef = useRef<HTMLButtonElement>(null);
   const overviewRef = useRef<HTMLDivElement>(null);
   const cityRailRef = useRef<HTMLDivElement>(null);
   const mapRegionRef = useRef<HTMLElement>(null);
@@ -170,14 +171,18 @@ const App: React.FC = () => {
     setIsMobileSearchOpen(true);
     requestAnimationFrame(() => searchInputRef.current?.focus());
   }, []);
+  const closeSearch = useCallback(() => {
+    searchInputRef.current?.blur();
+    setIsMobileSearchOpen(false);
+    requestAnimationFrame(() => searchToggleRef.current?.focus());
+  }, []);
   const toggleMobileSearch = useCallback(() => {
     if (isMobileSearchOpen) {
-      searchInputRef.current?.blur();
-      setIsMobileSearchOpen(false);
+      closeSearch();
       return;
     }
     openSearch();
-  }, [isMobileSearchOpen, openSearch]);
+  }, [closeSearch, isMobileSearchOpen, openSearch]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -353,12 +358,13 @@ const App: React.FC = () => {
                   submitLabel={t('common.search')}
                   loadingLabel={t('common.loading')}
                   suggestionsLabel={t('weather.citySuggestions')}
-                  onDismiss={() => setIsMobileSearchOpen(false)}
+                  onDismiss={closeSearch}
                 />
               </div>
 
               <nav className="atlas-header__actions" aria-label={t('weather.quickActions')}>
                 <button
+                  ref={searchToggleRef}
                   type="button"
                   className="atlas-icon-button atlas-icon-button--search"
                   onClick={toggleMobileSearch}
