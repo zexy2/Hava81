@@ -261,6 +261,19 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/izmir/');
   });
 
+  it('does not offer retry for a non-retryable current-weather failure', async () => {
+    service.getCurrentWeather.mockRejectedValueOnce(
+      new ApiError('Şehir bulunamadı', ErrorCode.NOT_FOUND, { retryable: false })
+    );
+
+    renderApp();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/şehir bulunamadı/i);
+    expect(screen.queryByRole('button', { name: /tekrar dene/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /kapat/i })).toBeInTheDocument();
+  });
+
   it('keeps raw current-weather failures out of the user-visible error state', async () => {
     service.getCurrentWeather.mockRejectedValueOnce(
       new Error('secret upstream endpoint detail: api.internal.example')

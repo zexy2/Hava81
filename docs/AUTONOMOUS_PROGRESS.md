@@ -1308,3 +1308,21 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added an App integration regression that forces a location denial, clicks the visible retry action, and requires a second geolocation-weather request without an extra city-weather request. Focused App integration passes 12/12; full gates follow before publication.
 - Full validation complete: 47 files / 429 frontend tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check` all pass.
 - After #351 merged and main pipeline #862 completed successfully, rebased onto exact `f860cec33ba146510e063ae44ba80a0eb299536f`; append-only #351 documentation was preserved during conflict resolution. Combined post-rebase gates again pass: 47 files / 429 tests, TypeScript, ESLint, 81-city build, audit 0 vulnerabilities, and diff-check.
+
+
+## 2026-08-30 19:47 TRT — retry affordance audit after #354
+
+- PR #354 (`4616b3e3555a5cad6fa42c1e46a96916c6cfc806`) was reverified mergeable with exact-head CI #864 successful and merged as main `c857501f884679d445f2421711a0984a003f4949`. Main pipeline #866 (`33323328310`) was still in progress at this checkpoint.
+- Continued independently from exact `c857501...` in `/home/ubuntu/hava81-auto-run11-retry-affordance-1949`, branch `automation/hava81-run11-retry-affordance-1949`.
+- Audited the global current-weather error banner: it offered “Tekrar Dene” for every error, including explicit non-retryable failures. Drafted a bounded UX fix that keeps retry available for geolocation errors, retryable errors, and normalized UNKNOWN failures, but hides retry for explicit non-retryable failures while preserving Close.
+- Added an App integration regression for a non-retryable NOT_FOUND error. No weather/provider/scoring semantics changed.
+- Validation is pending because this execution shell does not currently expose `npm` on PATH and the worktree cannot create a dependency symlink without elevated filesystem mutation. Do not commit/push this branch until focused App integration, TypeScript, ESLint, full frontend, 81-city build, audit, and diff-check pass.
+- Next action: restore the project Node/npm environment used by adjacent validated worktrees (or run via the known project toolchain path), validate the draft, inspect diff, then commit/push/open a PR only if all gates pass. Re-check main #866 and production before any merge.
+
+## 2026-08-30 20:49 TRT — retry affordance validation resumed
+
+- Restored the project Node/npm toolchain via `/home/ubuntu/.local/bin` and installed the exact lockfile dependencies in the isolated retry-affordance worktree; the earlier PATH-only blocker is resolved.
+- The non-retryable retry-affordance regression passes. TypeScript initially caught an unsafe nullable narrowing in the draft; corrected it before publication. ESLint then identified a hook dependency warning; corrected the callback dependency to the derived `isLocationError` boolean.
+- Full validation after the fixes: 47 files / 430 frontend tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check` pass.
+- Observer collected at 20:43 TRT reports main pipeline #866 successful, production root/İstanbul/API/CORS healthy, nginx on 4002, OpenWeather circuit closed. Host disk is high at 91.7% but still inside the configured 92% / 2 GiB guard; cleanup remains a prioritized operational task.
+- Next action: remove editor backup artifacts, inspect the exact diff, commit/push/open this bounded frontend-only PR, require exact-head CI, and continue independent disk/UX reliability work while it runs.
