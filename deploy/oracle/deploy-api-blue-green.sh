@@ -74,23 +74,26 @@ docker compose -p "$PROJECT_NAME" build weather-api
 docker compose -p "$PROJECT_NAME" up -d weather-api
 
 READY_FILE="$(mktemp "/tmp/hava81-api-${TARGET_PORT}-ready.XXXXXX.json")"
+READY_HEADERS="$(mktemp "/tmp/hava81-api-${TARGET_PORT}-ready.XXXXXX.headers")"
 HOURLY_FILE="$(mktemp "/tmp/hava81-api-${TARGET_PORT}-hourly.XXXXXX.json")"
 cleanup() {
-  rm -f "$READY_FILE" "$HOURLY_FILE"
+  rm -f "$READY_FILE" "$READY_HEADERS" "$HOURLY_FILE"
 }
 trap cleanup EXIT
 
 echo "[api] waiting for readiness on $TARGET_PORT"
 ready=0
 for _attempt in $(seq 1 30); do
-  if curl -fsS --max-time 5 "http://127.0.0.1:${TARGET_PORT}/api/v1/health/ready" >"$READY_FILE"; then
+  if curl -fsS --max-time 5 -D "$READY_HEADERS" \
+    "http://127.0.0.1:${TARGET_PORT}/api/v1/health/ready" >"$READY_FILE" && \
+    python3 "$PWD/validate-api-readiness.py" "$READY_FILE" "$READY_HEADERS"; then
     ready=1
     break
   fi
   sleep 2
 done
 if [[ "$ready" != "1" ]]; then
-  echo "target API on $TARGET_PORT did not become ready; traffic unchanged" >&2
+  echo "target API on $TARGET_PORT did not satisfy the readiness contract; traffic unchanged" >&2
   docker compose -p "$PROJECT_NAME" ps >&2 || true
   docker compose -p "$PROJECT_NAME" logs --tail=100 weather-api >&2 || true
   exit 1
