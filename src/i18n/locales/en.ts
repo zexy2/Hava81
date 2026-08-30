@@ -104,6 +104,7 @@ export const en = {
       title: "Today's rhythm",
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
+      intervalControlLabel: 'Forecast interval',
       intervalForecast: 'Forecast every {{hours}} hours',
       hourlySource: 'Source:',
       hourlyRegion: 'Scrollable hourly forecast chart and values',

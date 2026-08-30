@@ -1018,3 +1018,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - PR #282 remote head was read as `2bddba93e805c7166fa61aed1932a4a195f9a3b7` before rebasing this isolated branch onto exact current main. Append-only conflicts were resolved by preserving the valid #280, #281, and #282 checkpoints/decisions. The code delta remains only non-negative integer sunrise/sunset epoch validation plus its focused regression.
 - PR #283 remains independent on accessibility/i18n head `bea633adbac501dc64dd34ffa4c72e6bfc07ee3e`; it must not be merged without exact-head green CI and, after main moves, a clean rebase plus rerun.
 - Next queue: push this rebased #282 with explicit lease, wait for exact-head CI while continuing independent work; merge only after #687 is green and fresh production is healthy; then rebase #283 onto current main preserving all append-only checkpoints and rerun exact-head gates.
+
+
+## 2026-08-30 09:25 TRT — localize forecast interval accessibility label
+
+- While API PRs validate independently, audited Forecast Atlas accessibility on exact main `df74e8bac316534addf9763f5746454e44da4b4b`. The interval control's accessible name was the lone hard-coded TR/EN branch in the forecast component instead of using the translation catalog.
+- Moved that accessible label into the existing Forecast Atlas locale namespace for both Turkish and English. This keeps assistive-text localization consistent with the visible forecast strings and removes component-level language branching without changing forecast behavior. `git diff --check` passes; executable frontend gates are delegated to exact-head CI because Node/npm is unavailable in the gateway root shell.

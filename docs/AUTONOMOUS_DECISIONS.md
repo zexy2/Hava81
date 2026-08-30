@@ -330,3 +330,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — A successful OpenWeather forecast payload must contain at least one forecast item. Empty upstream lists are provider-data failure, not a valid empty forecast state.
 
 - 2026-08-30 — Validate sunrise/sunset only as non-negative integer Unix epochs; do not apply observation future-skew guards to astronomical events because future sunrise/sunset values are legitimate.
+
+- 2026-08-30 — Keep accessibility labels in the same i18n catalog as visible forecast copy; avoid component-local language branching so translated assistive text cannot drift from product language state.
