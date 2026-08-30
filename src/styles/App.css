@@ -1044,3 +1044,19 @@ kbd {
     background: #ffffff;
   }
 }
+
+.atlas-settings-loading {
+  position: fixed;
+  z-index: 1000;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  max-width: min(20rem, calc(100vw - 2rem));
+  padding: 0.75rem 1rem;
+  color: var(--color-atlas-ink, #142524);
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: var(--color-atlas-paper, #fff);
+  border: 1px solid var(--color-atlas-line, #c8d6d2);
+  border-radius: var(--radius-sm, 4px);
+  box-shadow: var(--shadow-overlay, 0 16px 48px rgb(14 44 50 / 0.16));
+}
