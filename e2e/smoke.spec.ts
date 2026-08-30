@@ -169,6 +169,41 @@ test('mobile location denial explains the permission failure', async ({ page }, 
   await expect(page.getByRole('button', { name: 'Kapat' })).toBeVisible();
 });
 
+test('mobile current location keeps exact weather coordinates but uses the canonical province identity', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile geolocation identity regression');
+  await page.unroute('**/api/v1/weather/current**');
+  await page.route('**/api/v1/weather/current**', route => {
+    const requestUrl = new URL(route.request().url());
+    const isCoordinateRequest = requestUrl.searchParams.has('lat');
+    return route.fulfill({
+      json: isCoordinateRequest
+        ? {
+            ...current,
+            cityName: 'Ulus',
+            coordinates: { lat: 39.9334, lon: 32.8597 },
+          }
+        : current,
+    });
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (success: PositionCallback) => {
+          success({ coords: { latitude: 39.9334, longitude: 32.8597 } } as GeolocationPosition);
+        },
+      },
+    });
+  });
+  await page.goto('/istanbul');
+
+  await page.getByRole('button', { name: 'Konumumu Kullan' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Ankara', level: 1 })).toBeVisible();
+  await expect(page.getByLabel('Plaka kodu 06')).toBeVisible();
+  await expect(page).toHaveURL(/\/ankara\/?$/);
+});
+
 test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single narrow-mobile overflow regression');
   await page.setViewportSize({ width: 320, height: 700 });
