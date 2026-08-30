@@ -1005,3 +1005,16 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 
 - While PR #280 validates independently, audited the same OpenWeather forecast boundary from untouched main `b57204978c57011120888b7abb0b57656ab17126`. The schema accepted an empty forecast list even though downstream normalization assumes provider forecast rows to produce hourly/daily guidance.
 - The provider boundary now requires at least one forecast item and fails closed on an empty upstream payload instead of returning a structurally successful but unusable forecast. Added a focused regression. `git diff --check` passes; executable API gates remain delegated to exact-head CI because Node/npm is not exposed in the gateway root shell.
+
+## 2026-08-30 09:22 TRT — current-weather sunrise/sunset epoch shape
+
+- While PR #280/#281 validate independently, audited current-weather astronomical timestamps from untouched main `b57204978c57011120888b7abb0b57656ab17126`. Sunrise/sunset values were accepted as arbitrary numbers even though they are Unix-second epochs and are converted directly to ISO timestamps downstream.
+- Sunrise and sunset now require non-negative integer epochs. They are intentionally not future-time bounded because the next sunset/sunrise can legitimately lie ahead of the observation time. Added focused negative/fractional regressions; no astronomical value is synthesized or corrected. `git diff --check` passes.
+
+
+## 2026-08-30 09:27 TRT — continuation checkpoint after PR #281
+
+- PR #281 exact rebased head `2097914bb16532a4e95ad30157be3bc2e4a8f17b` passed CI #685, was directly re-verified mergeable, and production was immediately rechecked: API slot 4002 readiness 200/fresh with OpenWeather circuit closed, exact production-origin CORS, public root 200, and İstanbul 200. It was squash-merged as main `4d01fc656fa988434a5f95b5c5f9adfdf916f05f`; main run #687 is in progress independently.
+- PR #282 remote head was read as `2bddba93e805c7166fa61aed1932a4a195f9a3b7` before rebasing this isolated branch onto exact current main. Append-only conflicts were resolved by preserving the valid #280, #281, and #282 checkpoints/decisions. The code delta remains only non-negative integer sunrise/sunset epoch validation plus its focused regression.
+- PR #283 remains independent on accessibility/i18n head `bea633adbac501dc64dd34ffa4c72e6bfc07ee3e`; it must not be merged without exact-head green CI and, after main moves, a clean rebase plus rerun.
+- Next queue: push this rebased #282 with explicit lease, wait for exact-head CI while continuing independent work; merge only after #687 is green and fresh production is healthy; then rebase #283 onto current main preserving all append-only checkpoints and rerun exact-head gates.

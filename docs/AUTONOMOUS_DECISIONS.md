@@ -328,3 +328,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — OpenWeather forecast item timestamps must be non-negative integer Unix seconds, and provider timezone offsets must remain within the same -12h..+14h domain already enforced for current weather. Reject malformed upstream temporal metadata rather than allowing it to distort date grouping.
 
 - 2026-08-30 — A successful OpenWeather forecast payload must contain at least one forecast item. Empty upstream lists are provider-data failure, not a valid empty forecast state.
+
+- 2026-08-30 — Validate sunrise/sunset only as non-negative integer Unix epochs; do not apply observation future-skew guards to astronomical events because future sunrise/sunset values are legitimate.
