@@ -299,6 +299,7 @@ export const en = {
         default: '12-hour suitability',
         filtered: '{{start}}–{{end}} suitability',
         explanationTitle: 'Why are the scores different?',
+        detailsTitle: 'Score details',
         activityImpact: 'Activity criteria impact: {{value}} points',
         explanation:
           'The same weather hours are re-scored with each activity’s own thresholds and weights. For example, running is more sensitive to heat and air quality than walking; picnics weigh rain and wind more heavily, while motorcycling weighs rain, wind and visibility more heavily. That is why two activities can receive different scores for the same hours.',

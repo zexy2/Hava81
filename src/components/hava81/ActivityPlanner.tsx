@@ -257,14 +257,6 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                       </span>
                     </div>
                   ) : null}
-                  <small className="activity-card__impact">
-                    {t('hava81.activities.score.activityImpact', {
-                      value: `${plan.baselineScore} → ${plan.score} (${plan.activityImpact > 0 ? `+${plan.activityImpact}` : plan.activityImpact})`,
-                    })}
-                  </small>
-                  <small className="activity-card__criteria">
-                    {formatComfortCriteria(plan.activity)}
-                  </small>
                   {plan.reasons[0] ? (
                     <small className="activity-card__risk">
                       {t('hava81.activities.mainRisk', {
@@ -272,6 +264,19 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                       })}
                     </small>
                   ) : null}
+                  <details className="activity-card__details">
+                    <summary>{t('hava81.activities.score.detailsTitle')}</summary>
+                    <div className="activity-card__details-body">
+                      <small className="activity-card__impact">
+                        {t('hava81.activities.score.activityImpact', {
+                          value: `${plan.baselineScore} → ${plan.score} (${plan.activityImpact > 0 ? `+${plan.activityImpact}` : plan.activityImpact})`,
+                        })}
+                      </small>
+                      <small className="activity-card__criteria">
+                        {formatComfortCriteria(plan.activity)}
+                      </small>
+                    </div>
+                  </details>
                 </article>
               );
             })}

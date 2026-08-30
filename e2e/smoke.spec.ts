@@ -340,6 +340,20 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
   expect(
     activityChips.buttons.some(button => button.left < activityChips.right && button.right > activityChips.right)
   ).toBe(true);
+
+  const activityDetails = page.locator('.activity-card__details');
+  await expect(activityDetails).toHaveCount(2);
+  expect(await activityDetails.evaluateAll(elements => elements.every(element => !element.hasAttribute('open')))).toBe(true);
+  const detailSummaryHeights = await activityDetails.locator('summary').evaluateAll(elements =>
+    elements.map(element => element.getBoundingClientRect().height)
+  );
+  expect(detailSummaryHeights.every(height => height >= 44)).toBe(true);
+  await expect(page.locator('.activity-card__risk').first()).toBeVisible();
+  await expect(page.locator('.activity-card__impact').first()).toBeHidden();
+  await activityDetails.locator('summary').first().click();
+  await expect(page.locator('.activity-card__impact').first()).toBeVisible();
+  await expect(page.locator('.activity-card__criteria').first()).toBeVisible();
+
   expect(layout.description.scrollWidth).toBeLessThanOrEqual(layout.description.clientWidth + 1);
 });
 
@@ -1197,7 +1211,9 @@ test('activity preference and time range change the personalized plan', async ({
   await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
   await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
   await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
-  await expect(page.getByText(/Koşuda 10–22°C/)).toBeVisible();
+  const runCard = page.locator('.activity-card').filter({ has: page.getByRole('heading', { name: 'Koşu', exact: true }) });
+  await runCard.locator('summary').click();
+  await expect(runCard.getByText(/Koşuda 10–22°C/)).toBeVisible();
 });
 
 test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
