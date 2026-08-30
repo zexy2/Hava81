@@ -132,7 +132,15 @@ class ObserverNginxTargetTests(unittest.TestCase):
 
 
 class ObserverApiDeploymentTests(unittest.TestCase):
-    def _collect(self, *, deployed_tree: str | None, github_tree: str | None):  # noqa: ANN201
+    def _collect(
+        self,
+        *,
+        deployed_revision: str | None = 'deployed-revision',
+        main_revision: str = 'main-revision',
+        compare_status: str = 'ahead',
+        changed_files: list[str] | None = None,
+        compare_ok: bool = True,
+    ):  # noqa: ANN201
         original_http_get = observer.http_get
         original_tree_file = observer.DEPLOYED_API_TREE_FILE
         original_revision_file = observer.DEPLOYED_API_REVISION_FILE
@@ -140,56 +148,114 @@ class ObserverApiDeploymentTests(unittest.TestCase):
             root = Path(tmp)
             tree_file = root / 'current-api-tree'
             revision_file = root / 'current-api-revision'
-            if deployed_tree is not None:
-                tree_file.write_text(f'{deployed_tree}\n', encoding='utf-8')
-            revision_file.write_text('deployed-revision\n', encoding='utf-8')
+            tree_file.write_text('deployed-api-tree\n', encoding='utf-8')
+            if deployed_revision is not None:
+                revision_file.write_text(f'{deployed_revision}\n', encoding='utf-8')
 
-            def fake_http_get(_url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
-                contents = []
-                if github_tree is not None:
-                    contents.append({
-                        'name': 'api',
-                        'path': 'apps/api',
-                        'type': 'dir',
-                        'sha': github_tree,
-                    })
-                return {
-                    'ok': True,
-                    'status': 200,
-                    'elapsed_ms': 1,
-                    'headers': {},
-                    'json': contents,
-                    'error': None,
-                }
+            def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+                if '/compare/' in url:
+                    return {
+                        'ok': compare_ok,
+                        'status': 200 if compare_ok else 503,
+                        'elapsed_ms': 1,
+                        'headers': {},
+                        'json': (
+                            {
+                                'status': compare_status,
+                                'files': [
+                                    {'filename': filename}
+                                    for filename in (changed_files or [])
+                                ],
+                            }
+                            if compare_ok
+                            else None
+                        ),
+                        'error': None if compare_ok else 'HTTP 503',
+                    }
+                raise AssertionError(f'unexpected GitHub lookup: {url}')
 
             try:
                 observer.http_get = fake_http_get
                 observer.DEPLOYED_API_TREE_FILE = tree_file
                 observer.DEPLOYED_API_REVISION_FILE = revision_file
-                return observer.collect_api_deployment({'head_sha': 'main-revision'})
+                return observer.collect_api_deployment({'head_sha': main_revision})
             finally:
                 observer.http_get = original_http_get
                 observer.DEPLOYED_API_TREE_FILE = original_tree_file
                 observer.DEPLOYED_API_REVISION_FILE = original_revision_file
 
-    def test_reports_matching_api_tree_as_current(self) -> None:
-        deployment = self._collect(deployed_tree='same-tree', github_tree='same-tree')
+    def test_reports_identical_deployed_revision_as_current_without_lookup(self) -> None:
+        deployment = self._collect(
+            deployed_revision='same-revision',
+            main_revision='same-revision',
+        )
         self.assertTrue(deployment['known'])
         self.assertFalse(deployment['pending'])
-        self.assertEqual(deployment['main_tree'], 'same-tree')
-        self.assertEqual(deployment['deployed_revision'], 'deployed-revision')
+        self.assertEqual(deployment['runtime_changed_files'], [])
 
-    def test_reports_api_tree_drift_without_marking_unknown(self) -> None:
-        deployment = self._collect(deployed_tree='old-tree', github_tree='new-tree')
+    def test_ignores_test_only_api_tree_drift(self) -> None:
+        deployment = self._collect(changed_files=['apps/api/test/app.test.ts'])
+        self.assertTrue(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertEqual(deployment['runtime_changed_files'], [])
+        self.assertIsNone(deployment['main_tree'])
+
+    def test_reports_runtime_source_drift_as_pending(self) -> None:
+        deployment = self._collect(
+            changed_files=['apps/api/src/app.ts', 'apps/api/test/app.test.ts']
+        )
         self.assertTrue(deployment['known'])
         self.assertTrue(deployment['pending'])
-        self.assertEqual(deployment['deployed_tree'], 'old-tree')
-        self.assertEqual(deployment['main_tree'], 'new-tree')
+        self.assertEqual(deployment['runtime_changed_files'], ['apps/api/src/app.ts'])
+        self.assertEqual(deployment['deployed_tree'], 'deployed-api-tree')
+        self.assertIsNone(deployment['main_tree'])
 
-    def test_reports_missing_deploy_marker_as_unknown_not_pending(self) -> None:
-        deployment = self._collect(deployed_tree=None, github_tree='main-tree')
+    def test_reports_api_build_and_compose_inputs_as_runtime_drift(self) -> None:
+        deployment = self._collect(
+            changed_files=[
+                'apps/api/Dockerfile',
+                'apps/api/package-lock.json',
+                'deploy/oracle/docker-compose.yml',
+                'docs/AUTONOMOUS_PROGRESS.md',
+            ]
+        )
+        self.assertTrue(deployment['known'])
+        self.assertTrue(deployment['pending'])
+        self.assertEqual(
+            deployment['runtime_changed_files'],
+            [
+                'apps/api/Dockerfile',
+                'apps/api/package-lock.json',
+                'deploy/oracle/docker-compose.yml',
+            ],
+        )
+
+    def test_reports_missing_deploy_revision_as_unknown_not_pending(self) -> None:
+        deployment = self._collect(deployed_revision=None)
         self.assertFalse(deployment['known'])
         self.assertFalse(deployment['pending'])
+        self.assertIn('revision marker is missing', deployment['error'])
+
+    def test_reports_failed_compare_as_unknown_not_pending(self) -> None:
+        deployment = self._collect(compare_ok=False)
+        self.assertFalse(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertEqual(deployment['error'], 'HTTP 503')
+
+    def test_reports_non_ancestor_deployment_as_unknown(self) -> None:
+        deployment = self._collect(compare_status='diverged', changed_files=['apps/api/src/app.ts'])
+        self.assertFalse(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertIn('not an ancestor', deployment['error'])
+
+    def test_fails_unknown_when_compare_file_list_may_be_truncated(self) -> None:
+        deployment = self._collect(
+            changed_files=[f'docs/generated-{index}.md' for index in range(observer.GITHUB_COMPARE_FILE_LIMIT)]
+        )
+        self.assertFalse(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertIn('maximum file count', deployment['error'])
+
 
 
 class ObserverStateSignatureTests(unittest.TestCase):

@@ -29,6 +29,16 @@ MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MAXIMUM_ROOT_USED_PERCENT = 92.0
 USER_AGENT = 'Hava81-Deterministic-Observer/1.0'
 SSL_CONTEXT = ssl.create_default_context()
+API_RUNTIME_PATHS = {
+    'apps/api/.dockerignore',
+    'apps/api/Dockerfile',
+    'apps/api/package-lock.json',
+    'apps/api/package.json',
+    'apps/api/tsconfig.json',
+    'deploy/oracle/docker-compose.yml',
+}
+API_RUNTIME_PREFIXES = ('apps/api/src/',)
+GITHUB_COMPARE_FILE_LIMIT = 300
 
 
 def now_iso() -> str:
@@ -217,40 +227,66 @@ def read_optional_marker(path: Path) -> str | None:
         return None
 
 
+def is_api_runtime_path(path: str) -> bool:
+    return path in API_RUNTIME_PATHS or path.startswith(API_RUNTIME_PREFIXES)
+
+
 def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]:
     main_sha = latest_main.get('head_sha') if latest_main else None
     deployed_revision = read_optional_marker(DEPLOYED_API_REVISION_FILE)
     deployed_tree = read_optional_marker(DEPLOYED_API_TREE_FILE)
     main_tree: str | None = None
+    runtime_changed_files: list[str] = []
     error: str | None = None
     lookup: dict[str, Any] | None = None
+    known = False
+    pending = False
 
-    if isinstance(main_sha, str) and main_sha:
-        lookup = http_get(f'https://api.github.com/repos/{REPO}/contents/apps?ref={main_sha}')
-        contents = lookup.get('json') if isinstance(lookup.get('json'), list) else []
-        api_entry = next(
-            (
-                item
-                for item in contents
-                if isinstance(item, dict)
-                and item.get('name') == 'api'
-                and item.get('path') == 'apps/api'
-                and item.get('type') == 'dir'
-            ),
-            None,
-        )
-        if api_entry and isinstance(api_entry.get('sha'), str):
-            main_tree = api_entry['sha']
+    if isinstance(main_sha, str) and main_sha and deployed_revision:
+        if main_sha == deployed_revision:
+            known = True
         else:
-            error = lookup.get('error') or 'apps/api tree SHA was not returned by GitHub'
+            lookup = http_get(
+                f'https://api.github.com/repos/{REPO}/compare/{deployed_revision}...{main_sha}'
+            )
+            comparison = lookup.get('json') if isinstance(lookup.get('json'), dict) else {}
+            status = comparison.get('status')
+            files = comparison.get('files') if isinstance(comparison.get('files'), list) else None
+            if not lookup.get('ok') or files is None:
+                error = lookup.get('error') or 'GitHub compare response did not include changed files'
+            elif status == 'identical':
+                known = True
+            elif status != 'ahead':
+                error = f'API deployed revision is not an ancestor of main (compare status: {status or "unknown"})'
+            else:
+                filenames = [
+                    item.get('filename')
+                    for item in files
+                    if isinstance(item, dict) and isinstance(item.get('filename'), str)
+                ]
+                runtime_changed_files = sorted(
+                    path for path in filenames if is_api_runtime_path(path)
+                )
+                compare_truncated = len(files) >= GITHUB_COMPARE_FILE_LIMIT
+                if runtime_changed_files:
+                    known = True
+                    pending = True
+                elif compare_truncated:
+                    error = (
+                        'GitHub compare returned the maximum file count without an API runtime change; '
+                        'deployment state is ambiguous'
+                    )
+                else:
+                    known = True
+    elif not deployed_revision:
+        error = 'deployed API revision marker is missing'
 
-    known = bool(main_tree and deployed_tree)
-    pending = bool(known and main_tree != deployed_tree)
     return {
         'main_revision': main_sha,
         'main_tree': main_tree,
         'deployed_revision': deployed_revision,
         'deployed_tree': deployed_tree,
+        'runtime_changed_files': runtime_changed_files,
         'known': known,
         'pending': pending,
         'error': error,
@@ -361,6 +397,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
             for key in (
                 'main_revision',
                 'main_tree',
+                'runtime_changed_files',
                 'deployed_revision',
                 'deployed_tree',
                 'known',
