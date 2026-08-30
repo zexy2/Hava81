@@ -89,9 +89,13 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil((async () => {
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of clients) {
-      if ('focus' in client) {
+      if (!('focus' in client)) continue;
+      try {
         if ('navigate' in client) await client.navigate(url);
-        return client.focus();
+        return await client.focus();
+      } catch {
+        // A stale/unavailable client must not swallow the notification activation.
+        // Try another window, then fall back to opening the intended same-origin URL.
       }
     }
     return self.clients.openWindow(url);
