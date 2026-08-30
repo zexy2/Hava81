@@ -417,31 +417,33 @@ describe('Hava81 app integration', () => {
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
 
-    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    expect(canonical?.href).toBe('http://localhost:3000/istanbul/');
-    expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
-      'http://localhost:3000/istanbul/'
-    );
-    expect(document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content).toBe(
-      'İstanbul hava durumu — Hava81'
-    );
     const cityDescription =
       'İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.';
-    expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toBe(
-      cityDescription
-    );
-    expect(
-      document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content
-    ).toBe(cityDescription);
-    expect(
-      document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.content
-    ).toBe(cityDescription);
-    expect(document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.content).toBe(
-      'İstanbul hava durumu — Hava81'
-    );
-    expect(document.querySelector<HTMLMetaElement>('meta[property="og:locale"]')?.content).toBe(
-      'tr_TR'
-    );
+    await waitFor(() => {
+      const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      expect(canonical?.href).toBe('http://localhost:3000/istanbul/');
+      expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
+        'http://localhost:3000/istanbul/'
+      );
+      expect(document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content).toBe(
+        'İstanbul hava durumu — Hava81'
+      );
+      expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toBe(
+        cityDescription
+      );
+      expect(
+        document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content
+      ).toBe(cityDescription);
+      expect(
+        document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.content
+      ).toBe(cityDescription);
+      expect(document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.content).toBe(
+        'İstanbul hava durumu — Hava81'
+      );
+      expect(document.querySelector<HTMLMetaElement>('meta[property="og:locale"]')?.content).toBe(
+        'tr_TR'
+      );
+    });
   });
 
   it('opens settings and switches language without leaking provider credentials', async () => {
