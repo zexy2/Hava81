@@ -66,6 +66,29 @@ describe('useDecisionProfile persistence', () => {
     expect(result.current.profile.activities).toEqual(['walk', 'run', 'picnic']);
   });
 
+  it('rejects invalid clock values before persisting commute or activity windows', () => {
+    const { result } = renderHook(() => useDecisionProfile());
+
+    act(() => {
+      result.current.setCommuteTime('start', '25:00');
+      result.current.setActivityWindow('end', '9:30');
+    });
+
+    expect(result.current.profile).toEqual({
+      activities: ['walk', 'run'],
+      temperatureSensitivity: 'balanced',
+    });
+    expect(JSON.parse(localStorage.getItem('hava81-decision-profile-v1') ?? 'null')).toBeNull();
+
+    act(() => {
+      result.current.setCommuteTime('start', '08:30');
+      result.current.setActivityWindow('end', '19:45');
+    });
+
+    expect(result.current.profile.commuteStart).toBe('08:30');
+    expect(result.current.profile.activityEnd).toBe('19:45');
+  });
+
   it('sanitizes cross-tab storage updates before applying them', () => {
     const { result } = renderHook(() => useDecisionProfile());
 

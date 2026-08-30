@@ -336,3 +336,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — A truly equal daily high/low is one displayed temperature, not a duplicated range. If two distinct temperatures only collapse under whole-degree rounding, preserve the real spread with one-decimal precision rather than falsely implying equality.
 
 - 2026-08-30 — Current-weather astronomical epochs must satisfy `sunrise <= sunset` at the upstream trust boundary. Individually valid epochs with sunset earlier than sunrise are internally inconsistent and must fail closed; the UI must not turn that provider defect into a plausible-looking zero daylight duration.
+
+- 2026-08-30 — Decision-profile time mutators must enforce the same 24-hour `HH:mm` domain as persisted-profile deserialization. Invalid defined clock strings fail closed before state/storage/analytics mutation; `undefined` remains the explicit clear operation.

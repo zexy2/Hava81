@@ -90,6 +90,7 @@ export function useDecisionProfile() {
   );
   const setCommuteTime = useCallback(
     (kind: 'start' | 'end', value?: string) => {
+      if (value !== undefined && !isClockTime(value)) return;
       const key = kind === 'start' ? 'commuteStart' : 'commuteEnd';
       setProfile(current => ({ ...current, [key]: value }));
       trackProductEvent('commute_schedule_changed', { kind, value: value ?? null });
@@ -102,6 +103,7 @@ export function useDecisionProfile() {
   }, [setProfile]);
   const setActivityWindow = useCallback(
     (kind: 'start' | 'end', value?: string) => {
+      if (value !== undefined && !isClockTime(value)) return;
       const key = kind === 'start' ? 'activityStart' : 'activityEnd';
       setProfile(current => ({ ...current, [key]: value }));
       trackProductEvent('activity_window_changed', { kind, value: value ?? null });
