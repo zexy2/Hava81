@@ -272,6 +272,46 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
     ).toEqual(['00:00', '06:00', '12:00', '18:00']);
   });
+  it('keeps the 24-hour summary stable when display sampling changes', async () => {
+    const user = userEvent.setup();
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={Array.from({ length: 24 }, (_, index) => ({
+            time: new Date(Date.UTC(2026, 7, 29, index)),
+            temp: index === 1 ? 31 : index === 2 ? 12 : 20,
+            icon: '01d',
+            description: 'açık',
+            pop: index === 5 ? 0.8 : 0,
+            precipitationMm: index === 5 ? 1.2 : 0,
+            windSpeed: 2,
+          }))}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
+    const interval = screen.getByRole('group', { name: /tahmin aralığı/i });
+    const assertFullHorizonSummary = () => {
+      expect(summary).toHaveTextContent('12°C');
+      expect(summary).toHaveTextContent('31°C');
+      expect(summary).toHaveTextContent('%80 · 1,2 mm');
+    };
+
+    assertFullHorizonSummary();
+    await user.click(within(interval).getByRole('button', { name: '3 saatlik' }));
+    assertFullHorizonSummary();
+    await user.click(within(interval).getByRole('button', { name: '6 saatlik' }));
+    assertFullHorizonSummary();
+  });
+
   it('shows daily precipitation totals without inventing a 0% rain label', () => {
     render(
       <SettingsProvider>
