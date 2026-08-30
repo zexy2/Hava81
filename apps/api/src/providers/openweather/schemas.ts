@@ -42,7 +42,7 @@ export const currentWeatherUpstreamSchema = z
     coord: coordinatesSchema,
     weather: z.array(weatherConditionSchema).min(1),
     main: currentMainWeatherSchema,
-    visibility: z.number().nonnegative().optional(),
+    visibility: z.number().min(0).max(10_000).optional(),
     wind: windSchema,
     clouds: cloudsSchema,
     dt: z
@@ -90,7 +90,7 @@ const forecastItemSchema = z.object({
   weather: z.array(weatherConditionSchema).min(1),
   clouds: cloudsSchema,
   wind: windSchema,
-  visibility: z.number().nonnegative().optional(),
+  visibility: z.number().min(0).max(10_000).optional(),
   pop: z.number().min(0).max(1).default(0),
   dt_txt: z.string().min(1),
 });

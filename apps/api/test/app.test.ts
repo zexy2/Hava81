@@ -412,7 +412,8 @@ test('OpenWeather adapter rejects impossible finite current-weather domains', as
     ['wind speed', (payload) => { payload.wind.speed = -1; }],
     ['wind direction', (payload) => { payload.wind.deg = 361; }],
     ['cloud cover', (payload) => { payload.clouds.all = 101; }],
-    ['visibility', (payload) => { payload.visibility = -1; }],
+    ['negative visibility', (payload) => { payload.visibility = -1; }],
+    ['visibility above provider maximum', (payload) => { payload.visibility = 10_001; }],
     ['timezone', (payload) => { payload.timezone = 99_999; }],
   ];
 
@@ -516,6 +517,22 @@ test('OpenWeather current accepts responses without optional visibility', async 
   const result = await provider.getCurrent({ city: 'Tokat', units: 'metric', lang: 'tr' });
 
   assert.equal(result.visibility, undefined);
+});
+
+test('OpenWeather forecast rejects visibility above the documented provider maximum', async () => {
+  const payload = structuredClone(forecastFixture);
+  payload.list[0].visibility = 10_001;
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  await assert.rejects(
+    () => provider.getForecast({ lat: 41.01, lon: 28.97, units: 'metric', lang: 'tr' }),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+  );
 });
 
 test('OpenWeather forecast accepts entries without optional visibility', async () => {
