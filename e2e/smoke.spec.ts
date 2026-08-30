@@ -439,6 +439,55 @@ test('narrow hourly atlas keeps its interval chip rail and summary readable', as
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
+test('narrow English hourly summary keeps long precipitation copy readable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single narrow English summary regression');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'dark',
+        language: 'en',
+      })
+    );
+  });
+  await page.goto('/istanbul');
+
+  const summary = page.getByRole('list', { name: 'Hourly forecast summary' });
+  const rainItem = summary.getByRole('listitem').filter({ hasText: 'Rain peak' });
+  await expect(rainItem).toContainText('45% · 0.2 mm');
+
+  const assertReadableSummary = async () => {
+    const readability = await rainItem.locator('span, strong').evaluateAll(elements =>
+      elements.map(element => {
+        const style = getComputedStyle(element);
+        return {
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+          clientHeight: element.clientHeight,
+          scrollHeight: element.scrollHeight,
+          textOverflow: style.textOverflow,
+          whiteSpace: style.whiteSpace,
+        };
+      })
+    );
+    expect(readability).toHaveLength(2);
+    expect(readability.every(metric => metric.scrollWidth <= metric.clientWidth + 1)).toBe(true);
+    expect(readability.every(metric => metric.scrollHeight <= metric.clientHeight + 1)).toBe(true);
+    expect(readability.every(metric => metric.textOverflow === 'clip')).toBe(true);
+    expect(readability.every(metric => metric.whiteSpace === 'normal')).toBe(true);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+    ).toBe(0);
+  };
+
+  await assertReadableSummary();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertReadableSummary();
+});
+
 test('tablet hourly interval controls keep touch-sized targets', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-768', 'tablet interval touch-target regression');
   await page.goto('/istanbul');

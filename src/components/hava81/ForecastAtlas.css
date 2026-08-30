@@ -553,8 +553,20 @@
     padding: 9px 10px;
   }
 
+  .hava81-forecast-atlas__summary-item span,
+  .hava81-forecast-atlas__summary-item strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .hava81-forecast-atlas__summary-item span {
+    overflow-wrap: anywhere;
+  }
+
   .hava81-forecast-atlas__summary-item strong {
     font-size: 0.9375rem;
+    overflow-wrap: normal;
   }
 
   .hava81-forecast-atlas__source a {
