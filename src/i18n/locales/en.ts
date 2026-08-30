@@ -407,6 +407,8 @@ export const en = {
       summary: 'Check an approximate weather corridor between two cities.',
       origin: 'Origin',
       destination: 'Destination',
+      swap: 'Swap direction',
+      sameCity: 'Choose different cities for origin and destination.',
       departure: 'Departure time · Türkiye time',
       check: 'Check corridor',
       corridor: 'Approximate weather corridor',

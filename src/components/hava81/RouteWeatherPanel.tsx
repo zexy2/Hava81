@@ -66,6 +66,11 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     setError(null);
     setLoading(false);
   };
+  const swapEndpoints = () => {
+    setOriginName(destinationName);
+    setDestinationName(originName);
+    invalidateRequest();
+  };
 
   useEffect(() => {
     const nextOrigin = canonicalProvinceName(currentCityName);
@@ -145,6 +150,15 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               ))}
             </select>
           </label>
+          <button
+            type="button"
+            className="route-weather__swap"
+            onClick={swapEndpoints}
+            aria-label={t('hava81.route.swap')}
+          >
+            <span aria-hidden="true">⇄</span>
+            <span>{t('hava81.route.swap')}</span>
+          </button>
           <label>
             {t('hava81.route.destination')}
             <select
@@ -175,11 +189,17 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           <button
             type="button"
             disabled={loading || originName === destinationName}
+            aria-describedby={originName === destinationName ? 'route-weather-same-city' : undefined}
             onClick={() => void submit()}
           >
             {loading ? t('common.loading') : t('hava81.route.check')}
           </button>
         </div>
+        {originName === destinationName ? (
+          <p id="route-weather-same-city" className="route-weather__hint" role="status">
+            {t('hava81.route.sameCity')}
+          </p>
+        ) : null}
         {error ? (
           <p role="alert" className="route-weather__error">
             {error}

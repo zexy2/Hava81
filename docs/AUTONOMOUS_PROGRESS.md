@@ -1258,3 +1258,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - No route score, route interpolation, precipitation, wind, provider, or disclaimer behavior changed; no value is clamped, repaired, converted, or synthesized.
 - Added a route regression for an out-of-domain 101°C segment. Local gates pass: weatherService BFF 117/117; full frontend 47 files / 420 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: commit/push/open this separate frontend-only PR. Serialize it after #343; if main moves, rebase with append-only documentation preserved, rerun combined gates, and require exact-head green CI plus fresh production verification before merge.
+
+## 2026-08-30 17:34 TRT — reduce route form friction and explain invalid same-city state
+
+- Worked independently in `/home/ubuntu/hava81-auto-run11-route-ux-1730` while the route-temperature PR validates.
+- Added a single-action origin/destination swap control so users do not need to reopen two 81-city selectors just to reverse a route. The control keeps a visible label on wider layouts and an accessible name when compacted on mobile.
+- When origin and destination are identical, the existing disabled route-check action now has a visible localized explanation and `aria-describedby` linkage instead of silently becoming unavailable.
+- Route requests, weather scoring, departure rules, provider data, and route-result rendering remain unchanged.
+- Focused RouteWeatherPanel gates pass: 10/10 tests, TypeScript, ESLint, and `git diff --check`.
+- Next action: rebase this bounded frontend-only branch onto current main, preserve append-only checkpoints, then run the full frontend/build/audit gates before publishing a PR.
+
