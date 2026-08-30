@@ -1178,3 +1178,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Both hourly and daily weather-code arrays now fail closed during provider schema validation when a code is outside that documented set. No unsupported condition is guessed, corrected, or synthesized.
 - Added hourly and daily regressions for unsupported code `4`. Local API gates pass: 52/52 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - PR #323 later merged as `7674b2a3581b17e556e21e0f6106cf01641a667d`; main pipeline #793 completed successfully and public root/İstanbul/API readiness/CORS remained healthy with nginx on 4002. This branch is now being rebased onto that production-green main before its exact-head CI is rerun.
+
+## 2026-08-30 15:43 TRT — rebuild context-model timeline guard on current main
+
+- PR #329 was directly reverified mergeable with exact-head green CI and fresh healthy observer/production checks, then squash-merged as main `b48eb4f44b8b4afa3a305e63df3fa2f29755d328` while its main pipeline proceeds independently.
+- Legacy PR #326 remains green on its old head but conflicts with current main, so it was not mutated from a second workstream. Rebuilt only its bounded trust-boundary change from exact post-#329 main in isolated branch `automation/hava81-context-series-shape-rebuild-1545`.
+- Open-Meteo air-context hourly timestamps must parse as finite GMT model times, and every present modeled UV/dust/grass-pollen/olive-pollen series must match the provider time axis length. Malformed or misaligned inputs fail closed with `INVALID_CONTEXT_PROVIDER_RESPONSE`; no context value is truncated, shifted, corrected, or synthesized.
+- Current-main local gates pass: API 53/53 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: commit/push/open replacement PR, require exact-head green CI, then close superseded #326 once the replacement is safely represented. Recheck #333 independently and merge only after its own exact-head gates plus fresh production verification.

@@ -362,3 +362,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Dry hourly forecast slots should not each emit a redundant hidden “no precipitation expected” sentence. Keep one aggregate accessible rain summary for the horizon and explicit per-hour precipitation detail only where probability or measurable accumulation is non-zero; this reduces screen-reader noise without changing weather semantics.
 
 - 2026-08-30 — Open-Meteo `weather_code` is a constrained WMO interpretation code, not an arbitrary integer. Reject unsupported hourly/daily codes at the provider boundary rather than mapping them to a generic condition; unsupported upstream conditions must never be converted into plausible-looking weather guidance.
+
+- 2026-08-30 15:43 TRT — Context-provider modeled series are accepted only when their timestamps parse and every present modeled value array exactly matches the provider time axis. Silent truncation or index drift can understate UV/pollen/dust maxima, so malformed context timelines fail closed rather than being repaired or partially consumed.
