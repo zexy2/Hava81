@@ -1,5 +1,6 @@
 import { vi, type Mock } from 'vitest';
 import { httpClient } from '../../api/httpClient';
+import { config } from '../../config';
 import { ErrorCode } from '../../types';
 
 const originalFetch = global.fetch;
@@ -179,6 +180,71 @@ describe('httpClient BFF transport', () => {
       await vi.advanceTimersByTimeAsync(1);
       await expect(request).resolves.toEqual({ cityName: 'Bursa' });
       expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the timeout active while reading a successful response body', async () => {
+    vi.useFakeTimers();
+    try {
+      (global.fetch as Mock).mockImplementation((_url: string, init?: RequestInit) =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: () =>
+            new Promise((_resolve, reject) => {
+              init?.signal?.addEventListener('abort', () => {
+                const abortError = new Error('body read aborted');
+                abortError.name = 'AbortError';
+                reject(abortError);
+              });
+            }),
+        } as Response)
+      );
+
+      const request = httpClient.get('/weather/current', { city: 'Izmir' });
+      const rejection = expect(request).rejects.toMatchObject({
+        code: ErrorCode.NETWORK_ERROR,
+        retryable: true,
+      });
+      await vi.advanceTimersByTimeAsync(config.api.timeout);
+
+      await rejection;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('treats an aborted error-body read as a timeout instead of an HTTP response', async () => {
+    vi.useFakeTimers();
+    try {
+      (global.fetch as Mock).mockImplementation((_url: string, init?: RequestInit) =>
+        Promise.resolve({
+          ok: false,
+          status: 503,
+          headers: new Headers(),
+          json: () =>
+            new Promise((_resolve, reject) => {
+              init?.signal?.addEventListener('abort', () => {
+                const abortError = new Error('error body read aborted');
+                abortError.name = 'AbortError';
+                reject(abortError);
+              });
+            }),
+        } as Response)
+      );
+
+      const request = httpClient.get('/weather/current', { city: 'Izmir' });
+      const rejection = expect(request).rejects.toMatchObject({
+        code: ErrorCode.NETWORK_ERROR,
+        retryable: true,
+      });
+      await vi.advanceTimersByTimeAsync(config.api.timeout);
+
+      await rejection;
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

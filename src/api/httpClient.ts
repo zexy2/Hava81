@@ -151,12 +151,17 @@ const fetchWithRetry = async <T>(
       },
     });
 
-    clearTimeout(timeoutId);
-
-    // Handle non-OK responses
+    // Handle non-OK responses. Keep the request timeout active while reading the body too;
+    // fetch() resolves after headers, so clearing it here would leave response.json() unbounded.
     if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      const errorMessage = errorBody?.error?.message ?? errorBody?.message;
+      let errorBody: { error?: { message?: string }; message?: string } = {};
+      try {
+        errorBody = await response.json();
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') throw error;
+      }
+      clearTimeout(timeoutId);
+      const errorMessage = errorBody.error?.message ?? errorBody.message;
 
       // Check if this is a retryable status
       if (
@@ -179,6 +184,7 @@ const fetchWithRetry = async <T>(
     }
 
     const data = await response.json();
+    clearTimeout(timeoutId);
 
     // Cache successful GET responses
     if (fetchOptions.method === undefined || fetchOptions.method === 'GET') {
