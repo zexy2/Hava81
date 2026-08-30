@@ -1140,3 +1140,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regression coverage for a sub-degree range that rounds to one displayed degree. Validation passes: ForecastAtlas 10/10, full frontend 46 files / 406 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Fresh observer after main CI #771: main pipeline successful, production root/İstanbul/API readiness/CORS healthy, OpenWeather circuit closed, nginx remains on 4002, no API runtime drift, disk healthy at 82.1% used.
 - Next action: commit/push/open this isolated branch, require exact-head CI, continue a separate non-overlapping audit while CI runs, then reverify PR head/mergeability/observer/production immediately before merge.
+
+
+## 2026-08-30 13:26 TRT — Forecast Atlas location-timezone regression coverage
+
+- After PR #313 merged as main `e4d536f2d63b8e01d8a0fbe0c2f043285a78dee4`, added a focused Forecast Atlas regression for a +03:00 forecast location crossing local midnight.
+- The test proves hourly labels use the forecast location offset (`20:00Z -> 23:00`, `21:00Z -> 00:00`) and the midnight slot receives both the visible day marker and `is-day-boundary` styling. This protects the redesigned hourly surface from silently reverting to the browser/UTC day rather than the weather location's local day.
+- Validation on exact post-#313 main: ForecastAtlas 11/11; full frontend 46 files / 407 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`. Runtime behavior is unchanged; this is regression hardening only.
+- Main pipeline #773 for #313 is in progress while this independent branch proceeds.

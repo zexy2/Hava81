@@ -351,6 +351,47 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(temperature).not.toHaveTextContent('/');
   });
 
+  it('uses the forecast location timezone for hourly clock labels and day boundaries', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T20:00:00.000Z'),
+              temp: 22,
+              icon: '01n',
+              description: 'açık',
+              pop: 0,
+              windSpeed: 2,
+            },
+            {
+              time: new Date('2026-08-29T21:00:00.000Z'),
+              temp: 21,
+              icon: '01n',
+              description: 'açık',
+              pop: 0,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 3 * 60 * 60,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    const hours = within(region).getAllByRole('listitem');
+    expect(hours[0]).toHaveTextContent('23:00');
+    expect(hours[1]).toHaveTextContent('00:00');
+    expect(hours[1].querySelector('.hava81-forecast-atlas__hour-day')).toBeInTheDocument();
+    expect(hours[1]).toHaveClass('is-day-boundary');
+  });
+
   it('marks the local day change without repeating a date on every hourly card', async () => {
     const user = userEvent.setup();
     render(
