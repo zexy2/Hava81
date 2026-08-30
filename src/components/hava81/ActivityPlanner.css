@@ -1,5 +1,6 @@
 .activity-planner {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   padding: var(--space-xl);
   background: var(--color-atlas-paper);
@@ -31,6 +32,9 @@
   color: var(--color-atlas-muted);
 }
 .activity-planner__sensitivity select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 2.75rem;
   padding: 0 0.65rem;
   color: var(--color-atlas-ink);
@@ -179,6 +183,9 @@
   font-size: 0.76rem;
 }
 .activity-planner__window input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 2.75rem;
   padding: 0 0.65rem;
   color: var(--color-atlas-ink);

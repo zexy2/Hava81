@@ -372,6 +372,14 @@
   }
 }
 
+@media (max-width: 24rem) {
+  .hava81-forecast-atlas__description {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
+
 @media (forced-colors: active) {
   .hava81-forecast-atlas,
   .hava81-forecast-atlas__section,
