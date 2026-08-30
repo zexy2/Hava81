@@ -296,6 +296,51 @@ test('keyboard map close restores focus to the map trigger', async ({ page }, te
   await expect(mapTrigger).toBeFocused();
 });
 
+test('forced colors keeps selected activity and settings options distinct', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors selected-state regression');
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/istanbul');
+
+  const selectedActivity = page.locator('.activity-planner__chips button[aria-pressed="true"]').first();
+  const unselectedActivity = page.locator('.activity-planner__chips button[aria-pressed="false"]').first();
+  await expect(selectedActivity).toBeVisible();
+  await expect(unselectedActivity).toBeVisible();
+  const activityState = await selectedActivity.evaluate((element, otherSelector) => {
+    const selectedStyle = getComputedStyle(element);
+    const other = document.querySelector(otherSelector as string);
+    if (!other) throw new Error('Missing unselected activity');
+    const otherStyle = getComputedStyle(other);
+    return {
+      decoration: selectedStyle.textDecorationLine,
+      border: selectedStyle.borderColor,
+      otherBorder: otherStyle.borderColor,
+    };
+  }, '.activity-planner__chips button[aria-pressed="false"]');
+  expect(activityState.decoration).toContain('underline');
+  expect(activityState.border).not.toBe(activityState.otherBorder);
+
+  await page.locator('.atlas-settings-button').click();
+  const selectedSetting = page.locator('.settings-option[aria-pressed="true"]').first();
+  const unselectedSetting = page.locator('.settings-option[aria-pressed="false"]').first();
+  await expect(selectedSetting).toBeVisible();
+  await expect(unselectedSetting).toBeVisible();
+  const settingsState = await selectedSetting.evaluate((element, otherSelector) => {
+    const selectedStyle = getComputedStyle(element);
+    const other = document.querySelector(otherSelector as string);
+    if (!other) throw new Error('Missing unselected setting');
+    const otherStyle = getComputedStyle(other);
+    return {
+      forcedColors: matchMedia('(forced-colors: active)').matches,
+      decoration: selectedStyle.textDecorationLine,
+      border: selectedStyle.borderColor,
+      otherBorder: otherStyle.borderColor,
+    };
+  }, '.settings-option[aria-pressed="false"]');
+  expect(settingsState.forcedColors).toBe(true);
+  expect(settingsState.decoration).toContain('underline');
+  expect(settingsState.border).not.toBe(settingsState.otherBorder);
+});
+
 test('mobile environment map action keeps its focus ring inside the clipped rail', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment focus regression');
   await page.setViewportSize({ width: 390, height: 844 });
