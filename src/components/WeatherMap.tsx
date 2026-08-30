@@ -66,8 +66,8 @@ const createPlateIcon = (plateCode: number): L.DivIcon =>
   L.divIcon({
     className: 'weather-map__plate-marker',
     html: `<span>${String(plateCode).padStart(2, '0')}</span>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
   });
 
 const labelMarker = (marker: L.Marker | null, accessibleName: string) => {
