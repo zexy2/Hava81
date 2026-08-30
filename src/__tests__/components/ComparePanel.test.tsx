@@ -285,6 +285,26 @@ describe('ComparePanel', () => {
 
   });
 
+  it('keeps a city usable when the dedicated hourly forecast succeeds but the general forecast fails', async () => {
+    api.getForecast.mockRejectedValue(new Error('forecast unavailable'));
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
+    expect(screen.queryByText(/Bazı şehirlerin verisi güncellenemedi/i)).not.toBeInTheDocument();
+  });
+
   it('explains partial failures while keeping successful city results usable', async () => {
     api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
       city === 'İzmir'

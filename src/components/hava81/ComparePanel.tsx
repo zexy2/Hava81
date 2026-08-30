@@ -67,16 +67,18 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
           weatherService.getHourlyForecast(weather.coordinates.lat, weather.coordinates.lon, language),
           weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language),
         ]);
-        if (forecastResult.status !== 'fulfilled') throw forecastResult.reason;
         const airQuality = airResult.status === 'fulfilled' ? airResult.value : undefined;
-        const decisionHourly =
+        const hourlySource =
           hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
-            ? hourlyResult.value.hourly
-            : forecastResult.value.hourly;
-        const decisionMeta =
-          hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
-            ? hourlyResult.value.meta
-            : forecastResult.value.meta;
+            ? hourlyResult.value
+            : forecastResult.status === 'fulfilled' && forecastResult.value.hourly.length
+              ? forecastResult.value
+              : undefined;
+        if (!hourlySource) {
+          throw new Error('No usable hourly comparison forecast');
+        }
+        const decisionHourly = hourlySource.hourly;
+        const decisionMeta = hourlySource.meta;
         const plan = buildDailyPlan({ weather, hourly: decisionHourly, airQuality });
         const activityPlan = primaryActivity
           ? buildActivityPlan({
