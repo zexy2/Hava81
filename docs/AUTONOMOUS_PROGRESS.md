@@ -1170,3 +1170,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt only the bounded accessibility behavior from exact current main `2ed6ccabfe50c292b275c206daf400b4ead02d60`: dry hourly slots no longer repeat a hidden “no precipitation expected” sentence for every hour.
 - The aggregate accessible rain summary remains, and non-zero precipitation probability or measurable accumulation still receives explicit hourly precipitation detail. No weather values, precipitation semantics, provider attribution, or scoring logic change.
 - Next action: run focused/full frontend, type, lint, production build, dependency audit and diff gates; publish as a replacement PR only if all pass, then retire superseded #320/#316 after the replacement is safely represented.
+
+## 2026-08-30 14:36 TRT — reject impossible finite OpenWeather temperatures
+
+- While API PR #324 deploys through main and other prepared branches validate independently, audited OpenWeather's shared current/forecast schema from the last production-green base `7674b2a3581b17e556e21e0f6106cf01641a667d`.
+- Temperature, feels-like, min and max fields previously accepted any finite number. A malformed value such as `999` could therefore survive schema validation and feed decision guidance. Because the schema serves metric (°C), imperial (°F), and standard (K) requests, it now uses a deliberately broad cross-unit physical envelope of -150..400 rather than a Celsius-only bound.
+- Added current-weather regressions for all four temperature fields plus a forecast regression proving the shared schema rejects impossible finite temperature input. No valid temperature is clamped or corrected; malformed provider input fails closed.
+- Local API gates pass: 52/52 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Keep this branch independent until #324's production pipeline is healthy, then rebase onto the latest production-green main before exact-head CI/merge consideration.
