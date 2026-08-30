@@ -925,3 +925,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - While PR #253 validated, audited generated city-entry bootstrap behavior independently. Its early weather prefetch skipped whenever the persisted cache age was less than five minutes, which also treated arbitrarily future corrupted timestamps as fresh even though the React cache boundary later rejects them.
 - Generated city/root bootstrap now accepts at most the same one-minute future clock skew used by the application cache. Materially future timestamps therefore no longer suppress the early BFF prefetch; no weather value is corrected or fabricated.
 - Pre-rebase gates pass: 81-city production build with generated Istanbul assertions (`cacheAge >= -60000` and `< 300000`), TypeScript, ESLint and diff-check. Branch was then rebased onto main `0ddad2c823370c87b44b298ddf12fcaa8fd6b1ed` after PR #253 merged; combined gates are rerun before push.
+
+## 2026-08-30 04:55 TRT — align persisted pressure trust boundary with fresh weather
+
+- While PR #254 validated, compared the persisted current-weather cache validator against `weatherService` and the OpenWeather provider schema. Fresh weather already requires pressure to be strictly positive, but persisted cache revival accepted zero via a generic non-negative check.
+- Persisted pressure now rejects zero/non-finite values and falls back to a fresh BFF request instead of rendering physically impossible cached pressure. No replacement pressure is synthesized.
+- Added zero-pressure cache regression; focused useWeather passes 38/38. After PR #254 merged as main `5dcea418b0c35f11a6a05b11934a0b5b17b5c54f`, this isolated branch rebased onto that exact main; combined gates are rerun before push.

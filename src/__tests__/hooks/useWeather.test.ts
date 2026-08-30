@@ -254,6 +254,7 @@ describe('useWeather', () => {
     ['feels-like temperature', { feelsLike: -999 }],
     ['minimum temperature', { tempMin: -999 }],
     ['maximum temperature', { tempMax: 999 }],
+    ['pressure', { pressure: 0 }],
   ])('rejects cached weather with impossible finite %s values', async (_label, invalidField) => {
     localStorage.setItem(
       'weather_cache',
