@@ -526,7 +526,8 @@ const App: React.FC = () => {
                   />
 
                   {forecast.isLoading && forecast.hourly.length === 0 ? (
-                    <section className="atlas-forecast-loading" aria-label={t('common.loading')}>
+                    <section className="atlas-forecast-loading" role="status" aria-live="polite">
+                      <span className="sr-only">{t('common.loading')}</span>
                       <div className="atlas-loading__line atlas-loading__line--short" />
                       <div className="atlas-loading__chart" />
                       <div className="atlas-loading__rows" />
