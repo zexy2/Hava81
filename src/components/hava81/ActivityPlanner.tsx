@@ -130,7 +130,10 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
       >
         <div className="activity-planner__window-copy">
           <strong>{t('hava81.activities.window.title')}</strong>
-          <span>{t('hava81.activities.window.help')}</span>
+          <details className="activity-planner__window-help">
+            <summary>{t('hava81.activities.window.helpTitle')}</summary>
+            <p>{t('hava81.activities.window.help')}</p>
+          </details>
         </div>
         <label>
           <span>{t('hava81.activities.window.start')}</span>

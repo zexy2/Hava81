@@ -132,6 +132,24 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getByRole('button', { name: 'Piknik' })).toBeEnabled();
   });
 
+  it('keeps advanced time-range behavior behind an explicit help disclosure', () => {
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} />
+      </SettingsProvider>
+    );
+
+    const helpSummary = screen.getByText('Nasıl çalışır?');
+    const helpDetails = helpSummary.closest('details');
+    expect(helpDetails).not.toBeNull();
+    expect(helpDetails).not.toHaveAttribute('open');
+    expect(screen.getByText(/Bitiş daha erkense aralık gece yarısını aşar/i)).not.toBeVisible();
+
+    fireEvent.click(helpSummary);
+    expect(helpDetails).toHaveAttribute('open');
+    expect(screen.getByText(/Bitiş daha erkense aralık gece yarısını aşar/i)).toBeVisible();
+  });
+
   it('keeps primary activity guidance visible while score criteria stay collapsed until requested', () => {
     render(
       <SettingsProvider>
