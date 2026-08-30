@@ -60,6 +60,10 @@ export const currentWeatherUpstreamSchema = z
   .refine((data) => data.main.temp_min <= data.main.temp_max, {
     message: 'Current-weather minimum temperature exceeds maximum temperature',
     path: ['main', 'temp_min'],
+  })
+  .refine((data) => data.sys.sunrise <= data.sys.sunset, {
+    message: 'Current-weather sunset precedes sunrise',
+    path: ['sys', 'sunset'],
   });
 
 // Forecast models occasionally overshoot relative humidity by a single percentage point

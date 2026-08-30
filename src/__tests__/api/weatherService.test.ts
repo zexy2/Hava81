@@ -184,6 +184,19 @@ describe('weatherService BFF client', () => {
     }
   );
 
+  it('rejects current weather whose sunset precedes sunrise', async () => {
+    mockGet.mockResolvedValue({
+      ...serializedWeather,
+      sunrise: '2026-07-14T17:35:00.000Z',
+      sunset: '2026-07-14T02:45:00.000Z',
+    });
+
+    await expect(weatherService.getCurrentWeather({ city: 'Izmir' })).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it.each([
     ['sunrise', { sunrise: 'invalid' }],
     ['sunset', { sunset: 'invalid' }],

@@ -54,6 +54,14 @@ test('current-weather schema rejects a minimum temperature above the maximum', (
   assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
 });
 
+test('current-weather schema rejects a sunset earlier than sunrise', () => {
+  const payload = sample();
+  payload.sys.sunrise = 1_720_020_000;
+  payload.sys.sunset = 1_719_970_000;
+
+  assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+});
+
 test('current-weather schema rejects negative and fractional sunrise/sunset epochs', () => {
   for (const [field, invalidTimestamp] of [
     ['sunrise', -1],

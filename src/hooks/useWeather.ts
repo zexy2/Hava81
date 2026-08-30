@@ -201,6 +201,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
   const fetchedAt = new Date(String(metaRecord.fetchedAt));
   if ([sunrise, sunset, timestamp, fetchedAt].some(date => Number.isNaN(date.getTime())))
     return null;
+  if (sunset.getTime() < sunrise.getTime()) return null;
   const latestPlausibleCurrentTimestamp = Date.now() + MAX_CACHE_FUTURE_SKEW_MS;
   if (timestamp.getTime() > latestPlausibleCurrentTimestamp || fetchedAt.getTime() > latestPlausibleCurrentTimestamp)
     return null;
