@@ -515,6 +515,7 @@ export const en = {
   },
   errors: {
     networkError: 'Connection error. Check your internet connection.',
+    rateLimit: 'Too many requests. Try again in a moment.',
     apiKeyMissing: 'API key not configured.',
     locationDenied: 'Location permission denied',
     locationUnavailable: 'Location unavailable',

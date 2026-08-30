@@ -638,6 +638,23 @@ describe('useWeather', () => {
     expect(result.current.error?.message).not.toContain('provider detail');
   });
 
+  it.each([
+    ['tr', 'Çok fazla istek gönderildi. Kısa bir süre sonra tekrar deneyin.'],
+    ['en', 'Too many requests. Try again in a moment.'],
+  ] as const)('localizes %s rate-limit errors without exposing provider details', async (language, expected) => {
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider detail', ErrorCode.RATE_LIMIT, { retryable: true })
+    );
+    const { result } = renderHook(() => useWeather({ language }));
+
+    await act(async () => {
+      await result.current.fetchWeather('İstanbul');
+    });
+
+    expect(result.current.error?.message).toBe(expected);
+    expect(result.current.error?.message).not.toContain('provider detail');
+  });
+
   it('uses the translation catalog for English not-found errors', async () => {
     (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
       new ApiError('provider detail', ErrorCode.NOT_FOUND)
