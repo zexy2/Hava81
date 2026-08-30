@@ -318,6 +318,28 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
   expect(quickDecisions.cells).toHaveLength(3);
   expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeLessThan(2);
   expect(quickDecisions.cells.every(cell => cell.scrollWidth <= cell.clientWidth + 1)).toBe(true);
+
+  const activityChips = await page.locator('.activity-planner__chips').evaluate(element => {
+    const rail = element.getBoundingClientRect();
+    const buttons = Array.from(element.querySelectorAll('button')).map(button => {
+      const rect = button.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, height: rect.height, clientWidth: button.clientWidth, scrollWidth: button.scrollWidth };
+    });
+    return {
+      height: rail.height,
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      right: rail.right,
+      buttons,
+    };
+  });
+  expect(activityChips.height).toBeLessThan(60);
+  expect(activityChips.scrollWidth).toBeGreaterThan(activityChips.clientWidth);
+  expect(activityChips.buttons.every(button => button.height >= 44)).toBe(true);
+  expect(activityChips.buttons.every(button => button.scrollWidth <= button.clientWidth + 1)).toBe(true);
+  expect(
+    activityChips.buttons.some(button => button.left < activityChips.right && button.right > activityChips.right)
+  ).toBe(true);
   expect(layout.description.scrollWidth).toBeLessThanOrEqual(layout.description.clientWidth + 1);
 });
 
