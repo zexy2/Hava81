@@ -104,6 +104,7 @@ export const tr = {
       title: 'Bugünün ritmi',
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
+      intervalControlLabel: 'Tahmin aralığı',
       intervalForecast: '{{hours}} saat aralıklarla tahmin',
       hourlySource: 'Kaynak:',
       hourlyRegion: 'Kaydırılabilir saatlik tahmin grafiği ve değerleri',

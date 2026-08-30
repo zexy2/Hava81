@@ -173,7 +173,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
             <div
               className="hava81-forecast-atlas__range"
               role="group"
-              aria-label={settings.language === 'en' ? 'Forecast interval' : 'Tahmin aralığı'}
+              aria-label={t('hava81.forecastAtlas.intervalControlLabel')}
             >
               {intervalOptions.map(hours => (
                 <button
