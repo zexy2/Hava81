@@ -1155,3 +1155,18 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt only its measured accessibility fix from exact current main `6ebdf27ec9b69e33d45df846c8ab6d2fcd00db14`: source attribution now uses the solid existing `--forecast-muted` token instead of fading that token toward transparency.
 - This preserves hierarchy and dark-mode token semantics while restoring the previously measured light-mode attribution contrast above WCAG AA normal-text threshold. No weather values, provider attribution, or scoring semantics change.
 - Current-main gates pass: ForecastAtlas 12/12, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+
+## 2026-08-30 13:49 TRT — rebuild dry-hour accessibility cleanup on current main
+
+- Legacy PR #316 is no longer mergeable after concurrent Forecast Atlas changes, so its branch remains untouched.
+- Rebuilt the bounded accessibility behavior on exact current main `6ebdf27ec9b69e33d45df846c8ab6d2fcd00db14`: dry hourly slots no longer emit a repetitive hidden “no precipitation expected” sentence for every hour.
+- The aggregate accessible rain summary remains, and hours with non-zero precipitation probability or measurable accumulation retain their explicit precipitation group. No weather values or precipitation semantics change.
+
+- Current-main gates pass: ForecastAtlas 12/12, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+
+## 2026-08-30 13:58 TRT — PR #320 rebased onto post-#319 main
+
+- Post-#319 main `65cc57c8c9bc5b4bdd3a23e6b518e0dafc380874` passed main CI #785 and a fresh observer sample confirmed root/İstanbul/API readiness/CORS healthy, OpenWeather circuit closed, nginx still on 4002, and no API deploy drift.
+- Verified remote #320 head still exactly `837663358d25aaa6881314512d462f8a99635a1b` before rebasing. Rebased onto current main and resolved the append-only progress conflict by retaining both the source-contrast and dry-hour accessibility checkpoints.
+- Combined post-rebase gates pass: full frontend 46 files / 408 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and diff-check.
+- Next action: push the rebased #320 branch with an explicit lease against `837663358d25aaa6881314512d462f8a99635a1b`, require exact-head green CI, then directly reverify head/mergeability/observer/production before merge. PR #321 continues independently and requires exact-head CI; because it changes API runtime inputs, production deployment after merge must use the established blue/green path.

@@ -62,14 +62,12 @@ const renderRangeAtlas = (count = 24) =>
   );
 
 describe('ForecastAtlas hourly precipitation labels', () => {
-  it('hides repeated visible 0% labels while preserving the accessible zero-rain meaning', () => {
+  it('omits repetitive zero-rain labels from each dry hourly slot', () => {
     renderAtlas();
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
     expect(within(region).queryByText('0%')).not.toBeInTheDocument();
     expect(within(region).getByText('15%')).toBeInTheDocument();
-    expect(within(region).getByText(/00:00 saatinde yağış beklenmiyor/i)).toHaveClass(
-      'hava81-forecast-atlas__sr-only'
-    );
+    expect(within(region).queryByText(/00:00 saatinde yağış beklenmiyor/i)).not.toBeInTheDocument();
   });
 
   it('keeps hourly rain amount visible even when probability rounds to zero', () => {
