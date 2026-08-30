@@ -86,8 +86,9 @@ export function useLocalStorage<T>(
   // Listen for changes from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key !== key) return;
-      if (event.newValue === null) {
+      if (event.storageArea && event.storageArea !== window.localStorage) return;
+      if (event.key !== null && event.key !== key) return;
+      if (event.key === null || event.newValue === null) {
         storedValueRef.current = initialValue;
         setStoredValue(initialValue);
         return;

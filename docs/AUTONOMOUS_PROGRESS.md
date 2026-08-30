@@ -856,3 +856,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - On isolated branch `automation/hava81-run12-a11y-focus` from current main, fixed keyboard focus loss when compact/mobile search is dismissed with Escape or the search toggle: focus now returns to the search toggle rather than falling back to the document body.
 - Added integration coverage for open → input focus → Escape → toggle focus + collapsed state. Combined local gates pass: 352/352 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: commit/push this bounded branch, open PR, continue independent audit while exact-head CI runs; merge only after direct head/mergeability/production re-verification. Keep API topology on 4002/4001.
+
+## 2026-08-30 03:53 TRT — local-storage cross-context isolation
+
+- While PR #245 validates independently, audited shared local-storage synchronization in a separate worktree from production-green main `c1f5828d6662bdcc96fbfc7dce2dab526d141f9d`.
+- `useLocalStorage` now recognizes native `localStorage.clear()` cross-context events (`key === null`) and resets each subscribed preference to its safe initial value instead of leaving an already-open tab stale.
+- Same-key `sessionStorage` events are now ignored, preventing an unrelated storage area from overwriting local-storage-backed settings/favorites/profile state. Existing synthetic same-document synchronization remains supported because its storage area is intentionally unspecified.
+- Added regression coverage for native key removal with an explicit local storage area, whole-localStorage clear, and same-key sessionStorage isolation.
+- Combined local gates pass: 353/353 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- This branch remains independent while #245 exact-head Browser/Lighthouse checks run; after #245 merge it must be rebased onto current main with both append-only checkpoints preserved before final CI/merge.
