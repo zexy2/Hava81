@@ -1148,3 +1148,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The test proves hourly labels use the forecast location offset (`20:00Z -> 23:00`, `21:00Z -> 00:00`) and the midnight slot receives both the visible day marker and `is-day-boundary` styling. This protects the redesigned hourly surface from silently reverting to the browser/UTC day rather than the weather location's local day.
 - Validation on exact post-#313 main: ForecastAtlas 11/11; full frontend 46 files / 407 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`. Runtime behavior is unchanged; this is regression hardening only.
 - Main pipeline #773 for #313 is in progress while this independent branch proceeds.
+
+
+## 2026-08-30 13:36 TRT — Forecast source attribution contrast
+
+- Measured the live Istanbul production page with Lighthouse/real Chromium after the Forecast Atlas redesign: performance 0.85, accessibility 0.97, best practices 1.00, SEO 1.00; FCP 2.4s, LCP 3.5s, TBT 10ms, CLS 0.
+- The only Lighthouse accessibility failure was Forecast Atlas source attribution text/links at 11px: rendered foreground `#6c7b79` on white measured 4.42:1, just below WCAG AA's 4.5:1 normal-text threshold.
+- Removed the 90%-to-transparent fade and use the existing solid `--forecast-muted` token (`#5c6c6a` in light mode), yielding ~5.51:1 against white without changing hierarchy or adding visual weight. Dark-mode token behavior is preserved.
+- Validation on concurrent-safe main `8c67e4602253505ec8e7458228b7abdfd3e1eb40`: ForecastAtlas 12/12, full frontend 46 files / 408 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, `git diff --check`.
