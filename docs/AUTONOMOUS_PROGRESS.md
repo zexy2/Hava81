@@ -1079,3 +1079,25 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Local gates pass: observer 20/20 tests, Python compile, and `git diff --check`. No production service/configuration was mutated by the code change.
 - Host hygiene also removed only reproducible Hava81 dependency trees from the stale primary checkout, recovering roughly 0.5 GiB; direct root usage fell from 93% to 92%. The staged unrelated primary-checkout work was preserved.
 - Current main moved concurrently through merged PR #303 to `76c3488b8fa765f44c326cc54f6d07e658886c39`; main pipeline #745 is running. This observer branch is based on that exact main and remains isolated.
+
+## 2026-08-30 11:58 TRT — reject impossible date-only forecast calendars
+
+- Independent browser/BFF trust-boundary audit on exact main `14cea317cb40e2e8c97637aae4815dc5e3bc086b` found that daily `YYYY-MM-DD` values were passed through JavaScript `Date`. Inputs such as `2026-02-31` can normalize into a different valid day instead of producing `Invalid Date`, allowing a malformed upstream day to become plausible-looking guidance.
+- Date-only revival now requires the exact `YYYY-MM-DD` shape and verifies that the parsed UTC-noon date round-trips to the identical calendar string. Impossible dates therefore fail closed through the existing retryable API-data error; no calendar value is corrected or fabricated.
+- Added regressions for impossible daily dates on both standard forecast and one-hour forecast BFF paths.
+- Local current-main gates pass in isolated Node 24: weatherService 106/106, frontend TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Temporary dependency/build artifacts were removed immediately after validation. This is frontend transport validation only and does not alter provider data or API traffic.
+
+## 2026-08-30 12:13 TRT — PR #308 current-main revalidation
+
+- Rebased `automation/hava81-date-only-trust-1158` from `14cea317cb40e2e8c97637aae4815dc5e3bc086b` onto current `origin/main` `593a98d2d9145910b154ee800b2e78e880839f79` after confirming the remote branch still pointed to `51fdd146df81cceff463952e6fc29b9cda792724`.
+- Combined gates after rebase pass: targeted weatherService 108/108; full frontend 46 files / 398 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: amend this checkpoint, push the rebased PR branch with explicit `--force-with-lease=refs/heads/automation/hava81-date-only-trust-1158:51fdd146df81cceff463952e6fc29b9cda792724`, then require exact-head green CI and directly re-verify production/observer immediately before merge.
+- Host disk remained under pressure during the run. Only clean worktrees whose branches were already ancestors of `origin/main` were removed; unrelated staged primary-worktree changes and open PR worktrees were preserved.
+
+## 2026-08-30 12:20 TRT — PR #308 rebased after concurrent main advance
+
+- Pre-merge verification caught concurrent PR #310 landing on `main` as `579931b8bf2fef41a95dff2f1e7bc0700efc0000`; #308 was not merged against the stale base.
+- Reconfirmed remote #308 head `8918a73899608f45c76892f43f0f6bc1eca68971`, rebased cleanly onto `579931b8bf2fef41a95dff2f1e7bc0700efc0000`, and reran combined gates.
+- Current-main validation passes: targeted weatherService 110/110; full frontend 46 files / 402 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: amend/push with exact lease against `8918a73899608f45c76892f43f0f6bc1eca68971`, require the new exact-head CI to pass, then reverify observer + GitHub head/mergeability + production immediately before merge.

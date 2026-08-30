@@ -344,3 +344,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — City autocomplete should preserve the existing Turkish-normalized match set but rank prefix matches ahead of substring-only matches. This improves intent resolution without accepting new city identities or changing weather data semantics.
 
 - 2026-08-30 — Disk-pressure health must be decided from the unrounded filesystem ratio, not the rounded display percentage. `maximum_used_percent` is an inclusive ceiling; a true value at or below 92.0% passes the percentage guard while the independent absolute free-space floor still fails closed. This prevents display rounding from creating false host incidents at the boundary.
+
+- 2026-08-30 — Date-only forecast fields are exact calendar identities, not forgiving JavaScript date inputs. Require `YYYY-MM-DD` and an identical parse/serialize round trip so impossible dates such as February 31 fail closed instead of being normalized into a different day and presented as trustworthy forecast guidance.
