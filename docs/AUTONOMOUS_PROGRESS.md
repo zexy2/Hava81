@@ -832,3 +832,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Recent province history now maps localized/ASCII provider labels through the canonical 81-province identity before persistence/display, so `Istanbul` and `İstanbul` deduplicate and render as the canonical `İstanbul` label.
 - Removed the obsolete identity set left unused by the canonical map conversion; lint is clean with no new warnings.
 - Combined validation on `847327c`: focused useWeather 31/31, full frontend 349/349, TypeScript, ESLint, production build with 81 city pages, production dependency audit 0 vulnerabilities, and `git diff --check` all pass.
+## 2026-08-30 03:20 TRT — future current-weather cache metadata fails closed
+
+- Audited persisted current-weather cache revival independently while canonical recent-search CI runs.
+- Cache parsing already bounded the storage timestamp, but accepted valid ISO `data.timestamp` / `meta.fetchedAt` values arbitrarily far in the future. Such corrupted values could surface impossible freshness/current-time metadata even when the cache envelope itself looked fresh.
+- Current-weather observation timestamp and fetch timestamp now share the existing one-minute future-skew tolerance and fail closed beyond it; sunrise/sunset remain exempt because future sunset is physically valid.
+- Focused useWeather coverage passes 32/32 including separate future observation/fetch regressions; TypeScript, ESLint, production build with 81 city pages, production dependency audit 0 vulnerabilities and `git diff --check` pass.
