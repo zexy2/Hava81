@@ -4,10 +4,14 @@ import { ErrorCode } from '../../types';
 
 const originalFetch = global.fetch;
 
-const mockResponse = (body: unknown, init: { ok?: boolean; status?: number } = {}) =>
+const mockResponse = (
+  body: unknown,
+  init: { ok?: boolean; status?: number; headers?: Record<string, string> } = {}
+) =>
   ({
     ok: init.ok ?? true,
     status: init.status ?? 200,
+    headers: new Headers(init.headers),
     json: vi.fn().mockResolvedValue(body),
   }) as unknown as Response;
 
@@ -95,6 +99,34 @@ describe('httpClient BFF transport', () => {
       retryable: false,
     });
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('honors a bounded Retry-After delay before retrying a temporary service failure', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse(
+            { error: { message: 'Service unavailable' } },
+            { ok: false, status: 503, headers: { 'Retry-After': '2' } }
+          )
+        )
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+      const request = httpClient.get('/weather/current', { city: 'Bursa' });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(request).resolves.toEqual({ cityName: 'Bursa' });
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('wraps unexpected transport failures as retryable network errors', async () => {

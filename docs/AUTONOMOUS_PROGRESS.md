@@ -884,3 +884,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Preserved acquisition semantics: city-search state refreshes the active city, while location-derived state reuses the location weather path rather than silently converting it to a city-mode request.
 - Added regression coverage for both stale city resume and stale location resume. Focused useWeather suite passes 35/35; combined local gates pass 357/357 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: commit/push/open PR for the resume refresh, allow exact-head CI to run while continuing an independent audit, and merge only after direct head/mergeability/main-pipeline/production re-verification.
+
+## 2026-08-30 04:14 TRT — respect bounded Retry-After on retryable BFF failures
+
+- While the stale-resume PR validated independently, audited the frontend BFF transport retry path from stable main `700e6ec` and found retryable 408/5xx responses ignored an upstream `Retry-After` hint.
+- Kept the existing deliberate no-retry policy for HTTP 429 so client retries cannot amplify rate-limit pressure. For status codes Hava81 already retries, a valid delta-seconds or HTTP-date `Retry-After` now raises the retry delay above exponential backoff, capped at the existing 30-second maximum; missing/invalid hints retain current backoff behavior.
+- Added regression coverage proving a 503 with `Retry-After: 2` does not retry before two seconds and then succeeds. Local combined gates pass: 356/356 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- PR #248 became green and mergeable during this work; direct local-4002/public readiness, CORS, root and İstanbul checks were fresh/healthy immediately before merge, then #248 merged as main `ae581e3b8053d9ac34e8a8df98d2fe030c22372a`. Main pipeline `33285196407` is in progress while this retry branch is prepared for rebase.

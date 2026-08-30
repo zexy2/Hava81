@@ -29,11 +29,28 @@ const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(r
 /**
  * Calculate exponential backoff delay
  */
+const MAX_RETRY_DELAY_MS = 30000;
+
 const getRetryDelay = (retryCount: number): number => {
-  return Math.min(
-    RETRY_CONFIG.retryDelay * Math.pow(2, retryCount),
-    30000 // Max 30 seconds
-  );
+  return Math.min(RETRY_CONFIG.retryDelay * Math.pow(2, retryCount), MAX_RETRY_DELAY_MS);
+};
+
+const getRetryAfterDelay = (response: Response, retryCount: number): number => {
+  const fallbackDelay = getRetryDelay(retryCount);
+  const retryAfter = response.headers.get('Retry-After')?.trim();
+  if (!retryAfter) return fallbackDelay;
+
+  const seconds = Number(retryAfter);
+  let requestedDelay: number;
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    requestedDelay = seconds * 1000;
+  } else {
+    const retryAt = Date.parse(retryAfter);
+    if (!Number.isFinite(retryAt)) return fallbackDelay;
+    requestedDelay = Math.max(0, retryAt - Date.now());
+  }
+
+  return Math.min(Math.max(fallbackDelay, requestedDelay), MAX_RETRY_DELAY_MS);
 };
 
 /**
@@ -146,7 +163,7 @@ const fetchWithRetry = async <T>(
         (RETRY_CONFIG.retryStatusCodes as readonly number[]).includes(response.status) &&
         retryState.count < retries
       ) {
-        const delay = getRetryDelay(retryState.count);
+        const delay = getRetryAfterDelay(response, retryState.count);
         console.warn(
           `[HTTP] Retrying request (${retryState.count + 1}/${retries}) after ${delay}ms`
         );
