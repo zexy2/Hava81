@@ -51,7 +51,10 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match('/')))
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME);
+          return (await cache.match(request)) || (await cache.match('/'));
+        })
     );
     return;
   }
@@ -62,15 +65,12 @@ self.addEventListener('fetch', event => {
   if (!cacheableStaticAsset) return;
 
   event.respondWith(
-    caches.match(request).then(cached => {
+    caches.open(CACHE_NAME).then(async cache => {
+      const cached = await cache.match(request);
       if (cached) return cached;
-      return fetch(request).then(async response => {
-        if (response.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(request, response.clone());
-        }
-        return response;
-      });
+      const response = await fetch(request);
+      if (response.ok) await cache.put(request, response.clone());
+      return response;
     })
   );
 });
