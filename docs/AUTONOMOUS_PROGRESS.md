@@ -1408,3 +1408,19 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a fake-time regression proving a second clipboard share keeps `copied` visible for the full interval measured from the latest action rather than the first.
 - Local gates on exact post-#364 main pass: DailyPlanPanel 10/10; full frontend 48 files / 443 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: commit/push/open a bounded frontend-only PR, require exact-head CI, and continue independent disk/UX reliability work while it validates. Before any merge, re-check current main, exact PR head, production health and pipeline state.
+
+## 2026-08-30 22:52 TRT — keep comparison usable when dedicated hourly data succeeds
+
+- Continued independently from exact main `555527e093839727cfeba241fe0c561b54236c28` in `/home/ubuntu/hava81-auto-run11-independent-2251` while PR #365 validated.
+- Audited ComparePanel's parallel forecast requests. The comparison previously rejected an entire city whenever the general forecast request failed, even if the dedicated hourly request succeeded with a usable hourly series and metadata. The panel does not otherwise require daily forecast content for its score, activity, precipitation, or timing rows.
+- Changed source selection to prefer a non-empty dedicated hourly response, fall back to a non-empty general forecast hourly response, and fail the city only when neither request provides usable hourly data. Air-quality remains optional as before. No missing weather values are synthesized, merged, clamped, or interpolated.
+- Added a regression proving both cities remain available and no partial-failure warning is shown when general forecast fails but dedicated hourly data succeeds.
+- Pre-rebase local gates pass: ComparePanel 10/10; full frontend 48 files / 443 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Operationally, removed 12 clearly temporary Hava81 Node test containers plus one stale Playwright audit container after verifying restart policy `no`, no ports, and no persistent Docker volumes; retained production, green, canary and rollback API containers. Removed only the unused `node:24-bookworm-slim` image. Root disk recovered from observer 92.8% incident to 91.7% healthy without touching source or production data.
+- PR #365 later merged exact head `004409383b68b2b5d787cf96f8e10172b1cf3523` as main `1b68c4acf6d0c1f67a057bc2a31705c14e2dd26f`. Next action: commit this independent change, rebase onto that exact main preserving append-only checkpoints, rerun combined gates, then publish its own PR with exact-head CI.
+
+## 2026-08-30 22:54 TRT — comparison fail-soft branch rebased and revalidated
+
+- Rebased `automation/hava81-run11-independent-2251` onto exact current main `1b68c4acf6d0c1f67a057bc2a31705c14e2dd26f` after #365 merged. The only conflict was append-only `docs/AUTONOMOUS_PROGRESS.md`; preserved both the repeated-share checkpoint and the comparison reliability checkpoint.
+- Combined post-rebase gates pass: ComparePanel 10/10; full frontend 48 files / 444 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: publish this exact rebased head only after checking the remote branch lease; require exact-head CI and fresh main/production verification before merge. Continue independent work while CI runs.
