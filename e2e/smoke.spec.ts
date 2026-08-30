@@ -384,22 +384,26 @@ test('daily plan timeline matches its 12-hour score horizon and shows risk-first
   await expect(timeline.getByText('Yarın')).toHaveCount(1);
 });
 
-test('narrow hourly atlas keeps its segmented control and summary readable', async ({ page }, testInfo) => {
+test('narrow hourly atlas keeps its interval chip rail and summary readable', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single narrow hourly-atlas layout regression');
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/istanbul');
 
   const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
   const buttons = interval.getByRole('button');
-  await expect(buttons).toHaveCount(3);
+  await expect(buttons).toHaveCount(7);
   const buttonBoxes = await buttons.evaluateAll(elements =>
     elements.map(element => {
       const rect = element.getBoundingClientRect();
-      return { width: rect.width, height: rect.height, right: rect.right };
+      return { width: rect.width, height: rect.height };
     })
   );
-  expect(buttonBoxes.every(box => box.height >= 44 && box.right <= 320)).toBe(true);
-  expect(Math.max(...buttonBoxes.map(box => box.width)) - Math.min(...buttonBoxes.map(box => box.width))).toBeLessThan(1);
+  expect(buttonBoxes.every(box => box.height >= 44 && box.width >= 44)).toBe(true);
+  const intervalScroll = await interval.evaluate(element => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(intervalScroll.scrollWidth).toBeGreaterThan(intervalScroll.clientWidth);
 
   const summary = page.getByRole('list', { name: 'Saatlik tahmin özeti' });
   await expect(summary.getByRole('listitem')).toHaveCount(3);
@@ -411,8 +415,23 @@ test('narrow hourly atlas keeps its segmented control and summary readable', asy
   );
   expect(summaryBoxes.every(box => box.left >= 0 && box.right <= 320 && box.width >= 70)).toBe(true);
   await expect(page.locator('.hava81-forecast-atlas__area')).toHaveCount(1);
-  await expect(page.locator('.hava81-forecast-atlas__guide')).toHaveCount(3);
-  await expect(page.locator('.hava81-forecast-atlas__hourly-viewport')).toHaveCSS('overflow-x', 'auto');
+  const guides = page.locator('.hava81-forecast-atlas__guide');
+  const axisLabels = page.locator('.hava81-forecast-atlas__axis-label');
+  expect(await guides.count()).toBeGreaterThanOrEqual(2);
+  await expect(axisLabels).toHaveCount(await guides.count());
+  expect((await axisLabels.allTextContents()).every(label => label.endsWith('°'))).toBe(true);
+  const axisXBefore = await axisLabels.evaluateAll(elements =>
+    elements.map(element => element.getBoundingClientRect().x)
+  );
+  const hourlyViewport = page.locator('.hava81-forecast-atlas__hourly-viewport');
+  await hourlyViewport.evaluate(element => {
+    element.scrollLeft = 360;
+  });
+  const axisXAfter = await axisLabels.evaluateAll(elements =>
+    elements.map(element => element.getBoundingClientRect().x)
+  );
+  expect(axisXAfter.every((x, index) => Math.abs(x - axisXBefore[index]) < 1)).toBe(true);
+  await expect(hourlyViewport).toHaveCSS('overflow-x', 'auto');
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
@@ -422,11 +441,11 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
 
   const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
   const buttons = interval.getByRole('button');
-  await expect(buttons).toHaveCount(3);
+  await expect(buttons).toHaveCount(7);
   const boxes = await buttons.evaluateAll(elements =>
     elements.map(element => element.getBoundingClientRect().height)
   );
-  expect(boxes).toHaveLength(3);
+  expect(boxes).toHaveLength(7);
   expect(boxes.every(height => height >= 44)).toBe(true);
 });
 
@@ -436,12 +455,17 @@ test('hourly interval controls resample the same 24-hour forecast', async ({ pag
 
   const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
   await expect(interval.getByRole('button', { name: '1 saatlik' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(interval.getByRole('button', { name: '3 saatlik' })).toBeVisible();
-  await expect(interval.getByRole('button', { name: '6 saatlik' })).toBeVisible();
+  await expect(interval.getByRole('button')).toHaveCount(7);
+  for (const hours of [2, 3, 4, 6, 8, 12]) {
+    await expect(interval.getByRole('button', { name: `${hours} saatlik`, exact: true })).toBeVisible();
+  }
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
 
   const displayedTimes = async () =>
     page.locator('.hava81-forecast-atlas__hour time > span:last-child').allTextContents();
+
+  await interval.getByRole('button', { name: '2 saatlik', exact: true }).click();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(12);
 
   await interval.getByRole('button', { name: '3 saatlik' }).click();
   await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
@@ -452,9 +476,19 @@ test('hourly interval controls resample the same 24-hour forecast', async ({ pag
     page.locator('.hava81-forecast-atlas__hour.is-day-boundary')
   ).toContainText('00:00');
 
+  await interval.getByRole('button', { name: '4 saatlik' }).click();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(6);
+
   await interval.getByRole('button', { name: '6 saatlik' }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(4);
   expect(await displayedTimes()).toEqual(['12:00', '18:00', '00:00', '06:00']);
+
+  await interval.getByRole('button', { name: '8 saatlik' }).click();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(3);
+
+  await interval.getByRole('button', { name: '12 saatlik' }).click();
+  await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(2);
+  expect(await displayedTimes()).toEqual(['12:00', '00:00']);
 });
 
 test('hourly display falls back to the existing three-hour forecast when the hourly source fails', async ({

@@ -116,6 +116,7 @@ export const en = {
       hourUnitSingular: 'hour',
       hourUnitPlural: 'hours',
       intervalOption: '{{hours}}-hour',
+      intervalOptionCompact: '{{hours}}h',
       formattedByHava81: 'Formatted by Hava81',
       intervalForecast: 'Forecast every {{hours}} hours',
       hourlySource: 'Source:',

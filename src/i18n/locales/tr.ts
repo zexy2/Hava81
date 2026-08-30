@@ -116,6 +116,7 @@ export const tr = {
       hourUnitSingular: 'saat',
       hourUnitPlural: 'saat',
       intervalOption: '{{hours}} saatlik',
+      intervalOptionCompact: '{{hours}}s',
       formattedByHava81: 'Hava81 tarafından biçimlendirildi',
       intervalForecast: '{{hours}} saat aralıklarla tahmin',
       hourlySource: 'Kaynak:',

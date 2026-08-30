@@ -19,7 +19,7 @@ export interface ForecastAtlasProps {
 
 const LEGACY_HOUR_LIMIT = 12;
 const REAL_HOURLY_HORIZON = 24;
-const DISPLAY_INTERVAL_OPTIONS = [1, 3, 6] as const;
+const DISPLAY_INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 12] as const;
 const MIN_CHART_WIDTH = 320;
 const MIN_DISPLAY_COLUMN_WIDTH = 72;
 const CHART_COLUMN_UNITS = 100;
@@ -162,8 +162,14 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
         point.precipitation >= PRECIPITATION_THRESHOLD ||
         (Number.isFinite(point.precipitationMm) && (point.precipitationMm ?? 0) >= 0.2)
     );
+    const tickValues =
+      range === 0 ? [min] : Array.from(new Set([max, Math.round((max + min) / 2), min]));
+    const yTicks = tickValues.map(value => ({
+      value,
+      y: CHART_TOP + ((max - value) / Math.max(range, 1)) * drawableHeight,
+    }));
 
-    return { areaPath, columnWidth, firstPrecipitation, max, min, path, points, width };
+    return { areaPath, columnWidth, firstPrecipitation, max, min, path, points, width, yTicks };
   }, [hourlyData]);
 
   const formatDay = (date: Date): string => {
@@ -250,10 +256,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       key={hours}
                       type="button"
                       className="hava81-forecast-atlas__range-button"
+                      aria-label={t('hava81.forecastAtlas.intervalOption', { hours })}
                       aria-pressed={displayIntervalHours === hours}
                       onClick={() => selectDisplayInterval(hours)}
                     >
-                      {t('hava81.forecastAtlas.intervalOption', { hours })}
+                      {t('hava81.forecastAtlas.intervalOptionCompact', { hours })}
                     </button>
                   ))}
                 </div>
@@ -322,6 +329,19 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
             aria-label={t('hava81.forecastAtlas.hourlyRegion')}
             tabIndex={0}
           >
+            {chart ? (
+              <div className="hava81-forecast-atlas__axis" aria-hidden="true">
+                {chart.yTicks.map(tick => (
+                  <span
+                    key={`axis-${tick.value}`}
+                    className="hava81-forecast-atlas__axis-label"
+                    style={{ top: `${tick.y}px` }}
+                  >
+                    {tick.value}°
+                  </span>
+                ))}
+              </div>
+            ) : null}
             <div className="hava81-forecast-atlas__hourly-track" style={{ width: trackWidth }}>
               {chart ? (
                 <svg
@@ -346,14 +366,14 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       <stop offset="100%" className="hava81-forecast-atlas__area-stop is-end" />
                     </linearGradient>
                   </defs>
-                  {[0.25, 0.5, 0.75].map(ratio => (
+                  {chart.yTicks.map(tick => (
                     <line
-                      key={`guide-${ratio}`}
+                      key={`guide-${tick.value}`}
                       className="hava81-forecast-atlas__guide"
-                      x1="0"
+                      x1="34"
                       x2={chart.width}
-                      y1={CHART_TOP + (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM) * ratio}
-                      y2={CHART_TOP + (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM) * ratio}
+                      y1={tick.y}
+                      y2={tick.y}
                       aria-hidden="true"
                     />
                   ))}
