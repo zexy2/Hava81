@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+const MAX_CURRENT_WEATHER_OBSERVATION_FUTURE_SKEW_MS = 60_000;
 const MAX_AIR_QUALITY_OBSERVATION_FUTURE_SKEW_MS = 60_000;
 
 const coordinatesSchema = z.object({
@@ -38,7 +39,14 @@ export const currentWeatherUpstreamSchema = z.object({
   visibility: z.number().nonnegative().optional(),
   wind: windSchema,
   clouds: cloudsSchema,
-  dt: z.number(),
+  dt: z
+    .number()
+    .int()
+    .nonnegative()
+    .refine(
+      (value) => value * 1_000 <= Date.now() + MAX_CURRENT_WEATHER_OBSERVATION_FUTURE_SKEW_MS,
+      'Current-weather observation timestamp is materially in the future',
+    ),
   sys: z.object({
     country: z.string(),
     sunrise: z.number(),
