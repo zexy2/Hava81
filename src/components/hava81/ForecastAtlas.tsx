@@ -192,6 +192,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       peakPrecipitation,
     };
   }, [hourlyHorizonData]);
+  const hasHourlyPrecipitationSignal = Boolean(
+    hourlySummary &&
+    (hourlySummary.peakPrecipitation.precipitation > 0 ||
+      (hourlySummary.peakPrecipitation.precipitationMm ?? 0) > 0)
+  );
   const currentLocationHourKey = atLocationTime(new Date()).toISOString().slice(0, 13);
 
   const intervalOptions = useMemo(
@@ -291,7 +296,12 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   </div>
                 </>
               )}
-              <div className="hava81-forecast-atlas__summary-item is-precipitation" role="listitem">
+              <div
+                className={`hava81-forecast-atlas__summary-item is-precipitation${
+                  hasHourlyPrecipitationSignal ? ' has-signal' : ''
+                }`}
+                role="listitem"
+              >
                 <span>{t('hava81.forecastAtlas.summaryRain')}</span>
                 <strong>
                   {formatPrecipitationSummary(
