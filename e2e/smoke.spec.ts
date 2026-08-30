@@ -1101,18 +1101,26 @@ test('out-and-back plan persists routine times and produces a preparation decisi
     })
   );
   await page.clock.setFixedTime(new Date(fixtureNow));
+  const localFixtureNow = fixtureNow + current.meta.timezoneOffsetSeconds * 1000;
+  const clockAtOffset = (offsetHours: number) =>
+    new Date(localFixtureNow + offsetHours * 60 * 60_000).toISOString().slice(11, 16);
+  const outboundClock = clockAtOffset(2);
+  const returnClock = clockAtOffset(5);
+
   await page.goto('/istanbul/');
   await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill('12:00');
-  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill('15:00');
-  await expect(
-    page.getByText(
-      /Şemsiyeyi al|Şemsiye yanında olsun|Ekstra hava hazırlığı gerekmiyor|su ve gölge planla|Rüzgâr\/hamle/
-    )
-  ).toBeVisible();
+  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(outboundClock);
+  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(returnClock);
+  const commuteVerdict = page.locator('.commute-plan__verdict');
+  await expect(commuteVerdict).toBeVisible();
+  await expect(commuteVerdict.locator('strong')).not.toHaveText('');
+  await expect(commuteVerdict).toHaveAttribute(
+    'data-advice',
+    /^(umbrella-take|umbrella-consider|heat|cold|strong-wind|wind-caution|poor-air|stable)$/
+  );
   await expect(page.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue('12:00');
-  await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue('15:00');
+  await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue(outboundClock);
+  await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue(returnClock);
 });
