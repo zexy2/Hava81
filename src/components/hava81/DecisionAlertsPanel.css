@@ -20,6 +20,11 @@
 .decision-alerts small {
   color: var(--color-atlas-muted);
 }
+.decision-alerts .decision-alerts__modeled-note {
+  display: block;
+  margin-top: var(--space-xs);
+  line-height: 1.45;
+}
 .decision-alerts .decision-alerts__permission-help {
   display: block;
   margin-top: var(--space-xs);

@@ -382,6 +382,8 @@ export const en = {
         'While Hava81 is open, show a browser notification for rain, a meaningful wait advantage, or a difficult day.',
       quietHours:
         'Quiet hours: 22:00–07:00. Notification permission is requested only if you opt in.',
+      modeledDisclosure:
+        'These notifications are Hava81 modeled guidance, not official MGM MeteoUyarı warnings.',
       enable: 'Enable alerts',
       disable: 'Disable alerts',
       blocked: 'Notifications blocked',
