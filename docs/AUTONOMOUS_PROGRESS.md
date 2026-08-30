@@ -838,3 +838,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Cache parsing already bounded the storage timestamp, but accepted valid ISO `data.timestamp` / `meta.fetchedAt` values arbitrarily far in the future. Such corrupted values could surface impossible freshness/current-time metadata even when the cache envelope itself looked fresh.
 - Current-weather observation timestamp and fetch timestamp now share the existing one-minute future-skew tolerance and fail closed beyond it; sunrise/sunset remain exempt because future sunset is physically valid.
 - Focused useWeather coverage passes 32/32 including separate future observation/fetch regressions; TypeScript, ESLint, production build with 81 city pages, production dependency audit 0 vulnerabilities and `git diff --check` pass.
+
+## 2026-08-30 03:24 TRT — run handoff checkpoint
+
+- PR #239 merged as `fb5ec63f27af2aaaf13a7e1c5830af23db66f5d3`; its Daily Plan temperature timeline now honors the selected unit.
+- PR #242 merged as `847327c688b60607b5e3dd3c9ad55a05533ff2e4`; persisted current-weather caches with reversed min/max fail closed. Main CI run #600 (`33282837989`) completed successfully.
+- Stale PR #241 was replaced by current-main PR #243, whose exact head `d7ea1535983aa760199487b8032d152e9271e990` passed CI run #601 and merged as main `b4ada33587dbdc55a98b997c2ae4ce0035aa5af8`.
+- Main pipeline #603 (`33283105253`) for `b4ada335...` is in progress. Direct production smoke before merge: root 200, İstanbul 200, local 4002 `/api/v1/health/ready` 200/fresh, production-origin CORS exact, provider circuit closed, nginx still targets 4002.
+- PR #244 is the active prepared workstream: branch `automation/hava81-cache-future-fields-0320` in `/home/ubuntu/hava81-auto-cache-future-fields-0320`. It was rebased onto `b4ada335...`; combined post-rebase gates pass 351/351 frontend tests, type-check, lint, 81-city build, production audit 0 vulnerabilities and diff-check. Rebase preserved both append-only checkpoints.
+- Next action: push the rebased #244 head with an explicit lease against remote old head `6204cc9340a34f2ff719ed7adfa4e8259be4d997`, wait only for exact-head CI while continuing independent work, then directly re-verify production/main head/mergeability and merge #244 when green. After merge, remove this worktree `node_modules/dist` to reduce disk pressure; keep API topology on 4002/4001.
