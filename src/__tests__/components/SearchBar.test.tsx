@@ -81,6 +81,17 @@ describe('SearchBar', () => {
     });
   });
 
+  it('ranks city-name prefixes ahead of substring-only matches', () => {
+    render(<SearchBar {...defaultProps} value="An" />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+
+    const options = screen.getAllByRole('option');
+    expect(options[0]).toHaveTextContent('Ankara');
+    expect(options.some(option => option.textContent === 'Adana')).toBe(true);
+  });
+
   it('should have proper accessibility attributes', () => {
     render(<SearchBar {...defaultProps} />);
 
