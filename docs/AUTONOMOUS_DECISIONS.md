@@ -383,3 +383,5 @@ This log records product and engineering decisions made during the autonomous im
 - Use the same broad physical temperature domain (-100..100°C) at the browser BFF trust boundary, converted exactly for imperial (-148..212°F) and standard (173.15..373.15K) requests.
 - Do not apply a Celsius-only bound to `getCurrentWeather`, because its public client contract permits `metric`, `imperial`, and `standard` units.
 - Reject out-of-domain finite values rather than clamping or converting malformed provider/BFF data into plausible guidance.
+
+- 2026-08-30 — Fresh forecast temperatures use the same broad physical metric trust domain as current-weather validation because the browser forecast endpoints currently request/contract metric data. Daily extrema, hourly temperature, and optional apparent temperature outside -100..100°C fail closed rather than being displayed, clamped, or repaired.

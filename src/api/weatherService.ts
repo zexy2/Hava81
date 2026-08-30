@@ -234,9 +234,13 @@ const reviveForecastMeta = (
   return { ...meta, fetchedAt };
 };
 
-const validateDailyForecastItem = (item: SerializedForecast['daily'][number], field: string): void => {
-  if (!isFiniteNumber(item.tempMin)) invalidForecastPayload(`${field}.tempMin`);
-  if (!isFiniteNumber(item.tempMax)) invalidForecastPayload(`${field}.tempMax`);
+const validateDailyForecastItem = (
+  item: SerializedForecast['daily'][number],
+  field: string,
+  units: WeatherUnits
+): void => {
+  if (!isPlausibleTemperature(item.tempMin, units)) invalidForecastPayload(`${field}.tempMin`);
+  if (!isPlausibleTemperature(item.tempMax, units)) invalidForecastPayload(`${field}.tempMax`);
   if (item.tempMin > item.tempMax) invalidForecastPayload(`${field}.tempRange`);
   if (typeof item.description !== 'string' || !item.description.trim()) {
     invalidForecastPayload(`${field}.description`);
@@ -250,15 +254,22 @@ const validateDailyForecastItem = (item: SerializedForecast['daily'][number], fi
   }
 };
 
-const validateHourlyForecastItem = (item: SerializedForecast['hourly'][number], field: string): void => {
+const validateHourlyForecastItem = (
+  item: SerializedForecast['hourly'][number],
+  field: string,
+  units: WeatherUnits
+): void => {
   const invalid = (condition: boolean, suffix: string) => {
     if (condition) invalidForecastPayload(`${field}.${suffix}`);
   };
-  invalid(!isFiniteNumber(item.temp), 'temp');
+  invalid(!isPlausibleTemperature(item.temp, units), 'temp');
   invalid(typeof item.icon !== 'string' || !item.icon.trim(), 'icon');
   invalid(item.description !== undefined && (!item.description || !item.description.trim()), 'description');
   invalid(item.windSpeed !== undefined && (!isFiniteNumber(item.windSpeed) || item.windSpeed < 0), 'windSpeed');
-  invalid(item.apparentTemperature !== undefined && !isFiniteNumber(item.apparentTemperature), 'apparentTemperature');
+  invalid(
+    item.apparentTemperature !== undefined && !isPlausibleTemperature(item.apparentTemperature, units),
+    'apparentTemperature'
+  );
   invalid(item.humidity !== undefined && (!isFiniteNumber(item.humidity) || item.humidity < 0 || item.humidity > 100), 'humidity');
   invalid(item.precipitationMm !== undefined && (!isFiniteNumber(item.precipitationMm) || item.precipitationMm < 0), 'precipitationMm');
   invalid(item.windGust !== undefined && (!isFiniteNumber(item.windGust) || item.windGust < 0), 'windGust');
@@ -576,8 +587,12 @@ export const weatherService = {
     const response = validateForecastEnvelope(rawResponse, 'forecast') as SerializedForecast;
 
     const meta = reviveForecastMeta(response.meta, 'forecast.meta');
-    response.daily.forEach((item, index) => validateDailyForecastItem(item, `forecast.daily.${index}`));
-    response.hourly.slice(0, 8).forEach((item, index) => validateHourlyForecastItem(item, `forecast.hourly.${index}`));
+    response.daily.forEach((item, index) =>
+      validateDailyForecastItem(item, `forecast.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
+    response.hourly.slice(0, 8).forEach((item, index) =>
+      validateHourlyForecastItem(item, `forecast.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
 
     return {
       daily: response.daily.map(item => ({
@@ -607,8 +622,12 @@ export const weatherService = {
     });
     const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
     const meta = reviveForecastMeta(response.meta, 'hourly.meta');
-    response.daily?.slice(0, 5).forEach((item, index) => validateDailyForecastItem(item, `hourly.daily.${index}`));
-    response.hourly.slice(0, 48).forEach((item, index) => validateHourlyForecastItem(item, `hourly.hourly.${index}`));
+    response.daily?.slice(0, 5).forEach((item, index) =>
+      validateDailyForecastItem(item, `hourly.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
+    response.hourly.slice(0, 48).forEach((item, index) =>
+      validateHourlyForecastItem(item, `hourly.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
 
     return {
       ...(response.daily?.length
