@@ -68,6 +68,7 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 };
 
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
+const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -194,6 +195,18 @@ const validateForecastMeta = (meta: SerializedForecast['meta'], field: string): 
         meta.freshForSeconds > 86_400),
     'freshForSeconds'
   );
+};
+
+const reviveForecastMeta = (
+  meta: SerializedForecast['meta'],
+  field: string
+): ForecastMeta => {
+  validateForecastMeta(meta, field);
+  const fetchedAt = reviveForecastDate(meta.fetchedAt, `${field}.fetchedAt`);
+  if (fetchedAt.getTime() > Date.now() + MAX_FORECAST_FUTURE_SKEW_MS) {
+    invalidForecastPayload(`${field}.fetchedAt`);
+  }
+  return { ...meta, fetchedAt };
 };
 
 const validateDailyForecastItem = (item: SerializedForecast['daily'][number], field: string): void => {
@@ -507,7 +520,7 @@ export const weatherService = {
     });
     const response = validateForecastEnvelope(rawResponse, 'forecast') as SerializedForecast;
 
-    validateForecastMeta(response.meta, 'forecast.meta');
+    const meta = reviveForecastMeta(response.meta, 'forecast.meta');
     response.daily.forEach((item, index) => validateDailyForecastItem(item, `forecast.daily.${index}`));
     response.hourly.slice(0, 8).forEach((item, index) => validateHourlyForecastItem(item, `forecast.hourly.${index}`));
 
@@ -523,10 +536,7 @@ export const weatherService = {
         time: reviveForecastDate(item.time, 'forecast.hourly.time'),
         pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.hourly.pop'),
       })),
-      meta: {
-        ...response.meta,
-        fetchedAt: reviveForecastDate(response.meta.fetchedAt, 'forecast.meta.fetchedAt'),
-      },
+      meta,
     };
   },
 
@@ -541,7 +551,7 @@ export const weatherService = {
       lang,
     });
     const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
-    validateForecastMeta(response.meta, 'hourly.meta');
+    const meta = reviveForecastMeta(response.meta, 'hourly.meta');
     response.daily?.slice(0, 5).forEach((item, index) => validateDailyForecastItem(item, `hourly.daily.${index}`));
     response.hourly.slice(0, 48).forEach((item, index) => validateHourlyForecastItem(item, `hourly.hourly.${index}`));
 
@@ -560,10 +570,7 @@ export const weatherService = {
         time: reviveForecastDate(item.time, 'hourly.hourly.time'),
         pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
       })),
-      meta: {
-        ...response.meta,
-        fetchedAt: reviveForecastDate(response.meta.fetchedAt, 'hourly.meta.fetchedAt'),
-      },
+      meta,
     };
   },
 

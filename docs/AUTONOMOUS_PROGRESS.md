@@ -937,3 +937,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued the fresh-vs-persisted weather trust-boundary audit while PR #255 validated. Persisted cache already rejected materially future observation/provider-fetch timestamps, but a fresh BFF current-weather response only checked that those dates parsed successfully.
 - Fresh current weather now applies the same one-minute future-clock tolerance to `current.timestamp` and `current.meta.fetchedAt`; sunrise/sunset are intentionally not constrained because future astronomical events are valid. Invalid fresh data raises the existing retryable API-data error rather than being corrected or replaced with fabricated values.
 - Added separate future observation/provider-fetch regressions; focused weatherService passes 98/98. PR #255 then merged as main `a13ae87b1ef9af304043cd641244a52e8013a16e`; this branch rebased onto that exact main and combined gates are rerun before push.
+
+## 2026-08-30 05:49 TRT — forecast metadata future-clock guard prepared
+
+- PR #256 merged cleanly as main `de80d90e53c660cb77fae1d223861d5a4e9d0ebd` after exact-head CI success and fresh production readiness/CORS/nginx checks.
+- Continued the same trust-boundary audit independently while main CI #633 was queued. Fresh forecast/hourly metadata previously parsed `fetchedAt` but accepted materially future provider-fetch timestamps.
+- Added a shared one-minute future-skew guard for `forecast.meta.fetchedAt` and `hourly.meta.fetchedAt`; future forecast item times remain valid forecast data and are intentionally not constrained. Added separate regressions for both endpoints.
+- Local gates: focused weatherService 100/100, full frontend 369/369, type-check, lint, 81-city production build, and production dependency audit with 0 vulnerabilities all pass.
