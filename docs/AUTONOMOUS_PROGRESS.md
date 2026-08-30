@@ -1163,3 +1163,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added fail-closed schema bounds: hourly/daily Unix epochs must be non-negative integers, and timezone offsets must remain within UTC-12..UTC+14, matching the existing OpenWeather trust domain. No time value is corrected or synthesized.
 - Regression coverage exercises an out-of-range timezone offset plus negative hourly and daily epochs. This is API-input validation only; production will require exact-head CI and blue/green validation after merge.
 - Local gates pass: full API suite 51/51, API TypeScript, API build, API dependency audit 0 vulnerabilities, and `git diff --check`.
+
+## 2026-08-30 14:14 TRT — rebuild dry-hour accessibility cleanup on current main
+
+- PR #320 passed CI on its prior head but became unmergeable after concurrent Forecast Atlas changes, so that branch remains untouched.
+- Rebuilt only the bounded accessibility behavior from exact current main `2ed6ccabfe50c292b275c206daf400b4ead02d60`: dry hourly slots no longer repeat a hidden “no precipitation expected” sentence for every hour.
+- The aggregate accessible rain summary remains, and non-zero precipitation probability or measurable accumulation still receives explicit hourly precipitation detail. No weather values, precipitation semantics, provider attribution, or scoring logic change.
+- Next action: run focused/full frontend, type, lint, production build, dependency audit and diff gates; publish as a replacement PR only if all pass, then retire superseded #320/#316 after the replacement is safely represented.
