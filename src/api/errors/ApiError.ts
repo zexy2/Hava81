@@ -64,6 +64,7 @@ export class ApiError extends Error implements AppError {
   static fromHttpStatus(statusCode: number, message?: string): ApiError {
     const errorMap: Record<number, { code: ErrorCode; defaultMessage: string }> = {
       400: { code: ErrorCode.VALIDATION_ERROR, defaultMessage: 'Geçersiz istek' },
+      408: { code: ErrorCode.NETWORK_ERROR, defaultMessage: 'İstek zaman aşımına uğradı' },
       401: { code: ErrorCode.UNAUTHORIZED, defaultMessage: 'Yetkilendirme hatası' },
       404: { code: ErrorCode.NOT_FOUND, defaultMessage: 'Kaynak bulunamadı' },
       429: { code: ErrorCode.RATE_LIMIT, defaultMessage: 'Çok fazla istek gönderildi' },
@@ -75,10 +76,7 @@ export class ApiError extends Error implements AppError {
       defaultMessage: 'Beklenmeyen bir hata oluştu',
     };
 
-    return new ApiError(message || errorInfo.defaultMessage, errorInfo.code, {
-      statusCode,
-      retryable: [429, 500, 502, 503, 504].includes(statusCode),
-    });
+    return new ApiError(message || errorInfo.defaultMessage, errorInfo.code, { statusCode });
   }
 
   static networkError(originalError?: Error): ApiError {

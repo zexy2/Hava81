@@ -97,6 +97,17 @@ describe('weatherService - ApiError', () => {
       expect(error.retryable).toBe(true);
     });
 
+    it('keeps HTTP 408 retryable and maps it to timeout guidance', () => {
+      const error = ApiError.fromHttpStatus(408);
+
+      expect(error).toMatchObject({
+        code: ErrorCode.NETWORK_ERROR,
+        statusCode: 408,
+        retryable: true,
+        message: 'İstek zaman aşımına uğradı',
+      });
+    });
+
     it('should convert to JSON', () => {
       const error = new ApiError('Test', undefined, { retryable: true });
       const json = error.toJSON();
