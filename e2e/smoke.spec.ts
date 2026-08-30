@@ -274,6 +274,28 @@ test('forced colors keeps the selected forecast interval visibly distinct', asyn
   expect(state.selectedBorder).not.toBe(state.unselectedBorder);
 });
 
+test('keyboard map close restores focus to the map trigger', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile map focus restoration regression');
+  await page.goto('/istanbul');
+
+  const mapTrigger = page.locator('.atlas-bottom-nav__button').filter({ hasText: 'Harita' });
+  await expect(mapTrigger).toBeVisible();
+  await mapTrigger.focus();
+  await page.keyboard.press('Enter');
+
+  const mapRegion = page.locator('#weather-map-region');
+  await expect(mapRegion).toBeVisible();
+  await expect(mapRegion).toBeFocused();
+
+  await page.keyboard.press('Tab');
+  const close = mapRegion.getByRole('button', { name: 'Kapat' });
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(mapRegion).toBeHidden();
+  await expect(mapTrigger).toBeFocused();
+});
+
 test('mobile environment map action keeps its focus ring inside the clipped rail', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment focus regression');
   await page.setViewportSize({ width: 390, height: 844 });
