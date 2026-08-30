@@ -700,7 +700,13 @@ const App: React.FC = () => {
           />
 
           {isSettingsOpen ? (
-            <Suspense fallback={null}>
+            <Suspense
+              fallback={
+                <div className="atlas-settings-loading" role="status" aria-live="polite">
+                  {t('common.loading')}
+                </div>
+              }
+            >
               <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
             </Suspense>
           ) : null}
