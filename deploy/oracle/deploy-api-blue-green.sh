@@ -40,8 +40,12 @@ if [[ "$NGINX_PORT" != "$CURRENT_PORT" ]]; then
 fi
 
 REPO_ROOT="$(cd ../.. && pwd)"
-if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  if [[ -n "$(git -C "$REPO_ROOT" status --porcelain -- apps/api)" ]]; then
+git_repo() {
+  git -c "safe.directory=$REPO_ROOT" -C "$REPO_ROOT" "$@"
+}
+
+if git_repo rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if [[ -n "$(git_repo status --porcelain -- apps/api)" ]]; then
     echo "apps/api has uncommitted changes; refusing production deploy" >&2
     exit 1
   fi
@@ -105,10 +109,10 @@ PY
 
 ./switch-api-traffic.sh "$TARGET_PORT"
 
-if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+if git_repo rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   mkdir -p /var/lib/hava81
-  git -C "$REPO_ROOT" rev-parse HEAD > /var/lib/hava81/current-api-revision
-  git -C "$REPO_ROOT" rev-parse HEAD:apps/api > /var/lib/hava81/current-api-tree
+  git_repo rev-parse HEAD > /var/lib/hava81/current-api-revision
+  git_repo rev-parse HEAD:apps/api > /var/lib/hava81/current-api-tree
 fi
 
 echo "[api] deployment complete active=$TARGET_PORT rollback=$CURRENT_PORT"
