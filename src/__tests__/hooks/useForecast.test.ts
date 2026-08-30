@@ -148,6 +148,23 @@ describe('useForecast', () => {
     expect(result.current.displayMeta?.intervalHours).toBe(1);
   });
 
+  it('uses the dedicated hourly forecast when the baseline forecast request fails', async () => {
+    (weatherService.getForecast as Mock).mockRejectedValueOnce(new Error('baseline unavailable'));
+    const { result } = renderHook(() => useForecast('tr'));
+
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.hourly[0]?.temp).toBe(25);
+    expect(result.current.displayHourly[0]?.temp).toBe(25);
+    expect(result.current.displayMeta?.intervalHours).toBe(1);
+    expect(result.current.meta?.intervalHours).toBe(1);
+    expect(result.current.daily).toHaveLength(1);
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('falls back to the existing three-hour display when the hourly source is unavailable', async () => {
     (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(new Error('hourly unavailable'));
     const { result } = renderHook(() => useForecast('tr'));
@@ -220,6 +237,7 @@ describe('useForecast', () => {
     expect(result.current.displayHourly[0]?.temp).toBe(25);
 
     (weatherService.getForecast as Mock).mockRejectedValueOnce(new Error('provider unavailable'));
+    (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(new Error('hourly unavailable'));
     await act(async () => {
       await result.current.fetch(coords);
     });
