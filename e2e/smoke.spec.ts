@@ -1242,6 +1242,44 @@ test('activity preference and time range change the personalized plan', async ({
   await expect(runCard.getByText(/Koşuda 10–22°C/)).toBeVisible();
 });
 
+test('narrow route form keeps endpoint controls readable and inside the viewport', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile route layout assertion');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/istanbul');
+  await page.getByText('Rota havası', { exact: true }).click();
+
+  const routeForm = page.locator('.route-weather__form');
+  const origin = routeForm.getByLabel('Başlangıç');
+  const destination = routeForm.getByLabel('Varış');
+  const swap = routeForm.getByRole('button', { name: 'Yönü değiştir' });
+  await expect(origin).toHaveValue('İstanbul');
+  await expect(destination).toHaveValue('Ankara');
+
+  const layout = await page.locator('.route-weather__form').evaluate(element => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const box = (node: Element | null) => {
+      if (!node) throw new Error('Missing route form control');
+      const rect = node.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+    };
+    const selects = Array.from(element.querySelectorAll('select')).map(select => box(select));
+    const swapButton = box(element.querySelector('.route-weather__swap'));
+    const form = box(element);
+    return { viewportWidth, pageWidth: document.documentElement.scrollWidth, form, selects, swapButton };
+  });
+
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.form.right).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.selects.every(select => select.left >= 0 && select.right <= layout.viewportWidth)).toBe(true);
+  expect(layout.selects.every(select => select.width > 180 && select.height >= 44)).toBe(true);
+  expect(layout.swapButton.width).toBeGreaterThanOrEqual(44);
+  expect(layout.swapButton.height).toBeGreaterThanOrEqual(44);
+
+  await swap.click();
+  await expect(origin).toHaveValue('Ankara');
+  await expect(destination).toHaveValue('İstanbul');
+});
+
 test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route assertion');
   await page.goto('/istanbul');
