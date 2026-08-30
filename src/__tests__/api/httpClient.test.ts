@@ -129,6 +129,61 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it('honors an HTTP-date Retry-After hint for a retryable response', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      vi.setSystemTime(new Date('2026-08-30T01:30:00Z'));
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse(
+            { error: { message: 'Service unavailable' } },
+            {
+              ok: false,
+              status: 503,
+              headers: { 'Retry-After': 'Sun, 30 Aug 2026 01:30:03 GMT' },
+            }
+          )
+        )
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+      const request = httpClient.get('/weather/current', { city: 'Bursa' });
+      await vi.advanceTimersByTimeAsync(2999);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(request).resolves.toEqual({ cityName: 'Bursa' });
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('caps an excessive Retry-After hint at the existing retry-delay maximum', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse(
+            { error: { message: 'Service unavailable' } },
+            { ok: false, status: 503, headers: { 'Retry-After': '120' } }
+          )
+        )
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+      const request = httpClient.get('/weather/current', { city: 'Bursa' });
+      await vi.advanceTimersByTimeAsync(29_999);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(request).resolves.toEqual({ cityName: 'Bursa' });
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('wraps unexpected transport failures as retryable network errors', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const transportError = new Error('socket closed');
