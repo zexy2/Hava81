@@ -34,6 +34,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const requestIdRef = useRef(0);
+  const lastSuccessfulRequestRef = useRef<{ lat: number; lon: number; language: 'tr' | 'en' } | null>(null);
 
   useEffect(
     () => () => {
@@ -47,13 +48,20 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       const requestId = ++requestIdRef.current;
       setIsLoading(true);
       setError(null);
-      setDaily([]);
-      setHourly([]);
-      setDisplayHourly([]);
-      setDisplayMeta(null);
-      setAirQuality(null);
-      setContextSignals(null);
-      setMeta(null);
+      const previousRequest = lastSuccessfulRequestRef.current;
+      const isSameSuccessfulRequest =
+        previousRequest?.lat === coords.lat &&
+        previousRequest.lon === coords.lon &&
+        previousRequest.language === language;
+      if (!isSameSuccessfulRequest) {
+        setDaily([]);
+        setHourly([]);
+        setDisplayHourly([]);
+        setDisplayMeta(null);
+        setAirQuality(null);
+        setContextSignals(null);
+        setMeta(null);
+      }
 
       try {
         const hourlyRequest = weatherService
@@ -76,6 +84,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         setDisplayHourly(forecastData.hourly);
         setDisplayMeta(forecastData.meta);
         setMeta(forecastData.meta);
+        lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
 
         const [hourlyData, aqData, contextData] = await Promise.all([
           hourlyRequest,
