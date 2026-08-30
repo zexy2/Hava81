@@ -5,6 +5,14 @@ import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
 import type { HourlyForecast, NormalizedWeatherData } from '../../types';
 
 vi.mock('../../analytics/productEvents', () => ({ trackProductEvent: vi.fn() }));
+const settingsMock = vi.hoisted(() => ({ temperatureUnit: 'metric' as 'metric' | 'imperial' }));
+vi.mock('../../context', () => ({
+  useSettings: () => ({
+    convertTemperature: (celsius: number) =>
+      settingsMock.temperatureUnit === 'imperial' ? Math.round((celsius * 9) / 5 + 32) : celsius,
+    getTemperatureSymbol: () => (settingsMock.temperatureUnit === 'imperial' ? '°F' : '°C'),
+  }),
+}));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'tr' } }),
 }));
@@ -46,6 +54,7 @@ const hourly: HourlyForecast[] = [6, 9, 12].map(hour => ({
 
 describe('DailyPlanPanel sharing', () => {
   beforeEach(() => {
+    settingsMock.temperatureUnit = 'metric';
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
@@ -112,13 +121,27 @@ describe('DailyPlanPanel sharing', () => {
     render(<DailyPlanPanel weather={weather} hourly={rainyHourly} />);
 
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
-    expect(within(timeline).getByText(/23° · %15 · 0,2 mm/)).toBeInTheDocument();
+    expect(within(timeline).getByText(/23°C · %15 · 0,2 mm/)).toBeInTheDocument();
     expect(within(timeline).getByText('hava81.dailyPlan.reasons.rainRisk')).toBeInTheDocument();
     expect(
       within(timeline).getByRole('listitem', {
         name: /%15.*0,2 mm.*hava81\.dailyPlan\.reasons\.rainRisk/,
       })
     ).toBeInTheDocument();
+  });
+
+  it('honors the selected temperature unit in the timeline and accessible label', () => {
+    settingsMock.temperatureUnit = 'imperial';
+
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+
+    const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    expect(
+      within(timeline).getAllByText((_, element) =>
+        element?.tagName === 'SMALL' && element.textContent?.startsWith('75°F') === true
+      )
+    ).toHaveLength(3);
+    expect(within(timeline).getAllByRole('listitem')[0]).toHaveAccessibleName(/75°F/);
   });
 
   it('announces clipboard success without moving focus', async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../context';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
@@ -62,6 +63,7 @@ const factorKey: Record<Hava81ScoreFactor, string> = {
 
 export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelProps) {
   const { t, i18n } = useTranslation();
+  const { convertTemperature, getTemperatureSymbol } = useSettings();
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
   const trackedPlanRef = useRef<string | null>(null);
   const plan = useMemo(
@@ -69,6 +71,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     [airQuality, hourly, weather]
   );
   const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const temperatureSymbol = getTemperatureSymbol();
+  const formatTemperature = (temperature: number) =>
+    `${Math.round(convertTemperature(temperature))}${temperatureSymbol}`;
 
   const formatTime = (date?: Date) => {
     if (!date) return '—';
@@ -260,7 +265,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
             formatTime(slot.time),
             `${slot.score}/100`,
             t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`),
-            `${Math.round(slot.temperature)}°`,
+            formatTemperature(slot.temperature),
             precipitationDetail || undefined,
             primaryReasonText,
           ]
@@ -282,7 +287,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
               <strong>{slot.score}</strong>
               {primaryReasonText ? <em>{primaryReasonText}</em> : null}
               <small>
-                {Math.round(slot.temperature)}°
+                {formatTemperature(slot.temperature)}
                 {precipitationDetail ? ` · ${precipitationDetail}` : ''}
               </small>
             </div>
