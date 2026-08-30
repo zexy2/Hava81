@@ -1148,3 +1148,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The test proves hourly labels use the forecast location offset (`20:00Z -> 23:00`, `21:00Z -> 00:00`) and the midnight slot receives both the visible day marker and `is-day-boundary` styling. This protects the redesigned hourly surface from silently reverting to the browser/UTC day rather than the weather location's local day.
 - Validation on exact post-#313 main: ForecastAtlas 11/11; full frontend 46 files / 407 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`. Runtime behavior is unchanged; this is regression hardening only.
 - Main pipeline #773 for #313 is in progress while this independent branch proceeds.
+
+## 2026-08-30 13:46 TRT — rebuild Forecast Atlas source contrast on current main
+
+- Legacy PR #317 is green on its old head but no longer mergeable after concurrent Forecast Atlas work, so it was left untouched.
+- Rebuilt only its measured accessibility fix from exact current main `6ebdf27ec9b69e33d45df846c8ab6d2fcd00db14`: source attribution now uses the solid existing `--forecast-muted` token instead of fading that token toward transparency.
+- This preserves hierarchy and dark-mode token semantics while restoring the previously measured light-mode attribution contrast above WCAG AA normal-text threshold. No weather values, provider attribution, or scoring semantics change.
+- Current-main gates pass: ForecastAtlas 12/12, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
