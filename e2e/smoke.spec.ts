@@ -243,6 +243,24 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
   }
   expect(layout.description.whiteSpace).toBe('normal');
   expect(layout.description.textOverflow).toBe('clip');
+
+  const quickDecisions = await page.locator('.daily-plan__quick').evaluate(element => {
+    const parent = element.getBoundingClientRect();
+    const cells = Array.from(element.children).map(child => {
+      const rect = child.getBoundingClientRect();
+      return {
+        top: rect.top,
+        width: rect.width,
+        clientWidth: (child as HTMLElement).clientWidth,
+        scrollWidth: (child as HTMLElement).scrollWidth,
+      };
+    });
+    return { height: parent.height, cells };
+  });
+  expect(quickDecisions.height).toBeLessThan(110);
+  expect(quickDecisions.cells).toHaveLength(3);
+  expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeLessThan(2);
+  expect(quickDecisions.cells.every(cell => cell.scrollWidth <= cell.clientWidth + 1)).toBe(true);
   expect(layout.description.scrollWidth).toBeLessThanOrEqual(layout.description.clientWidth + 1);
 });
 
