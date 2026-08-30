@@ -5,6 +5,8 @@ base_url="${HAVA81_PUBLIC_URL:-https://hava81.zekiakgul.dev}"
 base_url="${base_url%/}"
 attempts="${HAVA81_SMOKE_ATTEMPTS:-12}"
 delay_seconds="${HAVA81_SMOKE_DELAY_SECONDS:-5}"
+connect_timeout_seconds="${HAVA81_SMOKE_CONNECT_TIMEOUT_SECONDS:-5}"
+max_time_seconds="${HAVA81_SMOKE_MAX_TIME_SECONDS:-15}"
 smoke_token="${GITHUB_SHA:-$(date +%s)}"
 
 sha256_file() {
@@ -37,7 +39,10 @@ check_path() {
       request_url="${request_url}?__hava81_smoke=${smoke_token}-${attempt}"
     fi
 
-    code="$(curl --location --silent --show-error --output "$body" --write-out "%{http_code}" "$request_url" || true)"
+    code="$(curl --location --silent --show-error \
+      --connect-timeout "$connect_timeout_seconds" \
+      --max-time "$max_time_seconds" \
+      --output "$body" --write-out "%{http_code}" "$request_url" || true)"
     actual_sha=""
     if [[ "$code" == "200" ]]; then
       actual_sha="$(sha256_file "$body")"
