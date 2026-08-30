@@ -1115,3 +1115,19 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After PR #308 merged as `16a994d1d68ec0048ae874e5dd253af0726c546e`, rebased `automation/hava81-forecast-copy-rebuild-1153` onto that exact main. The only conflicts were append-only autonomous docs; both valid histories were preserved.
 - Combined current-main gates now pass: ForecastAtlas 8/8; full frontend 46 files / 402 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; full Chromium Playwright 39 passed / 60 intentionally skipped / 0 failed; `git diff --check`.
 - Next action: amend/push #307 using an explicit lease against remote `0b1a4f4bbb290e3ce6bee4641a743fd81b5e8354`, require new exact-head green CI, and continue independent work while CI/main deployment runs.
+
+## 2026-08-30 11:50 TRT — rebuild native-share fallback on current main
+
+- Open PR #301 remains conflicted against current main, so its product change was not force-rebased or mutated from this second workstream. Rebuilt the bounded share behavior on a fresh branch from exact main `76c3488b8fa765f44c326cc54f6d07e658886c39`.
+- Daily Plan now preserves successful native Web Share and explicit `AbortError` cancellation, but a non-cancellation native-share failure falls through to the existing clipboard fallback. Analytics fires only after successful native or clipboard completion; clipboard permission failures remain isolated from weather guidance.
+- Added regressions proving broken native-share -> clipboard fallback and user cancellation -> no clipboard copy.
+- Current-main local gates pass in an isolated Node 24 container: DailyPlanPanel 7/7, frontend TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Temporary `node_modules`/`dist` were removed immediately after validation; no production service or weather semantics changed.
+- Next action: publish this rebuilt branch as a replacement PR, require exact-head CI, and close superseded #301 only after the replacement is safely represented. Continue independent work while CI runs.
+
+## 2026-08-30 12:33 TRT — PR #305 rebuilt on post-#307 main
+
+- After PR #307 merged as `19ebbcce02c93343b54a85e5c00f996bcb058c31`, rebased `automation/hava81-share-fallback-rebuild-1149` onto that exact main while preserving both sides of append-only autonomous documentation.
+- The old #305 CI failure was isolated to the browser-flow job on its stale base; current-main validation now passes end to end: DailyPlanPanel 7/7; full frontend 46 files / 404 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; Chromium Playwright 39 passed / 60 intentionally skipped / 0 failed; `git diff --check`.
+- Product behavior remains bounded: successful native sharing stays native, explicit `AbortError` remains cancellation, other native-share failures may use clipboard, and analytics records only a completed transport. No weather data or safety semantics change.
+- Next action: amend/push with exact lease against remote `6b2ac9b1a2ca0b7c010e1b0b40662a839b62ee27`, require new exact-head CI, and directly reverify current main/observer/production immediately before merge.

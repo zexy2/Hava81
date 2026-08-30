@@ -348,3 +348,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Date-only forecast fields are exact calendar identities, not forgiving JavaScript date inputs. Require `YYYY-MM-DD` and an identical parse/serialize round trip so impossible dates such as February 31 fail closed instead of being normalized into a different day and presented as trustworthy forecast guidance.
 
 - 2026-08-30 — User-facing Forecast Atlas prose belongs in the shared locale tables even when the text is parameterized by the available horizon or interval. Keep weather/provider values in component logic, but avoid inline TR/EN conditionals for headings, controls, and attribution copy so localization remains one auditable source of truth.
+
+- 2026-08-30 — Native Web Share capability is proven by a successful share, not merely by `navigator.share` being present. Treat explicit `AbortError` as user cancellation with no fallback, but use clipboard after other native-share failures when available. Record share analytics only after one transport succeeds.
