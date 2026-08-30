@@ -33,6 +33,7 @@ const slugify = name =>
 const baseUrl = 'https://hava81.zekiakgul.dev';
 const apiBaseUrl = 'https://api.hava81.zekiakgul.dev/api/v1';
 const weatherCacheMaxAgeMs = 5 * 60 * 1000;
+const weatherCacheFutureSkewMs = 60 * 1000;
 const bootstrapTimeoutMs = 10_000;
 
 const safeJson = value => JSON.stringify(value).replace(/</g, '\u003c');
@@ -66,6 +67,7 @@ const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
           const cacheAge = Date.now() - Number(cached?.timestamp || 0);
           if (
             cacheCity &&
+            cacheAge >= -${weatherCacheFutureSkewMs} &&
             cacheAge < ${weatherCacheMaxAgeMs} &&
             cacheLanguage === lang &&
             normalizeCity(cacheCity) === cityKey

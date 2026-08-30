@@ -919,3 +919,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After PR #252 merged as main `44b656e1af3767155abcfbf678754ee9e298288e`, audited the frontend BFF transport deadline on a fresh isolated worktree. The timeout was cleared as soon as `fetch()` returned headers, leaving a stalled success/error JSON body able to hang indefinitely.
 - Kept the existing per-request AbortController deadline active through `response.json()`. Aborted error-body reads now surface the established retryable timeout error instead of being mistaken for an HTTP response; ordinary malformed error JSON still degrades to the existing bounded HTTP error path.
 - Added deterministic success-body and error-body stall regressions. Local gates pass: focused httpClient 10/10, full frontend 364/364, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and diff-check.
+
+## 2026-08-30 04:50 TRT — city bootstrap rejects materially future cache clocks
+
+- While PR #253 validated, audited generated city-entry bootstrap behavior independently. Its early weather prefetch skipped whenever the persisted cache age was less than five minutes, which also treated arbitrarily future corrupted timestamps as fresh even though the React cache boundary later rejects them.
+- Generated city/root bootstrap now accepts at most the same one-minute future clock skew used by the application cache. Materially future timestamps therefore no longer suppress the early BFF prefetch; no weather value is corrected or fabricated.
+- Pre-rebase gates pass: 81-city production build with generated Istanbul assertions (`cacheAge >= -60000` and `< 300000`), TypeScript, ESLint and diff-check. Branch was then rebased onto main `0ddad2c823370c87b44b298ddf12fcaa8fd6b1ed` after PR #253 merged; combined gates are rerun before push.
