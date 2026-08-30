@@ -70,9 +70,46 @@ describe('useLocalStorage synchronization', () => {
 
     act(() => {
       localStorage.removeItem('remote-pref');
-      window.dispatchEvent(new StorageEvent('storage', { key: 'remote-pref', newValue: null }));
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: 'remote-pref',
+          newValue: null,
+          storageArea: localStorage,
+        })
+      );
     });
 
     expect(result.current[0]).toBe('auto');
+  });
+
+  it('resets local-storage state when another context clears localStorage', () => {
+    localStorage.setItem('remote-pref', JSON.stringify('dark'));
+    const { result } = renderHook(() => useLocalStorage('remote-pref', 'auto'));
+
+    act(() => {
+      localStorage.clear();
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: null, newValue: null, storageArea: localStorage })
+      );
+    });
+
+    expect(result.current[0]).toBe('auto');
+  });
+
+  it('ignores same-key storage events from sessionStorage', () => {
+    localStorage.setItem('remote-pref', JSON.stringify('dark'));
+    const { result } = renderHook(() => useLocalStorage('remote-pref', 'auto'));
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: 'remote-pref',
+          newValue: JSON.stringify('light'),
+          storageArea: sessionStorage,
+        })
+      );
+    });
+
+    expect(result.current[0]).toBe('dark');
   });
 });
