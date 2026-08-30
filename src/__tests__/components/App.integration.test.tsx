@@ -315,6 +315,41 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps social metadata aligned with the active city and language', async () => {
+    const socialTags = [
+      ['property', 'og:url'],
+      ['property', 'og:title'],
+      ['property', 'og:image:alt'],
+      ['property', 'og:locale'],
+      ['name', 'twitter:title'],
+      ['name', 'twitter:image:alt'],
+    ] as const;
+    socialTags.forEach(([attribute, value]) => {
+      const meta = document.createElement('meta');
+      meta.setAttribute(attribute, value);
+      meta.content = 'stale';
+      document.head.appendChild(meta);
+    });
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul' });
+
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    expect(canonical?.href).toBe('http://localhost:3000/istanbul/');
+    expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
+      'http://localhost:3000/istanbul/'
+    );
+    expect(document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content).toBe(
+      'İstanbul hava durumu — Hava81'
+    );
+    expect(document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.content).toBe(
+      'İstanbul hava durumu — Hava81'
+    );
+    expect(document.querySelector<HTMLMetaElement>('meta[property="og:locale"]')?.content).toBe(
+      'tr_TR'
+    );
+  });
+
   it('opens settings and switches language without leaking provider credentials', async () => {
     const user = userEvent.setup();
     renderApp();
