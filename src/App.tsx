@@ -322,19 +322,22 @@ const App: React.FC = () => {
     [favorites.length, openMap]
   );
 
-  const retryCurrentWeather = useCallback(() => {
-    const isLocationError =
-      error?.code === ErrorCode.LOCATION_DENIED ||
-      error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
-      error?.code === ErrorCode.LOCATION_TIMEOUT;
+  const isLocationError =
+    error?.code === ErrorCode.LOCATION_DENIED ||
+    error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
+    error?.code === ErrorCode.LOCATION_TIMEOUT;
+  const canRetryCurrentWeather = Boolean(
+    error && (isLocationError || error.retryable || error.code === ErrorCode.UNKNOWN)
+  );
 
+  const retryCurrentWeather = useCallback(() => {
     clearError();
     if (isLocationError) {
       void fetchCurrentLocation();
       return;
     }
     void fetchWeather(city || weather?.cityName || 'İstanbul');
-  }, [city, clearError, error?.code, fetchCurrentLocation, fetchWeather, weather?.cityName]);
+  }, [city, clearError, fetchCurrentLocation, fetchWeather, isLocationError, weather?.cityName]);
 
   const retryForecast = useCallback(() => {
     if (weather?.coordinates) fetchForecast(weather.coordinates, weather.cityName);
@@ -491,9 +494,11 @@ const App: React.FC = () => {
                   <p>{error.message}</p>
                 </div>
                 <div className="atlas-message__actions">
-                  <button type="button" className="atlas-button" onClick={retryCurrentWeather}>
-                    {t('common.retry')}
-                  </button>
+                  {canRetryCurrentWeather && (
+                    <button type="button" className="atlas-button" onClick={retryCurrentWeather}>
+                      {t('common.retry')}
+                    </button>
+                  )}
                   <button type="button" className="atlas-text-button" onClick={clearError}>
                     {t('common.close')}
                   </button>
