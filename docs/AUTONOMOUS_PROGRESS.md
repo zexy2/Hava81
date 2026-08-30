@@ -1216,3 +1216,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - No forecast value is clamped, synthesized, or reordered. Existing partial-row handling and hourly one-hour continuity semantics are unchanged.
 - Local gates: API 57/57 tests, API type-check, API build, production dependency audit 0 vulnerabilities, and `git diff --check` pass.
 - Production remains healthy on port 4002; observer collected at 13:14:27Z reports root/city/API readiness 200, correct CORS, closed provider circuit, and host disk healthy at 89.0% used. API deployment for main `e397ea3...` is still pending, so this branch must not merge until the deployed revision catches up and exact-head PR CI is green.
+
+## 2026-08-30 16:46 TRT — reject incomplete required hourly edge rows
+
+- Direct GitHub verification found PR #339 had already merged as current main `4196dd7b2f1bf9ef33b3cc611314f7c50adeb483`, while the 13:35Z observer sample still showed its superseded failed head; merge/release decisions therefore use direct GitHub state until the next observer sample catches up.
+- Audited the Open-Meteo one-hour provider from an isolated exact-main worktree. Required hourly rows with a null temperature/probability/weather-code/wind/day flag were skipped before the continuity check; when the missing row was at the first or last edge, a single surviving point could evade the gap detector and silently shorten the forecast horizon.
+- Required hourly series are now checked for missing rows before normalization. Any missing required value fails closed as `NON_CONTIGUOUS_HOURLY_PROVIDER_RESPONSE`; optional decision fields remain nullable/fail-soft as before. No weather value is interpolated, repaired, or synthesized.
+- Added regressions for both a missing leading and missing trailing temperature row. Local exact-main API gates pass: 58/58 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Worktree/branch: `/home/ubuntu/hava81-auto-run11-hourly-order-1640`, `automation/hava81-openmeteo-hourly-order-1640`, based on main `4196dd7b2f1bf9ef33b3cc611314f7c50adeb483`.
+- Next action: publish/open the bounded PR and require exact-head green CI. Because this is an API change, merge only after fresh observer/direct production verification and serialize any production promotion through the normal blue-green path, restoring production to 4002 with 4001 retained as rollback/canary.

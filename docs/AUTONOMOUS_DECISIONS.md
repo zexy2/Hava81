@@ -371,3 +371,9 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-30 16:16 TRT — Treat the Open-Meteo daily time axis as ordered provider identity, not display data that can be repaired. Duplicate or backwards daily epochs make day-to-value association ambiguous, so reject the upstream payload rather than sorting, deduplicating, or presenting plausible-looking reordered weather.
+
+## 2026-08-30 — Required hourly forecast rows must not be silently dropped at horizon edges
+
+- Treat temperature, precipitation probability, weather code, wind speed and day/night flag as required members of every Open-Meteo hourly row.
+- If any required row value is missing, reject the provider response rather than shortening the requested forecast. A missing edge row can otherwise evade a post-filter continuity check and make the displayed horizon look complete when it is not.
+- Preserve fail-soft omission for optional decision fields such as apparent temperature, humidity, accumulation, gust, visibility and UV; this decision does not broaden provider data or fabricate replacements.
