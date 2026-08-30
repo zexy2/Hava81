@@ -246,6 +246,34 @@ test('tablet forecast source links keep touch-friendly target heights', async ({
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('forced colors keeps the selected forecast interval visibly distinct', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors interval regression');
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/istanbul');
+
+  const selected = page.locator('.hava81-forecast-atlas__range-button[aria-pressed="true"]');
+  const unselected = page.locator('.hava81-forecast-atlas__range-button[aria-pressed="false"]').first();
+  await expect(selected).toBeVisible();
+  await expect(unselected).toBeVisible();
+
+  const state = await selected.evaluate((element, unselectedSelector) => {
+    const selectedStyle = getComputedStyle(element);
+    const other = document.querySelector(unselectedSelector as string);
+    if (!other) throw new Error('Missing unselected interval');
+    const unselectedStyle = getComputedStyle(other);
+    return {
+      forcedColors: matchMedia('(forced-colors: active)').matches,
+      selectedDecoration: selectedStyle.textDecorationLine,
+      selectedBorder: selectedStyle.borderColor,
+      unselectedBorder: unselectedStyle.borderColor,
+    };
+  }, '.hava81-forecast-atlas__range-button[aria-pressed="false"]');
+
+  expect(state.forcedColors).toBe(true);
+  expect(state.selectedDecoration).toContain('underline');
+  expect(state.selectedBorder).not.toBe(state.unselectedBorder);
+});
+
 test('mobile environment map action keeps its focus ring inside the clipped rail', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment focus regression');
   await page.setViewportSize({ width: 390, height: 844 });
