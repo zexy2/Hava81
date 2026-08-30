@@ -193,6 +193,22 @@ describe('Hava81 app integration', () => {
     expect(searchToggle).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('closes mobile search and restores toggle focus after submitting a city', async () => {
+    const user = userEvent.setup();
+    const { container } = renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+
+    const searchToggle = container.querySelector<HTMLButtonElement>('.atlas-icon-button--search');
+    expect(searchToggle).not.toBeNull();
+    await user.click(searchToggle!);
+    const searchInput = screen.getByRole('combobox', { name: /şehir ara/i });
+    await waitFor(() => expect(searchInput).toHaveFocus());
+
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(searchToggle).toHaveFocus());
+    expect(searchToggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('keeps raw current-weather failures out of the user-visible error state', async () => {
     service.getCurrentWeather.mockRejectedValueOnce(
       new Error('secret upstream endpoint detail: api.internal.example')

@@ -865,3 +865,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regression coverage for native key removal with an explicit local storage area, whole-localStorage clear, and same-key sessionStorage isolation.
 - Combined local gates pass: 353/353 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - This branch remains independent while #245 exact-head Browser/Lighthouse checks run; after #245 merge it must be rebased onto current main with both append-only checkpoints preserved before final CI/merge.
+
+## 2026-08-30 03:57 TRT — mobile search submit focus
+
+- PR #245 passed exact-head CI, was re-verified against live production (root/İstanbul 200, API 4002 ready, provider circuit closed, exact CORS), then merged as main `89ff53e63e1b86c8ea3408c0fb28ae14d2f11d24`.
+- In a new worktree from that main, followed the same compact-search focus path through successful submission. Previously `handleSubmit` only hid the mobile search region, leaving the focused input hidden and potentially keeping a mobile virtual keyboard active.
+- Submission now uses the shared `closeSearch()` path: the input is blurred, compact search collapses, and focus returns to the visible search toggle before the weather request continues.
+- Added integration coverage for open → focused input → Enter submit → collapsed search + restored toggle focus.
+- Local combined gates pass: 353/353 frontend tests, TypeScript, ESLint, 81-city production build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- PR #246 remains isolated and was rebased onto #245 main with append-only checkpoints preserved; its post-rebase combined gates pass 354/354 and exact-head CI is being re-established after lease-safe push.
+- Next action: commit/push this submit-focus branch as its own PR; continue independent work while #246/#247 CI runs, merging strictly in current-main order after direct head/production verification.
