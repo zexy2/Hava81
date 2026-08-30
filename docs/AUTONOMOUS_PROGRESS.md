@@ -825,3 +825,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Followed the unit-consistency merge by removing the duplicated Celsius comfort ranges from the ActivityPlanner presentation layer.
 - The UI now reads the same exported comfort-range constants owned by the activity scoring domain, so future scoring-threshold changes cannot silently leave the explanation copy stale.
 - Focused activity domain + ActivityPlanner coverage passes 17/17; type-check, lint, 81-city production build, and diff-check pass on main `4fafa13f06198a162ba304a1a58117897b6d20c2`.
+
+## 2026-08-30 03:17 TRT — recent province labels rebuilt on current main
+
+- Rebuilt the stale/non-mergeable recent-search canonicalization change on current `main` after PR #239 and #242 merged, instead of force-updating the old branch.
+- Recent province history now maps localized/ASCII provider labels through the canonical 81-province identity before persistence/display, so `Istanbul` and `İstanbul` deduplicate and render as the canonical `İstanbul` label.
+- Removed the obsolete identity set left unused by the canonical map conversion; lint is clean with no new warnings.
+- Combined validation on `847327c`: focused useWeather 31/31, full frontend 349/349, TypeScript, ESLint, production build with 81 city pages, production dependency audit 0 vulnerabilities, and `git diff --check` all pass.

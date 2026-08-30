@@ -50,7 +50,9 @@ const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 const MAX_CACHE_FUTURE_SKEW_MS = 60_000;
 const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
-const supportedCityIdentities = new Set(TURKISH_CITIES.map(city => cityIdentity(city.name)));
+const canonicalCityByIdentity = new Map(
+  TURKISH_CITIES.map(city => [cityIdentity(city.name), city.name] as const)
+);
 
 const deserializeRecentSearches = (value: string): RecentSearch[] => {
   const parsed = JSON.parse(value) as unknown;
@@ -74,9 +76,10 @@ const deserializeRecentSearches = (value: string): RecentSearch[] => {
 
     const city = candidate.city.trim();
     const identity = cityIdentity(city);
-    if (!supportedCityIdentities.has(identity) || seen.has(identity)) continue;
+    const canonicalCity = canonicalCityByIdentity.get(identity);
+    if (!canonicalCity || seen.has(identity)) continue;
     seen.add(identity);
-    sanitized.push({ city, timestamp: candidate.timestamp });
+    sanitized.push({ city: canonicalCity, timestamp: candidate.timestamp });
   }
 
   return sanitized;
@@ -270,9 +273,10 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
         // Update recent searches using a stable province identity across localized provider labels.
         setRecentSearches(prev => {
           const dataIdentity = cityIdentity(data.cityName);
-          if (!supportedCityIdentities.has(dataIdentity)) return prev;
+          const canonicalCity = canonicalCityByIdentity.get(dataIdentity);
+          if (!canonicalCity) return prev;
           const filtered = prev.filter(s => cityIdentity(s.city) !== dataIdentity);
-          return [{ city: data.cityName, timestamp: now.getTime() }, ...filtered].slice(
+          return [{ city: canonicalCity, timestamp: now.getTime() }, ...filtered].slice(
             0,
             maxRecentSearches
           );
