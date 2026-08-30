@@ -1455,3 +1455,19 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a regression proving baseline failure + dedicated hourly success yields the real hourly series/meta/daily data with no error, and tightened the existing same-city failure regression so both sources fail before asserting retained prior data. No values are synthesized, merged, clamped, interpolated, or relabeled.
 - Local gates pass: useForecast 8/8; full frontend 48 files / 445 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: keep this branch local while #367 validates. After #367 merges and its exact main pipeline/production checks are green, rebase onto current main, preserve append-only checkpoints, rerun combined gates, then publish independently.
+
+## 2026-08-30 23:18 TRT — keep service-worker install fail-soft on transient shell fetch failures
+
+- Continued independently from exact main `0f2e83ba4c593d83c8bf21bf6338833aa849f1a8` in `/home/ubuntu/hava81-auto-run11-audit-2315` while PR #368 and its main pipeline serialized separately.
+- Audited service-worker install behavior. Each app-shell fetch was awaited without an individual failure boundary, so one transient network exception for `/` or `/manifest.json` rejected the entire install even though later successful navigations can repopulate the versioned cache.
+- Wrapped each shell fetch independently: successful responses are still cached with `no-store`, while a transient fetch exception no longer aborts the whole worker install. Navigation remains network-first and repopulates the versioned cache after recovery; no API/weather data is cached or synthesized.
+- Validation on the pre-#368 base passes: service-worker regression 4/4; full frontend 48 files / 445 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- PR #368 merged exact head `071105ec4a14305053e57f34c94419a82d714ae9` as main `54e5cce9e7105217f3c1ecb78b9f2cd560abadc2`; main pipeline #895 completed successfully. Next action: rerun combined post-rebase gates on this exact main, then publish as its own bounded PR after a remote branch lease check.
+
+
+## 2026-08-30 23:26 TRT — service-worker resilience branch rebased and fully revalidated
+
+- Rebased `automation/hava81-run11-audit-2315` onto exact main `54e5cce9e7105217f3c1ecb78b9f2cd560abadc2` after #368 merged; the only conflict was append-only progress history and all valid checkpoints were preserved.
+- Strengthened the regression from source-shape assertions to an executable worker-install simulation: `/` is forced to reject while `/manifest.json` still fetches and caches, and the install `waitUntil` promise resolves instead of rejecting.
+- Combined post-rebase gates pass: service-worker focused 4/4; full frontend 48 files / 447 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Main pipeline #895 for `54e5cce9e7105217f3c1ecb78b9f2cd560abadc2` is green; fresh observer at `2026-08-30T20:21:22.960497Z` reports root/İstanbul/API readiness/CORS healthy, nginx on 4002, and OpenWeather circuit closed. Next action: publish this exact branch after remote lease check and require exact-head CI before merge.

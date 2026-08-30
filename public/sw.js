@@ -6,8 +6,13 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
       for (const path of APP_SHELL) {
-        const response = await fetch(path, { cache: 'no-store' });
-        if (response.ok) await cache.put(path, response.clone());
+        try {
+          const response = await fetch(path, { cache: 'no-store' });
+          if (response.ok) await cache.put(path, response.clone());
+        } catch {
+          // A transient failure for one shell entry must not reject the entire worker install.
+          // Successful navigations will repopulate the versioned cache after recovery.
+        }
       }
     })
   );
