@@ -120,6 +120,21 @@ describe('SearchBar', () => {
     await waitFor(() => expect(screen.getByRole('option', { name: 'Ankara' })).toBeInTheDocument());
   });
 
+  it('does not reference a removed suggestion after the query stops producing a listbox', async () => {
+    const { rerender } = render(<SearchBar {...defaultProps} value="Iz" />);
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    await waitFor(() => expect(screen.getByRole('option', { name: 'İzmir' })).toBeInTheDocument());
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(input).toHaveAttribute('aria-activedescendant', 'suggestion-0');
+
+    rerender(<SearchBar {...defaultProps} value="I" />);
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+  });
+
+
   it('should have proper accessibility attributes', () => {
     render(<SearchBar {...defaultProps} />);
 

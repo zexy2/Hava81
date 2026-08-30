@@ -248,7 +248,10 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
   }, []);
 
   const listboxId = 'city-suggestions';
-  const activeDescendant = highlightedIndex >= 0 ? `suggestion-${highlightedIndex}` : undefined;
+  const activeDescendant =
+    showDropdown && highlightedIndex >= 0 && highlightedIndex < combinedItems.length
+      ? `suggestion-${highlightedIndex}`
+      : undefined;
 
   return (
     <form className="search-bar" onSubmit={handleSubmit} autoComplete="off" role="search">
