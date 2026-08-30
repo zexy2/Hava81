@@ -223,6 +223,12 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
   const rootClasses = ['hava81-forecast-atlas', className].filter(Boolean).join(' ');
   const hasData = hourlyData.length > 0 || dailyData.length > 0;
+  const firstPrecipitationAmount = chart?.firstPrecipitation
+    ? formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale)
+    : null;
+  const firstPrecipitationPercent = chart?.firstPrecipitation
+    ? Math.round(chart.firstPrecipitation.precipitation * 100)
+    : 0;
 
   return (
     <section className={rootClasses} aria-labelledby={headingId}>
@@ -439,19 +445,21 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
               {chart?.firstPrecipitation ? (
                 <span className="hava81-forecast-atlas__sr-only">
-                  {formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale)
+                  {firstPrecipitationAmount && firstPrecipitationPercent > 0
                     ? t('hava81.forecastAtlas.precipitationAtWithAmount', {
                         time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
-                        percent: Math.round(chart.firstPrecipitation.precipitation * 100),
-                        amount: formatPrecipitationAmount(
-                          chart.firstPrecipitation.precipitationMm,
-                          locale
-                        ),
+                        percent: firstPrecipitationPercent,
+                        amount: firstPrecipitationAmount,
                       })
-                    : t('hava81.forecastAtlas.precipitationAt', {
-                        time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
-                        percent: Math.round(chart.firstPrecipitation.precipitation * 100),
-                      })}
+                    : firstPrecipitationAmount
+                      ? `${timeFormatter.format(atLocationTime(chart.firstPrecipitation.time))} · ${t(
+                          'hava81.activities.conditions.rainAmount',
+                          { amount: firstPrecipitationAmount }
+                        )}`
+                      : t('hava81.forecastAtlas.precipitationAt', {
+                          time: timeFormatter.format(atLocationTime(chart.firstPrecipitation.time)),
+                          percent: firstPrecipitationPercent,
+                        })}
                 </span>
               ) : null}
 
@@ -518,12 +526,16 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                           }
                           role="group"
                           aria-label={
-                            precipitationAmount
+                            precipitationAmount && precipitation > 0
                               ? t('hava81.forecastAtlas.hourlyPrecipitationWithAmount', {
                                   percent: precipitation,
                                   amount: precipitationAmount,
                                 })
-                              : `${t('weather.precipitation')}: ${precipitation}%`
+                              : precipitationAmount
+                                ? t('hava81.activities.conditions.rainAmount', {
+                                    amount: precipitationAmount,
+                                  })
+                                : `${t('weather.precipitation')}: ${precipitation}%`
                           }
                         >
                           {precipitation > 0 ? <span>{precipitation}%</span> : null}
