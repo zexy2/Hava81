@@ -499,13 +499,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                           ) : null}
                           {precipitationAmount ? <span>{precipitationAmount}</span> : null}
                         </span>
-                      ) : (
-                        <span className="hava81-forecast-atlas__sr-only">
-                          {t('hava81.forecastAtlas.noHourlyPrecipitation', {
-                            time: timeFormatter.format(atLocationTime(hour.time)),
-                          })}
-                        </span>
-                      )}
+                      ) : null}
                     </li>
                   );
                 })}
