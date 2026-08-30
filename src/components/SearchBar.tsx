@@ -105,10 +105,17 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
         .toLowerCase();
 
     const normalized = normalizeTurkish(query);
-
-    return TURKIYE_SEHIRLERI.filter(cityName =>
+    const matches = TURKIYE_SEHIRLERI.filter(cityName =>
       normalizeTurkish(cityName).includes(normalized)
-    ).slice(0, MAX_SUGGESTIONS);
+    );
+    const prefixMatches = matches.filter(cityName =>
+      normalizeTurkish(cityName).startsWith(normalized)
+    );
+    const substringMatches = matches.filter(cityName =>
+      !normalizeTurkish(cityName).startsWith(normalized)
+    );
+
+    return [...prefixMatches, ...substringMatches].slice(0, MAX_SUGGESTIONS);
   }, [debouncedValue]);
 
   // Combine recent searches with suggestions

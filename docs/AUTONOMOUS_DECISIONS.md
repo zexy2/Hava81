@@ -340,3 +340,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Decision-profile time mutators must enforce the same 24-hour `HH:mm` domain as persisted-profile deserialization. Invalid defined clock strings fail closed before state/storage/analytics mutation; `undefined` remains the explicit clear operation.
 
 - 2026-08-30 — Live user-setting mutations are a runtime trust boundary even when TypeScript constrains normal callers. Reuse the persisted-settings enum validators before state/storage mutation so invalid temperature, wind, theme, or language values fail closed rather than surviving until reload normalization.
+
+- 2026-08-30 — City autocomplete should preserve the existing Turkish-normalized match set but rank prefix matches ahead of substring-only matches. This improves intent resolution without accepting new city identities or changing weather data semantics.
