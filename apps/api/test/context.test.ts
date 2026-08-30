@@ -95,6 +95,47 @@ test('context maxima ignore physically impossible negative modeled values', () =
   assert.equal(finiteMaxForWindow(times, [-4, -1], now), undefined);
 });
 
+test('context service rejects malformed or misaligned air-model timelines instead of understating maxima', async () => {
+  const cases = [
+    {
+      label: 'short UV series',
+      time: ['2026-08-30T12:00', '2026-08-30T13:00'],
+      uvIndex: [2],
+    },
+    {
+      label: 'invalid model time',
+      time: ['2026-08-30T12:00', 'not-a-model-time'],
+      uvIndex: [2, 7],
+    },
+  ];
+
+  for (const item of cases) {
+    const invalidAirFetch = (async () =>
+      new Response(
+        JSON.stringify({
+          timezone: 'GMT',
+          hourly: {
+            time: item.time,
+            uv_index: item.uvIndex,
+            dust: [4, 12],
+            grass_pollen: [1, 8],
+            olive_pollen: [0, 3],
+          },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )) as typeof fetch;
+
+    await assert.rejects(
+      () => new ContextSignalsService(invalidAirFetch).get(38.42, 27.14, false),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'INVALID_CONTEXT_PROVIDER_RESPONSE');
+        return true;
+      },
+      `expected ${item.label} to fail closed`
+    );
+  }
+});
+
 test('invalid marine physical domains fail closed to air-only context', async () => {
   const invalidMarineFetch = (async (input: Parameters<typeof fetch>[0]) => {
     if (String(input).includes('air-quality')) return fakeFetch(input);
