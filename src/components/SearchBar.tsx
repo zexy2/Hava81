@@ -130,12 +130,17 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
       return [];
     }
 
+    // The debounce intentionally lags behind the controlled input. Do not keep
+    // rendering suggestions for the previous valid query during that gap.
+    const suggestionQuery = (debouncedValue ?? '').trim();
+    if (suggestionQuery !== currentQuery) return [];
+
     if (suggestions.length > 0) {
       return suggestions.map(city => ({ city, isRecent: false }));
     }
 
     return [];
-  }, [suggestions, recentSearches, value]);
+  }, [debouncedValue, suggestions, recentSearches, value]);
 
   const showDropdown = isFocused && combinedItems.length > 0;
 
