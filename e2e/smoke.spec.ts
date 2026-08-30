@@ -147,6 +147,28 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
 });
 
+test('mobile location denial explains the permission failure', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile geolocation-error regression');
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_success: PositionCallback, failure?: PositionErrorCallback) => {
+          failure?.({ code: 1 } as GeolocationPositionError);
+        },
+      },
+    });
+  });
+  await page.goto('/istanbul');
+
+  await page.getByRole('button', { name: 'Konumumu Kullan' }).click();
+
+  await expect(page.getByText('Konum izni reddedildi')).toBeVisible();
+  await expect(page.getByText('Bir şeyler ters gitti')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Tekrar Dene' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Kapat' })).toBeVisible();
+});
+
 test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single narrow-mobile overflow regression');
   await page.setViewportSize({ width: 320, height: 700 });
@@ -1079,18 +1101,26 @@ test('out-and-back plan persists routine times and produces a preparation decisi
     })
   );
   await page.clock.setFixedTime(new Date(fixtureNow));
+  const localFixtureNow = fixtureNow + current.meta.timezoneOffsetSeconds * 1000;
+  const clockAtOffset = (offsetHours: number) =>
+    new Date(localFixtureNow + offsetHours * 60 * 60_000).toISOString().slice(11, 16);
+  const outboundClock = clockAtOffset(2);
+  const returnClock = clockAtOffset(5);
+
   await page.goto('/istanbul/');
   await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill('12:00');
-  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill('15:00');
-  await expect(
-    page.getByText(
-      /Şemsiyeyi al|Şemsiye yanında olsun|Ekstra hava hazırlığı gerekmiyor|su ve gölge planla|Rüzgâr\/hamle/
-    )
-  ).toBeVisible();
+  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(outboundClock);
+  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(returnClock);
+  const commuteVerdict = page.locator('.commute-plan__verdict');
+  await expect(commuteVerdict).toBeVisible();
+  await expect(commuteVerdict.locator('strong')).not.toHaveText('');
+  await expect(commuteVerdict).toHaveAttribute(
+    'data-advice',
+    /^(umbrella-take|umbrella-consider|heat|cold|strong-wind|wind-caution|poor-air|stable)$/
+  );
   await expect(page.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue('12:00');
-  await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue('15:00');
+  await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue(outboundClock);
+  await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue(returnClock);
 });

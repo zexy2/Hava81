@@ -498,7 +498,11 @@ export const weatherService = {
   ): Promise<NormalizedWeatherData> =>
     new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new ApiError('Konum servisi desteklenmiyor', undefined, { retryable: false }));
+        reject(
+          new ApiError('Konum servisi desteklenmiyor', ErrorCode.LOCATION_UNAVAILABLE, {
+            retryable: false,
+          })
+        );
         return;
       }
 
@@ -517,14 +521,16 @@ export const weatherService = {
           }
         },
         error => {
-          const messages: Record<number, string> = {
-            1: 'Konum izni reddedildi',
-            2: 'Konum bilgisi alınamadı',
-            3: 'Konum isteği zaman aşımına uğradı',
+          const locationErrors: Record<number, { code: ErrorCode; message: string }> = {
+            1: { code: ErrorCode.LOCATION_DENIED, message: 'Konum izni reddedildi' },
+            2: { code: ErrorCode.LOCATION_UNAVAILABLE, message: 'Konum bilgisi alınamadı' },
+            3: { code: ErrorCode.LOCATION_TIMEOUT, message: 'Konum isteği zaman aşımına uğradı' },
           };
-          reject(
-            new ApiError(messages[error.code] || 'Konum hatası', undefined, { retryable: false })
-          );
+          const locationError = locationErrors[error.code] ?? {
+            code: ErrorCode.LOCATION_UNAVAILABLE,
+            message: 'Konum bilgisi alınamadı',
+          };
+          reject(new ApiError(locationError.message, locationError.code, { retryable: false }));
         },
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
       );

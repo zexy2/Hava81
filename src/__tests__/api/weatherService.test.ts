@@ -366,15 +366,18 @@ describe('weatherService BFF client', () => {
     setGeolocation(undefined);
 
     await expect(weatherService.getCurrentLocationWeather()).rejects.toMatchObject({
+      code: ErrorCode.LOCATION_UNAVAILABLE,
       message: 'Konum servisi desteklenmiyor',
       retryable: false,
     });
   });
 
   it.each([
-    [1, 'Konum izni reddedildi'],
-    [99, 'Konum hatası'],
-  ])('maps geolocation error code %s', async (code, message) => {
+    [1, ErrorCode.LOCATION_DENIED, 'Konum izni reddedildi'],
+    [2, ErrorCode.LOCATION_UNAVAILABLE, 'Konum bilgisi alınamadı'],
+    [3, ErrorCode.LOCATION_TIMEOUT, 'Konum isteği zaman aşımına uğradı'],
+    [99, ErrorCode.LOCATION_UNAVAILABLE, 'Konum bilgisi alınamadı'],
+  ])('maps geolocation error code %s', async (code, errorCode, message) => {
     const getCurrentPosition = vi.fn(
       (_success: PositionCallback, failure: PositionErrorCallback) => {
         failure({ code } as GeolocationPositionError);
@@ -383,6 +386,7 @@ describe('weatherService BFF client', () => {
     setGeolocation({ getCurrentPosition } as unknown as Geolocation);
 
     await expect(weatherService.getCurrentLocationWeather()).rejects.toMatchObject({
+      code: errorCode,
       message,
       retryable: false,
     });

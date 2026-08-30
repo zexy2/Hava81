@@ -420,17 +420,25 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   // Combine error from both async operations while keeping raw provider/exception details out of the UI.
   const rawError = weatherAsync.error || locationAsync.error;
   const translateError = i18n.getFixedT(language);
-  const error = rawError
-    ? {
-        ...rawError,
-        message:
-          rawError.code === ErrorCode.NETWORK_ERROR
-            ? translateError('errors.networkError')
-            : rawError.code === ErrorCode.NOT_FOUND
-              ? translateError('weather.cityNotFound')
-              : translateError('errors.genericError'),
-      }
+  const localizedErrorMessage = rawError
+    ? (() => {
+        switch (rawError.code) {
+          case ErrorCode.NETWORK_ERROR:
+            return translateError('errors.networkError');
+          case ErrorCode.NOT_FOUND:
+            return translateError('weather.cityNotFound');
+          case ErrorCode.LOCATION_DENIED:
+            return translateError('errors.locationDenied');
+          case ErrorCode.LOCATION_UNAVAILABLE:
+            return translateError('errors.locationUnavailable');
+          case ErrorCode.LOCATION_TIMEOUT:
+            return translateError('errors.locationTimeout');
+          default:
+            return translateError('errors.genericError');
+        }
+      })()
     : null;
+  const error = rawError ? { ...rawError, message: localizedErrorMessage! } : null;
   const isLoading = weatherAsync.isLoading || locationAsync.isLoading;
 
   return {
