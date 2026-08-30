@@ -392,3 +392,6 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-30 — Explicit navigation between two valid province routes should create browser history (`pushState`) so Back/Forward can traverse prior cities. First-load/root/trailing-slash canonicalization should continue using `replaceState` to avoid duplicate history entries; popstate-driven loads must not push themselves again.
 - 2026-08-30 — A share action must not fail as a silent no-op when no usable transport exists. Preserve explicit native-share cancellation as neutral user intent, but surface unavailable/permission failures as temporary localized UI state without recording successful-share analytics.
+
+
+- 2026-08-30 — SPA city navigation must keep canonical URL, document title, Open Graph URL/title/image-alt, Twitter title/image-alt, and locale metadata coherent with the active city/language. Generated city pages remain authoritative for crawler-first descriptions/structured data; runtime metadata synchronization must not synthesize weather claims.

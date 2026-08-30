@@ -201,15 +201,28 @@ const App: React.FC = () => {
       const historyMethod = routeCity && routeCity.name !== weather.cityName ? 'pushState' : 'replaceState';
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
-    document.title = t('hava81.cityDocumentTitle', { city: weather.cityName });
+    const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
+    document.title = cityTitle;
     if (path) {
+      const canonicalUrl = new URL(path, window.location.origin).toString();
       let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
       if (!canonical) {
         canonical = document.createElement('link');
         canonical.rel = 'canonical';
         document.head.appendChild(canonical);
       }
-      canonical.href = new URL(path, window.location.origin).toString();
+      canonical.href = canonicalUrl;
+
+      const setMetaContent = (selector: string, content: string) => {
+        const meta = document.querySelector<HTMLMetaElement>(selector);
+        if (meta) meta.content = content;
+      };
+      setMetaContent('meta[property="og:url"]', canonicalUrl);
+      setMetaContent('meta[property="og:title"]', cityTitle);
+      setMetaContent('meta[property="og:image:alt"]', cityTitle);
+      setMetaContent('meta[name="twitter:title"]', cityTitle);
+      setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
+      setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
     }
   }, [settings.language, t, weather]);
 

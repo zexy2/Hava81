@@ -1283,3 +1283,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regressions for missing share transports and rejected clipboard writes. Focused DailyPlanPanel tests pass 9/9; full frontend passes 47 files / 423 tests; TypeScript and ESLint pass; 81-city production build/service-worker stamping passes; production dependency audit reports 0 vulnerabilities.
 - Worktree/branch: `/home/ubuntu/hava81-auto-run11-next-1747`, `automation/hava81-run11-next-1747`.
 - Next action: commit/push/open this bounded frontend-only PR, require exact-head green CI, and serialize it after #345. Rebase onto the then-current main with append-only docs preserved before merge.
+
+## 2026-08-30 17:58 TRT — keep SPA social metadata aligned with active city
+
+- Continued independently from exact post-#345 main `d73eb228e4b1c5bd49dad560b851ea43e79c4382` in `/home/ubuntu/hava81-auto-run11-forecast-empty-1756` while main browser/Lighthouse gates and PR #346 CI run independently.
+- Client-side city navigation already updated the URL, canonical link, and document title, but Open Graph/Twitter URL/title metadata could retain the city that originally bootstrapped the document. The active SPA document now keeps `og:url`, Open Graph/Twitter title/image-alt fields, and `og:locale` synchronized with the active canonical city/language.
+- Static generated city pages remain the source for crawler-first city descriptions and structured data; this change does not invent weather content or alter provider/decision semantics.
+- Focused App integration tests pass 10/10; TypeScript, ESLint, and `git diff --check` pass. Full build/test/audit gates remain next before publication.
+- Worktree/branch: `/home/ubuntu/hava81-auto-run11-forecast-empty-1756`, `automation/hava81-run11-forecast-empty-1756`.
