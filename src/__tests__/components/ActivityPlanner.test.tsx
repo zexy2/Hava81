@@ -132,6 +132,24 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getByRole('button', { name: 'Piknik' })).toBeEnabled();
   });
 
+  it('keeps primary activity guidance visible while score criteria stay collapsed until requested', () => {
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} />
+      </SettingsProvider>
+    );
+
+    const details = screen.getAllByText('Skor detayı').map(summary => summary.closest('details'));
+    expect(details).toHaveLength(2);
+    expect(details.every(item => item && !item.hasAttribute('open'))).toBe(true);
+    expect(screen.getAllByText(/Öne çıkan risk:/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getAllByText('Skor detayı')[0]);
+    expect(details[0]).toHaveAttribute('open');
+    expect(screen.getAllByText(/Aktivite ölçütlerinin etkisi:/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Yürüyüşte 12–26°C/i)).toBeInTheDocument();
+  });
+
   it('does not call an activity window dry when measurable precipitation exists at 0%', () => {
     const measurableRain: HourlyForecast[] = [15, 16, 17].map(hour => ({
       time: new Date(Date.UTC(2026, 7, 29, hour)),

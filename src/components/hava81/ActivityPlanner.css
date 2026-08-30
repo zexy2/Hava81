@@ -239,17 +239,34 @@
   color: var(--color-atlas-muted);
   font-size: 0.76rem;
 }
-.activity-card__impact {
-  font-weight: 650;
-  color: var(--color-atlas-ink);
-}
-.activity-card__criteria {
-  padding-top: 0.55rem;
-  border-top: 1px solid var(--color-atlas-line);
-}
 .activity-card__risk {
   color: var(--color-atlas-ink);
   font-weight: 600;
+}
+.activity-card__details {
+  border-top: 1px solid var(--color-atlas-line);
+}
+.activity-card__details summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  cursor: pointer;
+  color: var(--color-atlas-ink);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+.activity-card__details-body {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0 0 0.55rem;
+}
+.activity-card__details .activity-card__impact {
+  color: var(--color-atlas-ink);
+  font-weight: 650;
+}
+.activity-card__details .activity-card__criteria {
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--color-atlas-line);
 }
 @media (max-width: 47.99rem) {
   .activity-planner__window {
