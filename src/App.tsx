@@ -202,6 +202,7 @@ const App: React.FC = () => {
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
     const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
+    const cityDescription = t('hava81.cityDocumentDescription', { city: weather.cityName });
     document.title = cityTitle;
     if (path) {
       const canonicalUrl = new URL(path, window.location.origin).toString();
@@ -217,10 +218,13 @@ const App: React.FC = () => {
         const meta = document.querySelector<HTMLMetaElement>(selector);
         if (meta) meta.content = content;
       };
+      setMetaContent('meta[name="description"]', cityDescription);
       setMetaContent('meta[property="og:url"]', canonicalUrl);
       setMetaContent('meta[property="og:title"]', cityTitle);
+      setMetaContent('meta[property="og:description"]', cityDescription);
       setMetaContent('meta[property="og:image:alt"]', cityTitle);
       setMetaContent('meta[name="twitter:title"]', cityTitle);
+      setMetaContent('meta[name="twitter:description"]', cityDescription);
       setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
       setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
     }

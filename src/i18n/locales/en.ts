@@ -65,6 +65,8 @@ export const en = {
     homeLabel: 'Hava81 home view',
     systemStatus: 'Hava81 · System status',
     cityDocumentTitle: '{{city}} weather — Hava81',
+    cityDocumentDescription:
+      'Current weather, hourly and daily forecast, Hava81 Score, best time to go out, rain-wind-air quality signals and daily decision guidance for {{city}}.',
     loadingWeather: 'Preparing weather data',
     slowLoading:
       'Weather data is taking longer than usual; the connection or data provider may be delayed.',

@@ -1291,3 +1291,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Static generated city pages remain the source for crawler-first city descriptions and structured data; this change does not invent weather content or alter provider/decision semantics.
 - Focused App integration tests pass 10/10; TypeScript, ESLint, and `git diff --check` pass. Full build/test/audit gates remain next before publication.
 - Worktree/branch: `/home/ubuntu/hava81-auto-run11-forecast-empty-1756`, `automation/hava81-run11-forecast-empty-1756`.
+
+## 2026-08-30 18:36 TRT — keep runtime city descriptions aligned with SPA navigation
+
+- Continued from exact post-#347 main `aa5c449b1ede105fb8cac26da0a2e8cc11e8236f` in isolated worktree `/home/ubuntu/hava81-auto-run11-meta-description-1833` while the main pipeline validates independently.
+- Runtime SPA navigation already synchronized canonical URL, title, Open Graph/Twitter title/image-alt and locale, but the standard description, `og:description`, and `twitter:description` could still retain the city that originally bootstrapped the document. They now use localized city-specific product copy for the active city/language.
+- This is metadata coherence only: descriptions state Hava81 product capabilities and do not synthesize, infer, or alter weather/provider/decision data. Generated city pages remain crawler-first and unchanged.
+- Local gates on exact main pass: focused App integration 11/11; full frontend 47 files / 428 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Host disk pressure was also reduced safely below the observer threshold by deleting only ignored dependency/build artifacts from stale worktrees and unused Docker build cache; dirty source edits were preserved. Exact host usage after the local build cleanup was ~91.3% with ~3.9 GiB available.
+- Next action: publish/open this bounded frontend-only PR, require exact-head green CI and fresh production verification, then merge if current main remains stable; continue an independent audit while CI runs.

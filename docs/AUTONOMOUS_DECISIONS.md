@@ -395,3 +395,4 @@ This log records product and engineering decisions made during the autonomous im
 
 
 - 2026-08-30 — SPA city navigation must keep canonical URL, document title, Open Graph URL/title/image-alt, Twitter title/image-alt, and locale metadata coherent with the active city/language. Generated city pages remain authoritative for crawler-first descriptions/structured data; runtime metadata synchronization must not synthesize weather claims.
+- 2026-08-30 — SPA city/language navigation should keep standard, Open Graph, and Twitter description metadata coherent with the active canonical city using localized product-capability copy only. Runtime metadata synchronization must not fabricate weather claims; generated city pages remain crawler-first.

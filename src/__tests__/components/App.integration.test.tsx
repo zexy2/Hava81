@@ -317,11 +317,14 @@ describe('Hava81 app integration', () => {
 
   it('keeps social metadata aligned with the active city and language', async () => {
     const socialTags = [
+      ['name', 'description'],
       ['property', 'og:url'],
       ['property', 'og:title'],
+      ['property', 'og:description'],
       ['property', 'og:image:alt'],
       ['property', 'og:locale'],
       ['name', 'twitter:title'],
+      ['name', 'twitter:description'],
       ['name', 'twitter:image:alt'],
     ] as const;
     socialTags.forEach(([attribute, value]) => {
@@ -342,6 +345,17 @@ describe('Hava81 app integration', () => {
     expect(document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content).toBe(
       'İstanbul hava durumu — Hava81'
     );
+    const cityDescription =
+      'İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.';
+    expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toBe(
+      cityDescription
+    );
+    expect(
+      document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content
+    ).toBe(cityDescription);
+    expect(
+      document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.content
+    ).toBe(cityDescription);
     expect(document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.content).toBe(
       'İstanbul hava durumu — Hava81'
     );
