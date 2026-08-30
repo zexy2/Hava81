@@ -120,12 +120,18 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
 
   // Combine recent searches with suggestions
   const combinedItems = useMemo(() => {
-    if (suggestions.length > 0) {
-      return suggestions.map(city => ({ city, isRecent: false }));
+    const currentQuery = value.trim();
+    if (currentQuery.length < MIN_QUERY_LENGTH) {
+      if (recentSearches.length > 0 && currentQuery.length === 0) {
+        return recentSearches
+          .slice(0, MAX_SUGGESTIONS)
+          .map(({ city }) => ({ city, isRecent: true }));
+      }
+      return [];
     }
 
-    if (recentSearches.length > 0 && value.length === 0) {
-      return recentSearches.slice(0, MAX_SUGGESTIONS).map(({ city }) => ({ city, isRecent: true }));
+    if (suggestions.length > 0) {
+      return suggestions.map(city => ({ city, isRecent: false }));
     }
 
     return [];
