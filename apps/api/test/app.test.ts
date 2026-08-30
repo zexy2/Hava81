@@ -403,6 +403,10 @@ test('OpenWeather adapter rejects malformed upstream responses', async () => {
 test('OpenWeather adapter rejects impossible finite current-weather domains', async () => {
   const cases: Array<[string, (payload: typeof currentFixture) => void]> = [
     ['latitude', (payload) => { payload.coord.lat = 91; }],
+    ['temperature', (payload) => { payload.main.temp = 999; }],
+    ['feels-like temperature', (payload) => { payload.main.feels_like = -999; }],
+    ['minimum temperature', (payload) => { payload.main.temp_min = -999; }],
+    ['maximum temperature', (payload) => { payload.main.temp_max = 999; }],
     ['humidity', (payload) => { payload.main.humidity = 101; }],
     ['pressure', (payload) => { payload.main.pressure = -1; }],
     ['wind speed', (payload) => { payload.wind.speed = -1; }],
@@ -429,6 +433,22 @@ test('OpenWeather adapter rejects impossible finite current-weather domains', as
       `expected invalid ${label} to be rejected`,
     );
   }
+});
+
+test('OpenWeather forecast rejects impossible finite temperatures across shared provider units', async () => {
+  const payload = structuredClone(forecastFixture);
+  payload.list[0].main = { ...payload.list[0].main, temp: 999 };
+  const fakeFetch = (async () =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+  const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+  await assert.rejects(
+    () => provider.getForecast({ lat: 41.01, lon: 28.97, units: 'metric', lang: 'tr' }),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+  );
 });
 
 test('OpenWeather forecast normalizes small model humidity overshoots without weakening current observations', async () => {

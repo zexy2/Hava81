@@ -15,11 +15,16 @@ const weatherConditionSchema = z.object({
   icon: z.string().min(1),
 });
 
+// The provider schema is shared by metric (°C), imperial (°F), and standard (K) queries.
+// Use a deliberately broad cross-unit physical envelope so malformed finite values cannot
+// become plausible-looking guidance without rejecting real terrestrial temperatures.
+const providerTemperatureSchema = z.number().min(-150).max(400);
+
 const currentMainWeatherSchema = z.object({
-  temp: z.number(),
-  feels_like: z.number(),
-  temp_min: z.number(),
-  temp_max: z.number(),
+  temp: providerTemperatureSchema,
+  feels_like: providerTemperatureSchema,
+  temp_min: providerTemperatureSchema,
+  temp_max: providerTemperatureSchema,
   pressure: z.number().positive(),
   humidity: z.number().min(0).max(100),
 });
