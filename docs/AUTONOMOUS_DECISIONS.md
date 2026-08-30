@@ -368,3 +368,6 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-30 15:58 TRT — Zod errors at provider-response boundaries must not escape as request-validation errors. Malformed upstream Open-Meteo context payloads are provider failures (`502 INVALID_CONTEXT_PROVIDER_RESPONSE`), while Zod validation of user query parameters remains a client-side 400. This preserves correct fault attribution without exposing or repairing malformed weather data.
 - 2026-08-30 16:04 TRT — OpenWeather visibility is a provider-bound quantity documented in meters with a 10 km maximum. Reject values outside 0..10,000 m at the adapter boundary rather than clamping them, while preserving omission because the upstream field is optional.
+
+
+- 2026-08-30 16:16 TRT — Treat the Open-Meteo daily time axis as ordered provider identity, not display data that can be repaired. Duplicate or backwards daily epochs make day-to-value association ambiguous, so reject the upstream payload rather than sorting, deduplicating, or presenting plausible-looking reordered weather.

@@ -208,6 +208,49 @@ test('Open-Meteo hourly adapter rejects impossible timezone offsets and negative
   }
 });
 
+test('Open-Meteo hourly adapter rejects duplicate or backwards daily timestamps', async () => {
+  const cases = [
+    { label: 'duplicate', times: [1787950800, 1787950800] },
+    { label: 'backwards', times: [1788037200, 1787950800] },
+  ];
+
+  for (const item of cases) {
+    const fakeFetch = (async () =>
+      new Response(
+        JSON.stringify({
+          utc_offset_seconds: 10800,
+          daily: {
+            time: item.times,
+            temperature_2m_max: [28, 27],
+            temperature_2m_min: [20, 19],
+            weather_code: [0, 1],
+            precipitation_probability_max: [10, 20],
+          },
+          hourly: {
+            time: [1787936400],
+            temperature_2m: [24],
+            precipitation_probability: [10],
+            weather_code: [0],
+            wind_speed_10m: [3],
+            is_day: [1],
+          },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      )) as typeof fetch;
+
+    const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
+
+    await assert.rejects(
+      () => provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' }),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'INVALID_HOURLY_PROVIDER_RESPONSE');
+        return true;
+      },
+      "expected malformed daily timestamp ordering to be rejected",
+    );
+  }
+});
+
 test('Open-Meteo hourly adapter rejects unsupported WMO weather codes instead of inventing a generic condition', async () => {
   const cases = [
     { label: 'hourly code', hourlyCode: 4, dailyCode: 0 },
