@@ -226,6 +226,55 @@ test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, t
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mobile day-plan header stays readable at 390px', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile day-plan header regression');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'dark',
+        language: 'en',
+        notificationsEnabled: false,
+      })
+    );
+  });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
+
+  const layout = await page.locator('.daily-plan__header').evaluate(element => {
+    const header = element.getBoundingClientRect();
+    const title = element.querySelector('h2')?.getBoundingClientRect();
+    const actions = element.querySelector('.daily-plan__header-actions')?.getBoundingClientRect();
+    const share = element.querySelector('.daily-plan__share')?.getBoundingClientRect();
+    const score = element.querySelector('.daily-plan__score')?.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    if (!title || !actions || !share || !score) throw new Error('Missing Daily Plan header element');
+    return {
+      direction: style.flexDirection,
+      headerWidth: header.width,
+      titleWidth: title.width,
+      titleHeight: title.height,
+      actionsWidth: actions.width,
+      shareHeight: share.height,
+      overlap: Math.max(0, Math.min(title.right, actions.right) - Math.max(title.left, actions.left)) *
+        Math.max(0, Math.min(title.bottom, actions.bottom) - Math.max(title.top, actions.top)),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.direction).toBe('column');
+  expect(layout.titleWidth).toBeGreaterThan(200);
+  expect(layout.titleHeight).toBeLessThan(50);
+  expect(layout.actionsWidth).toBeGreaterThan(250);
+  expect(layout.shareHeight).toBeGreaterThanOrEqual(44);
+  expect(layout.overlap).toBe(0);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('narrow English layout keeps decision content readable at 320px', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single English narrow-layout regression');
   await page.setViewportSize({ width: 320, height: 720 });
