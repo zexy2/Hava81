@@ -203,11 +203,7 @@ const fetchWithRetry = async <T>(
     }
 
     // Handle network errors with retry
-    if (
-      error instanceof TypeError &&
-      error.message.includes('fetch') &&
-      retryState.count < retries
-    ) {
+    if (error instanceof TypeError && retryState.count < retries) {
       const delay = getRetryDelay(retryState.count);
       console.warn(
         `[HTTP] Network error, retrying (${retryState.count + 1}/${retries}) after ${delay}ms`

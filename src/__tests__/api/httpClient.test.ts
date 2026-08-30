@@ -250,6 +250,26 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it('retries fetch TypeErrors without relying on browser-specific error text', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      (global.fetch as Mock)
+        .mockRejectedValueOnce(new TypeError('Load failed'))
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+      const request = httpClient.get('/weather/current', { city: 'Bursa' });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await expect(request).resolves.toEqual({ cityName: 'Bursa' });
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('wraps unexpected transport failures as retryable network errors', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const transportError = new Error('socket closed');
