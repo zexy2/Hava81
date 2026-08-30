@@ -1046,3 +1046,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Extended the reversed daylight guard through the browser BFF and persisted-cache boundaries so a stale/corrupt client cache cannot bypass the API-side invariant before the runtime API deployment catches up.
 - Fresh BFF weather now rejects `sunset < sunrise` as a retryable invalid-data response; persisted current weather rejects the same ordering and refetches rather than rendering it. No timestamp is reordered or synthesized.
 - Combined local gates pass: weatherService/useWeather 145/145, frontend TypeScript, frontend ESLint, API 50/50, API type-check, API build, and diff-check.
+
+
+## 2026-08-30 10:47 TRT — reject invalid decision-profile clock writes
+
+- While main `859961db0cf45fd079749989f8c915625d69147c` CI ran after PR #295, audited persisted decision-profile trust boundaries from an isolated worktree based on that exact main. Deserialization already validates optional commute/activity times as 24-hour `HH:mm`, but the live setters accepted arbitrary strings and could persist malformed values until a reload sanitized them.
+- `setCommuteTime` and `setActivityWindow` now fail closed for defined values outside the same clock-time domain before mutating state, localStorage, or analytics. Clearing with `undefined` remains supported. No weather or safety value is invented.
+- Added regression coverage for malformed `25:00` and non-zero-padded `9:30`, plus valid write coverage. Local gates pass: focused decision-profile 6/6, frontend TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Disk pressure was also remediated from 95% used (~2.7 GiB free) to 91% (~4.3 GiB free) by removing only reproducible developer caches; production/runtime data was untouched. A conservative worktree cleanup removed only five clean branches whose heads were already ancestors of `origin/main`; open/dirty/unmerged worktrees were preserved.
