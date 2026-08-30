@@ -291,9 +291,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     await user.click(within(interval).getByRole('button', { name: '12 saatlik' }));
     expect(within(region).getAllByRole('listitem')).toHaveLength(2);
   });
-  it('keeps the 24-hour summary stable when display sampling changes', async () => {
+  it('keeps the 24-hour summary and chart scale stable when display sampling changes', async () => {
     const user = userEvent.setup();
-    render(
+    const { container } = render(
       <SettingsProvider>
         <ForecastAtlas
           daily={[]}
@@ -326,12 +326,25 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         'has-signal'
       );
     };
+    const assertFullHorizonScale = () => {
+      expect(
+        Array.from(container.querySelectorAll('.hava81-forecast-atlas__axis-label')).map(
+          label => label.textContent
+        )
+      ).toEqual(['31°', '22°', '12°']);
+    };
 
     assertFullHorizonSummary();
+    assertFullHorizonScale();
     await user.click(within(interval).getByRole('button', { name: '3 saatlik' }));
     assertFullHorizonSummary();
+    assertFullHorizonScale();
     await user.click(within(interval).getByRole('button', { name: '6 saatlik' }));
     assertFullHorizonSummary();
+    assertFullHorizonScale();
+    await user.click(within(interval).getByRole('button', { name: '12 saatlik' }));
+    assertFullHorizonSummary();
+    assertFullHorizonScale();
   });
 
   it('shows daily precipitation totals without inventing a 0% rain label', () => {
