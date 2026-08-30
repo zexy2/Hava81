@@ -199,9 +199,10 @@ def collect_host() -> dict[str, Any]:
     usage = os.statvfs('/')
     free_bytes = usage.f_bavail * usage.f_frsize
     total_bytes = usage.f_blocks * usage.f_frsize
-    used_percent = round((1 - (usage.f_bavail / usage.f_blocks)) * 100, 1) if usage.f_blocks else 0.0
+    raw_used_percent = (1 - (usage.f_bavail / usage.f_blocks)) * 100 if usage.f_blocks else 0.0
+    used_percent = round(raw_used_percent, 1)
     free_ok = free_bytes >= MINIMUM_ROOT_FREE_BYTES
-    usage_ok = used_percent < MAXIMUM_ROOT_USED_PERCENT
+    usage_ok = raw_used_percent <= MAXIMUM_ROOT_USED_PERCENT
     disk_ok = free_ok and usage_ok
     issues: list[str] = []
     if not free_ok:

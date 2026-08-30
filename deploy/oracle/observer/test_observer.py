@@ -452,6 +452,17 @@ class ObserverHostDiskTests(unittest.TestCase):
         self.assertIn('root_disk_pressure', host['issues'])
         self.assertNotIn('root_disk_low', host['issues'])
 
+    def test_usage_threshold_is_inclusive_and_not_decided_from_rounded_display(self) -> None:
+        exact_threshold = self._collect_with_available_blocks(800_000)  # exactly 92.0% used
+        rounded_up = self._collect_with_available_blocks(805_000)  # 91.95% used, displayed as 92.0%
+
+        self.assertEqual(exact_threshold['disk']['used_percent'], 92.0)
+        self.assertTrue(exact_threshold['disk']['usage_ok'])
+        self.assertTrue(exact_threshold['healthy'])
+        self.assertEqual(rounded_up['disk']['used_percent'], 92.0)
+        self.assertTrue(rounded_up['disk']['usage_ok'])
+        self.assertTrue(rounded_up['healthy'])
+
     def test_healthy_disk_must_pass_both_free_space_guards(self) -> None:
         host = self._collect_with_available_blocks(1_500_000)  # ~6.1 GB free, 85% used
         self.assertTrue(host['disk']['free_ok'])

@@ -342,3 +342,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Live user-setting mutations are a runtime trust boundary even when TypeScript constrains normal callers. Reuse the persisted-settings enum validators before state/storage mutation so invalid temperature, wind, theme, or language values fail closed rather than surviving until reload normalization.
 
 - 2026-08-30 — City autocomplete should preserve the existing Turkish-normalized match set but rank prefix matches ahead of substring-only matches. This improves intent resolution without accepting new city identities or changing weather data semantics.
+
+- 2026-08-30 — Disk-pressure health must be decided from the unrounded filesystem ratio, not the rounded display percentage. `maximum_used_percent` is an inclusive ceiling; a true value at or below 92.0% passes the percentage guard while the independent absolute free-space floor still fails closed. This prevents display rounding from creating false host incidents at the boundary.
