@@ -10,6 +10,14 @@ import type {
 const optionalHourlySeries = z.array(z.number().nullable()).optional();
 const providerTimestampSchema = z.number().int().nonnegative();
 const providerTimezoneOffsetSchema = z.number().int().min(-43_200).max(50_400);
+const supportedWeatherCodes = new Set([
+  0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+  85, 86, 95, 96, 99,
+]);
+const providerWeatherCodeSchema = z
+  .number()
+  .int()
+  .refine(code => supportedWeatherCodes.has(code), { message: "unsupported WMO weather code" });
 const ONE_HOUR_MS = 60 * 60 * 1_000;
 
 const hourlySchema = z.object({
@@ -19,7 +27,7 @@ const hourlySchema = z.object({
       time: z.array(providerTimestampSchema),
       temperature_2m_max: z.array(z.number().nullable()),
       temperature_2m_min: z.array(z.number().nullable()),
-      weather_code: z.array(z.number().int().nullable()),
+      weather_code: z.array(providerWeatherCodeSchema.nullable()),
       precipitation_probability_max: z.array(z.number().nullable()),
       precipitation_sum: z.array(z.number().nullable()).optional(),
     })
@@ -31,7 +39,7 @@ const hourlySchema = z.object({
     relative_humidity_2m: optionalHourlySeries,
     precipitation_probability: z.array(z.number().nullable()),
     precipitation: optionalHourlySeries,
-    weather_code: z.array(z.number().int().nullable()),
+    weather_code: z.array(providerWeatherCodeSchema.nullable()),
     wind_speed_10m: z.array(z.number().nullable()),
     wind_gusts_10m: optionalHourlySeries,
     visibility: optionalHourlySeries,

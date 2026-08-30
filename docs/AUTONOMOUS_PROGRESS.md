@@ -1170,3 +1170,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt only the bounded accessibility behavior from exact current main `2ed6ccabfe50c292b275c206daf400b4ead02d60`: dry hourly slots no longer repeat a hidden “no precipitation expected” sentence for every hour.
 - The aggregate accessible rain summary remains, and non-zero precipitation probability or measurable accumulation still receives explicit hourly precipitation detail. No weather values, precipitation semantics, provider attribution, or scoring logic change.
 - Next action: run focused/full frontend, type, lint, production build, dependency audit and diff gates; publish as a replacement PR only if all pass, then retire superseded #320/#316 after the replacement is safely represented.
+
+## 2026-08-30 14:22 TRT — reject unsupported Open-Meteo weather codes
+
+- While PR #323 validated independently, audited the Open-Meteo hourly provider from exact main `2ed6ccabfe50c292b275c206daf400b4ead02d60`.
+- Open-Meteo documents `weather_code` as the WMO interpretation set 0, 1–3, 45/48, 51/53/55, 56/57, 61/63/65, 66/67, 71/73/75, 77, 80/81/82, 85/86, 95, and 96/99. The adapter previously accepted any integer and mapped unknown values to a generic variable-weather condition, which could turn malformed upstream input into plausible-looking guidance.
+- Both hourly and daily weather-code arrays now fail closed during provider schema validation when a code is outside that documented set. No unsupported condition is guessed, corrected, or synthesized.
+- Added hourly and daily regressions for unsupported code `4`. Local API gates pass: 52/52 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- PR #323 later merged as `7674b2a3581b17e556e21e0f6106cf01641a667d`; main pipeline #793 completed successfully and public root/İstanbul/API readiness/CORS remained healthy with nginx on 4002. This branch is now being rebased onto that production-green main before its exact-head CI is rerun.

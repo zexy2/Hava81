@@ -360,3 +360,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Open-Meteo forecast temporal metadata is an upstream trust boundary. Require non-negative integer Unix epochs for hourly/daily forecast times and constrain `utc_offset_seconds` to the real-world UTC-12..UTC+14 domain already used for OpenWeather. Reject malformed values instead of allowing them to shift forecast grouping into a plausible-looking wrong calendar.
 
 - 2026-08-30 — Dry hourly forecast slots should not each emit a redundant hidden “no precipitation expected” sentence. Keep one aggregate accessible rain summary for the horizon and explicit per-hour precipitation detail only where probability or measurable accumulation is non-zero; this reduces screen-reader noise without changing weather semantics.
+
+- 2026-08-30 — Open-Meteo `weather_code` is a constrained WMO interpretation code, not an arbitrary integer. Reject unsupported hourly/daily codes at the provider boundary rather than mapping them to a generic condition; unsupported upstream conditions must never be converted into plausible-looking weather guidance.
