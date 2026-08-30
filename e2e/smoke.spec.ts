@@ -1211,7 +1211,9 @@ test('activity preference and time range change the personalized plan', async ({
   await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
   await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
   await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
-  await expect(page.getByText(/Koşuda 10–22°C/)).toBeVisible();
+  const runCard = page.locator('.activity-card').filter({ has: page.getByRole('heading', { name: 'Koşu', exact: true }) });
+  await runCard.locator('summary').click();
+  await expect(runCard.getByText(/Koşuda 10–22°C/)).toBeVisible();
 });
 
 test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
