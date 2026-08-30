@@ -52,6 +52,8 @@ jobs:
       - run: npm run api:build
       - name: Verify API deploy operation locking
         run: bash scripts/test-api-operation-lock.sh
+      - name: Verify API rollback target state
+        run: bash scripts/test-api-rollback-target.sh
 
   build:
     name: Production build

@@ -16,7 +16,7 @@ For a plan without changing containers or traffic:
 sudo PLAN_ONLY=1 deploy/oracle/deploy-api-blue-green.sh
 ```
 
-Rollback uses the port recorded by the traffic switch:
+Rollback uses the port recorded by the traffic switch and fails closed when that marker is missing or invalid rather than guessing a fallback port:
 
 ```bash
 sudo deploy/oracle/rollback-api.sh
