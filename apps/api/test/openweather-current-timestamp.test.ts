@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { currentWeatherUpstreamSchema } from '../src/providers/openweather/schemas';
+
+const sample = () => ({
+  coord: { lon: 28.97, lat: 41.01 },
+  weather: [{ id: 800, main: 'Clear', description: 'açık', icon: '01d' }],
+  main: {
+    temp: 21.6,
+    feels_like: 21.1,
+    temp_min: 19.4,
+    temp_max: 23.2,
+    pressure: 1013,
+    humidity: 62,
+  },
+  visibility: 10_000,
+  wind: { speed: 3.2, deg: 180 },
+  clouds: { all: 4 },
+  dt: Math.floor(Date.now() / 1_000),
+  sys: {
+    country: 'TR',
+    sunrise: Math.floor(Date.now() / 1_000) - 6 * 60 * 60,
+    sunset: Math.floor(Date.now() / 1_000) + 6 * 60 * 60,
+  },
+  timezone: 10_800,
+  id: 745_044,
+  name: 'İstanbul',
+});
+
+test('current-weather schema accepts a current integer observation timestamp', () => {
+  assert.doesNotThrow(() => currentWeatherUpstreamSchema.parse(sample()));
+});
+
+test('current-weather schema rejects materially future observation timestamps', () => {
+  const payload = sample();
+  payload.dt = Math.floor((Date.now() + 2 * 60_000) / 1_000);
+
+  assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+});
+
+test('current-weather schema rejects negative and fractional observation timestamps', () => {
+  for (const invalidTimestamp of [-1, 1_720_000_000.5]) {
+    const payload = sample();
+    payload.dt = invalidTimestamp;
+    assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+  }
+});
