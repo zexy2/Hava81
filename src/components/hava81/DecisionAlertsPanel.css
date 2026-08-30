@@ -20,6 +20,12 @@
 .decision-alerts small {
   color: var(--color-atlas-muted);
 }
+.decision-alerts .decision-alerts__permission-help {
+  display: block;
+  margin-top: var(--space-xs);
+  color: var(--color-saffron-ink);
+  line-height: 1.45;
+}
 .decision-alerts button {
   flex: 0 0 auto;
   min-height: 2.75rem;

@@ -116,6 +116,11 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         <h2 id="decision-alerts-title">{t('hava81.alerts.title')}</h2>
         <p>{t('hava81.alerts.description')}</p>
         <small>{t('hava81.alerts.quietHours')}</small>
+        {permission === 'denied' ? (
+          <small className="decision-alerts__permission-help" role="status">
+            {t('hava81.alerts.blockedHelp')}
+          </small>
+        ) : null}
       </div>
       <button
         type="button"

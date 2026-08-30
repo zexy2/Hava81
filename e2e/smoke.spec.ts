@@ -814,6 +814,38 @@ test('desktop comparison entry works with two saved cities', async ({ page }, te
 });
 
 
+test('mobile map navigation opens a dedicated map view', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile map-view assertion');
+  await page.goto('/istanbul');
+
+  await page.getByRole('button', { name: 'Harita' }).click();
+  const mapPanel = page.locator('#weather-map-region');
+  await expect(mapPanel).toBeVisible();
+  await expect(page.locator('.atlas-dashboard__primary')).not.toBeVisible();
+  await expect(page.locator('.daily-plan')).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Harita' })).toHaveAttribute('aria-current', 'page');
+
+  const layout = await page.evaluate(() => {
+    const map = document.querySelector<HTMLElement>('#weather-map-region');
+    const nav = document.querySelector<HTMLElement>('.atlas-bottom-nav');
+    if (!map || !nav) throw new Error('Missing map view or bottom navigation');
+    const mapRect = map.getBoundingClientRect();
+    const navRect = nav.getBoundingClientRect();
+    return {
+      scrollY: window.scrollY,
+      mapTop: mapRect.top,
+      mapBottom: mapRect.bottom,
+      navTop: navRect.top,
+      documentHeight: document.documentElement.scrollHeight,
+    };
+  });
+
+  expect(layout.scrollY).toBeLessThan(200);
+  expect(layout.mapTop).toBeGreaterThanOrEqual(0);
+  expect(layout.mapBottom).toBeLessThanOrEqual(layout.navTop + 1);
+  expect(layout.documentHeight).toBeLessThan(1600);
+});
+
 test('mobile saved navigation replaces the today dashboard', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-view assertion');
   await page.addInitScript(() => {
