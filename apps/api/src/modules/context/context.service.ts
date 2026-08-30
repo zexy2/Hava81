@@ -127,7 +127,15 @@ export class ContextSignalsService {
     if (this.openMeteo.apiKey) airUrl.searchParams.set('apikey', this.openMeteo.apiKey);
 
     const airPromise = getJson(airUrl, this.fetchImpl).then(data => {
-      const air = airSchema.parse(data);
+      const parsedAir = airSchema.safeParse(data);
+      if (!parsedAir.success) {
+        throw new AppError(
+          502,
+          'INVALID_CONTEXT_PROVIDER_RESPONSE',
+          'Ek hava bağlamı sağlayıcısı geçersiz veri döndürdü.'
+        );
+      }
+      const air = parsedAir.data;
       const timelineLength = air.hourly.time.length;
       const modeledSeries = [
         air.hourly.uv_index,

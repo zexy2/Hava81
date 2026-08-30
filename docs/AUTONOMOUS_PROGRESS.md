@@ -1192,3 +1192,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - OpenWeather current and forecast temperature fields now use a broad cross-unit physical envelope (-150..400) shared across metric/imperial/standard query modes. Extreme malformed finite values fail closed instead of becoming plausible-looking weather guidance; ordinary terrestrial values across °C/°F/K remain accepted.
 - Current-main gates pass: API 53/53 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: publish/open a replacement PR, then require exact-head green CI and fresh production verification before merge; close superseded #327 only after the replacement is safely represented.
+
+## 2026-08-30 15:58 TRT — classify malformed context payloads as upstream failures
+
+- After PR #334 merged, audited the same Open-Meteo air-context boundary from exact main `94b103a3555edd232a56ded8897fd2d360dfa684` while main CI and rebased PR #335 validate independently.
+- The context service previously let `airSchema.parse()` throw a raw Zod error. The global API handler correctly treats request-side Zod errors as HTTP 400, but that also mislabeled malformed upstream Open-Meteo payloads as bad user input. The provider boundary now uses `safeParse` and converts malformed upstream shapes to HTTP 502 `INVALID_CONTEXT_PROVIDER_RESPONSE` before the request layer sees them.
+- No provider value is repaired, guessed, or synthesized. Request-query validation remains unchanged. Added a regression for an upstream air payload missing its required time axis.
+- Local exact-main gates pass: API 54/54 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: publish this isolated branch, require exact-head CI, and merge only after current-main production is healthy and any earlier API PR is serialized safely.
