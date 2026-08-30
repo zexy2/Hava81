@@ -371,6 +371,7 @@ export const tr = {
       enable: 'Uyarıları aç',
       disable: 'Uyarıları kapat',
       blocked: 'Bildirim engelli',
+      blockedHelp: 'Tekrar açmak için tarayıcı ayarlarından Hava81 bildirimlerine izin ver.',
       rainTitle: '{{city}} · Şemsiye uyarısı',
       rainBody: 'Yakın saatlerde belirgin yağış riski var; şemsiyeyi planına ekle.',
       windTitle: '{{city}} · Kuvvetli rüzgâr',

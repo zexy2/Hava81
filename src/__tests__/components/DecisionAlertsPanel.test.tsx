@@ -53,6 +53,7 @@ describe('DecisionAlertsPanel', () => {
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(/tarayıcı ayarlarından/i);
     expect(requestPermission).not.toHaveBeenCalled();
   });
 

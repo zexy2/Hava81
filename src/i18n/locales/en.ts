@@ -369,6 +369,7 @@ export const en = {
       enable: 'Enable alerts',
       disable: 'Disable alerts',
       blocked: 'Notifications blocked',
+      blockedHelp: 'To enable alerts again, allow Hava81 notifications in your browser settings.',
       rainTitle: '{{city}} · Umbrella alert',
       rainBody: 'There is a meaningful rain risk in the next hours; add an umbrella to your plan.',
       windTitle: '{{city}} · Strong wind',
