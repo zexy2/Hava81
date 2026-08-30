@@ -379,6 +379,7 @@ export const tr = {
     share: {
       action: 'Paylaş',
       copied: 'Kopyalandı',
+      unavailable: 'Paylaşım kullanılamıyor',
     },
     alerts: {
       eyebrow: 'Akıllı uyarılar',

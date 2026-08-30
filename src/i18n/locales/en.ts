@@ -375,6 +375,7 @@ export const en = {
     share: {
       action: 'Share',
       copied: 'Copied',
+      unavailable: 'Sharing unavailable',
     },
     alerts: {
       eyebrow: 'Smart alerts',
