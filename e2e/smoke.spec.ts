@@ -226,6 +226,26 @@ test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, t
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('tablet forecast source links keep touch-friendly target heights', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'tablet-768', 'tablet forecast source target regression');
+  await page.goto('/istanbul');
+
+  const source = page.locator('.hava81-forecast-atlas__source');
+  await expect(source).toBeVisible();
+  const links = source.getByRole('link');
+  await expect(links).toHaveCount(2);
+  const heights = await links.evaluateAll(elements =>
+    elements.map(element => element.getBoundingClientRect().height)
+  );
+
+  expect(heights.every(height => height >= 44)).toBe(true);
+  const layout = await source.evaluate(() => ({
+    pageWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('mobile environment map action keeps its focus ring inside the clipped rail', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment focus regression');
   await page.setViewportSize({ width: 390, height: 844 });
