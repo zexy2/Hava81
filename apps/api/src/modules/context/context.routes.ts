@@ -43,7 +43,10 @@ export const registerContextRoutes = async (
         service.get(query.lat, query.lon, query.marine)
       );
       reply.header('x-cache', result.status);
-      reply.header('cache-control', 'public, max-age=900');
+      reply.header(
+        'cache-control',
+        `public, max-age=${Math.min(900, result.cacheMaxAgeSeconds)}`
+      );
       return {
         ...result.value,
         cacheStatus: result.status,
