@@ -330,3 +330,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — A successful OpenWeather forecast payload must contain at least one forecast item. Empty upstream lists are provider-data failure, not a valid empty forecast state.
 
 - 2026-08-30 — Validate sunrise/sunset only as non-negative integer Unix epochs; do not apply observation future-skew guards to astronomical events because future sunrise/sunset values are legitimate.
+
+- 2026-08-30 — The narrow dashboard must explicitly use a shrinkable `minmax(0, 1fr)` outer grid track and a `min-width: 0` primary wrapper. Hiding horizontal overflow is not a valid mobile-fit fix: 320px browser evidence must prove key card bounds remain inside the viewport.

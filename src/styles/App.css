@@ -496,11 +496,13 @@ textarea:focus-visible {
 
 .atlas-dashboard {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
 }
 
 .atlas-dashboard__primary {
   display: grid;
+  min-width: 0;
   grid-template-columns: minmax(0, 1.55fr) minmax(22rem, 0.9fr);
   gap: var(--space-lg);
   align-items: start;

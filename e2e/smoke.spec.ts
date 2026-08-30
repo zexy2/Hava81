@@ -147,6 +147,28 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
 });
 
+test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single narrow-mobile overflow regression');
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const layout = await page.locator('.atlas-dashboard__primary').evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      viewportWidth: document.documentElement.clientWidth,
+      pageWidth: document.documentElement.scrollWidth,
+    };
+  });
+
+  expect(layout.viewportWidth).toBe(320);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.left).toBeGreaterThanOrEqual(0);
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('core city experience renders and uses a shareable city URL', async ({ page }) => {
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
