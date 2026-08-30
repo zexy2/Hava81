@@ -280,6 +280,52 @@ describe('useWeather', () => {
     await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
   });
 
+  it.each(['timestamp', 'fetchedAt'] as const)(
+    'rejects cached weather with an implausibly future %s',
+    async futureField => {
+      const futureIso = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      localStorage.setItem(
+        'weather_cache',
+        JSON.stringify({
+          data: {
+            cityName: 'İstanbul',
+            country: 'TR',
+            temperature: 24,
+            feelsLike: 24,
+            tempMin: 20,
+            tempMax: 27,
+            humidity: 55,
+            pressure: 1014,
+            visibility: 10000,
+            windSpeed: 3,
+            windDirection: 180,
+            description: 'future current metadata cache',
+            icon: '01d',
+            sunrise: '2026-07-14T02:43:00.000Z',
+            sunset: '2026-07-14T17:34:00.000Z',
+            timestamp:
+              futureField === 'timestamp' ? futureIso : '2026-07-14T12:00:00.000Z',
+            coordinates: { lat: 41.01, lon: 28.97 },
+            clouds: 0,
+            meta: {
+              provider: 'OpenWeather',
+              fetchedAt:
+                futureField === 'fetchedAt' ? futureIso : '2026-07-14T12:00:00.000Z',
+            },
+          },
+          timestamp: Date.now(),
+          language: 'tr',
+        })
+      );
+
+      const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+      await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+      expect(result.current.weather?.description).not.toBe('future current metadata cache');
+    }
+  );
+
   it.each([
     ['timezone offset', { timezoneOffsetSeconds: 99_999 }],
     ['forecast interval', { intervalHours: 0 }],
