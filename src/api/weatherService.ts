@@ -214,6 +214,7 @@ const reviveForecastMeta = (
 const validateDailyForecastItem = (item: SerializedForecast['daily'][number], field: string): void => {
   if (!isFiniteNumber(item.tempMin)) invalidForecastPayload(`${field}.tempMin`);
   if (!isFiniteNumber(item.tempMax)) invalidForecastPayload(`${field}.tempMax`);
+  if (item.tempMin > item.tempMax) invalidForecastPayload(`${field}.tempRange`);
   if (typeof item.description !== 'string' || !item.description.trim()) {
     invalidForecastPayload(`${field}.description`);
   }
