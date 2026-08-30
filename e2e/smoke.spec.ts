@@ -147,6 +147,28 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
 });
 
+test('mobile location denial explains the permission failure', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile geolocation-error regression');
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_success: PositionCallback, failure?: PositionErrorCallback) => {
+          failure?.({ code: 1 } as GeolocationPositionError);
+        },
+      },
+    });
+  });
+  await page.goto('/istanbul');
+
+  await page.getByRole('button', { name: 'Konumumu Kullan' }).click();
+
+  await expect(page.getByText('Konum izni reddedildi')).toBeVisible();
+  await expect(page.getByText('Bir şeyler ters gitti')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Tekrar Dene' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Kapat' })).toBeVisible();
+});
+
 test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single narrow-mobile overflow regression');
   await page.setViewportSize({ width: 320, height: 700 });

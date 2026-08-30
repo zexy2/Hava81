@@ -652,6 +652,30 @@ describe('useWeather', () => {
     expect(result.current.error?.message).not.toContain('provider detail');
   });
 
+  it.each([
+    ['tr', ErrorCode.LOCATION_DENIED, 'Konum izni reddedildi'],
+    ['tr', ErrorCode.LOCATION_UNAVAILABLE, 'Konum bilgisi alınamadı'],
+    ['tr', ErrorCode.LOCATION_TIMEOUT, 'Konum isteği zaman aşımına uğradı'],
+    ['en', ErrorCode.LOCATION_DENIED, 'Location permission denied'],
+    ['en', ErrorCode.LOCATION_UNAVAILABLE, 'Location unavailable'],
+    ['en', ErrorCode.LOCATION_TIMEOUT, 'Location request timed out'],
+  ] as const)(
+    'localizes %s location errors without exposing provider details',
+    async (language, code, expectedMessage) => {
+      (weatherService.getCurrentLocationWeather as Mock).mockRejectedValueOnce(
+        new ApiError('provider detail', code, { retryable: false })
+      );
+      const { result } = renderHook(() => useWeather({ language }));
+
+      await act(async () => {
+        await result.current.fetchCurrentLocation();
+      });
+
+      expect(result.current.error?.message).toBe(expectedMessage);
+      expect(result.current.error?.message).not.toContain('provider detail');
+    }
+  );
+
   it('should clear error when clearError is called', async () => {
     const { result } = renderHook(() => useWeather());
 
