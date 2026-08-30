@@ -283,9 +283,6 @@ const App: React.FC = () => {
         trackProductEvent('compare_opened', { favorites: favorites.length });
         setShowMap(false);
         setActiveNav('saved');
-        if (favorites.length === 0) {
-          handleAddFavorite();
-        }
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (cityRailRef.current) {
@@ -302,7 +299,7 @@ const App: React.FC = () => {
         scrollIntoViewRespectingMotion(overviewRef.current, { block: 'start' });
       }
     },
-    [favorites.length, handleAddFavorite, openMap]
+    [favorites.length, openMap]
   );
 
   const retryCurrentWeather = useCallback(() => {

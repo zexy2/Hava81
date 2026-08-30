@@ -126,6 +126,7 @@ export const en = {
       title: 'City comparison',
       noRain: 'Not expected',
       needTwo: 'Add at least two cities to favorites to compare them.',
+      limitNote: 'The first 3 saved cities are compared: {{cities}}. Your other saved cities stay in the list.',
       partialUnavailable: 'Some city data could not update; available results are shown.',
       unavailable: 'City comparison could not update right now.',
       winnerLabel: 'Leading under these weather criteria',
@@ -270,6 +271,7 @@ export const en = {
       subtitle:
         'Pick up to three activities and Hava81 will re-score the same weather for your plan.',
       choose: 'Activity selection',
+      limitReached: 'Three activities are selected. Deselect one before choosing another.',
       names: {
         walk: 'Walk',
         run: 'Run',

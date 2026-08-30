@@ -54,6 +54,18 @@ describe('useDecisionProfile persistence', () => {
     });
   });
 
+  it('does not silently replace a selected activity when the three-activity limit is reached', () => {
+    localStorage.setItem(
+      'hava81-decision-profile-v1',
+      JSON.stringify({ activities: ['walk', 'run', 'picnic'], temperatureSensitivity: 'balanced' })
+    );
+    const { result } = renderHook(() => useDecisionProfile());
+
+    act(() => result.current.toggleActivity('motorcycle'));
+
+    expect(result.current.profile.activities).toEqual(['walk', 'run', 'picnic']);
+  });
+
   it('sanitizes cross-tab storage updates before applying them', () => {
     const { result } = renderHook(() => useDecisionProfile());
 

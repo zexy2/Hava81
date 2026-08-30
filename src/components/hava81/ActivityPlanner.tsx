@@ -159,15 +159,18 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
         className="activity-planner__chips"
         role="group"
         aria-label={t('hava81.activities.choose')}
+        aria-describedby={profile.activities.length >= 3 ? 'activity-selection-limit' : undefined}
       >
         {activities.map(activity => {
           const active = profile.activities.includes(activity);
+          const disabled = !active && profile.activities.length >= 3;
           return (
             <button
               key={activity}
               type="button"
               aria-pressed={active}
               className={active ? 'is-active' : ''}
+              disabled={disabled}
               onClick={() => toggleActivity(activity)}
             >
               {t(`hava81.activities.names.${activity}`)}
@@ -175,6 +178,11 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
           );
         })}
       </div>
+      {profile.activities.length >= 3 ? (
+        <p id="activity-selection-limit" className="activity-planner__selection-limit">
+          {t('hava81.activities.limitReached')}
+        </p>
+      ) : null}
 
       {plans.length > 0 ? (
         <>

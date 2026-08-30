@@ -198,6 +198,31 @@ describe('ComparePanel', () => {
     expect(screen.queryByText('%80 · 6,0 mm')).not.toBeInTheDocument();
   });
 
+  it('makes the three-city comparison limit explicit when more favorites are saved', async () => {
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'Ankara', lat: 39.93, lon: 32.86 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+            { name: 'Antalya', lat: 36.89, lon: 30.7 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.getByText(/ilk 3 şehir karşılaştırılıyor: İstanbul, Ankara, İzmir/i)
+    ).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Ankara' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Antalya' })).not.toBeInTheDocument();
+    expect(api.getCurrentWeather).toHaveBeenCalledTimes(3);
+  });
+
   it('loads decision metrics and a weather-criteria winner', async () => {
     render(
       <SettingsProvider>

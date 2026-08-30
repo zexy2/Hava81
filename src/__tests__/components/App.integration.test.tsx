@@ -222,6 +222,25 @@ describe('Hava81 app integration', () => {
     expect(screen.getByRole('button', { name: /tekrar dene/i })).toBeInTheDocument();
   });
 
+  it('opens saved cities without silently favoriting the current city', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul' });
+
+    expect(localStorage.getItem('favorites')).toBeNull();
+    await user.click(screen.getByRole('button', { name: /kayıtlı/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /şehir karşılaştırması/i }, { timeout: 3_000 })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/en az iki şehri favorilere ekle/i)).toBeVisible();
+    expect(localStorage.getItem('favorites')).toBeNull();
+    expect(screen.getByRole('button', { name: /favorilere ekle/i })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+  });
+
   it('adds a favorite and exposes saved-city comparison navigation', async () => {
     const user = userEvent.setup();
     renderApp();

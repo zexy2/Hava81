@@ -846,6 +846,22 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
   expect(layout.documentHeight).toBeLessThan(1600);
 });
 
+test('mobile saved navigation does not create a favorite just by opening the view', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-view mutation regression');
+  await page.goto('/istanbul');
+  await expect(page.evaluate(() => localStorage.getItem('favorites'))).resolves.toBeNull();
+
+  await page.getByRole('button', { name: 'Kayıtlı' }).click();
+
+  await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+  await expect(page.getByText(/en az iki şehri favorilere ekle/i)).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('favorites'))).toBeNull();
+  await expect(page.getByRole('button', { name: /favorilere ekle/i })).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
+});
+
 test('mobile saved navigation replaces the today dashboard', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-view assertion');
   await page.addInitScript(() => {
@@ -872,6 +888,9 @@ test('activity preference and time range change the personalized plan', async ({
   await picnic.click();
   await expect(picnic).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
+  await expect(page.getByText(/Üç aktivite seçtin/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
 
   await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
   await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
