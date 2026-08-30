@@ -69,6 +69,7 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
 const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
+const MAX_CONTEXT_FUTURE_SKEW_MS = 60_000;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -248,7 +249,9 @@ const validateContextSignalsPayload = (
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidForecastPayload(field);
   };
+  const latestPlausibleContextTimestamp = Date.now() + MAX_CONTEXT_FUTURE_SKEW_MS;
 
+  invalid(fetchedAt.getTime() > latestPlausibleContextTimestamp, 'context.fetchedAt');
   invalid(typeof data.provider !== 'string' || !data.provider.trim(), 'context.provider');
   invalid(typeof data.attribution !== 'string' || !data.attribution.trim(), 'context.attribution');
   for (const field of ['uvIndexMax', 'dustMax', 'grassPollenMax', 'olivePollenMax'] as const) {
@@ -263,7 +266,14 @@ const validateContextSignalsPayload = (
     'context.freshForSeconds'
   );
   if (data.marine) {
-    reviveForecastDate(data.marine.observedAt, 'context.marine.observedAt');
+    const marineObservedAt = reviveForecastDate(
+      data.marine.observedAt,
+      'context.marine.observedAt'
+    );
+    invalid(
+      marineObservedAt.getTime() > latestPlausibleContextTimestamp,
+      'context.marine.observedAt'
+    );
     invalid(
       data.marine.waveHeight !== undefined &&
         (!isFiniteNumber(data.marine.waveHeight) || data.marine.waveHeight < 0),

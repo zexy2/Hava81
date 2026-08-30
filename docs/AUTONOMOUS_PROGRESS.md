@@ -944,3 +944,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued the same trust-boundary audit independently while main CI #633 was queued. Fresh forecast/hourly metadata previously parsed `fetchedAt` but accepted materially future provider-fetch timestamps.
 - Added a shared one-minute future-skew guard for `forecast.meta.fetchedAt` and `hourly.meta.fetchedAt`; future forecast item times remain valid forecast data and are intentionally not constrained. Added separate regressions for both endpoints.
 - Local gates: focused weatherService 100/100, full frontend 369/369, type-check, lint, 81-city production build, and production dependency audit with 0 vulnerabilities all pass.
+
+## 2026-08-30 05:52 TRT — modeled context future-clock guard prepared
+
+- While PR #257 CI ran, continued independently from `main` `de80d90e53c660cb77fae1d223861d5a4e9d0ebd`; after #257 merged and main #636 passed, this work was rebased onto `5218005e859236514695ab34c0931988f295c46b`, preserving both append-only checkpoints.
+- Modeled context `fetchedAt` and optional marine `observedAt` reject timestamps more than one minute in the future. These are observation/fetch timestamps, so unlike forecast item times they are not allowed to point materially ahead.
+- Pre-rebase gates passed: weatherService 100/100, full frontend 369/369, type-check, lint, 81-city production build, dependency audit 0 vulnerabilities. Combined gates are rerun on the rebased head before lease-protected push.

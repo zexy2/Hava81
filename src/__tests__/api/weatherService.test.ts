@@ -740,6 +740,27 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it.each(['context fetch time', 'marine observation time'])(
+    'rejects materially future modeled %s from the BFF',
+    async field => {
+      const futureTimestamp = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+      mockGet.mockResolvedValue({
+        provider: 'Open-Meteo',
+        fetchedAt: field === 'context fetch time' ? futureTimestamp : '2026-08-29T17:00:00.000Z',
+        attribution: 'Open-Meteo · CC BY 4.0',
+        units: {},
+        ...(field === 'marine observation time'
+          ? { marine: { observedAt: futureTimestamp, waveHeight: 0.8 } }
+          : {}),
+      });
+
+      await expect(weatherService.getContextSignals(41.01, 28.97, true)).rejects.toMatchObject({
+        code: ErrorCode.API_ERROR,
+        retryable: true,
+      });
+    }
+  );
+
   it.each([
     ['invalid fetchedAt', { fetchedAt: 'invalid' }],
     ['negative UV', { uvIndexMax: -1 }],
