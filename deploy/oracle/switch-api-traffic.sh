@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lock/hava81-api-operation.lock}"
 INHERITED_LOCK_FD="${HAVA81_API_OPERATION_LOCK_FD:-}"
 if [[ -n "$INHERITED_LOCK_FD" ]]; then
@@ -32,18 +34,29 @@ cp "$CFG" "$BACKUP"
 READY_URL="http://127.0.0.1:${TARGET_PORT}/api/v1/health/ready"
 PUBLIC_READY_URL="https://api.hava81.zekiakgul.dev/api/v1/health/ready"
 TARGET_READY_FILE="$(mktemp /tmp/hava81-target-ready.XXXXXX.json)"
+TARGET_READY_HEADERS="$(mktemp /tmp/hava81-target-ready.XXXXXX.headers)"
 PUBLIC_READY_FILE="$(mktemp /tmp/hava81-public-ready.XXXXXX.json)"
+PUBLIC_READY_HEADERS="$(mktemp /tmp/hava81-public-ready.XXXXXX.headers)"
 cleanup() {
-  rm -f "$TARGET_READY_FILE" "$PUBLIC_READY_FILE"
+  rm -f "$TARGET_READY_FILE" "$TARGET_READY_HEADERS" "$PUBLIC_READY_FILE" "$PUBLIC_READY_HEADERS"
 }
 trap cleanup EXIT
 
 wait_for_ready() {
   local url="$1"
   local output="$2"
+  local headers="$3"
+  local expected_origin="${4:-}"
   local attempt
+  local -a curl_args=(-fsS --max-time 5 -D "$headers")
+  local -a validator_args=("$output" "$headers")
+  if [[ -n "$expected_origin" ]]; then
+    curl_args+=(-H "Origin: $expected_origin")
+    validator_args+=("$expected_origin")
+  fi
   for attempt in 1 2 3; do
-    if curl -fsS --max-time 5 "$url" >"$output"; then
+    if curl "${curl_args[@]}" "$url" >"$output" && \
+      python3 "$SCRIPT_DIR/validate-api-readiness.py" "${validator_args[@]}"; then
       return 0
     fi
     sleep 2
@@ -58,7 +71,7 @@ restore_previous_config() {
   systemctl reload nginx
 }
 
-if ! wait_for_ready "$READY_URL" "$TARGET_READY_FILE"; then
+if ! wait_for_ready "$READY_URL" "$TARGET_READY_FILE" "$TARGET_READY_HEADERS"; then
   echo "target API on 127.0.0.1:${TARGET_PORT} failed readiness checks; traffic unchanged" >&2
   exit 1
 fi
@@ -87,7 +100,11 @@ if ! systemctl reload nginx; then
   exit 1
 fi
 sleep 1
-if ! wait_for_ready "$PUBLIC_READY_URL" "$PUBLIC_READY_FILE"; then
+if ! wait_for_ready \
+  "$PUBLIC_READY_URL" \
+  "$PUBLIC_READY_FILE" \
+  "$PUBLIC_READY_HEADERS" \
+  "https://hava81.zekiakgul.dev"; then
   restore_previous_config
   echo "public readiness failed; traffic rolled back to the previous API target" >&2
   exit 1
