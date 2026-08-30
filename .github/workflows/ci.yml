@@ -50,6 +50,8 @@ jobs:
       - run: npm run api:type-check
       - run: npm run api:test
       - run: npm run api:build
+      - name: Verify API deployment shell syntax
+        run: bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh
       - name: Verify API deploy operation locking
         run: bash scripts/test-api-operation-lock.sh
       - name: Verify API rollback target state
