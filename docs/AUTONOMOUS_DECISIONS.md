@@ -377,3 +377,9 @@ This log records product and engineering decisions made during the autonomous im
 - Treat temperature, precipitation probability, weather code, wind speed and day/night flag as required members of every Open-Meteo hourly row.
 - If any required row value is missing, reject the provider response rather than shortening the requested forecast. A missing edge row can otherwise evade a post-filter continuity check and make the displayed horizon look complete when it is not.
 - Preserve fail-soft omission for optional decision fields such as apparent temperature, humidity, accumulation, gust, visibility and UV; this decision does not broaden provider data or fabricate replacements.
+
+## 2026-08-30 — Fresh current-weather temperature validation follows requested units
+
+- Use the same broad physical temperature domain (-100..100°C) at the browser BFF trust boundary, converted exactly for imperial (-148..212°F) and standard (173.15..373.15K) requests.
+- Do not apply a Celsius-only bound to `getCurrentWeather`, because its public client contract permits `metric`, `imperial`, and `standard` units.
+- Reject out-of-domain finite values rather than clamping or converting malformed provider/BFF data into plausible guidance.
