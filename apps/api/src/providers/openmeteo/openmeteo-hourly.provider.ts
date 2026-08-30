@@ -191,6 +191,20 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           "Saatlik tahmin sağlayıcısı tutarsız uzunlukta veri serileri döndürdü.",
         );
       }
+      const requiredHourlySeries = [
+        raw.temperature_2m,
+        raw.precipitation_probability,
+        raw.weather_code,
+        raw.wind_speed_10m,
+        raw.is_day,
+      ];
+      if (requiredHourlySeries.some(series => series.some(value => value === null))) {
+        throw new AppError(
+          502,
+          "NON_CONTIGUOUS_HOURLY_PROVIDER_RESPONSE",
+          "Saatlik tahmin sağlayıcısı eksik zorunlu veri döndürdü.",
+        );
+      }
       const hourly: HourlyForecastProviderResult["hourly"] = [];
       for (let index = 0; index < length; index += 1) {
         const temp = raw.temperature_2m[index];

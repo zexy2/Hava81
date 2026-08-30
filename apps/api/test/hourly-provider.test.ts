@@ -164,6 +164,37 @@ test('Open-Meteo hourly adapter rejects gaps in required one-hour data instead o
   );
 });
 
+test('Open-Meteo hourly adapter rejects missing required data at forecast edges instead of shortening the horizon', async () => {
+  for (const temperatures of [[null, 23], [24, null]]) {
+    const fakeFetch = (async () =>
+      new Response(
+        JSON.stringify({
+          utc_offset_seconds: 10800,
+          hourly: {
+            time: [1787936400, 1787940000],
+            temperature_2m: temperatures,
+            precipitation_probability: [5, 10],
+            weather_code: [0, 1],
+            wind_speed_10m: [3, 3],
+            is_day: [1, 1],
+          },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      )) as typeof fetch;
+
+    const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
+
+    await assert.rejects(
+      () => provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' }),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'NON_CONTIGUOUS_HOURLY_PROVIDER_RESPONSE');
+        return true;
+      },
+      'expected an incomplete required edge row to be rejected',
+    );
+  }
+});
+
 test('Open-Meteo hourly adapter rejects impossible timezone offsets and negative forecast epochs', async () => {
   const cases = [
     { label: 'timezone offset', utcOffset: 50_401, hourlyTime: 1_787_936_400, dailyTime: 1_787_950_800 },
