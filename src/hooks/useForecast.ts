@@ -74,32 +74,45 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           .getContextSignals(coords.lat, coords.lon, supportsMarineContext(cityName))
           .catch(() => null);
 
-        const forecastData = await weatherService.getForecast(coords.lat, coords.lon, language);
+        let forecastData: Awaited<ReturnType<typeof weatherService.getForecast>> | null = null;
+        let forecastError: unknown;
+        try {
+          forecastData = await weatherService.getForecast(coords.lat, coords.lon, language);
+        } catch (err) {
+          forecastError = err;
+        }
         if (requestId !== requestIdRef.current) return;
 
-        // The three-hour OpenWeather forecast is the resilient baseline. Render it immediately;
-        // the optional real-hourly layer may upgrade the Atlas later without blocking decisions.
-        setDaily(forecastData.daily);
-        setHourly(forecastData.hourly);
-        setDisplayHourly(forecastData.hourly);
-        setDisplayMeta(forecastData.meta);
-        setMeta(forecastData.meta);
-        lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
+        if (forecastData) {
+          // The three-hour OpenWeather forecast is the resilient baseline. Render it immediately;
+          // the optional real-hourly layer may upgrade the Atlas later without blocking decisions.
+          setDaily(forecastData.daily);
+          setHourly(forecastData.hourly);
+          setDisplayHourly(forecastData.hourly);
+          setDisplayMeta(forecastData.meta);
+          setMeta(forecastData.meta);
+          lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
+        }
 
         const [hourlyData, aqData, contextData] = await Promise.all([
           hourlyRequest,
           airQualityRequest,
           contextRequest,
         ]);
+        if (!forecastData && !hourlyData?.hourly.length) {
+          throw forecastError ?? new Error('Tahmin alınamadı');
+        }
         if (requestId !== requestIdRef.current) return;
         if (hourlyData?.hourly.length) {
           // Upgrade the visible/decision hourly series and the calendar-day extrema together.
-          // OpenWeather remains the immediate/failure fallback while Open-Meteo supplies complete
-          // local-day min/max values even when the page is opened late in the day.
+          // OpenWeather remains the immediate fallback when available; a valid dedicated hourly
+          // response can also carry the forecast surface when that baseline request itself fails.
           setHourly(hourlyData.hourly);
           setDisplayHourly(hourlyData.hourly.slice(0, 24));
           setDisplayMeta(hourlyData.meta);
+          if (!forecastData) setMeta(hourlyData.meta);
           if (hourlyData.daily?.length) setDaily(hourlyData.daily);
+          lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
         }
         setAirQuality(aqData);
         setContextSignals(contextData);

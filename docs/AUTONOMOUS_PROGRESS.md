@@ -1435,7 +1435,6 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Local gates pass: RouteWeatherPanel focused 13/13; full frontend 48 files / 444 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: after #366 resolves and its production pipeline is healthy, rebase this prepared branch onto exact current main, preserve append-only checkpoints, rerun combined gates, then publish as its own bounded PR.
 
-
 ## 2026-08-30 23:00 TRT — route endpoint branch rebased and revalidated
 
 - Rebased `automation/hava81-run11-third-2256` onto exact main `14e0146eca727f6f523a2a2bab9907261ccff236` after #366 merged; preserved all append-only comparison checkpoints during the sole documentation conflict.
@@ -1443,8 +1442,16 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Main pipeline #891 for `14e0146eca727f6f523a2a2bab9907261ccff236` is still in progress; direct public root and İstanbul route are 200. Keep this branch prepared and do not merge it until #891 and fresh production checks are green.
 - Next action: while #891 runs, continue a separate independent audit. Once #891 is green and production is freshly healthy, publish this exact route branch, require exact-head CI, then merge only after the same gates are re-verified.
 
-
 ## 2026-08-30 23:02 TRT — post-#366 production gate cleared for route branch
 
 - Main pipeline #891 for exact main `14e0146eca727f6f523a2a2bab9907261ccff236` completed successfully. Fresh public checks after completion: root 200, İstanbul 200, API readiness 200 with `no-store`, provider OpenWeather circuit closed with zero consecutive failures, and production-origin CORS preflight 204 with the expected allow-origin.
 - The prepared route-endpoint branch remains unchanged apart from this append-only checkpoint. Next action: publish exact head after remote branch lease check, require exact-head CI, and continue an independent forecast fail-soft workstream while it validates.
+
+## 2026-08-30 23:04 TRT — use real dedicated-hourly data when baseline forecast fails
+
+- Continued independently from exact main `14e0146eca727f6f523a2a2bab9907261ccff236` in `/home/ubuntu/hava81-auto-run11-fourth-2301` while route PR #367 validates separately.
+- Audited `useForecast` source resilience. The dedicated hourly request already runs independently and is treated as optional, but a failure of the three-hour baseline forecast previously jumped directly to the error path before a successful dedicated-hourly result could be used. This could remove forecast/decision detail even though a complete real hourly series had arrived.
+- The hook now captures the baseline error without fabricating a fallback, waits for the already-started dedicated-hourly request, and succeeds only when that response contains a non-empty real hourly series. It uses that response's own metadata and optional daily extrema; if neither baseline nor dedicated hourly data is usable, the original error path remains unchanged. Same-city continuity still retains prior successful data only when both sources fail.
+- Added a regression proving baseline failure + dedicated hourly success yields the real hourly series/meta/daily data with no error, and tightened the existing same-city failure regression so both sources fail before asserting retained prior data. No values are synthesized, merged, clamped, interpolated, or relabeled.
+- Local gates pass: useForecast 8/8; full frontend 48 files / 445 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: keep this branch local while #367 validates. After #367 merges and its exact main pipeline/production checks are green, rebase onto current main, preserve append-only checkpoints, rerun combined gates, then publish independently.
