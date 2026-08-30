@@ -84,6 +84,43 @@ describe('useWeather', () => {
     });
   });
 
+  it('refreshes stale city weather when a long-lived tab becomes visible again', async () => {
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+
+    const now = result.current.lastUpdated?.getTime();
+    expect(now).toBeDefined();
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue((now ?? 0) + 5 * 60 * 1000 + 1);
+    try {
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(2));
+      expect(weatherService.getCurrentLocationWeather).not.toHaveBeenCalled();
+    } finally {
+      dateNow.mockRestore();
+    }
+  });
+
+  it('preserves location mode when stale weather refreshes after returning to the tab', async () => {
+    const { result } = renderHook(() => useWeather());
+    await act(async () => {
+      await result.current.fetchCurrentLocation();
+    });
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('Ankara'));
+    expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(1);
+
+    const now = result.current.lastUpdated?.getTime();
+    expect(now).toBeDefined();
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue((now ?? 0) + 5 * 60 * 1000 + 1);
+    try {
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await waitFor(() => expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(2));
+      expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
+    } finally {
+      dateNow.mockRestore();
+    }
+  });
+
   it('revives cached weather dates before restoring a fresh cache entry', async () => {
     localStorage.setItem(
       'weather_cache',

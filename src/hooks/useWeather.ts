@@ -372,6 +372,44 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
+  // Long-lived tabs can otherwise keep an old decision surface indefinitely. Refresh only
+  // when the app becomes visible again, the last successful result is stale, and no request
+  // is already running. Preserve whether the active result came from city search or location.
+  useEffect(() => {
+    const refreshStaleVisibleWeather = () => {
+      if (
+        document.visibilityState !== 'visible' ||
+        !lastUpdated ||
+        Date.now() - lastUpdated.getTime() <= STALE_TIME ||
+        weatherAsync.isLoading ||
+        locationAsync.isLoading
+      ) {
+        return;
+      }
+
+      if (locationAsync.data) {
+        void fetchCurrentLocation();
+        return;
+      }
+
+      const activeCity = weatherAsync.data?.cityName ?? city ?? initialCity;
+      if (activeCity.trim()) void fetchWeather(activeCity);
+    };
+
+    document.addEventListener('visibilitychange', refreshStaleVisibleWeather);
+    return () => document.removeEventListener('visibilitychange', refreshStaleVisibleWeather);
+  }, [
+    city,
+    fetchCurrentLocation,
+    fetchWeather,
+    initialCity,
+    lastUpdated,
+    locationAsync.data,
+    locationAsync.isLoading,
+    weatherAsync.data,
+    weatherAsync.isLoading,
+  ]);
+
   // Combine error from both async operations while keeping raw provider/exception details out of the UI.
   const rawError = weatherAsync.error || locationAsync.error;
   const error = rawError
