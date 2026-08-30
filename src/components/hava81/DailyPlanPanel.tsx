@@ -64,7 +64,7 @@ const factorKey: Record<Hava81ScoreFactor, string> = {
 export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelProps) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, getTemperatureSymbol } = useSettings();
-  const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
+  const [shareState, setShareState] = useState<'idle' | 'copied' | 'unavailable'>('idle');
   const trackedPlanRef = useRef<string | null>(null);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
@@ -152,13 +152,19 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         }
       }
 
-      if (!navigator.clipboard) return;
+      if (!navigator.clipboard) {
+        setShareState('unavailable');
+        window.setTimeout(() => setShareState('idle'), 2400);
+        return;
+      }
       await navigator.clipboard.writeText(payload.clipboardText);
       setShareState('copied');
       window.setTimeout(() => setShareState('idle'), 1600);
       trackProductEvent('share_created', { city: weather.cityName, score: plan.score });
     } catch {
-      // Sharing is optional; clipboard permission/storage failures must not affect the daily plan.
+      // Sharing is optional; surface transport failure without affecting the daily plan.
+      setShareState('unavailable');
+      window.setTimeout(() => setShareState('idle'), 2400);
     }
   };
 
@@ -171,10 +177,18 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         </div>
         <div className="daily-plan__header-actions">
           <button type="button" className="daily-plan__share" onClick={() => void shareDecision()}>
-            {shareState === 'copied' ? t('hava81.share.copied') : t('hava81.share.action')}
+            {shareState === 'copied'
+              ? t('hava81.share.copied')
+              : shareState === 'unavailable'
+                ? t('hava81.share.unavailable')
+                : t('hava81.share.action')}
           </button>
           <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            {shareState === 'copied' ? t('hava81.share.copied') : ''}
+            {shareState === 'copied'
+              ? t('hava81.share.copied')
+              : shareState === 'unavailable'
+                ? t('hava81.share.unavailable')
+                : ''}
           </span>
           <div className={`daily-plan__score daily-plan__score--${plan.band}`}>
             <strong>{plan.score}</strong>

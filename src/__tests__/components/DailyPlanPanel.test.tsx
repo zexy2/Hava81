@@ -162,6 +162,34 @@ describe('DailyPlanPanel sharing', () => {
     expect(screen.getByRole('status')).toHaveTextContent('hava81.share.copied');
   });
 
+  it('surfaces an unavailable state when no share transport exists', async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    const button = screen.getByRole('button', { name: 'hava81.share.action' });
+    await user.click(button);
+
+    expect(button).toHaveFocus();
+    expect(button).toHaveTextContent('hava81.share.unavailable');
+    expect(screen.getByRole('status')).toHaveTextContent('hava81.share.unavailable');
+  });
+
+  it('surfaces an unavailable state when clipboard fallback is rejected', async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error('clipboard denied')) },
+    });
+
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    await user.click(screen.getByRole('button', { name: 'hava81.share.action' }));
+
+    expect(screen.getByRole('button')).toHaveTextContent('hava81.share.unavailable');
+    expect(screen.getByRole('status')).toHaveTextContent('hava81.share.unavailable');
+  });
+
   it('does not copy after the user cancels native sharing', async () => {
     const user = userEvent.setup();
     const abort = new Error('cancelled');

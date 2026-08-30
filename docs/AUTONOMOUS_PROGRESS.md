@@ -1268,10 +1268,18 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Focused RouteWeatherPanel gates pass: 10/10 tests, TypeScript, ESLint, and `git diff --check`.
 - Next action: rebase this bounded frontend-only branch onto current main, preserve append-only checkpoints, then run the full frontend/build/audit gates before publishing a PR.
 
-
 ## 2026-08-30 18:05 TRT — preserve browser history across explicit city changes
 
 - Continued independently from exact main `d73eb228e4b1c5bd49dad560b851ea43e79c4382` in `/home/ubuntu/hava81-auto-run11-history-1803` while PRs #346/#347 validate; neither pending branch was mutated.
 - The app already listened for `popstate`, but every weather-driven city URL change used `replaceState`, so explicit city searches could erase the previous city instead of creating navigable browser history. A change between two valid province routes now uses `pushState`; initial/canonical-path normalization still uses `replaceState` so first load does not create a duplicate history entry.
 - Added an integration regression that selects İzmir from İstanbul and asserts an `/izmir/` history entry is pushed. Weather/provider/decision semantics are unchanged.
 - Validation passes: focused App integration 10/10; full frontend 47 files / 424 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+
+## 2026-08-30 17:52 TRT — surface share transport failures instead of silent no-op
+
+- Continued independently from exact main `43defd6a88ae5695fc6eaad7668ad053007236bd` in `/home/ubuntu/hava81-auto-run11-next-1747` while rebased route UX PR #345 revalidates.
+- Daily-plan sharing previously did nothing visible when neither Web Share nor Clipboard was available, or when clipboard permission/write failed. The share control now exposes a temporary localized unavailable state and announces it through the existing polite live region while preserving focus.
+- Explicit native-share `AbortError` remains user cancellation with no fallback/no error state; successful native or clipboard sharing still records analytics only after transport success. No weather, scoring, recommendation, provider, or safety semantics changed.
+- Added regressions for missing share transports and rejected clipboard writes. Focused DailyPlanPanel tests pass 9/9; full frontend passes 47 files / 423 tests; TypeScript and ESLint pass; 81-city production build/service-worker stamping passes; production dependency audit reports 0 vulnerabilities.
+- Worktree/branch: `/home/ubuntu/hava81-auto-run11-next-1747`, `automation/hava81-run11-next-1747`.
+- Next action: commit/push/open this bounded frontend-only PR, require exact-head green CI, and serialize it after #345. Rebase onto the then-current main with append-only docs preserved before merge.
