@@ -1170,3 +1170,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt only the bounded accessibility behavior from exact current main `2ed6ccabfe50c292b275c206daf400b4ead02d60`: dry hourly slots no longer repeat a hidden “no precipitation expected” sentence for every hour.
 - The aggregate accessible rain summary remains, and non-zero precipitation probability or measurable accumulation still receives explicit hourly precipitation detail. No weather values, precipitation semantics, provider attribution, or scoring logic change.
 - Next action: run focused/full frontend, type, lint, production build, dependency audit and diff gates; publish as a replacement PR only if all pass, then retire superseded #320/#316 after the replacement is safely represented.
+
+## 2026-08-30 14:32 TRT — fail closed on misaligned UV/dust/pollen model timelines
+
+- Independent context-signal audit on production-green main `7674b2a3581b17e556e21e0f6106cf01641a667d` found that Open-Meteo air-quality model arrays could be shorter than the `time` axis or contain malformed model timestamps. `finiteMaxForWindow()` would then ignore unmatched/invalid slots, potentially understating the next-24-hour UV, dust, or pollen maximum.
+- The air-model trust boundary now requires every provided UV/dust/grass-pollen/olive-pollen series to exactly match the provider time-axis length, and every model timestamp must parse as an explicit/GMT instant. Misaligned or malformed timelines fail closed with `INVALID_CONTEXT_PROVIDER_RESPONSE`; no missing risk value is inferred or treated as zero.
+- Added regressions for a short UV series and an invalid model timestamp. Local API gates pass: 52/52 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- This branch is independent of Open-Meteo hourly PRs #324/#325. Publish separately, require exact-head green CI, and rebase after any earlier API PR merges before considering production. Production API remains on 4002 with 4001 retained for rollback/canary.

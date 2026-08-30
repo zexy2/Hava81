@@ -126,7 +126,25 @@ export class ContextSignalsService {
     airUrl.searchParams.set('timezone', 'GMT');
     if (this.openMeteo.apiKey) airUrl.searchParams.set('apikey', this.openMeteo.apiKey);
 
-    const airPromise = getJson(airUrl, this.fetchImpl).then(data => airSchema.parse(data));
+    const airPromise = getJson(airUrl, this.fetchImpl).then(data => {
+      const air = airSchema.parse(data);
+      const timelineLength = air.hourly.time.length;
+      const modeledSeries = [
+        air.hourly.uv_index,
+        air.hourly.dust,
+        air.hourly.grass_pollen,
+        air.hourly.olive_pollen,
+      ].filter((series): series is Array<number | null> => series !== undefined);
+      const timelineInvalid = air.hourly.time.some(time => !Number.isFinite(parseGmtModelTime(time)));
+      if (timelineInvalid || modeledSeries.some(series => series.length !== timelineLength)) {
+        throw new AppError(
+          502,
+          'INVALID_CONTEXT_PROVIDER_RESPONSE',
+          'Ek hava bağlamı sağlayıcısı tutarsız zaman serileri döndürdü.'
+        );
+      }
+      return air;
+    });
     const marinePromise = includeMarine
       ? (() => {
           const marineUrl = new URL('/v1/marine', this.openMeteo.marineBaseUrl);
