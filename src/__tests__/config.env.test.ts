@@ -31,4 +31,21 @@ describe("browser environment config", () => {
     expect(config.api.maxRetries).toBe(3);
     expect(config.features.enableAnalytics).toBe(false);
   });
+
+  it("rejects partially numeric, fractional, and unsafe integer settings", async () => {
+    vi.stubEnv("VITE_CACHE_TTL", "600000ms");
+    vi.stubEnv("VITE_MAX_RETRIES", "1.5");
+
+    const firstImport = await import("../config/env.config");
+    expect(firstImport.config.cache.ttl).toBe(300000);
+    expect(firstImport.config.api.maxRetries).toBe(3);
+
+    vi.resetModules();
+    vi.stubEnv("VITE_CACHE_TTL", "9007199254740992");
+    vi.stubEnv("VITE_MAX_RETRIES", "5retries");
+
+    const secondImport = await import("../config/env.config");
+    expect(secondImport.config.cache.ttl).toBe(300000);
+    expect(secondImport.config.api.maxRetries).toBe(3);
+  });
 });
