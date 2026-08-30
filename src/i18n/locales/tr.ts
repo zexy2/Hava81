@@ -517,6 +517,7 @@ export const tr = {
   },
   errors: {
     networkError: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.',
+    rateLimit: 'Çok fazla istek gönderildi. Kısa bir süre sonra tekrar deneyin.',
     apiKeyMissing: 'API anahtarı yapılandırılmamış.',
     locationDenied: 'Konum izni reddedildi',
     locationUnavailable: 'Konum bilgisi alınamadı',

@@ -1326,3 +1326,18 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Full validation after the fixes: 47 files / 430 frontend tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check` pass.
 - Observer collected at 20:43 TRT reports main pipeline #866 successful, production root/İstanbul/API/CORS healthy, nginx on 4002, OpenWeather circuit closed. Host disk is high at 91.7% but still inside the configured 92% / 2 GiB guard; cleanup remains a prioritized operational task.
 - Next action: remove editor backup artifacts, inspect the exact diff, commit/push/open this bounded frontend-only PR, require exact-head CI, and continue independent disk/UX reliability work while it runs.
+
+## 2026-08-30 20:54 TRT — make rate-limit failures actionable without leaking provider details
+
+- Continued from exact `c857501f884679d445f2421711a0984a003f4949` in isolated `/home/ubuntu/hava81-auto-run11-error-audit-2052` while PR #356 and the independently merged #355 main pipeline validate.
+- Audited localized current-weather error handling. `RATE_LIMIT` failures were sanitized correctly but fell through to the generic “something went wrong” copy, which hides the useful fact that the user should pause briefly before retrying. Added dedicated Turkish/English rate-limit copy and mapped only the existing `RATE_LIMIT` code to it.
+- Provider detail remains hidden; retry classification, automatic retry policy, weather values, scoring and safety semantics are unchanged. Added both-language hook regressions.
+- Local gates on this exact base pass: focused useWeather 49/49; full frontend 47 files / 431 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Do not publish against stale base. After #355 main pipeline is green and #356 is serialized, rebase this branch onto the then-current main, preserve append-only docs, rerun combined gates, and publish only if still clean.
+
+## 2026-08-30 21:04 TRT — rate-limit branch rebased after #356
+
+- PR #356 merged exact rebased head `8b91f8350e1af282db74657b56d97e922b35e349` as main `22f4f5332cf53cee86d186c885a48a9862238689`.
+- Rebased `automation/hava81-run11-error-audit-2052` onto that exact main. The only conflict was append-only `docs/AUTONOMOUS_PROGRESS.md`; preserved both retry-affordance and rate-limit checkpoints. No code conflicts occurred.
+- Combined post-rebase gates pass: 47 files / 432 frontend tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Next action: publish this bounded frontend-only branch, require exact-head CI and fresh production/main verification before merge; keep independent service-worker resilience work moving while CI runs.

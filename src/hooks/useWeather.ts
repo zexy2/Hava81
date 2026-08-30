@@ -427,6 +427,8 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
             return translateError('errors.networkError');
           case ErrorCode.NOT_FOUND:
             return translateError('weather.cityNotFound');
+          case ErrorCode.RATE_LIMIT:
+            return translateError('errors.rateLimit');
           case ErrorCode.LOCATION_DENIED:
             return translateError('errors.locationDenied');
           case ErrorCode.LOCATION_UNAVAILABLE:
