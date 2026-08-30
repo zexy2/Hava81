@@ -1250,3 +1250,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The browser decision-alert panel already described Hava81-generated rain/wind/air/score guidance, but did not explicitly state that these are not official MGM MeteoUyarı warnings. Added a visible localized disclosure in Turkish and English without changing notification triggers, thresholds, provider data, or delivery behavior.
 - Regression coverage now asserts the modeled-vs-official distinction is rendered. Local gates pass: DecisionAlertsPanel 8/8; full frontend 46 files / 416 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: commit/push/open this separate frontend-only PR. It can be serialized after #342; rebase onto current main after any earlier merge, preserve append-only documentation, rerun combined gates, and require exact-head green CI before merge.
+
+## 2026-08-30 17:28 TRT — bound route-weather segment temperature domain
+
+- Continued independently from post-#342 main `8615626d975216b061570bd869a5ff83a49fdf88` in `/home/ubuntu/hava81-auto-run11-route-domain-1727` while rebased PR #343 validates.
+- Route-weather segments are produced from metric hourly/forecast weather, but the browser BFF boundary previously accepted any finite `segment.temperature`. Reused the existing metric physical trust domain (-100..100°C) so an extreme malformed route temperature cannot become plausible-looking travel guidance.
+- No route score, route interpolation, precipitation, wind, provider, or disclaimer behavior changed; no value is clamped, repaired, converted, or synthesized.
+- Added a route regression for an out-of-domain 101°C segment. Local gates pass: weatherService BFF 117/117; full frontend 47 files / 420 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: commit/push/open this separate frontend-only PR. Serialize it after #343; if main moves, rebase with append-only documentation preserved, rerun combined gates, and require exact-head green CI plus fresh production verification before merge.

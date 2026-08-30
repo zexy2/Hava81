@@ -923,6 +923,7 @@ describe('weatherService BFF client', () => {
     ['segment fraction above one', { segment: { fraction: 1.1 } }],
     ['segment latitude outside globe', { segment: { lat: 91 } }],
     ['invalid segment ETA', { segment: { eta: 'invalid' } }],
+    ['route temperature outside metric domain', { segment: { temperature: 101 } }],
     ['precipitation above 100%', { segment: { precipitationProbability: 101 } }],
     ['negative precipitation amount', { segment: { precipitationMm: -0.1 } }],
     ['negative wind speed', { segment: { windSpeed: -1 } }],

@@ -398,7 +398,10 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
     invalid(!isFiniteNumber(segment.lat) || segment.lat < -90 || segment.lat > 90, `${prefix}.lat`);
     invalid(!isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180, `${prefix}.lon`);
     invalid(!validDateString(segment.eta), `${prefix}.eta`);
-    invalid(!isFiniteNumber(segment.temperature), `${prefix}.temperature`);
+    invalid(
+      !isPlausibleTemperature(segment.temperature, DEFAULT_WEATHER_PARAMS.units),
+      `${prefix}.temperature`
+    );
     invalid(
       !isFiniteNumber(segment.precipitationProbability) ||
         segment.precipitationProbability < 0 ||

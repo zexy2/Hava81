@@ -386,3 +386,5 @@ This log records product and engineering decisions made during the autonomous im
 
 - 2026-08-30 — Fresh forecast temperatures use the same broad physical metric trust domain as current-weather validation because the browser forecast endpoints currently request/contract metric data. Daily extrema, hourly temperature, and optional apparent temperature outside -100..100°C fail closed rather than being displayed, clamped, or repaired.
 - 2026-08-30 — Hava81 browser decision alerts must visibly identify themselves as modeled Hava81 guidance and explicitly state that they are not official MGM MeteoUyarı warnings. This disclosure is product/safety provenance only; it must not imply an MGM feed or change modeled alert thresholds.
+
+- 2026-08-30 — Route-weather segment temperatures are metric by service contract and must use the same -100..100°C browser trust domain as other metric forecast values. Reject out-of-domain finite route temperatures rather than allowing them to influence travel guidance or route scores.
