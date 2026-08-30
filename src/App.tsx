@@ -227,10 +227,10 @@ const App: React.FC = () => {
 
   const handleSubmit = useCallback(
     (selectedCity?: string) => {
-      setIsMobileSearchOpen(false);
+      closeSearch();
       fetchWeather(selectedCity || city);
     },
-    [city, fetchWeather]
+    [city, closeSearch, fetchWeather]
   );
 
   const handleSelectFavorite = useCallback(
