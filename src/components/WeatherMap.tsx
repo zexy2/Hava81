@@ -34,11 +34,12 @@ const MapController: React.FC<{ center: [number, number] }> = ({ center }) => {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const targetZoom = map.getContainer().clientWidth < 768 ? 7 : 8;
     if (reduceMotion) {
-      map.setView(center, 8);
+      map.setView(center, targetZoom);
       return;
     }
-    map.flyTo(center, 8, { duration: 0.4 });
+    map.flyTo(center, targetZoom, { duration: 0.4 });
   }, [center, map]);
 
   return null;

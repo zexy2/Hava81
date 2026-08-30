@@ -903,11 +903,20 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
 
 test('mobile map province marker previews the city before switching views', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map preview assertion');
+  await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/istanbul');
   await page.getByRole('button', { name: 'Harita' }).click();
 
   const bursaMarker = page.locator('.weather-map__plate-marker').filter({ hasText: '16' });
   await expect(bursaMarker).toBeVisible();
+  const markerBounds = await bursaMarker.boundingBox();
+  const mapBounds = await page.locator('.weather-map__container').boundingBox();
+  expect(markerBounds).not.toBeNull();
+  expect(mapBounds).not.toBeNull();
+  expect(markerBounds!.x).toBeGreaterThanOrEqual(mapBounds!.x);
+  expect(markerBounds!.y).toBeGreaterThanOrEqual(mapBounds!.y);
+  expect(markerBounds!.x + markerBounds!.width).toBeLessThanOrEqual(mapBounds!.x + mapBounds!.width);
+  expect(markerBounds!.y + markerBounds!.height).toBeLessThanOrEqual(mapBounds!.y + mapBounds!.height);
   await bursaMarker.click();
 
   await expect(page).toHaveURL(/\/istanbul\/?$/);
