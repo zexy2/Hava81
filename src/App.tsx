@@ -197,7 +197,9 @@ const App: React.FC = () => {
     if (!weather) return;
     const path = cityPath(weather.cityName);
     if (path && window.location.pathname !== path) {
-      window.history.replaceState({ city: weather.cityName }, '', path);
+      const routeCity = cityFromPathname(window.location.pathname);
+      const historyMethod = routeCity && routeCity.name !== weather.cityName ? 'pushState' : 'replaceState';
+      window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
     document.title = t('hava81.cityDocumentTitle', { city: weather.cityName });
     if (path) {
