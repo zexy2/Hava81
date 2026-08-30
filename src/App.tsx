@@ -245,7 +245,11 @@ const App: React.FC = () => {
     [closeSettings, fetchWeather, handleToggleFavorite, openSearch, openSettings, weather]
   );
 
-  useKeyboardShortcuts(shortcuts, { enabled: !isSettingsOpen });
+  const { getShortcutDisplay } = useKeyboardShortcuts(shortcuts, { enabled: !isSettingsOpen });
+  const searchShortcut = shortcuts.find(shortcut => shortcut.key === 'k');
+  const settingsShortcut = shortcuts.find(shortcut => shortcut.key === ',');
+  const searchShortcutLabel = searchShortcut ? getShortcutDisplay(searchShortcut) : 'Ctrl+K';
+  const settingsShortcutLabel = settingsShortcut ? getShortcutDisplay(settingsShortcut) : 'Ctrl+,';
 
   const handleSubmit = useCallback(
     (selectedCity?: string) => {
@@ -683,7 +687,8 @@ const App: React.FC = () => {
           <footer className="atlas-footer">
             <span>Hava81 · {t('hava81.tagline')}</span>
             <span className="atlas-footer__shortcuts">
-              <kbd>⌘K</kbd> {t('common.keyboardSearch')} <kbd>⌘,</kbd>{' '}
+              <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
+              <kbd>{settingsShortcutLabel}</kbd>{' '}
               {t('common.keyboardSettings')}
             </span>
           </footer>

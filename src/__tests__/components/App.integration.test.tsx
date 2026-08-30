@@ -176,6 +176,8 @@ describe('Hava81 app integration', () => {
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
     ).toBeInTheDocument();
+    expect(screen.getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
+    expect(screen.getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   }, 12_000);
 
