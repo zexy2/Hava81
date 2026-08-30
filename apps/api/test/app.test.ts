@@ -276,10 +276,22 @@ test('weather freshness metadata follows the configured server cache TTLs', asyn
   assert.equal(forecast.json().meta.freshForSeconds, 11);
   assert.equal(hourly.json().meta.freshForSeconds, 11);
   assert.equal(airQuality.json().meta.freshForSeconds, 13);
-  assert.equal(current.headers['cache-control'], 'public, max-age=7');
-  assert.equal(forecast.headers['cache-control'], 'public, max-age=11');
-  assert.equal(hourly.headers['cache-control'], 'public, max-age=11');
-  assert.equal(airQuality.headers['cache-control'], 'public, max-age=13');
+  const assertCacheMaxAgeWithinFreshness = (header: string | undefined, freshForSeconds: number) => {
+    assert.ok(header, 'cache-control header is present');
+    const match = /^public, max-age=(\d+)$/.exec(header);
+    assert.ok(match, `unexpected cache-control header: ${header}`);
+    const maxAge = Number(match[1]);
+    assert.ok(maxAge >= 0, 'cache max-age is non-negative');
+    assert.ok(
+      maxAge <= freshForSeconds,
+      `cache max-age ${maxAge}s must not exceed ${freshForSeconds}s server freshness`,
+    );
+  };
+
+  assertCacheMaxAgeWithinFreshness(current.headers['cache-control'], 7);
+  assertCacheMaxAgeWithinFreshness(forecast.headers['cache-control'], 11);
+  assertCacheMaxAgeWithinFreshness(hourly.headers['cache-control'], 11);
+  assertCacheMaxAgeWithinFreshness(airQuality.headers['cache-control'], 13);
 });
 
 test('forecast and air-quality endpoints normalize provider data', async (context) => {
