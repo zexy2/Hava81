@@ -62,6 +62,42 @@ describe('RouteWeatherPanel', () => {
     expect(result).toHaveTextContent('%20 · 0,4 mm');
   });
 
+
+  it('shows a dry label instead of 0% for a dry route segment', async () => {
+    const user = userEvent.setup();
+    api.getRouteWeather.mockResolvedValueOnce({
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 300,
+      requestedDeparture: '2026-08-28T18:00:00.000Z',
+      score: 90,
+      segments: [
+        {
+          fraction: 0,
+          lat: 41.01,
+          lon: 28.97,
+          eta: '2026-08-28T18:00:00.000Z',
+          temperature: 25,
+          precipitationProbability: 0,
+          precipitationMm: 0,
+          windSpeed: 4,
+          description: 'açık',
+          score: 92,
+          risk: 'low',
+        },
+      ],
+      disclaimer: 'Modeled corridor guidance.',
+    });
+
+    renderPanel();
+    await user.click(screen.getByText('Rota havası'));
+    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+
+    const result = await screen.findByRole('status');
+    expect(result).toHaveTextContent('Yağış yok');
+    expect(result).not.toHaveTextContent('%0');
+  });
+
   it('renders route segment temperature and wind with the selected units', async () => {
     localStorage.setItem(
       'user-settings',

@@ -14,7 +14,7 @@ import type {
   HourlyForecast,
   NormalizedWeatherData,
 } from '../../types';
-import { formatPrecipitationAmount, pickMostSignificantPrecipitation } from '../../utils/precipitation';
+import { formatPrecipitationSummary, pickMostSignificantPrecipitation } from '../../utils/precipitation';
 import './ComparePanel.css';
 
 interface ComparePanelProps {
@@ -30,14 +30,6 @@ interface CompareRow {
   plan: DailyPlan;
   activityPlan?: ActivityPlan;
 }
-
-const formatPrecipitationSummary = (locale: string, probability: number, amount: number) => {
-  const probabilityText = locale.startsWith('en')
-    ? `${Math.round(probability * 100)}%`
-    : `%${Math.round(probability * 100)}`;
-  const amountText = formatPrecipitationAmount(amount, locale);
-  return amountText ? `${probabilityText} · ${amountText}` : probabilityText;
-};
 
 export function ComparePanel({ cities, language }: ComparePanelProps) {
   const { t, i18n } = useTranslation();
@@ -202,7 +194,12 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                   </span>
                   <span>
                     {t('hava81.compare.rain')}{' '}
-                    <b>{formatPrecipitationSummary(i18n.language, peakPop, peakPrecipitationMm)}</b>
+                    <b>{formatPrecipitationSummary(
+                      peakPop,
+                      peakPrecipitationMm,
+                      i18n.language,
+                      t('hava81.compare.noRain')
+                    )}</b>
                   </span>
                   <span>
                     {t('weather.wind')}{' '}

@@ -6,7 +6,7 @@ import { weatherService } from '../../api/weatherService';
 import { TURKISH_CITIES } from '../../constants/cities';
 import type { RouteWeatherResult } from '../../types';
 import { citySlug } from '../../utils/cityRoute';
-import { formatPrecipitationAmount } from '../../utils/precipitation';
+import { formatPrecipitationSummary } from '../../utils/precipitation';
 import {
   formatTurkeyTime,
   parseTurkeyLocalInputValue,
@@ -53,13 +53,13 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   );
   const temperatureSymbol = getTemperatureSymbol();
   const windSpeedSymbol = getWindSpeedSymbol();
-  const formatPrecipitation = (probabilityPercent: number, amount?: number) => {
-    const probability = Math.round(probabilityPercent);
-    const parts = [i18n.language.startsWith('en') ? `${probability}%` : `%${probability}`];
-    const amountText = formatPrecipitationAmount(amount, i18n.language);
-    if (amountText) parts.push(amountText);
-    return parts.join(' · ');
-  };
+  const formatPrecipitation = (probabilityPercent: number, amount?: number) =>
+    formatPrecipitationSummary(
+      probabilityPercent / 100,
+      amount,
+      i18n.language,
+      t('hava81.route.noRain')
+    );
   const invalidateRequest = () => {
     requestIdRef.current += 1;
     setResult(null);
