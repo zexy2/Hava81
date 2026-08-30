@@ -1399,3 +1399,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added an App integration regression that keeps the forecast promise pending, confirms current İstanbul weather is already rendered, and requires the forecast loading status to be exposed before resolving the forecast.
 - Combined post-rebase gates pass: focused App integration 15/15; full frontend 48 files / 442 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: commit/push/open this bounded accessibility PR, require exact-head CI, and continue production/main observation plus independent audit while it validates.
+
+## 2026-08-30 22:47 TRT — keep repeated share feedback stable
+
+- Continued from exact post-#364 main `555527e093839727cfeba241fe0c561b54236c28` in isolated worktree `/home/ubuntu/hava81-auto-run11-post364-2243` while main pipeline #887 validated independently.
+- Audited the Daily Plan share feedback timer. Every copy/unavailable result scheduled an independent reset, so a second share before the first timeout expired could have its fresh success/error feedback cleared early by the stale earlier timer.
+- Added one owned feedback timer: a new share result cancels the previous reset, starts a fresh bounded interval, and component unmount clears the timer. Sharing transport, analytics success semantics, weather values, scoring, and guidance are unchanged.
+- Added a fake-time regression proving a second clipboard share keeps `copied` visible for the full interval measured from the latest action rather than the first.
+- Local gates on exact post-#364 main pass: DailyPlanPanel 10/10; full frontend 48 files / 443 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: commit/push/open a bounded frontend-only PR, require exact-head CI, and continue independent disk/UX reliability work while it validates. Before any merge, re-check current main, exact PR head, production health and pipeline state.
