@@ -1390,3 +1390,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Validation before serialization: focused App+useWeather 65/65; full frontend 48 files / 440 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - PR #362 merged after exact-head CI #882 and fresh production verification as new main `d37dc67a6982935e8a975a7144a922e1da4ba808`. Next action: commit this isolated change, rebase it onto that exact main preserving the #362 append-only checkpoint, rerun combined gates, then publish/open its own PR and require exact-head CI.
 - Post-rebase combined validation on exact `d37dc67a6982935e8a975a7144a922e1da4ba808` also passes: focused App+useWeather 65/65; full frontend 48 files / 441 tests (including #362 regression); TypeScript; ESLint; 81-city build/service-worker stamping; production dependency audit 0 vulnerabilities; diff-check.
+
+## 2026-08-30 22:03 TRT — make forecast skeleton an announced loading status
+
+- Continued independently on `automation/hava81-run11-loading-a11y-2200`, then rebased onto exact main `c01d555009097bcf601799c045f5a8b1848fdf51` immediately after #363 merged; the pending/merged refresh branch was never mutated from this workstream.
+- Audited the forecast-only skeleton shown after current weather is available but before forecast data arrives. It had a generic `aria-label` but no live/status semantics, so a screen-reader user could receive the current decision surface without an announcement that forecast detail was still loading.
+- The skeleton is now a polite `role=status` live region containing localized screen-reader-only loading text; visual skeleton/layout and forecast/weather semantics are unchanged.
+- Added an App integration regression that keeps the forecast promise pending, confirms current İstanbul weather is already rendered, and requires the forecast loading status to be exposed before resolving the forecast.
+- Combined post-rebase gates pass: focused App integration 15/15; full frontend 48 files / 442 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: commit/push/open this bounded accessibility PR, require exact-head CI, and continue production/main observation plus independent audit while it validates.

@@ -206,6 +206,26 @@ describe('Hava81 app integration', () => {
     }
   });
 
+  it('announces forecast loading while the current decision surface is already available', async () => {
+    let resolveForecast!: (value: typeof forecast) => void;
+    const pendingForecast = new Promise<typeof forecast>(resolve => {
+      resolveForecast = resolve;
+    });
+    service.getForecast.mockImplementation(() => pendingForecast);
+
+    renderApp();
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    await waitFor(() => expect(service.getForecast).toHaveBeenCalled());
+
+    const loadingStatus = screen.getByRole('status');
+    expect(loadingStatus).toHaveTextContent(/yükleniyor/i);
+
+    await act(async () => {
+      resolveForecast(forecast);
+      await pendingForecast;
+    });
+  });
+
   it('retries a failed location request as location instead of falling back to the typed city', async () => {
     const user = userEvent.setup();
     service.getCurrentLocationWeather
