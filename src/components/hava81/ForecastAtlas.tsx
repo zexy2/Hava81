@@ -57,9 +57,17 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const realHourlyHorizon = Math.min(REAL_HOURLY_HORIZON, hourly.length);
   const hourlyHeading =
     intervalHours === 1
-      ? settings.language === 'en'
-        ? `Hourly forecast · next ${realHourlyHorizon} ${realHourlyHorizon === 1 ? 'hour' : 'hours'}`
-        : `Saatlik tahmin · sonraki ${realHourlyHorizon} saat`
+      ? t('hava81.forecastAtlas.hourlyForecastNext', {
+          hours: realHourlyHorizon,
+          unit:
+            settings.language === 'en'
+              ? t(
+                  realHourlyHorizon === 1
+                    ? 'hava81.forecastAtlas.hourUnitSingular'
+                    : 'hava81.forecastAtlas.hourUnitPlural'
+                )
+              : '',
+        })
       : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 
   const hourlyData = useMemo(() => {
@@ -183,7 +191,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   aria-pressed={displayIntervalHours === hours}
                   onClick={() => selectDisplayInterval(hours)}
                 >
-                  {settings.language === 'en' ? `${hours}-hour` : `${hours} saatlik`}
+                  {t('hava81.forecastAtlas.intervalOption', { hours })}
                 </button>
               ))}
             </div>
@@ -201,9 +209,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   {' · '}
                   <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
                   {' · '}
-                  {settings.language === 'en'
-                    ? 'Formatted by Hava81'
-                    : 'Hava81 tarafından biçimlendirildi'}
+                  {t('hava81.forecastAtlas.formattedByHava81')}
                 </>
               ) : meta.attribution && meta.attribution !== meta.provider ? (
                 <> · {meta.attribution}</>

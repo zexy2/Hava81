@@ -105,6 +105,11 @@ export const en = {
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
       intervalControlLabel: 'Forecast interval',
+      hourlyForecastNext: 'Hourly forecast · next {{hours}} {{unit}}',
+      hourUnitSingular: 'hour',
+      hourUnitPlural: 'hours',
+      intervalOption: '{{hours}}-hour',
+      formattedByHava81: 'Formatted by Hava81',
       intervalForecast: 'Forecast every {{hours}} hours',
       hourlySource: 'Source:',
       hourlyRegion: 'Scrollable hourly forecast chart and values',

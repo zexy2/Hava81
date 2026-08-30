@@ -1101,3 +1101,17 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Reconfirmed remote #308 head `8918a73899608f45c76892f43f0f6bc1eca68971`, rebased cleanly onto `579931b8bf2fef41a95dff2f1e7bc0700efc0000`, and reran combined gates.
 - Current-main validation passes: targeted weatherService 110/110; full frontend 46 files / 402 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: amend/push with exact lease against `8918a73899608f45c76892f43f0f6bc1eca68971`, require the new exact-head CI to pass, then reverify observer + GitHub head/mergeability + production immediately before merge.
+
+## 2026-08-30 11:54 TRT — rebuild Forecast Atlas localized copy on current main
+
+- Legacy PR #289 remained green but conflicted with current main, so it was left untouched. Rebuilt its presentation-only localization change from exact main `54ec99c33c86377afaefbe986e8a35a56be19fb5` in a new isolated branch.
+- Forecast Atlas hourly horizon heading, interval buttons, and Open-Meteo “Formatted by Hava81” attribution now route through the shared TR/EN locale tables instead of inline language-condition strings. Weather values, time horizons, provider attribution, and scoring semantics are unchanged.
+- Local current-main gates pass in an isolated Node 24 container: ForecastAtlas 8/8, frontend TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Temporary dependency/build artifacts were removed immediately after validation. Next action: publish as a replacement PR, require exact-head CI, and retire #289 only after the replacement is green.
+
+## 2026-08-30 12:27 TRT — PR #307 rebuilt on post-#308 main
+
+- Diagnosed the previous #307 CI failure with real Chromium. Its four Forecast Atlas/browser flows passed; the sole full-suite failure was an unrelated stale commute-preparation text assertion inherited from the old base. Running that exact commute flow on current main passed.
+- After PR #308 merged as `16a994d1d68ec0048ae874e5dd253af0726c546e`, rebased `automation/hava81-forecast-copy-rebuild-1153` onto that exact main. The only conflicts were append-only autonomous docs; both valid histories were preserved.
+- Combined current-main gates now pass: ForecastAtlas 8/8; full frontend 46 files / 402 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; full Chromium Playwright 39 passed / 60 intentionally skipped / 0 failed; `git diff --check`.
+- Next action: amend/push #307 using an explicit lease against remote `0b1a4f4bbb290e3ce6bee4641a743fd81b5e8354`, require new exact-head green CI, and continue independent work while CI/main deployment runs.
