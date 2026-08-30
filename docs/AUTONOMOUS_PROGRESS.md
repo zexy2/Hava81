@@ -1364,3 +1364,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Existing-window reuse is now fail-soft: each focusable client is attempted inside a bounded try/catch; a stale/unavailable client is skipped, another client is tried, and the existing same-origin-validated `openWindow(url)` fallback remains last. External notification URLs are still rejected to `/`.
 - No weather/provider/scoring/alert-threshold semantics changed. Focused service-worker tests 3/3 and pre-rebase full frontend 47 files / 433 tests, TypeScript, ESLint, 81-city build/service-worker stamping, dependency audit 0 vulnerabilities, and diff-check pass.
 - Next action: rebase after #359 onto exact current main, preserve both append-only checkpoints, rerun combined gates, then publish/open an isolated PR with exact-head CI.
+
+## 2026-08-30 21:31 TRT — preserve usable forecast during same-city refresh failure
+
+- Audited forecast refresh behavior independently from exact main while PR #360 validated. `useForecast.fetch()` cleared all successful forecast/air/context state before every request, so a stale same-city refresh could erase still-usable decision data before the provider answered; if that refresh failed, users were left with only an error/retry surface.
+- Added a last-successful request identity keyed by exact coordinates plus language. Only a refresh for that same successful identity keeps the previous forecast visible while loading/failing. Different coordinates or a language change still clear old data immediately, preventing cross-city or cross-language stale content.
+- Added regressions proving same-city failure retains the prior hourly/meta forecast while a different-city request clears the old forecast as soon as it starts. No weather values are synthesized, repaired, clamped, or reclassified.
+- Pre-rebase local gates pass: focused useForecast 7/7; full frontend 48 files / 437 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; dependency audit 0 vulnerabilities; and diff-check.
+- Next action: serialize after #360, rebase onto exact current main preserving append-only checkpoints, rerun combined gates, then publish as a separate frontend-only PR requiring exact-head green CI and fresh production verification.

@@ -210,4 +210,50 @@ describe('useForecast', () => {
 
     expect(result.current.hourly[0]?.temp).toBe(25);
   });
+  it('keeps the last successful forecast when a same-city refresh fails', async () => {
+    const { result } = renderHook(() => useForecast('tr'));
+    const coords = { lat: 41.01, lon: 28.97 };
+
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+    expect(result.current.displayHourly[0]?.temp).toBe(25);
+
+    (weatherService.getForecast as Mock).mockRejectedValueOnce(new Error('provider unavailable'));
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+
+    expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.displayHourly[0]?.temp).toBe(25);
+    expect(result.current.displayMeta?.intervalHours).toBe(1);
+  });
+
+  it('does not retain another city forecast when a different-city refresh starts', async () => {
+    type ForecastResponse = Awaited<ReturnType<typeof weatherService.getForecast>>;
+    let rejectNext: (reason?: unknown) => void;
+    const pending = new Promise<ForecastResponse>((_, reject) => {
+      rejectNext = reject;
+    });
+    const { result } = renderHook(() => useForecast('tr'));
+
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+    expect(result.current.displayHourly).not.toHaveLength(0);
+
+    (weatherService.getForecast as Mock).mockReturnValueOnce(pending);
+    act(() => {
+      void result.current.fetch({ lat: 38.42, lon: 27.14 });
+    });
+
+    expect(result.current.displayHourly).toHaveLength(0);
+    expect(result.current.displayMeta).toBeNull();
+
+    await act(async () => {
+      rejectNext!(new Error('provider unavailable'));
+      await pending.catch(() => undefined);
+    });
+  });
+
 });
