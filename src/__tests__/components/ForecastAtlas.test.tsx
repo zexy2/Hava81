@@ -149,7 +149,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(region).getByText('1%')).toBeInTheDocument();
   });
 
-  it('keeps the available horizon while exposing 1h, 3h and 6h sampling intervals', () => {
+  it('keeps the available horizon while exposing useful compact sampling intervals', () => {
     renderRangeAtlas(8);
 
     expect(
@@ -160,10 +160,15 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       'aria-pressed',
       'true'
     );
-    expect(within(interval).getByRole('button', { name: '3 saatlik' })).toBeInTheDocument();
+    expect(
+      within(interval)
+        .getAllByRole('button')
+        .map(button => button.textContent)
+    ).toEqual(['1s', '2s', '3s', '4s', '6s']);
+    expect(within(interval).getByRole('button', { name: '2 saatlik' })).toBeInTheDocument();
     expect(within(interval).getByRole('button', { name: '6 saatlik' })).toBeInTheDocument();
-    expect(within(interval).queryByRole('button', { name: '12 saat' })).not.toBeInTheDocument();
-    expect(within(interval).queryByRole('button', { name: '24 saat' })).not.toBeInTheDocument();
+    expect(within(interval).queryByRole('button', { name: '8 saatlik' })).not.toBeInTheDocument();
+    expect(within(interval).queryByRole('button', { name: '12 saatlik' })).not.toBeInTheDocument();
   });
 
   it('presents the hourly trend as a summarized visual forecast surface', () => {
@@ -182,7 +187,11 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     const area = container.querySelector('.hava81-forecast-atlas__area');
     const curve = container.querySelector('.hava81-forecast-atlas__curve');
     expect(area).toBeInTheDocument();
-    expect(container.querySelectorAll('.hava81-forecast-atlas__guide')).toHaveLength(3);
+    const guides = container.querySelectorAll('.hava81-forecast-atlas__guide');
+    const axisLabels = container.querySelectorAll('.hava81-forecast-atlas__axis-label');
+    expect(guides.length).toBeGreaterThanOrEqual(2);
+    expect(axisLabels).toHaveLength(guides.length);
+    expect(Array.from(axisLabels).every(label => label.textContent?.endsWith('°'))).toBe(true);
     expect(curve?.getAttribute('d')).toContain(' C ');
 
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
@@ -232,6 +241,8 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(summary).not.toHaveTextContent('En düşük');
     expect(summary).not.toHaveTextContent('En yüksek');
     expect(summary).toHaveTextContent('Yağış piki');
+    expect(document.querySelectorAll('.hava81-forecast-atlas__guide')).toHaveLength(1);
+    expect(document.querySelectorAll('.hava81-forecast-atlas__axis-label')).toHaveLength(1);
   });
 
   it('changes sampling cadence without changing the 24-hour forecast horizon', async () => {
@@ -244,7 +255,11 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       'aria-pressed',
       'true'
     );
+    expect(within(interval).getAllByRole('button')).toHaveLength(7);
     expect(within(region).getAllByRole('listitem')).toHaveLength(24);
+
+    await user.click(within(interval).getByRole('button', { name: '2 saatlik' }));
+    expect(within(region).getAllByRole('listitem')).toHaveLength(12);
 
     await user.click(within(interval).getByRole('button', { name: '3 saatlik' }));
     expect(within(interval).getByRole('button', { name: '3 saatlik' })).toHaveAttribute(
@@ -272,6 +287,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         .getAllByRole('listitem')
         .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
     ).toEqual(['00:00', '06:00', '12:00', '18:00']);
+
+    await user.click(within(interval).getByRole('button', { name: '12 saatlik' }));
+    expect(within(region).getAllByRole('listitem')).toHaveLength(2);
   });
   it('keeps the 24-hour summary stable when display sampling changes', async () => {
     const user = userEvent.setup();

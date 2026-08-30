@@ -94,24 +94,31 @@
 }
 
 .hava81-forecast-atlas__range {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2px;
+  display: flex;
+  gap: 6px;
   width: 100%;
   min-width: 0;
-  padding: 4px;
-  background: color-mix(in srgb, var(--forecast-field) 88%, var(--forecast-line));
-  border: 1px solid color-mix(in srgb, var(--forecast-line) 84%, transparent);
-  border-radius: 12px;
+  overflow-x: auto;
+  padding: 2px 1px 4px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+
+.hava81-forecast-atlas__range::-webkit-scrollbar {
+  display: none;
 }
 
 .hava81-forecast-atlas__range-button {
+  flex: 0 0 auto;
+  min-width: 48px;
   min-height: 44px;
-  border: 0;
-  border-radius: 8px;
-  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--forecast-line) 84%, transparent);
+  border-radius: 999px;
+  padding: 6px 12px;
   color: var(--forecast-muted);
-  background: transparent;
+  background: color-mix(in srgb, var(--forecast-field) 86%, transparent);
+  scroll-snap-align: start;
   font: inherit;
   font-size: 0.75rem;
   font-weight: 650;
@@ -129,8 +136,9 @@
 .hava81-forecast-atlas__range-button[aria-pressed='true'] {
   color: var(--forecast-teal);
   background: var(--forecast-paper);
+  border-color: color-mix(in srgb, var(--forecast-teal) 56%, var(--forecast-line));
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--forecast-teal) 42%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--forecast-teal) 22%, transparent),
     0 1px 2px rgb(14 44 50 / 0.08),
     0 3px 10px rgb(14 44 50 / 0.06);
 }
@@ -202,6 +210,7 @@
 }
 
 .hava81-forecast-atlas__hourly-viewport {
+  position: relative;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: x proximity;
@@ -238,6 +247,33 @@
   stroke-width: 1;
   stroke-dasharray: 3 7;
   vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__axis {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: 34px;
+  height: 0;
+  pointer-events: none;
+}
+
+.hava81-forecast-atlas__axis-label {
+  position: absolute;
+  left: 5px;
+  display: inline-flex;
+  min-width: 27px;
+  min-height: 18px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border-radius: 5px;
+  color: var(--forecast-muted);
+  background: color-mix(in srgb, var(--forecast-field) 88%, transparent);
+  font-size: 0.625rem;
+  font-weight: 650;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .hava81-forecast-atlas__area {
