@@ -313,3 +313,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — Fresh current-weather observation and provider-fetch timestamps must fail closed when materially in the future, using the same one-minute clock-skew tolerance as persisted current-weather cache. Sunrise/sunset remain exempt because future astronomical event times are normal.
 
 - 2026-08-30 — Fresh forecast metadata (`forecast.meta.fetchedAt` and `hourly.meta.fetchedAt`) must use the same one-minute future clock-skew trust boundary as current weather metadata. Materially future provider-fetch timestamps fail closed as retryable API-data errors; forecast observation times themselves remain forecast data and are not constrained by this metadata guard.
+
+- 2026-08-30 — Air-quality provider metadata `fetchedAt` must fail closed when more than one minute in the future. Hava81 must not present pollutant measurements as trustworthy when their fetch timestamp is materially ahead of the client clock.

@@ -944,3 +944,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued the same trust-boundary audit independently while main CI #633 was queued. Fresh forecast/hourly metadata previously parsed `fetchedAt` but accepted materially future provider-fetch timestamps.
 - Added a shared one-minute future-skew guard for `forecast.meta.fetchedAt` and `hourly.meta.fetchedAt`; future forecast item times remain valid forecast data and are intentionally not constrained. Added separate regressions for both endpoints.
 - Local gates: focused weatherService 100/100, full frontend 369/369, type-check, lint, 81-city production build, and production dependency audit with 0 vulnerabilities all pass.
+
+## 2026-08-30 05:55 TRT — air-quality future metadata guard prepared
+
+- While main `5218005e859236514695ab34c0931988f295c46b` pipeline and PR #258 CI run, continued independently from exact current main in a separate detached worktree.
+- Air-quality `meta.fetchedAt` now rejects timestamps more than one minute in the future instead of treating materially future pollutant metadata as trustworthy.
+- Added a focused regression. Local gates: weatherService 101/101, full frontend 370/370, type-check, lint, 81-city production build, dependency audit 0 vulnerabilities.

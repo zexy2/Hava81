@@ -875,6 +875,25 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it('rejects materially future air-quality metadata timestamps', async () => {
+    mockGet.mockResolvedValue({
+      aqi: 1,
+      aqiLabel: 'Good',
+      pm25: 5,
+      pm10: 8,
+      o3: 20,
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+      },
+    });
+
+    await expect(weatherService.getAirQuality(38.42, 27.14)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
   it.each([
     ['AQI below provider scale', { aqi: 0 }],
     ['AQI above provider scale', { aqi: 6 }],

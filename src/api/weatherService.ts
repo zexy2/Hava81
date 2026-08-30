@@ -69,6 +69,7 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
 const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
+const MAX_AIR_QUALITY_FUTURE_SKEW_MS = 60_000;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -312,10 +313,15 @@ const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
     'airQuality.meta.freshForSeconds'
   );
 
+  const meta = reviveMeta(data.meta);
+  if (meta.fetchedAt.getTime() > Date.now() + MAX_AIR_QUALITY_FUTURE_SKEW_MS) {
+    invalidWeatherPayload('airQuality.meta.fetchedAt');
+  }
+
   return {
     ...data,
     aqiLabel: data.aqiLabel.trim(),
-    meta: reviveMeta(data.meta),
+    meta,
   };
 };
 
