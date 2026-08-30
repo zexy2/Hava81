@@ -569,6 +569,9 @@
     overflow-wrap: normal;
   }
 
+}
+
+@media (max-width: 64rem), (pointer: coarse) {
   .hava81-forecast-atlas__source a {
     display: inline-flex;
     min-height: 44px;
