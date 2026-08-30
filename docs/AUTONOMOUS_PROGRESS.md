@@ -1341,3 +1341,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebased `automation/hava81-run11-error-audit-2052` onto that exact main. The only conflict was append-only `docs/AUTONOMOUS_PROGRESS.md`; preserved both retry-affordance and rate-limit checkpoints. No code conflicts occurred.
 - Combined post-rebase gates pass: 47 files / 432 frontend tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
 - Next action: publish this bounded frontend-only branch, require exact-head CI and fresh production/main verification before merge; keep independent service-worker resilience work moving while CI runs.
+
+## 2026-08-30 21:18 TRT — align HTTP 408 retry semantics with retry transport
+
+- Audited the browser BFF transport on exact main `e0f3e45b834e130743f63e4286f2650a0833c150`. `RETRY_CONFIG` already treats HTTP 408 as retryable, and the `ApiError` constructor independently does the same, but `ApiError.fromHttpStatus()` maintained a second hard-coded retry list that omitted 408. After retry exhaustion, the same 408 could therefore surface as non-retryable generic failure copy.
+- Added an explicit 408 timeout mapping (`NETWORK_ERROR`, localized timeout message) and removed the duplicate retryability list from `fromHttpStatus()`, delegating to the constructor's single status/code policy. 429/5xx behavior remains retryable as before and non-retryable statuses remain unchanged.
+- Regression coverage asserts 408 status/code/message/retryability. Local gates pass in Node 24 container: focused ApiError/weatherService 118/118, full frontend 47 files / 433 tests, TypeScript, ESLint, 81-city production build/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Host disk pressure was reduced from 93% to 92% by deleting only the ignored `node_modules` directory from an unrelated dirty worktree; its dirty source edit and Git branch were preserved.
+- Next action: publish/open this bounded frontend-only PR, require exact-head green CI, and merge only after direct head/mergeability plus fresh production verification. Continue an independent audit while CI runs.
