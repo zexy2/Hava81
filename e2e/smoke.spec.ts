@@ -1345,6 +1345,54 @@ test('decision plate stays readable at 200 percent text size', async ({ page }, 
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('activity planner reflows at narrow 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile activity text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const planner = page.locator('.activity-planner');
+  await planner.scrollIntoViewIfNeeded();
+  await expect(planner).toBeVisible();
+  const layout = await planner.evaluate(element => {
+    const fits = (node: Element | null) => {
+      if (!(node instanceof HTMLElement)) return false;
+      return node.scrollWidth <= node.clientWidth + 1;
+    };
+    const selectors = [
+      '.activity-planner__header',
+      '.activity-planner__header h2',
+      '.activity-planner__header p',
+      '.activity-planner__window',
+      '.activity-planner__window-copy',
+      '.activity-planner__window-copy > strong',
+      '.activity-planner__window-help summary',
+    ];
+    const labels = Array.from(element.querySelectorAll('.activity-planner__window > label span'));
+    const rect = element.getBoundingClientRect();
+    return {
+      plannerFits: fits(element),
+      sectionsFit: selectors.every(selector => fits(element.querySelector(selector))),
+      labelsFit: labels.every(fits),
+      left: rect.left,
+      right: rect.right,
+      viewportWidth: document.documentElement.clientWidth,
+      pageWidth: document.documentElement.scrollWidth,
+    };
+  });
+
+  expect(layout.plannerFits).toBe(true);
+  expect(layout.sectionsFit).toBe(true);
+  expect(layout.labelsFit).toBe(true);
+  expect(layout.left).toBeGreaterThanOrEqual(0);
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('activity time filter stays within the page at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');

@@ -14,9 +14,16 @@
   gap: var(--space-lg);
   align-items: end;
 }
+.activity-planner__header > div {
+  min-width: 0;
+}
 .activity-planner__header h2 {
   margin: 0.2rem 0;
+  overflow-wrap: anywhere;
   font-size: 1.55rem;
+}
+.activity-planner__header p {
+  overflow-wrap: anywhere;
 }
 .activity-planner__header p,
 .activity-planner__note,
@@ -218,6 +225,13 @@
   color: var(--color-atlas-muted);
   font-size: 0.76rem;
 }
+.activity-planner__window-copy > strong,
+.activity-planner__window-help,
+.activity-planner__window-help summary,
+.activity-planner__window label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .activity-planner__window-help summary {
   display: flex;
   min-height: 44px;
@@ -303,10 +317,11 @@
 }
 @media (max-width: 47.99rem) {
   .activity-planner__window {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
   .activity-planner__window-copy {
     grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
@@ -328,7 +343,6 @@
   font-size: 0.8rem;
   line-height: 1.5;
 }
-
 
 @media (forced-colors: active) {
   .activity-planner__chips button[aria-pressed='true'] {
