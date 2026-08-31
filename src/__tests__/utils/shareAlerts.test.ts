@@ -29,7 +29,7 @@ describe('sharing and alerts', () => {
     });
     expect(result.url).toContain('/sanliurfa');
     expect(result.text).toContain('72/100 · Dikkat');
-    expect(result.text).toContain('19:00');
+    expect(result.text).toContain('En uygun zaman: 19:00');
     expect(result.text).toContain('Öneri: Şimdi çıkmak daha iyi');
     expect(result.text).not.toContain(result.url);
     expect(result.clipboardText).toContain(result.url);

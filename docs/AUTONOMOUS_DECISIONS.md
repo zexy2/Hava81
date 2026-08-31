@@ -451,3 +451,7 @@ Route and commute decision surfaces should not expose bare numeric Hava81 scores
 
 ## 2026-08-31 — Shared decision scores carry the same band as the in-app plan
 A shared Hava81 decision must not reduce an explainable in-app score back to a bare `/100` number. The share builder receives the plan's existing score band and localizes that band for Turkish/English output. It must not infer new weather semantics or alter the score when generating share copy.
+
+
+## 2026-08-31 — Shared best-time labels must also be valid for ranges
+The daily-plan share payload uses one field for either a single best time or a multi-hour range. Share copy therefore uses range-safe wording (`En uygun zaman / Best window`) rather than asserting that the value is always one clock time.

@@ -1700,3 +1700,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Fixed the actual remaining growth/share gap: decision shares now include the same localized qualitative band as the in-app score (for example `72/100 · Dikkat` / `98/100 · Very suitable`). The caller passes the exact plan band, so sharing does not reinterpret or recompute weather data.
 - Added Turkish and English regression coverage. Gates passed: targeted share + DailyPlan 17/17, full frontend suite 54 files / 501 tests, TypeScript, ESLint, production build + service-worker stamp + 81 city pages, and `git diff --check`.
 - Pending: main pipeline #1021 for `1efeb5a5583f1912103869013107574f2a1790d3`. This branch must be rebased onto current main only after preserving #426's append-only docs, then combined gates rerun before push/PR.
+
+
+## 2026-08-31 14:02 TRT — make shared best-time wording range-safe
+- Follow-up share-copy audit found `bestTime` may contain either a single time or a best-window range, while the copy always said “En iyi saat / Best time”.
+- Changed the label to `En uygun zaman / Best window`, which is truthful for both forms and does not alter the selected window itself.
+- Targeted share tests 7/7, TypeScript, ESLint, and `git diff --check` passed.

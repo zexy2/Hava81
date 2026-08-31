@@ -44,7 +44,7 @@ export const buildDecisionShare = ({
   const text = [
     title,
     recommendation ? (tr ? `Öneri: ${recommendation}` : `Recommendation: ${recommendation}`) : null,
-    bestTime ? (tr ? `En iyi saat: ${bestTime}` : `Best time: ${bestTime}`) : null,
+    bestTime ? (tr ? `En uygun zaman: ${bestTime}` : `Best window: ${bestTime}`) : null,
     umbrellaText,
     tr ? 'Havayı değil, gününü planla.' : 'Plan your day, not just the weather.',
   ]
