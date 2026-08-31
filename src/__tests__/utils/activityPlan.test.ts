@@ -37,6 +37,27 @@ const hourly = (
   }));
 
 describe('activity plans', () => {
+  it('does not project current humidity or wind into future activity hours when hourly fields are missing', () => {
+    const points = hourly([24, 24, 24]).map(point => ({
+      ...point,
+      windSpeed: undefined,
+      humidity: undefined,
+    }));
+    const harshCurrent = buildActivityPlan({
+      activity: 'walk',
+      weather: { ...weather, humidity: 100, windSpeed: 30 },
+      hourly: points,
+    });
+    const calmCurrent = buildActivityPlan({
+      activity: 'walk',
+      weather: { ...weather, humidity: 20, windSpeed: 1 },
+      hourly: points,
+    });
+
+    expect(harshCurrent.score).toBe(calmCurrent.score);
+    expect(harshCurrent.reasons).not.toContain('strong-wind');
+  });
+
   it('penalizes heat for running more than laundry drying', () => {
     const points = hourly([35, 36, 34, 30]);
     const run = buildActivityPlan({ activity: 'run', weather, hourly: points });
