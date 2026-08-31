@@ -1,5 +1,6 @@
 .decision-alerts {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
@@ -8,6 +9,14 @@
   border: 1px solid var(--color-atlas-line);
   border-radius: var(--radius-card, var(--radius-md));
   box-shadow: var(--shadow-card, none);
+}
+.decision-alerts > div {
+  min-width: 0;
+}
+@media (min-width: 48rem) {
+  .decision-alerts > div {
+    flex: 1 1 28rem;
+  }
 }
 .decision-alerts h2 {
   margin: 0.2rem 0;
@@ -32,7 +41,8 @@
   line-height: 1.45;
 }
 .decision-alerts button {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  max-width: 100%;
   min-height: 2.75rem;
   padding: 0 1rem;
   color: var(--color-atlas-paper);
