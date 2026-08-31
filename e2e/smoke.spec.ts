@@ -650,6 +650,56 @@ test('mobile commute windows reflow at 200 percent text size', async ({ page }, 
   await assertWindowsFit();
 });
 
+test('mobile context signals reflow at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile context-signals text-resize regression');
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const panel = page.locator('.context-signals');
+  await expect(panel).toBeVisible();
+  const assertContextFits = async () => {
+    const layout = await panel.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        return html.scrollWidth <= html.clientWidth + 1;
+      };
+      const header = element.querySelector('header');
+      const source = element.querySelector('.context-signals__source');
+      const grid = element.querySelector('.context-signals__grid');
+      const cards = Array.from(element.querySelectorAll('.context-signal'));
+      const note = element.querySelector('.context-signals__note');
+      if (!header || !source || !grid || cards.length !== 4 || !note) {
+        throw new Error('Missing context signal content');
+      }
+      return {
+        panelFits: fits(element),
+        headerFits: fits(header),
+        sourceFits: fits(source),
+        gridFits: fits(grid),
+        cardsFit: cards.every(fits),
+        noteFits: fits(note),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+    expect(layout.panelFits).toBe(true);
+    expect(layout.headerFits).toBe(true);
+    expect(layout.sourceFits).toBe(true);
+    expect(layout.gridFits).toBe(true);
+    expect(layout.cardsFit).toBe(true);
+    expect(layout.noteFits).toBe(true);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  };
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertContextFits();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertContextFits();
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
