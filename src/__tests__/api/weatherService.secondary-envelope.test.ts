@@ -125,4 +125,80 @@ describe('weatherService secondary BFF envelope validation', () => {
       'route.betterDeparture'
     );
   });
+
+  it('rejects a route segment ETA that is inconsistent with its corridor fraction', async () => {
+    const departure = new Date('2026-08-31T06:00:00.000Z');
+    mockGet.mockResolvedValue({
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 300,
+      requestedDeparture: departure.toISOString(),
+      score: 75,
+      segments: [
+        {
+          fraction: 0.5,
+          lat: 40.47,
+          lon: 30.91,
+          eta: new Date(departure.getTime() + 60 * 60_000).toISOString(),
+          temperature: 24,
+          precipitationProbability: 10,
+          windSpeed: 3,
+          description: 'açık',
+          score: 80,
+          risk: 'low',
+        },
+      ],
+      disclaimer: 'Model tabanlı rota tahmini.',
+    });
+
+    await expectApiDataError(
+      weatherService.getRouteWeather(
+        { lat: 41.01, lon: 28.97 },
+        { lat: 39.93, lon: 32.86 },
+        departure
+      ),
+      'route.segments.0.eta'
+    );
+  });
+
+  it('rejects inconsistent better-departure timing and improvement metadata', async () => {
+    const departure = new Date('2026-08-31T06:00:00.000Z');
+    mockGet.mockResolvedValue({
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 300,
+      requestedDeparture: departure.toISOString(),
+      score: 75,
+      segments: [
+        {
+          fraction: 0,
+          lat: 41.01,
+          lon: 28.97,
+          eta: departure.toISOString(),
+          temperature: 24,
+          precipitationProbability: 10,
+          windSpeed: 3,
+          description: 'açık',
+          score: 80,
+          risk: 'low',
+        },
+      ],
+      betterDeparture: {
+        departure: new Date(departure.getTime() + 2 * 60 * 60_000).toISOString(),
+        score: 90,
+        improvement: 15,
+      },
+      disclaimer: 'Model tabanlı rota tahmini.',
+    });
+
+    await expectApiDataError(
+      weatherService.getRouteWeather(
+        { lat: 41.01, lon: 28.97 },
+        { lat: 39.93, lon: 32.86 },
+        departure
+      ),
+      'route.betterDeparture.departure'
+    );
+  });
+
 });
