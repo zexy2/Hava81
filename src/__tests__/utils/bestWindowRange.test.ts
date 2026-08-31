@@ -41,6 +41,26 @@ describe('findBestWindowRange', () => {
     expect(range?.end.time.toISOString()).toBe('2026-08-29T23:00:00.000Z');
   });
 
+  it('does not widen a risked peak across a different surfaced risk', () => {
+    const windyPeak = { ...slot(18, 94), reasons: ['strong-wind' as const] };
+    const sameRiskNeighbor = { ...slot(19, 93), reasons: ['strong-wind' as const] };
+    const rainyNeighbor = { ...slot(20, 92), reasons: ['rain-risk' as const] };
+
+    const range = findBestWindowRange([windyPeak, sameRiskNeighbor, rainyNeighbor]);
+
+    expect(range?.start.time.toISOString()).toBe('2026-08-29T18:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T19:00:00.000Z');
+  });
+
+  it('allows a cleaner neighboring slot inside a risked peak range', () => {
+    const windyPeak = { ...slot(18, 94), reasons: ['strong-wind' as const] };
+    const cleanNeighbor = slot(19, 93);
+
+    const range = findBestWindowRange([windyPeak, cleanNeighbor]);
+
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T19:00:00.000Z');
+  });
+
   it('does not bridge a forecast gap just because both sides have similar scores', () => {
     const range = findBestWindowRange([
       slot(18, 94),

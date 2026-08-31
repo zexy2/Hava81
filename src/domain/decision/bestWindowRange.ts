@@ -30,7 +30,9 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   const cadenceMs = median(positiveGaps);
   const maxAdjacentGapMs = cadenceMs * 1.6;
   const floor = peak.score - Math.max(0, tolerance);
-  const isRiskCompatible = (candidate: T) => peak.reasons.length > 0 || candidate.reasons.length === 0;
+  const peakReasons = new Set(peak.reasons);
+  const isRiskCompatible = (candidate: T) =>
+    candidate.reasons.every(reason => peakReasons.has(reason));
 
   const maxRangeMs = DEFAULT_MAX_RANGE_HOURS * HOUR_MS;
   let startIndex = peakIndex;
