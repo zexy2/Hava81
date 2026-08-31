@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a reproducible problem in Hava81
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve Hava81. Do not include API keys or other secrets.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: city
+    attributes:
+      label: City or route
+      description: If the issue is location-specific, which city or route was selected?
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      placeholder: Chrome 151 / macOS, Safari / iPhone, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or additional context
+      description: Add screenshots, console errors or other useful details.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked existing issues for the same problem.
+          required: true
+        - label: This report does not contain credentials or other secrets.
+          required: true
