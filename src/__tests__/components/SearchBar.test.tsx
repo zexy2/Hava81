@@ -137,7 +137,6 @@ describe('SearchBar', () => {
     expect(input).not.toHaveAttribute('aria-activedescendant');
   });
 
-
   it('should have proper accessibility attributes', () => {
     render(<SearchBar {...defaultProps} />);
 
@@ -145,6 +144,19 @@ describe('SearchBar', () => {
     expect(input).toHaveAttribute('aria-autocomplete', 'list');
     expect(input).toHaveAttribute('aria-haspopup', 'listbox');
     expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('dismisses search with Escape even when suggestions are closed', () => {
+    const onDismiss = vi.fn();
+    render(<SearchBar {...defaultProps} onDismiss={onDismiss} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('should handle keyboard navigation', async () => {
