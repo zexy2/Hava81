@@ -127,6 +127,12 @@
   font-weight: 700;
 }
 
+.commute-window dt,
+.commute-window dd,
+.commute-window p {
+  overflow-wrap: anywhere;
+}
+
 .commute-plan__note {
   font-size: 0.85rem;
 }

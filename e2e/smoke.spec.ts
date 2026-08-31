@@ -585,6 +585,71 @@ test('mobile daily plan reflows at 200% text size', async ({ page }, testInfo) =
   expect(narrowState.shareFits).toBe(true);
 });
 
+test('mobile commute windows reflow at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile commute text-resize regression');
+
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({
+      json: {
+        ...hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          ...hourlyForecast.hourly[index],
+          time: fixtureIsoAtHour(index + 1),
+        })),
+      },
+    })
+  );
+  await page.clock.setFixedTime(new Date(fixtureNow));
+  const localFixtureNow = fixtureNow + current.meta.timezoneOffsetSeconds * 1000;
+  const clockAtOffset = (offsetHours: number) =>
+    new Date(localFixtureNow + offsetHours * 60 * 60_000).toISOString().slice(11, 16);
+
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(clockAtOffset(2));
+  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(clockAtOffset(5));
+  await expect(page.locator('.commute-plan__verdict')).toBeVisible();
+
+  const commute = page.locator('.commute-plan');
+  const assertWindowsFit = async () => {
+    const layout = await commute.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        return html.scrollWidth <= html.clientWidth + 1;
+      };
+      const windows = element.querySelector('.commute-plan__windows');
+      const cards = Array.from(element.querySelectorAll('.commute-window'));
+      const metrics = Array.from(element.querySelectorAll('.commute-window dl'));
+      const copy = Array.from(element.querySelectorAll('.commute-window dt, .commute-window dd'));
+      if (!windows || cards.length !== 2 || metrics.length !== 2 || copy.length === 0) {
+        throw new Error('Missing commute window content');
+      }
+      return {
+        windowsFit: fits(windows),
+        cardsFit: cards.every(fits),
+        metricsFit: metrics.every(fits),
+        copyFits: copy.every(fits),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+    expect(layout.windowsFit).toBe(true);
+    expect(layout.cardsFit).toBe(true);
+    expect(layout.metricsFit).toBe(true);
+    expect(layout.copyFits).toBe(true);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  };
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertWindowsFit();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertWindowsFit();
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
