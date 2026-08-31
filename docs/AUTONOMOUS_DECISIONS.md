@@ -458,3 +458,6 @@ The daily-plan share payload uses one field for either a single best time or a m
 
 ## 2026-08-31 — Difficult-day notifications keep the same qualitative score meaning
 A browser notification that includes a Hava81 `/100` score must pair it with the same localized score band already computed by the daily plan. Notification rendering may localize that band but must not reinterpret the score, change alert thresholds, or imply official MGM warning provenance.
+
+## 2026-08-31 — Factor impact numbers are explanatory averages, not direct deductions
+The `≈−X` values shown in the daily-score breakdown describe 12-hour duration-weighted average factor penalties. Because the final daily score also emphasizes the most difficult quarter of the window and may apply low-slot caps, UI copy must not imply those values subtract one-for-one from 100. This is an explanation contract only; it does not change scoring math.
