@@ -235,6 +235,7 @@ describe('weatherService BFF client', () => {
     ['blank city name', { cityName: '   ' }],
     ['blank country', { country: '   ' }],
     ['blank provider', { meta: { ...serializedWeather.meta, provider: '   ' } }],
+    ['missing timezone offset', { meta: { provider: 'OpenWeather', fetchedAt: serializedWeather.meta.fetchedAt } }],
     ['timezone outside global offset bounds', { meta: { ...serializedWeather.meta, timezoneOffsetSeconds: 50_401 } }],
     ['unbounded freshness window', { meta: { ...serializedWeather.meta, freshForSeconds: 86_401 } }],
   ])('rejects impossible current-weather %s from the BFF', async (_label, invalidField) => {
