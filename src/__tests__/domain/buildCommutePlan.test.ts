@@ -171,12 +171,10 @@ describe('buildCommutePlan', () => {
       commuteEnd: '15:00',
       timezoneOffsetSeconds: 3 * 60 * 60,
       now: new Date('2026-08-29T06:00:00Z'),
-      airQualityIndex: 4,
     });
 
     expect(plan?.umbrella).toBe('no');
     expect(plan?.advice).toContain('heat');
-    expect(plan?.advice).toContain('poor-air');
     expect(plan?.primaryAdvice).toBe('heat');
     expect(plan?.summary.maxApparentTemperature).toBe(35);
   });
@@ -215,31 +213,4 @@ describe('buildCommutePlan', () => {
     expect(plan!.return.score).toBeLessThan(plan!.outbound.score);
   });
 
-  it('keeps current air quality as advice without projecting it into future commute scores', () => {
-    const clear: HourlyForecast[] = [
-      point('2026-08-29T09:00:00Z', 22, 0, 3),
-      point('2026-08-29T12:00:00Z', 22, 0, 3),
-    ];
-    const goodAir = buildCommutePlan({
-      hourly: clear,
-      commuteStart: '12:00',
-      commuteEnd: '15:00',
-      timezoneOffsetSeconds: 3 * 60 * 60,
-      now: new Date('2026-08-29T06:00:00Z'),
-      airQualityIndex: 1,
-    });
-    const poorAir = buildCommutePlan({
-      hourly: clear,
-      commuteStart: '12:00',
-      commuteEnd: '15:00',
-      timezoneOffsetSeconds: 3 * 60 * 60,
-      now: new Date('2026-08-29T06:00:00Z'),
-      airQualityIndex: 4,
-    });
-
-    expect(poorAir!.outbound.score).toBe(goodAir!.outbound.score);
-    expect(poorAir!.return.score).toBe(goodAir!.return.score);
-    expect(poorAir!.advice).toContain('poor-air');
-    expect(poorAir!.summary.airQualityIndex).toBe(4);
-  });
 });

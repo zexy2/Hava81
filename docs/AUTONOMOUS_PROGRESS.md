@@ -1555,3 +1555,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Main pipeline #965 for `79d7c220...` is still in progress; completed jobs observed so far include API test/build, frontend quality, production build, and browser flows, all successful. Keep this branch local until the entire main run is completed successfully and fresh production smoke/observer checks pass, then lease-check/push/open the PR.
 
 - Main pipeline #965 completed successfully for exact main `79d7c2208a530e173e0d80a2c73326da956f7f5e`. Fresh observer collection at `2026-08-31T03:26:51Z` confirms root/İstanbul/API readiness 200, fresh no-store readiness, expected CORS, nginx still on 4002, closed provider circuit, and no production incident. The prepared decision-time branch is now eligible to publish after a remote lease check.
+
+## 2026-08-31 07:12 TRT — stop projecting current AQI into future commutes
+
+- Continued from exact main `f1cb0ec49c51bbe93963c3293dc73bce5be1bff9` in isolated worktree `/home/ubuntu/hava81-auto-run11-commute-aqi-0710`, branch `automation/hava81-run11-commute-aqi-0710`; unrelated dirty worktrees were left untouched.
+- Audited Commute Plan provenance after the future wind/humidity trust fixes. The panel still passed the current OpenWeather AQI measurement into a future outbound/return commute plan, allowing a present-only air-quality observation to appear as if it described the user's later commute window.
+- Removed current AQI from future commute scoring/advice and from the commute summary/share payload. Current AQI remains available on explicitly current/overall air-quality surfaces; no AQ/weather value is synthesized, extrapolated, clamped, interpolated, or relabeled.
+- Local gates pass on exact main: focused commute domain/component 14/14; full frontend suite passes; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Next action: push/open this bounded frontend-only PR after remote lease check, require exact-head green CI, then merge only after re-verifying current main, observer freshness, production health, exact PR head SHA, and mergeability. Continue an independent trust/performance audit while CI runs.

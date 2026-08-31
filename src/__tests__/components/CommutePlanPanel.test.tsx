@@ -158,11 +158,7 @@ describe('CommutePlanPanel', () => {
     ];
     render(
       <SettingsProvider>
-        <CommutePlanPanel
-          weather={weather}
-          hourly={hotHourly}
-          airQuality={{ aqi: 4, aqiLabel: 'Sağlıksız', pm25: 35, pm10: 50, o3: 70 }}
-        />
+        <CommutePlanPanel weather={weather} hourly={hotHourly} />
       </SettingsProvider>
     );
 
@@ -171,7 +167,7 @@ describe('CommutePlanPanel', () => {
 
     const verdict = screen.getByRole('status');
     expect(verdict).toHaveTextContent(/Hissedilen 35°C; su ve gölge planla/i);
-    expect(verdict).toHaveTextContent(/Hava kalitesi AQI 4\/5/i);
+    expect(verdict).not.toHaveTextContent(/Hava kalitesi AQI/i);
     expect(verdict).not.toHaveTextContent('Şemsiye gerekmiyor');
   });
 
