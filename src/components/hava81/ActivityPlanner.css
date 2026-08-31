@@ -27,7 +27,9 @@
 .activity-planner__sensitivity {
   display: grid;
   gap: 0.3rem;
-  min-width: 12rem;
+  flex: 0 1 12rem;
+  width: min(12rem, 100%);
+  min-width: 0;
   font-size: 0.78rem;
   color: var(--color-atlas-muted);
 }
