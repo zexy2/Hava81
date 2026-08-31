@@ -104,7 +104,7 @@ export function useAsync<T, Args extends unknown[] = []>(
                 code: ErrorCode.UNKNOWN,
                 message: i18n.t('errors.genericError'),
                 timestamp: new Date(),
-                retryable: false,
+                retryable: true,
               };
 
         if (mountedRef.current && callId === lastCallIdRef.current) {

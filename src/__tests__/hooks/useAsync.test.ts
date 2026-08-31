@@ -21,6 +21,7 @@ describe('useAsync', () => {
     expect(result.current.error?.code).toBe(ErrorCode.UNKNOWN);
     expect(result.current.error?.message).toBe(i18n.t('errors.genericError'));
     expect(result.current.error?.message).not.toContain(rawMessage);
+    expect(result.current.error?.retryable).toBe(true);
   });
   it('marks injected cached data as a successful settled state', () => {
     const { result } = renderHook(() => useAsync(async () => 'network'));

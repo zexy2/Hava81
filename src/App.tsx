@@ -353,9 +353,7 @@ const App: React.FC = () => {
     error?.code === ErrorCode.LOCATION_DENIED ||
     error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
     error?.code === ErrorCode.LOCATION_TIMEOUT;
-  const canRetryCurrentWeather = Boolean(
-    error && (isLocationError || error.retryable || error.code === ErrorCode.UNKNOWN)
-  );
+  const canRetryCurrentWeather = Boolean(error && (isLocationError || error.retryable));
 
   const retryCurrentWeather = useCallback(() => {
     clearError();
