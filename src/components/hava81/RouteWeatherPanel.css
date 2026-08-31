@@ -46,7 +46,7 @@
 }
 .route-weather__form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(12rem, 1.2fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.2fr) auto;
   gap: var(--space-sm);
   align-items: end;
   padding-top: var(--space-lg);
