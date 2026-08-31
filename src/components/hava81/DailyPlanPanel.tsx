@@ -71,7 +71,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     () => buildDailyPlan({ weather, hourly, airQuality }),
     [airQuality, hourly, weather]
   );
-  const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const temperatureSymbol = getTemperatureSymbol();
   const formatTemperature = (temperature: number) =>
     `${Math.round(convertTemperature(temperature))}${temperatureSymbol}`;

@@ -70,7 +70,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
       weather,
     ]
   );
-  const offset = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const offset = weather.meta.timezoneOffsetSeconds * 1000;
   const formatTime = (date?: Date) =>
     date
       ? new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {

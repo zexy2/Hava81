@@ -19,7 +19,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
     useSettings();
   const { profile, setCommuteTime, clearCommuteTimes } = useDecisionProfile();
   const trackedPlanRef = useRef<string | null>(null);
-  const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds ?? 0;
+  const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
   const plan = useMemo(
     () =>
       buildCommutePlan({

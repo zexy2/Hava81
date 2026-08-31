@@ -88,7 +88,7 @@ export function EnvironmentRail({
   );
 
   const hasValidDaylight = isValidDate(weather.sunrise) && isValidDate(weather.sunset);
-  const timezoneOffsetMs = (weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+  const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const sunriseTime = hasValidDaylight
     ? timeFormatter.format(atLocationTime(weather.sunrise))
