@@ -29,6 +29,7 @@ const forecastEnvelope = () => ({
       apparentTemperature: 25,
       icon: '01d',
       pop: 5,
+      windSpeed: 3.2,
     },
   ],
   meta: {
