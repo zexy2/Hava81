@@ -1718,3 +1718,14 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - PR #428 exact head `6b935e6b1c2925300db9ec1106d822c4cd1806dd` passed CI #1025 and was squash-merged as main `0e5a4b42865839f81f9d984b42bea69bc31cfbbf`.
 - Main pipeline #1027 completed all quality/build/browser/Lighthouse/Docker/Pages jobs successfully. Direct post-deploy smoke: root 200, canonical İstanbul 200, API readiness 200/fresh/no-store, production-origin CORS exact, OpenWeather circuit closed, nginx observer-verified on port 4002.
 - Rebased prepared PR #429 branch onto `0e5a4b42865839f81f9d984b42bea69bc31cfbbf`, preserving #428 and #429 append-only checkpoints. Next action: rerun combined gates, verify remote lease from `ff5901f9635f3490e9b8c04dd23360f514da85f0`, force-update only with that lease, then require replacement exact-head CI before merge.
+
+## 2026-08-31 14:28 TRT — clarify score-factor impact math
+- Continued independently from production-green main `921f2f6ff3cbf91644059ebe1f720b32d7718b98` while #428/#429 pipelines were active, branch `automation/hava81-run11-score-impact-copy-1428` in `/home/chatgpt/hava81-run11-a11y-audit-1425`.
+- Audited the score explanation against `aggregateImpacts`: displayed `≈−X` factor values are 12-hour duration-weighted average slot penalties, while the final daily score separately blends the weighted mean with the worst-quarter average and can apply minimum-score caps. Treating those factor numbers as direct one-for-one deductions from 100 would therefore be misleading.
+- Extended TR/EN method copy to state that the breakdown values are weighted-average impacts and do not subtract one-for-one from 100. Scoring math, thresholds, weather inputs and safety semantics are unchanged.
+- Added a locale contract regression for this explanation. Gates pass: focused locale + DailyPlan 11/11, TypeScript, ESLint, full frontend 55 files / 501 tests, production build + 81 city pages/service-worker stamp, dependency audit 0 vulnerabilities, and `git diff --check`.
+
+## 2026-08-31 14:33 TRT — PR #430 rebased after #429 merge
+- PR #429 exact head `f1cf3e931ede860a58a5e3c7422270aed865da07` passed replacement CI #1028 and was squash-merged as main `3bbba4b326b6ec957cddcdd10c157a18dbc7e745` after fresh production observer and direct smoke checks were healthy.
+- Rebased `automation/hava81-run11-score-impact-copy-1428` onto `3bbba4b326b6ec957cddcdd10c157a18dbc7e745`; product/localization files merged cleanly and only append-only progress/decision docs required reconciliation.
+- Next action: rerun combined gates, confirm remote branch still `355fadf9d73c5a15dc926378b41818944f4d22d5`, force-update with that explicit lease, require replacement exact-head CI, and merge only after the #429 main production pipeline is also green and production is re-smoked.

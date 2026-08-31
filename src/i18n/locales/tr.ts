@@ -192,7 +192,7 @@ export const tr = {
         title: 'Bu puanı ne etkiliyor?',
         stable: 'Belirgin bir hava riski puanı aşağı çekmiyor.',
         method:
-          'Bu puan genel dışarı uygunluğunu özetler; önümüzdeki 12 saati süreyle ağırlıklandırır, en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir.',
+          'Bu puan genel dışarı uygunluğunu özetler; önümüzdeki 12 saati süreyle ağırlıklandırır, en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir. Kırılımdaki ≈− değerleri 12 saatlik ağırlıklı ortalama etkidir; final skor en zor saatleri ayrıca ağırlıklandırdığı için bunlar 100’den birebir çıkarılan kalemler değildir.',
       },
       confidence: {
         high: 'Zengin saatlik veri',
