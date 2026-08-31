@@ -879,6 +879,7 @@ kbd {
     grid-template-columns: auto 1fr;
     gap: var(--space-sm) var(--space-md);
     min-height: auto;
+    padding-inline: min(var(--space-xl), 32px);
   }
 
   .atlas-header__search {
