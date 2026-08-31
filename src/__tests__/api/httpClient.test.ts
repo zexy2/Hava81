@@ -44,6 +44,53 @@ describe('httpClient BFF transport', () => {
     expect(httpClient.getCacheSize()).toBe(1);
   });
 
+  it('deduplicates concurrent identical GET requests and releases the single-flight entry', async () => {
+    let resolveFetch: ((response: Response) => void) | undefined;
+    const fetchPromise = new Promise<Response>(resolve => {
+      resolveFetch = resolve;
+    });
+    (global.fetch as Mock)
+      .mockReturnValueOnce(fetchPromise)
+      .mockResolvedValueOnce(mockResponse({ cityName: 'Izmir', temperature: 24 }));
+
+    const first = httpClient.get('/weather/current', { city: 'Izmir' });
+    const second = httpClient.get('/weather/current', { city: 'Izmir' });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    resolveFetch?.(mockResponse({ cityName: 'Izmir', temperature: 23 }));
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { cityName: 'Izmir', temperature: 23 },
+      { cityName: 'Izmir', temperature: 23 },
+    ]);
+
+    httpClient.clearCache();
+    await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toEqual({
+      cityName: 'Izmir',
+      temperature: 24,
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('releases a failed single-flight GET so a later retry can make a new request', async () => {
+    (global.fetch as Mock)
+      .mockResolvedValueOnce(
+        mockResponse({ error: { message: 'City unavailable' } }, { ok: false, status: 404 })
+      )
+      .mockResolvedValueOnce(mockResponse({ cityName: 'Izmir' }));
+
+    const first = httpClient.get('/weather/current', { city: 'Izmir' });
+    const second = httpClient.get('/weather/current', { city: 'Izmir' });
+
+    await expect(first).rejects.toMatchObject({ statusCode: 404 });
+    await expect(second).rejects.toMatchObject({ statusCode: 404 });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toEqual({
+      cityName: 'Izmir',
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('does not reuse a cache entry after the client clock moves behind its timestamp', async () => {
     vi.useFakeTimers();
     try {
