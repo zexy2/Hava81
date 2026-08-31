@@ -1496,3 +1496,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Combined post-rebase gates pass: App integration 16/16 on repeat, full frontend 51 files / 458 tests, TypeScript, ESLint, production build with 81 city pages/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`. One unrelated pre-existing online-refresh integration test timed out once during a repeat, then the complete App integration suite immediately passed 16/16; no product diff touched that flow.
 - Removed unrelated whole-file Prettier churn from `App.tsx`; the product diff is limited to conditional mobile dismiss wiring plus its regression.
 - Observer state is stale at `2026-08-31T00:19:42Z`; do not use its queued CI field for merge decisions. Direct production checks and observer health should be revalidated before any merge.
+
+## 2026-08-31 03:34 TRT — keep chunk-recovery URL guard when session storage is empty
+
+- Continued independently from exact post-#389 main `e72477b9af3b2cd6ceb755734f78d6f306b10cc3` in `/home/ubuntu/hava81-auto-run11-fourth-0332`, branch `automation/hava81-fourth-audit-0332`, while main pipeline #944 validates separately.
+- Audited the Vite chunk-preload recovery loop guard. The boot URL timestamp was initialized correctly, but any successful `sessionStorage.getItem` call overwrote it with `0` when storage was empty. In environments where a prior storage write failed but reads remain available, that weakened the URL-based reload-loop guard despite the comment claiming the URL guard remained authoritative.
+- Added a small pure helper that selects the newest valid positive recovery timestamp across URL and storage state. Empty, malformed, non-finite, or non-positive storage can no longer erase a valid URL guard; newer valid storage still wins.
+- Added four focused unit cases covering empty storage, malformed storage, newest-value selection, and non-positive input. No weather/provider/safety semantics changed.
+- Local gates on exact post-#389 main pass: chunk-recovery 4/4; full frontend 52 files / 462 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Keep this branch local until the higher-priority optional-data freshness branch serializes through current main; publish only from a current-main rebase with fresh gates.

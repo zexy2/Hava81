@@ -6,6 +6,7 @@ import { validateConfig } from './config';
 import './i18n';
 import './fonts.css';
 import './index.css';
+import { mostRecentChunkRecoveryAttempt } from './utils/chunkRecovery';
 
 const CHUNK_RECOVERY_PARAM = '__hava81_chunk_reload';
 const CHUNK_RECOVERY_STORAGE_KEY = 'hava81:chunk-recovery-at';
@@ -20,12 +21,13 @@ if (bootUrl.searchParams.has(CHUNK_RECOVERY_PARAM)) {
 
 window.addEventListener('vite:preloadError', event => {
   const now = Date.now();
-  let previousAttempt = Number.isFinite(bootRecoveryAttempt) ? bootRecoveryAttempt : 0;
+  let storedAttemptValue: string | null = null;
   try {
-    previousAttempt = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_STORAGE_KEY) ?? 0);
+    storedAttemptValue = window.sessionStorage.getItem(CHUNK_RECOVERY_STORAGE_KEY);
   } catch {
     // Storage can be unavailable in privacy-restricted contexts; the URL guard still limits loops.
   }
+  const previousAttempt = mostRecentChunkRecoveryAttempt(bootRecoveryAttempt, storedAttemptValue);
 
   if (previousAttempt && now - previousAttempt < CHUNK_RECOVERY_WINDOW_MS) return;
 
