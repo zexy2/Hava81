@@ -342,6 +342,19 @@ describe('Hava81 app integration', () => {
     expect(screen.getByRole('button', { name: /kapat/i })).toBeInTheDocument();
   });
 
+  it('honors explicit non-retryable unknown current-weather failures', async () => {
+    service.getCurrentWeather.mockRejectedValueOnce(
+      new ApiError('Bu istek tekrar denenmemeli', ErrorCode.UNKNOWN, { retryable: false })
+    );
+
+    renderApp();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Bir şeyler ters gitti');
+    expect(screen.queryByRole('button', { name: /tekrar dene/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /kapat/i })).toBeInTheDocument();
+  });
+
   it('keeps raw current-weather failures out of the user-visible error state', async () => {
     service.getCurrentWeather.mockRejectedValueOnce(
       new Error('secret upstream endpoint detail: api.internal.example')
