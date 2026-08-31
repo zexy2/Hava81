@@ -182,6 +182,14 @@ export const buildCommutePlan = ({
   const outboundPoint = nearestForecast(hourly, startTarget, timezoneOffsetSeconds);
   const returnPoint = nearestForecast(hourly, endTarget, timezoneOffsetSeconds);
   if (!outboundPoint || !returnPoint) return null;
+  if (
+    !Number.isFinite(outboundPoint.windSpeed) ||
+    (outboundPoint.windSpeed as number) < 0 ||
+    !Number.isFinite(returnPoint.windSpeed) ||
+    (returnPoint.windSpeed as number) < 0
+  ) {
+    return null;
+  }
 
   const outbound = buildWindow(
     outboundPoint,
