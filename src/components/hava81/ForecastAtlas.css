@@ -545,6 +545,10 @@
 }
 
 @media (max-width: 47.99rem) {
+  .hava81-forecast-atlas__summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
+  }
+
   .hava81-forecast-atlas__range-button {
     min-height: 44px;
     padding-inline: 8px;
