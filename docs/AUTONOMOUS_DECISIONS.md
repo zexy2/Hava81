@@ -426,3 +426,7 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-31 — Normalized current weather timezone is required identity because the browser BFF validator already requires it and current city-local decisions depend on it. Keep `timezoneOffsetSeconds` required in `CurrentWeatherMeta` and remove UTC fallbacks from normalized-current consumers; shared air-quality metadata may omit timezone because that endpoint does not contract it. Malformed current timezone fails closed rather than being defaulted to UTC.
 
 - 2026-08-31 — Required normalized hourly wind must never regain an internal calm-wind fallback after BFF validation. Consumers of `HourlyForecast.windSpeed` should use the required value directly; only genuinely optional gust may use a neutral absent-value fallback. Malformed required wind fails closed at the BFF boundary rather than becoming `0`.
+
+## 2026-08-31 11:18 TRT — decision value invariants
+
+- Model weather decisions as a discriminated union: rain, wind, heat, cold, AQI and UV decisions require a numeric value after construction. Do not mask impossible internal states with UI fallbacks such as zero or em dash; reserve optional value semantics for context-only decisions that do not present that field.
