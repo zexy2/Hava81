@@ -14,6 +14,7 @@ import { useSettings } from './context/SettingsContext';
 import type { TurkishCity } from './constants/cities';
 import type { FavoriteCity } from './types/weather.types';
 import { ErrorCode } from './types';
+import { ApiError } from './api/errors/ApiError';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { trackProductEvent } from './analytics/productEvents';
@@ -364,6 +365,9 @@ const App: React.FC = () => {
     void fetchWeather(city || weather?.cityName || 'İstanbul');
   }, [city, clearError, fetchCurrentLocation, fetchWeather, isLocationError, weather?.cityName]);
 
+  const canRetryForecast =
+    !forecast.error || !(forecast.error instanceof ApiError) || forecast.error.retryable;
+
   const retryForecast = useCallback(() => {
     if (weather?.coordinates) fetchForecast(weather.coordinates, weather.cityName);
   }, [fetchForecast, weather?.cityName, weather?.coordinates]);
@@ -620,9 +624,11 @@ const App: React.FC = () => {
                 {forecast.error && (
                   <section className="atlas-message atlas-message--inline" role="status">
                     <p>{t('errors.forecastUnavailable')}</p>
-                    <button type="button" className="atlas-text-button" onClick={retryForecast}>
-                      {t('common.retry')}
-                    </button>
+                    {canRetryForecast && (
+                      <button type="button" className="atlas-text-button" onClick={retryForecast}>
+                        {t('common.retry')}
+                      </button>
+                    )}
                   </section>
                 )}
 
