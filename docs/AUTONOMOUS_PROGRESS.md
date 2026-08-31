@@ -1505,3 +1505,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added four focused unit cases covering empty storage, malformed storage, newest-value selection, and non-positive input. No weather/provider/safety semantics changed.
 - Local gates on exact post-#389 main pass: chunk-recovery 4/4; full frontend 52 files / 462 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
 - Keep this branch local until the higher-priority optional-data freshness branch serializes through current main; publish only from a current-main rebase with fresh gates.
+
+## 2026-08-31 03:29 TRT — preserve only fresh optional context through same-city refresh failures
+
+- Continued independently from exact main `fbf36ef6f44153580d1629419167a9e746c8ca4f` in `/home/ubuntu/hava81-auto-run11-third-0320`, branch `automation/hava81-third-audit-0320`, while PR #389 validates separately.
+- Audited `useForecast` optional air-quality/context refresh behavior. A transient optional-source failure on the same city previously cleared already validated AQ/context immediately even when the prior payload was still within its provider freshness window, producing avoidable UI/data churn while the core forecast remained healthy.
+- Optional requests now distinguish failure from a successful null/value path and retain prior same-city AQ/context only while its own `fetchedAt` / `freshForSeconds` proves it is still fresh. Stale, metadata-less, invalid/future-skewed, or different-city optional data is cleared; no weather, AQ, UV, pollen, marine, or safety value is synthesized, extended beyond its freshness contract, merged, clamped, interpolated, or relabeled.
+- Added regressions proving a fresh validated optional payload survives a same-city optional-source outage and a stale payload is removed when replacement fails.
+- Local gates on exact pre-#389 main pass after the freshness refinement: focused useForecast 10/10; full frontend 51 files / 459 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Keep this branch local while PR #389 exact head `aae1fee11b6fc247e2415bd5d0fdfe2646efcaf9` / CI #943 resolves. After #389 merges and its exact main pipeline + fresh production checks are green, rebase this branch onto current main preserving append-only checkpoints, rerun combined gates, then publish independently.
