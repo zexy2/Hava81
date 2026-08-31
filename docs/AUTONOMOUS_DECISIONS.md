@@ -433,3 +433,9 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-31 11:23 TRT — commute timezone contract
 
 - Commute planning requires an explicit validated location timezone offset. Do not silently reinterpret a missing offset as UTC; callers with genuine UTC locations must pass `0` explicitly.
+
+## 2026-08-31 — A new service worker must secure the root shell before activation
+
+- `/` is the critical offline navigation fallback for a versioned Hava81 service-worker cache. If fetching or caching it fails during install, the install must reject so the previous active worker and cache remain authoritative.
+- Optional shell metadata such as `/manifest.json` stays best-effort and must not block an otherwise usable upgrade.
+- This prevents transient deploy/network failures from activating an empty versioned cache and then deleting the user's previously usable offline shell during activation.
