@@ -159,8 +159,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             <div className="settings-panel__content">
               {/* Language Setting */}
               <section className="settings-section">
-                <h3 className="settings-section__title">{t('settings.language')}</h3>
-                <div className="settings-option-group">
+                <h3 id="settings-language-title" className="settings-section__title">
+                  {t('settings.language')}
+                </h3>
+                <div
+                  className="settings-option-group"
+                  role="group"
+                  aria-labelledby="settings-language-title"
+                >
                   <button
                     type="button"
                     className={`settings-option ${settings.language === 'tr' ? 'settings-option--active' : ''}`}
@@ -188,8 +194,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
 
               {/* Temperature Unit */}
               <section className="settings-section">
-                <h3 className="settings-section__title">{t('settings.units')}</h3>
-                <div className="settings-option-group">
+                <h3 id="settings-temperature-title" className="settings-section__title">
+                  {t('settings.units')}
+                </h3>
+                <div
+                  className="settings-option-group"
+                  role="group"
+                  aria-labelledby="settings-temperature-title"
+                >
                   <button
                     type="button"
                     className={`settings-option ${settings.temperatureUnit === 'metric' ? 'settings-option--active' : ''}`}
@@ -213,8 +225,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
 
               {/* Wind Speed Unit */}
               <section className="settings-section">
-                <h3 className="settings-section__title">{t('weather.windSpeed')}</h3>
-                <div className="settings-option-group settings-option-group--three">
+                <h3 id="settings-wind-title" className="settings-section__title">
+                  {t('weather.windSpeed')}
+                </h3>
+                <div
+                  className="settings-option-group settings-option-group--three"
+                  role="group"
+                  aria-labelledby="settings-wind-title"
+                >
                   <button
                     type="button"
                     className={`settings-option ${settings.windSpeedUnit === 'ms' ? 'settings-option--active' : ''}`}
@@ -244,8 +262,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
 
               {/* Theme Mode */}
               <section className="settings-section">
-                <h3 className="settings-section__title">{t('settings.theme')}</h3>
-                <div className="settings-option-group settings-option-group--three">
+                <h3 id="settings-theme-title" className="settings-section__title">
+                  {t('settings.theme')}
+                </h3>
+                <div
+                  className="settings-option-group settings-option-group--three"
+                  role="group"
+                  aria-labelledby="settings-theme-title"
+                >
                   <button
                     type="button"
                     className={`settings-option ${settings.themeMode === 'auto' ? 'settings-option--active' : ''}`}
