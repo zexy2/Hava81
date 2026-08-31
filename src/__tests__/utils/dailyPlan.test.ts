@@ -297,7 +297,7 @@ describe('Hava81 daily decision engine v2', () => {
       hourly: Array.from({ length: 12 }, (_, index) =>
         rich(6 + index, 31, { apparentTemperature: 35, uvIndex: 8 })
       ),
-      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70 },
+      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70, meta: weather.meta },
     });
     expect(plan.confidence).toBe('high');
     expect(plan.impacts[0]).toBeDefined();
@@ -316,7 +316,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly,
-      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 },
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: weather.meta },
     });
     expect(plan.nowOrLater.kind).toBe('later');
     expect(plan.nowOrLater.improvement).toBeGreaterThanOrEqual(10);
@@ -340,12 +340,12 @@ describe('Hava81 daily decision engine v2', () => {
     const fair = buildDailyPlan({
       weather,
       hourly: [point(6, 24), point(9, 25), point(12, 26)],
-      airQuality: { aqi: 2, aqiLabel: 'Makul', pm25: 10, pm10: 15, o3: 40 },
+      airQuality: { aqi: 2, aqiLabel: 'Makul', pm25: 10, pm10: 15, o3: 40, meta: weather.meta },
     });
     const good = buildDailyPlan({
       weather,
       hourly: [point(6, 24), point(9, 25), point(12, 26)],
-      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 },
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: weather.meta },
     });
 
     expect(fair.airQuality).toBe('fair');
@@ -357,7 +357,7 @@ describe('Hava81 daily decision engine v2', () => {
     const poor = buildDailyPlan({
       weather,
       hourly,
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90 },
+      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: weather.meta },
     });
     const noCurrentAir = buildDailyPlan({ weather, hourly });
     expect(poor.airQuality).toBe('poor');
@@ -369,7 +369,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly: [],
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90 },
+      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: weather.meta },
     });
     expect(plan.airQuality).toBe('poor');
     expect(plan.impacts.map(impact => impact.factor)).toContain('air-quality');
@@ -402,7 +402,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly: [rich(6, 24), rich(7, 24), rich(8, 24), rich(9, 35, { apparentTemperature: 36 })],
-      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20 },
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: weather.meta },
     });
 
     expect(plan.bestWindowRange).toBeDefined();

@@ -195,7 +195,7 @@ export interface AirQuality {
   pm25: number;
   pm10: number;
   o3: number;
-  meta?: WeatherDataMeta;
+  meta: WeatherDataMeta;
 }
 
 export interface ForecastMeta extends WeatherDataMeta {
