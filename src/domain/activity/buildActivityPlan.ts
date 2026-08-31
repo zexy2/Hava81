@@ -356,7 +356,7 @@ export const buildActivityPlan = ({
     };
   });
 
-  const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds ?? 0;
+  const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
   const startMinutes = parseClockMinutes(preferredStart);
   const endMinutes = parseClockMinutes(preferredEnd);
   const windowApplied =

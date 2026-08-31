@@ -13,11 +13,13 @@ import type {
   AirQuality,
   ForecastMeta,
   WeatherDataMeta,
+  CurrentWeatherMeta,
   ContextSignals,
   RouteWeatherResult,
 } from '../types';
 
 type SerializedMeta = Omit<WeatherDataMeta, 'fetchedAt'> & { fetchedAt: string };
+type SerializedCurrentMeta = Omit<CurrentWeatherMeta, 'fetchedAt'> & { fetchedAt: string };
 type SerializedWeatherData = Omit<
   NormalizedWeatherData,
   'sunrise' | 'sunset' | 'timestamp' | 'meta'
@@ -25,7 +27,7 @@ type SerializedWeatherData = Omit<
   sunrise: string;
   sunset: string;
   timestamp: string;
-  meta: SerializedMeta;
+  meta: SerializedCurrentMeta;
 };
 
 type SerializedForecast = {
@@ -380,7 +382,7 @@ const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
     'airQuality.meta.freshForSeconds'
   );
 
-  const meta = reviveMeta(data.meta);
+  const meta = reviveAirQualityMeta(data.meta);
   if (meta.fetchedAt.getTime() > Date.now() + MAX_AIR_QUALITY_FUTURE_SKEW_MS) {
     invalidWeatherPayload('airQuality.meta.fetchedAt');
   }
@@ -492,7 +494,12 @@ const takeBootstrapWeather = (
   return bootstrap.promise;
 };
 
-const reviveMeta = (meta: SerializedMeta): WeatherDataMeta => ({
+const reviveAirQualityMeta = (meta: SerializedMeta): WeatherDataMeta => ({
+  ...meta,
+  fetchedAt: reviveWeatherDate(meta.fetchedAt, 'airQuality.meta.fetchedAt'),
+});
+
+const reviveCurrentMeta = (meta: SerializedCurrentMeta): CurrentWeatherMeta => ({
   ...meta,
   fetchedAt: reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt'),
 });
@@ -505,7 +512,7 @@ const reviveWeatherDates = (
   const sunrise = reviveWeatherDate(data.sunrise, 'current.sunrise');
   const sunset = reviveWeatherDate(data.sunset, 'current.sunset');
   const timestamp = reviveWeatherDate(data.timestamp, 'current.timestamp');
-  const meta = reviveMeta(data.meta);
+  const meta = reviveCurrentMeta(data.meta);
   if (sunset.getTime() < sunrise.getTime()) {
     invalidWeatherPayload('current.sunset');
   }

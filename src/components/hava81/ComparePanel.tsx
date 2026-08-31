@@ -127,7 +127,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
   );
   const offsetTime = (row: CompareRow, date?: Date) => {
     if (!date) return '—';
-    const offset = (row.weather.meta.timezoneOffsetSeconds ?? 0) * 1000;
+    const offset = row.weather.meta.timezoneOffsetSeconds * 1000;
     return new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {
       hour: '2-digit',
       minute: '2-digit',

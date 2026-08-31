@@ -92,6 +92,10 @@ export interface WeatherDataMeta {
   freshForSeconds?: number;
 }
 
+export interface CurrentWeatherMeta extends WeatherDataMeta {
+  timezoneOffsetSeconds: number;
+}
+
 // Processed/Normalized weather data for UI
 export interface NormalizedWeatherData {
   cityName: string;
@@ -112,7 +116,7 @@ export interface NormalizedWeatherData {
   timestamp: Date;
   coordinates: Coordinates;
   clouds: number;
-  meta: WeatherDataMeta;
+  meta: CurrentWeatherMeta;
 }
 
 // Forecast types
