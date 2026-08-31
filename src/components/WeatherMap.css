@@ -87,7 +87,9 @@
 }
 
 .weather-map__popup-content {
-  min-width: 10rem;
+  width: min(10rem, calc(100vw - 4rem));
+  min-width: 0;
+  max-width: 100%;
   padding: 1rem;
 }
 
