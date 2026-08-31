@@ -95,7 +95,7 @@ describe('useForecast', () => {
 
     await act(async () => {
       resolveHourly!({
-        hourly: [{ time: new Date('2026-07-14T13:00:00.000Z'), temp: 26, icon: '01d', pop: 0.2 }],
+        hourly: [{ time: new Date('2026-07-14T13:00:00.000Z'), temp: 26, icon: '01d', pop: 0.2, windSpeed: 3 }],
         meta: {
           provider: 'Open-Meteo',
           attribution: 'Open-Meteo · CC BY 4.0',
@@ -203,7 +203,7 @@ describe('useForecast', () => {
     await act(async () => {
       resolveSecond!({
         daily: [],
-        hourly: [{ time: new Date(), temp: 30, icon: '01d', pop: 0 }],
+        hourly: [{ time: new Date(), temp: 30, icon: '01d', pop: 0, windSpeed: 3 }],
         meta: {
           provider: 'OpenWeather',
           fetchedAt: new Date(),
@@ -217,7 +217,7 @@ describe('useForecast', () => {
     await act(async () => {
       resolveFirst!({
         daily: [],
-        hourly: [{ time: new Date(), temp: 10, icon: '01d', pop: 0 }],
+        hourly: [{ time: new Date(), temp: 10, icon: '01d', pop: 0, windSpeed: 3 }],
         meta: {
           provider: 'OpenWeather',
           fetchedAt: new Date(),

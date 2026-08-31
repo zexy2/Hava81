@@ -111,7 +111,7 @@ describe('buildCommutePlan', () => {
     const hourly = [
       point('2026-08-29T09:00:00Z', 22, 0),
       { ...point('2026-08-29T12:00:00Z', 22, 0), windSpeed: undefined },
-    ];
+    ] as unknown as HourlyForecast[];
 
     const plan = buildCommutePlan({
       hourly,
