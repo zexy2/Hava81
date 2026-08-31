@@ -331,6 +331,17 @@ test('keyboard map close restores focus to the map trigger', async ({ page }, te
   await expect(mapTrigger).toBeFocused();
 });
 
+test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
+  await page.goto('/istanbul');
+  await page.locator('.atlas-settings-button').click();
+
+  const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('banner')).toHaveCount(0);
+  await expect(dialog.getByRole('contentinfo')).toHaveCount(0);
+});
+
 test('forced colors keeps selected activity and settings options distinct', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors selected-state regression');
   await page.emulateMedia({ forcedColors: 'active' });

@@ -20,6 +20,11 @@ describe('SettingsPanel focus containment', () => {
       </SettingsProvider>
     );
 
+    const dialog = screen.getByRole('dialog', { name: /ayarlar/i });
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
+
     const closeButton = screen.getByRole('button', { name: /kapat/i });
     await waitFor(() => expect(closeButton).toHaveFocus());
 
