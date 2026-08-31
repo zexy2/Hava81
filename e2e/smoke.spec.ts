@@ -1207,6 +1207,9 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
       const table = element.querySelector('.hava81-compare__table');
       const cards = Array.from(element.querySelectorAll('.hava81-compare__city'));
       const headers = Array.from(element.querySelectorAll('.hava81-compare__city header'));
+      const scoreWraps = Array.from(element.querySelectorAll('.hava81-compare__score-wrap'));
+      const scoreLabels = Array.from(element.querySelectorAll('.hava81-compare__score-wrap small'));
+      const scores = Array.from(element.querySelectorAll('.hava81-compare__score'));
       const metrics = Array.from(element.querySelectorAll('.hava81-compare__metrics > span'));
       if (!table) throw new Error('Missing comparison table');
       return {
@@ -1216,6 +1219,9 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
         tableFits: fits(table),
         cardsFit: cards.every(fits),
         headersFit: headers.every(fits),
+        scoreWrapsFit: scoreWraps.every(fits),
+        scoreLabelsFit: scoreLabels.every(fits),
+        scoresFit: scores.every(fits),
         metricsFit: metrics.every(fits),
       };
     });
@@ -1224,6 +1230,9 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
     expect(state.tableFits).toBe(true);
     expect(state.cardsFit).toBe(true);
     expect(state.headersFit).toBe(true);
+    expect(state.scoreWrapsFit).toBe(true);
+    expect(state.scoreLabelsFit).toBe(true);
+    expect(state.scoresFit).toBe(true);
     expect(state.metricsFit).toBe(true);
   };
 
