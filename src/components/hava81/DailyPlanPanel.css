@@ -14,7 +14,13 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-lg);
+}
+
+.daily-plan__header > div:first-child {
+  flex: 1 1 16rem;
+  min-width: 0;
 }
 
 .daily-plan__header h2 {
@@ -29,7 +35,7 @@
   grid-template-columns: auto auto;
   align-items: baseline;
   justify-items: end;
-  min-width: 8rem;
+  min-width: min(8rem, 100%);
 }
 
 .daily-plan__score strong {
@@ -246,6 +252,9 @@
 .daily-plan__header-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
   gap: var(--space-sm);
 }
 .daily-plan__share {
