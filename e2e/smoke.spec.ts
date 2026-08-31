@@ -2231,6 +2231,37 @@ test('desktop comparison entry works with two saved cities', async ({ page }, te
 });
 
 
+test('mobile map header reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile map text-resize regression');
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.getByRole('button', { name: 'Harita', exact: true }).click();
+
+  const panel = page.locator('#weather-map-region');
+  const header = page.locator('.atlas-map-panel__header');
+  await expect(panel).toBeVisible();
+  const layout = await header.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const children = Array.from(element.children);
+    return {
+      headerFits: fits(element),
+      childrenFit: children.every(fits),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  expect(layout.headerFits).toBe(true);
+  expect(layout.childrenFit).toBe(true);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  await expect(header.getByRole('button', { name: 'Kapat' })).toBeVisible();
+});
+
 test('mobile map navigation opens a dedicated map view', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map-view assertion');
   await page.goto('/istanbul');
