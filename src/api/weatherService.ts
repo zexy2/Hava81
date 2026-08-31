@@ -284,6 +284,7 @@ const validateHourlyForecastItem = (
 const validateContextSignalsPayload = (
   data: Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
 ): ContextSignals => {
+  if (!isRecord(data)) invalidForecastPayload('context');
   const fetchedAt = reviveForecastDate(data.fetchedAt, 'context.fetchedAt');
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidForecastPayload(field);
@@ -304,6 +305,9 @@ const validateContextSignalsPayload = (
         data.freshForSeconds > 86_400),
     'context.freshForSeconds'
   );
+  if (data.marine !== undefined && !isRecord(data.marine)) {
+    invalidForecastPayload('context.marine');
+  }
   if (data.marine) {
     const marineObservedAt = reviveForecastDate(
       data.marine.observedAt,
@@ -341,6 +345,8 @@ const validateContextSignalsPayload = (
 };
 
 const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
+  if (!isRecord(data)) invalidWeatherPayload('airQuality');
+  if (!isRecord(data.meta)) invalidWeatherPayload('airQuality.meta');
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidWeatherPayload(field);
   };
@@ -374,6 +380,7 @@ const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
 };
 
 const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResult => {
+  if (!isRecord(data)) invalidForecastPayload('route');
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidForecastPayload(field);
   };
@@ -397,6 +404,7 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
 
   for (const [index, segment] of data.segments.entries()) {
     const prefix = `route.segments.${index}`;
+    if (!isRecord(segment)) invalidForecastPayload(prefix);
     invalid(!isFiniteNumber(segment.fraction) || segment.fraction < 0 || segment.fraction > 1, `${prefix}.fraction`);
     invalid(!isFiniteNumber(segment.lat) || segment.lat < -90 || segment.lat > 90, `${prefix}.lat`);
     invalid(!isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180, `${prefix}.lon`);
@@ -422,6 +430,9 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
     invalid(!['low', 'caution', 'high'].includes(segment.risk), `${prefix}.risk`);
   }
 
+  if (data.betterDeparture !== undefined && !isRecord(data.betterDeparture)) {
+    invalidForecastPayload('route.betterDeparture');
+  }
   if (data.betterDeparture) {
     invalid(!validDateString(data.betterDeparture.departure), 'route.betterDeparture.departure');
     invalid(!validScore(data.betterDeparture.score), 'route.betterDeparture.score');
