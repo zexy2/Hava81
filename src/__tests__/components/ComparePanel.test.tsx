@@ -159,6 +159,26 @@ describe('ComparePanel', () => {
     expect(screen.queryByText('%0')).not.toBeInTheDocument();
   });
 
+  it('shows unavailable AQI without implying a numeric scale value', async () => {
+    api.getAirQuality.mockRejectedValue(new Error('AQ unavailable'));
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getAllByText('—')).toHaveLength(2);
+    expect(screen.queryByText('—/5')).not.toBeInTheDocument();
+  });
+
   it('keeps precipitation probability and amount tied to the same forecast hour', async () => {
     api.getHourlyForecast.mockResolvedValue({
       hourly: [
