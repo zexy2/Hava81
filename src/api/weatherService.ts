@@ -137,10 +137,9 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: Weath
     'current.meta.provider'
   );
   invalid(
-    data.meta.timezoneOffsetSeconds !== undefined &&
-      (!isFiniteNumber(data.meta.timezoneOffsetSeconds) ||
-        data.meta.timezoneOffsetSeconds < -43_200 ||
-        data.meta.timezoneOffsetSeconds > 50_400),
+    !isFiniteNumber(data.meta.timezoneOffsetSeconds) ||
+      data.meta.timezoneOffsetSeconds < -43_200 ||
+      data.meta.timezoneOffsetSeconds > 50_400,
     'current.meta.timezoneOffsetSeconds'
   );
   invalid(
