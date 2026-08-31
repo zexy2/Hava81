@@ -91,7 +91,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
       ) {
         event.preventDefault();
         lastElement.focus();
-      } else if (!event.shiftKey && activeElement === lastElement) {
+      } else if (
+        !event.shiftKey &&
+        (activeElement === lastElement || !panelRef.current.contains(activeElement))
+      ) {
         event.preventDefault();
         firstElement.focus();
       }
