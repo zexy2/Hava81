@@ -294,6 +294,19 @@ const validateContextSignalsPayload = (
   invalid(fetchedAt.getTime() > latestPlausibleContextTimestamp, 'context.fetchedAt');
   invalid(typeof data.provider !== 'string' || !data.provider.trim(), 'context.provider');
   invalid(typeof data.attribution !== 'string' || !data.attribution.trim(), 'context.attribution');
+  if (!isRecord(data.units)) invalidForecastPayload('context.units');
+  for (const field of [
+    'dust',
+    'grassPollen',
+    'olivePollen',
+    'waveHeight',
+    'waveDirection',
+    'wavePeriod',
+    'seaSurfaceTemperature',
+  ] as const) {
+    const value = data.units[field];
+    invalid(value !== undefined && typeof value !== 'string', `context.units.${field}`);
+  }
   for (const field of ['uvIndexMax', 'dustMax', 'grassPollenMax', 'olivePollenMax'] as const) {
     const value = data[field];
     invalid(value !== undefined && (!isFiniteNumber(value) || value < 0), `context.${field}`);
