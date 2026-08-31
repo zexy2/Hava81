@@ -1,7 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { ApiError } from '../../api/errors/ApiError';
 import { weatherService } from '../../api/weatherService';
 import { useWeather } from '../../hooks/useWeather';
+import { ErrorCode } from '../../types';
 
 vi.mock('../../api/weatherService', () => ({
   weatherService: {
@@ -117,5 +119,33 @@ describe('useWeather city/location handoff', () => {
     });
     expect(result.current.weather?.cityName).toBe('İzmir');
     expect(result.current.error).not.toBeNull();
+  });
+
+  it('surfaces a new location failure instead of a stale city-request error', async () => {
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      ApiError.cityNotFound('İzmir')
+    );
+    (weatherService.getCurrentLocationWeather as Mock).mockRejectedValueOnce(
+      new ApiError('location denied', ErrorCode.LOCATION_DENIED, { retryable: true })
+    );
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('İzmir');
+    });
+    expect(result.current.error?.code).toBe(ErrorCode.NOT_FOUND);
+
+    let locationRequest: Promise<unknown>;
+    act(() => {
+      locationRequest = result.current.fetchCurrentLocation();
+    });
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      await locationRequest!;
+    });
+    expect(result.current.error?.code).toBe(ErrorCode.LOCATION_DENIED);
+    expect(result.current.error?.message).toBe('Konum izni reddedildi');
   });
 });
