@@ -339,10 +339,14 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
 
   // Fetch current location weather
   const fetchCurrentLocation = useCallback(async () => {
+    // A location action supersedes any stale city-request failure. Clear only the
+    // opposite-mode error so the last successful city data remains visible while
+    // geolocation runs and any new location failure can surface authoritatively.
+    weatherAsync.clearError();
     // Preserve the last successful city while permission/network work is pending.
     // A successful location handoff clears city state in locationAsync.onSuccess.
     return locationAsync.execute();
-  }, [locationAsync]);
+  }, [locationAsync, weatherAsync]);
 
   // Clear error
   const clearError = useCallback(() => {
