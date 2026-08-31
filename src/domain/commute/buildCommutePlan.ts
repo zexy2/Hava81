@@ -61,7 +61,7 @@ interface BuildCommutePlanInput {
   hourly: HourlyForecast[];
   commuteStart?: string;
   commuteEnd?: string;
-  timezoneOffsetSeconds?: number;
+  timezoneOffsetSeconds: number;
   now?: Date;
   temperatureSensitivity?: TemperatureSensitivity;
 }
@@ -161,7 +161,7 @@ export const buildCommutePlan = ({
   hourly,
   commuteStart,
   commuteEnd,
-  timezoneOffsetSeconds = 0,
+  timezoneOffsetSeconds,
   now = new Date(),
   temperatureSensitivity = 'balanced',
 }: BuildCommutePlanInput): CommutePlan | null => {
