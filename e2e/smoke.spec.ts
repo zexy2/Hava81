@@ -1148,6 +1148,54 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
   expect(boxes.every(height => height >= 44)).toBe(true);
 });
 
+test('mobile forecast summary reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile forecast-summary text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const summary = page.locator('.hava81-forecast-atlas__summary');
+  const assertSummaryFits = async () => {
+    await expect(summary).toBeVisible();
+    const layout = await summary.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        return html.scrollWidth <= html.clientWidth + 1;
+      };
+      const items = Array.from(element.querySelectorAll('.hava81-forecast-atlas__summary-item'));
+      const labels = Array.from(element.querySelectorAll('.hava81-forecast-atlas__summary-item span'));
+      const values = Array.from(element.querySelectorAll('.hava81-forecast-atlas__summary-item strong'));
+      const rect = element.getBoundingClientRect();
+      return {
+        summaryFits: fits(element),
+        itemsFit: items.every(fits),
+        labelsFit: labels.every(fits),
+        valuesFit: values.every(fits),
+        left: rect.left,
+        right: rect.right,
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+    expect(layout.summaryFits).toBe(true);
+    expect(layout.itemsFit).toBe(true);
+    expect(layout.labelsFit).toBe(true);
+    expect(layout.valuesFit).toBe(true);
+    expect(layout.left).toBeGreaterThanOrEqual(0);
+    expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  };
+
+  await assertSummaryFits();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertSummaryFits();
+});
+
 test('mobile daily forecast reflows instead of clipping at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile daily forecast text-resize regression');
   await page.setViewportSize({ width: 390, height: 844 });
