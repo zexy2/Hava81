@@ -132,7 +132,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             aria-labelledby="settings-panel-title"
             tabIndex={-1}
           >
-            <header className="settings-panel__header">
+            <div className="settings-panel__header">
               <h2 id="settings-panel-title">{t('settings.title')}</h2>
               <button
                 ref={closeButtonRef}
@@ -154,7 +154,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
-            </header>
+            </div>
 
             <div className="settings-panel__content">
               {/* Language Setting */}
@@ -283,9 +283,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
               </section>
             </div>
 
-            <footer className="settings-panel__footer">
+            <div className="settings-panel__footer">
               <p className="settings-panel__version">v2.1.0</p>
-            </footer>
+            </div>
           </aside>
         </>
       )}
