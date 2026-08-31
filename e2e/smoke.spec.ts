@@ -2221,6 +2221,45 @@ test('narrow route form keeps endpoint controls readable and inside the viewport
   await expect(destination).toHaveValue('İstanbul');
 });
 
+test('narrow route labels reflow at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile route text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+  await page.getByText('Rota havası', { exact: true }).click();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const routeForm = page.locator('.route-weather__form');
+  await routeForm.scrollIntoViewIfNeeded();
+  const layout = await routeForm.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const labels = Array.from(element.querySelectorAll('label'));
+    const controls = Array.from(element.querySelectorAll('select, input, button'));
+    const rect = element.getBoundingClientRect();
+    return {
+      formFits: fits(element),
+      labelsFit: labels.every(fits),
+      controlsFit: controls.every(fits),
+      left: rect.left,
+      right: rect.right,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.formFits).toBe(true);
+  expect(layout.labelsFit).toBe(true);
+  expect(layout.controlsFit).toBe(true);
+  expect(layout.left).toBeGreaterThanOrEqual(0);
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route assertion');
   await page.goto('/istanbul');

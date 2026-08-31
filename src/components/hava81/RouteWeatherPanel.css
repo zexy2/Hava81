@@ -55,6 +55,7 @@
   display: grid;
   min-width: 0;
   gap: 0.3rem;
+  overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
   font-size: 0.76rem;
 }
