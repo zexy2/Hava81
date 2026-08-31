@@ -105,6 +105,7 @@
 
 .hava81-decision-field__temperature {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   margin: 0;
   color: var(--decision-ink);
@@ -216,6 +217,7 @@
 
 .hava81-decision-field__metric dt {
   margin: 0 0 8px;
+  overflow-wrap: anywhere;
   color: var(--decision-muted);
   font-size: 0.75rem;
   font-weight: 600;
