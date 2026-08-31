@@ -455,3 +455,6 @@ A shared Hava81 decision must not reduce an explainable in-app score back to a b
 
 ## 2026-08-31 — Shared best-time labels must also be valid for ranges
 The daily-plan share payload uses one field for either a single best time or a multi-hour range. Share copy therefore uses range-safe wording (`En uygun zaman / Best window`) rather than asserting that the value is always one clock time.
+
+## 2026-08-31 — Difficult-day notifications keep the same qualitative score meaning
+A browser notification that includes a Hava81 `/100` score must pair it with the same localized score band already computed by the daily plan. Notification rendering may localize that band but must not reinterpret the score, change alert thresholds, or imply official MGM warning provenance.

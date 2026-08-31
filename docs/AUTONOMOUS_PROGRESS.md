@@ -1706,3 +1706,15 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Follow-up share-copy audit found `bestTime` may contain either a single time or a best-window range, while the copy always said “En iyi saat / Best time”.
 - Changed the label to `En uygun zaman / Best window`, which is truthful for both forms and does not alter the selected window itself.
 - Targeted share tests 7/7, TypeScript, ESLint, and `git diff --check` passed.
+
+## 2026-08-31 14:16 TRT — keep difficult-day notifications score-explainable
+- While main pipeline #1024 for merged PR #427 remained in GitHub Pages propagation, continued independently from the last production-green main `1efeb5a5583f1912103869013107574f2a1790d3` in `/home/chatgpt/hava81-run11-score-scan-1415`, branch `automation/hava81-run11-score-scan-1415`.
+- Audited remaining raw `/100` user-facing surfaces after comparison/activity/route/share score-band work. The meaningful remaining gap was the difficult-day browser notification, which still reduced the Hava81 plan to a bare numeric score.
+- Notification rendering now pairs that existing score with the already computed localized daily-plan band (`Zorlayıcı` / `Difficult` etc.). It does not recompute scoring or alter weather, alert priority, dedupe, MGM provenance, UV/AQI, or safety thresholds.
+- Added a delivered-notification regression requiring localized band copy. Local gates on the stable base pass: focused alert tests 10/10, TypeScript, ESLint, full frontend 54 files / 501 tests, production build + 81 city pages/service-worker stamp, production dependency audit 0 vulnerabilities, and `git diff --check`.
+- Hold/rebase onto current production-green main after #1024 completes; preserve append-only checkpoints, rerun combined gates, then lease-protected push/open PR.
+
+## 2026-08-31 14:30 TRT — PR #429 rebased after #428 production gate
+- PR #428 exact head `6b935e6b1c2925300db9ec1106d822c4cd1806dd` passed CI #1025 and was squash-merged as main `0e5a4b42865839f81f9d984b42bea69bc31cfbbf`.
+- Main pipeline #1027 completed all quality/build/browser/Lighthouse/Docker/Pages jobs successfully. Direct post-deploy smoke: root 200, canonical İstanbul 200, API readiness 200/fresh/no-store, production-origin CORS exact, OpenWeather circuit closed, nginx observer-verified on port 4002.
+- Rebased prepared PR #429 branch onto `0e5a4b42865839f81f9d984b42bea69bc31cfbbf`, preserving #428 and #429 append-only checkpoints. Next action: rerun combined gates, verify remote lease from `ff5901f9635f3490e9b8c04dd23360f514da85f0`, force-update only with that lease, then require replacement exact-head CI before merge.

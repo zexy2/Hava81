@@ -71,8 +71,12 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     if (sessionSentKeys.current.has(key)) return;
     const sentMarker = readStorage(key);
     if (sentMarker === undefined || sentMarker) return;
-    const title = t(candidate.titleKey, candidate.data);
-    const body = t(candidate.bodyKey, candidate.data);
+    const alertData = {
+      ...candidate.data,
+      band: t(`hava81.dailyPlan.bands.${plan.band}`),
+    };
+    const title = t(candidate.titleKey, alertData);
+    const body = t(candidate.bodyKey, alertData);
     void (async () => {
       try {
         if ('serviceWorker' in navigator) {
@@ -91,7 +95,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         // Notifications are optional; failure must never block weather data or suppress a later retry.
       }
     })();
-  }, [candidate, enabled, permission, t, weather.meta.timezoneOffsetSeconds]);
+  }, [candidate, enabled, permission, plan.band, t, weather.meta.timezoneOffsetSeconds]);
 
   const toggle = async () => {
     if (enabled) {

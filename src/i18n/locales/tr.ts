@@ -408,7 +408,7 @@ export const tr = {
       waitTitle: '{{city}} · Biraz beklersen daha iyi',
       waitBody: 'Yakın saatlerde hava skoru yaklaşık {{improvement}} puan iyileşiyor.',
       difficultTitle: '{{city}} · Zorlayıcı hava',
-      difficultBody: 'Bugünün Hava81 Skoru {{score}}/100. Planını hava risklerine göre ayarla.',
+      difficultBody: 'Bugünün Hava81 Skoru {{score}}/100 · {{band}}. Planını hava risklerine göre ayarla.',
     },
     route: {
       title: 'Rota havası',

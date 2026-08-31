@@ -407,7 +407,7 @@ export const en = {
       waitBody: 'The weather score improves by about {{improvement}} points in the next hours.',
       difficultTitle: '{{city}} · Difficult weather',
       difficultBody:
-        "Today's Hava81 Score is {{score}}/100. Adjust your plan for the weather risks.",
+        "Today's Hava81 Score is {{score}}/100 · {{band}}. Adjust your plan for the weather risks.",
     },
     route: {
       title: 'Route weather',
