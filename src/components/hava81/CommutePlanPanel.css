@@ -150,7 +150,6 @@
 .commute-plan__verdict[data-advice='umbrella-consider'],
 .commute-plan__verdict[data-advice='heat'],
 .commute-plan__verdict[data-advice='cold'],
-.commute-plan__verdict[data-advice='poor-air'],
 .commute-plan__verdict[data-advice='wind-caution'] {
   border-inline-start-color: var(--color-saffron);
 }

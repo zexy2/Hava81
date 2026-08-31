@@ -408,3 +408,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-31 — Missing optional AQI in comparison must remain visibly unknown. Do not render an unavailable AQI as `—/5`, which visually suggests a value on the five-point scale; show a standalone em dash while keeping real AQI values as `n/5`.
 
 - 2026-08-31 — Decision-card timestamps must describe the observation that actually determines the displayed value. If current apparent temperature is more extreme than every forecast hour, heat/cold guidance stays untimed/current; attach a future time only when the forecast point is at least as extreme as the current observation.
+
+- 2026-08-31 — Current air quality is an observation, not a future commute forecast. Do not project the current OpenWeather AQI into later outbound/return commute scoring, advice, or share summaries. Keep current AQI on explicitly current/overall air-quality surfaces unless a time-aligned future air-quality source with verified freshness semantics is introduced.

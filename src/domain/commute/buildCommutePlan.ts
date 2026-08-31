@@ -26,7 +26,6 @@ export type CommuteAdviceCode =
   | 'cold'
   | 'strong-wind'
   | 'wind-caution'
-  | 'poor-air'
   | 'stable';
 
 export interface CommuteWindow {
@@ -55,7 +54,6 @@ export interface CommutePlan {
     maxApparentTemperature: number;
     minApparentTemperature: number;
     maxEffectiveWind: number;
-    airQualityIndex?: number;
   };
 }
 
@@ -65,7 +63,6 @@ interface BuildCommutePlanInput {
   commuteEnd?: string;
   timezoneOffsetSeconds?: number;
   now?: Date;
-  airQualityIndex?: number;
   temperatureSensitivity?: TemperatureSensitivity;
 }
 
@@ -155,7 +152,6 @@ const advicePriority: CommuteAdviceCode[] = [
   'strong-wind',
   'heat',
   'cold',
-  'poor-air',
   'umbrella-consider',
   'wind-caution',
   'stable',
@@ -167,7 +163,6 @@ export const buildCommutePlan = ({
   commuteEnd,
   timezoneOffsetSeconds = 0,
   now = new Date(),
-  airQualityIndex,
   temperatureSensitivity = 'balanced',
 }: BuildCommutePlanInput): CommutePlan | null => {
   const startMinutes = parseClockMinutes(commuteStart);
@@ -267,7 +262,6 @@ export const buildCommutePlan = ({
   else if (maxEffectiveWind >= 10.8) advice.push('wind-caution');
   if (maxApparentTemperature >= heatThreshold) advice.push('heat');
   if (minApparentTemperature <= coldThreshold) advice.push('cold');
-  if ((airQualityIndex ?? 0) >= 4) advice.push('poor-air');
   if (advice.length === 0) advice.push('stable');
 
   const uniqueAdvice = [...new Set(advice)];
@@ -285,7 +279,6 @@ export const buildCommutePlan = ({
       maxApparentTemperature,
       minApparentTemperature,
       maxEffectiveWind,
-      airQualityIndex,
     },
   };
 };

@@ -4,17 +4,16 @@ import { trackProductEvent } from '../../analytics/productEvents';
 import { buildCommutePlan, type CommuteAdviceCode } from '../../domain/commute/buildCommutePlan';
 import { useSettings } from '../../context/SettingsContext';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { HourlyForecast, NormalizedWeatherData } from '../../types';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './CommutePlanPanel.css';
 
 interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
-  airQuality?: AirQuality;
 }
 
-export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
+export function CommutePlanPanel({ weather, hourly }: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
@@ -28,11 +27,9 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
         commuteStart: profile.commuteStart,
         commuteEnd: profile.commuteEnd,
         timezoneOffsetSeconds,
-        airQualityIndex: airQuality?.aqi,
         temperatureSensitivity: profile.temperatureSensitivity,
       }),
     [
-      airQuality?.aqi,
       hourly,
       profile.commuteEnd,
       profile.commuteStart,
@@ -90,7 +87,6 @@ export function CommutePlanPanel({ weather, hourly, airQuality }: Props) {
       temperatureUnit: getTemperatureSymbol(),
       wind: convertWindSpeed(plan.summary.maxEffectiveWind),
       windUnit: getWindSpeedSymbol(),
-      aqi: plan.summary.airQualityIndex ?? '—',
     });
   };
 
