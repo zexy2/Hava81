@@ -1,8 +1,10 @@
+import type { Hava81ScoreBand } from '../domain/decision/types';
 import { cityPath } from './cityRoute';
 
 interface ShareDecisionInput {
   cityName: string;
   score: number;
+  band: Hava81ScoreBand;
   bestTime?: string;
   umbrella: 'yes' | 'maybe' | 'no';
   recommendation?: string;
@@ -12,6 +14,7 @@ interface ShareDecisionInput {
 export const buildDecisionShare = ({
   cityName,
   score,
+  band,
   bestTime,
   umbrella,
   recommendation,
@@ -34,7 +37,10 @@ export const buildDecisionShare = ({
       : umbrella === 'maybe'
         ? 'Umbrella: Take one'
         : 'Umbrella: Not needed';
-  const title = tr ? `${cityName} · Hava81 ${score}/100` : `${cityName} · Hava81 ${score}/100`;
+  const bandText = tr
+    ? { excellent: 'Çok uygun', good: 'Uygun', caution: 'Dikkat', difficult: 'Zorlayıcı' }[band]
+    : { excellent: 'Very suitable', good: 'Suitable', caution: 'Caution', difficult: 'Difficult' }[band];
+  const title = `${cityName} · Hava81 ${score}/100 · ${bandText}`;
   const text = [
     title,
     recommendation ? (tr ? `Öneri: ${recommendation}` : `Recommendation: ${recommendation}`) : null,

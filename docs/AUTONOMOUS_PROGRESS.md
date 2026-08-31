@@ -1693,3 +1693,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Route corridor result and segment scores now carry the existing qualitative Hava81 band derived from the score; commute outbound/return scores now carry their plan-provided band. This removes remaining unexplained `/100` numbers without changing route interpolation, commute scoring, weather inputs, risk thresholds, or provider semantics.
 - Regression coverage added in RouteWeatherPanel and CommutePlanPanel tests. Local gates passed: targeted 16/16, full frontend suite 54 files / 500 tests, TypeScript, ESLint, production build + 81 city pages, and `git diff --check`.
 - This branch remains isolated while #426 is pending. Next action: merge #426 only after exact-head CI is green and state is freshly reverified; then rebase this branch onto the resulting main, preserve append-only checkpoints, rerun combined gates, and push with lease protection.
+
+## 2026-08-31 14:00 TRT — make shared Hava81 scores self-explanatory
+- While merged PR #426 main pipeline #1021 was running, continued independently on `automation/hava81-run11-score-audit-1358` from the last stable main base.
+- Audited the remaining score surfaces: daily-plan visible score already carries band + numeric range and timeline list items already expose band semantics through their accessible labels, so no redundant UI was added there.
+- Fixed the actual remaining growth/share gap: decision shares now include the same localized qualitative band as the in-app score (for example `72/100 · Dikkat` / `98/100 · Very suitable`). The caller passes the exact plan band, so sharing does not reinterpret or recompute weather data.
+- Added Turkish and English regression coverage. Gates passed: targeted share + DailyPlan 17/17, full frontend suite 54 files / 501 tests, TypeScript, ESLint, production build + service-worker stamp + 81 city pages, and `git diff --check`.
+- Pending: main pipeline #1021 for `1efeb5a5583f1912103869013107574f2a1790d3`. This branch must be rebased onto current main only after preserving #426's append-only docs, then combined gates rerun before push/PR.
