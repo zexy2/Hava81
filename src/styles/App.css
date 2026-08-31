@@ -1040,6 +1040,15 @@ kbd {
     scroll-margin-top: var(--space-sm);
   }
 
+  .atlas-map-panel__header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .atlas-map-panel__header > div {
+    min-width: 0;
+  }
+
   .atlas-footer {
     display: none;
   }
