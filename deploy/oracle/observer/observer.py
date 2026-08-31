@@ -27,6 +27,7 @@ ALLOWED_API_PORTS = {4000, 4001, 4002}
 REPO = 'zexy2/Hava81'
 MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MAXIMUM_ROOT_USED_PERCENT = 92.0
+ROOT_DISK_WARNING_USED_PERCENT = 85.0
 MAX_READY_AGE_SECONDS = 180
 MAX_FUTURE_SKEW_SECONDS = 60
 USER_AGENT = 'Hava81-Deterministic-Observer/1.0'
@@ -203,12 +204,16 @@ def collect_host() -> dict[str, Any]:
     used_percent = round(raw_used_percent, 1)
     free_ok = free_bytes >= MINIMUM_ROOT_FREE_BYTES
     usage_ok = raw_used_percent <= MAXIMUM_ROOT_USED_PERCENT
+    pressure_warning = raw_used_percent >= ROOT_DISK_WARNING_USED_PERCENT
     disk_ok = free_ok and usage_ok
     issues: list[str] = []
+    warnings: list[str] = []
     if not free_ok:
         issues.append('root_disk_low')
     if not usage_ok:
         issues.append('root_disk_pressure')
+    elif pressure_warning:
+        warnings.append('root_disk_pressure_warning')
     return {
         'disk': {
             'free_bytes': free_bytes,
@@ -216,12 +221,15 @@ def collect_host() -> dict[str, Any]:
             'used_percent': used_percent,
             'minimum_free_bytes': MINIMUM_ROOT_FREE_BYTES,
             'maximum_used_percent': MAXIMUM_ROOT_USED_PERCENT,
+            'warning_used_percent': ROOT_DISK_WARNING_USED_PERCENT,
             'free_ok': free_ok,
             'usage_ok': usage_ok,
+            'pressure_warning': pressure_warning,
             'ok': disk_ok,
         },
         'healthy': disk_ok,
         'issues': issues,
+        'warnings': warnings,
     }
 
 
@@ -388,6 +396,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'production_issues': production.get('issues'),
         'nginx_port': ((production.get('nginx') or {}).get('port')),
         'host_disk_ok': ((host.get('disk') or {}).get('ok')),
+        'host_disk_pressure_warning': ((host.get('disk') or {}).get('pressure_warning')),
         'prs': [
             {
                 'number': pr.get('number'),

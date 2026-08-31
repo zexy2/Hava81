@@ -448,7 +448,9 @@ class ObserverHostDiskTests(unittest.TestCase):
         host = self._collect_with_available_blocks(750_000)  # ~3.1 GB free, 92.5% used
         self.assertGreater(host['disk']['free_bytes'], observer.MINIMUM_ROOT_FREE_BYTES)
         self.assertFalse(host['disk']['usage_ok'])
+        self.assertTrue(host['disk']['pressure_warning'])
         self.assertFalse(host['healthy'])
+        self.assertEqual(host['warnings'], [])
         self.assertIn('root_disk_pressure', host['issues'])
         self.assertNotIn('root_disk_low', host['issues'])
 
@@ -459,16 +461,30 @@ class ObserverHostDiskTests(unittest.TestCase):
         self.assertEqual(exact_threshold['disk']['used_percent'], 92.0)
         self.assertTrue(exact_threshold['disk']['usage_ok'])
         self.assertTrue(exact_threshold['healthy'])
+        self.assertTrue(exact_threshold['disk']['pressure_warning'])
         self.assertEqual(rounded_up['disk']['used_percent'], 92.0)
         self.assertTrue(rounded_up['disk']['usage_ok'])
         self.assertTrue(rounded_up['healthy'])
+        self.assertTrue(rounded_up['disk']['pressure_warning'])
+
+    def test_disk_pressure_warning_is_advisory_before_incident_threshold(self) -> None:
+        warning = self._collect_with_available_blocks(1_500_000)  # exactly 85% used
+
+        self.assertEqual(warning['disk']['used_percent'], 85.0)
+        self.assertTrue(warning['disk']['pressure_warning'])
+        self.assertTrue(warning['disk']['usage_ok'])
+        self.assertTrue(warning['healthy'])
+        self.assertEqual(warning['issues'], [])
+        self.assertEqual(warning['warnings'], ['root_disk_pressure_warning'])
 
     def test_healthy_disk_must_pass_both_free_space_guards(self) -> None:
-        host = self._collect_with_available_blocks(1_500_000)  # ~6.1 GB free, 85% used
+        host = self._collect_with_available_blocks(2_000_000)  # ~8.2 GB free, 80% used
         self.assertTrue(host['disk']['free_ok'])
         self.assertTrue(host['disk']['usage_ok'])
+        self.assertFalse(host['disk']['pressure_warning'])
         self.assertTrue(host['healthy'])
         self.assertEqual(host['issues'], [])
+        self.assertEqual(host['warnings'], [])
 
 
 if __name__ == '__main__':
