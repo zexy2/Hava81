@@ -136,7 +136,7 @@ export class WeatherService {
   }
 
   private normalizeForecast(raw: ForecastUpstream): ForecastDto {
-    const timezoneOffsetSeconds = raw.city.timezone ?? 0;
+    const timezoneOffsetSeconds = raw.city.timezone;
     const hourly = raw.list.slice(0, 16).map(item => ({
       time: new Date(item.dt * 1_000).toISOString(),
       temp: Math.round(item.main.temp),
