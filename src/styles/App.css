@@ -923,7 +923,14 @@ kbd {
   }
 
   .atlas-header__inner {
-    padding: var(--space-sm) var(--space-md);
+    column-gap: 6px;
+    row-gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .atlas-brand {
+    gap: 8px;
+    min-height: 44px;
   }
 
   .atlas-brand__name {
@@ -931,17 +938,33 @@ kbd {
   }
 
   .atlas-brand__index {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 36px;
+    height: 36px;
+  }
+
+  .atlas-brand__index b {
+    font-size: 12px;
+  }
+
+  .atlas-brand__index small {
+    font-size: 9px;
   }
 
   .atlas-header__actions {
-    gap: var(--space-2xs);
+    gap: 3px;
   }
 
-  .atlas-icon-button {
-    width: 2.75rem;
-    height: 2.75rem;
+  .atlas-icon-button,
+  .atlas-settings-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+
+  .atlas-icon-button svg {
+    width: 20px;
+    height: 20px;
   }
 
   .atlas-icon-button--search {
@@ -1018,6 +1041,28 @@ kbd {
 
   .atlas-footer {
     display: none;
+  }
+}
+
+@media (max-width: 21rem) {
+  .atlas-header__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .atlas-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .atlas-header__actions {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+
+  .atlas-header__search {
+    grid-column: 1;
+    grid-row: 3;
   }
 }
 

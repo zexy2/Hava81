@@ -407,6 +407,75 @@ test('wide tablet header reflows search at 200% text size', async ({ page }, tes
   expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
 });
 
+test('mobile header keeps quick actions reachable at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile text-resize header regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const assertHeaderFits = async () => {
+    const state = await page.locator('.atlas-header__inner').evaluate(element => {
+      const actions = Array.from(
+        element.querySelectorAll<HTMLButtonElement>('.atlas-header__actions button')
+      ).filter(button => getComputedStyle(button).display !== 'none');
+      const viewportWidth = document.documentElement.clientWidth;
+      return {
+        innerFits: element.scrollWidth <= element.clientWidth,
+        pageFits: document.documentElement.scrollWidth <= viewportWidth,
+        actions: actions.map(button => {
+          const rect = button.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2
+          );
+          return {
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+            reachable: hit === button || button.contains(hit),
+          };
+        }),
+        viewportWidth,
+      };
+    });
+
+    expect(state.innerFits).toBe(true);
+    expect(state.pageFits).toBe(true);
+    expect(state.actions.length).toBeGreaterThanOrEqual(4);
+    expect(state.actions.every(action =>
+      action.left >= 0 &&
+      action.right <= state.viewportWidth &&
+      action.width >= 44 &&
+      action.height >= 44 &&
+      action.reachable
+    )).toBe(true);
+  };
+
+  await assertHeaderFits();
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertHeaderFits();
+
+  const searchToggle = page.locator('.atlas-icon-button--search');
+  await searchToggle.click();
+  const search = page.locator('.atlas-header__search');
+  await expect(search).toBeVisible();
+  const searchGeometry = await search.evaluate(element => ({
+    fits: element.scrollWidth <= element.clientWidth,
+    left: element.getBoundingClientRect().left,
+    right: element.getBoundingClientRect().right,
+    viewportWidth: document.documentElement.clientWidth,
+    pageWidth: document.documentElement.scrollWidth,
+  }));
+  expect(searchGeometry.fits).toBe(true);
+  expect(searchGeometry.left).toBeGreaterThanOrEqual(0);
+  expect(searchGeometry.right).toBeLessThanOrEqual(searchGeometry.viewportWidth);
+  expect(searchGeometry.pageWidth).toBeLessThanOrEqual(searchGeometry.viewportWidth);
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
