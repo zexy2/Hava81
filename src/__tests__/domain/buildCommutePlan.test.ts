@@ -198,7 +198,7 @@ describe('buildCommutePlan', () => {
     expect(plan!.return.score).toBeLessThan(plan!.outbound.score);
   });
 
-  it('includes air quality in the displayed commute Hava81 window scores', () => {
+  it('keeps current air quality as advice without projecting it into future commute scores', () => {
     const clear: HourlyForecast[] = [
       point('2026-08-29T09:00:00Z', 22, 0, 3),
       point('2026-08-29T12:00:00Z', 22, 0, 3),
@@ -220,7 +220,9 @@ describe('buildCommutePlan', () => {
       airQualityIndex: 4,
     });
 
-    expect(poorAir!.outbound.score).toBeLessThan(goodAir!.outbound.score);
-    expect(poorAir!.return.score).toBeLessThan(goodAir!.return.score);
+    expect(poorAir!.outbound.score).toBe(goodAir!.outbound.score);
+    expect(poorAir!.return.score).toBe(goodAir!.return.score);
+    expect(poorAir!.advice).toContain('poor-air');
+    expect(poorAir!.summary.airQualityIndex).toBe(4);
   });
 });

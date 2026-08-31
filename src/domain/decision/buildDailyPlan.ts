@@ -202,7 +202,6 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
           precipitationMm: point.precipitationMm,
           windSpeed: point.windSpeed ?? weather.windSpeed,
           windGust: point.windGust,
-          airQualityIndex: airQuality?.aqi,
           uvIndex: point.uvIndex,
           visibility: point.visibility,
           weatherCode: point.weatherCode,

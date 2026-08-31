@@ -147,7 +147,6 @@ export const getWeatherDecisions = ({
       precipitationMm: point.precipitationMm,
       windSpeed: point.windSpeed ?? weather.windSpeed,
       windGust: point.windGust,
-      airQualityIndex: airQuality?.aqi,
       uvIndex: point.uvIndex,
       visibility: point.visibility,
       weatherCode: point.weatherCode,
@@ -157,7 +156,7 @@ export const getWeatherDecisions = ({
     (best, entry) => (!best || entry.result.score > best.result.score ? entry : best),
     undefined
   );
-  if (outdoor && outdoor.result.score >= 85 && !outdoor.result.reasons.includes('poor-air-quality')) {
+  if (outdoor && outdoor.result.score >= 85) {
     decisions.push({
       kind: 'outdoor-window',
       severity: 'info',

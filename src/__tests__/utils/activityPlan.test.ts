@@ -54,22 +54,25 @@ describe('activity plans', () => {
     expect(plan.reasons).toContain('heavy-rain');
   });
 
-  it('makes poor AQI matter more for children than picnic', () => {
+  it('does not project current AQI unchanged across future activity hours', () => {
     const points = hourly([22, 23, 24]);
     const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
-    const children = buildActivityPlan({
+    const withCurrentAir = buildActivityPlan({
       activity: 'children',
       weather,
       hourly: points,
       airQuality: air,
     });
-    const picnic = buildActivityPlan({
-      activity: 'picnic',
-      weather,
-      hourly: points,
-      airQuality: air,
-    });
-    expect(children.score).toBeLessThan(picnic.score);
+    const withoutAirProjection = buildActivityPlan({ activity: 'children', weather, hourly: points });
+    expect(withCurrentAir.score).toBe(withoutAirProjection.score);
+    expect(withCurrentAir.reasons).not.toContain('poor-air-quality');
+  });
+
+  it('still uses current AQI when the activity plan falls back to current weather', () => {
+    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
+    const walk = buildActivityPlan({ activity: 'walk', weather, hourly: [], airQuality: air });
+    expect(walk.baselineScore).toBeLessThan(100);
+    expect(walk.reasons).toContain('poor-air-quality');
   });
 
   it('temperature sensitivity shifts activity comfort', () => {
@@ -186,34 +189,30 @@ describe('activity plans', () => {
     expect(walk.slots.every(slot => slot.band !== 'excellent')).toBe(true);
   });
 
-  it('does not let ideal activity comfort erase unrelated air-quality risk', () => {
+  it('does not invent future air-quality risk when only a current AQI is available', () => {
     const points = hourly([20, 20, 20]);
     const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40 };
     const walk = buildActivityPlan({ activity: 'walk', weather, hourly: points, airQuality: air });
-    const run = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: air });
-
-    expect(walk.baselineScore).toBeLessThan(100);
-    expect(walk.score).toBe(walk.baselineScore);
-    expect(run.score).toBe(run.baselineScore);
+    expect(walk.reasons).not.toContain('sensitive-air-quality');
+    expect(walk.reasons).not.toContain('poor-air-quality');
   });
 
   it('lets a running-friendly cool temperature refund only the generic thermal penalty', () => {
     const points = hourly([12, 12, 12]);
-    const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40 };
-    const run = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: air });
+    const run = buildActivityPlan({ activity: 'run', weather, hourly: points });
 
     expect(run.activityImpact).toBeGreaterThan(0);
     expect(run.score).toBeGreaterThan(run.baselineScore);
-    expect(run.score).toBeLessThanOrEqual(98);
+    expect(run.score).toBeLessThanOrEqual(100);
   });
 
-  it('lets laundry reclaim thermal and useful-wind friction without erasing poor air quality', () => {
+  it('does not turn current poor AQI into a future laundry air-quality penalty', () => {
     const points = hourly([30, 30, 30], [0, 0, 0], [6, 6, 6]);
     const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
     const laundry = buildActivityPlan({ activity: 'laundry', weather, hourly: points, airQuality: air });
 
     expect(laundry.activityImpact).toBeGreaterThan(0);
-    expect(laundry.score).toBeLessThanOrEqual(78);
+    expect(laundry.reasons).not.toContain('poor-air-quality');
   });
 
 });

@@ -52,14 +52,14 @@ describe('getWeatherDecisions', () => {
     expect(result.find(item => item.kind === 'heat')).toMatchObject({ severity: 'high', value: 41 });
   });
 
-  it('does not advertise a good outdoor window while current air quality is poor', () => {
+  it('keeps poor current air quality separate from a future outdoor weather window', () => {
     const result = getWeatherDecisions({
       weather,
       hourly: [point({ temp: 20, pop: 0.05, windSpeed: 2 })],
       airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 30, pm10: 50, o3: 70 },
     });
     expect(result.map(item => item.kind)).toContain('air-quality');
-    expect(result.map(item => item.kind)).not.toContain('outdoor-window');
+    expect(result.map(item => item.kind)).toContain('outdoor-window');
   });
 
   it('treats UV input as a modeled next-24-hour maximum when richer hourly UV is absent', () => {
