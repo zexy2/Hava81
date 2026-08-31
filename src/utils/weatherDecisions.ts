@@ -14,13 +14,23 @@ export type WeatherDecisionKind =
 
 export type WeatherDecisionSeverity = 'info' | 'moderate' | 'high';
 
-export interface WeatherDecision {
-  kind: WeatherDecisionKind;
+type WeatherDecisionBase = {
   severity: WeatherDecisionSeverity;
   time?: Date;
-  value?: number;
+};
+
+type ValuedWeatherDecision = WeatherDecisionBase & {
+  kind: 'rain' | 'wind' | 'heat' | 'cold' | 'air-quality' | 'uv';
+  value: number;
   amount?: number;
-}
+};
+
+type ContextWeatherDecision = WeatherDecisionBase & {
+  kind: 'outdoor-window' | 'stable';
+  value?: number;
+};
+
+export type WeatherDecision = ValuedWeatherDecision | ContextWeatherDecision;
 
 export interface WeatherDecisionInput {
   weather: NormalizedWeatherData;
