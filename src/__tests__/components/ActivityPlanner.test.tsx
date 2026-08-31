@@ -72,7 +72,7 @@ describe('ActivityPlanner time range', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getAllByText('12 saatlik uygunluk').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/12 saatlik uygunluk · /i).length).toBeGreaterThan(0);
     const scoreExplanation = screen.getByText('Skorlar neden farklı?');
     expect(scoreExplanation).toBeInTheDocument();
     fireEvent.click(scoreExplanation);
@@ -83,7 +83,7 @@ describe('ActivityPlanner time range', () => {
     fireEvent.change(screen.getByLabelText('Başlangıç'), { target: { value: '18:00' } });
     fireEvent.change(screen.getByLabelText('Bitiş'), { target: { value: '20:00' } });
 
-    expect(screen.getAllByText('18:00–20:00 uygunluğu').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/18:00–20:00 uygunluğu · /i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Koşuda 10–22°C/i)).toBeInTheDocument();
     expect(
       screen.getAllByText(/Aktivite ölçütlerinin etkisi: \d+ → \d+ \([+-]?\d+\) puan/i).length

@@ -218,6 +218,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                     end: profile.activityEnd,
                   })
                 : t('hava81.activities.score.default');
+              const scoreBandLabel = t(`hava81.dailyPlan.bands.${plan.band}`);
               return (
                 <article
                   key={plan.activity}
@@ -226,7 +227,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                   <header>
                     <h3>{t(`hava81.activities.names.${plan.activity}`)}</h3>
                     <div className="activity-card__score">
-                      <small>{scoreLabel}</small>
+                      <small>{scoreLabel} · {scoreBandLabel}</small>
                       <strong>
                         {plan.windowUnavailable ? '—' : plan.score}
                         <span>/100</span>
