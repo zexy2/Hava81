@@ -2677,6 +2677,56 @@ test('activity preference and time range change the personalized plan', async ({
   await expect(runCard.getByText(/Koşuda 10–22°C/)).toBeVisible();
 });
 
+test('route form reflows when enlarged text narrows its content box', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route text-resize container regression');
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/istanbul');
+  await page.getByText('Rota havası', { exact: true }).click();
+
+  const routeForm = page.locator('.route-weather__form');
+  const measure = async () =>
+    routeForm.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        const rect = html.getBoundingClientRect();
+        const formRect = element.getBoundingClientRect();
+        return (
+          html.scrollWidth <= html.clientWidth + 1 &&
+          rect.left >= formRect.left - 1 &&
+          rect.right <= formRect.right + 1
+        );
+      };
+      const labels = Array.from(element.querySelectorAll('label'));
+      const controls = Array.from(element.querySelectorAll('select, input, button'));
+      return {
+        formFits: element.scrollWidth <= element.clientWidth + 1,
+        labelsFit: labels.every(fits),
+        controlsFit: controls.every(fits),
+        labelTops: labels.map(label => label.getBoundingClientRect().top),
+        controlTops: controls.map(control => control.getBoundingClientRect().top),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+  const normal = await measure();
+  expect(normal.formFits).toBe(true);
+  expect(normal.labelsFit).toBe(true);
+  expect(normal.controlsFit).toBe(true);
+  expect(Math.abs(normal.labelTops[0] - normal.labelTops[2])).toBeLessThanOrEqual(1);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const enlarged = await measure();
+  expect(enlarged.formFits).toBe(true);
+  expect(enlarged.labelsFit).toBe(true);
+  expect(enlarged.controlsFit).toBe(true);
+  expect(enlarged.labelTops[2]).toBeGreaterThan(enlarged.labelTops[0] + 1);
+  expect(enlarged.controlTops.at(-1)).toBeGreaterThan(enlarged.controlTops[0] + 1);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+});
+
 test('narrow route form keeps endpoint controls readable and inside the viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile route layout assertion');
   await page.setViewportSize({ width: 320, height: 720 });
