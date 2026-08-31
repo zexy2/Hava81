@@ -1145,6 +1145,52 @@ test('daily plan timeline matches its 12-hour score horizon and shows risk-first
   await expect(timeline.getByText('Yarın')).toHaveCount(1);
 });
 
+
+test('daily plan avoids repeated perfect scores for pleasant humid night hours', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single top-end score calibration regression');
+  await page.unroute('**/api/v1/weather/hourly**');
+  const currentHour = new Date(current.timestamp);
+  currentHour.setUTCMinutes(0, 0, 0);
+  const profile = [
+    { temp: 22.6, apparentTemperature: 25.4, humidity: 81, windSpeed: 1.25, windGust: 3.9, visibility: 31560 },
+    { temp: 22.4, apparentTemperature: 25.1, humidity: 81, windSpeed: 1.12, windGust: 2.9, visibility: 31340 },
+    { temp: 22.1, apparentTemperature: 24.8, humidity: 82, windSpeed: 1.17, windGust: 2.7, visibility: 31080 },
+    { temp: 21.7, apparentTemperature: 24.4, humidity: 83, windSpeed: 1.14, windGust: 2.6, visibility: 29500 },
+    { temp: 21.5, apparentTemperature: 24.2, humidity: 85, windSpeed: 1.26, windGust: 2.7, visibility: 28280 },
+    { temp: 21.4, apparentTemperature: 23.9, humidity: 85, windSpeed: 1.34, windGust: 2.8, visibility: 27700 },
+    { temp: 21.4, apparentTemperature: 24, humidity: 84, windSpeed: 1.12, windGust: 2.9, visibility: 29000 },
+  ];
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({
+      json: {
+        ...hourlyForecast,
+        hourly: profile.map((point, index) => ({
+          ...point,
+          time: new Date(currentHour.getTime() + index * 60 * 60_000).toISOString(),
+          icon: '01n',
+          description: 'açık',
+          pop: 0,
+          precipitationMm: 0,
+          uvIndex: 0,
+          weatherCode: 0,
+        })),
+      },
+    })
+  );
+
+  await page.goto('/istanbul');
+  const timeline = page.getByRole('list', { name: 'Günün hava uygunluk zaman çizelgesi' });
+  await expect(timeline.locator('.daily-plan__slot')).toHaveCount(profile.length);
+  const scores = (await timeline.locator('.daily-plan__slot > strong').allTextContents()).map(Number);
+
+  expect(scores).toHaveLength(profile.length);
+  expect(scores.every(score => Number.isFinite(score) && score < 100)).toBe(true);
+  expect(Math.min(...scores)).toBeGreaterThanOrEqual(94);
+  expect(Math.max(...scores)).toBeLessThanOrEqual(98);
+  expect(new Set(scores).size).toBeGreaterThanOrEqual(3);
+  expect(scores[0]).toBeLessThan(scores.at(-1)!);
+});
+
 test('narrow hourly atlas keeps its interval chip rail and summary readable', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single narrow hourly-atlas layout regression');
   await page.setViewportSize({ width: 320, height: 720 });

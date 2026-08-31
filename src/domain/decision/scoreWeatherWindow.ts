@@ -93,9 +93,13 @@ const addImpact = (
 };
 
 const thermalPenalty = (apparent: number) => {
-  if (apparent > 25) return 58 * smoothstep(apparent, 25, 43);
-  if (apparent < 18) return 55 * smoothstep(18 - apparent, 0, 28);
-  return 0;
+  // Keep 100 for genuinely near-ideal comfort instead of treating the broad 18–25°C
+  // range as equally perfect. The gentle centre-distance penalty creates useful
+  // hour-to-hour separation while preserving the previous extreme-heat/cold ceiling.
+  const comfort = 4 * smoothstep(Math.abs(apparent - 22), 0, 4);
+  if (apparent > 25) return comfort + 54 * smoothstep(apparent, 25, 43);
+  if (apparent < 18) return comfort + 51 * smoothstep(18 - apparent, 0, 28);
+  return comfort;
 };
 
 const precipitationPenalty = (probability: number, amount?: number) => {

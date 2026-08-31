@@ -43,7 +43,11 @@ const point = (
   ...overrides,
 });
 
-const rich = (hour: number, temp = 24, overrides: Partial<HourlyForecast> = {}): HourlyForecast => ({
+const rich = (
+  hour: number,
+  temp = 24,
+  overrides: Partial<HourlyForecast> = {}
+): HourlyForecast => ({
   ...point(hour, temp, {
     apparentTemperature: temp,
     humidity: 45,
@@ -75,8 +79,8 @@ describe('Hava81 daily decision engine v2', () => {
   it('keeps comfortable dry calm windows in the excellent band', () => {
     const result = scoreWeatherWindow({
       time: new Date(),
-      temperature: 24,
-      apparentTemperature: 24,
+      temperature: 22,
+      apparentTemperature: 22,
       humidity: 45,
       precipitationProbability: 0.05,
       precipitationMm: 0,
@@ -91,6 +95,31 @@ describe('Hava81 daily decision engine v2', () => {
     expect(result.band).toBe('excellent');
     expect(result.reasons).toEqual([]);
     expect(result.impacts).toEqual([]);
+  });
+
+  it('keeps pleasant-but-not-perfect hours below 100 instead of flattening the comfort band', () => {
+    const apparentTemperatures = [25.4, 25.1, 24.8, 24.4, 24.2, 23.9, 24];
+    const scores = apparentTemperatures.map(
+      (apparentTemperature, index) =>
+        scoreWeatherWindow({
+          time: new Date(Date.parse('2026-08-31T21:00:00.000Z') + index * 60 * 60 * 1000),
+          temperature: 22.6 - index * 0.2,
+          apparentTemperature,
+          humidity: 81 + Math.min(index, 4),
+          precipitationProbability: 0,
+          precipitationMm: 0,
+          windSpeed: 1.2,
+          windGust: 3,
+          uvIndex: 0,
+          visibility: 28000,
+          weatherCode: 0,
+        }).score
+    );
+
+    expect(scores.every(score => score < 100)).toBe(true);
+    expect(Math.min(...scores)).toBeGreaterThanOrEqual(95);
+    expect(Math.max(...scores)).toBeLessThanOrEqual(99);
+    expect(new Set(scores).size).toBeGreaterThanOrEqual(3);
   });
 
   it('penalizes and caps compound hazardous weather', () => {
@@ -320,13 +349,17 @@ describe('Hava81 daily decision engine v2', () => {
     });
     expect(plan.nowOrLater.kind).toBe('later');
     expect(plan.nowOrLater.improvement).toBeGreaterThanOrEqual(10);
-    expect(plan.bestWindow?.score).toBeGreaterThanOrEqual(95);
+    expect(plan.bestWindow?.score).toBeGreaterThanOrEqual(93);
   });
 
   it('uses probability and amount for near-term umbrella advice', () => {
     const likely = buildDailyPlan({
       weather,
-      hourly: [point(6, 24, { pop: 0.1 }), point(9, 23, { pop: 0.55 }), point(12, 22, { pop: 0.2 })],
+      hourly: [
+        point(6, 24, { pop: 0.1 }),
+        point(9, 23, { pop: 0.55 }),
+        point(12, 22, { pop: 0.2 }),
+      ],
     });
     const measurable = buildDailyPlan({
       weather,
@@ -352,7 +385,7 @@ describe('Hava81 daily decision engine v2', () => {
     expect(good.airQuality).toBe('good');
   });
 
-  it('shows current unhealthy air separately without projecting it across the 12-hour score', () => {
+  it('uses current AQI only for the matching current hourly slot without projecting it forward', () => {
     const hourly = [point(6, 24), point(9, 25), point(12, 26)];
     const poor = buildDailyPlan({
       weather,
@@ -360,9 +393,15 @@ describe('Hava81 daily decision engine v2', () => {
       airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: weather.meta },
     });
     const noCurrentAir = buildDailyPlan({ weather, hourly });
+
     expect(poor.airQuality).toBe('poor');
-    expect(poor.score).toBe(noCurrentAir.score);
-    expect(poor.impacts.map(impact => impact.factor)).not.toContain('air-quality');
+    expect(poor.score).toBeLessThan(noCurrentAir.score);
+    expect(poor.slots[0].impacts.map(impact => impact.factor)).toContain('air-quality');
+    expect(
+      poor.slots
+        .slice(1)
+        .every(slot => slot.impacts.every(impact => impact.factor !== 'air-quality'))
+    ).toBe(true);
   });
 
   it('uses current AQI when hourly forecast data is unavailable and scoring falls back to now', () => {
@@ -410,5 +449,4 @@ describe('Hava81 daily decision engine v2', () => {
     expect(plan.bestWindowRange?.end.time.toISOString()).toBe('2026-08-28T08:00:00.000Z');
     expect(plan.bestWindow).toBe(plan.bestWindowRange?.peak);
   });
-
 });
