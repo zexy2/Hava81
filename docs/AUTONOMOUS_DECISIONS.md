@@ -467,3 +467,6 @@ Activity preferred-time controls may preserve their desktop proportions, but the
 
 ## 2026-08-31 — Compact-tablet outer gutters must not grow with enlarged text
 At the 768px breakpoint seam, rem-scaled header outer padding can consume enough horizontal space to clip otherwise valid enlarged controls even when the document suppresses horizontal scrolling. For the compact-tablet header, cap horizontal gutters at the normal 32px spacing value while allowing typography and controls themselves to enlarge. This preserves normal-size layout and WCAG-style text reflow without hiding the right edge of interactive actions.
+
+## 2026-08-31 — Fixed layout minima must not scale into content constraints under text resize
+A rem-based minimum column width is appropriate when it represents readable content width, but not when that minimum is an outer layout allocation that can starve a more important decision surface at 200% text. For the desktop forecast sidebar, retain its normal 352px minimum with `min(22rem, 352px)` so typography can enlarge without the sidebar allocation itself doubling. Long dynamic guidance also receives explicit wrapping rather than relying on document-level overflow clipping.
