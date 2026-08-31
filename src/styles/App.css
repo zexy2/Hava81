@@ -170,7 +170,7 @@ textarea:focus-visible {
 
 .atlas-header__inner {
   display: grid;
-  grid-template-columns: auto minmax(20rem, 38rem) 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-lg);
   width: min(100%, 90rem);
@@ -219,7 +219,9 @@ textarea:focus-visible {
 }
 
 .atlas-header__search {
+  width: 100%;
   min-width: 0;
+  max-width: 38rem;
 }
 
 .search-bar {
@@ -376,7 +378,7 @@ textarea:focus-visible {
   justify-content: flex-end;
   align-items: center;
   gap: var(--space-xs);
-  min-width: 0;
+  min-width: max-content;
 }
 
 .atlas-icon-button {
@@ -845,11 +847,30 @@ kbd {
 
 @media (max-width: 72rem) {
   .atlas-header__inner {
-    grid-template-columns: auto minmax(18rem, 1fr) auto;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-sm) var(--space-md);
+    min-height: auto;
+  }
+
+  .atlas-header__search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: none;
+  }
+
+  .atlas-header__actions {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .atlas-settings-button__language {
     display: none;
+  }
+
+  .atlas-main,
+  .atlas-city-rail,
+  .atlas-map-panel {
+    scroll-margin-top: 9rem;
   }
 }
 

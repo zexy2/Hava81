@@ -331,6 +331,82 @@ test('keyboard map close restores focus to the map trigger', async ({ page }, te
   await expect(mapTrigger).toBeFocused();
 });
 
+test('desktop header keeps settings reachable at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize header regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const search = page.locator('.atlas-header__search');
+  const actions = page.locator('.atlas-header__actions');
+  const settings = page.locator('.atlas-settings-button');
+  const geometry = await settings.evaluate(element => {
+    const searchRect = document.querySelector('.atlas-header__search')?.getBoundingClientRect();
+    const actionsRect = document.querySelector('.atlas-header__actions')?.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return {
+      searchRight: searchRect?.right ?? 0,
+      actionsLeft: actionsRect?.left ?? 0,
+      settingsReachable: hit === element || element.contains(hit),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  await expect(search).toBeVisible();
+  await expect(actions).toBeVisible();
+  expect(geometry.searchRight).toBeLessThanOrEqual(geometry.actionsLeft);
+  expect(geometry.settingsReachable).toBe(true);
+  expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+
+  await settings.click();
+  await expect(page.getByRole('dialog', { name: /ayarlar|settings/i })).toBeVisible();
+});
+
+test('wide tablet header reflows search at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'wide-tablet text-resize header regression');
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const settings = page.locator('.atlas-settings-button');
+  const geometry = await settings.evaluate(element => {
+    const search = document.querySelector('.atlas-header__search') as HTMLElement | null;
+    const actions = document.querySelector('.atlas-header__actions') as HTMLElement | null;
+    const input = document.querySelector('.search-bar__input') as HTMLElement | null;
+    const submit = document.querySelector('.search-bar__submit') as HTMLElement | null;
+    if (!search || !actions || !input || !submit) throw new Error('Missing header control');
+    const searchRect = search.getBoundingClientRect();
+    const actionsRect = actions.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    const submitRect = submit.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return {
+      searchBelowActions: searchRect.top >= actionsRect.bottom,
+      controlsSeparated: inputRect.right <= submitRect.left + 1,
+      searchFits: search.scrollWidth <= search.clientWidth,
+      settingsReachable: hit === element || element.contains(hit),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(geometry.searchBelowActions).toBe(true);
+  expect(geometry.controlsSeparated).toBe(true);
+  expect(geometry.searchFits).toBe(true);
+  expect(geometry.settingsReachable).toBe(true);
+  expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
