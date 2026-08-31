@@ -407,6 +407,47 @@ test('wide tablet header reflows search at 200% text size', async ({ page }, tes
   expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
 });
 
+test('compact tablet header stays inside the viewport at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'compact-tablet text-resize header regression');
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const geometry = await page.locator('.atlas-header__inner').evaluate(element => {
+    const search = element.querySelector<HTMLElement>('.atlas-header__search');
+    const actions = element.querySelector<HTMLElement>('.atlas-header__actions');
+    const settings = element.querySelector<HTMLElement>('.atlas-settings-button');
+    if (!search || !actions || !settings) throw new Error('Missing compact tablet header control');
+    const searchRect = search.getBoundingClientRect();
+    const actionsRect = actions.getBoundingClientRect();
+    const settingsRect = settings.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    const hit = document.elementFromPoint(
+      settingsRect.left + settingsRect.width / 2,
+      settingsRect.top + settingsRect.height / 2
+    );
+    return {
+      innerFits: element.scrollWidth <= element.clientWidth,
+      pageFits: document.documentElement.scrollWidth <= viewportWidth,
+      searchFits: searchRect.left >= 0 && searchRect.right <= viewportWidth,
+      actionsFit: actionsRect.left >= 0 && actionsRect.right <= viewportWidth,
+      settingsFits: settingsRect.left >= 0 && settingsRect.right <= viewportWidth,
+      settingsReachable: hit === settings || settings.contains(hit),
+    };
+  });
+
+  expect(geometry.innerFits).toBe(true);
+  expect(geometry.pageFits).toBe(true);
+  expect(geometry.searchFits).toBe(true);
+  expect(geometry.actionsFit).toBe(true);
+  expect(geometry.settingsFits).toBe(true);
+  expect(geometry.settingsReachable).toBe(true);
+});
+
 test('mobile header keeps quick actions reachable at 200% text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile text-resize header regression');
   await page.goto('/istanbul');
