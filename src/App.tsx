@@ -414,7 +414,7 @@ const App: React.FC = () => {
                   submitLabel={t('common.search')}
                   loadingLabel={t('common.loading')}
                   suggestionsLabel={t('weather.citySuggestions')}
-                  onDismiss={closeSearch}
+                  onDismiss={isMobileSearchOpen ? closeSearch : undefined}
                 />
               </div>
 

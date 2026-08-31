@@ -246,6 +246,25 @@ describe('Hava81 app integration', () => {
     expect(service.getCurrentWeather).toHaveBeenCalledTimes(1);
   });
 
+  it('does not move desktop search focus to the hidden mobile toggle on Escape', async () => {
+    const user = userEvent.setup();
+    const { container } = renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+
+    const searchToggle = container.querySelector<HTMLButtonElement>('.atlas-icon-button--search');
+    const searchInput = screen.getByRole('combobox', { name: /şehir ara/i });
+    expect(searchToggle).not.toBeNull();
+
+    await user.click(searchInput);
+    expect(searchInput).toHaveFocus();
+    await user.keyboard('{Escape}');
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    expect(searchInput).not.toHaveFocus();
+    expect(searchToggle).not.toHaveFocus();
+    expect(searchToggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('restores focus to the search toggle when mobile search is dismissed with Escape', async () => {
     const user = userEvent.setup();
     const { container } = renderApp();
