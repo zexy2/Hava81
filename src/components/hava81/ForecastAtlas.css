@@ -544,18 +544,9 @@
   }
 }
 
-@media (max-width: 47.99rem) {
+@media (max-width: 64rem) {
   .hava81-forecast-atlas__summary {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
-  }
-
-  .hava81-forecast-atlas__range-button {
-    min-height: 44px;
-    padding-inline: 8px;
-  }
-
-  .hava81-forecast-atlas__summary-item {
-    padding: 9px 10px;
   }
 
   .hava81-forecast-atlas__summary-item span,
@@ -567,6 +558,17 @@
 
   .hava81-forecast-atlas__summary-item span {
     overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .hava81-forecast-atlas__range-button {
+    min-height: 44px;
+    padding-inline: 8px;
+  }
+
+  .hava81-forecast-atlas__summary-item {
+    padding: 9px 10px;
   }
 
   .hava81-forecast-atlas__summary-item strong {
