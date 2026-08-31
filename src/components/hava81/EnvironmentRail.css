@@ -68,6 +68,7 @@
 
 .environment-rail__label {
   min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--environment-muted);
   font-size: 0.75rem;
   font-weight: 600;
