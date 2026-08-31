@@ -21,17 +21,29 @@ describe('sharing and alerts', () => {
     const result = buildDecisionShare({
       cityName: 'Şanlıurfa',
       score: 72,
+      band: 'caution',
       bestTime: '19:00',
       umbrella: 'no',
       recommendation: 'Şimdi çıkmak daha iyi',
       language: 'tr',
     });
     expect(result.url).toContain('/sanliurfa');
-    expect(result.text).toContain('72/100');
-    expect(result.text).toContain('19:00');
+    expect(result.text).toContain('72/100 · Dikkat');
+    expect(result.text).toContain('En uygun zaman: 19:00');
     expect(result.text).toContain('Öneri: Şimdi çıkmak daha iyi');
     expect(result.text).not.toContain(result.url);
     expect(result.clipboardText).toContain(result.url);
+  });
+
+  it('localizes the shared score meaning in English', () => {
+    const result = buildDecisionShare({
+      cityName: 'Ankara',
+      score: 98,
+      band: 'excellent',
+      umbrella: 'no',
+      language: 'en',
+    });
+    expect(result.title).toContain('98/100 · Very suitable');
   });
   it('prioritizes rain alerts', () => {
     const candidate = buildAlertCandidate('İstanbul', plan({ umbrella: 'yes', score: 45 }));

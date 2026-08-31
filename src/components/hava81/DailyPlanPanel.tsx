@@ -155,6 +155,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     const payload = buildDecisionShare({
       cityName: weather.cityName,
       score: plan.score,
+      band: plan.band,
       bestTime: bestWindowShareText,
       umbrella: plan.umbrella,
       recommendation: nowOrLaterText,
