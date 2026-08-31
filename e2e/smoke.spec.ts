@@ -476,6 +476,45 @@ test('mobile header keeps quick actions reachable at 200% text size', async ({ p
   expect(searchGeometry.pageWidth).toBeLessThanOrEqual(searchGeometry.viewportWidth);
 });
 
+test('mobile daily plan reflows at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile daily-plan text-resize regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const dailyPlan = page.locator('.daily-plan');
+  await expect(dailyPlan).toBeVisible();
+  const planState = await dailyPlan.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const explain = element.querySelector('.daily-plan__explain');
+    const explainHead = element.querySelector('.daily-plan__explain-head');
+    const quick = element.querySelector('.daily-plan__quick');
+    const quickItems = Array.from(element.querySelectorAll('.daily-plan__quick > div'));
+    const share = element.querySelector('.daily-plan__share');
+    if (!explain || !explainHead || !quick || !share) throw new Error('Missing daily plan content');
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      planFits: fits(element),
+      explainFits: fits(explain),
+      explainHeadFits: fits(explainHead),
+      quickFits: fits(quick) && quickItems.every(fits),
+      shareFits: fits(share),
+    };
+  });
+  expect(planState.pageWidth).toBeLessThanOrEqual(planState.viewportWidth);
+  expect(planState.planFits).toBe(true);
+  expect(planState.explainFits).toBe(true);
+  expect(planState.explainHeadFits).toBe(true);
+  expect(planState.quickFits).toBe(true);
+  expect(planState.shareFits).toBe(true);
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
