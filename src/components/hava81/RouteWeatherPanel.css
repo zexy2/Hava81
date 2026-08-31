@@ -116,15 +116,20 @@
   justify-content: space-between;
   gap: 1rem;
 }
+.route-weather__result > header > div:first-child {
+  min-width: 0;
+}
 .route-weather__result h3 {
   margin: 0.2rem 0;
+  overflow-wrap: anywhere;
   font-size: 1.35rem;
 }
 .route-weather__score {
   display: grid;
   justify-items: center;
   gap: 0.2rem;
-  min-width: 5rem;
+  flex: 0 1 5rem;
+  min-width: 0;
   padding: 0.45rem 0.65rem;
   text-align: center;
   background: var(--color-atlas-field);
