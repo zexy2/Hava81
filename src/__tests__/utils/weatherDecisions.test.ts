@@ -80,6 +80,24 @@ describe('getWeatherDecisions', () => {
     expect(result.find(item => item.kind === 'uv')).toMatchObject({ severity: 'high', value: 9 });
   });
 
+  it('does not project current humidity or wind into a future outdoor score when hourly fields are missing', () => {
+    const hourly = [
+      point({ temp: 20, apparentTemperature: undefined, humidity: undefined, windSpeed: undefined }),
+    ];
+    const calmDryCurrent = getWeatherDecisions({
+      weather: { ...weather, humidity: 20, windSpeed: 0 },
+      hourly,
+    });
+    const humidWindyCurrent = getWeatherDecisions({
+      weather: { ...weather, humidity: 95, windSpeed: 18 },
+      hourly,
+    });
+
+    expect(calmDryCurrent.find(item => item.kind === 'outdoor-window')).toEqual(
+      humidWindyCurrent.find(item => item.kind === 'outdoor-window')
+    );
+  });
+
   it('returns stable when no actionable signal exists and no outdoor point is present', () => {
     const result = getWeatherDecisions({ weather, hourly: [] });
     expect(result).toEqual([{ kind: 'stable', severity: 'info' }]);
