@@ -513,6 +513,35 @@ test('mobile daily plan reflows at 200% text size', async ({ page }, testInfo) =
   expect(planState.explainHeadFits).toBe(true);
   expect(planState.quickFits).toBe(true);
   expect(planState.shareFits).toBe(true);
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  const narrowState = await dailyPlan.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const explain = element.querySelector('.daily-plan__explain');
+    const explainHead = element.querySelector('.daily-plan__explain-head');
+    const quick = element.querySelector('.daily-plan__quick');
+    const quickItems = Array.from(element.querySelectorAll('.daily-plan__quick > div'));
+    const share = element.querySelector('.daily-plan__share');
+    if (!explain || !explainHead || !quick || !share) throw new Error('Missing daily plan content');
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      planFits: fits(element),
+      explainFits: fits(explain),
+      explainHeadFits: fits(explainHead),
+      quickFits: fits(quick) && quickItems.every(fits),
+      shareFits: fits(share),
+    };
+  });
+  expect(narrowState.pageWidth).toBeLessThanOrEqual(narrowState.viewportWidth);
+  expect(narrowState.planFits).toBe(true);
+  expect(narrowState.explainFits).toBe(true);
+  expect(narrowState.explainHeadFits).toBe(true);
+  expect(narrowState.quickFits).toBe(true);
+  expect(narrowState.shareFits).toBe(true);
 });
 
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
