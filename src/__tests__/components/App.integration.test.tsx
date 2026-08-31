@@ -368,6 +368,21 @@ describe('Hava81 app integration', () => {
     expect(screen.getByRole('button', { name: /tekrar dene/i })).toBeInTheDocument();
   });
 
+  it('does not offer forecast retry for an explicit non-retryable forecast failure', async () => {
+    service.getForecast.mockRejectedValueOnce(
+      new ApiError('Tahmin isteği geçersiz', ErrorCode.VALIDATION_ERROR, { retryable: false })
+    );
+    service.getHourlyForecast.mockRejectedValueOnce(new Error('hourly unavailable'));
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+
+    const message = await screen.findByText(/yakın tahmin şu anda güncellenemedi/i);
+    const section = message.closest('section');
+    expect(section).not.toBeNull();
+    expect(within(section!).queryByRole('button', { name: /tekrar dene/i })).not.toBeInTheDocument();
+  });
+
   it('opens saved cities without silently favoriting the current city', async () => {
     const user = userEvent.setup();
     renderApp();
