@@ -265,7 +265,7 @@ const validateHourlyForecastItem = (
   invalid(!isPlausibleTemperature(item.temp, units), 'temp');
   invalid(typeof item.icon !== 'string' || !item.icon.trim(), 'icon');
   invalid(item.description !== undefined && (!item.description || !item.description.trim()), 'description');
-  invalid(item.windSpeed !== undefined && (!isFiniteNumber(item.windSpeed) || item.windSpeed < 0), 'windSpeed');
+  invalid(!isFiniteNumber(item.windSpeed) || item.windSpeed < 0, 'windSpeed');
   invalid(
     item.apparentTemperature !== undefined && !isPlausibleTemperature(item.apparentTemperature, units),
     'apparentTemperature'
