@@ -195,6 +195,21 @@ describe('DecisionAlertsPanel', () => {
     expect(button).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('includes the localized score band in difficult-day notification copy', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const difficultWeather = { ...weather, temperature: 45, feelsLike: 50, tempMin: 42, tempMax: 47 };
+    const difficultHourly = hourly.map(item => ({ ...item, temp: 45, feelsLike: 50 }));
+    render(<DecisionAlertsPanel weather={difficultWeather} hourly={difficultHourly} />);
+
+    await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
+    const [, options] = notification.mock.calls[0];
+    expect(options.body).toMatch(/\d+\/100 · Zorlayıcı/);
+  });
+
   it('uses the weather location timezone for quiet hours', async () => {
     vi.setSystemTime(new Date('2026-08-28T19:30:00Z')); // 22:30 in İstanbul
     localStorage.setItem('hava81-alerts-v1', 'enabled');
