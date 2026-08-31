@@ -1480,3 +1480,19 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Local gates on exact main pass: focused useAsync 2/2; full frontend 51 files / 457 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
 - Direct GitHub verification confirms main pipeline #940 for exact `7de2a336...` completed successfully; fresh production observer re-check is required immediately before any merge.
 - Next action: commit/push/open this bounded frontend-only PR after remote lease check, require exact-head green CI, and continue an independent audit while CI runs.
+## 2026-08-31 03:18 TRT — keep desktop Escape away from the hidden mobile search toggle
+
+- Continued independently from exact main `7de2a336097122ba3ba7dc898a060c027ef07262` in worktree `/home/ubuntu/hava81-auto-run11-second-0316`, branch `automation/hava81-button-form-safety-0316`, while PR #388 validated separately.
+- Audited search keyboard focus across breakpoints. `SearchBar` always called the mobile `closeSearch` handler on Escape, even on desktop where the mobile search toggle is CSS-hidden; that handler then attempted to restore focus to the hidden toggle after the desktop input blurred.
+- App now supplies the dismiss/focus-restoration handler only while the mobile search surface is actually open. Desktop Escape still dismisses the search input/dropdown but does not move focus onto the hidden mobile control; the existing mobile Escape focus restoration remains unchanged.
+- Added an App integration regression for the desktop contract. After replacing a direct DOM focus call with user-event interaction, the targeted suite is clean without React act warnings.
+- Local gates on the pre-#388 exact main pass: focused App integration 16/16; full frontend 51 files / 457 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- PR #388 exact head `ced1d4e7e7ac0f000cedb8d3d898a30f59494198` reached green CI #941 and was merged as main `fbf36ef6f44153580d1629419167a9e746c8ca4f` after fresh production/main verification. Keep this branch local until the new main pipeline and production checks are green, then rebase, preserve append-only checkpoints, rerun combined gates, and publish independently.
+
+## 2026-08-31 03:25 TRT — desktop Escape branch rebased after #388
+
+- Main pipeline #942 completed successfully for exact `fbf36ef6f44153580d1629419167a9e746c8ca4f`; direct GitHub state supersedes the observer's stale queued snapshot.
+- Rebased `automation/hava81-button-form-safety-0316` onto that exact main and preserved both append-only checkpoints through the sole documentation conflict.
+- Combined post-rebase gates pass: App integration 16/16 on repeat, full frontend 51 files / 458 tests, TypeScript, ESLint, production build with 81 city pages/service-worker stamping, production dependency audit 0 vulnerabilities, and `git diff --check`. One unrelated pre-existing online-refresh integration test timed out once during a repeat, then the complete App integration suite immediately passed 16/16; no product diff touched that flow.
+- Removed unrelated whole-file Prettier churn from `App.tsx`; the product diff is limited to conditional mobile dismiss wiring plus its regression.
+- Observer state is stale at `2026-08-31T00:19:42Z`; do not use its queued CI field for merge decisions. Direct production checks and observer health should be revalidated before any merge.
