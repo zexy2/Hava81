@@ -307,6 +307,9 @@
   gap: 0.55rem;
   padding: 0 0 0.55rem;
 }
+.activity-card__details-body small {
+  overflow-wrap: anywhere;
+}
 .activity-card__details .activity-card__impact {
   color: var(--color-atlas-ink);
   font-weight: 650;
@@ -339,6 +342,7 @@
 }
 .activity-planner__score-explanation p {
   margin: var(--space-xs) 0 0;
+  overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
   font-size: 0.8rem;
   line-height: 1.5;
