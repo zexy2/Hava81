@@ -115,6 +115,11 @@
   opacity: 1;
 }
 
+.city-tabs__tab:focus-visible,
+.city-tabs__remove:focus-visible {
+  outline-offset: -3px;
+}
+
 .city-tabs__add {
   color: var(--color-aegean, #146b73);
   border: 1px dashed var(--color-aegean, #146b73);
