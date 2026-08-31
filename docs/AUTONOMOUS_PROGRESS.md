@@ -1536,3 +1536,22 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a regression with both city AQ requests failing and requiring `—` rather than `—/5`.
 - Local gates on exact main pass: focused ComparePanel 11/11; full frontend 52 files / 475 tests; TypeScript; ESLint; production build with 81 generated city pages/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
 - Next action: commit/push/open this bounded frontend-only PR after final diff/lease verification, require exact-head CI, and continue an independent UI/trust-boundary audit while it validates. Before merge, re-check current main, production observer health, exact PR head SHA, and mergeability.
+
+## 2026-08-31 06:20 TRT — keep heat/cold timestamps tied to the value source
+
+- Continued independently from exact main `a03eb9f8fc6905d7b8dfd8a6b381030559c9d337` in isolated worktree `/home/ubuntu/hava81-auto-run11-decision-time-0620`, branch `automation/hava81-run11-decision-time-0620`, while PR #400 CI ran separately.
+- Audited decision-card provenance. Heat/cold decisions compared current apparent temperature with forecast apparent temperature, but always attached the forecast point time whenever any forecast existed. This could display a current-driven extreme value next to an unrelated future hour.
+- Heat/cold decisions now attach the forecast time only when that forecast point is at least as extreme as the current observation; current-driven extremes remain untimed/current. Wind already had equivalent source-dominance handling.
+- Added regressions proving current-only heat and current-only cold do not receive a future timestamp. No temperature value is synthesized, substituted, clamped, interpolated, or relabeled.
+- Local gates pass: focused weather-decisions 9/9; full frontend 52 files / 476 tests; TypeScript; ESLint; production build with 81 generated city pages/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Keep this branch local until PR #400 resolves. After #400 merges and the exact new-main pipeline plus fresh production checks are green, rebase this branch onto current main preserving append-only checkpoints, rerun combined gates, then publish independently.
+
+## 2026-08-31 06:26 TRT — post-#400 rebase verification
+
+- PR #400 merged only after exact head `8f65ec57183f1a217a18b5df47676e4f5e008778` CI run #964 completed successfully, fresh observer production checks were healthy, and GitHub reported the PR mergeable. Squash merge produced main `79d7c2208a530e173e0d80a2c73326da956f7f5e`.
+- Rebased `automation/hava81-run11-decision-time-0620` onto that exact main. Append-only documentation conflicts were resolved by preserving both the merged AQI checkpoint/decision and this branch's heat/cold provenance checkpoint/decision.
+- Rebasing produced local head `abc69aa31cee7ce0c2cd26f3f38f68509693ffd7` before this checkpoint.
+- Combined post-rebase gates pass: focused weather-decisions 9/9; full frontend 52 files / 477 tests; TypeScript; ESLint; production build with 81 city pages/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Main pipeline #965 for `79d7c220...` is still in progress; completed jobs observed so far include API test/build, frontend quality, production build, and browser flows, all successful. Keep this branch local until the entire main run is completed successfully and fresh production smoke/observer checks pass, then lease-check/push/open the PR.
+
+- Main pipeline #965 completed successfully for exact main `79d7c2208a530e173e0d80a2c73326da956f7f5e`. Fresh observer collection at `2026-08-31T03:26:51Z` confirms root/İstanbul/API readiness 200, fresh no-store readiness, expected CORS, nginx still on 4002, closed provider circuit, and no production incident. The prepared decision-time branch is now eligible to publish after a remote lease check.

@@ -62,6 +62,34 @@ describe('getWeatherDecisions', () => {
     expect(result.map(item => item.kind)).toContain('outdoor-window');
   });
 
+  it('does not attach a future hour to heat that is only true right now', () => {
+    const futureTime = new Date('2026-08-28T15:00:00Z');
+    const result = getWeatherDecisions({
+      weather: { ...weather, feelsLike: 38 },
+      hourly: [point({ time: futureTime, temp: 30, apparentTemperature: 31 })],
+    });
+
+    expect(result.find(item => item.kind === 'heat')).toMatchObject({
+      kind: 'heat',
+      value: 38,
+    });
+    expect(result.find(item => item.kind === 'heat')?.time).toBeUndefined();
+  });
+
+  it('does not attach a future hour to cold that is only true right now', () => {
+    const futureTime = new Date('2026-08-28T15:00:00Z');
+    const result = getWeatherDecisions({
+      weather: { ...weather, feelsLike: -4 },
+      hourly: [point({ time: futureTime, temp: 4, apparentTemperature: 2 })],
+    });
+
+    expect(result.find(item => item.kind === 'cold')).toMatchObject({
+      kind: 'cold',
+      value: -4,
+    });
+    expect(result.find(item => item.kind === 'cold')?.time).toBeUndefined();
+  });
+
   it('treats UV input as a modeled next-24-hour maximum when richer hourly UV is absent', () => {
     const result = getWeatherDecisions({
       weather,
