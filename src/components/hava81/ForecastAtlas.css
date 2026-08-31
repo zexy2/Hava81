@@ -111,7 +111,7 @@
 
 .hava81-forecast-atlas__range-button {
   flex: 0 0 auto;
-  width: 44px;
+  width: auto;
   min-width: 44px;
   min-height: 44px;
   border: 1px solid color-mix(in srgb, var(--forecast-line) 84%, transparent);
@@ -437,11 +437,11 @@
 .hava81-forecast-atlas__day {
   display: grid;
   grid-template-areas:
-    'day symbol description temperatures'
-    'day symbol precipitation temperatures';
-  grid-template-columns: 64px 24px minmax(0, 1fr) auto;
+    'day symbol description'
+    'precipitation precipitation temperatures';
+  grid-template-columns: 64px 24px minmax(0, 1fr);
   align-items: center;
-  gap: 4px 12px;
+  gap: 6px 12px;
   min-height: 56px;
   border-top: 1px solid var(--forecast-line);
   padding: 12px 0;
@@ -464,13 +464,14 @@
 .hava81-forecast-atlas__description {
   grid-area: description;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   color: var(--forecast-ink);
   font-size: 0.875rem;
   line-height: 1.4;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
   text-transform: capitalize;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .hava81-forecast-atlas__day-pop {
@@ -568,7 +569,6 @@
     font-size: 0.9375rem;
     overflow-wrap: normal;
   }
-
 }
 
 @media (max-width: 64rem), (pointer: coarse) {
@@ -576,6 +576,28 @@
     display: inline-flex;
     min-height: 44px;
     align-items: center;
+  }
+}
+
+@media (max-width: 26rem) {
+  .hava81-forecast-atlas__day {
+    grid-template-areas:
+      'day day temperatures'
+      'symbol description description'
+      'precipitation precipitation precipitation';
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .hava81-forecast-atlas__day-name,
+  .hava81-forecast-atlas__day-pop,
+  .hava81-forecast-atlas__description {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .hava81-forecast-atlas__day-temperatures {
+    align-self: start;
   }
 }
 

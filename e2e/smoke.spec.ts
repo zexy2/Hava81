@@ -1041,6 +1041,97 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
   expect(boxes.every(height => height >= 44)).toBe(true);
 });
 
+test('mobile daily forecast reflows instead of clipping at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile daily forecast text-resize regression');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'dark',
+        language: 'en',
+      })
+    );
+  });
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.route('**/api/v1/weather/forecast**', route =>
+    route.fulfill({
+      json: {
+        ...forecast,
+        daily: [
+          {
+            date: fixtureLocalDate(),
+            tempMin: 20,
+            tempMax: 28,
+            icon: '11d',
+            description: 'thunderstorms with heavy rain',
+            pop: 73,
+          },
+          {
+            date: fixtureLocalDate(1),
+            tempMin: 18,
+            tempMax: 25,
+            icon: '10d',
+            description: 'partly cloudy with scattered showers',
+            pop: 48,
+          },
+        ],
+      },
+    })
+  );
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const days = page.locator('.hava81-forecast-atlas__day');
+  await expect(days).toHaveCount(2);
+  const descriptions = days.locator('.hava81-forecast-atlas__description');
+  await expect(descriptions.getByText('thunderstorms with heavy rain')).toBeVisible();
+  await expect(descriptions.getByText('partly cloudy with scattered showers')).toBeVisible();
+  const readability = await descriptions.evaluateAll(elements =>
+    elements.map(element => {
+      const style = getComputedStyle(element);
+      return {
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        overflow: style.overflow,
+        textOverflow: style.textOverflow,
+        whiteSpace: style.whiteSpace,
+      };
+    })
+  );
+  const rowContentFits = await days.evaluateAll(elements =>
+    elements.every(row =>
+      Array.from(
+        row.querySelectorAll<HTMLElement>(
+          '.hava81-forecast-atlas__day-name, .hava81-forecast-atlas__description, .hava81-forecast-atlas__day-pop, .hava81-forecast-atlas__day-temperatures'
+        )
+      ).every(element => element.scrollWidth <= element.clientWidth + 1)
+    )
+  );
+  const intervalLabelsFit = await page
+    .locator('.hava81-forecast-atlas__range-button')
+    .evaluateAll(elements =>
+      elements.every(element => element.scrollWidth <= element.clientWidth + 1)
+    );
+
+  expect(readability.every(metric => metric.scrollWidth <= metric.clientWidth + 1)).toBe(true);
+  expect(readability.every(metric => metric.scrollHeight <= metric.clientHeight + 1)).toBe(true);
+  expect(readability.every(metric => metric.overflow === 'visible')).toBe(true);
+  expect(readability.every(metric => metric.textOverflow === 'clip')).toBe(true);
+  expect(readability.every(metric => metric.whiteSpace === 'normal')).toBe(true);
+  expect(rowContentFits).toBe(true);
+  expect(intervalLabelsFit).toBe(true);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  ).toBe(0);
+});
+
 test('decision plate stays readable at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');
