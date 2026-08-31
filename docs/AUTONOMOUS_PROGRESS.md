@@ -1680,3 +1680,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - On branch `automation/hava81-forecast-hour-range-1312`, fixed a remaining forecast truth/display edge case: when real daily min/max differ but both round to the same integer, Hava81 now preserves the real range with one decimal instead of making high/low appear identical. Truly flat or sub-0.1° ranges remain a single displayed value.
 - Regression coverage added for both cases. Local gates passed: targeted ForecastAtlas 13/13, full frontend suite 54 files / 500 tests, TypeScript, ESLint, production build + 81 city pages, and npm audit during clean install reported 0 vulnerabilities.
 - Pending at this checkpoint: main pipeline #1011 for `55bfb9e...`; current branch is `automation/hava81-forecast-hour-range-1312`. Next action: once #1011 is green and production smoke remains healthy, sync/rebase this branch onto current main, rerun combined gates, push/open PR, then continue with a separate bounded UX/reliability loop.
+
+
+## 2026-08-31 13:50 TRT — make comparison scores self-explanatory
+- Fresh observer at 13:42 TRT reported production healthy, nginx on API port 4002, API ready/fresh, OpenWeather circuit closed, latest main pipeline #1016 green at `85e47451bcbcbdcc88acbc225a92ea2e40ca56b8`, and no open automation PRs.
+- Synced a clean worktree from `origin/main` on `automation/hava81-run11-1348` and audited remaining raw score surfaces after #424.
+- Updated city comparison cards so every daily Hava81 score is paired with its qualitative band (`Çok uygun/Uygun/Dikkat/Zorlayıcı` and EN equivalents); the winner summary now carries the same band, and the compared primary-activity score also includes its band. No scoring formula or weather data changes.
+- Regression coverage added to `ComparePanel.test.tsx`. Local gates passed: targeted ComparePanel 11/11, TypeScript, ESLint, production build + service-worker stamp + 81 city pages.
+- Environment note: `npm` is not on the default shell PATH; validation used `/home/chatgpt/.local/bin` and a read-only dependency symlink to the already validated #424 worktree instead of repeating the failed bare-`npm` invocation.

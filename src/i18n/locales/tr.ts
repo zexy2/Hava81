@@ -146,7 +146,7 @@ export const tr = {
         'Bazı şehirlerin verisi güncellenemedi; kullanılabilir sonuçlar gösteriliyor.',
       unavailable: 'Şehir karşılaştırması şu anda güncellenemedi.',
       winnerLabel: 'Bu hava kriterlerinde öne çıkan',
-      winner: '{{city}} · Hava81 {{score}}/100',
+      winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       winnerNote:
         'Sonuç yalnızca mevcut hava koşullarına göre; şehrin genel kalitesini değerlendirmez.',
       temp: 'Sıcaklık',
