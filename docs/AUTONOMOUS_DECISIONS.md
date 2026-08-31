@@ -430,3 +430,6 @@ This log records product and engineering decisions made during the autonomous im
 ## 2026-08-31 11:18 TRT — decision value invariants
 
 - Model weather decisions as a discriminated union: rain, wind, heat, cold, AQI and UV decisions require a numeric value after construction. Do not mask impossible internal states with UI fallbacks such as zero or em dash; reserve optional value semantics for context-only decisions that do not present that field.
+## 2026-08-31 11:23 TRT — commute timezone contract
+
+- Commute planning requires an explicit validated location timezone offset. Do not silently reinterpret a missing offset as UTC; callers with genuine UTC locations must pass `0` explicitly.
