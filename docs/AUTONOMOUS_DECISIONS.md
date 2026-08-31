@@ -464,3 +464,6 @@ The `≈−X` values shown in the daily-score breakdown describe 12-hour duratio
 
 ## 2026-08-31 — Enlarged text must not turn activity filters into fixed-width layouts
 Activity preferred-time controls may preserve their desktop proportions, but their grid tracks must be allowed to shrink to the available card width. Avoid hard `rem` minimums on the multi-column filter row because user text enlargement scales those minima and can create page-level horizontal overflow. This is layout-only; activity scoring/window semantics remain unchanged.
+
+## 2026-08-31 — Compact-tablet outer gutters must not grow with enlarged text
+At the 768px breakpoint seam, rem-scaled header outer padding can consume enough horizontal space to clip otherwise valid enlarged controls even when the document suppresses horizontal scrolling. For the compact-tablet header, cap horizontal gutters at the normal 32px spacing value while allowing typography and controls themselves to enlarge. This preserves normal-size layout and WCAG-style text reflow without hiding the right edge of interactive actions.
