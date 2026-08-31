@@ -1526,3 +1526,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Quality gates pass on exact main base: focused daily/activity 33/33; full frontend 52 files / 470 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
 - Safe host hygiene: removed only generated `node_modules`/`dist`/`coverage` directories under old lowercase Hava81 worktrees plus one clean, already-main-ancestor worktree, recovering about 1.31 GB. Observer disk improved to 86.9% used / ~6.32 GB free before this branch's local dependency install.
 - Next action: commit/push/open this bounded trust-boundary PR from exact `adeb6d89...`, require exact-head CI, and continue a separate audit while it validates. Prioritized next queue: align frontend hourly wind requiredness with the BFF contract or fail closed if absent; audit commute's unknown-wind `0` representation; then re-measure production first-viewport/performance without changing weather semantics.
+
+## 2026-08-31 06:18 TRT — keep unavailable comparison AQI visibly unknown
+
+- Started from exact current main `a03eb9f8fc6905d7b8dfd8a6b381030559c9d337` in isolated worktree `/home/ubuntu/hava81-auto-run11-0615`, branch `automation/hava81-run11-0615`; the unrelated dirty primary checkout was left untouched.
+- Repaired a narrow Git metadata ownership defect left by prior privileged operations: only the root-owned remote-ref log/files needed for `origin/main` plus the `refs/heads/automation` directory ownership were restored to `ubuntu`, allowing non-root fetch/worktree creation again. No source, production runtime, or deployed files were changed by this repair.
+- Audited city comparison optional AQI rendering. When the AQ request failed, the UI rendered `—/5`, visually attaching an unknown value to the five-point numeric scale.
+- Comparison now renders a standalone em dash for missing AQI and preserves `n/5` only for real returned AQI values. No AQ/weather value is synthesized, substituted, clamped, interpolated, or relabeled.
+- Added a regression with both city AQ requests failing and requiring `—` rather than `—/5`.
+- Local gates on exact main pass: focused ComparePanel 11/11; full frontend 52 files / 475 tests; TypeScript; ESLint; production build with 81 generated city pages/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Next action: commit/push/open this bounded frontend-only PR after final diff/lease verification, require exact-head CI, and continue an independent UI/trust-boundary audit while it validates. Before merge, re-check current main, production observer health, exact PR head SHA, and mergeability.

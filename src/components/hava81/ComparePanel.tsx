@@ -222,7 +222,8 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                     </b>
                   </span>
                   <span>
-                    {t('hava81.compare.aqi')} <b>{row.airQuality?.aqi ?? '—'}/5</b>
+                    {t('hava81.compare.aqi')}{' '}
+                    <b>{row.airQuality ? `${row.airQuality.aqi}/5` : '—'}</b>
                   </span>
                   <span>
                     {t('hava81.compare.bestTime')}{' '}

@@ -404,3 +404,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — A same-city current-weather refresh may keep the last successful payload visible while a replacement request is pending or fails; this is continuity, not fabricated freshness. Different-city and language handoffs must clear prior current weather before loading so data from another province or localization is never shown under the new context. Dismissing a refresh error must not destroy a retained successful payload.
 
 - 2026-08-30 — A visual forecast skeleton that replaces not-yet-available forecast content must expose a polite status message to assistive technology. Keep the loading copy localized and screen-reader-only when the visual skeleton already communicates progress; do not turn loading UI into a weather claim.
+
+- 2026-08-31 — Missing optional AQI in comparison must remain visibly unknown. Do not render an unavailable AQI as `—/5`, which visually suggests a value on the five-point scale; show a standalone em dash while keeping real AQI values as `n/5`.
