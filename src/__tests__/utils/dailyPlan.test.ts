@@ -287,7 +287,7 @@ describe('Hava81 daily decision engine v2', () => {
     expect(plan.confidence).toBe('high');
     expect(plan.impacts[0]).toBeDefined();
     expect(plan.impacts.map(impact => impact.factor)).toEqual(
-      expect.arrayContaining(['thermal', 'uv', 'air-quality'])
+      expect.arrayContaining(['thermal', 'uv'])
     );
   });
 
@@ -337,13 +337,27 @@ describe('Hava81 daily decision engine v2', () => {
     expect(good.airQuality).toBe('good');
   });
 
-  it('degrades the day score for unhealthy air', () => {
+  it('shows current unhealthy air separately without projecting it across the 12-hour score', () => {
+    const hourly = [point(6, 24), point(9, 25), point(12, 26)];
+    const poor = buildDailyPlan({
+      weather,
+      hourly,
+      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90 },
+    });
+    const noCurrentAir = buildDailyPlan({ weather, hourly });
+    expect(poor.airQuality).toBe('poor');
+    expect(poor.score).toBe(noCurrentAir.score);
+    expect(poor.impacts.map(impact => impact.factor)).not.toContain('air-quality');
+  });
+
+  it('uses current AQI when hourly forecast data is unavailable and scoring falls back to now', () => {
     const plan = buildDailyPlan({
       weather,
-      hourly: [point(6, 24), point(9, 25), point(12, 26)],
+      hourly: [],
       airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90 },
     });
     expect(plan.airQuality).toBe('poor');
+    expect(plan.impacts.map(impact => impact.factor)).toContain('air-quality');
     expect(plan.score).toBeLessThan(85);
   });
 

@@ -113,8 +113,7 @@ const buildWindow = (
   point: HourlyForecast,
   targetClock: string,
   targetShiftedMs: number,
-  timezoneOffsetSeconds: number,
-  airQualityIndex?: number
+  timezoneOffsetSeconds: number
 ): CommuteWindow => {
   const scored = scoreWeatherWindow({
     time: point.time,
@@ -125,7 +124,6 @@ const buildWindow = (
     precipitationMm: point.precipitationMm,
     windSpeed: point.windSpeed,
     windGust: point.windGust,
-    airQualityIndex,
     uvIndex: point.uvIndex,
     visibility: point.visibility,
     weatherCode: point.weatherCode,
@@ -189,15 +187,13 @@ export const buildCommutePlan = ({
     outboundPoint,
     commuteStart!,
     startTarget,
-    timezoneOffsetSeconds,
-    airQualityIndex
+    timezoneOffsetSeconds
   );
   const returnWindow = buildWindow(
     returnPoint,
     commuteEnd!,
     endTarget,
-    timezoneOffsetSeconds,
-    airQualityIndex
+    timezoneOffsetSeconds
   );
 
   const maxRain = Math.max(

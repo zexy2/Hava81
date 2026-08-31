@@ -279,7 +279,9 @@ export const buildActivityPlan = ({
         } as HourlyForecast,
       ];
 
+  const hasHourlySource = source.length > 0;
   const slots: ActivityWindowScore[] = points.map(point => {
+    const airQualityIndex = hasHourlySource ? undefined : airQuality?.aqi;
     const base = scoreWeatherWindow({
       time: point.time,
       temperature: point.temp,
@@ -289,7 +291,7 @@ export const buildActivityPlan = ({
       precipitationMm: point.precipitationMm,
       windSpeed: point.windSpeed ?? weather.windSpeed,
       windGust: point.windGust,
-      airQualityIndex: airQuality?.aqi,
+      airQualityIndex,
       uvIndex: point.uvIndex,
       visibility: point.visibility,
       weatherCode: point.weatherCode,
@@ -301,7 +303,7 @@ export const buildActivityPlan = ({
       precipitationMm: point.precipitationMm,
       wind: point.windSpeed ?? weather.windSpeed,
       gust: point.windGust,
-      aqi: airQuality?.aqi,
+      aqi: airQualityIndex,
       humidity: point.humidity ?? weather.humidity,
       uvIndex: point.uvIndex,
       visibility: point.visibility,
