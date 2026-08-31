@@ -1527,6 +1527,57 @@ test('decision field keeps metrics readable at narrow 200 percent text size', as
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mid-width desktop decision reading reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision mid-width resize regression');
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const reading = page.locator('.hava81-decision-field__reading');
+  const temperature = page.locator('.hava81-decision-field__temperature');
+  const symbol = page.locator('.hava81-decision-field__symbol');
+  const normal = await Promise.all([temperature.boundingBox(), symbol.boundingBox()]);
+  expect(normal[0]).not.toBeNull();
+  expect(normal[1]).not.toBeNull();
+  expect(normal[1]!.y).toBeLessThan(normal[0]!.y + normal[0]!.height);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const layout = await reading.evaluate(element => {
+    const fits = (node: Element | null) => {
+      if (!(node instanceof HTMLElement)) return false;
+      return node.scrollWidth <= node.clientWidth + 1;
+    };
+    const temperature = element.querySelector('.hava81-decision-field__temperature');
+    const value = element.querySelector('.hava81-decision-field__temperature-value');
+    const symbol = element.querySelector('.hava81-decision-field__symbol');
+    if (!(temperature instanceof HTMLElement) || !(value instanceof HTMLElement) || !(symbol instanceof HTMLElement)) {
+      throw new Error('Missing decision reading content');
+    }
+    const temperatureRect = temperature.getBoundingClientRect();
+    const symbolRect = symbol.getBoundingClientRect();
+    return {
+      readingFits: fits(element),
+      temperatureFits: fits(temperature),
+      valueFits: fits(value),
+      symbolFits: fits(symbol),
+      symbolBelowTemperature: symbolRect.top >= temperatureRect.bottom,
+      valueFontSize: Number.parseFloat(getComputedStyle(value).fontSize),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  expect(layout.readingFits).toBe(true);
+  expect(layout.temperatureFits).toBe(true);
+  expect(layout.valueFits).toBe(true);
+  expect(layout.symbolFits).toBe(true);
+  expect(layout.symbolBelowTemperature).toBe(true);
+  expect(layout.valueFontSize).toBeGreaterThanOrEqual(200);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('desktop decision guidance stays readable at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision-field text-resize regression');
   await page.goto('/istanbul');

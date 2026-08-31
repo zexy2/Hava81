@@ -278,6 +278,20 @@
     grid-column: 6 / -1;
   }
 
+  .hava81-decision-field__reading {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .hava81-decision-field__temperature {
+    flex: 1 1 7rem;
+    min-width: 0;
+  }
+
+  .hava81-decision-field__symbol {
+    flex: 0 0 112px;
+  }
+
   .hava81-decision-field__temperature-value {
     font-size: 7.5rem;
   }
