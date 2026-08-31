@@ -14,6 +14,7 @@
   padding: 16px;
   box-shadow: var(--shadow-card);
   font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
+  container-type: inline-size;
 }
 
 .hava81-forecast-atlas__header {
@@ -558,6 +559,28 @@
 
   .hava81-forecast-atlas__summary-item span {
     overflow-wrap: anywhere;
+  }
+}
+
+@container (max-width: 23rem) {
+  .hava81-forecast-atlas__day {
+    grid-template-areas:
+      'day day temperatures'
+      'symbol description description'
+      'precipitation precipitation precipitation';
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .hava81-forecast-atlas__day-name,
+  .hava81-forecast-atlas__day-pop,
+  .hava81-forecast-atlas__description {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .hava81-forecast-atlas__day-temperatures {
+    align-self: start;
   }
 }
 
