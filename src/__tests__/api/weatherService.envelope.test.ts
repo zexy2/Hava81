@@ -42,11 +42,37 @@ describe("weatherService forecast envelope validation", () => {
   });
 
   it.each([
+    ["null daily item", { daily: [null], hourly: [], meta: forecastMeta }, "forecast.daily.0"],
+    ["null hourly item", { daily: [], hourly: [null], meta: forecastMeta }, "forecast.hourly.0"],
+  ])("rejects malformed forecast item: %s", async (_label, payload, field) => {
+    mockGet.mockResolvedValue(payload);
+
+    await expect(weatherService.getForecast(38.42, 27.14)).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+      details: { field },
+    });
+  });
+
+  it.each([
     ["null envelope", null, "hourly"],
     ["missing metadata", { hourly: [] }, "hourly.meta"],
     ["non-array optional daily", { daily: {}, hourly: [], meta: hourlyMeta }, "hourly.daily"],
     ["non-array hourly", { hourly: {}, meta: hourlyMeta }, "hourly.hourly"],
   ])("rejects malformed one-hour forecast container: %s", async (_label, payload, field) => {
+    mockGet.mockResolvedValue(payload);
+
+    await expect(weatherService.getHourlyForecast(41.01, 28.97, "tr")).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+      details: { field },
+    });
+  });
+
+  it.each([
+    ["null daily item", { daily: [null], hourly: [], meta: hourlyMeta }, "hourly.daily.0"],
+    ["null hourly item", { hourly: [null], meta: hourlyMeta }, "hourly.hourly.0"],
+  ])("rejects malformed one-hour forecast item: %s", async (_label, payload, field) => {
     mockGet.mockResolvedValue(payload);
 
     await expect(weatherService.getHourlyForecast(41.01, 28.97, "tr")).rejects.toMatchObject({

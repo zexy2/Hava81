@@ -240,6 +240,7 @@ const validateDailyForecastItem = (
   field: string,
   units: WeatherUnits
 ): void => {
+  if (!isRecord(item)) invalidForecastPayload(field);
   if (!isPlausibleTemperature(item.tempMin, units)) invalidForecastPayload(`${field}.tempMin`);
   if (!isPlausibleTemperature(item.tempMax, units)) invalidForecastPayload(`${field}.tempMax`);
   if (item.tempMin > item.tempMax) invalidForecastPayload(`${field}.tempRange`);
@@ -260,6 +261,7 @@ const validateHourlyForecastItem = (
   field: string,
   units: WeatherUnits
 ): void => {
+  if (!isRecord(item)) invalidForecastPayload(field);
   const invalid = (condition: boolean, suffix: string) => {
     if (condition) invalidForecastPayload(`${field}.${suffix}`);
   };
