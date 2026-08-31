@@ -12,6 +12,7 @@ import React, {
   useRef,
   useEffect,
   useImperativeHandle,
+  useId,
   type KeyboardEvent,
   type FormEvent,
   type ChangeEvent,
@@ -75,6 +76,9 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
   const blurTimeoutRef = useRef<number | null>(null);
+  const id = useId();
+  const inputId = `city-search-${id}`;
+  const listboxId = `city-suggestions-${id}`;
 
   useImperativeHandle(forwardedRef, () => inputRef.current as HTMLInputElement, []);
 
@@ -247,7 +251,6 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
     }, 150);
   }, []);
 
-  const listboxId = 'city-suggestions';
   const activeDescendant =
     showDropdown && highlightedIndex >= 0 && highlightedIndex < combinedItems.length
       ? `suggestion-${highlightedIndex}`
@@ -255,7 +258,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
 
   return (
     <form className="search-bar" onSubmit={handleSubmit} autoComplete="off" role="search">
-      <label className="search-bar__label" htmlFor="city-search">
+      <label className="search-bar__label" htmlFor={inputId}>
         {label}
       </label>
 
@@ -263,7 +266,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
         <div className="search-bar__field">
           <input
             ref={inputRef}
-            id="city-search"
+            id={inputId}
             className="search-bar__input"
             type="text"
             value={value}
