@@ -200,7 +200,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
                     </div>
                     <div>
                       <dt>Hava81</dt>
-                      <dd>{window.score}/100</dd>
+                      <dd>{window.score}/100 · {t(`hava81.dailyPlan.bands.${window.band}`)}</dd>
                     </div>
                   </dl>
                 </article>

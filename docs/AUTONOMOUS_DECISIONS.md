@@ -446,3 +446,5 @@ When converted daily min/max values are genuinely different by at least 0.1° bu
 
 ## 2026-08-31 — Comparison scores must carry their qualitative meaning
 A bare `/100` score is not sufficient context in comparative decision surfaces. Wherever city comparison exposes a daily or activity Hava81 score, pair it with the existing score-band label derived from the same plan object. Reuse the established bands rather than inventing a second interpretation scale, and do not change the scoring model merely to improve presentation.
+## 2026-08-31 — Route and commute scores reuse the established qualitative bands
+Route and commute decision surfaces should not expose bare numeric Hava81 scores when the score model already has a qualitative band vocabulary. Route scores derive the band with the shared `getScoreBand` function; commute windows use the band already returned by the commute planner. This is presentation-only and must not alter route risk enums, thresholds, scoring weights, or weather data.
