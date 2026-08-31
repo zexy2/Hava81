@@ -288,16 +288,33 @@
   }
 
   .daily-plan__header-actions {
+    flex-wrap: wrap;
     gap: var(--space-xs);
+  }
+
+  .daily-plan__score {
+    min-width: min(6rem, 40%);
   }
 
   .daily-plan__share {
     min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .daily-plan__quick {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 5rem), 1fr));
+  }
+
+  .daily-plan__quick span,
+  .daily-plan__quick strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 
 .daily-plan__explain {
   display: grid;
+  min-width: 0;
   gap: var(--space-sm);
   padding: var(--space-lg);
   background: color-mix(in srgb, var(--color-atlas-field) 72%, transparent);
@@ -379,11 +396,28 @@
 
 @media (max-width: 47.99rem) {
   .daily-plan__explain-head {
-    align-items: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .daily-plan__explain-head > div {
+    min-width: 0;
+    flex: 1 1 8rem;
+  }
+
+  .daily-plan__explain-head small {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .daily-plan__impacts {
     grid-template-columns: 1fr;
+  }
+
+  .daily-plan__impacts li {
+    min-width: 0;
+    flex-wrap: wrap;
   }
 }
 
