@@ -253,7 +253,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
 
   const activeDescendant =
     showDropdown && highlightedIndex >= 0 && highlightedIndex < combinedItems.length
-      ? `suggestion-${highlightedIndex}`
+      ? `${listboxId}-option-${highlightedIndex}`
       : undefined;
 
   return (
@@ -295,7 +295,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
               {combinedItems.map((item, index) => (
                 <li
                   key={item.city}
-                  id={`suggestion-${index}`}
+                  id={`${listboxId}-option-${index}`}
                   className={`search-bar__suggestion ${
                     index === highlightedIndex ? 'is-active' : ''
                   } ${item.isRecent ? 'is-recent' : ''}`}
