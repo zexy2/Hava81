@@ -98,6 +98,8 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: Weath
     if (condition) invalidWeatherPayload(field);
   };
 
+  invalid(!isRecord(data), 'current');
+  invalid(!isRecord(data.meta), 'current.meta');
   invalid(typeof data.cityName !== 'string' || !data.cityName.trim(), 'current.cityName');
   invalid(typeof data.country !== 'string' || !data.country.trim(), 'current.country');
   for (const field of ['temperature', 'feelsLike', 'tempMin', 'tempMax'] as const) {
