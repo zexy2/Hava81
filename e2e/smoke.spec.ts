@@ -1132,6 +1132,77 @@ test('mobile daily forecast reflows instead of clipping at 200 percent text size
   ).toBe(0);
 });
 
+test('saved comparison reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile comparison text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'dark',
+        language: 'en',
+      })
+    );
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'Kahramanmaraş' },
+        { name: 'Afyonkarahisar' },
+        { name: 'Şanlıurfa' },
+      ])
+    );
+  });
+  await page.unroute('**/api/v1/weather/current**');
+  await page.route('**/api/v1/weather/current**', route => {
+    const requestedCity = new URL(route.request().url()).searchParams.get('city') ?? current.cityName;
+    return route.fulfill({ json: { ...current, cityName: requestedCity } });
+  });
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Saved|Kayıtlı/ }).click();
+
+  const compare = page.locator('.hava81-compare');
+  await expect(compare).toBeVisible();
+  await expect(compare.locator('.hava81-compare__city')).toHaveCount(3);
+
+  const assertFits = async () => {
+    const state = await compare.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        return html.scrollWidth <= html.clientWidth + 1;
+      };
+      const table = element.querySelector('.hava81-compare__table');
+      const cards = Array.from(element.querySelectorAll('.hava81-compare__city'));
+      const headers = Array.from(element.querySelectorAll('.hava81-compare__city header'));
+      const metrics = Array.from(element.querySelectorAll('.hava81-compare__metrics > span'));
+      if (!table) throw new Error('Missing comparison table');
+      return {
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+        compareFits: fits(element),
+        tableFits: fits(table),
+        cardsFit: cards.every(fits),
+        headersFit: headers.every(fits),
+        metricsFit: metrics.every(fits),
+      };
+    });
+    expect(state.pageWidth).toBeLessThanOrEqual(state.viewportWidth);
+    expect(state.compareFits).toBe(true);
+    expect(state.tableFits).toBe(true);
+    expect(state.cardsFit).toBe(true);
+    expect(state.headersFit).toBe(true);
+    expect(state.metricsFit).toBe(true);
+  };
+
+  await assertFits();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertFits();
+});
+
 test('decision plate stays readable at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');
