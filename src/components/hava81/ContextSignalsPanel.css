@@ -90,6 +90,16 @@
     max-width: 100%;
     text-align: left;
   }
+  .context-signals > *,
+  .context-signals > header > *,
+  .context-signal {
+    min-width: 0;
+  }
+  .context-signals__source,
+  .context-signal,
+  .context-signals__note {
+    overflow-wrap: anywhere;
+  }
   .context-signals__source a {
     display: inline-flex;
     min-height: 44px;
