@@ -39,7 +39,7 @@ const isFreshTimestamp = (
 };
 
 const isFreshOptionalMeta = (meta: AirQuality['meta']): boolean =>
-  Boolean(meta && isFreshTimestamp(meta.fetchedAt, meta.freshForSeconds));
+  isFreshTimestamp(meta.fetchedAt, meta.freshForSeconds);
 
 export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [daily, setDaily] = useState<DailyForecast[]>([]);
@@ -145,7 +145,10 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         if (aqResult.ok) {
           setAirQuality(aqResult.value);
           airQualityRef.current = aqResult.value;
-        } else if (isSameSuccessfulRequest && !isFreshOptionalMeta(airQualityRef.current?.meta)) {
+        } else if (
+          isSameSuccessfulRequest &&
+          (!airQualityRef.current || !isFreshOptionalMeta(airQualityRef.current.meta))
+        ) {
           setAirQuality(null);
           airQualityRef.current = null;
         }

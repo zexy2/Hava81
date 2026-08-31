@@ -56,7 +56,7 @@ describe('getWeatherDecisions', () => {
     const result = getWeatherDecisions({
       weather,
       hourly: [point({ temp: 20, pop: 0.05, windSpeed: 2 })],
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 30, pm10: 50, o3: 70 },
+      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 30, pm10: 50, o3: 70, meta: weather.meta },
     });
     expect(result.map(item => item.kind)).toContain('air-quality');
     expect(result.map(item => item.kind)).toContain('outdoor-window');

@@ -77,7 +77,7 @@ describe('activity plans', () => {
 
   it('does not project current AQI unchanged across future activity hours', () => {
     const points = hourly([22, 23, 24]);
-    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
+    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };
     const withCurrentAir = buildActivityPlan({
       activity: 'children',
       weather,
@@ -90,7 +90,7 @@ describe('activity plans', () => {
   });
 
   it('still uses current AQI when the activity plan falls back to current weather', () => {
-    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
+    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };
     const walk = buildActivityPlan({ activity: 'walk', weather, hourly: [], airQuality: air });
     expect(walk.baselineScore).toBeLessThan(100);
     expect(walk.reasons).toContain('poor-air-quality');
@@ -212,7 +212,7 @@ describe('activity plans', () => {
 
   it('does not invent future air-quality risk when only a current AQI is available', () => {
     const points = hourly([20, 20, 20]);
-    const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40 };
+    const air = { aqi: 2, aqiLabel: 'Orta', pm25: 10, pm10: 15, o3: 40, meta: weather.meta };
     const walk = buildActivityPlan({ activity: 'walk', weather, hourly: points, airQuality: air });
     expect(walk.reasons).not.toContain('sensitive-air-quality');
     expect(walk.reasons).not.toContain('poor-air-quality');
@@ -229,7 +229,7 @@ describe('activity plans', () => {
 
   it('does not turn current poor AQI into a future laundry air-quality penalty', () => {
     const points = hourly([30, 30, 30], [0, 0, 0], [6, 6, 6]);
-    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80 };
+    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };
     const laundry = buildActivityPlan({ activity: 'laundry', weather, hourly: points, airQuality: air });
 
     expect(laundry.activityImpact).toBeGreaterThan(0);
