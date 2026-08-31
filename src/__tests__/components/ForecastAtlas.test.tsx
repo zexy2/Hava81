@@ -167,8 +167,12 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     ).toEqual(['1s', '2s', '3s', '4s', '6s']);
     expect(within(interval).getByRole('button', { name: '2s 2 saatlik' })).toBeInTheDocument();
     expect(within(interval).getByRole('button', { name: '6s 6 saatlik' })).toBeInTheDocument();
-    expect(within(interval).queryByRole('button', { name: '8s 8 saatlik' })).not.toBeInTheDocument();
-    expect(within(interval).queryByRole('button', { name: '12s 12 saatlik' })).not.toBeInTheDocument();
+    expect(
+      within(interval).queryByRole('button', { name: '8s 8 saatlik' })
+    ).not.toBeInTheDocument();
+    expect(
+      within(interval).queryByRole('button', { name: '12s 12 saatlik' })
+    ).not.toBeInTheDocument();
   });
 
   it('presents the hourly trend as a summarized visual forecast surface', () => {
@@ -424,6 +428,37 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     const temperature = screen.getByRole('group', { name: /günlük sıcaklık 24°C/i });
     expect(temperature).toHaveTextContent('24°');
     expect(temperature).not.toHaveTextContent('/');
+  });
+
+  it('preserves a real daily range when integer rounding would make high and low look identical', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00.000Z'),
+              tempMin: 24.2,
+              tempMax: 24.4,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+            },
+          ]}
+          hourly={[]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const temperature = screen.getByRole('group', {
+      name: /yüksek 24,4°C, düşük 24,2°C/i,
+    });
+    expect(temperature).toHaveTextContent('24,4°/24,2°');
   });
 
   it('uses the forecast location timezone for hourly clock labels and day boundaries', () => {
