@@ -24,11 +24,32 @@ describe('weatherService secondary BFF envelope validation', () => {
     await expectApiDataError(weatherService.getContextSignals(41.01, 28.97), 'context');
   });
 
+  it('rejects a missing context units record before UI formatting can dereference it', async () => {
+    mockGet.mockResolvedValue({
+      provider: 'Open-Meteo',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      fetchedAt: new Date().toISOString(),
+    });
+    await expectApiDataError(weatherService.getContextSignals(41.01, 28.97), 'context.units');
+  });
+
+  it('rejects a non-string context unit before UI formatting can call string methods on it', async () => {
+    mockGet.mockResolvedValue({
+      provider: 'Open-Meteo',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      fetchedAt: new Date().toISOString(),
+      dustMax: 4,
+      units: { dust: 123 },
+    });
+    await expectApiDataError(weatherService.getContextSignals(41.01, 28.97), 'context.units.dust');
+  });
+
   it('rejects a non-object marine context payload', async () => {
     mockGet.mockResolvedValue({
       provider: 'Open-Meteo',
       attribution: 'Open-Meteo · CC BY 4.0',
       fetchedAt: new Date().toISOString(),
+      units: {},
       marine: [],
     });
     await expectApiDataError(weatherService.getContextSignals(41.01, 28.97, true), 'context.marine');
