@@ -1,5 +1,7 @@
 .hava81-compare {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   margin-bottom: 1.5rem;
   padding: var(--space-xl);
@@ -12,13 +14,20 @@
 
 .hava81-compare__header {
   display: flex;
+  min-width: 0;
   align-items: start;
   justify-content: space-between;
   gap: var(--space-lg);
 }
 
+.hava81-compare__header > div,
+.hava81-compare__header h2 {
+  min-width: 0;
+}
+
 .hava81-compare__header h2 {
   margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
   font-size: 1.5rem;
 }
 
@@ -34,12 +43,14 @@
 
 .hava81-compare__table {
   display: grid;
+  min-width: 0;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: var(--space-sm);
 }
 
 .hava81-compare__city {
   display: grid;
+  min-width: 0;
   gap: var(--space-xs);
   padding: var(--space-md);
   background: var(--color-atlas-field);
@@ -55,17 +66,21 @@
 
 .hava81-compare__city header {
   display: flex;
+  min-width: 0;
   align-items: start;
   justify-content: space-between;
   gap: var(--space-xs);
 }
 
 .hava81-compare__city h3 {
+  min-width: 0;
   margin: 0;
+  overflow-wrap: anywhere;
   font-size: 1.05rem;
 }
 
 .hava81-compare__winner {
+  min-width: 0;
   max-width: 30rem;
   padding: var(--space-sm) var(--space-md);
   background: var(--color-aegean-pale);
@@ -76,17 +91,22 @@
 .hava81-compare__winner span,
 .hava81-compare__winner small {
   display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
   font-size: 0.75rem;
 }
 
 .hava81-compare__winner strong {
   display: block;
+  min-width: 0;
   margin: 0.2rem 0;
+  overflow-wrap: anywhere;
 }
 
 .hava81-compare__score-wrap {
   display: grid;
+  min-width: 0;
   justify-items: end;
   gap: 0.15rem;
 }
@@ -116,8 +136,9 @@
   border-top: 1px solid var(--color-atlas-line);
 }
 
-.hava81-compare__metrics span {
+.hava81-compare__metrics > span {
   display: flex;
+  min-width: 0;
   justify-content: space-between;
   gap: 1rem;
   padding-block: 0.42rem;
@@ -126,9 +147,18 @@
   font-size: 0.85rem;
 }
 
+.hava81-compare__metric-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .hava81-compare__metrics b {
+  min-width: 0;
+  margin-inline-start: auto;
+  overflow-wrap: anywhere;
   color: var(--color-atlas-ink);
   font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 @media (max-width: 47.99rem) {
@@ -147,6 +177,19 @@
   }
 
   .hava81-compare__table {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hava81-compare__city header {
+    flex-wrap: wrap;
+  }
+
+  .hava81-compare__city h3 {
+    flex: 1 1 8rem;
+  }
+
+  .hava81-compare__metrics > span {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
   }
 }

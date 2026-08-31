@@ -204,14 +204,14 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                 </header>
                 <div className="hava81-compare__metrics">
                   <span>
-                    {t('hava81.compare.temp')}{' '}
+                    <span className="hava81-compare__metric-label">{t('hava81.compare.temp')}</span>
                     <b>
                       {Math.round(convertTemperature(row.weather.temperature))}
                       {getTemperatureSymbol()}
                     </b>
                   </span>
                   <span>
-                    {t('hava81.compare.rain')}{' '}
+                    <span className="hava81-compare__metric-label">{t('hava81.compare.rain')}</span>
                     <b>{formatPrecipitationSummary(
                       peakPop,
                       peakPrecipitationMm,
@@ -220,17 +220,17 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                     )}</b>
                   </span>
                   <span>
-                    {t('weather.wind')}{' '}
+                    <span className="hava81-compare__metric-label">{t('weather.wind')}</span>
                     <b>
                       {convertWindSpeed(row.weather.windSpeed)} {getWindSpeedSymbol()}
                     </b>
                   </span>
                   <span>
-                    {t('hava81.compare.aqi')}{' '}
+                    <span className="hava81-compare__metric-label">{t('hava81.compare.aqi')}</span>
                     <b>{row.airQuality ? `${row.airQuality.aqi}/5` : '—'}</b>
                   </span>
                   <span>
-                    {t('hava81.compare.bestTime')}{' '}
+                    <span className="hava81-compare__metric-label">{t('hava81.compare.bestTime')}</span>
                     <b>
                       {row.plan.bestWindowRange
                         ? row.plan.bestWindowRange.start.time.getTime() ===
@@ -245,7 +245,9 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                   </span>
                   {row.activityPlan ? (
                     <span>
-                      {t(`hava81.activities.names.${row.activityPlan.activity}`)}{' '}
+                      <span className="hava81-compare__metric-label">
+                        {t(`hava81.activities.names.${row.activityPlan.activity}`)}
+                      </span>
                       <b>
                         {row.activityPlan.score}/100 · {t(`hava81.dailyPlan.bands.${row.activityPlan.band}`)}
                       </b>
