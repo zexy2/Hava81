@@ -1,17 +1,22 @@
 const CACHE_NAME = 'hava81-shell-5ff62b8de47c';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
-const APP_SHELL = ['/', '/manifest.json'];
+const OPTIONAL_SHELL = ['/manifest.json'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      for (const path of APP_SHELL) {
+      // Do not activate a new versioned worker without an offline navigation fallback.
+      // Rejecting this install leaves the previous worker/cache authoritative until retry.
+      const rootResponse = await fetch('/', { cache: 'no-store' });
+      if (!rootResponse.ok) throw new Error('Hava81 shell root unavailable');
+      await cache.put('/', rootResponse.clone());
+
+      for (const path of OPTIONAL_SHELL) {
         try {
           const response = await fetch(path, { cache: 'no-store' });
           if (response.ok) await cache.put(path, response.clone());
         } catch {
-          // A transient failure for one shell entry must not reject the entire worker install.
-          // Successful navigations will repopulate the versioned cache after recovery.
+          // Optional metadata must not block an otherwise usable shell upgrade.
         }
       }
     })
