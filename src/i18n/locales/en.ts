@@ -225,7 +225,7 @@ export const en = {
         severeWeather: 'Severe weather risk',
         clear: 'No material risk',
       },
-      note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. If a field is unavailable, it falls back to the remaining verified signals with lower data coverage; it is not a safety guarantee.',
+      note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Current air quality is used only for the matching current hour and is not copied into future hours. If a field is unavailable, it falls back to the remaining verified signals with lower data coverage; it is not a safety guarantee.',
     },
     commute: {
       eyebrow: 'Personal routine',

@@ -192,8 +192,10 @@ const buildNowOrLater = (slots: ScoredWeatherWindow[]): NowOrLaterAdvice => {
 export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanInput): DailyPlan => {
   const source = [...hourly].sort(byTime).slice(0, 24);
   const slots = source.length
-    ? source.map(point =>
-        scoreWeatherWindow({
+    ? source.map(point => {
+        const slotAgeMs = weather.timestamp.getTime() - point.time.getTime();
+        const usesCurrentAirQuality = slotAgeMs >= 0 && slotAgeMs < 60 * 60 * 1000;
+        return scoreWeatherWindow({
           time: point.time,
           temperature: point.temp,
           apparentTemperature: point.apparentTemperature,
@@ -202,11 +204,12 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
           precipitationMm: point.precipitationMm,
           windSpeed: point.windSpeed,
           windGust: point.windGust,
+          airQualityIndex: usesCurrentAirQuality ? airQuality?.aqi : undefined,
           uvIndex: point.uvIndex,
           visibility: point.visibility,
           weatherCode: point.weatherCode,
-        })
-      )
+        });
+      })
     : [
         scoreWeatherWindow({
           time: weather.timestamp,
