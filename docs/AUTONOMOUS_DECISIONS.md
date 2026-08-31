@@ -410,3 +410,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-31 — Decision-card timestamps must describe the observation that actually determines the displayed value. If current apparent temperature is more extreme than every forecast hour, heat/cold guidance stays untimed/current; attach a future time only when the forecast point is at least as extreme as the current observation.
 
 - 2026-08-31 — Current air quality is an observation, not a future commute forecast. Do not project the current OpenWeather AQI into later outbound/return commute scoring, advice, or share summaries. Keep current AQI on explicitly current/overall air-quality surfaces unless a time-aligned future air-quality source with verified freshness semantics is introduced.
+
+- 2026-08-31 — Once the frontend BFF validator marks an hourly weather field mandatory, the normalized domain type should match that guarantee. Deliberate malformed-data boundary tests may use explicit invalid-fixture casts to exercise runtime fail-closed behavior rather than weakening the production type or preserving synthetic fallbacks such as missing wind becoming `0`.

@@ -160,7 +160,7 @@ export interface HourlyForecast {
   icon: WeatherIconCode;
   description?: string;
   pop: number; // Frontend-domain ratio from 0 to 1
-  windSpeed?: number;
+  windSpeed: number;
   apparentTemperature?: number;
   humidity?: number;
   precipitationMm?: number;

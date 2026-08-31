@@ -42,7 +42,7 @@ describe('activity plans', () => {
       ...point,
       windSpeed: undefined,
       humidity: undefined,
-    }));
+    })) as unknown as HourlyForecast[];
     const harshCurrent = buildActivityPlan({
       activity: 'walk',
       weather: { ...weather, humidity: 100, windSpeed: 30 },

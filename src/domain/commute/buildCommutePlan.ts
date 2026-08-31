@@ -134,7 +134,7 @@ const buildWindow = (
     apparentTemperature: scored.apparentTemperature,
     precipitationProbability: point.pop,
     precipitationMm: point.precipitationMm,
-    windSpeed: point.windSpeed ?? 0,
+    windSpeed: point.windSpeed,
     windGust: point.windGust,
     score: scored.score,
     band: getScoreBand(scored.score),
