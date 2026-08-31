@@ -223,6 +223,18 @@ describe('weatherService BFF client', () => {
   });
 
   it.each([
+    ['null envelope', null],
+    ['missing metadata envelope', { ...serializedWeather, meta: undefined }],
+  ])('rejects malformed current-weather %s from the BFF', async (_label, payload) => {
+    mockGet.mockResolvedValue(payload);
+
+    await expect(weatherService.getCurrentWeather({ city: 'Izmir' })).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+    });
+  });
+
+  it.each([
     ['non-finite temperature', { temperature: Number.NaN }],
     ['humidity above 100%', { humidity: 101 }],
     ['non-positive pressure', { pressure: 0 }],
