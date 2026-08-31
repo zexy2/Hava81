@@ -512,7 +512,7 @@ textarea:focus-visible {
 
 @media (min-width: 64rem) {
   .atlas-dashboard {
-    grid-template-columns: minmax(0, 1.55fr) minmax(22rem, 0.9fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(min(22rem, 352px), 0.9fr);
     align-items: start;
   }
 

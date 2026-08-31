@@ -163,7 +163,9 @@
 }
 
 .hava81-decision-field__change {
+  min-width: 0;
   align-self: end;
+  overflow-wrap: anywhere;
   padding: 16px;
   color: #142524;
   background: var(--decision-saffron);
@@ -324,7 +326,9 @@
 }
 
 .hava81-decision-field__decision-list li {
+  min-width: 0;
   padding-left: 0.75rem;
+  overflow-wrap: anywhere;
   border-left: 2px solid currentColor;
 }
 
