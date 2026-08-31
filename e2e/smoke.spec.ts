@@ -487,6 +487,58 @@ test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) 
   await expect(dialog.getByRole('contentinfo')).toHaveCount(0);
 });
 
+test('mobile settings reflows option groups at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile settings text-resize regression');
+  await page.goto('/istanbul');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+  await page.locator('.atlas-settings-button').click();
+  const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
+  await expect(dialog).toBeVisible();
+  await page.waitForTimeout(350);
+
+  const measure = async () => dialog.evaluate(element => {
+    const groups = Array.from(element.querySelectorAll<HTMLElement>('.settings-option-group'));
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      panel: (() => {
+        const rect = element.getBoundingClientRect();
+        return { left: rect.left, right: rect.right };
+      })(),
+      groups: groups.map(group => {
+        const options = Array.from(group.querySelectorAll<HTMLElement>('.settings-option'));
+        const rows = new Map<number, number>();
+        for (const option of options) {
+          const top = Math.round(option.getBoundingClientRect().top);
+          rows.set(top, (rows.get(top) ?? 0) + 1);
+        }
+        return {
+          columns: Math.max(...rows.values()),
+          fits: group.scrollWidth <= group.clientWidth,
+          optionsFit: options.every(option => option.scrollWidth <= option.clientWidth + 1),
+        };
+      }),
+    };
+  });
+
+  const wide = await measure();
+  expect(wide.pageWidth).toBeLessThanOrEqual(wide.viewportWidth);
+  expect(wide.panel.left).toBeGreaterThanOrEqual(0);
+  expect(wide.panel.right).toBeLessThanOrEqual(wide.viewportWidth);
+  expect(wide.groups.map(group => group.columns)).toEqual([1, 1, 2, 2]);
+  expect(wide.groups.every(group => group.fits && group.optionsFit)).toBe(true);
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  const narrow = await measure();
+  expect(narrow.pageWidth).toBeLessThanOrEqual(narrow.viewportWidth);
+  expect(narrow.panel.left).toBeGreaterThanOrEqual(0);
+  expect(narrow.panel.right).toBeLessThanOrEqual(narrow.viewportWidth);
+  expect(narrow.groups.map(group => group.columns)).toEqual([1, 1, 1, 1]);
+  expect(narrow.groups.every(group => group.fits && group.optionsFit)).toBe(true);
+});
+
 test('forced colors keeps selected activity and settings options distinct', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors selected-state regression');
   await page.emulateMedia({ forcedColors: 'active' });
