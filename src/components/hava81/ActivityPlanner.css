@@ -190,7 +190,7 @@
 
 .activity-planner__window {
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) minmax(8rem, 0.55fr) minmax(8rem, 0.55fr) auto;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.55fr) minmax(0, 0.55fr) auto;
   gap: var(--space-sm);
   align-items: end;
   padding: var(--space-sm) var(--space-md);

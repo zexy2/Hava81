@@ -461,3 +461,6 @@ A browser notification that includes a Hava81 `/100` score must pair it with the
 
 ## 2026-08-31 — Factor impact numbers are explanatory averages, not direct deductions
 The `≈−X` values shown in the daily-score breakdown describe 12-hour duration-weighted average factor penalties. Because the final daily score also emphasizes the most difficult quarter of the window and may apply low-slot caps, UI copy must not imply those values subtract one-for-one from 100. This is an explanation contract only; it does not change scoring math.
+
+## 2026-08-31 — Enlarged text must not turn activity filters into fixed-width layouts
+Activity preferred-time controls may preserve their desktop proportions, but their grid tracks must be allowed to shrink to the available card width. Avoid hard `rem` minimums on the multi-column filter row because user text enlargement scales those minima and can create page-level horizontal overflow. This is layout-only; activity scoring/window semantics remain unchanged.
