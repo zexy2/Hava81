@@ -87,15 +87,15 @@ export const getWeatherDecisions = ({
     const bestApparent = best ? (best.apparentTemperature ?? best.temp) : -Infinity;
     return !best || apparent > bestApparent ? point : best;
   }, undefined);
-  const maxTemperature = Math.max(
-    weather.feelsLike,
-    hottest ? (hottest.apparentTemperature ?? hottest.temp) : -Infinity
-  );
+  const hottestForecastTemperature = hottest
+    ? (hottest.apparentTemperature ?? hottest.temp)
+    : -Infinity;
+  const maxTemperature = Math.max(weather.feelsLike, hottestForecastTemperature);
   if (maxTemperature >= 32) {
     decisions.push({
       kind: 'heat',
       severity: maxTemperature >= 40 ? 'high' : 'moderate',
-      time: hottest?.time,
+      time: hottestForecastTemperature >= weather.feelsLike ? hottest?.time : undefined,
       value: maxTemperature,
     });
   }
@@ -105,15 +105,15 @@ export const getWeatherDecisions = ({
     const bestApparent = best ? (best.apparentTemperature ?? best.temp) : Infinity;
     return !best || apparent < bestApparent ? point : best;
   }, undefined);
-  const minTemperature = Math.min(
-    weather.feelsLike,
-    coldest ? (coldest.apparentTemperature ?? coldest.temp) : Infinity
-  );
+  const coldestForecastTemperature = coldest
+    ? (coldest.apparentTemperature ?? coldest.temp)
+    : Infinity;
+  const minTemperature = Math.min(weather.feelsLike, coldestForecastTemperature);
   if (minTemperature <= 0) {
     decisions.push({
       kind: 'cold',
       severity: minTemperature <= -10 ? 'high' : 'moderate',
-      time: coldest?.time,
+      time: coldestForecastTemperature <= weather.feelsLike ? coldest?.time : undefined,
       value: minTemperature,
     });
   }

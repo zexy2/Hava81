@@ -406,3 +406,5 @@ This log records product and engineering decisions made during the autonomous im
 - 2026-08-30 — A visual forecast skeleton that replaces not-yet-available forecast content must expose a polite status message to assistive technology. Keep the loading copy localized and screen-reader-only when the visual skeleton already communicates progress; do not turn loading UI into a weather claim.
 
 - 2026-08-31 — Missing optional AQI in comparison must remain visibly unknown. Do not render an unavailable AQI as `—/5`, which visually suggests a value on the five-point scale; show a standalone em dash while keeping real AQI values as `n/5`.
+
+- 2026-08-31 — Decision-card timestamps must describe the observation that actually determines the displayed value. If current apparent temperature is more extreme than every forecast hour, heat/cold guidance stays untimed/current; attach a future time only when the forecast point is at least as extreme as the current observation.
