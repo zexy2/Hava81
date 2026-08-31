@@ -85,6 +85,19 @@
   margin: 0.2rem 0;
 }
 
+.hava81-compare__score-wrap {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
+}
+
+.hava81-compare__score-wrap small {
+  color: var(--color-atlas-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
 .hava81-compare__score {
   font-size: 1.7rem;
   font-variant-numeric: tabular-nums;

@@ -145,7 +145,7 @@ export const en = {
       partialUnavailable: 'Some city data could not update; available results are shown.',
       unavailable: 'City comparison could not update right now.',
       winnerLabel: 'Leading under these weather criteria',
-      winner: '{{city}} · Hava81 {{score}}/100',
+      winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       winnerNote:
         'This result compares current weather criteria only; it is not a general ranking of the cities.',
       temp: 'Temperature',

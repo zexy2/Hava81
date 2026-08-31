@@ -263,6 +263,8 @@ describe('ComparePanel', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
+    expect(screen.getByText(/Hava81 \d+\/100 · (Çok uygun|Uygun|Dikkat|Zorlayıcı)/)).toBeVisible();
+    expect(screen.getAllByText(/^(Çok uygun|Uygun|Dikkat|Zorlayıcı)$/).length).toBeGreaterThanOrEqual(2);
     expect(api.getForecast).toHaveBeenCalledTimes(2);
     expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);

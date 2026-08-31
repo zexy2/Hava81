@@ -151,6 +151,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
               {t('hava81.compare.winner', {
                 city: winner.weather.cityName,
                 score: winner.plan.score,
+                band: t(`hava81.dailyPlan.bands.${winner.plan.band}`),
               })}
             </strong>
             <small>{t('hava81.compare.winnerNote')}</small>
@@ -193,10 +194,13 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
               >
                 <header>
                   <h3>{row.weather.cityName}</h3>
-                  <strong className="hava81-compare__score">
-                    {row.plan.score}
-                    <span>/100</span>
-                  </strong>
+                  <div className="hava81-compare__score-wrap">
+                    <small>{t(`hava81.dailyPlan.bands.${row.plan.band}`)}</small>
+                    <strong className="hava81-compare__score">
+                      {row.plan.score}
+                      <span>/100</span>
+                    </strong>
+                  </div>
                 </header>
                 <div className="hava81-compare__metrics">
                   <span>
@@ -242,7 +246,9 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                   {row.activityPlan ? (
                     <span>
                       {t(`hava81.activities.names.${row.activityPlan.activity}`)}{' '}
-                      <b>{row.activityPlan.score}/100</b>
+                      <b>
+                        {row.activityPlan.score}/100 · {t(`hava81.dailyPlan.bands.${row.activityPlan.band}`)}
+                      </b>
                     </span>
                   ) : null}
                 </div>
