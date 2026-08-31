@@ -1526,6 +1526,53 @@ test('activity planner reflows at narrow 200 percent text size', async ({ page }
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('activity detail explanations reflow at narrow 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile activity-detail text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  await page.locator('.activity-planner__score-explanation').evaluate(element => {
+    (element as HTMLDetailsElement).open = true;
+  });
+  await page.locator('.activity-card__details').evaluateAll(elements => {
+    elements.forEach(element => {
+      (element as HTMLDetailsElement).open = true;
+    });
+  });
+
+  const planner = page.locator('.activity-planner');
+  await planner.scrollIntoViewIfNeeded();
+  const layout = await planner.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const explanation = element.querySelector('.activity-planner__score-explanation p');
+    const detailBodies = Array.from(element.querySelectorAll('.activity-card__details-body'));
+    const detailCopy = Array.from(element.querySelectorAll('.activity-card__details-body small'));
+    if (!explanation || detailBodies.length === 0 || detailCopy.length === 0) {
+      throw new Error('Missing expanded activity detail content');
+    }
+    return {
+      explanationFits: fits(explanation),
+      detailBodiesFit: detailBodies.every(fits),
+      detailCopyFits: detailCopy.every(fits),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.explanationFits).toBe(true);
+  expect(layout.detailBodiesFit).toBe(true);
+  expect(layout.detailCopyFits).toBe(true);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('activity time filter stays within the page at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');
