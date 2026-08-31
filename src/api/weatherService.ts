@@ -411,6 +411,7 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
     'route.estimatedDurationMinutes'
   );
   invalid(!validDateString(data.requestedDeparture), 'route.requestedDeparture');
+  const requestedDepartureMs = Date.parse(data.requestedDeparture);
   invalid(!validScore(data.score), 'route.score');
   invalid(!Array.isArray(data.segments) || data.segments.length === 0, 'route.segments');
   invalid(typeof data.disclaimer !== 'string' || !data.disclaimer.trim(), 'route.disclaimer');
@@ -422,6 +423,11 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
     invalid(!isFiniteNumber(segment.lat) || segment.lat < -90 || segment.lat > 90, `${prefix}.lat`);
     invalid(!isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180, `${prefix}.lon`);
     invalid(!validDateString(segment.eta), `${prefix}.eta`);
+    if (validDateString(segment.eta)) {
+      const expectedEtaMs =
+        requestedDepartureMs + data.estimatedDurationMinutes * 60_000 * segment.fraction;
+      invalid(Math.abs(Date.parse(segment.eta) - expectedEtaMs) > 1, `${prefix}.eta`);
+    }
     invalid(
       !isPlausibleTemperature(segment.temperature, DEFAULT_WEATHER_PARAMS.units),
       `${prefix}.temperature`
@@ -448,9 +454,17 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
   }
   if (data.betterDeparture) {
     invalid(!validDateString(data.betterDeparture.departure), 'route.betterDeparture.departure');
+    if (validDateString(data.betterDeparture.departure)) {
+      invalid(
+        Date.parse(data.betterDeparture.departure) !== requestedDepartureMs + 3 * 60 * 60_000,
+        'route.betterDeparture.departure'
+      );
+    }
     invalid(!validScore(data.betterDeparture.score), 'route.betterDeparture.score');
     invalid(
-      !isFiniteNumber(data.betterDeparture.improvement) || data.betterDeparture.improvement <= 0,
+      !isFiniteNumber(data.betterDeparture.improvement) ||
+        data.betterDeparture.improvement <= 0 ||
+        data.betterDeparture.improvement !== data.betterDeparture.score - data.score,
       'route.betterDeparture.improvement'
     );
   }

@@ -117,17 +117,21 @@ const context = {
   marine: { observedAt: new Date().toISOString(), waveHeight: 0.3, seaSurfaceTemperature: 24.8 },
 };
 
+const routeRequestedDeparture = new Date();
+const routeDurationMinutes = 331;
 const routeResult = {
   kind: 'corridor-estimate',
   estimatedDistanceKm: 413,
-  estimatedDurationMinutes: 331,
-  requestedDeparture: new Date().toISOString(),
+  estimatedDurationMinutes: routeDurationMinutes,
+  requestedDeparture: routeRequestedDeparture.toISOString(),
   score: 84,
   segments: [0, 0.25, 0.5, 0.75, 1].map((fraction, index) => ({
     fraction,
     lat: 41 - index * 0.25,
     lon: 29 + index * 0.9,
-    eta: new Date(Date.now() + index * 60 * 60_000).toISOString(),
+    eta: new Date(
+      routeRequestedDeparture.getTime() + routeDurationMinutes * 60_000 * fraction
+    ).toISOString(),
     temperature: 22 + index,
     precipitationProbability: index === 2 ? 30 : 5,
     windSpeed: 4 + index,
