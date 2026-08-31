@@ -1154,6 +1154,29 @@ test('decision plate stays readable at 200 percent text size', async ({ page }, 
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('activity time filter stays within the page at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const activityWindow = page.locator('.activity-planner__window');
+  await activityWindow.scrollIntoViewIfNeeded();
+  await expect(activityWindow).toBeVisible();
+  const layout = await activityWindow.evaluate(element => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+    pageWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('hourly interval controls resample the same 24-hour forecast', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');
