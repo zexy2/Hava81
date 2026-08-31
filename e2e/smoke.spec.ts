@@ -652,6 +652,43 @@ test('forced colors keeps selected activity and settings options distinct', asyn
   expect(settingsState.border).not.toBe(settingsState.otherBorder);
 });
 
+test('mobile environment rail keeps labels readable at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const rail = page.locator('.environment-rail');
+  await expect(rail).toBeVisible();
+  const layout = await rail.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const modules = Array.from(element.querySelectorAll('.environment-rail__module'));
+    const labels = Array.from(element.querySelectorAll('.environment-rail__label'));
+    const rect = element.getBoundingClientRect();
+    return {
+      railFits: fits(element),
+      modulesFit: modules.every(fits),
+      labelsFit: labels.every(fits),
+      left: rect.left,
+      right: rect.right,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.railFits).toBe(true);
+  expect(layout.modulesFit).toBe(true);
+  expect(layout.labelsFit).toBe(true);
+  expect(layout.left).toBeGreaterThanOrEqual(0);
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('mobile environment map action keeps its focus ring inside the clipped rail', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment focus regression');
   await page.setViewportSize({ width: 390, height: 844 });
