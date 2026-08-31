@@ -1575,3 +1575,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Host hygiene: removed only regenerable `node_modules`/`dist` artifacts from the already-merged #403 worktree, reclaiming roughly 400 MB; direct filesystem usage improved from about 90% to 89% while preserving all source/checkpoint state.
 - Current branch/worktree: `automation/hava81-run11-wind-type-0718` / `/home/ubuntu/hava81-auto-run11-wind-type-0718`, rebased onto `e9ad45d35371298ae53ae2a70350d08686e8fea0`.
 - Next action: complete combined post-rebase gates, push after confirming the remote branch lease is empty, open the bounded PR, require exact-head green CI, and continue a separate contract/provenance audit while it runs.
+
+## 2026-08-31 07:44 TRT — fail closed when OpenWeather forecast timezone is missing
+
+- Started from exact current main a49efc1858947833535e0ccec9f9cc256fc82e83 in isolated worktree /home/ubuntu/hava81-auto-run11-0736, branch automation/hava81-run11-0736; the unrelated dirty primary checkout remains untouched.
+- Audited the OpenWeather five-day forecast boundary and found city.timezone defaulted to UTC (0) when omitted. Because this offset drives local-day grouping and preferred daytime-slot selection, a malformed upstream payload could be rendered as plausible weather attached to the wrong local day/hour.
+- Removed the UTC default and the downstream nullish fallback. Missing timezone metadata now fails closed in provider schema validation; valid UTC (0) remains accepted when explicitly supplied. No forecast/weather value is corrected, shifted, synthesized, or relabeled.
+- Added a regression proving missing forecast timezone is rejected. API gates pass in Node 24 container: 59/59 tests, API TypeScript, API build, production dependency audit 0 vulnerabilities, and git diff --check.
+- Next action: commit/push/open this bounded API PR, require exact-head green CI, then perform blue-green/canary validation before any production promotion; keep production on 4002 and 4001 as rollback/canary.

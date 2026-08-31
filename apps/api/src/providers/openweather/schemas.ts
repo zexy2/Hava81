@@ -103,7 +103,7 @@ export const forecastUpstreamSchema = z.object({
     name: z.string(),
     coord: coordinatesSchema,
     country: z.string(),
-    timezone: z.number().min(-43_200).max(50_400).default(0),
+    timezone: z.number().min(-43_200).max(50_400),
   }),
 });
 

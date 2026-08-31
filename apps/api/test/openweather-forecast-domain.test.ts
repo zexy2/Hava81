@@ -44,6 +44,12 @@ test('forecast schema rejects negative and fractional forecast epochs', () => {
   }
 });
 
+test('forecast schema rejects a missing provider timezone offset', () => {
+  const payload = sample();
+  delete (payload.city as Partial<typeof payload.city>).timezone;
+  assert.throws(() => forecastUpstreamSchema.parse(payload));
+});
+
 test('forecast schema rejects impossible provider timezone offsets', () => {
   for (const invalidTimezone of [-43_201, 50_401]) {
     const payload = sample();
