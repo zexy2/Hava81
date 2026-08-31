@@ -18,8 +18,9 @@ interface RetryState {
   lastError: Error | null;
 }
 
-// Simple in-memory request cache
+// Simple in-memory response cache plus single-flight GET deduplication.
 const requestCache = new Map<string, { data: unknown; timestamp: number }>();
+const inFlightGetRequests = new Map<string, Promise<unknown>>();
 
 /**
  * Sleep utility for retry delays
@@ -234,7 +235,17 @@ const fetchWithRetry = async <T>(
 export const httpClient = {
   get: <T>(endpoint: string, params?: Record<string, string | number | boolean>): Promise<T> => {
     const url = buildUrl(endpoint, params);
-    return fetchWithRetry<T>(url);
+    const cacheKey = getCacheKey(url);
+    const inFlight = inFlightGetRequests.get(cacheKey);
+    if (inFlight) return inFlight as Promise<T>;
+
+    const request = fetchWithRetry<T>(url).finally(() => {
+      if (inFlightGetRequests.get(cacheKey) === request) {
+        inFlightGetRequests.delete(cacheKey);
+      }
+    });
+    inFlightGetRequests.set(cacheKey, request);
+    return request;
   },
 
   post: <T>(endpoint: string, data?: unknown): Promise<T> => {
