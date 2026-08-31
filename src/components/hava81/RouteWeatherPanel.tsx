@@ -5,6 +5,7 @@ import { useSettings } from '../../context';
 import { weatherService } from '../../api/weatherService';
 import { TURKISH_CITIES } from '../../constants/cities';
 import type { RouteWeatherResult } from '../../types';
+import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
 import { citySlug } from '../../utils/cityRoute';
 import { formatPrecipitationSummary } from '../../utils/precipitation';
 import {
@@ -222,10 +223,13 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   {originName} → {destinationName}
                 </h3>
               </div>
-              <strong>
-                {result.score}
-                <span>/100</span>
-              </strong>
+              <div className="route-weather__score">
+                <small>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</small>
+                <strong>
+                  {result.score}
+                  <span>/100</span>
+                </strong>
+              </div>
             </header>
             <p>
               {t('hava81.route.estimate', {
@@ -253,7 +257,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   className={`route-segment route-segment--${segment.risk}`}
                 >
                   <time>{formatTime(segment.eta)}</time>
-                  <strong>{segment.score}</strong>
+                  <strong>{segment.score}/100 · {t(`hava81.dailyPlan.bands.${getScoreBand(segment.score)}`)}</strong>
                   <span>
                     {numberFormatter.format(Math.round(convertTemperature(segment.temperature)))}
                     {temperatureSymbol} ·{' '}

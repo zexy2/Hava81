@@ -85,6 +85,8 @@ describe('RouteWeatherPanel', () => {
     expect(result).toHaveAttribute('aria-live', 'polite');
     expect(result).toHaveAttribute('aria-atomic', 'true');
     expect(result).toHaveTextContent('78/100');
+    expect(result).toHaveTextContent('Uygun');
+    expect(result).toHaveTextContent('82/100 · Uygun');
     expect(result).toHaveTextContent('%20 · 0,4 mm');
   });
 

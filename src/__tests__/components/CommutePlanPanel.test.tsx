@@ -64,9 +64,9 @@ describe('CommutePlanPanel', () => {
     expect(screen.getByText('Şemsiyeyi al')).toBeInTheDocument();
     expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Cmt 08:30 → Cmt 18:00');
     expect(screen.getByText(/Dönüşte yağmur riski/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })
-    ).toBeInTheDocument();
+    const windows = screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' });
+    expect(windows).toBeInTheDocument();
+    expect(windows).toHaveTextContent(/\d+\/100 · (Çok uygun|Uygun|Dikkat|Zorlayıcı)/);
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('08:30');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
   });

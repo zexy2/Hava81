@@ -120,18 +120,29 @@
   margin: 0.2rem 0;
   font-size: 1.35rem;
 }
-.route-weather__result > header > strong {
+.route-weather__score {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
   min-width: 5rem;
   padding: 0.45rem 0.65rem;
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  line-height: 1;
   text-align: center;
   background: var(--color-atlas-field);
   border: 1px solid var(--color-atlas-line);
   border-radius: var(--radius-md);
 }
-.route-weather__result > header > strong span {
+.route-weather__score small {
+  color: var(--color-atlas-muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1.1;
+}
+.route-weather__score strong {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.route-weather__score strong span {
   font-size: 0.75rem;
   color: var(--color-atlas-muted);
 }
