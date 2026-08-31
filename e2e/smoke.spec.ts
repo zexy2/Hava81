@@ -1412,6 +1412,50 @@ test('decision field keeps metrics readable at narrow 200 percent text size', as
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('desktop decision guidance stays readable at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision-field text-resize regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const layout = await page.locator('.hava81-decision-field').evaluate(element => {
+    const selectors = [
+      '.hava81-decision-field__current',
+      '.hava81-decision-field__reading',
+      '.hava81-decision-field__temperature',
+      '.hava81-decision-field__change',
+      '.hava81-decision-field__decision-list',
+    ];
+    const regions = selectors.map(selector => {
+      const region = element.querySelector<HTMLElement>(selector);
+      if (!region) throw new Error(`Missing decision region ${selector}`);
+      return {
+        selector,
+        clientWidth: region.clientWidth,
+        scrollWidth: region.scrollWidth,
+      };
+    });
+    const rect = element.getBoundingClientRect();
+    return {
+      fieldFits: element.scrollWidth <= element.clientWidth + 1,
+      regions,
+      left: rect.left,
+      right: rect.right,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.fieldFits).toBe(true);
+  expect(layout.regions.every(region => region.scrollWidth <= region.clientWidth + 1)).toBe(true);
+  expect(layout.left).toBeGreaterThanOrEqual(0);
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('decision plate stays readable at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');
