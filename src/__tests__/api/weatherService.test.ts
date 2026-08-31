@@ -602,6 +602,7 @@ describe('weatherService BFF client', () => {
     ['non-finite daily minimum', { daily: { tempMin: Number.NaN } }],
     ['blank daily description', { daily: { description: '   ' } }],
     ['negative daily precipitation amount', { daily: { precipitationMm: -0.1 } }],
+    ['missing hourly wind speed', { hourly: { windSpeed: undefined } }],
     ['negative hourly wind speed', { hourly: { windSpeed: -1 } }],
     ['humidity above 100%', { hourly: { humidity: 101 } }],
     ['invalid forecast timezone offset', { meta: { timezoneOffsetSeconds: 50_401 } }],
@@ -782,6 +783,7 @@ describe('weatherService BFF client', () => {
   });
 
   it.each([
+    ['missing wind speed', { windSpeed: undefined }],
     ['negative precipitation', { precipitationMm: -0.1 }],
     ['negative wind gust', { windGust: -1 }],
     ['negative UV index', { uvIndex: -0.1 }],
