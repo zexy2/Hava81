@@ -112,13 +112,23 @@
 }
 
 .hava81-compare__score-wrap small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
   font-size: 0.72rem;
   font-weight: 650;
   line-height: 1.2;
+  text-align: end;
 }
 
 .hava81-compare__score {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
   font-size: 1.7rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
