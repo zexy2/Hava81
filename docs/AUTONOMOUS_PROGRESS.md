@@ -1471,3 +1471,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Strengthened the regression from source-shape assertions to an executable worker-install simulation: `/` is forced to reject while `/manifest.json` still fetches and caches, and the install `waitUntil` promise resolves instead of rejecting.
 - Combined post-rebase gates pass: service-worker focused 4/4; full frontend 48 files / 447 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Main pipeline #895 for `54e5cce9e7105217f3c1ecb78b9f2cd560abadc2` is green; fresh observer at `2026-08-30T20:21:22.960497Z` reports root/İstanbul/API readiness/CORS healthy, nginx on 4002, and OpenWeather circuit closed. Next action: publish this exact branch after remote lease check and require exact-head CI before merge.
+## 2026-08-31 03:14 TRT — keep cache-injected async state internally consistent
+
+- Continued from exact main `7de2a336097122ba3ba7dc898a060c027ef07262` in isolated branch `automation/hava81-useasync-setdata-state-0312`; the primary checkout and unrelated dirty worktrees were left untouched.
+- Audited `useAsync.setData`, which is used by `useWeather` to hydrate a fresh validated weather cache. It previously replaced only `data`, leaving status flags such as `isIdle` / `isSuccess` potentially inconsistent with the populated payload.
+- `setData` now settles injected non-null data as a successful state, clears stale error/loading flags, and returns to idle semantics for null. This changes only client state bookkeeping; it does not alter, synthesize, clamp, classify, or relabel weather/provider data.
+- Added a focused hook regression requiring cache-injected data to expose a settled successful state.
+- Local gates on exact main pass: focused useAsync 2/2; full frontend 51 files / 457 tests; TypeScript; ESLint; 81-city production build/service-worker stamping; production dependency audit 0 vulnerabilities; and `git diff --check`.
+- Direct GitHub verification confirms main pipeline #940 for exact `7de2a336...` completed successfully; fresh production observer re-check is required immediately before any merge.
+- Next action: commit/push/open this bounded frontend-only PR after remote lease check, require exact-head green CI, and continue an independent audit while CI runs.

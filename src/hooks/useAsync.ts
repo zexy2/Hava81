@@ -153,7 +153,16 @@ export function useAsync<T, Args extends unknown[] = []>(
   }, []);
 
   const setData = useCallback((data: T | null) => {
-    setState(prev => ({ ...prev, data }));
+    setState(prev => ({
+      ...prev,
+      data,
+      error: null,
+      status: data === null ? LoadingState.IDLE : LoadingState.SUCCESS,
+      isLoading: false,
+      isError: false,
+      isSuccess: data !== null,
+      isIdle: data === null,
+    }));
   }, []);
 
   // Execute immediately if requested
