@@ -585,6 +585,54 @@ test('mobile daily plan reflows at 200% text size', async ({ page }, testInfo) =
   expect(narrowState.shareFits).toBe(true);
 });
 
+test('commute time inputs stay inside their grid at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop commute input text-resize regression');
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
+
+  const times = page.locator('.commute-plan__times');
+  const measure = async () =>
+    times.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        const rect = html.getBoundingClientRect();
+        const parentRect = element.getBoundingClientRect();
+        return (
+          html.scrollWidth <= html.clientWidth + 1 &&
+          rect.left >= parentRect.left - 1 &&
+          rect.right <= parentRect.right + 1
+        );
+      };
+      const labels = Array.from(element.querySelectorAll('label'));
+      const inputs = Array.from(element.querySelectorAll('input'));
+      return {
+        timesFit: element.scrollWidth <= element.clientWidth + 1,
+        labelsFit: labels.every(fits),
+        inputsFit: inputs.every(fits),
+        labelTops: labels.map(label => label.getBoundingClientRect().top),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+  const normal = await measure();
+  expect(normal.timesFit).toBe(true);
+  expect(normal.labelsFit).toBe(true);
+  expect(normal.inputsFit).toBe(true);
+  expect(Math.abs(normal.labelTops[0] - normal.labelTops[1])).toBeLessThanOrEqual(1);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const enlarged = await measure();
+  expect(enlarged.timesFit).toBe(true);
+  expect(enlarged.labelsFit).toBe(true);
+  expect(enlarged.inputsFit).toBe(true);
+  expect(Math.abs(enlarged.labelTops[0] - enlarged.labelTops[1])).toBeLessThanOrEqual(1);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+});
+
 test('mobile commute windows reflow at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile commute text-resize regression');
 
