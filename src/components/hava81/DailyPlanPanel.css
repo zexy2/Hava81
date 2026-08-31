@@ -421,6 +421,17 @@
   }
 }
 
+@media (max-width: 26rem) {
+  .daily-plan__explain {
+    padding: 16px;
+  }
+
+  .daily-plan__impacts li {
+    gap: 8px;
+    padding: 12px;
+  }
+}
+
 @media (min-width: 64rem) {
   .daily-plan {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
