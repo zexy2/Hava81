@@ -1,17 +1,23 @@
 #!/usr/bin/env node
-import { mkdir, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import process from 'node:process';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
 const requestedPreviewPort = Number(process.env.HAVA81_LIGHTHOUSE_PORT);
 const port =
-  Number.isInteger(requestedPreviewPort) && requestedPreviewPort >= 1024 && requestedPreviewPort <= 65535
+  Number.isInteger(requestedPreviewPort) &&
+  requestedPreviewPort >= 1024 &&
+  requestedPreviewPort <= 65535
     ? requestedPreviewPort
     : DEFAULT_PREVIEW_PORT;
 const targetUrl = `http://${host}:${port}/index.html`;
+const tempPrefix = 'hava81-lighthouse-';
+const staleTempAgeMs = 6 * 60 * 60 * 1000;
 const resultDir = '.lighthouse-results';
 const resultPath = `${resultDir}/lhr.json`;
 const lighthouseCli = new URL('../node_modules/lighthouse/cli/index.js', import.meta.url).pathname;
@@ -25,6 +31,28 @@ const thresholds = [
 ];
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function cleanupStaleTempRuns(baseDir) {
+  const now = Date.now();
+  const entries = await readdir(baseDir, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter(entry => entry.isDirectory() && entry.name.startsWith(tempPrefix))
+      .map(async entry => {
+        const path = join(baseDir, entry.name);
+        try {
+          const metadata = await stat(path);
+          if (now - metadata.mtimeMs >= staleTempAgeMs) {
+            await rm(path, { recursive: true, force: true });
+          }
+        } catch (error) {
+          if (error?.code !== 'ENOENT' && error?.code !== 'EACCES' && error?.code !== 'EPERM') {
+            throw error;
+          }
+        }
+      })
+  );
+}
 
 async function assertPreviewPortIsFree() {
   const isOccupied = await new Promise(resolve => {
@@ -84,10 +112,15 @@ await assertPreviewPortIsFree();
 await rm(resultDir, { recursive: true, force: true });
 await mkdir(resultDir, { recursive: true });
 
+const tempBaseDir = tmpdir();
+await cleanupStaleTempRuns(tempBaseDir);
+const runTempDir = await mkdtemp(join(tempBaseDir, tempPrefix));
+const runEnv = { ...process.env, TMPDIR: runTempDir, TEMP: runTempDir, TMP: runTempDir };
+
 const preview = spawn(
   process.execPath,
   [viteCli, 'preview', '--host', host, '--port', String(port)],
-  { stdio: 'inherit', env: process.env }
+  { stdio: 'inherit', env: runEnv }
 );
 
 let exitCode = 0;
@@ -104,7 +137,7 @@ try {
       '--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage',
       '--quiet',
     ],
-    { env: process.env }
+    { env: runEnv }
   );
 
   const report = JSON.parse(await readFile(resultPath, 'utf8'));
@@ -118,9 +151,7 @@ try {
     }
     const percent = Math.round(score * 100);
     const minimum = Math.round(threshold.minimum * 100);
-    console.log(
-      `Lighthouse ${threshold.key}: ${percent} (minimum ${minimum}, ${threshold.level})`
-    );
+    console.log(`Lighthouse ${threshold.key}: ${percent} (minimum ${minimum}, ${threshold.level})`);
     if (score < threshold.minimum) {
       const message = `${threshold.key} score ${percent} is below ${minimum}`;
       if (threshold.level === 'error') {
@@ -133,7 +164,7 @@ try {
   }
   if (hasError) exitCode = 1;
 } catch (error) {
-  console.error(error instanceof Error ? error.stack ?? error.message : error);
+  console.error(error instanceof Error ? (error.stack ?? error.message) : error);
   exitCode = 1;
 } finally {
   preview.kill('SIGTERM');
@@ -141,6 +172,11 @@ try {
     new Promise(resolve => preview.once('exit', resolve)),
     sleep(2_000).then(() => preview.kill('SIGKILL')),
   ]);
+  await rm(runTempDir, { recursive: true, force: true }).catch(error => {
+    if (error?.code !== 'ENOENT') {
+      console.warn(`Unable to remove Lighthouse temp directory ${runTempDir}: ${error.message}`);
+    }
+  });
 }
 
 process.exitCode = exitCode;
