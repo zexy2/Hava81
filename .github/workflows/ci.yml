@@ -10,6 +10,9 @@ on:
 env:
   NODE_VERSION: '22'
 
+permissions:
+  contents: read
+
 concurrency:
   group: hava81-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
