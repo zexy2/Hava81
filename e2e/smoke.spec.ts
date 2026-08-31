@@ -1241,6 +1241,51 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
   await assertFits();
 });
 
+test('decision field keeps metrics readable at narrow 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision-field text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const field = page.locator('.hava81-decision-field');
+  const layout = await field.evaluate(element => {
+    const fits = (node: Element | null) => {
+      if (!(node instanceof HTMLElement)) return false;
+      return node.scrollWidth <= node.clientWidth + 1;
+    };
+    const reading = element.querySelector('.hava81-decision-field__reading');
+    const temperature = element.querySelector('.hava81-decision-field__temperature');
+    const rail = element.querySelector('.hava81-decision-field__rail');
+    const metrics = Array.from(element.querySelectorAll('.hava81-decision-field__metric'));
+    const labels = Array.from(element.querySelectorAll('.hava81-decision-field__metric dt'));
+    const rect = element.getBoundingClientRect();
+    return {
+      fieldFits: fits(element),
+      readingFits: fits(reading),
+      temperatureFits: fits(temperature),
+      railFits: fits(rail),
+      metricsFit: metrics.every(fits),
+      labelsFit: labels.every(fits),
+      left: rect.left,
+      right: rect.right,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.fieldFits).toBe(true);
+  expect(layout.readingFits).toBe(true);
+  expect(layout.temperatureFits).toBe(true);
+  expect(layout.railFits).toBe(true);
+  expect(layout.metricsFit).toBe(true);
+  expect(layout.labelsFit).toBe(true);
+  expect(layout.left).toBeGreaterThanOrEqual(0);
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('decision plate stays readable at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');
