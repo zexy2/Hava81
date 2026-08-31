@@ -278,6 +278,37 @@ test('forced colors keeps the selected forecast interval visibly distinct', asyn
   expect(state.selectedBorder).not.toBe(state.unselectedBorder);
 });
 
+test('forced colors keeps a pressed header action visibly distinct', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors header pressed-state regression');
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/istanbul');
+
+  const search = page.locator('.atlas-icon-button--search');
+  const favorite = page.locator('.atlas-icon-button[aria-pressed]').filter({ has: page.locator('svg') }).first();
+  await expect(search).toBeVisible();
+  await expect(favorite).toHaveAttribute('aria-pressed', 'false');
+  await favorite.click();
+  await expect(favorite).toHaveAttribute('aria-pressed', 'true');
+
+  const state = await favorite.evaluate((element, referenceSelector) => {
+    const selectedStyle = getComputedStyle(element);
+    const reference = document.querySelector(referenceSelector as string);
+    if (!reference) throw new Error('Missing unpressed header reference');
+    const referenceStyle = getComputedStyle(reference);
+    return {
+      forcedColors: matchMedia('(forced-colors: active)').matches,
+      selectedBackground: selectedStyle.backgroundColor,
+      selectedBorder: selectedStyle.borderColor,
+      referenceBackground: referenceStyle.backgroundColor,
+      referenceBorder: referenceStyle.borderColor,
+    };
+  }, '.atlas-icon-button--search');
+
+  expect(state.forcedColors).toBe(true);
+  expect(state.selectedBackground).not.toBe(state.referenceBackground);
+  expect(state.selectedBorder).not.toBe(state.referenceBorder);
+});
+
 test('keyboard map close restores focus to the map trigger', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map focus restoration regression');
   await page.goto('/istanbul');

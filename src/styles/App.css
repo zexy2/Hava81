@@ -1028,6 +1028,15 @@ kbd {
   }
 }
 
+@media (forced-colors: active) {
+  .atlas-icon-button[aria-pressed='true'],
+  .atlas-compare-button[aria-pressed='true'] {
+    color: HighlightText;
+    background: Highlight;
+    border-color: Highlight;
+  }
+}
+
 @media print {
   .atlas-header,
   .atlas-footer,
