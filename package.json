@@ -74,7 +74,7 @@
     "dev": "vite --host 0.0.0.0",
     "preview": "vite preview --host 0.0.0.0",
     "test:watch": "vitest",
-    "e2e": "playwright test",
+    "e2e": "node scripts/run-playwright.mjs",
     "lighthouse": "node scripts/run-lighthouse.mjs",
     "verify:81": "node scripts/verify-81-cities.mjs"
   },
