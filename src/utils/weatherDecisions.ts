@@ -41,7 +41,7 @@ const nextHours = (hourly: HourlyForecast[], hours: number) => {
 };
 
 const effectiveWind = (point: HourlyForecast) =>
-  Math.max(point.windSpeed ?? 0, (point.windGust ?? 0) * 0.72);
+  Math.max(point.windSpeed, (point.windGust ?? 0) * 0.72);
 
 export const getWeatherDecisions = ({
   weather,
@@ -72,7 +72,7 @@ export const getWeatherDecisions = ({
   if (maxWind >= 9) {
     const forecastDominates = strongestWind && effectiveWind(strongestWind) >= weather.windSpeed;
     const displayedWind = forecastDominates
-      ? Math.max(strongestWind.windSpeed ?? 0, strongestWind.windGust ?? 0)
+      ? Math.max(strongestWind.windSpeed, strongestWind.windGust ?? 0)
       : weather.windSpeed;
     decisions.push({
       kind: 'wind',
