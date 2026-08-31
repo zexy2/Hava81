@@ -166,7 +166,9 @@ describe('useForecast', () => {
   });
 
   it('falls back to the existing three-hour display when the hourly source is unavailable', async () => {
-    (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(new Error('hourly unavailable'));
+    (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(
+      new Error('hourly unavailable')
+    );
     const { result } = renderHook(() => useForecast('tr'));
 
     await act(async () => {
@@ -227,6 +229,84 @@ describe('useForecast', () => {
 
     expect(result.current.hourly[0]?.temp).toBe(25);
   });
+  it('keeps successful optional context through a same-city refresh when only optional sources fail', async () => {
+    const context = {
+      provider: 'Open-Meteo',
+      fetchedAt: new Date(),
+      freshForSeconds: 300,
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 5,
+      units: {},
+    };
+    (weatherService.getContextSignals as Mock).mockResolvedValueOnce(context);
+    (weatherService.getAirQuality as Mock).mockResolvedValueOnce({
+      aqi: 1,
+      aqiLabel: 'Good',
+      pm25: 5,
+      pm10: 8,
+      o3: 20,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+    });
+    const { result } = renderHook(() => useForecast('tr'));
+    const coords = { lat: 41.01, lon: 28.97 };
+
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+    expect(result.current.airQuality?.aqi).toBe(1);
+    expect(result.current.contextSignals).toMatchObject({ provider: 'Open-Meteo', uvIndexMax: 5 });
+
+    (weatherService.getAirQuality as Mock).mockRejectedValueOnce(new Error('aq unavailable'));
+    (weatherService.getContextSignals as Mock).mockRejectedValueOnce(
+      new Error('context unavailable')
+    );
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.airQuality?.aqi).toBe(1);
+    expect(result.current.contextSignals).toMatchObject({ provider: 'Open-Meteo', uvIndexMax: 5 });
+  });
+
+  it('drops stale optional context when a same-city refresh cannot replace it', async () => {
+    const staleAt = new Date(Date.now() - 10 * 60_000);
+    (weatherService.getAirQuality as Mock).mockResolvedValueOnce({
+      aqi: 2,
+      aqiLabel: 'Fair',
+      pm25: 9,
+      pm10: 12,
+      o3: 25,
+      meta: { provider: 'OpenWeather', fetchedAt: staleAt, freshForSeconds: 300 },
+    });
+    (weatherService.getContextSignals as Mock).mockResolvedValueOnce({
+      provider: 'Open-Meteo',
+      fetchedAt: staleAt,
+      attribution: 'Open-Meteo · CC BY 4.0',
+      freshForSeconds: 300,
+      units: {},
+    });
+    const { result } = renderHook(() => useForecast('tr'));
+    const coords = { lat: 41.01, lon: 28.97 };
+
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+    expect(result.current.airQuality?.aqi).toBe(2);
+    expect(result.current.contextSignals?.provider).toBe('Open-Meteo');
+
+    (weatherService.getAirQuality as Mock).mockRejectedValueOnce(new Error('aq unavailable'));
+    (weatherService.getContextSignals as Mock).mockRejectedValueOnce(
+      new Error('context unavailable')
+    );
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+
+    expect(result.current.airQuality).toBeNull();
+    expect(result.current.contextSignals).toBeNull();
+  });
+
   it('keeps the last successful forecast when a same-city refresh fails', async () => {
     const { result } = renderHook(() => useForecast('tr'));
     const coords = { lat: 41.01, lon: 28.97 };
@@ -237,7 +317,9 @@ describe('useForecast', () => {
     expect(result.current.displayHourly[0]?.temp).toBe(25);
 
     (weatherService.getForecast as Mock).mockRejectedValueOnce(new Error('provider unavailable'));
-    (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(new Error('hourly unavailable'));
+    (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(
+      new Error('hourly unavailable')
+    );
     await act(async () => {
       await result.current.fetch(coords);
     });
@@ -273,5 +355,4 @@ describe('useForecast', () => {
       await pending.catch(() => undefined);
     });
   });
-
 });

@@ -23,6 +23,24 @@ interface UseForecastReturn {
   fetch: (coords: Coordinates, cityName?: string) => Promise<void>;
 }
 
+const OPTIONAL_FRESHNESS_FALLBACK_SECONDS = 300;
+const MAX_OPTIONAL_FUTURE_SKEW_MS = 60_000;
+
+const isFreshTimestamp = (
+  fetchedAt: Date | string | undefined,
+  freshForSeconds = OPTIONAL_FRESHNESS_FALLBACK_SECONDS
+): boolean => {
+  if (!fetchedAt || !Number.isFinite(freshForSeconds) || freshForSeconds <= 0) return false;
+  const fetchedAtMs =
+    fetchedAt instanceof Date ? fetchedAt.getTime() : new Date(fetchedAt).getTime();
+  if (!Number.isFinite(fetchedAtMs)) return false;
+  const ageMs = Date.now() - fetchedAtMs;
+  return ageMs >= -MAX_OPTIONAL_FUTURE_SKEW_MS && ageMs <= freshForSeconds * 1000;
+};
+
+const isFreshOptionalMeta = (meta: AirQuality['meta']): boolean =>
+  Boolean(meta && isFreshTimestamp(meta.fetchedAt, meta.freshForSeconds));
+
 export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [daily, setDaily] = useState<DailyForecast[]>([]);
   const [hourly, setHourly] = useState<HourlyForecast[]>([]);
@@ -34,7 +52,13 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const requestIdRef = useRef(0);
-  const lastSuccessfulRequestRef = useRef<{ lat: number; lon: number; language: 'tr' | 'en' } | null>(null);
+  const airQualityRef = useRef<AirQuality | null>(null);
+  const contextSignalsRef = useRef<ContextSignals | null>(null);
+  const lastSuccessfulRequestRef = useRef<{
+    lat: number;
+    lon: number;
+    language: 'tr' | 'en';
+  } | null>(null);
 
   useEffect(
     () => () => {
@@ -59,7 +83,9 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         setDisplayHourly([]);
         setDisplayMeta(null);
         setAirQuality(null);
+        airQualityRef.current = null;
         setContextSignals(null);
+        contextSignalsRef.current = null;
         setMeta(null);
       }
 
@@ -69,10 +95,12 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           .catch(() => null);
         const airQualityRequest = weatherService
           .getAirQuality(coords.lat, coords.lon, language)
-          .catch(() => null);
+          .then(value => ({ ok: true as const, value }))
+          .catch(() => ({ ok: false as const }));
         const contextRequest = weatherService
           .getContextSignals(coords.lat, coords.lon, supportsMarineContext(cityName))
-          .catch(() => null);
+          .then(value => ({ ok: true as const, value }))
+          .catch(() => ({ ok: false as const }));
 
         let forecastData: Awaited<ReturnType<typeof weatherService.getForecast>> | null = null;
         let forecastError: unknown;
@@ -94,7 +122,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
         }
 
-        const [hourlyData, aqData, contextData] = await Promise.all([
+        const [hourlyData, aqResult, contextResult] = await Promise.all([
           hourlyRequest,
           airQualityRequest,
           contextRequest,
@@ -114,8 +142,26 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           if (hourlyData.daily?.length) setDaily(hourlyData.daily);
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
         }
-        setAirQuality(aqData);
-        setContextSignals(contextData);
+        if (aqResult.ok) {
+          setAirQuality(aqResult.value);
+          airQualityRef.current = aqResult.value;
+        } else if (isSameSuccessfulRequest && !isFreshOptionalMeta(airQualityRef.current?.meta)) {
+          setAirQuality(null);
+          airQualityRef.current = null;
+        }
+        if (contextResult.ok) {
+          setContextSignals(contextResult.value);
+          contextSignalsRef.current = contextResult.value;
+        } else if (
+          isSameSuccessfulRequest &&
+          !isFreshTimestamp(
+            contextSignalsRef.current?.fetchedAt,
+            contextSignalsRef.current?.freshForSeconds
+          )
+        ) {
+          setContextSignals(null);
+          contextSignalsRef.current = null;
+        }
       } catch (err) {
         if (requestId !== requestIdRef.current) return;
         setError(err instanceof Error ? err : new Error('Tahmin alınamadı'));
