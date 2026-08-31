@@ -1410,6 +1410,65 @@ test('mid-width forecast summary reflows at 200 percent text size', async ({ pag
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('desktop forecast days use compact rows only when the card narrows', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop forecast-card container regression');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const firstDay = page.locator('.hava81-forecast-atlas__day').first();
+  const geometry = async () =>
+    firstDay.evaluate(row => {
+      const metric = (selector: string) => {
+        const node = row.querySelector<HTMLElement>(selector);
+        if (!node) throw new Error(`Missing forecast-day node: ${selector}`);
+        const rect = node.getBoundingClientRect();
+        return {
+          clientWidth: node.clientWidth,
+          scrollWidth: node.scrollWidth,
+          top: rect.top,
+          left: rect.left,
+          right: rect.right,
+        };
+      };
+      const rect = row.getBoundingClientRect();
+      return {
+        row: {
+          clientWidth: row.clientWidth,
+          scrollWidth: row.scrollWidth,
+          height: rect.height,
+        },
+        day: metric('.hava81-forecast-atlas__day-name'),
+        description: metric('.hava81-forecast-atlas__description'),
+        temperatures: metric('.hava81-forecast-atlas__day-temperatures'),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+  const wide = await geometry();
+  expect(wide.description.left).toBeGreaterThan(wide.day.right);
+  expect(wide.temperatures.left).toBeGreaterThan(wide.description.right);
+
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const compact = await geometry();
+  expect(compact.description.top).toBeGreaterThan(compact.day.top);
+  expect(compact.description.clientWidth).toBeGreaterThan(200);
+  expect(compact.row.scrollWidth).toBeLessThanOrEqual(compact.row.clientWidth + 1);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const enlarged = await geometry();
+  expect(enlarged.description.top).toBeGreaterThan(enlarged.day.top);
+  expect(enlarged.description.clientWidth).toBeGreaterThan(200);
+  expect(enlarged.description.scrollWidth).toBeLessThanOrEqual(enlarged.description.clientWidth + 1);
+  expect(enlarged.temperatures.scrollWidth).toBeLessThanOrEqual(enlarged.temperatures.clientWidth + 1);
+  expect(enlarged.row.scrollWidth).toBeLessThanOrEqual(enlarged.row.clientWidth + 1);
+  expect(enlarged.row.height).toBeLessThan(180);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+});
+
 test('mobile daily forecast reflows instead of clipping at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile daily forecast text-resize regression');
   await page.setViewportSize({ width: 390, height: 844 });
