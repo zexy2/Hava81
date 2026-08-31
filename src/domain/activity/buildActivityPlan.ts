@@ -32,10 +32,10 @@ interface ActivityAdjustmentInput {
   temperature: number;
   pop: number;
   precipitationMm?: number;
-  wind: number;
+  wind?: number;
   gust?: number;
   aqi?: number;
-  humidity: number;
+  humidity?: number;
   uvIndex?: number;
   visibility?: number;
   sensitivity: TemperatureSensitivity;
@@ -49,8 +49,14 @@ const rainExposure = (pop: number, precipitationMm?: number) => {
   return Math.max(chance, amount);
 };
 
-const windExposure = (wind: number, gust?: number) => {
-  const effective = Math.max(wind, Number.isFinite(gust) ? (gust as number) * 0.72 : 0);
+const windExposure = (wind?: number, gust?: number) => {
+  const hasWind = Number.isFinite(wind);
+  const hasGust = Number.isFinite(gust);
+  if (!hasWind && !hasGust) return { effective: undefined, exposure: 0 };
+  const effective = Math.max(
+    hasWind ? (wind as number) : 0,
+    hasGust ? (gust as number) * 0.72 : 0
+  );
   return { effective, exposure: smoothstep(effective, 6, 18) };
 };
 
@@ -107,7 +113,7 @@ const activityAdjustment = ({
   const addWind = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * windRisk;
     penalty += penaltyValue;
-    if (penaltyValue >= 7) reasons.push(effectiveWind >= 13 ? 'strong-wind' : 'windy');
+    if (penaltyValue >= 7) reasons.push((effectiveWind ?? 0) >= 13 ? 'strong-wind' : 'windy');
   };
   const addAir = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * air;
@@ -128,7 +134,14 @@ const activityAdjustment = ({
       addWind(14);
       addAir(20);
       addUv(8);
-      if (temperature >= 10 && temperature <= 22 && rain < 0.12 && effectiveWind < 7 && air < 0.2) {
+      if (
+        temperature >= 10 &&
+        temperature <= 22 &&
+        rain < 0.12 &&
+        effectiveWind !== undefined &&
+        effectiveWind < 7 &&
+        air < 0.2
+      ) {
         benefit += 6;
       }
       break;
@@ -139,7 +152,13 @@ const activityAdjustment = ({
       addWind(8);
       addAir(10);
       addUv(5);
-      if (temperature >= 12 && temperature <= 26 && rain < 0.18 && effectiveWind < 8) benefit += 4;
+      if (
+        temperature >= 12 &&
+        temperature <= 26 &&
+        rain < 0.18 &&
+        effectiveWind !== undefined &&
+        effectiveWind < 8
+      ) benefit += 4;
       break;
     case 'picnic':
       addHeat(28, 39, 14);
@@ -148,7 +167,13 @@ const activityAdjustment = ({
       addWind(22);
       addAir(8);
       addUv(9);
-      if (temperature >= 16 && temperature <= 27 && rain < 0.08 && effectiveWind < 7) benefit += 7;
+      if (
+        temperature >= 16 &&
+        temperature <= 27 &&
+        rain < 0.08 &&
+        effectiveWind !== undefined &&
+        effectiveWind < 7
+      ) benefit += 7;
       break;
     case 'children':
       addHeat(26, 37, 24);
@@ -172,13 +197,15 @@ const activityAdjustment = ({
       break;
     case 'laundry': {
       addRain(42);
-      const humidityPenalty = 18 * smoothstep(humidity, 65, 90);
+      const humidityPenalty = Number.isFinite(humidity)
+        ? 18 * smoothstep(humidity as number, 65, 90)
+        : 0;
       penalty += humidityPenalty;
-      if (effectiveWind >= 14) {
+      if (effectiveWind !== undefined && effectiveWind >= 14) {
         const strongWindPenalty = 14 * smoothstep(effectiveWind, 14, 25);
         penalty += strongWindPenalty;
         if (strongWindPenalty >= 6) reasons.push('strong-wind');
-      } else if (effectiveWind >= 2 && effectiveWind <= 9) {
+      } else if (effectiveWind !== undefined && effectiveWind >= 2 && effectiveWind <= 9) {
         benefit += 8;
       }
       if (temperature >= 18 && temperature <= 32) benefit += 8;
@@ -286,10 +313,10 @@ export const buildActivityPlan = ({
       time: point.time,
       temperature: point.temp,
       apparentTemperature: point.apparentTemperature,
-      humidity: point.humidity ?? weather.humidity,
+      humidity: point.humidity,
       precipitationProbability: point.pop,
       precipitationMm: point.precipitationMm,
-      windSpeed: point.windSpeed ?? weather.windSpeed,
+      windSpeed: point.windSpeed,
       windGust: point.windGust,
       airQualityIndex,
       uvIndex: point.uvIndex,
@@ -301,10 +328,10 @@ export const buildActivityPlan = ({
       temperature: base.apparentTemperature,
       pop: point.pop,
       precipitationMm: point.precipitationMm,
-      wind: point.windSpeed ?? weather.windSpeed,
+      wind: point.windSpeed,
       gust: point.windGust,
       aqi: airQualityIndex,
-      humidity: point.humidity ?? weather.humidity,
+      humidity: point.humidity,
       uvIndex: point.uvIndex,
       visibility: point.visibility,
       sensitivity,

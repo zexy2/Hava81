@@ -57,6 +57,21 @@ const rich = (hour: number, temp = 24, overrides: Partial<HourlyForecast> = {}):
 });
 
 describe('Hava81 daily decision engine v2', () => {
+  it('does not project current humidity or wind into future slots when hourly fields are missing', () => {
+    const futurePoint = point(12, 24, { windSpeed: undefined, humidity: undefined });
+    const harshCurrent = buildDailyPlan({
+      weather: { ...weather, humidity: 100, windSpeed: 30 },
+      hourly: [futurePoint],
+    });
+    const calmCurrent = buildDailyPlan({
+      weather: { ...weather, humidity: 20, windSpeed: 1 },
+      hourly: [futurePoint],
+    });
+
+    expect(harshCurrent.score).toBe(calmCurrent.score);
+    expect(harshCurrent.slots[0].reasons).not.toContain('strong-wind');
+  });
+
   it('keeps comfortable dry calm windows in the excellent band', () => {
     const result = scoreWeatherWindow({
       time: new Date(),
