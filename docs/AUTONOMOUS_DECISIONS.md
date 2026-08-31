@@ -439,3 +439,6 @@ This log records product and engineering decisions made during the autonomous im
 - `/` is the critical offline navigation fallback for a versioned Hava81 service-worker cache. If fetching or caching it fails during install, the install must reject so the previous active worker and cache remain authoritative.
 - Optional shell metadata such as `/manifest.json` stays best-effort and must not block an otherwise usable upgrade.
 - This prevents transient deploy/network failures from activating an empty versioned cache and then deleting the user's previously usable offline shell during activation.
+
+## 2026-08-31 — Preserve real daily ranges that collapse under integer rounding
+When converted daily min/max values are genuinely different by at least 0.1° but round to the same integer, render both with one decimal. This avoids presenting a false flat daily temperature while keeping the normal compact integer display for ordinary ranges and a single value for effectively identical temperatures. No provider data or forecast semantics are altered.

@@ -82,6 +82,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       }),
     [locale]
   );
+  const preciseTemperatureFormatter = useMemo(
+    () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [locale]
+  );
   const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const intervalHours = meta?.intervalHours ?? 3;
@@ -128,6 +132,8 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       daily.map(day => ({
         ...day,
         timestamp: day.date.getTime(),
+        convertedMinExact: convertTemperature(day.tempMin),
+        convertedMaxExact: convertTemperature(day.tempMax),
         convertedMin: Math.round(convertTemperature(day.tempMin)),
         convertedMax: Math.round(convertTemperature(day.tempMax)),
         precipitation: normalizePrecipitationProbability(day.pop),
@@ -589,6 +595,15 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               const precipitation = Math.round(day.precipitation * 100);
               const precipitationAmount = formatPrecipitationAmount(day.precipitationMm, locale);
               const hasPrecipitation = precipitation > 0 || Boolean(precipitationAmount);
+              const roundedRangeCollapsed =
+                day.convertedMax === day.convertedMin &&
+                Math.abs(day.convertedMaxExact - day.convertedMinExact) >= 0.1;
+              const displayMax = roundedRangeCollapsed
+                ? preciseTemperatureFormatter.format(day.convertedMaxExact)
+                : String(day.convertedMax);
+              const displayMin = roundedRangeCollapsed
+                ? preciseTemperatureFormatter.format(day.convertedMinExact)
+                : String(day.convertedMin);
               return (
                 <li className="hava81-forecast-atlas__day" key={`day-${day.timestamp}`}>
                   <time
@@ -642,23 +657,23 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     className="hava81-forecast-atlas__day-temperatures"
                     role="group"
                     aria-label={
-                      day.convertedMax === day.convertedMin
+                      day.convertedMax === day.convertedMin && !roundedRangeCollapsed
                         ? t('hava81.forecastAtlas.dailySingleTemperature', {
-                            value: day.convertedMax,
+                            value: displayMax,
                             unit: temperatureSymbol,
                           })
                         : t('hava81.forecastAtlas.dailyRange', {
-                            high: day.convertedMax,
-                            low: day.convertedMin,
+                            high: displayMax,
+                            low: displayMin,
                             unit: temperatureSymbol,
                           })
                     }
                   >
-                    <strong>{day.convertedMax}°</strong>
-                    {day.convertedMax !== day.convertedMin ? (
+                    <strong>{displayMax}°</strong>
+                    {day.convertedMax !== day.convertedMin || roundedRangeCollapsed ? (
                       <>
                         <span aria-hidden="true">/</span>
-                        <span>{day.convertedMin}°</span>
+                        <span>{displayMin}°</span>
                       </>
                     ) : null}
                   </span>
