@@ -126,7 +126,10 @@ describe('SearchBar', () => {
     fireEvent.focus(input);
     await waitFor(() => expect(screen.getByRole('option', { name: 'İzmir' })).toBeInTheDocument());
     fireEvent.keyDown(input, { key: 'ArrowDown' });
-    expect(input).toHaveAttribute('aria-activedescendant', 'suggestion-0');
+    expect(input).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'İzmir' }).id
+    );
 
     rerender(<SearchBar {...defaultProps} value="I" />);
 
@@ -185,7 +188,10 @@ describe('SearchBar', () => {
       expect(screen.getByRole('listbox')).toBeInTheDocument();
 
       fireEvent.keyDown(input, { key: 'ArrowDown' });
-      expect(input).toHaveAttribute('aria-activedescendant', 'suggestion-0');
+      expect(input).toHaveAttribute(
+        'aria-activedescendant',
+        screen.getByRole('option', { name: 'İzmir' }).id
+      );
 
       fireEvent.blur(input);
       act(() => vi.advanceTimersByTime(200));
@@ -196,6 +202,29 @@ describe('SearchBar', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('keeps combobox relationships unique across multiple instances', () => {
+    render(
+      <>
+        <SearchBar {...defaultProps} value="İz" label="İlk şehir" />
+        <SearchBar {...defaultProps} value="An" label="İkinci şehir" />
+      </>
+    );
+
+    const inputs = screen.getAllByRole('combobox');
+    fireEvent.focus(inputs[0]);
+    fireEvent.focus(inputs[1]);
+
+    const inputIds = inputs.map(input => input.id);
+    expect(new Set(inputIds).size).toBe(inputIds.length);
+    expect(inputIds.every(Boolean)).toBe(true);
+
+    inputs.forEach(input => {
+      const listboxId = input.getAttribute('aria-controls');
+      expect(listboxId).toBeTruthy();
+      expect(document.getElementById(listboxId as string)).toHaveAttribute('role', 'listbox');
+    });
   });
 
   it('should expose the input through its forwarded ref', () => {
