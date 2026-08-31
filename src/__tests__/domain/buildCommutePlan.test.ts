@@ -107,6 +107,23 @@ describe('buildCommutePlan', () => {
     expect(plan?.primaryAdvice).toBe('umbrella-take');
   });
 
+  it('fails closed instead of inventing calm wind when a matched commute point has no wind data', () => {
+    const hourly = [
+      point('2026-08-29T09:00:00Z', 22, 0),
+      { ...point('2026-08-29T12:00:00Z', 22, 0), windSpeed: undefined },
+    ];
+
+    const plan = buildCommutePlan({
+      hourly,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+    });
+
+    expect(plan).toBeNull();
+  });
+
   it('returns null until both times are configured', () => {
     expect(
       buildCommutePlan({
