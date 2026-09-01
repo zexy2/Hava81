@@ -644,6 +644,21 @@ textarea:focus-visible {
   gap: var(--space-xs);
 }
 
+@media (max-width: 20rem) {
+  .atlas-message {
+    flex-wrap: wrap;
+  }
+
+  .atlas-message > div,
+  .atlas-message__actions {
+    min-width: 0;
+  }
+
+  .atlas-message__actions {
+    flex-wrap: wrap;
+  }
+}
+
 .atlas-loading,
 .atlas-dashboard__primary {
   width: 100%;
