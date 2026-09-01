@@ -184,23 +184,24 @@
 }
 
 .hava81-forecast-atlas__summary-item span {
-  overflow: hidden;
+  overflow: visible;
+  overflow-wrap: anywhere;
   color: var(--forecast-muted);
   font-size: 0.6875rem;
   font-weight: 650;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .hava81-forecast-atlas__summary-item strong {
-  overflow: hidden;
+  overflow: visible;
   color: var(--forecast-ink);
   font-size: 1rem;
   font-weight: 650;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .hava81-forecast-atlas__summary-item.is-temperature-flat {
@@ -548,17 +549,6 @@
 @media (max-width: 64rem) {
   .hava81-forecast-atlas__summary {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
-  }
-
-  .hava81-forecast-atlas__summary-item span,
-  .hava81-forecast-atlas__summary-item strong {
-    overflow: visible;
-    text-overflow: clip;
-    white-space: normal;
-  }
-
-  .hava81-forecast-atlas__summary-item span {
-    overflow-wrap: anywhere;
   }
 }
 

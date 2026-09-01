@@ -1470,6 +1470,59 @@ test('mid-width forecast summary reflows at 200 percent text size', async ({ pag
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('desktop forecast summary keeps full labels at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop forecast-summary text-resize regression');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const summary = page.locator('.hava81-forecast-atlas__summary');
+  const measure = async () =>
+    summary.evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        return html.scrollWidth <= html.clientWidth + 1;
+      };
+      const items = Array.from(element.querySelectorAll('.hava81-forecast-atlas__summary-item'));
+      const labels = Array.from(element.querySelectorAll('.hava81-forecast-atlas__summary-item span'));
+      const values = Array.from(element.querySelectorAll('.hava81-forecast-atlas__summary-item strong'));
+      return {
+        summaryFits: fits(element),
+        itemsFit: items.every(fits),
+        labelsFit: labels.every(fits),
+        valuesFit: values.every(fits),
+        copyCanWrap: [...labels, ...values].every(node => {
+          const style = getComputedStyle(node);
+          return style.whiteSpace === 'normal' && style.overflow === 'visible' && style.textOverflow === 'clip';
+        }),
+        itemTops: items.map(item => item.getBoundingClientRect().top),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+  const normal = await measure();
+  expect(normal.summaryFits).toBe(true);
+  expect(normal.itemsFit).toBe(true);
+  expect(normal.labelsFit).toBe(true);
+  expect(normal.valuesFit).toBe(true);
+  expect(normal.copyCanWrap).toBe(true);
+  expect(Math.max(...normal.itemTops) - Math.min(...normal.itemTops)).toBeLessThanOrEqual(1);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const enlarged = await measure();
+  expect(enlarged.summaryFits).toBe(true);
+  expect(enlarged.itemsFit).toBe(true);
+  expect(enlarged.labelsFit).toBe(true);
+  expect(enlarged.valuesFit).toBe(true);
+  expect(enlarged.copyCanWrap).toBe(true);
+  expect(Math.max(...enlarged.itemTops) - Math.min(...enlarged.itemTops)).toBeLessThanOrEqual(1);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+});
+
 test('desktop forecast days use compact rows only when the card narrows', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop forecast-card container regression');
   await page.setViewportSize({ width: 1280, height: 900 });
