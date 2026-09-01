@@ -100,6 +100,8 @@
 }
 
 .daily-plan__quick {
+  container-name: daily-plan-quick;
+  container-type: inline-size;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-block: 1px solid var(--color-atlas-line);
@@ -327,6 +329,8 @@
 }
 
 .daily-plan__explain {
+  container-name: daily-plan-explain;
+  container-type: inline-size;
   display: grid;
   min-width: 0;
   gap: var(--space-sm);
@@ -380,6 +384,7 @@
 
 .daily-plan__impacts li {
   display: flex;
+  min-width: 0;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-sm);
@@ -390,7 +395,9 @@
 }
 
 .daily-plan__impacts span {
+  min-width: 0;
   color: var(--color-atlas-muted);
+  overflow-wrap: anywhere;
   font-size: 0.78rem;
 }
 
@@ -406,6 +413,56 @@
   color: var(--color-atlas-muted);
   font-size: 0.75rem;
   line-height: 1.45;
+}
+
+@container daily-plan-explain (max-width: 23rem) {
+  .daily-plan__explain-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .daily-plan__explain-head > div {
+    min-width: 0;
+    flex: 1 1 8rem;
+  }
+
+  .daily-plan__explain-head small {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .daily-plan__impacts {
+    grid-template-columns: 1fr;
+  }
+
+  .daily-plan__impacts li {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .daily-plan__impacts span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@container daily-plan-quick (max-width: 20rem) {
+  .daily-plan__quick > div {
+    min-width: 0;
+    padding: var(--space-sm) var(--space-xs);
+  }
+
+  .daily-plan__quick span {
+    min-width: 0;
+    letter-spacing: 0.06em;
+    overflow-wrap: anywhere;
+  }
+
+  .daily-plan__quick strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 47.99rem) {
