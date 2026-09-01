@@ -71,6 +71,25 @@ describe('CommutePlanPanel', () => {
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
   });
 
+  it('scopes a stable preparation message to the signals the advice actually checks', () => {
+    const mildHourly: HourlyForecast[] = [
+      { time: new Date('2026-08-29T06:00:00Z'), temp: 22, pop: 0.05, windSpeed: 3, icon: '01d' },
+      { time: new Date('2026-08-29T09:00:00Z'), temp: 23, pop: 0.05, windSpeed: 3, icon: '01d' },
+    ];
+
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={mildHourly} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '09:00' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '12:00' } });
+
+    expect(screen.getByText('Yağış, sıcaklık ve rüzgâr için ek hazırlık sinyali yok')).toBeVisible();
+    expect(screen.queryByText('Ekstra hava hazırlığı gerekmiyor')).not.toBeInTheDocument();
+  });
+
   it('shows measurable rain amount instead of saying precipitation is not expected at 0%', () => {
     const measurableRain: HourlyForecast[] = [
       {

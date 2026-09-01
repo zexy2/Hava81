@@ -254,7 +254,7 @@ export const en = {
         'strong-wind': 'Wind/gusts reach {{wind}} {{windUnit}}; use extra care outdoors',
         'wind-caution': 'Wind reaches {{wind}} {{windUnit}}; factor it into your plan',
         'poor-air': 'Air quality is AQI {{aqi}}/5; reduce prolonged outdoor activity',
-        stable: 'No extra weather preparation needed',
+        stable: 'No extra preparation signal from rain, temperature or wind',
       },
       planWindow: 'Planned window: {{outbound}} → {{return}}',
       umbrella: {

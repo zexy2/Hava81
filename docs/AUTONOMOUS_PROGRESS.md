@@ -1958,3 +1958,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Activity Planner already shows an explicit three-activity limit and describes the chip group, but each newly disabled unselected chip did not directly reference that reason. Added `aria-describedby` only to disabled unselected activity buttons, pointing to the existing limit status; selected activities remain enabled for removal.
 - Regression coverage now requires both disabled example activities to reference the visible limit status. No activity score, weather evidence, threshold, provider, MGM, UV/AQI or safety semantics changed.
 - Local Node/npm is unavailable in the gateway shell; `git diff --check` is the local gate and protected exact-head CI/CodeQL remains mandatory before merge.
+
+## 2026-09-01 12:58 TRT — scope stable commute guidance to verified preparation signals
+- Continued from exact main `2732fe58c5e0492a31630e436d811399a2b79fb8` in isolated `automation/hava81-run11-1258` while main #1255 and PR #539 replacement CI ran independently.
+- The commute planner's stable fallback said no extra weather preparation was needed, but its explicit preparation list is derived from precipitation, apparent temperature and wind. That wording could overstate evidence when optional UV/air-quality/other signals are unavailable or handled elsewhere.
+- Reworded the Turkish/English stable advice to state only that rain, temperature and wind add no extra preparation signal. Added a component regression that exercises a mild/dry/still commute and rejects the old unscoped assurance. No weather values, matching, scoring, thresholds, provider, MGM, UV/AQI or safety calculations changed.
+- Local Node/npm is unavailable in the gateway shell; `git diff --check` is the local gate and exact-head protected CI/CodeQL is mandatory before merge.
