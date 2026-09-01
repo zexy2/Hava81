@@ -50,27 +50,26 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
   const forecastFreshness = getForecastFreshness(forecastMeta);
   const forecastFresh = forecastFreshness.fresh;
-  const plan = useMemo(
-    () =>
-      forecastFresh
-        ? buildCommutePlan({
-        hourly,
-        commuteStart: profile.commuteStart,
-        commuteEnd: profile.commuteEnd,
-        timezoneOffsetSeconds,
-            temperatureSensitivity: profile.temperatureSensitivity,
-          })
-        : null,
-    [
-      forecastFresh,
-      hourly,
-      profile.commuteEnd,
-      profile.commuteStart,
-      profile.temperatureSensitivity,
-      timezoneOffsetSeconds,
-      commuteClockRevision,
-    ]
-  );
+  const plan = useMemo(() => {
+    void commuteClockRevision;
+    return forecastFresh
+      ? buildCommutePlan({
+          hourly,
+          commuteStart: profile.commuteStart,
+          commuteEnd: profile.commuteEnd,
+          timezoneOffsetSeconds,
+          temperatureSensitivity: profile.temperatureSensitivity,
+        })
+      : null;
+  }, [
+    forecastFresh,
+    hourly,
+    profile.commuteEnd,
+    profile.commuteStart,
+    profile.temperatureSensitivity,
+    timezoneOffsetSeconds,
+    commuteClockRevision,
+  ]);
 
   useEffect(() => {
     const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
@@ -89,10 +88,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
   useEffect(() => {
     const delay = millisecondsUntilNextClock(profile.commuteStart, timezoneOffsetSeconds);
     if (delay === null) return undefined;
-    const timeout = window.setTimeout(
-      () => setCommuteClockRevision(value => value + 1),
-      delay
-    );
+    const timeout = window.setTimeout(() => setCommuteClockRevision(value => value + 1), delay);
     return () => window.clearTimeout(timeout);
   }, [commuteClockRevision, profile.commuteStart, timezoneOffsetSeconds]);
 
@@ -260,7 +256,9 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                     </div>
                     <div>
                       <dt>Hava81</dt>
-                      <dd>{window.score}/100 · {t(`hava81.dailyPlan.bands.${window.band}`)}</dd>
+                      <dd>
+                        {window.score}/100 · {t(`hava81.dailyPlan.bands.${window.band}`)}
+                      </dd>
                     </div>
                   </dl>
                 </article>
