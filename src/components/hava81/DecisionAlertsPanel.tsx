@@ -35,6 +35,9 @@ const removeStorage = (key: string): void => {
   }
 };
 const readEnabled = () => readStorage(SETTINGS_KEY) === 'enabled';
+const getLocationDateKey = (timezoneOffsetSeconds = 0) =>
+  new Date(Date.now() + timezoneOffsetSeconds * 1000).toISOString().slice(0, 10);
+
 const inQuietHours = (timezoneOffsetSeconds = 0) => {
   const locationNow = new Date(Date.now() + timezoneOffsetSeconds * 1000);
   const hour = locationNow.getUTCHours();
@@ -68,7 +71,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
       inQuietHours(weather.meta.timezoneOffsetSeconds)
     )
       return;
-    const day = new Date().toISOString().slice(0, 10);
+    const day = getLocationDateKey(weather.meta.timezoneOffsetSeconds);
     const key = `hava81-alert-sent:${day}:${candidate.signature}`;
     if (sessionSentKeys.current.has(key)) return;
     const sentMarker = readStorage(key);

@@ -257,6 +257,26 @@ describe('DecisionAlertsPanel', () => {
     expect(options.body).toMatch(/\d+\/100 · Zorlayıcı/);
   });
 
+  it('dedupes alerts by the weather location calendar day instead of UTC', async () => {
+    vi.setSystemTime(new Date('2026-08-29T00:30:00Z')); // 19:30 on Aug 28 at UTC-5
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    const westernWeather = {
+      ...weather,
+      meta: { ...weather.meta, timezoneOffsetSeconds: -18000 },
+    };
+    render(<DecisionAlertsPanel weather={westernWeather} hourly={rainyHourly} />);
+
+    await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
+    const sentKeys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index));
+    expect(sentKeys.some(key => key?.startsWith('hava81-alert-sent:2026-08-28:'))).toBe(true);
+    expect(sentKeys.some(key => key?.startsWith('hava81-alert-sent:2026-08-29:'))).toBe(false);
+  });
+
   it('uses the weather location timezone for quiet hours', async () => {
     vi.setSystemTime(new Date('2026-08-28T19:30:00Z')); // 22:30 in İstanbul
     localStorage.setItem('hava81-alerts-v1', 'enabled');
