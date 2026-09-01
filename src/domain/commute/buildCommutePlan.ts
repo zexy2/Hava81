@@ -221,7 +221,11 @@ export const buildCommutePlan = ({
     returnWindow.apparentTemperature
   );
   const rainIncrease = returnWindow.precipitationProbability - outbound.precipitationProbability;
-  const rainAmountIncrease = (returnWindow.precipitationMm ?? 0) - (outbound.precipitationMm ?? 0);
+  const hasComparableRainAmount =
+    Number.isFinite(outbound.precipitationMm) && Number.isFinite(returnWindow.precipitationMm);
+  const rainAmountIncrease = hasComparableRainAmount
+    ? (returnWindow.precipitationMm as number) - (outbound.precipitationMm as number)
+    : undefined;
   const temperatureDelta = returnWindow.apparentTemperature - outbound.apparentTemperature;
   const scoreDelta = returnWindow.score - outbound.score;
 
@@ -230,7 +234,7 @@ export const buildCommutePlan = ({
   if (rainIncrease >= 0.25) {
     change = 'rain-increase';
     changeValue = Math.round(rainIncrease * 100);
-  } else if (rainAmountIncrease >= 0.2) {
+  } else if (rainAmountIncrease !== undefined && rainAmountIncrease >= 0.2) {
     change = 'rain-amount-increase';
     changeValue = Math.round(rainAmountIncrease * 10) / 10;
   } else if (maxEffectiveWind >= 17.2) {
