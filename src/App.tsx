@@ -441,6 +441,7 @@ const App: React.FC = () => {
                   className="atlas-icon-button atlas-icon-button--location"
                   onClick={fetchCurrentLocation}
                   disabled={isLoading}
+                  aria-busy={isLoading}
                   aria-label={t('weather.useMyLocation')}
                   title={t('weather.useMyLocation')}
                 >

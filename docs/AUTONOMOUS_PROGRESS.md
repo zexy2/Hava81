@@ -1937,3 +1937,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Regression coverage proves a second activation cannot issue another permission request and proves rejected prompts recover without enabling alerts.
 - Local gates pass on exact post-#521 main: focused DecisionAlertsPanel 12/12; full frontend 55 files / 528 tests; TypeScript; ESLint; production build + service-worker stamp + all 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`.
 - Next action: require main #1214 to complete green and re-smoke production, then commit/push/open this bounded frontend PR from the exact current main. If main advances first, rebase with append-only docs preserved and rerun combined gates before publication.
+
+
+## 2026-09-01 12:49 TRT — expose current-location request busy state
+- Fresh observer and direct GitHub verification agreed on exact main `0201a87e48ca4ad184181964ce005a7a6295fc8d`; production remained healthy on API port 4002 while main CI/CD #1251 continued independently.
+- On isolated branch `automation/hava81-run11-1248`, audited the icon-only current-location action. It was disabled during the shared weather load but did not expose that transient state programmatically, unlike the search, route and notification request actions.
+- Added `aria-busy={isLoading}` to the current-location action and extended the existing mobile-header browser regression to require the idle `aria-busy=false` contract. No geolocation flow, weather evidence, provider, scoring, MGM, UV/AQI, or safety behavior changed.
+- Local Node/npm execution is not available in this gateway shell, so protected exact-head CI is authoritative for TypeScript, lint, unit, build, browser, Lighthouse and CodeQL. `git diff --check` is required locally before publication.
+- Next action: verify diff, current main and main #1251; commit/push/open a bounded frontend PR only if the base is still current. Require exact-head green CI/CodeQL before merge; continue an independent audit while CI runs.
