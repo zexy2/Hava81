@@ -2174,3 +2174,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a single timer scheduled to the next location-local hour boundary (plus a 100 ms boundary cushion), then reschedules hourly. A visibility-change resync corrects suspended/background tabs immediately when they return. Forecast rows, fetched timestamps, provider evidence, scores and safety guidance are unchanged.
 - Added a fake-clock regression that opens at 00:30, advances across 01:00, and requires `aria-current="time"` to move from the 00:00 forecast row to 01:00 without any data refetch.
 - Initial local gates pass: ForecastAtlas 14/14, TypeScript, ESLint, production build/service-worker stamp/all 81 city pages, and `git diff --check`. The branch was then rebased cleanly onto current main `5ece9b25d31779a3257e6d982a0a8faf9df42159`; combined gates are rerun before publication.
+
+### 2026-09-01 21:53 TRT — mark provider evidence stale at its exact TTL boundary
+- Continued independently from exact main `041e3fb9625bf977392c1dbb70e7e543bc571552` while #581 validates on its separately-owned branch.
+- Audited `WeatherDecisionField` after the minute-boundary freshness improvement and found `isStale` shared the minute-only timer. Data fetched at `xx:00:15` with a 30-second freshness contract could therefore remain visually fresh from `xx:00:45` until the `xx:01:00` label tick.
+- The freshness scheduler now wakes at whichever comes first: the next minute-label boundary or the exact `fetchedAt + freshForSeconds` boundary (+100 ms cushion). No provider call, weather value, score, MGM/UV/AQI semantics or safety guidance changes.
+- Added a fake-clock regression that starts 15 seconds before expiry, advances just beyond the TTL boundary, and requires the UI to switch to `Eski veri` before the next minute tick.
+- Local gates pass: WeatherDecisionField 14/14, TypeScript, ESLint, production build/service-worker stamp/all 81 city pages, and `git diff --check`.
