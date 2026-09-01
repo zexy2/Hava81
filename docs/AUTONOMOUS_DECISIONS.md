@@ -624,3 +624,9 @@ Treat city-vs-current-location as user intent independent of provider localizati
 - Main run #1345 pushed `gh-pages` successfully, while its public-shell gate still saw the previous root HTML for the full 55-second default retry window. Every upstream quality gate (frontend, API, build, browser, Lighthouse) was green, so the failure was propagation latency rather than a generated-artifact failure.
 - Keep exact SHA-256 equality for HTML and current boot assets. Do **not** downgrade the deploy check to HTTP-200-only or accept stale content.
 - Give only the CI deploy job 36 attempts at the existing 5-second interval (roughly a three-minute propagation window) and cap the whole deploy job at seven minutes. The standalone verifier keeps its shorter default so manual outage probes remain bounded.
+
+## 2026-09-01 — Retry Lighthouse process startup once, never score failures
+
+- Hosted GitHub runner failures have now repeated where Lighthouse exits with `Unable to connect to Chrome` before producing a report, while adjacent runs on the same code pass and Browser flows successfully launch Chromium.
+- Treat a Lighthouse process/report-generation failure as retryable exactly once inside the existing measurement runner. This retry occurs before score evaluation; accessibility/performance/best-practice/SEO floors are unchanged and a second process failure still fails the gate.
+- Keep the existing separate confirmation measurement for a produced performance score below the hard floor. Infrastructure startup retry and performance-score confirmation serve different failure modes and must not be conflated.
