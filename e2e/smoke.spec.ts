@@ -344,13 +344,35 @@ test('desktop header keeps settings reachable at 200% text size', async ({ page 
   const actions = page.locator('.atlas-header__actions');
   const settings = page.locator('.atlas-settings-button');
   const geometry = await settings.evaluate(element => {
-    const searchRect = document.querySelector('.atlas-header__search')?.getBoundingClientRect();
-    const actionsRect = document.querySelector('.atlas-header__actions')?.getBoundingClientRect();
+    const searchElement = document.querySelector<HTMLElement>('.atlas-header__search');
+    const controls = document.querySelector<HTMLElement>('.search-bar__controls');
+    const input = document.querySelector<HTMLInputElement>('.search-bar__input');
+    const submit = document.querySelector<HTMLButtonElement>('.search-bar__submit');
+    const actionsElement = document.querySelector<HTMLElement>('.atlas-header__actions');
+    if (!searchElement || !controls || !input || !submit || !actionsElement) {
+      throw new Error('Missing desktop header search control');
+    }
+    const searchRect = searchElement.getBoundingClientRect();
+    const controlsRect = controls.getBoundingClientRect();
+    const submitRect = submit.getBoundingClientRect();
+    const actionsRect = actionsElement.getBoundingClientRect();
+    const inputStyle = getComputedStyle(input);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Missing canvas context');
+    context.font = inputStyle.font;
+    const placeholderWidth = context.measureText(input.placeholder).width;
+    const inputContentWidth =
+      input.clientWidth - parseFloat(inputStyle.paddingLeft) - parseFloat(inputStyle.paddingRight);
     const rect = element.getBoundingClientRect();
     const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
     return {
-      searchRight: searchRect?.right ?? 0,
-      actionsLeft: actionsRect?.left ?? 0,
+      searchWidth: searchRect.width,
+      searchRight: searchRect.right,
+      actionsLeft: actionsRect.left,
+      placeholderFits: placeholderWidth <= inputContentWidth + 1,
+      inputFits: input.scrollWidth <= input.clientWidth + 1,
+      submitFits: submitRect.left >= controlsRect.left - 1 && submitRect.right <= controlsRect.right + 1,
       settingsReachable: hit === element || element.contains(hit),
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
@@ -359,7 +381,11 @@ test('desktop header keeps settings reachable at 200% text size', async ({ page 
 
   await expect(search).toBeVisible();
   await expect(actions).toBeVisible();
+  expect(geometry.searchWidth).toBeLessThanOrEqual(360);
   expect(geometry.searchRight).toBeLessThanOrEqual(geometry.actionsLeft);
+  expect(geometry.placeholderFits).toBe(true);
+  expect(geometry.inputFits).toBe(true);
+  expect(geometry.submitFits).toBe(true);
   expect(geometry.settingsReachable).toBe(true);
   expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
 
