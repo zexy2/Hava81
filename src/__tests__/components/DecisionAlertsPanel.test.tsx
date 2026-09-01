@@ -83,6 +83,49 @@ describe('DecisionAlertsPanel', () => {
     expect(requestPermission).not.toHaveBeenCalled();
   });
 
+  it('keeps notification permission requests single-flight while permission is pending', async () => {
+    const user = userEvent.setup();
+    let resolvePermission!: (permission: NotificationPermission) => void;
+    const permissionPromise = new Promise<NotificationPermission>(resolve => {
+      resolvePermission = resolve;
+    });
+    const requestPermission = vi.fn(() => permissionPromise);
+    vi.stubGlobal('Notification', { permission: 'default', requestPermission });
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+
+    const button = screen.getByRole('button');
+    await user.click(button);
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveTextContent(/yükleniyor/i);
+
+    await user.click(button);
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+
+    resolvePermission('denied');
+    await waitFor(() => expect(button).toHaveAttribute('aria-busy', 'false'));
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent(/engelli/i);
+  });
+
+  it('recovers cleanly if the browser rejects the permission request', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('Notification', {
+      permission: 'default',
+      requestPermission: vi.fn().mockRejectedValue(new Error('prompt failed')),
+    });
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+
+    const button = screen.getByRole('button');
+    await user.click(button);
+    await waitFor(() => expect(button).toHaveAttribute('aria-busy', 'false'));
+    expect(button).toBeEnabled();
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    expect(localStorage.getItem('hava81-alerts-v1')).toBeNull();
+  });
+
   it('lets a previously enabled user turn alerts off after browser permission becomes blocked', async () => {
     const user = userEvent.setup();
     localStorage.setItem('hava81-alerts-v1', 'enabled');

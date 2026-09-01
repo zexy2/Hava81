@@ -1929,3 +1929,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited Decision Alerts state semantics. Unsupported-browser and blocked-permission states already render an explicit localized explanation, but the disabled alert action did not reference that explanation programmatically.
 - Added one stable help id and conditionally wired it to the alert action through `aria-describedby` only while unsupported/blocked. Notification permission, opt-in/off behavior, delivery, deduplication, weather evidence, MGM provenance, scoring, and safety semantics are unchanged.
 - Added regressions for both unsupported and blocked states requiring the disabled action to reference the visible status. Gates pass: focused DecisionAlertsPanel 10/10; full frontend 55 files / 526 tests; TypeScript; ESLint; production build + service-worker stamp + all 81 city pages; production dependency audit 0 vulnerabilities.
+
+## 2026-09-01 08:58 TRT — make alert permission requests single-flight
+- Continued in isolated worktree `/home/ubuntu/hava81-auto-run11-independent-0849` after PR #521 merged as main `ace84e1e7fb75ce977e6010f07c24a724eff664f`; the pending/deployed branch was not mutated from another workstream.
+- Audit found the notification opt-in CTA stayed enabled while `Notification.requestPermission()` was unresolved, allowing rapid repeat activation to issue duplicate permission prompts with no busy feedback.
+- Added a ref-backed single-flight guard plus visible `aria-busy`/localized loading state. The CTA is disabled only while the permission request is pending. Browser promise rejection now fails closed, restores the CTA, and leaves opt-in storage untouched.
+- Regression coverage proves a second activation cannot issue another permission request and proves rejected prompts recover without enabling alerts.
+- Local gates pass on exact post-#521 main: focused DecisionAlertsPanel 12/12; full frontend 55 files / 528 tests; TypeScript; ESLint; production build + service-worker stamp + all 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`.
+- Next action: require main #1214 to complete green and re-smoke production, then commit/push/open this bounded frontend PR from the exact current main. If main advances first, rebase with append-only docs preserved and rerun combined gates before publication.

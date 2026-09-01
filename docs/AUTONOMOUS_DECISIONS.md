@@ -525,3 +525,6 @@ When route origin and destination are identical, the existing inline status expl
 
 ## 2026-09-01 — Unavailable decision-alert actions expose their existing explanation
 When browser notifications are unsupported or permission is blocked, the disabled decision-alert action already has visible explanatory copy. Associate that same copy with the action via `aria-describedby` so the reason remains part of the control's accessibility contract. Do not change notification permission, opt-in, delivery, deduplication, weather evidence, or safety behavior.
+
+## 2026-09-01 — Notification permission prompts are single-flight and visibly busy
+Treat the browser notification permission prompt as one in-flight operation. While it is pending, disable the alert opt-in action, expose `aria-busy`, and show the existing localized loading copy so rapid repeat activation cannot issue duplicate permission requests. If the browser rejects the promise, fail closed with alerts disabled and restore the action for retry. This does not alter weather evidence, alert thresholds, quiet hours, MGM provenance, delivery deduplication, or safety guidance.
