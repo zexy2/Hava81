@@ -23,7 +23,7 @@ describe('service worker notification navigation', () => {
     expect(source).toContain("fetch(request, { cache: 'no-store' })");
     expect(source).toContain("fetch('/', { cache: 'no-store' })");
     expect(source).toContain("fetch(path, { cache: 'no-store' })");
-    expect(source).toContain('Do not activate a new versioned worker without an offline navigation fallback');
+    expect(source).toContain('Do not activate a new versioned worker without a complete offline boot shell');
     expect(source).toContain('Optional metadata must not block an otherwise usable shell upgrade');
     expect(source).toContain("client.navigate(client.url)");
   });
@@ -87,11 +87,110 @@ describe('service worker notification navigation', () => {
     expect(source).not.toContain('caches.match(request)');
   });
 
+  it('pre-caches the root boot assets required for a first offline launch', async () => {
+    const source = readFileSync('public/sw.js', 'utf8');
+    const listeners = new Map<string, (event: { waitUntil: (promise: Promise<unknown>) => void }) => void>();
+    const cachePut = vi.fn().mockResolvedValue(undefined);
+    const rootHtml = `
+      <link href="/assets/index-def.css" rel="stylesheet">
+      <link rel="modulepreload" href="/assets/vendor-123.js">
+      <link rel="icon" href="/assets/icon.png">
+      <script type="module" src="/assets/index-abc.js"></script>
+      <script src="https://third-party.example/external.js"></script>
+    `;
+    const rootClone = vi.fn(() => ({ ok: true, text: vi.fn().mockResolvedValue(rootHtml) }));
+    const assetResponse = () => ({ ok: true, clone: vi.fn(() => ({ ok: true })) });
+    const manifestResponse = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, clone: rootClone })
+      .mockResolvedValueOnce(assetResponse())
+      .mockResolvedValueOnce(assetResponse())
+      .mockResolvedValueOnce(assetResponse())
+      .mockResolvedValueOnce(manifestResponse);
+    let installPromise: Promise<unknown> | undefined;
+
+    runInNewContext(source, {
+      self: {
+        location: { origin: 'https://hava81.example' },
+        clients: {},
+        skipWaiting: vi.fn(),
+        addEventListener: (name: string, listener: (event: { waitUntil: (promise: Promise<unknown>) => void }) => void) => {
+          listeners.set(name, listener);
+        },
+      },
+      caches: {
+        open: vi.fn().mockResolvedValue({ put: cachePut }),
+        keys: vi.fn().mockResolvedValue([]),
+        delete: vi.fn().mockResolvedValue(true),
+      },
+      fetch: fetchMock,
+      URL,
+      Set,
+      Error,
+    });
+
+    listeners.get('install')?.({ waitUntil: promise => { installPromise = promise; } });
+
+    await expect(installPromise).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith('/assets/index-def.css', { cache: 'no-store' });
+    expect(fetchMock).toHaveBeenCalledWith('/assets/vendor-123.js', { cache: 'no-store' });
+    expect(fetchMock).toHaveBeenCalledWith('/assets/index-abc.js', { cache: 'no-store' });
+    expect(fetchMock).not.toHaveBeenCalledWith('/assets/icon.png', expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith('https://third-party.example/external.js', expect.anything());
+    expect(cachePut).toHaveBeenCalledWith('/', expect.anything());
+    expect(cachePut).toHaveBeenCalledWith('/assets/index-def.css', expect.anything());
+    expect(cachePut).toHaveBeenCalledWith('/assets/vendor-123.js', expect.anything());
+    expect(cachePut).toHaveBeenCalledWith('/assets/index-abc.js', expect.anything());
+  });
+
+  it('rejects a new worker when a required boot asset cannot be secured', async () => {
+    const source = readFileSync('public/sw.js', 'utf8');
+    const listeners = new Map<string, (event: { waitUntil: (promise: Promise<unknown>) => void }) => void>();
+    const cachePut = vi.fn().mockResolvedValue(undefined);
+    const rootClone = vi.fn(() => ({
+      ok: true,
+      text: vi.fn().mockResolvedValue('<script type="module" src="/assets/index-missing.js"></script>'),
+    }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, clone: rootClone })
+      .mockResolvedValueOnce({ ok: false, clone: vi.fn() });
+    let installPromise: Promise<unknown> | undefined;
+
+    runInNewContext(source, {
+      self: {
+        location: { origin: 'https://hava81.example' },
+        clients: {},
+        skipWaiting: vi.fn(),
+        addEventListener: (name: string, listener: (event: { waitUntil: (promise: Promise<unknown>) => void }) => void) => {
+          listeners.set(name, listener);
+        },
+      },
+      caches: {
+        open: vi.fn().mockResolvedValue({ put: cachePut }),
+        keys: vi.fn().mockResolvedValue([]),
+        delete: vi.fn().mockResolvedValue(true),
+      },
+      fetch: fetchMock,
+      URL,
+      Set,
+      Error,
+    });
+
+    listeners.get('install')?.({ waitUntil: promise => { installPromise = promise; } });
+
+    await expect(installPromise).rejects.toThrow('Hava81 boot asset unavailable: /assets/index-missing.js');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(cachePut).toHaveBeenCalledTimes(1);
+    expect(cachePut).toHaveBeenCalledWith('/', expect.anything());
+  });
+
   it('finishes install when optional manifest caching fails after the root is secured', async () => {
     const source = readFileSync('public/sw.js', 'utf8');
     const listeners = new Map<string, (event: { waitUntil: (promise: Promise<unknown>) => void }) => void>();
     const cachePut = vi.fn().mockResolvedValue(undefined);
-    const clone = vi.fn(() => ({ ok: true }));
+    const clone = vi.fn(() => ({ ok: true, text: vi.fn().mockResolvedValue('<html></html>') }));
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, clone })
