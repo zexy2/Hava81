@@ -53,6 +53,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     notificationsSupported ? Notification.permission : 'default'
   );
   const sessionSentKeys = useRef(new Set<string>());
+  const sessionPendingKeys = useRef(new Set<string>());
   const permissionRequestInFlight = useRef(false);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
@@ -73,9 +74,10 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
       return;
     const day = getLocationDateKey(weather.meta.timezoneOffsetSeconds);
     const key = `hava81-alert-sent:${day}:${candidate.signature}`;
-    if (sessionSentKeys.current.has(key)) return;
+    if (sessionSentKeys.current.has(key) || sessionPendingKeys.current.has(key)) return;
     const sentMarker = readStorage(key);
     if (sentMarker === undefined || sentMarker) return;
+    sessionPendingKeys.current.add(key);
     const alertData = {
       ...candidate.data,
       band: t(`hava81.dailyPlan.bands.${plan.band}`),
@@ -98,6 +100,8 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         writeStorage(key, '1');
       } catch {
         // Notifications are optional; failure must never block weather data or suppress a later retry.
+      } finally {
+        sessionPendingKeys.current.delete(key);
       }
     })();
   }, [candidate, enabled, permission, plan.band, t, weather.meta.timezoneOffsetSeconds]);
