@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RouteWeatherPanel } from '../../components/hava81/RouteWeatherPanel';
 import { SettingsProvider } from '../../context';
-import '../../i18n';
+import i18n from '../../i18n';
 import type { RouteWeatherResult } from '../../types';
 
 const api = vi.hoisted(() => ({
@@ -20,9 +20,10 @@ const renderPanel = () =>
   );
 
 describe('RouteWeatherPanel', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
     api.getRouteWeather.mockReset();
+    await i18n.changeLanguage('tr');
   });
 
   it('swaps origin and destination with one action', async () => {
@@ -244,6 +245,62 @@ describe('RouteWeatherPanel', () => {
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.queryByText('41/100')).not.toBeInTheDocument();
+  });
+
+  it('invalidates a pending localized route response when the UI language changes', async () => {
+    const user = userEvent.setup();
+    let resolveRoute!: (value: RouteWeatherResult) => void;
+    api.getRouteWeather.mockImplementationOnce(
+      () =>
+        new Promise<RouteWeatherResult>(resolve => {
+          resolveRoute = resolve;
+        })
+    );
+
+    renderPanel();
+    await user.click(screen.getByText('Rota havası'));
+    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    expect(api.getRouteWeather).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.any(Date),
+      'tr'
+    );
+    expect(screen.getByRole('button', { name: 'Yükleniyor...' })).toBeDisabled();
+
+    await act(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    expect(screen.getByRole('button', { name: 'Check corridor' })).toBeEnabled();
+
+    await act(async () => {
+      resolveRoute({
+        kind: 'corridor-estimate',
+        estimatedDistanceKm: 450,
+        estimatedDurationMinutes: 300,
+        requestedDeparture: '2026-08-28T18:00:00.000Z',
+        score: 66,
+        segments: [
+          {
+            fraction: 0,
+            lat: 41.01,
+            lon: 28.97,
+            eta: '2026-08-28T18:00:00.000Z',
+            temperature: 25,
+            precipitationProbability: 0,
+            windSpeed: 4,
+            description: 'eski Türkçe açıklama',
+            score: 66,
+            risk: 'low',
+          },
+        ],
+        disclaimer: 'Old localized modeled corridor guidance.',
+      });
+    });
+
+    expect(screen.queryByText('66/100')).not.toBeInTheDocument();
+    expect(screen.queryByText('eski Türkçe açıklama')).not.toBeInTheDocument();
   });
 
   it('removes the previous result while a fresh route request is loading', async () => {
