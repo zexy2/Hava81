@@ -309,6 +309,38 @@ test('forced colors keeps a pressed header action visibly distinct', async ({ pa
   expect(state.selectedBorder).not.toBe(state.referenceBorder);
 });
 
+test('forced colors keeps the active bottom navigation visibly distinct', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors bottom-navigation regression');
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/istanbul');
+
+  const current = page.locator('.atlas-bottom-nav__button[aria-current="page"]');
+  const inactive = page.locator('.atlas-bottom-nav__button:not([aria-current])').first();
+  await expect(current).toBeVisible();
+  await expect(inactive).toBeVisible();
+  await expect(current).toHaveAttribute('aria-current', 'page');
+
+  const state = await current.evaluate((element, inactiveElement) => {
+    if (!(inactiveElement instanceof HTMLElement)) throw new Error('Missing inactive bottom navigation item');
+    const selectedStyle = getComputedStyle(element);
+    const inactiveStyle = getComputedStyle(inactiveElement);
+    return {
+      forcedColors: matchMedia('(forced-colors: active)').matches,
+      selectedDecoration: selectedStyle.textDecorationLine,
+      selectedThickness: selectedStyle.textDecorationThickness,
+      inactiveDecoration: inactiveStyle.textDecorationLine,
+      selectedHeight: element.getBoundingClientRect().height,
+      inactiveHeight: inactiveElement.getBoundingClientRect().height,
+    };
+  }, await inactive.elementHandle());
+
+  expect(state.forcedColors).toBe(true);
+  expect(state.selectedDecoration).toContain('underline');
+  expect(state.selectedThickness).toBe('2px');
+  expect(state.inactiveDecoration).not.toContain('underline');
+  expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
+});
+
 test('keyboard map close restores focus to the map trigger', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map focus restoration regression');
   await page.goto('/istanbul');
