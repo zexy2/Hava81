@@ -359,6 +359,121 @@ class ObserverApiDeploymentTests(unittest.TestCase):
 
 
 
+class ObserverGithubRunSelectionTests(unittest.TestCase):
+    def test_prefers_ci_pipeline_for_pr_and_latest_main_sha(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        requested_urls: list[str] = []
+
+        pulls = [
+            {
+                'number': 497,
+                'title': 'Observer test PR',
+                'html_url': 'https://github.com/zexy2/Hava81/pull/497',
+                'draft': False,
+                'head': {
+                    'ref': 'automation/hava81-observer-test',
+                    'sha': 'pr-sha',
+                },
+            }
+        ]
+        runs = [
+            {
+                'id': 11,
+                'run_number': 11,
+                'name': 'CodeQL',
+                'head_sha': 'main-new',
+                'head_branch': 'main',
+                'event': 'push',
+                'status': 'in_progress',
+                'conclusion': None,
+                'html_url': 'https://example.test/main-codeql',
+            },
+            {
+                'id': 12,
+                'run_number': 12,
+                'name': 'CI/CD Pipeline',
+                'head_sha': 'main-new',
+                'head_branch': 'main',
+                'event': 'push',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/main-ci',
+            },
+            {
+                'id': 13,
+                'run_number': 13,
+                'name': 'CodeQL',
+                'head_sha': 'pr-sha',
+                'head_branch': 'automation/hava81-observer-test',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/pr-codeql',
+            },
+            {
+                'id': 14,
+                'run_number': 14,
+                'name': 'CI/CD Pipeline',
+                'head_sha': 'pr-sha',
+                'head_branch': 'automation/hava81-observer-test',
+                'event': 'pull_request',
+                'status': 'in_progress',
+                'conclusion': None,
+                'html_url': 'https://example.test/pr-ci',
+            },
+            {
+                'id': 15,
+                'run_number': 15,
+                'name': 'CI/CD Pipeline',
+                'head_sha': 'main-old',
+                'head_branch': 'main',
+                'event': 'push',
+                'status': 'in_progress',
+                'conclusion': None,
+                'html_url': 'https://example.test/old-main-ci',
+            },
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if '/pulls?' in url:
+                payload = pulls
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {
+                'ok': True,
+                'status': 200,
+                'elapsed_ms': 1,
+                'headers': {'x-ratelimit-remaining': '50'},
+                'json': payload,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True,
+                'pending': False,
+                'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertIn('/actions/runs?per_page=100', requested_urls[1])
+        self.assertEqual(result['latest_main_run']['head_sha'], 'main-new')
+        self.assertEqual(result['latest_main_run']['run_id'], 12)
+        self.assertEqual(result['latest_main_run']['status'], 'completed')
+        self.assertEqual(result['open_automation_prs'][0]['ci']['run_id'], 14)
+        self.assertEqual(result['open_automation_prs'][0]['ci']['status'], 'in_progress')
+        self.assertEqual(result['signals']['ci_running_prs'], [497])
+        self.assertFalse(result['signals']['main_pipeline_pending'])
+
+
 class ObserverStateSignatureTests(unittest.TestCase):
     def test_api_lookup_latency_does_not_create_a_change_event(self) -> None:
         base_deployment = {

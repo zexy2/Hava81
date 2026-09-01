@@ -310,19 +310,35 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
 
 def collect_github() -> dict[str, Any]:
     pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
-    runs_result = http_get(f'https://api.github.com/repos/{REPO}/actions/runs?per_page=20')
+    runs_result = http_get(f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100')
     pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
 
     runs_by_sha: dict[str, dict[str, Any]] = {}
-    latest_main: dict[str, Any] | None = None
     for run in runs_data:
         sha = run.get('head_sha')
-        if sha and sha not in runs_by_sha:
+        if not sha:
+            continue
+        existing = runs_by_sha.get(sha)
+        if existing is None or (
+            run.get('name') == 'CI/CD Pipeline' and existing.get('name') != 'CI/CD Pipeline'
+        ):
             runs_by_sha[sha] = run
-        if latest_main is None and run.get('head_branch') == 'main' and run.get('event') in ('push', 'workflow_dispatch'):
-            latest_main = run
+
+    latest_main_candidates = [
+        run
+        for run in runs_data
+        if run.get('head_branch') == 'main' and run.get('event') in ('push', 'workflow_dispatch')
+    ]
+    latest_main: dict[str, Any] | None = None
+    if latest_main_candidates:
+        latest_main_sha = latest_main_candidates[0].get('head_sha')
+        same_sha = [run for run in latest_main_candidates if run.get('head_sha') == latest_main_sha]
+        latest_main = next(
+            (run for run in same_sha if run.get('name') == 'CI/CD Pipeline'),
+            same_sha[0] if same_sha else latest_main_candidates[0],
+        )
 
     automation_prs: list[dict[str, Any]] = []
     for pr in pulls_data:
