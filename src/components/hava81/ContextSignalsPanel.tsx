@@ -33,11 +33,22 @@ export function ContextSignalsPanel({ signals }: Props) {
       ? null
       : signals.fetchedAt.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
   const uv = uvLevel(signals.uvIndexMax);
-  const pollen = useMemo(
-    () => Math.max(signals.grassPollenMax ?? 0, signals.olivePollenMax ?? 0),
-    [signals.grassPollenMax, signals.olivePollenMax]
-  );
-  const hasPollen = signals.grassPollenMax !== undefined || signals.olivePollenMax !== undefined;
+  const pollen = useMemo(() => {
+    const grass = signals.grassPollenMax;
+    const olive = signals.olivePollenMax;
+    if (grass === undefined && olive === undefined) return undefined;
+    if (grass !== undefined && (olive === undefined || grass >= olive)) {
+      return { value: grass, unit: signals.units.grassPollen };
+    }
+    if (olive !== undefined) return { value: olive, unit: signals.units.olivePollen };
+    return undefined;
+  }, [
+    signals.grassPollenMax,
+    signals.olivePollenMax,
+    signals.units.grassPollen,
+    signals.units.olivePollen,
+  ]);
+  const hasPollen = pollen !== undefined;
   const hasMarine = Boolean(
     signals.marine &&
     (signals.marine.waveHeight !== undefined || signals.marine.seaSurfaceTemperature !== undefined)
@@ -98,10 +109,7 @@ export function ContextSignalsPanel({ signals }: Props) {
           <article className="context-signal">
             <span>{t('hava81.context.pollen')}</span>
             <strong>
-              {pollen.toFixed(1)}{' '}
-              <small>
-                {normalizeMicroUnit(signals.units.grassPollen ?? signals.units.olivePollen)}
-              </small>
+              {pollen?.value.toFixed(1)} <small>{normalizeMicroUnit(pollen?.unit)}</small>
             </strong>
             <p>{t('hava81.context.pollenNote')}</p>
           </article>

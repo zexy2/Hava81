@@ -507,3 +507,5 @@ At the 768px breakpoint, 200% root text can make the daily-plan heading, share a
 
 ## 2026-09-01 — Modeled context values require provider-supplied units
 A modeled dust, pollen, wave-height, wave-direction, wave-period or sea-temperature value is not presentation-safe without its matching provider unit. The browser trust boundary must reject a present value whose unit is missing or blank; the UI must not substitute assumed physical units. Missing measurements may remain absent, but a displayed measurement must preserve both the provider value and provider unit.
+## 2026-09-01 — Aggregate modeled values keep the unit from the winning source series
+When a UI aggregate chooses the maximum across multiple provider series, the displayed unit must be selected atomically from the same series as the winning value. Never choose the numeric maximum and unit through separate fallback rules, even if today's provider happens to use identical units.

@@ -127,6 +127,21 @@ describe('ContextSignalsPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps the displayed pollen maximum paired with the unit from the same source series', () => {
+    renderPanel({
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      grassPollenMax: 3.2,
+      olivePollenMax: 7.4,
+      units: { grassPollen: 'grass-unit', olivePollen: 'olive-unit' },
+    });
+
+    expect(screen.getByText('7.4')).toBeInTheDocument();
+    expect(screen.getByText('olive-unit')).toBeInTheDocument();
+    expect(screen.queryByText('grass-unit')).not.toBeInTheDocument();
+  });
+
   it('normalizes modeled micro units without requiring a Greek font glyph', () => {
     renderPanel({
           provider: 'Open-Meteo',
