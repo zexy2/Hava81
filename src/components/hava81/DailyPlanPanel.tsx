@@ -65,7 +65,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
   const { t, i18n } = useTranslation();
   const { convertTemperature, getTemperatureSymbol } = useSettings();
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'unavailable'>('idle');
+  const [sharing, setSharing] = useState(false);
   const shareFeedbackTimerRef = useRef<number | null>(null);
+  const shareInFlightRef = useRef(false);
   const trackedPlanRef = useRef<string | null>(null);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
@@ -156,6 +158,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
   };
 
   const shareDecision = async () => {
+    if (shareInFlightRef.current) return;
+    shareInFlightRef.current = true;
+    setSharing(true);
     const payload = buildDecisionShare({
       cityName: weather.cityName,
       score: plan.score,
@@ -187,6 +192,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
     } catch {
       // Sharing is optional; surface transport failure without affecting the daily plan.
       showShareFeedback('unavailable', 2400);
+    } finally {
+      shareInFlightRef.current = false;
+      setSharing(false);
     }
   };
 
@@ -198,12 +206,20 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
           <h2 id="daily-plan-title">{t('hava81.dailyPlan.title')}</h2>
         </div>
         <div className="daily-plan__header-actions">
-          <button type="button" className="daily-plan__share" onClick={() => void shareDecision()}>
-            {shareState === 'copied'
-              ? t('hava81.share.copied')
-              : shareState === 'unavailable'
-                ? t('hava81.share.unavailable')
-                : t('hava81.share.action')}
+          <button
+            type="button"
+            className="daily-plan__share"
+            onClick={() => void shareDecision()}
+            disabled={sharing}
+            aria-busy={sharing}
+          >
+            {sharing
+              ? t('common.loading')
+              : shareState === 'copied'
+                ? t('hava81.share.copied')
+                : shareState === 'unavailable'
+                  ? t('hava81.share.unavailable')
+                  : t('hava81.share.action')}
           </button>
           <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
             {shareState === 'copied'
