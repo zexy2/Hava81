@@ -115,8 +115,8 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
     const prefixMatches = matches.filter(cityName =>
       normalizeTurkish(cityName).startsWith(normalized)
     );
-    const substringMatches = matches.filter(cityName =>
-      !normalizeTurkish(cityName).startsWith(normalized)
+    const substringMatches = matches.filter(
+      cityName => !normalizeTurkish(cityName).startsWith(normalized)
     );
 
     return [...prefixMatches, ...substringMatches].slice(0, MAX_SUGGESTIONS);
@@ -215,6 +215,14 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
         case 'ArrowUp':
           event.preventDefault();
           setHighlightedIndex(prev => (prev > 0 ? prev - 1 : combinedItems.length - 1));
+          break;
+        case 'Home':
+          event.preventDefault();
+          setHighlightedIndex(0);
+          break;
+        case 'End':
+          event.preventDefault();
+          setHighlightedIndex(combinedItems.length - 1);
           break;
         case 'Enter':
           if (highlightedIndex >= 0) {
