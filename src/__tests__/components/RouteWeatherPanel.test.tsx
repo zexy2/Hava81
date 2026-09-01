@@ -217,12 +217,16 @@ describe('RouteWeatherPanel', () => {
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
-    expect(screen.getByRole('button', { name: 'Yükleniyor...' })).toBeDisabled();
+    const loadingButton = screen.getByRole('button', { name: 'Yükleniyor...' });
+    expect(loadingButton).toBeDisabled();
+    expect(loadingButton).toHaveAttribute('aria-busy', 'true');
 
     fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
       target: { value: '2026-08-29T10:00' },
     });
-    expect(screen.getByRole('button', { name: 'Koridoru kontrol et' })).toBeEnabled();
+    const readyButton = screen.getByRole('button', { name: 'Koridoru kontrol et' });
+    expect(readyButton).toBeEnabled();
+    expect(readyButton).toHaveAttribute('aria-busy', 'false');
 
     await act(async () => {
       resolveRoute({
