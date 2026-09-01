@@ -13,7 +13,7 @@ import './ForecastAtlas.css';
 export interface ForecastAtlasProps {
   daily: DailyForecast[];
   hourly: HourlyForecast[];
-  meta?: ForecastMeta | null;
+  meta: ForecastMeta;
   className?: string;
 }
 
@@ -86,9 +86,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     [locale]
   );
-  const timezoneOffsetMs = (meta?.timezoneOffsetSeconds ?? 0) * 1000;
+  const timezoneOffsetMs = meta.timezoneOffsetSeconds * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
-  const intervalHours = meta?.intervalHours ?? 3;
+  const intervalHours = meta.intervalHours;
   const realHourlyHorizon = Math.min(REAL_HOURLY_HORIZON, hourly.length);
   const hourlyHeading =
     intervalHours === 1
