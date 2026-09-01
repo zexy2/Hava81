@@ -2994,3 +2994,44 @@ test('out-and-back plan persists routine times and produces a preparation decisi
   await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue(outboundClock);
   await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue(returnClock);
 });
+
+test('compact tablet daily plan keeps score actions inside at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'compact-tablet daily-plan text-resize regression');
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const plan = page.locator('.daily-plan');
+  await plan.scrollIntoViewIfNeeded();
+  const layout = await plan.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      const rect = html.getBoundingClientRect();
+      return html.scrollWidth <= html.clientWidth + 1 && rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1;
+    };
+    const header = element.querySelector('.daily-plan__header');
+    const actions = element.querySelector('.daily-plan__header-actions');
+    const share = element.querySelector('.daily-plan__share');
+    const score = element.querySelector('.daily-plan__score');
+    if (!header || !actions || !share || !score) throw new Error('Missing daily-plan header content');
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      planFits: fits(element),
+      headerFits: fits(header),
+      actionsFits: fits(actions),
+      shareFits: fits(share),
+      scoreFits: fits(score),
+    };
+  });
+
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.planFits).toBe(true);
+  expect(layout.headerFits).toBe(true);
+  expect(layout.actionsFits).toBe(true);
+  expect(layout.shareFits).toBe(true);
+  expect(layout.scoreFits).toBe(true);
+});
