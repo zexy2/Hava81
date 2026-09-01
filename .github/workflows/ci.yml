@@ -91,6 +91,7 @@ jobs:
   browser:
     name: Browser flows
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     steps:
       - uses: actions/checkout@v6
@@ -114,6 +115,7 @@ jobs:
   lighthouse:
     name: Lighthouse budgets
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: build
     steps:
       - uses: actions/checkout@v6

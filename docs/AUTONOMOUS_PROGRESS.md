@@ -2063,3 +2063,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The exact root-HTML hash check proves the newest HTML reached GitHub Pages, but a partial edge propagation could still leave one of that HTML's current hashed JS/CSS references unavailable. Added generated-shell asset discovery and made the post-deploy smoke hash-check every current `/assets/` script/link reference against the built artifact.
 - Asset discovery is deliberately narrow: only same-origin absolute `/assets/` script/link URLs are accepted, query/hash fragments are normalized away, duplicates are removed, external/relative references are ignored, and path traversal is rejected. An HTML shell with no boot assets fails discovery instead of silently passing.
 - Local gates: 3/3 parser tests, explicit empty-shell rejection, `bash -n scripts/verify-public-shell.sh`, `git diff --check`, and a live-shell probe that found the six current production JS/CSS boot assets all pass. Protected exact-head CI/CodeQL and main post-deploy smoke remain mandatory.
+
+
+## 2026-09-01 16:33 TRT — bound external browser/Lighthouse CI stalls
+- Continued independently from exact main `81f52ca806927b844ea94abed72806ae1dbfa9d6` in isolated `automation/hava81-run11-1632-ci-timeouts` while #560/#561 validate separately.
+- The #560 rerun exposed the browser job sitting inside Playwright's external browser/dependency installation for several minutes. GitHub Actions otherwise allows jobs to run for hours by default, so an external package/browser stall can consume a large part of an autonomous release window without producing a useful result.
+- Added explicit 10-minute Browser flows and 5-minute Lighthouse job budgets. Normal observed durations are roughly 1–2 minutes and under 1 minute respectively, leaving substantial headroom while turning a true external hang into a bounded failure the next autonomous loop can diagnose or rerun with a changed strategy.
+- Static workflow contract assertions and `git diff --check` pass. No product code, weather semantics, deployment target or safety guidance changed.

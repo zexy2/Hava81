@@ -587,3 +587,7 @@ Keep `100vh` as a compatibility fallback, then override with `100dvh` for full-h
 
 ## 2026-09-01 — post-deploy static smoke verifies the exact current boot asset set
 Treat exact HTML propagation and asset propagation as separate release conditions. After the deployed root matches `dist/index.html`, enumerate its same-origin `/assets/` script/link references and require each public response to hash-match the corresponding built file. This complements short previous-generation retention: retention protects stale clients, while current-asset verification protects the newly published shell from partial edge propagation.
+
+
+## 2026-09-01 — browser/performance CI jobs have bounded wall-clock budgets
+Use a 10-minute job timeout for Playwright browser flows and 5 minutes for Lighthouse. These gates normally finish far below those limits; bounding them prevents external browser/package stalls from consuming the default multi-hour GitHub Actions allowance while preserving enough headroom for cold runners.
