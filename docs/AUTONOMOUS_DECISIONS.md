@@ -479,3 +479,6 @@ Current weather does not contain a forecast precipitation probability. When an h
 
 ## 2026-09-01 — Missing near-term forecast is unavailable, not stable
 A decision surface may report `stable` only when it has actual near-term forecast evidence to assess. If the hourly forecast is absent and no independent current/context hazard is actionable, represent near-term guidance as unavailable rather than asserting that no material risk stands out. This is an evidence/provenance rule only: it must not synthesize weather values, change hazard thresholds, or suppress valid current wind/heat/cold/AQI/UV decisions.
+
+## 2026-09-01 — Observer CI state follows the CI/CD workflow for the newest exact SHA
+GitHub can expose multiple workflow runs for one commit. Operational merge/deploy truth must not depend on whichever workflow appears first. For each PR exact head and for the newest main SHA, prefer the repository `CI/CD Pipeline` run; keep a bounded history deep enough to cover concurrent open automation PRs. CodeQL remains an independent required gate but must not stand in for deployment-pipeline state.
