@@ -608,7 +608,10 @@ const App: React.FC = () => {
 
                 {forecast.contextSignals && (
                   <Suspense fallback={null}>
-                    <ContextSignalsPanel signals={forecast.contextSignals} />
+                    <ContextSignalsPanel
+                      signals={forecast.contextSignals}
+                      timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
+                    />
                   </Suspense>
                 )}
 
