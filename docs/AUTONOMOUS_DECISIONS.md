@@ -662,3 +662,7 @@ AQI and modeled context signals (UV/pollen/dust/marine) must not remain decision
 ## 2026-09-01 — Pages exact-hash verification gets a measured ten-minute propagation window
 
 The three-minute Pages smoke window is no longer sufficient evidence of deploy failure. Main run #1378 pushed `gh-pages` successfully at 19:00:32Z, but the custom domain continued serving the prior healthy shell until the new root hash appeared at 19:07:29Z (~6m57s later); the response advertises `Cache-Control: max-age=600`. Keep exact HTML and boot-asset hashes as the release gate and retain prior asset generations, but allow up to 120 five-second attempts (~10 minutes) with a 12-minute deploy-job cap. Do not weaken this to HTTP-200-only, and keep the standalone verifier's shorter default for manual probes.
+
+## 2026-09-01 — Pending modeled alerts wake at the location-local quiet-hours boundary
+
+Quiet-hour suppression is a time-dependent delivery gate, so an enabled alert candidate that exists before 07:00 must be reconsidered when the weather location leaves quiet hours even if no weather result changes. Schedule one timeout to the location-local 07:00 boundary only while quiet, then re-enter the existing permission/dedupe/storage checks. Do not poll, refetch weather, extend evidence freshness, or bypass quiet hours.
