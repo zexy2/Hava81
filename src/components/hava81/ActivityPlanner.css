@@ -350,6 +350,13 @@
   cursor: pointer;
   font-weight: 650;
 }
+.activity-planner__window-help summary:focus-visible,
+.activity-planner__score-explanation summary:focus-visible,
+.activity-card__details summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
 .activity-planner__score-explanation p {
   margin: var(--space-xs) 0 0;
   overflow-wrap: anywhere;

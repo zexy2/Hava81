@@ -2034,3 +2034,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added deterministic coverage requiring `06:00Z` to render as `09:00` with a +03:00 weather-location offset. No context values, UV/pollen/marine thresholds, provider attribution, freshness validation, MGM semantics, scores or safety guidance change.
 - `git diff --check` passes. Local Node/npm is unavailable in this gateway shell; exact-head protected CI/CodeQL is mandatory before merge.
 - Next action: keep isolated while earlier exact-head CI/main deployment settles; rebase onto then-current main, preserve append-only docs and run combined protected gates before publication.
+
+## 2026-09-01 15:50 TRT — make Activity Planner disclosures visibly keyboard-focusable
+- Continued independently from exact main `19eb58196ee07e1b00fd0b732898769296a182c6` in isolated worktree `/home/ubuntu/hava81-auto-run11-1548-activity-summary`, branch `automation/hava81-run11-1548-activity-summary`, while #555 exact-head CI runs separately.
+- Accessibility audit found all three Activity Planner native disclosure families (`window help`, `score explanation`, and per-card score details) relied on browser-default `<summary>` focus styling. Unlike buttons/links/form controls, the app's shared explicit focus rule does not cover `summary`, leaving the visible keyboard indicator browser/theme-dependent.
+- Added a shared 2px `var(--color-focus)` `:focus-visible` outline with `-2px` inset offset and matching small radius for those summaries, avoiding layout shifts and keeping the indicator inside rounded/card boundaries.
+- Added a desktop Playwright regression that focuses each disclosure family and requires a solid >=2px inset outline. `git diff --check` passes. Local Node/npm is unavailable on the gateway host, so protected exact-head CI/CodeQL/browser gates remain mandatory before merge.
+- No activity scores, weather values, provider attribution, MGM/UV/AQI semantics or safety guidance changed.
+- Next action: rebase onto the then-current exact main after concurrent merges, preserve append-only checkpoints, lease-check/push/open bounded accessibility PR, and require exact-head protected gates before merge.
