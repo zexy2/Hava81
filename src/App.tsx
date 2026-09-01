@@ -590,6 +590,44 @@ const App: React.FC = () => {
                   </Suspense>
                 )}
 
+                <Suspense fallback={null}>
+                  <EnvironmentRail
+                    weather={weather}
+                    airQuality={forecast.airQuality ?? undefined}
+                    onOpenMap={showMap ? closeMap : openMap}
+                    mapExpanded={showMap}
+                  />
+                </Suspense>
+
+                {showMap && (
+                  <section
+                    className="atlas-map-panel"
+                    id="weather-map-region"
+                    ref={mapRegionRef}
+                    tabIndex={-1}
+                    aria-labelledby="weather-map-heading"
+                  >
+                    <div className="atlas-map-panel__header">
+                      <div>
+                        <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
+                        <h2 id="weather-map-heading">{t('common.map')}</h2>
+                      </div>
+                      <button type="button" className="atlas-text-button" onClick={closeMap}>
+                        {t('common.close')}
+                      </button>
+                    </div>
+                    <Suspense
+                      fallback={
+                        <div className="atlas-map-loading" role="status">
+                          {t('common.loading')}
+                        </div>
+                      }
+                    >
+                      <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
+                    </Suspense>
+                  </section>
+                )}
+
                 {forecast.hourly.length > 0 && (
                   <Suspense fallback={null}>
                     <CommutePlanPanel weather={weather} hourly={forecast.hourly} />
@@ -640,43 +678,6 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                <Suspense fallback={null}>
-                  <EnvironmentRail
-                    weather={weather}
-                    airQuality={forecast.airQuality ?? undefined}
-                    onOpenMap={showMap ? closeMap : openMap}
-                    mapExpanded={showMap}
-                  />
-                </Suspense>
-
-                {showMap && (
-                  <section
-                    className="atlas-map-panel"
-                    id="weather-map-region"
-                    ref={mapRegionRef}
-                    tabIndex={-1}
-                    aria-labelledby="weather-map-heading"
-                  >
-                    <div className="atlas-map-panel__header">
-                      <div>
-                        <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
-                        <h2 id="weather-map-heading">{t('common.map')}</h2>
-                      </div>
-                      <button type="button" className="atlas-text-button" onClick={closeMap}>
-                        {t('common.close')}
-                      </button>
-                    </div>
-                    <Suspense
-                      fallback={
-                        <div className="atlas-map-loading" role="status">
-                          {t('common.loading')}
-                        </div>
-                      }
-                    >
-                      <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
-                    </Suspense>
-                  </section>
-                )}
               </div>
             )}
 
