@@ -1124,6 +1124,13 @@ kbd {
     background: Highlight;
     border-color: Highlight;
   }
+
+  .search-bar__suggestion[aria-selected='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+  }
 }
 
 @media print {
