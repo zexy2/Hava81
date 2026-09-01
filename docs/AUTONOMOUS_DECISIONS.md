@@ -709,3 +709,7 @@ Activity scores and best-time windows are modeled guidance derived from the hour
 ## 2026-09-02 — Day-plan guidance shares one forecast freshness contract
 
 The day-plan score, best window, umbrella decision and share payload are modeled from the hourly forecast, so they must disappear when that forecast evidence expires rather than remain actionable in a long-lived tab. Use one shared forecast-freshness helper for modeled decision surfaces: honor provider `freshForSeconds`, fall back to the API's 30-minute forecast TTL, reject timestamps more than 60 seconds in the future, and expose the exact remaining delay for bounded expiry timers. Missing, invalid or stale metadata fails closed without refreshing timestamps, fetching implicitly or changing decision thresholds.
+
+## 2026-09-02 — Route guidance expires after its projected trip window
+
+An on-demand corridor result describes the user-selected departure and the API's modeled trip duration; it is not timeless weather guidance. Keep the result available through that projected journey, then remove its score/segments/better-departure advice at `selected departure + estimated duration` and ask the user to check again. Use the validated client departure that produced the request rather than inventing provider freshness metadata, resync on tab visibility, and never mutate the user's selected departure or synthesize a replacement route result.
