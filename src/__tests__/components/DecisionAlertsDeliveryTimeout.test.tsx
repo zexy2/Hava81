@@ -59,8 +59,7 @@ describe('DecisionAlertsPanel stalled delivery', () => {
     const { rerender } = render(
       <DecisionAlertsPanel weather={weather} hourly={rainyHourly} />
     );
-    await Promise.resolve();
-    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(0);
     expect(showNotification).toHaveBeenCalledTimes(1);
 
     await vi.advanceTimersByTimeAsync(5_001);
@@ -73,8 +72,7 @@ describe('DecisionAlertsPanel stalled delivery', () => {
         hourly={rainyHourly}
       />
     );
-    await Promise.resolve();
-    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(showNotification).toHaveBeenCalledTimes(2);
     expect(notification).not.toHaveBeenCalled();
