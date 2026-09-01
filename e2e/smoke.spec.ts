@@ -595,15 +595,37 @@ test('keyboard map close restores focus to the map trigger', async ({ page }, te
   await page.keyboard.press('Enter');
 
   const mapRegion = page.locator('#weather-map-region');
+  const bottomNav = page.locator('.atlas-bottom-nav');
   await expect(mapRegion).toBeVisible();
   await expect(mapRegion).toBeFocused();
+  await expect(bottomNav).toBeHidden();
 
-  await page.keyboard.press('Tab');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const zoomIn = mapRegion.locator('.leaflet-control-zoom-in');
+  const attribution = mapRegion.locator('.weather-map__attribution a').first();
+  await expect(zoomIn).toBeVisible();
+  await expect(attribution).toBeVisible();
+
+  for (const control of [zoomIn, attribution]) {
+    await control.focus();
+    await page.waitForTimeout(150);
+    const isHitTarget = await control.evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return hit === element || element.contains(hit);
+    });
+    expect(isHitTarget).toBe(true);
+  }
+
   const close = mapRegion.getByRole('button', { name: 'Kapat' });
-  await expect(close).toBeFocused();
+  await close.focus();
   await page.keyboard.press('Enter');
 
   await expect(mapRegion).toBeHidden();
+  await expect(bottomNav).toBeVisible();
   await expect(mapTrigger).toBeFocused();
 });
 
@@ -3087,26 +3109,32 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
   await expect(mapPanel).toBeVisible();
   await expect(page.locator('.atlas-dashboard__primary')).not.toBeVisible();
   await expect(page.locator('.daily-plan')).not.toBeVisible();
-  await expect(page.getByRole('button', { name: 'Harita' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.app')).toHaveAttribute('data-active-nav', 'map');
+  await expect(page.locator('.atlas-bottom-nav')).toBeHidden();
 
   const layout = await page.evaluate(() => {
     const map = document.querySelector<HTMLElement>('#weather-map-region');
     const nav = document.querySelector<HTMLElement>('.atlas-bottom-nav');
     if (!map || !nav) throw new Error('Missing map view or bottom navigation');
     const mapRect = map.getBoundingClientRect();
-    const navRect = nav.getBoundingClientRect();
     return {
       scrollY: window.scrollY,
       mapTop: mapRect.top,
-      mapBottom: mapRect.bottom,
-      navTop: navRect.top,
+      mapLeft: mapRect.left,
+      mapRight: mapRect.right,
+      navDisplay: getComputedStyle(nav).display,
+      viewportWidth: document.documentElement.clientWidth,
+      pageWidth: document.documentElement.scrollWidth,
       documentHeight: document.documentElement.scrollHeight,
     };
   });
 
   expect(layout.scrollY).toBeLessThan(200);
   expect(layout.mapTop).toBeGreaterThanOrEqual(0);
-  expect(layout.mapBottom).toBeLessThanOrEqual(layout.navTop + 1);
+  expect(layout.mapLeft).toBeGreaterThanOrEqual(0);
+  expect(layout.mapRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
+  expect(layout.navDisplay).toBe('none');
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
   expect(layout.documentHeight).toBeLessThan(1600);
 
   await expect(page.locator('.leaflet-control-zoom-in')).toBeVisible();
