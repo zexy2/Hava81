@@ -198,6 +198,46 @@ test('mobile location denial explains the permission failure', async ({ page }, 
   expect(errorLayout.buttonsFit).toBe(true);
 });
 
+test('mobile forecast error message reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile forecast-error text-resize regression');
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ status: 503, json: { error: 'down' } }));
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ status: 503, json: { error: 'down' } }));
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/istanbul');
+
+  const message = page.locator('.atlas-message--inline');
+  await expect(message).toBeVisible();
+  const normalHeight = await message.evaluate(element => element.getBoundingClientRect().height);
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const layout = await message.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const paragraph = element.querySelector('p');
+    const button = element.querySelector('button');
+    if (!paragraph || !button) throw new Error('Missing forecast error content');
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      cardFits: fits(element),
+      paragraphFits: fits(paragraph),
+      buttonFits: fits(button),
+      height: element.getBoundingClientRect().height,
+    };
+  });
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.cardFits).toBe(true);
+  expect(layout.paragraphFits).toBe(true);
+  expect(layout.buttonFits).toBe(true);
+  expect(layout.height).toBeGreaterThan(normalHeight);
+});
+
 test('mobile current location keeps exact weather coordinates but uses the canonical province identity', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single mobile geolocation identity regression');
   await page.unroute('**/api/v1/weather/current**');
