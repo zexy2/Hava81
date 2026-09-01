@@ -444,4 +444,43 @@ describe('DecisionAlertsPanel', () => {
 
     expect(notification).toHaveBeenCalledTimes(1);
   });
+
+  it('does not deliver a quiet-hours alert after its forecast evidence expires', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-28T03:59:30Z')); // 06:59:30 in İstanbul
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const fetchedAt = new Date();
+    const freshWeather = {
+      ...weather,
+      meta: { ...weather.meta, fetchedAt, freshForSeconds: 300 },
+    };
+    const forecastMeta = {
+      provider: 'OpenWeather',
+      fetchedAt,
+      freshForSeconds: 30,
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 3,
+    };
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(
+      <DecisionAlertsPanel
+        weather={freshWeather}
+        hourly={rainyHourly}
+        forecastMeta={forecastMeta}
+      />
+    );
+
+    await Promise.resolve();
+    expect(notification).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_101);
+    });
+
+    expect(notification).not.toHaveBeenCalled();
+  });
 });

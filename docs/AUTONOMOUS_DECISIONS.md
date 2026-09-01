@@ -678,3 +678,6 @@ A generated route departure default is convenience state, not user intent. When 
 ## 2026-09-01 — Cleanup must preflight removability and skip permission-mismatched trees
 
 A worktree can be safely classified as merged yet still contain stale root-owned generated directories from earlier privileged validation. Before removing an eligible artifact or linked checkout, verify its parent and directory tree are removable by the cleanup user. If not, report and skip it without attempting a partial deletion, continue with other independently eligible targets, and preserve all branch refs. Permission mismatch must never relax the clean/merged eligibility guard or trigger Docker/runtime cleanup.
+## 2026-09-01 — Modeled notifications require fresh current and forecast evidence at delivery time
+
+A notification candidate may outlive the evidence that produced it, especially across quiet hours. Production alert delivery must re-check both current-weather and decision-forecast metadata at the instant a quiet-hours timer is scheduled or a notification is sent. Use provider `freshForSeconds` when present, otherwise the API's current defaults (5 minutes current, 30 minutes forecast), reject timestamps more than 60 seconds in the future, and fail closed without silently refreshing timestamps or extrapolating stale values.

@@ -659,6 +659,7 @@ const App: React.FC = () => {
                       weather={weather}
                       hourly={forecast.hourly}
                       airQuality={forecast.airQuality ?? undefined}
+                      forecastMeta={forecast.displayMeta ?? forecast.meta}
                     />
                   </Suspense>
                 )}
