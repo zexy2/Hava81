@@ -3,15 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { buildAlertCandidate } from '../../domain/alerts/buildAlertCandidate';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DecisionAlertsPanel.css';
 
 interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  forecastMeta?: ForecastMeta | null;
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
+const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
+const FORECAST_FRESHNESS_FALLBACK_SECONDS = 1_800;
+const MAX_EVIDENCE_FUTURE_SKEW_MS = 60_000;
 const SERVICE_WORKER_READY_TIMEOUT_MS = 5_000;
 const NOTIFICATION_DELIVERY_TIMEOUT_MS = 5_000;
 const QUIET_HOURS_END_HOUR = 7;
@@ -53,6 +57,21 @@ const removeStorage = (key: string): void => {
   }
 };
 const readEnabled = () => readStorage(SETTINGS_KEY) === 'enabled';
+const isFreshEvidence = (
+  fetchedAt: Date | string | undefined,
+  freshForSeconds: number | undefined,
+  fallbackSeconds: number
+): boolean => {
+  if (!fetchedAt) return false;
+  const fetchedAtMs = fetchedAt instanceof Date ? fetchedAt.getTime() : new Date(fetchedAt).getTime();
+  if (!Number.isFinite(fetchedAtMs)) return false;
+  const ttlSeconds =
+    typeof freshForSeconds === 'number' && Number.isFinite(freshForSeconds) && freshForSeconds > 0
+      ? freshForSeconds
+      : fallbackSeconds;
+  const ageMs = Date.now() - fetchedAtMs;
+  return ageMs >= -MAX_EVIDENCE_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
+};
 const getLocationDateKey = (timezoneOffsetSeconds = 0) =>
   new Date(Date.now() + timezoneOffsetSeconds * 1000).toISOString().slice(0, 10);
 
@@ -80,7 +99,7 @@ const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | nul
   return Math.max(0, nextQuietEndMs - shiftedNowMs) + QUIET_HOURS_BOUNDARY_CUSHION_MS;
 };
 
-export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
+export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta }: Props) {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
   const [requestingPermission, setRequestingPermission] = useState(false);
@@ -109,20 +128,33 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     () => buildAlertCandidate(weather.cityName, plan),
     [plan, weather.cityName]
   );
+  const alertEvidenceFresh =
+    !forecastMeta ||
+    (isFreshEvidence(
+      weather.meta.fetchedAt,
+      weather.meta.freshForSeconds,
+      CURRENT_FRESHNESS_FALLBACK_SECONDS
+    ) &&
+      isFreshEvidence(
+        forecastMeta.fetchedAt,
+        forecastMeta.freshForSeconds,
+        FORECAST_FRESHNESS_FALLBACK_SECONDS
+      ));
 
   useEffect(() => {
-    if (!enabled || permission !== 'granted' || !candidate) return undefined;
+    if (!enabled || permission !== 'granted' || !candidate || !alertEvidenceFresh) return undefined;
     const delay = millisecondsUntilQuietHoursEnd(weather.meta.timezoneOffsetSeconds);
     if (delay === null) return undefined;
     const timeout = window.setTimeout(() => setQuietHoursRevision(value => value + 1), delay);
     return () => window.clearTimeout(timeout);
-  }, [candidate, enabled, permission, weather.meta.timezoneOffsetSeconds]);
+  }, [alertEvidenceFresh, candidate, enabled, permission, weather.meta.timezoneOffsetSeconds]);
 
   useEffect(() => {
     if (
       !enabled ||
       permission !== 'granted' ||
       !candidate ||
+      !alertEvidenceFresh ||
       inQuietHours(weather.meta.timezoneOffsetSeconds)
     )
       return;
@@ -168,7 +200,16 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         sessionPendingKeys.current.delete(key);
       }
     })();
-  }, [candidate, enabled, permission, plan.band, quietHoursRevision, t, weather.meta.timezoneOffsetSeconds]);
+  }, [
+    alertEvidenceFresh,
+    candidate,
+    enabled,
+    permission,
+    plan.band,
+    quietHoursRevision,
+    t,
+    weather.meta.timezoneOffsetSeconds,
+  ]);
 
   const toggle = async () => {
     if (permissionRequestInFlight.current) return;
