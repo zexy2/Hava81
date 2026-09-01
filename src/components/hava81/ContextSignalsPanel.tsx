@@ -6,6 +6,7 @@ import './ContextSignalsPanel.css';
 
 interface Props {
   signals: ContextSignals;
+  timezoneOffsetSeconds: number;
 }
 
 type Level = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
@@ -24,14 +25,18 @@ const uvLevel = (uv?: number): Level | undefined =>
             ? 'moderate'
             : 'low';
 
-export function ContextSignalsPanel({ signals }: Props) {
+export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const { t, i18n } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const fetchedAtMs = signals.fetchedAt.getTime();
   const fetchedTime =
     Number.isNaN(fetchedAtMs) || fetchedAtMs - Date.now() > FUTURE_FETCH_TOLERANCE_MS
       ? null
-      : signals.fetchedAt.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
+      : new Date(fetchedAtMs + timezoneOffsetSeconds * 1000).toLocaleTimeString(i18n.language, {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'UTC',
+        });
   const uv = uvLevel(signals.uvIndexMax);
   const pollen = useMemo(() => {
     const grass = signals.grassPollenMax;

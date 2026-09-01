@@ -5,10 +5,10 @@ import { ContextSignalsPanel } from '../../components/hava81/ContextSignalsPanel
 import { SettingsProvider } from '../../context';
 import type { ContextSignals } from '../../types';
 
-const renderPanel = (signals: ContextSignals) =>
+const renderPanel = (signals: ContextSignals, timezoneOffsetSeconds = 3 * 60 * 60) =>
   render(
     <SettingsProvider>
-      <ContextSignalsPanel signals={signals} />
+      <ContextSignalsPanel signals={signals} timezoneOffsetSeconds={timezoneOffsetSeconds} />
     </SettingsProvider>
   );
 
@@ -52,6 +52,20 @@ describe('ContextSignalsPanel', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('25.1°C')).toBeInTheDocument();
     expect(screen.getByText(/0.40 m.*4.8 s.*315°/)).toBeInTheDocument();
+  });
+
+  it('renders provider fetch time in the weather location timezone', () => {
+    renderPanel(
+      {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date('2026-08-28T06:00:00Z'),
+        attribution: 'Open-Meteo · CC BY 4.0',
+        units: {},
+      },
+      3 * 60 * 60
+    );
+
+    expect(screen.getByText(/veri alındı 09:00/i)).toBeInTheDocument();
   });
 
   it('converts sea surface temperature to the selected temperature unit', () => {

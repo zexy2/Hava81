@@ -570,3 +570,5 @@ Hava81's generated root/province HTML shell is pathname-defined; query parameter
 
 ## 2026-09-01 — Focus rings inside clipped disclosure cards must render inward
 When a keyboard-focusable disclosure such as Route Weather's `<summary>` sits on the edge of an `overflow: hidden` rounded card, do not rely on an outer user-agent outline that may be clipped. Use an explicit `:focus-visible` indicator inset within the card boundary. This is presentation/accessibility only and must not alter disclosure, route or weather semantics.
+## 2026-09-01 — Modeled-context fetch clocks use the weather-location timezone
+Provider `fetchedAt` is an absolute freshness timestamp; when Hava81 displays its clock time beside context attribution, format it using the validated current-weather location offset rather than the viewer device timezone. Apply future/staleness checks to the absolute instant before presentation. This changes only the displayed clock context and must not alter provider values, freshness thresholds, modeled guidance or safety semantics.
