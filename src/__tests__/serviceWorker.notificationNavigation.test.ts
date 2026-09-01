@@ -23,7 +23,7 @@ describe('service worker notification navigation', () => {
     expect(source).toContain("fetch(request, { cache: 'no-store' })");
     expect(source).toContain("fetch('/', { cache: 'no-store' })");
     expect(source).toContain("fetch(path, { cache: 'no-store' })");
-    expect(source).toContain('Do not activate a new versioned worker without an offline navigation fallback');
+    expect(source).toContain('Do not activate a new versioned worker without a complete offline boot shell');
     expect(source).toContain('Optional metadata must not block an otherwise usable shell upgrade');
     expect(source).toContain("client.navigate(client.url)");
   });
