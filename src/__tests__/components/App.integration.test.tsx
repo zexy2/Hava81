@@ -443,10 +443,14 @@ describe('Hava81 app integration', () => {
     await screen.findByRole('heading', { name: 'İstanbul' });
     const compare = screen.getByRole('button', { name: /karşılaştır/i });
     expect(compare).toBeInTheDocument();
+    expect(compare).not.toHaveAttribute('aria-current');
+    expect(compare).not.toHaveAttribute('aria-pressed');
     await user.click(compare);
     expect(
       await screen.findByRole('heading', { name: /şehir karşılaştırması/i })
     ).toBeInTheDocument();
+    expect(compare).toHaveAttribute('aria-current', 'page');
+    expect(compare).not.toHaveAttribute('aria-pressed');
   });
 
   it('keeps social metadata aligned with the active city and language', async () => {
