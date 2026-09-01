@@ -838,7 +838,14 @@ describe('weatherService BFF client', () => {
       uvIndexMax: 6,
       dustMax: 12,
       grassPollenMax: 3,
-      units: { dust: 'μg/m³', waveHeight: 'm', waveDirection: '°', wavePeriod: 's' },
+      units: {
+        dust: 'μg/m³',
+        grassPollen: 'grains/m³',
+        waveHeight: 'm',
+        waveDirection: '°',
+        wavePeriod: 's',
+        seaSurfaceTemperature: '°C',
+      },
       marine: {
         observedAt: '2026-08-29T17:00:00.000Z',
         waveHeight: 0.8,

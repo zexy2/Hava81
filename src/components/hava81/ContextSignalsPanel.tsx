@@ -116,14 +116,14 @@ export function ContextSignalsPanel({ signals }: Props) {
               {signals.marine?.waveHeight !== undefined
                 ? t('hava81.context.waveDetails', {
                     height: signals.marine.waveHeight.toFixed(2),
-                    unit: signals.units.waveHeight ?? 'm',
+                    unit: signals.units.waveHeight ?? '',
                     period: signals.marine.wavePeriod?.toFixed(1) ?? '—',
-                    periodUnit: signals.units.wavePeriod ?? 's',
+                    periodUnit: signals.units.wavePeriod ?? '',
                     direction:
                       signals.marine.waveDirection !== undefined
                         ? Math.round(signals.marine.waveDirection)
                         : '—',
-                    directionUnit: signals.units.waveDirection ?? '°',
+                    directionUnit: signals.units.waveDirection ?? '',
                   })
                 : t('hava81.context.waveUnavailable')}
             </p>

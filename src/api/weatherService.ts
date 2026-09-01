@@ -313,6 +313,17 @@ const validateContextSignalsPayload = (
     const value = data[field];
     invalid(value !== undefined && (!isFiniteNumber(value) || value < 0), `context.${field}`);
   }
+  for (const [valueField, unitField] of [
+    ['dustMax', 'dust'],
+    ['grassPollenMax', 'grassPollen'],
+    ['olivePollenMax', 'olivePollen'],
+  ] as const) {
+    invalid(
+      data[valueField] !== undefined &&
+        (typeof data.units[unitField] !== 'string' || !data.units[unitField]?.trim()),
+      `context.units.${unitField}`
+    );
+  }
   invalid(
     data.freshForSeconds !== undefined &&
       (!isFiniteNumber(data.freshForSeconds) ||
@@ -354,6 +365,18 @@ const validateContextSignalsPayload = (
         !isFiniteNumber(data.marine.seaSurfaceTemperature),
       'context.marine.seaSurfaceTemperature'
     );
+    for (const field of [
+      'waveHeight',
+      'waveDirection',
+      'wavePeriod',
+      'seaSurfaceTemperature',
+    ] as const) {
+      invalid(
+        data.marine[field] !== undefined &&
+          (typeof data.units[field] !== 'string' || !data.units[field]?.trim()),
+        `context.units.${field}`
+      );
+    }
   }
 
   return { ...data, fetchedAt };
