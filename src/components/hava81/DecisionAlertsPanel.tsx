@@ -13,6 +13,7 @@ interface Props {
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
 const SERVICE_WORKER_READY_TIMEOUT_MS = 5_000;
+const NOTIFICATION_DELIVERY_TIMEOUT_MS = 5_000;
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -106,11 +107,14 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
             navigator.serviceWorker.ready,
             SERVICE_WORKER_READY_TIMEOUT_MS
           );
-          await registration.showNotification(title, {
-            body,
-            tag: candidate.signature,
-            data: { url: window.location.href },
-          });
+          await withTimeout(
+            registration.showNotification(title, {
+              body,
+              tag: candidate.signature,
+              data: { url: window.location.href },
+            }),
+            NOTIFICATION_DELIVERY_TIMEOUT_MS
+          );
         } else {
           new Notification(title, { body, tag: candidate.signature });
         }
