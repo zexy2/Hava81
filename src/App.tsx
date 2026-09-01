@@ -240,10 +240,8 @@ const App: React.FC = () => {
         openSearch,
         openSettings,
         closeModal: closeSettings,
-        refreshData: () => weather && fetchWeather(weather.cityName),
-        toggleFavorite: handleToggleFavorite,
       }),
-    [closeSettings, fetchWeather, handleToggleFavorite, openSearch, openSettings, weather]
+    [closeSettings, openSearch, openSettings]
   );
 
   const { getShortcutDisplay } = useKeyboardShortcuts(shortcuts, { enabled: !isSettingsOpen });
