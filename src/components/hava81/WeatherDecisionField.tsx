@@ -138,16 +138,14 @@ export function WeatherDecisionField({
           });
         }
         return t('hava81.decision.actions.rain', {
-          defaultValue:
-            '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
+          defaultValue: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
           time,
           probability,
         });
       }
       case 'wind':
         return t('hava81.decision.actions.wind', {
-          defaultValue:
-            'Rüzgâr veya hamleler {{speed}} seviyesine çıkabilir; açık alanda dikkat.',
+          defaultValue: 'Rüzgâr veya hamleler {{speed}} seviyesine çıkabilir; açık alanda dikkat.',
           speed: `${numberFormatter.format(convertWindSpeed(decision.value))} ${windSpeedSymbol}`,
         });
       case 'heat':
@@ -189,6 +187,12 @@ export function WeatherDecisionField({
     }
   };
 
+  const fetchedAt =
+    weather.meta.fetchedAt instanceof Date
+      ? weather.meta.fetchedAt
+      : new Date(weather.meta.fetchedAt);
+  const fetchedAtMs = fetchedAt.getTime();
+  const staleAfterMs = (weather.meta.freshForSeconds ?? 300) * 1000;
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     let timerId: number | undefined;
@@ -197,7 +201,13 @@ export function WeatherDecisionField({
       const currentTime = Date.now();
       setNow(currentTime);
       const elapsedInMinute = ((currentTime % 60_000) + 60_000) % 60_000;
-      timerId = window.setTimeout(scheduleFreshnessRefresh, 60_000 - elapsedInMinute + 100);
+      const nextMinuteDelay = 60_000 - elapsedInMinute + 100;
+      const staleBoundaryDelay = fetchedAtMs + staleAfterMs - currentTime + 100;
+      const nextDelay =
+        Number.isNaN(fetchedAtMs) || staleBoundaryDelay <= 0
+          ? nextMinuteDelay
+          : Math.min(nextMinuteDelay, staleBoundaryDelay);
+      timerId = window.setTimeout(scheduleFreshnessRefresh, nextDelay);
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState !== 'visible') return;
@@ -211,19 +221,13 @@ export function WeatherDecisionField({
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, []);
-  const fetchedAt =
-    weather.meta.fetchedAt instanceof Date
-      ? weather.meta.fetchedAt
-      : new Date(weather.meta.fetchedAt);
-  const fetchedAtMs = fetchedAt.getTime();
+  }, [fetchedAtMs, staleAfterMs]);
   const ageMs = now - fetchedAtMs;
   const hasInvalidFutureTimestamp = !Number.isNaN(fetchedAtMs) && ageMs < -60_000;
   const ageMinutes =
     Number.isNaN(fetchedAtMs) || hasInvalidFutureTimestamp
       ? null
       : Math.max(0, Math.floor(ageMs / 60_000));
-  const staleAfterMs = (weather.meta.freshForSeconds ?? 300) * 1000;
   const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && ageMs > staleAfterMs;
   const freshnessText =
     ageMinutes === null

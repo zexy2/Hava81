@@ -650,3 +650,7 @@ Weather freshness text is derived from provider evidence timestamps and the curr
 ## 2026-09-01 — Hourly “now” markers advance without requiring a weather refetch
 
 The hourly forecast's `aria-current="time"` and visual “now” marker describe clock context, not provider evidence. Keep forecast data immutable between refreshes, but reschedule the marker at the next location-local hour boundary and resync it when a hidden tab becomes visible. Use one boundary timer rather than a frequent polling interval; this must not synthesize forecast rows or change weather freshness/scoring semantics.
+
+## 2026-09-01 — Provider stale-state UI flips at the evidence TTL boundary
+
+Provider `freshForSeconds` is an evidence freshness contract, not merely display copy. Schedule the decision-field clock at the earlier of the next minute label boundary or the exact fetched-at + freshness TTL boundary, with the existing small timer cushion. This updates only UI freshness state; it must not refetch, extend, interpolate, or otherwise alter weather evidence.

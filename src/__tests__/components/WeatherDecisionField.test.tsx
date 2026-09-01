@@ -146,14 +146,13 @@ describe('WeatherDecisionField daily range', () => {
 
     render(
       <SettingsProvider>
-        <WeatherDecisionField
-          weather={{ ...weather, feelsLike: 35, windSpeed: 10 }}
-          hourly={[]}
-        />
+        <WeatherDecisionField weather={{ ...weather, feelsLike: 35, windSpeed: 10 }} hourly={[]} />
       </SettingsProvider>
     );
 
-    expect(screen.getByText(/Rüzgâr veya hamleler 36 km\/h seviyesine çıkabilir/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Rüzgâr veya hamleler 36 km\/h seviyesine çıkabilir/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Hissedilen sıcaklık 95°F seviyesine çıkabilir/i)).toBeInTheDocument();
     expect(screen.queryByText(/10(?:[,.]0)? m\/s seviyesine çıkabilir/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/35°C seviyesine çıkabilir/i)).not.toBeInTheDocument();
@@ -200,7 +199,9 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText(/saatlik yaklaşık 0,8 mm yağış bekleniyor; şemsiye iyi fikir/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/saatlik yaklaşık 0,8 mm yağış bekleniyor; şemsiye iyi fikir/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText(/yağış olasılığı %0/i)).not.toBeInTheDocument();
   });
 
@@ -234,8 +235,12 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')).toBeInTheDocument();
-    expect(screen.queryByText('Yakın tahmin aralığında belirgin bir risk görünmüyor.')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Yakın tahmin aralığında belirgin bir risk görünmüyor.')
+    ).not.toBeInTheDocument();
   });
 
   it('does not expose the whole decision surface as a live region', () => {
@@ -274,6 +279,33 @@ describe('WeatherDecisionField daily range', () => {
     });
 
     expect(screen.getByText('1 dk önce')).toBeInTheDocument();
+  });
+
+  it('marks provider evidence stale at its exact freshness boundary instead of the next minute tick', async () => {
+    vi.setSystemTime(new Date('2026-08-29T13:00:30Z'));
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{
+            ...weather,
+            meta: {
+              ...weather.meta,
+              fetchedAt: new Date('2026-08-29T13:00:15Z'),
+              freshForSeconds: 30,
+            },
+          }}
+          hourly={[]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.queryByText('Eski veri')).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_200);
+    });
+
+    expect(screen.getByText('Eski veri')).toBeInTheDocument();
   });
 
   it('does not present a far-future fetchedAt timestamp as freshly updated', () => {
