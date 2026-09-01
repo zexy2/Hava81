@@ -693,3 +693,7 @@ Caching only the root HTML is not enough for a first offline launch: a newly ins
 ## 2026-09-02 — Modeled decision alerts require explicit forecast freshness metadata
 
 An alert candidate is derived from hourly forecast evidence, so absence of `ForecastMeta` cannot be treated as fresh. The production alert surface must receive an explicit forecast metadata value and fail closed when it is unavailable/null. Delivery and quiet-hours wake scheduling require both current-weather and forecast timestamps to pass their freshness contracts. Do not infer freshness from the presence of hourly values or silently substitute a new timestamp.
+
+## 2026-09-02 — Equal comparison scores must be presented as a tie, not an arbitrary winner
+
+City comparison is a decision surface, so favorite ordering must not break a genuine score tie. When multiple successfully loaded cities share the highest Hava81 daily-plan score, present them explicitly as tied leaders and highlight each tied city. Keep a single winner only when exactly one row has the top score. This changes no score formula, weather evidence, provider data, activity model, or safety semantics.

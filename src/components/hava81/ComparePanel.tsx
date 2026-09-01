@@ -118,14 +118,13 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     };
   }, [language, primaryActivity, profile.activityEnd, profile.activityStart, profile.temperatureSensitivity, selected]);
 
-  const winner = useMemo(
-    () =>
-      rows.reduce<CompareRow | undefined>(
-        (best, row) => (!best || row.plan.score > best.plan.score ? row : best),
-        undefined
-      ),
-    [rows]
-  );
+  const leaders = useMemo(() => {
+    if (rows.length === 0) return [];
+    const topScore = Math.max(...rows.map(row => row.plan.score));
+    return rows.filter(row => row.plan.score === topScore);
+  }, [rows]);
+  const winner = leaders.length === 1 ? leaders[0] : undefined;
+  const isLeader = (row: CompareRow) => leaders.includes(row);
   const offsetTime = (row: CompareRow, date?: Date) => {
     if (!date) return '—';
     const offset = row.weather.meta.timezoneOffsetSeconds * 1000;
@@ -145,16 +144,30 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
             {t('hava81.compare.title')}
           </h2>
         </div>
-        {winner && rows.length >= 2 ? (
+        {rows.length >= 2 && leaders.length > 0 ? (
           <div className="hava81-compare__winner" role="status">
-            <span>{t('hava81.compare.winnerLabel')}</span>
-            <strong>
-              {t('hava81.compare.winner', {
-                city: winner.weather.cityName,
-                score: winner.plan.score,
-                band: t(`hava81.dailyPlan.bands.${winner.plan.band}`),
-              })}
-            </strong>
+            {winner ? (
+              <>
+                <span>{t('hava81.compare.winnerLabel')}</span>
+                <strong>
+                  {t('hava81.compare.winner', {
+                    city: winner.weather.cityName,
+                    score: winner.plan.score,
+                    band: t(`hava81.dailyPlan.bands.${winner.plan.band}`),
+                  })}
+                </strong>
+              </>
+            ) : (
+              <>
+                <span>{t('hava81.compare.tieLabel')}</span>
+                <strong>
+                  {t('hava81.compare.tie', {
+                    cities: leaders.map(row => row.weather.cityName).join(', '),
+                    score: leaders[0]?.plan.score,
+                  })}
+                </strong>
+              </>
+            )}
             <small>{t('hava81.compare.winnerNote')}</small>
           </div>
         ) : null}
@@ -189,7 +202,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
             const peakPrecipitationMm = precipitationPeak?.precipitationMm ?? 0;
             return (
               <article
-                className={`hava81-compare__city${winner?.weather.cityName === row.weather.cityName ? ' is-winner' : ''}`}
+                className={`hava81-compare__city${isLeader(row) ? ' is-winner' : ''}`}
                 role="listitem"
                 key={row.weather.cityName}
               >
