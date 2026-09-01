@@ -467,7 +467,7 @@ const App: React.FC = () => {
                     type="button"
                     className="atlas-compare-button"
                     onClick={() => handleBottomNav('saved')}
-                    aria-pressed={activeNav === 'saved'}
+                    aria-current={activeNav === 'saved' ? 'page' : undefined}
                   >
                     {t('hava81.compare.action')}
                     <span aria-hidden="true">{favorites.length}</span>

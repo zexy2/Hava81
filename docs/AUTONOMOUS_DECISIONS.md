@@ -555,3 +555,6 @@ When saved-city comparison data is being replaced, the labeled comparison region
 
 ## 2026-09-01 — Route result replacement exposes a busy content state
 When a route-weather request is in flight, mark the route content body `aria-busy=true` as well as the submit button. Clear it when the request is invalidated or settles. This communicates that the result area itself is being replaced, without changing route timing, weather modeling, provider calls or error semantics.
+
+## 2026-09-01 13:50 TRT — comparison navigation semantics
+- Treat the desktop header comparison action as navigation, not a pressed toggle: expose `aria-current="page"` only while the saved-city comparison view is active. Keep toggle semantics (`aria-pressed`) for controls that actually switch a persistent binary state.
