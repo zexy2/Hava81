@@ -538,3 +538,6 @@ Treat the browser notification permission prompt as one in-flight operation. Whi
 
 ## 2026-09-01 — Daily-plan sharing is single-flight and visibly busy
 Treat a native-share/clipboard delivery as one in-flight user action. While the share transport is unresolved, keep an in-memory guard, disable the share action, expose `aria-busy`, and show localized loading feedback. Always release the guard in `finally`, including AbortError/failure paths, so cancellation or failure remains retryable. This changes only share transport state; weather evidence, scoring, providers, MGM, UV/AQI and safety guidance are unchanged.
+
+## 2026-09-01 — Disabled activity choices expose the selection-limit reason directly
+When three activities are selected, each additional disabled activity choice must reference the existing visible limit explanation with `aria-describedby`, rather than relying only on the surrounding group relationship. Selected choices stay enabled so users can remove one. This changes only accessibility semantics; activity scoring, weather evidence, thresholds, providers, MGM, UV/AQI and safety guidance remain unchanged.

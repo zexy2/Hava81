@@ -149,9 +149,18 @@ describe('ActivityPlanner time range', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Piknik' }));
 
-    expect(screen.getByText(/Üç aktivite seçtin/i)).toBeVisible();
+    const limitStatus = screen.getByText(/Üç aktivite seçtin/i);
+    expect(limitStatus).toBeVisible();
     expect(screen.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Motosiklet' })).toHaveAttribute(
+      'aria-describedby',
+      limitStatus.id
+    );
     expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Çamaşır' })).toHaveAttribute(
+      'aria-describedby',
+      limitStatus.id
+    );
     expect(screen.getByRole('button', { name: 'Yürüyüş' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Koşu' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Piknik' })).toBeEnabled();
