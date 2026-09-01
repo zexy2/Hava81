@@ -38,8 +38,19 @@ const isFreshTimestamp = (
   return ageMs >= -MAX_OPTIONAL_FUTURE_SKEW_MS && ageMs <= freshForSeconds * 1000;
 };
 
-const isFreshOptionalMeta = (meta: AirQuality['meta']): boolean =>
-  isFreshTimestamp(meta.fetchedAt, meta.freshForSeconds);
+const isFreshOptionalMeta = (meta: AirQuality['meta'] | undefined): boolean =>
+  Boolean(meta && isFreshTimestamp(meta.fetchedAt, meta.freshForSeconds));
+
+const freshnessDeadline = (
+  fetchedAt: Date | string | undefined,
+  freshForSeconds = OPTIONAL_FRESHNESS_FALLBACK_SECONDS
+): number | null => {
+  if (!fetchedAt || !Number.isFinite(freshForSeconds) || freshForSeconds <= 0) return null;
+  const fetchedAtMs =
+    fetchedAt instanceof Date ? fetchedAt.getTime() : new Date(fetchedAt).getTime();
+  if (!Number.isFinite(fetchedAtMs)) return null;
+  return fetchedAtMs + freshForSeconds * 1000;
+};
 
 export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [daily, setDaily] = useState<DailyForecast[]>([]);
@@ -66,6 +77,64 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
     },
     []
   );
+
+  useEffect(() => {
+    if (!airQuality && !contextSignals) return undefined;
+
+    const now = Date.now();
+    const deadlines: number[] = [];
+    let droppedInvalidEvidence = false;
+
+    if (airQuality) {
+      const deadline = freshnessDeadline(
+        airQuality.meta?.fetchedAt,
+        airQuality.meta?.freshForSeconds
+      );
+      if (!isFreshOptionalMeta(airQuality.meta) || deadline === null) {
+        setAirQuality(null);
+        if (airQualityRef.current === airQuality) airQualityRef.current = null;
+        droppedInvalidEvidence = true;
+      } else {
+        deadlines.push(deadline);
+      }
+    }
+
+    if (contextSignals) {
+      const deadline = freshnessDeadline(
+        contextSignals.fetchedAt,
+        contextSignals.freshForSeconds
+      );
+      if (
+        !isFreshTimestamp(contextSignals.fetchedAt, contextSignals.freshForSeconds) ||
+        deadline === null
+      ) {
+        setContextSignals(null);
+        if (contextSignalsRef.current === contextSignals) contextSignalsRef.current = null;
+        droppedInvalidEvidence = true;
+      } else {
+        deadlines.push(deadline);
+      }
+    }
+
+    if (droppedInvalidEvidence || deadlines.length === 0) return undefined;
+
+    const nextDeadline = Math.min(...deadlines);
+    const timerId = window.setTimeout(() => {
+      if (airQuality && !isFreshOptionalMeta(airQuality.meta)) {
+        setAirQuality(current => (current === airQuality ? null : current));
+        if (airQualityRef.current === airQuality) airQualityRef.current = null;
+      }
+      if (
+        contextSignals &&
+        !isFreshTimestamp(contextSignals.fetchedAt, contextSignals.freshForSeconds)
+      ) {
+        setContextSignals(current => (current === contextSignals ? null : current));
+        if (contextSignalsRef.current === contextSignals) contextSignalsRef.current = null;
+      }
+    }, Math.max(0, nextDeadline - now + 100));
+
+    return () => window.clearTimeout(timerId);
+  }, [airQuality, contextSignals]);
 
   const fetch = useCallback(
     async (coords: Coordinates, cityName?: string) => {
