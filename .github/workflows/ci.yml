@@ -165,7 +165,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 12
     needs: [build, browser, lighthouse]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     permissions:
@@ -185,8 +185,8 @@ jobs:
       - name: Verify public static shell
         env:
           HAVA81_PUBLIC_URL: https://hava81.zekiakgul.dev
-          # GitHub Pages custom-domain propagation can exceed the script's 55s default
-          # even after the gh-pages push succeeds. Give CI a bounded ~3 minute window
-          # while still requiring exact deployed hashes before declaring success.
-          HAVA81_SMOKE_ATTEMPTS: 36
+          # GitHub Pages custom-domain propagation can remain on the prior cached shell
+          # for several minutes after gh-pages is updated. Keep exact-hash verification,
+          # but allow a bounded ~10 minute edge-propagation window before failing deploy.
+          HAVA81_SMOKE_ATTEMPTS: 120
         run: bash scripts/verify-public-shell.sh
