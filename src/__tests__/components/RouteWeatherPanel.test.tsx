@@ -347,7 +347,6 @@ describe('RouteWeatherPanel', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-01T09:00:00.000Z'));
     try {
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       api.getRouteWeather.mockResolvedValueOnce({
         kind: 'corridor-estimate',
         estimatedDistanceKm: 90,
@@ -359,9 +358,12 @@ describe('RouteWeatherPanel', () => {
       });
 
       renderPanel();
-      await user.click(screen.getByText('Rota havası'));
-      await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
-      expect(await screen.findByRole('status')).toHaveTextContent('78/100');
+      fireEvent.click(screen.getByText('Rota havası'));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('78/100');
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2 * 60 * 60_000 + 101);
