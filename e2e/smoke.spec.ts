@@ -1521,6 +1521,32 @@ test('activity disclosure summaries keep a visible keyboard focus indicator', as
   }
 });
 
+test('mobile shell tracks dynamic viewport height changes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile dynamic-viewport regression');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/istanbul');
+
+  const measure = async () =>
+    page.evaluate(() => ({
+      viewportHeight: window.innerHeight,
+      bodyMinHeight: Number.parseFloat(getComputedStyle(document.body).minHeight),
+      rootMinHeight: Number.parseFloat(getComputedStyle(document.getElementById('root')!).minHeight),
+      appMinHeight: Number.parseFloat(getComputedStyle(document.querySelector('.app')!).minHeight),
+    }));
+
+  const tall = await measure();
+  expect(tall.bodyMinHeight).toBeCloseTo(tall.viewportHeight, 0);
+  expect(tall.rootMinHeight).toBeCloseTo(tall.viewportHeight, 0);
+  expect(tall.appMinHeight).toBeCloseTo(tall.viewportHeight, 0);
+
+  await page.setViewportSize({ width: 390, height: 600 });
+  const short = await measure();
+  expect(short.viewportHeight).toBe(600);
+  expect(short.bodyMinHeight).toBeCloseTo(short.viewportHeight, 0);
+  expect(short.rootMinHeight).toBeCloseTo(short.viewportHeight, 0);
+  expect(short.appMinHeight).toBeCloseTo(short.viewportHeight, 0);
+});
+
 test('skip link moves keyboard focus into the main weather content', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop keyboard regression');
   await page.goto('/istanbul');
