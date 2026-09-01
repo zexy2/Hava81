@@ -153,6 +153,9 @@ export function useAsync<T, Args extends unknown[] = []>(
   }, []);
 
   const setData = useCallback((data: T | null) => {
+    // Injected data is an explicit newer state boundary. An older in-flight request
+    // may still resolve, but it must not overwrite this caller-selected value.
+    lastCallIdRef.current += 1;
     setState(prev => ({
       ...prev,
       data,
