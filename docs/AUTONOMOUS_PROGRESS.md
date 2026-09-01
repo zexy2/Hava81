@@ -2134,3 +2134,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Production remained healthy during diagnosis: root and Istanbul 200; exact readiness endpoint `/api/v1/health/ready` 200 with fresh timestamp, correct CORS, OpenWeather circuit closed; nginx remains on port 4002.
 - Prepared branch `automation/hava81-run11-responsive-audit-2017` from exact main to extend only CI's Pages propagation retry budget to ~3 minutes while preserving exact-hash verification, with a seven-minute deploy-job cap. Next: validate YAML/diff, commit/push/PR, then continue production observation and merge only after exact-head green gates.
 - Host disk pressure was reduced safely from 95% / ~2.7 GiB free to about 89% / ~5 GiB free by removing only reproducible Hava81 Playwright/node_modules caches; production/rollback Docker assets and source worktrees were not pruned.
+
+### 2026-09-01 17:28Z — Lighthouse hosted-runner startup resilience prepared
+
+- PR #574 exact head `05764c44175d56bc7a06b4d35bf6b321a8f9958a` passed CodeQL, API, frontend quality, production build and Browser flows. Its first Lighthouse job failed before measurement with `Unable to connect to Chrome`; a targeted rerun was started without weakening thresholds.
+- Separate branch `automation/hava81-lighthouse-connect-run11-2028` from main `aa2402510c6391b7a36d5361abf63d5692d417c9` adds one retry only when the Lighthouse process/report generation throws. Produced score floors remain exact and unchanged; a second startup/process failure still fails.
+- Local source gates: `node --check scripts/run-lighthouse.mjs` and `git diff --check` pass. Full Lighthouse execution is intentionally left to isolated CI rather than installing another ~400 MiB dependency tree while host disk remains under pressure.
+- Next: finish #574 targeted rerun and merge if exact-head gates are green; rebase this Lighthouse branch onto resulting main preserving append-only checkpoints; run combined gates/CI; then merge and verify the next main deploy end-to-end.

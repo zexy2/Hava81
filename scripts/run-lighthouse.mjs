@@ -134,6 +134,27 @@ async function runLighthouse(outputPath, env) {
   return JSON.parse(await readFile(outputPath, 'utf8'));
 }
 
+async function runLighthouseWithStartupRetry(outputPath, env) {
+  try {
+    return await runLighthouse(outputPath, env);
+  } catch (firstError) {
+    // Hosted runners occasionally launch Chrome but fail Lighthouse's first DevTools
+    // connection. Retry the measurement process once; score-floor failures are evaluated
+    // after a report exists and therefore are never hidden by this infrastructure retry.
+    console.warn('Lighthouse process failed before producing a usable report; retrying once.');
+    await rm(outputPath, { force: true }).catch(() => undefined);
+    await sleep(1_500);
+    try {
+      return await runLighthouse(outputPath, env);
+    } catch (retryError) {
+      if (retryError instanceof Error && firstError instanceof Error) {
+        retryError.message += ` (first attempt: ${firstError.message})`;
+      }
+      throw retryError;
+    }
+  }
+}
+
 await assertPreviewPortIsFree();
 await rm(resultDir, { recursive: true, force: true });
 await mkdir(resultDir, { recursive: true });
@@ -152,7 +173,7 @@ const preview = spawn(
 let exitCode = 0;
 try {
   await waitForPreview(preview);
-  let report = await runLighthouse(resultPath, runEnv);
+  let report = await runLighthouseWithStartupRetry(resultPath, runEnv);
   const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');
   const firstPerformanceScore = report.categories?.performance?.score;
   if (
@@ -164,7 +185,7 @@ try {
       `Lighthouse performance ${Math.round(firstPerformanceScore * 100)} is below the hard floor; ` +
         'running one confirmation measurement to distinguish a persistent regression from runner contention.'
     );
-    report = await runLighthouse(confirmResultPath, runEnv);
+    report = await runLighthouseWithStartupRetry(confirmResultPath, runEnv);
   }
   let hasError = false;
   for (const threshold of thresholds) {
