@@ -406,6 +406,106 @@ test('forced colors keeps the active bottom navigation visibly distinct', async 
   expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
 });
 
+test('saved cities use an editorial tab rail instead of boxed chips', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop saved-city visual regression');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+  });
+  await page.goto('/istanbul');
+
+  const rail = page.locator('.city-tabs__scroll');
+  await expect(rail).toBeVisible();
+  await expect(rail.locator('.city-tabs__item')).toHaveCount(2);
+
+  const styles = await rail.evaluate(element => {
+    const active = element.querySelector<HTMLElement>('.city-tabs__item.active');
+    const inactive = element.querySelector<HTMLElement>('.city-tabs__item:not(.active)');
+    if (!active || !inactive) throw new Error('Missing saved-city rail controls');
+    const railStyle = getComputedStyle(element);
+    const activeStyle = getComputedStyle(active);
+    const inactiveStyle = getComputedStyle(inactive);
+    return {
+      railTop: parseFloat(railStyle.borderTopWidth),
+      railGap: parseFloat(railStyle.columnGap),
+      activeRadius: activeStyle.borderRadius,
+      activeBottom: parseFloat(activeStyle.borderBottomWidth),
+      activeShadow: activeStyle.boxShadow,
+      inactiveRadius: inactiveStyle.borderRadius,
+      inactiveShadow: inactiveStyle.boxShadow,
+      inactiveBackground: inactiveStyle.backgroundColor,
+    };
+  });
+
+  expect(styles.railTop).toBeGreaterThanOrEqual(1);
+  expect(styles.railGap).toBe(0);
+  expect(parseFloat(styles.activeRadius)).toBe(0);
+  expect(styles.activeBottom).toBeGreaterThanOrEqual(3);
+  expect(styles.activeShadow).toBe('none');
+  expect(parseFloat(styles.inactiveRadius)).toBe(0);
+  expect(styles.inactiveShadow).toBe('none');
+  expect(styles.inactiveBackground).toBe('rgba(0, 0, 0, 0)');
+});
+
+test('saved city tab rail stays contained at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-city text-resize regression');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'Kahramanmaraş', lat: 37.58, lon: 36.93 },
+        { name: 'Afyonkarahisar', lat: 38.75, lon: 30.54 },
+        { name: 'Şanlıurfa', lat: 37.16, lon: 38.79 },
+      ])
+    );
+  });
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Saved|Kayıtlı/ }).click();
+
+  const rail = page.locator('.city-tabs__scroll');
+  await expect(rail).toBeVisible();
+  const measure = async () => rail.evaluate(element => {
+    const items = Array.from(element.querySelectorAll<HTMLElement>('.city-tabs__item'));
+    const tabs = Array.from(element.querySelectorAll<HTMLElement>('.city-tabs__tab'));
+    const removes = Array.from(element.querySelectorAll<HTMLElement>('.city-tabs__remove'));
+    const add = element.querySelector<HTMLElement>('.city-tabs__add');
+    const rect = element.getBoundingClientRect();
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      railLeft: rect.left,
+      railRight: rect.right,
+      horizontalScrollAvailable: element.scrollWidth > element.clientWidth,
+      itemsTallEnough: items.every(item => item.getBoundingClientRect().height >= 44),
+      tabsTallEnough: tabs.every(tab => tab.getBoundingClientRect().height >= 44),
+      removesTallEnough: removes.every(button => button.getBoundingClientRect().height >= 44),
+      addTallEnough: !add || add.getBoundingClientRect().height >= 44,
+    };
+  });
+
+  for (const width of [320, 390]) {
+    if (width !== 320) await page.setViewportSize({ width, height: 844 });
+    const state = await measure();
+    expect(state.pageWidth).toBeLessThanOrEqual(state.viewportWidth);
+    expect(state.railLeft).toBeGreaterThanOrEqual(0);
+    expect(state.railRight).toBeLessThanOrEqual(state.viewportWidth);
+    expect(state.horizontalScrollAvailable).toBe(true);
+    expect(state.itemsTallEnough).toBe(true);
+    expect(state.tabsTallEnough).toBe(true);
+    expect(state.removesTallEnough).toBe(true);
+    expect(state.addTallEnough).toBe(true);
+  }
+});
+
 test('forced colors keeps the active saved city visibly distinct', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'forced-colors saved-city regression');
   await page.addInitScript(() => {
