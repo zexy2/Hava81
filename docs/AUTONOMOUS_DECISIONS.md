@@ -647,3 +647,6 @@ The Playwright SIGTERM regression intentionally allows up to 5 seconds for each 
 ## 2026-09-01 — Freshness labels refresh on clock boundaries, not mount-relative intervals
 
 Weather freshness text is derived from provider evidence timestamps and the current clock. Keep that evidence immutable, but schedule UI-only age-label refreshes at the next minute boundary and resync when a suspended tab becomes visible. This avoids up-to-59-second mount-relative drift without increasing polling or synthesizing weather data.
+## 2026-09-01 — Hourly “now” markers advance without requiring a weather refetch
+
+The hourly forecast's `aria-current="time"` and visual “now” marker describe clock context, not provider evidence. Keep forecast data immutable between refreshes, but reschedule the marker at the next location-local hour boundary and resync it when a hidden tab becomes visible. Use one boundary timer rather than a frequent polling interval; this must not synthesize forecast rows or change weather freshness/scoring semantics.

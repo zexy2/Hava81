@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
@@ -27,6 +27,7 @@ const CHART_HEIGHT = 132;
 const CHART_TOP = 24;
 const CHART_BOTTOM = 24;
 const PRECIPITATION_THRESHOLD = 0.35;
+const HOUR_MS = 60 * 60_000;
 const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 
 interface ChartCoordinate {
@@ -87,7 +88,32 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     [locale]
   );
   const timezoneOffsetMs = meta.timezoneOffsetSeconds * 1000;
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
+
+  useEffect(() => {
+    let timerId: number | undefined;
+    const scheduleCurrentHourRefresh = () => {
+      const now = Date.now();
+      setCurrentTimeMs(now);
+      const locationClockMs = now + timezoneOffsetMs;
+      const elapsedInHour = ((locationClockMs % HOUR_MS) + HOUR_MS) % HOUR_MS;
+      const delay = HOUR_MS - elapsedInHour + 100;
+      timerId = window.setTimeout(scheduleCurrentHourRefresh, delay);
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      scheduleCurrentHourRefresh();
+    };
+
+    scheduleCurrentHourRefresh();
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [timezoneOffsetMs]);
   const intervalHours = meta.intervalHours;
   const realHourlyHorizon = Math.min(REAL_HOURLY_HORIZON, hourly.length);
   const hourlyHeading =
@@ -209,7 +235,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     (hourlySummary.peakPrecipitation.precipitation > 0 ||
       (hourlySummary.peakPrecipitation.precipitationMm ?? 0) > 0)
   );
-  const currentLocationHourKey = atLocationTime(new Date()).toISOString().slice(0, 13);
+  const currentLocationHourKey = atLocationTime(new Date(currentTimeMs)).toISOString().slice(0, 13);
 
   const intervalOptions = useMemo(
     () =>

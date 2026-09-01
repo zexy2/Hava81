@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ForecastAtlas } from '../../components/hava81/ForecastAtlas';
 import { SettingsProvider } from '../../context';
@@ -60,6 +60,32 @@ const renderRangeAtlas = (count = 24) =>
       />
     </SettingsProvider>
   );
+
+describe('ForecastAtlas current-hour marker', () => {
+  it('advances the current-hour marker when an open tab crosses an hour boundary', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-29T00:30:00Z'));
+      renderRangeAtlas(3);
+
+      expect(document.querySelector('time[aria-current="time"]')).toHaveAttribute(
+        'datetime',
+        '2026-08-29T00:00:00.000Z'
+      );
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31 * 60_000);
+      });
+
+      expect(document.querySelector('time[aria-current="time"]')).toHaveAttribute(
+        'datetime',
+        '2026-08-29T01:00:00.000Z'
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
 
 describe('ForecastAtlas hourly precipitation labels', () => {
   it('omits repetitive zero-rain labels from each dry hourly slot', () => {
