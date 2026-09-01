@@ -1945,3 +1945,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added `aria-busy={isLoading}` to the current-location action and extended the existing mobile-header browser regression to require the idle `aria-busy=false` contract. No geolocation flow, weather evidence, provider, scoring, MGM, UV/AQI, or safety behavior changed.
 - Local Node/npm execution is not available in this gateway shell, so protected exact-head CI is authoritative for TypeScript, lint, unit, build, browser, Lighthouse and CodeQL. `git diff --check` is required locally before publication.
 - Next action: verify diff, current main and main #1251; commit/push/open a bounded frontend PR only if the base is still current. Require exact-head green CI/CodeQL before merge; continue an independent audit while CI runs.
+
+## 2026-09-01 12:52 TRT — serialize daily-plan share transport
+- Continued on isolated `automation/hava81-run11-1250` from exact stable main `0201a87e48ca4ad184181964ce005a7a6295fc8d` while PR #538 validates independently.
+- Audit found the Daily Plan share action remained enabled while `navigator.share()` (or clipboard fallback) was unresolved, so rapid activation could start duplicate share transports and duplicate analytics. A previously prepared local branch contained the same unmerged idea; it was reviewed as reference but not mutated or force-reused.
+- Rebuilt the fix on current main: a ref-backed single-flight guard, disabled/`aria-busy` state and localized loading copy remain active only while the transport is pending; `finally` always releases the guard so cancellation/failure stays retryable.
+- Added a deterministic unit regression with a never-resolved-until-test native share promise; a second activation must not call `navigator.share` twice, and the button must recover after resolution. No weather, score, provider, MGM, UV/AQI or safety semantics changed.
+- Local Node/npm is unavailable in the gateway shell; `git diff --check` is the local gate and protected exact-head CI/CodeQL must run before any merge.

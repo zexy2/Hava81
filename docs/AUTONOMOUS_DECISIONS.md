@@ -531,3 +531,10 @@ Treat the browser notification permission prompt as one in-flight operation. Whi
 
 ## 2026-09-01 — Current-location action exposes shared weather loading state
 When the current-location header action is disabled because the shared weather request is in flight, expose the same state with `aria-busy`. This keeps the icon-only control's programmatic state aligned with the visible/main-content loading state without changing geolocation, weather acquisition, provider, scoring, MGM, UV/AQI, or safety behavior.
+
+
+## 2026-09-01 — Notification permission prompts are single-flight and visibly busy
+Treat the browser notification permission prompt as one in-flight operation. While it is pending, disable the alert opt-in action, expose `aria-busy`, and show the existing localized loading copy so rapid repeat activation cannot issue duplicate permission requests. If the browser rejects the promise, fail closed with alerts disabled and restore the action for retry. This does not alter weather evidence, alert thresholds, quiet hours, MGM provenance, delivery deduplication, or safety guidance.
+
+## 2026-09-01 — Daily-plan sharing is single-flight and visibly busy
+Treat a native-share/clipboard delivery as one in-flight user action. While the share transport is unresolved, keep an in-memory guard, disable the share action, expose `aria-busy`, and show localized loading feedback. Always release the guard in `finally`, including AbortError/failure paths, so cancellation or failure remains retryable. This changes only share transport state; weather evidence, scoring, providers, MGM, UV/AQI and safety guidance are unchanged.

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
@@ -148,6 +148,34 @@ describe('DailyPlanPanel sharing', () => {
       )
     ).toHaveLength(3);
     expect(within(timeline).getAllByRole('listitem')[0]).toHaveAccessibleName(/75°F/);
+  });
+
+  it('keeps sharing single-flight while the native share sheet is pending', async () => {
+    const user = userEvent.setup();
+    let resolveShare!: () => void;
+    const sharePromise = new Promise<void>(resolve => {
+      resolveShare = resolve;
+    });
+    const share = vi.fn(() => sharePromise);
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+
+    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+
+    const button = screen.getByRole('button', { name: 'hava81.share.action' });
+    await user.click(button);
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveTextContent('common.loading');
+
+    await user.click(button);
+    expect(share).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveShare();
+      await sharePromise;
+    });
+    await waitFor(() => expect(button).toHaveAttribute('aria-busy', 'false'));
+    expect(button).toBeEnabled();
   });
 
   it('falls back to the clipboard when native sharing is present but unavailable', async () => {
