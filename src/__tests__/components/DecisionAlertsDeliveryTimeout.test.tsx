@@ -98,7 +98,7 @@ describe('DecisionAlertsPanel stalled delivery', () => {
         forecastMeta={freshForecastMeta()}
         weather={{
           ...weather,
-          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+          meta: { ...weather.meta, fetchedAt: new Date() },
         }}
         hourly={rainyHourly}
       />
