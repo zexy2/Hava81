@@ -189,6 +189,11 @@ describe('Hava81 app integration', () => {
 
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    // The decision surface can render from fresh data before the initial request's
+    // loading flag settles. Wait for that observable state before simulating a later resume.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Ara' })).toHaveAttribute('aria-busy', 'false')
+    );
 
     service.getCurrentWeather.mockReturnValueOnce(pendingRefresh);
     const dateNow = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 5 * 60 * 1000 + 1);
