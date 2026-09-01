@@ -91,6 +91,38 @@ describe('httpClient BFF transport', () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('bounds retained GET cache entries and evicts the oldest response', async () => {
+    (global.fetch as Mock).mockImplementation(async (url: string) => mockResponse({ url }));
+
+    for (let index = 0; index < 129; index += 1) {
+      await httpClient.get('/weather/current', { city: `City-${index}` });
+    }
+
+    expect(httpClient.getCacheSize()).toBe(128);
+    expect(global.fetch).toHaveBeenCalledTimes(129);
+
+    await httpClient.get('/weather/current', { city: 'City-0' });
+    expect(global.fetch).toHaveBeenCalledTimes(130);
+    expect(httpClient.getCacheSize()).toBe(128);
+  });
+
+  it('drops expired cache entries when storing a new response', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T10:00:00Z'));
+      (global.fetch as Mock).mockResolvedValue(mockResponse({ ok: true }));
+      await httpClient.get('/weather/current', { city: 'Old-1' });
+      await httpClient.get('/weather/current', { city: 'Old-2' });
+      expect(httpClient.getCacheSize()).toBe(2);
+
+      vi.setSystemTime(new Date(Date.now() + config.cache.ttl + 1));
+      await httpClient.get('/weather/current', { city: 'Fresh' });
+      expect(httpClient.getCacheSize()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not reuse a cache entry after the client clock moves behind its timestamp', async () => {
     vi.useFakeTimers();
     try {
