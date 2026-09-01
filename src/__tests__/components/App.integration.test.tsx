@@ -114,7 +114,14 @@ const hourlyForecast = {
   },
 };
 
-const air = { aqi: 3, aqiLabel: 'Orta', pm25: 8, pm10: 14, o3: 40 };
+const air = {
+  aqi: 3,
+  aqiLabel: 'Orta',
+  pm25: 8,
+  pm10: 14,
+  o3: 40,
+  meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+};
 
 const renderApp = () =>
   render(

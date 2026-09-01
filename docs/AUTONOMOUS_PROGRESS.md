@@ -2181,3 +2181,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The freshness scheduler now wakes at whichever comes first: the next minute-label boundary or the exact `fetchedAt + freshForSeconds` boundary (+100 ms cushion). No provider call, weather value, score, MGM/UV/AQI semantics or safety guidance changes.
 - Added a fake-clock regression that starts 15 seconds before expiry, advances just beyond the TTL boundary, and requires the UI to switch to `Eski veri` before the next minute tick.
 - Local gates pass: WeatherDecisionField 14/14, TypeScript, ESLint, production build/service-worker stamp/all 81 city pages, and `git diff --check`.
+
+### 2026-09-01 22:11 TRT — expire stale optional environmental evidence in long-lived tabs
+- Started from exact main `a268657c0f26d006274de48b1379cae3865f830c` in isolated branch `automation/hava81-optional-evidence-expiry-2211`, independent of the rebased #585 workstream.
+- Audited `useForecast` freshness retention and found AQI plus Open-Meteo context signals were only re-evaluated when another forecast request happened. A tab left open without a subsequent request could therefore keep expired optional evidence visible and available to decision surfaces beyond `freshForSeconds`.
+- Added a fail-closed lifecycle deadline: stale/invalid optional evidence is removed immediately, and valid AQI/context values schedule their own expiry at the provider TTL. This changes no weather value, score formula, provider timestamp, MGM semantics, or API polling cadence.
+- Updated one integration fixture and the hook's default AQ fixture to carry the production-required freshness metadata instead of weakening the guard for malformed test data.
+- Validation: focused `useForecast` 11/11; combined hook+App 29/29; TypeScript; ESLint; production build/service-worker stamp/all 81 city pages; then full coverage suite 58 files / 557 tests all green; `git diff --check` clean.

@@ -654,3 +654,7 @@ The hourly forecast's `aria-current="time"` and visual “now” marker describe
 ## 2026-09-01 — Provider stale-state UI flips at the evidence TTL boundary
 
 Provider `freshForSeconds` is an evidence freshness contract, not merely display copy. Schedule the decision-field clock at the earlier of the next minute label boundary or the exact fetched-at + freshness TTL boundary, with the existing small timer cushion. This updates only UI freshness state; it must not refetch, extend, interpolate, or otherwise alter weather evidence.
+
+## 2026-09-01 — Optional environmental evidence expires in-memory at provider TTL
+
+AQI and modeled context signals (UV/pollen/dust/marine) must not remain decision inputs indefinitely just because a long-lived tab receives no subsequent forecast refresh. Treat each source's `fetchedAt + freshForSeconds` as an in-memory evidence deadline: retain a still-fresh value through a transient optional-source failure, but fail closed by removing it once its own TTL passes. Do not extrapolate, refresh the timestamp, or substitute modeled values.

@@ -53,6 +53,7 @@ describe('useForecast', () => {
       pm25: 5,
       pm10: 8,
       o3: 20,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
     });
   });
 
@@ -269,7 +270,7 @@ describe('useForecast', () => {
     expect(result.current.contextSignals).toMatchObject({ provider: 'Open-Meteo', uvIndexMax: 5 });
   });
 
-  it('drops stale optional context when a same-city refresh cannot replace it', async () => {
+  it('drops stale optional evidence without waiting for another refresh', async () => {
     const staleAt = new Date(Date.now() - 10 * 60_000);
     (weatherService.getAirQuality as Mock).mockResolvedValueOnce({
       aqi: 2,
@@ -287,24 +288,53 @@ describe('useForecast', () => {
       units: {},
     });
     const { result } = renderHook(() => useForecast('tr'));
-    const coords = { lat: 41.01, lon: 28.97 };
 
     await act(async () => {
-      await result.current.fetch(coords);
-    });
-    expect(result.current.airQuality?.aqi).toBe(2);
-    expect(result.current.contextSignals?.provider).toBe('Open-Meteo');
-
-    (weatherService.getAirQuality as Mock).mockRejectedValueOnce(new Error('aq unavailable'));
-    (weatherService.getContextSignals as Mock).mockRejectedValueOnce(
-      new Error('context unavailable')
-    );
-    await act(async () => {
-      await result.current.fetch(coords);
+      await result.current.fetch({ lat: 41.01, lon: 28.97 });
     });
 
-    expect(result.current.airQuality).toBeNull();
+    await waitFor(() => expect(result.current.airQuality).toBeNull());
     expect(result.current.contextSignals).toBeNull();
+  });
+
+  it('expires optional evidence when its freshness TTL passes in a long-lived tab', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T18:00:00Z'));
+      const fetchedAt = new Date();
+      (weatherService.getAirQuality as Mock).mockResolvedValueOnce({
+        aqi: 1,
+        aqiLabel: 'Good',
+        pm25: 5,
+        pm10: 8,
+        o3: 20,
+        meta: { provider: 'OpenWeather', fetchedAt, freshForSeconds: 30 },
+      });
+      (weatherService.getContextSignals as Mock).mockResolvedValueOnce({
+        provider: 'Open-Meteo',
+        fetchedAt,
+        attribution: 'Open-Meteo · CC BY 4.0',
+        freshForSeconds: 30,
+        uvIndexMax: 5,
+        units: {},
+      });
+      const { result } = renderHook(() => useForecast('tr'));
+
+      await act(async () => {
+        await result.current.fetch({ lat: 41.01, lon: 28.97 });
+      });
+      expect(result.current.airQuality?.aqi).toBe(1);
+      expect(result.current.contextSignals?.uvIndexMax).toBe(5);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_200);
+      });
+
+      expect(result.current.airQuality).toBeNull();
+      expect(result.current.contextSignals).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps the last successful forecast when a same-city refresh fails', async () => {
