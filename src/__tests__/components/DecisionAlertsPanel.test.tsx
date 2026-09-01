@@ -44,6 +44,8 @@ describe('DecisionAlertsPanel', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-08-28T09:00:00Z')); // 12:00 in İstanbul
+    weather.meta.fetchedAt = new Date();
+    weather.meta.freshForSeconds = 300;
   });
 
   afterEach(() => {
@@ -422,6 +424,7 @@ describe('DecisionAlertsPanel', () => {
 
   it('dedupes alerts by the weather location calendar day instead of UTC', async () => {
     vi.setSystemTime(new Date('2026-08-29T00:30:00Z')); // 19:30 on Aug 28 at UTC-5
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
@@ -442,6 +445,7 @@ describe('DecisionAlertsPanel', () => {
 
   it('uses the weather location timezone for quiet hours', async () => {
     vi.setSystemTime(new Date('2026-08-28T19:30:00Z')); // 22:30 in İstanbul
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
@@ -457,6 +461,7 @@ describe('DecisionAlertsPanel', () => {
   it('re-evaluates a pending alert when quiet hours end without a weather refetch', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T03:59:30Z')); // 06:59:30 in İstanbul
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
@@ -478,6 +483,7 @@ describe('DecisionAlertsPanel', () => {
   it('does not deliver a quiet-hours alert after its forecast evidence expires', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T03:59:30Z')); // 06:59:30 in İstanbul
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });

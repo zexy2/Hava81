@@ -43,6 +43,8 @@ describe('DecisionAlertsPanel stalled delivery', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T09:00:00Z'));
+    weather.meta.fetchedAt = new Date();
+    weather.meta.freshForSeconds = 300;
     localStorage.setItem('hava81-alerts-v1', 'enabled');
   });
 
