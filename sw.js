@@ -52,18 +52,21 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
+    // Query parameters do not change Hava81's generated SPA/city shell. Normalize the
+    // offline cache key so tracking/cache-bust variants cannot create unbounded copies.
+    const navigationCacheKey = `${url.origin}${url.pathname}`;
     event.respondWith(
       fetch(request, { cache: 'no-store' })
         .then(async response => {
           if (response.ok) {
             const cache = await caches.open(CACHE_NAME);
-            await cache.put(request, response.clone());
+            await cache.put(navigationCacheKey, response.clone());
           }
           return response;
         })
         .catch(async () => {
           const cache = await caches.open(CACHE_NAME);
-          return (await cache.match(request)) || (await cache.match('/'));
+          return (await cache.match(navigationCacheKey)) || (await cache.match('/'));
         })
     );
     return;
