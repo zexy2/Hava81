@@ -482,3 +482,6 @@ A decision surface may report `stable` only when it has actual near-term forecas
 
 ## 2026-09-01 — Observer CI state follows the CI/CD workflow for the newest exact SHA
 GitHub can expose multiple workflow runs for one commit. Operational merge/deploy truth must not depend on whichever workflow appears first. For each PR exact head and for the newest main SHA, prefer the repository `CI/CD Pipeline` run; keep a bounded history deep enough to cover concurrent open automation PRs. CodeQL remains an independent required gate but must not stand in for deployment-pipeline state.
+
+## 2026-09-01 — Lighthouse performance uses a hard floor plus a higher target
+CI Lighthouse performance is materially noisier than the other categories on GitHub-hosted runners: six recent successful main samples ranged from 69 to 97 while accessibility stayed 100, best-practices 96 and SEO 100. Treating the observed performance target as a hard pass/fail threshold would create flaky releases, but leaving it warning-only provides no catastrophic-regression protection. Use a 60 hard floor plus an 80 warning target for performance, and evidence-supported 95 hard floors for accessibility, best-practices and SEO. Log FCP/LCP/TBT/CLS/SI on every run so future optimization is driven by metrics rather than category-score cosmetics.

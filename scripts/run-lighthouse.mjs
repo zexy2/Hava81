@@ -24,10 +24,18 @@ const lighthouseCli = new URL('../node_modules/lighthouse/cli/index.js', import.
 const viteCli = new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname;
 
 const thresholds = [
-  { key: 'performance', minimum: 0.75, level: 'warn' },
-  { key: 'accessibility', minimum: 0.9, level: 'error' },
-  { key: 'best-practices', minimum: 0.85, level: 'warn' },
-  { key: 'seo', minimum: 0.85, level: 'warn' },
+  { key: 'performance', floor: 0.6, target: 0.8 },
+  { key: 'accessibility', floor: 0.95, target: 1 },
+  { key: 'best-practices', floor: 0.95, target: 0.95 },
+  { key: 'seo', floor: 0.95, target: 1 },
+];
+
+const performanceMetrics = [
+  ['first-contentful-paint', 'FCP'],
+  ['largest-contentful-paint', 'LCP'],
+  ['total-blocking-time', 'TBT'],
+  ['cumulative-layout-shift', 'CLS'],
+  ['speed-index', 'SI'],
 ];
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -150,16 +158,23 @@ try {
       continue;
     }
     const percent = Math.round(score * 100);
-    const minimum = Math.round(threshold.minimum * 100);
-    console.log(`Lighthouse ${threshold.key}: ${percent} (minimum ${minimum}, ${threshold.level})`);
-    if (score < threshold.minimum) {
-      const message = `${threshold.key} score ${percent} is below ${minimum}`;
-      if (threshold.level === 'error') {
-        console.error(`ERROR: ${message}`);
-        hasError = true;
-      } else {
-        console.warn(`WARN: ${message}`);
-      }
+    const floor = Math.round(threshold.floor * 100);
+    const target = Math.round(threshold.target * 100);
+    console.log(`Lighthouse ${threshold.key}: ${percent} (floor ${floor}, target ${target})`);
+    if (score < threshold.floor) {
+      console.error(`ERROR: ${threshold.key} score ${percent} is below hard floor ${floor}`);
+      hasError = true;
+    } else if (score < threshold.target) {
+      console.warn(`WARN: ${threshold.key} score ${percent} is below target ${target}`);
+    }
+  }
+
+  for (const [auditKey, label] of performanceMetrics) {
+    const audit = report.audits?.[auditKey];
+    if (!audit) continue;
+    const value = audit.displayValue ?? audit.numericValue;
+    if (value !== undefined && value !== null) {
+      console.log(`Lighthouse metric ${label}: ${value}`);
     }
   }
   if (hasError) exitCode = 1;
