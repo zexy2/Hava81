@@ -90,7 +90,32 @@ const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
           .then(response => (response.ok ? response.json() : null))
           .catch(() => null)
           .finally(() => window.clearTimeout(timeoutId));
+        const hourlyPromise = promise.then(current => {
+          const lat = Number(current?.coordinates?.lat);
+          const lon = Number(current?.coordinates?.lon);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+          const hourlyUrl = new URL(${safeJson(apiBaseUrl + '/weather/hourly')});
+          hourlyUrl.searchParams.set('lat', String(lat));
+          hourlyUrl.searchParams.set('lon', String(lon));
+          hourlyUrl.searchParams.set('lang', lang);
+          const hourlyController = new AbortController();
+          const hourlyTimeoutId = window.setTimeout(
+            () => hourlyController.abort(),
+            ${bootstrapTimeoutMs}
+          );
+          return window
+            .fetch(hourlyUrl.toString(), {
+              headers: { Accept: 'application/json' },
+              signal: hourlyController.signal,
+            })
+            .then(response => (response.ok ? response.json() : null))
+            .then(response => (response ? { lat, lon, response } : null))
+            .catch(() => null)
+            .finally(() => window.clearTimeout(hourlyTimeoutId));
+        });
         window.__HAVA81_BOOTSTRAP_WEATHER__ = { city, lang, units: 'metric', promise };
+        window.__HAVA81_BOOTSTRAP_HOURLY__ = { lang, promise: hourlyPromise };
       })();
     </script>`;
 
@@ -99,8 +124,11 @@ const injectBootstrapWeather = (html, cityName, expectedPath) => {
   if (moduleScriptIndex < 0) throw new Error('Production HTML is missing the Vite module entry script');
   const script = bootstrapWeatherScript(cityName, expectedPath);
   const output = `${html.slice(0, moduleScriptIndex)}${script}\n${html.slice(moduleScriptIndex)}`;
-  if (output.indexOf('__HAVA81_BOOTSTRAP_WEATHER__') > output.indexOf('    <script type="module"')) {
-    throw new Error('Weather bootstrap must precede the application module script');
+  if (
+    output.indexOf('__HAVA81_BOOTSTRAP_WEATHER__') > output.indexOf('    <script type="module"') ||
+    output.indexOf('__HAVA81_BOOTSTRAP_HOURLY__') > output.indexOf('    <script type="module"')
+  ) {
+    throw new Error('Weather bootstraps must precede the application module script');
   }
   return output;
 };

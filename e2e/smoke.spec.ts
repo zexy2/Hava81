@@ -2229,22 +2229,26 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
   ).toEqual(['#0E2C32', '#0E2C32']);
 });
 
-test('production HTML bootstraps current weather without a duplicate app request', async ({
+test('production HTML bootstraps current and hourly weather without duplicate app requests', async ({
   page,
 }, testInfo) => {
   test.skip(
     testInfo.project.name !== 'desktop-1280',
-    'single browser coverage for early current weather'
+    'single browser coverage for early current and hourly weather'
   );
 
   let currentRequests = 0;
+  let hourlyRequests = 0;
   page.on('request', request => {
     if (request.url().includes('/api/v1/weather/current')) currentRequests += 1;
+    if (request.url().includes('/api/v1/weather/hourly')) hourlyRequests += 1;
   });
 
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
   expect(currentRequests).toBe(1);
+  expect(hourlyRequests).toBe(1);
 });
 
 test('fresh cached weather suppresses the generated bootstrap request', async ({
