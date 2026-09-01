@@ -9,3 +9,17 @@ export const mostRecentChunkRecoveryAttempt = (
 
   return Math.max(normalizedUrlAttempt, normalizedStoredAttempt);
 };
+
+export const isRecentChunkRecoveryAttempt = (
+  attempt: number,
+  now: number,
+  recoveryWindowMs: number
+): boolean => {
+  if (!Number.isFinite(attempt) || attempt <= 0) return false;
+  if (!Number.isFinite(now) || !Number.isFinite(recoveryWindowMs) || recoveryWindowMs <= 0) {
+    return false;
+  }
+
+  const age = now - attempt;
+  return age >= 0 && age < recoveryWindowMs;
+};

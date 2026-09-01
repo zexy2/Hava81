@@ -6,7 +6,10 @@ import { validateConfig } from './config';
 import './i18n';
 import './fonts.css';
 import './index.css';
-import { mostRecentChunkRecoveryAttempt } from './utils/chunkRecovery';
+import {
+  isRecentChunkRecoveryAttempt,
+  mostRecentChunkRecoveryAttempt,
+} from './utils/chunkRecovery';
 
 const CHUNK_RECOVERY_PARAM = '__hava81_chunk_reload';
 const CHUNK_RECOVERY_STORAGE_KEY = 'hava81:chunk-recovery-at';
@@ -29,7 +32,7 @@ window.addEventListener('vite:preloadError', event => {
   }
   const previousAttempt = mostRecentChunkRecoveryAttempt(bootRecoveryAttempt, storedAttemptValue);
 
-  if (previousAttempt && now - previousAttempt < CHUNK_RECOVERY_WINDOW_MS) return;
+  if (isRecentChunkRecoveryAttempt(previousAttempt, now, CHUNK_RECOVERY_WINDOW_MS)) return;
 
   try {
     window.sessionStorage.setItem(CHUNK_RECOVERY_STORAGE_KEY, String(now));
