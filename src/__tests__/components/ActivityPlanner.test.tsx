@@ -92,6 +92,31 @@ describe('ActivityPlanner time range', () => {
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('20:00');
   });
 
+  it('makes a partially selected activity range explicit instead of looking applied', () => {
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} />
+      </SettingsProvider>
+    );
+
+    const start = screen.getByLabelText('Başlangıç');
+    const end = screen.getByLabelText('Bitiş');
+    fireEvent.change(start, { target: { value: '18:00' } });
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç.');
+    expect(start).toHaveAttribute('aria-describedby', 'activity-window-incomplete');
+    expect(end).toHaveAttribute('aria-describedby', 'activity-window-incomplete');
+    expect(screen.getAllByText(/12 saatlik uygunluk · /i).length).toBeGreaterThan(0);
+
+    fireEvent.change(end, { target: { value: '20:00' } });
+
+    expect(screen.queryByText(/Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç/i)).not.toBeInTheDocument();
+    expect(start).not.toHaveAttribute('aria-describedby');
+    expect(end).not.toHaveAttribute('aria-describedby');
+    expect(screen.getAllByText(/18:00–20:00 uygunluğu · /i).length).toBeGreaterThan(0);
+  });
+
   it('shows comfort criteria and sensitivity shifts in the selected temperature unit', () => {
     localStorage.setItem(
       'user-settings',

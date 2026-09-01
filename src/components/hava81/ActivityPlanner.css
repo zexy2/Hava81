@@ -253,6 +253,14 @@
 .activity-planner__window-help[open] {
   grid-column: 1 / -1;
 }
+.activity-planner__window-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-atlas-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 .activity-planner__window input {
   width: 100%;
   min-width: 0;
