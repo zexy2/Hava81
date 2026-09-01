@@ -341,6 +341,52 @@ test('forced colors keeps the active bottom navigation visibly distinct', async 
   expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
 });
 
+test('forced colors keeps the active saved city visibly distinct', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'forced-colors saved-city regression');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+  });
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/istanbul');
+
+  const current = page.locator('.city-tabs__tab[aria-current="page"]');
+  const inactive = page.locator('.city-tabs__tab:not([aria-current])').first();
+  await expect(current).toBeVisible();
+  await expect(inactive).toBeVisible();
+  await expect(current).toHaveAttribute('aria-current', 'page');
+
+  const state = await current.evaluate((element, inactiveElement) => {
+    if (!(inactiveElement instanceof HTMLElement)) throw new Error('Missing inactive saved-city tab');
+    const selectedStyle = getComputedStyle(element);
+    const inactiveStyle = getComputedStyle(inactiveElement);
+    const selectedItem = element.closest('.city-tabs__item');
+    const inactiveItem = inactiveElement.closest('.city-tabs__item');
+    if (!(selectedItem instanceof HTMLElement) || !(inactiveItem instanceof HTMLElement)) {
+      throw new Error('Missing saved-city item');
+    }
+    return {
+      forcedColors: matchMedia('(forced-colors: active)').matches,
+      selectedDecoration: selectedStyle.textDecorationLine,
+      selectedThickness: selectedStyle.textDecorationThickness,
+      inactiveDecoration: inactiveStyle.textDecorationLine,
+      selectedHeight: selectedItem.getBoundingClientRect().height,
+      inactiveHeight: inactiveItem.getBoundingClientRect().height,
+    };
+  }, await inactive.elementHandle());
+
+  expect(state.forcedColors).toBe(true);
+  expect(state.selectedDecoration).toContain('underline');
+  expect(state.selectedThickness).toBe('2px');
+  expect(state.inactiveDecoration).not.toContain('underline');
+  expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
+});
+
 test('keyboard map close restores focus to the map trigger', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map focus restoration regression');
   await page.goto('/istanbul');
