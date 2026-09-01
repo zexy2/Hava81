@@ -120,9 +120,11 @@
   display: flex;
   align-items: start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 .route-weather__result > header > div:first-child {
+  flex: 1 1 min(100%, 16rem);
   min-width: 0;
 }
 .route-weather__result h3 {
@@ -134,8 +136,8 @@
   display: grid;
   justify-items: center;
   gap: 0.2rem;
-  flex: 0 1 5rem;
-  min-width: 0;
+  min-width: min(5rem, 100%);
+  max-width: 100%;
   padding: 0.45rem 0.65rem;
   text-align: center;
   background: var(--color-atlas-field);

@@ -614,3 +614,7 @@ Treat city-vs-current-location as user intent independent of provider localizati
 **Decision:** When a regression test triggers an async refresh and then simulates a later lifecycle event, wait for the refresh's observable settled state before advancing clocks or dispatching that later event. A mock being called proves only that the operation started.
 
 **Why:** Main CI #1339 exposed a race in the new current-location/language regression test: it waited for `getCurrentWeather(...)` invocation, then immediately made the result stale and dispatched `visibilitychange`. `useWeather` intentionally suppresses stale refreshes while another request is loading, so runner timing could make the location refresh assertion fail even though product behavior was correct. Waiting for `isLoading === false` models the intended sequence and keeps the test strict about reacquiring current location after the settled localized refresh becomes stale.
+### 2026-09-01 20:07 TRT — route result header may wrap under large text
+**Decision:** Allow the route-result title/summary column and score badge to wrap instead of forcing one horizontal row at large text sizes.
+
+**Why:** Hava81's route result is decision content, not a fixed dashboard chrome element. Under WCAG-style 200% text resizing, preserving readable text and eliminating page-level horizontal overflow is more important than retaining the desktop one-row arrangement. The change keeps normal-width hierarchy intact while making the constrained state responsive.
