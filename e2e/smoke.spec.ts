@@ -1493,6 +1493,34 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
   expect(layout.description.scrollWidth).toBeLessThanOrEqual(layout.description.clientWidth + 1);
 });
 
+test('activity disclosure summaries keep a visible keyboard focus indicator', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop activity focus regression');
+  await page.goto('/istanbul');
+
+  const summaries = [
+    page.locator('.activity-planner__window-help summary'),
+    page.locator('.activity-planner__score-explanation summary'),
+    page.locator('.activity-card__details summary').first(),
+  ];
+
+  for (const summary of summaries) {
+    await expect(summary).toBeVisible();
+    await summary.focus();
+    await expect(summary).toBeFocused();
+    const focusStyle = await summary.evaluate(element => {
+      const style = getComputedStyle(element);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: Number.parseFloat(style.outlineWidth),
+        outlineOffset: Number.parseFloat(style.outlineOffset),
+      };
+    });
+    expect(focusStyle.outlineStyle).toBe('solid');
+    expect(focusStyle.outlineWidth).toBeGreaterThanOrEqual(2);
+    expect(focusStyle.outlineOffset).toBeLessThan(0);
+  }
+});
+
 test('skip link moves keyboard focus into the main weather content', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop keyboard regression');
   await page.goto('/istanbul');
