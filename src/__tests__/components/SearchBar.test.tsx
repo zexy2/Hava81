@@ -170,6 +170,21 @@ describe('SearchBar', () => {
     expect(input).toHaveFocus();
   });
 
+  it('supports Home and End navigation across visible suggestions', () => {
+    render(<SearchBar {...defaultProps} value="İz" />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    const options = screen.getAllByRole('option');
+    expect(options.length).toBeGreaterThan(1);
+
+    fireEvent.keyDown(input, { key: 'End' });
+    expect(input).toHaveAttribute('aria-activedescendant', options.at(-1)?.id);
+
+    fireEvent.keyDown(input, { key: 'Home' });
+    expect(input).toHaveAttribute('aria-activedescendant', options[0].id);
+  });
+
   it('keeps suggestions open when the input is immediately refocused after blur', () => {
     vi.useFakeTimers();
     try {

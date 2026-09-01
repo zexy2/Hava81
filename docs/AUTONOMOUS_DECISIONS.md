@@ -547,3 +547,6 @@ The commute preparation advice currently derives explicit carry/preparation acti
 
 ## 2026-09-01 — Map reveal controls use disclosure semantics, not toggle-button semantics
 Both controls that show/hide the weather map control the visibility of `weather-map-region`; `aria-expanded` + `aria-controls` expresses that relationship. Do not also expose `aria-pressed`, which describes a persistent toggle-button state and can produce redundant/conflicting announcements. The visible label continues to switch between show/hide map.
+
+## 2026-09-01 — Search suggestions support Home/End keyboard navigation
+The city search is an ARIA combobox with a visible listbox. When suggestions are open, Home and End should move the active descendant to the first and last visible option instead of falling through to text-caret movement. Keep ArrowUp/ArrowDown wrapping behavior unchanged and preserve Enter selection/Escape dismissal semantics. This is keyboard accessibility only; city matching, debounce, weather fetching, providers and decision logic are unchanged.
