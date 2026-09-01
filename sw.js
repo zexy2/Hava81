@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hava81-shell-de4e6306ffe3';
+const CACHE_NAME = 'hava81-shell-e299cf617995';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
 
