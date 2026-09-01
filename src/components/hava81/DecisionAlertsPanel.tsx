@@ -14,6 +14,8 @@ interface Props {
 const SETTINGS_KEY = 'hava81-alerts-v1';
 const SERVICE_WORKER_READY_TIMEOUT_MS = 5_000;
 const NOTIFICATION_DELIVERY_TIMEOUT_MS = 5_000;
+const QUIET_HOURS_END_HOUR = 7;
+const QUIET_HOURS_BOUNDARY_CUSHION_MS = 100;
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -57,13 +59,32 @@ const getLocationDateKey = (timezoneOffsetSeconds = 0) =>
 const inQuietHours = (timezoneOffsetSeconds = 0) => {
   const locationNow = new Date(Date.now() + timezoneOffsetSeconds * 1000);
   const hour = locationNow.getUTCHours();
-  return hour >= 22 || hour < 7;
+  return hour >= 22 || hour < QUIET_HOURS_END_HOUR;
+};
+
+const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | null => {
+  const shiftedNowMs = Date.now() + timezoneOffsetSeconds * 1000;
+  const locationNow = new Date(shiftedNowMs);
+  const hour = locationNow.getUTCHours();
+  if (hour >= QUIET_HOURS_END_HOUR && hour < 22) return null;
+
+  const dayStartMs = Date.UTC(
+    locationNow.getUTCFullYear(),
+    locationNow.getUTCMonth(),
+    locationNow.getUTCDate()
+  );
+  const nextQuietEndMs =
+    dayStartMs +
+    QUIET_HOURS_END_HOUR * 60 * 60_000 +
+    (hour >= 22 ? 24 * 60 * 60_000 : 0);
+  return Math.max(0, nextQuietEndMs - shiftedNowMs) + QUIET_HOURS_BOUNDARY_CUSHION_MS;
 };
 
 export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
   const [requestingPermission, setRequestingPermission] = useState(false);
+  const [quietHoursRevision, setQuietHoursRevision] = useState(0);
   const notificationsSupported = typeof Notification !== 'undefined';
   const [permission, setPermission] = useState<NotificationPermission>(() =>
     notificationsSupported ? Notification.permission : 'default'
@@ -88,6 +109,14 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     () => buildAlertCandidate(weather.cityName, plan),
     [plan, weather.cityName]
   );
+
+  useEffect(() => {
+    if (!enabled || permission !== 'granted' || !candidate) return undefined;
+    const delay = millisecondsUntilQuietHoursEnd(weather.meta.timezoneOffsetSeconds);
+    if (delay === null) return undefined;
+    const timeout = window.setTimeout(() => setQuietHoursRevision(value => value + 1), delay);
+    return () => window.clearTimeout(timeout);
+  }, [candidate, enabled, permission, weather.meta.timezoneOffsetSeconds]);
 
   useEffect(() => {
     if (
@@ -139,7 +168,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         sessionPendingKeys.current.delete(key);
       }
     })();
-  }, [candidate, enabled, permission, plan.band, t, weather.meta.timezoneOffsetSeconds]);
+  }, [candidate, enabled, permission, plan.band, quietHoursRevision, t, weather.meta.timezoneOffsetSeconds]);
 
   const toggle = async () => {
     if (permissionRequestInFlight.current) return;

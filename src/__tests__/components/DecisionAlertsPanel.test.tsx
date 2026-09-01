@@ -423,4 +423,23 @@ describe('DecisionAlertsPanel', () => {
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();
   });
+
+  it('re-evaluates a pending alert when quiet hours end without a weather refetch', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-29T03:59:30Z')); // 06:59:30 in İstanbul
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+
+    await Promise.resolve();
+    expect(notification).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(30_101);
+
+    expect(notification).toHaveBeenCalledTimes(1);
+  });
 });
