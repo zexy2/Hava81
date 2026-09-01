@@ -33,6 +33,8 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test:ci
+      - name: Verify safe worktree cleanup contract
+        run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
