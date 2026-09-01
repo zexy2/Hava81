@@ -136,7 +136,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
   };
 
   return (
-    <section className="hava81-compare" aria-labelledby="hava81-compare-title">
+    <section className="hava81-compare" aria-labelledby="hava81-compare-title" aria-busy={loading}>
       <header className="hava81-compare__header">
         <div>
           <span className="atlas-kicker">{t('weather.favoriteCities')}</span>

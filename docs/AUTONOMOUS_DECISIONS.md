@@ -550,3 +550,5 @@ Both controls that show/hide the weather map control the visibility of `weather-
 
 ## 2026-09-01 — Search suggestions support Home/End keyboard navigation
 The city search is an ARIA combobox with a visible listbox. When suggestions are open, Home and End should move the active descendant to the first and last visible option instead of falling through to text-caret movement. Keep ArrowUp/ArrowDown wrapping behavior unchanged and preserve Enter selection/Escape dismissal semantics. This is keyboard accessibility only; city matching, debounce, weather fetching, providers and decision logic are unchanged.
+## 2026-09-01 — Comparison refresh exposes its busy region state
+When saved-city comparison data is being replaced, the labeled comparison region must expose `aria-busy=true` in addition to its visible loading status. Clear the busy state when loading settles. This is asynchronous-state accessibility only; comparison requests, weather evidence, score calculation, winner selection and failure handling are unchanged.
