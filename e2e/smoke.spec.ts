@@ -3137,15 +3137,22 @@ test('mobile map header reflows at 200 percent text size', async ({ page }, test
       return html.scrollWidth <= html.clientWidth + 1;
     };
     const children = Array.from(element.children);
+    const panel = element.closest<HTMLElement>('#weather-map-region');
+    if (!panel) throw new Error('Missing map panel');
+    const panelRect = panel.getBoundingClientRect();
     return {
       headerFits: fits(element),
       childrenFit: children.every(fits),
+      panelLeft: panelRect.left,
+      panelRight: panelRect.right,
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
     };
   });
   expect(layout.headerFits).toBe(true);
   expect(layout.childrenFit).toBe(true);
+  expect(layout.panelLeft).toBeGreaterThanOrEqual(0);
+  expect(layout.panelRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
   await expect(header.getByRole('button', { name: 'Kapat' })).toBeVisible();
 });
