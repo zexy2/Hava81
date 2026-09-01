@@ -45,8 +45,12 @@ describe('RouteWeatherPanel', () => {
     await user.click(screen.getByText('Rota havası'));
     await user.selectOptions(screen.getByLabelText('Varış'), 'İstanbul');
 
+    const origin = screen.getByLabelText('Başlangıç');
+    const destination = screen.getByLabelText('Varış');
     const check = screen.getByRole('button', { name: 'Koridoru kontrol et' });
     expect(check).toBeDisabled();
+    expect(origin).toHaveAttribute('aria-describedby', 'route-weather-same-city');
+    expect(destination).toHaveAttribute('aria-describedby', 'route-weather-same-city');
     expect(check).toHaveAttribute('aria-describedby', 'route-weather-same-city');
     expect(screen.getByRole('status')).toHaveTextContent(
       'Başlangıç ve varış için farklı şehirler seç.'

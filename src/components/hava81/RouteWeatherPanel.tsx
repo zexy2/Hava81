@@ -43,6 +43,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
   const origin = useMemo(() => TURKISH_CITIES.find(city => city.name === originName), [originName]);
+  const routeSelectionStatusId = originName === destinationName ? 'route-weather-same-city' : undefined;
   const destination = useMemo(
     () => TURKISH_CITIES.find(city => city.name === destinationName),
     [destinationName]
@@ -148,6 +149,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             {t('hava81.route.origin')}
             <select
               value={originName}
+              aria-describedby={routeSelectionStatusId}
               onChange={e => {
                 setOriginName(e.target.value);
                 invalidateRequest();
@@ -171,6 +173,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             {t('hava81.route.destination')}
             <select
               value={destinationName}
+              aria-describedby={routeSelectionStatusId}
               onChange={e => {
                 setDestinationName(e.target.value);
                 invalidateRequest();
@@ -198,7 +201,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             type="button"
             disabled={loading || originName === destinationName}
             aria-describedby={
-              originName === destinationName ? 'route-weather-same-city' : undefined
+              routeSelectionStatusId
             }
             onClick={() => void submit()}
           >
