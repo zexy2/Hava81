@@ -383,6 +383,9 @@ describe('Hava81 app integration', () => {
     expect(
       within(section!).queryByRole('button', { name: /tekrar dene/i })
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /saat aralıklarla tahmin|saatlik tahmin/i })
+    ).not.toBeInTheDocument();
   });
 
   it('opens saved cities without silently favoriting the current city', async () => {
