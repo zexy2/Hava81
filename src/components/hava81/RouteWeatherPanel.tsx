@@ -143,7 +143,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           ⌄
         </span>
       </summary>
-      <div className="route-weather__body">
+      <div className="route-weather__body" aria-busy={loading}>
         <div className="route-weather__form">
           <label>
             {t('hava81.route.origin')}

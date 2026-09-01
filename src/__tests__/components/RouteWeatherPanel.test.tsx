@@ -220,6 +220,7 @@ describe('RouteWeatherPanel', () => {
     const loadingButton = screen.getByRole('button', { name: 'Yükleniyor...' });
     expect(loadingButton).toBeDisabled();
     expect(loadingButton).toHaveAttribute('aria-busy', 'true');
+    expect(document.querySelector('.route-weather__body')).toHaveAttribute('aria-busy', 'true');
 
     fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
       target: { value: '2026-08-29T10:00' },
@@ -227,6 +228,7 @@ describe('RouteWeatherPanel', () => {
     const readyButton = screen.getByRole('button', { name: 'Koridoru kontrol et' });
     expect(readyButton).toBeEnabled();
     expect(readyButton).toHaveAttribute('aria-busy', 'false');
+    expect(document.querySelector('.route-weather__body')).toHaveAttribute('aria-busy', 'false');
 
     await act(async () => {
       resolveRoute({
