@@ -639,3 +639,7 @@ Autonomous host hygiene may remove rebuildable validation artifacts, or an entir
 ## 2026-09-01 — Route departure picker bounds refresh when the user returns to it
 
 Treat the native `datetime-local` min/max as presentation guardrails, not a mount-time snapshot. A long-lived Hava81 tab may remain open while the current time advances, so refresh the picker bounds when the departure control receives focus. Keep submit-time validation authoritative and use the same 18-hour route horizon constant for both layers; this changes neither modeled route weather nor provider/safety semantics.
+
+## 2026-09-01 — Runner shutdown regression gets an outer budget larger than its internal waits
+
+The Playwright SIGTERM regression intentionally allows up to 5 seconds for each of two descendant processes to disappear, so Vitest's default 5-second test timeout is internally inconsistent and can fail under host contention before the test's own bounded checks complete. Give only this regression a 12-second outer timeout; do not change production shutdown grace, descendant wait bounds, or CI job limits.
