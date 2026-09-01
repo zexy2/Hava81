@@ -298,6 +298,7 @@ export const tr = {
       title: 'Bugün ne yapacaksın?',
       subtitle: 'En fazla üç aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
       choose: 'Aktivite seçimi',
+      forecastStale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar aktivite önerileri gösterilmiyor.',
       limitReached:
         'Üç aktivite seçtin. Başka birini seçmek için önce seçili aktivitelerden birini kaldır.',
       names: {

@@ -298,6 +298,7 @@ export const en = {
       subtitle:
         'Pick up to three activities and Hava81 will re-score the same weather for your plan.',
       choose: 'Activity selection',
+      forecastStale: 'Forecast data is no longer fresh. Activity recommendations are hidden until new data arrives.',
       limitReached: 'Three activities are selected. Deselect one before choosing another.',
       names: {
         walk: 'Walk',

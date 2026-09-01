@@ -701,3 +701,7 @@ City comparison is a decision surface, so favorite ordering must not break a gen
 ## 2026-09-02 — Commute guidance must disappear when its forecast evidence expires
 
 The saved commute planner is a modeled decision surface, so a recommendation must not remain actionable after the forecast evidence that produced it crosses its provider freshness boundary. Pass the exact displayed forecast metadata into the planner, use provider `freshForSeconds` when present with the API's 30-minute forecast fallback, reject timestamps more than 60 seconds in the future, and fail closed when metadata is missing or expired. Re-evaluate at the expiry boundary and again when a backgrounded tab becomes visible; do not refresh timestamps, fetch implicitly, extrapolate stale hourly values, or change the user's saved commute clocks.
+
+## 2026-09-02 — Activity recommendations fail closed when forecast evidence expires
+
+Activity scores and best-time windows are modeled guidance derived from the hourly forecast, so they must not remain actionable after that evidence leaves its provider freshness window. Pass the exact displayed forecast metadata into the activity planner, honor provider `freshForSeconds` with the API's 30-minute forecast fallback, reject timestamps more than 60 seconds in the future, and hide the modeled recommendations when metadata is missing, invalid, or stale. Re-evaluate at the expiry boundary and when a throttled background tab becomes visible without refreshing timestamps, fetching implicitly, changing activity thresholds, or synthesizing weather.
