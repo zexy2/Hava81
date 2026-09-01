@@ -92,13 +92,23 @@ test('tablet decision alerts wrap instead of clipping at 200% text size', async 
       panelScrollWidth: element.scrollWidth,
       panelLeft: panelRect.left,
       panelRight: panelRect.right,
+      copyLeft: copy.left,
       copyRight: copy.right,
+      copyTop: copy.top,
+      copyBottom: copy.bottom,
       buttonLeft: button.left,
       buttonRight: button.right,
       buttonTop: button.top,
-      copyBottom: copy.bottom,
+      buttonBottom: button.bottom,
+      buttonHeight: button.height,
     };
   });
+
+  const contentDoesNotOverlap =
+    layout.buttonLeft >= layout.copyRight - 1 ||
+    layout.buttonTop >= layout.copyBottom - 1 ||
+    layout.buttonRight <= layout.copyLeft + 1 ||
+    layout.buttonBottom <= layout.copyTop + 1;
 
   expect(layout.documentScrollWidth).toBeLessThanOrEqual(layout.viewportWidth + 1);
   expect(layout.panelScrollWidth).toBeLessThanOrEqual(layout.panelClientWidth + 1);
@@ -107,5 +117,6 @@ test('tablet decision alerts wrap instead of clipping at 200% text size', async 
   expect(layout.copyRight).toBeLessThanOrEqual(layout.panelRight + 1);
   expect(layout.buttonLeft).toBeGreaterThanOrEqual(layout.panelLeft - 1);
   expect(layout.buttonRight).toBeLessThanOrEqual(layout.panelRight + 1);
-  expect(layout.buttonTop).toBeGreaterThanOrEqual(layout.copyBottom - 1);
+  expect(layout.buttonHeight).toBeGreaterThanOrEqual(44);
+  expect(contentDoesNotOverlap).toBe(true);
 });
