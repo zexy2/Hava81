@@ -50,6 +50,11 @@ interface UseWeatherReturn {
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 const MAX_CACHE_FUTURE_SKEW_MS = 60_000;
+const isWeatherResultStale = (lastUpdated: Date | null, now = Date.now()): boolean => {
+  if (!lastUpdated) return true;
+  const age = now - lastUpdated.getTime();
+  return age < -MAX_CACHE_FUTURE_SKEW_MS || age > STALE_TIME;
+};
 const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
 const canonicalCityByIdentity = new Map(
   TURKISH_CITIES.map(city => [cityIdentity(city.name), city.name] as const)
@@ -355,7 +360,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   }, [weatherAsync, locationAsync]);
 
   // Check if data is stale
-  const isStale = lastUpdated ? Date.now() - lastUpdated.getTime() > STALE_TIME : true;
+  const isStale = isWeatherResultStale(lastUpdated);
 
   // Fetch initial city weather
   useEffect(() => {
@@ -406,8 +411,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       if (
         document.visibilityState !== 'visible' ||
         navigator.onLine === false ||
-        !lastUpdated ||
-        Date.now() - lastUpdated.getTime() <= STALE_TIME ||
+        !isWeatherResultStale(lastUpdated) ||
         weatherAsync.isLoading ||
         locationAsync.isLoading
       ) {
