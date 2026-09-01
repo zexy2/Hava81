@@ -203,6 +203,47 @@ describe('DecisionAlertsPanel', () => {
     ).toBe(false);
   });
 
+  it('keeps alert delivery single-flight while service-worker delivery is pending', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    let resolveDelivery!: () => void;
+    const deliveryPromise = new Promise<void>(resolve => {
+      resolveDelivery = resolve;
+    });
+    const showNotification = vi.fn(() => deliveryPromise);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { ready: Promise.resolve({ showNotification }) },
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <DecisionAlertsPanel
+        weather={{
+          ...weather,
+          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+        }}
+        hourly={rainyHourly}
+      />
+    );
+    await Promise.resolve();
+    expect(showNotification).toHaveBeenCalledTimes(1);
+
+    resolveDelivery();
+    await waitFor(() =>
+      expect(
+        Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+          key?.startsWith('hava81-alert-sent:')
+        )
+      ).toBe(true)
+    );
+  });
+
   it('fails closed when alert dedupe storage becomes unavailable', async () => {
     const originalGetItem = Storage.prototype.getItem;
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
