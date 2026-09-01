@@ -38,6 +38,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [departure, setDeparture] = useState(() =>
     toTurkeyLocalInputValue(new Date(Date.now() + 60 * 60_000))
   );
+  const [departureBoundsNow, setDepartureBoundsNow] = useState(() => Date.now());
   const [result, setResult] = useState<RouteWeatherResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -196,8 +197,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             <input
               type="datetime-local"
               value={departure}
-              min={toTurkeyLocalInputValue(new Date())}
-              max={toTurkeyLocalInputValue(new Date(Date.now() + 18 * 60 * 60_000))}
+              min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
+              max={toTurkeyLocalInputValue(new Date(departureBoundsNow + ROUTE_MAX_DEPARTURE_MS))}
+              onFocus={() => setDepartureBoundsNow(Date.now())}
               onChange={e => {
                 setDeparture(e.target.value);
                 invalidateRequest();

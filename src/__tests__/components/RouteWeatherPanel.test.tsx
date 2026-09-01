@@ -26,6 +26,26 @@ describe('RouteWeatherPanel', () => {
     await i18n.changeLanguage('tr');
   });
 
+  it('refreshes the native departure bounds when the control is focused later', async () => {
+    const initialNow = new Date('2026-09-01T09:00:00.000Z').getTime();
+    const laterNow = new Date('2026-09-01T12:30:00.000Z').getTime();
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(initialNow);
+
+    renderPanel();
+    const user = userEvent.setup();
+    await user.click(screen.getByText('Rota havası'));
+    const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
+    expect(departureInput).toHaveAttribute('min', '2026-09-01T12:00');
+    expect(departureInput).toHaveAttribute('max', '2026-09-02T06:00');
+
+    nowSpy.mockReturnValue(laterNow);
+    fireEvent.focus(departureInput);
+
+    expect(departureInput).toHaveAttribute('min', '2026-09-01T15:30');
+    expect(departureInput).toHaveAttribute('max', '2026-09-02T09:30');
+    nowSpy.mockRestore();
+  });
+
   it('swaps origin and destination with one action', async () => {
     const user = userEvent.setup();
     renderPanel();
