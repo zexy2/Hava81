@@ -265,6 +265,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     deserializer: deserializeWeatherCache,
   });
   const previousLanguageRef = useRef(language);
+  const activeSourceRef = useRef<'city' | 'location'>('city');
 
   // Async weather fetching
   const weatherAsync = useAsync(
@@ -308,6 +309,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     },
     {
       onSuccess: data => {
+        activeSourceRef.current = 'location';
         // Keep the existing city visible while location is pending, then invalidate
         // any older city request only when a real location result is ready to replace it.
         weatherAsync.reset();
@@ -327,6 +329,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       const targetCity = cityName ?? city;
       if (!targetCity.trim()) return null;
 
+      activeSourceRef.current = 'city';
       // City search is a handoff from location mode. Clear and invalidate any
       // existing/in-flight location result so it cannot remain visible or win a late race.
       locationAsync.reset();
@@ -396,7 +399,10 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       // Do not preserve it across a language handoff.
       weatherAsync.reset();
       locationAsync.reset();
-      fetchWeather(activeCity);
+      // Refresh provider-localized text without changing whether the user's active
+      // source is an explicit city or current location. This avoids re-prompting for
+      // geolocation on a language toggle while preserving later location refreshes.
+      void weatherAsync.execute(activeCity);
     }
     // Only language changes should trigger this refresh; async state objects
     // intentionally stay out of the dependency list.
@@ -418,7 +424,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
         return;
       }
 
-      if (locationAsync.data) {
+      if (activeSourceRef.current === 'location') {
         void fetchCurrentLocation();
         return;
       }
