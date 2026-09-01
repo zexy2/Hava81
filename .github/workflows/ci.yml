@@ -80,6 +80,8 @@ jobs:
         run: test -z "$(find dist -type f -name *.map -print -quit)"
       - name: Verify Pages asset-retention logic
         run: python3 scripts/test_prepare_pages_asset_retention.py
+      - name: Verify generated-shell asset discovery
+        run: python3 scripts/test_list_html_assets.py
       - uses: actions/upload-artifact@v7
         with:
           name: dist
