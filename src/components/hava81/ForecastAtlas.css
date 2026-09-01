@@ -8,11 +8,12 @@
   --forecast-saffron: var(--saffron-signal, #e7a531);
 
   color: var(--forecast-ink);
-  background: var(--forecast-paper);
-  border: 1px solid var(--forecast-line);
-  border-radius: var(--radius-lg, 12px);
-  padding: 16px;
-  box-shadow: var(--shadow-card);
+  background: transparent;
+  border-block: 1px solid var(--forecast-line);
+  border-inline: 0;
+  border-radius: 0;
+  padding: 20px 0;
+  box-shadow: none;
   font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
   container-type: inline-size;
 }
@@ -96,11 +97,12 @@
 
 .hava81-forecast-atlas__range {
   display: flex;
-  gap: 4px;
+  gap: 0;
   width: 100%;
   min-width: 0;
   overflow-x: auto;
-  padding: 2px 10px 4px 1px;
+  padding: 0 10px 0 0;
+  border-block: 1px solid var(--forecast-line);
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   overscroll-behavior-inline: contain;
@@ -115,11 +117,12 @@
   width: auto;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid color-mix(in srgb, var(--forecast-line) 84%, transparent);
-  border-radius: 999px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   color: var(--forecast-muted);
-  background: color-mix(in srgb, var(--forecast-field) 86%, transparent);
+  background: transparent;
+  border: 0;
+  border-block-end: 3px solid transparent;
+  border-radius: 0;
   scroll-snap-align: start;
   font: inherit;
   font-size: 0.75rem;
@@ -128,7 +131,11 @@
   transition:
     color 140ms ease-out,
     background-color 140ms ease-out,
-    box-shadow 140ms ease-out;
+    border-color 140ms ease-out;
+}
+
+.hava81-forecast-atlas__range-button + .hava81-forecast-atlas__range-button {
+  border-inline-start: 1px solid color-mix(in srgb, var(--forecast-line) 84%, transparent);
 }
 
 .hava81-forecast-atlas__range-button:hover {
@@ -137,12 +144,8 @@
 
 .hava81-forecast-atlas__range-button[aria-pressed='true'] {
   color: var(--forecast-teal);
-  background: var(--forecast-paper);
-  border-color: color-mix(in srgb, var(--forecast-teal) 56%, var(--forecast-line));
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--forecast-teal) 22%, transparent),
-    0 1px 2px rgb(14 44 50 / 0.08),
-    0 3px 10px rgb(14 44 50 / 0.06);
+  background: color-mix(in srgb, var(--forecast-teal) 7%, transparent);
+  border-block-end-color: var(--forecast-teal);
 }
 
 .hava81-forecast-atlas__range-button:focus-visible {
@@ -169,18 +172,20 @@
 .hava81-forecast-atlas__summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 1px;
   margin-bottom: 14px;
+  background: var(--forecast-line);
+  border-block: 1px solid var(--forecast-line);
 }
 
 .hava81-forecast-atlas__summary-item {
   display: grid;
   gap: 3px;
   min-width: 0;
-  padding: 10px 12px;
-  background: color-mix(in srgb, var(--forecast-field) 84%, transparent);
-  border: 1px solid color-mix(in srgb, var(--forecast-line) 72%, transparent);
-  border-radius: 10px;
+  padding: 11px 12px;
+  background: var(--forecast-paper);
+  border: 0;
+  border-radius: 0;
 }
 
 .hava81-forecast-atlas__summary-item span {
@@ -516,7 +521,7 @@
 
 @media (min-width: 40rem) {
   .hava81-forecast-atlas {
-    padding: 24px;
+    padding: 24px 0;
   }
 
   .hava81-forecast-atlas__header {
@@ -631,7 +636,7 @@
 @media (forced-colors: active) {
   .hava81-forecast-atlas__range-button[aria-pressed='true'] {
     color: Highlight;
-    border-color: Highlight;
+    border: 2px solid Highlight;
     text-decoration: underline 2px;
     text-underline-offset: 4px;
   }
