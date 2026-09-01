@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
@@ -248,6 +248,32 @@ describe('WeatherDecisionField daily range', () => {
     const section = container.querySelector('.hava81-decision-field');
     expect(section).toHaveAttribute('aria-labelledby');
     expect(section).not.toHaveAttribute('aria-live');
+  });
+
+  it('advances freshness text at the next minute boundary without waiting a full minute from mount', async () => {
+    vi.setSystemTime(new Date('2026-08-29T13:00:30Z'));
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{
+            ...weather,
+            meta: {
+              ...weather.meta,
+              fetchedAt: new Date('2026-08-29T13:00:00Z'),
+            },
+          }}
+          hourly={[]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('şimdi güncellendi')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(31_000);
+    });
+
+    expect(screen.getByText('1 dk önce')).toBeInTheDocument();
   });
 
   it('does not present a far-future fetchedAt timestamp as freshly updated', () => {

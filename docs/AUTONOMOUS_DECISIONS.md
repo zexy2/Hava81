@@ -643,3 +643,7 @@ Treat the native `datetime-local` min/max as presentation guardrails, not a moun
 ## 2026-09-01 — Runner shutdown regression gets an outer budget larger than its internal waits
 
 The Playwright SIGTERM regression intentionally allows up to 5 seconds for each of two descendant processes to disappear, so Vitest's default 5-second test timeout is internally inconsistent and can fail under host contention before the test's own bounded checks complete. Give only this regression a 12-second outer timeout; do not change production shutdown grace, descendant wait bounds, or CI job limits.
+
+## 2026-09-01 — Freshness labels refresh on clock boundaries, not mount-relative intervals
+
+Weather freshness text is derived from provider evidence timestamps and the current clock. Keep that evidence immutable, but schedule UI-only age-label refreshes at the next minute boundary and resync when a suspended tab becomes visible. This avoids up-to-59-second mount-relative drift without increasing polling or synthesizing weather data.
