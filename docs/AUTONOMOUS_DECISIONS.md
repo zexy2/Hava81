@@ -561,3 +561,6 @@ When a route-weather request is in flight, mark the route content body `aria-bus
 
 ## 2026-09-01 14:00 TRT — browser GET cache retention
 - Keep the browser response cache freshness window unchanged, but bound retained response objects to 128 fresh GET keys and prune expired/future-skewed entries on successful cache writes. Cache eviction may cause an older key to refetch, but must never make stale data live longer or fabricate fallback data.
+
+## 2026-09-01 — Hava81 shortcuts must not override browser bookmark or hard refresh
+Do not bind hidden application actions to standard browser recovery/navigation commands such as `Ctrl/Cmd+D` (bookmark) or `Ctrl/Cmd+Shift+R` (hard reload). Favorite toggling and weather refresh already have visible controls, while browser bookmark and hard-refresh behavior is user-agent functionality Hava81 should preserve. Keep only deliberate, discoverable app shortcuts that do not remove important browser escape/recovery paths.

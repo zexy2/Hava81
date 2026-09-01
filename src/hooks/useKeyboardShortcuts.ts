@@ -113,8 +113,6 @@ export const createAppShortcuts = (actions: {
   openSearch?: () => void;
   openSettings?: () => void;
   closeModal?: () => void;
-  refreshData?: () => void;
-  toggleFavorite?: () => void;
   navigateNext?: () => void;
   navigatePrev?: () => void;
 }): KeyboardShortcut[] => {
@@ -143,25 +141,6 @@ export const createAppShortcuts = (actions: {
       key: 'Escape',
       action: actions.closeModal,
       description: 'Kapat',
-    });
-  }
-
-  if (actions.refreshData) {
-    shortcuts.push({
-      key: 'r',
-      ctrlKey: true,
-      shiftKey: true,
-      action: actions.refreshData,
-      description: 'Verileri yenile',
-    });
-  }
-
-  if (actions.toggleFavorite) {
-    shortcuts.push({
-      key: 'd',
-      ctrlKey: true,
-      action: actions.toggleFavorite,
-      description: 'Favorilere ekle/çıkar',
     });
   }
 

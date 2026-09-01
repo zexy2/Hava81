@@ -1,6 +1,6 @@
 import { fireEvent, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { createAppShortcuts, useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
 describe('useKeyboardShortcuts', () => {
   it('does not steal matching shortcuts from a focused select control', () => {
@@ -37,4 +37,28 @@ describe('useKeyboardShortcuts', () => {
     expect(action).toHaveBeenCalledTimes(1);
     select.remove();
   });
+
+  it('does not override standard browser bookmark or hard-refresh shortcuts', () => {
+    const shortcuts = createAppShortcuts({
+      openSearch: vi.fn(),
+      openSettings: vi.fn(),
+      closeModal: vi.fn(),
+    });
+
+    expect(shortcuts).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'd', ctrlKey: true })])
+    );
+    expect(shortcuts).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'r', ctrlKey: true, shiftKey: true }),
+      ])
+    );
+    expect(shortcuts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'k', ctrlKey: true }),
+        expect.objectContaining({ key: ',', ctrlKey: true }),
+      ])
+    );
+  });
+
 });
