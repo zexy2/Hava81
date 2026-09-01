@@ -630,7 +630,11 @@ const App: React.FC = () => {
 
                 {forecast.hourly.length > 0 && (
                   <Suspense fallback={null}>
-                    <CommutePlanPanel weather={weather} hourly={forecast.hourly} />
+                    <CommutePlanPanel
+                      weather={weather}
+                      hourly={forecast.hourly}
+                      forecastMeta={forecast.displayMeta ?? forecast.meta}
+                    />
                   </Suspense>
                 )}
 

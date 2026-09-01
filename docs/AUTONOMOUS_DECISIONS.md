@@ -697,3 +697,7 @@ An alert candidate is derived from hourly forecast evidence, so absence of `Fore
 ## 2026-09-02 — Equal comparison scores must be presented as a tie, not an arbitrary winner
 
 City comparison is a decision surface, so favorite ordering must not break a genuine score tie. When multiple successfully loaded cities share the highest Hava81 daily-plan score, present them explicitly as tied leaders and highlight each tied city. Keep a single winner only when exactly one row has the top score. This changes no score formula, weather evidence, provider data, activity model, or safety semantics.
+
+## 2026-09-02 — Commute guidance must disappear when its forecast evidence expires
+
+The saved commute planner is a modeled decision surface, so a recommendation must not remain actionable after the forecast evidence that produced it crosses its provider freshness boundary. Pass the exact displayed forecast metadata into the planner, use provider `freshForSeconds` when present with the API's 30-minute forecast fallback, reject timestamps more than 60 seconds in the future, and fail closed when metadata is missing or expired. Re-evaluate at the expiry boundary and again when a backgrounded tab becomes visible; do not refresh timestamps, fetch implicitly, extrapolate stale hourly values, or change the user's saved commute clocks.

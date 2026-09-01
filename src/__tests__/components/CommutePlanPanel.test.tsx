@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { CommutePlanPanel } from '../../components/hava81/CommutePlanPanel';
 import { SettingsProvider } from '../../context';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -26,6 +26,14 @@ const weather: NormalizedWeatherData = {
   clouds: 5,
   meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
 };
+
+const freshForecastMeta = (freshForSeconds = 1_800): ForecastMeta => ({
+  provider: 'OpenMeteo',
+  fetchedAt: new Date(),
+  timezoneOffsetSeconds: 10800,
+  intervalHours: 3,
+  freshForSeconds,
+});
 
 const hourly: HourlyForecast[] = [
   { time: new Date('2026-08-29T06:00:00Z'), temp: 23, pop: 0.1, windSpeed: 4, icon: '01d' },
@@ -50,7 +58,7 @@ describe('CommutePlanPanel', () => {
   it('turns saved leave/return times into a practical preparation decision', () => {
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={hourly} />
+        <CommutePlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -82,7 +90,7 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={twoDayHourly} />
+        <CommutePlanPanel weather={weather} hourly={twoDayHourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
     fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
@@ -97,6 +105,25 @@ describe('CommutePlanPanel', () => {
     expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Paz 08:30 → Paz 18:00');
   });
 
+  it('hides a commute recommendation as soon as its forecast evidence expires', async () => {
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta(30)} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '18:00' } });
+    expect(screen.getByRole('status')).toHaveTextContent('Şemsiyeyi al');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_101);
+    });
+
+    expect(screen.getByText(/Tahmin verisi güncelliğini yitirdi/i)).toBeInTheDocument();
+    expect(screen.queryByText('Şemsiyeyi al')).not.toBeInTheDocument();
+  });
+
   it('scopes a stable preparation message to the signals the advice actually checks', () => {
     const mildHourly: HourlyForecast[] = [
       { time: new Date('2026-08-29T06:00:00Z'), temp: 22, pop: 0.05, windSpeed: 3, icon: '01d' },
@@ -105,7 +132,7 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={mildHourly} />
+        <CommutePlanPanel weather={weather} hourly={mildHourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -138,7 +165,7 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={measurableRain} />
+        <CommutePlanPanel weather={weather} hourly={measurableRain} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -172,7 +199,7 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={rainy} />
+        <CommutePlanPanel weather={weather} hourly={rainy} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -203,7 +230,7 @@ describe('CommutePlanPanel', () => {
     ];
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={hotHourly} />
+        <CommutePlanPanel weather={weather} hourly={hotHourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -219,7 +246,7 @@ describe('CommutePlanPanel', () => {
   it('makes a partial commute time selection explicit and associates it with both inputs', () => {
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={hourly} />
+        <CommutePlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -242,7 +269,7 @@ describe('CommutePlanPanel', () => {
   it('explains when both saved times are outside available forecast coverage', () => {
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={[]} />
+        <CommutePlanPanel weather={weather} hourly={[]} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -276,7 +303,7 @@ describe('CommutePlanPanel', () => {
     ];
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={improving} />
+        <CommutePlanPanel weather={weather} hourly={improving} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
