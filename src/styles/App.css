@@ -76,6 +76,7 @@
   position: relative;
   isolation: isolate;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: clip;
   color: var(--color-atlas-ink);
   background: var(--color-atlas-field);
@@ -505,6 +506,7 @@ textarea:focus-visible {
 .atlas-main {
   width: min(100%, 90rem);
   min-height: calc(100vh - 10rem);
+  min-height: calc(100dvh - 10rem);
   padding: var(--space-xl);
   margin-inline: auto;
   scroll-margin-top: 6rem;
@@ -829,6 +831,7 @@ textarea:focus-visible {
 
 .app-fatal {
   min-height: 100vh;
+  min-height: 100dvh;
   padding: var(--space-xl);
   color: #142524;
   background: #f3f6f4;
@@ -1040,6 +1043,7 @@ kbd {
 
   .atlas-main {
     min-height: calc(100vh - 8rem);
+    min-height: calc(100dvh - 8rem);
     padding: var(--space-md);
     scroll-margin-top: var(--space-sm);
   }

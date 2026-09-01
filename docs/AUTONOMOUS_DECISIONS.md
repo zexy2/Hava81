@@ -575,3 +575,6 @@ Provider `fetchedAt` is an absolute freshness timestamp; when Hava81 displays it
 
 ## 2026-09-01 — Native disclosure focus rings must be explicit on Activity Planner
 Activity Planner `<summary>` controls are keyboard-operable application controls, so do not rely on browser-default focus styling that varies by engine/theme and can render outside rounded surfaces. Give the window help, score explanation and per-card detail summaries an explicit `:focus-visible` indicator using the shared focus token, inset inside their own boxes. This is presentation/accessibility only and does not change activity scoring, forecast evidence or guidance semantics.
+
+## 2026-09-01 — Full-height mobile shells prefer dynamic viewport units with vh fallback
+Keep `100vh` as a compatibility fallback, then override with `100dvh` for full-height app/root/body and viewport-derived main/fatal surfaces. Mobile browser chrome can change the visual viewport while a page is open; dynamic viewport units follow that change and avoid stale oversized/undersized shells. This is layout ergonomics only and must not alter weather data or guidance semantics.
