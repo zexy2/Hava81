@@ -51,9 +51,21 @@ type BootstrapWeatherRequest = {
   promise: Promise<SerializedWeatherData | null>;
 };
 
+type BootstrapHourlyResult = {
+  lat: number;
+  lon: number;
+  response: SerializedHourlyForecast;
+};
+
+type BootstrapHourlyRequest = {
+  lang: string;
+  promise: Promise<BootstrapHourlyResult | null>;
+};
+
 declare global {
   interface Window {
     __HAVA81_BOOTSTRAP_WEATHER__?: BootstrapWeatherRequest;
+    __HAVA81_BOOTSTRAP_HOURLY__?: BootstrapHourlyRequest;
   }
 }
 
@@ -517,6 +529,24 @@ const takeBootstrapWeather = (
   return bootstrap.promise;
 };
 
+const takeBootstrapHourly = (
+  lat: number,
+  lon: number,
+  lang: string
+): Promise<SerializedHourlyForecast | null> | null => {
+  if (typeof window === 'undefined') return null;
+  const bootstrap = window.__HAVA81_BOOTSTRAP_HOURLY__;
+  if (!bootstrap || bootstrap.lang !== lang) return null;
+  delete window.__HAVA81_BOOTSTRAP_HOURLY__;
+  return bootstrap.promise.then(result => {
+    if (!result) return null;
+    const sameCoordinate = (actual: number, expected: number) => Math.abs(actual - expected) < 1e-6;
+    return sameCoordinate(result.lat, lat) && sameCoordinate(result.lon, lon)
+      ? result.response
+      : null;
+  });
+};
+
 const reviveAirQualityMeta = (meta: SerializedMeta): WeatherDataMeta => ({
   ...meta,
   fetchedAt: reviveWeatherDate(meta.fetchedAt, 'airQuality.meta.fetchedAt'),
@@ -689,11 +719,15 @@ export const weatherService = {
     lon: number,
     lang = DEFAULT_WEATHER_PARAMS.lang
   ): Promise<{ daily?: DailyForecast[]; hourly: HourlyForecast[]; meta: ForecastMeta }> => {
-    const rawResponse = await httpClient.get<unknown>(API_ENDPOINTS.weather.hourly, {
-      lat,
-      lon,
-      lang,
-    });
+    const bootstrapPromise = takeBootstrapHourly(lat, lon, lang);
+    const bootstrapResponse = bootstrapPromise ? await bootstrapPromise : null;
+    const rawResponse =
+      bootstrapResponse ??
+      (await httpClient.get<unknown>(API_ENDPOINTS.weather.hourly, {
+        lat,
+        lon,
+        lang,
+      }));
     const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
     const meta = reviveForecastMeta(response.meta, 'hourly.meta');
     response.daily?.slice(0, 5).forEach((item, index) =>

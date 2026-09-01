@@ -44,6 +44,46 @@ const serializedWeather = {
   },
 };
 
+
+const serializedHourlyForecast = {
+  daily: [
+    {
+      date: '2026-08-29',
+      tempMin: 20,
+      tempMax: 24.6,
+      icon: '04d' as const,
+      description: 'kapalı',
+      pop: 23,
+      precipitationMm: 1.7,
+    },
+  ],
+  hourly: [
+    {
+      time: '2026-08-28T18:00:00.000Z',
+      temp: 24,
+      icon: '01d' as const,
+      description: 'açık',
+      pop: 35,
+      windSpeed: 3.2,
+      apparentTemperature: 25.1,
+      humidity: 58,
+      precipitationMm: 0.4,
+      windGust: 7.2,
+      uvIndex: 5.7,
+      visibility: 22000,
+      weatherCode: 1,
+    },
+  ],
+  meta: {
+    provider: 'Open-Meteo',
+    attribution: 'Open-Meteo · CC BY 4.0',
+    sourceUrl: 'https://open-meteo.com/',
+    fetchedAt: '2026-08-28T17:00:00.000Z',
+    timezoneOffsetSeconds: 10800,
+    intervalHours: 1,
+  },
+};
+
 interface InvalidForecastFields {
   dailyPop?: number;
   hourlyPop?: number;
@@ -153,6 +193,7 @@ describe('weatherService BFF client', () => {
   beforeEach(() => {
     mockGet.mockReset();
     Reflect.deleteProperty(window, '__HAVA81_BOOTSTRAP_WEATHER__');
+    Reflect.deleteProperty(window, '__HAVA81_BOOTSTRAP_HOURLY__');
   });
 
   afterEach(() => {
@@ -659,45 +700,43 @@ describe('weatherService BFF client', () => {
     });
   });
 
+  it('consumes a matching early hourly bootstrap without duplicating the BFF request', async () => {
+    window.__HAVA81_BOOTSTRAP_HOURLY__ = {
+      lang: 'tr',
+      promise: Promise.resolve({
+        lat: 41.01,
+        lon: 28.97,
+        response: serializedHourlyForecast,
+      }),
+    };
+
+    const result = await weatherService.getHourlyForecast(41.01, 28.97, 'tr');
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(result.hourly[0].time).toBeInstanceOf(Date);
+    expect(result.hourly[0].pop).toBe(0.35);
+    expect(window.__HAVA81_BOOTSTRAP_HOURLY__).toBeUndefined();
+  });
+
+  it('falls back to the BFF when an early hourly bootstrap belongs to different coordinates', async () => {
+    window.__HAVA81_BOOTSTRAP_HOURLY__ = {
+      lang: 'tr',
+      promise: Promise.resolve({
+        lat: 38.42,
+        lon: 27.14,
+        response: serializedHourlyForecast,
+      }),
+    };
+    mockGet.mockResolvedValue(serializedHourlyForecast);
+
+    await weatherService.getHourlyForecast(41.01, 28.97, 'tr');
+
+    expect(mockGet).toHaveBeenCalledWith('/weather/hourly', { lat: 41.01, lon: 28.97, lang: 'tr' });
+  });
+
   it('revives the one-hour forecast and calendar-day extrema returned by the BFF', async () => {
-    mockGet.mockResolvedValue({
-      daily: [
-        {
-          date: '2026-08-29',
-          tempMin: 20,
-          tempMax: 24.6,
-          icon: '04d',
-          description: 'kapalı',
-          pop: 23,
-          precipitationMm: 1.7,
-        },
-      ],
-      hourly: [
-        {
-          time: '2026-08-28T18:00:00.000Z',
-          temp: 24,
-          icon: '01d',
-          description: 'açık',
-          pop: 35,
-          windSpeed: 3.2,
-          apparentTemperature: 25.1,
-          humidity: 58,
-          precipitationMm: 0.4,
-          windGust: 7.2,
-          uvIndex: 5.7,
-          visibility: 22000,
-          weatherCode: 1,
-        },
-      ],
-      meta: {
-        provider: 'Open-Meteo',
-        attribution: 'Open-Meteo · CC BY 4.0',
-        sourceUrl: 'https://open-meteo.com/',
-        fetchedAt: '2026-08-28T17:00:00.000Z',
-        timezoneOffsetSeconds: 10800,
-        intervalHours: 1,
-      },
-    });
+    mockGet.mockResolvedValue(serializedHourlyForecast);
+
 
     const result = await weatherService.getHourlyForecast(41.01, 28.97, 'tr');
 
