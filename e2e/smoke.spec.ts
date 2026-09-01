@@ -387,6 +387,50 @@ test('forced colors keeps the active saved city visibly distinct', async ({ page
   expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
 });
 
+test('forced colors keeps the active search suggestion visibly distinct', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'forced-colors search suggestion regression');
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/istanbul');
+
+  const input = page.locator('.search-bar__input');
+  await input.fill('is');
+  const suggestions = page.locator('.search-bar__suggestion');
+  await expect(suggestions.first()).toBeVisible();
+  await input.press('ArrowDown');
+
+  const selected = page.locator('.search-bar__suggestion[aria-selected="true"]');
+  const inactive = page.locator('.search-bar__suggestion[aria-selected="false"]').first();
+  await expect(selected).toBeVisible();
+  await expect(inactive).toBeVisible();
+  await expect(input).toHaveAttribute('aria-activedescendant', await selected.getAttribute('id'));
+
+  const state = await selected.evaluate((element, inactiveElement) => {
+    if (!(inactiveElement instanceof HTMLElement)) throw new Error('Missing inactive search suggestion');
+    const selectedStyle = getComputedStyle(element);
+    const inactiveStyle = getComputedStyle(inactiveElement);
+    return {
+      forcedColors: matchMedia('(forced-colors: active)').matches,
+      selectedOutline: selectedStyle.outlineStyle,
+      selectedOutlineWidth: selectedStyle.outlineWidth,
+      selectedDecoration: selectedStyle.textDecorationLine,
+      selectedThickness: selectedStyle.textDecorationThickness,
+      inactiveOutline: inactiveStyle.outlineStyle,
+      inactiveDecoration: inactiveStyle.textDecorationLine,
+      selectedHeight: element.getBoundingClientRect().height,
+      inactiveHeight: inactiveElement.getBoundingClientRect().height,
+    };
+  }, await inactive.elementHandle());
+
+  expect(state.forcedColors).toBe(true);
+  expect(state.selectedOutline).toBe('solid');
+  expect(state.selectedOutlineWidth).toBe('2px');
+  expect(state.selectedDecoration).toContain('underline');
+  expect(state.selectedThickness).toBe('2px');
+  expect(state.inactiveOutline).not.toBe('solid');
+  expect(state.inactiveDecoration).not.toContain('underline');
+  expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
+});
+
 test('keyboard map close restores focus to the map trigger', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map focus restoration regression');
   await page.goto('/istanbul');
