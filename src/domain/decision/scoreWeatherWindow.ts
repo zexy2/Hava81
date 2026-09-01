@@ -13,7 +13,7 @@ export interface ScoreWeatherWindowInput {
   humidity?: number;
   precipitationProbability?: number;
   precipitationMm?: number;
-  windSpeed?: number;
+  windSpeed: number;
   windGust?: number;
   airQualityIndex?: number;
   uvIndex?: number;
@@ -76,7 +76,7 @@ export const resolveApparentTemperature = ({
   temperature,
   apparentTemperature,
   humidity,
-  windSpeed = 0,
+  windSpeed,
 }: Pick<
   ScoreWeatherWindowInput,
   'temperature' | 'apparentTemperature' | 'humidity' | 'windSpeed'
@@ -161,7 +161,7 @@ export const scoreWeatherWindow = ({
   humidity,
   precipitationProbability,
   precipitationMm,
-  windSpeed = 0,
+  windSpeed,
   windGust,
   airQualityIndex,
   uvIndex,

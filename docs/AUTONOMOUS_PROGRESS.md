@@ -1824,3 +1824,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The amount-delta branch now runs only when both commute-window precipitation amounts are finite. Probability change detection remains unchanged and measured return precipitation still contributes to umbrella advice; only the unsupported amount comparison is suppressed.
 - Regression coverage confirms an unavailable outbound amount plus measured 0.4 mm return amount still yields `umbrella=consider` but no fabricated amount-increase change. Existing measured 0 → 0.4 mm behavior remains covered.
 - Gates pass: focused commute domain 9/9; TypeScript; ESLint; full frontend 55 files / 514 tests; production build + service-worker stamp + all 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`.
+
+## 2026-09-01 05:25 TRT — make verified wind mandatory inside the score engine
+- Continued independently on `automation/hava81-evidence-scan-0524` from exact main `0128a45bbd2f400c68e359126e6b7505458c2b24` while #506 main deployment and PR #507 CI ran.
+- Evidence-safety audit found the shared `ScoreWeatherWindowInput.windSpeed` contract was still optional and both apparent-temperature/scoring entry points defaulted missing wind to `0`, despite the normalized hourly/current producers already requiring and passing validated wind. That left a future internal call path able to turn missing wind into fabricated calm conditions.
+- Made `windSpeed` required at the score-engine type boundary and removed both internal zero defaults. All production call sites already satisfy the stronger contract, so scoring math and current outputs are unchanged; the change prevents future callers from silently omitting wind.
+- Gates pass on exact current-main base: TypeScript; ESLint; full frontend 55 files / 513 tests; production build + service-worker stamp + all 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`.
