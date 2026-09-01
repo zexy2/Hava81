@@ -1982,3 +1982,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - ComparePanel already clears stale cards and renders a localized live loading status when a comparison refresh begins, but the labeled comparison region itself did not expose the asynchronous replacement state. Added `aria-busy={loading}` to that region so assistive technology can distinguish settled comparison content from content currently being refreshed.
 - Regression coverage asserts `aria-busy=true` during the deliberately suspended changed-comparison request and `aria-busy=false` once rows are loaded. Focused ComparePanel 11/11, TypeScript, ESLint and `git diff --check` pass. No weather, scoring, provider, MGM, UV/AQI or safety semantics changed.
 - Next action: run full frontend/build/audit gates, then exact-main/lease recheck before commit/push/PR. If main advances, rebase and preserve append-only checkpoints first.
+
+## 2026-09-01 13:30 TRT — expose route-result replacement as busy
+- Continued in isolated worktree `/home/chatgpt/hava81-auto-run11-1329`, branch `automation/hava81-run11-1329`; rebased the uncommitted bounded change onto exact current main after PR #544 merged, without touching pending PR #545.
+- RouteWeatherPanel already disabled/marked the submit button busy and removed stale results while a fresh corridor request was loading. The result/content body itself did not communicate that replacement state, so added `aria-busy={loading}` to the route body.
+- Existing late-response regression now verifies the content body is busy during the suspended request and returns to `aria-busy=false` when changing departure invalidates that request. Focused RouteWeatherPanel 10/10, TypeScript, ESLint and `git diff --check` pass before the main rebase; rerun full gates on the rebased state before publishing.
+- No route score, weather values, forecast provider, departure horizon, MGM, UV/AQI or safety semantics changed.
