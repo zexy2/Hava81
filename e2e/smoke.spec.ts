@@ -595,15 +595,37 @@ test('keyboard map close restores focus to the map trigger', async ({ page }, te
   await page.keyboard.press('Enter');
 
   const mapRegion = page.locator('#weather-map-region');
+  const bottomNav = page.locator('.atlas-bottom-nav');
   await expect(mapRegion).toBeVisible();
   await expect(mapRegion).toBeFocused();
+  await expect(bottomNav).toBeHidden();
 
-  await page.keyboard.press('Tab');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const zoomIn = mapRegion.locator('.leaflet-control-zoom-in');
+  const attribution = mapRegion.locator('.weather-map__attribution a').first();
+  await expect(zoomIn).toBeVisible();
+  await expect(attribution).toBeVisible();
+
+  for (const control of [zoomIn, attribution]) {
+    await control.focus();
+    await page.waitForTimeout(150);
+    const isHitTarget = await control.evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return hit === element || element.contains(hit);
+    });
+    expect(isHitTarget).toBe(true);
+  }
+
   const close = mapRegion.getByRole('button', { name: 'Kapat' });
-  await expect(close).toBeFocused();
+  await close.focus();
   await page.keyboard.press('Enter');
 
   await expect(mapRegion).toBeHidden();
+  await expect(bottomNav).toBeVisible();
   await expect(mapTrigger).toBeFocused();
 });
 
