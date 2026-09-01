@@ -485,3 +485,6 @@ GitHub can expose multiple workflow runs for one commit. Operational merge/deplo
 
 ## 2026-09-01 — Lighthouse performance uses a hard floor plus a higher target
 CI Lighthouse performance is materially noisier than the other categories on GitHub-hosted runners: six recent successful main samples ranged from 69 to 97 while accessibility stayed 100, best-practices 96 and SEO 100. Treating the observed performance target as a hard pass/fail threshold would create flaky releases, but leaving it warning-only provides no catastrophic-regression protection. Use a 60 hard floor plus an 80 warning target for performance, and evidence-supported 95 hard floors for accessibility, best-practices and SEO. Log FCP/LCP/TBT/CLS/SI on every run so future optimization is driven by metrics rather than category-score cosmetics.
+
+## 2026-09-01 — Favorite city controls must expose visible temperature context
+Saved-city buttons render cached temperature as meaningful quick-decision context. An explicit `aria-label` overrides descendant text for assistive technology, so the accessible name must carry the same converted temperature/unit when available. Missing cached temperature must remain a city-only label rather than inventing a value. This is presentation/accessibility only; the underlying weather and conversion functions remain the source of truth.
