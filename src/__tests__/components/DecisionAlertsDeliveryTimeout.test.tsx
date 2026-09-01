@@ -46,6 +46,26 @@ describe('DecisionAlertsPanel stalled delivery', () => {
     localStorage.clear();
   });
 
+  it('falls back to direct Notification when the registration cannot show notifications', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { ready: Promise.resolve({}) },
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(notification).toHaveBeenCalledTimes(1);
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(true);
+  });
+
   it('releases the pending guard when showNotification never settles', async () => {
     const showNotification = vi.fn(() => new Promise<void>(() => {}));
     Object.defineProperty(navigator, 'serviceWorker', {

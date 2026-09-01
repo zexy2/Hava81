@@ -107,14 +107,18 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
             navigator.serviceWorker.ready,
             SERVICE_WORKER_READY_TIMEOUT_MS
           );
-          await withTimeout(
-            registration.showNotification(title, {
-              body,
-              tag: candidate.signature,
-              data: { url: window.location.href },
-            }),
-            NOTIFICATION_DELIVERY_TIMEOUT_MS
-          );
+          if (typeof registration.showNotification === 'function') {
+            await withTimeout(
+              registration.showNotification(title, {
+                body,
+                tag: candidate.signature,
+                data: { url: window.location.href },
+              }),
+              NOTIFICATION_DELIVERY_TIMEOUT_MS
+            );
+          } else {
+            new Notification(title, { body, tag: candidate.signature });
+          }
         } else {
           new Notification(title, { body, tag: candidate.signature });
         }
