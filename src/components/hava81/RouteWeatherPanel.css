@@ -17,6 +17,10 @@
 .route-weather summary::-webkit-details-marker {
   display: none;
 }
+.route-weather summary:focus-visible {
+  outline: 2px solid var(--color-aegean);
+  outline-offset: -2px;
+}
 .route-weather__chevron {
   display: grid;
   place-items: center;

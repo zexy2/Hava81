@@ -3095,6 +3095,22 @@ test('activity preference and time range change the personalized plan', async ({
   await expect(runCard.getByText(/Koşuda 10–22°C/)).toBeVisible();
 });
 
+test('route disclosure keeps a visible keyboard focus indicator', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single browser route focus regression');
+  await page.goto('/istanbul');
+
+  const summary = page.locator('.route-weather > summary');
+  await summary.focus();
+  await expect(summary).toBeFocused();
+  const focusStyle = await summary.evaluate(element => {
+    const style = getComputedStyle(element);
+    return { outlineStyle: style.outlineStyle, outlineWidth: style.outlineWidth, outlineOffset: style.outlineOffset };
+  });
+  expect(focusStyle.outlineStyle).not.toBe('none');
+  expect(parseFloat(focusStyle.outlineWidth)).toBeGreaterThanOrEqual(2);
+  expect(parseFloat(focusStyle.outlineOffset)).toBeLessThanOrEqual(-2);
+});
+
 test('route form reflows when enlarged text narrows its content box', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route text-resize container regression');
   await page.setViewportSize({ width: 1024, height: 900 });
