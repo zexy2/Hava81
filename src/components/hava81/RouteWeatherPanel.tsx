@@ -200,9 +200,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           <button
             type="button"
             disabled={loading || originName === destinationName}
-            aria-describedby={
-              routeSelectionStatusId
-            }
+            aria-busy={loading}
+            aria-describedby={routeSelectionStatusId}
             onClick={() => void submit()}
           >
             {loading ? t('common.loading') : t('hava81.route.check')}
