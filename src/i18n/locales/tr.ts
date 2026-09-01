@@ -285,6 +285,7 @@ export const tr = {
       noRain: 'Beklenmiyor',
       wind: 'Rüzgâr',
       empty: 'İki saati de seçtiğinde Hava81 bir sonraki çıkış–dönüş çiftini karşılaştıracak.',
+      incomplete: 'Planı hesaplamak için çıkış ve dönüş saatini birlikte seç.',
       forecastUnavailable:
         'Seçtiğin çıkış ve dönüş saatlerine yeterince yakın tahmin henüz yok. Tahmin kapsamı genişlediğinde plan otomatik olarak hesaplanacak.',
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',

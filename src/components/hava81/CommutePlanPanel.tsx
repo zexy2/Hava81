@@ -18,6 +18,8 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
   const { profile, setCommuteTime, clearCommuteTimes } = useDecisionProfile();
+  const hasPartialCommuteTime = Boolean(profile.commuteStart) !== Boolean(profile.commuteEnd);
+  const commuteIncompleteId = hasPartialCommuteTime ? 'commute-plan-incomplete' : undefined;
   const trackedPlanRef = useRef<string | null>(null);
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
   const plan = useMemo(
@@ -111,6 +113,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
           <input
             type="time"
             value={profile.commuteStart ?? ''}
+            aria-describedby={commuteIncompleteId}
             onChange={event => setCommuteTime('start', event.target.value || undefined)}
           />
         </label>
@@ -119,6 +122,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
           <input
             type="time"
             value={profile.commuteEnd ?? ''}
+            aria-describedby={commuteIncompleteId}
             onChange={event => setCommuteTime('end', event.target.value || undefined)}
           />
         </label>
@@ -209,10 +213,16 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
           </div>
         </>
       ) : (
-        <p className="commute-plan__empty">
+        <p
+          id={commuteIncompleteId}
+          className="commute-plan__empty"
+          role={hasPartialCommuteTime ? 'status' : undefined}
+        >
           {profile.commuteStart && profile.commuteEnd
             ? t('hava81.commute.forecastUnavailable')
-            : t('hava81.commute.empty')}
+            : hasPartialCommuteTime
+              ? t('hava81.commute.incomplete')
+              : t('hava81.commute.empty')}
         </p>
       )}
 

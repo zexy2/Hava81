@@ -517,3 +517,6 @@ When a responsive Hava81 surface intentionally uses horizontal overflow to prese
 
 ## 2026-09-01 — Non-interactive timeline scrollers need a keyboard entry point
 A horizontal weather timeline made of non-interactive cards cannot rely on child focus to expose off-screen content. Keep the labeled list semantics, make the scroll container itself keyboard-focusable, and render the focus indicator inside its clipped border so it remains visible.
+
+## 2026-09-01 — Partial commute time selections must be explicitly incomplete
+The commute planner calculates a decision only when both departure and return times are present. If exactly one bound is selected, render a distinct localized incomplete-state message and associate both time inputs with it via `aria-describedby`. Do not infer or auto-fill the missing time; once both values exist, remove that relationship and let the normal forecast/decision state take over. This is state clarity/accessibility only and does not change weather evidence, scoring, commute matching, or safety guidance.
