@@ -12,6 +12,21 @@ interface Props {
   airQuality?: AirQuality;
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
+const SERVICE_WORKER_READY_TIMEOUT_MS = 5_000;
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Timed out waiting for notification delivery')), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+};
 const readStorage = (key: string): string | null | undefined => {
   try {
     return localStorage.getItem(key);
@@ -87,7 +102,10 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     void (async () => {
       try {
         if ('serviceWorker' in navigator) {
-          const registration = await navigator.serviceWorker.ready;
+          const registration = await withTimeout(
+            navigator.serviceWorker.ready,
+            SERVICE_WORKER_READY_TIMEOUT_MS
+          );
           await registration.showNotification(title, {
             body,
             tag: candidate.signature,
