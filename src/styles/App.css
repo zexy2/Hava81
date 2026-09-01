@@ -650,8 +650,14 @@ textarea:focus-visible {
   }
 
   .atlas-message > div,
+  .atlas-message > p,
   .atlas-message__actions {
     min-width: 0;
+  }
+
+  .atlas-message > p {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .atlas-message__actions {
