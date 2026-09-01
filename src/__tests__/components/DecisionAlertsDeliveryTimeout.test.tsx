@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { DecisionAlertsPanel } from '../../components/hava81/DecisionAlertsPanel';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -26,6 +26,14 @@ const weather: NormalizedWeatherData = {
   meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
 };
 
+const freshForecastMeta = (): ForecastMeta => ({
+  provider: 'Open-Meteo',
+  fetchedAt: new Date(),
+  freshForSeconds: 1_800,
+  timezoneOffsetSeconds: 10800,
+  intervalHours: 1,
+});
+
 const rainyHourly: HourlyForecast[] = [
   { time: new Date('2026-08-28T10:00:00Z'), temp: 27, pop: 0.95, windSpeed: 4, icon: '10d' },
   { time: new Date('2026-08-28T13:00:00Z'), temp: 29, pop: 0.95, windSpeed: 5, icon: '10d' },
@@ -35,6 +43,8 @@ describe('DecisionAlertsPanel stalled delivery', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T09:00:00Z'));
+    weather.meta.fetchedAt = new Date();
+    weather.meta.freshForSeconds = 300;
     localStorage.setItem('hava81-alerts-v1', 'enabled');
   });
 
@@ -55,7 +65,7 @@ describe('DecisionAlertsPanel stalled delivery', () => {
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
     vi.stubGlobal('Notification', notification);
 
-    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
     await vi.advanceTimersByTimeAsync(0);
 
     expect(notification).toHaveBeenCalledTimes(1);
@@ -77,7 +87,7 @@ describe('DecisionAlertsPanel stalled delivery', () => {
     vi.stubGlobal('Notification', notification);
 
     const { rerender } = render(
-      <DecisionAlertsPanel weather={weather} hourly={rainyHourly} />
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />
     );
     await vi.advanceTimersByTimeAsync(0);
     expect(showNotification).toHaveBeenCalledTimes(1);
@@ -85,9 +95,10 @@ describe('DecisionAlertsPanel stalled delivery', () => {
     await vi.advanceTimersByTimeAsync(5_001);
     rerender(
       <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
         weather={{
           ...weather,
-          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+          meta: { ...weather.meta, fetchedAt: new Date() },
         }}
         hourly={rainyHourly}
       />

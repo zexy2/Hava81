@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { DecisionAlertsPanel } from '../../components/hava81/DecisionAlertsPanel';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -27,6 +27,14 @@ const weather: NormalizedWeatherData = {
   meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
 };
 
+const freshForecastMeta = (): ForecastMeta => ({
+  provider: 'Open-Meteo',
+  fetchedAt: new Date(),
+  freshForSeconds: 1_800,
+  timezoneOffsetSeconds: 10800,
+  intervalHours: 1,
+});
+
 const hourly: HourlyForecast[] = [
   { time: new Date('2026-08-28T10:00:00Z'), temp: 27, pop: 0.1, windSpeed: 4, icon: '01d' },
   { time: new Date('2026-08-28T13:00:00Z'), temp: 29, pop: 0.1, windSpeed: 5, icon: '01d' },
@@ -36,6 +44,8 @@ describe('DecisionAlertsPanel', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-08-28T09:00:00Z')); // 12:00 in İstanbul
+    weather.meta.fetchedAt = new Date();
+    weather.meta.freshForSeconds = 300;
   });
 
   afterEach(() => {
@@ -49,7 +59,7 @@ describe('DecisionAlertsPanel', () => {
   it('clearly distinguishes modeled alerts from official MGM warnings', () => {
     vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn() });
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
 
     expect(screen.getByText(/hava81 model rehberidir/i)).toHaveTextContent(
       /resmî MGM MeteoUyarı değildir/i
@@ -59,7 +69,7 @@ describe('DecisionAlertsPanel', () => {
   it('distinguishes an unsupported browser from blocked notification permission', () => {
     vi.stubGlobal('Notification', undefined);
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
@@ -74,7 +84,7 @@ describe('DecisionAlertsPanel', () => {
     const notificationApi = { permission: 'default' as NotificationPermission, requestPermission: vi.fn() };
     vi.stubGlobal('Notification', notificationApi);
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
     expect(screen.getByRole('button')).toBeEnabled();
 
     notificationApi.permission = 'denied';
@@ -90,7 +100,7 @@ describe('DecisionAlertsPanel', () => {
     const requestPermission = vi.fn();
     vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
@@ -109,7 +119,7 @@ describe('DecisionAlertsPanel', () => {
     const requestPermission = vi.fn(() => permissionPromise);
     vi.stubGlobal('Notification', { permission: 'default', requestPermission });
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -133,7 +143,7 @@ describe('DecisionAlertsPanel', () => {
       requestPermission: vi.fn().mockRejectedValue(new Error('prompt failed')),
     });
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -149,7 +159,7 @@ describe('DecisionAlertsPanel', () => {
     const requestPermission = vi.fn();
     vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
 
     const button = screen.getByRole('button');
     expect(button).toBeEnabled();
@@ -162,6 +172,24 @@ describe('DecisionAlertsPanel', () => {
     expect(requestPermission).not.toHaveBeenCalled();
   });
 
+  it('fails closed when forecast freshness metadata is unavailable', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(<DecisionAlertsPanel forecastMeta={null} weather={weather} hourly={rainyHourly} />);
+
+    await Promise.resolve();
+    expect(notification).not.toHaveBeenCalled();
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(false);
+  });
+
   it('does not mark a decision alert as sent when notification delivery fails', async () => {
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn(function NotificationMock() {
@@ -171,7 +199,7 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
 
     await waitFor(() => expect(notification).toHaveBeenCalled());
     expect(
@@ -198,14 +226,15 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
     await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
 
     rerender(
       <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
         weather={{
           ...weather,
-          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+          meta: { ...weather.meta, fetchedAt: new Date() },
         }}
         hourly={rainyHourly}
       />
@@ -236,14 +265,15 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
 
     rerender(
       <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
         weather={{
           ...weather,
-          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+          meta: { ...weather.meta, fetchedAt: new Date() },
         }}
         hourly={rainyHourly}
       />
@@ -276,16 +306,17 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
     await Promise.resolve();
     await Promise.resolve();
 
     rerender(
       <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
         weather={{
           ...weather,
-          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+          meta: { ...weather.meta, fetchedAt: new Date() },
         }}
         hourly={rainyHourly}
       />
@@ -311,16 +342,17 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
     await Promise.resolve();
     expect(readyReads).toBe(1);
 
     await vi.advanceTimersByTimeAsync(5_001);
     rerender(
       <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
         weather={{
           ...weather,
-          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+          meta: { ...weather.meta, fetchedAt: new Date() },
         }}
         hourly={rainyHourly}
       />
@@ -351,7 +383,7 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
 
     await Promise.resolve();
     expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
@@ -368,7 +400,7 @@ describe('DecisionAlertsPanel', () => {
       throw new DOMException('blocked', 'SecurityError');
     });
 
-    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
     const button = screen.getByRole('button');
     await user.click(button);
 
@@ -383,7 +415,7 @@ describe('DecisionAlertsPanel', () => {
 
     const difficultWeather = { ...weather, temperature: 45, feelsLike: 50, tempMin: 42, tempMax: 47 };
     const difficultHourly = hourly.map(item => ({ ...item, temp: 45, feelsLike: 50 }));
-    render(<DecisionAlertsPanel weather={difficultWeather} hourly={difficultHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={difficultWeather} hourly={difficultHourly} />);
 
     await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
     const [, options] = notification.mock.calls[0];
@@ -392,6 +424,7 @@ describe('DecisionAlertsPanel', () => {
 
   it('dedupes alerts by the weather location calendar day instead of UTC', async () => {
     vi.setSystemTime(new Date('2026-08-29T00:30:00Z')); // 19:30 on Aug 28 at UTC-5
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
@@ -402,7 +435,7 @@ describe('DecisionAlertsPanel', () => {
       ...weather,
       meta: { ...weather.meta, timezoneOffsetSeconds: -18000 },
     };
-    render(<DecisionAlertsPanel weather={westernWeather} hourly={rainyHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={westernWeather} hourly={rainyHourly} />);
 
     await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
     const sentKeys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index));
@@ -412,13 +445,14 @@ describe('DecisionAlertsPanel', () => {
 
   it('uses the weather location timezone for quiet hours', async () => {
     vi.setSystemTime(new Date('2026-08-28T19:30:00Z')); // 22:30 in İstanbul
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
 
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();
@@ -427,13 +461,14 @@ describe('DecisionAlertsPanel', () => {
   it('re-evaluates a pending alert when quiet hours end without a weather refetch', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T03:59:30Z')); // 06:59:30 in İstanbul
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
 
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();
@@ -448,6 +483,7 @@ describe('DecisionAlertsPanel', () => {
   it('does not deliver a quiet-hours alert after its forecast evidence expires', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T03:59:30Z')); // 06:59:30 in İstanbul
+    weather.meta.fetchedAt = new Date();
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
