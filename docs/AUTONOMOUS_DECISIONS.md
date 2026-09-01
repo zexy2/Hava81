@@ -600,3 +600,6 @@ Use Pointer Events for direct city-suggestion activation instead of mouse-only h
 
 ## 2026-09-01 — Comparison minimum-state transitions settle busy state
 When saved-city comparison drops below its two-city minimum, treat that transition as a settled non-loading state even if a superseded request is still resolving. Keep the existing stale-result guard, clear `aria-busy`, and show the minimum requirement immediately. This changes async-state semantics only; it does not cancel or reinterpret weather evidence.
+
+## 2026-09-01 — Notification permission is re-read when the page becomes visible
+Treat browser notification permission as external mutable state, not a mount-time constant. When Hava81 becomes visible again, re-read `Notification.permission` so browser/site-settings changes immediately re-enter the existing permission gates. Do not auto-enable alerts or alter stored opt-in; this only makes the UI and delivery eligibility reflect the browser's current authority.

@@ -71,6 +71,15 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   const sessionSentKeys = useRef(new Set<string>());
   const sessionPendingKeys = useRef(new Set<string>());
   const permissionRequestInFlight = useRef(false);
+
+  useEffect(() => {
+    if (!notificationsSupported) return undefined;
+    const syncPermission = () => {
+      if (document.visibilityState === 'visible') setPermission(Notification.permission);
+    };
+    document.addEventListener('visibilitychange', syncPermission);
+    return () => document.removeEventListener('visibilitychange', syncPermission);
+  }, [notificationsSupported]);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
     [weather, hourly, airQuality]
