@@ -2042,3 +2042,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a desktop Playwright regression that focuses each disclosure family and requires a solid >=2px inset outline. `git diff --check` passes. Local Node/npm is unavailable on the gateway host, so protected exact-head CI/CodeQL/browser gates remain mandatory before merge.
 - No activity scores, weather values, provider attribution, MGM/UV/AQI semantics or safety guidance changed.
 - Next action: rebase onto the then-current exact main after concurrent merges, preserve append-only checkpoints, lease-check/push/open bounded accessibility PR, and require exact-head protected gates before merge.
+
+## 2026-09-01 16:03 TRT — make full-height mobile shell follow browser chrome
+- Continued independently from exact main `29616e492cba57c214c45a7845371e85447dcdd4` in isolated worktree `/home/ubuntu/hava81-auto-run11-1558-dvh`, branch `automation/hava81-run11-1558-dvh`, while the new main pipeline validates separately.
+- Mobile layout audit found body, root, app, fatal shell and viewport-derived main minimum heights still ended at legacy `vh`. Settings already used a `vh` + `dvh` fallback pair, so the rest of the primary shell could lag behind mobile browser chrome expansion/collapse.
+- Added `100dvh` / `calc(100dvh - …)` overrides after the existing `vh` declarations, retaining old-browser fallback while making modern mobile browsers follow the live visual viewport.
+- Added a mobile Playwright regression that changes the viewport from 390×844 to 390×600 and requires body/root/app computed minimum heights to track the new viewport height. `git diff --check` passes; protected exact-head CI/CodeQL/browser gates are mandatory because local Node/npm is unavailable on the gateway host.
+- No forecast values, scores, provider attribution, MGM/UV/AQI semantics or safety guidance changed.
+- Next action: publish from an exact current-main base, require protected gates, and keep production verification independent of CI observation.
