@@ -106,10 +106,35 @@
           .then(response => (response.ok ? response.json() : null))
           .catch(() => null)
           .finally(() => window.clearTimeout(timeoutId));
+        const hourlyPromise = promise.then(current => {
+          const lat = Number(current?.coordinates?.lat);
+          const lon = Number(current?.coordinates?.lon);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+          const hourlyUrl = new URL("https://api.hava81.zekiakgul.dev/api/v1/weather/hourly");
+          hourlyUrl.searchParams.set('lat', String(lat));
+          hourlyUrl.searchParams.set('lon', String(lon));
+          hourlyUrl.searchParams.set('lang', lang);
+          const hourlyController = new AbortController();
+          const hourlyTimeoutId = window.setTimeout(
+            () => hourlyController.abort(),
+            10000
+          );
+          return window
+            .fetch(hourlyUrl.toString(), {
+              headers: { Accept: 'application/json' },
+              signal: hourlyController.signal,
+            })
+            .then(response => (response.ok ? response.json() : null))
+            .then(response => (response ? { lat, lon, response } : null))
+            .catch(() => null)
+            .finally(() => window.clearTimeout(hourlyTimeoutId));
+        });
         window.__HAVA81_BOOTSTRAP_WEATHER__ = { city, lang, units: 'metric', promise };
+        window.__HAVA81_BOOTSTRAP_HOURLY__ = { lang, promise: hourlyPromise };
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-DStaugT_.js"></script>
+    <script type="module" crossorigin src="/assets/index-Iq5q2PLb.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-CbXtAM7H.js">
     <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-CEuv_zDX.js">
     <link rel="modulepreload" crossorigin href="/assets/SettingsContext-6wxcg1ro.js">
