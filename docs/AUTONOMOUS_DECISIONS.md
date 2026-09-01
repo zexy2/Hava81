@@ -681,3 +681,7 @@ A worktree can be safely classified as merged yet still contain stale root-owned
 ## 2026-09-01 — Modeled notifications require fresh current and forecast evidence at delivery time
 
 A notification candidate may outlive the evidence that produced it, especially across quiet hours. Production alert delivery must re-check both current-weather and decision-forecast metadata at the instant a quiet-hours timer is scheduled or a notification is sent. Use provider `freshForSeconds` when present, otherwise the API's current defaults (5 minutes current, 30 minutes forecast), reject timestamps more than 60 seconds in the future, and fail closed without silently refreshing timestamps or extrapolating stale values.
+
+## 2026-09-01 — Optional evidence freshness revalidates when a tab becomes visible
+
+AQI and modeled context TTLs are evidence boundaries, not timer hints. Because browsers may throttle background timers, a visible-tab return must immediately re-evaluate the existing provider timestamps and remove expired optional evidence before it can keep influencing UI/decisions. This resync may only drop or reschedule existing evidence; it must not refresh timestamps, fetch implicitly, or extend source TTLs.

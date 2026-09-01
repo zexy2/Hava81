@@ -81,59 +81,62 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   useEffect(() => {
     if (!airQuality && !contextSignals) return undefined;
 
-    const now = Date.now();
-    const deadlines: number[] = [];
-    let droppedInvalidEvidence = false;
+    let timerId: number | undefined;
 
-    if (airQuality) {
-      const deadline = freshnessDeadline(
-        airQuality.meta?.fetchedAt,
-        airQuality.meta?.freshForSeconds
-      );
-      if (!isFreshOptionalMeta(airQuality.meta) || deadline === null) {
-        setAirQuality(null);
-        if (airQualityRef.current === airQuality) airQualityRef.current = null;
-        droppedInvalidEvidence = true;
-      } else {
-        deadlines.push(deadline);
+    const refreshOptionalEvidence = () => {
+      const now = Date.now();
+      const deadlines: number[] = [];
+      let droppedInvalidEvidence = false;
+
+      if (airQuality) {
+        const deadline = freshnessDeadline(
+          airQuality.meta?.fetchedAt,
+          airQuality.meta?.freshForSeconds
+        );
+        if (!isFreshOptionalMeta(airQuality.meta) || deadline === null) {
+          setAirQuality(current => (current === airQuality ? null : current));
+          if (airQualityRef.current === airQuality) airQualityRef.current = null;
+          droppedInvalidEvidence = true;
+        } else {
+          deadlines.push(deadline);
+        }
       }
-    }
 
-    if (contextSignals) {
-      const deadline = freshnessDeadline(
-        contextSignals.fetchedAt,
-        contextSignals.freshForSeconds
-      );
-      if (
-        !isFreshTimestamp(contextSignals.fetchedAt, contextSignals.freshForSeconds) ||
-        deadline === null
-      ) {
-        setContextSignals(null);
-        if (contextSignalsRef.current === contextSignals) contextSignalsRef.current = null;
-        droppedInvalidEvidence = true;
-      } else {
-        deadlines.push(deadline);
+      if (contextSignals) {
+        const deadline = freshnessDeadline(
+          contextSignals.fetchedAt,
+          contextSignals.freshForSeconds
+        );
+        if (
+          !isFreshTimestamp(contextSignals.fetchedAt, contextSignals.freshForSeconds) ||
+          deadline === null
+        ) {
+          setContextSignals(current => (current === contextSignals ? null : current));
+          if (contextSignalsRef.current === contextSignals) contextSignalsRef.current = null;
+          droppedInvalidEvidence = true;
+        } else {
+          deadlines.push(deadline);
+        }
       }
-    }
 
-    if (droppedInvalidEvidence || deadlines.length === 0) return undefined;
+      if (droppedInvalidEvidence || deadlines.length === 0) return;
 
-    const nextDeadline = Math.min(...deadlines);
-    const timerId = window.setTimeout(() => {
-      if (airQuality && !isFreshOptionalMeta(airQuality.meta)) {
-        setAirQuality(current => (current === airQuality ? null : current));
-        if (airQualityRef.current === airQuality) airQualityRef.current = null;
-      }
-      if (
-        contextSignals &&
-        !isFreshTimestamp(contextSignals.fetchedAt, contextSignals.freshForSeconds)
-      ) {
-        setContextSignals(current => (current === contextSignals ? null : current));
-        if (contextSignalsRef.current === contextSignals) contextSignalsRef.current = null;
-      }
-    }, Math.max(0, nextDeadline - now + 100));
+      const nextDeadline = Math.min(...deadlines);
+      timerId = window.setTimeout(refreshOptionalEvidence, Math.max(0, nextDeadline - now + 100));
+    };
 
-    return () => window.clearTimeout(timerId);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      refreshOptionalEvidence();
+    };
+
+    refreshOptionalEvidence();
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, [airQuality, contextSignals]);
 
   const fetch = useCallback(
