@@ -594,3 +594,6 @@ Use a 10-minute job timeout for Playwright browser flows and 5 minutes for Light
 
 ## 2026-09-01 — Lighthouse performance floor uses one confirmation measurement
 When the first Lighthouse performance score falls below the hard floor, run exactly one confirmation measurement and evaluate that second result. Do not retry deterministic accessibility/best-practices/SEO failures, and do not loop retries. This handles observed GitHub-runner contention without weakening persistent-regression detection or turning CI into a best-of-N score hunt.
+
+## 2026-09-01 — City suggestion activation uses Pointer Events
+Use Pointer Events for direct city-suggestion activation instead of mouse-only handlers. Prevent the pointer-down default so the combobox does not blur and close its list before selection, while letting mouse, touch and pen share one activation path. This is input ergonomics only; city matching, request semantics and weather evidence are unchanged.

@@ -2077,3 +2077,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Hardened `scripts/run-lighthouse.mjs` so a performance result below the hard floor gets exactly one confirmation measurement on the same preview. The confirmation result is authoritative; persistent below-floor performance still fails. Accessibility, best-practices and SEO floors are never retried/softened.
 - This avoids merging on a noisy first measurement while also avoiding repeated blind retries of a genuinely slow build. Local gates: `node --check` in the existing Node 24 container and `git diff --check` pass.
 - Next action: commit/publish as a separate CI-reliability PR after exact-main/lease recheck; require protected CI and verify the confirmation path does not mask persistent performance failure.
+
+## 2026-09-01 18:42 TRT — make city suggestions pointer-input agnostic
+- Continued from exact main `b8d1647c26ab84a833a571887b54d20628976e07` in isolated `/home/ubuntu/hava81-auto-run11-1839`, branch `automation/hava81-run11-1839`, after PR #565 merged; main CI/CD #1328 is validating independently.
+- SearchBar suggestion selection was wired to `onMouseDown`, which couples the no-blur-before-selection safeguard to compatibility mouse events. Replaced it with `onPointerDown` so mouse, touch and pen all use the same direct pointer path while still preventing the input blur from closing the list before selection.
+- Added a regression that dispatches a touch pointer-down on the İzmir option and requires both controlled value delivery and direct city submission. Keyboard combobox behavior, matching, debounce, weather fetching, providers, MGM/UV/AQI and safety guidance are unchanged.
+- Local gates pass: SearchBar 21/21, TypeScript, ESLint, production build + service-worker stamp + all 81 city pages, and `git diff --check`. Exact-head CI/CodeQL remains mandatory before merge.

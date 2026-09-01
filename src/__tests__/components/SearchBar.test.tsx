@@ -159,6 +159,21 @@ describe('SearchBar', () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
+  it('selects suggestions from pointer input without losing the combobox first', () => {
+    const onChange = vi.fn();
+    const onSubmit = vi.fn();
+    render(<SearchBar {...defaultProps} value="İz" onChange={onChange} onSubmit={onSubmit} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    const option = screen.getByRole('option', { name: 'İzmir' });
+
+    fireEvent.pointerDown(option, { pointerType: 'touch' });
+
+    expect(onChange).toHaveBeenCalledWith('İzmir');
+    expect(onSubmit).toHaveBeenCalledWith('İzmir');
+  });
+
   it('should handle keyboard navigation', async () => {
     const user = userEvent.setup();
     render(<SearchBar {...defaultProps} value="İz" />);
