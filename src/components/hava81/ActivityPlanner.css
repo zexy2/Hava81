@@ -33,10 +33,12 @@
 }
 .activity-planner__sensitivity {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.3rem;
   flex: 0 1 12rem;
   width: min(12rem, 100%);
   min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 0.78rem;
   color: var(--color-atlas-muted);
 }
@@ -105,7 +107,7 @@
 }
 .activity-planner__cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
   gap: var(--space-sm);
 }
 .activity-card {
