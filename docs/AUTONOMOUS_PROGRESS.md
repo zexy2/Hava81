@@ -2188,3 +2188,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a fail-closed lifecycle deadline: stale/invalid optional evidence is removed immediately, and valid AQI/context values schedule their own expiry at the provider TTL. This changes no weather value, score formula, provider timestamp, MGM semantics, or API polling cadence.
 - Updated one integration fixture and the hook's default AQ fixture to carry the production-required freshness metadata instead of weakening the guard for malformed test data.
 - Validation: focused `useForecast` 11/11; combined hook+App 29/29; TypeScript; ESLint; production build/service-worker stamp/all 81 city pages; then full coverage suite 58 files / 557 tests all green; `git diff --check` clean.
+
+### 2026-09-01 22:15 TRT — align Pages exact-shell gate with measured edge propagation
+- Main `a268657c0f26d006274de48b1379cae3865f830c` run #1378 passed API, frontend, production build, Lighthouse, browser flows and Docker image build; the `gh-pages` push itself also succeeded. Only the exact public-shell verification failed after 36 attempts because the custom domain still returned the prior root SHA.
+- Direct verification found the prior shell remained healthy with its retained assets, then the public root matched the new `gh-pages` exact SHA at 19:07:29Z, about 6m57s after the push. The edge response advertises `Cache-Control: max-age=600`, so this was a deterministic false-negative propagation ceiling rather than a broken release.
+- Preserve the exact-hash and current boot-asset checks. Increase only the CI deploy window from 36 to 120 five-second attempts (~10 minutes) and the deploy job cap from 7 to 12 minutes. The standalone script defaults remain unchanged.
+- Next: validate workflow syntax/diff, commit/push/open a bounded CI-reliability PR, then continue exact-head #585/#586 work while their protected checks run.

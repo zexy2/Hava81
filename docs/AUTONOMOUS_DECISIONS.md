@@ -658,3 +658,7 @@ Provider `freshForSeconds` is an evidence freshness contract, not merely display
 ## 2026-09-01 — Optional environmental evidence expires in-memory at provider TTL
 
 AQI and modeled context signals (UV/pollen/dust/marine) must not remain decision inputs indefinitely just because a long-lived tab receives no subsequent forecast refresh. Treat each source's `fetchedAt + freshForSeconds` as an in-memory evidence deadline: retain a still-fresh value through a transient optional-source failure, but fail closed by removing it once its own TTL passes. Do not extrapolate, refresh the timestamp, or substitute modeled values.
+
+## 2026-09-01 — Pages exact-hash verification gets a measured ten-minute propagation window
+
+The three-minute Pages smoke window is no longer sufficient evidence of deploy failure. Main run #1378 pushed `gh-pages` successfully at 19:00:32Z, but the custom domain continued serving the prior healthy shell until the new root hash appeared at 19:07:29Z (~6m57s later); the response advertises `Cache-Control: max-age=600`. Keep exact HTML and boot-asset hashes as the release gate and retain prior asset generations, but allow up to 120 five-second attempts (~10 minutes) with a 12-minute deploy-job cap. Do not weaken this to HTTP-200-only, and keep the standalone verifier's shorter default for manual probes.
