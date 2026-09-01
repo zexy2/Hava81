@@ -3207,6 +3207,62 @@ test('mobile interactive controls preserve 44px touch targets', async ({ page },
   expect(undersized).toEqual([]);
 });
 
+test('desktop comparison uses one editorial data matrix', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop comparison visual regression');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+  });
+  await page.goto('/istanbul');
+  await page.getByRole('button', { name: /Karşılaştır/i }).click();
+
+  const compare = page.locator('.hava81-compare');
+  await expect(compare).toBeVisible();
+  await expect(compare.locator('.hava81-compare__city')).toHaveCount(2);
+
+  const styles = await compare.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const winner = element.querySelector('.hava81-compare__winner');
+    const table = element.querySelector('.hava81-compare__table');
+    const cities = Array.from(element.querySelectorAll('.hava81-compare__city'));
+    if (!winner || !table || cities.length < 2) throw new Error('Missing comparison matrix');
+    const winnerStyle = getComputedStyle(winner);
+    const tableStyle = getComputedStyle(table);
+    const first = getComputedStyle(cities[0]);
+    const second = getComputedStyle(cities[1]);
+    return {
+      panelBackground: panel.backgroundColor,
+      panelRadius: panel.borderRadius,
+      panelShadow: panel.boxShadow,
+      winnerBackground: winnerStyle.backgroundColor,
+      winnerRadius: winnerStyle.borderRadius,
+      tableTop: parseFloat(tableStyle.borderTopWidth),
+      firstBackground: first.backgroundColor,
+      firstRadius: first.borderRadius,
+      secondBackground: second.backgroundColor,
+      secondRadius: second.borderRadius,
+      secondSeparator: parseFloat(second.borderInlineStartWidth),
+    };
+  });
+
+  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.panelRadius)).toBe(0);
+  expect(styles.panelShadow).toBe('none');
+  expect(styles.winnerBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.winnerRadius)).toBe(0);
+  expect(styles.tableTop).toBeGreaterThanOrEqual(1);
+  expect(styles.firstBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.firstRadius)).toBe(0);
+  expect(styles.secondBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.secondRadius)).toBe(0);
+  expect(styles.secondSeparator).toBeGreaterThanOrEqual(1);
+});
+
 test('desktop comparison entry works with two saved cities', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop comparison assertion');
   await page.addInitScript(() => {
