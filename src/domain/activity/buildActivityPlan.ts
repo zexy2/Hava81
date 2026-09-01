@@ -12,9 +12,7 @@ import type {
 const HOUR_MS = 60 * 60 * 1000;
 const HORIZON_HOURS = 12;
 
-export const ACTIVITY_COMFORT_RANGES_C: Partial<
-  Record<ActivityKind, readonly [number, number]>
-> = {
+export const ACTIVITY_COMFORT_RANGES_C: Partial<Record<ActivityKind, readonly [number, number]>> = {
   walk: [12, 26],
   run: [10, 22],
   picnic: [16, 27],
@@ -30,7 +28,7 @@ const smoothstep = (value: number, start: number, end: number) => {
 interface ActivityAdjustmentInput {
   activity: ActivityKind;
   temperature: number;
-  pop: number;
+  pop?: number;
   precipitationMm?: number;
   wind?: number;
   gust?: number;
@@ -41,8 +39,8 @@ interface ActivityAdjustmentInput {
   sensitivity: TemperatureSensitivity;
 }
 
-const rainExposure = (pop: number, precipitationMm?: number) => {
-  const chance = smoothstep(pop, 0.15, 0.85) * 0.72;
+const rainExposure = (pop?: number, precipitationMm?: number) => {
+  const chance = Number.isFinite(pop) ? smoothstep(pop as number, 0.15, 0.85) * 0.72 : 0;
   const amount = Number.isFinite(precipitationMm)
     ? smoothstep(precipitationMm as number, 0.1, 5)
     : 0;
@@ -53,23 +51,17 @@ const windExposure = (wind?: number, gust?: number) => {
   const hasWind = Number.isFinite(wind);
   const hasGust = Number.isFinite(gust);
   if (!hasWind && !hasGust) return { effective: undefined, exposure: 0 };
-  const effective = Math.max(
-    hasWind ? (wind as number) : 0,
-    hasGust ? (gust as number) * 0.72 : 0
-  );
+  const effective = Math.max(hasWind ? (wind as number) : 0, hasGust ? (gust as number) * 0.72 : 0);
   return { effective, exposure: smoothstep(effective, 6, 18) };
 };
 
-const airExposure = (aqi?: number) =>
-  Number.isFinite(aqi) ? smoothstep(aqi as number, 2, 5) : 0;
+const airExposure = (aqi?: number) => (Number.isFinite(aqi) ? smoothstep(aqi as number, 2, 5) : 0);
 
 const uvExposure = (uvIndex?: number) =>
   Number.isFinite(uvIndex) ? smoothstep(uvIndex as number, 3, 11) : 0;
 
 const lowVisibilityExposure = (visibility?: number) =>
-  Number.isFinite(visibility)
-    ? smoothstep(5000 - Math.max(0, visibility as number), 0, 4800)
-    : 0;
+  Number.isFinite(visibility) ? smoothstep(5000 - Math.max(0, visibility as number), 0, 4800) : 0;
 
 const activityAdjustment = ({
   activity,
@@ -88,6 +80,7 @@ const activityAdjustment = ({
   let benefit = 0;
   const reasons: DecisionReasonCode[] = [];
   const rain = rainExposure(pop, precipitationMm);
+  const hasRainSignal = Number.isFinite(pop) || Number.isFinite(precipitationMm);
   const { effective: effectiveWind, exposure: windRisk } = windExposure(wind, gust);
   const air = airExposure(aqi);
   const uv = uvExposure(uvIndex);
@@ -98,7 +91,8 @@ const activityAdjustment = ({
   const addHeat = (start: number, end: number, maxPenalty: number) => {
     const penaltyValue = maxPenalty * smoothstep(temperature, start + heatShift, end + heatShift);
     penalty += penaltyValue;
-    if (penaltyValue >= 8) reasons.push(temperature >= end + heatShift - 1 ? 'extreme-heat' : 'heat');
+    if (penaltyValue >= 8)
+      reasons.push(temperature >= end + heatShift - 1 ? 'extreme-heat' : 'heat');
   };
   const addCold = (start: number, end: number, maxPenalty: number) => {
     const penaltyValue = maxPenalty * smoothstep(start + coldShift - temperature, 0, start - end);
@@ -108,7 +102,8 @@ const activityAdjustment = ({
   const addRain = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * rain;
     penalty += penaltyValue;
-    if (penaltyValue >= 7) reasons.push((precipitationMm ?? 0) >= 2.5 || pop >= 0.6 ? 'heavy-rain' : 'rain-risk');
+    if (penaltyValue >= 7)
+      reasons.push((precipitationMm ?? 0) >= 2.5 || (pop ?? 0) >= 0.6 ? 'heavy-rain' : 'rain-risk');
   };
   const addWind = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * windRisk;
@@ -118,7 +113,8 @@ const activityAdjustment = ({
   const addAir = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * air;
     penalty += penaltyValue;
-    if (penaltyValue >= 7) reasons.push((aqi ?? 0) >= 4 ? 'poor-air-quality' : 'sensitive-air-quality');
+    if (penaltyValue >= 7)
+      reasons.push((aqi ?? 0) >= 4 ? 'poor-air-quality' : 'sensitive-air-quality');
   };
   const addUv = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * uv;
@@ -137,6 +133,7 @@ const activityAdjustment = ({
       if (
         temperature >= 10 &&
         temperature <= 22 &&
+        hasRainSignal &&
         rain < 0.12 &&
         effectiveWind !== undefined &&
         effectiveWind < 7 &&
@@ -155,10 +152,12 @@ const activityAdjustment = ({
       if (
         temperature >= 12 &&
         temperature <= 26 &&
+        hasRainSignal &&
         rain < 0.18 &&
         effectiveWind !== undefined &&
         effectiveWind < 8
-      ) benefit += 4;
+      )
+        benefit += 4;
       break;
     case 'picnic':
       addHeat(28, 39, 14);
@@ -170,10 +169,12 @@ const activityAdjustment = ({
       if (
         temperature >= 16 &&
         temperature <= 27 &&
+        hasRainSignal &&
         rain < 0.08 &&
         effectiveWind !== undefined &&
         effectiveWind < 7
-      ) benefit += 7;
+      )
+        benefit += 7;
       break;
     case 'children':
       addHeat(26, 37, 24);
@@ -182,7 +183,8 @@ const activityAdjustment = ({
       addWind(13);
       addAir(24);
       addUv(13);
-      if (temperature >= 14 && temperature <= 25 && rain < 0.12 && air < 0.15) benefit += 5;
+      if (temperature >= 14 && temperature <= 25 && hasRainSignal && rain < 0.12 && air < 0.15)
+        benefit += 5;
       break;
     case 'motorcycle':
       addHeat(34, 43, 8);
@@ -300,21 +302,26 @@ export const buildActivityPlan = ({
           temp: weather.temperature,
           apparentTemperature: weather.feelsLike,
           humidity: weather.humidity,
-          pop: 0,
+          pop: undefined,
+          precipitationMm: undefined,
           windSpeed: weather.windSpeed,
+          windGust: undefined,
+          uvIndex: undefined,
           visibility: weather.visibility,
-        } as HourlyForecast,
+          weatherCode: undefined,
+        },
       ];
 
   const hasHourlySource = source.length > 0;
   const slots: ActivityWindowScore[] = points.map(point => {
+    const precipitationProbability = 'pop' in point ? point.pop : undefined;
     const airQualityIndex = hasHourlySource ? undefined : airQuality?.aqi;
     const base = scoreWeatherWindow({
       time: point.time,
       temperature: point.temp,
       apparentTemperature: point.apparentTemperature,
       humidity: point.humidity,
-      precipitationProbability: point.pop,
+      precipitationProbability,
       precipitationMm: point.precipitationMm,
       windSpeed: point.windSpeed,
       windGust: point.windGust,
@@ -326,7 +333,7 @@ export const buildActivityPlan = ({
     const adj = activityAdjustment({
       activity,
       temperature: base.apparentTemperature,
-      pop: point.pop,
+      pop: precipitationProbability,
       precipitationMm: point.precipitationMm,
       wind: point.windSpeed,
       gust: point.windGust,
@@ -339,7 +346,10 @@ export const buildActivityPlan = ({
     // Activity comfort can only refund generic penalties that the activity genuinely benefits from.
     // It must never erase unrelated AQI, UV, precipitation, visibility or severe-weather risk.
     const reclaimablePenalty = base.impacts
-      .filter(impact => impact.factor === 'thermal' || (activity === 'laundry' && impact.factor === 'wind'))
+      .filter(
+        impact =>
+          impact.factor === 'thermal' || (activity === 'laundry' && impact.factor === 'wind')
+      )
       .reduce((sum, impact) => sum + impact.penalty, 0);
     const reclaimed = Math.min(adj.benefit, reclaimablePenalty);
     const reasons = [...new Set([...base.reasons, ...adj.reasons])];
@@ -365,16 +375,20 @@ export const buildActivityPlan = ({
       : undefined;
 
   const defaultEnd = slots[0]?.time.getTime() + HORIZON_HOURS * HOUR_MS;
-  const defaultSlots = defaultEnd
-    ? slots.filter(slot => slot.time.getTime() < defaultEnd)
-    : slots;
+  const defaultSlots = defaultEnd ? slots.filter(slot => slot.time.getTime() < defaultEnd) : slots;
   const nextDayEnd = slots[0]?.time.getTime() + 24 * HOUR_MS;
-  const filteredSlots = windowApplied && nextDayEnd
-    ? slots.filter(slot =>
-        slot.time.getTime() < nextDayEnd &&
-        clockInRange(localClockMinutes(slot.time, timezoneOffsetSeconds), startMinutes!, endMinutes!)
-      )
-    : defaultSlots;
+  const filteredSlots =
+    windowApplied && nextDayEnd
+      ? slots.filter(
+          slot =>
+            slot.time.getTime() < nextDayEnd &&
+            clockInRange(
+              localClockMinutes(slot.time, timezoneOffsetSeconds),
+              startMinutes!,
+              endMinutes!
+            )
+        )
+      : defaultSlots;
   const evaluatedSlots = windowApplied ? filteredSlots : defaultSlots;
 
   const bestWindowRange = findBestWindowRange(evaluatedSlots);

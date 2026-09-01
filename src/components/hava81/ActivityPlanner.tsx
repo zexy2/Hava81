@@ -197,21 +197,25 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
             {plans.map(plan => {
               const best = plan.bestWindow;
               const bestRange = plan.bestWindowRange;
-              const precipitation = best ? Math.round(best.precipitationProbability * 100) : 0;
+              const precipitation = Number.isFinite(best?.precipitationProbability)
+                ? Math.round((best?.precipitationProbability as number) * 100)
+                : undefined;
               const precipitationAmount = formatPrecipitationAmount(
                 best?.precipitationMm,
                 i18n.language
               );
               const rainText = precipitationAmount
-                ? precipitation > 0
+                ? (precipitation ?? 0) > 0
                   ? t('hava81.activities.conditions.rainWithAmount', {
                       value: precipitation,
                       amount: precipitationAmount,
                     })
                   : t('hava81.activities.conditions.rainAmount', { amount: precipitationAmount })
-                : precipitation === 0
-                  ? t('hava81.activities.conditions.dry')
-                  : t('hava81.activities.conditions.rain', { value: precipitation });
+                : precipitation === undefined
+                  ? t('hava81.activities.conditions.precipitationUnknown')
+                  : precipitation === 0
+                    ? t('hava81.activities.conditions.dry')
+                    : t('hava81.activities.conditions.rain', { value: precipitation });
               const scoreLabel = hasWindow
                 ? t('hava81.activities.score.filtered', {
                     start: profile.activityStart,
@@ -227,7 +231,9 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
                   <header>
                     <h3>{t(`hava81.activities.names.${plan.activity}`)}</h3>
                     <div className="activity-card__score">
-                      <small>{scoreLabel} · {scoreBandLabel}</small>
+                      <small>
+                        {scoreLabel} · {scoreBandLabel}
+                      </small>
                       <strong>
                         {plan.windowUnavailable ? '—' : plan.score}
                         <span>/100</span>

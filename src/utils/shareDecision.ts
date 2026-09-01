@@ -6,7 +6,7 @@ interface ShareDecisionInput {
   score: number;
   band: Hava81ScoreBand;
   bestTime?: string;
-  umbrella: 'yes' | 'maybe' | 'no';
+  umbrella: 'yes' | 'maybe' | 'no' | 'unknown';
   recommendation?: string;
   language: string;
 }
@@ -31,15 +31,21 @@ export const buildDecisionShare = ({
       ? 'Şemsiye: Evet'
       : umbrella === 'maybe'
         ? 'Şemsiye: Yanında olsun'
-        : 'Şemsiye: Gerekmez'
+        : umbrella === 'no'
+          ? 'Şemsiye: Gerekmez'
+          : 'Şemsiye: Veri yok'
     : umbrella === 'yes'
       ? 'Umbrella: Yes'
       : umbrella === 'maybe'
         ? 'Umbrella: Take one'
-        : 'Umbrella: Not needed';
+        : umbrella === 'no'
+          ? 'Umbrella: Not needed'
+          : 'Umbrella: No data';
   const bandText = tr
     ? { excellent: 'Çok uygun', good: 'Uygun', caution: 'Dikkat', difficult: 'Zorlayıcı' }[band]
-    : { excellent: 'Very suitable', good: 'Suitable', caution: 'Caution', difficult: 'Difficult' }[band];
+    : { excellent: 'Very suitable', good: 'Suitable', caution: 'Caution', difficult: 'Difficult' }[
+        band
+      ];
   const title = `${cityName} · Hava81 ${score}/100 · ${bandText}`;
   const text = [
     title,

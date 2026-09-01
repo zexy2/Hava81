@@ -1,30 +1,30 @@
 export type DecisionReasonCode =
-  | "extreme-heat"
-  | "heat"
-  | "freezing"
-  | "cold"
-  | "heavy-rain"
-  | "rain-risk"
-  | "strong-wind"
-  | "windy"
-  | "gusty-wind"
-  | "poor-air-quality"
-  | "sensitive-air-quality"
-  | "high-uv"
-  | "low-visibility"
-  | "severe-weather";
+  | 'extreme-heat'
+  | 'heat'
+  | 'freezing'
+  | 'cold'
+  | 'heavy-rain'
+  | 'rain-risk'
+  | 'strong-wind'
+  | 'windy'
+  | 'gusty-wind'
+  | 'poor-air-quality'
+  | 'sensitive-air-quality'
+  | 'high-uv'
+  | 'low-visibility'
+  | 'severe-weather';
 
-export type Hava81ScoreBand = "excellent" | "good" | "caution" | "difficult";
+export type Hava81ScoreBand = 'excellent' | 'good' | 'caution' | 'difficult';
 
 export type Hava81ScoreFactor =
-  | "thermal"
-  | "precipitation"
-  | "wind"
-  | "air-quality"
-  | "uv"
-  | "visibility"
-  | "severe-weather"
-  | "compound";
+  | 'thermal'
+  | 'precipitation'
+  | 'wind'
+  | 'air-quality'
+  | 'uv'
+  | 'visibility'
+  | 'severe-weather'
+  | 'compound';
 
 export interface ScoreFactorImpact {
   factor: Hava81ScoreFactor;
@@ -37,7 +37,7 @@ export interface ScoredWeatherWindow {
   band: Hava81ScoreBand;
   temperature: number;
   apparentTemperature: number;
-  precipitationProbability: number;
+  precipitationProbability?: number;
   precipitationMm?: number;
   windSpeed: number;
   windGust?: number;
@@ -56,13 +56,13 @@ export interface BestWindowRange<T extends ScoredWeatherWindow = ScoredWeatherWi
   tolerance: number;
 }
 
-export type UmbrellaAdvice = "yes" | "maybe" | "no";
-export type WindAdvice = "strong" | "caution" | "normal";
-export type AirQualityAdvice = "poor" | "sensitive" | "fair" | "good" | "unknown";
-export type ScoreConfidence = "high" | "medium" | "basic";
+export type UmbrellaAdvice = 'yes' | 'maybe' | 'no' | 'unknown';
+export type WindAdvice = 'strong' | 'caution' | 'normal';
+export type AirQualityAdvice = 'poor' | 'sensitive' | 'fair' | 'good' | 'unknown';
+export type ScoreConfidence = 'high' | 'medium' | 'basic';
 
 export interface NowOrLaterAdvice {
-  kind: "now" | "later" | "similar";
+  kind: 'now' | 'later' | 'similar';
   targetTime?: Date;
   improvement?: number;
   currentScore: number;
