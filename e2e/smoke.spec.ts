@@ -171,6 +171,31 @@ test('mobile location denial explains the permission failure', async ({ page }, 
   await expect(page.getByText('Bir şeyler ters gitti')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Tekrar Dene' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Kapat' })).toBeVisible();
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const errorLayout = await page.locator('.atlas-message--error').evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const actions = element.querySelector('.atlas-message__actions');
+    const buttons = Array.from(element.querySelectorAll('button'));
+    if (!actions || buttons.length === 0) throw new Error('Missing error actions');
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      cardFits: fits(element),
+      actionsFit: fits(actions),
+      buttonsFit: buttons.every(fits),
+    };
+  });
+  expect(errorLayout.pageWidth).toBeLessThanOrEqual(errorLayout.viewportWidth);
+  expect(errorLayout.cardFits).toBe(true);
+  expect(errorLayout.actionsFit).toBe(true);
+  expect(errorLayout.buttonsFit).toBe(true);
 });
 
 test('mobile current location keeps exact weather coordinates but uses the canonical province identity', async ({ page }, testInfo) => {
