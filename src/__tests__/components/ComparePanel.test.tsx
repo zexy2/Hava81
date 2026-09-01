@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComparePanel } from '../../components/hava81/ComparePanel';
 import { SettingsProvider } from '../../context';
 import '../../i18n';
@@ -60,6 +60,10 @@ const forecast = {
 };
 
 describe('ComparePanel', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     localStorage.clear();
     api.getCurrentWeather
@@ -84,7 +88,14 @@ describe('ComparePanel', () => {
     });
     api.getAirQuality
       .mockReset()
-      .mockResolvedValue({ aqi: 2, aqiLabel: 'Orta', pm25: 8, pm10: 12, o3: 30 });
+      .mockResolvedValue({
+        aqi: 2,
+        aqiLabel: 'Orta',
+        pm25: 8,
+        pm10: 12,
+        o3: 30,
+        meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+      });
   });
 
   it('explains that two favorites are required', () => {
@@ -273,8 +284,22 @@ describe('ComparePanel', () => {
     api.getAirQuality.mockImplementation((lat: number) =>
       Promise.resolve(
         lat > 40
-          ? { aqi: 1, aqiLabel: 'İyi', pm25: 4, pm10: 6, o3: 20 }
-          : { aqi: 5, aqiLabel: 'Çok kötü', pm25: 80, pm10: 120, o3: 160 }
+          ? {
+              aqi: 1,
+              aqiLabel: 'İyi',
+              pm25: 4,
+              pm10: 6,
+              o3: 20,
+              meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+            }
+          : {
+              aqi: 5,
+              aqiLabel: 'Çok kötü',
+              pm25: 80,
+              pm10: 120,
+              o3: 160,
+              meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+            }
       )
     );
 
@@ -372,6 +397,81 @@ describe('ComparePanel', () => {
       'true'
     );
 
+  });
+
+  it('removes modeled comparison rows when their evidence expires in a long-lived tab', async () => {
+    vi.useFakeTimers();
+    const fetchedAt = new Date('2026-09-02T00:00:00.000Z');
+    vi.setSystemTime(fetchedAt);
+
+    api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
+      Promise.resolve({
+        ...makeWeather(city, city === 'İstanbul' ? 24 : 28),
+        meta: {
+          provider: 'OpenWeather',
+          fetchedAt,
+          freshForSeconds: 30,
+          timezoneOffsetSeconds: 10800,
+        },
+      })
+    );
+    api.getHourlyForecast.mockResolvedValue({
+      hourly: forecast.hourly.map(item => ({
+        ...item,
+        apparentTemperature: item.temp,
+        humidity: 55,
+        precipitationMm: 0,
+        windGust: (item.windSpeed ?? 0) + 2,
+        uvIndex: 3,
+        visibility: 20000,
+        weatherCode: 0,
+      })),
+      meta: {
+        ...forecast.meta,
+        provider: 'Open-Meteo',
+        fetchedAt,
+        freshForSeconds: 30,
+        intervalHours: 1,
+      },
+    });
+    api.getAirQuality.mockResolvedValue({
+      aqi: 2,
+      aqiLabel: 'Orta',
+      pm25: 8,
+      pm10: 12,
+      o3: 30,
+      meta: { provider: 'OpenWeather', fetchedAt, freshForSeconds: 30 },
+    });
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'İzmir' })).toBeVisible();
+
+    vi.setSystemTime(new Date(fetchedAt.getTime() + 31_000));
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(screen.queryByRole('heading', { name: 'İstanbul' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'İzmir' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/güncelliği sona erdi/i);
   });
 
   it('keeps a city usable when the dedicated hourly forecast succeeds but the general forecast fails', async () => {

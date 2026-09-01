@@ -146,6 +146,8 @@ export const en = {
         'The first 3 saved cities are compared: {{cities}}. Your other saved cities stay in the list.',
       partialUnavailable: 'Some city data could not update; available results are shown.',
       unavailable: 'City comparison could not update right now.',
+      stale: 'The comparison data is no longer fresh. Reopen the comparison for current results.',
+      partialStale: 'Some city data is no longer fresh or could not update; only current results are shown.',
       winnerLabel: 'Leading under these weather criteria',
       winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       tieLabel: 'Tied under these weather criteria',

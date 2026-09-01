@@ -13,9 +13,32 @@ import type {
   ForecastMeta,
   HourlyForecast,
   NormalizedWeatherData,
+  WeatherDataMeta,
 } from '../../types';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationSummary, pickMostSignificantPrecipitation } from '../../utils/precipitation';
 import './ComparePanel.css';
+
+const OPTIONAL_EVIDENCE_FALLBACK_SECONDS = 300;
+const MAX_EVIDENCE_FUTURE_SKEW_MS = 60_000;
+const EVIDENCE_EXPIRY_CUSHION_MS = 100;
+
+const getEvidenceFreshness = (meta: WeatherDataMeta | undefined) => {
+  if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null as number | null };
+  const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
+  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null as number | null };
+  const ttlSeconds =
+    typeof meta.freshForSeconds === 'number' && Number.isFinite(meta.freshForSeconds) && meta.freshForSeconds > 0
+      ? meta.freshForSeconds
+      : OPTIONAL_EVIDENCE_FALLBACK_SECONDS;
+  const ageMs = Date.now() - fetchedAtMs;
+  const fresh = ageMs >= -MAX_EVIDENCE_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
+  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
+  return {
+    fresh,
+    expiresInMs: fresh && remainingMs > 0 ? remainingMs + EVIDENCE_EXPIRY_CUSHION_MS : null,
+  };
+};
 
 interface ComparePanelProps {
   cities: FavoriteCity[];
@@ -41,6 +64,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
   const [rows, setRows] = useState<CompareRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
+  const [freshnessRevision, setFreshnessRevision] = useState(0);
   const primaryActivity = profile.activities[0];
 
   useEffect(() => {
@@ -118,11 +142,43 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     };
   }, [language, primaryActivity, profile.activityEnd, profile.activityStart, profile.temperatureSensitivity, selected]);
 
+  const freshRows = rows.filter(row => {
+    const currentFreshness = getEvidenceFreshness(row.weather.meta);
+    const forecastFreshness = getForecastFreshness(row.meta);
+    const airFreshness = row.airQuality ? getEvidenceFreshness(row.airQuality.meta) : null;
+    return currentFreshness.fresh && forecastFreshness.fresh && (airFreshness === null || airFreshness.fresh);
+  });
+  const staleCount = rows.length - freshRows.length;
+  const unavailableCount = failedCount + staleCount;
+
+  useEffect(() => {
+    void freshnessRevision;
+    const expiryDelays = rows.flatMap(row => {
+      const states = [
+        getEvidenceFreshness(row.weather.meta),
+        getForecastFreshness(row.meta),
+        ...(row.airQuality ? [getEvidenceFreshness(row.airQuality.meta)] : []),
+      ];
+      return states.flatMap(state => state.fresh && state.expiresInMs !== null ? [state.expiresInMs] : []);
+    });
+    const nextExpiry = expiryDelays.length ? Math.min(...expiryDelays) : null;
+    const resyncFreshness = () => setFreshnessRevision(value => value + 1);
+    const timeout = nextExpiry === null ? undefined : window.setTimeout(resyncFreshness, nextExpiry);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [freshnessRevision, rows]);
+
   const leaders = useMemo(() => {
-    if (rows.length === 0) return [];
-    const topScore = Math.max(...rows.map(row => row.plan.score));
-    return rows.filter(row => row.plan.score === topScore);
-  }, [rows]);
+    if (freshRows.length === 0) return [];
+    const topScore = Math.max(...freshRows.map(row => row.plan.score));
+    return freshRows.filter(row => row.plan.score === topScore);
+  }, [freshRows]);
   const winner = leaders.length === 1 ? leaders[0] : undefined;
   const isLeader = (row: CompareRow) => leaders.includes(row);
   const offsetTime = (row: CompareRow, date?: Date) => {
@@ -144,7 +200,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
             {t('hava81.compare.title')}
           </h2>
         </div>
-        {rows.length >= 2 && leaders.length > 0 ? (
+        {freshRows.length >= 2 && leaders.length > 0 ? (
           <div className="hava81-compare__winner" role="status">
             {winner ? (
               <>
@@ -181,13 +237,17 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
         <p>{t('hava81.compare.needTwo')}</p>
       ) : loading && rows.length === 0 ? (
         <p role="status">{t('common.loading')}</p>
-      ) : failedCount === selected.length ? (
-        <p role="status">{t('hava81.compare.unavailable')}</p>
+      ) : unavailableCount === selected.length ? (
+        <p role="status">
+          {staleCount > 0 && failedCount === 0
+            ? t('hava81.compare.stale')
+            : t('hava81.compare.unavailable')}
+        </p>
       ) : (
         <>
-          {failedCount > 0 ? (
+          {unavailableCount > 0 ? (
             <p className="hava81-compare__partial" role="status">
-              {t('hava81.compare.partialUnavailable')}
+              {t(staleCount > 0 ? 'hava81.compare.partialStale' : 'hava81.compare.partialUnavailable')}
             </p>
           ) : null}
           <div
@@ -195,7 +255,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
             role="list"
             aria-label={t('hava81.compare.title')}
           >
-          {rows.map(row => {
+          {freshRows.map(row => {
             const nearTerm = row.hourly.slice(0, 6);
             const precipitationPeak = pickMostSignificantPrecipitation(nearTerm);
             const peakPop = precipitationPeak?.pop ?? 0;
