@@ -337,6 +337,49 @@ describe('useForecast', () => {
     }
   });
 
+  it('drops expired optional evidence immediately when a throttled tab becomes visible', async () => {
+    vi.useFakeTimers();
+    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    try {
+      vi.setSystemTime(new Date('2026-09-01T18:00:00Z'));
+      const fetchedAt = new Date();
+      (weatherService.getAirQuality as Mock).mockResolvedValueOnce({
+        aqi: 1,
+        aqiLabel: 'Good',
+        pm25: 5,
+        pm10: 8,
+        o3: 20,
+        meta: { provider: 'OpenWeather', fetchedAt, freshForSeconds: 30 },
+      });
+      (weatherService.getContextSignals as Mock).mockResolvedValueOnce({
+        provider: 'Open-Meteo',
+        fetchedAt,
+        attribution: 'Open-Meteo · CC BY 4.0',
+        freshForSeconds: 30,
+        uvIndexMax: 5,
+        units: {},
+      });
+      const { result } = renderHook(() => useForecast('tr'));
+
+      await act(async () => {
+        await result.current.fetch({ lat: 41.01, lon: 28.97 });
+      });
+      expect(result.current.airQuality?.aqi).toBe(1);
+      expect(result.current.contextSignals?.uvIndexMax).toBe(5);
+
+      vi.setSystemTime(new Date('2026-09-01T18:00:31Z'));
+      await act(async () => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      expect(result.current.airQuality).toBeNull();
+      expect(result.current.contextSignals).toBeNull();
+    } finally {
+      visibilitySpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps the last successful forecast when a same-city refresh fails', async () => {
     const { result } = renderHook(() => useForecast('tr'));
     const coords = { lat: 41.01, lon: 28.97 };
