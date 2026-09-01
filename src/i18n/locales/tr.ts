@@ -288,6 +288,7 @@ export const tr = {
       wind: 'Rüzgâr',
       empty: 'İki saati de seçtiğinde Hava81 bir sonraki çıkış–dönüş çiftini karşılaştıracak.',
       incomplete: 'Planı hesaplamak için çıkış ve dönüş saatini birlikte seç.',
+      forecastStale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar çıkış–dönüş önerisi gösterilmiyor.',
       forecastUnavailable:
         'Seçtiğin çıkış ve dönüş saatlerine yeterince yakın tahmin henüz yok. Tahmin kapsamı genişlediğinde plan otomatik olarak hesaplanacak.',
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
