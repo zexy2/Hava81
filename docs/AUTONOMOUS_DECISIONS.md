@@ -618,3 +618,8 @@ Treat city-vs-current-location as user intent independent of provider localizati
 **Decision:** Allow the route-result title/summary column and score badge to wrap instead of forcing one horizontal row at large text sizes.
 
 **Why:** Hava81's route result is decision content, not a fixed dashboard chrome element. Under WCAG-style 200% text resizing, preserving readable text and eliminating page-level horizontal overflow is more important than retaining the desktop one-row arrangement. The change keeps normal-width hierarchy intact while making the constrained state responsive.
+
+### 2026-09-01 20:25 TRT — exact Pages verification may wait up to the observed multi-minute propagation envelope
+**Decision:** Give the post-publish exact-shell verifier 36 attempts at the existing 5-second cadence instead of 12.
+
+**Why:** Main #1345 published successfully, while the custom domain required roughly 141 seconds to expose the new root hash. A 55-second retry window therefore produced a false deploy failure even though the prior release stayed healthy and the new release propagated correctly. Extending the bounded window preserves strict hash/asset validation while matching observed GitHub Pages behavior; it does not weaken any production acceptance criterion.

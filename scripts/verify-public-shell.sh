@@ -3,7 +3,9 @@ set -euo pipefail
 
 base_url="${HAVA81_PUBLIC_URL:-https://hava81.zekiakgul.dev}"
 base_url="${base_url%/}"
-attempts="${HAVA81_SMOKE_ATTEMPTS:-12}"
+# GitHub Pages propagation has exceeded 2 minutes in production; keep the check bounded
+# while allowing enough time for the exact pushed shell to reach the custom domain.
+attempts="${HAVA81_SMOKE_ATTEMPTS:-36}"
 delay_seconds="${HAVA81_SMOKE_DELAY_SECONDS:-5}"
 connect_timeout_seconds="${HAVA81_SMOKE_CONNECT_TIMEOUT_SECONDS:-5}"
 max_time_seconds="${HAVA81_SMOKE_MAX_TIME_SECONDS:-15}"
