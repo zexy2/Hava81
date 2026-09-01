@@ -191,8 +191,26 @@ export function WeatherDecisionField({
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(timer);
+    let timerId: number | undefined;
+
+    const scheduleFreshnessRefresh = () => {
+      const currentTime = Date.now();
+      setNow(currentTime);
+      const elapsedInMinute = ((currentTime % 60_000) + 60_000) % 60_000;
+      timerId = window.setTimeout(scheduleFreshnessRefresh, 60_000 - elapsedInMinute + 100);
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      scheduleFreshnessRefresh();
+    };
+
+    scheduleFreshnessRefresh();
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, []);
   const fetchedAt =
     weather.meta.fetchedAt instanceof Date

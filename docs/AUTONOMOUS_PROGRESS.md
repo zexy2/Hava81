@@ -2161,3 +2161,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 ### 2026-09-01 21:05 TRT — remove a false-negative ceiling from the Playwright shutdown regression
 - During a full rebased #580 validation on the shared Oracle host, 552/553 frontend tests passed and only `scripts.runPlaywright.test.ts` hit Vitest's 5-second default timeout; the same exact test passed alone immediately afterward in ~0.1 s, and #580's hosted exact-head CI had already passed it.
 - The test itself permits two sequential `waitForProcessExit(..., 5_000)` windows, so its 5-second outer timeout could expire before its own bounded assertions. Added a 12-second timeout to this single regression only; production `SHUTDOWN_GRACE_MS`, process-tree signaling, cleanup assertions, browser CI limits and product behavior are unchanged.
+
+### 2026-09-01 21:18 TRT — keep provider freshness labels aligned to minute boundaries
+- Continued independently from exact main `2cf279a28cd643b784adf13dd3288104c979ec9a` while PR #580 validated on its separately-owned branch; no pending branch was mutated from a second workstream.
+- `WeatherDecisionField` refreshed provider-age text with a 60-second interval anchored to component mount time. A page mounted at `xx:00:30` could therefore keep “şimdi güncellendi” until `xx:01:30`, even though the displayed integer-minute age had changed at `xx:01:00`.
+- Replaced the mount-relative interval with one timeout aligned to the next clock-minute boundary plus a small boundary cushion, and resync on visible-tab return after browser timer suspension. Weather values, fetched timestamps, provider evidence, scores and safety guidance remain unchanged.
+- Added a fake-clock regression that mounts at `13:00:30` with a `13:00:00` provider timestamp, advances 31 seconds, and requires the label to become `1 dk önce` without waiting a full minute from mount.
+- Full local gates pass: 58/58 test files, 555/555 tests with coverage, ESLint, TypeScript, production build/service-worker stamp/all 81 city pages, and `git diff --check`.
+- Next action: commit/push/open this bounded UI-truthfulness PR from exact main lineage; require protected exact-head CI/CodeQL before merge, then continue with #580/#581 lease-aware sequencing and production smoke.
