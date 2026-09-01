@@ -277,6 +277,49 @@ describe('DecisionAlertsPanel', () => {
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(2));
   });
 
+  it('releases the pending delivery guard when service-worker readiness stalls', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    let readyReads = 0;
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        get ready() {
+          readyReads += 1;
+          return new Promise<ServiceWorkerRegistration>(() => {});
+        },
+      },
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    const { rerender } = render(<DecisionAlertsPanel weather={weather} hourly={rainyHourly} />);
+    await Promise.resolve();
+    expect(readyReads).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(5_001);
+    rerender(
+      <DecisionAlertsPanel
+        weather={{
+          ...weather,
+          meta: { ...weather.meta, fetchedAt: new Date('2026-08-28T09:05:00Z') },
+        }}
+        hourly={rainyHourly}
+      />
+    );
+    await Promise.resolve();
+
+    expect(readyReads).toBe(2);
+    expect(notification).not.toHaveBeenCalled();
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(false);
+  });
+
   it('fails closed when alert dedupe storage becomes unavailable', async () => {
     const originalGetItem = Storage.prototype.getItem;
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
