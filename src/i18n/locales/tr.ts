@@ -161,6 +161,7 @@ export const tr = {
     dailyPlan: {
       eyebrow: 'Hava81 karar motoru',
       title: 'Gün planı',
+      forecastStale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar gün planı önerileri gösterilmiyor.',
       bands: {
         excellent: 'Çok uygun',
         good: 'Uygun',

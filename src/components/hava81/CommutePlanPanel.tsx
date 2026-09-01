@@ -5,39 +5,12 @@ import { buildCommutePlan, type CommuteAdviceCode } from '../../domain/commute/b
 import { useSettings } from '../../context/SettingsContext';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './CommutePlanPanel.css';
 
 const COMMUTE_BOUNDARY_CUSHION_MS = 100;
 const DAY_MS = 24 * 60 * 60_000;
-const FORECAST_FRESHNESS_FALLBACK_SECONDS = 1_800;
-const MAX_FUTURE_SKEW_MS = 60_000;
-const FORECAST_EXPIRY_CUSHION_MS = 100;
-
-const isFreshForecast = (meta: ForecastMeta | null) => {
-  if (!meta?.fetchedAt) return false;
-  const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return false;
-  const ttlSeconds =
-    typeof meta.freshForSeconds === 'number' && Number.isFinite(meta.freshForSeconds) && meta.freshForSeconds > 0
-      ? meta.freshForSeconds
-      : FORECAST_FRESHNESS_FALLBACK_SECONDS;
-  const ageMs = Date.now() - fetchedAtMs;
-  return ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
-};
-
-const millisecondsUntilForecastExpiry = (meta: ForecastMeta | null) => {
-  if (!meta?.fetchedAt) return null;
-  const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return null;
-  const ttlSeconds =
-    typeof meta.freshForSeconds === 'number' && Number.isFinite(meta.freshForSeconds) && meta.freshForSeconds > 0
-      ? meta.freshForSeconds
-      : FORECAST_FRESHNESS_FALLBACK_SECONDS;
-  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
-  return remainingMs > 0 ? remainingMs + FORECAST_EXPIRY_CUSHION_MS : null;
-};
-
 const millisecondsUntilNextClock = (clock: string | undefined, timezoneOffsetSeconds: number) => {
   if (!clock) return null;
   const match = /^(\d{2}):(\d{2})$/.exec(clock);
@@ -73,9 +46,10 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
   const commuteIncompleteId = hasPartialCommuteTime ? 'commute-plan-incomplete' : undefined;
   const trackedPlanRef = useRef<string | null>(null);
   const [commuteClockRevision, setCommuteClockRevision] = useState(0);
-  const [forecastFreshnessRevision, setForecastFreshnessRevision] = useState(0);
+  const [, setForecastFreshnessRevision] = useState(0);
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
-  const forecastFresh = isFreshForecast(forecastMeta);
+  const forecastFreshness = getForecastFreshness(forecastMeta);
+  const forecastFresh = forecastFreshness.fresh;
   const plan = useMemo(
     () =>
       forecastFresh
@@ -95,13 +69,12 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
       profile.temperatureSensitivity,
       timezoneOffsetSeconds,
       commuteClockRevision,
-      forecastFreshnessRevision,
     ]
   );
 
   useEffect(() => {
     const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
-    const delay = millisecondsUntilForecastExpiry(forecastMeta);
+    const delay = forecastFreshness.expiresInMs;
     const timeout = delay === null ? undefined : window.setTimeout(resyncFreshness, delay);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
@@ -111,7 +84,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
       if (timeout !== undefined) window.clearTimeout(timeout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [forecastMeta]);
+  }, [forecastMeta, forecastFreshness.expiresInMs]);
 
   useEffect(() => {
     const delay = millisecondsUntilNextClock(profile.commuteStart, timezoneOffsetSeconds);
