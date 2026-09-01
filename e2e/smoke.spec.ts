@@ -1327,35 +1327,60 @@ test('mobile day-plan header stays readable at 390px', async ({ page }, testInfo
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
 
-  const layout = await page.locator('.daily-plan__header').evaluate(element => {
-    const header = element.getBoundingClientRect();
-    const title = element.querySelector('h2')?.getBoundingClientRect();
-    const actions = element.querySelector('.daily-plan__header-actions')?.getBoundingClientRect();
-    const share = element.querySelector('.daily-plan__share')?.getBoundingClientRect();
-    const score = element.querySelector('.daily-plan__score')?.getBoundingClientRect();
-    const style = getComputedStyle(element);
-    if (!title || !actions || !share || !score) throw new Error('Missing Daily Plan header element');
-    return {
-      direction: style.flexDirection,
-      headerWidth: header.width,
-      titleWidth: title.width,
-      titleHeight: title.height,
-      actionsWidth: actions.width,
-      shareHeight: share.height,
-      overlap: Math.max(0, Math.min(title.right, actions.right) - Math.max(title.left, actions.left)) *
-        Math.max(0, Math.min(title.bottom, actions.bottom) - Math.max(title.top, actions.top)),
-      pageWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-    };
-  });
+  const measure = async () =>
+    page.locator('.daily-plan__header').evaluate(element => {
+      const header = element.getBoundingClientRect();
+      const titleBlock = element.firstElementChild as HTMLElement | null;
+      const title = element.querySelector('h2')?.getBoundingClientRect();
+      const actions = element.querySelector('.daily-plan__header-actions')?.getBoundingClientRect();
+      const share = element.querySelector('.daily-plan__share')?.getBoundingClientRect();
+      const score = element.querySelector('.daily-plan__score')?.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      if (!titleBlock || !title || !actions || !share || !score) {
+        throw new Error('Missing Daily Plan header element');
+      }
+      return {
+        direction: style.flexDirection,
+        headerHeight: header.height,
+        titleBlockHeight: titleBlock.getBoundingClientRect().height,
+        titleBlockBasis: getComputedStyle(titleBlock).flexBasis,
+        titleWidth: title.width,
+        titleHeight: title.height,
+        actionsWidth: actions.width,
+        shareHeight: share.height,
+        overlap:
+          Math.max(0, Math.min(title.right, actions.right) - Math.max(title.left, actions.left)) *
+          Math.max(0, Math.min(title.bottom, actions.bottom) - Math.max(title.top, actions.top)),
+        headerFits: element.scrollWidth <= element.clientWidth + 1,
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
 
-  expect(layout.direction).toBe('column');
-  expect(layout.titleWidth).toBeGreaterThan(200);
-  expect(layout.titleHeight).toBeLessThan(50);
-  expect(layout.actionsWidth).toBeGreaterThan(250);
-  expect(layout.shareHeight).toBeGreaterThanOrEqual(44);
-  expect(layout.overlap).toBe(0);
-  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  const normal = await measure();
+  expect(normal.direction).toBe('column');
+  expect(normal.titleBlockBasis).toBe('auto');
+  expect(normal.headerHeight).toBeLessThan(180);
+  expect(normal.titleBlockHeight).toBeLessThan(100);
+  expect(normal.titleWidth).toBeGreaterThan(200);
+  expect(normal.titleHeight).toBeLessThan(50);
+  expect(normal.actionsWidth).toBeGreaterThan(250);
+  expect(normal.shareHeight).toBeGreaterThanOrEqual(44);
+  expect(normal.overlap).toBe(0);
+  expect(normal.headerFits).toBe(true);
+  expect(normal.pageWidth).toBeLessThanOrEqual(normal.viewportWidth);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const enlarged = await measure();
+  expect(enlarged.direction).toBe('column');
+  expect(enlarged.titleBlockBasis).toBe('auto');
+  expect(enlarged.headerHeight).toBeLessThan(450);
+  expect(enlarged.titleBlockHeight).toBeLessThan(180);
+  expect(enlarged.headerFits).toBe(true);
+  expect(enlarged.overlap).toBe(0);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
 test('narrow English layout keeps decision content readable at 320px', async ({ page }, testInfo) => {
