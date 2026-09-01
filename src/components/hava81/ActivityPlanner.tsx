@@ -181,6 +181,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
               key={activity}
               type="button"
               aria-pressed={active}
+              aria-describedby={disabled ? 'activity-selection-limit' : undefined}
               className={active ? 'is-active' : ''}
               disabled={disabled}
               onClick={() => toggleActivity(activity)}

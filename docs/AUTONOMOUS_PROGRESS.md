@@ -1952,3 +1952,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the fix on current main: a ref-backed single-flight guard, disabled/`aria-busy` state and localized loading copy remain active only while the transport is pending; `finally` always releases the guard so cancellation/failure stays retryable.
 - Added a deterministic unit regression with a never-resolved-until-test native share promise; a second activation must not call `navigator.share` twice, and the button must recover after resolution. No weather, score, provider, MGM, UV/AQI or safety semantics changed.
 - Local Node/npm is unavailable in the gateway shell; `git diff --check` is the local gate and protected exact-head CI/CodeQL must run before any merge.
+
+## 2026-09-01 12:55 TRT — connect disabled activity choices to the selection limit
+- Continued in a third isolated branch from exact main `0201a87e48ca4ad184181964ce005a7a6295fc8d` while PRs #538/#539 validate independently; neither pending branch was mutated.
+- Activity Planner already shows an explicit three-activity limit and describes the chip group, but each newly disabled unselected chip did not directly reference that reason. Added `aria-describedby` only to disabled unselected activity buttons, pointing to the existing limit status; selected activities remain enabled for removal.
+- Regression coverage now requires both disabled example activities to reference the visible limit status. No activity score, weather evidence, threshold, provider, MGM, UV/AQI or safety semantics changed.
+- Local Node/npm is unavailable in the gateway shell; `git diff --check` is the local gate and protected exact-head CI/CodeQL remains mandatory before merge.
