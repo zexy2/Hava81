@@ -297,7 +297,9 @@ const App: React.FC = () => {
   const openMap = useCallback(() => {
     const activeElement = document.activeElement;
     mapReturnFocusRef.current =
-      activeElement instanceof HTMLElement && activeElement !== document.body ? activeElement : null;
+      activeElement instanceof HTMLElement && activeElement !== document.body
+        ? activeElement
+        : null;
     setShowMap(true);
     setActiveNav('map');
     requestAnimationFrame(() => {
@@ -486,6 +488,9 @@ const App: React.FC = () => {
                   type="button"
                   className="atlas-icon-button atlas-settings-button"
                   onClick={openSettings}
+                  aria-haspopup="dialog"
+                  aria-expanded={isSettingsOpen}
+                  aria-controls="settings-panel-dialog"
                   aria-label={t('common.settings')}
                 >
                   <span className="atlas-settings-button__language" aria-hidden="true">
@@ -688,8 +693,7 @@ const App: React.FC = () => {
             <span>Hava81 · {t('hava81.tagline')}</span>
             <span className="atlas-footer__shortcuts">
               <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
-              <kbd>{settingsShortcutLabel}</kbd>{' '}
-              {t('common.keyboardSettings')}
+              <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
             </span>
           </footer>
 

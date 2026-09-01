@@ -380,7 +380,9 @@ describe('Hava81 app integration', () => {
     const message = await screen.findByText(/yakın tahmin şu anda güncellenemedi/i);
     const section = message.closest('section');
     expect(section).not.toBeNull();
-    expect(within(section!).queryByRole('button', { name: /tekrar dene/i })).not.toBeInTheDocument();
+    expect(
+      within(section!).queryByRole('button', { name: /tekrar dene/i })
+    ).not.toBeInTheDocument();
   });
 
   it('opens saved cities without silently favoriting the current city', async () => {
@@ -500,7 +502,14 @@ describe('Hava81 app integration', () => {
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
     expect(document.title).toBe('İstanbul hava durumu — Hava81');
-    await user.click(screen.getByRole('button', { name: /ayarlar/i }));
+    const settingsButton = screen.getByRole('button', { name: /ayarlar/i });
+    expect(settingsButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(settingsButton).toHaveAttribute('aria-expanded', 'false');
+    expect(settingsButton).toHaveAttribute('aria-controls', 'settings-panel-dialog');
+    await user.click(settingsButton);
+    const settingsDialog = await screen.findByRole('dialog', {}, { timeout: 5_000 });
+    expect(settingsDialog).toHaveAttribute('id', 'settings-panel-dialog');
+    expect(settingsButton).toHaveAttribute('aria-expanded', 'true');
     expect(
       await screen.findByRole('heading', { name: 'Birimler' }, { timeout: 5_000 })
     ).toBeInTheDocument();

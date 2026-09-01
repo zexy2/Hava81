@@ -125,6 +125,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
           <div className="settings-backdrop" aria-hidden="true" onClick={onClose} />
 
           <aside
+            id="settings-panel-dialog"
             ref={panelRef}
             className="settings-panel"
             role="dialog"
