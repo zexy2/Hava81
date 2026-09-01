@@ -25,10 +25,13 @@ const FORECAST_EXPIRY_CUSHION_MS = 100;
 
 const forecastFreshness = (meta: ForecastMeta | null) => {
   if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null as number | null };
-  const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
+  const fetchedAtMs =
+    meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
   if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null as number | null };
   const ttlSeconds =
-    typeof meta.freshForSeconds === 'number' && Number.isFinite(meta.freshForSeconds) && meta.freshForSeconds > 0
+    typeof meta.freshForSeconds === 'number' &&
+    Number.isFinite(meta.freshForSeconds) &&
+    meta.freshForSeconds > 0
       ? meta.freshForSeconds
       : FORECAST_FRESHNESS_FALLBACK_SECONDS;
   const ageMs = Date.now() - fetchedAtMs;
@@ -69,7 +72,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
     setActivityWindow,
     clearActivityWindow,
   } = useDecisionProfile();
-  const [forecastFreshnessRevision, setForecastFreshnessRevision] = useState(0);
+  const [, setForecastFreshnessRevision] = useState(0);
   const freshness = forecastFreshness(forecastMeta);
   const plans = useMemo(
     () =>
@@ -89,7 +92,6 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
     [
       airQuality,
       freshness.fresh,
-      forecastFreshnessRevision,
       hourly,
       profile.activities,
       profile.activityEnd,
@@ -102,7 +104,9 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
   useEffect(() => {
     const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
     const timeout =
-      freshness.expiresInMs === null ? undefined : window.setTimeout(resyncFreshness, freshness.expiresInMs);
+      freshness.expiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, freshness.expiresInMs);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -198,7 +202,11 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
           />
         </label>
         {hasPartialWindow ? (
-          <p id="activity-window-incomplete" className="activity-planner__window-status" role="status">
+          <p
+            id="activity-window-incomplete"
+            className="activity-planner__window-status"
+            role="status"
+          >
             {t('hava81.activities.window.incomplete')}
           </p>
         ) : null}
