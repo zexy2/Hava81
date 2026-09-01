@@ -435,8 +435,11 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
             },
         ]
 
+        requested_timeouts: list[float] = []
+
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
             requested_urls.append(url)
+            requested_timeouts.append(timeout)
             if '/pulls?' in url:
                 payload = pulls
             elif '/actions/runs?' in url:
@@ -465,6 +468,9 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
             observer.collect_api_deployment = original_collect_api_deployment
 
         self.assertIn('/actions/runs?per_page=100', requested_urls[1])
+        self.assertEqual(requested_timeouts[0], 6.0)
+        self.assertEqual(requested_timeouts[1], observer.GITHUB_RUNS_TIMEOUT_SECONDS)
+        self.assertGreater(requested_timeouts[1], requested_timeouts[0])
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-new')
         self.assertEqual(result['latest_main_run']['run_id'], 12)
         self.assertEqual(result['latest_main_run']['status'], 'completed')

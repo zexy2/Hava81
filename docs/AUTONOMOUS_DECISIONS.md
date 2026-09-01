@@ -497,3 +497,6 @@ A return-vs-outbound precipitation-amount change is meaningful only when both wi
 
 ## 2026-09-01 — Score-engine wind is required evidence, never an implicit calm fallback
 The shared Hava81 score engine must require a finite validated sustained-wind input from its producer. Missing wind must fail at the type/trust boundary instead of becoming `0 m/s` inside apparent-temperature or wind scoring. Optional gust remains optional because absence of gust is a legitimate provider state.
+
+## 2026-09-01 — Large GitHub Actions observer reads get a dedicated bounded timeout
+Keep normal observer HTTP calls on the tight 6-second default, but allow the `actions/runs?per_page=100` response up to 12 seconds because its payload is materially larger and measured network latency can exceed 6 seconds. The oneshot service still has a 55-second hard systemd ceiling, so this improves CI observability without allowing an unbounded observer or weakening production health timeouts.
