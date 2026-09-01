@@ -203,6 +203,17 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByText(/0,0 mm/i)).not.toBeInTheDocument();
   });
 
+  it('does not claim the near forecast is stable when hourly decision data is unavailable', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')).toBeInTheDocument();
+    expect(screen.queryByText('Yakın tahmin aralığında belirgin bir risk görünmüyor.')).not.toBeInTheDocument();
+  });
+
   it('does not expose the whole decision surface as a live region', () => {
     const { container } = render(
       <SettingsProvider>

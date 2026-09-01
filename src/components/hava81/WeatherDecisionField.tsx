@@ -182,6 +182,10 @@ export function WeatherDecisionField({
         return t('hava81.decision.actions.stable', {
           defaultValue: 'Yakın tahmin aralığında belirgin bir risk görünmüyor.',
         });
+      case 'unavailable':
+        return t('hava81.decision.actions.unavailable', {
+          defaultValue: 'Yakın saatler için karar verisi henüz hazır değil.',
+        });
     }
   };
 

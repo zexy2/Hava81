@@ -10,7 +10,8 @@ export type WeatherDecisionKind =
   | 'air-quality'
   | 'uv'
   | 'outdoor-window'
-  | 'stable';
+  | 'stable'
+  | 'unavailable';
 
 export type WeatherDecisionSeverity = 'info' | 'moderate' | 'high';
 
@@ -26,7 +27,7 @@ type ValuedWeatherDecision = WeatherDecisionBase & {
 };
 
 type ContextWeatherDecision = WeatherDecisionBase & {
-  kind: 'outdoor-window' | 'stable';
+  kind: 'outdoor-window' | 'stable' | 'unavailable';
   value?: number;
 };
 
@@ -175,7 +176,9 @@ export const getWeatherDecisions = ({
     });
   }
 
-  if (decisions.length === 0) decisions.push({ kind: 'stable', severity: 'info' });
+  if (decisions.length === 0) {
+    decisions.push({ kind: next.length === 0 ? 'unavailable' : 'stable', severity: 'info' });
+  }
 
   return decisions.sort((a, b) => severityRank[b.severity] - severityRank[a.severity]).slice(0, 3);
 };
