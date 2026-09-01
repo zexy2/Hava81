@@ -5,11 +5,7 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 describe('useKeyboardShortcuts', () => {
   it('does not steal matching shortcuts from a focused select control', () => {
     const action = vi.fn();
-    renderHook(() =>
-      useKeyboardShortcuts([
-        { key: 'ArrowRight', action, description: 'Next' },
-      ])
-    );
+    renderHook(() => useKeyboardShortcuts([{ key: 'ArrowRight', action, description: 'Next' }]));
 
     const select = document.createElement('select');
     select.innerHTML = '<option>One</option><option>Two</option>';
@@ -24,9 +20,7 @@ describe('useKeyboardShortcuts', () => {
 
   it('still allows Escape shortcuts from a focused select control', () => {
     const action = vi.fn();
-    renderHook(() =>
-      useKeyboardShortcuts([{ key: 'Escape', action, description: 'Close' }])
-    );
+    renderHook(() => useKeyboardShortcuts([{ key: 'Escape', action, description: 'Close' }]));
 
     const select = document.createElement('select');
     document.body.append(select);
@@ -36,5 +30,29 @@ describe('useKeyboardShortcuts', () => {
 
     expect(action).toHaveBeenCalledTimes(1);
     select.remove();
+  });
+  it('does not steal horizontal arrows from a focused scrollable region', () => {
+    const action = vi.fn();
+    renderHook(() => useKeyboardShortcuts([{ key: 'ArrowRight', action, description: 'Next' }]));
+
+    const scroller = document.createElement('div');
+    scroller.tabIndex = 0;
+    document.body.append(scroller);
+    scroller.focus();
+
+    fireEvent.keyDown(scroller, { key: 'ArrowRight' });
+
+    expect(action).not.toHaveBeenCalled();
+    scroller.remove();
+  });
+
+  it('keeps horizontal arrow shortcuts global when focus is on the document body', () => {
+    const action = vi.fn();
+    renderHook(() => useKeyboardShortcuts([{ key: 'ArrowRight', action, description: 'Next' }]));
+
+    document.body.focus();
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' });
+
+    expect(action).toHaveBeenCalledTimes(1);
   });
 });
