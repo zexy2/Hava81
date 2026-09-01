@@ -689,3 +689,7 @@ AQI and modeled context TTLs are evidence boundaries, not timer hints. Because b
 ## 2026-09-02 — A service-worker upgrade must secure the complete boot shell before activation
 
 Caching only the root HTML is not enough for a first offline launch: a newly installed worker can claim the page after its hashed JS/CSS were fetched outside service-worker control, leaving the cached HTML unusable offline. During install, parse the fetched same-origin root shell and fail closed unless every referenced same-origin `/assets/` script, stylesheet, and modulepreload asset can also be fetched with `cache: 'no-store'` and stored in the new versioned cache. Optional metadata such as the manifest remains best-effort. Never cache third-party URLs or unrelated asset links as required boot dependencies.
+
+## 2026-09-02 — Modeled decision alerts require explicit forecast freshness metadata
+
+An alert candidate is derived from hourly forecast evidence, so absence of `ForecastMeta` cannot be treated as fresh. The production alert surface must receive an explicit forecast metadata value and fail closed when it is unavailable/null. Delivery and quiet-hours wake scheduling require both current-weather and forecast timestamps to pass their freshness contracts. Do not infer freshness from the presence of hourly values or silently substitute a new timestamp.

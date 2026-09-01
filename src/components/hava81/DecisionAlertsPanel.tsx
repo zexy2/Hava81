@@ -10,7 +10,7 @@ interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
-  forecastMeta?: ForecastMeta | null;
+  forecastMeta: ForecastMeta | null;
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
 const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
@@ -129,17 +129,17 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     [plan, weather.cityName]
   );
   const alertEvidenceFresh =
-    !forecastMeta ||
-    (isFreshEvidence(
+    forecastMeta !== null &&
+    isFreshEvidence(
       weather.meta.fetchedAt,
       weather.meta.freshForSeconds,
       CURRENT_FRESHNESS_FALLBACK_SECONDS
     ) &&
-      isFreshEvidence(
-        forecastMeta.fetchedAt,
-        forecastMeta.freshForSeconds,
-        FORECAST_FRESHNESS_FALLBACK_SECONDS
-      ));
+    isFreshEvidence(
+      forecastMeta.fetchedAt,
+      forecastMeta.freshForSeconds,
+      FORECAST_FRESHNESS_FALLBACK_SECONDS
+    );
 
   useEffect(() => {
     if (!enabled || permission !== 'granted' || !candidate || !alertEvidenceFresh) return undefined;
