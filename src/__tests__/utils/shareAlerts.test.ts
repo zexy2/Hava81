@@ -35,6 +35,27 @@ describe('sharing and alerts', () => {
     expect(result.clipboardText).toContain(result.url);
   });
 
+  it('does not turn missing precipitation guidance into a no-umbrella claim', () => {
+    const tr = buildDecisionShare({
+      cityName: 'İzmir',
+      score: 80,
+      band: 'good',
+      umbrella: 'unknown',
+      language: 'tr',
+    });
+    const en = buildDecisionShare({
+      cityName: 'Izmir',
+      score: 80,
+      band: 'good',
+      umbrella: 'unknown',
+      language: 'en',
+    });
+    expect(tr.text).toContain('Şemsiye: Veri yok');
+    expect(tr.text).not.toContain('Şemsiye: Gerekmez');
+    expect(en.text).toContain('Umbrella: No data');
+    expect(en.text).not.toContain('Umbrella: Not needed');
+  });
+
   it('localizes the shared score meaning in English', () => {
     const result = buildDecisionShare({
       cityName: 'Ankara',

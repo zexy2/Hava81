@@ -1,6 +1,6 @@
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from "../../types";
-import { findBestWindowRange } from "./bestWindowRange";
-import { getScoreBand, scoreWeatherWindow } from "./scoreWeatherWindow";
+import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { findBestWindowRange } from './bestWindowRange';
+import { getScoreBand, scoreWeatherWindow } from './scoreWeatherWindow';
 import type {
   AirQualityAdvice,
   DailyPlan,
@@ -11,7 +11,7 @@ import type {
   ScoredWeatherWindow,
   UmbrellaAdvice,
   WindAdvice,
-} from "./types";
+} from './types';
 
 export interface BuildDailyPlanInput {
   weather: NormalizedWeatherData;
@@ -92,64 +92,74 @@ const aggregateImpacts = (entries: WeightedSlot[]): ScoreFactorImpact[] => {
 };
 
 const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
-  if (!slots.length) return "basic";
-  const richness = slots.map(slot =>
-    [
-      slot.apparentTemperature,
-      slot.humidity,
-      slot.precipitationMm,
-      slot.windGust,
-      slot.uvIndex,
-      slot.visibility,
-      slot.weatherCode,
-    ].filter(value => Number.isFinite(value)).length
+  if (!slots.length) return 'basic';
+  const richness = slots.map(
+    slot =>
+      [
+        slot.apparentTemperature,
+        slot.humidity,
+        slot.precipitationMm,
+        slot.windGust,
+        slot.uvIndex,
+        slot.visibility,
+        slot.weatherCode,
+      ].filter(value => Number.isFinite(value)).length
   );
   const richShare = richness.filter(count => count >= 6).length / slots.length;
   const usefulShare = richness.filter(count => count >= 4).length / slots.length;
-  if (richShare >= 0.7) return "high";
-  if (usefulShare >= 0.5) return "medium";
-  return "basic";
+  if (richShare >= 0.7) return 'high';
+  if (usefulShare >= 0.5) return 'medium';
+  return 'basic';
 };
 
 const pickUmbrellaAdvice = (slots: ScoredWeatherWindow[]): UmbrellaAdvice => {
   const near = withinHours(slots, NEAR_TERM_HOURS);
-  const maxPop = Math.max(0, ...near.map(slot => slot.precipitationProbability));
-  const maxMm = Math.max(0, ...near.map(slot => slot.precipitationMm ?? 0));
-  if (maxMm >= 1 || maxPop >= 0.55) return "yes";
-  if (maxMm >= 0.2 || maxPop >= 0.25) return "maybe";
-  return "no";
+  const probabilities = near
+    .map(slot => slot.precipitationProbability)
+    .filter((value): value is number => Number.isFinite(value));
+  const amounts = near
+    .map(slot => slot.precipitationMm)
+    .filter((value): value is number => Number.isFinite(value));
+  if (!probabilities.length && !amounts.length) return 'unknown';
+  const maxPop = Math.max(0, ...probabilities);
+  const maxMm = Math.max(0, ...amounts);
+  if (maxMm >= 1 || maxPop >= 0.55) return 'yes';
+  if (maxMm >= 0.2 || maxPop >= 0.25) return 'maybe';
+  return 'no';
 };
 
 const pickWindAdvice = (slots: ScoredWeatherWindow[]): WindAdvice => {
   const near = withinHours(slots, NEAR_TERM_HOURS);
   const maxWind = Math.max(0, ...near.map(slot => slot.windSpeed));
   const maxGust = Math.max(0, ...near.map(slot => slot.windGust ?? 0));
-  if (maxWind >= 13 || maxGust >= 20) return "strong";
-  if (maxWind >= 8 || maxGust >= 13) return "caution";
-  return "normal";
+  if (maxWind >= 13 || maxGust >= 20) return 'strong';
+  if (maxWind >= 8 || maxGust >= 13) return 'caution';
+  return 'normal';
 };
 
 const pickAirQualityAdvice = (airQuality?: AirQuality): AirQualityAdvice => {
-  if (!airQuality) return "unknown";
-  if (airQuality.aqi >= 4) return "poor";
-  if (airQuality.aqi >= 3) return "sensitive";
-  if (airQuality.aqi >= 2) return "fair";
-  return "good";
+  if (!airQuality) return 'unknown';
+  if (airQuality.aqi >= 4) return 'poor';
+  if (airQuality.aqi >= 3) return 'sensitive';
+  if (airQuality.aqi >= 2) return 'fair';
+  return 'good';
 };
 
 const buildNowOrLater = (slots: ScoredWeatherWindow[]): NowOrLaterAdvice => {
   const near = withinHours(slots, NEAR_TERM_HOURS);
   const current = near[0];
   if (!current) {
-    return { kind: "similar", currentScore: 0, targetScore: 0, reasons: [] };
+    return { kind: 'similar', currentScore: 0, targetScore: 0, reasons: [] };
   }
-  const bestLater = near.slice(1).reduce<ScoredWeatherWindow | undefined>(
-    (best, slot) => (!best || slot.score > best.score ? slot : best),
-    undefined
-  );
+  const bestLater = near
+    .slice(1)
+    .reduce<ScoredWeatherWindow | undefined>(
+      (best, slot) => (!best || slot.score > best.score ? slot : best),
+      undefined
+    );
   if (!bestLater) {
     return {
-      kind: "similar",
+      kind: 'similar',
       currentScore: current.score,
       targetScore: current.score,
       reasons: current.reasons,
@@ -159,7 +169,7 @@ const buildNowOrLater = (slots: ScoredWeatherWindow[]): NowOrLaterAdvice => {
   const improvement = bestLater.score - current.score;
   if (improvement >= 10) {
     return {
-      kind: "later",
+      kind: 'later',
       targetTime: bestLater.time,
       improvement,
       currentScore: current.score,
@@ -170,7 +180,7 @@ const buildNowOrLater = (slots: ScoredWeatherWindow[]): NowOrLaterAdvice => {
 
   if (current.score - bestLater.score >= 8 || (current.score >= 88 && improvement <= 3)) {
     return {
-      kind: "now",
+      kind: 'now',
       targetTime: current.time,
       improvement: current.score - bestLater.score,
       currentScore: current.score,
@@ -180,7 +190,7 @@ const buildNowOrLater = (slots: ScoredWeatherWindow[]): NowOrLaterAdvice => {
   }
 
   return {
-    kind: "similar",
+    kind: 'similar',
     targetTime: bestLater.time,
     improvement: Math.max(0, improvement),
     currentScore: current.score,
@@ -216,7 +226,6 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
           temperature: weather.temperature,
           apparentTemperature: weather.feelsLike,
           humidity: weather.humidity,
-          precipitationProbability: 0,
           windSpeed: weather.windSpeed,
           airQualityIndex: airQuality?.aqi,
           visibility: weather.visibility,

@@ -473,3 +473,6 @@ A rem-based minimum column width is appropriate when it represents readable cont
 
 ## 2026-09-01 — Settings trigger exposes its dialog relationship
 The header Settings control opens a modal dialog, so its accessibility contract should expose `aria-haspopup="dialog"`, live `aria-expanded`, and `aria-controls` pointing to the dialog's stable id. The dialog keeps its existing modal/focus-trap behavior; this change adds relationship/state semantics only and does not alter settings, weather, scoring, provider, or safety behavior.
+
+## 2026-09-01 — Unknown precipitation must remain unknown in current-only fallbacks
+Current weather does not contain a forecast precipitation probability. When an hourly forecast is absent, decision/activity fallback scoring must not synthesize `0%`, because that turns missing evidence into a dry-weather claim and can yield a false "no umbrella" recommendation. The scoring domain now permits precipitation probability to be unknown: absent probability/amount contributes no invented rain penalty or reason, but also cannot earn dry-weather activity benefits. Umbrella guidance becomes `unknown` when no precipitation signal exists at all; genuine forecast `0%` remains an explicit dry signal. UI/share copy renders the distinction as unavailable data rather than "not needed"/"dry".

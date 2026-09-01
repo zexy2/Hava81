@@ -413,6 +413,8 @@ describe('Hava81 daily decision engine v2', () => {
     expect(plan.airQuality).toBe('poor');
     expect(plan.impacts.map(impact => impact.factor)).toContain('air-quality');
     expect(plan.score).toBeLessThan(85);
+    expect(plan.slots[0].precipitationProbability).toBeUndefined();
+    expect(plan.umbrella).toBe('unknown');
   });
 
   it('lets a sustained difficult period pull down the 12-hour score without using one arbitrary worst point', () => {

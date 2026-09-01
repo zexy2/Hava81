@@ -172,7 +172,13 @@ export const en = {
       bestRange: 'Best-looking range: {{start}}–{{end}}',
       quickLabel: 'Practical weather decisions',
       quick: {
-        umbrella: { label: 'Umbrella', yes: 'Yes', maybe: 'Take one', no: 'Not needed' },
+        umbrella: {
+          label: 'Umbrella',
+          yes: 'Yes',
+          maybe: 'Take one',
+          no: 'Not needed',
+          unknown: 'No data',
+        },
         wind: { label: 'Wind', strong: 'Strong', caution: 'Caution', normal: 'Normal' },
         air: {
           label: 'Air quality',
@@ -318,6 +324,7 @@ export const en = {
       conditions: {
         feelsLike: 'Feels like {{value}}{{unit}}',
         dry: 'No precipitation expected',
+        precipitationUnknown: 'Precipitation data unavailable',
         rain: 'Rain {{value}}%',
         rainWithAmount: 'Rain {{value}}% · {{amount}}',
         rainAmount: 'Rain {{amount}}',

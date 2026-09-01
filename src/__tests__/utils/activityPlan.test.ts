@@ -84,7 +84,11 @@ describe('activity plans', () => {
       hourly: points,
       airQuality: air,
     });
-    const withoutAirProjection = buildActivityPlan({ activity: 'children', weather, hourly: points });
+    const withoutAirProjection = buildActivityPlan({
+      activity: 'children',
+      weather,
+      hourly: points,
+    });
     expect(withCurrentAir.score).toBe(withoutAirProjection.score);
     expect(withCurrentAir.reasons).not.toContain('poor-air-quality');
   });
@@ -94,6 +98,33 @@ describe('activity plans', () => {
     const walk = buildActivityPlan({ activity: 'walk', weather, hourly: [], airQuality: air });
     expect(walk.baselineScore).toBeLessThan(100);
     expect(walk.reasons).toContain('poor-air-quality');
+    expect(walk.slots[0].precipitationProbability).toBeUndefined();
+  });
+
+  it('does not award dry-weather activity benefits when precipitation is unknown', () => {
+    const currentOnly = buildActivityPlan({
+      activity: 'walk',
+      weather: { ...weather, temperature: 20, feelsLike: 20, windSpeed: 4 },
+      hourly: [],
+    });
+    const explicitlyDry = buildActivityPlan({
+      activity: 'walk',
+      weather: { ...weather, temperature: 20, feelsLike: 20, windSpeed: 4 },
+      hourly: [
+        {
+          time: weather.timestamp,
+          temp: 20,
+          apparentTemperature: 20,
+          pop: 0,
+          windSpeed: 4,
+          icon: '01d',
+        },
+      ],
+    });
+
+    expect(currentOnly.slots[0].precipitationProbability).toBeUndefined();
+    expect(explicitlyDry.slots[0].precipitationProbability).toBe(0);
+    expect(currentOnly.activityImpact).toBeLessThan(explicitlyDry.activityImpact);
   });
 
   it('temperature sensitivity shifts activity comfort', () => {
@@ -115,10 +146,38 @@ describe('activity plans', () => {
 
   it('recalculates the score and best time inside a user-selected clock range', () => {
     const points: HourlyForecast[] = [
-      { time: new Date('2026-08-28T09:00:00Z'), temp: 18, apparentTemperature: 18, pop: 0, windSpeed: 2, icon: '01d' },
-      { time: new Date('2026-08-28T15:00:00Z'), temp: 30, apparentTemperature: 31, pop: 0, windSpeed: 4, icon: '01d' },
-      { time: new Date('2026-08-28T16:00:00Z'), temp: 31, apparentTemperature: 32, pop: 0, windSpeed: 4, icon: '01d' },
-      { time: new Date('2026-08-28T17:00:00Z'), temp: 32, apparentTemperature: 33, pop: 0, windSpeed: 4, icon: '01d' },
+      {
+        time: new Date('2026-08-28T09:00:00Z'),
+        temp: 18,
+        apparentTemperature: 18,
+        pop: 0,
+        windSpeed: 2,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-28T15:00:00Z'),
+        temp: 30,
+        apparentTemperature: 31,
+        pop: 0,
+        windSpeed: 4,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-28T16:00:00Z'),
+        temp: 31,
+        apparentTemperature: 32,
+        pop: 0,
+        windSpeed: 4,
+        icon: '01d',
+      },
+      {
+        time: new Date('2026-08-28T17:00:00Z'),
+        temp: 32,
+        apparentTemperature: 33,
+        pop: 0,
+        windSpeed: 4,
+        icon: '01d',
+      },
     ];
     const unfiltered = buildActivityPlan({ activity: 'run', weather, hourly: points });
     const filtered = buildActivityPlan({
@@ -230,10 +289,14 @@ describe('activity plans', () => {
   it('does not turn current poor AQI into a future laundry air-quality penalty', () => {
     const points = hourly([30, 30, 30], [0, 0, 0], [6, 6, 6]);
     const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };
-    const laundry = buildActivityPlan({ activity: 'laundry', weather, hourly: points, airQuality: air });
+    const laundry = buildActivityPlan({
+      activity: 'laundry',
+      weather,
+      hourly: points,
+      airQuality: air,
+    });
 
     expect(laundry.activityImpact).toBeGreaterThan(0);
     expect(laundry.reasons).not.toContain('poor-air-quality');
   });
-
 });

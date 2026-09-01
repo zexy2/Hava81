@@ -4,14 +4,14 @@ import type {
   Hava81ScoreFactor,
   ScoreFactorImpact,
   ScoredWeatherWindow,
-} from "./types";
+} from './types';
 
 export interface ScoreWeatherWindowInput {
   time: Date;
   temperature: number;
   apparentTemperature?: number;
   humidity?: number;
-  precipitationProbability: number;
+  precipitationProbability?: number;
   precipitationMm?: number;
   windSpeed?: number;
   windGust?: number;
@@ -24,10 +24,10 @@ export interface ScoreWeatherWindowInput {
 export const getScoreBand = (score: number): Hava81ScoreBand => {
   // Reserve the top label for genuinely near-ideal windows; 90–96 is still good weather,
   // but calling the whole range “excellent” makes normal hourly variation disappear.
-  if (score >= 97) return "excellent";
-  if (score >= 75) return "good";
-  if (score >= 55) return "caution";
-  return "difficult";
+  if (score >= 97) return 'excellent';
+  if (score >= 75) return 'good';
+  if (score >= 55) return 'caution';
+  return 'difficult';
 };
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -77,18 +77,18 @@ export const resolveApparentTemperature = ({
   apparentTemperature,
   humidity,
   windSpeed = 0,
-}: Pick<ScoreWeatherWindowInput, "temperature" | "apparentTemperature" | "humidity" | "windSpeed">) => {
+}: Pick<
+  ScoreWeatherWindowInput,
+  'temperature' | 'apparentTemperature' | 'humidity' | 'windSpeed'
+>) => {
   if (Number.isFinite(apparentTemperature)) return apparentTemperature as number;
-  if (temperature >= 26.7 && Number.isFinite(humidity)) return heatIndexC(temperature, humidity as number);
+  if (temperature >= 26.7 && Number.isFinite(humidity))
+    return heatIndexC(temperature, humidity as number);
   if (temperature <= 10) return windChillC(temperature, windSpeed);
   return temperature;
 };
 
-const addImpact = (
-  impacts: ScoreFactorImpact[],
-  factor: Hava81ScoreFactor,
-  penalty: number,
-) => {
+const addImpact = (impacts: ScoreFactorImpact[], factor: Hava81ScoreFactor, penalty: number) => {
   if (penalty >= 0.5) impacts.push({ factor, penalty: Math.round(penalty * 10) / 10 });
 };
 
@@ -102,9 +102,12 @@ const thermalPenalty = (apparent: number) => {
   return comfort;
 };
 
-const precipitationPenalty = (probability: number, amount?: number) => {
-  const pop = clamp(probability, 0, 1);
-  if (!Number.isFinite(amount)) return 28 * smoothstep(pop, 0.12, 0.9);
+const precipitationPenalty = (probability?: number, amount?: number) => {
+  const hasProbability = Number.isFinite(probability);
+  const hasAmount = Number.isFinite(amount);
+  if (!hasProbability && !hasAmount) return 0;
+  const pop = hasProbability ? clamp(probability as number, 0, 1) : 0;
+  if (!hasAmount) return 28 * smoothstep(pop, 0.12, 0.9);
   const mm = Math.max(0, amount as number);
   // A zero measured amount does not mean a moderate forecast probability is irrelevant.
   // Give probability enough weight to distinguish a dry-looking 15% hour from a 35–50%
@@ -182,37 +185,51 @@ export const scoreWeatherWindow = ({
   const visibilityRisk = visibilityPenalty(visibility);
   const severe = severeWeatherPenalty(weatherCode);
 
-  addImpact(impacts, "thermal", thermal);
-  addImpact(impacts, "precipitation", rain);
-  addImpact(impacts, "wind", wind);
-  addImpact(impacts, "air-quality", air);
-  addImpact(impacts, "uv", uv);
-  addImpact(impacts, "visibility", visibilityRisk);
-  addImpact(impacts, "severe-weather", severe);
+  addImpact(impacts, 'thermal', thermal);
+  addImpact(impacts, 'precipitation', rain);
+  addImpact(impacts, 'wind', wind);
+  addImpact(impacts, 'air-quality', air);
+  addImpact(impacts, 'uv', uv);
+  addImpact(impacts, 'visibility', visibilityRisk);
+  addImpact(impacts, 'severe-weather', severe);
 
-  if (apparent >= 36) reasons.push("extreme-heat");
-  else if (apparent >= 29) reasons.push("heat");
-  else if (apparent <= 0) reasons.push("freezing");
-  else if (apparent <= 8) reasons.push("cold");
+  if (apparent >= 36) reasons.push('extreme-heat');
+  else if (apparent >= 29) reasons.push('heat');
+  else if (apparent <= 0) reasons.push('freezing');
+  else if (apparent <= 8) reasons.push('cold');
 
-  if ((precipitationMm ?? 0) >= 2.5 || precipitationProbability >= 0.6) reasons.push("heavy-rain");
-  else if ((precipitationMm ?? 0) >= 0.2 || precipitationProbability >= 0.25) reasons.push("rain-risk");
+  const hasPrecipitationProbability = Number.isFinite(precipitationProbability);
+  const hasPrecipitationAmount = Number.isFinite(precipitationMm);
+  if (
+    (hasPrecipitationAmount && (precipitationMm as number) >= 2.5) ||
+    (hasPrecipitationProbability && (precipitationProbability as number) >= 0.6)
+  )
+    reasons.push('heavy-rain');
+  else if (
+    (hasPrecipitationAmount && (precipitationMm as number) >= 0.2) ||
+    (hasPrecipitationProbability && (precipitationProbability as number) >= 0.25)
+  )
+    reasons.push('rain-risk');
 
-  if (windSpeed >= 13 || (windGust ?? 0) >= 20) reasons.push("strong-wind");
-  else if ((windGust ?? 0) >= 13) reasons.push("gusty-wind");
-  else if (windSpeed >= 8) reasons.push("windy");
+  if (windSpeed >= 13 || (windGust ?? 0) >= 20) reasons.push('strong-wind');
+  else if ((windGust ?? 0) >= 13) reasons.push('gusty-wind');
+  else if (windSpeed >= 8) reasons.push('windy');
 
-  if ((airQualityIndex ?? 0) >= 4) reasons.push("poor-air-quality");
-  else if ((airQualityIndex ?? 0) >= 3) reasons.push("sensitive-air-quality");
-  if ((uvIndex ?? 0) >= 6) reasons.push("high-uv");
-  if ((visibility ?? Number.POSITIVE_INFINITY) < 2000) reasons.push("low-visibility");
-  if (severe >= 20) reasons.push("severe-weather");
+  if ((airQualityIndex ?? 0) >= 4) reasons.push('poor-air-quality');
+  else if ((airQualityIndex ?? 0) >= 3) reasons.push('sensitive-air-quality');
+  if ((uvIndex ?? 0) >= 6) reasons.push('high-uv');
+  if ((visibility ?? Number.POSITIVE_INFINITY) < 2000) reasons.push('low-visibility');
+  if (severe >= 20) reasons.push('severe-weather');
 
-  const materialRisks = [thermal, rain, wind, air, uv, visibilityRisk, severe].filter(value => value >= 8).length;
+  const materialRisks = [thermal, rain, wind, air, uv, visibilityRisk, severe].filter(
+    value => value >= 8
+  ).length;
   const compound = materialRisks >= 2 ? Math.min(12, (materialRisks - 1) * 4) : 0;
-  addImpact(impacts, "compound", compound);
+  addImpact(impacts, 'compound', compound);
 
-  let score = clampScore(100 - (thermal + rain + wind + air + uv + visibilityRisk + severe + compound));
+  let score = clampScore(
+    100 - (thermal + rain + wind + air + uv + visibilityRisk + severe + compound)
+  );
 
   if (apparent >= 43) score = Math.min(score, 30);
   else if (apparent >= 40) score = Math.min(score, 45);
@@ -233,7 +250,9 @@ export const scoreWeatherWindow = ({
     band: getScoreBand(score),
     temperature,
     apparentTemperature: Math.round(apparent * 10) / 10,
-    precipitationProbability: clamp(precipitationProbability, 0, 1),
+    precipitationProbability: Number.isFinite(precipitationProbability)
+      ? clamp(precipitationProbability as number, 0, 1)
+      : undefined,
     precipitationMm,
     windSpeed,
     windGust,

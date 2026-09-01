@@ -173,7 +173,13 @@ export const tr = {
       bestRange: 'En uygun görünen aralık: {{start}}–{{end}}',
       quickLabel: 'Pratik hava kararları',
       quick: {
-        umbrella: { label: 'Şemsiye', yes: 'Evet', maybe: 'Yanında olsun', no: 'Gerekmez' },
+        umbrella: {
+          label: 'Şemsiye',
+          yes: 'Evet',
+          maybe: 'Yanında olsun',
+          no: 'Gerekmez',
+          unknown: 'Veri yok',
+        },
         wind: { label: 'Rüzgâr', strong: 'Güçlü', caution: 'Dikkat', normal: 'Normal' },
         air: {
           label: 'Hava kalitesi',
@@ -319,6 +325,7 @@ export const tr = {
       conditions: {
         feelsLike: 'Hissedilen {{value}}{{unit}}',
         dry: 'Yağış beklenmiyor',
+        precipitationUnknown: 'Yağış verisi yok',
         rain: 'Yağış %{{value}}',
         rainWithAmount: 'Yağış %{{value}} · {{amount}}',
         rainAmount: 'Yağış {{amount}}',
@@ -408,7 +415,8 @@ export const tr = {
       waitTitle: '{{city}} · Biraz beklersen daha iyi',
       waitBody: 'Yakın saatlerde hava skoru yaklaşık {{improvement}} puan iyileşiyor.',
       difficultTitle: '{{city}} · Zorlayıcı hava',
-      difficultBody: 'Bugünün Hava81 Skoru {{score}}/100 · {{band}}. Planını hava risklerine göre ayarla.',
+      difficultBody:
+        'Bugünün Hava81 Skoru {{score}}/100 · {{band}}. Planını hava risklerine göre ayarla.',
     },
     route: {
       title: 'Rota havası',

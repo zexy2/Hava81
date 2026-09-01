@@ -84,11 +84,15 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       timeZone: 'UTC',
     });
   };
-  const formatSlotPrecipitation = (probability: number, amount?: number) => {
-    const probabilityPercent = Math.round(probability * 100);
+  const formatSlotPrecipitation = (probability: number | undefined, amount?: number) => {
+    const probabilityPercent = Number.isFinite(probability)
+      ? Math.round((probability as number) * 100)
+      : undefined;
     const parts: string[] = [];
-    if (probabilityPercent > 0) {
-      parts.push(i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`);
+    if (probabilityPercent !== undefined && probabilityPercent > 0) {
+      parts.push(
+        i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`
+      );
     }
     const amountText = formatPrecipitationAmount(amount, i18n.language);
     if (amountText) parts.push(amountText);
@@ -224,7 +228,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         {plan.bestWindowRange ? (
           <small>
             {plan.bestWindowRange.start.time.getTime() === plan.bestWindowRange.end.time.getTime()
-              ? t('hava81.dailyPlan.bestWindow', { time: formatTime(plan.bestWindowRange.peak.time) })
+              ? t('hava81.dailyPlan.bestWindow', {
+                  time: formatTime(plan.bestWindowRange.peak.time),
+                })
               : t('hava81.dailyPlan.bestRange', {
                   start: formatTime(plan.bestWindowRange.start.time),
                   end: formatTime(plan.bestWindowRange.end.time),
@@ -262,11 +268,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
         <p>{t('hava81.dailyPlan.explain.method')}</p>
       </div>
 
-      <div
-        className="daily-plan__quick"
-        role="group"
-        aria-label={t('hava81.dailyPlan.quickLabel')}
-      >
+      <div className="daily-plan__quick" role="group" aria-label={t('hava81.dailyPlan.quickLabel')}>
         <div>
           <span>{t('hava81.dailyPlan.quick.umbrella.label')}</span>
           <strong>{t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)}</strong>
