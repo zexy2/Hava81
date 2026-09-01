@@ -149,3 +149,12 @@
     transition: none;
   }
 }
+
+
+@media (forced-colors: active) {
+  .atlas-bottom-nav__button[aria-current='page'] {
+    color: Highlight;
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+  }
+}
