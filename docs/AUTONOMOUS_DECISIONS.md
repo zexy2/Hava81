@@ -603,3 +603,6 @@ When saved-city comparison drops below its two-city minimum, treat that transiti
 
 ## 2026-09-01 — Notification permission is re-read when the page becomes visible
 Treat browser notification permission as external mutable state, not a mount-time constant. When Hava81 becomes visible again, re-read `Notification.permission` so browser/site-settings changes immediately re-enter the existing permission gates. Do not auto-enable alerts or alter stored opt-in; this only makes the UI and delivery eligibility reflect the browser's current authority.
+
+## 2026-09-01 — Route result language follows the current interface language
+Route corridor payloads may contain provider-localized descriptions, so a language change invalidates any rendered or in-flight route result that was requested under the previous locale. Reuse the existing request-generation guard to ignore late responses; do not translate provider text locally or fabricate replacement descriptions.

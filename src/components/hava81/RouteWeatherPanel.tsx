@@ -90,6 +90,13 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     setLoading(false);
   }, [currentCityName]);
 
+  useEffect(() => {
+    requestIdRef.current += 1;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+  }, [i18n.language]);
+
   const submit = async () => {
     if (!origin || !destination || origin.name === destination.name) return;
     const departureDate = parseTurkeyLocalInputValue(departure);
