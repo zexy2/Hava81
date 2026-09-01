@@ -1111,6 +1111,18 @@ kbd {
   }
 }
 
+@media (max-height: 28rem) {
+  .search-bar__suggestions {
+    max-height: min(20rem, 40dvh);
+  }
+}
+
+@media (max-width: 47.99rem) and (max-height: 28rem) {
+  .atlas-header--search-open ~ .atlas-bottom-nav {
+    display: none;
+  }
+}
+
 @media (max-width: 24rem) {
   .atlas-brand__index {
     display: none;

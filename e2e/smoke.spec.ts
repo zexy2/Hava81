@@ -496,6 +496,95 @@ test('forced colors keeps the active search suggestion visibly distinct', async 
   expect(Math.abs(state.selectedHeight - state.inactiveHeight)).toBeLessThanOrEqual(1);
 });
 
+test('short desktop viewport keeps search suggestions inside the viewport at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'short-height search suggestion regression');
+  await page.setViewportSize({ width: 1280, height: 320 });
+  await page.goto('/istanbul');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const input = page.locator('.search-bar__input:visible').first();
+  await input.fill('is');
+  const list = page.locator('.search-bar__suggestions:visible').first();
+  await expect(list).toBeVisible();
+
+  const beforeScrollY = await page.evaluate(() => window.scrollY);
+  await input.press('End');
+  const state = await list.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    const active = element.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!active) throw new Error('Missing active search suggestion');
+    const activeRect = active.getBoundingClientRect();
+    return {
+      top: rect.top,
+      bottom: rect.bottom,
+      viewportHeight: window.innerHeight,
+      internalScrollTop: element.scrollTop,
+      activeVisible: activeRect.top >= rect.top && activeRect.bottom <= rect.bottom,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  const afterScrollY = await page.evaluate(() => window.scrollY);
+
+  expect(state.top).toBeGreaterThanOrEqual(0);
+  expect(state.bottom).toBeLessThanOrEqual(state.viewportHeight + 1);
+  expect(state.internalScrollTop).toBeGreaterThan(0);
+  expect(state.activeVisible).toBe(true);
+  expect(afterScrollY).toBe(beforeScrollY);
+  expect(state.pageWidth).toBeLessThanOrEqual(state.viewportWidth);
+});
+
+test('short mobile landscape search reserves the viewport for suggestions at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'short mobile search suggestion regression');
+  await page.setViewportSize({ width: 568, height: 320 });
+  await page.goto('/istanbul');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+
+  const toggle = page.getByRole('button', { name: /şehir ara|city search/i });
+  await toggle.click();
+  const nav = page.locator('.atlas-bottom-nav');
+  await expect(nav).toBeHidden();
+
+  const input = page.locator('.search-bar__input:visible').first();
+  await input.fill('is');
+  const list = page.locator('.search-bar__suggestions:visible').first();
+  await expect(list).toBeVisible();
+  const beforeScrollY = await page.evaluate(() => window.scrollY);
+  await input.press('End');
+
+  const state = await list.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    const active = element.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!active) throw new Error('Missing active search suggestion');
+    const activeRect = active.getBoundingClientRect();
+    return {
+      top: rect.top,
+      bottom: rect.bottom,
+      viewportHeight: window.innerHeight,
+      internalScrollTop: element.scrollTop,
+      activeVisible: activeRect.top >= rect.top && activeRect.bottom <= rect.bottom,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  const afterScrollY = await page.evaluate(() => window.scrollY);
+
+  expect(state.top).toBeGreaterThanOrEqual(0);
+  expect(state.bottom).toBeLessThanOrEqual(state.viewportHeight + 1);
+  expect(state.internalScrollTop).toBeGreaterThan(0);
+  expect(state.activeVisible).toBe(true);
+  expect(afterScrollY).toBe(beforeScrollY);
+  expect(state.pageWidth).toBeLessThanOrEqual(state.viewportWidth);
+
+  await input.press('Escape');
+  await expect(nav).toBeVisible();
+  await expect(toggle).toBeFocused();
+});
+
 test('keyboard map close restores focus to the map trigger', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map focus restoration regression');
   await page.goto('/istanbul');
