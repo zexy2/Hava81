@@ -1136,6 +1136,10 @@ kbd {
   .atlas-main {
     padding-inline: var(--space-sm);
   }
+
+  .atlas-map-panel {
+    margin-inline: calc(var(--space-sm) * -1);
+  }
 }
 
 @media (pointer: coarse) {
