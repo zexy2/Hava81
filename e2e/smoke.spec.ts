@@ -1663,6 +1663,8 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
         const html = node as HTMLElement;
         return html.scrollWidth <= html.clientWidth + 1;
       };
+      const header = element.querySelector('.hava81-compare__header');
+      const winner = element.querySelector('.hava81-compare__winner');
       const table = element.querySelector('.hava81-compare__table');
       const cards = Array.from(element.querySelectorAll('.hava81-compare__city'));
       const headers = Array.from(element.querySelectorAll('.hava81-compare__city header'));
@@ -1675,6 +1677,8 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
         pageWidth: document.documentElement.scrollWidth,
         viewportWidth: document.documentElement.clientWidth,
         compareFits: fits(element),
+        headerFits: header ? fits(header) : true,
+        winnerFits: winner ? fits(winner) : true,
         tableFits: fits(table),
         cardsFit: cards.every(fits),
         headersFit: headers.every(fits),
@@ -1686,6 +1690,8 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
     });
     expect(state.pageWidth).toBeLessThanOrEqual(state.viewportWidth);
     expect(state.compareFits).toBe(true);
+    expect(state.headerFits).toBe(true);
+    expect(state.winnerFits).toBe(true);
     expect(state.tableFits).toBe(true);
     expect(state.cardsFit).toBe(true);
     expect(state.headersFit).toBe(true);
@@ -1695,6 +1701,8 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
     expect(state.metricsFit).toBe(true);
   };
 
+  await assertFits();
+  await page.setViewportSize({ width: 768, height: 1024 });
   await assertFits();
   await page.setViewportSize({ width: 390, height: 844 });
   await assertFits();
