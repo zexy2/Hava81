@@ -597,3 +597,6 @@ When the first Lighthouse performance score falls below the hard floor, run exac
 
 ## 2026-09-01 — City suggestion activation uses Pointer Events
 Use Pointer Events for direct city-suggestion activation instead of mouse-only handlers. Prevent the pointer-down default so the combobox does not blur and close its list before selection, while letting mouse, touch and pen share one activation path. This is input ergonomics only; city matching, request semantics and weather evidence are unchanged.
+
+## 2026-09-01 — Comparison minimum-state transitions settle busy state
+When saved-city comparison drops below its two-city minimum, treat that transition as a settled non-loading state even if a superseded request is still resolving. Keep the existing stale-result guard, clear `aria-busy`, and show the minimum requirement immediately. This changes async-state semantics only; it does not cancel or reinterpret weather evidence.

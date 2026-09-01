@@ -51,6 +51,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     let active = true;
     if (selected.length < 2) {
       setRows([]);
+      setLoading(false);
       setFailedCount(0);
       return () => {
         active = false;

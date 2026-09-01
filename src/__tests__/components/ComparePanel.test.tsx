@@ -97,6 +97,31 @@ describe('ComparePanel', () => {
     expect(screen.getByRole('heading', { name: /şehir karşılaştırması/i })).toHaveFocus();
   });
 
+  it('clears the busy state when favorites drop below the comparison minimum mid-load', () => {
+    api.getCurrentWeather.mockImplementation(() => new Promise(() => undefined));
+    const twoCities = [
+      { name: 'İstanbul', lat: 41, lon: 29 },
+      { name: 'İzmir', lat: 38, lon: 27 },
+    ];
+    const { rerender } = render(
+      <SettingsProvider>
+        <ComparePanel cities={twoCities} language="tr" />
+      </SettingsProvider>
+    );
+
+    const region = screen.getByRole('region', { name: /şehir karşılaştırması/i });
+    expect(region).toHaveAttribute('aria-busy', 'true');
+
+    rerender(
+      <SettingsProvider>
+        <ComparePanel cities={[twoCities[0]]} language="tr" />
+      </SettingsProvider>
+    );
+
+    expect(region).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByText(/en az iki şehri/i)).toBeVisible();
+  });
+
   it('shows measurable near-term precipitation even when probability is 0%', async () => {
     api.getHourlyForecast.mockResolvedValue({
       hourly: [{
