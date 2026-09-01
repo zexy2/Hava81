@@ -1102,6 +1102,82 @@ test('desktop context signals use one editorial data surface', async ({ page }, 
   expect(surface.separatedColumns).toBeGreaterThanOrEqual(1);
 });
 
+test('desktop decision alerts read as an editorial utility strip', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision-alerts editorial regression');
+  await page.goto('/istanbul');
+
+  const panel = page.locator('.decision-alerts');
+  await expect(panel).toBeVisible();
+  const surface = await panel.evaluate(element => {
+    const button = element.querySelector<HTMLButtonElement>('button');
+    if (!button) throw new Error('Missing decision alert action');
+    const panelStyle = getComputedStyle(element);
+    const buttonStyle = getComputedStyle(button);
+    return {
+      panelBackground: panelStyle.backgroundColor,
+      panelBorderTop: parseFloat(panelStyle.borderTopWidth),
+      panelBorderLeft: parseFloat(panelStyle.borderLeftWidth),
+      panelRadius: parseFloat(panelStyle.borderRadius),
+      panelShadow: panelStyle.boxShadow,
+      buttonBackground: buttonStyle.backgroundColor,
+      buttonShadow: buttonStyle.boxShadow,
+      buttonHeight: button.getBoundingClientRect().height,
+    };
+  });
+
+  expect(surface.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(surface.panelBorderTop).toBeGreaterThanOrEqual(1);
+  expect(surface.panelBorderLeft).toBe(0);
+  expect(surface.panelRadius).toBe(0);
+  expect(surface.panelShadow).toBe('none');
+  expect(surface.buttonBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(surface.buttonShadow).toBe('none');
+  expect(surface.buttonHeight).toBeGreaterThanOrEqual(44);
+});
+
+test('mobile decision alerts reflow at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision-alerts resize regression');
+  await page.goto('/istanbul');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const panel = page.locator('.decision-alerts');
+  await expect(panel).toBeVisible();
+  const assertFits = async () => {
+    const layout = await panel.evaluate(element => {
+      const button = element.querySelector<HTMLButtonElement>('button');
+      if (!button) throw new Error('Missing decision alert action');
+      const panelRect = element.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      return {
+        panelFits: element.scrollWidth <= element.clientWidth + 1,
+        buttonFits: button.scrollWidth <= button.clientWidth + 1,
+        panelLeft: panelRect.left,
+        panelRight: panelRect.right,
+        buttonLeft: buttonRect.left,
+        buttonRight: buttonRect.right,
+        buttonHeight: buttonRect.height,
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+    expect(layout.panelFits).toBe(true);
+    expect(layout.buttonFits).toBe(true);
+    expect(layout.panelLeft).toBeGreaterThanOrEqual(0);
+    expect(layout.panelRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
+    expect(layout.buttonLeft).toBeGreaterThanOrEqual(layout.panelLeft - 1);
+    expect(layout.buttonRight).toBeLessThanOrEqual(layout.panelRight + 1);
+    expect(layout.buttonHeight).toBeGreaterThanOrEqual(44);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  };
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertFits();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertFits();
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
