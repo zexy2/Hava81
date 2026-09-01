@@ -3248,3 +3248,69 @@ test('compact tablet daily plan keeps score actions inside at 200 percent text s
   expect(layout.shareFits).toBe(true);
   expect(layout.scoreFits).toBe(true);
 });
+
+test('english daily plan explanation reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop daily-plan English text-resize regression');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'light',
+        language: 'en',
+        notificationsEnabled: false,
+      })
+    );
+  });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
+
+  const measure = async () =>
+    page.locator('.daily-plan').evaluate(element => {
+      const fits = (node: Element) => {
+        const html = node as HTMLElement;
+        return html.scrollWidth <= html.clientWidth + 1;
+      };
+      const explain = element.querySelector('.daily-plan__explain');
+      const impacts = element.querySelector('.daily-plan__impacts');
+      const quick = element.querySelector('.daily-plan__quick');
+      const impactItems = Array.from(element.querySelectorAll('.daily-plan__impacts li'));
+      const quickItems = Array.from(element.querySelectorAll('.daily-plan__quick > div'));
+      if (!explain || !impacts || !quick || impactItems.length === 0 || quickItems.length === 0) {
+        throw new Error('Missing Daily Plan explanation content');
+      }
+      return {
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+        planFits: fits(element),
+        explainFits: fits(explain),
+        impactsFit: fits(impacts) && impactItems.every(fits),
+        quickFits: fits(quick) && quickItems.every(fits),
+        impactColumns: getComputedStyle(impacts).gridTemplateColumns.split(' ').filter(Boolean).length,
+      };
+    });
+
+  await page.setViewportSize({ width: 1024, height: 1024 });
+  const normal = await measure();
+  expect(normal.planFits).toBe(true);
+  expect(normal.explainFits).toBe(true);
+  expect(normal.impactsFit).toBe(true);
+  expect(normal.quickFits).toBe(true);
+  expect(normal.impactColumns).toBe(3);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  for (const width of [768, 1024, 1280]) {
+    await page.setViewportSize({ width, height: 1024 });
+    const enlarged = await measure();
+    expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+    expect(enlarged.planFits).toBe(true);
+    expect(enlarged.explainFits).toBe(true);
+    expect(enlarged.impactsFit).toBe(true);
+    expect(enlarged.quickFits).toBe(true);
+    expect(enlarged.impactColumns).toBe(1);
+  }
+});
