@@ -564,3 +564,6 @@ When a route-weather request is in flight, mark the route content body `aria-bus
 
 ## 2026-09-01 — Hava81 shortcuts must not override browser bookmark or hard refresh
 Do not bind hidden application actions to standard browser recovery/navigation commands such as `Ctrl/Cmd+D` (bookmark) or `Ctrl/Cmd+Shift+R` (hard reload). Favorite toggling and weather refresh already have visible controls, while browser bookmark and hard-refresh behavior is user-agent functionality Hava81 should preserve. Keep only deliberate, discoverable app shortcuts that do not remove important browser escape/recovery paths.
+
+## 2026-09-01 — Offline navigation shell cache keys ignore query variants
+Hava81's generated root/province HTML shell is pathname-defined; query parameters are not weather evidence and do not change the shell document. Keep network navigation requests intact, but normalize successful service-worker navigation cache keys to same-origin pathname so UTM/share/cache-bust variants cannot retain duplicate offline HTML. Preserve distinct province path entries and keep API/weather responses outside service-worker caching.
