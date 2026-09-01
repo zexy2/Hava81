@@ -270,6 +270,14 @@ describe('ComparePanel', () => {
   });
 
   it('loads decision metrics and a weather-criteria winner', async () => {
+    api.getAirQuality.mockImplementation((lat: number) =>
+      Promise.resolve(
+        lat > 40
+          ? { aqi: 1, aqiLabel: 'İyi', pm25: 4, pm10: 6, o3: 20 }
+          : { aqi: 5, aqiLabel: 'Çok kötü', pm25: 80, pm10: 120, o3: 160 }
+      )
+    );
+
     render(
       <SettingsProvider>
         <ComparePanel
