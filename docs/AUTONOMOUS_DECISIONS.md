@@ -491,3 +491,6 @@ Saved-city buttons render cached temperature as meaningful quick-decision contex
 
 ## 2026-09-01 — Skip navigation must transfer keyboard focus, not only scroll
 A skip link to the main weather content must land on a programmatically focusable main landmark so keyboard users actually leave repeated header controls. Keep the landmark out of the normal Tab order with `tabIndex={-1}`; the link remains the entry point. This is navigation/accessibility semantics only and does not alter weather, scoring, provider, or safety behavior.
+
+## 2026-09-01 — Commute precipitation deltas require two measured amounts
+A return-vs-outbound precipitation-amount change is meaningful only when both windows provide finite precipitation amounts. Missing amount data must not be coerced to 0 for comparison. Probability-based change logic and umbrella advice may still use their independently available verified signals.
