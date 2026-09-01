@@ -634,3 +634,8 @@ Treat city-vs-current-location as user intent independent of provider localizati
 ## 2026-09-01 — Worktree cleanup must prove source is already represented on main
 
 Autonomous host hygiene may remove rebuildable validation artifacts, or an entire linked checkout when explicitly requested, only when that worktree is clean and its HEAD is either an ancestor of `origin/main` or every branch patch is already represented on `origin/main` according to `git cherry`. This covers squash-merged PR branches without treating a merely closed/stale branch as merged. The primary/current worktrees, dirty worktrees, unmerged patches, branch refs, Git metadata and Docker/runtime resources are excluded.
+
+
+## 2026-09-01 — Route departure picker bounds refresh when the user returns to it
+
+Treat the native `datetime-local` min/max as presentation guardrails, not a mount-time snapshot. A long-lived Hava81 tab may remain open while the current time advances, so refresh the picker bounds when the departure control receives focus. Keep submit-time validation authoritative and use the same 18-hour route horizon constant for both layers; this changes neither modeled route weather nor provider/safety semantics.
