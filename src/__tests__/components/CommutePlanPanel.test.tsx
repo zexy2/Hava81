@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { CommutePlanPanel } from '../../components/hava81/CommutePlanPanel';
@@ -69,6 +69,32 @@ describe('CommutePlanPanel', () => {
     expect(windows).toHaveTextContent(/\d+\/100 · (Çok uygun|Uygun|Dikkat|Zorlayıcı)/);
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('08:30');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
+  });
+
+  it('moves a long-lived commute plan to the next day after the saved outbound time passes', async () => {
+    vi.setSystemTime(new Date('2026-08-29T05:29:30Z')); // 08:29:30 in İstanbul
+    const twoDayHourly: HourlyForecast[] = [
+      { time: new Date('2026-08-29T05:30:00Z'), temp: 23, pop: 0.1, windSpeed: 4, icon: '01d' },
+      { time: new Date('2026-08-29T15:00:00Z'), temp: 20, pop: 0.2, windSpeed: 5, icon: '01d' },
+      { time: new Date('2026-08-30T05:30:00Z'), temp: 22, pop: 0.15, windSpeed: 4, icon: '02d' },
+      { time: new Date('2026-08-30T15:00:00Z'), temp: 19, pop: 0.25, windSpeed: 6, icon: '02d' },
+    ];
+
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={twoDayHourly} />
+      </SettingsProvider>
+    );
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '18:00' } });
+
+    expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Cmt 08:30 → Cmt 18:00');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_101);
+    });
+
+    expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Paz 08:30 → Paz 18:00');
   });
 
   it('scopes a stable preparation message to the signals the advice actually checks', () => {

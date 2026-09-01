@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { buildCommutePlan, type CommuteAdviceCode } from '../../domain/commute/buildCommutePlan';
@@ -7,6 +7,29 @@ import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type { HourlyForecast, NormalizedWeatherData } from '../../types';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './CommutePlanPanel.css';
+
+const COMMUTE_BOUNDARY_CUSHION_MS = 100;
+const DAY_MS = 24 * 60 * 60_000;
+
+const millisecondsUntilNextClock = (clock: string | undefined, timezoneOffsetSeconds: number) => {
+  if (!clock) return null;
+  const match = /^(\d{2}):(\d{2})$/.exec(clock);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  const shiftedNowMs = Date.now() + timezoneOffsetSeconds * 1000;
+  const locationNow = new Date(shiftedNowMs);
+  const dayStartMs = Date.UTC(
+    locationNow.getUTCFullYear(),
+    locationNow.getUTCMonth(),
+    locationNow.getUTCDate()
+  );
+  let targetMs = dayStartMs + (hours * 60 + minutes) * 60_000;
+  if (targetMs <= shiftedNowMs) targetMs += DAY_MS;
+  return targetMs - shiftedNowMs + COMMUTE_BOUNDARY_CUSHION_MS;
+};
 
 interface Props {
   weather: NormalizedWeatherData;
@@ -21,6 +44,7 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
   const hasPartialCommuteTime = Boolean(profile.commuteStart) !== Boolean(profile.commuteEnd);
   const commuteIncompleteId = hasPartialCommuteTime ? 'commute-plan-incomplete' : undefined;
   const trackedPlanRef = useRef<string | null>(null);
+  const [commuteClockRevision, setCommuteClockRevision] = useState(0);
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
   const plan = useMemo(
     () =>
@@ -37,8 +61,19 @@ export function CommutePlanPanel({ weather, hourly }: Props) {
       profile.commuteStart,
       profile.temperatureSensitivity,
       timezoneOffsetSeconds,
+      commuteClockRevision,
     ]
   );
+
+  useEffect(() => {
+    const delay = millisecondsUntilNextClock(profile.commuteStart, timezoneOffsetSeconds);
+    if (delay === null) return undefined;
+    const timeout = window.setTimeout(
+      () => setCommuteClockRevision(value => value + 1),
+      delay
+    );
+    return () => window.clearTimeout(timeout);
+  }, [commuteClockRevision, profile.commuteStart, timezoneOffsetSeconds]);
 
   useEffect(() => {
     if (!plan) return;

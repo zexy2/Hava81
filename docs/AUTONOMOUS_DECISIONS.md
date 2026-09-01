@@ -666,3 +666,7 @@ The three-minute Pages smoke window is no longer sufficient evidence of deploy f
 ## 2026-09-01 — Pending modeled alerts wake at the location-local quiet-hours boundary
 
 Quiet-hour suppression is a time-dependent delivery gate, so an enabled alert candidate that exists before 07:00 must be reconsidered when the weather location leaves quiet hours even if no weather result changes. Schedule one timeout to the location-local 07:00 boundary only while quiet, then re-enter the existing permission/dedupe/storage checks. Do not poll, refetch weather, extend evidence freshness, or bypass quiet hours.
+
+## 2026-09-01 — Saved commute plans re-evaluate at the next outbound clock boundary
+
+The commute planner's “next occurrence” semantics are time-dependent. A long-lived tab must re-run the existing plan when the saved outbound time passes in the weather location timezone, otherwise an already-passed window can remain visible. Use one timer to that boundary with a small cushion; do not poll, refetch weather, alter saved clocks, or extend forecast evidence.
