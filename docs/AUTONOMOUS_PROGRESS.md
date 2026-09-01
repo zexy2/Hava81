@@ -2070,3 +2070,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The #560 rerun exposed the browser job sitting inside Playwright's external browser/dependency installation for several minutes. GitHub Actions otherwise allows jobs to run for hours by default, so an external package/browser stall can consume a large part of an autonomous release window without producing a useful result.
 - Added explicit 10-minute Browser flows and 5-minute Lighthouse job budgets. Normal observed durations are roughly 1–2 minutes and under 1 minute respectively, leaving substantial headroom while turning a true external hang into a bounded failure the next autonomous loop can diagnose or rerun with a changed strategy.
 - Static workflow contract assertions and `git diff --check` pass. No product code, weather semantics, deployment target or safety guidance changed.
+
+## 2026-09-01 16:29 TRT — confirm anomalous Lighthouse hard-floor failures once
+- Continued independently from exact main `81f52ca806927b844ea94abed72806ae1dbfa9d6` in isolated `automation/hava81-run11-1620-next` while PR #560 validation remained isolated.
+- CI evidence showed a clear runner-contention outlier: main #1313 measured Lighthouse performance 91 with 270 ms TBT, while PR #560 on effectively the same product bundle measured performance 50 with 2520 ms TBT; frontend/API/build/browser gates all passed and the PR only changes deployment scripts/docs.
+- Hardened `scripts/run-lighthouse.mjs` so a performance result below the hard floor gets exactly one confirmation measurement on the same preview. The confirmation result is authoritative; persistent below-floor performance still fails. Accessibility, best-practices and SEO floors are never retried/softened.
+- This avoids merging on a noisy first measurement while also avoiding repeated blind retries of a genuinely slow build. Local gates: `node --check` in the existing Node 24 container and `git diff --check` pass.
+- Next action: commit/publish as a separate CI-reliability PR after exact-main/lease recheck; require protected CI and verify the confirmation path does not mask persistent performance failure.
