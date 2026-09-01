@@ -255,7 +255,7 @@ export const tr = {
         'strong-wind': 'Rüzgâr/hamle {{wind}} {{windUnit}}; açık alanda dikkat',
         'wind-caution': 'Rüzgâr {{wind}} {{windUnit}}; planında hesaba kat',
         'poor-air': 'Hava kalitesi AQI {{aqi}}/5; uzun dış aktiviteyi azalt',
-        stable: 'Ekstra hava hazırlığı gerekmiyor',
+        stable: 'Yağış, sıcaklık ve rüzgâr için ek hazırlık sinyali yok',
       },
       planWindow: 'Planlanan pencere: {{outbound}} → {{return}}',
       umbrella: {

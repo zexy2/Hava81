@@ -541,3 +541,6 @@ Treat a native-share/clipboard delivery as one in-flight user action. While the 
 
 ## 2026-09-01 — Disabled activity choices expose the selection-limit reason directly
 When three activities are selected, each additional disabled activity choice must reference the existing visible limit explanation with `aria-describedby`, rather than relying only on the surrounding group relationship. Selected choices stay enabled so users can remove one. This changes only accessibility semantics; activity scoring, weather evidence, thresholds, providers, MGM, UV/AQI and safety guidance remain unchanged.
+
+## 2026-09-01 — Stable commute preparation copy must not exceed the signals it checks
+The commute preparation advice currently derives explicit carry/preparation actions from precipitation, apparent temperature and wind. Its stable fallback must name that scope instead of claiming that no extra weather preparation is needed in general, because optional UV, air-quality and other evidence may be absent or surfaced elsewhere. This is wording/evidence scope only; commute matching, score math, weather values and safety thresholds are unchanged.
