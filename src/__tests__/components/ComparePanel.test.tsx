@@ -300,6 +300,32 @@ describe('ComparePanel', () => {
   });
 
 
+  it('reports an explicit tie instead of inventing a single winner for equal scores', async () => {
+    api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
+      Promise.resolve(makeWeather(city, 24))
+    );
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    const istanbul = await screen.findByRole('heading', { name: 'İstanbul' });
+    const izmir = await screen.findByRole('heading', { name: 'İzmir' });
+    expect(screen.getByText('Bu hava kriterlerinde eşit')).toBeVisible();
+    expect(screen.getByText(/İstanbul, İzmir · Hava81 \d+\/100/)).toBeVisible();
+    expect(screen.queryByText(/bu hava kriterlerinde öne çıkan/i)).not.toBeInTheDocument();
+    expect(istanbul.closest('article')).toHaveClass('is-winner');
+    expect(izmir.closest('article')).toHaveClass('is-winner');
+  });
+
   it('clears stale city cards while a changed comparison is loading', async () => {
     const { rerender } = render(
       <SettingsProvider>
