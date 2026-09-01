@@ -1850,6 +1850,70 @@ test('decision plate stays readable at 200 percent text size', async ({ page }, 
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('activity planner stays contained at tablet 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'tablet activity text-resize regression');
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const planner = page.locator('.activity-planner');
+  const measure = async () =>
+    planner.evaluate(element => {
+      const fits = (node: Element | null) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const rect = node.getBoundingClientRect();
+        const plannerRect = element.getBoundingClientRect();
+        return (
+          node.scrollWidth <= node.clientWidth + 1 &&
+          rect.left >= plannerRect.left - 1 &&
+          rect.right <= plannerRect.right + 1
+        );
+      };
+      const header = element.querySelector('.activity-planner__header');
+      const sensitivity = element.querySelector('.activity-planner__sensitivity');
+      const sensitivitySelect = sensitivity?.querySelector('select') ?? null;
+      const cards = element.querySelector('.activity-planner__cards');
+      const cardItems = Array.from(element.querySelectorAll('.activity-card'));
+      if (!header || !sensitivity || !sensitivitySelect || !cards || cardItems.length < 2) {
+        throw new Error('Missing activity planner tablet content');
+      }
+      return {
+        plannerFits: fits(element),
+        headerFits: fits(header),
+        sensitivityFits: fits(sensitivity),
+        sensitivitySelectFits: fits(sensitivitySelect),
+        cardsFit: fits(cards),
+        cardItemsFit: cardItems.every(fits),
+        cardTops: cardItems.slice(0, 2).map(card => card.getBoundingClientRect().top),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+  const normal = await measure();
+  expect(normal.plannerFits).toBe(true);
+  expect(normal.headerFits).toBe(true);
+  expect(normal.sensitivityFits).toBe(true);
+  expect(normal.sensitivitySelectFits).toBe(true);
+  expect(normal.cardsFit).toBe(true);
+  expect(normal.cardItemsFit).toBe(true);
+  expect(Math.abs(normal.cardTops[0] - normal.cardTops[1])).toBeLessThanOrEqual(1);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const enlarged = await measure();
+  expect(enlarged.plannerFits).toBe(true);
+  expect(enlarged.headerFits).toBe(true);
+  expect(enlarged.sensitivityFits).toBe(true);
+  expect(enlarged.sensitivitySelectFits).toBe(true);
+  expect(enlarged.cardsFit).toBe(true);
+  expect(enlarged.cardItemsFit).toBe(true);
+  expect(enlarged.cardTops[1]).toBeGreaterThan(enlarged.cardTops[0] + 1);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+});
+
 test('activity planner reflows at narrow 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile activity text-resize regression');
   await page.setViewportSize({ width: 320, height: 844 });
