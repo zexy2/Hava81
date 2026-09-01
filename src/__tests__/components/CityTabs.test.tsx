@@ -4,7 +4,10 @@ import { CityTabs } from '../../components/CityTabs';
 import '../../i18n';
 
 vi.mock('../../context/SettingsContext', () => ({
-  useSettings: () => ({ convertTemperature: (value: number) => value }),
+  useSettings: () => ({
+    convertTemperature: (value: number) => value,
+    getTemperatureSymbol: () => '°C',
+  }),
 }));
 
 describe('CityTabs', () => {
@@ -21,7 +24,22 @@ describe('CityTabs', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'İstanbul hava durumunu göster' })
+      screen.getByRole('button', { name: 'İstanbul hava durumunu göster, 20°C' })
     ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('keeps the fallback label when a saved city has no cached temperature', () => {
+    render(
+      <CityTabs
+        cities={[{ name: 'Ankara', lat: 39.93, lon: 32.86 }]}
+        activeCity=""
+        onSelect={vi.fn()}
+        onRemove={vi.fn()}
+        onAdd={vi.fn()}
+        canAdd={false}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Ankara hava durumunu göster' })).toBeVisible();
   });
 });

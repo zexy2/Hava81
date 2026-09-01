@@ -46,6 +46,7 @@ export const en = {
     removeFromFavorites: 'Remove from Favorites',
     favoriteCities: 'Favorite cities',
     selectCity: 'Show weather for {{city}}',
+    selectCityWithTemperature: 'Show weather for {{city}}, {{temperature}}{{unit}}',
     removeCity: 'Remove {{city}} from favorites',
     addCurrentCity: 'Add current city to favorites',
     cityNotFound: 'City not found',
