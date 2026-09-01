@@ -1964,3 +1964,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The commute planner's stable fallback said no extra weather preparation was needed, but its explicit preparation list is derived from precipitation, apparent temperature and wind. That wording could overstate evidence when optional UV/air-quality/other signals are unavailable or handled elsewhere.
 - Reworded the Turkish/English stable advice to state only that rain, temperature and wind add no extra preparation signal. Added a component regression that exercises a mild/dry/still commute and rejects the old unscoped assurance. No weather values, matching, scoring, thresholds, provider, MGM, UV/AQI or safety calculations changed.
 - Local Node/npm is unavailable in the gateway shell; `git diff --check` is the local gate and exact-head protected CI/CodeQL is mandatory before merge.
+
+## 2026-09-01 13:02 TRT — simplify map controls to disclosure semantics
+- Continued on isolated `automation/hava81-run11-1302` from exact main `1c8c487af33a8b2d1939bb08167dc796feeb9703` while post-#539 main CI and #540 replacement CI ran independently.
+- Both the header map action and Environment Rail map action already identify `weather-map-region` with `aria-controls` and expose its visibility with `aria-expanded`, but they also exposed `aria-pressed`. Removed the redundant toggle-button state so assistive technology receives one clear disclosure model.
+- Strengthened Environment Rail unit coverage and the existing browser map flow to require expanded/controls semantics without `aria-pressed`. Visual labels, map behavior, weather evidence, providers and safety guidance are unchanged.
+- Local Node/npm is unavailable in this gateway shell; `git diff --check` is the local gate and exact-head CI/CodeQL is mandatory before merge.

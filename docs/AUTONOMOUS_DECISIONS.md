@@ -544,3 +544,6 @@ When three activities are selected, each additional disabled activity choice mus
 
 ## 2026-09-01 — Stable commute preparation copy must not exceed the signals it checks
 The commute preparation advice currently derives explicit carry/preparation actions from precipitation, apparent temperature and wind. Its stable fallback must name that scope instead of claiming that no extra weather preparation is needed in general, because optional UV, air-quality and other evidence may be absent or surfaced elsewhere. This is wording/evidence scope only; commute matching, score math, weather values and safety thresholds are unchanged.
+
+## 2026-09-01 — Map reveal controls use disclosure semantics, not toggle-button semantics
+Both controls that show/hide the weather map control the visibility of `weather-map-region`; `aria-expanded` + `aria-controls` expresses that relationship. Do not also expose `aria-pressed`, which describes a persistent toggle-button state and can produce redundant/conflicting announcements. The visible label continues to switch between show/hide map.

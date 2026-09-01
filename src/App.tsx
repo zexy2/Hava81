@@ -477,7 +477,6 @@ const App: React.FC = () => {
                   type="button"
                   className="atlas-icon-button atlas-icon-button--map"
                   onClick={showMap ? closeMap : openMap}
-                  aria-pressed={showMap}
                   aria-expanded={showMap}
                   aria-controls="weather-map-region"
                   aria-label={showMap ? t('weather.hideMap') : t('weather.showMap')}

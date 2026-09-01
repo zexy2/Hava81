@@ -38,6 +38,7 @@ describe('EnvironmentRail', () => {
     const mapButton = screen.getByRole('button', { name: /haritayı göster/i });
     expect(mapButton).toHaveAttribute('aria-controls', 'weather-map-region');
     expect(mapButton).toHaveAttribute('aria-expanded', 'false');
+    expect(mapButton).not.toHaveAttribute('aria-pressed');
   });
 
   it('renders sunrise and sunset in the weather location timezone instead of the device timezone', () => {
