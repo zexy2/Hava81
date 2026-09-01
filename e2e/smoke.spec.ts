@@ -1246,6 +1246,26 @@ test('mobile environment rail keeps labels readable at 200 percent text size', a
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+  await expect(page.locator('.daily-plan')).toBeVisible();
+  await expect(page.locator('.commute-plan')).toBeVisible();
+  await expect(page.locator('.activity-planner')).toBeVisible();
+
+  const contentOrder = await page.evaluate(() => {
+    const top = (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) throw new Error(`Missing ${selector}`);
+      return element.getBoundingClientRect().top;
+    };
+    return {
+      daily: top('.daily-plan'),
+      environment: top('.environment-rail'),
+      commute: top('.commute-plan'),
+      activity: top('.activity-planner'),
+    };
+  });
+  expect(contentOrder.daily).toBeLessThan(contentOrder.environment);
+  expect(contentOrder.environment).toBeLessThan(contentOrder.commute);
+  expect(contentOrder.environment).toBeLessThan(contentOrder.activity);
 
   await page.locator('html').evaluate(element => {
     element.style.fontSize = '200%';
@@ -3013,6 +3033,7 @@ test('desktop dashboard uses the decision column instead of leaving dead space',
       forecast: rect('.hava81-forecast-atlas'),
       commute: rect('.commute-plan'),
       daily: rect('.daily-plan'),
+      environment: rect('.environment-rail'),
       activity,
       cards,
     };
@@ -3024,6 +3045,10 @@ test('desktop dashboard uses the decision column instead of leaving dead space',
   expect(layout.daily.top).toBeGreaterThanOrEqual(
     Math.max(layout.commute.bottom, layout.forecast.bottom) + 8
   );
+  expect(layout.environment.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
+  expect(Math.abs(layout.environment.left - layout.daily.left)).toBeLessThan(2);
+  expect(Math.abs(layout.environment.right - layout.daily.right)).toBeLessThan(2);
+  expect(layout.activity.top).toBeGreaterThanOrEqual(layout.environment.bottom + 8);
   expect(Math.min(...layout.cards.map(card => card.width))).toBeGreaterThan(layout.activity.width * 0.45);
 });
 
