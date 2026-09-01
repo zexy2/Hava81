@@ -46,9 +46,22 @@ candidate_count=0
 candidate_bytes=0
 removed_count=0
 removed_bytes=0
+skipped_artifact_count=0
 worktree_count=0
 worktree_bytes=0
 removed_worktree_count=0
+skipped_worktree_count=0
+
+tree_is_removable() {
+  local target="$1"
+  local parent
+  parent="$(dirname "$target")"
+  [[ -w "$parent" && -x "$parent" ]] || return 1
+  if find "$target" -type d \( ! -writable -o ! -executable \) -print -quit 2>/dev/null | grep -q .; then
+    return 1
+  fi
+  return 0
+}
 
 while IFS= read -r wt; do
   [[ -n "$wt" ]] || continue
@@ -75,7 +88,11 @@ while IFS= read -r wt; do
   if [[ "$remove_worktrees" == true ]]; then
     worktree_count=$((worktree_count + 1))
     worktree_bytes=$((worktree_bytes + wt_bytes))
-    printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo REMOVE_WORKTREE || echo WOULD_REMOVE_WORKTREE)" "$wt_bytes" "$wt"
+    if tree_is_removable "$wt"; then
+      printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo REMOVE_WORKTREE || echo WOULD_REMOVE_WORKTREE)" "$wt_bytes" "$wt"
+    else
+      printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo SKIP_UNWRITABLE_WORKTREE || echo WOULD_SKIP_UNWRITABLE_WORKTREE)" "$wt_bytes" "$wt"
+    fi
   fi
 
   for rel in "${artifacts[@]}"; do
@@ -85,30 +102,49 @@ while IFS= read -r wt; do
     [[ "$bytes" =~ ^[0-9]+$ ]] || bytes=0
     candidate_count=$((candidate_count + 1))
     candidate_bytes=$((candidate_bytes + bytes))
+    if ! tree_is_removable "$target"; then
+      printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo SKIP_UNWRITABLE_ARTIFACT || echo WOULD_SKIP_UNWRITABLE_ARTIFACT)" "$bytes" "$target"
+      if [[ "$apply" == true ]]; then
+        skipped_artifact_count=$((skipped_artifact_count + 1))
+      fi
+      continue
+    fi
     printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo REMOVE || echo WOULD_REMOVE)" "$bytes" "$target"
     if [[ "$apply" == true ]]; then
-      rm -rf --one-file-system "$target"
-      removed_count=$((removed_count + 1))
-      removed_bytes=$((removed_bytes + bytes))
+      if rm -rf --one-file-system "$target"; then
+        removed_count=$((removed_count + 1))
+        removed_bytes=$((removed_bytes + bytes))
+      else
+        printf 'SKIP_ARTIFACT_REMOVE_FAILED\t%s\t%s\n' "$bytes" "$target" >&2
+        skipped_artifact_count=$((skipped_artifact_count + 1))
+      fi
     fi
   done
 
   if [[ "$remove_worktrees" == true && "$apply" == true ]]; then
-    git worktree remove "$wt"
-    removed_worktree_count=$((removed_worktree_count + 1))
+    if ! tree_is_removable "$wt"; then
+      skipped_worktree_count=$((skipped_worktree_count + 1))
+      continue
+    fi
+    if git worktree remove "$wt"; then
+      removed_worktree_count=$((removed_worktree_count + 1))
+    else
+      printf 'SKIP_WORKTREE_REMOVE_FAILED\t%s\t%s\n' "$wt_bytes" "$wt" >&2
+      skipped_worktree_count=$((skipped_worktree_count + 1))
+    fi
   fi
 done < <(git worktree list --porcelain | awk '/^worktree / {sub(/^worktree /, ""); print}')
 
 if [[ "$remove_worktrees" == true ]]; then
   if [[ "$apply" == true ]]; then
-    printf 'Removed %d clean merged linked worktrees; their branch refs were preserved.\n' "$removed_worktree_count"
+    printf 'Removed %d clean merged linked worktrees; skipped %d unwritable/failed removals; branch refs were preserved.\n' "$removed_worktree_count" "$skipped_worktree_count"
   else
     printf 'Dry run: %d clean merged linked worktrees (%d bytes) are eligible for checkout removal.\n' "$worktree_count" "$worktree_bytes"
   fi
 fi
 
 if [[ "$apply" == true ]]; then
-  printf 'Removed %d rebuildable artifact directories (%d bytes).\n' "$removed_count" "$removed_bytes"
+  printf 'Removed %d rebuildable artifact directories (%d bytes); skipped %d unwritable/failed removals.\n' "$removed_count" "$removed_bytes" "$skipped_artifact_count"
 else
   printf 'Dry run: %d rebuildable artifact directories (%d bytes) are eligible. Re-run with --apply to remove only these artifacts.\n' "$candidate_count" "$candidate_bytes"
 fi

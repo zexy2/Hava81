@@ -674,3 +674,7 @@ The commute planner's “next occurrence” semantics are time-dependent. A long
 ## 2026-09-01 — Long-lived route forms may refresh only untouched time defaults
 
 A generated route departure default is convenience state, not user intent. When a long-lived tab makes the untouched default stale, refresh it to one hour from current time as the datetime control is focused, alongside its native min/max bounds. Once the user edits the field, preserve that value exactly and let normal range validation explain invalid choices; never silently rewrite explicit input.
+
+## 2026-09-01 — Cleanup must preflight removability and skip permission-mismatched trees
+
+A worktree can be safely classified as merged yet still contain stale root-owned generated directories from earlier privileged validation. Before removing an eligible artifact or linked checkout, verify its parent and directory tree are removable by the cleanup user. If not, report and skip it without attempting a partial deletion, continue with other independently eligible targets, and preserve all branch refs. Permission mismatch must never relax the clean/merged eligibility guard or trigger Docker/runtime cleanup.
