@@ -39,6 +39,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     toTurkeyLocalInputValue(new Date(Date.now() + 60 * 60_000))
   );
   const [departureBoundsNow, setDepartureBoundsNow] = useState(() => Date.now());
+  const [departureEdited, setDepartureEdited] = useState(false);
   const [result, setResult] = useState<RouteWeatherResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,17 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     setOriginName(destinationName);
     setDestinationName(originName);
     invalidateRequest();
+  };
+
+  const refreshDepartureBounds = () => {
+    const now = Date.now();
+    setDepartureBoundsNow(now);
+    if (departureEdited) return;
+    const departureDate = parseTurkeyLocalInputValue(departure);
+    if (!departureDate || departureDate.getTime() < now - ROUTE_DEPARTURE_PAST_TOLERANCE_MS) {
+      setDeparture(toTurkeyLocalInputValue(new Date(now + 60 * 60_000)));
+      invalidateRequest();
+    }
   };
 
   useEffect(() => {
@@ -199,8 +211,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               value={departure}
               min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
               max={toTurkeyLocalInputValue(new Date(departureBoundsNow + ROUTE_MAX_DEPARTURE_MS))}
-              onFocus={() => setDepartureBoundsNow(Date.now())}
+              onFocus={refreshDepartureBounds}
               onChange={e => {
+                setDepartureEdited(true);
                 setDeparture(e.target.value);
                 invalidateRequest();
               }}

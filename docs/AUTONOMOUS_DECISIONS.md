@@ -670,3 +670,7 @@ Quiet-hour suppression is a time-dependent delivery gate, so an enabled alert ca
 ## 2026-09-01 — Saved commute plans re-evaluate at the next outbound clock boundary
 
 The commute planner's “next occurrence” semantics are time-dependent. A long-lived tab must re-run the existing plan when the saved outbound time passes in the weather location timezone, otherwise an already-passed window can remain visible. Use one timer to that boundary with a small cushion; do not poll, refetch weather, alter saved clocks, or extend forecast evidence.
+
+## 2026-09-01 — Long-lived route forms may refresh only untouched time defaults
+
+A generated route departure default is convenience state, not user intent. When a long-lived tab makes the untouched default stale, refresh it to one hour from current time as the datetime control is focused, alongside its native min/max bounds. Once the user edits the field, preserve that value exactly and let normal range validation explain invalid choices; never silently rewrite explicit input.

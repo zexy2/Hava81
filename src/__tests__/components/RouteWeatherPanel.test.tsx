@@ -43,6 +43,26 @@ describe('RouteWeatherPanel', () => {
 
     expect(departureInput).toHaveAttribute('min', '2026-09-01T15:30');
     expect(departureInput).toHaveAttribute('max', '2026-09-02T09:30');
+    expect(departureInput).toHaveValue('2026-09-01T16:30');
+    nowSpy.mockRestore();
+  });
+
+  it('preserves an explicitly edited departure when refreshing stale native bounds', async () => {
+    const initialNow = new Date('2026-09-01T09:00:00.000Z').getTime();
+    const laterNow = new Date('2026-09-01T12:30:00.000Z').getTime();
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(initialNow);
+
+    renderPanel();
+    const user = userEvent.setup();
+    await user.click(screen.getByText('Rota havası'));
+    const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
+    fireEvent.change(departureInput, { target: { value: '2026-09-01T14:00' } });
+
+    nowSpy.mockReturnValue(laterNow);
+    fireEvent.focus(departureInput);
+
+    expect(departureInput).toHaveValue('2026-09-01T14:00');
+    expect(departureInput).toHaveAttribute('min', '2026-09-01T15:30');
     nowSpy.mockRestore();
   });
 
