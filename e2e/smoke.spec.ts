@@ -1178,6 +1178,50 @@ test('mobile decision alerts reflow at 200 percent text size', async ({ page }, 
   await assertFits();
 });
 
+test('desktop settings use shared preference matrices', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop settings visual regression');
+  await page.goto('/istanbul');
+  await page.locator('.atlas-settings-button').click();
+
+  const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
+  await expect(dialog).toBeVisible();
+
+  const styles = await dialog.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const groups = Array.from(element.querySelectorAll<HTMLElement>('.settings-option-group'));
+    const selected = element.querySelector<HTMLElement>('.settings-option[aria-pressed="true"]');
+    const unselected = element.querySelector<HTMLElement>('.settings-option[aria-pressed="false"]');
+    if (!groups.length || !selected || !unselected) throw new Error('Missing settings preference controls');
+    const group = getComputedStyle(groups[0]);
+    const selectedStyle = getComputedStyle(selected);
+    const unselectedStyle = getComputedStyle(unselected);
+    return {
+      panelShadow: panel.boxShadow,
+      groupTop: parseFloat(group.borderTopWidth),
+      groupGap: parseFloat(group.columnGap),
+      selectedRadius: selectedStyle.borderRadius,
+      selectedShadow: selectedStyle.boxShadow,
+      selectedBottom: parseFloat(selectedStyle.borderBottomWidth),
+      unselectedRadius: unselectedStyle.borderRadius,
+      unselectedShadow: unselectedStyle.boxShadow,
+      unselectedBorder: parseFloat(unselectedStyle.borderTopWidth),
+      selectedBackground: selectedStyle.backgroundColor,
+      unselectedBackground: unselectedStyle.backgroundColor,
+    };
+  });
+
+  expect(styles.panelShadow).not.toBe('none');
+  expect(styles.groupTop).toBeGreaterThanOrEqual(1);
+  expect(styles.groupGap).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.selectedRadius)).toBe(0);
+  expect(styles.selectedShadow).toBe('none');
+  expect(styles.selectedBottom).toBeGreaterThanOrEqual(3);
+  expect(parseFloat(styles.unselectedRadius)).toBe(0);
+  expect(styles.unselectedShadow).toBe('none');
+  expect(styles.unselectedBorder).toBeGreaterThanOrEqual(1);
+  expect(styles.selectedBackground).not.toBe(styles.unselectedBackground);
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
