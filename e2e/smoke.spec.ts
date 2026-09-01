@@ -2675,6 +2675,7 @@ test('mobile header keeps current-location action reachable without horizontal o
   const locationAction = page.locator('.atlas-icon-button--location');
   await expect(locationAction).toBeVisible();
   await expect(locationAction).toHaveAttribute('aria-label', /konum/i);
+  await expect(locationAction).toHaveAttribute('aria-busy', 'false');
 
   expect(
     await page.locator('.atlas-header__inner').evaluate(element => element.scrollWidth <= element.clientWidth)
