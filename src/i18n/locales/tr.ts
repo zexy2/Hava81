@@ -323,6 +323,7 @@ export const tr = {
         start: 'Başlangıç',
         end: 'Bitiş',
         clear: 'Aralığı temizle',
+        incomplete: 'Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç.',
       },
       conditions: {
         feelsLike: 'Hissedilen {{value}}{{unit}}',

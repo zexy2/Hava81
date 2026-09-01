@@ -322,6 +322,7 @@ export const en = {
         start: 'Start',
         end: 'End',
         clear: 'Clear range',
+        incomplete: 'Choose both a start and end time to apply this filter.',
       },
       conditions: {
         feelsLike: 'Feels like {{value}}{{unit}}',

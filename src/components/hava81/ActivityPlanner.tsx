@@ -80,6 +80,8 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
         })
       : '—';
   const hasWindow = Boolean(profile.activityStart && profile.activityEnd);
+  const hasPartialWindow = Boolean(profile.activityStart) !== Boolean(profile.activityEnd);
+  const activityWindowStatusId = hasPartialWindow ? 'activity-window-incomplete' : undefined;
   const temperatureSymbol = getTemperatureSymbol();
   const sensitivityShift = Math.round(Math.abs(convertTemperature(3) - convertTemperature(0)));
 
@@ -140,6 +142,7 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
           <input
             type="time"
             value={profile.activityStart ?? ''}
+            aria-describedby={activityWindowStatusId}
             onChange={event => setActivityWindow('start', event.target.value || undefined)}
           />
         </label>
@@ -148,9 +151,15 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
           <input
             type="time"
             value={profile.activityEnd ?? ''}
+            aria-describedby={activityWindowStatusId}
             onChange={event => setActivityWindow('end', event.target.value || undefined)}
           />
         </label>
+        {hasPartialWindow ? (
+          <p id="activity-window-incomplete" className="activity-planner__window-status" role="status">
+            {t('hava81.activities.window.incomplete')}
+          </p>
+        ) : null}
         {profile.activityStart || profile.activityEnd ? (
           <button type="button" className="atlas-text-button" onClick={clearActivityWindow}>
             {t('hava81.activities.window.clear')}
