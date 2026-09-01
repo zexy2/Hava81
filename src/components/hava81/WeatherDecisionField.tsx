@@ -80,7 +80,7 @@ export function WeatherDecisionField({
     const roundedHigh = Math.round(convertedHigh);
     const roundedLow = Math.round(convertedLow);
 
-    if (convertedHigh === convertedLow) {
+    if (Math.abs(convertedHigh - convertedLow) < 0.1) {
       return `${numberFormatter.format(roundedHigh)}${temperatureSymbol}`;
     }
 
