@@ -42,6 +42,7 @@ API_RUNTIME_PATHS = {
 }
 API_RUNTIME_PREFIXES = ('apps/api/src/',)
 GITHUB_COMPARE_FILE_LIMIT = 300
+GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 
 
 def now_iso() -> str:
@@ -310,7 +311,10 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
 
 def collect_github() -> dict[str, Any]:
     pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
-    runs_result = http_get(f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100')
+    runs_result = http_get(
+        f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
+        timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+    )
     pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
