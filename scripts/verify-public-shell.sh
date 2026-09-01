@@ -81,6 +81,20 @@ check_path "/hava81-mark.svg" "<svg" "dist/hava81-mark.svg"
 check_path "/hava81-favicon.ico" "" "dist/hava81-favicon.ico"
 check_path "/hava81-social-card.png" "" "dist/hava81-social-card.png"
 
+# Root hash equality proves the current HTML reached the edge. Verify every script/style
+# asset that HTML references as well, so a partial Pages propagation cannot pass smoke
+# while the browser would still boot into a missing current-generation chunk.
+current_shell_assets_output="$(python3 scripts/list-html-assets.py dist/index.html)"
+mapfile -t current_shell_assets <<< "$current_shell_assets_output"
+for current_asset in "${current_shell_assets[@]}"; do
+  current_asset_file="dist/${current_asset#/}"
+  if [[ ! -f "$current_asset_file" ]]; then
+    printf 'generated shell references missing local asset %s\n' "$current_asset_file" >&2
+    exit 1
+  fi
+  check_path "$current_asset" "" "$current_asset_file"
+done
+
 # The Pages deploy keeps recent Vite asset generations so cached HTML from the prior
 # release cannot point at an asset that disappeared during propagation. Verify at least
 # one carried file when a previous generation is present in the local deploy manifest.

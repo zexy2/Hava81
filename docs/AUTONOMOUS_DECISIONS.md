@@ -584,3 +584,6 @@ Keep `100vh` as a compatibility fallback, then override with `100dvh` for full-h
 **Decision:** Preserve only recent prior hashed Pages assets for 30 minutes during deployment, with an explicit 32-generation metadata cap; never retain source maps and reject unsafe paths.
 
 **Why:** Static HTML and hashed assets can propagate/cache on different timelines. Keeping a short bounded overlap avoids stale-HTML → missing-chunk failures without turning the publish branch into unbounded storage. This is a deployment reliability safeguard only; it does not cache or alter weather/API responses.
+
+## 2026-09-01 — post-deploy static smoke verifies the exact current boot asset set
+Treat exact HTML propagation and asset propagation as separate release conditions. After the deployed root matches `dist/index.html`, enumerate its same-origin `/assets/` script/link references and require each public response to hash-match the corresponding built file. This complements short previous-generation retention: retention protects stale clients, while current-asset verification protects the newly published shell from partial edge propagation.
