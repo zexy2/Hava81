@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import {
@@ -8,7 +8,7 @@ import {
 import type { ActivityKind } from '../../domain/activity/types';
 import type { DecisionReasonCode } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './ActivityPlanner.css';
 
@@ -16,7 +16,29 @@ interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  forecastMeta: ForecastMeta | null;
 }
+
+const FORECAST_FRESHNESS_FALLBACK_SECONDS = 1_800;
+const MAX_FUTURE_SKEW_MS = 60_000;
+const FORECAST_EXPIRY_CUSHION_MS = 100;
+
+const forecastFreshness = (meta: ForecastMeta | null) => {
+  if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null as number | null };
+  const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
+  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null as number | null };
+  const ttlSeconds =
+    typeof meta.freshForSeconds === 'number' && Number.isFinite(meta.freshForSeconds) && meta.freshForSeconds > 0
+      ? meta.freshForSeconds
+      : FORECAST_FRESHNESS_FALLBACK_SECONDS;
+  const ageMs = Date.now() - fetchedAtMs;
+  const fresh = ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
+  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
+  return {
+    fresh,
+    expiresInMs: fresh && remainingMs > 0 ? remainingMs + FORECAST_EXPIRY_CUSHION_MS : null,
+  };
+};
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
 const reasonKey: Record<DecisionReasonCode, string> = {
@@ -36,7 +58,7 @@ const reasonKey: Record<DecisionReasonCode, string> = {
   'severe-weather': 'severeWeather',
 };
 
-export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
+export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
@@ -47,21 +69,27 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
     setActivityWindow,
     clearActivityWindow,
   } = useDecisionProfile();
+  const [forecastFreshnessRevision, setForecastFreshnessRevision] = useState(0);
+  const freshness = forecastFreshness(forecastMeta);
   const plans = useMemo(
     () =>
-      profile.activities.map(activity =>
-        buildActivityPlan({
-          activity,
-          weather,
-          hourly,
-          airQuality,
-          sensitivity: profile.temperatureSensitivity,
-          preferredStart: profile.activityStart,
-          preferredEnd: profile.activityEnd,
-        })
-      ),
+      freshness.fresh
+        ? profile.activities.map(activity =>
+            buildActivityPlan({
+              activity,
+              weather,
+              hourly,
+              airQuality,
+              sensitivity: profile.temperatureSensitivity,
+              preferredStart: profile.activityStart,
+              preferredEnd: profile.activityEnd,
+            })
+          )
+        : [],
     [
       airQuality,
+      freshness.fresh,
+      forecastFreshnessRevision,
       hourly,
       profile.activities,
       profile.activityEnd,
@@ -70,6 +98,20 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
       weather,
     ]
   );
+
+  useEffect(() => {
+    const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
+    const timeout =
+      freshness.expiresInMs === null ? undefined : window.setTimeout(resyncFreshness, freshness.expiresInMs);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [forecastMeta, freshness.expiresInMs]);
   const offset = weather.meta.timezoneOffsetSeconds * 1000;
   const formatTime = (date?: Date) =>
     date
@@ -197,7 +239,11 @@ export function ActivityPlanner({ weather, hourly, airQuality }: Props) {
         </p>
       ) : null}
 
-      {plans.length > 0 ? (
+      {!freshness.fresh && profile.activities.length > 0 ? (
+        <p className="activity-planner__selection-limit" role="status">
+          {t('hava81.activities.forecastStale')}
+        </p>
+      ) : plans.length > 0 ? (
         <>
           <details className="activity-planner__score-explanation">
             <summary>{t('hava81.activities.score.explanationTitle')}</summary>

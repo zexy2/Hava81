@@ -1,9 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ActivityPlanner } from '../../components/hava81/ActivityPlanner';
 import { SettingsProvider } from '../../context';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -26,6 +26,14 @@ const weather: NormalizedWeatherData = {
   clouds: 0,
   meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
 };
+
+const freshForecastMeta = (freshForSeconds = 1_800): ForecastMeta => ({
+  provider: 'OpenMeteo',
+  fetchedAt: new Date(),
+  timezoneOffsetSeconds: 10800,
+  intervalHours: 1,
+  freshForSeconds,
+});
 
 const hourly: HourlyForecast[] = [
   {
@@ -68,7 +76,7 @@ describe('ActivityPlanner time range', () => {
   it('persists a preferred range and makes the displayed activity score explicitly range-based', () => {
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={hourly} />
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -95,7 +103,7 @@ describe('ActivityPlanner time range', () => {
   it('makes a partially selected activity range explicit instead of looking applied', () => {
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={hourly} />
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -130,7 +138,7 @@ describe('ActivityPlanner time range', () => {
 
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={hourly} />
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -143,7 +151,7 @@ describe('ActivityPlanner time range', () => {
   it('disables unselected activities when three are already selected instead of replacing one', () => {
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={hourly} />
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -169,7 +177,7 @@ describe('ActivityPlanner time range', () => {
   it('keeps advanced time-range behavior behind an explicit help disclosure', () => {
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={hourly} />
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -187,7 +195,7 @@ describe('ActivityPlanner time range', () => {
   it('keeps primary activity guidance visible while score criteria stay collapsed until requested', () => {
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={hourly} />
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -200,6 +208,29 @@ describe('ActivityPlanner time range', () => {
     expect(details[0]).toHaveAttribute('open');
     expect(screen.getAllByText(/Aktivite ölçütlerinin etkisi:/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Yürüyüşte 12–26°C/i)).toBeInTheDocument();
+  });
+
+  it('hides activity recommendations when their forecast evidence expires', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-29T08:00:00Z'));
+    try {
+      render(
+        <SettingsProvider>
+          <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta(30)} />
+        </SettingsProvider>
+      );
+
+      expect(screen.getAllByText(/12 saatlik uygunluk · /i).length).toBeGreaterThan(0);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_101);
+      });
+
+      expect(screen.getByRole('status')).toHaveTextContent(/Tahmin verisi güncelliğini yitirdi/i);
+      expect(screen.queryByText(/12 saatlik uygunluk · /i)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not call an activity window dry when measurable precipitation exists at 0%', () => {
@@ -215,7 +246,7 @@ describe('ActivityPlanner time range', () => {
 
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={measurableRain} />
+        <ActivityPlanner weather={weather} hourly={measurableRain} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -236,7 +267,7 @@ describe('ActivityPlanner time range', () => {
 
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={rainy} />
+        <ActivityPlanner weather={weather} hourly={rainy} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
@@ -254,7 +285,7 @@ describe('ActivityPlanner time range', () => {
     }));
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={plateau} />
+        <ActivityPlanner weather={weather} hourly={plateau} forecastMeta={freshForecastMeta()} />
       </SettingsProvider>
     );
 
