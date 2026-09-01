@@ -227,6 +227,9 @@ describe('useWeather', () => {
     await waitFor(() =>
       expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'Ankara', lang: 'en' })
     );
+    // The provider call beginning is not the same as the localized refresh settling.
+    // Wait until the refresh completes before advancing time and simulating a later resume.
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(1);
 
     const now = result.current.lastUpdated?.getTime();

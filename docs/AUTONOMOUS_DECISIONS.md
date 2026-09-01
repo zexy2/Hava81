@@ -609,3 +609,8 @@ Route corridor payloads may contain provider-localized descriptions, so a langua
 
 ## 2026-09-01 — Language refresh does not change the user's weather source mode
 Treat city-vs-current-location as user intent independent of provider localization. A language change may re-fetch the already known city name to refresh localized provider text without prompting for geolocation, but it must not convert a successful current-location session into city mode. Preserve that source identity in memory so later stale/online refreshes can reacquire current location. Explicit city searches still switch to city mode, and failed location attempts do not replace the previously successful source.
+
+### 2026-09-01 19:53 TRT — async regression tests must wait for operation settlement, not only invocation
+**Decision:** When a regression test triggers an async refresh and then simulates a later lifecycle event, wait for the refresh's observable settled state before advancing clocks or dispatching that later event. A mock being called proves only that the operation started.
+
+**Why:** Main CI #1339 exposed a race in the new current-location/language regression test: it waited for `getCurrentWeather(...)` invocation, then immediately made the result stale and dispatched `visibilitychange`. `useWeather` intentionally suppresses stale refreshes while another request is loading, so runner timing could make the location refresh assertion fail even though product behavior was correct. Waiting for `isLoading === false` models the intended sequence and keeps the test strict about reacquiring current location after the settled localized refresh becomes stale.
