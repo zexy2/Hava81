@@ -13,7 +13,8 @@ git init -b main "$primary" >/dev/null
 git -C "$primary" config user.name 'Hava81 cleanup test'
 git -C "$primary" config user.email 'cleanup-test@example.invalid'
 printf 'base\n' > "$primary/base.txt"
-git -C "$primary" add base.txt
+printf 'dist/\nnode_modules/\n' > "$primary/.gitignore"
+git -C "$primary" add base.txt .gitignore
 git -C "$primary" commit -m base >/dev/null
 git -C "$primary" remote add origin "$bare"
 git -C "$primary" push -u origin main >/dev/null
@@ -46,7 +47,7 @@ mkdir -p "$primary/scripts"
 cp "$cleanup_script" "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
 chmod +x "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
 
-dry="$(git -C "$primary" status --porcelain; cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --remove-worktrees)"
+dry="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --remove-worktrees)"
 grep -Fq "WOULD_REMOVE_WORKTREE" <<<"$dry"
 grep -Fq "$merged" <<<"$dry"
 grep -Fq "$merged/dist" <<<"$dry"
