@@ -44,11 +44,13 @@ const inQuietHours = (timezoneOffsetSeconds = 0) => {
 export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
+  const [requestingPermission, setRequestingPermission] = useState(false);
   const notificationsSupported = typeof Notification !== 'undefined';
   const [permission, setPermission] = useState<NotificationPermission>(() =>
     notificationsSupported ? Notification.permission : 'default'
   );
   const sessionSentKeys = useRef(new Set<string>());
+  const permissionRequestInFlight = useRef(false);
   const plan = useMemo(
     () => buildDailyPlan({ weather, hourly, airQuality }),
     [weather, hourly, airQuality]
@@ -98,19 +100,27 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
   }, [candidate, enabled, permission, plan.band, t, weather.meta.timezoneOffsetSeconds]);
 
   const toggle = async () => {
+    if (permissionRequestInFlight.current) return;
     if (enabled) {
       removeStorage(SETTINGS_KEY);
       setEnabled(false);
       return;
     }
     if (typeof Notification === 'undefined') return;
-    const next = await Notification.requestPermission();
-    setPermission(next);
-    if (next === 'granted') {
-      if (writeStorage(SETTINGS_KEY, 'enabled')) {
+    permissionRequestInFlight.current = true;
+    setRequestingPermission(true);
+    try {
+      const next = await Notification.requestPermission();
+      setPermission(next);
+      if (next === 'granted' && writeStorage(SETTINGS_KEY, 'enabled')) {
         setEnabled(true);
         trackProductEvent('alert_opt_in', { granted: true });
       }
+    } catch {
+      // Permission prompts are optional; keep alerts disabled if the browser rejects the request.
+    } finally {
+      permissionRequestInFlight.current = false;
+      setRequestingPermission(false);
     }
   };
 
@@ -152,10 +162,13 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         onClick={() => void toggle()}
         aria-pressed={enabled}
         aria-describedby={permissionHelpId}
-        disabled={!enabled && (!notificationsSupported || permission === 'denied')}
+        aria-busy={requestingPermission}
+        disabled={requestingPermission || (!enabled && (!notificationsSupported || permission === 'denied'))}
       >
-        {enabled
-          ? t('hava81.alerts.disable')
+        {requestingPermission
+          ? t('common.loading')
+          : enabled
+            ? t('hava81.alerts.disable')
           : !notificationsSupported
             ? t('hava81.alerts.unsupported')
             : permission === 'denied'
