@@ -1072,6 +1072,36 @@ test('mobile context signals reflow at 200 percent text size', async ({ page }, 
   await assertContextFits();
 });
 
+test('desktop context signals use one editorial data surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop context-signals editorial-surface regression');
+  await page.goto('/istanbul');
+
+  const panel = page.locator('.context-signals');
+  await expect(panel).toBeVisible();
+  const surface = await panel.evaluate(element => {
+    const source = element.querySelector<HTMLElement>('.context-signals__source');
+    const grid = element.querySelector<HTMLElement>('.context-signals__grid');
+    const cards = Array.from(element.querySelectorAll<HTMLElement>('.context-signal'));
+    if (!source || !grid || cards.length !== 4) throw new Error('Missing context signal surface');
+    const sourceStyle = getComputedStyle(source);
+    const gridStyle = getComputedStyle(grid);
+    const cardStyles = cards.map(card => getComputedStyle(card));
+    return {
+      sourceHasBox: sourceStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(sourceStyle.borderTopWidth) > 0,
+      gridRule: parseFloat(gridStyle.borderTopWidth),
+      nestedCardBackgrounds: cardStyles.filter(style => style.backgroundColor !== 'rgba(0, 0, 0, 0)').length,
+      roundedNestedCards: cardStyles.filter(style => parseFloat(style.borderRadius) > 0).length,
+      separatedColumns: parseFloat(cardStyles[1]?.borderInlineStartWidth ?? '0'),
+    };
+  });
+
+  expect(surface.sourceHasBox).toBe(false);
+  expect(surface.gridRule).toBeGreaterThanOrEqual(1);
+  expect(surface.nestedCardBackgrounds).toBe(0);
+  expect(surface.roundedNestedCards).toBe(0);
+  expect(surface.separatedColumns).toBeGreaterThanOrEqual(1);
+});
+
 test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'settings landmark regression');
   await page.goto('/istanbul');
