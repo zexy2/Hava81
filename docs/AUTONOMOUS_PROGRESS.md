@@ -2020,3 +2020,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Navigation fetches remain network-first and continue sending the original URL, but successful offline shell storage/fallback lookup now normalizes the cache key to same-origin pathname. This preserves city-specific offline pages while preventing query variants from multiplying cached HTML. Cross-origin/API/weather requests remain uncached and no weather evidence, score, provider or safety semantics change.
 - Added a service-worker VM regression that dispatches a query-bearing İstanbul navigation and requires the stored key to be the clean `/istanbul/` URL. `git diff --check` passes. Local Node/npm remains unavailable in the gateway shell; protected exact-head CI/CodeQL is mandatory before merge.
 - Next action: rebase/publish this PWA branch after any main movement and exact-head validation.
+
+## 2026-09-01 15:31 TRT — keep Route Weather disclosure focus visible inside clipped card
+- Continued from exact main `aefac7bd96d37a8e803aaeaef383497345cb42aa` in isolated worktree `/home/ubuntu/hava81-auto-run11-1528-route-focus`, branch `automation/hava81-run11-1528-route-focus`, while PR #552 and the PWA branch remain isolated.
+- Accessibility audit found the native Route Weather `<summary>` relied on the browser's outer focus outline while its card intentionally uses `overflow: hidden` for rounded clipping. That can clip the keyboard focus indicator at the card edge even though the disclosure itself is keyboard reachable.
+- Added an explicit `:focus-visible` outline inset by 2px so the focus ring remains visible inside the clipped card without changing the card layout, route request behavior or open/close semantics.
+- Added a desktop browser regression that focuses the summary and requires a non-none >=2px inset outline. `git diff --check` passes; protected exact-head CI/browser gates are required before merge because local Node/npm is unavailable in this gateway shell.
+- Next action: rebase onto exact current main, preserve append-only checkpoints and publish only after diff/lease recheck.

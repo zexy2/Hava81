@@ -567,3 +567,6 @@ Do not bind hidden application actions to standard browser recovery/navigation c
 
 ## 2026-09-01 — Offline navigation shell cache keys ignore query variants
 Hava81's generated root/province HTML shell is pathname-defined; query parameters are not weather evidence and do not change the shell document. Keep network navigation requests intact, but normalize successful service-worker navigation cache keys to same-origin pathname so UTM/share/cache-bust variants cannot retain duplicate offline HTML. Preserve distinct province path entries and keep API/weather responses outside service-worker caching.
+
+## 2026-09-01 — Focus rings inside clipped disclosure cards must render inward
+When a keyboard-focusable disclosure such as Route Weather's `<summary>` sits on the edge of an `overflow: hidden` rounded card, do not rely on an outer user-agent outline that may be clipped. Use an explicit `:focus-visible` indicator inset within the card boundary. This is presentation/accessibility only and must not alter disclosure, route or weather semantics.
