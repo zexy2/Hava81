@@ -40,8 +40,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 5rem;
-  padding: 1rem 1.5rem;
+  min-height: min(5rem, 25dvh);
+  padding: clamp(0.5rem, 5dvh, 1rem) 1.5rem;
   border-bottom: 1px solid var(--color-atlas-line, #c8d6d2);
 }
 
@@ -83,7 +83,7 @@
 
 .settings-panel__content {
   flex: 1;
-  padding: 1.5rem;
+  padding: clamp(0.75rem, 7.5dvh, 1.5rem) 1.5rem;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -264,7 +264,8 @@
 }
 
 .settings-panel__footer {
-  padding: 1rem 1.5rem max(1rem, env(safe-area-inset-bottom));
+  padding: clamp(0.5rem, 5dvh, 1rem) 1.5rem
+    max(clamp(0.5rem, 5dvh, 1rem), env(safe-area-inset-bottom));
   text-align: left;
   border-top: 1px solid var(--color-atlas-line, #c8d6d2);
 }

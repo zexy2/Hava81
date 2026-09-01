@@ -972,6 +972,67 @@ test('settings dialog avoids nested page landmarks', async ({ page }, testInfo) 
   await expect(dialog.getByRole('contentinfo')).toHaveCount(0);
 });
 
+test('short landscape settings keeps the footer visible at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'short-height settings text-resize regression');
+  await page.setViewportSize({ width: 568, height: 320 });
+  await page.goto('/istanbul');
+  await page.locator('.atlas-settings-button').click();
+
+  const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
+  await expect(dialog).toBeVisible();
+  await page.waitForTimeout(350);
+
+  const measure = async () => dialog.evaluate(element => {
+    const content = element.querySelector<HTMLElement>('.settings-panel__content');
+    const footer = element.querySelector<HTMLElement>('.settings-panel__footer');
+    const close = element.querySelector<HTMLElement>('.settings-panel__close');
+    if (!content || !footer || !close) throw new Error('Missing settings panel regions');
+    const panelRect = element.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    const footerRect = footer.getBoundingClientRect();
+    const closeRect = close.getBoundingClientRect();
+    return {
+      panelBottom: panelRect.bottom,
+      panelScrollHeight: (element as HTMLElement).scrollHeight,
+      panelClientHeight: (element as HTMLElement).clientHeight,
+      contentHeight: contentRect.height,
+      contentScrollable: content.scrollHeight > content.clientHeight,
+      contentOverflowY: getComputedStyle(content).overflowY,
+      footerBottom: footerRect.bottom,
+      closeTop: closeRect.top,
+      closeBottom: closeRect.bottom,
+      viewportHeight: window.innerHeight,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      focusInsideDialog: element.contains(document.activeElement),
+    };
+  });
+
+  const normal = await measure();
+  expect(normal.panelBottom).toBeLessThanOrEqual(normal.viewportHeight + 1);
+  expect(normal.panelScrollHeight).toBeLessThanOrEqual(normal.panelClientHeight + 1);
+  expect(normal.footerBottom).toBeLessThanOrEqual(normal.viewportHeight + 1);
+  expect(normal.contentHeight).toBeGreaterThan(0);
+  expect(normal.contentScrollable).toBe(true);
+  expect(normal.contentOverflowY).toBe('auto');
+  expect(normal.focusInsideDialog).toBe(true);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const enlarged = await measure();
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+  expect(enlarged.panelBottom).toBeLessThanOrEqual(enlarged.viewportHeight + 1);
+  expect(enlarged.panelScrollHeight).toBeLessThanOrEqual(enlarged.panelClientHeight + 1);
+  expect(enlarged.footerBottom).toBeLessThanOrEqual(enlarged.viewportHeight + 1);
+  expect(enlarged.contentHeight).toBeGreaterThan(0);
+  expect(enlarged.contentScrollable).toBe(true);
+  expect(enlarged.contentOverflowY).toBe('auto');
+  expect(enlarged.closeTop).toBeGreaterThanOrEqual(0);
+  expect(enlarged.closeBottom).toBeLessThanOrEqual(enlarged.viewportHeight + 1);
+  expect(enlarged.focusInsideDialog).toBe(true);
+});
+
 test('mobile settings reflows option groups at 200% text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile settings text-resize regression');
   await page.goto('/istanbul');
