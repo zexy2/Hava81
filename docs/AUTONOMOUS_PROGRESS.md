@@ -2206,3 +2206,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - `buildCommutePlan` intentionally resolves a saved outbound clock to its next location-local occurrence, but `CommutePlanPanel` memoized that result without a clock dependency. A long-lived tab crossing the saved outbound time could therefore keep showing today's already-passed commute window instead of rolling to tomorrow.
 - Added one bounded location-local timeout for the next saved outbound boundary (+100 ms cushion). Crossing it increments a revision that re-runs the existing commute planner against the same forecast evidence; it does not poll, refetch, extrapolate, or change saved user times.
 - Added a deterministic two-day fake-clock regression proving an 08:30 İstanbul commute rolls from Saturday to Sunday after 08:30 passes. `git diff --check` passes; exact-head hosted gates remain required before merge.
+
+### 2026-09-01 22:56 TRT — refresh untouched route departure defaults in long-lived tabs
+- Continued independently from exact main `9a0dd9739247af475c876dc32db70620300df7b1` while #588 validates on its own branch and main #1388 deploys.
+- Route planning already refreshed the native datetime min/max when the departure control regained focus, but its initial `now + 1h` value could remain untouched for hours and become invalid. A user returning to the form then saw a stale default that failed only on submit.
+- Track whether the user explicitly edited departure. On focus, always refresh native bounds; only if the default is still untouched and has fallen outside the past tolerance, advance it to a fresh `now + 1h`. Explicit user selections are never rewritten, even when currently invalid, so validation remains transparent and user-owned input is preserved.
+- Added deterministic clock regressions for both behaviors and kept route API/risk/weather semantics unchanged. `git diff --check` passes; exact-head hosted gates remain required before merge.
