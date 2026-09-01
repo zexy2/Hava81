@@ -500,3 +500,5 @@ The shared Hava81 score engine must require a finite validated sustained-wind in
 
 ## 2026-09-01 — Large GitHub Actions observer reads get a dedicated bounded timeout
 Keep normal observer HTTP calls on the tight 6-second default, but allow the `actions/runs?per_page=100` response up to 12 seconds because its payload is materially larger and measured network latency can exceed 6 seconds. The oneshot service still has a 55-second hard systemd ceiling, so this improves CI observability without allowing an unbounded observer or weakening production health timeouts.
+## 2026-09-01 — Observer CI state follows evidence: unknown is not running
+When an open PR head has no matching workflow in the observer's bounded GitHub runs window, report it as `ci_unknown`, not `ci_running`. Only explicit queued/in-progress/waiting/pending workflow states count as running. This prevents stale PRs from looking perpetually active while preserving direct GitHub re-verification as the merge authority.
