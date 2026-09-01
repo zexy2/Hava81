@@ -1130,6 +1130,18 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
   expect(layout.description.scrollWidth).toBeLessThanOrEqual(layout.description.clientWidth + 1);
 });
 
+test('skip link moves keyboard focus into the main weather content', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop keyboard regression');
+  await page.goto('/istanbul');
+
+  await page.keyboard.press('Tab');
+  const skipLink = page.getByRole('link', { name: 'İçeriğe Geç' });
+  await expect(skipLink).toBeFocused();
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeFocused();
+});
+
 test('core city experience renders and uses a shareable city URL', async ({ page }) => {
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
