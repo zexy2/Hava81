@@ -193,6 +193,13 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Escape') {
+        setHighlightedIndex(-1);
+        inputRef.current?.blur();
+        onDismiss?.();
+        return;
+      }
+
       if (!showDropdown) {
         if (event.key === 'ArrowDown' && combinedItems.length > 0) {
           setHighlightedIndex(0);
@@ -217,11 +224,6 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
               combinedItems[highlightedIndex].isRecent
             );
           }
-          break;
-        case 'Escape':
-          setHighlightedIndex(-1);
-          inputRef.current?.blur();
-          onDismiss?.();
           break;
       }
     },
