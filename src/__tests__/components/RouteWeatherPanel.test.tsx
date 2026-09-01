@@ -48,7 +48,9 @@ describe('RouteWeatherPanel', () => {
     const check = screen.getByRole('button', { name: 'Koridoru kontrol et' });
     expect(check).toBeDisabled();
     expect(check).toHaveAttribute('aria-describedby', 'route-weather-same-city');
-    expect(screen.getByRole('status')).toHaveTextContent('Başlangıç ve varış için farklı şehirler seç.');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Başlangıç ve varış için farklı şehirler seç.'
+    );
   });
 
   it('announces a completed route-weather decision without moving focus', async () => {
@@ -88,8 +90,11 @@ describe('RouteWeatherPanel', () => {
     expect(result).toHaveTextContent('Uygun');
     expect(result).toHaveTextContent('82/100 · Uygun');
     expect(result).toHaveTextContent('%20 · 0,4 mm');
+    expect(screen.getByRole('list', { name: 'Rota boyunca hava örnekleri' })).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
   });
-
 
   it('shows a dry label instead of 0% for a dry route segment', async () => {
     const user = userEvent.setup();
