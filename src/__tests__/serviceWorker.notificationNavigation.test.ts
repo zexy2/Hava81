@@ -28,6 +28,54 @@ describe('service worker notification navigation', () => {
     expect(source).toContain("client.navigate(client.url)");
   });
 
+  it('normalizes navigation cache keys so query variants do not multiply offline shells', async () => {
+    const source = readFileSync('public/sw.js', 'utf8');
+    type TestWorkerEvent = {
+      request?: { method: string; mode: string; destination: string; url: string };
+      respondWith?: (promise: Promise<unknown>) => void;
+    };
+    const listeners = new Map<string, (event: TestWorkerEvent) => void>();
+    const cachePut = vi.fn().mockResolvedValue(undefined);
+    const cacheMatch = vi.fn().mockResolvedValue(undefined);
+    const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    let responsePromise: Promise<unknown> | undefined;
+
+    runInNewContext(source, {
+      self: {
+        location: { origin: 'https://hava81.example' },
+        clients: {},
+        skipWaiting: vi.fn(),
+        addEventListener: (name: string, listener: (event: TestWorkerEvent) => void) => {
+          listeners.set(name, listener);
+        },
+      },
+      caches: {
+        open: vi.fn().mockResolvedValue({ put: cachePut, match: cacheMatch }),
+        keys: vi.fn().mockResolvedValue([]),
+        delete: vi.fn().mockResolvedValue(true),
+      },
+      fetch: vi.fn().mockResolvedValue(response),
+      URL,
+      Set,
+      Error,
+    });
+
+    listeners.get('fetch')?.({
+      request: {
+        method: 'GET',
+        mode: 'navigate',
+        destination: 'document',
+        url: 'https://hava81.example/istanbul/?utm_source=share&v=2',
+      },
+      respondWith: (promise: Promise<unknown>) => {
+        responsePromise = promise;
+      },
+    });
+
+    await expect(responsePromise).resolves.toBe(response);
+    expect(cachePut).toHaveBeenCalledWith('https://hava81.example/istanbul/', expect.anything());
+  });
+
   it('caches any visited hashed application asset for resilient repeat/offline use', () => {
     const source = readFileSync('public/sw.js', 'utf8');
 
