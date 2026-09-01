@@ -578,3 +578,9 @@ Activity Planner `<summary>` controls are keyboard-operable application controls
 
 ## 2026-09-01 — Full-height mobile shells prefer dynamic viewport units with vh fallback
 Keep `100vh` as a compatibility fallback, then override with `100dvh` for full-height app/root/body and viewport-derived main/fatal surfaces. Mobile browser chrome can change the visual viewport while a page is open; dynamic viewport units follow that change and avoid stale oversized/undersized shells. This is layout ergonomics only and must not alter weather data or guidance semantics.
+
+## 2026-09-01 — bound Pages rollback/propagation asset retention
+
+**Decision:** Preserve only recent prior hashed Pages assets for 30 minutes during deployment, with an explicit 32-generation metadata cap; never retain source maps and reject unsafe paths.
+
+**Why:** Static HTML and hashed assets can propagate/cache on different timelines. Keeping a short bounded overlap avoids stale-HTML → missing-chunk failures without turning the publish branch into unbounded storage. This is a deployment reliability safeguard only; it does not cache or alter weather/API responses.

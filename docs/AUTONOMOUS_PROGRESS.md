@@ -2050,3 +2050,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a mobile Playwright regression that changes the viewport from 390×844 to 390×600 and requires body/root/app computed minimum heights to track the new viewport height. `git diff --check` passes; protected exact-head CI/CodeQL/browser gates are mandatory because local Node/npm is unavailable on the gateway host.
 - No forecast values, scores, provider attribution, MGM/UV/AQI semantics or safety guidance changed.
 - Next action: publish from an exact current-main base, require protected gates, and keep production verification independent of CI observation.
+
+## 2026-09-01 16:16 TRT — retain recent Pages asset generations during deploy
+- Continued independently from exact main `b4d16c1b3b6a879782aa696950fa2397e41e29fe` after PR #558 merged, in isolated `automation/hava81-run11-1608-pages-retention`; pending PR #559 was not mutated.
+- GitHub Pages deploys previously replaced the entire hashed `assets/` set immediately. If edge/browser HTML remained cached briefly during propagation, that stale HTML could reference a just-removed hashed chunk and fail to boot. Added a bounded deploy-preparation step that carries only recent prior asset generations for 30 minutes, caps metadata at 32 generations, rejects source maps/path escapes, and drops missing/expired files.
+- Added deterministic Python coverage for retain/expiry/bootstrap/missing/source-map/path-traversal cases, wired it into CI, and extended public-shell verification to probe one retained asset when present. Navigation/weather/API semantics are unchanged.
+- Local gates on the rebased branch: 6/6 retention tests, `bash -n scripts/prepare-pages-deploy.sh`, and `git diff --check` pass. Protected exact-head CI/CodeQL/Pages deployment remain mandatory before merge.
+- Next action: inspect final diff, commit/push/open the bounded deployment-reliability PR, then continue an independent product/a11y audit while CI runs. Re-check PR #559 and the new main pipeline separately.

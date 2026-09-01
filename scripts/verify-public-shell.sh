@@ -80,3 +80,21 @@ check_path "/sw.js" "notificationclick" "dist/sw.js"
 check_path "/hava81-mark.svg" "<svg" "dist/hava81-mark.svg"
 check_path "/hava81-favicon.ico" "" "dist/hava81-favicon.ico"
 check_path "/hava81-social-card.png" "" "dist/hava81-social-card.png"
+
+# The Pages deploy keeps recent Vite asset generations so cached HTML from the prior
+# release cannot point at an asset that disappeared during propagation. Verify at least
+# one carried file when a previous generation is present in the local deploy manifest.
+if [[ -f dist/.hava81-asset-retention.json ]]; then
+  retained_asset="$(python3 - <<'PYRETENTION'
+import json
+from pathlib import Path
+payload = json.loads(Path('dist/.hava81-asset-retention.json').read_text(encoding='utf-8'))
+generations = payload.get('generations', [])
+files = generations[1].get('files', []) if len(generations) > 1 else []
+print(files[0] if files else '')
+PYRETENTION
+)"
+  if [[ -n "$retained_asset" && -f "dist/$retained_asset" ]]; then
+    check_path "/$retained_asset" "" "dist/$retained_asset"
+  fi
+fi
