@@ -204,6 +204,44 @@ describe('useWeather', () => {
     }
   });
 
+  it('preserves location as the refresh source across a language change', async () => {
+    const initialProps: { language: 'tr' | 'en' } = { language: 'tr' };
+    const { result, rerender } = renderHook(
+      ({ language }: { language: 'tr' | 'en' }) => useWeather({ language }),
+      { initialProps }
+    );
+
+    await act(async () => {
+      await result.current.fetchCurrentLocation();
+    });
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('Ankara'));
+    expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(1);
+
+    (weatherService.getCurrentWeather as Mock).mockResolvedValueOnce({
+      cityName: 'Ankara',
+      country: 'TR',
+      temperature: 18,
+      coordinates: { lat: 39.93, lon: 32.86 },
+    });
+    rerender({ language: 'en' });
+    await waitFor(() =>
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'Ankara', lang: 'en' })
+    );
+    expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(1);
+
+    const now = result.current.lastUpdated?.getTime();
+    expect(now).toBeDefined();
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue((now ?? 0) + 5 * 60 * 1000 + 1);
+    try {
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await waitFor(() =>
+        expect(weatherService.getCurrentLocationWeather).toHaveBeenCalledTimes(2)
+      );
+    } finally {
+      dateNow.mockRestore();
+    }
+  });
+
   it('revives cached weather dates before restoring a fresh cache entry', async () => {
     localStorage.setItem(
       'weather_cache',

@@ -606,3 +606,6 @@ Treat browser notification permission as external mutable state, not a mount-tim
 
 ## 2026-09-01 — Route result language follows the current interface language
 Route corridor payloads may contain provider-localized descriptions, so a language change invalidates any rendered or in-flight route result that was requested under the previous locale. Reuse the existing request-generation guard to ignore late responses; do not translate provider text locally or fabricate replacement descriptions.
+
+## 2026-09-01 — Language refresh does not change the user's weather source mode
+Treat city-vs-current-location as user intent independent of provider localization. A language change may re-fetch the already known city name to refresh localized provider text without prompting for geolocation, but it must not convert a successful current-location session into city mode. Preserve that source identity in memory so later stale/online refreshes can reacquire current location. Explicit city searches still switch to city mode, and failed location attempts do not replace the previously successful source.
