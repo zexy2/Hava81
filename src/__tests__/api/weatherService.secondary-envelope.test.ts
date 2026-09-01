@@ -44,6 +44,43 @@ describe('weatherService secondary BFF envelope validation', () => {
     await expectApiDataError(weatherService.getContextSignals(41.01, 28.97), 'context.units.dust');
   });
 
+  it.each([
+    ['dustMax', 'dust'],
+    ['grassPollenMax', 'grassPollen'],
+    ['olivePollenMax', 'olivePollen'],
+  ] as const)('rejects modeled %s when its display unit is missing', async (valueField, unitField) => {
+    mockGet.mockResolvedValue({
+      provider: 'Open-Meteo',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      fetchedAt: new Date().toISOString(),
+      units: {},
+      [valueField]: 4,
+    });
+    await expectApiDataError(
+      weatherService.getContextSignals(41.01, 28.97),
+      `context.units.${unitField}`
+    );
+  });
+
+  it.each([
+    ['waveHeight', 0.8],
+    ['waveDirection', 210],
+    ['wavePeriod', 5.5],
+    ['seaSurfaceTemperature', 24],
+  ] as const)('rejects modeled marine %s when its provider unit is missing', async (field, value) => {
+    mockGet.mockResolvedValue({
+      provider: 'Open-Meteo',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      fetchedAt: new Date().toISOString(),
+      units: {},
+      marine: { observedAt: new Date().toISOString(), [field]: value },
+    });
+    await expectApiDataError(
+      weatherService.getContextSignals(41.01, 28.97, true),
+      `context.units.${field}`
+    );
+  });
+
   it('rejects a non-object marine context payload', async () => {
     mockGet.mockResolvedValue({
       provider: 'Open-Meteo',
