@@ -77,7 +77,11 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     const nextOrigin = canonicalProvinceName(currentCityName);
     setOriginName(nextOrigin);
     setDestinationName(currentDestination =>
-      currentDestination === nextOrigin ? (nextOrigin === 'Ankara' ? 'İstanbul' : 'Ankara') : currentDestination
+      currentDestination === nextOrigin
+        ? nextOrigin === 'Ankara'
+          ? 'İstanbul'
+          : 'Ankara'
+        : currentDestination
     );
     requestIdRef.current += 1;
     setResult(null);
@@ -193,7 +197,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           <button
             type="button"
             disabled={loading || originName === destinationName}
-            aria-describedby={originName === destinationName ? 'route-weather-same-city' : undefined}
+            aria-describedby={
+              originName === destinationName ? 'route-weather-same-city' : undefined
+            }
             onClick={() => void submit()}
           >
             {loading ? t('common.loading') : t('hava81.route.check')}
@@ -248,6 +254,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             <div
               className="route-weather__segments"
               role="list"
+              tabIndex={0}
               aria-label={t('hava81.route.segments')}
             >
               {result.segments.map((segment, index) => (
@@ -257,13 +264,16 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   className={`route-segment route-segment--${segment.risk}`}
                 >
                   <time>{formatTime(segment.eta)}</time>
-                  <strong>{segment.score}/100 · {t(`hava81.dailyPlan.bands.${getScoreBand(segment.score)}`)}</strong>
+                  <strong>
+                    {segment.score}/100 ·{' '}
+                    {t(`hava81.dailyPlan.bands.${getScoreBand(segment.score)}`)}
+                  </strong>
                   <span>
                     {numberFormatter.format(Math.round(convertTemperature(segment.temperature)))}
                     {temperatureSymbol} ·{' '}
                     {formatPrecipitation(segment.precipitationProbability, segment.precipitationMm)}{' '}
-                    · {t('weather.wind')} {numberFormatter.format(convertWindSpeed(segment.windSpeed))}{' '}
-                    {windSpeedSymbol}
+                    · {t('weather.wind')}{' '}
+                    {numberFormatter.format(convertWindSpeed(segment.windSpeed))} {windSpeedSymbol}
                   </span>
                   <small>{segment.description}</small>
                 </article>
