@@ -114,6 +114,11 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
     }
   };
 
+  const permissionHelpId =
+    !notificationsSupported || permission === 'denied'
+      ? 'decision-alerts-permission-help'
+      : undefined;
+
   return (
     <section className="decision-alerts" aria-labelledby="decision-alerts-title">
       <div>
@@ -125,11 +130,19 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
           {t('hava81.alerts.modeledDisclosure')}
         </small>
         {!notificationsSupported ? (
-          <small className="decision-alerts__permission-help" role="status">
+          <small
+            id="decision-alerts-permission-help"
+            className="decision-alerts__permission-help"
+            role="status"
+          >
             {t('hava81.alerts.unsupportedHelp')}
           </small>
         ) : permission === 'denied' ? (
-          <small className="decision-alerts__permission-help" role="status">
+          <small
+            id="decision-alerts-permission-help"
+            className="decision-alerts__permission-help"
+            role="status"
+          >
             {t('hava81.alerts.blockedHelp')}
           </small>
         ) : null}
@@ -138,6 +151,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality }: Props) {
         type="button"
         onClick={() => void toggle()}
         aria-pressed={enabled}
+        aria-describedby={permissionHelpId}
         disabled={!enabled && (!notificationsSupported || permission === 'denied')}
       >
         {enabled

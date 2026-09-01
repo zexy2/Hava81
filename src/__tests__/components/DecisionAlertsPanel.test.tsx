@@ -63,8 +63,10 @@ describe('DecisionAlertsPanel', () => {
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent(/desteklenmiyor/i);
-    expect(screen.getByRole('status')).toHaveTextContent(/tarayıcı.*desteklemiyor/i);
-    expect(screen.getByRole('status')).not.toHaveTextContent(/tarayıcı ayarlarından/i);
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent(/tarayıcı.*desteklemiyor/i);
+    expect(status).not.toHaveTextContent(/tarayıcı ayarlarından/i);
+    expect(button).toHaveAttribute('aria-describedby', status.id);
   });
 
   it('does not present a clickable opt-in when browser permission is blocked', () => {
@@ -75,7 +77,9 @@ describe('DecisionAlertsPanel', () => {
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent(/tarayıcı ayarlarından/i);
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent(/tarayıcı ayarlarından/i);
+    expect(button).toHaveAttribute('aria-describedby', status.id);
     expect(requestPermission).not.toHaveBeenCalled();
   });
 
