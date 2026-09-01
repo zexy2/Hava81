@@ -375,7 +375,17 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                     'ref': 'automation/hava81-observer-test',
                     'sha': 'pr-sha',
                 },
-            }
+            },
+            {
+                'number': 484,
+                'title': 'Old observer test PR',
+                'html_url': 'https://github.com/zexy2/Hava81/pull/484',
+                'draft': False,
+                'head': {
+                    'ref': 'automation/hava81-old-observer-test',
+                    'sha': 'old-pr-sha-outside-window',
+                },
+            },
         ]
         runs = [
             {
@@ -477,6 +487,8 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['open_automation_prs'][0]['ci']['run_id'], 14)
         self.assertEqual(result['open_automation_prs'][0]['ci']['status'], 'in_progress')
         self.assertEqual(result['signals']['ci_running_prs'], [497])
+        self.assertEqual(result['signals']['ci_unknown_prs'], [484])
+        self.assertIsNone(result['open_automation_prs'][1]['ci']['run_id'])
         self.assertFalse(result['signals']['main_pipeline_pending'])
 
 

@@ -26,4 +26,4 @@ for pr in gh.get('open_automation_prs', []):
 main = gh.get('latest_main_run') or {}
 if main:
     print(f"main_ci: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:8]} {main.get('status')}/{main.get('conclusion')}")
-print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} failed={sig.get('ci_failed_prs', [])} production_incident={sig.get('production_incident')}")
+print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} production_incident={sig.get('production_incident')}")

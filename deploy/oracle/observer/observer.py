@@ -384,7 +384,12 @@ def collect_github() -> dict[str, Any]:
 
     ci_green = [pr['number'] for pr in automation_prs if pr['ci']['status'] == 'completed' and pr['ci']['conclusion'] == 'success']
     ci_failed = [pr['number'] for pr in automation_prs if pr['ci']['status'] == 'completed' and pr['ci']['conclusion'] not in (None, 'success')]
-    ci_running = [pr['number'] for pr in automation_prs if pr['ci']['status'] in ('queued', 'in_progress', 'waiting', 'pending') or pr['ci']['run_id'] is None]
+    ci_running = [
+        pr['number']
+        for pr in automation_prs
+        if pr['ci']['status'] in ('queued', 'in_progress', 'waiting', 'pending')
+    ]
+    ci_unknown = [pr['number'] for pr in automation_prs if pr['ci']['run_id'] is None]
     api_deployment = collect_api_deployment(latest_main)
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
@@ -399,6 +404,7 @@ def collect_github() -> dict[str, Any]:
             'ci_green_prs': ci_green,
             'ci_failed_prs': ci_failed,
             'ci_running_prs': ci_running,
+            'ci_unknown_prs': ci_unknown,
             'main_pipeline_pending': bool(latest_main and latest_main.get('status') != 'completed'),
             'api_deploy_pending': api_deployment['pending'],
             'api_deploy_unknown': not api_deployment['known'],
@@ -516,7 +522,7 @@ def main() -> int:
             'current': state_signature(state),
         })
     level = 'OK' if production['healthy'] else 'WARN'
-    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
+    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} ci_unknown={github['signals']['ci_unknown_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
     return 0
 
 
