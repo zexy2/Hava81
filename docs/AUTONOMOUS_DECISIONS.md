@@ -494,3 +494,6 @@ A skip link to the main weather content must land on a programmatically focusabl
 
 ## 2026-09-01 — Commute precipitation deltas require two measured amounts
 A return-vs-outbound precipitation-amount change is meaningful only when both windows provide finite precipitation amounts. Missing amount data must not be coerced to 0 for comparison. Probability-based change logic and umbrella advice may still use their independently available verified signals.
+
+## 2026-09-01 — Score-engine wind is required evidence, never an implicit calm fallback
+The shared Hava81 score engine must require a finite validated sustained-wind input from its producer. Missing wind must fail at the type/trust boundary instead of becoming `0 m/s` inside apparent-temperature or wind scoring. Optional gust remains optional because absence of gust is a legitimate provider state.
