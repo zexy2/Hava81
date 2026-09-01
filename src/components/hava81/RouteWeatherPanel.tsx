@@ -21,6 +21,7 @@ interface Props {
 
 const ROUTE_MAX_DEPARTURE_MS = 18 * 60 * 60_000;
 const ROUTE_DEPARTURE_PAST_TOLERANCE_MS = 60_000;
+const ROUTE_RESULT_EXPIRY_CUSHION_MS = 100;
 
 const canonicalProvinceName = (name: string): string => {
   const slug = citySlug(name);
@@ -41,6 +42,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [departureBoundsNow, setDepartureBoundsNow] = useState(() => Date.now());
   const [departureEdited, setDepartureEdited] = useState(false);
   const [result, setResult] = useState<RouteWeatherResult | null>(null);
+  const [resultExpiresAt, setResultExpiresAt] = useState<number | null>(null);
+  const [resultExpired, setResultExpired] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
@@ -67,6 +70,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const invalidateRequest = () => {
     requestIdRef.current += 1;
     setResult(null);
+    setResultExpiresAt(null);
+    setResultExpired(false);
     setError(null);
     setLoading(false);
   };
@@ -99,6 +104,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     );
     requestIdRef.current += 1;
     setResult(null);
+    setResultExpiresAt(null);
+    setResultExpired(false);
     setError(null);
     setLoading(false);
   }, [currentCityName]);
@@ -106,6 +113,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   useEffect(() => {
     requestIdRef.current += 1;
     setResult(null);
+    setResultExpiresAt(null);
+    setResultExpired(false);
     setError(null);
     setLoading(false);
   }, [i18n.language]);
@@ -128,6 +137,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     }
     const requestId = ++requestIdRef.current;
     setResult(null);
+    setResultExpiresAt(null);
+    setResultExpired(false);
     setLoading(true);
     setError(null);
     try {
@@ -139,6 +150,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
       );
       if (requestId !== requestIdRef.current) return;
       setResult(value);
+      setResultExpiresAt(
+        departureTime + value.estimatedDurationMinutes * 60_000 + ROUTE_RESULT_EXPIRY_CUSHION_MS
+      );
       trackProductEvent('route_checked', {
         origin: origin.name,
         destination: destination.name,
@@ -151,6 +165,29 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
       if (requestId === requestIdRef.current) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (resultExpiresAt === null || !result) return undefined;
+
+    const expireResult = () => {
+      if (Date.now() < resultExpiresAt) return false;
+      setResult(null);
+      setResultExpiresAt(null);
+      setResultExpired(true);
+      return true;
+    };
+
+    if (expireResult()) return undefined;
+    const timeout = window.setTimeout(expireResult, Math.max(0, resultExpiresAt - Date.now()));
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') expireResult();
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [result, resultExpiresAt]);
 
   return (
     <details className="route-weather">
@@ -232,6 +269,11 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
         {originName === destinationName ? (
           <p id="route-weather-same-city" className="route-weather__hint" role="status">
             {t('hava81.route.sameCity')}
+          </p>
+        ) : null}
+        {resultExpired ? (
+          <p className="route-weather__hint" role="status">
+            {t('hava81.route.resultExpired')}
           </p>
         ) : null}
         {error ? (

@@ -343,6 +343,41 @@ describe('RouteWeatherPanel', () => {
     expect(screen.queryByText('eski Türkçe açıklama')).not.toBeInTheDocument();
   });
 
+  it('removes route guidance after the projected trip window ends', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-01T09:00:00.000Z'));
+    try {
+      api.getRouteWeather.mockResolvedValueOnce({
+        kind: 'corridor-estimate',
+        estimatedDistanceKm: 90,
+        estimatedDurationMinutes: 60,
+        requestedDeparture: '2026-09-01T10:00:00.000Z',
+        score: 78,
+        segments: [],
+        disclaimer: 'Modeled corridor guidance.',
+      });
+
+      renderPanel();
+      fireEvent.click(screen.getByText('Rota havası'));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('78/100');
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2 * 60 * 60_000 + 101);
+      });
+
+      expect(screen.queryByText('78/100')).not.toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Bu rota tahmininin yolculuk süresi doldu.'
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('removes the previous result while a fresh route request is loading', async () => {
     const user = userEvent.setup();
     api.getRouteWeather.mockResolvedValueOnce({
