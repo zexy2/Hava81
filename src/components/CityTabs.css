@@ -147,3 +147,11 @@
     padding-bottom: 0.5rem;
   }
 }
+
+
+@media (forced-colors: active) {
+  .city-tabs__tab[aria-current='page'] {
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+  }
+}
