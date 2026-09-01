@@ -427,7 +427,8 @@ textarea:focus-visible {
 }
 
 .atlas-icon-button:hover:not(:disabled),
-.atlas-icon-button[aria-pressed='true'] {
+.atlas-icon-button[aria-pressed='true'],
+.atlas-icon-button--map[aria-expanded='true'] {
   color: var(--color-aegean);
   background: var(--color-atlas-paper);
   border-color: var(--color-atlas-line);
@@ -1140,6 +1141,7 @@ kbd {
 
 @media (forced-colors: active) {
   .atlas-icon-button[aria-pressed='true'],
+  .atlas-icon-button--map[aria-expanded='true'],
   .atlas-compare-button[aria-pressed='true'] {
     color: HighlightText;
     background: Highlight;

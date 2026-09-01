@@ -2963,6 +2963,8 @@ test('mobile map province marker previews the city before switching views', asyn
 
   await expect(page).toHaveURL(/\/istanbul\/?$/);
   await expect(page.locator('#weather-map-region')).toBeVisible();
+  await expect(page.locator('.atlas-icon-button--map')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('.atlas-icon-button--map')).not.toHaveAttribute('aria-pressed');
   const popup = page.locator('.weather-map__popup');
   await expect(popup.getByRole('heading', { name: 'Bursa' })).toBeVisible();
   const cityButton = popup.getByRole('button', { name: /şehrin havasını gör/i });
