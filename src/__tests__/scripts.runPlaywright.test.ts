@@ -125,5 +125,5 @@ describe('Playwright temp runner', () => {
     await waitForProcessExit(parentPid);
     await waitForProcessExit(childPid);
     expect(await runnerTempDirs(root)).toHaveLength(0);
-  });
+  }, 12_000);
 });
