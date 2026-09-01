@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 vi.mock('../../analytics/productEvents', () => ({ trackProductEvent: vi.fn() }));
 const settingsMock = vi.hoisted(() => ({ temperatureUnit: 'metric' as 'metric' | 'imperial' }));
@@ -43,6 +43,14 @@ const weather: NormalizedWeatherData = {
   },
 };
 
+const freshForecastMeta = (freshForSeconds = 1_800): ForecastMeta => ({
+  provider: 'OpenMeteo',
+  fetchedAt: new Date(),
+  timezoneOffsetSeconds: 10800,
+  intervalHours: 1,
+  freshForSeconds,
+});
+
 const hourly: HourlyForecast[] = [6, 9, 12].map(hour => ({
   time: new Date(`2026-08-28T${String(hour).padStart(2, '0')}:00:00.000Z`),
   temp: 24,
@@ -63,7 +71,7 @@ describe('DailyPlanPanel sharing', () => {
   });
 
   it('exposes the explanation as a named accessibility group', () => {
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
 
     expect(
       screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })
@@ -92,7 +100,7 @@ describe('DailyPlanPanel sharing', () => {
       description: 'açık',
     }));
 
-    render(<DailyPlanPanel weather={weather} hourly={richHourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={richHourly} forecastMeta={freshForecastMeta()} />);
 
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
     expect(timeline).toHaveAttribute('tabindex', '0');
@@ -123,7 +131,7 @@ describe('DailyPlanPanel sharing', () => {
       },
     ];
 
-    render(<DailyPlanPanel weather={weather} hourly={rainyHourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={rainyHourly} forecastMeta={freshForecastMeta()} />);
 
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
     expect(within(timeline).getByText(/23°C · %15 · 0,2 mm/)).toBeInTheDocument();
@@ -138,7 +146,7 @@ describe('DailyPlanPanel sharing', () => {
   it('honors the selected temperature unit in the timeline and accessible label', () => {
     settingsMock.temperatureUnit = 'imperial';
 
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
 
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
     expect(
@@ -159,7 +167,7 @@ describe('DailyPlanPanel sharing', () => {
     const share = vi.fn(() => sharePromise);
     Object.defineProperty(navigator, 'share', { configurable: true, value: share });
 
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
 
     const button = screen.getByRole('button', { name: 'hava81.share.action' });
     await user.click(button);
@@ -188,7 +196,7 @@ describe('DailyPlanPanel sharing', () => {
       value: { writeText },
     });
 
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
     await user.click(screen.getByRole('button', { name: 'hava81.share.action' }));
 
     expect(share).toHaveBeenCalledTimes(1);
@@ -201,7 +209,7 @@ describe('DailyPlanPanel sharing', () => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
 
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
     const button = screen.getByRole('button', { name: 'hava81.share.action' });
     await user.click(button);
 
@@ -217,7 +225,7 @@ describe('DailyPlanPanel sharing', () => {
       value: { writeText: vi.fn().mockRejectedValue(new Error('clipboard denied')) },
     });
 
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
     await user.click(screen.getByRole('button', { name: 'hava81.share.action' }));
 
     expect(screen.getByRole('button')).toHaveTextContent('hava81.share.unavailable');
@@ -236,7 +244,7 @@ describe('DailyPlanPanel sharing', () => {
       value: { writeText },
     });
 
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
     await user.click(screen.getByRole('button', { name: 'hava81.share.action' }));
 
     expect(share).toHaveBeenCalledTimes(1);
@@ -244,9 +252,34 @@ describe('DailyPlanPanel sharing', () => {
     expect(screen.getByRole('status')).toHaveTextContent('');
   });
 
+  it('hides the daily decision surface when forecast evidence expires', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-28T06:00:00.000Z'));
+    try {
+      render(
+        <DailyPlanPanel
+          weather={weather}
+          hourly={hourly}
+          forecastMeta={freshForecastMeta(30)}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'hava81.share.action' })).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_101);
+      });
+
+      expect(screen.getByRole('status')).toHaveTextContent('hava81.dailyPlan.forecastStale');
+      expect(screen.queryByRole('button', { name: 'hava81.share.action' })).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('announces clipboard success without moving focus', async () => {
     const user = userEvent.setup();
-    render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
 
     const button = screen.getByRole('button', { name: 'hava81.share.action' });
     await user.click(button);
@@ -258,7 +291,7 @@ describe('DailyPlanPanel sharing', () => {
   it('keeps repeated share feedback visible for the full interval after the latest share', async () => {
     vi.useFakeTimers();
     try {
-      render(<DailyPlanPanel weather={weather} hourly={hourly} />);
+      render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
 
       const button = screen.getByRole('button', { name: 'hava81.share.action' });
       await act(async () => {

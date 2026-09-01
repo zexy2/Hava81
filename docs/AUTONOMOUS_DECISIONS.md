@@ -705,3 +705,7 @@ The saved commute planner is a modeled decision surface, so a recommendation mus
 ## 2026-09-02 — Activity recommendations fail closed when forecast evidence expires
 
 Activity scores and best-time windows are modeled guidance derived from the hourly forecast, so they must not remain actionable after that evidence leaves its provider freshness window. Pass the exact displayed forecast metadata into the activity planner, honor provider `freshForSeconds` with the API's 30-minute forecast fallback, reject timestamps more than 60 seconds in the future, and hide the modeled recommendations when metadata is missing, invalid, or stale. Re-evaluate at the expiry boundary and when a throttled background tab becomes visible without refreshing timestamps, fetching implicitly, changing activity thresholds, or synthesizing weather.
+
+## 2026-09-02 — Day-plan guidance shares one forecast freshness contract
+
+The day-plan score, best window, umbrella decision and share payload are modeled from the hourly forecast, so they must disappear when that forecast evidence expires rather than remain actionable in a long-lived tab. Use one shared forecast-freshness helper for modeled decision surfaces: honor provider `freshForSeconds`, fall back to the API's 30-minute forecast TTL, reject timestamps more than 60 seconds in the future, and expose the exact remaining delay for bounded expiry timers. Missing, invalid or stale metadata fails closed without refreshing timestamps, fetching implicitly or changing decision thresholds.

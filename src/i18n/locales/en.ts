@@ -160,6 +160,7 @@ export const en = {
     dailyPlan: {
       eyebrow: 'Hava81 decision engine',
       title: 'Day plan',
+      forecastStale: 'Forecast data is no longer fresh. Day-plan recommendations are hidden until new data arrives.',
       bands: {
         excellent: 'Very suitable',
         good: 'Suitable',

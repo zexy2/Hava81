@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import { trackProductEvent } from '../../analytics/productEvents';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { buildDecisionShare } from '../../utils/shareDecision';
 import type {
@@ -10,14 +11,17 @@ import type {
   Hava81ScoreBand,
   Hava81ScoreFactor,
 } from '../../domain/decision/types';
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DailyPlanPanel.css';
 
 interface DailyPlanPanelProps {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  forecastMeta: ForecastMeta | null;
 }
+
+type FreshDailyPlanPanelProps = Omit<DailyPlanPanelProps, 'forecastMeta'>;
 
 const bandKey: Record<Hava81ScoreBand, string> = {
   excellent: 'excellent',
@@ -61,7 +65,7 @@ const factorKey: Record<Hava81ScoreFactor, string> = {
   compound: 'compound',
 };
 
-export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelProps) {
+function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPanelProps) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, getTemperatureSymbol } = useSettings();
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'unavailable'>('idle');
@@ -355,6 +359,48 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       <p className="daily-plan__note">{t('hava81.dailyPlan.note')}</p>
     </section>
   );
+}
+
+
+export function DailyPlanPanel({ weather, hourly, airQuality, forecastMeta }: DailyPlanPanelProps) {
+  const { t } = useTranslation();
+  const [, setForecastFreshnessRevision] = useState(0);
+  const freshness = getForecastFreshness(forecastMeta);
+
+  useEffect(() => {
+    const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
+    const timeout =
+      freshness.expiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, freshness.expiresInMs);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [forecastMeta, freshness.expiresInMs]);
+
+
+  if (!freshness.fresh) {
+    return (
+      <section className="daily-plan" aria-labelledby="daily-plan-title">
+        <header className="daily-plan__header">
+          <div>
+            <span className="atlas-kicker">{t('hava81.dailyPlan.eyebrow')}</span>
+            <h2 id="daily-plan-title">{t('hava81.dailyPlan.title')}</h2>
+          </div>
+        </header>
+        <p className="daily-plan__note" role="status">
+          {t('hava81.dailyPlan.forecastStale')}
+        </p>
+      </section>
+    );
+  }
+
+  return <FreshDailyPlanPanel weather={weather} hourly={hourly} airQuality={airQuality} />;
 }
 
 export default DailyPlanPanel;
