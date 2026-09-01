@@ -30,7 +30,7 @@ const AddIcon = () => (
 
 export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd }: CityTabsProps) {
   const { t } = useTranslation();
-  const { convertTemperature } = useSettings();
+  const { convertTemperature, getTemperatureSymbol } = useSettings();
   const activeCityKey = citySlug(activeCity);
 
   if (cities.length === 0 && !canAdd) return null;
@@ -42,6 +42,8 @@ export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd
           const isActive = citySlug(favorite.name) === activeCityKey;
           const metadata = getCityMetadata(favorite.name);
           const plateCode = metadata ? String(metadata.plateCode).padStart(2, '0') : '--';
+          const displayTemperature =
+            favorite.temp !== undefined ? Math.round(convertTemperature(favorite.temp)) : undefined;
 
           return (
             <div key={favorite.name} className={`city-tabs__item ${isActive ? 'active' : ''}`}>
@@ -50,7 +52,15 @@ export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd
                 className="city-tabs__tab"
                 onClick={() => onSelect(favorite)}
                 aria-current={isActive ? 'page' : undefined}
-                aria-label={t('weather.selectCity', { city: favorite.name })}
+                aria-label={
+                  displayTemperature === undefined
+                    ? t('weather.selectCity', { city: favorite.name })
+                    : t('weather.selectCityWithTemperature', {
+                        city: favorite.name,
+                        temperature: displayTemperature,
+                        unit: getTemperatureSymbol(),
+                      })
+                }
               >
                 <span className="city-tabs__plate" aria-hidden="true">
                   {plateCode}
@@ -59,10 +69,8 @@ export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd
                   <WeatherSymbol code={favorite.icon} size={18} className="city-tabs__symbol" />
                 )}
                 <span className="city-tabs__name">{favorite.name}</span>
-                {favorite.temp !== undefined && (
-                  <span className="city-tabs__temp">
-                    {Math.round(convertTemperature(favorite.temp))}°
-                  </span>
+                {displayTemperature !== undefined && (
+                  <span className="city-tabs__temp">{displayTemperature}°</span>
                 )}
               </button>
 

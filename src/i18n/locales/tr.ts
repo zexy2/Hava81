@@ -46,6 +46,7 @@ export const tr = {
     removeFromFavorites: 'Favorilerden Kaldır',
     favoriteCities: 'Favori şehirler',
     selectCity: '{{city}} hava durumunu göster',
+    selectCityWithTemperature: '{{city}} hava durumunu göster, {{temperature}}{{unit}}',
     removeCity: '{{city}} şehrini favorilerden kaldır',
     addCurrentCity: 'Geçerli şehri favorilere ekle',
     cityNotFound: 'Şehir bulunamadı',
