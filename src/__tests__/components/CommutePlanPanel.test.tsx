@@ -171,6 +171,29 @@ describe('CommutePlanPanel', () => {
     expect(verdict).not.toHaveTextContent('Şemsiye gerekmiyor');
   });
 
+  it('makes a partial commute time selection explicit and associates it with both inputs', () => {
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={hourly} />
+      </SettingsProvider>
+    );
+
+    const outbound = screen.getByLabelText('Çıkış');
+    const returnInput = screen.getByLabelText('Dönüş');
+    fireEvent.change(outbound, { target: { value: '08:30' } });
+
+    const incomplete = screen.getByRole('status');
+    expect(incomplete).toHaveTextContent(/çıkış ve dönüş saatini birlikte seç/i);
+    expect(outbound).toHaveAttribute('aria-describedby', incomplete.id);
+    expect(returnInput).toHaveAttribute('aria-describedby', incomplete.id);
+
+    fireEvent.change(returnInput, { target: { value: '18:00' } });
+
+    expect(screen.queryByText(/çıkış ve dönüş saatini birlikte seç/i)).not.toBeInTheDocument();
+    expect(outbound).not.toHaveAttribute('aria-describedby');
+    expect(returnInput).not.toHaveAttribute('aria-describedby');
+  });
+
   it('explains when both saved times are outside available forecast coverage', () => {
     render(
       <SettingsProvider>
