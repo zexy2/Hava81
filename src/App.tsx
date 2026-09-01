@@ -515,7 +515,13 @@ const App: React.FC = () => {
             )}
           </header>
 
-          <main className="atlas-main" id="main-content" aria-busy={isLoading} ref={overviewRef}>
+          <main
+            className="atlas-main"
+            id="main-content"
+            tabIndex={-1}
+            aria-busy={isLoading}
+            ref={overviewRef}
+          >
             {activeNav === 'saved' ? (
               <Suspense fallback={<p role="status">{t('common.loading')}</p>}>
                 <ComparePanel cities={favorites} language={settings.language} />

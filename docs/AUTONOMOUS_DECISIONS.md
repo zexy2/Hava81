@@ -488,3 +488,6 @@ CI Lighthouse performance is materially noisier than the other categories on Git
 
 ## 2026-09-01 — Favorite city controls must expose visible temperature context
 Saved-city buttons render cached temperature as meaningful quick-decision context. An explicit `aria-label` overrides descendant text for assistive technology, so the accessible name must carry the same converted temperature/unit when available. Missing cached temperature must remain a city-only label rather than inventing a value. This is presentation/accessibility only; the underlying weather and conversion functions remain the source of truth.
+
+## 2026-09-01 — Skip navigation must transfer keyboard focus, not only scroll
+A skip link to the main weather content must land on a programmatically focusable main landmark so keyboard users actually leave repeated header controls. Keep the landmark out of the normal Tab order with `tabIndex={-1}`; the link remains the entry point. This is navigation/accessibility semantics only and does not alter weather, scoring, provider, or safety behavior.
