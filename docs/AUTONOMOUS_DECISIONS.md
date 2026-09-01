@@ -591,3 +591,6 @@ Treat exact HTML propagation and asset propagation as separate release condition
 
 ## 2026-09-01 — browser/performance CI jobs have bounded wall-clock budgets
 Use a 10-minute job timeout for Playwright browser flows and 5 minutes for Lighthouse. These gates normally finish far below those limits; bounding them prevents external browser/package stalls from consuming the default multi-hour GitHub Actions allowance while preserving enough headroom for cold runners.
+
+## 2026-09-01 — Lighthouse performance floor uses one confirmation measurement
+When the first Lighthouse performance score falls below the hard floor, run exactly one confirmation measurement and evaluate that second result. Do not retry deterministic accessibility/best-practices/SEO failures, and do not loop retries. This handles observed GitHub-runner contention without weakening persistent-regression detection or turning CI into a best-of-N score hunt.

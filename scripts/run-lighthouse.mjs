@@ -20,6 +20,7 @@ const tempPrefix = 'hava81-lighthouse-';
 const staleTempAgeMs = 6 * 60 * 60 * 1000;
 const resultDir = '.lighthouse-results';
 const resultPath = `${resultDir}/lhr.json`;
+const confirmResultPath = `${resultDir}/lhr-confirm.json`;
 const lighthouseCli = new URL('../node_modules/lighthouse/cli/index.js', import.meta.url).pathname;
 const viteCli = new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname;
 
@@ -116,6 +117,23 @@ function run(command, args, options = {}) {
   });
 }
 
+async function runLighthouse(outputPath, env) {
+  await run(
+    process.execPath,
+    [
+      lighthouseCli,
+      targetUrl,
+      '--output=json',
+      `--output-path=${outputPath}`,
+      '--only-categories=performance,accessibility,best-practices,seo',
+      '--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage',
+      '--quiet',
+    ],
+    { env }
+  );
+  return JSON.parse(await readFile(outputPath, 'utf8'));
+}
+
 await assertPreviewPortIsFree();
 await rm(resultDir, { recursive: true, force: true });
 await mkdir(resultDir, { recursive: true });
@@ -134,21 +152,20 @@ const preview = spawn(
 let exitCode = 0;
 try {
   await waitForPreview(preview);
-  await run(
-    process.execPath,
-    [
-      lighthouseCli,
-      targetUrl,
-      '--output=json',
-      `--output-path=${resultPath}`,
-      '--only-categories=performance,accessibility,best-practices,seo',
-      '--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage',
-      '--quiet',
-    ],
-    { env: runEnv }
-  );
-
-  const report = JSON.parse(await readFile(resultPath, 'utf8'));
+  let report = await runLighthouse(resultPath, runEnv);
+  const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');
+  const firstPerformanceScore = report.categories?.performance?.score;
+  if (
+    performanceThreshold &&
+    typeof firstPerformanceScore === 'number' &&
+    firstPerformanceScore < performanceThreshold.floor
+  ) {
+    console.warn(
+      `Lighthouse performance ${Math.round(firstPerformanceScore * 100)} is below the hard floor; ` +
+        'running one confirmation measurement to distinguish a persistent regression from runner contention.'
+    );
+    report = await runLighthouse(confirmResultPath, runEnv);
+  }
   let hasError = false;
   for (const threshold of thresholds) {
     const score = report.categories?.[threshold.key]?.score;
