@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
@@ -68,6 +68,22 @@ describe('DecisionAlertsPanel', () => {
     expect(status).toHaveTextContent(/tarayıcı.*desteklemiyor/i);
     expect(status).not.toHaveTextContent(/tarayıcı ayarlarından/i);
     expect(button).toHaveAttribute('aria-describedby', status.id);
+  });
+
+  it('refreshes externally changed notification permission when the tab becomes visible', () => {
+    const notificationApi = { permission: 'default' as NotificationPermission, requestPermission: vi.fn() };
+    vi.stubGlobal('Notification', notificationApi);
+
+    render(<DecisionAlertsPanel weather={weather} hourly={hourly} />);
+    expect(screen.getByRole('button')).toBeEnabled();
+
+    notificationApi.permission = 'denied';
+    fireEvent(document, new Event('visibilitychange'));
+
+    const button = screen.getByRole('button');
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent(/engelli/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/tarayıcı ayarlarından/i);
   });
 
   it('does not present a clickable opt-in when browser permission is blocked', () => {
