@@ -315,8 +315,8 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
                   } ${item.isRecent ? 'is-recent' : ''}`}
                   role="option"
                   aria-selected={index === highlightedIndex}
-                  onMouseDown={e => {
-                    e.preventDefault();
+                  onPointerDown={event => {
+                    event.preventDefault();
                     selectItem(item.city, item.isRecent);
                   }}
                   onMouseEnter={() => setHighlightedIndex(index)}
