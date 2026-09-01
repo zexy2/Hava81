@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
@@ -426,7 +426,7 @@ describe('DecisionAlertsPanel', () => {
 
   it('re-evaluates a pending alert when quiet hours end without a weather refetch', async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-29T03:59:30Z')); // 06:59:30 in İstanbul
+    vi.setSystemTime(new Date('2026-08-28T03:59:30Z')); // 06:59:30 in İstanbul
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const notification = vi.fn();
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
@@ -438,7 +438,9 @@ describe('DecisionAlertsPanel', () => {
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(30_101);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_101);
+    });
 
     expect(notification).toHaveBeenCalledTimes(1);
   });
