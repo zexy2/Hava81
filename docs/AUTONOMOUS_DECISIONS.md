@@ -558,3 +558,6 @@ When a route-weather request is in flight, mark the route content body `aria-bus
 
 ## 2026-09-01 13:50 TRT — comparison navigation semantics
 - Treat the desktop header comparison action as navigation, not a pressed toggle: expose `aria-current="page"` only while the saved-city comparison view is active. Keep toggle semantics (`aria-pressed`) for controls that actually switch a persistent binary state.
+
+## 2026-09-01 14:00 TRT — browser GET cache retention
+- Keep the browser response cache freshness window unchanged, but bound retained response objects to 128 fresh GET keys and prune expired/future-skewed entries on successful cache writes. Cache eviction may cause an older key to refetch, but must never make stale data live longer or fabricate fallback data.

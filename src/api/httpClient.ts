@@ -20,6 +20,7 @@ interface RetryState {
 
 // Simple in-memory response cache plus single-flight GET deduplication.
 const requestCache = new Map<string, { data: unknown; timestamp: number }>();
+const MAX_CACHE_ENTRIES = 128;
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
 
 /**
@@ -111,6 +112,24 @@ const isCacheValid = (timestamp: number): boolean => {
   return age >= 0 && age < config.cache.ttl;
 };
 
+const storeCachedResponse = (cacheKey: string, data: unknown): void => {
+  const now = Date.now();
+  for (const [key, cached] of requestCache) {
+    const age = now - cached.timestamp;
+    if (age < 0 || age >= config.cache.ttl) requestCache.delete(key);
+  }
+
+  // Refresh insertion order for a reused key so the oldest retained entry is evicted first.
+  requestCache.delete(cacheKey);
+  requestCache.set(cacheKey, { data, timestamp: now });
+
+  while (requestCache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = requestCache.keys().next().value as string | undefined;
+    if (oldestKey === undefined) break;
+    requestCache.delete(oldestKey);
+  }
+};
+
 /**
  * Core fetch with retry logic
  */
@@ -189,7 +208,7 @@ const fetchWithRetry = async <T>(
 
     // Cache successful GET responses
     if (fetchOptions.method === undefined || fetchOptions.method === 'GET') {
-      requestCache.set(cacheKey, { data, timestamp: Date.now() });
+      storeCachedResponse(cacheKey, data);
     }
 
     return data;
