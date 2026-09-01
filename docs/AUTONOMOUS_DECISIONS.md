@@ -685,3 +685,7 @@ A notification candidate may outlive the evidence that produced it, especially a
 ## 2026-09-01 — Optional evidence freshness revalidates when a tab becomes visible
 
 AQI and modeled context TTLs are evidence boundaries, not timer hints. Because browsers may throttle background timers, a visible-tab return must immediately re-evaluate the existing provider timestamps and remove expired optional evidence before it can keep influencing UI/decisions. This resync may only drop or reschedule existing evidence; it must not refresh timestamps, fetch implicitly, or extend source TTLs.
+
+## 2026-09-02 — A service-worker upgrade must secure the complete boot shell before activation
+
+Caching only the root HTML is not enough for a first offline launch: a newly installed worker can claim the page after its hashed JS/CSS were fetched outside service-worker control, leaving the cached HTML unusable offline. During install, parse the fetched same-origin root shell and fail closed unless every referenced same-origin `/assets/` script, stylesheet, and modulepreload asset can also be fetched with `cache: 'no-store'` and stored in the new versioned cache. Optional metadata such as the manifest remains best-effort. Never cache third-party URLs or unrelated asset links as required boot dependencies.

@@ -2,14 +2,45 @@ const CACHE_NAME = 'hava81-shell-__HAVA81_BUILD_ID__';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
 
+function extractBootAssetPaths(html) {
+  const paths = new Set();
+  for (const match of html.matchAll(/<(script|link)\b[^>]*>/gi)) {
+    const [tag, rawName] = match;
+    const name = rawName.toLowerCase();
+    if (name === 'link') {
+      const rel = tag.match(/\brel=["']([^"']+)["']/i)?.[1]?.toLowerCase().split(/\s+/) || [];
+      if (!rel.includes('stylesheet') && !rel.includes('modulepreload')) continue;
+    }
+    const attribute = name === 'script' ? 'src' : 'href';
+    const rawPath = tag.match(new RegExp(`\\b${attribute}=["']([^"']+)["']`, 'i'))?.[1];
+    if (!rawPath) continue;
+    try {
+      const assetUrl = new URL(rawPath, self.location.origin);
+      if (assetUrl.origin === self.location.origin && assetUrl.pathname.startsWith('/assets/')) {
+        paths.add(`${assetUrl.pathname}${assetUrl.search}`);
+      }
+    } catch {
+      // Malformed tags are ignored; required valid boot assets are still cached below.
+    }
+  }
+  return [...paths];
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // Do not activate a new versioned worker without an offline navigation fallback.
+      // Do not activate a new versioned worker without a complete offline boot shell.
       // Rejecting this install leaves the previous worker/cache authoritative until retry.
       const rootResponse = await fetch('/', { cache: 'no-store' });
       if (!rootResponse.ok) throw new Error('Hava81 shell root unavailable');
+      const rootHtml = await rootResponse.clone().text();
       await cache.put('/', rootResponse.clone());
+
+      for (const assetPath of extractBootAssetPaths(rootHtml)) {
+        const response = await fetch(assetPath, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Hava81 boot asset unavailable: ${assetPath}`);
+        await cache.put(assetPath, response.clone());
+      }
 
       for (const path of OPTIONAL_SHELL) {
         try {
