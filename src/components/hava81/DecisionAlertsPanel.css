@@ -74,7 +74,7 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
-@media (max-width: 47.99rem) {
+@media (max-width: 63.99rem) {
   .decision-alerts {
     grid-template-columns: 1fr;
     gap: var(--space-lg);
