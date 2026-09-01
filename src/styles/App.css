@@ -222,6 +222,8 @@ textarea:focus-visible {
   width: 100%;
   min-width: 0;
   max-width: 38rem;
+  container-name: header-search;
+  container-type: inline-size;
 }
 
 .search-bar {
@@ -305,6 +307,17 @@ textarea:focus-visible {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+@container header-search (max-width: 360px) {
+  .search-bar__input {
+    padding-inline: var(--space-xs);
+  }
+
+  .search-bar__submit {
+    min-width: 0;
+    padding-inline: var(--space-xs);
+  }
 }
 
 .search-bar__submit:hover:not(:disabled) {
