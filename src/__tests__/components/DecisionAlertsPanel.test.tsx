@@ -242,6 +242,7 @@ describe('DecisionAlertsPanel', () => {
         )
       ).toBe(true)
     );
+    Reflect.deleteProperty(navigator, 'serviceWorker');
   });
 
   it('fails closed when alert dedupe storage becomes unavailable', async () => {
