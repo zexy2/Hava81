@@ -91,6 +91,7 @@ export const tr = {
         uv: 'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
         outdoor: '{{time}} civarı dışarıda olmak için daha sakin bir pencere görünüyor.',
         stable: 'Yakın tahmin aralığında belirgin bir risk görünmüyor.',
+        unavailable: 'Yakın saatler için karar verisi henüz hazır değil.',
       },
       notAvailable: '—',
       highLow: 'Bugünün yüksek / düşük',

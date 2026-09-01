@@ -91,6 +91,7 @@ export const en = {
         uv: 'The modeled UV maximum for the next 24 hours is {{uv}}; plan sun protection.',
         outdoor: 'Around {{time}} looks like a calmer window for being outdoors.',
         stable: 'No material risk stands out in the near forecast.',
+        unavailable: 'Near-term decision data is not ready yet.',
       },
       notAvailable: '—',
       highLow: "Today's high / low",

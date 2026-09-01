@@ -126,8 +126,8 @@ describe('getWeatherDecisions', () => {
     );
   });
 
-  it('returns stable when no actionable signal exists and no outdoor point is present', () => {
+  it('reports unavailable near-term guidance when no hourly forecast exists', () => {
     const result = getWeatherDecisions({ weather, hourly: [] });
-    expect(result).toEqual([{ kind: 'stable', severity: 'info' }]);
+    expect(result).toEqual([{ kind: 'unavailable', severity: 'info' }]);
   });
 });
