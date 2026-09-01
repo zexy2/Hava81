@@ -2003,6 +2003,65 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
   expect(boxes.every(height => height >= 44)).toBe(true);
 });
 
+test('desktop forecast reads as one editorial data surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop forecast visual regression');
+  await page.goto('/istanbul');
+
+  const forecast = page.locator('.hava81-forecast-atlas');
+  await expect(forecast).toBeVisible();
+
+  const styles = await forecast.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const summary = element.querySelector<HTMLElement>('.hava81-forecast-atlas__summary');
+    const summaryItems = Array.from(element.querySelectorAll<HTMLElement>('.hava81-forecast-atlas__summary-item'));
+    const range = element.querySelector<HTMLElement>('.hava81-forecast-atlas__range');
+    const selected = element.querySelector<HTMLElement>('.hava81-forecast-atlas__range-button[aria-pressed="true"]');
+    const unselected = element.querySelector<HTMLElement>('.hava81-forecast-atlas__range-button[aria-pressed="false"]');
+    const chart = element.querySelector<HTMLElement>('.hava81-forecast-atlas__hourly-viewport');
+    if (!summary || summaryItems.length !== 3 || !range || !selected || !unselected || !chart) {
+      throw new Error('Missing forecast editorial surface');
+    }
+    const summaryStyle = getComputedStyle(summary);
+    const firstSummary = getComputedStyle(summaryItems[0]);
+    const selectedStyle = getComputedStyle(selected);
+    const unselectedStyle = getComputedStyle(unselected);
+    const chartStyle = getComputedStyle(chart);
+    return {
+      panelBackground: panel.backgroundColor,
+      panelRadius: panel.borderRadius,
+      panelShadow: panel.boxShadow,
+      panelTop: parseFloat(panel.borderTopWidth),
+      summaryGap: parseFloat(summaryStyle.columnGap),
+      summaryTop: parseFloat(summaryStyle.borderTopWidth),
+      summaryItemRadius: firstSummary.borderRadius,
+      summaryItemShadow: firstSummary.boxShadow,
+      rangeTop: parseFloat(getComputedStyle(range).borderTopWidth),
+      selectedRadius: selectedStyle.borderRadius,
+      selectedBottom: parseFloat(selectedStyle.borderBottomWidth),
+      selectedShadow: selectedStyle.boxShadow,
+      unselectedRadius: unselectedStyle.borderRadius,
+      unselectedShadow: unselectedStyle.boxShadow,
+      chartBorder: parseFloat(chartStyle.borderTopWidth),
+    };
+  });
+
+  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.panelRadius)).toBe(0);
+  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelTop).toBeGreaterThanOrEqual(1);
+  expect(styles.summaryGap).toBeGreaterThanOrEqual(1);
+  expect(styles.summaryTop).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.summaryItemRadius)).toBe(0);
+  expect(styles.summaryItemShadow).toBe('none');
+  expect(styles.rangeTop).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.selectedRadius)).toBe(0);
+  expect(styles.selectedBottom).toBeGreaterThanOrEqual(3);
+  expect(styles.selectedShadow).toBe('none');
+  expect(parseFloat(styles.unselectedRadius)).toBe(0);
+  expect(styles.unselectedShadow).toBe('none');
+  expect(styles.chartBorder).toBeGreaterThanOrEqual(1);
+});
+
 test('mobile forecast summary reflows at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile forecast-summary text-resize regression');
   await page.setViewportSize({ width: 320, height: 844 });
