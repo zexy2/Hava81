@@ -286,6 +286,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality }: DailyPlanPanelPr
       <div
         className="daily-plan__slots"
         role="list"
+        tabIndex={0}
         aria-label={t('hava81.dailyPlan.timelineLabel')}
       >
         {timelineSlots.map((slot, index) => {

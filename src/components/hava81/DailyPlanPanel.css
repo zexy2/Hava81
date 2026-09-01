@@ -126,6 +126,11 @@
   scrollbar-color: color-mix(in srgb, var(--color-aegean) 45%, transparent) transparent;
 }
 
+.daily-plan__slots:focus-visible {
+  outline: 2px solid var(--color-atlas-focus, var(--color-aegean));
+  outline-offset: -2px;
+}
+
 .daily-plan__slots::-webkit-scrollbar {
   height: 0.4rem;
 }

@@ -514,3 +514,6 @@ When a UI aggregate chooses the maximum across multiple provider series, the dis
 The Activity Planner applies a custom time filter only when both start and end are present. If exactly one bound is selected, keep the default scoring behavior but explicitly tell the user that both times are required, and connect that status to both time inputs for assistive technology. Do not coerce, infer, or auto-fill the missing bound; overnight and equal-time semantics remain owned by the existing activity-window model.
 ## 2026-09-01 — Intentional horizontal weather scrollers must be keyboard reachable
 When a responsive Hava81 surface intentionally uses horizontal overflow to preserve readable weather cards, make the labeled scroll container keyboard-focusable and provide a non-clipped `:focus-visible` indicator. Do not replace readable cards with compressed text merely to avoid scrolling.
+
+## 2026-09-01 — Non-interactive timeline scrollers need a keyboard entry point
+A horizontal weather timeline made of non-interactive cards cannot rely on child focus to expose off-screen content. Keep the labeled list semantics, make the scroll container itself keyboard-focusable, and render the focus indicator inside its clipped border so it remains visible.

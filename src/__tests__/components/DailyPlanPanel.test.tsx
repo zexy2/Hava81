@@ -65,7 +65,9 @@ describe('DailyPlanPanel sharing', () => {
   it('exposes the explanation as a named accessibility group', () => {
     render(<DailyPlanPanel weather={weather} hourly={hourly} />);
 
-    expect(screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: 'hava81.dailyPlan.explain.label' })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         /hava81\.dailyPlan\.bands\.(excellent|good|caution|difficult) · (97–100|75–96|55–74|0–54)/
@@ -93,8 +95,11 @@ describe('DailyPlanPanel sharing', () => {
     render(<DailyPlanPanel weather={weather} hourly={richHourly} />);
 
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    expect(timeline).toHaveAttribute('tabindex', '0');
     expect(within(timeline).getAllByRole('listitem')).toHaveLength(12);
-    expect(within(timeline).queryByText('hava81.dailyPlan.bands.excellent')).not.toBeInTheDocument();
+    expect(
+      within(timeline).queryByText('hava81.dailyPlan.bands.excellent')
+    ).not.toBeInTheDocument();
     expect(within(timeline).getByText('hava81.dailyPlan.reasons.rainRisk')).toBeInTheDocument();
     expect(within(timeline).getAllByText('hava81.dailyPlan.tomorrow')).toHaveLength(1);
   });
@@ -137,8 +142,9 @@ describe('DailyPlanPanel sharing', () => {
 
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
     expect(
-      within(timeline).getAllByText((_, element) =>
-        element?.tagName === 'SMALL' && element.textContent?.startsWith('75°F') === true
+      within(timeline).getAllByText(
+        (_, element) =>
+          element?.tagName === 'SMALL' && element.textContent?.startsWith('75°F') === true
       )
     ).toHaveLength(3);
     expect(within(timeline).getAllByRole('listitem')[0]).toHaveAccessibleName(/75°F/);
