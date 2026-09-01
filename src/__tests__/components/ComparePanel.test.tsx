@@ -258,6 +258,10 @@ describe('ComparePanel', () => {
     );
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
     expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
+    expect(screen.getByRole('region', { name: /şehir karşılaştırması/i })).toHaveAttribute(
+      'aria-busy',
+      'false'
+    );
     const cityList = screen.getByRole('list', { name: /şehir karşılaştırması/i });
     expect(cityList).toBeVisible();
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
@@ -304,6 +308,10 @@ describe('ComparePanel', () => {
     expect(screen.queryByRole('heading', { name: 'İstanbul' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'İzmir' })).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Yükleniyor...');
+    expect(screen.getByRole('region', { name: /şehir karşılaştırması/i })).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
 
   });
 
