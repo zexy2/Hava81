@@ -618,3 +618,9 @@ Treat city-vs-current-location as user intent independent of provider localizati
 **Decision:** Allow the route-result title/summary column and score badge to wrap instead of forcing one horizontal row at large text sizes.
 
 **Why:** Hava81's route result is decision content, not a fixed dashboard chrome element. Under WCAG-style 200% text resizing, preserving readable text and eliminating page-level horizontal overflow is more important than retaining the desktop one-row arrangement. The change keeps normal-width hierarchy intact while making the constrained state responsive.
+
+## 2026-09-01 — Bound Pages propagation verification without weakening exact hashes
+
+- Main run #1345 pushed `gh-pages` successfully, while its public-shell gate still saw the previous root HTML for the full 55-second default retry window. Every upstream quality gate (frontend, API, build, browser, Lighthouse) was green, so the failure was propagation latency rather than a generated-artifact failure.
+- Keep exact SHA-256 equality for HTML and current boot assets. Do **not** downgrade the deploy check to HTTP-200-only or accept stale content.
+- Give only the CI deploy job 36 attempts at the existing 5-second interval (roughly a three-minute propagation window) and cap the whole deploy job at seven minutes. The standalone verifier keeps its shorter default so manual outage probes remain bounded.
