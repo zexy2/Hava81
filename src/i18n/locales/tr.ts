@@ -147,6 +147,8 @@ export const tr = {
       partialUnavailable:
         'Bazı şehirlerin verisi güncellenemedi; kullanılabilir sonuçlar gösteriliyor.',
       unavailable: 'Şehir karşılaştırması şu anda güncellenemedi.',
+      stale: 'Karşılaştırma verisinin güncelliği sona erdi. Güncel sonuçlar için karşılaştırmayı yeniden aç.',
+      partialStale: 'Bazı şehirlerin verisi artık güncel değil veya güncellenemedi; yalnızca güncel sonuçlar gösteriliyor.',
       winnerLabel: 'Bu hava kriterlerinde öne çıkan',
       winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       tieLabel: 'Bu hava kriterlerinde eşit',

@@ -713,3 +713,7 @@ The day-plan score, best window, umbrella decision and share payload are modeled
 ## 2026-09-02 — Route guidance expires after its projected trip window
 
 An on-demand corridor result describes the user-selected departure and the API's modeled trip duration; it is not timeless weather guidance. Keep the result available through that projected journey, then remove its score/segments/better-departure advice at `selected departure + estimated duration` and ask the user to check again. Use the validated client departure that produced the request rather than inventing provider freshness metadata, resync on tab visibility, and never mutate the user's selected departure or synthesize a replacement route result.
+
+## 2026-09-02 — City comparison rows expire at the earliest evidence freshness boundary
+
+A city-comparison row combines current weather, hourly forecast evidence, and optional AQI into modeled scores and recommendations, so it must not outlive any evidence source that actually contributed to that row. Keep a row only while current weather and forecast metadata are fresh and, when AQI is present, its metadata is fresh too. Wake once at the earliest evidence deadline and re-check again when a backgrounded tab becomes visible; never extend timestamps, synthesize weather, silently refetch, or present expired rows as current. If expiry removes rows, explain the stale state explicitly rather than framing it as a new provider observation.
