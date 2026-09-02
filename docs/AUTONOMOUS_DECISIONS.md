@@ -802,3 +802,7 @@ A recent browser persistence timestamp is not proof that the provider observatio
 
 ### 2026-09-02 — Top-level provider freshness remains authoritative when nested metadata is unrelated
 Modeled context payloads may expose freshness as top-level `fetchedAt` / `freshForSeconds` while also carrying an unrelated nested `meta` object. The browser transport cache must continue using the complete top-level freshness contract unless nested `meta` itself contains freshness fields; unrelated nested metadata must not silently restore the generic client TTL. Conversely, malformed top-level freshness evidence remains non-cacheable so corrected network evidence can recover immediately. This affects cache reuse only and never rewrites provider evidence or user-facing weather guidance.
+
+
+### 2026-09-02 — Pages deploy health requires coherence for the shell a normal navigation actually receives
+Exact-hash smoke checks prove the new release and its current boot assets have reached an edge, but a normal custom-domain navigation can briefly receive a cached prior HTML generation during propagation. Treat that state as healthy only when every hashed `/assets/` script/style/modulepreload referenced by the actually served navigation shell is still available. Keep the existing bounded propagation window and retained-generation strategy; do not change application cache semantics or hide persistent missing-asset failures.

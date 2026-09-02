@@ -84,6 +84,8 @@ jobs:
         run: python3 scripts/test_prepare_pages_asset_retention.py
       - name: Verify generated-shell asset discovery
         run: python3 scripts/test_list_html_assets.py
+      - name: Verify public-shell smoke syntax
+        run: bash -n scripts/verify-public-shell.sh
       - uses: actions/upload-artifact@v7
         with:
           name: dist
