@@ -79,6 +79,7 @@ export const en = {
       title: 'Show weather for where you are',
       body: 'Allow location access to open weather for the nearest province. If you prefer not to, you can continue with İstanbul.',
       fallback: 'Continue with İstanbul',
+      searchAnother: 'Search another city',
       privacy: 'Your location is used only to load nearby weather data.',
     },
     decision: {

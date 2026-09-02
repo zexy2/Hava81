@@ -850,3 +850,6 @@ The exact 768px viewport is intentionally on the wider side of the Activity Plan
 
 ## 2026-09-02 — Global horizontal-arrow shortcuts yield to focused surfaces
 Plain left/right arrows are native interaction keys for horizontal scrollers and many focused widgets. Hava81 city navigation may use them only when focus is effectively on the document itself; never intercept them from a focused control or keyboard-reachable content region. Modifier shortcuts and the global Escape close affordance keep their existing semantics.
+
+## 2026-09-02 — Root location choice always includes a direct city-search escape hatch
+The location-first onboarding may recommend nearby weather and offer İstanbul as a zero-permission default, but it must not force either choice. Keep a first-class “Başka şehir ara / Search another city” action that opens and focuses the existing city search without touching browser geolocation. This preserves explicit user control while retaining the location-first product path.

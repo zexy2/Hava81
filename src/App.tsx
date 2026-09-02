@@ -735,6 +735,13 @@ const App: React.FC = () => {
                       >
                         {t('hava81.locationGate.fallback')}
                       </button>
+                      <button
+                        type="button"
+                        className="atlas-button"
+                        onClick={openSearch}
+                      >
+                        {t('hava81.locationGate.searchAnother')}
+                      </button>
                     </div>
                     <small className="atlas-empty__note">{t('hava81.locationGate.privacy')}</small>
                   </>

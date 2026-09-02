@@ -2528,3 +2528,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Hardened `useKeyboardShortcuts` so horizontal-arrow app navigation only fires when focus is effectively on the document body/root. Focused controls and keyboard-reachable scroll regions retain native arrow behavior; Escape semantics are unchanged.
 - Added regressions for a focused tabindex scroller and body-level ArrowRight. No weather, provider, scoring, route, MGM, or API behavior changes.
 - `git diff --check` passes; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory because local Node dependencies are intentionally absent under disk pressure.
+
+## 2026-09-02 13:04 TRT — add direct city search to the root location gate
+- Audited the newly merged root location-choice gate while its main deploy was running. The header search remained available, but the gate itself presented only “use my location” or “continue with İstanbul”, which made the primary onboarding copy look more restrictive than the app actually is, especially on mobile where header search is collapsed.
+- Added a localized third action, “Başka şehir ara / Search another city”, wired to the existing `openSearch` focus path. It does not trigger geolocation and does not fetch weather until the user chooses/submits a city.
+- Added mobile E2E coverage proving the action focuses the city textbox and leaves geolocation untouched, plus retained visibility of the search alternative in the İstanbul fallback regression.
+- No weather values, location precision, provider, MGM, scoring, routing contract, or API topology changes. `git diff --check` is the host-local gate; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.

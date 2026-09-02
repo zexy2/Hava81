@@ -259,10 +259,35 @@ test('root route can continue with İstanbul without touching browser location',
   });
 
   await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Başka şehir ara' })).toBeVisible();
   await page.getByRole('button', { name: 'İstanbul ile devam et' }).click();
 
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
   await expect(page).toHaveURL(/\/istanbul\/?$/);
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
+});
+
+
+test('root location gate can search another city without requesting location', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-city search regression');
+  await page.addInitScript(() => {
+    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: () => {
+          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
+            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Başka şehir ara' }).click();
+
+  const search = page.getByRole('textbox', { name: 'Şehir Ara' });
+  await expect(search).toBeFocused();
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
 });
 
