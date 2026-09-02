@@ -2302,3 +2302,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited `EnvironmentRail` and found current wind direction/speed remained visible indefinitely in a long-lived tab even after the OpenWeather current-observation TTL expired. Daylight times and the map city control are not treated as live wind observations, and AQI already expires under its own source contract.
 - Wind values now honor current weather `fetchedAt + freshForSeconds` with the existing 5-minute current-weather fallback and 60-second future-skew ceiling, wake once at the exact TTL boundary, and re-check on visible-tab resume. Expired wind becomes explicit localized stale copy rather than an apparently live direction/speed.
 - Added a fake-clock regression proving 30-second current evidence removes the wind observation after expiry. `git diff --check` passes; host-local Node/npm remain unavailable, so exact-head hosted lint/type/unit/build/browser/CodeQL gates are mandatory before merge.
+
+
+### 2026-09-02 03:52 TRT — announce current-wind expiry to assistive technology
+- Built independently from new main `11930a661aebd9c0fb3997648a79da36ef21ea49` while that merge deploys and other PRs validate.
+- The newly hardened environment rail visually replaces expired wind with explicit stale copy, but the asynchronous TTL transition was not guaranteed to be announced to screen-reader users. The stale detail now acquires `role="status"` only after current evidence expires, avoiding an unnecessary live region while data is fresh.
+- Tightened the fake-clock regression to require the stale message through the status role. `git diff --check` passes; hosted exact-head gates remain mandatory before merge.

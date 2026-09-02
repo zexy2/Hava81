@@ -67,7 +67,7 @@ describe('EnvironmentRail', () => {
       });
 
       expect(screen.queryByText(/GD ·/i)).not.toBeInTheDocument();
-      expect(screen.getByText('Anlık veri güncel değil')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
     } finally {
       vi.useRealTimers();
     }

@@ -191,7 +191,10 @@ export function EnvironmentRail({
         <strong className="environment-rail__value">
           {directionLabel} · {windSpeed}
         </strong>
-        <span className="environment-rail__detail">
+        <span
+          className="environment-rail__detail"
+          role={currentFreshness.fresh ? undefined : 'status'}
+        >
           {hasValidWind
             ? `${Math.round(normalizedDirection)}°`
             : currentFreshness.fresh
