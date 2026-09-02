@@ -2626,3 +2626,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added an opt-in `--stale-clean-hours=N` path to the cleanup helper. It may remove an unmerged linked checkout only when clean, older than the explicit threshold, attached to a local branch, and the local branch ref equals that checkout HEAD. Detached, dirty, recent, current and primary worktrees remain fail-closed; default behavior is unchanged.
 - Extended the dependency-free cleanup safety test with stale unmerged, recent unmerged, detached unmerged and dirty-old fixtures plus invalid-threshold coverage. `bash -n`, `git diff --check`, and the full cleanup safety contract pass locally as the normal `ubuntu` user.
 - Current branch/worktree: `automation/hava81-stale-clean-worktree-hygiene-1745` / `/home/ubuntu/hava81-auto-run11-1745-current`, based on main `55187b855616413d166baa86d2a8c9fade41103b`. Next action: inspect exact diff, commit/push/open PR, require exact-head hosted gates, and do not apply the new broader stale-clean mode to the real host until the change is CI-green and production/main state is freshly reverified.
+
+### 2026-09-02 17:59 TRT — make cleanup cleanliness detection fail closed
+
+- While post-#685 main validation ran, audited the cleanup helper's error handling from exact main `6b052544b8cb1fd66ab490f35c8d52f828c3d117` in isolated branch `automation/hava81-clean-status-failclosed-1758`.
+- Found that the previous `git status` command substitution discarded stderr and inspected only output; a status command that failed without output could therefore continue toward eligibility checks instead of being rejected immediately.
+- Split status collection from cleanliness evaluation: any non-zero `git status --porcelain --untracked-files=all` now skips the worktree, and only a successful empty status can establish cleanliness.
+- Added a deterministic linked-worktree fixture whose index is unreadable to the normal cleanup user. Both default and stale-clean dry runs must exclude it, while the existing stale-attached branch case still removes only its checkout and preserves its branch ref.
+- Validation: both shell scripts pass `bash -n`, `git diff --check` passes, and the dependency-free cleanup safety contract passes as the normal `ubuntu` user.

@@ -893,3 +893,7 @@ The root location-choice gate should not present location, İstanbul fallback, a
 ### 2026-09-02 — Stale clean checkout removal requires an attached exact branch ref
 
 Severe host disk pressure can justify removing a linked checkout even when its branch is not merged, because `git worktree remove` preserves an attached local branch. This broader path must be opt-in with an explicit positive age threshold, and it is eligible only when the worktree is clean, old enough, attached to a local branch, and that branch ref points exactly at the checked-out HEAD. Detached, dirty, recent, current and primary worktrees remain excluded. Default cleanup behavior remains merge-equivalence-only, so routine automation cannot silently broaden its deletion set.
+
+### 2026-09-02 — Unknown worktree status is never equivalent to clean
+
+Cleanup eligibility requires positive evidence that a worktree is clean. If `git status --porcelain` cannot be read, skip that checkout entirely rather than interpreting empty command output as a clean result. This fail-closed rule applies to both merge-equivalent cleanup and the opt-in stale-clean path; inability to inspect worktree state must never widen deletion eligibility.
