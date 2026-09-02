@@ -2308,3 +2308,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Built independently from new main `11930a661aebd9c0fb3997648a79da36ef21ea49` while that merge deploys and other PRs validate.
 - The newly hardened environment rail visually replaces expired wind with explicit stale copy, but the asynchronous TTL transition was not guaranteed to be announced to screen-reader users. The stale detail now acquires `role="status"` only after current evidence expires, avoiding an unnecessary live region while data is fresh.
 - Tightened the fake-clock regression to require the stale message through the status role. `git diff --check` passes; hosted exact-head gates remain mandatory before merge.
+
+
+### 2026-09-02 03:58 TRT — stop persisting stale favorite weather snapshots
+- Built independently from exact main `d66ebb30e6a9a4a2c10ed7a9c25062bd35b60d44` while its production pipeline and rebased Forecast Atlas branch validate separately.
+- Confirmed `ComparePanel` ignores persisted favorite weather and fetches current/forecast evidence independently, so saved `temp`/`icon` have no legitimate downstream freshness-aware consumer.
+- `useFavorites` now stores only canonical province identity/coordinates, drops legacy untimestamped weather fields during deserialization, and no longer rewrites localStorage whenever current weather changes. Existing saved provinces remain intact; only unprovable weather snapshots are discarded.
+- Updated sanitizer/new-favorite regressions and added explicit legacy-field stripping coverage. `git diff --check` passes; hosted exact-head gates remain mandatory before merge.

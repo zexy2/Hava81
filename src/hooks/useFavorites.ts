@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { TURKISH_CITIES } from '../constants/cities';
 import type { FavoriteCity, NormalizedWeatherData } from '../types';
 import { citySlug } from '../utils/cityRoute';
@@ -8,8 +8,6 @@ const favoriteCityKey = (name: string): string =>
   citySlug(name) || name.trim().toLocaleLowerCase('tr-TR');
 
 const cityByFavoriteKey = new Map(TURKISH_CITIES.map(city => [favoriteCityKey(city.name), city]));
-const validWeatherIcon = /^(?:0[1-4]|09|10|11|13|50)[dn]$/;
-
 const deserializeFavorites = (value: string): FavoriteCity[] => {
   const parsed: unknown = JSON.parse(value);
   if (!Array.isArray(parsed)) return [];
@@ -30,17 +28,6 @@ const deserializeFavorites = (value: string): FavoriteCity[] => {
       lat: canonicalCity.coordinates.lat,
       lon: canonicalCity.coordinates.lon,
     };
-    if (
-      typeof candidate.temp === 'number' &&
-      Number.isFinite(candidate.temp) &&
-      candidate.temp >= -100 &&
-      candidate.temp <= 70
-    ) {
-      favorite.temp = candidate.temp;
-    }
-    if (typeof candidate.icon === 'string' && validWeatherIcon.test(candidate.icon)) {
-      favorite.icon = candidate.icon;
-    }
     favorites.push(favorite);
     seen.add(key);
   }
@@ -73,8 +60,6 @@ export const useFavorites = (weather: NormalizedWeatherData | null) => {
       name: canonicalCity.name,
       lat: canonicalCity.coordinates.lat,
       lon: canonicalCity.coordinates.lon,
-      temp: weather.temperature,
-      icon: weather.icon,
     };
     setFavorites(current =>
       current.some(item => favoriteCityKey(item.name) === weatherKey)
@@ -97,21 +82,6 @@ export const useFavorites = (weather: NormalizedWeatherData | null) => {
     else addFavorite();
   }, [addFavorite, isFavorite, removeFavorite, weather]);
 
-  useEffect(() => {
-    if (!weather) return;
-    const weatherKey = favoriteCityKey(weather.cityName);
-    setFavorites(current => {
-      const index = current.findIndex(favorite => favoriteCityKey(favorite.name) === weatherKey);
-      if (index < 0) return current;
-      const existing = current[index];
-      if (existing.temp === weather.temperature && existing.icon === weather.icon) return current;
-      return current.map((favorite, favoriteIndex) =>
-        favoriteIndex === index
-          ? { ...favorite, temp: weather.temperature, icon: weather.icon }
-          : favorite
-      );
-    });
-  }, [setFavorites, weather]);
 
   return { favorites, isFavorite, addFavorite, removeFavorite, toggleFavorite };
 };
