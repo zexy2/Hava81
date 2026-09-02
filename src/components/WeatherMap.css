@@ -21,8 +21,8 @@
   overflow: hidden;
   background: var(--color-atlas-field, #f3f6f4);
   border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-card, none);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .weather-map__leaflet {
