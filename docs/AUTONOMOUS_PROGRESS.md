@@ -2361,3 +2361,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited forecast-evidence consumers while CI ran and found `ActivityPlanner` still duplicated the shared forecast TTL/future-skew/exact-expiry algorithm.
 - Replaced the private copy with `getForecastFreshness(forecastMeta)` so activity guidance and Forecast Atlas/Daily Plan/Commute/Compare/decision surfaces use the same fail-closed forecast evidence contract.
 - This is behavior-preserving; existing activity exact-expiry tests remain the regression gate. Local `git diff --check` passes and hosted gates remain mandatory under host disk pressure.
+
+### 2026-09-02 optional evidence freshness contract
+- Audited `useForecast` while main deploy/browser gates ran and found air-quality/context retention still carried a private 5-minute TTL, 60-second future-skew and expiry-deadline implementation.
+- Added `getOptionalEvidenceFreshness` and routed both long-lived expiry timers and same-city fallback retention through the same explicit-clock contract. This remains separate from current-weather and forecast contracts because optional AQ/context compatibility fallback is intentionally 5 minutes.
+- Regression development caught two stale helper references before commit; after correction the focused optional/useForecast suite is 16/16 and full frontend is 61 files / 589 tests. TypeScript, ESLint, production build + service-worker stamp + 81 city pages, production dependency audit (0 vulnerabilities), and `git diff --check` all pass on exact main `977389003d8fa9d82c3e18fefa0864df6329203b`.
+- No UV/AQI/pollen/marine values, thresholds, attribution, provider selection or safety copy changed. Hosted exact-head CI/CodeQL/browser/Lighthouse remain mandatory before merge.
