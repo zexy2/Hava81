@@ -2852,3 +2852,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed only the no-umbrella copy to `Tahmin gerektirmiyor` / `Forecast doesn't indicate one` in both the in-app quick decision and share payload. The probability/amount thresholds, `unknown` fail-closed state, selected forecast horizon, providers and weather values are unchanged.
 - Added a regression covering both localized UI strings and both share payloads. `git diff --check` passes; exact-head hosted type/unit/browser/Lighthouse/CodeQL gates are mandatory before merge.
 - Rebased onto current main before merge.
+
+## 2026-09-03 02:04 TRT — scope activity timing to weather evidence
+- Continued on an independent exact-main worktree while #717/#718 validate.
+- Activity Planner explains that it re-scores weather with activity-specific thresholds, but the primary timing result still rendered `Best time` / `En iyi saat` and `Best range` / `En uygun aralık` without carrying that evidence boundary itself.
+- Tightened those four localized labels to `Best weather time/range` and `Hava açısından en iyi saat/en uygun aralık`. No activity thresholds, weights, selected windows, score, provider, weather values or health/safety semantics changed.
+- Added a localization regression and `git diff --check` passes. Hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory before merge.
+- Rebased onto current main before merge.
