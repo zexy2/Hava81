@@ -9,17 +9,24 @@ export interface OptionalEvidenceMeta {
 
 export interface OptionalEvidenceFreshnessState {
   fresh: boolean;
+  status: 'fresh' | 'stale' | 'unknown';
   expiresInMs: number | null;
 }
+
+const unknownFreshness = (): OptionalEvidenceFreshnessState => ({
+  fresh: false,
+  status: 'unknown',
+  expiresInMs: null,
+});
 
 export function getOptionalEvidenceFreshness(
   meta: OptionalEvidenceMeta | null | undefined,
   now = Date.now()
 ): OptionalEvidenceFreshnessState {
-  if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null };
+  if (!meta?.fetchedAt) return unknownFreshness();
   const fetchedAtMs =
     meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null };
+  if (!Number.isFinite(fetchedAtMs)) return unknownFreshness();
 
   const ttlSeconds =
     typeof meta.freshForSeconds === 'number' &&
@@ -28,11 +35,14 @@ export function getOptionalEvidenceFreshness(
       ? meta.freshForSeconds
       : OPTIONAL_FRESHNESS_FALLBACK_SECONDS;
   const ageMs = now - fetchedAtMs;
+  if (ageMs < -MAX_OPTIONAL_FUTURE_SKEW_MS) return unknownFreshness();
+
   const remainingMs = fetchedAtMs + ttlSeconds * 1000 - now;
-  const fresh = ageMs >= -MAX_OPTIONAL_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
+  const fresh = ageMs <= ttlSeconds * 1000;
 
   return {
     fresh,
+    status: fresh ? 'fresh' : 'stale',
     expiresInMs: fresh && remainingMs >= 0 ? remainingMs + OPTIONAL_EXPIRY_CUSHION_MS : null,
   };
 }

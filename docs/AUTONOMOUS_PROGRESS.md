@@ -2389,8 +2389,15 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Removed ComparePanel's remaining local AQ TTL/future-skew/expiry arithmetic and routed AQ through `getOptionalEvidenceFreshness`, while current weather uses `getCurrentWeatherFreshness` and hourly forecast uses `getForecastFreshness`.
 - This is behavior-preserving and removes the last presentation-level freshness algorithm from ComparePanel. `git diff --check` passes; exact-head hosted gates remain mandatory before merge.
 
+
 ### 2026-09-02 current freshness presentation deduplication
 - After merging #627, audited the primary decision surface and found its visible freshness label still independently classified future-skew vs stale evidence even though evidence validity already came from `getCurrentWeatherFreshness`.
 - Extended the shared helper with `status` and bounded `ageMinutes`, then removed WeatherDecisionField's duplicate future-skew/age arithmetic. Invalid/missing/materially-future timestamps now consistently surface as unknown; valid expired evidence remains stale.
 - Local gates on exact main `8b92def6f30cc5f4482066aa48d266bfbc29b3b7`: focused freshness utility 5/5; full frontend 61 files / 591 tests; TypeScript; ESLint; production build + service-worker stamp + 81 city pages; `git diff --check`.
 - No weather values, provider TTLs, score thresholds, MGM/UV/AQI semantics or user guidance changed. Exact-head hosted CI/CodeQL/browser/Lighthouse remain mandatory before merge.
+
+### 2026-09-02 modeled-context provenance freshness deduplication
+- While PR #628 validates independently, audited ContextSignalsPanel and found it still carried a private 60-second future-timestamp check solely for provider fetch-time presentation.
+- Extended `getOptionalEvidenceFreshness` with explicit `fresh` / `stale` / `unknown` status and routed the provenance display through that contract. Valid stale timestamps remain visible as provenance; invalid/missing/materially-future timestamps remain hidden.
+- Local gates on exact main `8b92def6f30cc5f4482066aa48d266bfbc29b3b7`: focused optional/context 13/13; full frontend 61 files / 591 tests; TypeScript; ESLint; production build + service-worker stamp + 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`.
+- No modeled weather/UV/AQI/pollen/marine values, thresholds, provider selection or safety copy changed. This branch stays isolated from pending #628 and must be rebased onto current main after #628 is production-green before publication/merge.

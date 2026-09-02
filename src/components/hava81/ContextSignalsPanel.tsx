@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { ContextSignals } from '../../types';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import './ContextSignalsPanel.css';
 
 interface Props {
@@ -11,7 +12,6 @@ interface Props {
 
 type Level = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
 const normalizeMicroUnit = (unit?: string) => unit?.replace(/μ/g, 'µ') ?? '';
-const FUTURE_FETCH_TOLERANCE_MS = 60_000;
 const uvLevel = (uv?: number): Level | undefined =>
   uv === undefined
     ? undefined
@@ -29,8 +29,9 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const { t, i18n } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const fetchedAtMs = signals.fetchedAt.getTime();
+  const freshness = getOptionalEvidenceFreshness(signals);
   const fetchedTime =
-    Number.isNaN(fetchedAtMs) || fetchedAtMs - Date.now() > FUTURE_FETCH_TOLERANCE_MS
+    freshness.status === 'unknown'
       ? null
       : new Date(fetchedAtMs + timezoneOffsetSeconds * 1000).toLocaleTimeString(i18n.language, {
           hour: '2-digit',
@@ -95,9 +96,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
             <strong>{signals.uvIndexMax.toFixed(1)}</strong>
             <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
             <p>
-              {uv && uv !== 'low'
-                ? t('hava81.context.uvProtection')
-                : t('hava81.context.uvNormal')}
+              {uv && uv !== 'low' ? t('hava81.context.uvProtection') : t('hava81.context.uvNormal')}
             </p>
           </article>
         ) : null}
@@ -122,9 +121,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
         {hasMarine ? (
           <article className="context-signal context-signal--marine">
             <span>{t('hava81.context.sea')}</span>
-            <strong>
-              {formattedSeaSurfaceTemperature}
-            </strong>
+            <strong>{formattedSeaSurfaceTemperature}</strong>
             <p>
               {signals.marine?.waveHeight !== undefined
                 ? t('hava81.context.waveDetails', {
