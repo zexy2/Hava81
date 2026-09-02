@@ -205,9 +205,14 @@ export function WeatherDecisionField({
       setNow(currentTime);
       const elapsedInMinute = ((currentTime % 60_000) + 60_000) % 60_000;
       const nextMinuteDelay = 60_000 - elapsedInMinute + 100;
-      const expiresInMs = getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs;
-      const nextDelay =
-        expiresInMs === null ? nextMinuteDelay : Math.min(nextMinuteDelay, expiresInMs);
+      const currentExpiresInMs = getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs;
+      const airQualityExpiresInMs = airQuality
+        ? getCurrentWeatherFreshness(airQuality.meta, currentTime).expiresInMs
+        : null;
+      const evidenceExpiryDelays = [currentExpiresInMs, airQualityExpiresInMs].filter(
+        (value): value is number => value !== null
+      );
+      const nextDelay = Math.min(nextMinuteDelay, ...evidenceExpiryDelays);
       timerId = window.setTimeout(scheduleFreshnessRefresh, nextDelay);
     };
     const refreshWhenVisible = () => {
@@ -222,7 +227,7 @@ export function WeatherDecisionField({
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [weather.meta]);
+  }, [airQuality, weather.meta]);
 
   useEffect(() => {
     if (forecastMeta === undefined) return undefined;
@@ -245,13 +250,15 @@ export function WeatherDecisionField({
   const ageMinutes = currentFreshness.ageMinutes;
   const currentEvidenceFresh = currentFreshness.fresh;
   const isStale = currentFreshness.status === 'stale';
+  const airQualityFreshness = airQuality ? getCurrentWeatherFreshness(airQuality.meta, now) : null;
+  const freshAirQuality = airQualityFreshness?.fresh ? airQuality : undefined;
   const decisionEvidenceFresh = currentEvidenceFresh && (forecastFreshness?.fresh ?? true);
   const decisions = useMemo(
     () =>
       decisionEvidenceFresh
-        ? getWeatherDecisions({ weather, hourly, airQuality, uvIndexMax })
+        ? getWeatherDecisions({ weather, hourly, airQuality: freshAirQuality, uvIndexMax })
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
-    [airQuality, decisionEvidenceFresh, hourly, uvIndexMax, weather]
+    [decisionEvidenceFresh, freshAirQuality, hourly, uvIndexMax, weather]
   );
   const freshnessText =
     ageMinutes === null
@@ -270,10 +277,12 @@ export function WeatherDecisionField({
   const windSpeed = currentEvidenceFresh
     ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${windSpeedSymbol}`
     : '—';
-  const airQualityLabelKey = airQuality ? getOpenWeatherAqiLabelKey(airQuality.aqi) : undefined;
+  const airQualityLabelKey = freshAirQuality
+    ? getOpenWeatherAqiLabelKey(freshAirQuality.aqi)
+    : undefined;
   const airQualityValue =
-    airQuality && airQualityLabelKey
-      ? `${numberFormatter.format(airQuality.aqi)}/5 · ${t(airQualityLabelKey)}`
+    freshAirQuality && airQualityLabelKey
+      ? `${numberFormatter.format(freshAirQuality.aqi)}/5 · ${t(airQualityLabelKey)}`
       : t('hava81.decision.notAvailable', { defaultValue: '—' });
 
   return (

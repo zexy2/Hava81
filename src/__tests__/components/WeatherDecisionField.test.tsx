@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
 import { SettingsProvider } from '../../context';
-import type { ForecastMeta, NormalizedWeatherData } from '../../types';
+import type { AirQuality, ForecastMeta, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -28,6 +28,19 @@ const weather: NormalizedWeatherData = {
     provider: 'OpenWeather',
     fetchedAt: new Date('2026-08-29T13:00:00Z'),
     timezoneOffsetSeconds: 10800,
+  },
+};
+
+const airQuality: AirQuality = {
+  aqi: 4,
+  aqiLabel: 'Poor',
+  pm25: 42,
+  pm10: 58,
+  o3: 90,
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: new Date('2026-08-29T13:00:00Z'),
+    freshForSeconds: 30,
   },
 };
 
@@ -409,5 +422,24 @@ describe('WeatherDecisionField daily range', () => {
     const label = screen.getByText('Bugünün yüksek / düşük');
     expect(label.parentElement).toHaveTextContent('—');
     expect(screen.queryByText('34°C / 21°C')).not.toBeInTheDocument();
+  });
+
+  it('hides stale air-quality evidence and removes its decision at the exact freshness boundary', async () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} airQuality={airQuality} />
+      </SettingsProvider>
+    );
+
+    const airQualityLabel = screen.getByText('Hava kalitesi');
+    expect(airQualityLabel.parentElement).toHaveTextContent('4/5');
+    expect(screen.getByText(/Hava kalitesi zayıf \(AQI 4\/5\)/i)).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_200);
+    });
+
+    expect(airQualityLabel.parentElement).toHaveTextContent('—');
+    expect(screen.queryByText(/Hava kalitesi zayıf \(AQI 4\/5\)/i)).not.toBeInTheDocument();
   });
 });
