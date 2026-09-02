@@ -10,10 +10,11 @@
   width: 100%;
   overflow: hidden;
   color: var(--environment-ink);
-  background: var(--color-atlas-paper);
-  border: 1px solid var(--environment-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  background: transparent;
+  border-block: 1px solid var(--environment-line);
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
   font-family: var(
     --font-ui,
     'IBM Plex Sans Variable',
