@@ -162,7 +162,21 @@ describe('httpClient BFF transport', () => {
     }
   });
 
-  it('does not cache structurally invalid provider freshness metadata', async () => {
+  it.each([
+    [
+      'materially future fetchedAt',
+      (now: Date) => ({
+        fetchedAt: new Date(now.getTime() + 60_001).toISOString(),
+        freshForSeconds: 60,
+      }),
+    ],
+    ['missing freshness window', (now: Date) => ({ fetchedAt: now.toISOString() })],
+    ['invalid fetchedAt', (_now: Date) => ({ fetchedAt: 'not-a-date', freshForSeconds: 60 })],
+    [
+      'oversized freshness window',
+      (now: Date) => ({ fetchedAt: now.toISOString(), freshForSeconds: 86_401 }),
+    ],
+  ])('does not cache provider evidence with %s', async (_label, invalidMeta) => {
     vi.useFakeTimers();
     try {
       const now = new Date('2026-09-02T05:00:00.000Z');
@@ -172,11 +186,7 @@ describe('httpClient BFF transport', () => {
           mockResponse({
             cityName: 'Izmir',
             temperature: 23,
-            meta: {
-              provider: 'OpenWeather',
-              fetchedAt: new Date(now.getTime() + 60_001).toISOString(),
-              freshForSeconds: 60,
-            },
+            meta: { provider: 'OpenWeather', ...invalidMeta(now) },
           })
         )
         .mockResolvedValueOnce(
