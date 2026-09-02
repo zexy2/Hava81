@@ -834,3 +834,7 @@ The hourly forecast is a continuous evidence surface, not a stack of dashboard c
 ## 2026-09-02 — observer GitHub timeout resilience
 
 - Keep the comprehensive 100-run GitHub Actions lookup as the primary observer read, but retry once with a 30-run payload when that bounded request fails. A transient large-payload timeout must not erase otherwise actionable main/PR CI state; the retry remains read-only and bounded to the same 12-second timeout.
+
+## 2026-09-02 — make Lighthouse floor failures actionable
+
+- When a Lighthouse category breaches its hard floor, print the weighted audits that actually lost points instead of logging only the aggregate category score. This keeps quality gates strict while making regressions diagnosable without downloading and manually inspecting the raw LHR artifact.
