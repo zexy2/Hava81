@@ -27,7 +27,9 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Bir şeyler ters gitti');
     expect(screen.getByRole('alert')).toHaveTextContent('Uygulama beklenmeyen bir hatayla karşılaştı.');
     expect(screen.queryByText('secret implementation detail')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Tekrar Dene' })).toHaveAttribute('type', 'button');
+    const retryButton = screen.getByRole('button', { name: 'Tekrar Dene' });
+    expect(retryButton).toHaveAttribute('type', 'button');
+    expect(retryButton).toHaveFocus();
   });
 
   it('uses the active English language for the default recovery screen', async () => {
@@ -43,5 +45,4 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('The app encountered an unexpected error.');
     expect(screen.getByRole('button', { name: 'Try Again' })).toHaveAttribute('type', 'button');
   });
-
 });
