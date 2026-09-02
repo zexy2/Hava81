@@ -107,7 +107,11 @@ const getCacheKey = (url: string, options?: RequestConfig): string => {
 /**
  * Check if cached response is still valid
  */
-const getProviderEvidenceExpiry = (data: unknown): number | null => {
+const MAX_PROVIDER_FRESHNESS_SECONDS = 86_400;
+const MAX_PROVIDER_FUTURE_SKEW_MS = 60_000;
+const INVALID_PROVIDER_EVIDENCE_EXPIRY = Number.NEGATIVE_INFINITY;
+
+const getProviderEvidenceExpiry = (data: unknown, now: number): number | null => {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   const meta = (data as { meta?: unknown }).meta;
   if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
@@ -116,13 +120,26 @@ const getProviderEvidenceExpiry = (data: unknown): number | null => {
     fetchedAt?: unknown;
     freshForSeconds?: unknown;
   };
-  if (typeof freshForSeconds !== 'number' || !Number.isFinite(freshForSeconds) || freshForSeconds <= 0) {
-    return null;
+  const hasFetchedAt = fetchedAt !== undefined;
+  const hasFreshForSeconds = freshForSeconds !== undefined;
+  if (!hasFetchedAt && !hasFreshForSeconds) return null;
+  if (!hasFetchedAt || !hasFreshForSeconds) return INVALID_PROVIDER_EVIDENCE_EXPIRY;
+  if (
+    typeof freshForSeconds !== 'number' ||
+    !Number.isFinite(freshForSeconds) ||
+    freshForSeconds <= 0 ||
+    freshForSeconds > MAX_PROVIDER_FRESHNESS_SECONDS
+  ) {
+    return INVALID_PROVIDER_EVIDENCE_EXPIRY;
   }
-  if (typeof fetchedAt !== 'string' && !(fetchedAt instanceof Date)) return null;
+  if (typeof fetchedAt !== 'string' && !(fetchedAt instanceof Date)) {
+    return INVALID_PROVIDER_EVIDENCE_EXPIRY;
+  }
 
   const fetchedAtMs = fetchedAt instanceof Date ? fetchedAt.getTime() : Date.parse(fetchedAt);
-  if (!Number.isFinite(fetchedAtMs)) return null;
+  if (!Number.isFinite(fetchedAtMs) || fetchedAtMs > now + MAX_PROVIDER_FUTURE_SKEW_MS) {
+    return INVALID_PROVIDER_EVIDENCE_EXPIRY;
+  }
   return fetchedAtMs + freshForSeconds * 1000;
 };
 
@@ -137,7 +154,7 @@ const storeCachedResponse = (cacheKey: string, data: unknown): void => {
     if (now < cached.timestamp || now >= cached.expiresAt) requestCache.delete(key);
   }
 
-  const providerExpiry = getProviderEvidenceExpiry(data);
+  const providerExpiry = getProviderEvidenceExpiry(data, now);
   const expiresAt = Math.min(now + config.cache.ttl, providerExpiry ?? Number.POSITIVE_INFINITY);
   if (expiresAt <= now) {
     requestCache.delete(cacheKey);
