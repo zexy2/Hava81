@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ContextSignalsPanel } from '../../components/hava81/ContextSignalsPanel';
 import { SettingsProvider } from '../../context';
@@ -13,7 +13,15 @@ const renderPanel = (signals: ContextSignals, timezoneOffsetSeconds = 3 * 60 * 6
   );
 
 describe('ContextSignalsPanel', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-28T06:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('keeps modeled context attributed and renders marine values without inventing missing data', () => {
     renderPanel({
@@ -94,23 +102,18 @@ describe('ContextSignalsPanel', () => {
     expect(screen.queryByText('25.1°C')).not.toBeInTheDocument();
   });
 
-  it('does not publish a materially future provider fetch time', () => {
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(new Date('2026-08-28T06:00:00Z'));
-      renderPanel({
-            provider: 'Open-Meteo',
-            fetchedAt: new Date('2026-08-28T06:02:00Z'),
-            attribution: 'Open-Meteo · CC BY 4.0',
-            uvIndexMax: 4,
-            units: {},
-      });
+  it('does not render materially future provider evidence', () => {
+    renderPanel({
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:02:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 4,
+      units: {},
+    });
 
-      expect(screen.queryByText(/veri alındı/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/Hava81 tarafından özetlendi/)).toBeInTheDocument();
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(screen.queryByText(/veri alındı/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Hava81 tarafından özetlendi/)).not.toBeInTheDocument();
+    expect(screen.queryByText('UV · 24s model maksimumu')).not.toBeInTheDocument();
   });
 
   it('recommends protection from the WHO moderate UV band upward', () => {
@@ -168,5 +171,28 @@ describe('ContextSignalsPanel', () => {
 
     expect(screen.getAllByText('µg/m³')).toHaveLength(2);
     expect(screen.queryByText('μg/m³')).not.toBeInTheDocument();
+  });
+
+  it('removes modeled health and activity evidence at the exact provider freshness boundary', async () => {
+    renderPanel({
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      freshForSeconds: 30,
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 7,
+      dustMax: 18,
+      units: { dust: 'µg/m³' },
+    });
+
+    expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(screen.getByText('18')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_200);
+    });
+
+    expect(screen.queryByText('UV · 24s model maksimumu')).not.toBeInTheDocument();
+    expect(screen.queryByText('18')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Hava81 tarafından özetlendi/)).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { ContextSignals } from '../../types';
@@ -28,8 +28,26 @@ const uvLevel = (uv?: number): Level | undefined =>
 export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const { t, i18n } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
+  const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
   const fetchedAtMs = signals.fetchedAt.getTime();
-  const freshness = getOptionalEvidenceFreshness(signals);
+  const freshness = getOptionalEvidenceFreshness(signals, freshnessNow);
+
+  useEffect(() => {
+    let timerId: number | undefined;
+    const refresh = () => setFreshnessNow(Date.now());
+    if (freshness.fresh && freshness.expiresInMs !== null) {
+      timerId = window.setTimeout(refresh, freshness.expiresInMs);
+    }
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [freshness.expiresInMs, freshness.fresh, signals.fetchedAt, signals.freshForSeconds]);
+
   const fetchedTime =
     freshness.status === 'unknown'
       ? null
@@ -54,6 +72,9 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
     signals.units.grassPollen,
     signals.units.olivePollen,
   ]);
+
+  if (!freshness.fresh) return null;
+
   const hasPollen = pollen !== undefined;
   const hasMarine = Boolean(
     signals.marine &&
