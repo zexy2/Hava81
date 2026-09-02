@@ -3,13 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { CityTabs } from '../../components/CityTabs';
 import '../../i18n';
 
-vi.mock('../../context/SettingsContext', () => ({
-  useSettings: () => ({
-    convertTemperature: (value: number) => value,
-    getTemperatureSymbol: () => '°C',
-  }),
-}));
-
 describe('CityTabs', () => {
   it('marks a saved province active across localized provider spellings', () => {
     render(
@@ -23,9 +16,12 @@ describe('CityTabs', () => {
       />
     );
 
-    expect(
-      screen.getByRole('button', { name: 'İstanbul hava durumunu göster, 20°C' })
-    ).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'İstanbul hava durumunu göster' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.queryByText('20°')).not.toBeInTheDocument();
+    expect(document.querySelector('.city-tabs__symbol')).not.toBeInTheDocument();
   });
 
   it('keeps the fallback label when a saved city has no cached temperature', () => {

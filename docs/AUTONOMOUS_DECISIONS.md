@@ -740,3 +740,7 @@ Saved-city state is navigation identity (`name`, canonical coordinates), while c
 ## 2026-09-02 — First-viewport current observations fail closed at their provider TTL
 
 The main decision field already suppresses modeled action guidance when current evidence expires, but current temperature, condition, feels-like, humidity and wind must follow the same current-observation boundary. Once current `fetchedAt + freshForSeconds` is stale/invalid/future-skewed, hide those values and show explicit stale-current status while preserving city identity/provider metadata. Forecast-derived daily range follows forecast freshness independently, and independently fresh AQI may remain visible. Do not convert an expired observation into a fresh-looking number merely because the surrounding decision list is unavailable.
+
+## 2026-09-02 — Saved-city navigation must not present untimestamped weather as current
+
+Legacy favorites may carry the temperature/icon observed on the last visit, but that persisted shape has no provider `fetchedAt` or TTL. Keep those fields backward-compatible in storage for now, but do not render them in saved-city tabs or include them in accessible labels as if they were current observations. Saved tabs remain navigation affordances (province plate + city name) until a freshness-aware saved-city evidence contract exists.
