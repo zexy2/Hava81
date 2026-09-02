@@ -43,6 +43,7 @@ API_RUNTIME_PATHS = {
 API_RUNTIME_PREFIXES = ('apps/api/src/',)
 GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
+GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 
 
 def now_iso() -> str:
@@ -359,6 +360,14 @@ def collect_github() -> dict[str, Any]:
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
         timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
     )
+    if not runs_result.get('ok'):
+        # The 100-run response is occasionally slow enough to exceed the observer's
+        # bounded timeout. Retry once with a materially smaller payload so a transient
+        # GitHub read does not erase otherwise actionable PR/main CI state.
+        runs_result = http_get(
+            f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
+            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+        )
     pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []

@@ -830,3 +830,7 @@ When production health depends on multiple HTML shells, the operator-facing stat
 
 ### 2026-09-02 — Forecast Atlas uses an editorial data strip instead of nested cards
 The hourly forecast is a continuous evidence surface, not a stack of dashboard cards. Keep the outer atlas and hourly viewport flat with border rules, remove the decorative rounded/gradient chart container, and present low/high/rain summary values as one divided editorial strip. Preserve temperature/rain values, provider attribution, interval controls, chart geometry, freshness semantics, keyboard focus, 44px touch targets, and responsive text reflow. Current-hour emphasis remains subtle and informational rather than becoming another filled card.
+
+## 2026-09-02 — observer GitHub timeout resilience
+
+- Keep the comprehensive 100-run GitHub Actions lookup as the primary observer read, but retry once with a 30-run payload when that bounded request fails. A transient large-payload timeout must not erase otherwise actionable main/PR CI state; the retry remains read-only and bounded to the same 12-second timeout.
