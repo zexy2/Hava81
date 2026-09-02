@@ -114,6 +114,46 @@ describe('useForecast', () => {
     expect(result.current.displayHourly[0]?.temp).toBe(26);
   });
 
+  it('renders a fast hourly forecast before a slow baseline completes without downgrading it later', async () => {
+    type ForecastResponse = Awaited<ReturnType<typeof weatherService.getForecast>>;
+    let resolveForecast!: (value: ForecastResponse) => void;
+    const pendingForecast = new Promise<ForecastResponse>(resolve => {
+      resolveForecast = resolve;
+    });
+    (weatherService.getForecast as Mock).mockReturnValueOnce(pendingForecast);
+
+    const { result } = renderHook(() => useForecast('tr'));
+    let fetchPromise!: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    await waitFor(() => expect(result.current.displayMeta?.intervalHours).toBe(1));
+    expect(result.current.displayHourly[0]?.temp).toBe(25);
+    expect(result.current.daily).toHaveLength(1);
+    expect(result.current.isLoading).toBe(true);
+
+    await act(async () => {
+      resolveForecast({
+        daily: [],
+        hourly: [{ time: new Date('2026-07-14T12:00:00.000Z'), temp: 18, icon: '10d', pop: 0.7, windSpeed: 3 }],
+        meta: {
+          provider: 'OpenWeather',
+          fetchedAt: new Date(),
+          timezoneOffsetSeconds: 10800,
+          intervalHours: 3,
+        },
+      });
+      await fetchPromise;
+    });
+
+    expect(result.current.displayMeta?.intervalHours).toBe(1);
+    expect(result.current.displayHourly[0]?.temp).toBe(25);
+    expect(result.current.hourly[0]?.temp).toBe(25);
+    expect(result.current.meta?.intervalHours).toBe(1);
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('keeps up to 48 hourly decision points while the visible atlas stays at 24 hours', async () => {
     const richHourly = Array.from({ length: 30 }, (_, index) => ({
       time: new Date(Date.parse('2026-07-14T13:00:00.000Z') + index * 60 * 60_000),
