@@ -335,6 +335,7 @@ class ObserverApiDeploymentTests(unittest.TestCase):
 
             def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
                 if '/compare/' in url:
+                    self.assertTrue(url.endswith('?per_page=1&page=1'), url)
                     return {
                         'ok': compare_ok,
                         'status': 200 if compare_ok else 503,
