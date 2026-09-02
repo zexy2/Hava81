@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { EnvironmentRail } from '../../components/hava81/EnvironmentRail';
@@ -39,6 +39,38 @@ describe('EnvironmentRail', () => {
     expect(mapButton).toHaveAttribute('aria-controls', 'weather-map-region');
     expect(mapButton).toHaveAttribute('aria-expanded', 'false');
     expect(mapButton).not.toHaveAttribute('aria-pressed');
+  });
+
+  it('stops presenting stale current wind as a live observation at the provider TTL', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-28T15:00:00Z'));
+      const expiringWeather: NormalizedWeatherData = {
+        ...weather,
+        meta: {
+          ...weather.meta,
+          fetchedAt: new Date('2026-08-28T15:00:00Z'),
+          freshForSeconds: 30,
+        },
+      };
+
+      render(
+        <SettingsProvider>
+          <EnvironmentRail weather={expiringWeather} onOpenMap={vi.fn()} mapExpanded={false} />
+        </SettingsProvider>
+      );
+
+      expect(screen.getByText(/GD ·/i)).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_200);
+      });
+
+      expect(screen.queryByText(/GD ·/i)).not.toBeInTheDocument();
+      expect(screen.getByText('Anlık veri güncel değil')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders sunrise and sunset in the weather location timezone instead of the device timezone', () => {

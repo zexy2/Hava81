@@ -51,6 +51,7 @@ export const tr = {
     addCurrentCity: 'Geçerli şehri favorilere ekle',
     cityNotFound: 'Şehir bulunamadı',
     noData: 'Veri yok',
+    staleCurrentData: 'Anlık veri güncel değil',
     mapTitle: 'Türkiye hava atlası',
     viewCityWeather: 'Şehrin havasını gör',
     temperatureLegend: 'Harita sıcaklık renkleri',
