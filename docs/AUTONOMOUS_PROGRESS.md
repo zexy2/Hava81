@@ -2831,3 +2831,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Independent SEO audit found `scripts/generate-city-pages.mjs` still emitted `en iyi dışarı çıkma saati` into statically generated city HTML, even though the prepared runtime metadata correction scopes the recommendation to meteorological evidence. Search crawlers can consume that static description before client hydration.
 - Changed only the generated Turkish description to `hava açısından en iyi dışarı çıkma penceresi`; canonical URLs, structured data, weather values, scores and runtime logic are unchanged.
 - Added a source-level regression that requires the generator to retain the weather-scoped phrase and rejects the prior unqualified wording. `git diff --check` is required locally; hosted frontend/build/browser/Lighthouse/CodeQL are mandatory before merge.
+
+## 2026-09-03 00:18 TRT — scope now-or-later comparisons to weather conditions
+- While #713 was isolated for CI correction/rebase, audited current-main Day Plan comparative copy. Its `Now or later?` sentences said going out was more comfortable/better or offered no advantage without naming that the comparison is meteorological.
+- Changed only Turkish/English now-or-later copy so each comparative statement explicitly names `hava koşulları` / `weather conditions` or `weather advantage`. No score, selected hour, forecast evidence, threshold, provider interpretation, severity, or recommendation algorithm changed.
+- Added a localization regression covering all three comparative states in both languages. `git diff --check` is required locally; exact-head hosted frontend/browser/Lighthouse/CodeQL remain mandatory before merge.
+- Branch/worktree: `automation/hava81-run12-0016`, rebased onto current main before merge.

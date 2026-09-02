@@ -181,9 +181,9 @@ export const en = {
       },
       nowOrLater: {
         label: 'Now or later?',
-        later: 'Going out around {{time}} looks more comfortable.',
-        now: 'Going out now looks better than the next few hours.',
-        similar: 'There is no meaningful advantage between the next few hours.',
+        later: 'Weather conditions look more comfortable for going out around {{time}}.',
+        now: 'Weather conditions look better for going out now than in the next few hours.',
+        similar: 'There is no meaningful weather advantage between the next few hours.',
       },
       bestWindow: 'Best-looking time: {{time}}',
       bestRange: 'Best-looking range: {{start}}–{{end}}',
