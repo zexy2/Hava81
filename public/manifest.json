@@ -1,7 +1,7 @@
 {
   "short_name": "Hava81",
   "name": "Hava81 — Havayı değil, gününü planla",
-  "description": "Türkiye'nin 81 ili için hava durumunu günlük kararlara çevirir: Hava81 Skoru, en iyi zaman, aktivite planları ve yerel hava riskleri.",
+  "description": "Türkiye'nin 81 ili için hava durumunu günlük kararlara çevirir: Hava81 Skoru, hava açısından en iyi zaman, aktivite planları ve yerel hava riskleri.",
   "icons": [
     {
       "src": "hava81-mark.svg",

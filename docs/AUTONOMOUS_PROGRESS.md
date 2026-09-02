@@ -2859,3 +2859,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Tightened those four localized labels to `Best weather time/range` and `Hava açısından en iyi saat/en uygun aralık`. No activity thresholds, weights, selected windows, score, provider, weather values or health/safety semantics changed.
 - Added a localization regression and `git diff --check` passes. Hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory before merge.
 - Rebased onto current main before merge.
+
+## 2026-09-03 02:11 TRT — scope root/PWA product metadata to weather timing
+- Independent static-metadata audit on exact main found the root HTML description, Open Graph/Twitter descriptions, and PWA manifest still advertised `en iyi zaman` without naming that Hava81 optimizes meteorological conditions. These surfaces can be consumed outside the hydrated UI.
+- Tightened only those static Turkish product descriptions to `hava açısından en iyi zaman`, aligning them with the existing decision truthfulness boundary. No structured weather data, city ranking, score, forecast, provider, runtime behavior or navigation changed.
+- Added a source regression covering both root HTML and the manifest and rejecting the prior unqualified phrase. `git diff --check` passes; hosted exact-head frontend/build/browser/Lighthouse/CodeQL remain mandatory.
+- Next: commit/push/open this bounded metadata PR and rebase after earlier prepared PRs merge.
