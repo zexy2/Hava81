@@ -188,6 +188,42 @@ describe('Hava81 app integration', () => {
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   }, 12_000);
 
+  it('uses the freshness metadata from the hourly evidence driving first-viewport guidance', async () => {
+    const staleBaseline = {
+      ...forecast,
+      meta: {
+        ...forecast.meta,
+        fetchedAt: new Date(Date.now() - 10 * 60_000),
+        freshForSeconds: 30,
+      },
+    };
+    const freshHourly = {
+      ...hourlyForecast,
+      meta: {
+        ...hourlyForecast.meta,
+        fetchedAt: new Date(),
+        freshForSeconds: 300,
+      },
+    };
+    service.getForecast.mockResolvedValueOnce(staleBaseline);
+    service.getHourlyForecast.mockResolvedValueOnce(freshHourly);
+
+    renderApp();
+
+    expect(
+      await screen.findByRole(
+        'heading',
+        { name: /saatlik tahmin · sonraki 2 saat/i },
+        { timeout: 5_000 }
+      )
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByText('Yakın saatler için karar verisi henüz hazır değil.')
+      ).not.toBeInTheDocument()
+    );
+  }, 12_000);
+
   it('keeps the current city decision surface visible while a same-city refresh is pending', async () => {
     let resolveRefresh!: (value: typeof current) => void;
     const pendingRefresh = new Promise<typeof current>(resolve => {
