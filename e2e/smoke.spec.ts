@@ -3615,6 +3615,42 @@ test('fresh cached weather suppresses the generated bootstrap request', async ({
   expect(currentRequests).toBe(0);
 });
 
+test('provider-stale recent cache does not suppress the generated bootstrap request', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'desktop-1280',
+    'single browser coverage for provider-aware bootstrap cache guard'
+  );
+
+  await page.addInitScript(cachedWeather => {
+    window.localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: cachedWeather,
+        timestamp: Date.now(),
+        language: 'tr',
+      })
+    );
+  }, {
+    ...current,
+    meta: {
+      ...current.meta,
+      fetchedAt: new Date(Date.now() - 2 * 60_000).toISOString(),
+      freshForSeconds: 60,
+    },
+  });
+
+  let currentRequests = 0;
+  page.on('request', request => {
+    if (request.url().includes('/api/v1/weather/current')) currentRequests += 1;
+  });
+
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+  expect(currentRequests).toBe(1);
+});
+
 test('lazy forecast chunk does not block the decision-first view', async ({ page }, testInfo) => {
   test.skip(
     testInfo.project.name !== 'desktop-1280',

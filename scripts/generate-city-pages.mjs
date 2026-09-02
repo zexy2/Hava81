@@ -64,11 +64,31 @@ const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
           const cached = JSON.parse(window.localStorage.getItem('weather_cache') || 'null');
           const cacheCity = cached?.data?.cityName;
           const cacheLanguage = cached?.language || 'tr';
-          const cacheAge = Date.now() - Number(cached?.timestamp || 0);
+          const now = Date.now();
+          const cacheAge = now - Number(cached?.timestamp || 0);
+          const fetchedAtMs = Date.parse(String(cached?.data?.meta?.fetchedAt || ''));
+          const rawFreshForSeconds = cached?.data?.meta?.freshForSeconds;
+          const providerTtlValid =
+            rawFreshForSeconds === undefined ||
+            (typeof rawFreshForSeconds === 'number' &&
+              Number.isFinite(rawFreshForSeconds) &&
+              rawFreshForSeconds > 0 &&
+              rawFreshForSeconds <= 86_400);
+          const providerFreshForMs =
+            typeof rawFreshForSeconds === 'number'
+              ? rawFreshForSeconds * 1000
+              : ${weatherCacheMaxAgeMs};
+          const providerAge = now - fetchedAtMs;
+          const providerEvidenceFresh =
+            Number.isFinite(fetchedAtMs) &&
+            providerTtlValid &&
+            providerAge >= -${weatherCacheFutureSkewMs} &&
+            providerAge <= providerFreshForMs;
           if (
             cacheCity &&
             cacheAge >= -${weatherCacheFutureSkewMs} &&
             cacheAge < ${weatherCacheMaxAgeMs} &&
+            providerEvidenceFresh &&
             cacheLanguage === lang &&
             normalizeCity(cacheCity) === cityKey
           ) {

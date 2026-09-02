@@ -883,3 +883,6 @@ The map is a primary evidence surface inside an already-flat map panel, so its d
 
 ### 2026-09-02 — Fatal recovery surfaces inherit the resolved color mode
 The ErrorBoundary fallback sits outside the normal `.app` wrapper but the resolved color mode is applied to the document root. Use the shared atlas ink/field tokens there instead of hard-coded light colors so recovery remains readable and visually coherent in dark mode. Keep light fallbacks for pre-theme safety and do not couple fatal presentation to weather or retry logic.
+
+### 2026-09-02 — Static city bootstrap cache suppression never outlives provider evidence freshness
+The generated pre-module weather bootstrap is a latency optimization and must use the same freshness authority as hydrated current weather. Suppress its early request only when the local receipt is within the existing five-minute bound and provider `fetchedAt`/TTL evidence is still fresh. Missing TTL may use the established five-minute fallback, while malformed, non-positive, unbounded or materially future provider freshness evidence must fail open to a network refresh. Never rewrite provider timestamps or extend provider TTLs.
