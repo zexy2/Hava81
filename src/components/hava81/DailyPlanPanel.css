@@ -123,8 +123,9 @@
   grid-auto-flow: column;
   grid-auto-columns: minmax(8rem, 1fr);
   overflow-x: auto;
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  border-block: 1px solid var(--color-atlas-line);
+  border-inline: 0;
+  border-radius: 0;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-aegean) 45%, transparent) transparent;
 }
