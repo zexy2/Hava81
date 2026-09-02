@@ -166,6 +166,57 @@ describe('useForecast', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('shows hourly recovery before optional evidence requests finish', async () => {
+    type AirQualityResponse = Awaited<ReturnType<typeof weatherService.getAirQuality>>;
+    type ContextResponse = Awaited<ReturnType<typeof weatherService.getContextSignals>>;
+    let resolveAirQuality!: (value: AirQualityResponse) => void;
+    let resolveContext!: (value: ContextResponse) => void;
+    const pendingAirQuality = new Promise<AirQualityResponse>(resolve => {
+      resolveAirQuality = resolve;
+    });
+    const pendingContext = new Promise<ContextResponse>(resolve => {
+      resolveContext = resolve;
+    });
+    (weatherService.getForecast as Mock).mockRejectedValueOnce(new Error('baseline unavailable'));
+    (weatherService.getAirQuality as Mock).mockReturnValueOnce(pendingAirQuality);
+    (weatherService.getContextSignals as Mock).mockReturnValueOnce(pendingContext);
+
+    const { result } = renderHook(() => useForecast('tr'));
+    let fetchPromise!: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    await waitFor(() => expect(result.current.displayMeta?.intervalHours).toBe(1));
+    expect(result.current.hourly[0]?.temp).toBe(25);
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.airQuality).toBeNull();
+    expect(result.current.contextSignals).toBeNull();
+
+    await act(async () => {
+      resolveAirQuality({
+        aqi: 1,
+        aqiLabel: 'Good',
+        pm25: 5,
+        pm10: 8,
+        o3: 20,
+        meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+      });
+      resolveContext({
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(),
+        freshForSeconds: 300,
+        attribution: 'Open-Meteo · CC BY 4.0',
+        units: {},
+      });
+      await fetchPromise;
+    });
+
+    expect(result.current.airQuality?.aqi).toBe(1);
+    expect(result.current.contextSignals?.provider).toBe('Open-Meteo');
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('does not mix baseline daily rows with hourly-only provenance', async () => {
     (weatherService.getForecast as Mock).mockResolvedValueOnce({
       daily: [

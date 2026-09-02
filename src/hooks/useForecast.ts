@@ -157,19 +157,14 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
         }
 
-        const [hourlyData, aqResult, contextResult] = await Promise.all([
-          hourlyRequest,
-          airQualityRequest,
-          contextRequest,
-        ]);
+        const hourlyData = await hourlyRequest;
         if (!forecastData && !hourlyData?.hourly.length) {
           throw forecastError ?? new Error('Tahmin alınamadı');
         }
         if (requestId !== requestIdRef.current) return;
         if (hourlyData?.hourly.length) {
-          // Upgrade the visible/decision hourly series and the calendar-day extrema together.
-          // OpenWeather remains the immediate fallback when available; a valid dedicated hourly
-          // response can also carry the forecast surface when that baseline request itself fails.
+          // Upgrade the visible/decision hourly series as soon as it is ready. Air-quality and
+          // context signals are optional evidence and must not delay a resilient forecast recovery.
           setHourly(hourlyData.hourly);
           setDisplayHourly(hourlyData.hourly.slice(0, 24));
           setDisplayMeta(hourlyData.meta);
@@ -184,6 +179,9 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           }
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
         }
+
+        const [aqResult, contextResult] = await Promise.all([airQualityRequest, contextRequest]);
+        if (requestId !== requestIdRef.current) return;
         if (aqResult.ok) {
           setAirQuality(aqResult.value);
           airQualityRef.current = aqResult.value;
