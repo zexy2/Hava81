@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "retentionMinutes": 30,
-  "generatedAt": "2026-09-02T14:12:09Z",
+  "generatedAt": "2026-09-02T15:00:12Z",
   "generations": [
     {
-      "publishedAt": "2026-09-02T14:12:09Z",
+      "publishedAt": "2026-09-02T15:00:12Z",
       "files": [
         "assets/ActivityPlanner-DIJ9W3Xs.css",
         "assets/ActivityPlanner-DeGSUsap.js",
@@ -42,47 +42,6 @@
         "assets/source-serif-4-latin-ext-wght-normal-CxNHBx-q.woff2",
         "assets/source-serif-4-latin-wght-normal-D9elroTD.woff2",
         "assets/useDecisionProfile-4VsBb5rn.js"
-      ]
-    },
-    {
-      "publishedAt": "2026-09-02T13:57:09Z",
-      "files": [
-        "assets/ActivityPlanner-CXD8xH7O.js",
-        "assets/ActivityPlanner-DIJ9W3Xs.css",
-        "assets/CommutePlanPanel-CGv63-CB.css",
-        "assets/CommutePlanPanel-UzABs-Kh.js",
-        "assets/ComparePanel-BCE4MuJR.css",
-        "assets/ComparePanel-mLt3STzE.js",
-        "assets/ContextSignalsPanel-BrxeMO4Y.js",
-        "assets/ContextSignalsPanel-C6bDhN-5.css",
-        "assets/DailyPlanPanel-DUhyUFnD.css",
-        "assets/DailyPlanPanel-DmAwZy-v.js",
-        "assets/DecisionAlertsPanel-CCU8LRpx.js",
-        "assets/DecisionAlertsPanel-qDtsiU0r.css",
-        "assets/EnvironmentRail-CMazTuOr.js",
-        "assets/EnvironmentRail-aNWNiyPJ.css",
-        "assets/ForecastAtlas-D_JYqwPv.css",
-        "assets/ForecastAtlas-fiAQbV5i.js",
-        "assets/RouteWeatherPanel-BGlH0MSF.css",
-        "assets/RouteWeatherPanel-C2lEG634.js",
-        "assets/SettingsContext-DYj-2L_c.js",
-        "assets/SettingsPanel-B7q75P3p.js",
-        "assets/SettingsPanel-CaPY9_Do.css",
-        "assets/WeatherMap-DODZrOhs.css",
-        "assets/WeatherMap-sszHzplF.js",
-        "assets/bestWindowRange-CwY4WMNi.js",
-        "assets/buildActivityPlan-B6ghn_PS.js",
-        "assets/buildDailyPlan-Cx15ogL0.js",
-        "assets/cities-CPHWYFED.js",
-        "assets/ibm-plex-sans-latin-ext-wght-normal-CIII54If.woff2",
-        "assets/ibm-plex-sans-latin-wght-normal-IvpUvPa2.woff2",
-        "assets/index-BTkvlhbo.css",
-        "assets/index-CN_tHEfz.js",
-        "assets/jsx-runtime-CEuv_zDX.js",
-        "assets/rolldown-runtime-CbXtAM7H.js",
-        "assets/source-serif-4-latin-ext-wght-normal-CxNHBx-q.woff2",
-        "assets/source-serif-4-latin-wght-normal-D9elroTD.woff2",
-        "assets/useDecisionProfile-CBDHfNqW.js"
       ]
     }
   ]
