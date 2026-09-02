@@ -65,6 +65,9 @@ const forecast = {
   },
 };
 const hourlyForecast = {
+  // Normal Open-Meteo hourly success carries the same-provider daily series too.
+  // Tests that customize daily evidence should override both endpoints together.
+  daily: forecast.daily,
   hourly: Array.from({ length: 24 }, (_, index) => ({
     time: new Date(Date.parse('2026-08-28T09:00:00.000Z') + index * 60 * 60_000).toISOString(),
     temp: 22 - Math.floor(index / 6),
@@ -2002,23 +2005,23 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
       })
     );
   });
+  const englishDaily = [
+    {
+      date: fixtureLocalDate(),
+      tempMin: 19,
+      tempMax: 27,
+      icon: '02d',
+      description: 'partly cloudy',
+      pop: 10,
+    },
+  ];
   await page.unroute('**/api/v1/weather/forecast**');
   await page.route('**/api/v1/weather/forecast**', route =>
-    route.fulfill({
-      json: {
-        ...forecast,
-        daily: [
-          {
-            date: fixtureLocalDate(),
-            tempMin: 19,
-            tempMax: 27,
-            icon: '02d',
-            description: 'partly cloudy',
-            pop: 10,
-          },
-        ],
-      },
-    })
+    route.fulfill({ json: { ...forecast, daily: englishDaily } })
+  );
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ json: { ...hourlyForecast, daily: englishDaily } })
   );
 
   await page.goto('/istanbul');
@@ -2729,31 +2732,31 @@ test('mobile daily forecast reflows instead of clipping at 200 percent text size
       })
     );
   });
+  const resizedDaily = [
+    {
+      date: fixtureLocalDate(),
+      tempMin: 20,
+      tempMax: 28,
+      icon: '11d',
+      description: 'thunderstorms with heavy rain',
+      pop: 73,
+    },
+    {
+      date: fixtureLocalDate(1),
+      tempMin: 18,
+      tempMax: 25,
+      icon: '10d',
+      description: 'partly cloudy with scattered showers',
+      pop: 48,
+    },
+  ];
   await page.unroute('**/api/v1/weather/forecast**');
   await page.route('**/api/v1/weather/forecast**', route =>
-    route.fulfill({
-      json: {
-        ...forecast,
-        daily: [
-          {
-            date: fixtureLocalDate(),
-            tempMin: 20,
-            tempMax: 28,
-            icon: '11d',
-            description: 'thunderstorms with heavy rain',
-            pop: 73,
-          },
-          {
-            date: fixtureLocalDate(1),
-            tempMin: 18,
-            tempMax: 25,
-            icon: '10d',
-            description: 'partly cloudy with scattered showers',
-            pop: 48,
-          },
-        ],
-      },
-    })
+    route.fulfill({ json: { ...forecast, daily: resizedDaily } })
+  );
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ json: { ...hourlyForecast, daily: resizedDaily } })
   );
   await page.goto('/istanbul');
   await page.locator('html').evaluate(element => {
@@ -3707,32 +3710,32 @@ test('lazy forecast atlas renders hourly and daily guidance after city data load
 
 test('desktop daily forecast keeps full condition labels readable', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop daily forecast layout assertion');
+  const desktopDaily = [
+    {
+      date: fixtureLocalDate(),
+      tempMin: 20,
+      tempMax: 28,
+      icon: '02d',
+      description: 'parçalı bulutlu',
+      pop: 10,
+    },
+    {
+      date: fixtureLocalDate(1),
+      tempMin: 17,
+      tempMax: 23,
+      icon: '11d',
+      description: 'gök gürültülü fırtına',
+      pop: 73,
+      precipitationMm: 11.6,
+    },
+  ];
   await page.unroute('**/api/v1/weather/forecast**');
   await page.route('**/api/v1/weather/forecast**', route =>
-    route.fulfill({
-      json: {
-        ...forecast,
-        daily: [
-          {
-            date: fixtureLocalDate(),
-            tempMin: 20,
-            tempMax: 28,
-            icon: '02d',
-            description: 'parçalı bulutlu',
-            pop: 10,
-          },
-          {
-            date: fixtureLocalDate(1),
-            tempMin: 17,
-            tempMax: 23,
-            icon: '11d',
-            description: 'gök gürültülü fırtına',
-            pop: 73,
-            precipitationMm: 11.6,
-          },
-        ],
-      },
-    })
+    route.fulfill({ json: { ...forecast, daily: desktopDaily } })
+  );
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ json: { ...hourlyForecast, daily: desktopDaily } })
   );
 
   await page.goto('/istanbul');
