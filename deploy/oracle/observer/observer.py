@@ -157,16 +157,20 @@ def extract_boot_asset_paths(html: Any) -> list[str]:
     return sorted(assets)
 
 
-def collect_boot_assets(root: dict[str, Any]) -> dict[str, Any]:
-    paths = extract_boot_asset_paths(root.get('text'))
+def collect_boot_assets(root: dict[str, Any], city: dict[str, Any] | None = None) -> dict[str, Any]:
+    root_paths = extract_boot_asset_paths(root.get('text'))
+    city_paths = extract_boot_asset_paths(city.get('text')) if city is not None else root_paths
+    paths = sorted(set(root_paths) | set(city_paths))
     failed: list[dict[str, Any]] = []
     for path in paths[:32]:
         result = http_get(f'https://hava81.zekiakgul.dev{path}', timeout=4.0)
         if result.get('status') != 200:
             failed.append({'path': path, **slim_http(result)})
     return {
-        'ok': bool(paths) and not failed and len(paths) <= 32,
+        'ok': bool(root_paths) and bool(city_paths) and not failed and len(paths) <= 32,
         'count': len(paths),
+        'root_count': len(root_paths),
+        'city_count': len(city_paths),
         'failed': failed,
         'truncated': len(paths) > 32,
     }
@@ -191,7 +195,7 @@ def collect_production() -> dict[str, Any]:
         'https://api.hava81.zekiakgul.dev/api/v1/health/ready',
         headers={'Origin': 'https://hava81.zekiakgul.dev'},
     )
-    boot_assets = collect_boot_assets(root)
+    boot_assets = collect_boot_assets(root, city)
     ready_json = ready.get('json') if isinstance(ready.get('json'), dict) else {}
     ready_headers = ready.get('headers') or {}
     cors_value = ready_headers.get('access-control-allow-origin')
