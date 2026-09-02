@@ -753,3 +753,8 @@ Legacy favorites may carry the temperature/icon observed on the last visit, but 
 ## 2026-09-02 — The map must not preserve an expired current-temperature marker
 
 The selected-city map marker is a current observation surface because it renders the current temperature and condition. Reuse a shared current-weather freshness contract (provider TTL, 5-minute fallback, 60-second future-skew ceiling), re-evaluate at provider expiry and visible-tab resume, and replace expired temperature/condition content with an explicit unavailable observation marker while keeping the city location navigable. Do not refresh timestamps, poll from the map, synthesize weather, or hide static featured-city navigation.
+
+### 2026-09-02 — Prefer provider observation freshness over client receipt age
+- Current-weather refresh eligibility must use the provider evidence timestamp (`meta.fetchedAt`) and TTL when available, not merely the moment the browser received the response.
+- A provider-cached observation can already be expired when it reaches the client; treating receipt time as freshness would unnecessarily preserve expired evidence for another client-side TTL window.
+- Reuse the shared `getCurrentWeatherFreshness` contract so map rendering and refresh eligibility agree on TTL, future-skew, and fail-closed semantics. Client receipt age remains only a compatibility fallback for legacy payloads without provider metadata.
