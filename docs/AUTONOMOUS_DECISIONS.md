@@ -841,3 +841,9 @@ The hourly forecast is a continuous evidence surface, not a stack of dashboard c
 
 ## 2026-09-02 — Browser CI does not reinstall OS dependencies on every hosted run
 GitHub's current `ubuntu-24.04` hosted image already contains the core Chromium runtime libraries required by Hava81's Playwright suite, while the repo separately caches the version-keyed Playwright Chromium bundle. Do not run `playwright install --with-deps` on every Browser job: it invokes apt and can spend the full job timeout downloading optional font packages from a slow mirror. Use `playwright install chromium` to materialize/verify the version-keyed browser and let the actual browser suite fail clearly if the hosted image ever loses a required shared library. Keep the cache key tied to `package-lock.json` so browser-version changes cannot silently reuse an incompatible binary.
+
+## 2026-09-02 — The tablet activity reflow includes the exact 768px boundary
+Responsive breakpoints that protect Activity Planner text reflow must include the exact 48rem/768px tablet width rather than stopping at 47.99rem. Keep the existing desktop layout above that boundary; this is a presentation/accessibility correction only.
+
+## 2026-09-02 — Preserve the normal 768px Activity Planner layout
+The exact 768px viewport is intentionally on the wider side of the Activity Planner viewport breakpoint so its normal-size cards remain side by side. Enlarged-text resilience at that width must be proven by content reflow rather than forcing the entire 768px layout into the narrow/mobile presentation. Keep `47.99rem` as the viewport breakpoint and retain a dedicated English 200%-text containment regression. This supersedes the immediately preceding 48rem breakpoint decision after hosted Browser CI exposed its normal-size regression.

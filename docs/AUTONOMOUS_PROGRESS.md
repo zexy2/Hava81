@@ -2513,3 +2513,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Read the exact hosted job log: the Chromium cache was a hit (~269 MB restored), all core browser libraries were already installed on `ubuntu-24.04`, and apt then spent ~9m48s fetching nine extra font packages from the Azure Ubuntu mirror before the job was cancelled.
 - Changed only the Browser setup step to `npx playwright install chromium`, preserving the lockfile-keyed browser cache and the full E2E gate while avoiding per-run apt dependency/font installation. A future missing runtime library will fail in the real browser launch instead of being masked.
 - First hosted validation on pre-#665 base completed successfully: Browser setup skipped apt, Chromium materialization passed, and the full E2E job completed green. The branch is now rebased onto current main and must pass exact-head gates again before merge.
+
+## 2026-09-02 13:00 TRT — include exact 768px tablet width in Activity Planner reflow
+- Audited the established Activity Planner responsive boundary and initially widened the two `47.99rem` media queries to `48rem`, plus a 768px English 200%-text Chromium regression.
+- Hosted Browser CI subsequently proved that breakpoint implementation regressed the normal 768px layout; see the corrective checkpoint below.
+
+## 2026-09-02 13:24 TRT — corrected the 768px Activity Planner approach after hosted regression
+- Exact-head Browser CI on PR #668 caught a real regression in the first approach: widening the viewport breakpoint to `48rem` stacked the first two activity cards even at normal text size, violating the established 768px tablet layout (`cardTops` differed by 242.28px).
+- Reverted both breakpoint changes to the intentional `47.99rem` boundary instead of weakening the existing regression. Kept the new English 768px/200%-text containment test, but removed the implementation-specific requirement that the header must switch to `flex-direction: column`; the contract is containment/readability, not a specific layout mechanism.
+- This branch now changes regression coverage/documentation only; no product CSS remains changed. Exact-head hosted Browser CI will determine whether current content-aware reflow already satisfies the English 200%-text case.
