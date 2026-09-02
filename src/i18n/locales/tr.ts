@@ -194,7 +194,7 @@ export const tr = {
           label: 'Şemsiye',
           yes: 'Evet',
           maybe: 'Yanında olsun',
-          no: 'Gerekmez',
+          no: 'Tahmin gerektirmiyor',
           unknown: 'Veri yok',
         },
         wind: { label: 'Rüzgâr', strong: 'Güçlü', caution: 'Dikkat', normal: 'Normal' },

@@ -193,7 +193,7 @@ export const en = {
           label: 'Umbrella',
           yes: 'Yes',
           maybe: 'Take one',
-          no: 'Not needed',
+          no: "Forecast doesn't indicate one",
           unknown: 'No data',
         },
         wind: { label: 'Wind', strong: 'Strong', caution: 'Caution', normal: 'Normal' },
