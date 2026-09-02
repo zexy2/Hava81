@@ -2,6 +2,7 @@
 set -euo pipefail
 
 apply=false
+audit=false
 parent=""
 older_than_hours=""
 repo="$(git rev-parse --show-toplevel)"
@@ -10,7 +11,7 @@ archive_prefix="refs/archive/hava81-standalone"
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/cleanup-stale-standalone-checkouts.sh --parent=DIR --older-than-hours=N [--apply]
+Usage: scripts/cleanup-stale-standalone-checkouts.sh --parent=DIR --older-than-hours=N [--apply] [--audit]
 
 Dry-run by default. Scans only direct child directories named `hava81-*` under
 an explicit parent and considers standalone Git clones only (`.git` must be a
@@ -25,12 +26,17 @@ With --apply, the exact HEAD is first preserved under
 refs/archive/hava81-standalone/<branch>, then every eligibility condition is
 rechecked immediately before the standalone directory is removed. Existing
 archive refs must already point at the same commit or the candidate is skipped.
+
+`--audit` is read-only and reports how many matching directories are standalone
+clones, linked worktrees, or directories without Git metadata. It does not widen
+cleanup eligibility or reveal file contents.
 USAGE
 }
 
 for arg in "$@"; do
   case "$arg" in
     --apply) apply=true ;;
+    --audit) audit=true ;;
     --parent=*) parent="${arg#*=}" ;;
     --older-than-hours=*) older_than_hours="${arg#*=}" ;;
     -h|--help) usage; exit 0 ;;
@@ -116,8 +122,21 @@ candidate_bytes=0
 removed_count=0
 removed_bytes=0
 skipped_apply_count=0
+scanned_count=0
+standalone_count=0
+linked_count=0
+without_git_count=0
 
 while IFS= read -r -d '' candidate; do
+  scanned_count=$((scanned_count + 1))
+  if [[ -d "$candidate/.git" && ! -L "$candidate/.git" ]]; then
+    standalone_count=$((standalone_count + 1))
+  elif [[ -f "$candidate/.git" && ! -L "$candidate/.git" ]]; then
+    linked_count=$((linked_count + 1))
+  else
+    without_git_count=$((without_git_count + 1))
+  fi
+
   eligibility="$(candidate_is_eligible "$candidate" || true)"
   [[ -n "$eligibility" ]] || continue
   IFS=$'\t' read -r head branch archive_ref age_seconds <<<"$eligibility"
@@ -162,4 +181,8 @@ if [[ "$apply" == true ]]; then
   printf 'Removed %d stale standalone Hava81 checkouts (%d bytes); exact HEAD archive refs were preserved; skipped %d changed/failed candidates.\n' "$removed_count" "$removed_bytes" "$skipped_apply_count"
 else
   printf 'Dry run: %d stale standalone Hava81 checkouts (%d bytes) are eligible; no files or refs were changed.\n' "$candidate_count" "$candidate_bytes"
+fi
+
+if [[ "$audit" == true ]]; then
+  printf 'Audit: scanned=%d standalone_clones=%d linked_worktrees=%d without_git_metadata=%d.\n' "$scanned_count" "$standalone_count" "$linked_count" "$without_git_count"
 fi

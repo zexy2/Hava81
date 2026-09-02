@@ -67,6 +67,9 @@ touch -d '3 days ago' "$parent/hava81-wrong-origin"
 git -C "$primary" worktree add -b linked-old "$parent/hava81-linked" HEAD >/dev/null
 touch -d '3 days ago' "$parent/hava81-linked"
 
+mkdir "$parent/hava81-no-git"
+touch -d '3 days ago' "$parent/hava81-no-git"
+
 mkdir -p "$primary/scripts"
 cp "$cleanup_script" "$primary/scripts/cleanup-stale-standalone-checkouts.sh"
 chmod +x "$primary/scripts/cleanup-stale-standalone-checkouts.sh"
@@ -85,6 +88,11 @@ if git -C "$primary" show-ref --verify --quiet refs/archive/hava81-standalone/ar
   exit 1
 fi
 
+audit="$(cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --audit)"
+grep -Fq 'Audit: scanned=8 standalone_clones=6 linked_worktrees=1 without_git_metadata=1.' <<<"$audit"
+grep -Fq "$parent/hava81-safe" <<<"$audit"
+[[ -d "$parent/hava81-no-git" ]]
+
 (cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --apply >/dev/null)
 [[ ! -e "$parent/hava81-safe" ]]
 [[ -d "$parent/hava81-unmerged" ]]
@@ -93,6 +101,7 @@ fi
 [[ -d "$parent/hava81-recent" ]]
 [[ -d "$parent/hava81-wrong-origin" ]]
 [[ -d "$parent/hava81-linked" ]]
+[[ -d "$parent/hava81-no-git" ]]
 [[ "$(git -C "$primary" rev-parse refs/archive/hava81-standalone/archive-me)" == "$safe_head" ]]
 
 if (cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=0 >/dev/null 2>&1); then
