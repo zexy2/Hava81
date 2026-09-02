@@ -86,6 +86,30 @@ describe('useWeather', () => {
     });
   });
 
+  it('refreshes provider-expired city evidence on resume even when the response was just received', async () => {
+    const now = Date.now();
+    (weatherService.getCurrentWeather as Mock).mockResolvedValueOnce({
+      cityName: 'İzmir',
+      country: 'TR',
+      temperature: 22,
+      coordinates: { lat: 38.42, lon: 27.14 },
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date(now - 301_000),
+        freshForSeconds: 300,
+        timezoneOffsetSeconds: 10_800,
+      },
+    });
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(result.current.isStale).toBe(true);
+    expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    await waitFor(() => expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(2));
+  });
+
   it('refreshes stale city weather when a long-lived tab becomes visible again', async () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));

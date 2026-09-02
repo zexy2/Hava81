@@ -8,6 +8,7 @@ import { weatherService } from '../api/weatherService';
 import i18n from '../i18n';
 import { TURKISH_CITIES } from '../constants/cities';
 import { citySlug } from '../utils/cityRoute';
+import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import { useAsync } from './useAsync';
 import { useLocalStorage } from './useLocalStorage';
 import { ErrorCode, type NormalizedWeatherData, type AppError } from '../types';
@@ -50,7 +51,15 @@ interface UseWeatherReturn {
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 const MAX_CACHE_FUTURE_SKEW_MS = 60_000;
-const isWeatherResultStale = (lastUpdated: Date | null, now = Date.now()): boolean => {
+const isWeatherResultStale = (
+  lastUpdated: Date | null,
+  weather: NormalizedWeatherData | null = null,
+  now = Date.now()
+): boolean => {
+  if (weather?.meta?.fetchedAt) {
+    return !getCurrentWeatherFreshness(weather.meta, now).fresh;
+  }
+
   if (!lastUpdated) return true;
   const age = now - lastUpdated.getTime();
   return age < -MAX_CACHE_FUTURE_SKEW_MS || age > STALE_TIME;
@@ -362,8 +371,9 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     locationAsync.clearError();
   }, [weatherAsync, locationAsync]);
 
-  // Check if data is stale
-  const isStale = isWeatherResultStale(lastUpdated);
+  // Check if the provider observation itself is stale before falling back to client receipt time.
+  const activeWeather = weatherAsync.data || locationAsync.data;
+  const isStale = isWeatherResultStale(lastUpdated, activeWeather);
 
   // Fetch initial city weather
   useEffect(() => {
@@ -417,7 +427,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       if (
         document.visibilityState !== 'visible' ||
         navigator.onLine === false ||
-        !isWeatherResultStale(lastUpdated) ||
+        !isWeatherResultStale(lastUpdated, weatherAsync.data || locationAsync.data) ||
         weatherAsync.isLoading ||
         locationAsync.isLoading
       ) {
@@ -480,7 +490,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   return {
     // State
     city,
-    weather: weatherAsync.data || locationAsync.data,
+    weather: activeWeather,
     error,
     isLoading,
 

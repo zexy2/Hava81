@@ -10,7 +10,8 @@ export interface CurrentWeatherFreshnessState {
 }
 
 export function getCurrentWeatherFreshness(
-  meta: CurrentWeatherMeta | null
+  meta: CurrentWeatherMeta | null,
+  now = Date.now()
 ): CurrentWeatherFreshnessState {
   if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null };
   const fetchedAtMs =
@@ -23,8 +24,8 @@ export function getCurrentWeatherFreshness(
     meta.freshForSeconds > 0
       ? meta.freshForSeconds
       : CURRENT_FRESHNESS_FALLBACK_SECONDS;
-  const ageMs = Date.now() - fetchedAtMs;
-  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
+  const ageMs = now - fetchedAtMs;
+  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - now;
   const fresh = ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
 
   return {
