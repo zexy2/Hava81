@@ -3963,6 +3963,36 @@ test('desktop comparison entry works with two saved cities', async ({ page }, te
 });
 
 
+test('desktop map frame follows editorial surface geometry', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop map editorial geometry regression');
+  await page.goto('/istanbul');
+  await page.locator('.atlas-icon-button--map').click();
+
+  const map = page.locator('.weather-map__container');
+  await expect(map).toBeVisible();
+  const geometry = await map.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      borderTop: parseFloat(style.borderTopWidth),
+      borderRight: parseFloat(style.borderRightWidth),
+      borderBottom: parseFloat(style.borderBottomWidth),
+      borderLeft: parseFloat(style.borderLeftWidth),
+      radius: parseFloat(style.borderRadius),
+      shadow: style.boxShadow,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(geometry.borderTop).toBeGreaterThanOrEqual(1);
+  expect(geometry.borderRight).toBeGreaterThanOrEqual(1);
+  expect(geometry.borderBottom).toBeGreaterThanOrEqual(1);
+  expect(geometry.borderLeft).toBeGreaterThanOrEqual(1);
+  expect(geometry.radius).toBe(0);
+  expect(geometry.shadow).toBe('none');
+  expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+});
+
 test('mobile map header reflows at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile map text-resize regression');
   await page.goto('/istanbul');

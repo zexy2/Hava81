@@ -2593,3 +2593,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Flattened only presentation geometry for the planner shell, activity result rows, preferred-time surface and score-explanation surface: transparent backgrounds, block-axis rules, square corners and no card hover elevation. Activity scores, band colors, data, controls and decision logic are unchanged.
 - Extended the dedicated 390px/200%-text browser regression to lock computed planner/card/window/explanation geometry alongside the existing overflow assertions.
 - git diff --check passes. Local Node dependencies are intentionally absent under disk pressure, so exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
+
+
+### 2026-09-02 16:18 TRT — flatten the desktop weather-map frame
+- Continued from exact post-#679 main `1acc7df754c4d9fa509d6b5df40ed042ebfa847c` in isolated branch `automation/hava81-run11-1610` while the post-merge production pipeline propagates independently.
+- Audited the remaining legacy visual geometry after the editorial passes. The map panel itself was already flat, but its nested desktop map viewport still carried the older large rounded-card frame; mobile already removed that radius at its breakpoint.
+- Flattened only the map viewport boundary to square corners and explicit no-shadow while retaining the real map border, marker elevation, popup elevation, Leaflet controls, attribution, map dimensions and all weather/provider semantics.
+- Added a desktop Chromium regression locking the map frame border/radius/shadow contract and horizontal containment. Host Node dependencies remain intentionally absent under disk pressure; `git diff --check` is the local gate and exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.

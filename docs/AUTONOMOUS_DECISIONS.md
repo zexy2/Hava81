@@ -876,3 +876,7 @@ Weather recovery/status messages should read as editorial callouts rather than e
 
 ### 2026-09-02 — Activity Planner uses editorial surfaces instead of dashboard cards
 Activity guidance is evidence and planning content, not a stack of floating dashboard cards. Keep the planner, activity result rows, preferred-time window, and score explanation flat with block-axis rules, square corners, and no elevation. Preserve activity scores, risk bands, controls, 44px targets, responsive reflow, and all weather/freshness semantics; chips and form controls remain interactive affordances rather than being flattened into text.
+
+
+### 2026-09-02 — The weather-map viewport uses a flat editorial frame
+The map is a primary evidence surface inside an already-flat map panel, so its desktop viewport should not reintroduce the legacy rounded/elevated dashboard-card treatment. Keep a visible map boundary, square corners and no container shadow; marker and popup elevation remain functional spatial cues, and map values, attribution, controls, touch targets and provider semantics are unchanged.
