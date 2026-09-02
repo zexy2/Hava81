@@ -3485,6 +3485,17 @@ test('browser and install surfaces use Hava81 branding assets', async ({ page },
   expect(samples[5]).toMatchObject({ width: 1200, height: 630 });
 });
 
+test('PWA metadata advertises standard standalone capability', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single PWA metadata coverage');
+
+  await page.goto('/istanbul');
+  await expect(page.locator('meta[name="mobile-web-app-capable"]')).toHaveAttribute('content', 'yes');
+  await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute(
+    'content',
+    'yes'
+  );
+});
+
 test('theme choice keeps browser chrome color in sync', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser theme metadata coverage');
 
