@@ -431,7 +431,7 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    const airQualityLabel = screen.getByText('Hava kalitesi');
+    const airQualityLabel = screen.getByText(/Hava Kalitesi/i);
     expect(airQualityLabel.parentElement).toHaveTextContent('4/5');
     expect(screen.getByText(/Hava kalitesi zayıf \(AQI 4\/5\)/i)).toBeInTheDocument();
 
