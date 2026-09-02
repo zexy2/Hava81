@@ -53,6 +53,10 @@ export function WeatherDecisionField({
   const temperatureSymbol = getTemperatureSymbol();
   const windSpeedSymbol = getWindSpeedSymbol();
   const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
+  const uvFormatter = useMemo(
+    () => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }),
+    [locale]
+  );
   const coordinateFormatter = useMemo(
     () =>
       new Intl.NumberFormat(locale, {
@@ -189,7 +193,7 @@ export function WeatherDecisionField({
         return t('hava81.decision.actions.uv', {
           defaultValue:
             'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
-          uv: decision.value,
+          uv: uvFormatter.format(decision.value),
         });
       case 'outdoor-window':
         return t('hava81.decision.actions.outdoor', {

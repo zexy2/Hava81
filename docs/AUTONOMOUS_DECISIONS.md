@@ -1075,3 +1075,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Daily Plan best-time/range labels and shared timing text must explicitly call the selected interval a weather time/window.
 
 **Why:** The timing engine ranks meteorological conditions only. Share targets and isolated metric labels can be consumed without the nearby score explanation, so the evidence boundary must travel with the timing claim itself.
+
+### 2026-09-03 02:34 TRT — display modeled UV guidance at one-decimal precision
+
+**Decision:** First-viewport modeled UV guidance should format the provider/model maximum to at most one decimal in the active locale, matching the dedicated context signal surface rather than exposing raw floating-point precision.
+
+**Why:** The decision threshold uses the original numeric evidence, but values such as `6.35` imply more display precision than the user can act on and are visually inconsistent with the existing one-decimal UV metric. Formatting only the rendered value preserves all thresholds, provider evidence and safety semantics.
