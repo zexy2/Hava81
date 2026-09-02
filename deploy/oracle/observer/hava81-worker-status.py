@@ -18,7 +18,7 @@ free_gib = round(free_bytes / (1024 ** 3), 1) if isinstance(free_bytes, (int, fl
 print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} free_gib={free_gib} warnings={host.get('warnings', [])}")
 print(f"nginx_api_port: {(prod.get('nginx') or {}).get('port')} expected={(prod.get('nginx') or {}).get('expected')}")
 boot_assets = prod.get('boot_assets') or {}
-print(f"boot_assets: ok={boot_assets.get('ok')} count={boot_assets.get('count')} failed={[item.get('path') for item in boot_assets.get('failed', [])]}")
+print(f"boot_assets: ok={boot_assets.get('ok')} count={boot_assets.get('count')} root={boot_assets.get('root_count')} city={boot_assets.get('city_count')} failed={[item.get('path') for item in boot_assets.get('failed', [])]}")
 ready = prod.get('api_ready') or {}
 print(f"api_ready: http={ready.get('status')} reported={ready.get('reported_status')} age_s={ready.get('age_seconds')} cache={ready.get('cache_control')} provider={ready.get('provider')} circuit={ready.get('provider_state')}")
 print(f"cors: {(prod.get('cors') or {}).get('allow_origin')} ok={(prod.get('cors') or {}).get('ok')}")
