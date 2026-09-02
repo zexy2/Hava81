@@ -73,6 +73,17 @@ export function WeatherDecisionField({
       }),
     [locale]
   );
+  const compactDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+      }),
+    [locale]
+  );
   const timeFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
     [locale]
@@ -116,6 +127,9 @@ export function WeatherDecisionField({
   const observedAtText = Number.isNaN(observedAt.getTime())
     ? '—'
     : dateFormatter.format(atLocationTime(observedAt));
+  const compactObservedAtText = Number.isNaN(observedAt.getTime())
+    ? '—'
+    : compactDateFormatter.format(atLocationTime(observedAt));
   const observedAtDateTime = Number.isNaN(observedAt.getTime())
     ? undefined
     : observedAt.toISOString();
@@ -306,7 +320,12 @@ export function WeatherDecisionField({
         </div>
 
         <div className="hava81-decision-field__atlas-meta">
-          <time dateTime={observedAtDateTime}>{observedAtText}</time>
+          <time className="hava81-decision-field__observed-full" dateTime={observedAtDateTime}>
+            {observedAtText}
+          </time>
+          <time className="hava81-decision-field__observed-compact" dateTime={observedAtDateTime}>
+            {compactObservedAtText}
+          </time>
           <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
           <span className="hava81-decision-field__coordinate-meta">
             {t('hava81.decision.latitude', { defaultValue: 'Enlem' })}{' '}

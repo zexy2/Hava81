@@ -93,6 +93,10 @@
   letter-spacing: 0.04em;
 }
 
+.hava81-decision-field__observed-compact {
+  display: none;
+}
+
 .hava81-decision-field__current {
   min-width: 0;
 }
@@ -241,8 +245,13 @@
 }
 
 @media (max-width: 39.99rem) {
-  .hava81-decision-field__coordinate-meta {
+  .hava81-decision-field__coordinate-meta,
+  .hava81-decision-field__observed-full {
     display: none;
+  }
+
+  .hava81-decision-field__observed-compact {
+    display: inline;
   }
 }
 
