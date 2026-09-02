@@ -264,6 +264,7 @@ def collect_host() -> dict[str, Any]:
     return {
         'disk': {
             'free_bytes': free_bytes,
+            'used_bytes': used_bytes,
             'total_bytes': total_bytes,
             'used_percent': used_percent,
             'minimum_free_bytes': MINIMUM_ROOT_FREE_BYTES,
