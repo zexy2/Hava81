@@ -2,10 +2,11 @@
   display: grid;
   gap: var(--space-md);
   padding: var(--space-xl);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-card, var(--radius-md));
-  background: var(--color-atlas-paper);
-  box-shadow: var(--shadow-card, none);
+  border-block: 1px solid var(--color-atlas-line);
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .context-signals > header {
   display: flex;
