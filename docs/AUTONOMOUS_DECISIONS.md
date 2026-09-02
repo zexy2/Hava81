@@ -721,3 +721,8 @@ A city-comparison row combines current weather, hourly forecast evidence, and op
 ## 2026-09-02 — First-viewport modeled guidance fails closed when its evidence expires
 
 The primary Weather Decision Field is an action surface, not merely a historical weather readout. Keep current measurements visible with their existing freshness label, but stop presenting modeled rain/wind/temperature/UV/outdoor recommendations when current weather evidence is invalid/stale or the hourly forecast metadata is missing/expired. Use provider freshness metadata and the shared forecast freshness contract; do not extend timestamps, synthesize replacement values, or silently refetch from the presentation component. Re-evaluate at the exact forecast TTL boundary and when a backgrounded tab becomes visible.
+
+
+## 2026-09-02 — First-viewport guidance freshness follows the hourly evidence actually rendered
+
+When the dedicated one-hour forecast upgrades the baseline three-hour forecast, the primary Weather Decision Field must validate freshness against the metadata that belongs to that upgraded hourly series. Prefer `displayMeta` with the existing baseline `meta` fallback so the action surface cannot be incorrectly suppressed by stale metadata from a different provider/evidence snapshot while fresh hourly evidence is driving its modeled guidance. This changes no weather values, provider timestamps, scoring thresholds, refresh cadence, MGM semantics, or official-warning behavior.
