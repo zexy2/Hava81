@@ -1153,7 +1153,10 @@ test('desktop daily plan reads as one editorial planning surface', async ({ page
       impactsTop: parseFloat(impactsStyle.borderTopWidth),
       impactRadius: impactStyle.borderRadius,
       impactShadow: impactStyle.boxShadow,
-      slotsBorder: parseFloat(slotsStyle.borderTopWidth),
+      slotsTop: parseFloat(slotsStyle.borderTopWidth),
+      slotsBottom: parseFloat(slotsStyle.borderBottomWidth),
+      slotsInline: parseFloat(slotsStyle.borderLeftWidth),
+      slotsRadius: slotsStyle.borderRadius,
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
     };
@@ -1174,7 +1177,10 @@ test('desktop daily plan reads as one editorial planning surface', async ({ page
   expect(styles.impactsTop).toBeGreaterThanOrEqual(1);
   expect(parseFloat(styles.impactRadius)).toBe(0);
   expect(styles.impactShadow).toBe('none');
-  expect(styles.slotsBorder).toBeGreaterThanOrEqual(1);
+  expect(styles.slotsTop).toBeGreaterThanOrEqual(1);
+  expect(styles.slotsBottom).toBeGreaterThanOrEqual(1);
+  expect(styles.slotsInline).toBe(0);
+  expect(parseFloat(styles.slotsRadius)).toBe(0);
   expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
 });
 
