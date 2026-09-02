@@ -1073,6 +1073,82 @@ test('mobile daily plan reflows at 200% text size', async ({ page }, testInfo) =
   expect(narrowState.shareFits).toBe(true);
 });
 
+test('desktop commute reads as one editorial travel surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop commute visual regression');
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({
+      json: {
+        ...hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          ...hourlyForecast.hourly[index],
+          time: fixtureIsoAtHour(index + 1),
+        })),
+      },
+    })
+  );
+  await page.clock.setFixedTime(new Date(fixtureNow));
+  const localFixtureNow = fixtureNow + current.meta.timezoneOffsetSeconds * 1000;
+  const clockAtOffset = (offsetHours: number) =>
+    new Date(localFixtureNow + offsetHours * 60 * 60_000).toISOString().slice(11, 16);
+
+  await page.goto('/istanbul');
+  await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(clockAtOffset(2));
+  await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(clockAtOffset(5));
+  await expect(page.locator('.commute-plan__verdict')).toBeVisible();
+
+  const commute = page.locator('.commute-plan');
+  await expect(commute).toBeVisible();
+  const styles = await commute.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const verdict = element.querySelector<HTMLElement>('.commute-plan__verdict');
+    const windows = element.querySelector<HTMLElement>('.commute-plan__windows');
+    const cards = Array.from(element.querySelectorAll<HTMLElement>('.commute-window'));
+    const input = element.querySelector<HTMLElement>('.commute-plan__times input');
+    if (!verdict || !windows || cards.length !== 2 || !input) {
+      throw new Error('Missing commute editorial regions');
+    }
+    const verdictStyle = getComputedStyle(verdict);
+    const windowsStyle = getComputedStyle(windows);
+    const firstCard = getComputedStyle(cards[0]);
+    const inputStyle = getComputedStyle(input);
+    return {
+      panelBackground: panel.backgroundColor,
+      panelRadius: panel.borderRadius,
+      panelTop: parseFloat(panel.borderTopWidth),
+      panelInline: parseFloat(panel.borderLeftWidth),
+      verdictRadius: verdictStyle.borderRadius,
+      verdictSignal: parseFloat(verdictStyle.borderLeftWidth),
+      windowsGap: parseFloat(windowsStyle.columnGap),
+      windowsTop: parseFloat(windowsStyle.borderTopWidth),
+      cardRadius: firstCard.borderRadius,
+      cardBorder: parseFloat(firstCard.borderTopWidth),
+      cardShadow: firstCard.boxShadow,
+      inputRadius: inputStyle.borderRadius,
+      inputBorder: parseFloat(inputStyle.borderTopWidth),
+      inputHeight: input.getBoundingClientRect().height,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.panelRadius)).toBe(0);
+  expect(styles.panelTop).toBeGreaterThanOrEqual(1);
+  expect(styles.panelInline).toBe(0);
+  expect(parseFloat(styles.verdictRadius)).toBe(0);
+  expect(styles.verdictSignal).toBeGreaterThanOrEqual(4);
+  expect(styles.windowsGap).toBeGreaterThanOrEqual(1);
+  expect(styles.windowsTop).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.cardRadius)).toBe(0);
+  expect(styles.cardBorder).toBe(0);
+  expect(styles.cardShadow).toBe('none');
+  expect(parseFloat(styles.inputRadius)).toBeGreaterThan(0);
+  expect(styles.inputBorder).toBeGreaterThanOrEqual(1);
+  expect(styles.inputHeight).toBeGreaterThanOrEqual(44);
+  expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
+});
+
 test('commute time inputs stay inside their grid at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop commute input text-resize regression');
   await page.setViewportSize({ width: 1024, height: 900 });

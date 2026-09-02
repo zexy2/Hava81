@@ -1,10 +1,11 @@
 .commute-plan {
   display: grid;
   gap: 18px;
-  padding: clamp(20px, 3vw, 32px);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--card-radius, 18px);
-  background: var(--color-atlas-paper);
+  padding: clamp(20px, 3vw, 32px) 0;
+  border-block: 1px solid var(--color-atlas-line);
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .commute-plan__header {
@@ -56,8 +57,8 @@
   gap: 5px;
   padding: 16px 18px;
   border-inline-start: 4px solid var(--color-aegean);
-  border-radius: 10px;
-  background: var(--color-atlas-field);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--color-aegean) 7%, transparent);
 }
 
 .commute-plan__verdict[data-umbrella='take'] {
@@ -85,16 +86,18 @@
 .commute-plan__windows {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 1px;
+  background: var(--color-atlas-line);
+  border-block: 1px solid var(--color-atlas-line);
 }
 
 .commute-window {
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 1px solid var(--color-atlas-line);
-  border-radius: 12px;
-  background: var(--color-atlas-field);
+  border: 0;
+  border-radius: 0;
+  background: var(--color-atlas-paper);
 }
 
 .commute-window header {
