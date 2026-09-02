@@ -37,6 +37,8 @@ jobs:
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - name: Verify production observer contract
         run: python3 deploy/oracle/observer/test_observer.py
+      - name: Verify observer installer shell syntax
+        run: bash -n deploy/oracle/install-observer.sh
       - uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
