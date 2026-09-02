@@ -806,3 +806,7 @@ Modeled context payloads may expose freshness as top-level `fetchedAt` / `freshF
 
 ### 2026-09-02 — Pages deploy health requires coherence for the shell a normal navigation actually receives
 Exact-hash smoke checks prove the new release and its current boot assets have reached an edge, but a normal custom-domain navigation can briefly receive a cached prior HTML generation during propagation. Treat that state as healthy only when every hashed `/assets/` script/style/modulepreload referenced by the actually served navigation shell is still available. Keep the existing bounded propagation window and retained-generation strategy; do not change application cache semantics or hide persistent missing-asset failures.
+
+
+### 2026-09-02 — Versioned production-observer behavior is a required hosted CI contract
+The Oracle observer participates in merge/deploy decisions and production-incident detection, so its deterministic unittest suite must run in hosted pull-request CI rather than relying only on local/manual execution. Keep this gate fast and dependency-free inside the existing quality job; observer changes still require direct post-merge host validation before replacing the installed read-only collector.

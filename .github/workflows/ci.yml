@@ -35,6 +35,8 @@ jobs:
       - run: npm run test:ci
       - name: Verify safe worktree cleanup contract
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
+      - name: Verify production observer contract
+        run: python3 deploy/oracle/observer/test_observer.py
       - uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
