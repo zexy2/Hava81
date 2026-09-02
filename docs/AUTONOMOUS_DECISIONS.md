@@ -813,3 +813,6 @@ The Oracle observer participates in merge/deploy decisions and production-incide
 
 ### 2026-09-02 — Frontend observer health includes the boot assets referenced by the served HTML
 HTTP 200 for an SPA shell is insufficient evidence that the frontend can boot. The read-only production observer must parse the same-origin `/assets/` references from the root HTML it actually receives and require those hashed boot resources to return 200. Keep the check bounded and observational: cap asset fan-out, store only failure summaries, and do not mutate Pages, caches, application state, weather evidence, or API traffic.
+
+### 2026-09-02 — Production boot-asset health covers both core navigation shells
+Root-shell coherence alone is insufficient because GitHub Pages/custom-domain propagation can serve different cached HTML generations for `/` and `/istanbul/`. The read-only observer must require boot-asset evidence from both core shells and verify the bounded union of their same-origin hashed assets. A city shell that returns HTTP 200 but references an unavailable asset is a production frontend incident, not a healthy response. Keep fan-out bounded and do not alter Pages caches or application traffic to perform this check.

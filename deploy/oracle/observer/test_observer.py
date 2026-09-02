@@ -217,6 +217,38 @@ class ObserverBootAssetTests(unittest.TestCase):
         self.assertEqual(result['count'], 3)
         self.assertEqual([failure['path'] for failure in result['failed']], ['/assets/missing.js'])
 
+    def test_city_shell_boot_asset_is_verified(self) -> None:
+        original_http_get = observer.http_get
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            status = 404 if url.endswith('/assets/city-missing.js') else 200
+            return {
+                'ok': status == 200,
+                'status': status,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': None,
+                'error': None if status == 200 else 'HTTP 404',
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.collect_boot_assets(
+                {'text': '<script src="/assets/index.js"></script>'},
+                {'text': '<script src="/assets/city-missing.js"></script>'},
+            )
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['root_count'], 1)
+        self.assertEqual(result['city_count'], 1)
+        self.assertEqual(
+            [failure['path'] for failure in result['failed']],
+            ['/assets/city-missing.js'],
+        )
+
 
 class ObserverNginxTargetTests(unittest.TestCase):
     def test_follows_validated_blue_green_state_port(self) -> None:
