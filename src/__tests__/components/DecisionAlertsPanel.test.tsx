@@ -291,6 +291,45 @@ describe('DecisionAlertsPanel', () => {
     );
   });
 
+  it('does not deliver after evidence expires while service-worker readiness is pending', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    weather.meta.fetchedAt = new Date();
+    weather.meta.freshForSeconds = 1;
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        ready: new Promise(resolve => {
+          window.setTimeout(() => resolve({ showNotification }), 1_100);
+        }),
+      },
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+    const forecastMeta: ForecastMeta = {
+      ...freshForecastMeta(),
+      fetchedAt: new Date(),
+      freshForSeconds: 1,
+    };
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+
+    render(<DecisionAlertsPanel forecastMeta={forecastMeta} weather={weather} hourly={rainyHourly} />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_101);
+    });
+
+    expect(showNotification).not.toHaveBeenCalled();
+    expect(notification).not.toHaveBeenCalled();
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(false);
+  });
+
   it('releases the pending delivery guard after service-worker delivery fails', async () => {
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const showNotification = vi
