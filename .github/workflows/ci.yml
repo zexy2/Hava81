@@ -45,6 +45,7 @@ jobs:
   api:
     name: API test & build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -139,6 +140,7 @@ jobs:
   docker:
     name: Build Docker image
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [build, browser]
     if: github.ref == 'refs/heads/main'
     steps:
