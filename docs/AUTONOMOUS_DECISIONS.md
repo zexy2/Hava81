@@ -859,3 +859,7 @@ A forecast metadata object alone is not sufficient evidence for a forecast surfa
 
 ## 2026-09-02 — Partial same-city forecast recovery must not mix stale daily evidence with fresh hourly provenance
 Forecast Atlas presents one provider/freshness authority for both hourly and daily rows. Once a successful dedicated-hourly response becomes that visible authority, retain daily rows only when the same response supplies replacement daily evidence. Otherwise clear the daily series rather than presenting baseline or prior-generation values under the new hourly provenance. This fail-closed rule changes neither provider values nor retry semantics; it prevents cross-source and cross-generation evidence mixing.
+
+
+### 2026-09-02 — Optional environmental evidence must not block resilient forecast recovery
+Air quality and context signals enrich decisions but are not prerequisites for rendering a valid hourly forecast. When the baseline forecast fails and the dedicated hourly source succeeds, apply that core forecast as soon as its request resolves; await optional AQ/context evidence only afterward. Keep the overall loading lifecycle until optional requests settle, retain request-id guards before every state application, and preserve fail-closed behavior when neither forecast source succeeds. This changes response ordering only, not provider values, freshness windows, scoring, MGM semantics, or API topology.

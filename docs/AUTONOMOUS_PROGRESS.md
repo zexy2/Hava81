@@ -2559,3 +2559,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Confirmed the production `/weather/hourly` path normally returns Open-Meteo hourly plus its same-provider daily series when valid, while the global Playwright hourly fixture modeled only hourly rows. The new fail-closed provenance rule correctly cleared the unrelated baseline daily rows, exposing this stale fixture contract.
 - Updated the normal hourly E2E fixture to carry daily evidence, and daily-layout tests that customize forecast rows now override both forecast and hourly endpoints with the same daily series. Hourly-only provider degradation remains covered by the deterministic hook regressions and still clears daily rows.
 - `git diff --check` passes. No product runtime, weather values, provider semantics, freshness thresholds, retries, API topology or production state changed; exact-head hosted Browser/CI/CodeQL remain mandatory before merge.
+
+
+### 2026-09-02 14:51 TRT — let hourly recovery render before optional evidence settles
+- Continued from exact post-#671 main `fb7ce2d5a9bbbcea659d4d9911d221bc950cda6c` in isolated branch `automation/hava81-hourly-recovery-latency-1452` while the main production pipeline runs.
+- Audited `useForecast` recovery ordering and found that after a baseline forecast failure, a successful dedicated hourly response was held behind the same `Promise.all` as optional air-quality and context requests. A slow optional source could therefore delay otherwise valid core hourly guidance.
+- The hook now awaits/applies dedicated hourly evidence first, then awaits optional AQ/context results with a fresh request-id guard before applying them. The overall fetch/loading lifecycle still waits for optional completion, and neither provider values nor freshness semantics change.
+- Added a deterministic regression that keeps AQ/context promises unresolved, proves the hourly recovery is already visible and loading remains true, then resolves optional evidence and verifies normal completion.
+- Host Node dependencies are intentionally absent under disk pressure; `git diff --check` passes and exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
