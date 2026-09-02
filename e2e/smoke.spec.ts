@@ -3978,6 +3978,7 @@ test('mobile map header reflows at 200 percent text size', async ({ page }, test
     const panel = element.closest<HTMLElement>('#weather-map-region');
     if (!panel) throw new Error('Missing map panel');
     const panelRect = panel.getBoundingClientRect();
+    const panelStyle = getComputedStyle(panel);
     return {
       headerFits: fits(element),
       childrenFit: children.every(fits),
@@ -3985,6 +3986,13 @@ test('mobile map header reflows at 200 percent text size', async ({ page }, test
       panelRight: panelRect.right,
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
+      panelBackground: panelStyle.backgroundColor,
+      panelBorderTopWidth: panelStyle.borderTopWidth,
+      panelBorderRightWidth: panelStyle.borderRightWidth,
+      panelBorderBottomWidth: panelStyle.borderBottomWidth,
+      panelBorderLeftWidth: panelStyle.borderLeftWidth,
+      panelBorderRadius: panelStyle.borderRadius,
+      panelBoxShadow: panelStyle.boxShadow,
     };
   });
   expect(layout.headerFits).toBe(true);
@@ -3992,6 +4000,13 @@ test('mobile map header reflows at 200 percent text size', async ({ page }, test
   expect(layout.panelLeft).toBeGreaterThanOrEqual(0);
   expect(layout.panelRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(layout.panelBorderTopWidth).toBe('1px');
+  expect(layout.panelBorderRightWidth).toBe('0px');
+  expect(layout.panelBorderBottomWidth).toBe('1px');
+  expect(layout.panelBorderLeftWidth).toBe('0px');
+  expect(layout.panelBorderRadius).toBe('0px');
+  expect(layout.panelBoxShadow).toBe('none');
   await expect(header.getByRole('button', { name: 'Kapat' })).toBeVisible();
 });
 
