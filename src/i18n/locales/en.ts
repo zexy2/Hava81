@@ -167,7 +167,7 @@ export const en = {
       temp: 'Temperature',
       rain: 'Precipitation',
       aqi: 'Air quality',
-      bestTime: 'Best time',
+      bestTime: 'Best weather time',
     },
     dailyPlan: {
       eyebrow: 'Hava81 decision engine',

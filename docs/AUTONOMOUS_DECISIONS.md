@@ -1045,3 +1045,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Comparative `now or later` outing guidance must explicitly describe weather conditions rather than stating an unqualified comfort or advantage claim.
 
 **Why:** The comparison is produced from forecast/weather scoring and cannot evaluate non-weather constraints. Naming the meteorological scope keeps the decision useful without implying a broader lifestyle or safety judgment.
+
+### 2026-09-03 01:49 TRT — comparison best-time labels name the weather domain
+
+**Decision:** Saved-city comparison must label its recommended time as the best **weather** time rather than an unqualified best time.
+
+**Why:** The comparison derives its ranking from meteorological evidence and cannot judge work, sleep, transport, personal safety, or other non-weather constraints. The metric label should preserve that scope even when read apart from the surrounding winner note.

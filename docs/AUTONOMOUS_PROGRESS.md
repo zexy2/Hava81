@@ -2837,3 +2837,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed only Turkish/English now-or-later copy so each comparative statement explicitly names `hava koşulları` / `weather conditions` or `weather advantage`. No score, selected hour, forecast evidence, threshold, provider interpretation, severity, or recommendation algorithm changed.
 - Added a localization regression covering all three comparative states in both languages. `git diff --check` is required locally; exact-head hosted frontend/browser/Lighthouse/CodeQL remain mandatory before merge.
 - Branch/worktree: `automation/hava81-run12-0016`, rebased onto current main before merge.
+
+## 2026-09-03 01:49 TRT — scope comparison best-time label to weather evidence
+- Fresh observer state showed production healthy while root disk pressure remained active at ~94.4% used / ~2.5 GiB free; no production incident was present.
+- Started a clean isolated worktree from exact `origin/main` `108cba3124ab43925d376ab05213ee8480afade6`, preserving the dirty primary checkout untouched.
+- Audited saved-city comparison copy and found its otherwise weather-scoped winner card still labeled the recommended window simply `En iyi saat` / `Best time`. That standalone metric can be read as a broader lifestyle recommendation even though the underlying plan score uses weather evidence only.
+- Changed only the metric label to `En iyi hava saati` / `Best weather time` and added a localization regression locking the weather scope. No score, selected window, provider, freshness, weather value, threshold, or safety behavior changed.
+- `git diff --check` passes. Exact-head hosted frontend/unit/browser/Lighthouse/CodeQL gates remain mandatory before merge.
+- Next: commit/push/open this bounded trust-copy PR, continue independent work while hosted gates run, and require fresh observer + exact-head/mergeability verification before merge.
