@@ -2586,3 +2586,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed only presentation: subtle contextual field, 4px inline-start signal rule, square corners, and no shadow. Error callouts use vermilion; neutral forecast recovery uses Aegean. Roles, copy, retry/dismiss actions, and weather behavior are untouched.
 - Extended the existing 320px/200%-text Playwright regressions to lock the computed geometry. A real Chromium probe against production with the proposed CSS injected confirmed both variants fit at 320px/200%, all action buttons stay above 44px, no page errors occur, and the 4px/radius-0/shadow-none contract computes as intended.
 - Host disk remains under pressure, so no new dependency install was added for this pass; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
+
+### 2026-09-02 15:50 TRT — flatten Activity Planner into the editorial surface system
+- Continued from exact main ee18c94d624db3a9ce8a5460a7ed78dea510c7ef after PR #676 merged.
+- Audited remaining elevated Hava81 feature surfaces and found Activity Planner still used the legacy rounded card/shadow language while decision, forecast, commute, route, environment and comparison surfaces had moved to the editorial model.
+- Flattened only presentation geometry for the planner shell, activity result rows, preferred-time surface and score-explanation surface: transparent backgrounds, block-axis rules, square corners and no card hover elevation. Activity scores, band colors, data, controls and decision logic are unchanged.
+- Extended the dedicated 390px/200%-text browser regression to lock computed planner/card/window/explanation geometry alongside the existing overflow assertions.
+- git diff --check passes. Local Node dependencies are intentionally absent under disk pressure, so exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.

@@ -39,6 +39,29 @@ test('activity cards stay inside a 390px page at 200% text size', async ({ page 
   await cards.scrollIntoViewIfNeeded();
   await expect(cards.locator('.activity-card')).toHaveCount(2);
 
+  const editorialGeometry = await page.locator('.activity-planner').evaluate(element => {
+    const planner = getComputedStyle(element);
+    const card = getComputedStyle(element.querySelector('.activity-card') as HTMLElement);
+    const windowSurface = getComputedStyle(element.querySelector('.activity-planner__window') as HTMLElement);
+    const explanation = getComputedStyle(element.querySelector('.activity-planner__score-explanation') as HTMLElement);
+    return {
+      plannerRadius: planner.borderRadius,
+      plannerShadow: planner.boxShadow,
+      cardRadius: card.borderRadius,
+      cardShadow: card.boxShadow,
+      windowRadius: windowSurface.borderRadius,
+      explanationRadius: explanation.borderRadius,
+    };
+  });
+  expect(editorialGeometry).toEqual({
+    plannerRadius: '0px',
+    plannerShadow: 'none',
+    cardRadius: '0px',
+    cardShadow: 'none',
+    windowRadius: '0px',
+    explanationRadius: '0px',
+  });
+
   const layout = await cards.evaluate(element => ({
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,

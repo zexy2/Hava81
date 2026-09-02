@@ -873,3 +873,6 @@ Primary weather loading shells should preserve the same visual boundary model as
 
 ## 2026-09-02 — Recovery and error messages use editorial signal callouts
 Weather recovery/status messages should read as editorial callouts rather than elevated cards. Use a subtle contextual field, a 4px inline-start signal rule, square corners, and no shadow. Reserve Aegean for neutral recovery/status and vermilion for errors; keep the existing semantic roles, actions, and responsive behavior unchanged.
+
+### 2026-09-02 — Activity Planner uses editorial surfaces instead of dashboard cards
+Activity guidance is evidence and planning content, not a stack of floating dashboard cards. Keep the planner, activity result rows, preferred-time window, and score explanation flat with block-axis rules, square corners, and no elevation. Preserve activity scores, risk bands, controls, 44px targets, responsive reflow, and all weather/freshness semantics; chips and form controls remain interactive affordances rather than being flattened into text.
