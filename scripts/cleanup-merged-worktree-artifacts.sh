@@ -84,7 +84,11 @@ while IFS= read -r wt; do
   [[ "$(realpath "$wt")" != "$(realpath "$current")" ]] || continue
   [[ "$(realpath "$wt")" != "$(realpath "$primary")" ]] || continue
 
-  if [[ -n "$(git -C "$wt" status --porcelain --untracked-files=all 2>/dev/null)" ]]; then
+  status_output=""
+  if ! status_output="$(git -C "$wt" status --porcelain --untracked-files=all 2>/dev/null)"; then
+    continue
+  fi
+  if [[ -n "$status_output" ]]; then
     continue
   fi
 
