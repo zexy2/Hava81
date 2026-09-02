@@ -750,6 +750,9 @@ test('saved city add action keeps its focus ring inside the scroll rail', async 
   const add = page.locator('.city-tabs__add');
   await expect(add).toBeVisible();
   await add.focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(add).toBeFocused();
   const focusState = await add.evaluate(element => {
     const style = getComputedStyle(element);
     const parent = element.parentElement;
