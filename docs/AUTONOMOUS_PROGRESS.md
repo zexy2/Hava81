@@ -2793,3 +2793,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a mobile Playwright regression requiring the bottom-nav landmark and its first focusable button to precede the first main-content control in DOM/focus order.
 - `git diff --check` passes. Local Node/npm are intentionally unavailable on this disk-pressured host, so exact-head hosted frontend/browser/Lighthouse/CodeQL gates are mandatory before merge.
 - Next: commit/push/open this isolated accessibility PR; keep #707 validation and post-#706 main validation independent.
+
+## 2026-09-02 23:31 TRT — expose host incidents in compact observer status
+- Audited the post-#707 compact status contract from exact main `b1b436cdb1e07a8e389659ce388b8ac521288751`. The state correctly records `host.issues=['root_disk_pressure']` and `signals.host_incident=true`, but the human-readable command showed only `warnings=[]` and `production_incident`, which could make the active disk incident look less explicit than the underlying state.
+- Added `host.issues` to the disk line and `host_incident` to the signals line. No observer collection, thresholds, probes, health classification, timer behavior, API behavior, or mutation authority changed.
+- Local gates: observer suite 26/26 PASS, Python compile PASS, installer `bash -n` PASS, `git diff --check` PASS. Next: commit/push/open the bounded status-only PR and require exact-head hosted gates; do not install until merged green.

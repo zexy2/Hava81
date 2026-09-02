@@ -17,7 +17,7 @@ used_bytes = disk.get('used_bytes')
 free_bytes = disk.get('free_bytes')
 used_gib = round(used_bytes / (1024 ** 3), 1) if isinstance(used_bytes, (int, float)) else None
 free_gib = round(free_bytes / (1024 ** 3), 1) if isinstance(free_bytes, (int, float)) else None
-print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} used_gib={used_gib} free_gib={free_gib} warnings={host.get('warnings', [])}")
+print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} used_gib={used_gib} free_gib={free_gib} issues={host.get('issues', [])} warnings={host.get('warnings', [])}")
 print(f"nginx_api_port: {(prod.get('nginx') or {}).get('port')} expected={(prod.get('nginx') or {}).get('expected')}")
 boot_assets = prod.get('boot_assets') or {}
 print(f"boot_assets: ok={boot_assets.get('ok')} count={boot_assets.get('count')} root={boot_assets.get('root_count')} city={boot_assets.get('city_count')} failed={[item.get('path') for item in boot_assets.get('failed', [])]}")
@@ -30,4 +30,4 @@ for pr in gh.get('open_automation_prs', []):
 main = gh.get('latest_main_run') or {}
 if main:
     print(f"main_ci: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:8]} {main.get('status')}/{main.get('conclusion')}")
-print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} production_incident={sig.get('production_incident')}")
+print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} host_incident={sig.get('host_incident')} production_incident={sig.get('production_incident')}")

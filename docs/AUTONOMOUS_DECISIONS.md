@@ -999,3 +999,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Keep the fixed mobile bottom navigation immediately after the application header and before `<main>` in DOM order, even though CSS continues to pin it visually to the viewport bottom.
 
 **Why:** A persistent primary navigation that is visually available at all times should not require keyboard users to traverse the entire weather dashboard and footer before reaching it. Moving only the DOM position preserves the mobile visual design and behavior while making landmark and focus order match the navigation's role.
+
+### 2026-09-02 23:31 TRT — compact status must surface host incident evidence
+
+**Decision:** The human-readable worker status must expose both `host.issues` on the disk line and `signals.host_incident` alongside `production_incident`.
+
+**Why:** An active host incident can coexist with healthy production and an empty warnings array. Hiding the state’s explicit incident fields makes operator summaries ambiguous during disk pressure; surfacing existing evidence improves triage without changing any health decision or write authority.
