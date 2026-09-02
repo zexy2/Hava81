@@ -3,33 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { AirQuality, NormalizedWeatherData } from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
+import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import './EnvironmentRail.css';
 
 const WIND_DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
-const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
-const MAX_FUTURE_SKEW_MS = 60_000;
-const FRESHNESS_EXPIRY_CUSHION_MS = 100;
-
-function getCurrentFreshness(weather: NormalizedWeatherData): { fresh: boolean; expiresInMs: number | null } {
-  const fetchedAtMs = weather.meta.fetchedAt instanceof Date
-    ? weather.meta.fetchedAt.getTime()
-    : new Date(weather.meta.fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null };
-  const ttlSeconds =
-    typeof weather.meta.freshForSeconds === 'number' &&
-    Number.isFinite(weather.meta.freshForSeconds) &&
-    weather.meta.freshForSeconds > 0
-      ? weather.meta.freshForSeconds
-      : CURRENT_FRESHNESS_FALLBACK_SECONDS;
-  const ageMs = Date.now() - fetchedAtMs;
-  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
-  const fresh = ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
-  return {
-    fresh,
-    expiresInMs: fresh && remainingMs > 0 ? remainingMs + FRESHNESS_EXPIRY_CUSHION_MS : null,
-  };
-}
-
 export interface EnvironmentRailProps {
   weather: NormalizedWeatherData;
   airQuality?: AirQuality;
@@ -92,7 +69,7 @@ export function EnvironmentRail({
   const { settings, convertWindSpeed, getWindSpeedSymbol } = useSettings();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const [, setFreshnessRevision] = useState(0);
-  const currentFreshness = getCurrentFreshness(weather);
+  const currentFreshness = getCurrentWeatherFreshness(weather.meta);
 
   useEffect(() => {
     const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
