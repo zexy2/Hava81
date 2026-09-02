@@ -765,3 +765,6 @@ The selected-city map marker is a current observation surface because it renders
 
 ## 2026-09-02 — first-viewport current evidence uses the shared freshness contract
 `WeatherDecisionField` must derive whether current observations are actionable and when their expiry timer fires from `getCurrentWeatherFreshness`, rather than carrying its own TTL/future-skew math. Keep the user-facing age/minute text separate because it is presentation cadence, not evidence validity. This prevents the primary decision surface from drifting from map/environment/current-refresh freshness semantics without changing weather values or decision thresholds.
+
+## 2026-09-02 — Optional AQ/context evidence gets one freshness contract
+Air-quality and modeled context evidence must use one shared fail-closed TTL/future-skew/expiry calculation in `useForecast`. Keep this contract distinct from current-weather/forecast freshness because its legacy metadata fallback is five minutes, but use one explicit-clock decision per expiry pass so same-city retention and timer invalidation cannot drift apart.
