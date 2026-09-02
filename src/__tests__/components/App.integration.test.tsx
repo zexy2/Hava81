@@ -323,21 +323,28 @@ describe('Hava81 app integration', () => {
 
   it('announces forecast loading while the current decision surface is already available', async () => {
     let resolveForecast!: (value: typeof forecast) => void;
+    let resolveHourly!: (value: typeof hourlyForecast) => void;
     const pendingForecast = new Promise<typeof forecast>(resolve => {
       resolveForecast = resolve;
     });
+    const pendingHourly = new Promise<typeof hourlyForecast>(resolve => {
+      resolveHourly = resolve;
+    });
     service.getForecast.mockImplementation(() => pendingForecast);
+    service.getHourlyForecast.mockImplementation(() => pendingHourly);
 
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     await waitFor(() => expect(service.getForecast).toHaveBeenCalled());
+    await waitFor(() => expect(service.getHourlyForecast).toHaveBeenCalled());
 
     const loadingStatus = screen.getByText(/yükleniyor/i).closest('[role="status"]');
     expect(loadingStatus).toHaveClass('atlas-forecast-loading');
 
     await act(async () => {
       resolveForecast(forecast);
-      await pendingForecast;
+      resolveHourly(hourlyForecast);
+      await Promise.all([pendingForecast, pendingHourly]);
     });
   });
 
