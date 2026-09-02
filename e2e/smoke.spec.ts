@@ -941,6 +941,70 @@ test('mobile header keeps quick actions reachable at 200% text size', async ({ p
   expect(searchGeometry.pageWidth).toBeLessThanOrEqual(searchGeometry.viewportWidth);
 });
 
+test('desktop daily plan reads as one editorial planning surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop daily-plan visual regression');
+  await page.goto('/istanbul');
+
+  const plan = page.locator('.daily-plan');
+  await expect(plan).toBeVisible();
+  const styles = await plan.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const decision = element.querySelector<HTMLElement>('.daily-plan__decision');
+    const explain = element.querySelector<HTMLElement>('.daily-plan__explain');
+    const confidence = element.querySelector<HTMLElement>('.daily-plan__explain-head small');
+    const impacts = element.querySelector<HTMLElement>('.daily-plan__impacts');
+    const impact = element.querySelector<HTMLElement>('.daily-plan__impacts li');
+    const slots = element.querySelector<HTMLElement>('.daily-plan__slots');
+    if (!decision || !explain || !confidence || !impacts || !impact || !slots) {
+      throw new Error('Missing daily-plan editorial regions');
+    }
+    const decisionStyle = getComputedStyle(decision);
+    const explainStyle = getComputedStyle(explain);
+    const confidenceStyle = getComputedStyle(confidence);
+    const impactsStyle = getComputedStyle(impacts);
+    const impactStyle = getComputedStyle(impact);
+    const slotsStyle = getComputedStyle(slots);
+    return {
+      panelBackground: panel.backgroundColor,
+      panelRadius: panel.borderRadius,
+      panelShadow: panel.boxShadow,
+      panelTop: parseFloat(panel.borderTopWidth),
+      panelInline: parseFloat(panel.borderLeftWidth),
+      decisionRadius: decisionStyle.borderRadius,
+      decisionSignal: parseFloat(decisionStyle.borderLeftWidth),
+      explainRadius: explainStyle.borderRadius,
+      explainTop: parseFloat(explainStyle.borderTopWidth),
+      confidenceBorder: parseFloat(confidenceStyle.borderTopWidth),
+      confidenceRadius: confidenceStyle.borderRadius,
+      impactsGap: parseFloat(impactsStyle.columnGap),
+      impactsTop: parseFloat(impactsStyle.borderTopWidth),
+      impactRadius: impactStyle.borderRadius,
+      impactShadow: impactStyle.boxShadow,
+      slotsBorder: parseFloat(slotsStyle.borderTopWidth),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.panelRadius)).toBe(0);
+  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelTop).toBeGreaterThanOrEqual(1);
+  expect(styles.panelInline).toBe(0);
+  expect(parseFloat(styles.decisionRadius)).toBe(0);
+  expect(styles.decisionSignal).toBeGreaterThanOrEqual(4);
+  expect(parseFloat(styles.explainRadius)).toBe(0);
+  expect(styles.explainTop).toBeGreaterThanOrEqual(1);
+  expect(styles.confidenceBorder).toBe(0);
+  expect(parseFloat(styles.confidenceRadius)).toBe(0);
+  expect(styles.impactsGap).toBeGreaterThanOrEqual(1);
+  expect(styles.impactsTop).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.impactRadius)).toBe(0);
+  expect(styles.impactShadow).toBe('none');
+  expect(styles.slotsBorder).toBeGreaterThanOrEqual(1);
+  expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
+});
+
 test('mobile daily plan reflows at 200% text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile daily-plan text-resize regression');
   await page.goto('/istanbul');

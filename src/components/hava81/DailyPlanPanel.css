@@ -3,11 +3,12 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   margin-top: var(--space-lg);
-  padding: var(--space-xl);
-  background: var(--color-atlas-paper);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  padding: var(--space-xl) 0;
+  background: transparent;
+  border-block: 1px solid var(--color-atlas-line);
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .daily-plan__header {
@@ -76,10 +77,10 @@
   display: grid;
   gap: var(--space-xs);
   padding: var(--space-lg);
-  background: var(--color-atlas-field);
-  border: 1px solid var(--color-atlas-line);
+  background: color-mix(in srgb, var(--color-aegean) 7%, transparent);
+  border: 0;
   border-inline-start: 4px solid var(--color-aegean);
-  border-radius: var(--radius-md);
+  border-radius: 0;
 }
 
 .daily-plan__decision > span,
@@ -218,7 +219,7 @@
 @media (max-width: 47.99rem) {
   .daily-plan {
     margin-top: var(--space-md);
-    padding: var(--space-lg) var(--space-md);
+    padding: var(--space-lg) 0;
   }
 
   .daily-plan__header {
@@ -338,10 +339,11 @@
   display: grid;
   min-width: 0;
   gap: var(--space-sm);
-  padding: var(--space-lg);
-  background: color-mix(in srgb, var(--color-atlas-field) 72%, transparent);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-md);
+  padding: var(--space-lg) 0;
+  background: transparent;
+  border-block: 1px solid var(--color-atlas-line);
+  border-inline: 0;
+  border-radius: 0;
 }
 
 .daily-plan__explain-head {
@@ -366,23 +368,24 @@
 }
 
 .daily-plan__explain-head small {
-  padding: 0.3rem 0.5rem;
-  border: 1px solid var(--color-atlas-line);
-  border-radius: 999px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   white-space: nowrap;
 }
 
 .daily-plan__explain-head small[data-confidence='high'] {
   color: var(--color-aegean);
-  border-color: color-mix(in srgb, var(--color-aegean) 45%, var(--color-atlas-line));
 }
 
 .daily-plan__impacts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-sm);
+  gap: 1px;
   margin: 0;
   padding: 0;
+  background: var(--color-atlas-line);
+  border-block: 1px solid var(--color-atlas-line);
   list-style: none;
 }
 
@@ -394,8 +397,8 @@
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   background: var(--color-atlas-paper);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-radius: 0;
 }
 
 .daily-plan__impacts span {
@@ -498,7 +501,7 @@
 
 @media (max-width: 26rem) {
   .daily-plan__explain {
-    padding: 16px;
+    padding: 16px 0;
   }
 
   .daily-plan__impacts li {
@@ -518,7 +521,7 @@
       'note note';
     gap: var(--space-md);
     margin-top: 0;
-    padding: var(--space-lg);
+    padding: var(--space-lg) 0;
   }
 
   .daily-plan__header {
