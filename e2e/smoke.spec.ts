@@ -3552,6 +3552,20 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
       .locator('meta[name="theme-color"]')
       .evaluateAll(elements => elements.map(element => (element as HTMLMetaElement).content))
   ).toEqual(['#0E2C32', '#0E2C32']);
+
+  const fatalTheme = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.className = 'app-fatal';
+    document.body.append(probe);
+    const style = getComputedStyle(probe);
+    const result = { color: style.color, background: style.backgroundColor };
+    probe.remove();
+    return result;
+  });
+  expect(fatalTheme).toEqual({
+    color: 'rgb(243, 246, 244)',
+    background: 'rgb(14, 44, 50)',
+  });
 });
 
 test('production HTML bootstraps current and hourly weather without duplicate app requests', async ({

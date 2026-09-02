@@ -2600,3 +2600,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the remaining legacy visual geometry after the editorial passes. The map panel itself was already flat, but its nested desktop map viewport still carried the older large rounded-card frame; mobile already removed that radius at its breakpoint.
 - Flattened only the map viewport boundary to square corners and explicit no-shadow while retaining the real map border, marker elevation, popup elevation, Leaflet controls, attribution, map dimensions and all weather/provider semantics.
 - Added a desktop Chromium regression locking the map frame border/radius/shadow contract and horizontal containment. Host Node dependencies remain intentionally absent under disk pressure; `git diff --check` is the local gate and exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.
+
+### 2026-09-02 16:25 TRT — keep fatal recovery UI aligned with dark mode
+- Continued on a separate exact-main worktree while PR #680 validates. The normal app shell follows resolved light/dark tokens, but the ErrorBoundary fallback lived outside `.app` and still hard-coded light foreground/background values.
+- Switched the fatal recovery surface to the shared atlas ink/field tokens with the same light fallbacks, so a render failure no longer flashes a light recovery screen for users whose resolved mode is dark.
+- Extended the existing Chromium browser-theme regression with a computed-style fatal-surface probe after switching to dark mode; it now verifies dark foreground/background token resolution without needing a test-only crash hook.
+- No error-boundary control flow, retry behavior, weather/provider semantics, API topology, MGM handling or safety guidance changed. `git diff --check` is the host-local gate; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.
