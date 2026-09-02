@@ -781,3 +781,6 @@ Current observation freshness already centralizes provider TTL and future-skew v
 
 ### 2026-09-02 — Modeled-context provenance uses the shared optional-evidence validity boundary
 The Context Signals source timestamp is provenance, not a separate freshness algorithm. Reuse `getOptionalEvidenceFreshness` to distinguish valid stale/fresh timestamps from invalid/missing/materially-future evidence before displaying a provider fetch time. Keep stale-but-valid fetch times visible as provenance; hide only unknown timestamps. No UV, pollen, dust, marine values or provider TTLs change.
+
+### 2026-09-02 — Multi-source comparison freshness uses a single clock snapshot
+A comparison row combines current weather, forecast and optional AQ evidence. Evaluate all contributing freshness contracts against one wall-clock snapshot per validity pass, and calculate the next expiry from one separate snapshot per scheduling pass. This prevents sub-millisecond boundary drift between evidence sources without extending timestamps, changing TTLs, synthesizing weather, or altering scores.
