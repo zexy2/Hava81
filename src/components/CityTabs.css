@@ -120,7 +120,8 @@
 }
 
 .city-tabs__tab:focus-visible,
-.city-tabs__remove:focus-visible {
+.city-tabs__remove:focus-visible,
+.city-tabs__add:focus-visible {
   outline-offset: -3px;
 }
 

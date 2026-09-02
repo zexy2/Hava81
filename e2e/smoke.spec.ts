@@ -739,6 +739,37 @@ test('saved city tab rail stays contained at 200 percent text size', async ({ pa
   }
 });
 
+test('saved city add action keeps its focus ring inside the scroll rail', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-city focus regression');
+  await page.addInitScript(() => {
+    localStorage.setItem('favorites', JSON.stringify([{ name: 'Ankara', lat: 39.93, lon: 32.86 }]));
+  });
+  await page.goto('/istanbul');
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Saved|Kayıtlı/ }).click();
+
+  const add = page.locator('.city-tabs__add');
+  await expect(add).toBeVisible();
+  await add.focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(add).toBeFocused();
+  const focusState = await add.evaluate(element => {
+    const style = getComputedStyle(element);
+    const parent = element.parentElement;
+    return {
+      outlineStyle: style.outlineStyle,
+      outlineWidth: parseFloat(style.outlineWidth),
+      outlineOffset: parseFloat(style.outlineOffset),
+      railOverflowX: parent ? getComputedStyle(parent).overflowX : null,
+    };
+  });
+
+  expect(focusState.railOverflowX).toBe('auto');
+  expect(focusState.outlineStyle).not.toBe('none');
+  expect(focusState.outlineWidth).toBeGreaterThanOrEqual(2);
+  expect(focusState.outlineOffset).toBeLessThan(0);
+});
+
 test('forced colors keeps the active saved city visibly distinct', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'forced-colors saved-city regression');
   await page.addInitScript(() => {

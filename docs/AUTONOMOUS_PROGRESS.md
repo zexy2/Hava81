@@ -2710,3 +2710,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Local dependency-backed browser tests are unavailable because Node/npm are intentionally absent on this disk-pressured host; `git diff --check` passes and exact-head hosted CI/CodeQL/browser/Lighthouse are mandatory before merge.
 - Disk incident remains active (~97% used, ~1.6 GiB available). Hardened cleanup removed four positively proven clean+merged Hava81 linked worktrees and two rebuildable artifact directories; branch refs were preserved. Standalone audit found no eligible stale standalone clone. Large `/opt/postify-*` usage belongs to another project and was deliberately not touched.
 - Next action: commit/push/open this bounded frontend PR, require exact-head hosted gates, continue independent current-main UI/a11y audit while CI runs, then fresh-observer + exact SHA/mergeability verification before merge and production smoke afterward.
+
+## 2026-09-02 21:19 TRT — keep saved-city add focus visible inside the rail
+- Continued from exact post-#696 main `605bea4409f51579f1568a7532c478839bcb361a` in isolated `/home/chatgpt/hava81-auto-run11-2115-next`, branch `automation/hava81-run11-2115-next` while the main deployment validates separately.
+- Accessibility audit found the horizontally scrollable `.city-tabs__scroll` already gives tab/remove controls an inset focus outline because `.city-tabs__item` clips them, but the direct `.city-tabs__add` control still inherited the global positive `outline-offset: 2px`. At the scroll viewport edge that focus indicator can be clipped.
+- Added the add action to the existing `outline-offset: -3px` rule and a mobile Playwright regression proving the rail remains `overflow-x: auto`, the add action receives a visible >=2px outline, and the offset is inward.
+- `git diff --check` passes. Node/npm remain unavailable locally; exact-head hosted CI/browser/Lighthouse/CodeQL remain mandatory.
+- Next action: verify current main has not moved unexpectedly, commit/push/open this bounded accessibility PR, and keep main `605bea44...` deployment/production verification separate before any merge.
