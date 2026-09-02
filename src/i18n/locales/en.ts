@@ -321,8 +321,8 @@ export const en = {
         motorcycle: 'Motorcycle',
         laundry: 'Laundry',
       },
-      bestTime: 'Best time: {{time}}',
-      bestRange: 'Best range: {{start}}–{{end}}',
+      bestTime: 'Best weather time: {{time}}',
+      bestRange: 'Best weather range: {{start}}–{{end}}',
       score: {
         default: '12-hour suitability',
         filtered: '{{start}}–{{end}} suitability',

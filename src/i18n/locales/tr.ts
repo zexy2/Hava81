@@ -322,8 +322,8 @@ export const tr = {
         motorcycle: 'Motosiklet',
         laundry: 'Çamaşır',
       },
-      bestTime: 'En iyi saat: {{time}}',
-      bestRange: 'En uygun aralık: {{start}}–{{end}}',
+      bestTime: 'Hava açısından en iyi saat: {{time}}',
+      bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
       score: {
         default: '12 saatlik uygunluk',
         filtered: '{{start}}–{{end}} uygunluğu',

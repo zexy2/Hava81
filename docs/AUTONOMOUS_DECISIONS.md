@@ -1057,3 +1057,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** When fresh precipitation evidence falls below Hava81's umbrella thresholds, phrase the result as the forecast not indicating an umbrella need rather than as an unconditional `not needed` claim. Keep missing precipitation evidence as the separate `unknown` state.
 
 **Why:** Hava81 can make a bounded decision from current forecast evidence but cannot guarantee that an umbrella will never be useful. Carrying the evidence boundary into both the UI and shared text preserves actionability without overstating certainty.
+
+### 2026-09-03 02:04 TRT — activity best-time labels carry the weather boundary
+
+**Decision:** Activity Planner timing labels must call the selected interval the best weather time/range for the chosen activity, not an unqualified best time/range.
+
+**Why:** Activity-specific scoring adjusts meteorological thresholds and weights; it does not know the user's full schedule, route, venue availability, personal safety context or non-weather constraints. The primary timing label should state the evidence domain directly.
