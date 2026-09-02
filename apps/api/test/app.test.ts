@@ -166,6 +166,55 @@ const createEnv = (overrides: Partial<Record<string, string | number>> = {}): Ap
     ...overrides,
   });
 
+test('production proxy trust validates the immediate peer address', async (context) => {
+  const app = await buildApp({
+    env: createEnv({ NODE_ENV: 'production' }),
+    provider: new FakeWeatherProvider(),
+    logger: false,
+  });
+  context.after(() => app.close());
+
+  app.get('/__test/proxy-metadata', request => ({
+    host: request.host,
+    protocol: request.protocol,
+    ip: request.ip,
+  }));
+
+  const spoofedDirect = await app.inject({
+    method: 'GET',
+    url: '/__test/proxy-metadata',
+    remoteAddress: '203.0.113.10',
+    headers: {
+      host: 'api.hava81.zekiakgul.dev',
+      'x-forwarded-for': '198.51.100.44',
+      'x-forwarded-host': 'spoofed.example',
+      'x-forwarded-proto': 'https',
+    },
+  });
+  assert.deepEqual(spoofedDirect.json(), {
+    host: 'api.hava81.zekiakgul.dev',
+    protocol: 'http',
+    ip: '203.0.113.10',
+  });
+
+  const trustedDockerProxy = await app.inject({
+    method: 'GET',
+    url: '/__test/proxy-metadata',
+    remoteAddress: '172.20.0.1',
+    headers: {
+      host: 'api.hava81.zekiakgul.dev',
+      'x-forwarded-for': '198.51.100.44',
+      'x-forwarded-host': 'forwarded.example',
+      'x-forwarded-proto': 'https',
+    },
+  });
+  assert.deepEqual(trustedDockerProxy.json(), {
+    host: 'forwarded.example',
+    protocol: 'https',
+    ip: '198.51.100.44',
+  });
+});
+
 test('health endpoints and OpenAPI docs are available', async (context) => {
   const app = await buildApp({ env: createEnv(), provider: new FakeWeatherProvider(), logger: false });
   context.after(() => app.close());
