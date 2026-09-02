@@ -768,3 +768,6 @@ The selected-city map marker is a current observation surface because it renders
 
 ## 2026-09-02 — Optional AQ/context evidence gets one freshness contract
 Air-quality and modeled context evidence must use one shared fail-closed TTL/future-skew/expiry calculation in `useForecast`. Keep this contract distinct from current-weather/forecast freshness because its legacy metadata fallback is five minutes, but use one explicit-clock decision per expiry pass so same-city retention and timer invalidation cannot drift apart.
+
+### 2026-09-02 — Comparison current observations reuse the shared current-weather freshness contract
+City comparison must evaluate each row's current observation with `getCurrentWeatherFreshness`, not a private TTL/future-skew copy. Keep optional AQ evidence on its distinct five-minute compatibility contract. This is a behavior-preserving deduplication that prevents comparison current evidence from drifting from map, environment and refresh semantics without changing provider values, scoring or decision thresholds.

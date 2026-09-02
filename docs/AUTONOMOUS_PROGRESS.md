@@ -2378,3 +2378,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added `getOptionalEvidenceFreshness` and routed both long-lived expiry timers and same-city fallback retention through the same explicit-clock contract. This remains separate from current-weather and forecast contracts because optional AQ/context compatibility fallback is intentionally 5 minutes.
 - Regression development caught two stale helper references before commit; after correction the focused optional/useForecast suite is 16/16 and full frontend is 61 files / 589 tests. TypeScript, ESLint, production build + service-worker stamp + 81 city pages, production dependency audit (0 vulnerabilities), and `git diff --check` all pass on exact main `977389003d8fa9d82c3e18fefa0864df6329203b`.
 - No UV/AQI/pollen/marine values, thresholds, attribution, provider selection or safety copy changed. Hosted exact-head CI/CodeQL/browser/Lighthouse remain mandatory before merge.
+
+### 2026-09-02 comparison current-freshness deduplication
+- Audited remaining freshness arithmetic while earlier freshness PRs validated and found `ComparePanel` still evaluated current weather through a private generic TTL/future-skew helper.
+- Routed comparison current observations through shared `getCurrentWeatherFreshness`; optional AQ evidence remains on its distinct compatibility freshness contract.
+- No weather values, timestamps, score thresholds, provider calls, MGM semantics, official-warning behavior or UI copy changed. Hosted exact-head lint/type/unit/build/browser/CodeQL remain mandatory before merge.
