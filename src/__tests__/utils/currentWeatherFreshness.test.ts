@@ -43,6 +43,12 @@ describe('getCurrentWeatherFreshness', () => {
     ).toEqual({ fresh: true, status: 'fresh', ageMinutes: 0, expiresInMs: 20_100 });
   });
 
+  it('keeps an expiry wake-up at the exact TTL boundary', () => {
+    expect(
+      getCurrentWeatherFreshness(meta({ freshForSeconds: 30 }), Date.parse('2026-09-02T00:00:30Z'))
+    ).toEqual({ fresh: true, status: 'fresh', ageMinutes: 0, expiresInMs: 100 });
+  });
+
   it('fails closed as unknown for timestamps beyond the future-skew ceiling', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-02T00:00:00Z'));

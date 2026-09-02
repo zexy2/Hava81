@@ -784,3 +784,5 @@ The Context Signals source timestamp is provenance, not a separate freshness alg
 
 ### 2026-09-02 — Multi-source comparison freshness uses a single clock snapshot
 A comparison row combines current weather, forecast and optional AQ evidence. Evaluate all contributing freshness contracts against one wall-clock snapshot per validity pass, and calculate the next expiry from one separate snapshot per scheduling pass. This prevents sub-millisecond boundary drift between evidence sources without extending timestamps, changing TTLs, synthesizing weather, or altering scores.
+### 2026-09-02 — Inclusive freshness boundaries must retain an expiry wake-up
+When a freshness contract considers evidence fresh through `age <= TTL`, the exact `age === TTL` instant must still return the small expiry cushion instead of a null timer. Otherwise a render landing on the inclusive boundary can remain fresh indefinitely until unrelated state changes. Preserve the existing 100 ms cushion and do not extend provider TTLs or mutate evidence timestamps.
