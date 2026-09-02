@@ -168,7 +168,7 @@ export const tr = {
       temp: 'Sıcaklık',
       rain: 'Yağış',
       aqi: 'Hava kalitesi',
-      bestTime: 'En iyi saat',
+      bestTime: 'En iyi hava saati',
     },
     dailyPlan: {
       eyebrow: 'Hava81 karar motoru',
