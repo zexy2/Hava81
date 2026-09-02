@@ -3,20 +3,24 @@ set -euo pipefail
 
 apply=false
 remove_worktrees=false
+stale_clean_hours=""
 repo="$(git rev-parse --show-toplevel)"
 current="$repo"
 primary="$(git worktree list --porcelain | awk '/^worktree / && !seen {sub(/^worktree /, ""); print; seen=1}')"
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/cleanup-merged-worktree-artifacts.sh [--apply] [--remove-worktrees]
+Usage: scripts/cleanup-merged-worktree-artifacts.sh [--apply] [--remove-worktrees] [--stale-clean-hours=N]
 
 Dry-run by default. Scans linked Hava81 worktrees and considers only worktrees
 that are clean and whose HEAD is already an ancestor of origin/main. It removes
 only rebuildable validation artifacts; source files, branches, Git metadata,
 Docker resources and the current/primary worktrees are never removed. With
 --remove-worktrees, an eligible linked checkout itself is also removed while its
-branch/ref is preserved.
+branch/ref is preserved. With --stale-clean-hours=N, clean attached linked
+checkouts older than N hours may also be removed even when their branch is not
+merged, but only when the local branch ref still points exactly at that HEAD.
+Detached, dirty, recent, current and primary worktrees remain excluded.
 USAGE
 }
 
@@ -24,10 +28,19 @@ for arg in "$@"; do
   case "$arg" in
     --apply) apply=true ;;
     --remove-worktrees) remove_worktrees=true ;;
+    --stale-clean-hours=*) stale_clean_hours="${arg#*=}" ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $arg" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+if [[ -n "$stale_clean_hours" ]]; then
+  if [[ ! "$stale_clean_hours" =~ ^[0-9]+$ || "$stale_clean_hours" -lt 1 ]]; then
+    echo "--stale-clean-hours must be an integer >= 1" >&2
+    exit 2
+  fi
+  remove_worktrees=true
+fi
 
 git rev-parse --verify origin/main >/dev/null
 
@@ -51,6 +64,8 @@ worktree_count=0
 worktree_bytes=0
 removed_worktree_count=0
 skipped_worktree_count=0
+stale_worktree_count=0
+stale_worktree_bytes=0
 
 tree_is_removable() {
   local target="$1"
@@ -75,12 +90,37 @@ while IFS= read -r wt; do
 
   head="$(git -C "$wt" rev-parse HEAD 2>/dev/null || true)"
   [[ -n "$head" ]] || continue
+
+  merged=true
   if ! git merge-base --is-ancestor "$head" origin/main; then
     cherry="$(git cherry origin/main "$head" 2>/dev/null || true)"
-    [[ -n "$cherry" ]] || continue
-    if grep -q '^+' <<<"$cherry"; then
-      continue
+    if [[ -z "$cherry" ]] || grep -q '^+' <<<"$cherry"; then
+      merged=false
     fi
+  fi
+
+  stale_clean=false
+  if [[ "$merged" != true && -n "$stale_clean_hours" ]]; then
+    branch_ref="$(git -C "$wt" symbolic-ref -q HEAD 2>/dev/null || true)"
+    branch_head=""
+    if [[ -n "$branch_ref" ]]; then
+      branch_head="$(git rev-parse --verify "$branch_ref" 2>/dev/null || true)"
+    fi
+    if [[ -n "$branch_ref" && "$branch_head" == "$head" ]]; then
+      modified_epoch="$(stat -c %Y "$wt" 2>/dev/null || true)"
+      now_epoch="$(date +%s)"
+      if [[ "$modified_epoch" =~ ^[0-9]+$ && "$now_epoch" =~ ^[0-9]+$ ]]; then
+        age_seconds=$((now_epoch - modified_epoch))
+        required_seconds=$((stale_clean_hours * 3600))
+        if (( age_seconds >= required_seconds )); then
+          stale_clean=true
+        fi
+      fi
+    fi
+  fi
+
+  if [[ "$merged" != true && "$stale_clean" != true ]]; then
+    continue
   fi
 
   wt_bytes="$(du -sb "$wt" 2>/dev/null | awk '{print $1}')"
@@ -88,6 +128,10 @@ while IFS= read -r wt; do
   if [[ "$remove_worktrees" == true ]]; then
     worktree_count=$((worktree_count + 1))
     worktree_bytes=$((worktree_bytes + wt_bytes))
+    if [[ "$stale_clean" == true ]]; then
+      stale_worktree_count=$((stale_worktree_count + 1))
+      stale_worktree_bytes=$((stale_worktree_bytes + wt_bytes))
+    fi
     if tree_is_removable "$wt"; then
       printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo REMOVE_WORKTREE || echo WOULD_REMOVE_WORKTREE)" "$wt_bytes" "$wt"
     else
@@ -137,9 +181,9 @@ done < <(git worktree list --porcelain | awk '/^worktree / {sub(/^worktree /, ""
 
 if [[ "$remove_worktrees" == true ]]; then
   if [[ "$apply" == true ]]; then
-    printf 'Removed %d clean merged linked worktrees; skipped %d unwritable/failed removals; branch refs were preserved.\n' "$removed_worktree_count" "$skipped_worktree_count"
+    printf 'Removed %d eligible clean linked worktrees; skipped %d unwritable/failed removals; branch refs were preserved.\n' "$removed_worktree_count" "$skipped_worktree_count"
   else
-    printf 'Dry run: %d clean merged linked worktrees (%d bytes) are eligible for checkout removal.\n' "$worktree_count" "$worktree_bytes"
+    printf 'Dry run: %d eligible clean linked worktrees (%d bytes) are eligible for checkout removal; %d (%d bytes) qualify only via the stale-clean guard.\n' "$worktree_count" "$worktree_bytes" "$stale_worktree_count" "$stale_worktree_bytes"
   fi
 fi
 

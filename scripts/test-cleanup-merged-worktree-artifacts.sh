@@ -22,6 +22,8 @@ git -C "$primary" push -u origin main >/dev/null
 base="$(git -C "$primary" rev-parse HEAD)"
 merged="$tmp/merged"
 unmerged="$tmp/unmerged"
+stale="$tmp/stale"
+detached="$tmp/detached"
 dirty="$tmp/dirty"
 locked="$tmp/locked"
 git -C "$primary" worktree add -b feature-merged "$merged" "$base" >/dev/null
@@ -44,8 +46,21 @@ printf 'unique\n' > "$unmerged/unique.txt"
 git -C "$unmerged" add unique.txt
 git -C "$unmerged" commit -m unique >/dev/null
 
+git -C "$primary" worktree add -b feature-stale "$stale" "$base" >/dev/null
+printf 'stale unique\n' > "$stale/stale.txt"
+git -C "$stale" add stale.txt
+git -C "$stale" commit -m 'stale unique' >/dev/null
+touch -d '3 days ago' "$stale"
+
+git -C "$primary" worktree add --detach "$detached" "$base" >/dev/null
+printf 'detached unique\n' > "$detached/detached.txt"
+git -C "$detached" add detached.txt
+git -C "$detached" commit -m 'detached unique' >/dev/null
+touch -d '3 days ago' "$detached"
+
 git -C "$primary" worktree add -b feature-dirty "$dirty" "$base" >/dev/null
 printf 'dirty\n' > "$dirty/uncommitted.txt"
+touch -d '3 days ago' "$dirty"
 mkdir -p "$merged/dist"
 printf 'build\n' > "$merged/dist/output.txt"
 
@@ -61,8 +76,8 @@ grep -Fq "WOULD_SKIP_UNWRITABLE_WORKTREE" <<<"$dry"
 grep -Fq "$locked" <<<"$dry"
 grep -Fq "WOULD_SKIP_UNWRITABLE_ARTIFACT" <<<"$dry"
 grep -Fq "$locked/dist" <<<"$dry"
-if grep -Fq "$unmerged" <<<"$dry" || grep -Fq "$dirty" <<<"$dry"; then
-  echo 'unsafe worktree appeared in dry-run eligibility' >&2
+if grep -Fq "$unmerged" <<<"$dry" || grep -Fq "$stale" <<<"$dry" || grep -Fq "$detached" <<<"$dry" || grep -Fq "$dirty" <<<"$dry"; then
+  echo 'unsafe worktree appeared in default dry-run eligibility' >&2
   exit 1
 fi
 
@@ -74,6 +89,26 @@ fi
 [[ -d "$dirty" ]]
 git -C "$primary" show-ref --verify --quiet refs/heads/feature-merged
 git -C "$primary" show-ref --verify --quiet refs/heads/feature-locked
+
+stale_dry="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --stale-clean-hours=24)"
+grep -Fq "$stale" <<<"$stale_dry"
+grep -Fq 'qualify only via the stale-clean guard' <<<"$stale_dry"
+if grep -Fq "$unmerged" <<<"$stale_dry" || grep -Fq "$detached" <<<"$stale_dry" || grep -Fq "$dirty" <<<"$stale_dry"; then
+  echo 'recent, detached, or dirty worktree appeared in stale-clean eligibility' >&2
+  exit 1
+fi
+
+(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --stale-clean-hours=24 --apply >/dev/null)
+[[ ! -d "$stale" ]]
+[[ -d "$unmerged" ]]
+[[ -d "$detached" ]]
+[[ -d "$dirty" ]]
+git -C "$primary" show-ref --verify --quiet refs/heads/feature-stale
+
+if (cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --stale-clean-hours=0 >/dev/null 2>&1); then
+  echo 'invalid stale-clean threshold was accepted' >&2
+  exit 1
+fi
 
 chmod 0755 "$locked/dist/locked"
 printf 'cleanup worktree safety contract: PASS\n'
