@@ -939,3 +939,6 @@ Cleanup eligibility requires positive evidence that a worktree is clean. If `git
 
 ## 2026-09-02 — Mobile Activity Planner must not inherit desktop flex basis as vertical height
 At the mobile breakpoint the Activity Planner header switches from row to column. The desktop sensitivity control uses `flex: 0 1 12rem`; without an override, that basis becomes a vertical main-axis size and can create excessive header height, especially under 200% text. Set the mobile sensitivity `flex-basis` to `auto` so the control sizes to its content while preserving the desktop width behavior. This is layout-only; activity scoring, weather evidence, thresholds and provider semantics are unchanged.
+
+## 2026-09-02 — Focus indicators inside horizontally clipped saved-city rails render inward
+The saved-city rail is an intentional horizontal scroll container. Controls at its edges must not rely on a positive outer outline offset that the scroll viewport can clip. Keep tab, remove and add actions on the shared inset focus-indicator treatment. This is keyboard presentation only; saved-city persistence, selection and weather behavior are unchanged.
