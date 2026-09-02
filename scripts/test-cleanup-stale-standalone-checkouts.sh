@@ -7,7 +7,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 bare="$tmp/origin.git"
-primary="$tmp/primary"
+primary="$tmp/hava81-primary"
 parent="$tmp/checkouts"
 mkdir -p "$parent"
 git init --bare "$bare" >/dev/null
@@ -90,9 +90,13 @@ fi
 
 audit="$(cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --audit)"
 grep -Fq 'Audit: scanned=8 standalone_clones=6 linked_worktrees=1 without_git_metadata=1.' <<<"$audit"
-grep -Fq 'Audit reasons: eligible=1 dirty=1 origin_mismatch=1 detached=1 unrepresented=1 recent=1 in_use=0 unreadable=0 archive_conflict=0.' <<<"$audit"
+grep -Fq 'Audit reasons: eligible=1 registered=0 dirty=1 origin_mismatch=1 detached=1 unrepresented=1 recent=1 in_use=0 unreadable=0 archive_conflict=0.' <<<"$audit"
 grep -Fq "$parent/hava81-safe" <<<"$audit"
 [[ -d "$parent/hava81-no-git" ]]
+
+root_audit="$(cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$tmp" --older-than-hours=24 --audit)"
+grep -Fq 'Audit: scanned=1 standalone_clones=1 linked_worktrees=0 without_git_metadata=0.' <<<"$root_audit"
+grep -Fq 'Audit reasons: eligible=0 registered=1 dirty=0 origin_mismatch=0 detached=0 unrepresented=0 recent=0 in_use=0 unreadable=0 archive_conflict=0.' <<<"$root_audit"
 
 if (cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --apply --audit >/dev/null 2>&1); then
   echo 'read-only audit accepted mutation mode' >&2
