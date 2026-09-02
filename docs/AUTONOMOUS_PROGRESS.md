@@ -2567,3 +2567,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The hook now awaits/applies dedicated hourly evidence first, then awaits optional AQ/context results with a fresh request-id guard before applying them. The overall fetch/loading lifecycle still waits for optional completion, and neither provider values nor freshness semantics change.
 - Added a deterministic regression that keeps AQ/context promises unresolved, proves the hourly recovery is already visible and loading remains true, then resolves optional evidence and verifies normal completion.
 - Host Node dependencies are intentionally absent under disk pressure; `git diff --check` passes and exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
+
+
+### 2026-09-02 15:01 TRT — race core forecast providers for first usable guidance
+- Continued from exact post-#672 main `667ae333ff5bd22bc134f3aa9c13e4857a73e9f2` in isolated branch `automation/hava81-first-core-forecast-1501` while main CI/CD #1630 runs.
+- Found a remaining latency serialization in `useForecast`: the dedicated hourly request started in parallel but its result was not observed until the OpenWeather baseline settled, so a slow baseline could hide an already-valid Open-Meteo hourly forecast.
+- Core provider requests are now tagged and raced. The first valid result is rendered immediately; after both settle, dedicated hourly remains final authority when valid, while either provider can still rescue a failure/empty response from the other. Request-id protection and fail-closed total failure remain intact.
+- Added the symmetric deterministic regression to the existing slow-hourly baseline test: a deliberately unresolved baseline now proves hourly data appears first, remains authoritative after baseline later resolves, and keeps loading true until the full fetch lifecycle completes.
+- `git diff --check` passes. Host Node dependencies remain absent under disk pressure, so exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.

@@ -125,9 +125,14 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       }
 
       try {
+        const forecastRequest = weatherService
+          .getForecast(coords.lat, coords.lon, language)
+          .then(value => ({ source: 'baseline' as const, ok: true as const, value }))
+          .catch(error => ({ source: 'baseline' as const, ok: false as const, error }));
         const hourlyRequest = weatherService
           .getHourlyForecast(coords.lat, coords.lon, language)
-          .catch(() => null);
+          .then(value => ({ source: 'hourly' as const, ok: true as const, value }))
+          .catch(error => ({ source: 'hourly' as const, ok: false as const, error }));
         const airQualityRequest = weatherService
           .getAirQuality(coords.lat, coords.lon, language)
           .then(value => ({ ok: true as const, value }))
@@ -137,40 +142,24 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           .then(value => ({ ok: true as const, value }))
           .catch(() => ({ ok: false as const }));
 
-        let forecastData: Awaited<ReturnType<typeof weatherService.getForecast>> | null = null;
-        let forecastError: unknown;
-        try {
-          forecastData = await weatherService.getForecast(coords.lat, coords.lon, language);
-        } catch (err) {
-          forecastError = err;
-        }
-        if (requestId !== requestIdRef.current) return;
-
-        if (forecastData) {
-          // The three-hour OpenWeather forecast is the resilient baseline. Render it immediately;
-          // the optional real-hourly layer may upgrade the Atlas later without blocking decisions.
-          setDaily(forecastData.daily);
-          setHourly(forecastData.hourly);
-          setDisplayHourly(forecastData.hourly);
-          setDisplayMeta(forecastData.meta);
-          setMeta(forecastData.meta);
+        const applyBaseline = (data: Awaited<ReturnType<typeof weatherService.getForecast>>) => {
+          setDaily(data.daily);
+          setHourly(data.hourly);
+          setDisplayHourly(data.hourly);
+          setDisplayMeta(data.meta);
+          setMeta(data.meta);
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
-        }
-
-        const hourlyData = await hourlyRequest;
-        if (!forecastData && !hourlyData?.hourly.length) {
-          throw forecastError ?? new Error('Tahmin alınamadı');
-        }
-        if (requestId !== requestIdRef.current) return;
-        if (hourlyData?.hourly.length) {
-          // Upgrade the visible/decision hourly series as soon as it is ready. Air-quality and
-          // context signals are optional evidence and must not delay a resilient forecast recovery.
-          setHourly(hourlyData.hourly);
-          setDisplayHourly(hourlyData.hourly.slice(0, 24));
-          setDisplayMeta(hourlyData.meta);
-          if (!forecastData) setMeta(hourlyData.meta);
-          if (hourlyData.daily?.length) {
-            setDaily(hourlyData.daily);
+        };
+        const applyHourly = (
+          data: Awaited<ReturnType<typeof weatherService.getHourlyForecast>>,
+          becomesPrimaryMeta: boolean
+        ) => {
+          setHourly(data.hourly);
+          setDisplayHourly(data.hourly.slice(0, 24));
+          setDisplayMeta(data.meta);
+          if (becomesPrimaryMeta) setMeta(data.meta);
+          if (data.daily?.length) {
+            setDaily(data.daily);
           } else {
             // ForecastAtlas exposes one provenance/freshness contract for its hourly and daily rows.
             // Once the dedicated hourly source becomes the visible authority, do not retain daily
@@ -178,6 +167,35 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
             setDaily([]);
           }
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
+        };
+
+        // Both core providers start together. Render whichever valid forecast becomes available
+        // first; a slower baseline must not hide already-usable dedicated hourly guidance.
+        const firstCoreResult = await Promise.race([forecastRequest, hourlyRequest]);
+        if (requestId !== requestIdRef.current) return;
+        const firstAppliedBaseline = firstCoreResult.source === 'baseline' && firstCoreResult.ok;
+        const firstAppliedHourly =
+          firstCoreResult.source === 'hourly' && firstCoreResult.ok && firstCoreResult.value.hourly.length > 0;
+        if (firstAppliedBaseline) applyBaseline(firstCoreResult.value);
+        if (firstAppliedHourly) applyHourly(firstCoreResult.value, true);
+
+        const [forecastResult, hourlyResult] = await Promise.all([forecastRequest, hourlyRequest]);
+        if (requestId !== requestIdRef.current) return;
+        const forecastData = forecastResult.ok ? forecastResult.value : null;
+        const hourlyData = hourlyResult.ok ? hourlyResult.value : null;
+        if (!forecastData && !hourlyData?.hourly.length) {
+          const coreError = !forecastResult.ok
+            ? forecastResult.error
+            : !hourlyResult.ok
+              ? hourlyResult.error
+              : undefined;
+          throw coreError ?? new Error('Tahmin alınamadı');
+        }
+        if (hourlyData?.hourly.length) {
+          // Dedicated hourly remains the final visible authority when both providers succeed.
+          if (!firstAppliedHourly) applyHourly(hourlyData, !forecastData);
+        } else if (forecastData && !firstAppliedBaseline) {
+          applyBaseline(forecastData);
         }
 
         const [aqResult, contextResult] = await Promise.all([airQualityRequest, contextRequest]);
