@@ -11,8 +11,8 @@ describe('Hava81 score explanation copy', () => {
   });
 
   it('scopes favorable risk language to weather rather than general safety', () => {
-    expect(tr.hava81.score.reasons.clear).toContain('hava riski');
-    expect(en.hava81.score.reasons.clear).toContain('weather risk');
+    expect(tr.hava81.dailyPlan.reasons.clear).toContain('hava riski');
+    expect(en.hava81.dailyPlan.reasons.clear).toContain('weather risk');
     expect(tr.hava81.decision.actions.stable).toContain('hava riski');
     expect(en.hava81.decision.actions.stable).toContain('weather risk');
   });
