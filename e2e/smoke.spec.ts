@@ -528,6 +528,29 @@ test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, t
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mobile decision metadata prioritizes source freshness over coordinates', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision metadata hierarchy regression');
+  await page.goto('/istanbul');
+
+  const meta = page.locator('.hava81-decision-field__atlas-meta');
+  await expect(meta).toBeVisible();
+  const state = await meta.evaluate(element => {
+    const coordinates = Array.from(
+      element.querySelectorAll<HTMLElement>('.hava81-decision-field__coordinate-meta')
+    );
+    const rect = element.getBoundingClientRect();
+    return {
+      height: rect.height,
+      coordinatesHidden: coordinates.every(item => getComputedStyle(item).display === 'none'),
+      text: element.innerText,
+    };
+  });
+
+  expect(state.coordinatesHidden).toBe(true);
+  expect(state.height).toBeLessThan(24);
+  expect(state.text).toMatch(/OpenWeather/i);
+});
+
 test('tablet forecast source links keep touch-friendly target heights', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-768', 'tablet forecast source target regression');
   await page.goto('/istanbul');
