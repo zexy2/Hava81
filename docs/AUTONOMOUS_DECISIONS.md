@@ -1069,3 +1069,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Root-page search/social descriptions and the installable-app manifest must describe Hava81's timing output as the best time **from a weather perspective**, not an unqualified best time.
 
 **Why:** These metadata surfaces are often read before hydration or outside the app. They should preserve the same evidence-domain boundary as the in-product decision surfaces rather than relying on nearby explanatory copy.
+
+### 2026-09-03 02:18 TRT — Daily Plan timing stays weather-scoped outside its surrounding UI
+
+**Decision:** Daily Plan best-time/range labels and shared timing text must explicitly call the selected interval a weather time/window.
+
+**Why:** The timing engine ranks meteorological conditions only. Share targets and isolated metric labels can be consumed without the nearby score explanation, so the evidence boundary must travel with the timing claim itself.
