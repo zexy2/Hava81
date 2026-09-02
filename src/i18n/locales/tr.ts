@@ -79,6 +79,7 @@ export const tr = {
       title: 'Havayı bulunduğun yere göre gösterelim',
       body: 'Konum izni verirsen sana en yakın ilin hava durumunu açarız. İzin vermezsen İstanbul ile devam edebilirsin.',
       fallback: 'İstanbul ile devam et',
+      searchAnother: 'Başka şehir ara',
       privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
     },
     decision: {
