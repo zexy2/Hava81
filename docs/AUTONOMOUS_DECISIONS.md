@@ -987,3 +987,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Standalone-cleanup `--audit` may measure and report aggregate checkout bytes for each existing eligibility/exclusion reason, while remaining read-only and path/content-silent. The byte measurement must not influence `candidate_is_eligible`, archive refs, or removal authorization.
 
 **Why:** During disk pressure, reason counts alone do not show whether a blocked class is materially responsible for host consumption. Aggregate byte totals let autonomous operations prioritize the real storage pressure while preserving dirty/unrepresented clones and avoiding disclosure of candidate paths or file contents.
+
+### 2026-09-02 23:20 TRT — compact observer status includes absolute used disk
+
+**Decision:** The human-readable worker status should display both `used_gib` and `free_gib` when the observer state provides absolute disk bytes, while tolerating older state snapshots by rendering missing values as `None`.
+
+**Why:** Percent usage alone obscures the scale of a disk incident. The observer already computes absolute used bytes, so surfacing that existing evidence improves operational decisions without adding probes, changing thresholds, or increasing mutation authority.

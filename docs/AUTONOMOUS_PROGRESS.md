@@ -2780,3 +2780,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Disk pressure remains active at ~94.4% used / ~2.5 GiB free. The hardened linked-worktree cleaner revalidated and removed four clean eligible Hava81 worktrees while preserving their branch refs; standalone cleanup still has zero eligible deletions.
 - Extended standalone `--audit` diagnostics to aggregate bytes by exclusion reason without printing candidate paths/content or changing mutation eligibility. The real host audit now shows 40 standalone clones totaling 405,393,871 bytes: 258,335,670 bytes in 27 dirty clones and 147,058,201 bytes in 13 unrepresented clones; zero bytes are safely eligible. This demonstrates the remaining standalone space cannot be reclaimed autonomously under the current safety contract.
 - Local gates: `bash -n` for cleaner and fixture, full `scripts/test-cleanup-stale-standalone-checkouts.sh` PASS, real-host read-only audit PASS, and `git diff --check` PASS. Next: commit/push/open the diagnostics-only PR and require exact-head hosted gates; continue independent audit while it validates.
+
+## 2026-09-02 23:20 TRT — surface absolute disk use in compact observer status
+- Continued independently from exact clean main `049f1377626bf3c466b2939478a863af741453ee` while #706 validates in its own branch.
+- The observer state now exposes `host.disk.used_bytes`, but `/usr/local/bin/hava81-worker-status` still discarded it and showed only percentage plus free GiB. Added `used_gib` to the compact disk line with backward-compatible `None` behavior when an older state lacks the field.
+- No thresholds, health classification, timer behavior, production probes, API behavior, or disk mutation changed.
+- Local gates: observer suite 26/26 PASS, Python compile PASS, installer `bash -n` PASS, `git diff --check` PASS. Next: push/open bounded observer-status PR and require exact-head CI/CodeQL; do not install it on the host until merged green.
