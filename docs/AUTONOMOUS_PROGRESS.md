@@ -2672,3 +2672,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added regression coverage proving AQI `4/5` and its health/activity guidance disappear at the provider freshness boundary while the still-fresh current-weather surface remains available. `git diff --check` passes. Local dependency-backed gates are intentionally deferred because node_modules are absent and the host is under severe disk pressure; exact-head hosted CI remains mandatory before merge.
 
 - PR #689 hosted Frontend quality confirmed lint/type-check and 619/620 tests before failing only on the new regression's localized label lookup (`Hava kalitesi` vs rendered `Hava Kalitesi`); the DOM showed the intended fresh AQI value and guidance. Tightened the matcher case-insensitively and retained the exact-boundary assertions; this is a fixture-only correction, not a product logic change.
+
+
+### 2026-09-02 19:52 TRT — close AQ freshness handoff across secondary surfaces
+
+- While post-#691 main CI and rebased #689 validate, audited every `airQuality` consumer from current main. Compare already enforces provider freshness internally, but App still handed raw AQ evidence to the hero, daily plan, environment rail, activity planner, and decision-alert surfaces.
+- Added one synchronous App-level `getOptionalEvidenceFreshness` guard and routed all App-owned AQ consumers through the filtered value. This complements #689's component-local hero boundary rather than replacing it.
+- Added an App integration regression proving materially future OpenWeather AQI never reaches rendered decision surfaces. No AQ value is substituted or fabricated; invalid evidence becomes unavailable.
