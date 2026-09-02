@@ -2575,3 +2575,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Core provider requests are now tagged and raced. The first valid result is rendered immediately; after both settle, dedicated hourly remains final authority when valid, while either provider can still rescue a failure/empty response from the other. Request-id protection and fail-closed total failure remain intact.
 - Added the symmetric deterministic regression to the existing slow-hourly baseline test: a deliberately unresolved baseline now proves hourly data appears first, remains authoritative after baseline later resolves, and keeps loading true until the full fetch lifecycle completes.
 - `git diff --check` passes. Host Node dependencies remain absent under disk pressure, so exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
+
+### 2026-09-02 15:31 TRT — align loading skeletons with the editorial weather surfaces
+- Audited the remaining rounded/elevated surfaces after the decision, forecast, context, commute, route, environment, and comparison editorial passes. The initial decision/forecast skeletons were still using the older card geometry, causing a visible shape jump when real content arrived.
+- Updated only the loading shell geometry to transparent backgrounds with block-axis rules, square corners, and no shadow; kept the shimmer placeholders intact so loading remains obvious.
+- Extended the existing 1280px/200%-text Playwright regression to assert both containment and the computed editorial geometry. On current main: lint/type-check/build pass, full frontend 61/61 files and 619/619 tests pass, and the targeted real Chromium loading regression passes.
