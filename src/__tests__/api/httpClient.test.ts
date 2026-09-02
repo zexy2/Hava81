@@ -255,6 +255,42 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it.each([
+    [
+      'maximum allowed future skew',
+      (now: Date) => ({
+        fetchedAt: new Date(now.getTime() + 60_000).toISOString(),
+        freshForSeconds: 60,
+      }),
+    ],
+    [
+      'maximum allowed freshness window',
+      (now: Date) => ({ fetchedAt: now.toISOString(), freshForSeconds: 86_400 }),
+    ],
+  ])('caches provider evidence at the valid %s boundary', async (_label, validMeta) => {
+    vi.useFakeTimers();
+    try {
+      const now = new Date('2026-09-02T05:00:00.000Z');
+      vi.setSystemTime(now);
+      (global.fetch as Mock).mockResolvedValue(
+        mockResponse({
+          cityName: 'Izmir',
+          temperature: 23,
+          meta: { provider: 'OpenWeather', ...validMeta(now) },
+        })
+      );
+
+      const first = await httpClient.get('/weather/current', { city: 'Izmir' });
+      const second = await httpClient.get('/weather/current', { city: 'Izmir' });
+
+      expect(second).toBe(first);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(httpClient.getCacheSize()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not reuse a cache entry after the client clock moves behind its timestamp', async () => {
     vi.useFakeTimers();
     try {
