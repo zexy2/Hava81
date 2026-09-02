@@ -1039,3 +1039,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Generated city HTML descriptions must qualify recommended outing timing as weather-based, matching the hydrated app metadata.
 
 **Why:** Crawlers and link previews may consume the pre-hydration HTML only. A truthfulness boundary that exists solely after JavaScript runs is insufficient for search/social surfaces.
+
+### 2026-09-03 00:18 TRT — now-or-later guidance names its evidence domain
+
+**Decision:** Comparative `now or later` outing guidance must explicitly describe weather conditions rather than stating an unqualified comfort or advantage claim.
+
+**Why:** The comparison is produced from forecast/weather scoring and cannot evaluate non-weather constraints. Naming the meteorological scope keeps the decision useful without implying a broader lifestyle or safety judgment.

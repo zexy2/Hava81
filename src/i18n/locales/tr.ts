@@ -182,9 +182,9 @@ export const tr = {
       },
       nowOrLater: {
         label: 'Şimdi mi, sonra mı?',
-        later: '{{time}} civarı dışarı çıkmak daha rahat görünüyor.',
-        now: 'Şimdi çıkmak yakın saatlere göre daha avantajlı.',
-        similar: 'Yakın saatler arasında belirgin bir avantaj görünmüyor.',
+        later: '{{time}} civarı hava koşulları dışarı çıkmak için daha rahat görünüyor.',
+        now: 'Hava koşulları şimdi çıkmak için yakın saatlere göre daha avantajlı görünüyor.',
+        similar: 'Yakın saatler arasında hava açısından belirgin bir avantaj görünmüyor.',
       },
       bestWindow: 'En iyi görünen saat: {{time}}',
       bestRange: 'En uygun görünen aralık: {{start}}–{{end}}',
