@@ -170,6 +170,54 @@ class ObserverFreshnessTests(unittest.TestCase):
         self.assertIn('api_ready_fresh', production['issues'])
 
 
+class ObserverBootAssetTests(unittest.TestCase):
+    def test_extracts_only_safe_same_origin_boot_assets(self) -> None:
+        html = '''
+        <link rel="stylesheet" href="/assets/index.css">
+        <link rel="modulepreload" href="/assets/runtime.js?x=1">
+        <script type="module" src="/assets/index.js"></script>
+        <script src="https://example.com/assets/external.js"></script>
+        <script src="/assets/../escape.js"></script>
+        '''
+        self.assertEqual(
+            observer.extract_boot_asset_paths(html),
+            ['/assets/index.css', '/assets/index.js', '/assets/runtime.js?x=1'],
+        )
+
+    def test_missing_boot_asset_fails_closed(self) -> None:
+        original_http_get = observer.http_get
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            status = 404 if url.endswith('/assets/missing.js') else 200
+            return {
+                'ok': status == 200,
+                'status': status,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': None,
+                'error': None if status == 200 else 'HTTP 404',
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.collect_boot_assets(
+                {
+                    'text': (
+                        '<script src="/assets/index.js"></script>'
+                        '<link rel="stylesheet" href="/assets/index.css">'
+                        '<link rel="modulepreload" href="/assets/missing.js">'
+                    )
+                }
+            )
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['count'], 3)
+        self.assertEqual([failure['path'] for failure in result['failed']], ['/assets/missing.js'])
+
+
 class ObserverNginxTargetTests(unittest.TestCase):
     def test_follows_validated_blue_green_state_port(self) -> None:
         original_site = observer.NGINX_SITE

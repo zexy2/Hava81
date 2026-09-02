@@ -65,6 +65,12 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
                     parsed = json.loads(body.decode('utf-8'))
                 except (UnicodeDecodeError, json.JSONDecodeError):
                     parsed = None
+            body_text: str | None = None
+            if 'html' in content_type.lower():
+                try:
+                    body_text = body.decode('utf-8')
+                except UnicodeDecodeError:
+                    body_text = None
             return {
                 'ok': 200 <= response.status < 400,
                 'status': response.status,
@@ -76,6 +82,7 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
                     'x-ratelimit-reset': response.headers.get('x-ratelimit-reset'),
                 },
                 'json': parsed,
+                'text': body_text,
                 'error': None,
             }
     except urllib.error.HTTPError as exc:
@@ -135,6 +142,36 @@ def slim_http(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def extract_boot_asset_paths(html: Any) -> list[str]:
+    if not isinstance(html, str) or not html:
+        return []
+    assets: set[str] = set()
+    for tag in re.findall(r'<(?:script|link)\b[^>]*>', html, flags=re.IGNORECASE):
+        match = re.search(r'\b(?:src|href)=["\'](/assets/[^"\']+)["\']', tag, flags=re.IGNORECASE)
+        if not match:
+            continue
+        path = match.group(1)
+        if '..' in path.split('/'):
+            continue
+        assets.add(path)
+    return sorted(assets)
+
+
+def collect_boot_assets(root: dict[str, Any]) -> dict[str, Any]:
+    paths = extract_boot_asset_paths(root.get('text'))
+    failed: list[dict[str, Any]] = []
+    for path in paths[:32]:
+        result = http_get(f'https://hava81.zekiakgul.dev{path}', timeout=4.0)
+        if result.get('status') != 200:
+            failed.append({'path': path, **slim_http(result)})
+    return {
+        'ok': bool(paths) and not failed and len(paths) <= 32,
+        'count': len(paths),
+        'failed': failed,
+        'truncated': len(paths) > 32,
+    }
+
+
 def timestamp_age_seconds(value: Any) -> float | None:
     if not isinstance(value, str) or not value:
         return None
@@ -154,6 +191,7 @@ def collect_production() -> dict[str, Any]:
         'https://api.hava81.zekiakgul.dev/api/v1/health/ready',
         headers={'Origin': 'https://hava81.zekiakgul.dev'},
     )
+    boot_assets = collect_boot_assets(root)
     ready_json = ready.get('json') if isinstance(ready.get('json'), dict) else {}
     ready_headers = ready.get('headers') or {}
     cors_value = ready_headers.get('access-control-allow-origin')
@@ -165,6 +203,7 @@ def collect_production() -> dict[str, Any]:
     checks = {
         'root_200': root.get('status') == 200,
         'istanbul_200': city.get('status') == 200,
+        'boot_assets_200': boot_assets.get('ok') is True,
         'api_ready_200': ready.get('status') == 200,
         'api_reports_ready': ready_json.get('status') == 'ready',
         'api_ready_fresh': (
@@ -183,6 +222,7 @@ def collect_production() -> dict[str, Any]:
         'checks': checks,
         'root': slim_http(root),
         'istanbul': slim_http(city),
+        'boot_assets': boot_assets,
         'api_ready': {
             **slim_http(ready),
             'reported_status': ready_json.get('status'),
