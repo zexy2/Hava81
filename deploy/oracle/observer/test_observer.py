@@ -572,6 +572,94 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertIsNone(result['open_automation_prs'][1]['ci']['run_id'])
         self.assertFalse(result['signals']['main_pipeline_pending'])
 
+    def test_github_runs_timeout_retries_with_smaller_payload(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        requested_urls: list[str] = []
+        requested_timeouts: list[float] = []
+        pulls = [
+            {
+                'number': 662,
+                'title': 'Context shell',
+                'html_url': 'https://example.test/pr/662',
+                'draft': False,
+                'head': {
+                    'ref': 'automation/hava81-context-shell-1156',
+                    'sha': 'pr-sha',
+                },
+            }
+        ]
+        fallback_runs = [
+            {
+                'id': 21,
+                'run_number': 1590,
+                'name': 'CI/CD Pipeline',
+                'head_sha': 'main-sha',
+                'head_branch': 'main',
+                'event': 'push',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/main-ci',
+            },
+            {
+                'id': 22,
+                'run_number': 1586,
+                'name': 'CI/CD Pipeline',
+                'head_sha': 'pr-sha',
+                'head_branch': 'automation/hava81-context-shell-1156',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/pr-ci',
+            },
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            requested_timeouts.append(timeout)
+            if '/pulls?' in url:
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1,
+                    'headers': {'x-ratelimit-remaining': '50'}, 'json': pulls, 'error': None,
+                }
+            if '/actions/runs?per_page=100' in url:
+                return {
+                    'ok': False, 'status': None, 'elapsed_ms': 12001,
+                    'headers': {}, 'json': None, 'error': 'TimeoutError: timed out',
+                }
+            if f'/actions/runs?per_page={observer.GITHUB_RUNS_FALLBACK_PAGE_SIZE}' in url:
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 400,
+                    'headers': {'x-ratelimit-remaining': '49'},
+                    'json': {'workflow_runs': fallback_runs}, 'error': None,
+                }
+            raise AssertionError(f'unexpected URL: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(len(requested_urls), 3)
+        self.assertIn('/actions/runs?per_page=100', requested_urls[1])
+        self.assertIn(
+            f'/actions/runs?per_page={observer.GITHUB_RUNS_FALLBACK_PAGE_SIZE}', requested_urls[2]
+        )
+        self.assertEqual(requested_timeouts[1:], [
+            observer.GITHUB_RUNS_TIMEOUT_SECONDS, observer.GITHUB_RUNS_TIMEOUT_SECONDS
+        ])
+        self.assertTrue(result['ok'])
+        self.assertIsNone(result['error'])
+        self.assertEqual(result['rate_limit_remaining'], '49')
+        self.assertEqual(result['latest_main_run']['head_sha'], 'main-sha')
+        self.assertEqual(result['signals']['ci_green_prs'], [662])
+        self.assertEqual(result['signals']['ci_unknown_prs'], [])
+
 
 class ObserverStateSignatureTests(unittest.TestCase):
     def test_api_lookup_latency_does_not_create_a_change_event(self) -> None:

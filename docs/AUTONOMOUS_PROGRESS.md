@@ -2494,3 +2494,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Removed the Forecast Atlas hourly viewport's rounded card + decorative background gradient and converted the low/high/rain summary from three boxed tiles into one border-divided data strip. Reduced the current-hour fill/indicator weight and temperature area tint so the chart reads as evidence rather than decoration.
 - Updated the existing Chromium editorial regression to require zero summary gap with an actual divider plus a flat transparent chart viewport. Responsive auto-fit behavior remains intact; no weather values, forecast geometry, provider attribution, freshness TTLs, MGM semantics, interval controls or touch-target sizes changed.
 - Local gates: ESLint; TypeScript; Forecast Atlas 16/16; full frontend 61 files / 610 tests; production build + service-worker stamp + 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check` all pass. Targeted local Playwright launch was attempted but the host browser executable had been intentionally removed under disk pressure, so exact-head hosted Chromium remains mandatory before merge.
+
+## 2026-09-02 12:18 TRT — observer GitHub timeout resilience
+
+- Production observer snapshot exposed a real `TimeoutError` on the 100-run GitHub Actions lookup while production itself remained healthy.
+- Added a single bounded fallback to a 30-run Actions payload only when the primary 100-run lookup fails; successful primary behavior is unchanged.
+- Added regression coverage proving the fallback restores main and automation-PR CI state, rate-limit metadata, and a clean observer status after a simulated primary timeout.
+- Validation: observer unit suite 26/26 passed, Python compile passed, `git diff --check` passed, and a live read-only `collect_github()` probe returned current main CI plus PR #662 without error.
