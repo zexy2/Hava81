@@ -548,6 +548,42 @@ test('tablet forecast source links keep touch-friendly target heights', async ({
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mobile horizontal choice rails keep focused actions inside the scroll viewport', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile horizontal focus regression');
+  await page.goto('/istanbul');
+
+  const checks = [
+    ['.hava81-forecast-atlas__range-button', '.hava81-forecast-atlas__range'],
+    ['.activity-planner__chips button', '.activity-planner__chips'],
+  ] as const;
+
+  for (const [controlSelector, railSelector] of checks) {
+    const control = page.locator(controlSelector).first();
+    await control.scrollIntoViewIfNeeded();
+    await control.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(control).toBeFocused();
+    const state = await control.evaluate((element, parentSelector) => {
+      const rail = element.closest(parentSelector as string);
+      if (!(rail instanceof HTMLElement)) throw new Error(`Missing focus rail ${parentSelector}`);
+      const style = getComputedStyle(element);
+      const railStyle = getComputedStyle(rail);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: parseFloat(style.outlineWidth),
+        outlineOffset: parseFloat(style.outlineOffset),
+        railOverflowX: railStyle.overflowX,
+      };
+    }, railSelector);
+
+    expect(state.railOverflowX).toBe('auto');
+    expect(state.outlineStyle).not.toBe('none');
+    expect(state.outlineWidth).toBeGreaterThanOrEqual(2);
+    expect(state.outlineOffset).toBeLessThanOrEqual(0);
+  }
+});
+
 test('forced colors keeps the selected forecast interval visibly distinct', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors interval regression');
   await page.emulateMedia({ forcedColors: 'active' });
