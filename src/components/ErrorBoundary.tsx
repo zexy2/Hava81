@@ -18,6 +18,8 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
+  private retryButtonRef = React.createRef<HTMLButtonElement>();
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -29,6 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    // Move keyboard focus into the default recovery surface after the failed
+    // subtree is replaced. Custom fallbacks retain ownership of their focus policy.
+    this.retryButtonRef.current?.focus();
     
     // Report to error tracking service
     this.props.onError?.(error, errorInfo);
@@ -62,6 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h2>{i18n.t('errors.genericError')}</h2>
             <p>{i18n.t('errors.unexpectedError')}</p>
             <button
+              ref={this.retryButtonRef}
               type="button"
               className="error-boundary__button"
               onClick={this.handleReset}
