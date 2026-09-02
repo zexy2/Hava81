@@ -1063,3 +1063,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Activity Planner timing labels must call the selected interval the best weather time/range for the chosen activity, not an unqualified best time/range.
 
 **Why:** Activity-specific scoring adjusts meteorological thresholds and weights; it does not know the user's full schedule, route, venue availability, personal safety context or non-weather constraints. The primary timing label should state the evidence domain directly.
+
+### 2026-09-03 02:11 TRT — root and PWA product metadata qualify best timing as weather-based
+
+**Decision:** Root-page search/social descriptions and the installable-app manifest must describe Hava81's timing output as the best time **from a weather perspective**, not an unqualified best time.
+
+**Why:** These metadata surfaces are often read before hydration or outside the app. They should preserve the same evidence-domain boundary as the in-product decision surfaces rather than relying on nearby explanatory copy.
