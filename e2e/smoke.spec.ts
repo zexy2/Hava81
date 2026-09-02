@@ -1323,23 +1323,41 @@ test('desktop context signals use one editorial data surface', async ({ page }, 
     const grid = element.querySelector<HTMLElement>('.context-signals__grid');
     const cards = Array.from(element.querySelectorAll<HTMLElement>('.context-signal'));
     if (!source || !grid || cards.length !== 4) throw new Error('Missing context signal surface');
+    const panelStyle = getComputedStyle(element);
     const sourceStyle = getComputedStyle(source);
     const gridStyle = getComputedStyle(grid);
     const cardStyles = cards.map(card => getComputedStyle(card));
     return {
+      panelBackground: panelStyle.backgroundColor,
+      panelTop: parseFloat(panelStyle.borderTopWidth),
+      panelBottom: parseFloat(panelStyle.borderBottomWidth),
+      panelLeft: parseFloat(panelStyle.borderLeftWidth),
+      panelRight: parseFloat(panelStyle.borderRightWidth),
+      panelRadius: parseFloat(panelStyle.borderRadius),
+      panelShadow: panelStyle.boxShadow,
       sourceHasBox: sourceStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(sourceStyle.borderTopWidth) > 0,
       gridRule: parseFloat(gridStyle.borderTopWidth),
       nestedCardBackgrounds: cardStyles.filter(style => style.backgroundColor !== 'rgba(0, 0, 0, 0)').length,
       roundedNestedCards: cardStyles.filter(style => parseFloat(style.borderRadius) > 0).length,
       separatedColumns: parseFloat(cardStyles[1]?.borderInlineStartWidth ?? '0'),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
     };
   });
 
+  expect(surface.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(surface.panelTop).toBeGreaterThanOrEqual(1);
+  expect(surface.panelBottom).toBeGreaterThanOrEqual(1);
+  expect(surface.panelLeft).toBe(0);
+  expect(surface.panelRight).toBe(0);
+  expect(surface.panelRadius).toBe(0);
+  expect(surface.panelShadow).toBe('none');
   expect(surface.sourceHasBox).toBe(false);
   expect(surface.gridRule).toBeGreaterThanOrEqual(1);
   expect(surface.nestedCardBackgrounds).toBe(0);
   expect(surface.roundedNestedCards).toBe(0);
   expect(surface.separatedColumns).toBeGreaterThanOrEqual(1);
+  expect(surface.pageWidth).toBeLessThanOrEqual(surface.viewportWidth);
 });
 
 test('desktop decision alerts read as an editorial utility strip', async ({ page }, testInfo) => {
