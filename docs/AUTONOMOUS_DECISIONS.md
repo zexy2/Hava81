@@ -758,3 +758,6 @@ The selected-city map marker is a current observation surface because it renders
 - Current-weather refresh eligibility must use the provider evidence timestamp (`meta.fetchedAt`) and TTL when available, not merely the moment the browser received the response.
 - A provider-cached observation can already be expired when it reaches the client; treating receipt time as freshness would unnecessarily preserve expired evidence for another client-side TTL window.
 - Reuse the shared `getCurrentWeatherFreshness` contract so map rendering and refresh eligibility agree on TTL, future-skew, and fail-closed semantics. Client receipt age remains only a compatibility fallback for legacy payloads without provider metadata.
+
+## 2026-09-02 — first-viewport current evidence uses the shared freshness contract
+`WeatherDecisionField` must derive whether current observations are actionable and when their expiry timer fires from `getCurrentWeatherFreshness`, rather than carrying its own TTL/future-skew math. Keep the user-facing age/minute text separate because it is presentation cadence, not evidence validity. This prevents the primary decision surface from drifting from map/environment/current-refresh freshness semantics without changing weather values or decision thresholds.
