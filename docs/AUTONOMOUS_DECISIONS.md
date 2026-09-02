@@ -886,3 +886,6 @@ The ErrorBoundary fallback sits outside the normal `.app` wrapper but the resolv
 
 ### 2026-09-02 — Theme-adaptive Aegean actions use the theme-adaptive paper foreground
 Do not hard-code white text on controls whose Aegean background becomes light in dark mode. Pair `--color-aegean` with `--color-atlas-paper`: light mode retains white-on-deep-teal while dark mode receives dark ink on light teal with AA text contrast. Loading indicators inside those actions should inherit `currentColor` rather than restoring a fixed white ring.
+
+### 2026-09-02 — Initial location onboarding has one primary decision
+The root location-choice gate should not present location, İstanbul fallback, and city search as three equal competing CTAs. Keep “use my location” as the single primary full-width action, group İstanbul and explicit city search as equal secondary choices below it on wider screens, and stack all actions on narrow screens. Preserve zero automatic geolocation calls, the explicit city-search escape hatch, 44px targets, and associate the primary action with the privacy note.

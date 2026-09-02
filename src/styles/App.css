@@ -849,15 +849,26 @@ textarea:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.atlas-empty--location {
+  padding-block: var(--space-xl);
+  border-block: 1px solid var(--color-atlas-line);
+}
+
 .atlas-empty__actions {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 34rem);
   gap: var(--space-sm);
 }
 
 .atlas-empty__actions .atlas-button {
+  width: 100%;
+  min-width: 0;
   white-space: normal;
+}
+
+.atlas-empty__actions .atlas-button--primary {
+  grid-column: 1 / -1;
 }
 
 .atlas-empty__note {
@@ -1128,6 +1139,16 @@ kbd {
 
   .atlas-footer {
     display: none;
+  }
+}
+
+@media (max-width: 30rem) {
+  .atlas-empty__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .atlas-empty__actions .atlas-button--primary {
+    grid-column: 1;
   }
 }
 

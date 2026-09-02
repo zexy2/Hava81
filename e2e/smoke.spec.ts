@@ -219,6 +219,66 @@ test('root route explains the location choice before requesting browser permissi
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(1);
 });
 
+test('desktop root location gate gives the location choice a clear primary row', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop initial-location hierarchy regression');
+
+  await page.addInitScript(() => {
+    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: () => {
+          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
+            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+  const gate = page.locator('.atlas-empty--location');
+  await expect(gate).toBeVisible();
+
+  const layout = await gate.evaluate(element => {
+    const actions = element.querySelector<HTMLElement>('.atlas-empty__actions');
+    const primary = element.querySelector<HTMLElement>('.atlas-button--primary');
+    const buttons = Array.from(element.querySelectorAll<HTMLElement>('.atlas-empty__actions .atlas-button'));
+    const note = element.querySelector<HTMLElement>('#location-gate-privacy');
+    if (!actions || !primary || buttons.length !== 3 || !note) {
+      throw new Error('Missing location gate hierarchy');
+    }
+    const gateStyle = getComputedStyle(element);
+    const actionsRect = actions.getBoundingClientRect();
+    const primaryRect = primary.getBoundingClientRect();
+    const secondaryRects = buttons.slice(1).map(button => button.getBoundingClientRect());
+    return {
+      actionsDisplay: getComputedStyle(actions).display,
+      primaryWidth: primaryRect.width,
+      actionsWidth: actionsRect.width,
+      primaryBottom: primaryRect.bottom,
+      secondaryTops: secondaryRects.map(rect => rect.top),
+      secondaryWidths: secondaryRects.map(rect => rect.width),
+      gateTopBorder: parseFloat(gateStyle.borderTopWidth),
+      gateBottomBorder: parseFloat(gateStyle.borderBottomWidth),
+      describedBy: primary.getAttribute('aria-describedby'),
+      noteId: note.id,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.actionsDisplay).toBe('grid');
+  expect(Math.abs(layout.primaryWidth - layout.actionsWidth)).toBeLessThanOrEqual(1);
+  expect(Math.abs(layout.secondaryTops[0] - layout.secondaryTops[1])).toBeLessThanOrEqual(1);
+  expect(layout.secondaryTops.every(top => top >= layout.primaryBottom)).toBe(true);
+  expect(Math.abs(layout.secondaryWidths[0] - layout.secondaryWidths[1])).toBeLessThanOrEqual(1);
+  expect(layout.gateTopBorder).toBeGreaterThanOrEqual(1);
+  expect(layout.gateBottomBorder).toBeGreaterThanOrEqual(1);
+  expect(layout.describedBy).toBe(layout.noteId);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
+});
+
 test('root route falls back to İstanbul without an error when chosen location permission is denied', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location fallback regression');
   await page.addInitScript(() => {

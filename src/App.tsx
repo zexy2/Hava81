@@ -702,7 +702,7 @@ const App: React.FC = () => {
             )}
 
             {activeNav !== 'saved' && !weather && !isLoading && !error && (
-              <section className="atlas-empty">
+              <section className={`atlas-empty${initialCity ? '' : ' atlas-empty--location'}`}>
                 {initialCity ? (
                   <>
                     <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
@@ -725,6 +725,7 @@ const App: React.FC = () => {
                       <button
                         type="button"
                         className="atlas-button atlas-button--primary"
+                        aria-describedby="location-gate-privacy"
                         onClick={() => void handleInitialLocation()}
                       >
                         {t('weather.useMyLocation')}
@@ -744,7 +745,9 @@ const App: React.FC = () => {
                         {t('hava81.locationGate.searchAnother')}
                       </button>
                     </div>
-                    <small className="atlas-empty__note">{t('hava81.locationGate.privacy')}</small>
+                    <small id="location-gate-privacy" className="atlas-empty__note">
+                      {t('hava81.locationGate.privacy')}
+                    </small>
                   </>
                 )}
               </section>
