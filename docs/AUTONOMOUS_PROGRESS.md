@@ -2815,3 +2815,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed only the localized favorable-state wording to “Belirgin hava riski yok” / “No material weather risk” and the near-forecast stable sentence to the same weather-specific scope. No score, threshold, weather value, provider interpretation, severity, or official-warning behavior changed.
 - `git diff --check` passes. Local Node/npm remain intentionally absent on the disk-pressured host; exact-head hosted frontend/browser/Lighthouse/CodeQL gates are mandatory before merge.
 - Next: commit/push/open this bounded trust-copy PR from the current stable base; while it validates, finish post-#710 main production verification and rebase prepared branches onto the resulting green main.
+
+
+## 2026-09-03 00:20 TRT — make mobile navigation DOM-order regression wait for rendered controls
+- Post-#712 main CI/CD #1738 failed only in Browser flows; API, frontend quality, production build and CodeQL were green. The failing mobile regression executed its raw `page.evaluate` before the asynchronously rendered first main-content control existed, producing `Missing mobile navigation or main interactive control` on all retries.
+- Kept the DOM-order assertion intact but added explicit Playwright attachment waits for the nav, main landmark, first nav button and first main interactive control before evaluating document order. Product markup, keyboard order, navigation behavior and production code are unchanged.
+- `git diff --check` is required locally; exact-head hosted Browser flows plus all protected gates are mandatory before merge. Production remained healthy, so this is a test-reliability correction rather than a rollback-worthy product incident.

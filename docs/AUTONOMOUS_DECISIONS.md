@@ -1021,3 +1021,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Hava81 may describe a forecast window as having no material **weather** risk among the signals it evaluates, but must not publish an unqualified “no material risk” statement that could be read as a broader safety guarantee.
 
 **Why:** The score and decision engine evaluate meteorological/provider evidence only. Explicitly naming weather keeps favorable guidance useful while preserving the product boundary already stated in the score note: Hava81 is not a general safety guarantee.
+
+
+### 2026-09-03 00:20 TRT — browser DOM-order checks wait for asynchronous controls
+
+**Decision:** Browser regressions that compare DOM order after asynchronous city rendering must first wait for the exact participating elements to be attached, then evaluate their relative document position.
+
+**Why:** `page.goto` guarantees navigation completion, not that React's weather-dependent controls have rendered. Waiting for the participants preserves the semantic assertion while removing a race that can fail an otherwise healthy production commit.

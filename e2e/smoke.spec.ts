@@ -670,6 +670,17 @@ test('mobile bottom navigation precedes main content in keyboard order', async (
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile navigation focus-order regression');
   await page.goto('/istanbul');
 
+  const nav = page.locator('.atlas-bottom-nav');
+  const main = page.locator('#main-content');
+  const firstNavButton = nav.locator('button').first();
+  const firstMainControl = main
+    .locator('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex="0"]')
+    .first();
+  await expect(nav).toBeAttached();
+  await expect(main).toBeAttached();
+  await expect(firstNavButton).toBeAttached();
+  await expect(firstMainControl).toBeAttached();
+
   const order = await page.evaluate(() => {
     const nav = document.querySelector<HTMLElement>('.atlas-bottom-nav');
     const main = document.querySelector<HTMLElement>('#main-content');
