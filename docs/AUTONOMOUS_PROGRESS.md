@@ -2786,3 +2786,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The observer state now exposes `host.disk.used_bytes`, but `/usr/local/bin/hava81-worker-status` still discarded it and showed only percentage plus free GiB. Added `used_gib` to the compact disk line with backward-compatible `None` behavior when an older state lacks the field.
 - No thresholds, health classification, timer behavior, production probes, API behavior, or disk mutation changed.
 - Local gates: observer suite 26/26 PASS, Python compile PASS, installer `bash -n` PASS, `git diff --check` PASS. Next: push/open bounded observer-status PR and require exact-head CI/CodeQL; do not install it on the host until merged green.
+
+## 2026-09-02 23:24 TRT — align fixed mobile navigation with keyboard DOM order
+- Measured current production at a real 390×844 Chromium viewport: the page has no document-level horizontal overflow, header actions meet 44px targets, and the decision field occupies the first viewport as intended. The audit did expose that the visually persistent bottom navigation is rendered after the entire `<main>` and footer in DOM order.
+- Moved `AtlasBottomNav` to immediately after the header and before `<main>`. Its fixed visual position, active-state logic, map/search hiding selectors, saved-state behavior, and desktop `display:none` remain unchanged; the change only aligns landmark/focus order with the persistent navigation's visual role.
+- Added a mobile Playwright regression requiring the bottom-nav landmark and its first focusable button to precede the first main-content control in DOM/focus order.
+- `git diff --check` passes. Local Node/npm are intentionally unavailable on this disk-pressured host, so exact-head hosted frontend/browser/Lighthouse/CodeQL gates are mandatory before merge.
+- Next: commit/push/open this isolated accessibility PR; keep #707 validation and post-#706 main validation independent.
