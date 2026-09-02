@@ -838,3 +838,6 @@ The hourly forecast is a continuous evidence surface, not a stack of dashboard c
 ## 2026-09-02 — make Lighthouse floor failures actionable
 
 - When a Lighthouse category breaches its hard floor, print the weighted audits that actually lost points instead of logging only the aggregate category score. This keeps quality gates strict while making regressions diagnosable without downloading and manually inspecting the raw LHR artifact.
+
+## 2026-09-02 — Browser CI does not reinstall OS dependencies on every hosted run
+GitHub's current `ubuntu-24.04` hosted image already contains the core Chromium runtime libraries required by Hava81's Playwright suite, while the repo separately caches the version-keyed Playwright Chromium bundle. Do not run `playwright install --with-deps` on every Browser job: it invokes apt and can spend the full job timeout downloading optional font packages from a slow mirror. Use `playwright install chromium` to materialize/verify the version-keyed browser and let the actual browser suite fail clearly if the hosted image ever loses a required shared library. Keep the cache key tied to `package-lock.json` so browser-version changes cannot silently reuse an incompatible binary.

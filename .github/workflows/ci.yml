@@ -124,7 +124,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - run: npx playwright install --with-deps chromium
+      - name: Ensure Playwright Chromium is present
+        run: npx playwright install chromium
       - uses: actions/download-artifact@v8
         with:
           name: dist
