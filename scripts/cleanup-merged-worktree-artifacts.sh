@@ -85,14 +85,14 @@ while IFS= read -r wt; do
   [[ "$(realpath "$wt")" != "$(realpath "$primary")" ]] || continue
 
   status_output=""
-  if ! status_output="$(git -C "$wt" status --porcelain --untracked-files=all 2>/dev/null)"; then
+  if ! status_output="$(git -c safe.directory="$wt" -C "$wt" status --porcelain --untracked-files=all 2>/dev/null)"; then
     continue
   fi
   if [[ -n "$status_output" ]]; then
     continue
   fi
 
-  head="$(git -C "$wt" rev-parse HEAD 2>/dev/null || true)"
+  head="$(git -c safe.directory="$wt" -C "$wt" rev-parse HEAD 2>/dev/null || true)"
   [[ -n "$head" ]] || continue
 
   merged=true
@@ -105,7 +105,7 @@ while IFS= read -r wt; do
 
   stale_clean=false
   if [[ "$merged" != true && -n "$stale_clean_hours" ]]; then
-    branch_ref="$(git -C "$wt" symbolic-ref -q HEAD 2>/dev/null || true)"
+    branch_ref="$(git -c safe.directory="$wt" -C "$wt" symbolic-ref -q HEAD 2>/dev/null || true)"
     branch_head=""
     if [[ -n "$branch_ref" ]]; then
       branch_head="$(git rev-parse --verify "$branch_ref" 2>/dev/null || true)"
