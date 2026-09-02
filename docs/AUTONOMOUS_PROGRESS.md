@@ -2507,3 +2507,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - A concurrent location-first PR passed API/frontend/build/browser gates but failed only the Lighthouse best-practices floor (92 vs 95), while the existing CI log exposed no underlying audit ID.
 - Updated the Lighthouse runner to emit each weighted sub-audit that lost points whenever a category falls below its hard floor. No threshold, retry, or scoring behavior changed.
 - Validation available on this host: `git diff --check`; hosted CI remains authoritative for Node/Lighthouse execution because the Oracle host intentionally has no system Node runtime.
+
+## 2026-09-02 13:08 TRT — remove apt-mirror bottleneck from Browser CI
+- PR #664's API, frontend, production build, Lighthouse and CodeQL gates all passed, but Browser job #100198687998 hit its 10-minute timeout entirely inside `npx playwright install --with-deps chromium`; E2E never started.
+- Read the exact hosted job log: the Chromium cache was a hit (~269 MB restored), all core browser libraries were already installed on `ubuntu-24.04`, and apt then spent ~9m48s fetching nine extra font packages from the Azure Ubuntu mirror before the job was cancelled.
+- Changed only the Browser setup step to `npx playwright install chromium`, preserving the lockfile-keyed browser cache and the full E2E gate while avoiding per-run apt dependency/font installation. A future missing runtime library will fail in the real browser launch instead of being masked.
+- First hosted validation on pre-#665 base completed successfully: Browser setup skipped apt, Chromium materialization passed, and the full E2E job completed green. The branch is now rebased onto current main and must pass exact-head gates again before merge.
