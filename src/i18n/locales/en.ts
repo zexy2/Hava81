@@ -51,6 +51,7 @@ export const en = {
     addCurrentCity: 'Add current city to favorites',
     cityNotFound: 'City not found',
     noData: 'No data',
+    staleCurrentData: 'Current observation is not fresh',
     mapTitle: 'Turkey weather atlas',
     viewCityWeather: 'View city weather',
     temperatureLegend: 'Map temperature colors',

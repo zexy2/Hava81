@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { AirQuality, NormalizedWeatherData } from '../../types';
@@ -6,6 +6,29 @@ import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import './EnvironmentRail.css';
 
 const WIND_DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
+const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
+const MAX_FUTURE_SKEW_MS = 60_000;
+const FRESHNESS_EXPIRY_CUSHION_MS = 100;
+
+function getCurrentFreshness(weather: NormalizedWeatherData): { fresh: boolean; expiresInMs: number | null } {
+  const fetchedAtMs = weather.meta.fetchedAt instanceof Date
+    ? weather.meta.fetchedAt.getTime()
+    : new Date(weather.meta.fetchedAt).getTime();
+  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null };
+  const ttlSeconds =
+    typeof weather.meta.freshForSeconds === 'number' &&
+    Number.isFinite(weather.meta.freshForSeconds) &&
+    weather.meta.freshForSeconds > 0
+      ? weather.meta.freshForSeconds
+      : CURRENT_FRESHNESS_FALLBACK_SECONDS;
+  const ageMs = Date.now() - fetchedAtMs;
+  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
+  const fresh = ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
+  return {
+    fresh,
+    expiresInMs: fresh && remainingMs > 0 ? remainingMs + FRESHNESS_EXPIRY_CUSHION_MS : null,
+  };
+}
 
 export interface EnvironmentRailProps {
   weather: NormalizedWeatherData;
@@ -68,6 +91,25 @@ export function EnvironmentRail({
   const { t } = useTranslation();
   const { settings, convertWindSpeed, getWindSpeedSymbol } = useSettings();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
+  const [, setFreshnessRevision] = useState(0);
+  const currentFreshness = getCurrentFreshness(weather);
+
+  useEffect(() => {
+    const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
+    const timerId =
+      currentFreshness.expiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, currentFreshness.expiresInMs);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [currentFreshness.expiresInMs, weather.meta.fetchedAt, weather.meta.freshForSeconds]);
 
   const timeFormatter = useMemo(
     () =>
@@ -110,7 +152,8 @@ export function EnvironmentRail({
     return `${hours} ${t('daylight.hours')} ${minutes} ${t('daylight.minutes')}`;
   }, [hasValidDaylight, t, weather.sunrise, weather.sunset]);
 
-  const hasValidWind = Number.isFinite(weather.windDirection) && Number.isFinite(weather.windSpeed);
+  const hasValidWind =
+    currentFreshness.fresh && Number.isFinite(weather.windDirection) && Number.isFinite(weather.windSpeed);
   const normalizedDirection = hasValidWind ? ((weather.windDirection % 360) + 360) % 360 : 0;
   const directionKey = WIND_DIRECTION_KEYS[Math.round(normalizedDirection / 45) % 8];
   const directionLabel = hasValidWind ? t(`wind.directions.${directionKey}`) : t('weather.noData');
@@ -149,7 +192,11 @@ export function EnvironmentRail({
           {directionLabel} · {windSpeed}
         </strong>
         <span className="environment-rail__detail">
-          {hasValidWind ? `${Math.round(normalizedDirection)}°` : t('weather.noData')}
+          {hasValidWind
+            ? `${Math.round(normalizedDirection)}°`
+            : currentFreshness.fresh
+              ? t('weather.noData')
+              : t('weather.staleCurrentData')}
         </span>
       </div>
 
