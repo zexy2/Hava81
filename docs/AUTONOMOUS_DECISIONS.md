@@ -1015,3 +1015,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Hide latitude/longitude metadata below 40rem while retaining observation time, provider, and freshness; keep coordinates visible at tablet/desktop widths.
 
 **Why:** Live 390px measurement showed coordinates force provenance/freshness onto a second row and consume scarce first-viewport space. Exact coordinates are secondary technical detail for a city forecast, whereas source and freshness directly support weather-data trust.
+
+### 2026-09-02 23:52 TRT — no-risk copy is scoped to weather evidence
+
+**Decision:** Hava81 may describe a forecast window as having no material **weather** risk among the signals it evaluates, but must not publish an unqualified “no material risk” statement that could be read as a broader safety guarantee.
+
+**Why:** The score and decision engine evaluate meteorological/provider evidence only. Explicitly naming weather keeps favorable guidance useful while preserving the product boundary already stated in the score note: Hava81 is not a general safety guarantee.
