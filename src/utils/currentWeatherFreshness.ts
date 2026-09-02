@@ -1,4 +1,4 @@
-import type { CurrentWeatherMeta } from '../types';
+import type { WeatherDataMeta } from '../types';
 
 const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
 const MAX_FUTURE_SKEW_MS = 60_000;
@@ -19,7 +19,7 @@ const unknownFreshness = (): CurrentWeatherFreshnessState => ({
 });
 
 export function getCurrentWeatherFreshness(
-  meta: CurrentWeatherMeta | null,
+  meta: WeatherDataMeta | null,
   now = Date.now()
 ): CurrentWeatherFreshnessState {
   if (!meta?.fetchedAt) return unknownFreshness();
