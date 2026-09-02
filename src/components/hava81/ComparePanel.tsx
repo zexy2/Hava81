@@ -3,9 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { weatherService } from '../../api/weatherService';
 import { useSettings } from '../../context';
 import { buildActivityPlan } from '../../domain/activity/buildActivityPlan';
-import type { ActivityPlan } from '../../domain/activity/types';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
-import type { DailyPlan } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type {
   AirQuality,
@@ -30,8 +28,6 @@ interface CompareRow {
   airQuality?: AirQuality;
   hourly: HourlyForecast[];
   meta: ForecastMeta;
-  plan: DailyPlan;
-  activityPlan?: ActivityPlan;
 }
 
 export function ComparePanel({ cities, language }: ComparePanelProps) {
@@ -84,25 +80,11 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
         }
         const decisionHourly = hourlySource.hourly;
         const decisionMeta = hourlySource.meta;
-        const plan = buildDailyPlan({ weather, hourly: decisionHourly, airQuality });
-        const activityPlan = primaryActivity
-          ? buildActivityPlan({
-              activity: primaryActivity,
-              weather,
-              hourly: decisionHourly,
-              airQuality,
-              sensitivity: profile.temperatureSensitivity,
-              preferredStart: profile.activityStart,
-              preferredEnd: profile.activityEnd,
-            })
-          : undefined;
         return {
           weather,
           airQuality,
           hourly: decisionHourly,
           meta: decisionMeta,
-          plan,
-          activityPlan,
         } satisfies CompareRow;
       })
     )
@@ -120,16 +102,32 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     return () => {
       active = false;
     };
-  }, [language, primaryActivity, profile.activityEnd, profile.activityStart, profile.temperatureSensitivity, selected]);
+  }, [language, selected]);
 
   const freshnessNow = Date.now();
-  const freshRows = rows.filter(row => {
+  const freshRows = rows.flatMap(row => {
     const currentFreshness = getCurrentWeatherFreshness(row.weather.meta, freshnessNow);
     const forecastFreshness = getForecastFreshness(row.meta, freshnessNow);
-    const airFreshness = row.airQuality
-      ? getOptionalEvidenceFreshness(row.airQuality.meta, freshnessNow)
-      : null;
-    return currentFreshness.fresh && forecastFreshness.fresh && (airFreshness === null || airFreshness.fresh);
+    if (!currentFreshness.fresh || !forecastFreshness.fresh) return [];
+
+    const freshAirQuality =
+      row.airQuality && getOptionalEvidenceFreshness(row.airQuality.meta, freshnessNow).fresh
+        ? row.airQuality
+        : undefined;
+    const plan = buildDailyPlan({ weather: row.weather, hourly: row.hourly, airQuality: freshAirQuality });
+    const activityPlan = primaryActivity
+      ? buildActivityPlan({
+          activity: primaryActivity,
+          weather: row.weather,
+          hourly: row.hourly,
+          airQuality: freshAirQuality,
+          sensitivity: profile.temperatureSensitivity,
+          preferredStart: profile.activityStart,
+          preferredEnd: profile.activityEnd,
+        })
+      : undefined;
+
+    return [{ ...row, airQuality: freshAirQuality, plan, activityPlan }];
   });
   const staleCount = rows.length - freshRows.length;
   const unavailableCount = failedCount + staleCount;
@@ -164,7 +162,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     return freshRows.filter(row => row.plan.score === topScore);
   }, [freshRows]);
   const winner = leaders.length === 1 ? leaders[0] : undefined;
-  const isLeader = (row: CompareRow) => leaders.includes(row);
+  const isLeader = (row: (typeof freshRows)[number]) => leaders.includes(row);
   const offsetTime = (row: CompareRow, date?: Date) => {
     if (!date) return '—';
     const offset = row.weather.meta.timezoneOffsetSeconds * 1000;
