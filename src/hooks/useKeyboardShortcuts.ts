@@ -49,6 +49,15 @@ export function useKeyboardShortcuts(
         }
       }
 
+      // Plain horizontal arrows are native navigation/scroll keys for focused
+      // controls and keyboard-reachable overflow regions. Keep app-level city
+      // navigation global only while focus is effectively on the document.
+      const isHorizontalArrow = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+      const hasFocusedSurface = target !== document.body && target !== document.documentElement;
+      if (isHorizontalArrow && hasFocusedSurface) {
+        return;
+      }
+
       for (const shortcut of shortcutsRef.current) {
         const ctrlOrMeta = shortcut.ctrlKey || shortcut.metaKey;
         const eventCtrlOrMeta = event.ctrlKey || event.metaKey;
