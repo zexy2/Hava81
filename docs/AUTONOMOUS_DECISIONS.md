@@ -889,3 +889,7 @@ Do not hard-code white text on controls whose Aegean background becomes light in
 
 ### 2026-09-02 — Initial location onboarding has one primary decision
 The root location-choice gate should not present location, İstanbul fallback, and city search as three equal competing CTAs. Keep “use my location” as the single primary full-width action, group İstanbul and explicit city search as equal secondary choices below it on wider screens, and stack all actions on narrow screens. Preserve zero automatic geolocation calls, the explicit city-search escape hatch, 44px targets, and associate the primary action with the privacy note.
+
+### 2026-09-02 — Stale clean checkout removal requires an attached exact branch ref
+
+Severe host disk pressure can justify removing a linked checkout even when its branch is not merged, because `git worktree remove` preserves an attached local branch. This broader path must be opt-in with an explicit positive age threshold, and it is eligible only when the worktree is clean, old enough, attached to a local branch, and that branch ref points exactly at the checked-out HEAD. Detached, dirty, recent, current and primary worktrees remain excluded. Default cleanup behavior remains merge-equivalence-only, so routine automation cannot silently broaden its deletion set.
