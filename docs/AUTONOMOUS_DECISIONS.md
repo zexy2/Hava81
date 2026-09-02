@@ -981,3 +981,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Standalone-cleanup audit classification must mark the repository itself or any registered checkout as `registered` before evaluating content/age eligibility. Its `eligible` aggregate must mean the same thing as mutation candidate eligibility at this structural boundary.
 
 **Why:** The mutation path already refuses the primary/current repository and registered worktrees. Without the same guard, a clean primary clone located under the scanned `hava81-*` parent could be reported as audit-eligible even though apply would correctly refuse it, weakening the audit's value during disk incidents. This changes diagnostics only; deletion authority remains unchanged.
+
+### 2026-09-02 23:16 TRT — disk-cleanup audit reports aggregate bytes by blocker
+
+**Decision:** Standalone-cleanup `--audit` may measure and report aggregate checkout bytes for each existing eligibility/exclusion reason, while remaining read-only and path/content-silent. The byte measurement must not influence `candidate_is_eligible`, archive refs, or removal authorization.
+
+**Why:** During disk pressure, reason counts alone do not show whether a blocked class is materially responsible for host consumption. Aggregate byte totals let autonomous operations prioritize the real storage pressure while preserving dirty/unrepresented clones and avoiding disclosure of candidate paths or file contents.
