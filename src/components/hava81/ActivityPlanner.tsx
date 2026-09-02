@@ -9,6 +9,7 @@ import type { ActivityKind } from '../../domain/activity/types';
 import type { DecisionReasonCode } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './ActivityPlanner.css';
 
@@ -18,30 +19,6 @@ interface Props {
   airQuality?: AirQuality;
   forecastMeta: ForecastMeta | null;
 }
-
-const FORECAST_FRESHNESS_FALLBACK_SECONDS = 1_800;
-const MAX_FUTURE_SKEW_MS = 60_000;
-const FORECAST_EXPIRY_CUSHION_MS = 100;
-
-const forecastFreshness = (meta: ForecastMeta | null) => {
-  if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null as number | null };
-  const fetchedAtMs =
-    meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null as number | null };
-  const ttlSeconds =
-    typeof meta.freshForSeconds === 'number' &&
-    Number.isFinite(meta.freshForSeconds) &&
-    meta.freshForSeconds > 0
-      ? meta.freshForSeconds
-      : FORECAST_FRESHNESS_FALLBACK_SECONDS;
-  const ageMs = Date.now() - fetchedAtMs;
-  const fresh = ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
-  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
-  return {
-    fresh,
-    expiresInMs: fresh && remainingMs > 0 ? remainingMs + FORECAST_EXPIRY_CUSHION_MS : null,
-  };
-};
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
 const reasonKey: Record<DecisionReasonCode, string> = {
@@ -73,7 +50,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
     clearActivityWindow,
   } = useDecisionProfile();
   const [, setForecastFreshnessRevision] = useState(0);
-  const freshness = forecastFreshness(forecastMeta);
+  const freshness = getForecastFreshness(forecastMeta);
   const plans = useMemo(
     () =>
       freshness.fresh
