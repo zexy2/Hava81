@@ -294,7 +294,8 @@ describe('useWeather', () => {
           clouds: 0,
           meta: {
             provider: 'OpenWeather',
-            fetchedAt: '2026-07-14T12:00:00.000Z',
+            fetchedAt: new Date().toISOString(),
+            freshForSeconds: 300,
           },
         },
         timestamp: Date.now(),
@@ -309,6 +310,50 @@ describe('useWeather', () => {
     expect(result.current.weather?.sunset).toBeInstanceOf(Date);
     expect(result.current.weather?.timestamp).toBeInstanceOf(Date);
     expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
+  });
+
+  it('rejects a newly persisted cache entry when the provider observation is already stale', async () => {
+    const now = Date.now();
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          visibility: 10000,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'stale cache',
+          icon: '01d',
+          sunrise: '2026-09-02T03:30:00.000Z',
+          sunset: '2026-09-02T16:30:00.000Z',
+          timestamp: new Date(now - 301_000).toISOString(),
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: {
+            provider: 'OpenWeather',
+            fetchedAt: new Date(now - 301_000).toISOString(),
+            freshForSeconds: 300,
+          },
+        },
+        timestamp: now,
+        language: 'tr',
+      })
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+    await waitFor(() =>
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' })
+    );
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(result.current.weather?.description).not.toBe('stale cache');
   });
 
   it('ignores malformed persisted weather cache instead of rendering untrusted weather values', async () => {

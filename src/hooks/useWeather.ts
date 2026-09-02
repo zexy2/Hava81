@@ -380,9 +380,9 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     if (initialCity) {
       // Check cache first
       if (enableCache && cachedWeather) {
-        const cacheAge = Date.now() - cachedWeather.timestamp;
+        const now = Date.now();
         if (
-          cacheAge < STALE_TIME &&
+          !isWeatherResultStale(new Date(cachedWeather.timestamp), cachedWeather.data, now) &&
           cityIdentity(cachedWeather.data.cityName) === cityIdentity(initialCity) &&
           (cachedWeather.language ?? 'tr') === language
         ) {

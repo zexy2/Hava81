@@ -794,3 +794,7 @@ The generic GET cache may shorten reuse but must not extend a weather payload be
 
 ### 2026-09-02 — Malformed provider freshness metadata must not poison the browser GET cache
 Provider freshness metadata is a cache-validity contract, not merely an optimization hint. When a response includes only part of that contract, an invalid/non-positive/over-one-day TTL, an invalid fetch timestamp, or a fetch timestamp beyond the same 60-second future-skew ceiling used by weather validation, do not retain that response in the generic browser GET cache. Metadata-less responses keep the existing client-TTL compatibility path. This allows the next request to reach the BFF instead of replaying a payload that higher-level validation will reject.
+
+
+### 2026-09-02 — Initial current-weather cache restore follows provider evidence freshness
+A recent browser persistence timestamp is not proof that the provider observation itself is current. When cached current weather carries provider `fetchedAt`/TTL metadata, initial restore must use the same shared evidence-freshness decision as resume/online refresh; client receipt age is only the compatibility fallback when provider evidence metadata is unavailable. Rejecting a provider-stale cache should trigger the normal initial fetch rather than extending stale evidence with a new local cache age.
