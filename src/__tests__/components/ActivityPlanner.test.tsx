@@ -290,7 +290,7 @@ describe('ActivityPlanner time range', () => {
     );
 
     expect(screen.getByText('Standart konfor aralıkları kullanılır.')).toBeInTheDocument();
-    expect(screen.getAllByText('En uygun aralık: 18:00–20:00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Hava açısından en uygun aralık: 18:00–20:00').length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
     expect(screen.getByText('Sıcak uyarıları yaklaşık 3°C daha erken başlar.')).toBeInTheDocument();
