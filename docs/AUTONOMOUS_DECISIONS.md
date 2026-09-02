@@ -798,3 +798,7 @@ Provider freshness metadata is a cache-validity contract, not merely an optimiza
 
 ### 2026-09-02 — Initial current-weather cache restore follows provider evidence freshness
 A recent browser persistence timestamp is not proof that the provider observation itself is current. When cached current weather carries provider `fetchedAt`/TTL metadata, initial restore must use the same shared evidence-freshness decision as resume/online refresh; client receipt age is only the compatibility fallback when provider evidence metadata is unavailable. Rejecting a provider-stale cache should trigger the normal initial fetch rather than extending stale evidence with a new local cache age.
+
+
+### 2026-09-02 — Top-level provider freshness remains authoritative when nested metadata is unrelated
+Modeled context payloads may expose freshness as top-level `fetchedAt` / `freshForSeconds` while also carrying an unrelated nested `meta` object. The browser transport cache must continue using the complete top-level freshness contract unless nested `meta` itself contains freshness fields; unrelated nested metadata must not silently restore the generic client TTL. Conversely, malformed top-level freshness evidence remains non-cacheable so corrected network evidence can recover immediately. This affects cache reuse only and never rewrites provider evidence or user-facing weather guidance.
