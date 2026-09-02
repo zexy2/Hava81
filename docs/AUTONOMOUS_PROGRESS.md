@@ -2753,3 +2753,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Extended the existing isolated safety fixture to assert the reason breakdown while preserving all prior deletion/archival guarantees. `bash -n`, `git diff --check`, and `scripts/test-cleanup-stale-standalone-checkouts.sh` pass locally.
 - Ran the enhanced audit against `/home/ubuntu`: 42 standalone Hava81 clones classify as 27 dirty, 14 unrepresented by current main/object graph, and 1 recent; zero are eligible. This explains why aggressive standalone deletion would be unsafe and prevents blind disk reclamation.
 - Next: commit/push this diagnostics-only branch and require hosted gates; do not delete dirty/unrepresented standalone clones automatically. Continue #702 validation in parallel.
+
+## 2026-09-02 22:31 TRT — keep city comparison usable when optional AQ evidence expires
+- While #701 validated independently, audited ComparePanel's freshness boundary from exact pre-merge main. Current weather and forecast are required decision evidence, but optional air quality was also treated as row-critical: once AQ freshness expired, an otherwise fresh city card disappeared entirely.
+- Changed comparison rows to store raw successful weather/hourly/AQ inputs and derive plan/activity output at render time from only currently fresh optional AQ evidence. Current-weather or forecast expiry still removes the row fail-closed; AQ expiry now removes only AQI and AQ-derived scoring/advice while preserving fresh weather comparison.
+- This also stops refetching city weather/forecast/AQ merely because the user's activity preferences change; those preferences now recompute the derived plan locally from the already-fresh evidence.
+- Added a long-lived-tab regression with 120-second current/forecast evidence and 30-second AQ evidence: after AQ expiry, both city cards remain visible, AQI becomes unavailable, and no whole-row stale warning is emitted.
+- `git diff --check` passes. Node/npm remain intentionally absent on the disk-pressured host, so hosted exact-head frontend/unit/browser/Lighthouse/CodeQL gates are mandatory before merge.
+- Next: commit this isolated branch, then rebase it onto post-#701 main after the new main pipeline is green, preserving append-only docs and rerunning hosted gates on the rebased exact head.

@@ -399,6 +399,82 @@ describe('ComparePanel', () => {
 
   });
 
+  it('drops expired optional AQI without hiding otherwise fresh comparison rows', async () => {
+    vi.useFakeTimers();
+    const fetchedAt = new Date('2026-09-02T00:00:00.000Z');
+    vi.setSystemTime(fetchedAt);
+
+    api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
+      Promise.resolve({
+        ...makeWeather(city, city === 'İstanbul' ? 24 : 28),
+        meta: {
+          provider: 'OpenWeather',
+          fetchedAt,
+          freshForSeconds: 120,
+          timezoneOffsetSeconds: 10800,
+        },
+      })
+    );
+    api.getHourlyForecast.mockResolvedValue({
+      hourly: forecast.hourly.map(item => ({
+        ...item,
+        apparentTemperature: item.temp,
+        humidity: 55,
+        precipitationMm: 0,
+        windGust: (item.windSpeed ?? 0) + 2,
+        uvIndex: 3,
+        visibility: 20000,
+        weatherCode: 0,
+      })),
+      meta: {
+        ...forecast.meta,
+        provider: 'Open-Meteo',
+        fetchedAt,
+        freshForSeconds: 120,
+        intervalHours: 1,
+      },
+    });
+    api.getAirQuality.mockResolvedValue({
+      aqi: 2,
+      aqiLabel: 'Orta',
+      pm25: 8,
+      pm10: 12,
+      o3: 30,
+      meta: { provider: 'OpenWeather', fetchedAt, freshForSeconds: 30 },
+    });
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getAllByText('2/5')).toHaveLength(2);
+
+    vi.setSystemTime(new Date(fetchedAt.getTime() + 31_000));
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(screen.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'İzmir' })).toBeVisible();
+    expect(screen.queryByText('2/5')).not.toBeInTheDocument();
+    expect(screen.getAllByText('—')).toHaveLength(2);
+    expect(screen.queryByText(/güncelliği sona erdi/i)).not.toBeInTheDocument();
+  });
+
   it('removes modeled comparison rows when their evidence expires in a long-lived tab', async () => {
     vi.useFakeTimers();
     const fetchedAt = new Date('2026-09-02T00:00:00.000Z');
