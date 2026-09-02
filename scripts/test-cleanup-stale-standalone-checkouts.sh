@@ -90,6 +90,7 @@ fi
 
 audit="$(cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --audit)"
 grep -Fq 'Audit: scanned=8 standalone_clones=6 linked_worktrees=1 without_git_metadata=1.' <<<"$audit"
+grep -Fq 'Audit reasons: eligible=1 dirty=1 origin_mismatch=1 detached=1 unrepresented=1 recent=1 in_use=0 unreadable=0 archive_conflict=0.' <<<"$audit"
 grep -Fq "$parent/hava81-safe" <<<"$audit"
 [[ -d "$parent/hava81-no-git" ]]
 

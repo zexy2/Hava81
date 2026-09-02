@@ -957,3 +957,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Every Hava81 browser notification generated from modeled decision guidance must carry an explicit localized statement in the notification body that it is Hava81 modeled guidance and not an official MGM MeteoUyarı warning. The disclosure shown inside the alerts panel is necessary but not sufficient because system notifications are consumed outside that UI context.
 
 **Why:** Notification titles such as rain or strong-wind alerts can be seen on the lock screen or notification center without the panel that explains their provenance. Keeping the distinction in the payload itself prevents modeled Hava81 guidance from being mistaken for an official warning while leaving all weather evidence, thresholds and provider semantics unchanged.
+
+### 2026-09-02 22:38 TRT — disk cleanup diagnostics must explain exclusion without weakening eligibility
+
+**Decision:** Standalone-cleanup audit mode may report aggregate reasons why clones are excluded, but those diagnostics must remain read-only and separate from the mutation eligibility function. Dirty, unrepresented, recent, in-use, unreadable, wrong-origin, detached, or archive-conflicting checkouts remain non-candidates.
+
+**Why:** Under disk pressure, a bare “0 eligible” result encourages unsafe manual cleanup. Aggregate reason counts expose whether space is tied up in potentially valuable/unknown work without inspecting file contents or broadening deletion authority.
