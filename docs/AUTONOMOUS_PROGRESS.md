@@ -2366,3 +2366,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the asynchronous notification path and found a narrow stale-evidence window: the effect checked freshness before awaiting `navigator.serviceWorker.ready`, but could still show a decision notification after current/forecast TTL expired during that wait.
 - Prepared a fail-closed delivery guard that reuses shared freshness utilities and revalidates immediately after service-worker readiness. Added a deterministic regression where both evidence TTLs expire during a delayed readiness promise; no notification or sent marker may be produced.
 - Local `git diff --check` passes; hosted lint/type/unit/build/browser/CodeQL gates remain mandatory because host dependency trees stay removed under disk pressure.
+
+### 2026-09-02 comparison current-freshness deduplication
+- Audited remaining freshness arithmetic while #623/#624 validated and found `ComparePanel` still evaluated current weather through a private generic TTL/future-skew helper.
+- Routed comparison current observations through shared `getCurrentWeatherFreshness`; retained the local helper only for optional AQ evidence because its compatibility fallback is a separate contract.
+- No weather values, timestamps, score thresholds, provider calls, MGM semantics, official-warning behavior or UI copy changed. `git diff --check` passes; hosted exact-head lint/type/unit/build/browser/CodeQL remain mandatory before merge under host disk pressure.

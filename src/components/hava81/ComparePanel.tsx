@@ -15,6 +15,7 @@ import type {
   NormalizedWeatherData,
   WeatherDataMeta,
 } from '../../types';
+import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationSummary, pickMostSignificantPrecipitation } from '../../utils/precipitation';
 import './ComparePanel.css';
@@ -23,7 +24,7 @@ const OPTIONAL_EVIDENCE_FALLBACK_SECONDS = 300;
 const MAX_EVIDENCE_FUTURE_SKEW_MS = 60_000;
 const EVIDENCE_EXPIRY_CUSHION_MS = 100;
 
-const getEvidenceFreshness = (meta: WeatherDataMeta | undefined) => {
+const getOptionalEvidenceFreshness = (meta: WeatherDataMeta | undefined) => {
   if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null as number | null };
   const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
   if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null as number | null };
@@ -143,9 +144,9 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
   }, [language, primaryActivity, profile.activityEnd, profile.activityStart, profile.temperatureSensitivity, selected]);
 
   const freshRows = rows.filter(row => {
-    const currentFreshness = getEvidenceFreshness(row.weather.meta);
+    const currentFreshness = getCurrentWeatherFreshness(row.weather.meta);
     const forecastFreshness = getForecastFreshness(row.meta);
-    const airFreshness = row.airQuality ? getEvidenceFreshness(row.airQuality.meta) : null;
+    const airFreshness = row.airQuality ? getOptionalEvidenceFreshness(row.airQuality.meta) : null;
     return currentFreshness.fresh && forecastFreshness.fresh && (airFreshness === null || airFreshness.fresh);
   });
   const staleCount = rows.length - freshRows.length;
@@ -155,9 +156,9 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     void freshnessRevision;
     const expiryDelays = rows.flatMap(row => {
       const states = [
-        getEvidenceFreshness(row.weather.meta),
+        getCurrentWeatherFreshness(row.weather.meta),
         getForecastFreshness(row.meta),
-        ...(row.airQuality ? [getEvidenceFreshness(row.airQuality.meta)] : []),
+        ...(row.airQuality ? [getOptionalEvidenceFreshness(row.airQuality.meta)] : []),
       ];
       return states.flatMap(state => state.fresh && state.expiresInMs !== null ? [state.expiresInMs] : []);
     });
