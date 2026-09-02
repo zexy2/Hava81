@@ -1033,3 +1033,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** City document descriptions may advertise a best outing window only as a **weather** window (`hava açısından` / `weather window`), rather than as an unqualified best time to go out.
 
 **Why:** Hava81 ranks meteorological evidence; search/social metadata can be read outside the product UI and therefore must carry the evidence-domain boundary itself instead of relying on nearby in-app disclaimers.
+
+### 2026-09-03 00:22 TRT — static city metadata carries the same weather scope as hydrated metadata
+
+**Decision:** Generated city HTML descriptions must qualify recommended outing timing as weather-based, matching the hydrated app metadata.
+
+**Why:** Crawlers and link previews may consume the pre-hydration HTML only. A truthfulness boundary that exists solely after JavaScript runs is insufficient for search/social surfaces.
