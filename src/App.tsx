@@ -113,9 +113,7 @@ const App: React.FC = () => {
   const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
 
-  const [initialCity] = useState(
-    () => cityFromPathname(window.location.pathname)?.name ?? 'İstanbul'
-  );
+  const [initialCity] = useState(() => cityFromPathname(window.location.pathname)?.name ?? '');
 
   const {
     city,
@@ -350,6 +348,20 @@ const App: React.FC = () => {
     [favorites.length, openMap]
   );
 
+  const handleInitialLocation = useCallback(async () => {
+    clearError();
+    const locationResult = await fetchCurrentLocation();
+    if (!locationResult) {
+      clearError();
+      await fetchWeather('İstanbul');
+    }
+  }, [clearError, fetchCurrentLocation, fetchWeather]);
+
+  const handleInitialIstanbul = useCallback(() => {
+    clearError();
+    void fetchWeather('İstanbul');
+  }, [clearError, fetchWeather]);
+
   const isLocationError =
     error?.code === ErrorCode.LOCATION_DENIED ||
     error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
@@ -437,7 +449,7 @@ const App: React.FC = () => {
                 <button
                   type="button"
                   className="atlas-icon-button atlas-icon-button--location"
-                  onClick={fetchCurrentLocation}
+                  onClick={initialCity || weather ? fetchCurrentLocation : handleInitialLocation}
                   disabled={isLoading}
                   aria-busy={isLoading}
                   aria-label={t('weather.useMyLocation')}
@@ -685,22 +697,48 @@ const App: React.FC = () => {
                     )}
                   </section>
                 )}
-
               </div>
             )}
 
             {activeNav !== 'saved' && !weather && !isLoading && !error && (
               <section className="atlas-empty">
-                <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
-                <h1>{t('weather.searchLabel')}</h1>
-                <p>{t('weather.searchPlaceholder')}</p>
-                <button
-                  type="button"
-                  className="atlas-button atlas-button--primary"
-                  onClick={openSearch}
-                >
-                  {t('common.search')}
-                </button>
+                {initialCity ? (
+                  <>
+                    <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
+                    <h1>{t('weather.searchLabel')}</h1>
+                    <p>{t('weather.searchPlaceholder')}</p>
+                    <button
+                      type="button"
+                      className="atlas-button atlas-button--primary"
+                      onClick={openSearch}
+                    >
+                      {t('common.search')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="atlas-kicker">{t('hava81.locationGate.eyebrow')}</span>
+                    <h1>{t('hava81.locationGate.title')}</h1>
+                    <p>{t('hava81.locationGate.body')}</p>
+                    <div className="atlas-empty__actions">
+                      <button
+                        type="button"
+                        className="atlas-button atlas-button--primary"
+                        onClick={() => void handleInitialLocation()}
+                      >
+                        {t('weather.useMyLocation')}
+                      </button>
+                      <button
+                        type="button"
+                        className="atlas-button"
+                        onClick={handleInitialIstanbul}
+                      >
+                        {t('hava81.locationGate.fallback')}
+                      </button>
+                    </div>
+                    <small className="atlas-empty__note">{t('hava81.locationGate.privacy')}</small>
+                  </>
+                )}
               </section>
             )}
           </main>
