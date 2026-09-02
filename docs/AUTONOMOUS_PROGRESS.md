@@ -2656,3 +2656,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added component-level freshness state using the existing optional-evidence contract. The panel now fails closed synchronously for stale/unknown evidence, refreshes on visibility, and schedules a rerender at the exact provider TTL boundary.
 - Updated the component regression fixture to use a deterministic provider clock, tightened the materially-future case to require no context evidence at all, and added exact-boundary coverage proving modeled UV/dust evidence disappears when its TTL expires.
 - `git diff --check` passes. Dependency-backed local gates remain deferred because the host is under critical disk pressure and this isolated worktree intentionally has no dependencies; exact-head hosted CI/CodeQL are required before merge.
+
+
+### 2026-09-02 19:04 TRT — fail closed on modeled UV before decision-hero handoff
+
+- After merging #690, audited the remaining context-signal consumers and found `App` passed `forecast.contextSignals?.uvIndexMax` directly into the first-viewport decision hero. `useForecast` does expire optional evidence, but that cleanup occurs in an effect and therefore does not protect the render handoff itself.
+- Added a synchronous `getOptionalEvidenceFreshness` guard before handing modeled UV to `WeatherDecisionField`; stale/invalid/materially-future context now produces `undefined` rather than UV-derived guidance. The existing `useForecast` expiry timer remains the rerender mechanism at the exact TTL boundary.
+- This branch starts from post-#690 main and does not touch the pending #689 branch. `git diff --check` is required locally; hosted CI/CodeQL remain mandatory before merge because dependencies are intentionally absent under the ongoing disk-pressure incident.
+- Added an App integration regression for materially future Open-Meteo UV evidence: the async context fetch is allowed to resolve, but first-viewport guidance must never publish the future UV model maximum. This protects the render-handoff guard independently of the ContextSignalsPanel fail-closed behavior.

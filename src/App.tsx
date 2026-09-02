@@ -17,6 +17,7 @@ import { ErrorCode } from './types';
 import { ApiError } from './api/errors/ApiError';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
+import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 
@@ -384,6 +385,11 @@ const App: React.FC = () => {
     if (weather?.coordinates) fetchForecast(weather.coordinates, weather.cityName);
   }, [fetchForecast, weather?.cityName, weather?.coordinates]);
 
+  const freshUvIndexMax =
+    forecast.contextSignals && getOptionalEvidenceFreshness(forecast.contextSignals).fresh
+      ? forecast.contextSignals.uvIndexMax
+      : undefined;
+
   return (
     <>
       <ErrorBoundary
@@ -571,7 +577,7 @@ const App: React.FC = () => {
                     hourly={forecast.hourly}
                     daily={forecast.daily}
                     airQuality={forecast.airQuality ?? undefined}
-                    uvIndexMax={forecast.contextSignals?.uvIndexMax}
+                    uvIndexMax={freshUvIndexMax}
                     forecastMeta={forecast.displayMeta ?? forecast.meta}
                   />
 
