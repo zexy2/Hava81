@@ -136,7 +136,7 @@ describe('useForecast', () => {
     await act(async () => {
       resolveForecast({
         daily: [],
-        hourly: [{ time: new Date('2026-07-14T12:00:00.000Z'), temp: 18, icon: '10d', pop: 0.7 }],
+        hourly: [{ time: new Date('2026-07-14T12:00:00.000Z'), temp: 18, icon: '10d', pop: 0.7, windSpeed: 3 }],
         meta: {
           provider: 'OpenWeather',
           fetchedAt: new Date(),
