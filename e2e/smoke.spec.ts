@@ -3566,6 +3566,30 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
     color: 'rgb(243, 246, 244)',
     background: 'rgb(14, 44, 50)',
   });
+
+  const actionColors = await page.evaluate(() => {
+    const searchButton = document.querySelector<HTMLElement>('.search-bar__submit');
+    if (!searchButton) throw new Error('Missing search submit button');
+    const popupButton = document.createElement('button');
+    popupButton.className = 'weather-map__popup-btn';
+    document.body.append(popupButton);
+    const searchStyle = getComputedStyle(searchButton);
+    const popupStyle = getComputedStyle(popupButton);
+    const result = {
+      searchColor: searchStyle.color,
+      searchBackground: searchStyle.backgroundColor,
+      popupColor: popupStyle.color,
+      popupBackground: popupStyle.backgroundColor,
+    };
+    popupButton.remove();
+    return result;
+  });
+  expect(actionColors).toEqual({
+    searchColor: 'rgb(21, 55, 60)',
+    searchBackground: 'rgb(120, 186, 192)',
+    popupColor: 'rgb(21, 55, 60)',
+    popupBackground: 'rgb(120, 186, 192)',
+  });
 });
 
 test('production HTML bootstraps current and hourly weather without duplicate app requests', async ({
