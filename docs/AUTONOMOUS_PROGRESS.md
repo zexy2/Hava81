@@ -2428,3 +2428,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The transport cache now treats partial/invalid freshness metadata, TTLs outside the weather contract, and provider fetch timestamps beyond the shared 60-second future-skew ceiling as non-cacheable. Responses with no freshness evidence retain the existing compatibility TTL, and valid evidence remains bounded by the earlier provider/client expiry.
 - Added a deterministic two-response regression proving a materially future provider timestamp is returned once but not retained, allowing the immediately following request to reach the network and cache corrected evidence. No weather values, provider timestamps, TTLs, fetch cadence, MGM semantics, API runtime, or user guidance are rewritten.
 - `git diff --check` passes. Local Node dependencies remain intentionally absent under disk pressure, so hosted exact-head lint/type/unit/build/browser/Lighthouse/CodeQL gates are mandatory before merge.
+
+
+### 2026-09-02 08:31 TRT — cover the full malformed provider-evidence cache matrix
+- Continued independently from exact main `22f78f8465d396a1dd916d4b18cbc1ce6c4665e4` while #634 reruns after rebase. Production behavior is unchanged in this loop.
+- Expanded the transport-cache regression added with #636 from one materially-future timestamp case to the fail-closed contract's four distinct malformed shapes: materially future `fetchedAt`, missing `freshForSeconds`, invalid `fetchedAt`, and an over-one-day freshness window.
+- Every case must allow the first response through to higher-level validation without retaining it in the generic GET cache, then prove an immediate second request reaches the network and caches corrected provider evidence. This locks recovery behavior without changing weather values, TTLs, provider timestamps, API semantics, MGM handling, or user guidance.
+- `git diff --check` passes; local Node dependencies remain intentionally absent under disk pressure, so hosted exact-head lint/type/unit/build/browser/Lighthouse/CodeQL gates are required before merge.
