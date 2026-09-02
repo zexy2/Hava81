@@ -2356,3 +2356,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After the shared current-weather freshness contract landed, audited remaining current-observation consumers and found `EnvironmentRail` still carried a private copy of the same TTL/future-skew/expiry logic.
 - Replaced that duplicate with `getCurrentWeatherFreshness(weather.meta)` so map and environment wind evidence cannot silently drift on freshness semantics. Existing exact-expiry/visibility behavior and stale-wind regression remain unchanged.
 - Local `git diff --check` passes; hosted gates remain mandatory because dependency directories are intentionally absent under disk pressure.
+
+### 2026-09-02 activity planner forecast freshness contract
+- Audited forecast-evidence consumers while CI ran and found `ActivityPlanner` still duplicated the shared forecast TTL/future-skew/exact-expiry algorithm.
+- Replaced the private copy with `getForecastFreshness(forecastMeta)` so activity guidance and Forecast Atlas/Daily Plan/Commute/Compare/decision surfaces use the same fail-closed forecast evidence contract.
+- This is behavior-preserving; existing activity exact-expiry tests remain the regression gate. Local `git diff --check` passes and hosted gates remain mandatory under host disk pressure.
