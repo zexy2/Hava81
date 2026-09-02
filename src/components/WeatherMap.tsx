@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,6 +7,7 @@ import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
 import { useResolvedColorMode } from '../hooks/useResolvedColorMode';
 import type { NormalizedWeatherData } from '../types/weather.types';
+import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import './WeatherMap.css';
 
 interface WeatherMapProps {
@@ -63,6 +64,14 @@ const createTemperatureIcon = (celsius: number, displayTemperature: number): L.D
   });
 };
 
+const createUnavailableObservationIcon = (): L.DivIcon =>
+  L.divIcon({
+    className: 'weather-map__plate-marker',
+    html: '<span>—</span>',
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+  });
+
 const createPlateIcon = (plateCode: number): L.DivIcon =>
   L.divIcon({
     className: 'weather-map__plate-marker',
@@ -83,6 +92,25 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const colorMode = useResolvedColorMode(settings.themeMode);
+  const [, setFreshnessRevision] = useState(0);
+  const currentFreshness = getCurrentWeatherFreshness(weather?.meta ?? null);
+
+  useEffect(() => {
+    const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
+    const timerId =
+      currentFreshness.expiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, currentFreshness.expiresInMs);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [currentFreshness.expiresInMs, weather?.meta.fetchedAt, weather?.meta.freshForSeconds]);
 
   const center = useMemo<[number, number]>(() => {
     const lat = weather?.coordinates.lat;
@@ -101,9 +129,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   const tileStyle = colorMode === 'dark' ? 'dark_all' : 'light_all';
   const temperatureSymbol = getTemperatureSymbol();
   const currentMarkerName = weather
-    ? `${weather.cityName}: ${Math.round(
-        convertTemperature(weather.temperature)
-      )}${temperatureSymbol}`
+    ? currentFreshness.fresh
+      ? `${weather.cityName}: ${Math.round(
+          convertTemperature(weather.temperature)
+        )}${temperatureSymbol}`
+      : `${weather.cityName}: ${t('weather.staleCurrentData')}`
     : '';
   const legendThresholds = {
     zero: Math.round(convertTemperature(0)),
@@ -134,10 +164,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
               position={[weather.coordinates.lat, weather.coordinates.lon]}
               ref={marker => labelMarker(marker, currentMarkerName)}
               title={currentMarkerName}
-              icon={createTemperatureIcon(
-                weather.temperature,
-                convertTemperature(weather.temperature)
-              )}
+              icon={
+                currentFreshness.fresh
+                  ? createTemperatureIcon(weather.temperature, convertTemperature(weather.temperature))
+                  : createUnavailableObservationIcon()
+              }
               eventHandlers={{
                 add: event => labelMarker(event.target as L.Marker, currentMarkerName),
               }}
@@ -145,10 +176,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
               <Popup className="weather-map__popup">
                 <div className="weather-map__popup-content">
                   <h4>{weather.cityName}</h4>
-                  <p className="weather-map__popup-temp">
-                    {convertTemperature(weather.temperature)} {getTemperatureSymbol()}
-                  </p>
-                  <p className="weather-map__popup-desc">{weather.description}</p>
+                  {currentFreshness.fresh ? (
+                    <>
+                      <p className="weather-map__popup-temp">
+                        {convertTemperature(weather.temperature)} {getTemperatureSymbol()}
+                      </p>
+                      <p className="weather-map__popup-desc">{weather.description}</p>
+                    </>
+                  ) : (
+                    <p className="weather-map__popup-desc">{t('weather.staleCurrentData')}</p>
+                  )}
                 </div>
               </Popup>
             </Marker>
