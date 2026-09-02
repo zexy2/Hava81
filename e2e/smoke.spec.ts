@@ -2311,6 +2311,7 @@ test('desktop forecast reads as one editorial data surface', async ({ page }, te
       summaryTop: parseFloat(summaryStyle.borderTopWidth),
       summaryItemRadius: firstSummary.borderRadius,
       summaryItemShadow: firstSummary.boxShadow,
+      summaryItemSeparator: parseFloat(getComputedStyle(summaryItems[1]).borderLeftWidth),
       rangeTop: parseFloat(getComputedStyle(range).borderTopWidth),
       selectedRadius: selectedStyle.borderRadius,
       selectedBottom: parseFloat(selectedStyle.borderBottomWidth),
@@ -2318,6 +2319,8 @@ test('desktop forecast reads as one editorial data surface', async ({ page }, te
       unselectedRadius: unselectedStyle.borderRadius,
       unselectedShadow: unselectedStyle.boxShadow,
       chartBorder: parseFloat(chartStyle.borderTopWidth),
+      chartRadius: parseFloat(chartStyle.borderRadius),
+      chartBackground: chartStyle.backgroundColor,
     };
   });
 
@@ -2325,10 +2328,11 @@ test('desktop forecast reads as one editorial data surface', async ({ page }, te
   expect(parseFloat(styles.panelRadius)).toBe(0);
   expect(styles.panelShadow).toBe('none');
   expect(styles.panelTop).toBeGreaterThanOrEqual(1);
-  expect(styles.summaryGap).toBeGreaterThanOrEqual(1);
+  expect(styles.summaryGap).toBe(0);
   expect(styles.summaryTop).toBeGreaterThanOrEqual(1);
   expect(parseFloat(styles.summaryItemRadius)).toBe(0);
   expect(styles.summaryItemShadow).toBe('none');
+  expect(styles.summaryItemSeparator).toBeGreaterThanOrEqual(1);
   expect(styles.rangeTop).toBeGreaterThanOrEqual(1);
   expect(parseFloat(styles.selectedRadius)).toBe(0);
   expect(styles.selectedBottom).toBeGreaterThanOrEqual(3);
@@ -2336,6 +2340,8 @@ test('desktop forecast reads as one editorial data surface', async ({ page }, te
   expect(parseFloat(styles.unselectedRadius)).toBe(0);
   expect(styles.unselectedShadow).toBe('none');
   expect(styles.chartBorder).toBeGreaterThanOrEqual(1);
+  expect(styles.chartRadius).toBe(0);
+  expect(styles.chartBackground).toBe('rgba(0, 0, 0, 0)');
 });
 
 test('mobile forecast summary reflows at 200 percent text size', async ({ page }, testInfo) => {
