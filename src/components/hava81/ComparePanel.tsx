@@ -122,10 +122,13 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     };
   }, [language, primaryActivity, profile.activityEnd, profile.activityStart, profile.temperatureSensitivity, selected]);
 
+  const freshnessNow = Date.now();
   const freshRows = rows.filter(row => {
-    const currentFreshness = getCurrentWeatherFreshness(row.weather.meta);
-    const forecastFreshness = getForecastFreshness(row.meta);
-    const airFreshness = row.airQuality ? getOptionalEvidenceFreshness(row.airQuality.meta) : null;
+    const currentFreshness = getCurrentWeatherFreshness(row.weather.meta, freshnessNow);
+    const forecastFreshness = getForecastFreshness(row.meta, freshnessNow);
+    const airFreshness = row.airQuality
+      ? getOptionalEvidenceFreshness(row.airQuality.meta, freshnessNow)
+      : null;
     return currentFreshness.fresh && forecastFreshness.fresh && (airFreshness === null || airFreshness.fresh);
   });
   const staleCount = rows.length - freshRows.length;
@@ -133,11 +136,12 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
 
   useEffect(() => {
     void freshnessRevision;
+    const expiryNow = Date.now();
     const expiryDelays = rows.flatMap(row => {
       const states = [
-        getCurrentWeatherFreshness(row.weather.meta),
-        getForecastFreshness(row.meta),
-        ...(row.airQuality ? [getOptionalEvidenceFreshness(row.airQuality.meta)] : []),
+        getCurrentWeatherFreshness(row.weather.meta, expiryNow),
+        getForecastFreshness(row.meta, expiryNow),
+        ...(row.airQuality ? [getOptionalEvidenceFreshness(row.airQuality.meta, expiryNow)] : []),
       ];
       return states.flatMap(state => state.fresh && state.expiresInMs !== null ? [state.expiresInMs] : []);
     });
