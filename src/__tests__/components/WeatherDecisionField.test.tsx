@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
 import { SettingsProvider } from '../../context';
-import type { NormalizedWeatherData } from '../../types';
+import type { ForecastMeta, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -281,6 +281,54 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.getByText('1 dk önce')).toBeInTheDocument();
   });
 
+  it('removes actionable guidance when the forecast evidence expires', async () => {
+    vi.setSystemTime(new Date('2026-08-29T13:00:00Z'));
+    const forecastMeta: ForecastMeta = {
+      provider: 'OpenWeather',
+      fetchedAt: new Date('2026-08-29T13:00:00Z'),
+      freshForSeconds: 30,
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 1,
+    };
+
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{
+            ...weather,
+            meta: {
+              ...weather.meta,
+              fetchedAt: new Date('2026-08-29T13:00:00Z'),
+              freshForSeconds: 300,
+            },
+          }}
+          forecastMeta={forecastMeta}
+          hourly={[
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 37,
+              apparentTemperature: 38,
+              icon: '01d',
+              pop: 0,
+              windSpeed: 2,
+            },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/Hissedilen sıcaklık 38°C seviyesine çıkabilir/i)).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_200);
+    });
+
+    expect(screen.queryByText(/Hissedilen sıcaklık 38°C seviyesine çıkabilir/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')
+    ).toBeInTheDocument();
+  });
+
   it('marks provider evidence stale at its exact freshness boundary instead of the next minute tick', async () => {
     vi.setSystemTime(new Date('2026-08-29T13:00:30Z'));
     render(
@@ -326,6 +374,9 @@ describe('WeatherDecisionField daily range', () => {
 
     expect(screen.getByText('Güncellik bilinmiyor')).toBeInTheDocument();
     expect(screen.queryByText('şimdi güncellendi')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')
+    ).toBeInTheDocument();
   });
 
   it("does not label tomorrow's forecast as today when the current-day daily row is missing", () => {

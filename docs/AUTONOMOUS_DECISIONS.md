@@ -717,3 +717,7 @@ An on-demand corridor result describes the user-selected departure and the API's
 ## 2026-09-02 — City comparison rows expire at the earliest evidence freshness boundary
 
 A city-comparison row combines current weather, hourly forecast evidence, and optional AQI into modeled scores and recommendations, so it must not outlive any evidence source that actually contributed to that row. Keep a row only while current weather and forecast metadata are fresh and, when AQI is present, its metadata is fresh too. Wake once at the earliest evidence deadline and re-check again when a backgrounded tab becomes visible; never extend timestamps, synthesize weather, silently refetch, or present expired rows as current. If expiry removes rows, explain the stale state explicitly rather than framing it as a new provider observation.
+
+## 2026-09-02 — First-viewport modeled guidance fails closed when its evidence expires
+
+The primary Weather Decision Field is an action surface, not merely a historical weather readout. Keep current measurements visible with their existing freshness label, but stop presenting modeled rain/wind/temperature/UV/outdoor recommendations when current weather evidence is invalid/stale or the hourly forecast metadata is missing/expired. Use provider freshness metadata and the shared forecast freshness contract; do not extend timestamps, synthesize replacement values, or silently refetch from the presentation component. Re-evaluate at the exact forecast TTL boundary and when a backgrounded tab becomes visible.
