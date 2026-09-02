@@ -2606,3 +2606,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Switched the fatal recovery surface to the shared atlas ink/field tokens with the same light fallbacks, so a render failure no longer flashes a light recovery screen for users whose resolved mode is dark.
 - Extended the existing Chromium browser-theme regression with a computed-style fatal-surface probe after switching to dark mode; it now verifies dark foreground/background token resolution without needing a test-only crash hook.
 - No error-boundary control flow, retry behavior, weather/provider semantics, API topology, MGM handling or safety guidance changed. `git diff --check` is the host-local gate; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.
+
+### 2026-09-02 16:39 TRT — restore AA contrast for dark-mode teal action surfaces
+- Audited dark-mode interactive contrast on exact main `af45ed3100f685c4eb657dbf602537730bc243c8` while #681/#682 validate independently. The search submit and map-popup action uniquely hard-coded white text over the theme-adaptive Aegean background; in dark mode that background becomes `#78bac0`, yielding only about 2.19:1 contrast (and about 1.75:1 against the hover background).
+- Reused the existing `--color-atlas-paper` foreground token for those actions. It remains white in light mode but resolves to dark atlas ink (`#15373c`) in dark mode, giving about 5.83:1 against `#78bac0`; the search spinner now derives its ring from `currentColor` so it stays coherent with the corrected foreground.
+- Extended the existing dark-theme Chromium regression to verify computed foreground/background colors for the real search submit and the shared map-popup action class. No button semantics, search/map behavior, weather data, provider logic or API topology changed.
+- `git diff --check` passes; exact-head hosted frontend/API/build/browser/Lighthouse/CodeQL remain mandatory before merge.

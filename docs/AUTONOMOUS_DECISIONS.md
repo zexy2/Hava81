@@ -883,3 +883,6 @@ The map is a primary evidence surface inside an already-flat map panel, so its d
 
 ### 2026-09-02 — Fatal recovery surfaces inherit the resolved color mode
 The ErrorBoundary fallback sits outside the normal `.app` wrapper but the resolved color mode is applied to the document root. Use the shared atlas ink/field tokens there instead of hard-coded light colors so recovery remains readable and visually coherent in dark mode. Keep light fallbacks for pre-theme safety and do not couple fatal presentation to weather or retry logic.
+
+### 2026-09-02 — Theme-adaptive Aegean actions use the theme-adaptive paper foreground
+Do not hard-code white text on controls whose Aegean background becomes light in dark mode. Pair `--color-aegean` with `--color-atlas-paper`: light mode retains white-on-deep-teal while dark mode receives dark ink on light teal with AA text contrast. Loading indicators inside those actions should inherit `currentColor` rather than restoring a fixed white ring.

@@ -281,7 +281,7 @@ textarea:focus-visible {
   min-width: 5.25rem;
   min-height: 3rem;
   padding: 0 var(--space-md);
-  color: #ffffff;
+  color: var(--color-atlas-paper);
   cursor: pointer;
   background: var(--color-aegean);
   border: 1px solid var(--color-aegean);
@@ -334,8 +334,8 @@ textarea:focus-visible {
 .search-bar__spinner {
   width: 0.85rem;
   height: 0.85rem;
-  border: 1px solid rgb(255 255 255 / 0.4);
-  border-top-color: #ffffff;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: atlas-spin 700ms linear infinite;
 }

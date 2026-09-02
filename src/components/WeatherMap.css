@@ -125,7 +125,7 @@
   min-height: 2.75rem;
   padding: 0.5rem 0.75rem;
   margin-top: 0.75rem;
-  color: #fff;
+  color: var(--color-atlas-paper, #fff);
   cursor: pointer;
   background: var(--color-aegean, #146b73);
   border: 1px solid var(--color-aegean, #146b73);

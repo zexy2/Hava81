@@ -3566,6 +3566,23 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
     color: 'rgb(243, 246, 244)',
     background: 'rgb(14, 44, 50)',
   });
+
+  const actionColors = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const searchButton = document.querySelector<HTMLElement>('.search-bar__submit');
+    if (!searchButton) throw new Error('Missing search submit button');
+    const searchStyle = getComputedStyle(searchButton);
+    return {
+      paper: rootStyle.getPropertyValue('--color-atlas-paper').trim().toLowerCase(),
+      aegean: rootStyle.getPropertyValue('--color-aegean').trim().toLowerCase(),
+      searchColor: searchStyle.color,
+    };
+  });
+  expect(actionColors).toEqual({
+    paper: '#15373c',
+    aegean: '#78bac0',
+    searchColor: 'rgb(21, 55, 60)',
+  });
 });
 
 test('production HTML bootstraps current and hourly weather without duplicate app requests', async ({
