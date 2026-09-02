@@ -40,9 +40,15 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
             censor: '[REDACTED]',
           },
         };
+  // Production traffic reaches the container through Nginx on the host and the
+  // Docker bridge. Fastify 5.12+ intentionally rejects numeric hop-count trust
+  // because it cannot validate the immediate peer (GHSA-3m5p-2c4r-xxw2).
+  // Trust only loopback and the RFC1918 range Docker uses for this bridge; the
+  // published API port itself remains bound to host loopback in docker-compose.
+  const trustedProxyAddresses = ['127.0.0.0/8', '::1/128', '172.16.0.0/12'];
   const app = Fastify({
     logger,
-    trustProxy: env.NODE_ENV === 'production' ? 1 : false,
+    trustProxy: env.NODE_ENV === 'production' ? trustedProxyAddresses : false,
     requestIdHeader: 'x-request-id',
   });
 
