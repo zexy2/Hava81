@@ -2351,3 +2351,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Prepared a bounded fix on `automation/hava81-run11-current-evidence-audit-0249`: `useWeather` now evaluates `meta.fetchedAt` + provider TTL through the shared current-weather freshness contract, with receipt age retained only for metadata-less compatibility payloads. Added a regression proving a just-received but provider-expired observation refreshes when a visible tab resumes.
 - Extended the shared freshness helper with an optional explicit clock so callers can make one deterministic freshness decision per render/test without changing default behavior.
 - Local `git diff --check` passes. Dependency directories are intentionally absent after disk-pressure cleanup, so protected hosted lint/type/unit/build/browser/CodeQL gates remain mandatory before merge.
+
+### 2026-09-02 environment freshness contract deduplication
+- After the shared current-weather freshness contract landed, audited remaining current-observation consumers and found `EnvironmentRail` still carried a private copy of the same TTL/future-skew/expiry logic.
+- Replaced that duplicate with `getCurrentWeatherFreshness(weather.meta)` so map and environment wind evidence cannot silently drift on freshness semantics. Existing exact-expiry/visibility behavior and stale-wind regression remain unchanged.
+- Local `git diff --check` passes; hosted gates remain mandatory because dependency directories are intentionally absent under disk pressure.
