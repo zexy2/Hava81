@@ -2480,3 +2480,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Verified GitHub compare pagination semantics against the same revisions: `?per_page=1&page=1` still returns the complete first-page changed-file list (136 files) and `status=ahead`, while shrinking the response to about 743 KB. The relevant runtime-file set remains empty.
 - Updated only the compare URL to request one commit object while retaining the changed-file list used by the existing runtime-path classifier. All API deployment tests now assert the bounded pagination query is present. A real read-only probe through the observer's own `http_get` successfully parsed HTTP 200 / `ahead` / 136 files within the existing response cap.
 - Local gates: observer 25/25, installer `bash -n`, and `git diff --check` pass. No API deployment markers, runtime containers, traffic, weather/provider semantics, or response-size safety bound change.
+
+
+### 2026-09-02 10:34 TRT — expose per-shell boot evidence in operator status
+- Continued in a separate worktree from exact main `96e5576008daff51f63dba2996c24c3c5ea743dc` while its production pipeline validates.
+- The observer state added root/İstanbul boot-asset counts in #652, but the compact `/usr/local/bin/hava81-worker-status` line still exposed only the union count. Updated it to print `root=` and `city=` so an operator can immediately distinguish absent boot evidence on either core shell without opening JSON state.
+- Hardened the hosted observer contract to run tests with bytecode writes disabled and compile both the collector and status script in memory. This closes a CI gap where the collector was imported by tests but a syntax error in the standalone status command could otherwise wait until host deployment.
+- Local dependency-free gates: observer 25/25, collector/status in-memory compile, observer installer `bash -n`, and `git diff --check` pass. No health thresholds, production requests, weather/API/provider semantics, or routing change.

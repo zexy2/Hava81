@@ -822,3 +822,7 @@ The observer's systemd `RuntimeDirectory` is lifecycle-bound to the oneshot serv
 
 ### 2026-09-02 — Paginate GitHub compare commit objects before raising observer HTTP bounds
 The GitHub compare endpoint includes up to hundreds of commit objects plus the changed-file list, so long-running non-API history can exceed the observer's bounded HTTP body even when only a modest number of files changed. Keep the 1.5 MB observer read cap. For API deployment drift, request `per_page=1&page=1`: GitHub still supplies compare status and the first-page changed-file list (up to its documented compare file limit), but avoids transferring hundreds of irrelevant commit objects. Continue treating the existing maximum-file-count case as ambiguous rather than assuming no runtime drift.
+
+
+### 2026-09-02 — Compact observer status must expose evidence for each core shell
+When production health depends on multiple HTML shells, the operator-facing status should surface the per-shell evidence already present in state instead of only an aggregate count. Keep the aggregate for compatibility, add root/İstanbul counts, and compile the standalone status script in hosted CI because observer unit tests do not import that executable.
