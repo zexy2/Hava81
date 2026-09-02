@@ -929,3 +929,10 @@ Cleanup eligibility requires positive evidence that a worktree is clean. If `git
 **Decision:** App must pass `airQuality` to decision, planning, alert, activity, and environment surfaces only while the provider envelope is fresh. `useForecast` remains responsible for state cleanup and expiry rerender, but render-time handoff must independently reject stale, invalid, or materially future AQ evidence.
 
 **Why:** Air quality is health-adjacent and is consumed by several surfaces. Effect-based cleanup alone can permit one render of expired/future AQ data before state is cleared; a single App-level trust boundary prevents that transient publication across all downstream consumers.
+
+
+### 2026-09-02 20:56 TRT — cleanup may trust a specific linked worktree without global Git trust
+
+**Decision:** The linked-worktree cleaner may pass `-c safe.directory=<exact-worktree-path>` only on the read-only per-worktree Git inspections needed to prove cleanliness, HEAD, and attachment. It must not change global Git safe-directory configuration, and any inspection failure still excludes that checkout.
+
+**Why:** Hava81 automation has created linked checkouts under more than one Unix owner. Git's dubious-ownership protection caused the root-run cleaner to treat otherwise inspectable worktrees as unknown, blocking safe reclamation during severe disk pressure. Narrow per-command trust preserves Git's default global protection while allowing the cleaner to make the same positive-evidence decision it already requires.
