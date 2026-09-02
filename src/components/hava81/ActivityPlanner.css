@@ -195,6 +195,9 @@
     flex: 0 0 auto;
     scroll-snap-align: start;
   }
+  .activity-planner__chips button:focus-visible {
+    outline-offset: -2px;
+  }
   .activity-planner__cards {
     grid-template-columns: minmax(0, 1fr);
   }
