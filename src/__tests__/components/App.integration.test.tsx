@@ -253,6 +253,23 @@ describe('Hava81 app integration', () => {
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
   }, 12_000);
 
+  it('does not hand materially future modeled UV into first-viewport guidance', async () => {
+    service.getContextSignals.mockResolvedValueOnce({
+      provider: 'Open-Meteo',
+      fetchedAt: new Date(Date.now() + 2 * 60_000),
+      freshForSeconds: 300,
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 9,
+      units: {},
+    });
+
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    await waitFor(() => expect(service.getContextSignals).toHaveBeenCalled());
+    expect(screen.queryByText(/UV model maksimumu 9/i)).not.toBeInTheDocument();
+  });
+
   it('uses the freshness metadata from the hourly evidence driving first-viewport guidance', async () => {
     const staleBaseline = {
       ...forecast,
