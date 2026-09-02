@@ -728,6 +728,11 @@ The primary Weather Decision Field is an action surface, not merely a historical
 When the dedicated one-hour forecast upgrades the baseline three-hour forecast, the primary Weather Decision Field must validate freshness against the metadata that belongs to that upgraded hourly series. Prefer `displayMeta` with the existing baseline `meta` fallback so the action surface cannot be incorrectly suppressed by stale metadata from a different provider/evidence snapshot while fresh hourly evidence is driving its modeled guidance. This changes no weather values, provider timestamps, scoring thresholds, refresh cadence, MGM semantics, or official-warning behavior.
 
 
+## 2026-09-02 — Forecast Atlas stops presenting expired provider evidence as current
+
+The hourly/daily forecast visualization is an evidence surface even when it is not itself a score or safety recommendation. Honor the same forecast `fetchedAt + freshForSeconds` contract used by modeled decision panels: when metadata is missing/invalid/future-skewed or the TTL expires, hide the forecast values and show an explicit stale state. Re-evaluate once at the exact provider expiry boundary and on visible-tab resume so background timer throttling cannot leave old forecasts presented as current. Do not refresh timestamps, synthesize rows, change provider values, or add polling from the presentation component.
+
+
 ## 2026-09-02 — Current wind observations stop at the current-weather TTL
 
 The environment rail's wind direction/speed are current observations, not timeless city attributes. Honor current weather `fetchedAt + freshForSeconds` (5-minute fallback, 60-second future-skew ceiling) and stop presenting wind values once that evidence expires. Re-evaluate at the exact expiry boundary and when a backgrounded tab becomes visible. Daylight times and the map city control remain available because they are not live wind observations; AQI already expires under its own provider contract. Do not refresh timestamps, poll implicitly, or synthesize replacement wind data.

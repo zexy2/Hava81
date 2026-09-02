@@ -107,6 +107,7 @@ export const en = {
     },
     forecastAtlas: {
       title: "Today's rhythm",
+      stale: 'Forecast data is no longer fresh. The forecast chart is hidden until new data arrives.',
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
       intervalControlLabel: 'Forecast interval',

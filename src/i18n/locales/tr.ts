@@ -107,6 +107,7 @@ export const tr = {
     },
     forecastAtlas: {
       title: 'Bugünün ritmi',
+      stale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar tahmin grafiği gösterilmiyor.',
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
       intervalControlLabel: 'Tahmin aralığı',

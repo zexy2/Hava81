@@ -2297,6 +2297,14 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Host disk pressure was also reduced safely by removing the root-owned disposable `/tmp/hava81-run11-day-evidence` tree (~406 MiB); production/rollback/canary images, containers, volumes and unrelated project data were left untouched. Root filesystem free space rose from ~3.2 GiB to ~3.6 GiB, though the observer threshold still reports disk pressure and remains a follow-up priority.
 
 
+### 2026-09-02 03:42 TRT — expire stale Forecast Atlas evidence in long-lived tabs
+- Continued from exact main `f17013109cca009790bf059b9f57a6b1d90e7146` after observer and GitHub agreed main CI #1459 was green and production root/İstanbul/API/CORS/nginx:4002 were healthy.
+- Audited the remaining forecast evidence surfaces and found `ForecastAtlas` kept hourly/daily values visible indefinitely even though its `ForecastMeta` already carries provider freshness metadata. Decision surfaces had been hardened to fail closed, but the primary forecast visualization could still look current after the same provider TTL elapsed.
+- Reused `getForecastFreshness(meta)` in the atlas, scheduled one UI-only wake at the exact TTL boundary, and revalidated on visible-tab resume. Expired/invalid/future-skewed evidence now hides the forecast values behind explicit localized stale copy; no weather value, timestamp, fetch cadence, provider semantics, MGM warning behavior, or score changes.
+- Added a deterministic fake-clock regression proving a 30-second provider TTL removes the visible forecast value after expiry. `git diff --check` passes. Host-local Node/npm binaries are unavailable, so exact-head hosted lint/type/unit/build/browser/CodeQL remain mandatory before merge.
+- Host disk remains under pressure at ~92% used / ~3.7 GiB free. The merged-worktree cleanup tool found no currently eligible clean merged linked worktrees, so no unsafe deletion was attempted.
+
+
 ### 2026-09-02 03:45 TRT — stop stale wind observations from looking live
 - Continued independently from exact main `f17013109cca009790bf059b9f57a6b1d90e7146` while Forecast Atlas PR #610 validates on its separately owned exact head.
 - Audited `EnvironmentRail` and found current wind direction/speed remained visible indefinitely in a long-lived tab even after the OpenWeather current-observation TTL expired. Daylight times and the map city control are not treated as live wind observations, and AQI already expires under its own source contract.
@@ -2333,3 +2341,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the selected-city map and found its temperature icon, accessible marker label and popup condition could remain indefinitely after the current-weather observation TTL expired. Static featured-city navigation itself is not current weather evidence and remains available.
 - Added a shared `getCurrentWeatherFreshness` contract with provider TTL / five-minute fallback / 60-second future-skew ceiling. The map re-checks at exact expiry and visible-tab resume; stale current evidence becomes a neutral unavailable marker plus localized stale copy rather than an old temperature/condition.
 - Added deterministic utility coverage for fallback expiry, explicit provider TTL delay and future-skew failure. `git diff --check` passes; hosted exact-head lint/type/unit/build/browser/CodeQL remain mandatory before merge.
+
+### 2026-09-02 03:48 TRT — repair Forecast Atlas clock-test fixture after the freshness gate
+- PR #610 exact-head CI/CD #1460 reached the real frontend suite: lint, type-check and the new 30-second expiry regression passed, while one pre-existing current-hour marker test failed because its fixture used the 30-minute fallback TTL and intentionally advanced the fake clock by 31 minutes. The product correctly hid the now-expired atlas, so this was a stale test contract rather than a production regression.
+- Kept the product freshness gate unchanged and made only that long-horizon clock fixture explicitly fresh for two hours, allowing it to continue testing hour-marker advancement independently of evidence expiry. Remote branch head was verified unchanged at `10868d1d2689995dbc0b0d7f0ce7e76516a665e4` before mutation.
