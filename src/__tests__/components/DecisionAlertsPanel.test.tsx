@@ -66,6 +66,31 @@ describe('DecisionAlertsPanel', () => {
     );
   });
 
+  it('carries the modeled-guidance disclosure into delivered browser notifications', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { ready: Promise.resolve({ showNotification }) },
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+
+    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
+
+    await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
+    expect(showNotification.mock.calls[0]?.[1]?.body).toMatch(/Hava81 model rehberi/i);
+    expect(showNotification.mock.calls[0]?.[1]?.body).toMatch(/resmî MGM MeteoUyarı değildir/i);
+  });
+
   it('distinguishes an unsupported browser from blocked notification permission', () => {
     vi.stubGlobal('Notification', undefined);
 

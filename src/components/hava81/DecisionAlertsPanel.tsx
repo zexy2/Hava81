@@ -149,7 +149,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
       band: t(`hava81.dailyPlan.bands.${plan.band}`),
     };
     const title = t(candidate.titleKey, alertData);
-    const body = t(candidate.bodyKey, alertData);
+    const body = `${t(candidate.bodyKey, alertData)} ${t('hava81.alerts.notificationDisclosure')}`;
     void (async () => {
       try {
         if ('serviceWorker' in navigator) {
