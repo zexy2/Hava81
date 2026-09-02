@@ -41,6 +41,20 @@ const performanceMetrics = [
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+function printCategoryAuditFailures(report, categoryKey) {
+  const auditRefs = report.categories?.[categoryKey]?.auditRefs ?? [];
+  const seen = new Set();
+  for (const auditRef of auditRefs) {
+    if (!(auditRef.weight > 0) || seen.has(auditRef.id)) continue;
+    seen.add(auditRef.id);
+    const audit = report.audits?.[auditRef.id];
+    if (!audit || typeof audit.score !== 'number' || audit.score >= 1) continue;
+    const score = Math.round(audit.score * 100);
+    const detail = audit.displayValue ? ` — ${audit.displayValue}` : '';
+    console.error(`  failing audit ${auditRef.id}: ${score} — ${audit.title}${detail}`);
+  }
+}
+
 async function cleanupStaleTempRuns(baseDir) {
   const now = Date.now();
   const entries = await readdir(baseDir, { withFileTypes: true });
@@ -201,6 +215,7 @@ try {
     console.log(`Lighthouse ${threshold.key}: ${percent} (floor ${floor}, target ${target})`);
     if (score < threshold.floor) {
       console.error(`ERROR: ${threshold.key} score ${percent} is below hard floor ${floor}`);
+      printCategoryAuditFailures(report, threshold.key);
       hasError = true;
     } else if (score < threshold.target) {
       console.warn(`WARN: ${threshold.key} score ${percent} is below target ${target}`);

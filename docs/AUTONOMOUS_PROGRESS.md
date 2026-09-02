@@ -2501,3 +2501,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a single bounded fallback to a 30-run Actions payload only when the primary 100-run lookup fails; successful primary behavior is unchanged.
 - Added regression coverage proving the fallback restores main and automation-PR CI state, rate-limit metadata, and a clean observer status after a simulated primary timeout.
 - Validation: observer unit suite 26/26 passed, Python compile passed, `git diff --check` passed, and a live read-only `collect_github()` probe returned current main CI plus PR #662 without error.
+
+## 2026-09-02 12:30 TRT — Lighthouse floor diagnostics
+
+- A concurrent location-first PR passed API/frontend/build/browser gates but failed only the Lighthouse best-practices floor (92 vs 95), while the existing CI log exposed no underlying audit ID.
+- Updated the Lighthouse runner to emit each weighted sub-audit that lost points whenever a category falls below its hard floor. No threshold, retry, or scoring behavior changed.
+- Validation available on this host: `git diff --check`; hosted CI remains authoritative for Node/Lighthouse execution because the Oracle host intentionally has no system Node runtime.
