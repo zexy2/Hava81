@@ -897,3 +897,9 @@ Severe host disk pressure can justify removing a linked checkout even when its b
 ### 2026-09-02 — Unknown worktree status is never equivalent to clean
 
 Cleanup eligibility requires positive evidence that a worktree is clean. If `git status --porcelain` cannot be read, skip that checkout entirely rather than interpreting empty command output as a clean result. This fail-closed rule applies to both merge-equivalent cleanup and the opt-in stale-clean path; inability to inspect worktree state must never widen deletion eligibility.
+
+### 2026-09-02 18:18 TRT — standalone clone cleanup must archive exact represented HEADs before deletion
+
+**Decision:** Treat stale standalone Hava81 clones as a separate storage class from linked worktrees. Automated removal is allowed only after positive proof that the clone is clean, attached, old enough, not in use, has the exact Hava81 origin, and its HEAD is already represented on `origin/main`; preserve that exact HEAD in an archive ref in the primary repository and recheck all eligibility immediately before deletion.
+
+**Why:** Root disk pressure is critical while merge-only linked-worktree cleanup now yields little space. Standalone clones can duplicate checkout storage but are not protected by `git worktree` metadata, so a broader `rm` strategy would risk deleting unique work. Archive-first, represented-commit-only eligibility keeps the operation reversible and fail-closed without touching Docker/runtime/browser/user data.
