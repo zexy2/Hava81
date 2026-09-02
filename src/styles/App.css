@@ -871,8 +871,8 @@ textarea:focus-visible {
   min-height: 100vh;
   min-height: 100dvh;
   padding: var(--space-xl);
-  color: #142524;
-  background: #f3f6f4;
+  color: var(--color-atlas-ink, #142524);
+  background: var(--color-atlas-field, #f3f6f4);
 }
 
 .atlas-footer {

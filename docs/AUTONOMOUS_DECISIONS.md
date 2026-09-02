@@ -880,3 +880,6 @@ Activity guidance is evidence and planning content, not a stack of floating dash
 
 ### 2026-09-02 — The weather-map viewport uses a flat editorial frame
 The map is a primary evidence surface inside an already-flat map panel, so its desktop viewport should not reintroduce the legacy rounded/elevated dashboard-card treatment. Keep a visible map boundary, square corners and no container shadow; marker and popup elevation remain functional spatial cues, and map values, attribution, controls, touch targets and provider semantics are unchanged.
+
+### 2026-09-02 — Fatal recovery surfaces inherit the resolved color mode
+The ErrorBoundary fallback sits outside the normal `.app` wrapper but the resolved color mode is applied to the document root. Use the shared atlas ink/field tokens there instead of hard-coded light colors so recovery remains readable and visually coherent in dark mode. Keep light fallbacks for pre-theme safety and do not couple fatal presentation to weather or retry logic.
