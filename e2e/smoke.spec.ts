@@ -643,6 +643,32 @@ test('forced colors keeps a pressed header action visibly distinct', async ({ pa
   expect(state.selectedBorder).not.toBe(state.referenceBorder);
 });
 
+test('mobile bottom navigation precedes main content in keyboard order', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile navigation focus-order regression');
+  await page.goto('/istanbul');
+
+  const order = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>('.atlas-bottom-nav');
+    const main = document.querySelector<HTMLElement>('#main-content');
+    const firstNavButton = nav?.querySelector<HTMLButtonElement>('button');
+    const firstMainControl = main?.querySelector<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex="0"]'
+    );
+    if (!nav || !main || !firstNavButton || !firstMainControl) {
+      throw new Error('Missing mobile navigation or main interactive control');
+    }
+    return {
+      navBeforeMain: Boolean(nav.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING),
+      navControlBeforeMainControl: Boolean(
+        firstNavButton.compareDocumentPosition(firstMainControl) & Node.DOCUMENT_POSITION_FOLLOWING
+      ),
+    };
+  });
+
+  expect(order.navBeforeMain).toBe(true);
+  expect(order.navControlBeforeMainControl).toBe(true);
+});
+
 test('forced colors keeps the active bottom navigation visibly distinct', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'forced-colors bottom-navigation regression');
   await page.emulateMedia({ forcedColors: 'active' });

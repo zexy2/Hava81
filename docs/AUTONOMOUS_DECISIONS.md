@@ -993,3 +993,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The human-readable worker status should display both `used_gib` and `free_gib` when the observer state provides absolute disk bytes, while tolerating older state snapshots by rendering missing values as `None`.
 
 **Why:** Percent usage alone obscures the scale of a disk incident. The observer already computes absolute used bytes, so surfacing that existing evidence improves operational decisions without adding probes, changing thresholds, or increasing mutation authority.
+
+### 2026-09-02 23:24 TRT — persistent mobile navigation precedes main content semantically
+
+**Decision:** Keep the fixed mobile bottom navigation immediately after the application header and before `<main>` in DOM order, even though CSS continues to pin it visually to the viewport bottom.
+
+**Why:** A persistent primary navigation that is visually available at all times should not require keyboard users to traverse the entire weather dashboard and footer before reaching it. Moving only the DOM position preserves the mobile visual design and behavior while making landmark and focus order match the navigation's role.

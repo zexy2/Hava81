@@ -535,6 +535,12 @@ const App: React.FC = () => {
             )}
           </header>
 
+          <AtlasBottomNav
+            active={showMap ? 'map' : activeNav === 'saved' ? 'saved' : 'today'}
+            onSelect={handleBottomNav}
+            hasSaved={favorites.length > 0}
+          />
+
           <main
             className="atlas-main"
             id="main-content"
@@ -771,12 +777,6 @@ const App: React.FC = () => {
               <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
             </span>
           </footer>
-
-          <AtlasBottomNav
-            active={showMap ? 'map' : activeNav === 'saved' ? 'saved' : 'today'}
-            onSelect={handleBottomNav}
-            hasSaved={favorites.length > 0}
-          />
 
           {isSettingsOpen ? (
             <Suspense
