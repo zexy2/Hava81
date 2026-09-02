@@ -4,6 +4,8 @@ import { trackProductEvent } from '../../analytics/productEvents';
 import { buildAlertCandidate } from '../../domain/alerts/buildAlertCandidate';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import './DecisionAlertsPanel.css';
 
 interface Props {
@@ -13,9 +15,6 @@ interface Props {
   forecastMeta: ForecastMeta | null;
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
-const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
-const FORECAST_FRESHNESS_FALLBACK_SECONDS = 1_800;
-const MAX_EVIDENCE_FUTURE_SKEW_MS = 60_000;
 const SERVICE_WORKER_READY_TIMEOUT_MS = 5_000;
 const NOTIFICATION_DELIVERY_TIMEOUT_MS = 5_000;
 const QUIET_HOURS_END_HOUR = 7;
@@ -57,21 +56,13 @@ const removeStorage = (key: string): void => {
   }
 };
 const readEnabled = () => readStorage(SETTINGS_KEY) === 'enabled';
-const isFreshEvidence = (
-  fetchedAt: Date | string | undefined,
-  freshForSeconds: number | undefined,
-  fallbackSeconds: number
-): boolean => {
-  if (!fetchedAt) return false;
-  const fetchedAtMs = fetchedAt instanceof Date ? fetchedAt.getTime() : new Date(fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return false;
-  const ttlSeconds =
-    typeof freshForSeconds === 'number' && Number.isFinite(freshForSeconds) && freshForSeconds > 0
-      ? freshForSeconds
-      : fallbackSeconds;
-  const ageMs = Date.now() - fetchedAtMs;
-  return ageMs >= -MAX_EVIDENCE_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
-};
+const isAlertEvidenceFresh = (
+  weather: NormalizedWeatherData,
+  forecastMeta: ForecastMeta | null
+): boolean =>
+  forecastMeta !== null &&
+  getCurrentWeatherFreshness(weather.meta).fresh &&
+  getForecastFreshness(forecastMeta).fresh;
 const getLocationDateKey = (timezoneOffsetSeconds = 0) =>
   new Date(Date.now() + timezoneOffsetSeconds * 1000).toISOString().slice(0, 10);
 
@@ -128,18 +119,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     () => buildAlertCandidate(weather.cityName, plan),
     [plan, weather.cityName]
   );
-  const alertEvidenceFresh =
-    forecastMeta !== null &&
-    isFreshEvidence(
-      weather.meta.fetchedAt,
-      weather.meta.freshForSeconds,
-      CURRENT_FRESHNESS_FALLBACK_SECONDS
-    ) &&
-    isFreshEvidence(
-      forecastMeta.fetchedAt,
-      forecastMeta.freshForSeconds,
-      FORECAST_FRESHNESS_FALLBACK_SECONDS
-    );
+  const alertEvidenceFresh = isAlertEvidenceFresh(weather, forecastMeta);
 
   useEffect(() => {
     if (!enabled || permission !== 'granted' || !candidate || !alertEvidenceFresh) return undefined;
@@ -177,6 +157,9 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
             navigator.serviceWorker.ready,
             SERVICE_WORKER_READY_TIMEOUT_MS
           );
+          // Service-worker readiness can outlive the evidence TTL. Never deliver a decision
+          // notification after either current or forecast evidence has expired in-flight.
+          if (!isAlertEvidenceFresh(weather, forecastMeta)) return;
           if (typeof registration.showNotification === 'function') {
             await withTimeout(
               registration.showNotification(title, {
@@ -204,10 +187,12 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     alertEvidenceFresh,
     candidate,
     enabled,
+    forecastMeta,
     permission,
     plan.band,
     quietHoursRevision,
     t,
+    weather,
     weather.meta.timezoneOffsetSeconds,
   ]);
 

@@ -2361,3 +2361,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited forecast-evidence consumers while CI ran and found `ActivityPlanner` still duplicated the shared forecast TTL/future-skew/exact-expiry algorithm.
 - Replaced the private copy with `getForecastFreshness(forecastMeta)` so activity guidance and Forecast Atlas/Daily Plan/Commute/Compare/decision surfaces use the same fail-closed forecast evidence contract.
 - This is behavior-preserving; existing activity exact-expiry tests remain the regression gate. Local `git diff --check` passes and hosted gates remain mandatory under host disk pressure.
+
+### 2026-09-02 alert delivery in-flight freshness guard
+- Audited the asynchronous notification path and found a narrow stale-evidence window: the effect checked freshness before awaiting `navigator.serviceWorker.ready`, but could still show a decision notification after current/forecast TTL expired during that wait.
+- Prepared a fail-closed delivery guard that reuses shared freshness utilities and revalidates immediately after service-worker readiness. Added a deterministic regression where both evidence TTLs expire during a delayed readiness promise; no notification or sent marker may be produced.
+- Local `git diff --check` passes; hosted lint/type/unit/build/browser/CodeQL gates remain mandatory because host dependency trees stay removed under disk pressure.
