@@ -162,6 +162,43 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it('bounds top-level provider evidence by its declared freshness window', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchedAt = new Date('2026-09-02T05:00:00.000Z');
+      vi.setSystemTime(fetchedAt);
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse({
+            provider: 'Open-Meteo',
+            fetchedAt: fetchedAt.toISOString(),
+            freshForSeconds: 60,
+            marker: 'old',
+          })
+        )
+        .mockResolvedValueOnce(
+          mockResponse({
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(fetchedAt.getTime() + 60_001).toISOString(),
+            freshForSeconds: 60,
+            marker: 'fresh',
+          })
+        );
+
+      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+        marker: 'old',
+      });
+      vi.setSystemTime(new Date(fetchedAt.getTime() + 60_001));
+      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+        marker: 'fresh',
+      });
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it.each([
     [
       'materially future fetchedAt',
