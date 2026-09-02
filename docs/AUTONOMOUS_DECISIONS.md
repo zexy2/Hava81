@@ -744,3 +744,7 @@ The main decision field already suppresses modeled action guidance when current 
 ## 2026-09-02 — Saved-city navigation must not present untimestamped weather as current
 
 Legacy favorites may carry the temperature/icon observed on the last visit, but that persisted shape has no provider `fetchedAt` or TTL. Keep those fields backward-compatible in storage for now, but do not render them in saved-city tabs or include them in accessible labels as if they were current observations. Saved tabs remain navigation affordances (province plate + city name) until a freshness-aware saved-city evidence contract exists.
+
+## 2026-09-02 — The map must not preserve an expired current-temperature marker
+
+The selected-city map marker is a current observation surface because it renders the current temperature and condition. Reuse a shared current-weather freshness contract (provider TTL, 5-minute fallback, 60-second future-skew ceiling), re-evaluate at provider expiry and visible-tab resume, and replace expired temperature/condition content with an explicit unavailable observation marker while keeping the city location navigable. Do not refresh timestamps, poll from the map, synthesize weather, or hide static featured-city navigation.
