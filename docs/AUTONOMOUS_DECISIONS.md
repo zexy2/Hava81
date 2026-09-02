@@ -903,3 +903,10 @@ Cleanup eligibility requires positive evidence that a worktree is clean. If `git
 **Decision:** Treat stale standalone Hava81 clones as a separate storage class from linked worktrees. Automated removal is allowed only after positive proof that the clone is clean, attached, old enough, not in use, has the exact Hava81 origin, and its HEAD is already represented on `origin/main`; preserve that exact HEAD in an archive ref in the primary repository and recheck all eligibility immediately before deletion.
 
 **Why:** Root disk pressure is critical while merge-only linked-worktree cleanup now yields little space. Standalone clones can duplicate checkout storage but are not protected by `git worktree` metadata, so a broader `rm` strategy would risk deleting unique work. Archive-first, represented-commit-only eligibility keeps the operation reversible and fail-closed without touching Docker/runtime/browser/user data.
+
+
+### 2026-09-02 18:54 TRT — modeled context must fail closed before paint
+
+**Decision:** `ContextSignalsPanel` must independently refuse stale, invalid, or materially future provider evidence and expire itself at the provider TTL boundary. Parent-hook cleanup remains useful state hygiene, but it is not the trust boundary for UV, dust, pollen, or marine guidance.
+
+**Why:** React effects run after render. Relying only on `useForecast` to drop expired optional evidence permits a transient render of stale or future health/activity guidance. The component that publishes that evidence must enforce freshness synchronously and schedule its own boundary refresh.

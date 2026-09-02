@@ -2648,3 +2648,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - While post-#687 main CI validates, audited the read-only observer's disk payload. It exposed free/total bytes and used percentage but not absolute used bytes, which makes fast incident sizing and trend comparisons unnecessarily indirect.
 - Added `host.disk.used_bytes`, derived from the same `statvfs` available/total counters already used for the incident thresholds. No thresholds, health semantics, runtime writes, Docker behavior, or production topology changed.
 - Extended the host-disk regression to assert the byte accounting identity. Full observer suite passes 26/26 and `git diff --check` passes.
+
+
+### 2026-09-02 18:54 TRT — close transient stale modeled-context render
+
+- While PR #689 validates independently, audited the Open-Meteo context panel and confirmed that `useForecast` drops stale optional evidence only in an effect, leaving the publishing component able to paint expired or materially future UV/dust/pollen/marine evidence for a render.
+- Added component-level freshness state using the existing optional-evidence contract. The panel now fails closed synchronously for stale/unknown evidence, refreshes on visibility, and schedules a rerender at the exact provider TTL boundary.
+- Updated the component regression fixture to use a deterministic provider clock, tightened the materially-future case to require no context evidence at all, and added exact-boundary coverage proving modeled UV/dust evidence disappears when its TTL expires.
+- `git diff --check` passes. Dependency-backed local gates remain deferred because the host is under critical disk pressure and this isolated worktree intentionally has no dependencies; exact-head hosted CI/CodeQL are required before merge.
