@@ -3289,11 +3289,17 @@ test('activity planner reflows at narrow 200 percent text size', async ({ page }
       '.activity-planner__window-help summary',
     ];
     const labels = Array.from(element.querySelectorAll('.activity-planner__window > label span'));
+    const header = element.querySelector<HTMLElement>('.activity-planner__header');
+    const sensitivity = element.querySelector<HTMLElement>('.activity-planner__sensitivity');
+    if (!header || !sensitivity) throw new Error('Missing activity planner mobile header content');
     const rect = element.getBoundingClientRect();
     return {
       plannerFits: fits(element),
       sectionsFit: selectors.every(selector => fits(element.querySelector(selector))),
       labelsFit: labels.every(fits),
+      headerHeight: header.getBoundingClientRect().height,
+      sensitivityHeight: sensitivity.getBoundingClientRect().height,
+      sensitivityBasis: getComputedStyle(sensitivity).flexBasis,
       left: rect.left,
       right: rect.right,
       viewportWidth: document.documentElement.clientWidth,
@@ -3304,6 +3310,9 @@ test('activity planner reflows at narrow 200 percent text size', async ({ page }
   expect(layout.plannerFits).toBe(true);
   expect(layout.sectionsFit).toBe(true);
   expect(layout.labelsFit).toBe(true);
+  expect(layout.sensitivityBasis).toBe('auto');
+  expect(layout.sensitivityHeight).toBeLessThan(300);
+  expect(layout.headerHeight).toBeLessThan(1050);
   expect(layout.left).toBeGreaterThanOrEqual(0);
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
