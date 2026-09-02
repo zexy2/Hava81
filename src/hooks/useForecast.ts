@@ -174,7 +174,14 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           setDisplayHourly(hourlyData.hourly.slice(0, 24));
           setDisplayMeta(hourlyData.meta);
           if (!forecastData) setMeta(hourlyData.meta);
-          if (hourlyData.daily?.length) setDaily(hourlyData.daily);
+          if (hourlyData.daily?.length) {
+            setDaily(hourlyData.daily);
+          } else {
+            // ForecastAtlas exposes one provenance/freshness contract for its hourly and daily rows.
+            // Once the dedicated hourly source becomes the visible authority, do not retain daily
+            // rows from another response generation when it cannot supply a matching daily series.
+            setDaily([]);
+          }
           lastSuccessfulRequestRef.current = { lat: coords.lat, lon: coords.lon, language };
         }
         if (aqResult.ok) {

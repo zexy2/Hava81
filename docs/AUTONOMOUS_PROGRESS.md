@@ -2545,3 +2545,17 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Tightened the render gate so the Atlas requires metadata plus at least one actual forecast row; the existing localized error/recovery surface remains authoritative when no forecast evidence exists.
 - Added an integration assertion that the empty Atlas is absent in the explicit non-retryable forecast-failure path. No weather values, provider timestamps, retryability semantics, MGM behavior, scoring, or production API topology change.
 - Host-local Node dependencies are intentionally absent under disk pressure, so `git diff --check` is the local gate and exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.
+
+### 2026-09-02 13:58 TRT — do not carry stale daily rows through partial same-city recovery
+- While the post-#667 main pipeline validated, audited `useForecast` partial-recovery behavior on current main `036fe0b80c6c662fc51dba596241e0472a0ba6a3`.
+- Found a provenance mismatch on same-city refresh: if the resilient baseline request failed, the dedicated hourly request succeeded, and that hourly response did not include its optional daily series, the hook retained the previous daily rows while replacing the visible hourly metadata with the new source. Old daily evidence could therefore appear alongside fresh hourly provenance.
+- Because Forecast Atlas exposes a single provenance/freshness contract, an hourly upgrade that supplies no matching daily series now clears daily rows instead of retaining baseline or prior-generation daily evidence under the new hourly metadata. Fresh hourly data still renders normally, and dedicated hourly daily replacements remain unchanged.
+- Added deterministic hook regressions for both mixed-provider first-load provenance and partial same-city recovery: daily rows disappear when the visible hourly authority cannot supply matching daily evidence, while the fresh hourly forecast remains usable.
+- `git diff --check` passes. Host Node dependencies remain intentionally absent under disk pressure, so exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
+
+
+### 2026-09-02 14:46 TRT — align browser forecast fixtures with same-provider daily provenance
+- Diagnosed PR #671 exact-head CI/CD #1626: frontend quality, API tests/build, production build, Lighthouse and CodeQL all passed; only Browser flows failed, with seven daily-forecast layout assertions receiving zero daily rows.
+- Confirmed the production `/weather/hourly` path normally returns Open-Meteo hourly plus its same-provider daily series when valid, while the global Playwright hourly fixture modeled only hourly rows. The new fail-closed provenance rule correctly cleared the unrelated baseline daily rows, exposing this stale fixture contract.
+- Updated the normal hourly E2E fixture to carry daily evidence, and daily-layout tests that customize forecast rows now override both forecast and hourly endpoints with the same daily series. Hourly-only provider degradation remains covered by the deterministic hook regressions and still clears daily rows.
+- `git diff --check` passes. No product runtime, weather values, provider semantics, freshness thresholds, retries, API topology or production state changed; exact-head hosted Browser/CI/CodeQL remain mandatory before merge.

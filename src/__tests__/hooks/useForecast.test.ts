@@ -166,6 +166,91 @@ describe('useForecast', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('does not mix baseline daily rows with hourly-only provenance', async () => {
+    (weatherService.getForecast as Mock).mockResolvedValueOnce({
+      daily: [
+        {
+          date: new Date('2026-07-14T12:00:00.000Z'),
+          tempMin: 17,
+          tempMax: 29,
+          icon: '01d',
+          description: 'clear',
+          pop: 0,
+        },
+      ],
+      hourly: [{ time: new Date('2026-07-14T12:00:00.000Z'), temp: 26, icon: '01d', pop: 0 }],
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 3,
+      },
+    });
+    (weatherService.getHourlyForecast as Mock).mockResolvedValueOnce({
+      hourly: [
+        {
+          time: new Date('2026-07-14T13:00:00.000Z'),
+          temp: 27,
+          icon: '01d',
+          pop: 0.1,
+          windSpeed: 3,
+        },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    const { result } = renderHook(() => useForecast('tr'));
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 });
+    });
+
+    expect(result.current.displayMeta?.provider).toBe('Open-Meteo');
+    expect(result.current.hourly[0]?.temp).toBe(27);
+    expect(result.current.daily).toHaveLength(0);
+  });
+
+  it('drops stale same-city daily rows when only the hourly refresh recovers', async () => {
+    const { result } = renderHook(() => useForecast('tr'));
+    const coords = { lat: 41.01, lon: 28.97 };
+
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+    expect(result.current.daily).toHaveLength(1);
+
+    (weatherService.getForecast as Mock).mockRejectedValueOnce(new Error('baseline unavailable'));
+    (weatherService.getHourlyForecast as Mock).mockResolvedValueOnce({
+      hourly: [
+        {
+          time: new Date('2026-07-14T14:00:00.000Z'),
+          temp: 27,
+          icon: '01d',
+          pop: 0.1,
+          windSpeed: 3,
+        },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(),
+        timezoneOffsetSeconds: 10800,
+        intervalHours: 1,
+      },
+    });
+
+    await act(async () => {
+      await result.current.fetch(coords);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.hourly[0]?.temp).toBe(27);
+    expect(result.current.daily).toHaveLength(0);
+  });
+
   it('falls back to the existing three-hour display when the hourly source is unavailable', async () => {
     (weatherService.getHourlyForecast as Mock).mockRejectedValueOnce(
       new Error('hourly unavailable')
