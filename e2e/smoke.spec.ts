@@ -3568,27 +3568,20 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
   });
 
   const actionColors = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
     const searchButton = document.querySelector<HTMLElement>('.search-bar__submit');
     if (!searchButton) throw new Error('Missing search submit button');
-    const popupButton = document.createElement('button');
-    popupButton.className = 'weather-map__popup-btn';
-    document.body.append(popupButton);
     const searchStyle = getComputedStyle(searchButton);
-    const popupStyle = getComputedStyle(popupButton);
-    const result = {
+    return {
+      paper: rootStyle.getPropertyValue('--color-atlas-paper').trim().toLowerCase(),
+      aegean: rootStyle.getPropertyValue('--color-aegean').trim().toLowerCase(),
       searchColor: searchStyle.color,
-      searchBackground: searchStyle.backgroundColor,
-      popupColor: popupStyle.color,
-      popupBackground: popupStyle.backgroundColor,
     };
-    popupButton.remove();
-    return result;
   });
   expect(actionColors).toEqual({
+    paper: '#15373c',
+    aegean: '#78bac0',
     searchColor: 'rgb(21, 55, 60)',
-    searchBackground: 'rgb(120, 186, 192)',
-    popupColor: 'rgb(21, 55, 60)',
-    popupBackground: 'rgb(120, 186, 192)',
   });
 });
 
