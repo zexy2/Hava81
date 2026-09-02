@@ -3232,6 +3232,53 @@ test('activity detail explanations reflow at narrow 200 percent text size', asyn
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('tablet English activity planner reflows at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'tablet English activity text-resize regression');
+  await page.setViewportSize({ width: 768, height: 1000 });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'light',
+        language: 'en',
+        notificationsEnabled: false,
+      })
+    );
+  });
+  await page.goto('/istanbul');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const planner = page.locator('.activity-planner');
+  await planner.scrollIntoViewIfNeeded();
+  const layout = await planner.evaluate(element => {
+    const fits = (node: Element | null) =>
+      node instanceof HTMLElement && node.scrollWidth <= node.clientWidth + 1;
+    const header = element.querySelector('.activity-planner__header');
+    const sensitivity = element.querySelector('.activity-planner__sensitivity');
+    const cards = element.querySelector('.activity-planner__cards');
+    return {
+      plannerFits: fits(element),
+      headerFits: fits(header),
+      sensitivityFits: fits(sensitivity),
+      cardsFit: fits(cards),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.plannerFits).toBe(true);
+  expect(layout.headerFits).toBe(true);
+  expect(layout.sensitivityFits).toBe(true);
+  expect(layout.cardsFit).toBe(true);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
+
 test('activity time filter stays within the page at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop text-resize regression');
   await page.goto('/istanbul');
