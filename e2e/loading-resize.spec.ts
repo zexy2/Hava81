@@ -25,8 +25,12 @@ test('desktop loading shell stays inside the viewport at 200% text size', async 
     const layout = await loading.evaluate(element => {
       const viewportWidth = document.documentElement.clientWidth;
       const loadingRect = element.getBoundingClientRect();
-      const decisionRect = element.querySelector('.atlas-loading__decision')?.getBoundingClientRect();
-      const forecastRect = element.querySelector('.atlas-loading__forecast')?.getBoundingClientRect();
+      const decision = element.querySelector('.atlas-loading__decision');
+      const forecast = element.querySelector('.atlas-loading__forecast');
+      const decisionRect = decision?.getBoundingClientRect();
+      const forecastRect = forecast?.getBoundingClientRect();
+      const decisionStyle = decision ? getComputedStyle(decision) : null;
+      const forecastStyle = forecast ? getComputedStyle(forecast) : null;
 
       return {
         viewportWidth,
@@ -38,6 +42,28 @@ test('desktop loading shell stays inside the viewport at 200% text size', async 
         loadingScrollWidth: element.scrollWidth,
         decisionRight: decisionRect?.right ?? 0,
         forecastRight: forecastRect?.right ?? 0,
+        decisionStyle: decisionStyle
+          ? {
+              background: decisionStyle.backgroundColor,
+              borderTopWidth: decisionStyle.borderTopWidth,
+              borderRightWidth: decisionStyle.borderRightWidth,
+              borderBottomWidth: decisionStyle.borderBottomWidth,
+              borderLeftWidth: decisionStyle.borderLeftWidth,
+              borderRadius: decisionStyle.borderRadius,
+              boxShadow: decisionStyle.boxShadow,
+            }
+          : null,
+        forecastStyle: forecastStyle
+          ? {
+              background: forecastStyle.backgroundColor,
+              borderTopWidth: forecastStyle.borderTopWidth,
+              borderRightWidth: forecastStyle.borderRightWidth,
+              borderBottomWidth: forecastStyle.borderBottomWidth,
+              borderLeftWidth: forecastStyle.borderLeftWidth,
+              borderRadius: forecastStyle.borderRadius,
+              boxShadow: forecastStyle.boxShadow,
+            }
+          : null,
       };
     });
 
@@ -47,6 +73,16 @@ test('desktop loading shell stays inside the viewport at 200% text size', async 
     expect(layout.loadingRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
     expect(layout.decisionRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
     expect(layout.forecastRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
+    for (const style of [layout.decisionStyle, layout.forecastStyle]) {
+      expect(style).not.toBeNull();
+      expect(style?.background).toBe('rgba(0, 0, 0, 0)');
+      expect(style?.borderTopWidth).toBe('1px');
+      expect(style?.borderBottomWidth).toBe('1px');
+      expect(style?.borderRightWidth).toBe('0px');
+      expect(style?.borderLeftWidth).toBe('0px');
+      expect(style?.borderRadius).toBe('0px');
+      expect(style?.boxShadow).toBe('none');
+    }
   } finally {
     releaseCurrent();
   }
