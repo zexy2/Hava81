@@ -632,7 +632,7 @@ describe('Hava81 app integration', () => {
     await screen.findByRole('heading', { name: 'İstanbul' });
 
     const cityDescription =
-      'İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.';
+      'İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.';
     await waitFor(() => {
       const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
       expect(canonical?.href).toBe('http://localhost:3000/istanbul/');
