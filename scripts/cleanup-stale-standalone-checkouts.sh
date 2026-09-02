@@ -29,7 +29,7 @@ archive refs must already point at the same commit or the candidate is skipped.
 
 `--audit` is read-only and reports how many matching directories are standalone
 clones, linked worktrees, or directories without Git metadata, plus aggregate
-standalone exclusion reasons (dirty, origin mismatch, detached, unrepresented,
+standalone exclusion reasons (registered, dirty, origin mismatch, detached, unrepresented,
 recent, in-use, unreadable, or archive conflict). It does not widen cleanup
 eligibility, print candidate file contents, or mutate refs/checkouts.
 USAGE
@@ -79,6 +79,11 @@ path_is_in_use() {
 audit_reason_for_standalone() {
   local candidate="$1"
   local status_output head branch remote modified_epoch now_epoch age_seconds required_seconds archive_ref cherry
+
+  if [[ "$(realpath "$candidate")" == "$(realpath "$repo")" ]] || path_is_registered "$candidate"; then
+    printf 'registered\n'
+    return
+  fi
 
   status_output=""
   if ! status_output="$(git -c safe.directory="$candidate" -C "$candidate" status --porcelain --untracked-files=all 2>/dev/null)"; then
@@ -204,6 +209,7 @@ standalone_count=0
 linked_count=0
 without_git_count=0
 audit_eligible_count=0
+audit_registered_count=0
 audit_dirty_count=0
 audit_origin_mismatch_count=0
 audit_detached_count=0
@@ -227,6 +233,7 @@ while IFS= read -r -d '' candidate; do
     audit_reason="$(audit_reason_for_standalone "$candidate")"
     case "$audit_reason" in
       eligible) audit_eligible_count=$((audit_eligible_count + 1)) ;;
+      registered) audit_registered_count=$((audit_registered_count + 1)) ;;
       dirty) audit_dirty_count=$((audit_dirty_count + 1)) ;;
       origin_mismatch) audit_origin_mismatch_count=$((audit_origin_mismatch_count + 1)) ;;
       detached) audit_detached_count=$((audit_detached_count + 1)) ;;
@@ -286,8 +293,8 @@ fi
 
 if [[ "$audit" == true ]]; then
   printf 'Audit: scanned=%d standalone_clones=%d linked_worktrees=%d without_git_metadata=%d.\n' "$scanned_count" "$standalone_count" "$linked_count" "$without_git_count"
-  printf 'Audit reasons: eligible=%d dirty=%d origin_mismatch=%d detached=%d unrepresented=%d recent=%d in_use=%d unreadable=%d archive_conflict=%d.\n' \
-    "$audit_eligible_count" "$audit_dirty_count" "$audit_origin_mismatch_count" "$audit_detached_count" \
+  printf 'Audit reasons: eligible=%d registered=%d dirty=%d origin_mismatch=%d detached=%d unrepresented=%d recent=%d in_use=%d unreadable=%d archive_conflict=%d.\n' \
+    "$audit_eligible_count" "$audit_registered_count" "$audit_dirty_count" "$audit_origin_mismatch_count" "$audit_detached_count" \
     "$audit_unrepresented_count" "$audit_recent_count" "$audit_in_use_count" "$audit_unreadable_count" \
     "$audit_archive_conflict_count"
 fi

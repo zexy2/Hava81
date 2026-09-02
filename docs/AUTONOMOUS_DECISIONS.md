@@ -975,3 +975,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** `cleanup-stale-standalone-checkouts.sh --audit` must be mutually exclusive with `--apply`. Reject the combination before candidate discovery or ref mutation rather than relying on operator convention.
 
 **Why:** Audit mode is documented as read-only evidence gathering. Allowing `--apply --audit` made that guarantee false and could turn a diagnostic invocation into an archive/remove operation. Mutation remains available through explicit `--apply` without `--audit`; eligibility and archive-first safety checks are unchanged.
+
+### 2026-09-02 23:05 TRT — cleanup audit eligibility must honor registered checkout exclusion
+
+**Decision:** Standalone-cleanup audit classification must mark the repository itself or any registered checkout as `registered` before evaluating content/age eligibility. Its `eligible` aggregate must mean the same thing as mutation candidate eligibility at this structural boundary.
+
+**Why:** The mutation path already refuses the primary/current repository and registered worktrees. Without the same guard, a clean primary clone located under the scanned `hava81-*` parent could be reported as audit-eligible even though apply would correctly refuse it, weakening the audit's value during disk incidents. This changes diagnostics only; deletion authority remains unchanged.
