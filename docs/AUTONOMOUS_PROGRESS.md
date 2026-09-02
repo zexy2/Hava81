@@ -2450,3 +2450,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Existing deploy smoke already waits for exact current HTML hashes plus every current boot asset, but those checks use cache-busting query tokens. Added a second bounded coherence check against the normal user-facing `/` and `/istanbul/` cache keys: whichever HTML generation the edge serves must have every referenced `/assets/` script/style/modulepreload available before deploy is considered healthy.
 - The coherence check reuses the existing 120-attempt/5-second deploy budget, does not alter Pages caching, asset retention, application runtime, weather semantics, API ports, or provider evidence. Added `bash -n scripts/verify-public-shell.sh` to the build gate so PR CI validates smoke-script syntax before merge.
 - Local no-dependency gates: `bash -n`, list-html-assets 3/3, Pages retention 6/6, and `git diff --check` pass. Hosted exact-head CI/CodeQL/browser/Lighthouse remain mandatory before merge.
+
+
+### 2026-09-02 09:31 TRT — make the production observer suite a hosted CI gate
+- Audited the CI workflow while the boot-asset observer PR was validating and found `deploy/oracle/observer/test_observer.py` was only a manual/local contract; hosted PR CI did not execute it.
+- Added the observer unittest suite to the existing `Frontend quality` job after the safe-worktree contract. This is dependency-free, fast, and means future observer state/signature, readiness, disk, GitHub-run-selection, API-drift, and boot-asset regressions cannot merge solely on unrelated frontend/API tests.
+- Current-main observer suite passes 22/22 locally and `git diff --check` passes. The expanded 24-test suite from the independent boot-asset observer PR will be exercised automatically once that branch is rebased/merged with this gate.
