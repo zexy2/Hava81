@@ -74,6 +74,13 @@ export const tr = {
       'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',
     mapEyebrow: 'Türkiye · İl haritası',
     emptyEyebrow: 'Hava81 · 81 il',
+    locationGate: {
+      eyebrow: 'Hava81 · Yakınındaki hava',
+      title: 'Havayı bulunduğun yere göre gösterelim',
+      body: 'Konum izni verirsen sana en yakın ilin hava durumunu açarız. İzin vermezsen İstanbul ile devam edebilirsin.',
+      fallback: 'İstanbul ile devam et',
+      privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
+    },
     decision: {
       plateCodeLabel: 'Plaka kodu {{code}}',
       latitude: 'Enlem',

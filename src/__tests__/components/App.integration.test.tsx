@@ -143,6 +143,71 @@ describe('Hava81 app integration', () => {
     service.getContextSignals.mockReset().mockResolvedValue(null);
   });
 
+  it('asks for a location choice on the root route before requesting browser permission', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/');
+    service.getCurrentLocationWeather.mockResolvedValueOnce({
+      ...current,
+      cityName: 'Ankara',
+      coordinates: { lat: 39.93, lon: 32.86 },
+    });
+
+    renderApp();
+
+    const locationGateHeading = screen.getByRole('heading', {
+      name: 'Havayı bulunduğun yere göre gösterelim',
+      level: 1,
+    });
+    expect(locationGateHeading).toBeInTheDocument();
+    const locationGate = locationGateHeading.closest('section');
+    expect(locationGate).not.toBeNull();
+    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
+    expect(service.getCurrentWeather).not.toHaveBeenCalled();
+
+    await user.click(within(locationGate!).getByRole('button', { name: 'Konumumu Kullan' }));
+
+    expect(await screen.findByRole('heading', { name: 'Ankara', level: 1 })).toBeInTheDocument();
+    expect(service.getCurrentLocationWeather).toHaveBeenCalledWith('tr');
+    expect(service.getCurrentWeather).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/ankara/');
+  });
+
+  it('falls back to İstanbul after the user chooses location but browser permission is denied', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/');
+    service.getCurrentLocationWeather.mockRejectedValueOnce(
+      new ApiError('Konum izni reddedildi', ErrorCode.LOCATION_DENIED, { retryable: false })
+    );
+
+    renderApp();
+    const locationGateHeading = screen.getByRole('heading', {
+      name: 'Havayı bulunduğun yere göre gösterelim',
+      level: 1,
+    });
+    const locationGate = locationGateHeading.closest('section');
+    expect(locationGate).not.toBeNull();
+    await user.click(within(locationGate!).getByRole('button', { name: 'Konumumu Kullan' }));
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    expect(service.getCurrentLocationWeather).toHaveBeenCalledWith('tr');
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
+    expect(screen.queryByText('Konum izni reddedildi')).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/istanbul/');
+  });
+
+  it('lets the user continue with İstanbul without requesting browser location', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/');
+
+    renderApp();
+    await user.click(screen.getByRole('button', { name: 'İstanbul ile devam et' }));
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
+    expect(window.location.pathname).toBe('/istanbul/');
+  });
+
   it('renders the decision-first city view and forecast metadata', async () => {
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();

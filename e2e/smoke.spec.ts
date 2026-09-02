@@ -151,6 +151,121 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
 });
 
+test('root route explains the location choice before requesting browser permission', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location regression');
+  await page.unroute('**/api/v1/weather/current**');
+  await page.route('**/api/v1/weather/current**', route => {
+    const requestUrl = new URL(route.request().url());
+    const isCoordinateRequest = requestUrl.searchParams.has('lat');
+    return route.fulfill({
+      json: isCoordinateRequest
+        ? {
+            ...current,
+            cityName: 'Ulus',
+            coordinates: { lat: 39.9334, lon: 32.8597 },
+          }
+        : current,
+    });
+  });
+  await page.addInitScript(() => {
+    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (success: PositionCallback) => {
+          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
+            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
+          success({ coords: { latitude: 39.9334, longitude: 32.8597 } } as GeolocationPosition);
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Havayı bulunduğun yere göre gösterelim', level: 1 })).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const gate = page.locator('.atlas-empty');
+  const gateLayout = await gate.evaluate(element => {
+    const fits = (node: Element) => {
+      const html = node as HTMLElement;
+      return html.scrollWidth <= html.clientWidth + 1;
+    };
+    const buttons = Array.from(element.querySelectorAll('button'));
+    return {
+      gateFits: fits(element),
+      buttonsFit: buttons.every(fits),
+      buttonHeights: buttons.map(button => button.getBoundingClientRect().height),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  expect(gateLayout.gateFits).toBe(true);
+  expect(gateLayout.buttonsFit).toBe(true);
+  expect(gateLayout.buttonHeights.every(height => height >= 44)).toBe(true);
+  expect(gateLayout.pageWidth).toBeLessThanOrEqual(gateLayout.viewportWidth);
+
+  await gate.getByRole('button', { name: 'Konumumu Kullan' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Ankara', level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/\/ankara\/?$/);
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(1);
+});
+
+test('root route falls back to İstanbul without an error when chosen location permission is denied', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location fallback regression');
+  await page.addInitScript(() => {
+    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_success: PositionCallback, failure?: PositionErrorCallback) => {
+          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
+            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
+          failure?.({ code: 1 } as GeolocationPositionError);
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
+  await page.locator('.atlas-empty').getByRole('button', { name: 'Konumumu Kullan' }).click();
+
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/\/istanbul\/?$/);
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(1);
+  await expect(page.getByText('Konum izni reddedildi')).toHaveCount(0);
+  await expect(page.locator('.atlas-message--error')).toHaveCount(0);
+});
+
+test('root route can continue with İstanbul without touching browser location', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-city fallback regression');
+  await page.addInitScript(() => {
+    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: () => {
+          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
+            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'İstanbul ile devam et' }).click();
+
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/\/istanbul\/?$/);
+  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
+});
+
 test('mobile location denial explains the permission failure', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single mobile geolocation-error regression');
   await page.addInitScript(() => {

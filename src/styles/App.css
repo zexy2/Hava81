@@ -810,6 +810,8 @@ textarea:focus-visible {
   display: grid;
   place-items: start;
   align-content: center;
+  width: 100%;
+  min-width: 0;
   min-height: 65vh;
   max-width: 42rem;
   margin-inline: auto;
@@ -827,6 +829,37 @@ textarea:focus-visible {
 .app-fatal p {
   margin: 0 0 var(--space-lg);
   color: var(--color-atlas-muted);
+}
+
+.atlas-empty > *,
+.atlas-empty__actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.atlas-empty h1,
+.atlas-empty p,
+.atlas-empty__note,
+.atlas-empty__actions .atlas-button {
+  overflow-wrap: anywhere;
+}
+
+.atlas-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: var(--space-sm);
+}
+
+.atlas-empty__actions .atlas-button {
+  white-space: normal;
+}
+
+.atlas-empty__note {
+  max-width: 34rem;
+  margin-top: var(--space-md);
+  color: var(--color-atlas-muted);
+  line-height: 1.5;
 }
 
 .app-fatal {

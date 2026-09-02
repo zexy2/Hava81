@@ -74,6 +74,13 @@ export const en = {
       'Weather data is taking longer than usual; the connection or data provider may be delayed.',
     mapEyebrow: 'Türkiye · Province map',
     emptyEyebrow: 'Hava81 · 81 provinces',
+    locationGate: {
+      eyebrow: 'Hava81 · Weather near you',
+      title: 'Show weather for where you are',
+      body: 'Allow location access to open weather for the nearest province. If you prefer not to, you can continue with İstanbul.',
+      fallback: 'Continue with İstanbul',
+      privacy: 'Your location is used only to load nearby weather data.',
+    },
     decision: {
       plateCodeLabel: 'Province plate code {{code}}',
       latitude: 'Latitude',
