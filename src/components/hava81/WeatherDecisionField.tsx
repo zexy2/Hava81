@@ -307,17 +307,17 @@ export function WeatherDecisionField({
 
         <div className="hava81-decision-field__atlas-meta">
           <time dateTime={observedAtDateTime}>{observedAtText}</time>
-          <span aria-hidden="true">·</span>
-          <span>
+          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
+          <span className="hava81-decision-field__coordinate-meta">
             {t('hava81.decision.latitude', { defaultValue: 'Enlem' })}{' '}
             {coordinateFormatter.format(weather.coordinates.lat)}°
           </span>
-          <span aria-hidden="true">·</span>
-          <span>
+          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
+          <span className="hava81-decision-field__coordinate-meta">
             {t('hava81.decision.longitude', { defaultValue: 'Boylam' })}{' '}
             {coordinateFormatter.format(weather.coordinates.lon)}°
           </span>
-          <span aria-hidden="true">·</span>
+          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
           <span>{weather.meta.provider}</span>
           <span aria-hidden="true">·</span>
           <span className={isStale ? 'is-stale' : undefined}>

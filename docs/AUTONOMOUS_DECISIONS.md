@@ -1010,3 +1010,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Phrase the generic `outdoor-window` decision as a calmer **weather** window (“hava açısından” in Turkish) rather than an unqualified best time to be outdoors.
 
 **Why:** The decision scorer uses meteorological evidence and cannot judge lifestyle, sleep, personal-security, transport, or other non-weather constraints. Explicitly scoping the copy preserves Hava81's decision-first value while avoiding a broader recommendation than the evidence supports.
+### 2026-09-02 23:41 TRT — mobile first viewport prioritizes provider/freshness over coordinates
+
+**Decision:** Hide latitude/longitude metadata below 40rem while retaining observation time, provider, and freshness; keep coordinates visible at tablet/desktop widths.
+
+**Why:** Live 390px measurement showed coordinates force provenance/freshness onto a second row and consume scarce first-viewport space. Exact coordinates are secondary technical detail for a city forecast, whereas source and freshness directly support weather-data trust.

@@ -2803,3 +2803,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Tightened Turkish and English decision copy to explicitly say “hava açısından” / “weather window”. The scoring algorithm, chosen hour, forecast evidence, severity, and all weather/safety data remain unchanged; this is a truthfulness boundary, not a fabricated recommendation.
 - Updated the English integration assertion to preserve the qualification. `git diff --check` passes. Local Node is intentionally absent, so exact-head hosted unit/browser/Lighthouse/CodeQL gates are required before merge.
 - Next: commit/push/open this isolated copy-truthfulness PR while #708/#709 validate independently.
+## 2026-09-02 23:41 TRT — reduce technical metadata in the mobile first viewport
+- Measured live 390px production decision metadata: the row is 37.6px high because date + latitude + longitude consume the first line and provider + freshness wrap to a second line. Without coordinates, the evidence users need for trust (observation time, provider, freshness) fits in one line.
+- Marked only latitude/longitude tokens and their separators as coordinate metadata and hide them below 40rem. Tablet/desktop still expose the coordinates; provider and freshness remain visible on mobile. No weather values, provenance, freshness calculation, or accessible control behavior changed.
+- Added a mobile browser regression requiring coordinate metadata to be hidden, the metadata row to remain single-line-sized, and provider evidence to remain visible.
+- `git diff --check` passes. Exact-head hosted browser/Lighthouse/frontend/CodeQL gates are mandatory before merge because Node is intentionally absent locally.
+- Next: commit/push/open this isolated first-viewport polish PR; rebase after any earlier PR merges before final gate/merge.
