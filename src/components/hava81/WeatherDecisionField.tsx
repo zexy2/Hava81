@@ -249,11 +249,9 @@ export function WeatherDecisionField({
       ? null
       : Math.max(0, Math.floor(ageMs / 60_000));
   const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && ageMs > staleAfterMs;
-  const decisionEvidenceFresh =
-    !Number.isNaN(fetchedAtMs) &&
-    !hasInvalidFutureTimestamp &&
-    !isStale &&
-    (forecastFreshness?.fresh ?? true);
+  const currentEvidenceFresh =
+    !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && !isStale;
+  const decisionEvidenceFresh = currentEvidenceFresh && (forecastFreshness?.fresh ?? true);
   const decisions = useMemo(
     () =>
       decisionEvidenceFresh
@@ -272,10 +270,12 @@ export function WeatherDecisionField({
           });
 
   const plateCode = cityMetadata ? String(cityMetadata.plateCode).padStart(2, '0') : '--';
-  const currentTemperature = numberFormatter.format(
-    Math.round(convertTemperature(weather.temperature))
-  );
-  const windSpeed = `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${windSpeedSymbol}`;
+  const currentTemperature = currentEvidenceFresh
+    ? numberFormatter.format(Math.round(convertTemperature(weather.temperature)))
+    : '—';
+  const windSpeed = currentEvidenceFresh
+    ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${windSpeedSymbol}`
+    : '—';
   const airQualityLabelKey = airQuality ? getOpenWeatherAqiLabelKey(airQuality.aqi) : undefined;
   const airQualityValue =
     airQuality && airQualityLabelKey
@@ -326,28 +326,36 @@ export function WeatherDecisionField({
       </header>
 
       <div className="hava81-decision-field__current">
-        <div className="hava81-decision-field__reading">
-          <p className="hava81-decision-field__temperature">
-            <span className="hava81-decision-field__temperature-value">{currentTemperature}</span>
-            <span className="hava81-decision-field__temperature-unit">{temperatureSymbol}</span>
+        {currentEvidenceFresh ? (
+          <>
+            <div className="hava81-decision-field__reading">
+              <p className="hava81-decision-field__temperature">
+                <span className="hava81-decision-field__temperature-value">{currentTemperature}</span>
+                <span className="hava81-decision-field__temperature-unit">{temperatureSymbol}</span>
+              </p>
+
+              <div className="hava81-decision-field__symbol" aria-hidden="true">
+                <WeatherSymbol
+                  code={weather.icon}
+                  label={weather.description}
+                  className="hava81-decision-field__weather-symbol"
+                />
+              </div>
+            </div>
+
+            <p className="hava81-decision-field__condition">{weather.description}</p>
+            <p className="hava81-decision-field__feels-like">
+              {t('hava81.decision.feelsLike', {
+                defaultValue: 'Hissedilen {{temperature}}',
+                temperature: formatTemperature(weather.feelsLike),
+              })}
+            </p>
+          </>
+        ) : (
+          <p className="hava81-decision-field__condition" role="status">
+            {t('weather.staleCurrentData')}
           </p>
-
-          <div className="hava81-decision-field__symbol" aria-hidden="true">
-            <WeatherSymbol
-              code={weather.icon}
-              label={weather.description}
-              className="hava81-decision-field__weather-symbol"
-            />
-          </div>
-        </div>
-
-        <p className="hava81-decision-field__condition">{weather.description}</p>
-        <p className="hava81-decision-field__feels-like">
-          {t('hava81.decision.feelsLike', {
-            defaultValue: 'Hissedilen {{temperature}}',
-            temperature: formatTemperature(weather.feelsLike),
-          })}
-        </p>
+        )}
       </div>
 
       <aside className="hava81-decision-field__change" aria-labelledby={changeHeadingId}>
@@ -366,11 +374,15 @@ export function WeatherDecisionField({
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
           <dt>{t('hava81.decision.highLow', { defaultValue: 'Bugünün yüksek / düşük' })}</dt>
-          <dd>{todayDaily ? formatDailyRange(todayDaily.tempMax, todayDaily.tempMin) : '—'}</dd>
+          <dd>
+            {forecastFreshness?.fresh !== false && todayDaily
+              ? formatDailyRange(todayDaily.tempMax, todayDaily.tempMin)
+              : '—'}
+          </dd>
         </div>
         <div className="hava81-decision-field__metric">
           <dt>{t('weather.humidity')}</dt>
-          <dd>{numberFormatter.format(weather.humidity)}%</dd>
+          <dd>{currentEvidenceFresh ? `${numberFormatter.format(weather.humidity)}%` : '—'}</dd>
         </div>
         <div className="hava81-decision-field__metric">
           <dt>{t('weather.wind')}</dt>

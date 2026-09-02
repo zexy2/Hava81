@@ -736,3 +736,7 @@ The environment rail's wind direction/speed are current observations, not timele
 ## 2026-09-02 — Favorites persist province identity, not untimestamped weather snapshots
 
 Saved-city state is navigation identity (`name`, canonical coordinates), while comparison fetches fresh evidence independently. Stop persisting/updating `temp` and `icon` because those fields have no source timestamp or TTL and create stale local snapshots plus unnecessary localStorage churn. The deserializer continues accepting legacy payloads but intentionally drops their weather fields while canonicalizing the province, so existing users retain favorites without presenting or carrying forward unprovable weather evidence.
+
+## 2026-09-02 — First-viewport current observations fail closed at their provider TTL
+
+The main decision field already suppresses modeled action guidance when current evidence expires, but current temperature, condition, feels-like, humidity and wind must follow the same current-observation boundary. Once current `fetchedAt + freshForSeconds` is stale/invalid/future-skewed, hide those values and show explicit stale-current status while preserving city identity/provider metadata. Forecast-derived daily range follows forecast freshness independently, and independently fresh AQI may remain visible. Do not convert an expired observation into a fresh-looking number merely because the surrounding decision list is unavailable.

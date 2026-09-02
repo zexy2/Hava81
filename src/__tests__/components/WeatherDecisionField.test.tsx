@@ -358,6 +358,9 @@ describe('WeatherDecisionField daily range', () => {
     });
 
     expect(screen.getByText('Eski veri')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
+    expect(screen.queryByText('27')).not.toBeInTheDocument();
+    expect(screen.queryByText(weather.description)).not.toBeInTheDocument();
   });
 
   it('does not present a far-future fetchedAt timestamp as freshly updated', () => {
