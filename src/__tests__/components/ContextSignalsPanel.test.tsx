@@ -56,7 +56,7 @@ describe('ContextSignalsPanel', () => {
     expect(screen.queryByText(/model \d{2}:\d{2}/i)).not.toBeInTheDocument();
     expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
     expect(
-      screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)
+      screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)
     ).toBeInTheDocument();
     expect(screen.getByText('25.1°C')).toBeInTheDocument();
     expect(screen.getByText(/0.40 m.*4.8 s.*315°/)).toBeInTheDocument();
@@ -126,7 +126,7 @@ describe('ContextSignalsPanel', () => {
     });
 
     expect(screen.getByText('Orta')).toBeInTheDocument();
-    expect(screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)).toBeInTheDocument();
+    expect(screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)).toBeInTheDocument();
   });
 
   it('keeps the WHO extreme UV category distinct at 11 and above', () => {
@@ -140,7 +140,7 @@ describe('ContextSignalsPanel', () => {
 
     expect(screen.getByText('Aşırı')).toBeInTheDocument();
     expect(
-      screen.getByText(/UV korunma önerilen seviyeye çıkıyor/i)
+      screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)
     ).toBeInTheDocument();
   });
 
