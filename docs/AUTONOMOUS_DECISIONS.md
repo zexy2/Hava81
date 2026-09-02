@@ -810,3 +810,6 @@ Exact-hash smoke checks prove the new release and its current boot assets have r
 
 ### 2026-09-02 — Versioned production-observer behavior is a required hosted CI contract
 The Oracle observer participates in merge/deploy decisions and production-incident detection, so its deterministic unittest suite must run in hosted pull-request CI rather than relying only on local/manual execution. Keep this gate fast and dependency-free inside the existing quality job; observer changes still require direct post-merge host validation before replacing the installed read-only collector.
+
+### 2026-09-02 — Frontend observer health includes the boot assets referenced by the served HTML
+HTTP 200 for an SPA shell is insufficient evidence that the frontend can boot. The read-only production observer must parse the same-origin `/assets/` references from the root HTML it actually receives and require those hashed boot resources to return 200. Keep the check bounded and observational: cap asset fan-out, store only failure summaries, and do not mutate Pages, caches, application state, weather evidence, or API traffic.
