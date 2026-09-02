@@ -306,7 +306,7 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
             known = True
         else:
             lookup = http_get(
-                f'https://api.github.com/repos/{REPO}/compare/{deployed_revision}...{main_sha}'
+                f'https://api.github.com/repos/{REPO}/compare/{deployed_revision}...{main_sha}?per_page=1&page=1'
             )
             comparison = lookup.get('json') if isinstance(lookup.get('json'), dict) else {}
             status = comparison.get('status')
