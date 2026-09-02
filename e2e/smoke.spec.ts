@@ -327,18 +327,33 @@ test('mobile location denial explains the permission failure', async ({ page }, 
     const actions = element.querySelector('.atlas-message__actions');
     const buttons = Array.from(element.querySelectorAll('button'));
     if (!actions || buttons.length === 0) throw new Error('Missing error actions');
+    const style = getComputedStyle(element);
     return {
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
       cardFits: fits(element),
       actionsFit: fits(actions),
       buttonsFit: buttons.every(fits),
+      background: style.backgroundColor,
+      borderTopWidth: style.borderTopWidth,
+      borderRightWidth: style.borderRightWidth,
+      borderBottomWidth: style.borderBottomWidth,
+      borderLeftWidth: style.borderLeftWidth,
+      borderRadius: style.borderRadius,
+      boxShadow: style.boxShadow,
     };
   });
   expect(errorLayout.pageWidth).toBeLessThanOrEqual(errorLayout.viewportWidth);
   expect(errorLayout.cardFits).toBe(true);
   expect(errorLayout.actionsFit).toBe(true);
   expect(errorLayout.buttonsFit).toBe(true);
+  expect(errorLayout.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(errorLayout.borderTopWidth).toBe('0px');
+  expect(errorLayout.borderRightWidth).toBe('0px');
+  expect(errorLayout.borderBottomWidth).toBe('0px');
+  expect(errorLayout.borderLeftWidth).toBe('4px');
+  expect(errorLayout.borderRadius).toBe('0px');
+  expect(errorLayout.boxShadow).toBe('none');
 });
 
 test('mobile forecast error message reflows at 200 percent text size', async ({ page }, testInfo) => {
@@ -365,6 +380,7 @@ test('mobile forecast error message reflows at 200 percent text size', async ({ 
     const paragraph = element.querySelector('p');
     const button = element.querySelector('button');
     if (!paragraph || !button) throw new Error('Missing forecast error content');
+    const style = getComputedStyle(element);
     return {
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
@@ -372,6 +388,13 @@ test('mobile forecast error message reflows at 200 percent text size', async ({ 
       paragraphFits: fits(paragraph),
       buttonFits: fits(button),
       height: element.getBoundingClientRect().height,
+      background: style.backgroundColor,
+      borderTopWidth: style.borderTopWidth,
+      borderRightWidth: style.borderRightWidth,
+      borderBottomWidth: style.borderBottomWidth,
+      borderLeftWidth: style.borderLeftWidth,
+      borderRadius: style.borderRadius,
+      boxShadow: style.boxShadow,
     };
   });
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
@@ -379,6 +402,13 @@ test('mobile forecast error message reflows at 200 percent text size', async ({ 
   expect(layout.paragraphFits).toBe(true);
   expect(layout.buttonFits).toBe(true);
   expect(layout.height).toBeGreaterThan(normalHeight);
+  expect(layout.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(layout.borderTopWidth).toBe('0px');
+  expect(layout.borderRightWidth).toBe('0px');
+  expect(layout.borderBottomWidth).toBe('0px');
+  expect(layout.borderLeftWidth).toBe('4px');
+  expect(layout.borderRadius).toBe('0px');
+  expect(layout.boxShadow).toBe('none');
 });
 
 test('mobile current location keeps exact weather coordinates but uses the canonical province identity', async ({ page }, testInfo) => {

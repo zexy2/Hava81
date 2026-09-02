@@ -622,14 +622,16 @@ textarea:focus-visible {
   gap: var(--space-lg);
   padding: var(--space-md);
   margin-bottom: var(--space-lg);
-  background: var(--color-atlas-paper);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  background: color-mix(in srgb, var(--color-aegean) 6%, var(--color-atlas-paper));
+  border: 0;
+  border-inline-start: 4px solid var(--color-aegean);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .atlas-message--error {
-  border-color: var(--color-vermilion);
+  background: color-mix(in srgb, var(--color-vermilion) 7%, var(--color-atlas-paper));
+  border-inline-start-color: var(--color-vermilion);
 }
 
 .atlas-message--inline {
