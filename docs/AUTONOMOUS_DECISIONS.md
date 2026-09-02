@@ -731,3 +731,8 @@ When the dedicated one-hour forecast upgrades the baseline three-hour forecast, 
 ## 2026-09-02 — Current wind observations stop at the current-weather TTL
 
 The environment rail's wind direction/speed are current observations, not timeless city attributes. Honor current weather `fetchedAt + freshForSeconds` (5-minute fallback, 60-second future-skew ceiling) and stop presenting wind values once that evidence expires. Re-evaluate at the exact expiry boundary and when a backgrounded tab becomes visible. Daylight times and the map city control remain available because they are not live wind observations; AQI already expires under its own provider contract. Do not refresh timestamps, poll implicitly, or synthesize replacement wind data.
+
+
+## 2026-09-02 — Favorites persist province identity, not untimestamped weather snapshots
+
+Saved-city state is navigation identity (`name`, canonical coordinates), while comparison fetches fresh evidence independently. Stop persisting/updating `temp` and `icon` because those fields have no source timestamp or TTL and create stale local snapshots plus unnecessary localStorage churn. The deserializer continues accepting legacy payloads but intentionally drops their weather fields while canonicalizing the province, so existing users retain favorites without presenting or carrying forward unprovable weather evidence.

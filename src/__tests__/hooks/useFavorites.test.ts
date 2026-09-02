@@ -54,9 +54,20 @@ describe('useFavorites', () => {
     const { result } = renderHook(() => useFavorites(null));
 
     expect(result.current.favorites).toEqual([
-      { name: 'İstanbul', lat: 41.01, lon: 28.97, temp: 21.4, icon: '01d' },
+      { name: 'İstanbul', lat: 41.01, lon: 28.97 },
       { name: 'Ankara', lat: 39.93, lon: 32.86 },
     ]);
+  });
+
+  it('drops legacy untimestamped weather fields while retaining canonical saved-city navigation', () => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([{ name: 'İstanbul', lat: 41.01, lon: 28.97, temp: -12, icon: '13n' }])
+    );
+
+    const { result } = renderHook(() => useFavorites(null));
+
+    expect(result.current.favorites).toEqual([{ name: 'İstanbul', lat: 41.01, lon: 28.97 }]);
   });
 
   it('degrades a wrong-shape persisted favorites payload to an empty list', () => {
@@ -73,7 +84,7 @@ describe('useFavorites', () => {
     act(() => result.current.addFavorite());
 
     expect(result.current.favorites).toEqual([
-      { name: 'İstanbul', lat: 41.01, lon: 28.97, temp: 20, icon: '01d' },
+      { name: 'İstanbul', lat: 41.01, lon: 28.97 },
     ]);
     expect(JSON.parse(localStorage.getItem('favorites') ?? '[]')).toEqual(result.current.favorites);
   });
