@@ -4061,6 +4061,93 @@ test('route weather renders a transparent corridor result', async ({ page }, tes
   ).toHaveCount(5);
 });
 
+test('desktop route weather reads as one editorial corridor surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route visual regression');
+  await page.goto('/istanbul');
+
+  const panel = page.locator('.route-weather');
+  await panel.locator('summary').click();
+  await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+  await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
+
+  const styles = await panel.evaluate(element => {
+    const panelStyle = getComputedStyle(element);
+    const chevron = element.querySelector<HTMLElement>('.route-weather__chevron');
+    const score = element.querySelector<HTMLElement>('.route-weather__score');
+    const segments = element.querySelector<HTMLElement>('.route-weather__segments');
+    const segmentItems = Array.from(element.querySelectorAll<HTMLElement>('.route-segment'));
+    if (!chevron || !score || !segments || segmentItems.length !== 5) {
+      throw new Error('Missing route editorial surface parts');
+    }
+    const chevronStyle = getComputedStyle(chevron);
+    const scoreStyle = getComputedStyle(score);
+    const segmentsStyle = getComputedStyle(segments);
+    const itemStyles = segmentItems.map(item => getComputedStyle(item));
+    return {
+      panel: {
+        background: panelStyle.backgroundColor,
+        radius: panelStyle.borderRadius,
+        shadow: panelStyle.boxShadow,
+        top: parseFloat(panelStyle.borderTopWidth),
+        bottom: parseFloat(panelStyle.borderBottomWidth),
+        left: parseFloat(panelStyle.borderLeftWidth),
+        right: parseFloat(panelStyle.borderRightWidth),
+      },
+      chevron: {
+        radius: chevronStyle.borderRadius,
+        top: parseFloat(chevronStyle.borderTopWidth),
+      },
+      score: {
+        background: scoreStyle.backgroundColor,
+        radius: scoreStyle.borderRadius,
+        left: parseFloat(scoreStyle.borderLeftWidth),
+        top: parseFloat(scoreStyle.borderTopWidth),
+        right: parseFloat(scoreStyle.borderRightWidth),
+        bottom: parseFloat(scoreStyle.borderBottomWidth),
+      },
+      segments: {
+        gap: parseFloat(segmentsStyle.columnGap),
+        top: parseFloat(segmentsStyle.borderTopWidth),
+        bottom: parseFloat(segmentsStyle.borderBottomWidth),
+      },
+      items: itemStyles.map(style => ({
+        radius: style.borderRadius,
+        top: parseFloat(style.borderTopWidth),
+        left: parseFloat(style.borderLeftWidth),
+        right: parseFloat(style.borderRightWidth),
+        bottom: parseFloat(style.borderBottomWidth),
+      })),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(styles.panel.background).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.panel.radius)).toBe(0);
+  expect(styles.panel.shadow).toBe('none');
+  expect(styles.panel.top).toBeGreaterThanOrEqual(1);
+  expect(styles.panel.bottom).toBeGreaterThanOrEqual(1);
+  expect(styles.panel.left).toBe(0);
+  expect(styles.panel.right).toBe(0);
+  expect(parseFloat(styles.chevron.radius)).toBe(0);
+  expect(styles.chevron.top).toBe(0);
+  expect(styles.score.background).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.score.radius)).toBe(0);
+  expect(styles.score.left).toBeGreaterThanOrEqual(1);
+  expect(styles.score.top).toBe(0);
+  expect(styles.score.right).toBe(0);
+  expect(styles.score.bottom).toBe(0);
+  expect(styles.segments.gap).toBe(1);
+  expect(styles.segments.top).toBeGreaterThanOrEqual(1);
+  expect(styles.segments.bottom).toBeGreaterThanOrEqual(1);
+  expect(styles.items.every(item => parseFloat(item.radius) === 0)).toBe(true);
+  expect(styles.items.every(item => item.top >= 4)).toBe(true);
+  expect(styles.items.every(item => item.left === 0 && item.right === 0 && item.bottom === 0)).toBe(
+    true
+  );
+  expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
+});
+
 test('production shell exposes an installable PWA contract', async ({
   page,
   request,
