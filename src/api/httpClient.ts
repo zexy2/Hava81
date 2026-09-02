@@ -113,13 +113,18 @@ const INVALID_PROVIDER_EVIDENCE_EXPIRY = Number.NEGATIVE_INFINITY;
 
 const getProviderEvidenceExpiry = (data: unknown, now: number): number | null => {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
-  const meta = (data as { meta?: unknown }).meta;
-  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+  const record = data as Record<string, unknown>;
+  const nestedMeta =
+    record.meta && typeof record.meta === 'object' && !Array.isArray(record.meta)
+      ? (record.meta as Record<string, unknown>)
+      : null;
+  const evidence =
+    nestedMeta &&
+    (nestedMeta.fetchedAt !== undefined || nestedMeta.freshForSeconds !== undefined)
+      ? nestedMeta
+      : record;
 
-  const { fetchedAt, freshForSeconds } = meta as {
-    fetchedAt?: unknown;
-    freshForSeconds?: unknown;
-  };
+  const { fetchedAt, freshForSeconds } = evidence;
   const hasFetchedAt = fetchedAt !== undefined;
   const hasFreshForSeconds = freshForSeconds !== undefined;
   if (!hasFetchedAt && !hasFreshForSeconds) return null;
