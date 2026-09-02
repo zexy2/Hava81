@@ -94,6 +94,16 @@ grep -Fq 'Audit reasons: eligible=1 dirty=1 origin_mismatch=1 detached=1 unrepre
 grep -Fq "$parent/hava81-safe" <<<"$audit"
 [[ -d "$parent/hava81-no-git" ]]
 
+if (cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --apply --audit >/dev/null 2>&1); then
+  echo 'read-only audit accepted mutation mode' >&2
+  exit 1
+fi
+[[ -d "$parent/hava81-safe" ]]
+if git -C "$primary" show-ref --verify --quiet refs/archive/hava81-standalone/archive-me; then
+  echo 'rejected apply+audit unexpectedly created archive ref' >&2
+  exit 1
+fi
+
 (cd "$primary" && scripts/cleanup-stale-standalone-checkouts.sh --parent="$parent" --older-than-hours=24 --apply >/dev/null)
 [[ ! -e "$parent/hava81-safe" ]]
 [[ -d "$parent/hava81-unmerged" ]]

@@ -969,3 +969,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** In saved-city comparison, current weather and forecast freshness remain mandatory for a city row, but air-quality evidence is optional and independently freshness-gated. When AQ evidence expires or becomes invalid, remove AQI and AQ-derived plan/activity influence while keeping the row usable if current weather and forecast remain fresh.
 
 **Why:** AQ is separately timestamped optional evidence. Treating its shorter TTL as a reason to hide an otherwise current weather comparison reduces availability without improving safety. Recomputing decision output without expired AQ preserves the fail-closed trust boundary and avoids presenting stale health-adjacent guidance.
+
+### 2026-09-02 22:53 TRT — cleanup audit mode is structurally read-only
+
+**Decision:** `cleanup-stale-standalone-checkouts.sh --audit` must be mutually exclusive with `--apply`. Reject the combination before candidate discovery or ref mutation rather than relying on operator convention.
+
+**Why:** Audit mode is documented as read-only evidence gathering. Allowing `--apply --audit` made that guarantee false and could turn a diagnostic invocation into an archive/remove operation. Mutation remains available through explicit `--apply` without `--audit`; eligibility and archive-first safety checks are unchanged.

@@ -46,6 +46,11 @@ for arg in "$@"; do
   esac
 done
 
+if [[ "$apply" == true && "$audit" == true ]]; then
+  echo "--audit is read-only and cannot be combined with --apply" >&2
+  exit 2
+fi
+
 [[ -n "$parent" && -d "$parent" ]] || { echo "--parent must name an existing directory" >&2; exit 2; }
 if [[ ! "$older_than_hours" =~ ^[0-9]+$ || "$older_than_hours" -lt 1 ]]; then
   echo "--older-than-hours must be an integer >= 1" >&2
