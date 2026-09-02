@@ -2366,3 +2366,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the asynchronous notification path and found a narrow stale-evidence window: the effect checked freshness before awaiting `navigator.serviceWorker.ready`, but could still show a decision notification after current/forecast TTL expired during that wait.
 - Prepared a fail-closed delivery guard that reuses shared freshness utilities and revalidates immediately after service-worker readiness. Added a deterministic regression where both evidence TTLs expire during a delayed readiness promise; no notification or sent marker may be produced.
 - Local `git diff --check` passes; hosted lint/type/unit/build/browser/CodeQL gates remain mandatory because host dependency trees stay removed under disk pressure.
+
+### 2026-09-02 decision-field current freshness contract
+- Audited the first-viewport `WeatherDecisionField` while #618 deployed and found it still duplicated current-weather TTL, future-skew and expiry scheduling that is now centralized in `getCurrentWeatherFreshness`.
+- Replaced the private stale boundary calculation with the shared current-weather freshness contract for both fail-closed evidence visibility and exact expiry scheduling. The existing minute-boundary freshness text remains independent and unchanged.
+- Local gates from exact main `d46c77c7fe09ab195b3d0d178be3fddad5e0a1d7`: focused WeatherDecisionField 15/15; full frontend 60 files / 585 tests; TypeScript; ESLint; production build + service-worker stamp + 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`.
+- No weather values, provider attribution, decision thresholds, MGM/UV/AQI semantics or safety guidance changed. Hosted exact-head CI/CodeQL/browser/Lighthouse remain mandatory before merge.

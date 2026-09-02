@@ -762,3 +762,6 @@ The selected-city map marker is a current observation surface because it renders
 ### 2026-09-02 — Revalidate weather evidence immediately before asynchronous alert delivery
 - Starting a notification delivery while current/forecast evidence is fresh is insufficient when service-worker readiness can take seconds. Evidence can cross its TTL while delivery is in flight.
 - Decision alerts now reuse the shared current/forecast freshness contracts and re-check both immediately after service-worker readiness resolves, before any notification is shown. Expired evidence aborts delivery without writing a sent marker, preserving a later fresh-data retry.
+
+## 2026-09-02 — first-viewport current evidence uses the shared freshness contract
+`WeatherDecisionField` must derive whether current observations are actionable and when their expiry timer fires from `getCurrentWeatherFreshness`, rather than carrying its own TTL/future-skew math. Keep the user-facing age/minute text separate because it is presentation cadence, not evidence validity. This prevents the primary decision surface from drifting from map/environment/current-refresh freshness semantics without changing weather values or decision thresholds.

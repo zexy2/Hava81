@@ -2,10 +2,17 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
-import type { AirQuality, DailyForecast, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  DailyForecast,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
+import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherSymbol } from './WeatherSymbol';
 import './WeatherDecisionField.css';
@@ -191,7 +198,6 @@ export function WeatherDecisionField({
       ? weather.meta.fetchedAt
       : new Date(weather.meta.fetchedAt);
   const fetchedAtMs = fetchedAt.getTime();
-  const staleAfterMs = (weather.meta.freshForSeconds ?? 300) * 1000;
   const [now, setNow] = useState(() => Date.now());
   const [, setForecastFreshnessRevision] = useState(0);
   const forecastFreshness = forecastMeta === undefined ? null : getForecastFreshness(forecastMeta);
@@ -204,11 +210,9 @@ export function WeatherDecisionField({
       setNow(currentTime);
       const elapsedInMinute = ((currentTime % 60_000) + 60_000) % 60_000;
       const nextMinuteDelay = 60_000 - elapsedInMinute + 100;
-      const staleBoundaryDelay = fetchedAtMs + staleAfterMs - currentTime + 100;
+      const expiresInMs = getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs;
       const nextDelay =
-        Number.isNaN(fetchedAtMs) || staleBoundaryDelay <= 0
-          ? nextMinuteDelay
-          : Math.min(nextMinuteDelay, staleBoundaryDelay);
+        expiresInMs === null ? nextMinuteDelay : Math.min(nextMinuteDelay, expiresInMs);
       timerId = window.setTimeout(scheduleFreshnessRefresh, nextDelay);
     };
     const refreshWhenVisible = () => {
@@ -223,7 +227,7 @@ export function WeatherDecisionField({
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [fetchedAtMs, staleAfterMs]);
+  }, [weather.meta]);
 
   useEffect(() => {
     if (forecastMeta === undefined) return undefined;
@@ -248,9 +252,8 @@ export function WeatherDecisionField({
     Number.isNaN(fetchedAtMs) || hasInvalidFutureTimestamp
       ? null
       : Math.max(0, Math.floor(ageMs / 60_000));
-  const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && ageMs > staleAfterMs;
-  const currentEvidenceFresh =
-    !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && !isStale;
+  const currentEvidenceFresh = getCurrentWeatherFreshness(weather.meta, now).fresh;
+  const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && !currentEvidenceFresh;
   const decisionEvidenceFresh = currentEvidenceFresh && (forecastFreshness?.fresh ?? true);
   const decisions = useMemo(
     () =>
@@ -330,7 +333,9 @@ export function WeatherDecisionField({
           <>
             <div className="hava81-decision-field__reading">
               <p className="hava81-decision-field__temperature">
-                <span className="hava81-decision-field__temperature-value">{currentTemperature}</span>
+                <span className="hava81-decision-field__temperature-value">
+                  {currentTemperature}
+                </span>
                 <span className="hava81-decision-field__temperature-unit">{temperatureSymbol}</span>
               </p>
 
