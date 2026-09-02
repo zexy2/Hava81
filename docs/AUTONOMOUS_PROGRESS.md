@@ -2634,3 +2634,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Split status collection from cleanliness evaluation: any non-zero `git status --porcelain --untracked-files=all` now skips the worktree, and only a successful empty status can establish cleanliness.
 - Added a deterministic linked-worktree fixture whose index is unreadable to the normal cleanup user. Both default and stale-clean dry runs must exclude it, while the existing stale-attached branch case still removes only its checkout and preserves its branch ref.
 - Validation: both shell scripts pass `bash -n`, `git diff --check` passes, and the dependency-free cleanup safety contract passes as the normal `ubuntu` user.
+
+### 2026-09-02 18:18 TRT — archive-first cleanup for stale standalone Hava81 clones
+
+- Fresh observer state showed production healthy (root/İstanbul/readiness/boot assets/CORS, OpenWeather circuit closed, nginx 4002) but root disk at ~98% with only ~1.3 GiB free. The merged linked-worktree cleaner removed six clean, attached, >24h Hava81 worktrees while preserving their branch refs; this recovered only ~15 MB, confirming linked worktrees are no longer the main safe reclaim class.
+- Restored the previously researched standalone-clone cleanup helper onto exact current main `a7ea819a47194d93a880c0ff88ffbe3ff7285dda` in isolated branch `automation/hava81-standalone-cleanup-1812`.
+- The helper is dry-run by default and considers only direct `hava81-*` standalone clones under an explicit parent. Eligibility requires exact origin equality, successful empty status, attached branch, HEAD already represented on `origin/main`, explicit age threshold, no registered worktree identity, and no process command-line reference.
+- Apply mode rechecks the full eligibility tuple, preserves the exact HEAD under `refs/archive/hava81-standalone/<branch>`, verifies that ref, and only then removes the standalone checkout. Unknown, dirty, detached, recent, wrong-origin, unique/unmerged and in-use clones remain fail-closed.
+- Dependency-free validation passes: both scripts `bash -n`, standalone cleanup safety contract, and `git diff --check`. Next action: inspect exact diff, commit/push/open PR, require exact-head hosted gates before applying the helper to the real host.
