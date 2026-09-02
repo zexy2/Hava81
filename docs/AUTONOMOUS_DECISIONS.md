@@ -870,3 +870,6 @@ The OpenWeather baseline and dedicated Open-Meteo hourly requests already start 
 
 ## 2026-09-02 — Loading shells follow the editorial surface geometry
 Primary weather loading shells should preserve the same visual boundary model as the loaded decision and forecast surfaces: transparent field, block-axis rules, square corners, and no card shadow. Keep shimmer shapes and motion as loading affordances; do not reintroduce rounded elevated cards solely during loading.
+
+## 2026-09-02 — Recovery and error messages use editorial signal callouts
+Weather recovery/status messages should read as editorial callouts rather than elevated cards. Use a subtle contextual field, a 4px inline-start signal rule, square corners, and no shadow. Reserve Aegean for neutral recovery/status and vermilion for errors; keep the existing semantic roles, actions, and responsive behavior unchanged.

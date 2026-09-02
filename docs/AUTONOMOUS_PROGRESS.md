@@ -2580,3 +2580,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the remaining rounded/elevated surfaces after the decision, forecast, context, commute, route, environment, and comparison editorial passes. The initial decision/forecast skeletons were still using the older card geometry, causing a visible shape jump when real content arrived.
 - Updated only the loading shell geometry to transparent backgrounds with block-axis rules, square corners, and no shadow; kept the shimmer placeholders intact so loading remains obvious.
 - Extended the existing 1280px/200%-text Playwright regression to assert both containment and the computed editorial geometry. On current main: lint/type-check/build pass, full frontend 61/61 files and 619/619 tests pass, and the targeted real Chromium loading regression passes.
+
+### 2026-09-02 15:45 TRT — flatten error and forecast-recovery message surfaces
+- Audited the remaining shared message surface and found current-weather errors and forecast recovery notices still used the pre-editorial rounded card + shadow treatment while adjacent product surfaces had already moved to flat signal-led geometry.
+- Changed only presentation: subtle contextual field, 4px inline-start signal rule, square corners, and no shadow. Error callouts use vermilion; neutral forecast recovery uses Aegean. Roles, copy, retry/dismiss actions, and weather behavior are untouched.
+- Extended the existing 320px/200%-text Playwright regressions to lock the computed geometry. A real Chromium probe against production with the proposed CSS injected confirmed both variants fit at 320px/200%, all action buttons stay above 44px, no page errors occur, and the 4px/radius-0/shadow-none contract computes as intended.
+- Host disk remains under pressure, so no new dependency install was added for this pass; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL are mandatory before merge.
