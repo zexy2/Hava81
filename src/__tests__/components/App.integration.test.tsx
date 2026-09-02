@@ -270,6 +270,24 @@ describe('Hava81 app integration', () => {
     expect(screen.queryByText(/UV model maksimumu 9/i)).not.toBeInTheDocument();
   });
 
+  it('does not hand materially future air quality into rendered decision surfaces', async () => {
+    service.getAirQuality.mockResolvedValueOnce({
+      ...air,
+      aqi: 5,
+      aqiLabel: 'Very Poor',
+      meta: {
+        ...air.meta,
+        fetchedAt: new Date(Date.now() + 2 * 60_000),
+      },
+    });
+
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    await waitFor(() => expect(service.getAirQuality).toHaveBeenCalled());
+    expect(screen.queryByText(/5\/5/)).not.toBeInTheDocument();
+  });
+
   it('uses the freshness metadata from the hourly evidence driving first-viewport guidance', async () => {
     const staleBaseline = {
       ...forecast,

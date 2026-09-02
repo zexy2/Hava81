@@ -922,3 +922,10 @@ Cleanup eligibility requires positive evidence that a worktree is clean. If `git
 **Decision:** Treat air-quality observations as independently freshness-gated evidence. The decision hero may show AQI or generate AQI-based activity guidance only while `airQuality.meta` is fresh under the same provider TTL semantics used for current observations; when that evidence expires, render the metric unavailable and remove AQI-derived guidance without hiding still-fresh weather evidence.
 
 **Why:** Air quality arrives as a separately timestamped provider payload. Letting a fresh current-weather observation keep stale AQI visible would present expired health-related evidence as current and violate Hava81's evidence-first trust model.
+
+
+### 2026-09-02 19:52 TRT — optional AQ evidence must fail closed before App handoff
+
+**Decision:** App must pass `airQuality` to decision, planning, alert, activity, and environment surfaces only while the provider envelope is fresh. `useForecast` remains responsible for state cleanup and expiry rerender, but render-time handoff must independently reject stale, invalid, or materially future AQ evidence.
+
+**Why:** Air quality is health-adjacent and is consumed by several surfaces. Effect-based cleanup alone can permit one render of expired/future AQ data before state is cleared; a single App-level trust boundary prevents that transient publication across all downstream consumers.

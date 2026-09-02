@@ -389,6 +389,10 @@ const App: React.FC = () => {
     forecast.contextSignals && getOptionalEvidenceFreshness(forecast.contextSignals).fresh
       ? forecast.contextSignals.uvIndexMax
       : undefined;
+  const freshAirQuality =
+    forecast.airQuality && getOptionalEvidenceFreshness(forecast.airQuality.meta).fresh
+      ? forecast.airQuality
+      : undefined;
 
   return (
     <>
@@ -576,7 +580,7 @@ const App: React.FC = () => {
                     weather={weather}
                     hourly={forecast.hourly}
                     daily={forecast.daily}
-                    airQuality={forecast.airQuality ?? undefined}
+                    airQuality={freshAirQuality}
                     uvIndexMax={freshUvIndexMax}
                     forecastMeta={forecast.displayMeta ?? forecast.meta}
                   />
@@ -605,7 +609,7 @@ const App: React.FC = () => {
                     <DailyPlanPanel
                       weather={weather}
                       hourly={forecast.hourly}
-                      airQuality={forecast.airQuality ?? undefined}
+                      airQuality={freshAirQuality}
                       forecastMeta={forecast.displayMeta ?? forecast.meta}
                     />
                   </Suspense>
@@ -614,7 +618,7 @@ const App: React.FC = () => {
                 <Suspense fallback={null}>
                   <EnvironmentRail
                     weather={weather}
-                    airQuality={forecast.airQuality ?? undefined}
+                    airQuality={freshAirQuality}
                     onOpenMap={showMap ? closeMap : openMap}
                     mapExpanded={showMap}
                   />
@@ -664,7 +668,7 @@ const App: React.FC = () => {
                     <ActivityPlanner
                       weather={weather}
                       hourly={forecast.hourly}
-                      airQuality={forecast.airQuality ?? undefined}
+                      airQuality={freshAirQuality}
                       forecastMeta={forecast.displayMeta ?? forecast.meta}
                     />
                   </Suspense>
@@ -684,7 +688,7 @@ const App: React.FC = () => {
                     <DecisionAlertsPanel
                       weather={weather}
                       hourly={forecast.hourly}
-                      airQuality={forecast.airQuality ?? undefined}
+                      airQuality={freshAirQuality}
                       forecastMeta={forecast.displayMeta ?? forecast.meta}
                     />
                   </Suspense>
