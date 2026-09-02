@@ -2522,3 +2522,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Exact-head Browser CI on PR #668 caught a real regression in the first approach: widening the viewport breakpoint to `48rem` stacked the first two activity cards even at normal text size, violating the established 768px tablet layout (`cardTops` differed by 242.28px).
 - Reverted both breakpoint changes to the intentional `47.99rem` boundary instead of weakening the existing regression. Kept the new English 768px/200%-text containment test, but removed the implementation-specific requirement that the header must switch to `flex-direction: column`; the contract is containment/readability, not a specific layout mechanism.
 - This branch now changes regression coverage/documentation only; no product CSS remains changed. Exact-head hosted Browser CI will determine whether current content-aware reflow already satisfies the English 200%-text case.
+
+## 2026-09-02 12:53 TRT — preserve native arrow keys on focused horizontal surfaces
+- Audited keyboard interaction after the responsive editorial surfaces became horizontally scrollable and found app-level plain `ArrowLeft`/`ArrowRight` city shortcuts still fired from focused non-editable regions.
+- Hardened `useKeyboardShortcuts` so horizontal-arrow app navigation only fires when focus is effectively on the document body/root. Focused controls and keyboard-reachable scroll regions retain native arrow behavior; Escape semantics are unchanged.
+- Added regressions for a focused tabindex scroller and body-level ArrowRight. No weather, provider, scoring, route, MGM, or API behavior changes.
+- `git diff --check` passes; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory because local Node dependencies are intentionally absent under disk pressure.

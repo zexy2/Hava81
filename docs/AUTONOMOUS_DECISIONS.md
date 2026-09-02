@@ -847,3 +847,6 @@ Responsive breakpoints that protect Activity Planner text reflow must include th
 
 ## 2026-09-02 — Preserve the normal 768px Activity Planner layout
 The exact 768px viewport is intentionally on the wider side of the Activity Planner viewport breakpoint so its normal-size cards remain side by side. Enlarged-text resilience at that width must be proven by content reflow rather than forcing the entire 768px layout into the narrow/mobile presentation. Keep `47.99rem` as the viewport breakpoint and retain a dedicated English 200%-text containment regression. This supersedes the immediately preceding 48rem breakpoint decision after hosted Browser CI exposed its normal-size regression.
+
+## 2026-09-02 — Global horizontal-arrow shortcuts yield to focused surfaces
+Plain left/right arrows are native interaction keys for horizontal scrollers and many focused widgets. Hava81 city navigation may use them only when focus is effectively on the document itself; never intercept them from a focused control or keyboard-reachable content region. Modifier shortcuts and the global Escape close affordance keep their existing semantics.

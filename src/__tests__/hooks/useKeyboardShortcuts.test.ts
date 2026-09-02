@@ -61,4 +61,29 @@ describe('useKeyboardShortcuts', () => {
     );
   });
 
+  it('does not steal horizontal arrows from a focused scrollable region', () => {
+    const action = vi.fn();
+    renderHook(() => useKeyboardShortcuts([{ key: 'ArrowRight', action, description: 'Next' }]));
+
+    const scroller = document.createElement('div');
+    scroller.tabIndex = 0;
+    document.body.append(scroller);
+    scroller.focus();
+
+    fireEvent.keyDown(scroller, { key: 'ArrowRight' });
+
+    expect(action).not.toHaveBeenCalled();
+    scroller.remove();
+  });
+
+  it('keeps horizontal arrow shortcuts global when focus is on the document body', () => {
+    const action = vi.fn();
+    renderHook(() => useKeyboardShortcuts([{ key: 'ArrowRight', action, description: 'Next' }]));
+
+    document.body.focus();
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' });
+
+    expect(action).toHaveBeenCalledTimes(1);
+  });
+
 });
