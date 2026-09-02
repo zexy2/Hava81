@@ -2,6 +2,11 @@
 
 const baseUrl = (process.env.BASE_URL || 'http://127.0.0.1:4001/api/v1').replace(/\/$/, '');
 const delayMs = Number(process.env.DELAY_MS || 1100);
+const requestedTimeoutMs = Number(process.env.REQUEST_TIMEOUT_MS || 10000);
+const requestTimeoutMs =
+  Number.isFinite(requestedTimeoutMs) && requestedTimeoutMs >= 1000 && requestedTimeoutMs <= 60000
+    ? requestedTimeoutMs
+    : 10000;
 
 const cities = [
   'Adana','Adıyaman','Afyonkarahisar','Ağrı','Amasya','Ankara','Antalya','Artvin','Aydın','Balıkesir',
@@ -19,11 +24,25 @@ const finite = value => typeof value === 'number' && Number.isFinite(value);
 const validDate = value => typeof value === 'string' && !Number.isNaN(Date.parse(value));
 
 async function getJson(url) {
-  const response = await fetch(url, { headers: { accept: 'application/json' } });
-  let body;
-  try { body = await response.json(); } catch { body = null; }
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return body;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
+  try {
+    const response = await fetch(url, {
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    });
+    let body;
+    try { body = await response.json(); } catch { body = null; }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return body;
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`request timed out after ${requestTimeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 const failures = [];
@@ -65,6 +84,7 @@ for (const [index, city] of cities.entries()) {
 const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
 console.log('\n=== Hava81 81-il release gate ===');
 console.log(`Base URL: ${baseUrl}`);
+console.log(`Request timeout: ${requestTimeoutMs}ms`);
 console.log(`Current: ${currentOk}/81`);
 console.log(`Forecast: ${forecastOk}/81`);
 console.log(`Elapsed: ${elapsedSeconds}s`);
