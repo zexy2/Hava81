@@ -178,6 +178,7 @@
   }
   .activity-planner__sensitivity {
     min-width: 0;
+    flex-basis: auto;
   }
   .activity-planner__chips {
     flex-wrap: nowrap;
