@@ -28,8 +28,10 @@ rechecked immediately before the standalone directory is removed. Existing
 archive refs must already point at the same commit or the candidate is skipped.
 
 `--audit` is read-only and reports how many matching directories are standalone
-clones, linked worktrees, or directories without Git metadata. It does not widen
-cleanup eligibility or reveal file contents.
+clones, linked worktrees, or directories without Git metadata, plus aggregate
+standalone exclusion reasons (dirty, origin mismatch, detached, unrepresented,
+recent, in-use, unreadable, or archive conflict). It does not widen cleanup
+eligibility, print candidate file contents, or mutate refs/checkouts.
 USAGE
 }
 
@@ -67,6 +69,76 @@ path_is_registered() {
 path_is_in_use() {
   local candidate="$1"
   ps -eo args= 2>/dev/null | grep -F -- "$candidate" | grep -qv -F -- "grep -F -- $candidate"
+}
+
+audit_reason_for_standalone() {
+  local candidate="$1"
+  local status_output head branch remote modified_epoch now_epoch age_seconds required_seconds archive_ref cherry
+
+  status_output=""
+  if ! status_output="$(git -c safe.directory="$candidate" -C "$candidate" status --porcelain --untracked-files=all 2>/dev/null)"; then
+    printf 'status_unreadable\n'
+    return
+  fi
+  if [[ -n "$status_output" ]]; then
+    printf 'dirty\n'
+    return
+  fi
+
+  remote="$(git -c safe.directory="$candidate" -C "$candidate" config --get remote.origin.url 2>/dev/null || true)"
+  if [[ "$remote" != "$origin_url" ]]; then
+    printf 'origin_mismatch\n'
+    return
+  fi
+
+  head="$(git -c safe.directory="$candidate" -C "$candidate" rev-parse --verify HEAD 2>/dev/null || true)"
+  branch="$(git -c safe.directory="$candidate" -C "$candidate" symbolic-ref -q --short HEAD 2>/dev/null || true)"
+  if [[ -z "$head" || -z "$branch" ]]; then
+    printf 'detached\n'
+    return
+  fi
+
+  if ! git cat-file -e "$head^{commit}" 2>/dev/null; then
+    printf 'unrepresented\n'
+    return
+  fi
+  if ! git merge-base --is-ancestor "$head" origin/main; then
+    cherry="$(git cherry origin/main "$head" 2>/dev/null || true)"
+    if [[ -z "$cherry" ]] || grep -q '^+' <<<"$cherry"; then
+      printf 'unrepresented\n'
+      return
+    fi
+  fi
+
+  modified_epoch="$(stat -c %Y "$candidate" 2>/dev/null || true)"
+  now_epoch="$(date +%s)"
+  if [[ ! "$modified_epoch" =~ ^[0-9]+$ || ! "$now_epoch" =~ ^[0-9]+$ ]]; then
+    printf 'age_unreadable\n'
+    return
+  fi
+  age_seconds=$((now_epoch - modified_epoch))
+  required_seconds=$((older_than_hours * 3600))
+  if (( age_seconds < required_seconds )); then
+    printf 'recent\n'
+    return
+  fi
+
+  if path_is_in_use "$candidate"; then
+    printf 'in_use\n'
+    return
+  fi
+
+  archive_ref="$archive_prefix/$branch"
+  if ! git check-ref-format "$archive_ref" >/dev/null 2>&1; then
+    printf 'archive_conflict\n'
+    return
+  fi
+  if git show-ref --verify --quiet "$archive_ref" && [[ "$(git rev-parse "$archive_ref")" != "$head" ]]; then
+    printf 'archive_conflict\n'
+    return
+  fi
+
+  printf 'eligible\n'
 }
 
 candidate_is_eligible() {
@@ -126,6 +198,15 @@ scanned_count=0
 standalone_count=0
 linked_count=0
 without_git_count=0
+audit_eligible_count=0
+audit_dirty_count=0
+audit_origin_mismatch_count=0
+audit_detached_count=0
+audit_unrepresented_count=0
+audit_recent_count=0
+audit_in_use_count=0
+audit_unreadable_count=0
+audit_archive_conflict_count=0
 
 while IFS= read -r -d '' candidate; do
   scanned_count=$((scanned_count + 1))
@@ -135,6 +216,21 @@ while IFS= read -r -d '' candidate; do
     linked_count=$((linked_count + 1))
   else
     without_git_count=$((without_git_count + 1))
+  fi
+
+  if [[ "$audit" == true && -d "$candidate/.git" && ! -L "$candidate/.git" ]]; then
+    audit_reason="$(audit_reason_for_standalone "$candidate")"
+    case "$audit_reason" in
+      eligible) audit_eligible_count=$((audit_eligible_count + 1)) ;;
+      dirty) audit_dirty_count=$((audit_dirty_count + 1)) ;;
+      origin_mismatch) audit_origin_mismatch_count=$((audit_origin_mismatch_count + 1)) ;;
+      detached) audit_detached_count=$((audit_detached_count + 1)) ;;
+      unrepresented) audit_unrepresented_count=$((audit_unrepresented_count + 1)) ;;
+      recent) audit_recent_count=$((audit_recent_count + 1)) ;;
+      in_use) audit_in_use_count=$((audit_in_use_count + 1)) ;;
+      status_unreadable|age_unreadable) audit_unreadable_count=$((audit_unreadable_count + 1)) ;;
+      archive_conflict) audit_archive_conflict_count=$((audit_archive_conflict_count + 1)) ;;
+    esac
   fi
 
   eligibility="$(candidate_is_eligible "$candidate" || true)"
@@ -185,4 +281,8 @@ fi
 
 if [[ "$audit" == true ]]; then
   printf 'Audit: scanned=%d standalone_clones=%d linked_worktrees=%d without_git_metadata=%d.\n' "$scanned_count" "$standalone_count" "$linked_count" "$without_git_count"
+  printf 'Audit reasons: eligible=%d dirty=%d origin_mismatch=%d detached=%d unrepresented=%d recent=%d in_use=%d unreadable=%d archive_conflict=%d.\n' \
+    "$audit_eligible_count" "$audit_dirty_count" "$audit_origin_mismatch_count" "$audit_detached_count" \
+    "$audit_unrepresented_count" "$audit_recent_count" "$audit_in_use_count" "$audit_unreadable_count" \
+    "$audit_archive_conflict_count"
 fi
