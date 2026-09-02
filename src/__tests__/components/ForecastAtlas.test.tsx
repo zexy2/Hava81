@@ -54,6 +54,7 @@ const renderRangeAtlas = (count = 24) =>
         meta={{
           provider: 'Open-Meteo',
           fetchedAt: new Date(),
+          freshForSeconds: 2 * 60 * 60,
           timezoneOffsetSeconds: 0,
           intervalHours: 1,
         }}
