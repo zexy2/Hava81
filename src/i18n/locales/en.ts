@@ -416,6 +416,7 @@ export const en = {
         'Quiet hours: 22:00–07:00. Notification permission is requested only if you opt in.',
       modeledDisclosure:
         'These notifications are Hava81 modeled guidance, not official MGM MeteoUyarı warnings.',
+      notificationDisclosure: 'Hava81 modeled guidance; not an official MGM MeteoUyarı warning.',
       enable: 'Enable alerts',
       disable: 'Disable alerts',
       blocked: 'Notifications blocked',

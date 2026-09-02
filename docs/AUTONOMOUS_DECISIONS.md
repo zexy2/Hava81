@@ -951,3 +951,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 
 - The Forecast Atlas hourly viewport is itself keyboard-focusable (`role="region"`, `tabIndex=0`) and horizontally scrollable, but its focus outline still used a positive 2px offset. Unlike an ordinary static region, this control sits directly on the rail boundary, so rendering the indicator inward is the safer clipping-resistant behavior and matches the interval/activity rail policy already merged.
 - Change only the focus outline offset to `-2px`; no chart, forecast, weather-provider, scoring, or safety semantics change. Extend the existing 320px Forecast Atlas browser regression to focus the actual hourly viewport and require a visible >=2px, non-positive-offset indicator.
+
+### 2026-09-02 22:24 TRT — modeled-warning provenance travels with the notification payload
+
+**Decision:** Every Hava81 browser notification generated from modeled decision guidance must carry an explicit localized statement in the notification body that it is Hava81 modeled guidance and not an official MGM MeteoUyarı warning. The disclosure shown inside the alerts panel is necessary but not sufficient because system notifications are consumed outside that UI context.
+
+**Why:** Notification titles such as rain or strong-wind alerts can be seen on the lock screen or notification center without the panel that explains their provenance. Keeping the distinction in the payload itself prevents modeled Hava81 guidance from being mistaken for an official warning while leaving all weather evidence, thresholds and provider semantics unchanged.
