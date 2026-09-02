@@ -1631,6 +1631,42 @@ test('forced colors keeps selected activity and settings options distinct', asyn
   expect(settingsState.border).not.toBe(settingsState.otherBorder);
 });
 
+test('desktop environment metrics read as an editorial rail', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop environment visual regression');
+  await page.goto('/istanbul');
+
+  const rail = page.locator('.environment-rail');
+  await expect(rail).toBeVisible();
+  const styles = await rail.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const modules = Array.from(element.querySelectorAll<HTMLElement>('.environment-rail__module'));
+    if (modules.length !== 4) throw new Error('Missing environment rail modules');
+    const moduleStyles = modules.map(module => getComputedStyle(module));
+    return {
+      background: panel.backgroundColor,
+      radius: panel.borderRadius,
+      shadow: panel.boxShadow,
+      top: parseFloat(panel.borderTopWidth),
+      bottom: parseFloat(panel.borderBottomWidth),
+      inline: parseFloat(panel.borderLeftWidth),
+      overflow: panel.overflow,
+      separatorWidths: moduleStyles.slice(1).map(style => parseFloat(style.borderLeftWidth)),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(styles.background).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.radius)).toBe(0);
+  expect(styles.shadow).toBe('none');
+  expect(styles.top).toBeGreaterThanOrEqual(1);
+  expect(styles.bottom).toBeGreaterThanOrEqual(1);
+  expect(styles.inline).toBe(0);
+  expect(styles.overflow).toBe('hidden');
+  expect(styles.separatorWidths.every(width => width >= 1)).toBe(true);
+  expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
+});
+
 test('mobile environment rail keeps labels readable at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile environment text-resize regression');
   await page.setViewportSize({ width: 320, height: 844 });
