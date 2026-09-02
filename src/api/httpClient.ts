@@ -19,7 +19,7 @@ interface RetryState {
 }
 
 // Simple in-memory response cache plus single-flight GET deduplication.
-const requestCache = new Map<string, { data: unknown; timestamp: number }>();
+const requestCache = new Map<string, { data: unknown; timestamp: number; expiresAt: number }>();
 const MAX_CACHE_ENTRIES = 128;
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
 
@@ -107,21 +107,46 @@ const getCacheKey = (url: string, options?: RequestConfig): string => {
 /**
  * Check if cached response is still valid
  */
-const isCacheValid = (timestamp: number): boolean => {
-  const age = Date.now() - timestamp;
-  return age >= 0 && age < config.cache.ttl;
+const getProviderEvidenceExpiry = (data: unknown): number | null => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const meta = (data as { meta?: unknown }).meta;
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+
+  const { fetchedAt, freshForSeconds } = meta as {
+    fetchedAt?: unknown;
+    freshForSeconds?: unknown;
+  };
+  if (typeof freshForSeconds !== 'number' || !Number.isFinite(freshForSeconds) || freshForSeconds <= 0) {
+    return null;
+  }
+  if (typeof fetchedAt !== 'string' && !(fetchedAt instanceof Date)) return null;
+
+  const fetchedAtMs = fetchedAt instanceof Date ? fetchedAt.getTime() : Date.parse(fetchedAt);
+  if (!Number.isFinite(fetchedAtMs)) return null;
+  return fetchedAtMs + freshForSeconds * 1000;
+};
+
+const isCacheValid = (cached: { timestamp: number; expiresAt: number }): boolean => {
+  const now = Date.now();
+  return now >= cached.timestamp && now < cached.expiresAt;
 };
 
 const storeCachedResponse = (cacheKey: string, data: unknown): void => {
   const now = Date.now();
   for (const [key, cached] of requestCache) {
-    const age = now - cached.timestamp;
-    if (age < 0 || age >= config.cache.ttl) requestCache.delete(key);
+    if (now < cached.timestamp || now >= cached.expiresAt) requestCache.delete(key);
+  }
+
+  const providerExpiry = getProviderEvidenceExpiry(data);
+  const expiresAt = Math.min(now + config.cache.ttl, providerExpiry ?? Number.POSITIVE_INFINITY);
+  if (expiresAt <= now) {
+    requestCache.delete(cacheKey);
+    return;
   }
 
   // Refresh insertion order for a reused key so the oldest retained entry is evicted first.
   requestCache.delete(cacheKey);
-  requestCache.set(cacheKey, { data, timestamp: now });
+  requestCache.set(cacheKey, { data, timestamp: now, expiresAt });
 
   while (requestCache.size > MAX_CACHE_ENTRIES) {
     const oldestKey = requestCache.keys().next().value as string | undefined;
@@ -148,7 +173,7 @@ const fetchWithRetry = async <T>(
   const cacheKey = getCacheKey(url, options);
   if (fetchOptions.method === undefined || fetchOptions.method === 'GET') {
     const cached = requestCache.get(cacheKey);
-    if (cached && isCacheValid(cached.timestamp)) {
+    if (cached && isCacheValid(cached)) {
       console.debug('[HTTP] Cache hit:', cacheKey);
       return cached.data as T;
     }

@@ -123,6 +123,45 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it('does not reuse provider evidence beyond its declared freshness window', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchedAt = new Date('2026-09-02T05:00:00.000Z');
+      vi.setSystemTime(fetchedAt);
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse({
+            cityName: 'Izmir',
+            temperature: 23,
+            meta: { provider: 'OpenWeather', fetchedAt: fetchedAt.toISOString(), freshForSeconds: 60 },
+          })
+        )
+        .mockResolvedValueOnce(
+          mockResponse({
+            cityName: 'Izmir',
+            temperature: 22,
+            meta: {
+              provider: 'OpenWeather',
+              fetchedAt: new Date(fetchedAt.getTime() + 60_001).toISOString(),
+              freshForSeconds: 60,
+            },
+          })
+        );
+
+      await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toMatchObject({
+        temperature: 23,
+      });
+      vi.setSystemTime(new Date(fetchedAt.getTime() + 60_001));
+      await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toMatchObject({
+        temperature: 22,
+      });
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not reuse a cache entry after the client clock moves behind its timestamp', async () => {
     vi.useFakeTimers();
     try {
