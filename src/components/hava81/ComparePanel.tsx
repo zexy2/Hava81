@@ -162,7 +162,7 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     return freshRows.filter(row => row.plan.score === topScore);
   }, [freshRows]);
   const winner = leaders.length === 1 ? leaders[0] : undefined;
-  const isLeader = (row: CompareRow) => leaders.includes(row);
+  const isLeader = (row: (typeof freshRows)[number]) => leaders.includes(row);
   const offsetTime = (row: CompareRow, date?: Date) => {
     if (!date) return '—';
     const offset = row.weather.meta.timezoneOffsetSeconds * 1000;
