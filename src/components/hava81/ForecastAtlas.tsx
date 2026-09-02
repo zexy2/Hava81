@@ -7,6 +7,7 @@ import {
   formatPrecipitationSummary,
   normalizePrecipitationProbability,
 } from '../../utils/precipitation';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { WeatherSymbol } from './WeatherSymbol';
 import './ForecastAtlas.css';
 
@@ -89,6 +90,8 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   );
   const timezoneOffsetMs = meta.timezoneOffsetSeconds * 1000;
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
+  const [, setFreshnessRevision] = useState(0);
+  const forecastFreshness = getForecastFreshness(meta);
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
 
   useEffect(() => {
@@ -114,6 +117,23 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, [timezoneOffsetMs]);
+  useEffect(() => {
+    const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
+    const timerId =
+      forecastFreshness.expiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, forecastFreshness.expiresInMs);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [forecastFreshness.expiresInMs, meta]);
+
   const intervalHours = meta.intervalHours;
   const realHourlyHorizon = Math.min(REAL_HOURLY_HORIZON, hourly.length);
   const hourlyHeading =
@@ -261,6 +281,22 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const firstPrecipitationPercent = chart?.firstPrecipitation
     ? Math.round(chart.firstPrecipitation.precipitation * 100)
     : 0;
+
+  if (!forecastFreshness.fresh) {
+    return (
+      <section className={rootClasses} aria-labelledby={headingId}>
+        <header className="hava81-forecast-atlas__header">
+          <h2 id={headingId} className="hava81-forecast-atlas__title">
+            {t('hava81.forecastAtlas.title')}
+          </h2>
+          <span className="hava81-forecast-atlas__unit">{temperatureSymbol}</span>
+        </header>
+        <p className="hava81-forecast-atlas__empty" role="status">
+          {t('hava81.forecastAtlas.stale')}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className={rootClasses} aria-labelledby={headingId}>

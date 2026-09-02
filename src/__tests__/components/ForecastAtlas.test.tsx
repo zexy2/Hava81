@@ -61,6 +61,51 @@ const renderRangeAtlas = (count = 24) =>
     </SettingsProvider>
   );
 
+describe('ForecastAtlas freshness', () => {
+  it('hides forecast values when provider evidence expires in a long-lived tab', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-29T00:00:00Z'));
+      render(
+        <SettingsProvider>
+          <ForecastAtlas
+            daily={[]}
+            hourly={[
+              {
+                time: new Date('2026-08-29T00:00:00Z'),
+                temp: 24,
+                icon: '01n',
+                description: 'açık',
+                pop: 0,
+                windSpeed: 2,
+              },
+            ]}
+            meta={{
+              provider: 'Open-Meteo',
+              fetchedAt: new Date('2026-08-29T00:00:00Z'),
+              freshForSeconds: 30,
+              timezoneOffsetSeconds: 0,
+              intervalHours: 1,
+            }}
+          />
+        </SettingsProvider>
+      );
+
+      expect(screen.getByText('24°')).toBeInTheDocument();
+      expect(screen.queryByText(/güncelliğini yitirdi/i)).not.toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_200);
+      });
+
+      expect(screen.getByText(/tahmin verisi güncelliğini yitirdi/i)).toBeInTheDocument();
+      expect(screen.queryByText('24°')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('ForecastAtlas current-hour marker', () => {
   it('advances the current-hour marker when an open tab crosses an hour boundary', async () => {
     vi.useFakeTimers();
