@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
 import { supportsMarineContext } from '../utils/marineCities';
+import { getOptionalEvidenceFreshness } from '../utils/optionalEvidenceFreshness';
 import type {
   DailyForecast,
   HourlyForecast,
@@ -22,35 +23,6 @@ interface UseForecastReturn {
   error: Error | null;
   fetch: (coords: Coordinates, cityName?: string) => Promise<void>;
 }
-
-const OPTIONAL_FRESHNESS_FALLBACK_SECONDS = 300;
-const MAX_OPTIONAL_FUTURE_SKEW_MS = 60_000;
-
-const isFreshTimestamp = (
-  fetchedAt: Date | string | undefined,
-  freshForSeconds = OPTIONAL_FRESHNESS_FALLBACK_SECONDS
-): boolean => {
-  if (!fetchedAt || !Number.isFinite(freshForSeconds) || freshForSeconds <= 0) return false;
-  const fetchedAtMs =
-    fetchedAt instanceof Date ? fetchedAt.getTime() : new Date(fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return false;
-  const ageMs = Date.now() - fetchedAtMs;
-  return ageMs >= -MAX_OPTIONAL_FUTURE_SKEW_MS && ageMs <= freshForSeconds * 1000;
-};
-
-const isFreshOptionalMeta = (meta: AirQuality['meta'] | undefined): boolean =>
-  Boolean(meta && isFreshTimestamp(meta.fetchedAt, meta.freshForSeconds));
-
-const freshnessDeadline = (
-  fetchedAt: Date | string | undefined,
-  freshForSeconds = OPTIONAL_FRESHNESS_FALLBACK_SECONDS
-): number | null => {
-  if (!fetchedAt || !Number.isFinite(freshForSeconds) || freshForSeconds <= 0) return null;
-  const fetchedAtMs =
-    fetchedAt instanceof Date ? fetchedAt.getTime() : new Date(fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return null;
-  return fetchedAtMs + freshForSeconds * 1000;
-};
 
 export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [daily, setDaily] = useState<DailyForecast[]>([]);
@@ -89,40 +61,31 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       let droppedInvalidEvidence = false;
 
       if (airQuality) {
-        const deadline = freshnessDeadline(
-          airQuality.meta?.fetchedAt,
-          airQuality.meta?.freshForSeconds
-        );
-        if (!isFreshOptionalMeta(airQuality.meta) || deadline === null) {
+        const freshness = getOptionalEvidenceFreshness(airQuality.meta, now);
+        if (!freshness.fresh || freshness.expiresInMs === null) {
           setAirQuality(current => (current === airQuality ? null : current));
           if (airQualityRef.current === airQuality) airQualityRef.current = null;
           droppedInvalidEvidence = true;
         } else {
-          deadlines.push(deadline);
+          deadlines.push(now + freshness.expiresInMs);
         }
       }
 
       if (contextSignals) {
-        const deadline = freshnessDeadline(
-          contextSignals.fetchedAt,
-          contextSignals.freshForSeconds
-        );
-        if (
-          !isFreshTimestamp(contextSignals.fetchedAt, contextSignals.freshForSeconds) ||
-          deadline === null
-        ) {
+        const freshness = getOptionalEvidenceFreshness(contextSignals, now);
+        if (!freshness.fresh || freshness.expiresInMs === null) {
           setContextSignals(current => (current === contextSignals ? null : current));
           if (contextSignalsRef.current === contextSignals) contextSignalsRef.current = null;
           droppedInvalidEvidence = true;
         } else {
-          deadlines.push(deadline);
+          deadlines.push(now + freshness.expiresInMs);
         }
       }
 
       if (droppedInvalidEvidence || deadlines.length === 0) return;
 
       const nextDeadline = Math.min(...deadlines);
-      timerId = window.setTimeout(refreshOptionalEvidence, Math.max(0, nextDeadline - now + 100));
+      timerId = window.setTimeout(refreshOptionalEvidence, Math.max(0, nextDeadline - now));
     };
 
     const refreshWhenVisible = () => {
@@ -219,7 +182,8 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           airQualityRef.current = aqResult.value;
         } else if (
           isSameSuccessfulRequest &&
-          (!airQualityRef.current || !isFreshOptionalMeta(airQualityRef.current.meta))
+          (!airQualityRef.current ||
+            !getOptionalEvidenceFreshness(airQualityRef.current.meta).fresh)
         ) {
           setAirQuality(null);
           airQualityRef.current = null;
@@ -229,10 +193,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           contextSignalsRef.current = contextResult.value;
         } else if (
           isSameSuccessfulRequest &&
-          !isFreshTimestamp(
-            contextSignalsRef.current?.fetchedAt,
-            contextSignalsRef.current?.freshForSeconds
-          )
+          !getOptionalEvidenceFreshness(contextSignalsRef.current).fresh
         ) {
           setContextSignals(null);
           contextSignalsRef.current = null;
