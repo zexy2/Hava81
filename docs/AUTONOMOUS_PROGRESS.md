@@ -2809,3 +2809,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a mobile browser regression requiring coordinate metadata to be hidden, the metadata row to remain single-line-sized, and provider evidence to remain visible.
 - `git diff --check` passes. Exact-head hosted browser/Lighthouse/frontend/CodeQL gates are mandatory before merge because Node is intentionally absent locally.
 - Next: commit/push/open this isolated first-viewport polish PR; rebase after any earlier PR merges before final gate/merge.
+
+## 2026-09-02 23:52 TRT — scope favorable risk copy to weather
+- Independent trust-copy audit found two favorable-state strings that said “Belirgin risk yok” / “No material risk” without naming the evidence domain. The surrounding score note says the model is not a safety guarantee, but the standalone labels could still overstate what Hava81 knows.
+- Changed only the localized favorable-state wording to “Belirgin hava riski yok” / “No material weather risk” and the near-forecast stable sentence to the same weather-specific scope. No score, threshold, weather value, provider interpretation, severity, or official-warning behavior changed.
+- `git diff --check` passes. Local Node/npm remain intentionally absent on the disk-pressured host; exact-head hosted frontend/browser/Lighthouse/CodeQL gates are mandatory before merge.
+- Next: commit/push/open this bounded trust-copy PR from the current stable base; while it validates, finish post-#710 main production verification and rebase prepared branches onto the resulting green main.

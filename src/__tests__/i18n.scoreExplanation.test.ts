@@ -9,4 +9,11 @@ describe('Hava81 score explanation copy', () => {
     expect(en.hava81.dailyPlan.explain.method).toContain('12-hour weighted-average impacts');
     expect(en.hava81.dailyPlan.explain.method).toContain('subtracted one-for-one from 100');
   });
+
+  it('scopes favorable risk language to weather rather than general safety', () => {
+    expect(tr.hava81.dailyPlan.reasons.clear).toContain('hava riski');
+    expect(en.hava81.dailyPlan.reasons.clear).toContain('weather risk');
+    expect(tr.hava81.decision.actions.stable).toContain('hava riski');
+    expect(en.hava81.decision.actions.stable).toContain('weather risk');
+  });
 });
