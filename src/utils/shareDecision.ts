@@ -32,14 +32,14 @@ export const buildDecisionShare = ({
       : umbrella === 'maybe'
         ? 'Şemsiye: Yanında olsun'
         : umbrella === 'no'
-          ? 'Şemsiye: Gerekmez'
+          ? 'Şemsiye: Tahmin gerektirmiyor'
           : 'Şemsiye: Veri yok'
     : umbrella === 'yes'
       ? 'Umbrella: Yes'
       : umbrella === 'maybe'
         ? 'Umbrella: Take one'
         : umbrella === 'no'
-          ? 'Umbrella: Not needed'
+          ? "Umbrella: Forecast doesn't indicate one"
           : 'Umbrella: No data';
   const bandText = tr
     ? { excellent: 'Çok uygun', good: 'Uygun', caution: 'Dikkat', difficult: 'Zorlayıcı' }[band]

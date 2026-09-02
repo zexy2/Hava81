@@ -1051,3 +1051,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Saved-city comparison must label its recommended time as the best **weather** time rather than an unqualified best time.
 
 **Why:** The comparison derives its ranking from meteorological evidence and cannot judge work, sleep, transport, personal safety, or other non-weather constraints. The metric label should preserve that scope even when read apart from the surrounding winner note.
+
+### 2026-09-03 01:56 TRT — no-umbrella copy remains explicitly forecast-based
+
+**Decision:** When fresh precipitation evidence falls below Hava81's umbrella thresholds, phrase the result as the forecast not indicating an umbrella need rather than as an unconditional `not needed` claim. Keep missing precipitation evidence as the separate `unknown` state.
+
+**Why:** Hava81 can make a bounded decision from current forecast evidence but cannot guarantee that an umbrella will never be useful. Carrying the evidence boundary into both the UI and shared text preserves actionability without overstating certainty.

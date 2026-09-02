@@ -2845,3 +2845,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed only the metric label to `En iyi hava saati` / `Best weather time` and added a localization regression locking the weather scope. No score, selected window, provider, freshness, weather value, threshold, or safety behavior changed.
 - `git diff --check` passes. Exact-head hosted frontend/unit/browser/Lighthouse/CodeQL gates remain mandatory before merge.
 - Next: commit/push/open this bounded trust-copy PR, continue independent work while hosted gates run, and require fresh observer + exact-head/mergeability verification before merge.
+
+## 2026-09-03 01:56 TRT — phrase no-umbrella guidance as forecast evidence
+- Continued independently from exact main `108cba3124ab43925d376ab05213ee8480afade6` while PR #717 reruns hosted gates.
+- Daily Plan correctly distinguishes missing precipitation evidence as `unknown`, but its positive-evidence `no` state was still rendered and shared as the categorical `Gerekmez` / `Not needed`. Even with valid forecast evidence, that wording can sound like a universal guarantee rather than a forecast-based decision aid.
+- Changed only the no-umbrella copy to `Tahmin gerektirmiyor` / `Forecast doesn't indicate one` in both the in-app quick decision and share payload. The probability/amount thresholds, `unknown` fail-closed state, selected forecast horizon, providers and weather values are unchanged.
+- Added a regression covering both localized UI strings and both share payloads. `git diff --check` passes; exact-head hosted type/unit/browser/Lighthouse/CodeQL gates are mandatory before merge.
+- Rebased onto current main before merge.
