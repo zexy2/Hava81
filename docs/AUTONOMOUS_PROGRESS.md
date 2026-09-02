@@ -2383,3 +2383,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited remaining freshness arithmetic while earlier freshness PRs validated and found `ComparePanel` still evaluated current weather through a private generic TTL/future-skew helper.
 - Routed comparison current observations through shared `getCurrentWeatherFreshness`; optional AQ evidence remains on its distinct compatibility freshness contract.
 - No weather values, timestamps, score thresholds, provider calls, MGM semantics, official-warning behavior or UI copy changed. Hosted exact-head lint/type/unit/build/browser/CodeQL remain mandatory before merge.
+
+### 2026-09-02 comparison optional-evidence freshness follow-through
+- Rebasing the comparison freshness branch onto main after #626 made the shared optional-evidence contract available.
+- Removed ComparePanel's remaining local AQ TTL/future-skew/expiry arithmetic and routed AQ through `getOptionalEvidenceFreshness`, while current weather uses `getCurrentWeatherFreshness` and hourly forecast uses `getForecastFreshness`.
+- This is behavior-preserving and removes the last presentation-level freshness algorithm from ComparePanel. `git diff --check` passes; exact-head hosted gates remain mandatory before merge.

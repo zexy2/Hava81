@@ -13,33 +13,12 @@ import type {
   ForecastMeta,
   HourlyForecast,
   NormalizedWeatherData,
-  WeatherDataMeta,
 } from '../../types';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatPrecipitationSummary, pickMostSignificantPrecipitation } from '../../utils/precipitation';
 import './ComparePanel.css';
-
-const OPTIONAL_EVIDENCE_FALLBACK_SECONDS = 300;
-const MAX_EVIDENCE_FUTURE_SKEW_MS = 60_000;
-const EVIDENCE_EXPIRY_CUSHION_MS = 100;
-
-const getOptionalEvidenceFreshness = (meta: WeatherDataMeta | undefined) => {
-  if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null as number | null };
-  const fetchedAtMs = meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
-  if (!Number.isFinite(fetchedAtMs)) return { fresh: false, expiresInMs: null as number | null };
-  const ttlSeconds =
-    typeof meta.freshForSeconds === 'number' && Number.isFinite(meta.freshForSeconds) && meta.freshForSeconds > 0
-      ? meta.freshForSeconds
-      : OPTIONAL_EVIDENCE_FALLBACK_SECONDS;
-  const ageMs = Date.now() - fetchedAtMs;
-  const fresh = ageMs >= -MAX_EVIDENCE_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
-  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
-  return {
-    fresh,
-    expiresInMs: fresh && remainingMs > 0 ? remainingMs + EVIDENCE_EXPIRY_CUSHION_MS : null,
-  };
-};
 
 interface ComparePanelProps {
   cities: FavoriteCity[];

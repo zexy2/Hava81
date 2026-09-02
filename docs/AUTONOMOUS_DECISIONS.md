@@ -771,3 +771,6 @@ Air-quality and modeled context evidence must use one shared fail-closed TTL/fut
 
 ### 2026-09-02 — Comparison current observations reuse the shared current-weather freshness contract
 City comparison must evaluate each row's current observation with `getCurrentWeatherFreshness`, not a private TTL/future-skew copy. Keep optional AQ evidence on its distinct five-minute compatibility contract. This is a behavior-preserving deduplication that prevents comparison current evidence from drifting from map, environment and refresh semantics without changing provider values, scoring or decision thresholds.
+
+### 2026-09-02 — Comparison optional AQ evidence reuses the shared optional-evidence contract
+After the optional evidence helper became part of main, city comparison must also evaluate AQ metadata with `getOptionalEvidenceFreshness` rather than retaining a second five-minute/future-skew implementation. This completes comparison freshness deduplication while preserving the distinct contracts for current observations, forecast evidence, and optional AQ evidence.
