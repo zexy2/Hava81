@@ -10,13 +10,14 @@
   display: grid;
   gap: 24px;
   width: 100%;
-  padding: 16px;
+  padding: 20px 0;
   color: var(--decision-ink);
   font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
-  background: var(--decision-paper);
-  border: 1px solid var(--decision-line);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-card, 0 8px 24px rgb(14 44 50 / 0.05));
+  background: transparent;
+  border-block: 1px solid var(--decision-line);
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .hava81-decision-field__identity {
@@ -166,11 +167,12 @@
   min-width: 0;
   align-self: end;
   overflow-wrap: anywhere;
-  padding: 16px;
-  color: #142524;
-  background: var(--decision-saffron);
-  border-radius: var(--radius-md, 8px);
-  box-shadow: inset 0 0 0 1px rgb(128 85 0 / 0.12);
+  padding: 16px 18px;
+  color: var(--decision-ink);
+  background: color-mix(in srgb, var(--decision-saffron) 18%, transparent);
+  border-inline-start: 4px solid var(--decision-saffron);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .hava81-decision-field__change-title {
@@ -240,7 +242,7 @@
 
 @media (min-width: 40rem) {
   .hava81-decision-field {
-    padding: 24px;
+    padding: 24px 0;
   }
 
   .hava81-decision-field__reading {
@@ -262,7 +264,7 @@
     grid-template-columns: repeat(8, minmax(0, 1fr));
     column-gap: 24px;
     row-gap: 32px;
-    padding: 32px;
+    padding: 32px 0;
   }
 
   .hava81-decision-field__identity,

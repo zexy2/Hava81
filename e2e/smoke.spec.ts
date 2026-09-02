@@ -2554,6 +2554,48 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
   await assertFits();
 });
 
+test('desktop decision overview reads as an editorial hero surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision visual regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const field = page.locator('.hava81-decision-field');
+  const styles = await field.evaluate(element => {
+    const panel = getComputedStyle(element);
+    const change = element.querySelector<HTMLElement>('.hava81-decision-field__change');
+    const rail = element.querySelector<HTMLElement>('.hava81-decision-field__rail');
+    if (!change || !rail) throw new Error('Missing decision editorial regions');
+    const changeStyle = getComputedStyle(change);
+    const railStyle = getComputedStyle(rail);
+    return {
+      panelBackground: panel.backgroundColor,
+      panelRadius: panel.borderRadius,
+      panelShadow: panel.boxShadow,
+      panelTop: parseFloat(panel.borderTopWidth),
+      panelInline: parseFloat(panel.borderLeftWidth),
+      changeRadius: changeStyle.borderRadius,
+      changeShadow: changeStyle.boxShadow,
+      changeSignal: parseFloat(changeStyle.borderLeftWidth),
+      changeBackground: changeStyle.backgroundColor,
+      railTop: parseFloat(railStyle.borderTopWidth),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.panelRadius)).toBe(0);
+  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelTop).toBeGreaterThanOrEqual(1);
+  expect(styles.panelInline).toBe(0);
+  expect(parseFloat(styles.changeRadius)).toBe(0);
+  expect(styles.changeShadow).toBe('none');
+  expect(styles.changeSignal).toBeGreaterThanOrEqual(4);
+  expect(styles.changeBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(styles.railTop).toBeGreaterThanOrEqual(1);
+  expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
+});
+
 test('decision field keeps metrics readable at narrow 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision-field text-resize regression');
   await page.setViewportSize({ width: 320, height: 844 });
