@@ -781,6 +781,10 @@ class ObserverHostDiskTests(unittest.TestCase):
 
     def test_healthy_disk_must_pass_both_free_space_guards(self) -> None:
         host = self._collect_with_available_blocks(2_000_000)  # ~8.2 GB free, 80% used
+        self.assertEqual(
+            host['disk']['used_bytes'] + host['disk']['free_bytes'],
+            host['disk']['total_bytes'],
+        )
         self.assertTrue(host['disk']['free_ok'])
         self.assertTrue(host['disk']['usage_ok'])
         self.assertFalse(host['disk']['pressure_warning'])
