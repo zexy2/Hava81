@@ -70,6 +70,7 @@ jobs:
   build:
     name: Production build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [quality, api]
     steps:
       - uses: actions/checkout@v6
