@@ -499,6 +499,7 @@ describe('Hava81 app integration', () => {
     expect(
       screen.queryByRole('heading', { name: /saat aralıklarla tahmin|saatlik tahmin/i })
     ).not.toBeInTheDocument();
+    expect(document.querySelector('.hava81-forecast-atlas')).not.toBeInTheDocument();
   });
 
   it('opens saved cities without silently favoriting the current city', async () => {
