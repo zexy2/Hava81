@@ -2537,6 +2537,18 @@ test('narrow hourly atlas keeps its interval chip rail and summary readable', as
   );
   expect(axisXAfter.every((x, index) => Math.abs(x - axisXBefore[index]) < 1)).toBe(true);
   await expect(hourlyViewport).toHaveCSS('overflow-x', 'auto');
+  await hourlyViewport.focus();
+  const hourlyFocus = await hourlyViewport.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      width: Number.parseFloat(style.outlineWidth),
+      offset: Number.parseFloat(style.outlineOffset),
+      style: style.outlineStyle,
+    };
+  });
+  expect(hourlyFocus.style).not.toBe('none');
+  expect(hourlyFocus.width).toBeGreaterThanOrEqual(2);
+  expect(hourlyFocus.offset).toBeLessThanOrEqual(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 

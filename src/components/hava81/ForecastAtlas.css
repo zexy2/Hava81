@@ -236,7 +236,7 @@
 
 .hava81-forecast-atlas__hourly-viewport:focus-visible {
   outline: 2px solid var(--forecast-teal);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 .hava81-forecast-atlas__hourly-track {
