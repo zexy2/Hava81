@@ -332,8 +332,8 @@ describe('Hava81 app integration', () => {
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     await waitFor(() => expect(service.getForecast).toHaveBeenCalled());
 
-    const loadingStatus = screen.getByRole('status');
-    expect(loadingStatus).toHaveTextContent(/yükleniyor/i);
+    const loadingStatus = screen.getByText(/yükleniyor/i).closest('[role="status"]');
+    expect(loadingStatus).toHaveClass('atlas-forecast-loading');
 
     await act(async () => {
       resolveForecast(forecast);
