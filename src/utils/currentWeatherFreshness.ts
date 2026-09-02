@@ -43,6 +43,6 @@ export function getCurrentWeatherFreshness(
     fresh,
     status: fresh ? 'fresh' : 'stale',
     ageMinutes: Math.max(0, Math.floor(ageMs / 60_000)),
-    expiresInMs: fresh && remainingMs > 0 ? remainingMs + CURRENT_EXPIRY_CUSHION_MS : null,
+    expiresInMs: fresh && remainingMs >= 0 ? remainingMs + CURRENT_EXPIRY_CUSHION_MS : null,
   };
 }
