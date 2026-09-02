@@ -582,7 +582,8 @@ const App: React.FC = () => {
                       <div className="atlas-loading__chart" />
                       <div className="atlas-loading__rows" />
                     </section>
-                  ) : forecast.displayMeta ? (
+                  ) : forecast.displayMeta &&
+                    (forecast.daily.length > 0 || forecast.displayHourly.length > 0) ? (
                     <Suspense fallback={null}>
                       <ForecastAtlas
                         daily={forecast.daily}

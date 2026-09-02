@@ -853,3 +853,6 @@ Plain left/right arrows are native interaction keys for horizontal scrollers and
 
 ## 2026-09-02 — Root location choice always includes a direct city-search escape hatch
 The location-first onboarding may recommend nearby weather and offer İstanbul as a zero-permission default, but it must not force either choice. Keep a first-class “Başka şehir ara / Search another city” action that opens and focuses the existing city search without touching browser geolocation. This preserves explicit user control while retaining the location-first product path.
+
+### 2026-09-02 — Do not render an empty Forecast Atlas after total forecast failure
+A forecast metadata object alone is not sufficient evidence for a forecast surface. Render Forecast Atlas only when at least one daily or display-hourly row is available; when all forecast data is unavailable, keep the localized error/recovery surface without an empty visualization shell. This does not alter weather values, provider semantics, freshness thresholds, or retry policy.

@@ -2539,3 +2539,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - PR #670 failed only its new mobile Playwright check; API/frontend/build/Lighthouse all passed. Hosted E2E proved the product rendered, but the assertion queried the city input as role `textbox` with title-case label while SearchBar exposes an ARIA `combobox` labeled `Şehir ara`.
 - Corrected the regression to target the actual accessibility contract (`combobox`, localized label) rather than changing working product behavior. Geolocation privacy assertion and focus requirement remain intact.
 - Local no-browser gate: `git diff --check` passes. Exact-head hosted Browser/CI/CodeQL remain mandatory before merge.
+
+### 2026-09-02 12:47 TRT — hide empty forecast visualization after total failure
+- Audited the city failure state on exact current main and found `ForecastAtlas` could still mount whenever `displayMeta` existed even if both daily and display-hourly forecast arrays were empty after a total forecast failure.
+- Tightened the render gate so the Atlas requires metadata plus at least one actual forecast row; the existing localized error/recovery surface remains authoritative when no forecast evidence exists.
+- Added an integration assertion that the empty Atlas is absent in the explicit non-retryable forecast-failure path. No weather values, provider timestamps, retryability semantics, MGM behavior, scoring, or production API topology change.
+- Host-local Node dependencies are intentionally absent under disk pressure, so `git diff --check` is the local gate and exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.
