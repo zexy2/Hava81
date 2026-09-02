@@ -2534,3 +2534,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a localized third action, “Başka şehir ara / Search another city”, wired to the existing `openSearch` focus path. It does not trigger geolocation and does not fetch weather until the user chooses/submits a city.
 - Added mobile E2E coverage proving the action focuses the city textbox and leaves geolocation untouched, plus retained visibility of the search alternative in the İstanbul fallback regression.
 - No weather values, location precision, provider, MGM, scoring, routing contract, or API topology changes. `git diff --check` is the host-local gate; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.
+
+### 2026-09-02 13:46 TRT — repair location-gate search browser regression selector
+- PR #670 failed only its new mobile Playwright check; API/frontend/build/Lighthouse all passed. Hosted E2E proved the product rendered, but the assertion queried the city input as role `textbox` with title-case label while SearchBar exposes an ARIA `combobox` labeled `Şehir ara`.
+- Corrected the regression to target the actual accessibility contract (`combobox`, localized label) rather than changing working product behavior. Geolocation privacy assertion and focus requirement remain intact.
+- Local no-browser gate: `git diff --check` passes. Exact-head hosted Browser/CI/CodeQL remain mandatory before merge.

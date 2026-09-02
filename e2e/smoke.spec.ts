@@ -286,7 +286,7 @@ test('root location gate can search another city without requesting location', a
   await page.goto('/');
   await page.getByRole('button', { name: 'Başka şehir ara' }).click();
 
-  const search = page.getByRole('textbox', { name: 'Şehir Ara' });
+  const search = page.getByRole('combobox', { name: 'Şehir ara' });
   await expect(search).toBeFocused();
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
 });
