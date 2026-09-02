@@ -175,6 +175,17 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByText(/35°C seviyesine çıkabilir/i)).not.toBeInTheDocument();
   });
 
+  it('keeps modeled UV guidance to one meaningful decimal', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} uvIndexMax={6.35} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/UV model maksimumu 6,4; güneşten korunma planı yap/i)).toBeInTheDocument();
+    expect(screen.queryByText(/UV model maksimumu 6,35/i)).not.toBeInTheDocument();
+  });
+
   it('formats measurable rain amounts with the active locale', () => {
     render(
       <SettingsProvider>

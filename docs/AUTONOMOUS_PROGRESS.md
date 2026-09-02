@@ -2872,3 +2872,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Tightened the visible labels to `Best-looking weather time/range` / `Hava açısından ...` and the share line to `Best weather window` / `En uygun hava penceresi`. No scoring, range selection, forecast horizon, weather values, thresholds, providers or recommendation logic changed.
 - Added a localization/share regression and `git diff --check` passes. Hosted exact-head frontend/unit/browser/Lighthouse/CodeQL are required before merge.
 - Next: commit/push/open the bounded trust-copy PR; after post-#717 production is green, rebase this and the other prepared branches in order onto the latest main with explicit leases.
+
+## 2026-09-03 02:34 TRT — reduce false precision in first-viewport UV guidance
+- Continued from exact main `68464b28ef2d7037d6e453bb6143ad45d3ea63fe` after #721 merged. A fresh real-Chromium 390px production audit showed the first decision surface rendering a modeled UV maximum like `6.35`, while the dedicated context surface already presents UV to one decimal.
+- Added a locale-aware UV formatter limited to one decimal only at the presentation boundary; the original UV value still drives thresholds/scoring unchanged. Turkish now renders e.g. `6,4`, English `6.4`.
+- Added a component regression rejecting the raw `6,35` display. Local gates: WeatherDecisionField 17/17 PASS, TypeScript PASS, ESLint PASS, production build + service-worker stamp + all 81 generated city pages PASS, `git diff --check` PASS.
+- No UV evidence, provider value, freshness TTL, score, threshold, MGM semantics, health/safety recommendation logic or API behavior changed. Exact-head hosted CI/browser/Lighthouse/CodeQL remain mandatory before merge.
