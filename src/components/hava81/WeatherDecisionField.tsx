@@ -193,11 +193,6 @@ export function WeatherDecisionField({
     }
   };
 
-  const fetchedAt =
-    weather.meta.fetchedAt instanceof Date
-      ? weather.meta.fetchedAt
-      : new Date(weather.meta.fetchedAt);
-  const fetchedAtMs = fetchedAt.getTime();
   const [now, setNow] = useState(() => Date.now());
   const [, setForecastFreshnessRevision] = useState(0);
   const forecastFreshness = forecastMeta === undefined ? null : getForecastFreshness(forecastMeta);
@@ -246,14 +241,10 @@ export function WeatherDecisionField({
     };
   }, [forecastExpiresInMs, forecastMeta]);
 
-  const ageMs = now - fetchedAtMs;
-  const hasInvalidFutureTimestamp = !Number.isNaN(fetchedAtMs) && ageMs < -60_000;
-  const ageMinutes =
-    Number.isNaN(fetchedAtMs) || hasInvalidFutureTimestamp
-      ? null
-      : Math.max(0, Math.floor(ageMs / 60_000));
-  const currentEvidenceFresh = getCurrentWeatherFreshness(weather.meta, now).fresh;
-  const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && !currentEvidenceFresh;
+  const currentFreshness = getCurrentWeatherFreshness(weather.meta, now);
+  const ageMinutes = currentFreshness.ageMinutes;
+  const currentEvidenceFresh = currentFreshness.fresh;
+  const isStale = currentFreshness.status === 'stale';
   const decisionEvidenceFresh = currentEvidenceFresh && (forecastFreshness?.fresh ?? true);
   const decisions = useMemo(
     () =>
