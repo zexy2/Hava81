@@ -68,7 +68,7 @@ export const tr = {
     systemStatus: 'Hava81 · Sistem durumu',
     cityDocumentTitle: '{{city}} hava durumu — Hava81',
     cityDocumentDescription:
-      '{{city}} için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, en iyi dışarı çıkma saati, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.',
+      '{{city}} için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.',
     loadingWeather: 'Hava verileri hazırlanıyor',
     slowLoading:
       'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',

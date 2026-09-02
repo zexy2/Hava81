@@ -1028,3 +1028,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Browser regressions that compare DOM order after asynchronous city rendering must first wait for the exact participating elements to be attached, then evaluate their relative document position.
 
 **Why:** `page.goto` guarantees navigation completion, not that React's weather-dependent controls have rendered. Waiting for the participants preserves the semantic assertion while removing a race that can fail an otherwise healthy production commit.
+### 2026-09-03 00:12 TRT — city metadata recommendations name the weather scope
+
+**Decision:** City document descriptions may advertise a best outing window only as a **weather** window (`hava açısından` / `weather window`), rather than as an unqualified best time to go out.
+
+**Why:** Hava81 ranks meteorological evidence; search/social metadata can be read outside the product UI and therefore must carry the evidence-domain boundary itself instead of relying on nearby in-app disclaimers.
