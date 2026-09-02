@@ -99,7 +99,7 @@ export const en = {
         cold: 'Feels-like temperature may fall to {{temperature}}; take care with cold stress.',
         airQuality: 'Air quality is poor (AQI {{aqi}}/5); reduce prolonged outdoor activity.',
         uv: 'The modeled UV maximum for the next 24 hours is {{uv}}; plan sun protection.',
-        outdoor: 'Around {{time}} looks like a calmer window for being outdoors.',
+        outdoor: 'Around {{time}} looks like a calmer weather window for being outdoors.',
         stable: 'No material risk stands out in the near forecast.',
         unavailable: 'Near-term decision data is not ready yet.',
       },

@@ -179,7 +179,7 @@ export function WeatherDecisionField({
         });
       case 'outdoor-window':
         return t('hava81.decision.actions.outdoor', {
-          defaultValue: '{{time}} civarı dışarıda olmak için daha sakin bir pencere görünüyor.',
+          defaultValue: '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
           time: decision.time ? formatForecastTime(decision.time) : '—',
         });
       case 'stable':

@@ -99,7 +99,7 @@ export const tr = {
         cold: 'Hissedilen sıcaklık {{temperature}} seviyesine inebilir; soğuk stresine karşı dikkat.',
         airQuality: 'Hava kalitesi zayıf (AQI {{aqi}}/5); uzun süreli dış aktiviteyi azalt.',
         uv: 'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
-        outdoor: '{{time}} civarı dışarıda olmak için daha sakin bir pencere görünüyor.',
+        outdoor: '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
         stable: 'Yakın tahmin aralığında belirgin bir risk görünmüyor.',
         unavailable: 'Yakın saatler için karar verisi henüz hazır değil.',
       },
