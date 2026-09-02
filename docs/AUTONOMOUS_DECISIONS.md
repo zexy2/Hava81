@@ -910,3 +910,10 @@ Cleanup eligibility requires positive evidence that a worktree is clean. If `git
 **Decision:** `ContextSignalsPanel` must independently refuse stale, invalid, or materially future provider evidence and expire itself at the provider TTL boundary. Parent-hook cleanup remains useful state hygiene, but it is not the trust boundary for UV, dust, pollen, or marine guidance.
 
 **Why:** React effects run after render. Relying only on `useForecast` to drop expired optional evidence permits a transient render of stale or future health/activity guidance. The component that publishes that evidence must enforce freshness synchronously and schedule its own boundary refresh.
+
+
+### 2026-09-02 19:04 TRT — first-viewport modeled UV must be filtered before handoff
+
+**Decision:** App must pass modeled `uvIndexMax` into the decision hero only when the context-signals envelope is fresh. The `useForecast` expiry effect remains responsible for state cleanup and boundary rerender, but the render handoff itself must fail closed for stale, invalid, or materially future context evidence.
+
+**Why:** The first viewport can render before parent effects run. UV-driven activity guidance is health-adjacent, so even a transient stale/future model value must not be published as current guidance.
