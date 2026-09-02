@@ -2642,3 +2642,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The helper is dry-run by default and considers only direct `hava81-*` standalone clones under an explicit parent. Eligibility requires exact origin equality, successful empty status, attached branch, HEAD already represented on `origin/main`, explicit age threshold, no registered worktree identity, and no process command-line reference.
 - Apply mode rechecks the full eligibility tuple, preserves the exact HEAD under `refs/archive/hava81-standalone/<branch>`, verifies that ref, and only then removes the standalone checkout. Unknown, dirty, detached, recent, wrong-origin, unique/unmerged and in-use clones remain fail-closed.
 - Dependency-free validation passes: both scripts `bash -n`, standalone cleanup safety contract, and `git diff --check`. Next action: inspect exact diff, commit/push/open PR, require exact-head hosted gates before applying the helper to the real host.
+
+### 2026-09-02 18:28 TRT — expose absolute root-disk consumption in observer state
+
+- While post-#687 main CI validates, audited the read-only observer's disk payload. It exposed free/total bytes and used percentage but not absolute used bytes, which makes fast incident sizing and trend comparisons unnecessarily indirect.
+- Added `host.disk.used_bytes`, derived from the same `statvfs` available/total counters already used for the incident thresholds. No thresholds, health semantics, runtime writes, Docker behavior, or production topology changed.
+- Extended the host-disk regression to assert the byte accounting identity. Full observer suite passes 26/26 and `git diff --check` passes.
