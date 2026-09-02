@@ -856,3 +856,6 @@ The location-first onboarding may recommend nearby weather and offer İstanbul a
 
 ### 2026-09-02 — Do not render an empty Forecast Atlas after total forecast failure
 A forecast metadata object alone is not sufficient evidence for a forecast surface. Render Forecast Atlas only when at least one daily or display-hourly row is available; when all forecast data is unavailable, keep the localized error/recovery surface without an empty visualization shell. This does not alter weather values, provider semantics, freshness thresholds, or retry policy.
+
+## 2026-09-02 — Partial same-city forecast recovery must not mix stale daily evidence with fresh hourly provenance
+Forecast Atlas presents one provider/freshness authority for both hourly and daily rows. Once a successful dedicated-hourly response becomes that visible authority, retain daily rows only when the same response supplies replacement daily evidence. Otherwise clear the daily series rather than presenting baseline or prior-generation values under the new hourly provenance. This fail-closed rule changes neither provider values nor retry semantics; it prevents cross-source and cross-generation evidence mixing.
