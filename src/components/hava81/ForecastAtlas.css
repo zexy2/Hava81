@@ -172,9 +172,8 @@
 .hava81-forecast-atlas__summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
+  gap: 0;
   margin-bottom: 14px;
-  background: var(--forecast-line);
   border-block: 1px solid var(--forecast-line);
 }
 
@@ -182,10 +181,15 @@
   display: grid;
   gap: 3px;
   min-width: 0;
-  padding: 11px 12px;
-  background: var(--forecast-paper);
+  padding: 11px 14px 11px 0;
+  background: transparent;
   border: 0;
   border-radius: 0;
+}
+
+.hava81-forecast-atlas__summary-item + .hava81-forecast-atlas__summary-item {
+  padding-inline-start: 14px;
+  border-inline-start: 1px solid color-mix(in srgb, var(--forecast-line) 82%, transparent);
 }
 
 .hava81-forecast-atlas__summary-item span {
@@ -224,15 +228,10 @@
   scroll-snap-type: x proximity;
   scrollbar-color: var(--forecast-line) transparent;
   scrollbar-width: thin;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--forecast-teal) 4%, transparent),
-      transparent 38%
-    ),
-    var(--forecast-field);
-  border: 1px solid color-mix(in srgb, var(--forecast-line) 78%, transparent);
-  border-radius: 14px;
+  background: transparent;
+  border-block: 1px solid color-mix(in srgb, var(--forecast-line) 82%, transparent);
+  border-inline: 0;
+  border-radius: 0;
 }
 
 .hava81-forecast-atlas__hourly-viewport:focus-visible {
@@ -290,12 +289,12 @@
 
 .hava81-forecast-atlas__area-stop.is-start {
   stop-color: var(--forecast-teal);
-  stop-opacity: 0.22;
+  stop-opacity: 0.12;
 }
 
 .hava81-forecast-atlas__area-stop.is-end {
   stop-color: var(--forecast-teal);
-  stop-opacity: 0.015;
+  stop-opacity: 0;
 }
 
 .hava81-forecast-atlas__curve {
@@ -376,8 +375,8 @@
 }
 
 .hava81-forecast-atlas__hour.is-current {
-  background: color-mix(in srgb, var(--forecast-teal) 8%, transparent);
-  box-shadow: inset 0 3px 0 color-mix(in srgb, var(--forecast-teal) 68%, transparent);
+  background: color-mix(in srgb, var(--forecast-teal) 5%, transparent);
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--forecast-teal) 68%, transparent);
 }
 
 .hava81-forecast-atlas__hour:first-child {
@@ -586,7 +585,11 @@
   }
 
   .hava81-forecast-atlas__summary-item {
-    padding: 9px 10px;
+    padding: 9px 9px 9px 0;
+  }
+
+  .hava81-forecast-atlas__summary-item + .hava81-forecast-atlas__summary-item {
+    padding-inline-start: 9px;
   }
 
   .hava81-forecast-atlas__summary-item strong {

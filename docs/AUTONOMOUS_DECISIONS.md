@@ -826,3 +826,7 @@ The GitHub compare endpoint includes up to hundreds of commit objects plus the c
 
 ### 2026-09-02 — Compact observer status must expose evidence for each core shell
 When production health depends on multiple HTML shells, the operator-facing status should surface the per-shell evidence already present in state instead of only an aggregate count. Keep the aggregate for compatibility, add root/İstanbul counts, and compile the standalone status script in hosted CI because observer unit tests do not import that executable.
+
+
+### 2026-09-02 — Forecast Atlas uses an editorial data strip instead of nested cards
+The hourly forecast is a continuous evidence surface, not a stack of dashboard cards. Keep the outer atlas and hourly viewport flat with border rules, remove the decorative rounded/gradient chart container, and present low/high/rain summary values as one divided editorial strip. Preserve temperature/rain values, provider attribution, interval controls, chart geometry, freshness semantics, keyboard focus, 44px touch targets, and responsive text reflow. Current-hour emphasis remains subtle and informational rather than becoming another filled card.
