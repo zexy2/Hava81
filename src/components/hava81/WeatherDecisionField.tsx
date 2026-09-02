@@ -2,9 +2,10 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
-import type { AirQuality, DailyForecast, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, DailyForecast, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
+import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherSymbol } from './WeatherSymbol';
 import './WeatherDecisionField.css';
@@ -15,6 +16,7 @@ export interface WeatherDecisionFieldProps {
   daily?: DailyForecast[];
   airQuality?: AirQuality;
   uvIndexMax?: number;
+  forecastMeta?: ForecastMeta | null;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export function WeatherDecisionField({
   daily = [],
   airQuality,
   uvIndexMax,
+  forecastMeta,
   className = '',
 }: WeatherDecisionFieldProps) {
   const headingId = useId();
@@ -39,10 +42,6 @@ export function WeatherDecisionField({
 
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const cityMetadata = useMemo(() => getCityMetadata(weather.cityName), [weather.cityName]);
-  const decisions = useMemo(
-    () => getWeatherDecisions({ weather, hourly, airQuality, uvIndexMax }),
-    [airQuality, hourly, uvIndexMax, weather]
-  );
 
   const temperatureSymbol = getTemperatureSymbol();
   const windSpeedSymbol = getWindSpeedSymbol();
@@ -194,6 +193,9 @@ export function WeatherDecisionField({
   const fetchedAtMs = fetchedAt.getTime();
   const staleAfterMs = (weather.meta.freshForSeconds ?? 300) * 1000;
   const [now, setNow] = useState(() => Date.now());
+  const [, setForecastFreshnessRevision] = useState(0);
+  const forecastFreshness = forecastMeta === undefined ? null : getForecastFreshness(forecastMeta);
+  const forecastExpiresInMs = forecastFreshness?.expiresInMs ?? null;
   useEffect(() => {
     let timerId: number | undefined;
 
@@ -222,6 +224,24 @@ export function WeatherDecisionField({
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, [fetchedAtMs, staleAfterMs]);
+
+  useEffect(() => {
+    if (forecastMeta === undefined) return undefined;
+    const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
+    const timeout =
+      forecastExpiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, forecastExpiresInMs);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [forecastExpiresInMs, forecastMeta]);
+
   const ageMs = now - fetchedAtMs;
   const hasInvalidFutureTimestamp = !Number.isNaN(fetchedAtMs) && ageMs < -60_000;
   const ageMinutes =
@@ -229,6 +249,18 @@ export function WeatherDecisionField({
       ? null
       : Math.max(0, Math.floor(ageMs / 60_000));
   const isStale = !Number.isNaN(fetchedAtMs) && !hasInvalidFutureTimestamp && ageMs > staleAfterMs;
+  const decisionEvidenceFresh =
+    !Number.isNaN(fetchedAtMs) &&
+    !hasInvalidFutureTimestamp &&
+    !isStale &&
+    (forecastFreshness?.fresh ?? true);
+  const decisions = useMemo(
+    () =>
+      decisionEvidenceFresh
+        ? getWeatherDecisions({ weather, hourly, airQuality, uvIndexMax })
+        : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
+    [airQuality, decisionEvidenceFresh, hourly, uvIndexMax, weather]
+  );
   const freshnessText =
     ageMinutes === null
       ? t('hava81.decision.freshness.unknown', { defaultValue: 'Güncellik bilinmiyor' })

@@ -560,6 +560,7 @@ const App: React.FC = () => {
                     daily={forecast.daily}
                     airQuality={forecast.airQuality ?? undefined}
                     uvIndexMax={forecast.contextSignals?.uvIndexMax}
+                    forecastMeta={forecast.meta}
                   />
 
                   {forecast.isLoading && forecast.hourly.length === 0 ? (
