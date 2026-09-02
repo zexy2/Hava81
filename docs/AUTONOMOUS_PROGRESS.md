@@ -2389,8 +2389,15 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Removed ComparePanel's remaining local AQ TTL/future-skew/expiry arithmetic and routed AQ through `getOptionalEvidenceFreshness`, while current weather uses `getCurrentWeatherFreshness` and hourly forecast uses `getForecastFreshness`.
 - This is behavior-preserving and removes the last presentation-level freshness algorithm from ComparePanel. `git diff --check` passes; exact-head hosted gates remain mandatory before merge.
 
+
 ### 2026-09-02 current freshness presentation deduplication
 - After merging #627, audited the primary decision surface and found its visible freshness label still independently classified future-skew vs stale evidence even though evidence validity already came from `getCurrentWeatherFreshness`.
 - Extended the shared helper with `status` and bounded `ageMinutes`, then removed WeatherDecisionField's duplicate future-skew/age arithmetic. Invalid/missing/materially-future timestamps now consistently surface as unknown; valid expired evidence remains stale.
 - Local gates on exact main `8b92def6f30cc5f4482066aa48d266bfbc29b3b7`: focused freshness utility 5/5; full frontend 61 files / 591 tests; TypeScript; ESLint; production build + service-worker stamp + 81 city pages; `git diff --check`.
 - No weather values, provider TTLs, score thresholds, MGM/UV/AQI semantics or user guidance changed. Exact-head hosted CI/CodeQL/browser/Lighthouse remain mandatory before merge.
+
+### 2026-09-02 forecast freshness single-clock boundary
+- While #628 deployed and the modeled-context branch validated independently, audited the shared forecast freshness helper and found it read `Date.now()` twice per call.
+- At the exact provider TTL boundary the two reads could straddle expiry: the first could classify evidence fresh while the second produced a negative remaining duration, leaving `fresh=true` with no expiry timer. Some consumers would then retain stale guidance until another unrelated rerender or visibility event.
+- Changed the helper to capture one clock snapshot and accept an explicit clock. The regression also exposed the exact-boundary case where `remainingMs === 0` was classified fresh but received no timer; exact TTL now retains the existing 100 ms expiry cushion.
+- Post-rebase local gates on production-green main `611a447fb7fb1ee6456318cbb1b9c015b61330c7`: focused forecast freshness 5/5; full frontend 61 files / 593 tests; TypeScript; ESLint; production build + service-worker stamp + 81 city pages; production dependency audit 0 vulnerabilities; `git diff --check`. No weather values, forecast TTLs, provider calls, scoring thresholds, MGM semantics or guidance changed.

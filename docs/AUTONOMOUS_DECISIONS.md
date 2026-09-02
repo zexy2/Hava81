@@ -775,5 +775,9 @@ City comparison must evaluate each row's current observation with `getCurrentWea
 ### 2026-09-02 — Comparison optional AQ evidence reuses the shared optional-evidence contract
 After the optional evidence helper became part of main, city comparison must also evaluate AQ metadata with `getOptionalEvidenceFreshness` rather than retaining a second five-minute/future-skew implementation. This completes comparison freshness deduplication while preserving the distinct contracts for current observations, forecast evidence, and optional AQ evidence.
 
+
 ### 2026-09-02 — Current-weather freshness owns presentation age/status semantics
 Current observation freshness already centralizes provider TTL and future-skew validity. It now also exposes bounded age-in-minutes plus an explicit `fresh` / `stale` / `unknown` status so first-viewport presentation cannot reimplement the same 60-second future-skew boundary independently. Invalid/missing/materially-future timestamps remain fail-closed as unknown; expired but valid evidence is stale. No provider values, TTLs, score thresholds or safety guidance change.
+
+### 2026-09-02 — Forecast freshness uses one clock snapshot per decision
+Forecast freshness and its expiry deadline must be computed from the same `now` value. Reading the wall clock twice can cross the TTL boundary between the freshness check and remaining-time calculation, producing a fresh result with no expiry timer. Capture one clock snapshot (or accept an explicit one), and treat zero remaining milliseconds as eligible for the existing expiry cushion, so every fresh state retains a deterministic expiry deadline. No forecast values, TTLs, provider semantics, scoring or safety guidance change.

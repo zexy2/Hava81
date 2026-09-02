@@ -39,6 +39,28 @@ describe('getForecastFreshness', () => {
     });
   });
 
+  it('uses one clock snapshot so an expiry boundary cannot lose its timer', () => {
+    vi.useRealTimers();
+    const boundary = Date.parse('2026-09-02T00:00:20.000Z');
+    const nowSpy = vi
+      .spyOn(Date, 'now')
+      .mockReturnValueOnce(boundary)
+      .mockReturnValueOnce(boundary + 1);
+
+    expect(getForecastFreshness(meta(new Date('2026-09-01T23:59:50.000Z'), 30))).toEqual({
+      fresh: true,
+      expiresInMs: 100,
+    });
+    expect(nowSpy).toHaveBeenCalledTimes(1);
+    nowSpy.mockRestore();
+  });
+
+  it('accepts an explicit clock for consumers that batch freshness decisions', () => {
+    expect(
+      getForecastFreshness(meta(new Date('2026-09-01T23:59:50.000Z'), 30), Date.parse('2026-09-02T00:00:10.000Z'))
+    ).toEqual({ fresh: true, expiresInMs: 10_100 });
+  });
+
   it('fails closed when freshness metadata cannot be interpreted', () => {
     expect(getForecastFreshness(null)).toEqual({ fresh: false, expiresInMs: null });
     expect(

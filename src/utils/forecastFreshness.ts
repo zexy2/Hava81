@@ -9,7 +9,10 @@ export interface ForecastFreshnessState {
   expiresInMs: number | null;
 }
 
-export function getForecastFreshness(meta: ForecastMeta | null): ForecastFreshnessState {
+export function getForecastFreshness(
+  meta: ForecastMeta | null,
+  now = Date.now()
+): ForecastFreshnessState {
   if (!meta?.fetchedAt) return { fresh: false, expiresInMs: null };
   const fetchedAtMs =
     meta.fetchedAt instanceof Date ? meta.fetchedAt.getTime() : new Date(meta.fetchedAt).getTime();
@@ -21,12 +24,12 @@ export function getForecastFreshness(meta: ForecastMeta | null): ForecastFreshne
     meta.freshForSeconds > 0
       ? meta.freshForSeconds
       : FORECAST_FRESHNESS_FALLBACK_SECONDS;
-  const ageMs = Date.now() - fetchedAtMs;
+  const ageMs = now - fetchedAtMs;
   const fresh = ageMs >= -MAX_FUTURE_SKEW_MS && ageMs <= ttlSeconds * 1000;
-  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - Date.now();
+  const remainingMs = fetchedAtMs + ttlSeconds * 1000 - now;
 
   return {
     fresh,
-    expiresInMs: fresh && remainingMs > 0 ? remainingMs + FORECAST_EXPIRY_CUSHION_MS : null,
+    expiresInMs: fresh && remainingMs >= 0 ? remainingMs + FORECAST_EXPIRY_CUSHION_MS : null,
   };
 }
