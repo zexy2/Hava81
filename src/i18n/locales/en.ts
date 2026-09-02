@@ -185,8 +185,8 @@ export const en = {
         now: 'Weather conditions look better for going out now than in the next few hours.',
         similar: 'There is no meaningful weather advantage between the next few hours.',
       },
-      bestWindow: 'Best-looking time: {{time}}',
-      bestRange: 'Best-looking range: {{start}}–{{end}}',
+      bestWindow: 'Best-looking weather time: {{time}}',
+      bestRange: 'Best-looking weather range: {{start}}–{{end}}',
       quickLabel: 'Practical weather decisions',
       quick: {
         umbrella: {

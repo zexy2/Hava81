@@ -2865,3 +2865,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Tightened only those static Turkish product descriptions to `hava açısından en iyi zaman`, aligning them with the existing decision truthfulness boundary. No structured weather data, city ranking, score, forecast, provider, runtime behavior or navigation changed.
 - Added a source regression covering both root HTML and the manifest and rejecting the prior unqualified phrase. `git diff --check` passes; hosted exact-head frontend/build/browser/Lighthouse/CodeQL remain mandatory.
 - Next: commit/push/open this bounded metadata PR and rebase after earlier prepared PRs merge.
+
+## 2026-09-03 02:18 TRT — keep Daily Plan timing weather-scoped in UI and sharing
+- Continued from the last production-green base `108cba3124ab43925d376ab05213ee8480afade6` while post-#717 main CI/deploy validates separately.
+- Daily Plan's now-or-later sentence was already weather-scoped, but its primary best-time/range labels and detached share payload still said `Best-looking time/range` and `Best window` without naming the meteorological evidence domain.
+- Tightened the visible labels to `Best-looking weather time/range` / `Hava açısından ...` and the share line to `Best weather window` / `En uygun hava penceresi`. No scoring, range selection, forecast horizon, weather values, thresholds, providers or recommendation logic changed.
+- Added a localization/share regression and `git diff --check` passes. Hosted exact-head frontend/unit/browser/Lighthouse/CodeQL are required before merge.
+- Next: commit/push/open the bounded trust-copy PR; after post-#717 production is green, rebase this and the other prepared branches in order onto the latest main with explicit leases.

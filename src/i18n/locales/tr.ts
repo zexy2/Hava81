@@ -186,8 +186,8 @@ export const tr = {
         now: 'Hava koşulları şimdi çıkmak için yakın saatlere göre daha avantajlı görünüyor.',
         similar: 'Yakın saatler arasında hava açısından belirgin bir avantaj görünmüyor.',
       },
-      bestWindow: 'En iyi görünen saat: {{time}}',
-      bestRange: 'En uygun görünen aralık: {{start}}–{{end}}',
+      bestWindow: 'Hava açısından en iyi görünen saat: {{time}}',
+      bestRange: 'Hava açısından en uygun görünen aralık: {{start}}–{{end}}',
       quickLabel: 'Pratik hava kararları',
       quick: {
         umbrella: {
