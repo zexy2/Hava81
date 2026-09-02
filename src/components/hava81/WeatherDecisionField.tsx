@@ -195,6 +195,7 @@ export function WeatherDecisionField({
   const [now, setNow] = useState(() => Date.now());
   const [, setForecastFreshnessRevision] = useState(0);
   const forecastFreshness = forecastMeta === undefined ? null : getForecastFreshness(forecastMeta);
+  const forecastExpiresInMs = forecastFreshness?.expiresInMs ?? null;
   useEffect(() => {
     let timerId: number | undefined;
 
@@ -225,12 +226,12 @@ export function WeatherDecisionField({
   }, [fetchedAtMs, staleAfterMs]);
 
   useEffect(() => {
-    if (forecastFreshness === null) return undefined;
+    if (forecastMeta === undefined) return undefined;
     const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
     const timeout =
-      forecastFreshness.expiresInMs === null
+      forecastExpiresInMs === null
         ? undefined
-        : window.setTimeout(resyncFreshness, forecastFreshness.expiresInMs);
+        : window.setTimeout(resyncFreshness, forecastExpiresInMs);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -239,7 +240,7 @@ export function WeatherDecisionField({
       if (timeout !== undefined) window.clearTimeout(timeout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [forecastMeta, forecastFreshness?.expiresInMs]);
+  }, [forecastExpiresInMs, forecastMeta]);
 
   const ageMs = now - fetchedAtMs;
   const hasInvalidFutureTimestamp = !Number.isNaN(fetchedAtMs) && ageMs < -60_000;

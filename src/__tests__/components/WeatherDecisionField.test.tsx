@@ -24,7 +24,11 @@ const weather: NormalizedWeatherData = {
   timestamp: new Date('2026-08-29T09:00:00Z'),
   coordinates: { lat: 41.01, lon: 28.97 },
   clouds: 0,
-  meta: { provider: 'OpenWeather', fetchedAt: new Date(), timezoneOffsetSeconds: 10800 },
+  meta: {
+    provider: 'OpenWeather',
+    fetchedAt: new Date('2026-08-29T13:00:00Z'),
+    timezoneOffsetSeconds: 10800,
+  },
 };
 
 describe('WeatherDecisionField daily range', () => {
