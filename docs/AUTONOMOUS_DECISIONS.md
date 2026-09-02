@@ -1005,3 +1005,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The human-readable worker status must expose both `host.issues` on the disk line and `signals.host_incident` alongside `production_incident`.
 
 **Why:** An active host incident can coexist with healthy production and an empty warnings array. Hiding the state’s explicit incident fields makes operator summaries ambiguous during disk pressure; surfacing existing evidence improves triage without changing any health decision or write authority.
+### 2026-09-02 23:35 TRT — outdoor-window copy describes weather suitability only
+
+**Decision:** Phrase the generic `outdoor-window` decision as a calmer **weather** window (“hava açısından” in Turkish) rather than an unqualified best time to be outdoors.
+
+**Why:** The decision scorer uses meteorological evidence and cannot judge lifestyle, sleep, personal-security, transport, or other non-weather constraints. Explicitly scoping the copy preserves Hava81's decision-first value while avoiding a broader recommendation than the evidence supports.
