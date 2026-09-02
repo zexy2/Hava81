@@ -71,6 +71,62 @@ check_path() {
   return 1
 }
 
+check_navigation_asset_coherence() {
+  local path="$1"
+  local body
+  local code
+  local asset
+  local asset_code
+  local coherent
+  local -a navigation_assets=()
+
+  body="$(mktemp)"
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    # Deliberately use the normal navigation URL here, without the smoke cache-buster.
+    # A cached prior-generation shell is safe only if every hashed asset it references
+    # is still available during Pages edge propagation.
+    code="$(curl --location --silent --show-error \
+      --connect-timeout "$connect_timeout_seconds" \
+      --max-time "$max_time_seconds" \
+      --output "$body" --write-out "%{http_code}" "${base_url}${path}" || true)"
+    coherent=true
+
+    if [[ "$code" != "200" ]]; then
+      coherent=false
+    else
+      mapfile -t navigation_assets < <(python3 scripts/list-html-assets.py "$body" 2>/dev/null || true)
+      if (( ${#navigation_assets[@]} == 0 )); then
+        coherent=false
+      else
+        for asset in "${navigation_assets[@]}"; do
+          asset_code="$(curl --location --silent --show-error \
+            --connect-timeout "$connect_timeout_seconds" \
+            --max-time "$max_time_seconds" \
+            --output /dev/null --write-out "%{http_code}" "${base_url}${asset}" || true)"
+          if [[ "$asset_code" != "200" ]]; then
+            coherent=false
+            break
+          fi
+        done
+      fi
+    fi
+
+    if [[ "$coherent" == true ]]; then
+      printf 'ok coherent navigation %s (attempt %s/%s)\n' "$path" "$attempt" "$attempts"
+      rm -f "$body"
+      return 0
+    fi
+
+    if (( attempt < attempts )); then
+      sleep "$delay_seconds"
+    fi
+  done
+
+  printf 'public navigation asset coherence failed for %s (last HTML HTTP %s)\n' "$path" "$code" >&2
+  rm -f "$body"
+  return 1
+}
+
 # When the deploy artifact is present, hash equality ensures the smoke test waits
 # for the exact GitHub Pages release instead of accepting a healthy stale shell.
 check_path "/" "hava81-favicon.ico" "dist/index.html" "/react.svg"
@@ -94,6 +150,13 @@ for current_asset in "${current_shell_assets[@]}"; do
   fi
   check_path "$current_asset" "" "$current_asset_file"
 done
+
+# Exact current-release checks can succeed through a cache-busted edge while a normal
+# navigation still receives an older cached shell. That prior shell is acceptable only
+# while all of its hashed boot assets remain available. Exercise normal navigation keys
+# too and wait for a coherent HTML-to-asset set before declaring the deploy healthy.
+check_navigation_asset_coherence "/"
+check_navigation_asset_coherence "/istanbul/"
 
 # The Pages deploy keeps recent Vite asset generations so cached HTML from the prior
 # release cannot point at an asset that disappeared during propagation. Verify at least
