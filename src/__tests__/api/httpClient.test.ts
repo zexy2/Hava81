@@ -211,6 +211,86 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it.each([
+    ['zero freshness window', 0],
+    ['negative freshness window', -1],
+    ['null freshness window', null],
+    ['string freshness window', '60'],
+  ])('does not cache provider evidence with %s', async (_label, invalidFreshForSeconds) => {
+    vi.useFakeTimers();
+    try {
+      const now = new Date('2026-09-02T05:00:00.000Z');
+      vi.setSystemTime(now);
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse({
+            cityName: 'Izmir',
+            temperature: 23,
+            meta: {
+              provider: 'OpenWeather',
+              fetchedAt: now.toISOString(),
+              freshForSeconds: invalidFreshForSeconds,
+            },
+          })
+        )
+        .mockResolvedValueOnce(
+          mockResponse({
+            cityName: 'Izmir',
+            temperature: 22,
+            meta: { provider: 'OpenWeather', fetchedAt: now.toISOString(), freshForSeconds: 60 },
+          })
+        );
+
+      await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toMatchObject({
+        temperature: 23,
+      });
+      await expect(httpClient.get('/weather/current', { city: 'Izmir' })).resolves.toMatchObject({
+        temperature: 22,
+      });
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(httpClient.getCacheSize()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([
+    [
+      'maximum allowed future skew',
+      (now: Date) => ({
+        fetchedAt: new Date(now.getTime() + 60_000).toISOString(),
+        freshForSeconds: 60,
+      }),
+    ],
+    [
+      'maximum allowed freshness window',
+      (now: Date) => ({ fetchedAt: now.toISOString(), freshForSeconds: 86_400 }),
+    ],
+  ])('caches provider evidence at the valid %s boundary', async (_label, validMeta) => {
+    vi.useFakeTimers();
+    try {
+      const now = new Date('2026-09-02T05:00:00.000Z');
+      vi.setSystemTime(now);
+      (global.fetch as Mock).mockResolvedValue(
+        mockResponse({
+          cityName: 'Izmir',
+          temperature: 23,
+          meta: { provider: 'OpenWeather', ...validMeta(now) },
+        })
+      );
+
+      const first = await httpClient.get('/weather/current', { city: 'Izmir' });
+      const second = await httpClient.get('/weather/current', { city: 'Izmir' });
+
+      expect(second).toBe(first);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(httpClient.getCacheSize()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not reuse a cache entry after the client clock moves behind its timestamp', async () => {
     vi.useFakeTimers();
     try {
