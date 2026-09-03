@@ -9,7 +9,7 @@ fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 observer_dir="$repo/deploy/oracle/observer"
 
-PYTHONDONTWRITEBYTECODE=1 python3 "$observer_dir/test_observer.py"
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s "$observer_dir" -p 'test_*.py'
 python3 - "$observer_dir/observer.py" "$observer_dir/hava81-worker-status.py" <<'PY'
 from pathlib import Path
 import sys
