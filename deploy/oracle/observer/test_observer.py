@@ -184,6 +184,15 @@ class ObserverBootAssetTests(unittest.TestCase):
             ['/assets/index.css', '/assets/index.js', '/assets/runtime.js?x=1'],
         )
 
+    def test_extracts_exact_frontend_build_revision(self) -> None:
+        revision = 'a' * 40
+        html = f'<meta name="hava81-build-revision" content="{revision}">'
+        self.assertEqual(observer.extract_build_revision(html), revision)
+
+    def test_rejects_missing_or_malformed_frontend_build_revision(self) -> None:
+        self.assertIsNone(observer.extract_build_revision('<meta name="hava81-build-revision" content="abc">'))
+        self.assertIsNone(observer.extract_build_revision('<html></html>'))
+
     def test_missing_boot_asset_fails_closed(self) -> None:
         original_http_get = observer.http_get
 

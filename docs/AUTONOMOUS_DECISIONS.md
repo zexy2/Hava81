@@ -1222,3 +1222,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** At <=26rem, the stacked Daily Plan header uses the shared small gap instead of the medium gap while preserving the new 13px-equivalent score-band interpretation text.
 
 **Why:** Hosted 390px/200% browser evidence showed the typography improvement alone pushed the header to 454.6px against the existing <450px readability budget. Tightening only the inter-group gap recovers vertical room without shrinking functional copy or changing score semantics.
+
+### 2026-09-03 08:33 TRT — observer reports the exact deployed frontend revision
+
+**Decision:** The read-only production observer extracts the inert `hava81-build-revision` meta value from both root and İstanbul shells and reports whether both exact revisions are known and consistent, without yet treating absence/mismatch as a production-health failure.
+
+**Why:** Hava81 now stamps exact Pages revisions, but the observer still exposed only API deployment provenance. Surfacing root/city frontend revisions lets autonomous runs directly prove which frontend build is live while avoiding a false incident during rollout or legacy-shell propagation.

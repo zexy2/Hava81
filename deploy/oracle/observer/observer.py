@@ -143,6 +143,17 @@ def slim_http(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def extract_build_revision(html: Any) -> str | None:
+    if not isinstance(html, str) or not html:
+        return None
+    match = re.search(
+        r'<meta\b[^>]*\bname=["\']hava81-build-revision["\'][^>]*\bcontent=["\']([0-9a-f]{40})["\'][^>]*>',
+        html,
+        flags=re.IGNORECASE,
+    )
+    return match.group(1).lower() if match else None
+
+
 def extract_boot_asset_paths(html: Any) -> list[str]:
     if not isinstance(html, str) or not html:
         return []
@@ -197,6 +208,14 @@ def collect_production() -> dict[str, Any]:
         headers={'Origin': 'https://hava81.zekiakgul.dev'},
     )
     boot_assets = collect_boot_assets(root, city)
+    root_revision = extract_build_revision(root.get('text'))
+    city_revision = extract_build_revision(city.get('text'))
+    frontend_revision = {
+        'known': root_revision is not None and city_revision is not None,
+        'consistent': root_revision is not None and root_revision == city_revision,
+        'root': root_revision,
+        'city': city_revision,
+    }
     ready_json = ready.get('json') if isinstance(ready.get('json'), dict) else {}
     ready_headers = ready.get('headers') or {}
     cors_value = ready_headers.get('access-control-allow-origin')
@@ -228,6 +247,7 @@ def collect_production() -> dict[str, Any]:
         'root': slim_http(root),
         'istanbul': slim_http(city),
         'boot_assets': boot_assets,
+        'frontend_revision': frontend_revision,
         'api_ready': {
             **slim_http(ready),
             'reported_status': ready_json.get('status'),

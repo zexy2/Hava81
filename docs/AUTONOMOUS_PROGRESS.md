@@ -3014,3 +3014,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Exact-head #760 browser CI exposed a deterministic regression at 390px/200% text: the strengthened score-band line raised the stacked header to 454.6px against the existing <450px guard.
 - Kept the 13px-equivalent band/range interpretation text and instead reduced only the <=26rem stacked header gap from the shared medium spacing token to the shared small token.
 - This is a bounded mobile-density adjustment: no score, threshold, recommendation, weather evidence, provider/freshness, API or MGM semantics changed. `git diff --check` passes; the exact browser regression and full hosted gates must pass after push before merge.
+
+## 2026-09-03 08:33 TRT — expose exact frontend deployment provenance in the observer
+- Started from exact main `f7800da3788753c846d148fb03e24c25f4385d83` while its post-#760 Pages pipeline runs and #761 remains isolated.
+- The production shell now carries `hava81-build-revision`, but `/var/lib/hava81-worker/state.json` still had no frontend revision field, forcing operators to correlate workflow history manually.
+- Added a strict 40-hex meta extractor, root/İstanbul `frontend_revision` state with `known`/`consistent` flags, and concise worker-status output. Deliberately did not make missing/mismatched revision a health gate yet, so rollout/propagation cannot create a false production incident.
+- Local observer suite passes 28/28, Python compile passes, and `git diff --check` passes. Hosted exact-head CI/CodeQL remain required before installing the observer copy on Oracle.
