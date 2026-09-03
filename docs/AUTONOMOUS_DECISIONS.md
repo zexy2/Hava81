@@ -1282,3 +1282,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Environment Rail module labels render at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** Daylight, wind, air-quality and map labels identify the evidence or action directly beneath them. Keeping those headings readily readable improves scanability without changing any underlying weather data or recommendation semantics.
+
+### 2026-09-03 13:04 TRT — CI JavaScript actions should use supported Node 24 majors
+
+**Decision:** The frontend coverage artifact upload uses `actions/upload-artifact@v7` instead of the deprecated Node 20-backed v4 major.
+
+**Why:** GitHub-hosted runners now warn on the v4 Node 20 runtime, while upstream v7.0.1 uses Node 24 and preserves every input Hava81 relies on. Removing the deprecated runtime reduces future CI breakage without changing artifacts or production behavior.

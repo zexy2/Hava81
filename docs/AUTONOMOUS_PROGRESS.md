@@ -3074,3 +3074,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Environment Rail still rendered the daylight, wind, air-quality and map module labels at 12px-equivalent even though these labels identify the evidence/action presented immediately below them.
 - Raised only `.environment-rail__label` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - No daylight calculation, wind data, AQI value/health semantics, map behavior, provider/freshness logic, API or MGM behavior changed. Existing mobile/browser checks remain the reflow guard; exact-head hosted gates are required before merge.
+
+## 2026-09-03 13:04 TRT — remove the remaining Node 20 upload-artifact action
+- Continued independently from exact main `f3efc46b6a601bc120864a15cf49f1ed24eb64a8` after the main CI emitted a Node 20 deprecation warning for the frontend coverage upload step.
+- Repository audit found one remaining `actions/upload-artifact@v4` while another upload step already uses v7 and all download steps use v8. Upstream v7.0.1 declares a Node 24 runtime and retains the `name`, `path`, `if-no-files-found`, and `retention-days` inputs used by Hava81.
+- Upgraded only that coverage upload action from v4 to v7. Artifact name/path/retention and downstream behavior are unchanged.
+- YAML/diff checks and exact-head hosted CI/CodeQL are mandatory before merge.
