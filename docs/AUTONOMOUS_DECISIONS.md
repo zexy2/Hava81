@@ -1111,3 +1111,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Detached browser-notification titles that recommend waiting must explicitly say the improvement is weather-based.
 
 **Why:** The underlying comparison scores meteorological evidence only. Notification trays can display the title apart from its body, so `Waiting looks better` / `Biraz beklersen daha iyi` can overstate a general lifestyle recommendation unless the title carries the weather boundary itself.
+
+### 2026-09-03 04:12 TRT — safety-sensitive browser alerts self-identify as Hava81 notifications
+
+**Decision:** Decision Alerts UI uses `notifications` rather than generic `alerts/warnings`, and detached wind, air-quality, and difficult-weather titles explicitly name Hava81 and use signal/outlook language where appropriate.
+
+**Why:** OS notification surfaces may show only a title, while the body-level disclosure can be truncated. Wind and air-quality guidance should not be mistaken for an official MGM warning or an unaffiliated measurement. Provenance belongs in the detached title and opt-in control without changing any modeled evidence or thresholds.

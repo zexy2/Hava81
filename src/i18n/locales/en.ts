@@ -409,7 +409,7 @@ export const en = {
       unavailable: 'Sharing unavailable',
     },
     alerts: {
-      eyebrow: 'Smart alerts',
+      eyebrow: 'Hava81 notifications',
       title: 'Notify me when the decision changes',
       description:
         'While Hava81 is open, show a browser notification for rain, a meaningful wait advantage, or a difficult day.',
@@ -418,8 +418,8 @@ export const en = {
       modeledDisclosure:
         'These notifications are Hava81 modeled guidance, not official MGM MeteoUyarı warnings.',
       notificationDisclosure: 'Hava81 modeled guidance; not an official MGM MeteoUyarı warning.',
-      enable: 'Enable alerts',
-      disable: 'Disable alerts',
+      enable: 'Enable notifications',
+      disable: 'Disable notifications',
       blocked: 'Notifications blocked',
       blockedHelp: 'To enable alerts again, allow Hava81 notifications in your browser settings.',
       unsupported: 'Notifications unavailable',
@@ -427,15 +427,15 @@ export const en = {
         'This browser does not support Hava81 notifications; weather and decision guidance continue to work normally.',
       rainTitle: '{{city}} · Hava81 umbrella guidance',
       rainBody: 'There is a meaningful rain risk in the next hours; add an umbrella to your plan.',
-      windTitle: '{{city}} · Strong wind',
+      windTitle: '{{city}} · Hava81 wind signal',
       windBody:
         'A strong-wind signal appears in the next hours; adjust outdoor plans and transport accordingly.',
-      airTitle: '{{city}} · Poor air quality',
+      airTitle: '{{city}} · Hava81 air quality looks poor',
       airBody:
         'Current air quality is poor in the Hava81 decision layer; reconsider prolonged outdoor plans.',
       waitTitle: '{{city}} · Weather looks better if you wait',
       waitBody: 'The weather score improves by about {{improvement}} points in the next hours.',
-      difficultTitle: '{{city}} · Difficult weather',
+      difficultTitle: '{{city}} · Hava81 difficult weather outlook',
       difficultBody:
         "Today's Hava81 Score is {{score}}/100 · {{band}}. Adjust your plan for the weather risks.",
     },

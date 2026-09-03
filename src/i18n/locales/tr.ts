@@ -412,15 +412,15 @@ export const tr = {
       unavailable: 'Paylaşım kullanılamıyor',
     },
     alerts: {
-      eyebrow: 'Akıllı uyarılar',
+      eyebrow: 'Hava81 bildirimleri',
       title: 'Karar değişince haber ver',
       description:
         'Yağmur, belirgin bekleme avantajı veya zorlayıcı gün oluştuğunda; Hava81 açıkken tarayıcı bildirimi gösterir.',
       quietHours: 'Sessiz saatler: 22:00–07:00. Bildirim izni yalnızca sen açarsan istenir.',
       modeledDisclosure: 'Bu bildirimler Hava81 model rehberidir; resmî MGM MeteoUyarı değildir.',
       notificationDisclosure: 'Hava81 model rehberi; resmî MGM MeteoUyarı değildir.',
-      enable: 'Uyarıları aç',
-      disable: 'Uyarıları kapat',
+      enable: 'Bildirimleri aç',
+      disable: 'Bildirimleri kapat',
       blocked: 'Bildirim engelli',
       blockedHelp: 'Tekrar açmak için tarayıcı ayarlarından Hava81 bildirimlerine izin ver.',
       unsupported: 'Bildirim desteklenmiyor',
@@ -428,15 +428,15 @@ export const tr = {
         'Bu tarayıcı Hava81 bildirimlerini desteklemiyor; hava durumu ve karar rehberi normal çalışmaya devam eder.',
       rainTitle: '{{city}} · Hava81 şemsiye rehberi',
       rainBody: 'Yakın saatlerde belirgin yağış riski var; şemsiyeyi planına ekle.',
-      windTitle: '{{city}} · Kuvvetli rüzgâr',
+      windTitle: '{{city}} · Hava81 rüzgâr sinyali',
       windBody:
         'Yakın saatlerde kuvvetli rüzgâr sinyali var; dışarıdaki planını ve ulaşımını buna göre ayarla.',
-      airTitle: '{{city}} · Hava kalitesi zayıf',
+      airTitle: '{{city}} · Hava81 hava kalitesi zayıf görünüyor',
       airBody:
         'Mevcut hava kalitesi Hava81 karar katmanında zayıf görünüyor; açık hava planını yeniden değerlendir.',
       waitTitle: '{{city}} · Hava açısından beklemek daha iyi',
       waitBody: 'Yakın saatlerde hava skoru yaklaşık {{improvement}} puan iyileşiyor.',
-      difficultTitle: '{{city}} · Zorlayıcı hava',
+      difficultTitle: '{{city}} · Hava81 zorlayıcı hava görünümü',
       difficultBody:
         'Bugünün Hava81 Skoru {{score}}/100 · {{band}}. Planını hava risklerine göre ayarla.',
     },
