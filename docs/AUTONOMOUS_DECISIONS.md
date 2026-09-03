@@ -1408,3 +1408,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - `worker.can_merge_or_deploy` is an operational decision signal. It must be derived from current production/host/GitHub/deployment state rather than hard-coded false merely because the observer itself is read-only.
 - The observer remains strictly read-only (`writes_repository=false`); mutations are still performed only by an authorized autonomous run after direct exact-head and production re-verification.
 - Readiness fails closed when production/host/GitHub state is unhealthy or unknown, a main/frontend/API rollout is pending, API deployment state is unknown, or the preferred API port has drifted.
+
+
+### 2026-09-04 00:30 TRT — persistent mobile navigation stays visually flat
+- Persistent navigation state meaning is carried by accent color, label weight and the existing underline. A second filled tile, icon scaling, backdrop blur and elevation shadow are unnecessary duplicate signals.
+- Preserve the solid editorial paper surface and interaction/accessibility semantics; remove decorative compositing work that does not improve wayfinding.
