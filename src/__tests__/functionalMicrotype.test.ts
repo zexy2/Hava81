@@ -13,7 +13,7 @@ const remFontSize = (rule: string) => {
 
 const expectReadableFunctionalMicrotype = (path: string, selector: string) => {
   const css = readFileSync(path, 'utf8');
-  expect(remFontSize(cssRule(css, selector))).toBeGreaterThanOrEqual(0.6875);
+  expect(remFontSize(cssRule(css, selector))).toBeGreaterThanOrEqual(0.8125);
 };
 
 describe('functional microtype readability', () => {
@@ -33,7 +33,7 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.atlas-settings-button__language'))).toBeGreaterThanOrEqual(0.8125);
   });
 
-  it('keeps saved-city province plates at or above the 11px-equivalent floor', () => {
+  it('keeps saved-city province plates at or above the 13px-equivalent floor', () => {
     expectReadableFunctionalMicrotype('src/components/CityTabs.css', '.city-tabs__plate');
   });
 
@@ -52,7 +52,7 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.daily-plan__score small'))).toBeGreaterThanOrEqual(0.8125);
   });
 
-  it('keeps Daily Plan local-day boundaries at or above the 11px-equivalent floor', () => {
+  it('keeps Daily Plan local-day boundaries at or above the 13px-equivalent floor', () => {
     expectReadableFunctionalMicrotype('src/components/hava81/DailyPlanPanel.css', '.daily-plan__slot-day');
   });
 
@@ -87,7 +87,7 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.context-signals__note'))).toBeGreaterThanOrEqual(0.8125);
   });
 
-  it('keeps modeled context units at or above the 11px-equivalent floor', () => {
+  it('keeps modeled context units at or above the 13px-equivalent floor', () => {
     expectReadableFunctionalMicrotype(
       'src/components/hava81/ContextSignalsPanel.css',
       '.context-signal > strong small'
