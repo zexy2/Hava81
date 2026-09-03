@@ -39,6 +39,7 @@ describe('functional microtype readability', () => {
     const css = readFileSync('src/components/hava81/ComparePanel.css', 'utf8');
     expect(remFontSize(cssRule(css, '.hava81-compare__winner span,\n.hava81-compare__winner small'))).toBeGreaterThanOrEqual(0.8125);
     expect(remFontSize(cssRule(css, '.hava81-compare__score-wrap small'))).toBeGreaterThanOrEqual(0.8125);
+    expect(remFontSize(cssRule(css, '.hava81-compare__score span'))).toBeGreaterThanOrEqual(0.8125);
   });
 
   it('keeps modeled context provenance and guidance at or above the 13px-equivalent floor', () => {

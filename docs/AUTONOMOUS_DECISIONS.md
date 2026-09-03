@@ -1300,3 +1300,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Activity Planner `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** A raw score without a readily readable denominator weakens interpretation of the adjacent recommendation. The scale is decision context rather than decorative microtype, and increasing it does not alter scoring behavior.
+
+### 2026-09-03 13:20 TRT — comparison score scale is functional context
+
+**Decision:** The saved-city comparison `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** The denominator communicates the scoring scale used to compare cities. It is functional decision context rather than decorative microtype, and making it readable does not alter ranking or scoring behavior.
