@@ -1087,3 +1087,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Reclaim Chromium audit profile storage only through an explicit-root, dry-run-by-default helper that accepts Hava81-owned directory names, excludes symlinks/recent profiles, rejects process-referenced paths, and rechecks eligibility immediately before deletion.
 
 **Why:** Snap Chromium retained roughly 1 GB of old Hava81 audit profiles during an active root-disk incident. Generic `/tmp` or Chromium cleanup could destroy unrelated browser/user state, so automation needs a narrow evidence-based cleanup boundary rather than broad temp deletion.
+
+### 2026-09-03 02:48 TRT — UV protection copy names the WHO threshold
+
+**Decision:** When Hava81 presents modeled UV guidance at UVI 3 or above, the user-facing recommendation must name the WHO UV Index threshold instead of presenting the protection advice as an unattributed product assertion.
+
+**Why:** WHO guidance recommends sun protection from UVI 3 upward. Carrying that provenance into the copy makes the health-related boundary explicit while leaving the modeled Open-Meteo value, freshness checks, UV bands, thresholds and scoring unchanged.

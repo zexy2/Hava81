@@ -390,7 +390,7 @@ export const tr = {
         extreme: 'Aşırı',
       },
       uvProtection:
-        'Önümüzdeki 24 saatte UV korunma önerilen seviyeye çıkıyor; güneşten korunma planı yap.',
+        'WHO UV İndeksi rehberinde 3 ve üzeri için güneşten korunma önerilir; 24 saatlik model maksimumu bu aralığa çıkıyor.',
       uvNormal: 'Önümüzdeki 24 saatin UV model maksimumu düşük seviyede.',
       dust: 'Toz modeli',
       pollen: 'Polen modeli',

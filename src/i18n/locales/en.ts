@@ -387,7 +387,8 @@ export const en = {
         veryHigh: 'Very high',
         extreme: 'Extreme',
       },
-      uvProtection: 'The next 24 hours reach a UV level where sun protection is recommended.',
+      uvProtection:
+        'WHO UV Index guidance recommends sun protection at 3 and above; the modeled 24-hour maximum reaches that range.',
       uvNormal: 'The modeled UV maximum stays low over the next 24 hours.',
       dust: 'Dust model',
       pollen: 'Pollen model',
