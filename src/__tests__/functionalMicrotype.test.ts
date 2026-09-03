@@ -32,8 +32,7 @@ describe('functional microtype readability', () => {
 
   it('keeps comparison decision qualifiers at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/ComparePanel.css', 'utf8');
-    expect(remFontSize(cssRule(css, '.hava81-compare__winner span,
-.hava81-compare__winner small'))).toBeGreaterThanOrEqual(0.8125);
+    expect(remFontSize(cssRule(css, '.hava81-compare__winner span,\n.hava81-compare__winner small'))).toBeGreaterThanOrEqual(0.8125);
     expect(remFontSize(cssRule(css, '.hava81-compare__score-wrap small'))).toBeGreaterThanOrEqual(0.8125);
   });
 
