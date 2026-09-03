@@ -22,7 +22,8 @@ recovery_gib = round(bytes_to_free / (1024 ** 3), 2) if isinstance(bytes_to_free
 print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} used_gib={used_gib} free_gib={free_gib} recovery_gib={recovery_gib} issues={host.get('issues', [])} warnings={host.get('warnings', [])}")
 browser_processes = host.get('browser_processes') or {}
 print(f"browser_audits: known={browser_processes.get('known')} stale_count={browser_processes.get('stale_count')} threshold_s={browser_processes.get('stale_after_seconds')} processes={browser_processes.get('processes', [])} error={browser_processes.get('error')}")
-print(f"nginx_api_port: {(prod.get('nginx') or {}).get('port')} expected={(prod.get('nginx') or {}).get('expected')}")
+nginx = prod.get('nginx') or {}
+print(f"nginx_api_port: {nginx.get('port')} expected={nginx.get('expected')} preferred={nginx.get('preferred')} preferred_ok={nginx.get('preferred_ok')}")
 boot_assets = prod.get('boot_assets') or {}
 print(f"boot_assets: ok={boot_assets.get('ok')} count={boot_assets.get('count')} root={boot_assets.get('root_count')} city={boot_assets.get('city_count')} failed={[item.get('path') for item in boot_assets.get('failed', [])]}")
 frontend_revision = prod.get('frontend_revision') or {}
@@ -37,4 +38,4 @@ for pr in gh.get('open_automation_prs', []):
 main = gh.get('latest_main_run') or {}
 if main:
     print(f"main_ci: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:8]} {main.get('status')}/{main.get('conclusion')}")
-print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} host_incident={sig.get('host_incident')} production_incident={sig.get('production_incident')}")
+print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} host_incident={sig.get('host_incident')} production_incident={sig.get('production_incident')} api_primary_port_drift={sig.get('api_primary_port_drift')}")

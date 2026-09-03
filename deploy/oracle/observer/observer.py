@@ -26,6 +26,7 @@ CURRENT_API_PORT_FILE = Path('/var/lib/hava81/current-api-port')
 DEPLOYED_API_REVISION_FILE = Path('/var/lib/hava81/current-api-revision')
 DEPLOYED_API_TREE_FILE = Path('/var/lib/hava81/current-api-tree')
 DEFAULT_API_PORT = 4002
+PREFERRED_API_PORT = 4002
 ALLOWED_API_PORTS = {4000, 4001, 4002}
 REPO = 'zexy2/Hava81'
 MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
@@ -136,9 +137,9 @@ def nginx_target() -> dict[str, Any]:
         text = NGINX_SITE.read_text(encoding='utf-8')
         match = re.search(r'proxy_pass\s+http://127\.0\.0\.1:(\d+)\s*;', text)
         port = int(match.group(1)) if match else None
-        return {'port': port, 'expected': expected, 'ok': port == expected, 'error': None}
+        return {'port': port, 'expected': expected, 'preferred': PREFERRED_API_PORT, 'preferred_ok': port == PREFERRED_API_PORT, 'ok': port == expected, 'error': None}
     except Exception as exc:
-        return {'port': None, 'expected': expected, 'ok': False, 'error': f'{type(exc).__name__}: {exc}'}
+        return {'port': None, 'expected': expected, 'preferred': PREFERRED_API_PORT, 'preferred_ok': None, 'ok': False, 'error': f'{type(exc).__name__}: {exc}'}
 
 
 def slim_http(result: dict[str, Any]) -> dict[str, Any]:
@@ -681,6 +682,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'production_healthy': production.get('healthy'),
         'production_issues': production.get('issues'),
         'nginx_port': ((production.get('nginx') or {}).get('port')),
+        'nginx_preferred_ok': ((production.get('nginx') or {}).get('preferred_ok')),
         'host_disk_ok': ((host.get('disk') or {}).get('ok')),
         'host_disk_pressure_warning': ((host.get('disk') or {}).get('pressure_warning')),
         'stale_hava81_browser_processes': ((host.get('browser_processes') or {}).get('stale_count')),
@@ -773,6 +775,7 @@ def main() -> int:
             'production_incident': not production['healthy'],
             'host_incident': not host['healthy'],
             'frontend_deploy_pending': frontend_revision.get('pending') is True,
+            'api_primary_port_drift': (production.get('nginx') or {}).get('preferred_ok') is False,
             **github.get('signals', {}),
         },
         'worker': {

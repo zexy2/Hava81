@@ -280,6 +280,8 @@ class ObserverNginxTargetTests(unittest.TestCase):
 
         self.assertEqual(target['port'], 4001)
         self.assertEqual(target['expected'], 4001)
+        self.assertEqual(target['preferred'], 4002)
+        self.assertFalse(target['preferred_ok'])
         self.assertTrue(target['ok'])
         self.assertIsNone(target['error'])
 
@@ -299,6 +301,8 @@ class ObserverNginxTargetTests(unittest.TestCase):
                 observer.CURRENT_API_PORT_FILE = original_port_file
 
         self.assertEqual(target['expected'], observer.DEFAULT_API_PORT)
+        self.assertEqual(target['preferred'], 4002)
+        self.assertTrue(target['preferred_ok'])
         self.assertTrue(target['ok'])
 
     def test_rejects_invalid_state_port_instead_of_masking_it(self) -> None:
