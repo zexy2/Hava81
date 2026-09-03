@@ -2612,6 +2612,32 @@ test('narrow hourly atlas keeps its interval chip rail and summary readable', as
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
+test('mobile forecast temporal markers stay legible without horizontal overflow', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile forecast label readability regression');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/istanbul');
+
+  const axisLabel = page.locator('.hava81-forecast-atlas__axis-label').first();
+  const dayLabel = page.locator('.hava81-forecast-atlas__hour-day').first();
+  await expect(axisLabel).toBeVisible();
+  await expect(dayLabel).toBeVisible();
+
+  const readability = await page.locator(
+    '.hava81-forecast-atlas__axis-label, .hava81-forecast-atlas__hour-day, .hava81-forecast-atlas__hour-now'
+  ).evaluateAll(elements =>
+    elements.map(element => ({
+      fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }))
+  );
+
+  expect(readability.length).toBeGreaterThanOrEqual(2);
+  expect(readability.every(label => label.fontSize >= 11)).toBe(true);
+  expect(readability.every(label => label.scrollWidth <= label.clientWidth + 1)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});
+
 test('narrow English hourly summary keeps long precipitation copy readable', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single narrow English summary regression');
   await page.setViewportSize({ width: 320, height: 720 });
