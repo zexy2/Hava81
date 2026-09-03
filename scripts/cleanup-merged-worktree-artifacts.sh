@@ -2,6 +2,7 @@
 set -euo pipefail
 
 apply=false
+audit=false
 remove_worktrees=false
 stale_clean_hours=""
 repo="$(git rev-parse --show-toplevel)"
@@ -10,7 +11,7 @@ primary="$(git worktree list --porcelain | awk '/^worktree / && !seen {sub(/^wor
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/cleanup-merged-worktree-artifacts.sh [--apply] [--remove-worktrees] [--stale-clean-hours=N]
+Usage: scripts/cleanup-merged-worktree-artifacts.sh [--apply] [--audit] [--remove-worktrees] [--stale-clean-hours=N]
 
 Dry-run by default. Scans linked Hava81 worktrees and considers only worktrees
 that are clean and whose HEAD is already an ancestor of origin/main. It removes
@@ -20,19 +21,27 @@ Docker resources and the current/primary worktrees are never removed. With
 branch/ref is preserved. With --stale-clean-hours=N, clean attached linked
 checkouts older than N hours may also be removed even when their branch is not
 merged, but only when the local branch ref still points exactly at that HEAD.
-Detached, dirty, recent, current and primary worktrees remain excluded.
+Detached, dirty, recent, current and primary worktrees remain excluded. With
+--audit, the command remains read-only and reports aggregate exclusion counts so
+ownership/status failures are visible during disk incidents.
 USAGE
 }
 
 for arg in "$@"; do
   case "$arg" in
     --apply) apply=true ;;
+    --audit) audit=true ;;
     --remove-worktrees) remove_worktrees=true ;;
     --stale-clean-hours=*) stale_clean_hours="${arg#*=}" ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $arg" >&2; usage >&2; exit 2 ;;
   esac
 done
+if [[ "$apply" == true && "$audit" == true ]]; then
+  echo "--audit is read-only and cannot be combined with --apply" >&2
+  exit 2
+fi
+
 
 if [[ -n "$stale_clean_hours" ]]; then
   if [[ ! "$stale_clean_hours" =~ ^[0-9]+$ || "$stale_clean_hours" -lt 1 ]]; then
@@ -66,6 +75,10 @@ removed_worktree_count=0
 skipped_worktree_count=0
 stale_worktree_count=0
 stale_worktree_bytes=0
+audit_scanned_count=0
+audit_dirty_count=0
+audit_status_unreadable_count=0
+audit_missing_count=0
 
 tree_is_removable() {
   local target="$1"
@@ -80,15 +93,21 @@ tree_is_removable() {
 
 while IFS= read -r wt; do
   [[ -n "$wt" ]] || continue
-  [[ -d "$wt" ]] || continue
+  if [[ ! -d "$wt" ]]; then
+    audit_missing_count=$((audit_missing_count + 1))
+    continue
+  fi
   [[ "$(realpath "$wt")" != "$(realpath "$current")" ]] || continue
   [[ "$(realpath "$wt")" != "$(realpath "$primary")" ]] || continue
 
+  audit_scanned_count=$((audit_scanned_count + 1))
   status_output=""
   if ! status_output="$(git -c safe.directory="$wt" -C "$wt" status --porcelain --untracked-files=all 2>/dev/null)"; then
+    audit_status_unreadable_count=$((audit_status_unreadable_count + 1))
     continue
   fi
   if [[ -n "$status_output" ]]; then
+    audit_dirty_count=$((audit_dirty_count + 1))
     continue
   fi
 
@@ -182,6 +201,10 @@ while IFS= read -r wt; do
     fi
   fi
 done < <(git worktree list --porcelain | awk '/^worktree / {sub(/^worktree /, ""); print}')
+
+if [[ "$audit" == true ]]; then
+  printf "Audit: scanned=%d dirty=%d status_unreadable=%d missing=%d. No files, refs, or worktrees were changed.\n" "$audit_scanned_count" "$audit_dirty_count" "$audit_status_unreadable_count" "$audit_missing_count"
+fi
 
 if [[ "$remove_worktrees" == true ]]; then
   if [[ "$apply" == true ]]; then
