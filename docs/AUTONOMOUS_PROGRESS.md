@@ -3109,3 +3109,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast Atlas still rendered the first non-zero precipitation annotation inside the chart at 12px even though the percentage is decision evidence that tells users where rain first appears in the visible horizon.
 - Raised only `.hava81-forecast-atlas__precipitation-marker text` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - No precipitation probability, timing, forecast values, interpolation, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Local diff/static checks pass; exact-head hosted CI/CodeQL remain mandatory before merge.
+
+
+## 2026-09-03 18:49 TRT — keep Forecast Atlas temperature unit readable
+- Continued independently from exact main `1e126da835835dc8472ca30c30b0f763288921e8` while its production rollout and PR #835 validation proceed.
+- Forecast Atlas displayed the active temperature unit beside the panel title at 12px-equivalent even though it defines the scale for every temperature value in the module.
+- Raised only `.hava81-forecast-atlas__unit` to the shared 13px-equivalent functional-copy floor and extended the central microtype regression.
+- No unit conversion, temperature values, forecast data, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.

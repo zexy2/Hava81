@@ -1318,3 +1318,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Forecast Atlas first-precipitation percentage renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** The annotation identifies where precipitation first enters the visible forecast horizon and directly supports action timing. Making it readable improves scanability without changing precipitation data or guidance semantics.
+
+
+### 2026-09-03 18:49 TRT — Forecast Atlas temperature unit is functional scale context
+
+**Decision:** The active temperature unit beside Forecast Atlas renders at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** The unit defines the scale for every temperature value shown in the module. Readability improves interpretation without changing conversion or forecast semantics.
