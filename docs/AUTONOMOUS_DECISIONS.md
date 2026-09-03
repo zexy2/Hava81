@@ -1288,3 +1288,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The frontend coverage artifact upload uses `actions/upload-artifact@v7` instead of the deprecated Node 20-backed v4 major.
 
 **Why:** GitHub-hosted runners now warn on the v4 Node 20 runtime, while upstream v7.0.1 uses Node 24 and preserves every input Hava81 relies on. Removing the deprecated runtime reduces future CI breakage without changing artifacts or production behavior.
+
+### 2026-09-03 12:56 TRT — visible interval labels own the control-group accessible name
+
+**Decision:** Forecast Atlas interval controls use `aria-labelledby` to reference the visible translated interval label instead of duplicating that label through a separate `aria-label` expression.
+
+**Why:** One source of truth prevents visible and assistive labels from drifting while preserving the same localized meaning and interaction behavior.

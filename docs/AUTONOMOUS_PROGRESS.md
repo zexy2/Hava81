@@ -3080,3 +3080,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Repository audit found one remaining `actions/upload-artifact@v4` while another upload step already uses v7 and all download steps use v8. Upstream v7.0.1 declares a Node 24 runtime and retains the `name`, `path`, `if-no-files-found`, and `retention-days` inputs used by Hava81.
 - Upgraded only that coverage upload action from v4 to v7. Artifact name/path/retention and downstream behavior are unchanged.
 - YAML/diff checks and exact-head hosted CI/CodeQL are mandatory before merge.
+
+## 2026-09-03 12:56 TRT — bind Forecast Atlas interval controls to their visible label
+- Continued independently from exact main `de3632e23ca1e337e93338f953d6181e1d98893f` while #781/#782 validate.
+- The interval selector exposed a visible translated label and a separate duplicated `aria-label` string on the button group. Replaced the duplicate accessible-name path with `aria-labelledby` pointing at the visible label.
+- Added a focused source regression locking the relationship. No interval options, forecast values, selection behavior, provider/freshness logic, scoring, API or MGM behavior changed.
