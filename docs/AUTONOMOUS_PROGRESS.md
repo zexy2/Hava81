@@ -3242,3 +3242,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After installing the new observer from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59`, live state correctly reported `worker.can_merge_or_deploy=true` with no blockers, but `/usr/local/bin/hava81-worker-status` did not print that operational signal.
 - Updated the status helper to show readiness, explicit blocking reasons, and the separate observer-write flag so operators can distinguish environment safety from the observer's read-only mode without opening raw JSON.
 - Local observer suite passes 45/45 plus `git diff --check`. No production/weather/provider/API behavior changes.
+## 2026-09-04 00:34 TRT — re-anchor city-search IME fix after observer merge
+- Main advanced to `5307a0d529216e88eeb555de6e75d9a0ac2ddc59` with the observer readiness fix, while production and the new live observer both verified healthy and `worker.can_merge_or_deploy=true`.
+- Reconstructed PR #850 again from exact current main and replayed only its SearchBar implementation/test delta so append-only documentation remains lossless.
+- `git diff --check` passes; fresh exact-head hosted CI/CD + CodeQL are mandatory before merge. No weather/provider/freshness/API/MGM/scoring/recommendation semantics changed.

@@ -174,6 +174,13 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.nativeEvent.isComposing) {
+        // Let the IME own Enter/arrow keys while the user is composing text.
+        // In particular, Enter must confirm the composition instead of submitting
+        // a partial city query or selecting a Hava81 suggestion.
+        return;
+      }
+
       if (event.key === 'Escape') {
         setHighlightedIndex(-1);
         inputRef.current?.blur();
