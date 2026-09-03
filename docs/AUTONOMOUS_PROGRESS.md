@@ -3237,3 +3237,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Reconstructed PR #855 from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59` after prior autonomous documentation diverged. Replayed only the bounded bottom-navigation CSS and regression onto current main.
 - The fixed mobile navigation keeps its solid paper surface, top divider, accent/weight/underline active affordance, 44px+ targets, safe-area padding and forced-colors behavior while removing blur, elevated shadow, filled active tile and icon scale.
 - `git diff --check` and a dependency-free static contract pass. Fresh exact-head hosted CI/CD + CodeQL remain mandatory before merge. No navigation behavior, weather data, scoring, provider/freshness, API or MGM semantics changed.
+
+## 2026-09-04 00:37 TRT — surface merge/deploy readiness in the status command
+- After installing the new observer from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59`, live state correctly reported `worker.can_merge_or_deploy=true` with no blockers, but `/usr/local/bin/hava81-worker-status` did not print that operational signal.
+- Updated the status helper to show readiness, explicit blocking reasons, and the separate observer-write flag so operators can distinguish environment safety from the observer's read-only mode without opening raw JSON.
+- Local observer suite passes 45/45 plus `git diff --check`. No production/weather/provider/API behavior changes.
