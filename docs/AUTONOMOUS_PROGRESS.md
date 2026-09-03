@@ -2979,3 +2979,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the live sitemap after #754 preparation: root plus all 81 province URLs were present, unique, HTTP 200, and each city shell carried its matching canonical and `og:url` metadata.
 - Hardened `scripts/generate-city-pages.mjs` so production generation now aborts unless it extracts exactly 81 unique province names and exactly 81 non-empty unique slugs. This prevents a future city-list edit or slug collision from silently overwriting/omitting a province shell while still producing a nominally successful build.
 - Added a focused source contract for the invariant. No province names, coordinates, slugs, metadata wording, weather data, API behavior, routing semantics or MGM semantics changed. `git diff --check` passes locally; hosted build/test/browser/Lighthouse/CodeQL remain mandatory because Node/npm are unavailable on this host.
+
+## 2026-09-03 07:48 TRT — keep first-view weather evidence readable
+- Continued from exact main 7e131404ffda4e1dcedaac62538a7075965c9201 after #755 merged while its production pipeline remained in progress.
+- The first-view city/current-weather identity line still rendered observation time, provider and freshness at 0.75rem (12px), even though these fields define the provenance and recency of the evidence used by Hava81 decisions.
+- Raised only .hava81-decision-field__atlas-meta to the shared 13px-equivalent functional-copy floor and added a source regression locking that floor. No weather value, timestamp, provider, freshness computation, score, recommendation, API behavior or MGM semantics changed.
+- git diff --check passes. Node/npm exist on the host, but this fresh worktree intentionally has no node_modules because root disk pressure remains active; exact-head hosted frontend/unit/browser/build/Lighthouse/CodeQL gates are therefore mandatory before merge.

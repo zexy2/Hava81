@@ -86,7 +86,7 @@
   flex-wrap: wrap;
   gap: 4px 8px;
   color: var(--decision-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums lining-nums;
   line-height: 1.4;

@@ -1186,3 +1186,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Production city-page generation fails closed unless the canonical dataset yields exactly 81 unique province names and 81 non-empty unique slugs.
 
 **Why:** Hava81's product and SEO surface promises all 81 provinces. Silent extraction loss or a slug collision could otherwise produce a successful build with a missing/overwritten city shell, so completeness belongs in the generator's build-time trust boundary.
+
+### 2026-09-03 07:48 TRT — first-view provider and freshness are functional evidence
+
+**Decision:** The current-weather identity line that exposes observation time, provider and freshness renders at least at the 13px-equivalent functional-copy floor.
+
+**Why:** These fields tell users when the evidence was observed, who supplied it, and whether it is stale. They are part of Hava81's trust boundary rather than decorative metadata; increasing only their presentation size improves first-viewport scanability without changing weather or decision semantics.
