@@ -373,8 +373,8 @@ export const tr = {
         heat: 'Sıcağa hassasım',
         help: {
           balanced: 'Standart konfor aralıkları kullanılır.',
-          cold: 'Soğuk uyarıları yaklaşık {{value}}{{unit}} daha erken başlar.',
-          heat: 'Sıcak uyarıları yaklaşık {{value}}{{unit}} daha erken başlar.',
+          cold: 'Soğuk kaynaklı puan düşüşleri yaklaşık {{value}}{{unit}} daha erken başlar.',
+          heat: 'Sıcak kaynaklı puan düşüşleri yaklaşık {{value}}{{unit}} daha erken başlar.',
         },
       },
     },
