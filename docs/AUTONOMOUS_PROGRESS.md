@@ -3231,3 +3231,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a fail-closed readiness calculation that blocks on production/host health, GitHub state, frontend/main/API rollout pending or unknown state, and preferred API-port drift while keeping `mode=read-only-observer` and `writes_repository=false`.
 - Added explicit blocking reasons so future autonomous runs can distinguish a real gate from the observer's read-only implementation.
 - Validation: Python compile, 42/42 observer tests, and `git diff --check` pass. No production mutation, weather semantics, provider choice, API runtime, or deploy topology changed.
+
+
+## 2026-09-04 00:30 TRT — refresh flat mobile navigation onto current main
+- Reconstructed PR #855 from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59` after prior autonomous documentation diverged. Replayed only the bounded bottom-navigation CSS and regression onto current main.
+- The fixed mobile navigation keeps its solid paper surface, top divider, accent/weight/underline active affordance, 44px+ targets, safe-area padding and forced-colors behavior while removing blur, elevated shadow, filled active tile and icon scale.
+- `git diff --check` and a dependency-free static contract pass. Fresh exact-head hosted CI/CD + CodeQL remain mandatory before merge. No navigation behavior, weather data, scoring, provider/freshness, API or MGM semantics changed.
