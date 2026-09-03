@@ -64,10 +64,8 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__source'))).toBeGreaterThanOrEqual(0.8125);
   });
 
-  it('keeps Activity Planner score qualifiers at or above the 11px-equivalent floor', () => {
-    expectReadableFunctionalMicrotype(
-      'src/components/hava81/ActivityPlanner.css',
-      '.activity-card__score small'
-    );
+  it('keeps Activity Planner score qualifiers at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/ActivityPlanner.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.activity-card__score small'))).toBeGreaterThanOrEqual(0.8125);
   });
 });

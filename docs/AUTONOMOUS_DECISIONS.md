@@ -1204,3 +1204,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** GitHub Actions production builds stamp the full commit revision into root and generated city HTML, and deploy verification requires that exact revision on public root and İstanbul shells.
 
 **Why:** A healthy HTTP response or even a coherent prior-generation shell does not prove which commit is live. Hava81 operations require “merged” and “production-verified” to remain distinct; an inert build-revision meta tag gives direct, machine-readable deployment provenance without changing user-facing content or runtime weather behavior.
+
+### 2026-09-03 08:04 TRT — score context must compete visually with the Activity Planner number
+
+**Decision:** The Activity Planner time-window/band qualifier beside each numeric score renders at least at the 13px-equivalent functional-copy floor.
+
+**Why:** A large `/100` value without equally readable context can look like an unexplained absolute judgment. The existing qualifier tells users which planning window and qualitative band the number represents; increasing only its presentation hierarchy improves interpretation without changing the score model.
