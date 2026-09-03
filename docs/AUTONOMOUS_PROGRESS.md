@@ -3047,3 +3047,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Generated province shells still described every one of Türkiye's 81 il pages as Schema.org City objects, even though Hava81's canonical product/SEO scope is the province-level administrative area rather than a municipality boundary.
 - Changed only generated structured-data identity to AdministrativeArea contained in Country Türkiye and added a focused source contract preventing a regression back to City. Titles, canonical URLs, visible copy, province names/slugs, coordinates, weather requests and recommendations are unchanged.
 - Node syntax, git diff --check and hosted exact-head quality/build/browser/CodeQL gates remain required before merge.
+
+
+## 2026-09-03 11:16 TRT — make stale-browser observation work under systemd hardening
+- Fresh observer state after #768 reported browser-process state as unknown with ps exited 102; direct interactive ps remained healthy, isolating the failure to the observer hardened process view rather than a host-wide procps failure.
+- Kept ProtectProc=invisible and added a read-only /proc fallback that uses Linux CLOCK_BOOTTIME plus same-visible process cmdline/comm/stat/status, filters only /tmp/hava81-* Chromium/Chrome/Playwright processes, preserves the two-hour threshold and bounded output, and skips raced/inaccessible process entries.
+- Exact systemd reproduction confirmed procps ps fails under ProtectProc=invisible + ProcSubset=pid because procps cannot see the proc mount shape it expects; the fallback was then exercised under those same transient-unit restrictions and returned a known healthy state without relaxing hardening.
+- Added regressions for ps failure fallback and synthetic /proc elapsed-time parsing. Observer suite passes 36/36, compile and git diff --check pass. No production health classification, disk threshold, weather/API/frontend behavior or process mutation changed.

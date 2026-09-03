@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import pwd
 import re
 import ssl
 import subprocess
@@ -265,6 +266,81 @@ def collect_production() -> dict[str, Any]:
     }
 
 
+def _browser_process_state(stale: list[dict[str, Any]]) -> dict[str, Any]:
+    stale.sort(key=lambda item: item['elapsed_seconds'], reverse=True)
+    return {
+        'known': True,
+        'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
+        'stale_count': len(stale),
+        'processes': stale[:MAX_STALE_BROWSER_PROCESSES_REPORTED],
+        'error': None,
+    }
+
+
+def collect_hava81_browser_processes_from_proc(
+    proc_root: Path = Path('/proc'), boot_seconds: float | None = None
+) -> dict[str, Any]:
+    try:
+        if boot_seconds is None:
+            boot_seconds = time.clock_gettime(time.CLOCK_BOOTTIME)
+        clock_ticks = int(os.sysconf('SC_CLK_TCK'))
+    except (OSError, ValueError) as exc:
+        return {
+            'known': False,
+            'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
+            'stale_count': 0,
+            'processes': [],
+            'error': f'{type(exc).__name__}: {exc}',
+        }
+
+    stale: list[dict[str, Any]] = []
+    try:
+        entries = list(proc_root.iterdir())
+    except OSError as exc:
+        return {
+            'known': False,
+            'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
+            'stale_count': 0,
+            'processes': [],
+            'error': f'{type(exc).__name__}: {exc}',
+        }
+
+    for entry in entries:
+        if not entry.name.isdigit():
+            continue
+        try:
+            args = (entry / 'cmdline').read_bytes().replace(b'\0', b' ').decode('utf-8', errors='replace').strip()
+            if '/tmp/hava81-' not in args:
+                continue
+            command = (entry / 'comm').read_text(encoding='utf-8').strip()
+            browser_identity = f'{command} {args}'.lower()
+            if not any(token in browser_identity for token in ('chromium', 'chrome', 'playwright')):
+                continue
+            stat = (entry / 'stat').read_text(encoding='utf-8')
+            stat_fields = stat[stat.rfind(')') + 2 :].split()
+            start_ticks = int(stat_fields[19])
+            elapsed_seconds = max(0, int(boot_seconds - (start_ticks / clock_ticks)))
+            if elapsed_seconds < HAVA81_BROWSER_STALE_SECONDS:
+                continue
+            status = (entry / 'status').read_text(encoding='utf-8')
+            uid_line = next(line for line in status.splitlines() if line.startswith('Uid:'))
+            uid = int(uid_line.split()[1])
+            try:
+                user = pwd.getpwuid(uid).pw_name
+            except KeyError:
+                user = str(uid)
+        except (OSError, ValueError, IndexError, StopIteration):
+            continue
+        stale.append({
+            'pid': int(entry.name),
+            'user': user,
+            'command': command,
+            'elapsed_seconds': elapsed_seconds,
+        })
+
+    return _browser_process_state(stale)
+
+
 def collect_hava81_browser_processes() -> dict[str, Any]:
     try:
         result = subprocess.run(
@@ -274,23 +350,11 @@ def collect_hava81_browser_processes() -> dict[str, Any]:
             timeout=2.0,
             check=False,
         )
-    except (OSError, subprocess.SubprocessError) as exc:
-        return {
-            'known': False,
-            'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
-            'stale_count': 0,
-            'processes': [],
-            'error': f'{type(exc).__name__}: {exc}',
-        }
+    except (OSError, subprocess.SubprocessError):
+        return collect_hava81_browser_processes_from_proc()
 
     if result.returncode != 0:
-        return {
-            'known': False,
-            'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
-            'stale_count': 0,
-            'processes': [],
-            'error': f'ps exited {result.returncode}',
-        }
+        return collect_hava81_browser_processes_from_proc()
 
     stale: list[dict[str, Any]] = []
     for raw_line in result.stdout.splitlines():
@@ -317,14 +381,7 @@ def collect_hava81_browser_processes() -> dict[str, Any]:
             'elapsed_seconds': elapsed_seconds,
         })
 
-    stale.sort(key=lambda item: item['elapsed_seconds'], reverse=True)
-    return {
-        'known': True,
-        'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
-        'stale_count': len(stale),
-        'processes': stale[:MAX_STALE_BROWSER_PROCESSES_REPORTED],
-        'error': None,
-    }
+    return _browser_process_state(stale)
 
 
 def collect_host() -> dict[str, Any]:
