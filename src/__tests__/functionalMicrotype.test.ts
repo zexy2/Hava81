@@ -140,6 +140,13 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__range-button'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps Forecast Atlas first-precipitation annotation at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/ForecastAtlas.css', 'utf8');
+    expect(
+      remFontSize(cssRule(css, '.hava81-forecast-atlas__precipitation-marker text'))
+    ).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps Activity Planner score qualifiers at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/ActivityPlanner.css', 'utf8');
     expect(remFontSize(cssRule(css, '.activity-card__score small'))).toBeGreaterThanOrEqual(0.8125);

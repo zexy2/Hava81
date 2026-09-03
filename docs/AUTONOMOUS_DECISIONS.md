@@ -1312,3 +1312,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Dust and pollen measurement units in Context Signals render at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** A measurement without a legible unit can be misread and weaken the evidence attached to Hava81 guidance. Enlarging only the unit label improves interpretation without changing any measured value, threshold, provider, or recommendation logic.
+
+### 2026-09-03 16:18 TRT — first-precipitation percentage is functional forecast evidence
+
+**Decision:** The Forecast Atlas first-precipitation percentage renders at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** The annotation identifies where precipitation first enters the visible forecast horizon and directly supports action timing. Making it readable improves scanability without changing precipitation data or guidance semantics.
