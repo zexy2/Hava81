@@ -1,0 +1,16 @@
+/* Performance experiment: keep lower decision tools mounted and semantic while
+   allowing Chromium to skip offscreen style/layout/paint work until approached. */
+.atlas-dashboard > .activity-planner {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 36rem;
+}
+
+.atlas-dashboard > .context-signals {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 18rem;
+}
+
+.atlas-dashboard > .decision-alerts {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 24rem;
+}
