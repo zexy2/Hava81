@@ -21,6 +21,16 @@ describe('functional microtype readability', () => {
     expectReadableFunctionalMicrotype('src/components/CityTabs.css', '.city-tabs__plate');
   });
 
+  it('keeps Daily Plan decision labels at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/DailyPlanPanel.css', 'utf8');
+    expect(
+      remFontSize(cssRule(css, '.daily-plan__decision > span,\n.daily-plan__quick span'))
+    ).toBeGreaterThanOrEqual(0.8125);
+    expect(
+      remFontSize(cssRule(css, '.daily-plan__explain-head span,\n.daily-plan__explain-head small'))
+    ).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps Daily Plan score band context at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/DailyPlanPanel.css', 'utf8');
     expect(remFontSize(cssRule(css, '.daily-plan__score small'))).toBeGreaterThanOrEqual(0.8125);
