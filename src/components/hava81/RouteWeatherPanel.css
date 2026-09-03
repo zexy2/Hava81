@@ -150,9 +150,9 @@
 }
 .route-weather__score small {
   color: var(--color-atlas-muted);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   font-weight: 650;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 .route-weather__score strong {
   font-family: var(--font-display);
