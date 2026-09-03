@@ -1105,3 +1105,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Browser notification titles for umbrella guidance must name Hava81 and describe the item as guidance rather than an unqualified `warning` / `alert`.
 
 **Why:** Notification trays can show a title while truncating or hiding the body-level MGM disclosure. Carrying the modeled-guidance boundary into the title itself prevents Hava81 precipitation guidance from being mistaken for an official MGM warning without changing any precipitation threshold, evidence, freshness rule, or delivery behavior.
+
+### 2026-09-03 04:05 TRT — wait notification titles name the weather scope
+
+**Decision:** Detached browser-notification titles that recommend waiting must explicitly say the improvement is weather-based.
+
+**Why:** The underlying comparison scores meteorological evidence only. Notification trays can display the title apart from its body, so `Waiting looks better` / `Biraz beklersen daha iyi` can overstate a general lifestyle recommendation unless the title carries the weather boundary itself.

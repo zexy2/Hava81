@@ -2901,3 +2901,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued on an isolated exact-main worktree while #725 reran exact-head hosted gates after rebase.
 - Audited Decision Alerts delivery and confirmed the notification body already says Hava81 modeled guidance is not official MGM MeteoUyarı, but the detached OS title still rendered `Şemsiye uyarısı` / `Umbrella alert`. Notification trays may truncate the body, leaving that title without its provenance boundary.
 - Changed only the rain notification title to `Hava81 şemsiye rehberi` / `Hava81 umbrella guidance` and added a delivery regression requiring the title itself to carry Hava81 provenance. Rain thresholds, hourly evidence, freshness, priority, dedupe signature, permission flow, notification body disclosure and MGM handling are unchanged.
+
+## 2026-09-03 04:05 TRT — weather-scope the wait-improvement notification title
+- Continued from exact main `b46466102266772aa18d85c4d8cfa3bff8ab2739` in a separate worktree while #726 exact-head gates ran.
+- Audited detached Decision Alert titles and found the wait candidate still said `Biraz beklersen daha iyi` / `Waiting looks better`, although its score comparison is meteorological only and the notification body may be truncated in the OS tray.
+- Tightened only that title to `Hava açısından beklemek daha iyi` / `Weather looks better if you wait` and added a localization regression locking the evidence-domain boundary. No score, improvement threshold, selected time, forecast evidence, freshness, provider, notification priority, or delivery behavior changed.

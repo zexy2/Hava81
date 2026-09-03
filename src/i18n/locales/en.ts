@@ -433,7 +433,7 @@ export const en = {
       airTitle: '{{city}} · Poor air quality',
       airBody:
         'Current air quality is poor in the Hava81 decision layer; reconsider prolonged outdoor plans.',
-      waitTitle: '{{city}} · Waiting looks better',
+      waitTitle: '{{city}} · Weather looks better if you wait',
       waitBody: 'The weather score improves by about {{improvement}} points in the next hours.',
       difficultTitle: '{{city}} · Difficult weather',
       difficultBody:
