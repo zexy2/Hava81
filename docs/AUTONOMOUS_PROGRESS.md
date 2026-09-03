@@ -3091,3 +3091,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Activity Planner displayed each numeric activity score with a `/100` scale at 11.2px-equivalent; the adjacent score band was already protected by the 13px functional-copy floor.
 - Raised only the `/100` score-unit span to 13px-equivalent and extended the existing Activity Planner microtype regression.
 - No activity scoring, weather windows, profile settings, forecast evidence, API or MGM semantics changed. Existing activity 200% text-size browser coverage remains the reflow guard.
+
+## 2026-09-03 13:20 TRT — keep comparison score scale readable
+- Continued independently from last confirmed-production main `a57c499d1ea6950886824144637418da83de5f6b` while post-#785 main rollout runs.
+- Saved-city comparison displayed each Hava81 score with a `/100` scale at 11.2px-equivalent even though the adjacent band qualifier already uses the 13px functional-copy floor.
+- Raised only `.hava81-compare__score span` to 13px-equivalent and extended the existing comparison microtype regression.
+- No comparison scoring, winner selection, weather metrics, freshness, API or MGM semantics changed. Existing comparison 200% text-size browser coverage remains the reflow guard.
