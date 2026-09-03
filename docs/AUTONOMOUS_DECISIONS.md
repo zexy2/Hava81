@@ -1417,3 +1417,6 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ### 2026-09-04 00:37 TRT — status output exposes readiness and observer capability separately
 - The human-readable worker status must print both merge/deploy readiness and `writes_repository`; hiding either recreates the ambiguity fixed in the observer schema.
 - Blocking reasons are part of the status line so autonomous/operator decisions can fail closed without parsing raw state JSON.
+### 2026-09-04 00:33 TRT — runner regressions prove owned signal semantics
+- Process-group shutdown tests should assert the signals Hava81 sends and the cleanup Hava81 owns, rather than treating OS PID disappearance timing as part of the contract.
+- Keep production runner code unchanged unless a separately reproduced runtime defect requires it.
