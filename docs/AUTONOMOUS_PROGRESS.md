@@ -3103,3 +3103,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited remaining sub-13px functional copy and found dust/pollen measurement units inside Context Signals still rendered at 11px-equivalent, despite being required to interpret the displayed modeled values.
 - Raised only `.context-signal > strong small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - Existing `mobile context signals reflow at 200 percent text size` browser coverage remains the layout guard. No UV, pollen, dust, marine value, provider/freshness, API, MGM, or recommendation semantics changed.
+
+## 2026-09-03 16:18 TRT — keep first-precipitation annotation readable
+- Continued independently from exact main `3a15eadbaf3a89a4fc48442f00dd3ce729aebdc3` while PR #807/#808 remain green but the host disk-pressure merge gate is active.
+- Forecast Atlas still rendered the first non-zero precipitation annotation inside the chart at 12px even though the percentage is decision evidence that tells users where rain first appears in the visible horizon.
+- Raised only `.hava81-forecast-atlas__precipitation-marker text` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
+- No precipitation probability, timing, forecast values, interpolation, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Local diff/static checks pass; exact-head hosted CI/CodeQL remain mandatory before merge.

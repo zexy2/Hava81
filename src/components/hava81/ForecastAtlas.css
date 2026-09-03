@@ -340,7 +340,7 @@
 .hava81-forecast-atlas__precipitation-marker text {
   fill: var(--forecast-ink);
   font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
-  font-size: 12px;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums lining-nums;
 }
