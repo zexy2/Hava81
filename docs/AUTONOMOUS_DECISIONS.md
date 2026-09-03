@@ -1338,3 +1338,15 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Hourly and daily Forecast Atlas section headings render at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** These h3 headings separate the primary forecast views and support scan hierarchy. Making them readable improves navigation without changing any forecast or guidance semantics.
+
+### 2026-09-03 18:58 TRT — product section kickers are functional navigation copy
+
+**Decision:** Shared Atlas kicker labels for decision modules render at least at the 13px-equivalent functional-copy floor.
+
+**Why:** They identify the module users are about to scan or act on. A readable shared floor improves hierarchy consistently without changing underlying weather or decision semantics.
+
+### 2026-09-03 19:47 TRT — preserve readable kickers by reclaiming mobile header spacing
+
+**Decision:** At <=26rem, the stacked Daily Plan header uses the shared extra-small gap while keeping the 13px-equivalent module kicker.
+
+**Why:** Hosted browser measurement showed the readable kicker pushed the 390px/200% text header only 1.34px beyond the existing 450px density guard. Reducing inter-block whitespace rather than shrinking functional text preserves accessibility and restores the bounded mobile layout.

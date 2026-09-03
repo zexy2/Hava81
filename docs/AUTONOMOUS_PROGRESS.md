@@ -3129,3 +3129,14 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast Atlas hourly and daily section headings remained at 12px-equivalent even though they are semantic h3 headings that separate the two primary forecast views.
 - Raised only `.hava81-forecast-atlas__section-title` to the shared 13px-equivalent functional-copy floor and extended the central microtype regression.
 - No forecast values, horizon selection, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
+
+## 2026-09-03 18:58 TRT — keep product section kickers readable
+- Continued independently from exact main `c0059150f6424bdbe5d1222714efbb04840e7e65` while its production rollout and PR #835/#837 validation proceed.
+- Shared `atlas-kicker` labels across Daily Plan, Commute, Activities, Context Signals, Alerts, Compare and Route remained at 12px-equivalent despite identifying each decision module.
+- Raised only the shared kicker copy to the 13px-equivalent functional-copy floor and added a central regression. Existing responsive/browser coverage remains the reflow guard.
+- No weather values, provider/freshness behavior, scoring, route logic, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
+
+## 2026-09-03 19:47 TRT — recover Daily Plan mobile density without shrinking functional copy
+- PR #838 exact-head browser CI deterministically measured the 390px/200% text Daily Plan header at 451.34375px against the existing <450px guard; the separate skip-link failure passed on retry and is classified as flaky rather than the blocking regression.
+- Kept the new 13px-equivalent shared `atlas-kicker` floor and reduced only the <=26rem stacked Daily Plan header gap from the shared small token to the shared extra-small token, reclaiming 4px of vertical whitespace.
+- No score, recommendation, weather evidence, provider/freshness, API, MGM, route, or notification semantics changed. The exact browser guard must pass on the rebased head before merge.
