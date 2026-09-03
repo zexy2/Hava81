@@ -1402,3 +1402,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Optional forecast `sourceUrl` metadata must parse as an absolute HTTPS URL before it can enter the normalized frontend forecast model.
 
 **Why:** Forecast Atlas turns this metadata into an interactive link. Failing closed at the BFF/browser boundary prevents malformed or unsafe schemes from becoming UI navigation while preserving the legitimate Open-Meteo attribution contract.
+
+
+### 2026-09-04 00:18 TRT — observer readiness describes environment safety, not observer permissions
+- `worker.can_merge_or_deploy` is an operational decision signal. It must be derived from current production/host/GitHub/deployment state rather than hard-coded false merely because the observer itself is read-only.
+- The observer remains strictly read-only (`writes_repository=false`); mutations are still performed only by an authorized autonomous run after direct exact-head and production re-verification.
+- Readiness fails closed when production/host/GitHub state is unhealthy or unknown, a main/frontend/API rollout is pending, API deployment state is unknown, or the preferred API port has drifted.

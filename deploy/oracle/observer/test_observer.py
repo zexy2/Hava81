@@ -752,6 +752,51 @@ class ObserverFrontendDeploymentStateTests(unittest.TestCase):
         self.assertFalse(state['pending'])
 
 
+class ObserverMergeDeployReadinessTests(unittest.TestCase):
+    def healthy_inputs(self):
+        return (
+            {'healthy': True, 'nginx': {'preferred_ok': True}},
+            {'healthy': True, 'disk': {'ok': True}},
+            {
+                'ok': True,
+                'signals': {
+                    'main_pipeline_pending': False,
+                    'api_deploy_pending': False,
+                    'api_deploy_unknown': False,
+                },
+            },
+            {'pending': False},
+        )
+
+    def test_reports_environment_ready_without_granting_observer_write_access(self) -> None:
+        result = observer.merge_deploy_readiness(*self.healthy_inputs())
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['blocking_reasons'], [])
+
+    def test_blocks_when_host_disk_is_outside_hard_gate(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        host = {'healthy': False, 'disk': {'ok': False}}
+        result = observer.merge_deploy_readiness(production, host, github, frontend)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['host_unhealthy'])
+
+    def test_blocks_while_main_or_frontend_rollout_is_pending(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        github['signals']['main_pipeline_pending'] = True
+        frontend = {'pending': True}
+        result = observer.merge_deploy_readiness(production, host, github, frontend)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['frontend_deploy_pending', 'main_pipeline_pending'])
+
+    def test_blocks_when_github_or_api_deploy_state_is_unknown(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        github['ok'] = False
+        github['signals']['api_deploy_unknown'] = True
+        result = observer.merge_deploy_readiness(production, host, github, frontend)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['github_state_unknown', 'api_deploy_unknown'])
+
+
 class ObserverStateSignatureTests(unittest.TestCase):
     def test_frontend_revision_transition_creates_a_change_event(self) -> None:
         base = {

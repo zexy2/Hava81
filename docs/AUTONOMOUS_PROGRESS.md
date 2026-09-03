@@ -3224,3 +3224,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast metadata can supply `sourceUrl`, which Forecast Atlas renders as a clickable provider attribution link. The browser boundary validated provider/freshness/timezone fields but accepted any source URL string, so a malformed or unsafe scheme could reach an interactive link if the BFF contract were violated.
 - Forecast metadata validation now accepts optional source links only when they parse as absolute HTTPS URLs; malformed/non-HTTPS values fail closed through the existing retryable invalid-forecast path. The production Open-Meteo source remains valid.
 - Added a focused regression for a `javascript:` attribution URL. `git diff --check` passes; dependency-heavy local tests/build remain deferred while the host disk hard gate is active, so exact-head hosted CI/CD and CodeQL are required before merge. No forecast/weather value, provider attribution text, freshness, scoring, MGM or recommendation semantics changed.
+
+
+## 2026-09-04 00:18 TRT — make observer merge/deploy readiness actionable
+- Fresh observer showed root disk back inside the configured hard gate (about 91.8% used) and production healthy, while `worker.can_merge_or_deploy` still remained permanently false because the field was hard-coded to describe observer write capability rather than environment readiness.
+- Added a fail-closed readiness calculation that blocks on production/host health, GitHub state, frontend/main/API rollout pending or unknown state, and preferred API-port drift while keeping `mode=read-only-observer` and `writes_repository=false`.
+- Added explicit blocking reasons so future autonomous runs can distinguish a real gate from the observer's read-only implementation.
+- Validation: Python compile, 42/42 observer tests, and `git diff --check` pass. No production mutation, weather semantics, provider choice, API runtime, or deploy topology changed.
