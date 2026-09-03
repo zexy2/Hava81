@@ -93,6 +93,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.route-weather__form label'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps route planning hint at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/RouteWeatherPanel.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.route-weather__hint'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps route segment timing and condition context at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/RouteWeatherPanel.css', 'utf8');
     expect(remFontSize(cssRule(css, '.route-segment time,\n.route-segment small'))).toBeGreaterThanOrEqual(0.8125);
