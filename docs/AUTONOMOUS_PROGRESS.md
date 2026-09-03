@@ -3103,3 +3103,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited remaining sub-13px functional copy and found dust/pollen measurement units inside Context Signals still rendered at 11px-equivalent, despite being required to interpret the displayed modeled values.
 - Raised only `.context-signal > strong small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - Existing `mobile context signals reflow at 200 percent text size` browser coverage remains the layout guard. No UV, pollen, dust, marine value, provider/freshness, API, MGM, or recommendation semantics changed.
+
+## 2026-09-03 16:32 TRT — keep Settings language cues readable
+- Continued independently from exact main `f9bc47b2c99bfa465549cb7761b87846871caf02` while the main rollout and other exact-head PR gates run.
+- The compact TR/EN language cue inside Settings still rendered at 11px-equivalent even though it identifies the language choice users are about to select.
+- Raised only `.settings-option__flag` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
+- No locale selection, translations, persistence, theme behavior, weather values, provider/freshness behavior, API, or MGM semantics changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
