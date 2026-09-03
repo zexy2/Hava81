@@ -30,6 +30,22 @@ const slugify = name =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+
+const expectedProvinceCount = 81;
+const uniqueNames = new Set(names);
+const slugs = names.map(slugify);
+const uniqueSlugs = new Set(slugs);
+if (names.length !== expectedProvinceCount || uniqueNames.size !== expectedProvinceCount) {
+  throw new Error(
+    `Expected exactly ${expectedProvinceCount} unique Turkish provinces, found ${names.length} entries / ${uniqueNames.size} unique names`
+  );
+}
+if (uniqueSlugs.size !== expectedProvinceCount || slugs.some(slug => !slug)) {
+  throw new Error(
+    `Expected exactly ${expectedProvinceCount} non-empty unique city slugs, found ${uniqueSlugs.size}`
+  );
+}
+
 const baseUrl = 'https://hava81.zekiakgul.dev';
 const apiBaseUrl = 'https://api.hava81.zekiakgul.dev/api/v1';
 const weatherCacheMaxAgeMs = 5 * 60 * 1000;
