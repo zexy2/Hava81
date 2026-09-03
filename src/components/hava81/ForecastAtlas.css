@@ -277,7 +277,7 @@
   border-radius: 5px;
   color: var(--forecast-muted);
   background: color-mix(in srgb, var(--forecast-field) 88%, transparent);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums lining-nums;
