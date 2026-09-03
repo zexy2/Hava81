@@ -356,7 +356,13 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
         })}
       </div>
 
-      <p className="daily-plan__note">{t('hava81.dailyPlan.note')}</p>
+      <footer className="daily-plan__notes">
+        <p className="daily-plan__safety">{t('hava81.dailyPlan.safetyNote')}</p>
+        <details className="daily-plan__method">
+          <summary>{t('hava81.dailyPlan.methodDetails')}</summary>
+          <p>{t('hava81.dailyPlan.note')}</p>
+        </details>
+      </footer>
     </section>
   );
 }

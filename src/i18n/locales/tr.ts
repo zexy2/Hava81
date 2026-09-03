@@ -249,7 +249,9 @@ export const tr = {
         severeWeather: 'Şiddetli hava riski',
         clear: 'Belirgin hava riski yok',
       },
-      note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Güncel hava kalitesi yalnız geçerli saat diliminde hesaba katılır; gelecekteki saatlere kopyalanmaz. Bir veri alanı yoksa kalan doğrulanmış sinyallerle daha düşük veri kapsamıyla hesaplanır; güvenlik garantisi değildir.',
+      safetyNote: 'Yalnız hava koşullarına dayalı karar desteğidir; güvenlik garantisi değildir.',
+      methodDetails: 'Veri kapsamı ve yöntem',
+      note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Güncel hava kalitesi yalnız geçerli saat diliminde hesaba katılır; gelecekteki saatlere kopyalanmaz. Bir veri alanı yoksa kalan doğrulanmış sinyallerle daha düşük veri kapsamıyla hesaplanır.',
     },
     commute: {
       eyebrow: 'Kişisel rutin',

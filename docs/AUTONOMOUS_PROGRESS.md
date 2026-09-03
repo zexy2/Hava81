@@ -3195,3 +3195,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Static CSS review found `.daily-plan__slot > span { font-size: 0.78rem }` overriding the nominal 0.8125rem local-day boundary label because the generic child selector has higher specificity. The effective boundary/time copy therefore fell below the established 13px-equivalent functional floor.
 - Raised the generic slot-time declaration to 0.8125rem and expanded the existing microtype regression so both the generic slot time and boundary declaration are guarded.
 - No forecast values, scoring, provider attribution, MGM semantics, API behavior, navigation behavior, or layout structure changed. Hosted exact-head lint/type/unit/build/browser/Lighthouse/CodeQL remains required before merge because local dependency installation is intentionally avoided while the host disk hard gate is breached.
+
+## 2026-09-03 23:41 TRT — compress Daily Plan methodology without hiding the safety boundary
+- Continued from exact main `9ded469438404520344580f7167e139165992d6a` after PR #848 raised Daily Plan slot-time microtype to the functional floor.
+- Live baseline audit showed the always-expanded Daily Plan note consumed about 152px at 390px and about 911px at 320px with 200% text. The content is important, but the full paragraph does not need to occupy the default scan path because score mechanics are already summarized above it.
+- Split the note into an always-visible safety sentence plus a native `details/summary` disclosure for the complete signal/data-coverage method. Turkish and English remain equivalent; no score thresholds, weather evidence, recommendation logic or safety semantics changed.
+- Real Chromium measurement after the patch: collapsed notes ≈94.6px at 390px and ≈307.8px at 320px/200%; expanded detail remains available (≈257.6px at normal 390px). No page-width overflow.
+- Added component and Playwright regressions for default-collapsed semantics, visible safety copy, expansion, 44px summary affordance path and narrow 200% density.

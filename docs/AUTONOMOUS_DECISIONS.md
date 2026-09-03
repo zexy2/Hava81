@@ -1384,3 +1384,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Raise `.daily-plan__slot > span` from `0.78rem` to `0.8125rem` and regression-test the generic slot-time rule alongside the local-day boundary declaration.
 
 **Why:** The generic child-span selector is more specific than `.daily-plan__slot-day`, so its 0.78rem declaration wins the cascade for both ordinary slot times and the nested “tomorrow” boundary label despite the boundary class declaring 0.8125rem. Keeping the generic rule at the functional-copy floor fixes the computed result without adding selector overrides or changing weather semantics.
+
+### 2026-09-03 23:41 TRT — Daily Plan keeps safety visible while method detail is disclosed on demand
+
+**Decision:** Keep the weather-only safety boundary visible at all times, but move the long score signal/data-coverage explanation into a native <details> disclosure labelled “Veri kapsamı ve yöntem” / “Data coverage and method”.
+
+**Why:** The always-expanded methodology paragraph duplicated information hierarchy already established by the score-breakdown surface and consumed disproportionate mobile space, especially at 200% text size. Native disclosure preserves every methodological detail, keyboard/screen-reader semantics and a 44px interactive target while making the default planning flow materially easier to scan.

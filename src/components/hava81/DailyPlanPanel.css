@@ -211,10 +211,68 @@
   line-height: 1.35;
 }
 
-.daily-plan__note {
+.daily-plan__notes {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.daily-plan__safety {
+  max-width: 72ch;
   margin: 0;
   color: var(--color-atlas-muted);
   font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.daily-plan__method {
+  min-width: 0;
+  border-block: 1px solid var(--color-atlas-line);
+}
+
+.daily-plan__method summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  color: var(--color-aegean);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.daily-plan__method summary::-webkit-details-marker {
+  display: none;
+}
+
+.daily-plan__method summary::after {
+  content: '+';
+  flex: 0 0 auto;
+  color: var(--color-atlas-muted);
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.daily-plan__method[open] summary::after {
+  content: '−';
+}
+
+.daily-plan__method summary:focus-visible {
+  outline: 2px solid var(--color-atlas-focus, var(--color-aegean));
+  outline-offset: 2px;
+}
+
+.daily-plan__method p {
+  max-width: 76ch;
+  margin: 0;
+  padding: 0 0 var(--space-md);
+  color: var(--color-atlas-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 47.99rem) {
@@ -545,7 +603,7 @@
     grid-area: slots;
   }
 
-  .daily-plan__note {
+  .daily-plan__notes {
     grid-area: note;
   }
 }
