@@ -94,4 +94,8 @@ describe('functional microtype readability', () => {
     const css = readFileSync('src/components/hava81/ActivityPlanner.css', 'utf8');
     expect(remFontSize(cssRule(css, '.activity-card__score small'))).toBeGreaterThanOrEqual(0.8125);
   });
+  it('keeps Environment Rail evidence labels at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/EnvironmentRail.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.environment-rail__label'))).toBeGreaterThanOrEqual(0.8125);
+  });
 });
