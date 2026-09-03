@@ -25,7 +25,7 @@
 .context-signals__source {
   max-width: 32rem;
   padding: 0;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   text-align: right;
 }
@@ -76,7 +76,7 @@
 }
 .context-signals__note {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 @media (max-width: 63.99rem) {
   .context-signals__grid {
