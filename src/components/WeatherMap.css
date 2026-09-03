@@ -65,9 +65,9 @@
   border: 1px solid #fff;
   border-radius: 2px;
   box-shadow: 0 3px 12px rgb(14 44 50 / 0.18);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 650;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 
 .weather-map__popup .leaflet-popup-content-wrapper,

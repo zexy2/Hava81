@@ -4398,8 +4398,17 @@ test('mobile map province marker previews the city before switching views', asyn
   await expect(bursaMarker).toBeVisible();
   const markerBounds = await bursaMarker.boundingBox();
   const mapBounds = await page.locator('.weather-map__container').boundingBox();
+  const markerReadability = await bursaMarker.locator('span').evaluate(element => {
+    const html = element as HTMLElement;
+    return {
+      fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+      fits: html.scrollWidth <= html.clientWidth + 1 && html.scrollHeight <= html.clientHeight + 1,
+    };
+  });
   expect(markerBounds).not.toBeNull();
   expect(mapBounds).not.toBeNull();
+  expect(markerReadability.fontSize).toBeGreaterThanOrEqual(13);
+  expect(markerReadability.fits).toBe(true);
   expect(markerBounds!.x).toBeGreaterThanOrEqual(mapBounds!.x);
   expect(markerBounds!.y).toBeGreaterThanOrEqual(mapBounds!.y);
   expect(markerBounds!.x + markerBounds!.width).toBeLessThanOrEqual(mapBounds!.x + mapBounds!.width);
