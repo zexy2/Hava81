@@ -206,7 +206,8 @@
 .route-segment time,
 .route-segment small {
   color: var(--color-atlas-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 .route-weather__disclaimer {
   color: var(--color-atlas-muted);
