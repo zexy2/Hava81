@@ -1192,3 +1192,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The current-weather identity line that exposes observation time, provider and freshness renders at least at the 13px-equivalent functional-copy floor.
 
 **Why:** These fields tell users when the evidence was observed, who supplied it, and whether it is stale. They are part of Hava81's trust boundary rather than decorative metadata; increasing only their presentation size improves first-viewport scanability without changing weather or decision semantics.
+
+### 2026-09-03 07:52 TRT — comparison qualifiers are decision-support copy
+
+**Decision:** Comparison winner/tie helper copy and per-city daily-plan band qualifiers render at least at the 13px-equivalent functional-copy floor.
+
+**Why:** These labels tell users how to interpret the comparison result and score quality. They are functional decision context, not decorative microtype; increasing only their presentation size preserves comparison calculations and weather semantics.
