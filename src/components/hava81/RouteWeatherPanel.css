@@ -204,10 +204,14 @@
   border-top-color: var(--color-vermilion);
 }
 .route-segment time,
-.route-segment small,
-.route-weather__disclaimer {
+.route-segment small {
   color: var(--color-atlas-muted);
   font-size: 0.72rem;
+}
+.route-weather__disclaimer {
+  color: var(--color-atlas-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
 }
 .route-weather__error {
   color: var(--color-vermilion);
