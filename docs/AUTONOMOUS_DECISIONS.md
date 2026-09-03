@@ -1379,3 +1379,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Below desktop width, keep the four Weather Decision metrics in one compact editorial row when space and text size allow, using a rem-based minimum track so enlarged text automatically reflows to fewer columns instead of shrinking copy or overflowing.
 
 **Why:** On the 390px production viewport the decision surface consumed most of the first screen and delayed the Forecast Atlas. The metrics are scan data, not four separate cards; a compact matrix improves first-viewport hierarchy while preserving every value and allowing 200% text to reflow safely.
+### 2026-09-03 22:01 TRT — Daily Plan time labels use the functional 13px floor
+
+**Decision:** Raise `.daily-plan__slot > span` from `0.78rem` to `0.8125rem` and regression-test the generic slot-time rule alongside the local-day boundary declaration.
+
+**Why:** The generic child-span selector is more specific than `.daily-plan__slot-day`, so its 0.78rem declaration wins the cascade for both ordinary slot times and the nested “tomorrow” boundary label despite the boundary class declaring 0.8125rem. Keeping the generic rule at the functional-copy floor fixes the computed result without adding selector overrides or changing weather semantics.

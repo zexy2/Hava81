@@ -11,9 +11,10 @@ const remFontSize = (rule: string) => {
   return match ? Number.parseFloat(match[1]) : Number.NaN;
 };
 
-describe('Daily Plan local-day boundary microtype', () => {
-  it('keeps the local-day boundary at or above the 13px-equivalent floor', () => {
+describe('Daily Plan slot microtype', () => {
+  it('keeps slot times and the local-day boundary at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/DailyPlanPanel.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.daily-plan__slot > span'))).toBeGreaterThanOrEqual(0.8125);
     expect(remFontSize(cssRule(css, '.daily-plan__slot-day'))).toBeGreaterThanOrEqual(0.8125);
   });
 });
