@@ -101,7 +101,7 @@
 
 .weather-map__popup-plate {
   color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.1em;
 }
