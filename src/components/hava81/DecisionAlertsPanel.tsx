@@ -77,6 +77,13 @@ const inQuietHours = (timezoneOffsetSeconds = 0) => {
   return hour >= 22 || hour < QUIET_HOURS_END_HOUR;
 };
 
+const formatLocationTime = (date: Date, timezoneOffsetSeconds: number, language: string): string =>
+  new Intl.DateTimeFormat(language.startsWith('en') ? 'en-US' : 'tr-TR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }).format(new Date(date.getTime() + timezoneOffsetSeconds * 1000));
+
 const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | null => {
   const shiftedNowMs = Date.now() + timezoneOffsetSeconds * 1000;
   const locationNow = new Date(shiftedNowMs);
@@ -96,7 +103,7 @@ const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | nul
 };
 
 export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
   const [requestingPermission, setRequestingPermission] = useState(false);
   const [quietHoursRevision, setQuietHoursRevision] = useState(0);
@@ -152,6 +159,14 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     const alertData = {
       ...candidate.data,
       band: t(`hava81.dailyPlan.bands.${plan.band}`),
+      time:
+        candidate.kind === 'wait' && plan.nowOrLater.targetTime
+          ? formatLocationTime(
+              plan.nowOrLater.targetTime,
+              weather.meta.timezoneOffsetSeconds,
+              i18n.language
+            )
+          : '',
     };
     const title = t(candidate.titleKey, alertData);
     const body = `${t(candidate.bodyKey, alertData)} ${t('hava81.alerts.notificationDisclosure')}`;
@@ -194,8 +209,10 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     candidate,
     enabled,
     forecastMeta,
+    i18n.language,
     permission,
     plan.band,
+    plan.nowOrLater.targetTime,
     quietHoursRevision,
     t,
     weather,

@@ -2931,3 +2931,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Updated only TR/EN `waitTitle` copy to `Hava81 bekleme rehberi` / `Hava81 wait guidance` and extended the existing localization provenance regression to include wait titles.
 - No wait threshold, target-time selection, score, weather/provider evidence, freshness, dedupe, permission, MGM handling, API or delivery behavior changed.
 - Hosted CI exposed an existing weather-scope contract that the first provenance wording accidentally removed: wait titles must remain explicitly weather-scoped (`Weather` / `Hava açısından`). Kept the Hava81 provenance improvement while restoring that scope in the same title; this is the corrected strategy rather than rerunning the failed wording unchanged.
+## 2026-09-03 04:45 TRT — make wait notifications tell users when to act
+- Continued in a separate worktree from exact main `a1bbb458638f14593a7f9549c463cc6fb1d29eb3` while #731 and the #730 post-merge pipeline ran.
+- Found that `wait` notifications told users conditions improve “in the next hours” even though the daily plan already owns the exact recommended `targetTime`; detached notification users therefore lacked the key “when” needed to act on the guidance.
+- The notification body now formats that existing target time with the weather payload's `timezoneOffsetSeconds` and the current UI locale, then states the unchanged score improvement around that local clock time.
+- Added a deterministic İstanbul regression where `13:00Z` must be delivered as `16:00`. No target selection, forecast value, score, threshold, provider timestamp, freshness, dedupe, MGM handling, permission or delivery semantics changed.

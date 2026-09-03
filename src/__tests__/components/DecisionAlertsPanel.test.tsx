@@ -66,6 +66,27 @@ describe('DecisionAlertsPanel', () => {
     );
   });
 
+  it('tells wait-notification users when the better weather window occurs in local time', async () => {
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { ready: Promise.resolve({ showNotification }) },
+    });
+    vi.stubGlobal('Notification', { permission: 'granted', requestPermission: vi.fn() });
+    const waitHourly: HourlyForecast[] = [
+      { time: new Date('2026-08-28T10:00:00Z'), temp: 40, pop: 0.05, windSpeed: 2, icon: '01d' },
+      { time: new Date('2026-08-28T13:00:00Z'), temp: 25, pop: 0.05, windSpeed: 2, icon: '01d' },
+    ];
+
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={waitHourly} />
+    );
+
+    await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
+    expect(showNotification.mock.calls[0]?.[1]?.body).toMatch(/16:00 civarı/i);
+  });
+
   it('carries the modeled-guidance disclosure into delivered browser notifications', async () => {
     localStorage.setItem('hava81-alerts-v1', 'enabled');
     const showNotification = vi.fn().mockResolvedValue(undefined);

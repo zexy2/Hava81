@@ -1135,3 +1135,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The modeled `wait` browser-notification title must identify Hava81 in both Turkish and English, matching the provenance boundary already applied to rain, wind, air-quality and difficult-weather notification titles.
 
 **Why:** OS notification trays can truncate the body-level modeled-guidance/MGM disclosure. A detached `wait for better weather` title should not look like an unaffiliated or official forecast instruction when consumed outside the app. This is a copy/provenance change only; the wait threshold, timing, weather evidence, freshness, scoring and delivery logic remain unchanged.
+### 2026-09-03 04:45 TRT — wait notifications include the actionable local target time
+
+**Decision:** When Hava81 sends a modeled `wait` notification, its body includes the existing `nowOrLater.targetTime` formatted in the weather location's timezone rather than only saying the weather improves “in the next hours.”
+
+**Why:** A recommendation to wait is not fully actionable without telling the user when the better window is expected. The target time is already part of the daily-plan decision; exposing it in location-local clock time adds no new forecast claim and preserves the same score, improvement threshold, freshness, provider and official-warning boundaries.
