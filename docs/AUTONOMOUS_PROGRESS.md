@@ -3242,3 +3242,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After installing the new observer from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59`, live state correctly reported `worker.can_merge_or_deploy=true` with no blockers, but `/usr/local/bin/hava81-worker-status` did not print that operational signal.
 - Updated the status helper to show readiness, explicit blocking reasons, and the separate observer-write flag so operators can distinguish environment safety from the observer's read-only mode without opening raw JSON.
 - Local observer suite passes 45/45 plus `git diff --check`. No production/weather/provider/API behavior changes.
+## 2026-09-04 00:26 TRT — refresh standalone checkout audit onto current main
+- Rebuilt PR #847 from exact production/main `6ca510ffdd88e189713a12a4b2b8befd4cdb94b0` after its append-only autonomous docs diverged. Replayed only the CI hook and read-only standalone-checkout audit scripts onto current main.
+- Local validation on the reconstructed head: shell syntax passes; the hermetic contract correctly classifies clean represented, dirty, and unrepresented fixtures; `git diff --check` passes.
+- No standalone checkout was deleted or modified by the audit. Fresh hosted CI/CD + CodeQL remain mandatory before merge.

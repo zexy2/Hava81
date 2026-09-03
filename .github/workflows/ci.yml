@@ -37,6 +37,8 @@ jobs:
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - name: Verify Hava81 browser temp cleanup contract
         run: bash scripts/test-cleanup-hava81-browser-temp.sh
+      - name: Verify standalone checkout audit contract
+        run: bash scripts/test-audit-hava81-standalone-checkouts.sh
       - name: Verify production observer contract
         run: |
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/oracle/observer -p 'test_*.py'

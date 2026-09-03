@@ -1417,3 +1417,6 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ### 2026-09-04 00:37 TRT — status output exposes readiness and observer capability separately
 - The human-readable worker status must print both merge/deploy readiness and `writes_repository`; hiding either recreates the ambiguity fixed in the observer schema.
 - Blocking reasons are part of the status line so autonomous/operator decisions can fail closed without parsing raw state JSON.
+### 2026-09-04 00:26 TRT — standalone checkout cleanup remains audit-first and fail-closed
+- Direct `hava81-*` clones are never reclaimable by name alone. Only a read-only audit may mark one `SAFE_TO_ARCHIVE`, and only when it is clean, same-origin, and all local commit tips are already represented by canonical remote refs.
+- Dirty, foreign-origin, non-Git, status-failed, or unrepresented clones must remain untouched.
