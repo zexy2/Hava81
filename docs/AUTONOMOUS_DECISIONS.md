@@ -1248,3 +1248,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The read-only Oracle observer detects only Chromium/Chrome/Playwright processes tied to /tmp/hava81-* profiles that have lived at least two hours, reports a bounded process list, and records their count as an advisory warning/state transition rather than failing production health.
 
 **Why:** Long-lived audit browsers can retain deleted profile files and silently consume root disk, but their presence does not prove the public product is unhealthy. Observability should surface the leak early without killing processes, deleting data, weakening the disk merge gate, or confusing an operational cleanup candidate with a production outage.
+
+
+### 2026-09-03 11:01 TRT — province SEO identity follows administrative geography
+
+**Decision:** Generated Hava81 province-page JSON-LD describes the page subject as a Schema.org AdministrativeArea contained in Türkiye, not as a City.
+
+**Why:** Hava81 promises and routes all 81 Turkish provinces. A municipality/city schema type overstates the geographic object actually represented; administrative-area semantics keep structured metadata aligned with the product's province-level scope without changing weather behavior.

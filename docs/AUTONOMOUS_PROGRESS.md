@@ -3040,3 +3040,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - A direct process check confirmed there are currently no Hava81 Chromium/Playwright processes using /tmp/hava81-* profiles, but the earlier disk incident showed that abandoned audit browsers can keep deleted profile files open for many hours.
 - Extended the read-only observer to report only browser processes whose command line contains a Hava81 temporary profile and whose elapsed time is at least two hours. Results are bounded to eight process records, ps failures degrade to an explicit unknown state, and stale browsers create an advisory warning rather than a production-health incident.
 - The observer remains non-mutating: it never terminates processes or deletes profiles. The stale-process count is included in the observer state signature so a transition is logged. Observer suite passes 35/35, in-memory Python compile checks pass, and git diff --check passes.
+
+
+## 2026-09-03 11:01 TRT — align province JSON-LD with the geographic object Hava81 serves
+- Continued independently from main 8d944fc2305f1396f47ca6120166e6665025c3ba while the #766 Pages rollout and #767/#768 hosted gates proceed.
+- Generated province shells still described every one of Türkiye's 81 il pages as Schema.org City objects, even though Hava81's canonical product/SEO scope is the province-level administrative area rather than a municipality boundary.
+- Changed only generated structured-data identity to AdministrativeArea contained in Country Türkiye and added a focused source contract preventing a regression back to City. Titles, canonical URLs, visible copy, province names/slugs, coordinates, weather requests and recommendations are unchanged.
+- Node syntax, git diff --check and hosted exact-head quality/build/browser/CodeQL gates remain required before merge.

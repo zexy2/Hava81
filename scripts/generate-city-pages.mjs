@@ -175,9 +175,9 @@ for (const name of names) {
     url: canonical,
     isPartOf: { '@type': 'WebSite', name: 'Hava81', url: `${baseUrl}/` },
     about: {
-      '@type': 'City',
+      '@type': 'AdministrativeArea',
       name,
-      address: { '@type': 'PostalAddress', addressCountry: 'TR' },
+      containedInPlace: { '@type': 'Country', name: 'Türkiye' },
     },
     inLanguage: ['tr', 'en'],
   });
