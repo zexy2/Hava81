@@ -1262,3 +1262,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** If procps ps is unavailable or exits non-zero inside the hardened observer unit, stale Hava81 browser detection falls back to bounded read-only /proc inspection instead of weakening ProtectProc=invisible.
 
 **Why:** Production showed ps exited 102 under the hardened unit even though the same command works interactively. /proc exposes enough same-user process metadata to identify Hava81 temporary browser profiles while preserving the observer least-privilege boundary.
+
+
+### 2026-09-03 11:24 TRT — compact status surfaces browser-audit state
+
+**Decision:** The human-readable hava81-worker-status output includes whether stale-browser observation is known, its stale count/threshold, bounded process details, and any collection error.
+
+**Why:** A read-only signal that exists only in raw state.json is easy to miss during incident triage. Surfacing it in the established compact status command makes disk-leak diagnosis operationally useful without changing health or cleanup behavior.

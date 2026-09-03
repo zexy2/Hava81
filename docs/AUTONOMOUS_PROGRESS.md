@@ -3054,3 +3054,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Kept ProtectProc=invisible and added a read-only /proc fallback that uses Linux CLOCK_BOOTTIME plus same-visible process cmdline/comm/stat/status, filters only /tmp/hava81-* Chromium/Chrome/Playwright processes, preserves the two-hour threshold and bounded output, and skips raced/inaccessible process entries.
 - Exact systemd reproduction confirmed procps ps fails under ProtectProc=invisible + ProcSubset=pid because procps cannot see the proc mount shape it expects; the fallback was then exercised under those same transient-unit restrictions and returned a known healthy state without relaxing hardening.
 - Added regressions for ps failure fallback and synthetic /proc elapsed-time parsing. Observer suite passes 36/36, compile and git diff --check pass. No production health classification, disk threshold, weather/API/frontend behavior or process mutation changed.
+
+
+## 2026-09-03 11:24 TRT — surface stale-browser observation in worker status
+- Continued independently from exact main 34eda5fe354df082f028276a2831338c43a61da8 while #770 exact-head CI runs.
+- The observer state already carries browser_processes, but hava81-worker-status did not display it, forcing raw JSON inspection during disk-pressure triage.
+- Added one compact browser_audits line with known/stale_count/threshold/processes/error and a source contract locking the key fields. This is presentation-only; no process scanning, health classification, cleanup, disk threshold, weather/API/frontend or MGM behavior changes.
+- Observer suite passes 36/36, in-memory compile checks and git diff --check pass. Exact-head hosted CI/CodeQL remain mandatory before merge.

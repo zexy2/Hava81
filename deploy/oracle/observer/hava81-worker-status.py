@@ -18,6 +18,8 @@ free_bytes = disk.get('free_bytes')
 used_gib = round(used_bytes / (1024 ** 3), 1) if isinstance(used_bytes, (int, float)) else None
 free_gib = round(free_bytes / (1024 ** 3), 1) if isinstance(free_bytes, (int, float)) else None
 print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} used_gib={used_gib} free_gib={free_gib} issues={host.get('issues', [])} warnings={host.get('warnings', [])}")
+browser_processes = host.get('browser_processes') or {}
+print(f"browser_audits: known={browser_processes.get('known')} stale_count={browser_processes.get('stale_count')} threshold_s={browser_processes.get('stale_after_seconds')} processes={browser_processes.get('processes', [])} error={browser_processes.get('error')}")
 print(f"nginx_api_port: {(prod.get('nginx') or {}).get('port')} expected={(prod.get('nginx') or {}).get('expected')}")
 boot_assets = prod.get('boot_assets') or {}
 print(f"boot_assets: ok={boot_assets.get('ok')} count={boot_assets.get('count')} root={boot_assets.get('root_count')} city={boot_assets.get('city_count')} failed={[item.get('path') for item in boot_assets.get('failed', [])]}")

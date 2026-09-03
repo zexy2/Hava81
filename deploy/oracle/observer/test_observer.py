@@ -895,6 +895,15 @@ class ObserverBrowserProcessTests(unittest.TestCase):
 
 
 
+class ObserverStatusScriptTests(unittest.TestCase):
+    def test_status_script_surfaces_browser_audit_state(self) -> None:
+        status_script = MODULE_PATH.with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn("host.get('browser_processes')", status_script)
+        self.assertIn('browser_audits:', status_script)
+        self.assertIn("browser_processes.get('stale_count')", status_script)
+        self.assertIn("browser_processes.get('error')", status_script)
+
+
 class ObserverHostDiskTests(unittest.TestCase):
     class _Statvfs:
         f_frsize = 4096
