@@ -1152,3 +1152,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Forecast Atlas chart-axis values, local-day boundary markers, and current-hour marker use at least 0.6875rem at the default root size while remaining visually subordinate to primary forecast text.
 
 **Why:** These labels tell users how to read the chart and when forecast columns occur; they are functional evidence/navigation, not ornamental metadata. Keeping them above 10px improves mobile scanability without increasing card width or changing any weather claim.
+
+### 2026-09-03 06:42 TRT — provenance and modeled-guidance copy is functional text
+
+**Decision:** Context Signals provider/freshness attribution and the modeled-guidance disclaimer use at least the 13px-equivalent functional-copy floor.
+
+**Why:** These lines tell users where the evidence came from, how fresh it is, and that modeled guidance is not an official warning. They are part of the trust/safety contract and should not be rendered as decorative microtype; increasing only their presentation size preserves all weather evidence and decision semantics.

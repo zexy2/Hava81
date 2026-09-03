@@ -2948,3 +2948,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast Atlas still rendered chart-axis values, local-day boundary labels, and the current-hour `Now/Şimdi` marker at 0.625rem (10px with the default root size). Those markers are navigation/evidence labels rather than decorative microcopy, so the small size weakens scanability on the 390px first forecast surface.
 - Raised only those three temporal/chart labels to 0.6875rem (11px), preserving hierarchy below regular 12px forecast labels. Added a real-Chromium 390px regression requiring >=11px computed text, no label clipping, and no page-level horizontal overflow.
 - No forecast values, intervals, chart geometry, weather symbols, provider data, freshness, scoring, thresholds, MGM semantics, API, or route behavior changed.
+
+## 2026-09-03 06:42 TRT — raise modeled-context provenance and guidance out of microtype
+- Continued from exact main `a8806eec46d976e2bc191a53a06b46ba6b5dc2a3` while #748/#747 reran hosted gates after safe rebases.
+- Context Signals still rendered the provider/freshness attribution and modeled-guidance disclaimer at ~11.5px. Those strings define provenance, freshness and the modeled-vs-official safety boundary, so they are functional trust copy rather than decorative metadata.
+- Raised only `.context-signals__source` and `.context-signals__note` to the shared 13px-equivalent floor and added a source regression locking both selectors. No provider values, freshness TTLs, UV/AQI/marine thresholds, scoring, MGM handling, API behavior or layout structure changed.
+- `git diff --check` passes; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory before merge because local Node/npm are unavailable on this host.
