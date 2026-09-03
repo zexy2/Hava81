@@ -673,6 +673,42 @@ def frontend_deployment_state(frontend_revision: dict[str, Any], latest_main: di
     }
 
 
+def merge_deploy_readiness(
+    production: dict[str, Any],
+    host: dict[str, Any],
+    github: dict[str, Any],
+    frontend_revision: dict[str, Any],
+) -> dict[str, Any]:
+    """Summarize whether an autonomous merge/deploy is safe to start now.
+
+    The observer remains read-only; this signal describes environment readiness,
+    not permission for the observer process itself to mutate the repository.
+    """
+    reasons: list[str] = []
+    github_signals = github.get('signals') or {}
+    nginx = production.get('nginx') or {}
+    disk = host.get('disk') or {}
+
+    if production.get('healthy') is not True:
+        reasons.append('production_unhealthy')
+    if host.get('healthy') is not True or disk.get('ok') is not True:
+        reasons.append('host_unhealthy')
+    if github.get('ok') is not True:
+        reasons.append('github_state_unknown')
+    if frontend_revision.get('pending') is True:
+        reasons.append('frontend_deploy_pending')
+    if nginx.get('preferred_ok') is False:
+        reasons.append('api_primary_port_drift')
+    if github_signals.get('main_pipeline_pending') is True:
+        reasons.append('main_pipeline_pending')
+    if github_signals.get('api_deploy_pending') is True:
+        reasons.append('api_deploy_pending')
+    if github_signals.get('api_deploy_unknown') is True:
+        reasons.append('api_deploy_unknown')
+
+    return {'ok': not reasons, 'blocking_reasons': reasons}
+
+
 def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     github = state.get('github') or {}
     production = state.get('production') or {}
@@ -765,6 +801,7 @@ def main() -> int:
     frontend_revision = production.get('frontend_revision') or {}
     frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('latest_main_run')))
     production['frontend_revision'] = frontend_revision
+    merge_deploy = merge_deploy_readiness(production, host, github, frontend_revision)
     state = {
         'schema_version': 1,
         'collected_at': collected_at,
@@ -781,7 +818,8 @@ def main() -> int:
         'worker': {
             'mode': 'read-only-observer',
             'writes_repository': False,
-            'can_merge_or_deploy': False,
+            'can_merge_or_deploy': merge_deploy['ok'],
+            'merge_deploy_blocking_reasons': merge_deploy['blocking_reasons'],
             'duration_ms': round((time.monotonic() - started) * 1000),
         },
     }
