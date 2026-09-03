@@ -1300,3 +1300,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Activity Planner `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** A raw score without a readily readable denominator weakens interpretation of the adjacent recommendation. The scale is decision context rather than decorative microtype, and increasing it does not alter scoring behavior.
+
+### 2026-09-03 13:10 TRT — Daily Plan action framing is functional copy
+
+**Decision:** Daily Plan now-or-later, quick-action, explanation and confidence labels render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** These labels explain what the adjacent decision means and how confidently it should be interpreted. They are part of Hava81 action guidance, not decorative metadata, so they should remain legible without changing any decision logic.

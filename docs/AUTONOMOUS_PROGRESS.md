@@ -3091,3 +3091,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Activity Planner displayed each numeric activity score with a `/100` scale at 11.2px-equivalent; the adjacent score band was already protected by the 13px functional-copy floor.
 - Raised only the `/100` score-unit span to 13px-equivalent and extended the existing Activity Planner microtype regression.
 - No activity scoring, weather windows, profile settings, forecast evidence, API or MGM semantics changed. Existing activity 200% text-size browser coverage remains the reflow guard.
+
+## 2026-09-03 13:10 TRT — keep Daily Plan action labels readable
+- Continued independently from last confirmed-production main `f3efc46b6a601bc120864a15cf49f1ed24eb64a8` while post-#782 main rollout runs.
+- Daily Plan still rendered the now-or-later label, quick action labels, explanation eyebrow and confidence context at 11.5px-equivalent even though they directly frame actionable guidance.
+- Raised the two shared 0.72rem selector groups to the 13px-equivalent functional-copy floor and added focused source regressions for both groups.
+- No best-window calculation, score/confidence values, umbrella/activity guidance, forecast data, freshness, API or MGM semantics changed. Exact-head hosted gates remain mandatory before merge.
