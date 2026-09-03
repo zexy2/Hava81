@@ -3242,3 +3242,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After installing the new observer from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59`, live state correctly reported `worker.can_merge_or_deploy=true` with no blockers, but `/usr/local/bin/hava81-worker-status` did not print that operational signal.
 - Updated the status helper to show readiness, explicit blocking reasons, and the separate observer-write flag so operators can distinguish environment safety from the observer's read-only mode without opening raw JSON.
 - Local observer suite passes 45/45 plus `git diff --check`. No production/weather/provider/API behavior changes.
+
+
+## 2026-09-04 02:02 TRT — correct current-state semantics for in-page navigation
+- Continued independently from exact main `0ca1d418feed87b7499d317247db49e36b131880` while npm-registry CI recovery validates on #859.
+- Bottom-nav Today/Map/Saved controls and the header compare shortcut select destinations inside the same document, but active state was exposed as `aria-current="page"`. Changed only the current token to `location` so assistive technology receives the correct relationship.
+- Updated the existing compare integration assertion and added a focused source regression for bottom-nav semantics. No layout, behavior, analytics, weather data, provider/freshness, scoring, API or MGM semantics changed.

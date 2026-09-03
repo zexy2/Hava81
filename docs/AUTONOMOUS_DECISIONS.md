@@ -1417,3 +1417,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ### 2026-09-04 00:37 TRT — status output exposes readiness and observer capability separately
 - The human-readable worker status must print both merge/deploy readiness and `writes_repository`; hiding either recreates the ambiguity fixed in the observer schema.
 - Blocking reasons are part of the status line so autonomous/operator decisions can fail closed without parsing raw state JSON.
+
+
+## 2026-09-04 02:02 TRT — in-page navigation uses `aria-current="location"`
+- Hava81's bottom navigation and header compare shortcut move focus/viewport among destinations inside the current document; they do not navigate to a different page.
+- Use `aria-current="location"` for the active in-page destination instead of `page`. Keep the existing buttons, visual active state, click behavior and analytics unchanged.
