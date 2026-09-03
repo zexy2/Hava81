@@ -45,7 +45,7 @@ export const buildAlertCandidate = (cityName: string, plan: DailyPlan): AlertCan
       titleKey: 'hava81.alerts.waitTitle',
       bodyKey: 'hava81.alerts.waitBody',
       data: { city: cityName, improvement: plan.nowOrLater.improvement ?? 0 },
-      signature: `${signatureCity}:wait:${plan.nowOrLater.targetTime?.toISOString() ?? 'later'}`,
+      signature: `${signatureCity}:wait`,
     };
   }
   if (plan.score < 50) {
