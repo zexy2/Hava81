@@ -87,6 +87,7 @@ describe('DecisionAlertsPanel', () => {
     );
 
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
+    expect(showNotification.mock.calls[0]?.[0]).toMatch(/Hava81 şemsiye rehberi/i);
     expect(showNotification.mock.calls[0]?.[1]?.body).toMatch(/Hava81 model rehberi/i);
     expect(showNotification.mock.calls[0]?.[1]?.body).toMatch(/resmî MGM MeteoUyarı değildir/i);
   });

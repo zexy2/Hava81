@@ -2896,3 +2896,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited Turkish activity-sensitivity help and found it said heat/cold `warnings` begin earlier, even though the control only shifts Hava81 activity-score comfort penalties. English already described penalties accurately.
 - Reworded Turkish help to `sıcak/soğuk kaynaklı puan düşüşleri ... daha erken başlar` and updated both Celsius/Fahrenheit component regressions. No threshold, score, weather evidence, official-warning behavior, provider or API behavior changed.
 - `git diff --check` is required locally; exact-head hosted frontend/browser/Lighthouse/CodeQL remain mandatory before merge. Keep this branch independent from #724 and rebase onto the latest green main before final merge.
+
+## 2026-09-03 03:58 TRT — make rain notification titles self-identify as modeled Hava81 guidance
+- Continued on an isolated exact-main worktree while #725 reran exact-head hosted gates after rebase.
+- Audited Decision Alerts delivery and confirmed the notification body already says Hava81 modeled guidance is not official MGM MeteoUyarı, but the detached OS title still rendered `Şemsiye uyarısı` / `Umbrella alert`. Notification trays may truncate the body, leaving that title without its provenance boundary.
+- Changed only the rain notification title to `Hava81 şemsiye rehberi` / `Hava81 umbrella guidance` and added a delivery regression requiring the title itself to carry Hava81 provenance. Rain thresholds, hourly evidence, freshness, priority, dedupe signature, permission flow, notification body disclosure and MGM handling are unchanged.
