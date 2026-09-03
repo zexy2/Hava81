@@ -140,7 +140,7 @@
 }
 
 .commute-plan__note {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 640px) {
@@ -172,5 +172,5 @@
   margin: 4px 0 0;
   padding-inline-start: 20px;
   color: var(--color-atlas-muted);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
