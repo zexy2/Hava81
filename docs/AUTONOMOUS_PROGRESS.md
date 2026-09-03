@@ -2912,3 +2912,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited the remaining detached Decision Alert titles. Rain now names Hava81, but wind, air-quality, and difficult-weather titles could still appear without the body-level MGM/model disclosure in an OS tray; the panel also called the opt-in control generic `alerts/uyarılar`.
 - Renamed the panel surface to `Hava81 notifications / Hava81 bildirimleri`, changed opt-in/out labels to notifications, and made wind/air/difficult titles explicitly Hava81-owned using signal/outlook wording. Added localization regressions for detached-title provenance and opt-in semantics.
 - No wind/AQI/score threshold, provider value, freshness, notification priority, dedupe, permission behavior, official MGM handling, API, or delivery path changed.
+
+## 2026-09-03 04:17 TRT — fail closed when AQ evidence expires during alert delivery
+- Continued in a fourth isolated worktree from exact main `dbe05b6749661ba6c0d26f580009a1b2a4023c4f` while #727/#728 ran hosted gates.
+- Found that App filters AQ by its own metadata at render time, but DecisionAlertsPanel's delivery-time freshness guard rechecked only current weather + forecast. AQ metadata has an independent provider TTL (API regressions already cover values such as 13 seconds), so an air-quality candidate could outlive AQ evidence while service-worker readiness was pending.
+- Extended only the air-quality candidate freshness path to require `getOptionalEvidenceFreshness(airQuality.meta).fresh`, including the final pre-delivery re-check. Other alert kinds continue to depend only on their relevant current/forecast evidence.
+- Added a regression where current + forecast remain fresh, AQ expires after one second, service-worker readiness resolves at 1.1 seconds, and neither service-worker nor direct notification delivery is allowed.
