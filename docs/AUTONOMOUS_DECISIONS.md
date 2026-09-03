@@ -1099,3 +1099,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Turkish Activity Planner sensitivity help describes earlier **score penalties** rather than earlier `warnings` when a user selects cold/heat sensitivity.
 
 **Why:** The control only shifts Hava81's activity-scoring comfort thresholds; it does not generate or move an official weather warning threshold. Matching the copy to the actual scoring behavior avoids overstating authority while preserving the personalized decision model unchanged.
+
+### 2026-09-03 03:58 TRT — modeled rain notification titles carry the Hava81 boundary
+
+**Decision:** Browser notification titles for umbrella guidance must name Hava81 and describe the item as guidance rather than an unqualified `warning` / `alert`.
+
+**Why:** Notification trays can show a title while truncating or hiding the body-level MGM disclosure. Carrying the modeled-guidance boundary into the title itself prevents Hava81 precipitation guidance from being mistaken for an official MGM warning without changing any precipitation threshold, evidence, freshness rule, or delivery behavior.

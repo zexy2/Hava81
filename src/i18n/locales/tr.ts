@@ -426,7 +426,7 @@ export const tr = {
       unsupported: 'Bildirim desteklenmiyor',
       unsupportedHelp:
         'Bu tarayıcı Hava81 bildirimlerini desteklemiyor; hava durumu ve karar rehberi normal çalışmaya devam eder.',
-      rainTitle: '{{city}} · Şemsiye uyarısı',
+      rainTitle: '{{city}} · Hava81 şemsiye rehberi',
       rainBody: 'Yakın saatlerde belirgin yağış riski var; şemsiyeyi planına ekle.',
       windTitle: '{{city}} · Kuvvetli rüzgâr',
       windBody:
