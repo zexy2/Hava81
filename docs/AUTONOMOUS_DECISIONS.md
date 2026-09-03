@@ -1146,3 +1146,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** CI preserves `coverage/lcov.info` as a required GitHub Actions artifact rather than invoking Codecov while Codecov reports the Hava81 repository as not found.
 
 **Why:** Hosted evidence proved GitHub OIDC token issuance works, but Codecov cannot associate the upload with an onboarded repository. A non-blocking external upload silently loses telemetry; a blocking external upload makes healthy application changes fail for unrelated account configuration. A required first-party artifact preserves inspectable coverage output deterministically without secrets or additional trust scope.
+
+### 2026-09-03 05:24 TRT — forecast navigation labels must not fall to 10px microtype
+
+**Decision:** Forecast Atlas chart-axis values, local-day boundary markers, and current-hour marker use at least 0.6875rem at the default root size while remaining visually subordinate to primary forecast text.
+
+**Why:** These labels tell users how to read the chart and when forecast columns occur; they are functional evidence/navigation, not ornamental metadata. Keeping them above 10px improves mobile scanability without increasing card width or changing any weather claim.
