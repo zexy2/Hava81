@@ -1337,6 +1337,47 @@ test('mobile header keeps quick actions reachable at 200% text size', async ({ p
   expect(searchGeometry.pageWidth).toBeLessThanOrEqual(searchGeometry.viewportWidth);
 });
 
+test('mobile Daily Plan keeps its safety boundary visible and tucks method detail behind disclosure', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile Daily Plan hierarchy regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'Gün planı' })).toBeVisible();
+
+  const notes = page.locator('.daily-plan__notes');
+  const safety = page.locator('.daily-plan__safety');
+  const method = page.locator('.daily-plan__method');
+  const summary = method.locator('summary');
+  await expect(safety).toBeVisible();
+  await expect(summary).toBeVisible();
+  await expect(method).not.toHaveAttribute('open', '');
+
+  const collapsed = await notes.evaluate(element => ({
+    height: element.getBoundingClientRect().height,
+    pageWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+  expect(collapsed.height).toBeLessThan(140);
+  expect(collapsed.pageWidth).toBeLessThanOrEqual(collapsed.viewportWidth);
+
+  await summary.click();
+  await expect(method).toHaveAttribute('open', '');
+  const expanded = await notes.evaluate(element => element.getBoundingClientRect().height);
+  expect(expanded).toBeGreaterThan(collapsed.height);
+
+  await summary.click();
+  await expect(method).not.toHaveAttribute('open', '');
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  await page.setViewportSize({ width: 320, height: 844 });
+  const enlargedCollapsed = await notes.evaluate(element => ({
+    height: element.getBoundingClientRect().height,
+    pageWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+  expect(enlargedCollapsed.height).toBeLessThan(340);
+  expect(enlargedCollapsed.pageWidth).toBeLessThanOrEqual(enlargedCollapsed.viewportWidth);
+});
+
 test('desktop daily plan reads as one editorial planning surface', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop daily-plan visual regression');
   await page.goto('/istanbul');

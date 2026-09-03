@@ -83,6 +83,21 @@ describe('DailyPlanPanel sharing', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps the safety boundary visible while detailed score methodology is collapsed by default', () => {
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
+
+    expect(screen.getByText('hava81.dailyPlan.safetyNote')).toBeVisible();
+    const summary = screen.getByText('hava81.dailyPlan.methodDetails');
+    const details = summary.closest('details');
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute('open');
+    expect(screen.getByText('hava81.dailyPlan.note')).not.toBeVisible();
+
+    fireEvent.click(summary);
+    expect(details).toHaveAttribute('open');
+    expect(screen.getByText('hava81.dailyPlan.note')).toBeVisible();
+  });
+
   it('shows the same 12-hour horizon that the score evaluates without repeating band copy in every slot', () => {
     const richHourly: HourlyForecast[] = Array.from({ length: 12 }, (_, index) => ({
       time: new Date(Date.parse('2026-08-28T18:00:00.000Z') + index * 60 * 60 * 1000),
