@@ -1269,3 +1269,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Automation PR gate state is derived from two exact-head workflows: CI/CD Pipeline and CodeQL. A PR is green only when both completed successfully; either failure is failed, either pending workflow is running, and a missing workflow is unknown.
 
 **Why:** Treating one workflow as representative of an exact head can report a false green while the security gate is still pending or failed. The observer must fail closed on missing security evidence and match the merge discipline used by autonomous runs.
+
+
+### 2026-09-03 12:48 TRT — forecast horizon controls are functional copy
+
+**Decision:** Forecast Atlas horizon group and selectable horizon labels render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** These labels are not passive metadata: they tell users which forecast interval is selected and let them change it. Readable control text improves mobile/accessibility ergonomics without changing forecast data or interval semantics.
