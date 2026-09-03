@@ -1262,3 +1262,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** If procps ps is unavailable or exits non-zero inside the hardened observer unit, stale Hava81 browser detection falls back to bounded read-only /proc inspection instead of weakening ProtectProc=invisible.
 
 **Why:** Production showed ps exited 102 under the hardened unit even though the same command works interactively. /proc exposes enough same-user process metadata to identify Hava81 temporary browser profiles while preserving the observer least-privilege boundary.
+
+
+### 2026-09-03 11:28 TRT — observer PR green means CI/CD and CodeQL are both green
+
+**Decision:** Automation PR gate state is derived from two exact-head workflows: CI/CD Pipeline and CodeQL. A PR is green only when both completed successfully; either failure is failed, either pending workflow is running, and a missing workflow is unknown.
+
+**Why:** Treating one workflow as representative of an exact head can report a false green while the security gate is still pending or failed. The observer must fail closed on missing security evidence and match the merge discipline used by autonomous runs.

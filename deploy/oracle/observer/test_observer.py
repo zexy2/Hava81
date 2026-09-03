@@ -477,6 +477,16 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                     'sha': 'old-pr-sha-outside-window',
                 },
             },
+            {
+                'number': 498,
+                'title': 'CodeQL failure test PR',
+                'html_url': 'https://github.com/zexy2/Hava81/pull/498',
+                'draft': False,
+                'head': {
+                    'ref': 'automation/hava81-codeql-failure-test',
+                    'sha': 'codeql-failed-pr-sha',
+                },
+            },
         ]
         runs = [
             {
@@ -534,6 +544,28 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'conclusion': None,
                 'html_url': 'https://example.test/old-main-ci',
             },
+            {
+                'id': 16,
+                'run_number': 16,
+                'name': 'CI/CD Pipeline',
+                'head_sha': 'codeql-failed-pr-sha',
+                'head_branch': 'automation/hava81-codeql-failure-test',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/codeql-failed-pr-ci',
+            },
+            {
+                'id': 17,
+                'run_number': 17,
+                'name': 'CodeQL',
+                'head_sha': 'codeql-failed-pr-sha',
+                'head_branch': 'automation/hava81-codeql-failure-test',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'failure',
+                'html_url': 'https://example.test/codeql-failed-pr-codeql',
+            },
         ]
 
         requested_timeouts: list[float] = []
@@ -577,9 +609,13 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['latest_main_run']['status'], 'completed')
         self.assertEqual(result['open_automation_prs'][0]['ci']['run_id'], 14)
         self.assertEqual(result['open_automation_prs'][0]['ci']['status'], 'in_progress')
+        self.assertEqual(result['open_automation_prs'][0]['codeql']['run_id'], 13)
+        self.assertEqual(result['open_automation_prs'][0]['codeql']['conclusion'], 'success')
         self.assertEqual(result['signals']['ci_running_prs'], [497])
         self.assertEqual(result['signals']['ci_unknown_prs'], [484])
+        self.assertEqual(result['signals']['ci_failed_prs'], [498])
         self.assertIsNone(result['open_automation_prs'][1]['ci']['run_id'])
+        self.assertIsNone(result['open_automation_prs'][1]['codeql']['run_id'])
         self.assertFalse(result['signals']['main_pipeline_pending'])
 
     def test_github_runs_timeout_retries_with_smaller_payload(self) -> None:
@@ -621,6 +657,17 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'status': 'completed',
                 'conclusion': 'success',
                 'html_url': 'https://example.test/pr-ci',
+            },
+            {
+                'id': 23,
+                'run_number': 1587,
+                'name': 'CodeQL',
+                'head_sha': 'pr-sha',
+                'head_branch': 'automation/hava81-context-shell-1156',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/pr-codeql',
             },
         ]
 
