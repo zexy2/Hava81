@@ -2930,3 +2930,4 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited detached Decision Alert titles after the rain/wind/AQI/difficult provenance hardening and found `wait` remained the only modeled notification kind whose title did not name Hava81.
 - Updated only TR/EN `waitTitle` copy to `Hava81 bekleme rehberi` / `Hava81 wait guidance` and extended the existing localization provenance regression to include wait titles.
 - No wait threshold, target-time selection, score, weather/provider evidence, freshness, dedupe, permission, MGM handling, API or delivery behavior changed.
+- Hosted CI exposed an existing weather-scope contract that the first provenance wording accidentally removed: wait titles must remain explicitly weather-scoped (`Weather` / `Hava açısından`). Kept the Hava81 provenance improvement while restoring that scope in the same title; this is the corrected strategy rather than rerunning the failed wording unchanged.
