@@ -2906,3 +2906,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued from exact main `b46466102266772aa18d85c4d8cfa3bff8ab2739` in a separate worktree while #726 exact-head gates ran.
 - Audited detached Decision Alert titles and found the wait candidate still said `Biraz beklersen daha iyi` / `Waiting looks better`, although its score comparison is meteorological only and the notification body may be truncated in the OS tray.
 - Tightened only that title to `Hava açısından beklemek daha iyi` / `Weather looks better if you wait` and added a localization regression locking the evidence-domain boundary. No score, improvement threshold, selected time, forecast evidence, freshness, provider, notification priority, or delivery behavior changed.
+
+## 2026-09-03 04:12 TRT — carry Hava81 provenance into safety-sensitive notification titles
+- Continued independently from exact main `dbe05b6749661ba6c0d26f580009a1b2a4023c4f` while #727 reran exact-head gates on its own branch.
+- Audited the remaining detached Decision Alert titles. Rain now names Hava81, but wind, air-quality, and difficult-weather titles could still appear without the body-level MGM/model disclosure in an OS tray; the panel also called the opt-in control generic `alerts/uyarılar`.
+- Renamed the panel surface to `Hava81 notifications / Hava81 bildirimleri`, changed opt-in/out labels to notifications, and made wind/air/difficult titles explicitly Hava81-owned using signal/outlook wording. Added localization regressions for detached-title provenance and opt-in semantics.
+- No wind/AQI/score threshold, provider value, freshness, notification priority, dedupe, permission behavior, official MGM handling, API, or delivery path changed.
