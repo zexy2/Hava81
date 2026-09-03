@@ -50,7 +50,7 @@
 }
 .context-signal > span {
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
