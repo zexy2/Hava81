@@ -1402,3 +1402,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Optional forecast `sourceUrl` metadata must parse as an absolute HTTPS URL before it can enter the normalized frontend forecast model.
 
 **Why:** Forecast Atlas turns this metadata into an interactive link. Failing closed at the BFF/browser boundary prevents malformed or unsafe schemes from becoming UI navigation while preserving the legitimate Open-Meteo attribution contract.
+
+
+### 2026-09-04 00:22 TRT — resolve append-only PR refresh conflicts by replaying the bounded code delta
+- When an otherwise independent PR conflicts only because AUTONOMOUS_PROGRESS/AUTONOMOUS_DECISIONS advanced on main, rebuild the PR from exact current main, replay only its bounded product/test delta, and append the decision checkpoint again.
+- Never choose one side of append-only autonomous documentation wholesale; preserve both valid histories and require fresh exact-head CI before merge.

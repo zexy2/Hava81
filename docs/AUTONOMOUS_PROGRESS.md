@@ -3224,3 +3224,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast metadata can supply `sourceUrl`, which Forecast Atlas renders as a clickable provider attribution link. The browser boundary validated provider/freshness/timezone fields but accepted any source URL string, so a malformed or unsafe scheme could reach an interactive link if the BFF contract were violated.
 - Forecast metadata validation now accepts optional source links only when they parse as absolute HTTPS URLs; malformed/non-HTTPS values fail closed through the existing retryable invalid-forecast path. The production Open-Meteo source remains valid.
 - Added a focused regression for a `javascript:` attribution URL. `git diff --check` passes; dependency-heavy local tests/build remain deferred while the host disk hard gate is active, so exact-head hosted CI/CD and CodeQL are required before merge. No forecast/weather value, provider attribution text, freshness, scoring, MGM or recommendation semantics changed.
+
+
+## 2026-09-04 00:22 TRT — refresh city-search IME fix onto current production main
+- Production rollout for main `6ca510ffdd88e189713a12a4b2b8befd4cdb94b0` completed successfully; direct root/istanbul smoke matched that exact revision and readiness/CORS/4002 remained healthy.
+- GitHub's update-branch endpoint reported a merge conflict for PR #850 because its append-only autonomous docs diverged. Reconstructed the branch from exact current main and reapplied only the reviewed SearchBar implementation/test delta, then preserved the rationale as a fresh append-only checkpoint instead of discarding either history.
+- `git diff --check` passes. Dependency-heavy local install remains intentionally avoided while root disk is close to the 92% hard gate; the reconstructed exact head must pass hosted CI/CD + CodeQL before merge.
