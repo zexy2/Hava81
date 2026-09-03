@@ -6,6 +6,7 @@ import { validateConfig } from './config';
 import './i18n';
 import './fonts.css';
 import './index.css';
+import './styles/offscreen-panels.css';
 import {
   isRecentChunkRecoveryAttempt,
   mostRecentChunkRecoveryAttempt,
