@@ -3164,3 +3164,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Tightened only the regression helper to 0.8125rem and corrected the three stale test descriptions. Runtime CSS, layout, weather values, scoring, provider/freshness behavior, API, MGM semantics, and recommendations are unchanged.
 - Dependency-free static verification confirms all three protected selectors currently meet >=0.8125rem and git diff --check passes. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.
 - Operationally, PR #841 exact head e022a3834c052e4c2fad7081db573790e57ae8e0 was reverified green and squash-merged to main 5ab80b2e3c80abddead051d8343e17e5cea6ff65; its observer was installed after the hosted gates and the installer passed 40/40 tests. Fresh observer state remains production-healthy with disk ~91.5% used, stale Hava81 browser count 0, and main rollout #2043 pending.
+
+
+## 2026-09-03 21:28 TRT — surface preferred API-slot drift without turning deploy transitions into incidents
+- Continued independently from exact main bf38fb996462d9fc03f4585519ca433e8a476adb after restoring the validated API to preferred production port 4002 and retaining healthy port 4001 as rollback.
+- The observer previously verified only that Nginx matched the mutable current-api-port state file. That made a long-lived, internally consistent 4001 state appear fully normal even though Hava81's operating policy prefers 4002 outside a controlled switch.
+- Added preferred=4002 and preferred_ok fields to the read-only Nginx observation, an advisory api_primary_port_drift signal, status output, and event-signature coverage. A temporary validated switch to 4001 remains production-healthy; it is visible as drift rather than falsely classified as an outage.
+- Added regressions proving 4001 can be expected/healthy while preferred_ok is false and 4002 is preferred_ok true. Observer suite passes 40/40, both observer Python files compile, and git diff --check passes.
+- No traffic switching, process mutation, weather/API semantics, thresholds, MGM behavior, scoring, or recommendation logic is performed by this observer change. Exact-head hosted CI/CD and CodeQL remain mandatory before merge/install.
