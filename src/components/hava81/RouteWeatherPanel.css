@@ -64,7 +64,7 @@
   gap: 0.3rem;
   overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 .route-weather__form select,
 .route-weather__form input {
