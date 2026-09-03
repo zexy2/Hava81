@@ -49,6 +49,8 @@ GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
 MAX_STALE_BROWSER_PROCESSES_REPORTED = 8
+HAVA81_BROWSER_PROFILE_NAMES = {'h81deploycheck', 'h81meta', 'h81text'}
+HAVA81_BROWSER_PROFILE_ARG = re.compile(r'--user-data-dir(?:=|\s+)([^\s]+)')
 
 
 def now_iso() -> str:
@@ -267,6 +269,14 @@ def collect_production() -> dict[str, Any]:
     }
 
 
+def is_hava81_browser_profile_args(args: str) -> bool:
+    for match in HAVA81_BROWSER_PROFILE_ARG.finditer(args):
+        profile_name = Path(match.group(1).strip('\"\'')).name
+        if profile_name.startswith('hava81-') or profile_name in HAVA81_BROWSER_PROFILE_NAMES:
+            return True
+    return False
+
+
 def _browser_process_state(stale: list[dict[str, Any]]) -> dict[str, Any]:
     stale.sort(key=lambda item: item['elapsed_seconds'], reverse=True)
     return {
@@ -311,7 +321,7 @@ def collect_hava81_browser_processes_from_proc(
             continue
         try:
             args = (entry / 'cmdline').read_bytes().replace(b'\0', b' ').decode('utf-8', errors='replace').strip()
-            if '/tmp/hava81-' not in args:
+            if not is_hava81_browser_profile_args(args):
                 continue
             command = (entry / 'comm').read_text(encoding='utf-8').strip()
             browser_identity = f'{command} {args}'.lower()
@@ -363,7 +373,7 @@ def collect_hava81_browser_processes() -> dict[str, Any]:
         if len(parts) != 5:
             continue
         pid_raw, elapsed_raw, user, command, args = parts
-        if '/tmp/hava81-' not in args:
+        if not is_hava81_browser_profile_args(args):
             continue
         browser_identity = f'{command} {args}'.lower()
         if not any(token in browser_identity for token in ('chromium', 'chrome', 'playwright')):

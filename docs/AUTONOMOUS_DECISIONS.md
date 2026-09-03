@@ -1362,3 +1362,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The primary skip link explicitly focuses the already-focusable main content before normal fragment navigation completes.
 
 **Why:** Hosted browser validation has intermittently observed fragment navigation without the expected focus assertion even though the target carries `tabIndex={-1}`. Explicit focus keeps the native `#main-content` link and scrolling behavior while making the keyboard focus transfer deterministic; it changes no weather, routing, scoring, API, MGM, or recommendation semantics.
+### 2026-09-03 21:02 TRT — stale-browser observation follows Hava81 profile identity, not one temp root
+
+**Decision:** Browser-audit observation identifies Hava81 Chromium processes from the `--user-data-dir` profile basename allowlist (`hava81-*`, `h81deploycheck`, `h81meta`, `h81text`) instead of requiring the profile to live under `/tmp`.
+
+**Why:** Real Hava81 audit profiles also live under Snap Chromium's private common directory. Binding detection to `/tmp/hava81-*` could miss a long-running Hava81 browser that still owns a Snap profile and disk blocks. Profile-name matching preserves project isolation and remains read-only while covering both normal and Snap path layouts.
