@@ -158,7 +158,7 @@
   align-items: center;
   gap: 0.5rem;
   color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .weather-map__legend-item::before {
