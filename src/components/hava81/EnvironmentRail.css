@@ -92,7 +92,7 @@
 .environment-rail__detail {
   min-width: 0;
   color: var(--environment-muted);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.35;
   overflow-wrap: anywhere;
