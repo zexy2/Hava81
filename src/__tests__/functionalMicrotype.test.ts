@@ -90,6 +90,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.weather-map__popup-plate'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps Context Signals measurement units at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/ContextSignalsPanel.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.context-signal > strong small'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps forecast source attribution at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/ForecastAtlas.css', 'utf8');
     expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__source'))).toBeGreaterThanOrEqual(0.8125);

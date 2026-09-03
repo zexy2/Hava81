@@ -3097,3 +3097,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Saved-city comparison displayed each Hava81 score with a `/100` scale at 11.2px-equivalent even though the adjacent band qualifier already uses the 13px functional-copy floor.
 - Raised only `.hava81-compare__score span` to 13px-equivalent and extended the existing comparison microtype regression.
 - No comparison scoring, winner selection, weather metrics, freshness, API or MGM semantics changed. Existing comparison 200% text-size browser coverage remains the reflow guard.
+
+## 2026-09-03 13:56 TRT — keep Context Signals units readable
+- Continued independently from current main `6866a5d82eb43f00f8e1f7f50582bfd2c0ec580c` while the #788 production rollout and rebased PR gates run.
+- Audited remaining sub-13px functional copy and found dust/pollen measurement units inside Context Signals still rendered at 11px-equivalent, despite being required to interpret the displayed modeled values.
+- Raised only `.context-signal > strong small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
+- Existing `mobile context signals reflow at 200 percent text size` browser coverage remains the layout guard. No UV, pollen, dust, marine value, provider/freshness, API, MGM, or recommendation semantics changed.
