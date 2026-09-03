@@ -22,6 +22,12 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.settings-section__title'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps top navigation state labels at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/styles/App.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.atlas-compare-button span'))).toBeGreaterThanOrEqual(0.8125);
+    expect(remFontSize(cssRule(css, '.atlas-settings-button__language'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps saved-city province plates at or above the 11px-equivalent floor', () => {
     expectReadableFunctionalMicrotype('src/components/CityTabs.css', '.city-tabs__plate');
   });
