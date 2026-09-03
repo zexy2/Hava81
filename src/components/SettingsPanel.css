@@ -281,7 +281,7 @@
 .settings-panel__version {
   margin: 0;
   color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .settings-option:focus-visible,
