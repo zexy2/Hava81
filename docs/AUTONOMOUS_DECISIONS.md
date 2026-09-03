@@ -1180,3 +1180,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Forecast Atlas source/provider attribution renders at least at the 13px-equivalent functional-copy floor.
 
 **Why:** Source attribution is part of the evidence trust boundary, not decorative microtype. Raising only its presentation size improves readability without altering forecast data or decision semantics.
+
+### 2026-09-03 07:27 TRT — city-shell generation must prove 81 unique provinces
+
+**Decision:** Production city-page generation fails closed unless the canonical dataset yields exactly 81 unique province names and 81 non-empty unique slugs.
+
+**Why:** Hava81's product and SEO surface promises all 81 provinces. Silent extraction loss or a slug collision could otherwise produce a successful build with a missing/overwritten city shell, so completeness belongs in the generator's build-time trust boundary.
