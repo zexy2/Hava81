@@ -131,6 +131,10 @@ check_navigation_asset_coherence() {
 # for the exact GitHub Pages release instead of accepting a healthy stale shell.
 check_path "/" "hava81-favicon.ico" "dist/index.html" "/react.svg"
 check_path "/istanbul/" "İstanbul hava durumu ve gün planı — Hava81" "dist/istanbul/index.html"
+if [[ -n "${GITHUB_SHA:-}" ]]; then
+  check_path "/" "name=\"hava81-build-revision\" content=\"${GITHUB_SHA}\"" "dist/index.html"
+  check_path "/istanbul/" "name=\"hava81-build-revision\" content=\"${GITHUB_SHA}\"" "dist/istanbul/index.html"
+fi
 check_path "/manifest.json" '"short_name": "Hava81"' "dist/manifest.json" '"React App"'
 check_path "/sw.js" "notificationclick" "dist/sw.js"
 check_path "/hava81-mark.svg" "<svg" "dist/hava81-mark.svg"
