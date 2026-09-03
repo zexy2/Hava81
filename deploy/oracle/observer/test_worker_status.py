@@ -10,6 +10,11 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("browser_processes.get('stale_count')", status_script)
         self.assertIn("browser_processes.get('error')", status_script)
 
+    def test_status_script_surfaces_codeql_gate_state(self) -> None:
+        status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn("pr.get('codeql')", status_script)
+        self.assertIn("codeql={codeql.get('status')}/{codeql.get('conclusion')}", status_script)
+
 
 if __name__ == '__main__':
     unittest.main()
