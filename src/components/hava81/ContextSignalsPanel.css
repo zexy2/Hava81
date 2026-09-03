@@ -59,7 +59,7 @@
   font-size: 1.45rem;
 }
 .context-signal > strong small {
-  font-size: 0.68rem;
+  font-size: 0.6875rem;
   color: var(--color-atlas-muted);
 }
 .context-signal p {
