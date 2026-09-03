@@ -1417,3 +1417,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ### 2026-09-04 00:37 TRT — status output exposes readiness and observer capability separately
 - The human-readable worker status must print both merge/deploy readiness and `writes_repository`; hiding either recreates the ambiguity fixed in the observer schema.
 - Blocking reasons are part of the status line so autonomous/operator decisions can fail closed without parsing raw state JSON.
+
+
+## 2026-09-04 01:50 TRT — header action controls are not navigation landmarks
+- The top-header search/location/favorite/map/settings controls are actions, not destination navigation. Expose them as one named `group` rather than a `nav` landmark so assistive-technology landmark lists remain reserved for actual navigation regions.
+- Keep the existing class, labels, button behavior and visual layout unchanged; this is a semantic-only accessibility correction.

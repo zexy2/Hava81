@@ -446,7 +446,11 @@ const App: React.FC = () => {
                 />
               </div>
 
-              <nav className="atlas-header__actions" aria-label={t('weather.quickActions')}>
+              <div
+                className="atlas-header__actions"
+                role="group"
+                aria-label={t('weather.quickActions')}
+              >
                 <button
                   ref={searchToggleRef}
                   type="button"
@@ -522,7 +526,7 @@ const App: React.FC = () => {
                   </span>
                   <SettingsIcon />
                 </button>
-              </nav>
+              </div>
             </div>
 
             {favorites.length > 0 && (
