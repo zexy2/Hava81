@@ -86,7 +86,7 @@
 .daily-plan__decision > span,
 .daily-plan__quick span {
   color: var(--color-atlas-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -362,7 +362,7 @@
 .daily-plan__explain-head span,
 .daily-plan__explain-head small {
   color: var(--color-atlas-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
