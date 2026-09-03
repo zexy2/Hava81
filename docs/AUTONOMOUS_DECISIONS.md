@@ -1164,3 +1164,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The route-corridor disclaimer that excludes turn-by-turn navigation, traffic, closures and road safety must render at least at the 13px-equivalent functional-copy floor rather than share microtype sizing with segment metadata.
 
 **Why:** That sentence limits how users should act on the modeled weather corridor. It is a safety/use-boundary, not decorative metadata, so it must remain readily readable without changing the underlying route model or claim.
+### 2026-09-03 07:02 TRT — province matching uses one Turkish/ASCII normalization path
+
+**Decision:** Interactive autocomplete and reusable province lookup/search helpers share one case- and Turkish-diacritic-insensitive normalizer.
+
+**Why:** Hava81 promises all 81 provinces. Divergent `I/İ/ı` handling makes otherwise valid province spellings behave differently depending on which helper is called. A single normalizer preserves canonical display names while making matching tolerant and deterministic.

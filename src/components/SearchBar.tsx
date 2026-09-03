@@ -18,7 +18,7 @@ import React, {
   type ChangeEvent,
 } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
-import { TURKIYE_SEHIRLERI } from '../constants/cities';
+import { normalizeCitySearchText, TURKIYE_SEHIRLERI } from '../constants/cities';
 
 interface SearchBarProps {
   value: string;
@@ -89,34 +89,15 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
     const query = (debouncedValue ?? '').trim();
     if (query.length < MIN_QUERY_LENGTH) return [];
 
-    // Normalize Turkish characters for comparison
-    // Replace Turkish chars BEFORE toLowerCase to avoid Unicode issues
-    const normalizeTurkish = (str: string) =>
-      str
-        .replace(/İ/g, 'i')
-        .replace(/I/g, 'i')
-        .replace(/ı/g, 'i')
-        .replace(/Ü/g, 'u')
-        .replace(/ü/g, 'u')
-        .replace(/Ö/g, 'o')
-        .replace(/ö/g, 'o')
-        .replace(/Ş/g, 's')
-        .replace(/ş/g, 's')
-        .replace(/Ğ/g, 'g')
-        .replace(/ğ/g, 'g')
-        .replace(/Ç/g, 'c')
-        .replace(/ç/g, 'c')
-        .toLowerCase();
-
-    const normalized = normalizeTurkish(query);
+    const normalized = normalizeCitySearchText(query);
     const matches = TURKIYE_SEHIRLERI.filter(cityName =>
-      normalizeTurkish(cityName).includes(normalized)
+      normalizeCitySearchText(cityName).includes(normalized)
     );
     const prefixMatches = matches.filter(cityName =>
-      normalizeTurkish(cityName).startsWith(normalized)
+      normalizeCitySearchText(cityName).startsWith(normalized)
     );
     const substringMatches = matches.filter(
-      cityName => !normalizeTurkish(cityName).startsWith(normalized)
+      cityName => !normalizeCitySearchText(cityName).startsWith(normalized)
     );
 
     return [...prefixMatches, ...substringMatches].slice(0, MAX_SUGGESTIONS);

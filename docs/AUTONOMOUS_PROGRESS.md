@@ -2960,3 +2960,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Route Weather's API disclaimer explicitly says the corridor is not a turn-by-turn route and excludes traffic, closures and road safety, but the UI grouped that safety boundary with 0.72rem segment metadata.
 - Split only the disclaimer presentation from segment timestamps/metadata and raised it to the 13px-equivalent functional-copy floor with 1.45 line-height. Added a source regression locking the disclaimer floor.
 - No route geometry, scoring, forecast evidence, departure recommendation, provider data, freshness, navigation claim, API contract or MGM behavior changed. `git diff --check` passes; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory before merge.
+## 2026-09-03 07:02 TRT — unify Turkish province search identity
+- Continued from exact main `8f19afed6ace5b2a8b4e163a727fabe2e74cb32b` while #750/#751 exact-head gates and deployment observation ran independently.
+- Found split city-name semantics: SearchBar already folded Turkish `I/İ/ı` and diacritics for forgiving autocomplete, while exported `getCityByName`/`searchCities` still used plain JavaScript `toLowerCase()`. That can miss valid forms such as lowercase `ığdır` or ASCII `IGDIR` for canonical `Iğdır`.
+- Added one shared `normalizeCitySearchText` helper, reused it in SearchBar and both exported city lookup helpers, and added focused regressions for Iğdır, İzmir and Şanlıurfa variants.
+- No coordinates, province list, slugs, routing, weather values, API calls or recommendation semantics changed. `git diff --check` passes; exact-head hosted lint/type/unit/browser/build/Lighthouse/CodeQL remain mandatory before merge because Node/npm are unavailable on this host.
