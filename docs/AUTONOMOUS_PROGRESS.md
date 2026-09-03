@@ -3116,3 +3116,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast Atlas displayed the active temperature unit beside the panel title at 12px-equivalent even though it defines the scale for every temperature value in the module.
 - Raised only `.hava81-forecast-atlas__unit` to the shared 13px-equivalent functional-copy floor and extended the central microtype regression.
 - No unit conversion, temperature values, forecast data, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
+
+
+## 2026-09-03 19:02 TRT — quantify disk recovery headroom in the observer
+- Continued independently from exact main `c0059150f6424bdbe5d1222714efbb04840e7e65` while its frontend rollout and prepared UI PR gates proceed.
+- Repeated root-disk incidents exposed a practical observability gap: the observer said whether the 92%/2 GiB gates failed, but not how many bytes must be reclaimed to recover both gates.
+- Added read-only disk fields for the percentage-gate required free bytes, bytes still needed for that gate, and bytes needed for overall disk health; worker-status surfaces the overall recovery amount in GiB.
+- The calculation uses the raw filesystem totals rather than rounded display percentages and remains observation-only. No deletion, process termination, deploy, weather, API, MGM, scoring or recommendation behavior changed.
