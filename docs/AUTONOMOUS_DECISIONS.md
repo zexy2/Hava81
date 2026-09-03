@@ -1175,3 +1175,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Weather Map source attribution renders at least at the 13px-equivalent functional-copy floor.
 
 **Why:** Source attribution tells users where map evidence comes from and should remain readily readable; increasing only its presentation size preserves all map/weather behavior.
+### 2026-09-03 07:18 TRT — forecast source attribution is functional provenance
+
+**Decision:** Forecast Atlas source/provider attribution renders at least at the 13px-equivalent functional-copy floor.
+
+**Why:** Source attribution is part of the evidence trust boundary, not decorative microtype. Raising only its presentation size improves readability without altering forecast data or decision semantics.
