@@ -18,8 +18,7 @@
   margin: 0.2rem 0 0;
   font-size: 1.45rem;
 }
-.context-signals > header small,
-.context-signals__note {
+.context-signals > header small {
   color: var(--color-atlas-muted);
 }
 .context-signals__source {
@@ -76,6 +75,7 @@
 }
 .context-signals__note {
   margin: 0;
+  color: var(--color-atlas-muted);
   font-size: 0.8125rem;
 }
 @media (max-width: 63.99rem) {
