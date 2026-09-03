@@ -3123,3 +3123,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Repeated root-disk incidents exposed a practical observability gap: the observer said whether the 92%/2 GiB gates failed, but not how many bytes must be reclaimed to recover both gates.
 - Added read-only disk fields for the percentage-gate required free bytes, bytes still needed for that gate, and bytes needed for overall disk health; worker-status surfaces the overall recovery amount in GiB.
 - The calculation uses the raw filesystem totals rather than rounded display percentages and remains observation-only. No deletion, process termination, deploy, weather, API, MGM, scoring or recommendation behavior changed.
+
+## 2026-09-03 18:53 TRT — keep Forecast Atlas section headings readable
+- Continued independently from exact main `1e126da835835dc8472ca30c30b0f763288921e8` while the main rollout and PR #835/#836 gates proceed.
+- Forecast Atlas hourly and daily section headings remained at 12px-equivalent even though they are semantic h3 headings that separate the two primary forecast views.
+- Raised only `.hava81-forecast-atlas__section-title` to the shared 13px-equivalent functional-copy floor and extended the central microtype regression.
+- No forecast values, horizon selection, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.

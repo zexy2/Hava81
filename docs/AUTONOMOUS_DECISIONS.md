@@ -1332,3 +1332,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The read-only host observer reports the exact byte headroom needed to satisfy both root-disk health gates.
 
 **Why:** Operators can make bounded cleanup decisions without estimating from rounded `df` percentages. This improves recovery precision while keeping cleanup policy and all mutations outside the observer.
+
+### 2026-09-03 18:53 TRT — Forecast Atlas section headings are functional hierarchy
+
+**Decision:** Hourly and daily Forecast Atlas section headings render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** These h3 headings separate the primary forecast views and support scan hierarchy. Making them readable improves navigation without changing any forecast or guidance semantics.
