@@ -2954,3 +2954,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Context Signals still rendered the provider/freshness attribution and modeled-guidance disclaimer at ~11.5px. Those strings define provenance, freshness and the modeled-vs-official safety boundary, so they are functional trust copy rather than decorative metadata.
 - Raised only `.context-signals__source` and `.context-signals__note` to the shared 13px-equivalent floor and added a source regression locking both selectors. No provider values, freshness TTLs, UV/AQI/marine thresholds, scoring, MGM handling, API behavior or layout structure changed.
 - `git diff --check` passes; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory before merge because local Node/npm are unavailable on this host.
+
+## 2026-09-03 06:56 TRT — keep route safety boundary readable
+- Continued independently from exact main `8455b8d9587ea6736d612a72672410869483f957` while #747/#750 reran exact-head hosted gates.
+- Route Weather's API disclaimer explicitly says the corridor is not a turn-by-turn route and excludes traffic, closures and road safety, but the UI grouped that safety boundary with 0.72rem segment metadata.
+- Split only the disclaimer presentation from segment timestamps/metadata and raised it to the 13px-equivalent functional-copy floor with 1.45 line-height. Added a source regression locking the disclaimer floor.
+- No route geometry, scoring, forecast evidence, departure recommendation, provider data, freshness, navigation claim, API contract or MGM behavior changed. `git diff --check` passes; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory before merge.

@@ -1158,3 +1158,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Context Signals provider/freshness attribution and the modeled-guidance disclaimer use at least the 13px-equivalent functional-copy floor.
 
 **Why:** These lines tell users where the evidence came from, how fresh it is, and that modeled guidance is not an official warning. They are part of the trust/safety contract and should not be rendered as decorative microtype; increasing only their presentation size preserves all weather evidence and decision semantics.
+
+### 2026-09-03 06:56 TRT — route safety boundary is functional copy
+
+**Decision:** The route-corridor disclaimer that excludes turn-by-turn navigation, traffic, closures and road safety must render at least at the 13px-equivalent functional-copy floor rather than share microtype sizing with segment metadata.
+
+**Why:** That sentence limits how users should act on the modeled weather corridor. It is a safety/use-boundary, not decorative metadata, so it must remain readily readable without changing the underlying route model or claim.
