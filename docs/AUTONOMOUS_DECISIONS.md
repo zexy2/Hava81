@@ -1306,3 +1306,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The saved-city comparison `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** The denominator communicates the scoring scale used to compare cities. It is functional decision context rather than decorative microtype, and making it readable does not alter ranking or scoring behavior.
+
+### 2026-09-03 13:56 TRT — modeled context measurement units are functional copy
+
+**Decision:** Dust and pollen measurement units in Context Signals render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** A measurement without a legible unit can be misread and weaken the evidence attached to Hava81 guidance. Enlarging only the unit label improves interpretation without changing any measured value, threshold, provider, or recommendation logic.
