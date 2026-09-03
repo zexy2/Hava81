@@ -3033,3 +3033,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The first Forecast Atlas summary still rendered its Low/High/Rain evidence labels at the 11px-equivalent floor even though those labels identify the values users scan before deciding what to do.
 - Raised only the Forecast Atlas summary label selector to the shared 13px-equivalent functional-copy floor. Extended the existing 320px + 200% text-size browser regression to require the resulting labels to remain at least 26px computed size while preserving overflow/reflow checks.
 - No forecast values, rainfall interpretation, horizon, provider/freshness behavior, scoring, API or MGM semantics changed. Exact-head hosted gates remain mandatory before merge.
+
+
+## 2026-09-03 10:56 TRT — observe abandoned Hava81 browser audits before they consume disk
+- Continued from exact main f5bbaccb607237a0b0c5135691a58cd8b40250e7 while PR #767 validates independently and the production disk gate remains active.
+- A direct process check confirmed there are currently no Hava81 Chromium/Playwright processes using /tmp/hava81-* profiles, but the earlier disk incident showed that abandoned audit browsers can keep deleted profile files open for many hours.
+- Extended the read-only observer to report only browser processes whose command line contains a Hava81 temporary profile and whose elapsed time is at least two hours. Results are bounded to eight process records, ps failures degrade to an explicit unknown state, and stale browsers create an advisory warning rather than a production-health incident.
+- The observer remains non-mutating: it never terminates processes or deletes profiles. The stale-process count is included in the observer state signature so a transition is logged. Observer suite passes 35/35, in-memory Python compile checks pass, and git diff --check passes.

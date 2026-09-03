@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import tempfile
 import unittest
+from unittest import mock
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -791,6 +792,68 @@ class ObserverStateSignatureTests(unittest.TestCase):
         }
 
         self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
+
+
+class ObserverBrowserProcessTests(unittest.TestCase):
+    class _Result:
+        def __init__(self, stdout: str, returncode: int = 0) -> None:
+            self.stdout = stdout
+            self.returncode = returncode
+
+    def test_only_old_hava81_browser_profiles_are_reported(self) -> None:
+        output = "\n".join([
+            "101 9000 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/tmp/hava81-audit-1",
+            "102 7100 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/tmp/hava81-audit-2",
+            "103 12000 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/tmp/postify-audit",
+            "104 15000 ubuntu node node /tmp/hava81-worker.js",
+        ])
+        with mock.patch.object(observer.subprocess, "run", return_value=self._Result(output)):
+            state = observer.collect_hava81_browser_processes()
+
+        self.assertTrue(state["known"])
+        self.assertEqual(state["stale_count"], 1)
+        self.assertEqual(state["processes"][0]["pid"], 101)
+        self.assertEqual(state["processes"][0]["elapsed_seconds"], 9000)
+        self.assertIsNone(state["error"])
+
+    def test_ps_failure_is_observationally_unknown(self) -> None:
+        with mock.patch.object(
+            observer.subprocess, "run", side_effect=observer.subprocess.TimeoutExpired("ps", 2.0)
+        ):
+            state = observer.collect_hava81_browser_processes()
+
+        self.assertFalse(state["known"])
+        self.assertEqual(state["stale_count"], 0)
+        self.assertIn("TimeoutExpired", state["error"])
+
+    def test_stale_browser_process_is_warning_not_host_incident(self) -> None:
+        original_statvfs = observer.os.statvfs
+        original_collect = observer.collect_hava81_browser_processes
+
+        class HealthyStatvfs:
+            f_frsize = 4096
+            f_blocks = 10_000_000
+            f_bavail = 2_000_000
+
+        try:
+            observer.os.statvfs = lambda _path: HealthyStatvfs()
+            observer.collect_hava81_browser_processes = lambda: {
+                "known": True,
+                "stale_after_seconds": observer.HAVA81_BROWSER_STALE_SECONDS,
+                "stale_count": 2,
+                "processes": [],
+                "error": None,
+            }
+            host = observer.collect_host()
+        finally:
+            observer.os.statvfs = original_statvfs
+            observer.collect_hava81_browser_processes = original_collect
+
+        self.assertTrue(host["healthy"])
+        self.assertEqual(host["issues"], [])
+        self.assertIn("stale_hava81_browser_processes", host["warnings"])
+        self.assertEqual(host["browser_processes"]["stale_count"], 2)
+
 
 
 class ObserverHostDiskTests(unittest.TestCase):
