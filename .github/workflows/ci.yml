@@ -50,10 +50,13 @@ jobs:
           PY
       - name: Verify observer installer shell syntax
         run: bash -n deploy/oracle/install-observer.sh
-      - uses: codecov/codecov-action@v7
+      - name: Preserve frontend coverage report
+        uses: actions/upload-artifact@v4
         with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
+          name: frontend-coverage
+          path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 7
 
   api:
     name: API test & build

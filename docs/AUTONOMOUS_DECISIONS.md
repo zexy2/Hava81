@@ -1140,3 +1140,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** When Hava81 sends a modeled `wait` notification, its body includes the existing `nowOrLater.targetTime` formatted in the weather location's timezone rather than only saying the weather improves “in the next hours.”
 
 **Why:** A recommendation to wait is not fully actionable without telling the user when the better window is expected. The target time is already part of the daily-plan decision; exposing it in location-local clock time adds no new forecast claim and preserves the same score, improvement threshold, freshness, provider and official-warning boundaries.
+
+### 2026-09-03 05:12 TRT — coverage evidence stays first-party until Codecov is actually onboarded
+
+**Decision:** CI preserves `coverage/lcov.info` as a required GitHub Actions artifact rather than invoking Codecov while Codecov reports the Hava81 repository as not found.
+
+**Why:** Hosted evidence proved GitHub OIDC token issuance works, but Codecov cannot associate the upload with an onboarded repository. A non-blocking external upload silently loses telemetry; a blocking external upload makes healthy application changes fail for unrelated account configuration. A required first-party artifact preserves inspectable coverage output deterministically without secrets or additional trust scope.
