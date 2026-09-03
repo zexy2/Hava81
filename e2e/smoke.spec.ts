@@ -528,6 +528,42 @@ test('narrow mobile dashboard stays inside a 320px viewport', async ({ page }, t
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mobile decision metrics form a compact matrix and reflow with enlarged text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision metric-density regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const rail = page.locator('.hava81-decision-field__rail');
+  const measure = () =>
+    rail.evaluate(element => {
+      const metrics = Array.from(element.querySelectorAll<HTMLElement>('.hava81-decision-field__metric'));
+      const rects = metrics.map(metric => metric.getBoundingClientRect());
+      const rowTops = Array.from(new Set(rects.map(rect => Math.round(rect.top))));
+      return {
+        rows: rowTops.length,
+        height: element.getBoundingClientRect().height,
+        metricsFit: metrics.every(metric => metric.scrollWidth <= metric.clientWidth + 1),
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+  const normal = await measure();
+  expect(normal.rows).toBe(1);
+  expect(normal.height).toBeLessThan(140);
+  expect(normal.metricsFit).toBe(true);
+  expect(normal.pageWidth).toBeLessThanOrEqual(normal.viewportWidth);
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  const enlarged = await measure();
+  expect(enlarged.rows).toBe(2);
+  expect(enlarged.metricsFit).toBe(true);
+  expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
+});
+
 test('mobile decision metadata prioritizes source freshness over coordinates', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision metadata hierarchy regression');
   await page.goto('/istanbul');

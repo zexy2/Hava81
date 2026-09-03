@@ -244,6 +244,28 @@
   line-height: 1.35;
 }
 
+@media (max-width: 55.99rem) {
+  .hava81-decision-field__rail {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
+    gap: 1px;
+    background: var(--decision-line);
+  }
+
+  .hava81-decision-field__metric,
+  .hava81-decision-field__metric:nth-child(even),
+  .hava81-decision-field__metric:nth-child(n + 3) {
+    margin-top: 0;
+    padding: 12px 8px;
+    background: var(--decision-field);
+    border-top: 0;
+    border-left: 0;
+  }
+
+  .hava81-decision-field__metric dt {
+    margin-bottom: 6px;
+  }
+}
+
 @media (max-width: 39.99rem) {
   .hava81-decision-field__coordinate-meta,
   .hava81-decision-field__observed-full {

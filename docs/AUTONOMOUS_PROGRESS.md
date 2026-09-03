@@ -3184,3 +3184,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The remaining Weather Map province marker code still rendered at `0.6875rem` even though popup province codes, map legend text and attribution are protected by the 13px functional microtype floor.
 - Raised only the marker code to `0.8125rem`, slightly tightened letter spacing to keep two-digit plates centered, and left the existing 44px Leaflet marker target, popup behavior and city-selection flow unchanged.
 - Added a static functional-microtype regression plus a mobile Chromium assertion that the Bursa `16` marker computes to at least 13px and remains fully contained in its marker box.
+
+## 2026-09-03 22:10 TRT — compact the mobile Weather Decision metric rail without hiding evidence
+- Re-audited exact production after #846: root and /istanbul bytes matched gh-pages at main 1ebad4ec1f66b31e44b181913eccfe7959d44fbd, observer reported matches_main=true, and public/4001/4002 readiness were healthy.
+- Live 390px geometry showed the Weather Decision surface at about 616px tall, with Forecast Atlas beginning around 717px while the fixed bottom navigation begins around 778px. The existing 2×2 metric rail was the clearest compressible data block without removing content.
+- Changed only WeatherDecisionField responsive CSS: <=55.99rem uses an auto-fit 4rem-minimum data matrix with 1px editorial separators. Normal 390px text renders all four metrics in one row; enlarged text increases the rem minimum and reflows instead of squeezing labels.
+- Added a mobile Chromium regression that requires one row at normal text, two rows after 200% root text scaling, no metric overflow, and no page overflow. Browser measurement: normal rail 120.97px; 200% rail 390.69px with all metrics contained.
+- Local validation: git diff --check, lint, type-check, production build, full Vitest, the new mobile matrix E2E, and the existing 320px/200% decision containment E2E all pass. No weather data, scoring, routing, provider, Activity Planner, or Daily Plan behavior changed.
