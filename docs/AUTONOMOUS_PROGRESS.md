@@ -3026,3 +3026,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added derived `main_revision`, `matches_main` and `pending` fields for a known/consistent frontend revision, surfaced `frontend_deploy_pending` as an observer signal, and included revision state in the event signature so an actual Pages transition is logged.
 - Unknown or inconsistent shells deliberately do not claim either a match or a pending deployment, and frontend lag remains observational rather than a production-health failure.
 - Observer suite passes 32/32, compile checks pass without bytecode artifacts, and `git diff --check` passes. Exact-head hosted CI/CodeQL and merge remain required before Oracle installation.
+
+
+## 2026-09-03 10:52 TRT — keep Forecast Atlas summary evidence readable
+- Continued from exact main f5bbaccb607237a0b0c5135691a58cd8b40250e7 while production remains healthy and the host disk-pressure merge gate stays active.
+- The first Forecast Atlas summary still rendered its Low/High/Rain evidence labels at the 11px-equivalent floor even though those labels identify the values users scan before deciding what to do.
+- Raised only the Forecast Atlas summary label selector to the shared 13px-equivalent functional-copy floor. Extended the existing 320px + 200% text-size browser regression to require the resulting labels to remain at least 26px computed size while preserving overflow/reflow checks.
+- No forecast values, rainfall interpretation, horizon, provider/freshness behavior, scoring, API or MGM semantics changed. Exact-head hosted gates remain mandatory before merge.
