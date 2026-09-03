@@ -39,7 +39,7 @@ jobs:
         run: bash scripts/test-cleanup-hava81-browser-temp.sh
       - name: Verify production observer contract
         run: |
-          PYTHONDONTWRITEBYTECODE=1 python3 deploy/oracle/observer/test_observer.py
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/oracle/observer -p 'test_*.py'
           python3 - <<'PY'
           from pathlib import Path
           for filename in [
