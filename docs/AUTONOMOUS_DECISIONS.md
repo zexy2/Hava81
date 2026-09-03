@@ -1169,3 +1169,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Interactive autocomplete and reusable province lookup/search helpers share one case- and Turkish-diacritic-insensitive normalizer.
 
 **Why:** Hava81 promises all 81 provinces. Divergent `I/İ/ı` handling makes otherwise valid province spellings behave differently depending on which helper is called. A single normalizer preserves canonical display names while making matching tolerant and deterministic.
+
+### 2026-09-03 07:11 TRT — map attribution is functional provenance
+
+**Decision:** Weather Map source attribution renders at least at the 13px-equivalent functional-copy floor.
+
+**Why:** Source attribution tells users where map evidence comes from and should remain readily readable; increasing only its presentation size preserves all map/weather behavior.

@@ -43,6 +43,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.route-weather__disclaimer'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps map data attribution at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/WeatherMap.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.weather-map__attribution'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps Activity Planner score qualifiers at or above the 11px-equivalent floor', () => {
     expectReadableFunctionalMicrotype(
       'src/components/hava81/ActivityPlanner.css',
