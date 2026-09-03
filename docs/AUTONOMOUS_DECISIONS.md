@@ -1234,3 +1234,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The observer compares a known, internally consistent root/İstanbul build revision with the latest main revision and exposes `matches_main` plus `pending`; it records revision transitions in the state signature but does not classify deployment lag as production failure.
 
 **Why:** GitHub Pages propagation can legitimately trail a successful merge. Explicit pending state lets autonomous runs distinguish “healthy previous frontend still live” from “new main is live” without treating propagation as an outage or guessing from workflow timestamps.
+
+
+### 2026-09-03 10:52 TRT — Forecast Atlas summary labels are functional evidence
+
+**Decision:** The Low/High/Rain labels in the first Forecast Atlas summary render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** They identify the forecast evidence values users scan before acting. Keeping those labels below the functional-copy floor weakens interpretation of the adjacent numbers; increasing only their typography preserves weather and recommendation semantics.

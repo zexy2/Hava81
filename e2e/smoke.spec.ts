@@ -2793,6 +2793,7 @@ test('mobile forecast summary reflows at 200 percent text size', async ({ page }
         itemsFit: items.every(fits),
         labelsFit: labels.every(fits),
         valuesFit: values.every(fits),
+        labelFontSizes: labels.map(node => parseFloat(getComputedStyle(node).fontSize)),
         left: rect.left,
         right: rect.right,
         pageWidth: document.documentElement.scrollWidth,
@@ -2804,6 +2805,7 @@ test('mobile forecast summary reflows at 200 percent text size', async ({ page }
     expect(layout.itemsFit).toBe(true);
     expect(layout.labelsFit).toBe(true);
     expect(layout.valuesFit).toBe(true);
+    expect(layout.labelFontSizes.every(size => size >= 26)).toBe(true);
     expect(layout.left).toBeGreaterThanOrEqual(0);
     expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
     expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);

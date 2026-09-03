@@ -196,7 +196,7 @@
   overflow: visible;
   overflow-wrap: anywhere;
   color: var(--forecast-muted);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1.2;
   text-overflow: clip;
