@@ -2924,3 +2924,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited Decision Alert deduplication and found `wait` signatures embedded the suggested target timestamp. Hourly forecast refreshes can shift that target while the decision remains materially the same, bypassing the existing same-local-day sent marker and causing repeat notifications.
 - Made the `wait` signature stable per normalized city (`<city>:wait`); the existing location-date key still resets notification eligibility on the next local day.
 - Added a regression proving a one-hour target shift and score refresh retain the same wait signature. No wait threshold, score, target-time selection, weather evidence, provider, freshness, priority, permission behavior or official-warning handling changed.
+
+## 2026-09-03 04:40 TRT — complete modeled-guidance provenance across wait notification titles
+- Started a fresh isolated branch from exact main `a1bbb458638f14593a7f9549c463cc6fb1d29eb3` while its post-merge pipeline was running.
+- Audited detached Decision Alert titles after the rain/wind/AQI/difficult provenance hardening and found `wait` remained the only modeled notification kind whose title did not name Hava81.
+- Updated only TR/EN `waitTitle` copy to `Hava81 bekleme rehberi` / `Hava81 wait guidance` and extended the existing localization provenance regression to include wait titles.
+- No wait threshold, target-time selection, score, weather/provider evidence, freshness, dedupe, permission, MGM handling, API or delivery behavior changed.

@@ -1129,3 +1129,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** A material `wait` notification uses a stable city-level signature; the existing location-date key remains the freshness boundary for deduplication. A forecast refresh that merely shifts the suggested hour must not create another notification on the same local day.
 
 **Why:** The target hour can move as hourly forecasts refresh without representing a new notification-worthy event. Encoding that timestamp in the dedupe signature could repeatedly notify a user about the same `wait for better weather` decision. The body still reflects the current recommendation when the day's first notification is delivered; thresholds, scoring and target-time selection are unchanged.
+
+### 2026-09-03 04:40 TRT — detached wait-notification titles identify Hava81
+
+**Decision:** The modeled `wait` browser-notification title must identify Hava81 in both Turkish and English, matching the provenance boundary already applied to rain, wind, air-quality and difficult-weather notification titles.
+
+**Why:** OS notification trays can truncate the body-level modeled-guidance/MGM disclosure. A detached `wait for better weather` title should not look like an unaffiliated or official forecast instruction when consumed outside the app. This is a copy/provenance change only; the wait threshold, timing, weather evidence, freshness, scoring and delivery logic remain unchanged.
