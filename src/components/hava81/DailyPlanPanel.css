@@ -54,7 +54,7 @@
 .daily-plan__score small {
   grid-column: 1 / -1;
   margin-top: var(--space-xs);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -302,7 +302,7 @@
   .daily-plan__header {
     align-items: stretch;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-sm);
   }
 
   .daily-plan__header > div:first-child {
