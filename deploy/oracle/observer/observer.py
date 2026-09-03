@@ -5,6 +5,7 @@ import json
 import os
 import re
 import ssl
+import subprocess
 import tempfile
 import time
 import urllib.error
@@ -44,6 +45,8 @@ API_RUNTIME_PREFIXES = ('apps/api/src/',)
 GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
+MAX_STALE_BROWSER_PROCESSES_REPORTED = 8
 
 
 def now_iso() -> str:
@@ -262,8 +265,71 @@ def collect_production() -> dict[str, Any]:
     }
 
 
+def collect_hava81_browser_processes() -> dict[str, Any]:
+    try:
+        result = subprocess.run(
+            ['/usr/bin/ps', '-eo', 'pid=,etimes=,user=,comm=,args='],
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {
+            'known': False,
+            'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
+            'stale_count': 0,
+            'processes': [],
+            'error': f'{type(exc).__name__}: {exc}',
+        }
+
+    if result.returncode != 0:
+        return {
+            'known': False,
+            'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
+            'stale_count': 0,
+            'processes': [],
+            'error': f'ps exited {result.returncode}',
+        }
+
+    stale: list[dict[str, Any]] = []
+    for raw_line in result.stdout.splitlines():
+        parts = raw_line.strip().split(None, 4)
+        if len(parts) != 5:
+            continue
+        pid_raw, elapsed_raw, user, command, args = parts
+        if '/tmp/hava81-' not in args:
+            continue
+        browser_identity = f'{command} {args}'.lower()
+        if not any(token in browser_identity for token in ('chromium', 'chrome', 'playwright')):
+            continue
+        try:
+            pid = int(pid_raw)
+            elapsed_seconds = int(elapsed_raw)
+        except ValueError:
+            continue
+        if elapsed_seconds < HAVA81_BROWSER_STALE_SECONDS:
+            continue
+        stale.append({
+            'pid': pid,
+            'user': user,
+            'command': command,
+            'elapsed_seconds': elapsed_seconds,
+        })
+
+    stale.sort(key=lambda item: item['elapsed_seconds'], reverse=True)
+    return {
+        'known': True,
+        'stale_after_seconds': HAVA81_BROWSER_STALE_SECONDS,
+        'stale_count': len(stale),
+        'processes': stale[:MAX_STALE_BROWSER_PROCESSES_REPORTED],
+        'error': None,
+    }
+
+
 def collect_host() -> dict[str, Any]:
     usage = os.statvfs('/')
+    browser_processes = collect_hava81_browser_processes()
     free_bytes = usage.f_bavail * usage.f_frsize
     total_bytes = usage.f_blocks * usage.f_frsize
     used_bytes = max(total_bytes - free_bytes, 0)
@@ -281,6 +347,8 @@ def collect_host() -> dict[str, Any]:
         issues.append('root_disk_pressure')
     elif pressure_warning:
         warnings.append('root_disk_pressure_warning')
+    if browser_processes['stale_count'] > 0:
+        warnings.append('stale_hava81_browser_processes')
     return {
         'disk': {
             'free_bytes': free_bytes,
@@ -295,6 +363,7 @@ def collect_host() -> dict[str, Any]:
             'pressure_warning': pressure_warning,
             'ok': disk_ok,
         },
+        'browser_processes': browser_processes,
         'healthy': disk_ok,
         'issues': issues,
         'warnings': warnings,
@@ -512,6 +581,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'nginx_port': ((production.get('nginx') or {}).get('port')),
         'host_disk_ok': ((host.get('disk') or {}).get('ok')),
         'host_disk_pressure_warning': ((host.get('disk') or {}).get('pressure_warning')),
+        'stale_hava81_browser_processes': ((host.get('browser_processes') or {}).get('stale_count')),
         'prs': [
             {
                 'number': pr.get('number'),

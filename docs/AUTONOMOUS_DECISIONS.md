@@ -1241,3 +1241,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Low/High/Rain labels in the first Forecast Atlas summary render at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** They identify the forecast evidence values users scan before acting. Keeping those labels below the functional-copy floor weakens interpretation of the adjacent numbers; increasing only their typography preserves weather and recommendation semantics.
+
+
+### 2026-09-03 10:56 TRT — abandoned Hava81 browser audits are an advisory observer signal
+
+**Decision:** The read-only Oracle observer detects only Chromium/Chrome/Playwright processes tied to /tmp/hava81-* profiles that have lived at least two hours, reports a bounded process list, and records their count as an advisory warning/state transition rather than failing production health.
+
+**Why:** Long-lived audit browsers can retain deleted profile files and silently consume root disk, but their presence does not prove the public product is unhealthy. Observability should surface the leak early without killing processes, deleting data, weakening the disk merge gate, or confusing an operational cleanup candidate with a production outage.
