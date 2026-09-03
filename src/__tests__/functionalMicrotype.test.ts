@@ -58,6 +58,7 @@ describe('functional microtype readability', () => {
   it('keeps route score qualifiers at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/RouteWeatherPanel.css', 'utf8');
     expect(remFontSize(cssRule(css, '.route-weather__score small'))).toBeGreaterThanOrEqual(0.8125);
+    expect(remFontSize(cssRule(css, '.route-weather__score strong span'))).toBeGreaterThanOrEqual(0.8125);
   });
 
   it('keeps route input labels at or above the 13px-equivalent floor', () => {
