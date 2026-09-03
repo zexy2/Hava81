@@ -3054,3 +3054,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Kept ProtectProc=invisible and added a read-only /proc fallback that uses Linux CLOCK_BOOTTIME plus same-visible process cmdline/comm/stat/status, filters only /tmp/hava81-* Chromium/Chrome/Playwright processes, preserves the two-hour threshold and bounded output, and skips raced/inaccessible process entries.
 - Exact systemd reproduction confirmed procps ps fails under ProtectProc=invisible + ProcSubset=pid because procps cannot see the proc mount shape it expects; the fallback was then exercised under those same transient-unit restrictions and returned a known healthy state without relaxing hardening.
 - Added regressions for ps failure fallback and synthetic /proc elapsed-time parsing. Observer suite passes 36/36, compile and git diff --check pass. No production health classification, disk threshold, weather/API/frontend behavior or process mutation changed.
+
+
+## 2026-09-03 11:28 TRT — make observer exact-head PR state include CodeQL
+- Continued independently from exact main da331d1b70361ba834a041d4555eec65336f1a9a while the post-#770 main pipeline and #771 hosted gates run.
+- Audited collect_github and found runs_by_sha intentionally preferred CI/CD Pipeline, but ci_green_prs therefore ignored the CodeQL workflow on the same exact head. Direct pre-merge verification already checks both; the read-only observer did not model that requirement.
+- Split exact-head workflow selection into CI/CD and CodeQL records, expose both per automation PR, and derive green/running/failed/unknown from both gates. Missing CodeQL now fails closed to unknown; a CodeQL failure wins even when CI/CD succeeds.
+- Extended observer regressions with running-CI/success-CodeQL, missing workflow, explicit CodeQL failure, and fallback-page success coverage. Observer suite passes 36/36, in-memory compile and git diff --check pass.

@@ -520,16 +520,16 @@ def collect_github() -> dict[str, Any]:
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
 
-    runs_by_sha: dict[str, dict[str, Any]] = {}
+    ci_runs_by_sha: dict[str, dict[str, Any]] = {}
+    codeql_runs_by_sha: dict[str, dict[str, Any]] = {}
     for run in runs_data:
         sha = run.get('head_sha')
         if not sha:
             continue
-        existing = runs_by_sha.get(sha)
-        if existing is None or (
-            run.get('name') == 'CI/CD Pipeline' and existing.get('name') != 'CI/CD Pipeline'
-        ):
-            runs_by_sha[sha] = run
+        if run.get('name') == 'CI/CD Pipeline' and sha not in ci_runs_by_sha:
+            ci_runs_by_sha[sha] = run
+        elif run.get('name') == 'CodeQL' and sha not in codeql_runs_by_sha:
+            codeql_runs_by_sha[sha] = run
 
     latest_main_candidates = [
         run
@@ -552,7 +552,8 @@ def collect_github() -> dict[str, Any]:
         if not ref.startswith('automation/hava81-'):
             continue
         sha = head.get('sha')
-        run = runs_by_sha.get(sha, {})
+        ci_run = ci_runs_by_sha.get(sha, {})
+        codeql_run = codeql_runs_by_sha.get(sha, {})
         automation_prs.append({
             'number': pr.get('number'),
             'title': pr.get('title'),
@@ -561,11 +562,18 @@ def collect_github() -> dict[str, Any]:
             'head_sha': sha,
             'draft': pr.get('draft'),
             'ci': {
-                'run_id': run.get('id'),
-                'run_number': run.get('run_number'),
-                'status': run.get('status'),
-                'conclusion': run.get('conclusion'),
-                'url': run.get('html_url'),
+                'run_id': ci_run.get('id'),
+                'run_number': ci_run.get('run_number'),
+                'status': ci_run.get('status'),
+                'conclusion': ci_run.get('conclusion'),
+                'url': ci_run.get('html_url'),
+            },
+            'codeql': {
+                'run_id': codeql_run.get('id'),
+                'run_number': codeql_run.get('run_number'),
+                'status': codeql_run.get('status'),
+                'conclusion': codeql_run.get('conclusion'),
+                'url': codeql_run.get('html_url'),
             },
         })
 
@@ -583,14 +591,28 @@ def collect_github() -> dict[str, Any]:
             'updated_at': run.get('updated_at'),
         }
 
-    ci_green = [pr['number'] for pr in automation_prs if pr['ci']['status'] == 'completed' and pr['ci']['conclusion'] == 'success']
-    ci_failed = [pr['number'] for pr in automation_prs if pr['ci']['status'] == 'completed' and pr['ci']['conclusion'] not in (None, 'success')]
-    ci_running = [
-        pr['number']
-        for pr in automation_prs
-        if pr['ci']['status'] in ('queued', 'in_progress', 'waiting', 'pending')
-    ]
-    ci_unknown = [pr['number'] for pr in automation_prs if pr['ci']['run_id'] is None]
+    pending_statuses = {'queued', 'in_progress', 'waiting', 'pending'}
+
+    def pr_gate_state(pr: dict[str, Any]) -> str:
+        gates = [pr['ci'], pr['codeql']]
+        if any(
+            gate['status'] == 'completed' and gate['conclusion'] not in (None, 'success')
+            for gate in gates
+        ):
+            return 'failed'
+        if all(gate['status'] == 'completed' and gate['conclusion'] == 'success' for gate in gates):
+            return 'green'
+        if any(gate['run_id'] is None for gate in gates):
+            return 'unknown'
+        if any(gate['status'] in pending_statuses for gate in gates):
+            return 'running'
+        return 'unknown'
+
+    gate_states = {pr['number']: pr_gate_state(pr) for pr in automation_prs}
+    ci_green = [number for number, state in gate_states.items() if state == 'green']
+    ci_failed = [number for number, state in gate_states.items() if state == 'failed']
+    ci_running = [number for number, state in gate_states.items() if state == 'running']
+    ci_unknown = [number for number, state in gate_states.items() if state == 'unknown']
     api_deployment = collect_api_deployment(latest_main)
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
