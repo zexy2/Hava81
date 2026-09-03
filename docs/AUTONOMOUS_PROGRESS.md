@@ -3103,3 +3103,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited remaining sub-13px functional copy and found dust/pollen measurement units inside Context Signals still rendered at 11px-equivalent, despite being required to interpret the displayed modeled values.
 - Raised only `.context-signal > strong small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - Existing `mobile context signals reflow at 200 percent text size` browser coverage remains the layout guard. No UV, pollen, dust, marine value, provider/freshness, API, MGM, or recommendation semantics changed.
+
+## 2026-09-03 16:27 TRT — keep saved-city province plates readable
+- Continued independently from exact main `f9bc47b2c99bfa465549cb7761b87846871caf02` while its production rollout proceeds and other open PRs validate independently.
+- Saved-city tabs still rendered the province plate code at 11px-equivalent even though the plate is the compact geographic identity cue users scan when switching saved locations.
+- Raised only `.city-tabs__plate` to the shared 13px-equivalent functional-copy floor and tightened the existing source regression to the same floor.
+- No city selection, weather values, saved-city persistence, scoring, provider/freshness behavior, API, MGM semantics, or navigation behavior changed. Exact-head hosted CI/CodeQL remain mandatory before merge.

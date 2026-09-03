@@ -28,8 +28,9 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.atlas-settings-button__language'))).toBeGreaterThanOrEqual(0.8125);
   });
 
-  it('keeps saved-city province plates at or above the 11px-equivalent floor', () => {
-    expectReadableFunctionalMicrotype('src/components/CityTabs.css', '.city-tabs__plate');
+  it('keeps saved-city province plates at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/CityTabs.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.city-tabs__plate'))).toBeGreaterThanOrEqual(0.8125);
   });
 
   it('keeps Daily Plan decision labels at or above the 13px-equivalent floor', () => {

@@ -1312,3 +1312,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Dust and pollen measurement units in Context Signals render at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** A measurement without a legible unit can be misread and weaken the evidence attached to Hava81 guidance. Enlarging only the unit label improves interpretation without changing any measured value, threshold, provider, or recommendation logic.
+
+### 2026-09-03 16:27 TRT — saved-city province plates are functional identity copy
+
+**Decision:** Province plate codes inside saved-city tabs render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** The compact plate helps users distinguish saved provinces while switching locations. It is functional geographic identity rather than decorative microtype, so it should remain readily legible without altering navigation behavior.
