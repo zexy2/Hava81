@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { DecisionAlertsPanel } from '../../components/hava81/DecisionAlertsPanel';
-import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -342,6 +342,54 @@ describe('DecisionAlertsPanel', () => {
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
 
     render(<DecisionAlertsPanel forecastMeta={forecastMeta} weather={weather} hourly={rainyHourly} />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_101);
+    });
+
+    expect(showNotification).not.toHaveBeenCalled();
+    expect(notification).not.toHaveBeenCalled();
+    expect(
+      Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
+        key?.startsWith('hava81-alert-sent:')
+      )
+    ).toBe(false);
+  });
+
+  it('does not deliver an air-quality alert after AQ evidence expires in flight', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem('hava81-alerts-v1', 'enabled');
+    weather.meta.fetchedAt = new Date();
+    weather.meta.freshForSeconds = 300;
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        ready: new Promise(resolve => {
+          window.setTimeout(() => resolve({ showNotification }), 1_100);
+        }),
+      },
+    });
+    const notification = vi.fn();
+    Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
+    vi.stubGlobal('Notification', notification);
+    const airQuality: AirQuality = {
+      aqi: 4,
+      aqiLabel: 'Poor',
+      pm25: 42,
+      pm10: 58,
+      o3: 90,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 1 },
+    };
+
+    render(
+      <DecisionAlertsPanel
+        airQuality={airQuality}
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={hourly}
+      />
+    );
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_101);

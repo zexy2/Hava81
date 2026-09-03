@@ -1117,3 +1117,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Decision Alerts UI uses `notifications` rather than generic `alerts/warnings`, and detached wind, air-quality, and difficult-weather titles explicitly name Hava81 and use signal/outlook language where appropriate.
 
 **Why:** OS notification surfaces may show only a title, while the body-level disclosure can be truncated. Wind and air-quality guidance should not be mistaken for an official MGM warning or an unaffiliated measurement. Provenance belongs in the detached title and opt-in control without changing any modeled evidence or thresholds.
+
+### 2026-09-03 04:17 TRT — AQ alert delivery revalidates AQ's own freshness TTL
+
+**Decision:** An air-quality browser notification may be delivered only while its AQ evidence is still fresh according to the AQ payload's own metadata, including the final re-check after asynchronous service-worker readiness.
+
+**Why:** Current weather and forecast freshness are not substitutes for AQ freshness. AQ carries an independent provider TTL and can expire while those broader weather inputs remain valid. Health-adjacent notification delivery must fail closed on that evidence rather than rely on the App render-time filter alone.

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
-import { buildAlertCandidate } from '../../domain/alerts/buildAlertCandidate';
+import { buildAlertCandidate, type AlertCandidate } from '../../domain/alerts/buildAlertCandidate';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import './DecisionAlertsPanel.css';
 
 interface Props {
@@ -58,11 +59,15 @@ const removeStorage = (key: string): void => {
 const readEnabled = () => readStorage(SETTINGS_KEY) === 'enabled';
 const isAlertEvidenceFresh = (
   weather: NormalizedWeatherData,
-  forecastMeta: ForecastMeta | null
+  forecastMeta: ForecastMeta | null,
+  candidateKind?: AlertCandidate['kind'],
+  airQuality?: AirQuality
 ): boolean =>
   forecastMeta !== null &&
   getCurrentWeatherFreshness(weather.meta).fresh &&
-  getForecastFreshness(forecastMeta).fresh;
+  getForecastFreshness(forecastMeta).fresh &&
+  (candidateKind !== 'air-quality' ||
+    Boolean(airQuality && getOptionalEvidenceFreshness(airQuality.meta).fresh));
 const getLocationDateKey = (timezoneOffsetSeconds = 0) =>
   new Date(Date.now() + timezoneOffsetSeconds * 1000).toISOString().slice(0, 10);
 
@@ -119,7 +124,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     () => buildAlertCandidate(weather.cityName, plan),
     [plan, weather.cityName]
   );
-  const alertEvidenceFresh = isAlertEvidenceFresh(weather, forecastMeta);
+  const alertEvidenceFresh = isAlertEvidenceFresh(weather, forecastMeta, candidate?.kind, airQuality);
 
   useEffect(() => {
     if (!enabled || permission !== 'granted' || !candidate || !alertEvidenceFresh) return undefined;
@@ -158,8 +163,8 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
             SERVICE_WORKER_READY_TIMEOUT_MS
           );
           // Service-worker readiness can outlive the evidence TTL. Never deliver a decision
-          // notification after either current or forecast evidence has expired in-flight.
-          if (!isAlertEvidenceFresh(weather, forecastMeta)) return;
+          // notification after any evidence required by its candidate has expired in-flight.
+          if (!isAlertEvidenceFresh(weather, forecastMeta, candidate.kind, airQuality)) return;
           if (typeof registration.showNotification === 'function') {
             await withTimeout(
               registration.showNotification(title, {
@@ -184,6 +189,7 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
       }
     })();
   }, [
+    airQuality,
     alertEvidenceFresh,
     candidate,
     enabled,
