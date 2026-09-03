@@ -1402,3 +1402,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Optional forecast `sourceUrl` metadata must parse as an absolute HTTPS URL before it can enter the normalized frontend forecast model.
 
 **Why:** Forecast Atlas turns this metadata into an interactive link. Failing closed at the BFF/browser boundary prevents malformed or unsafe schemes from becoming UI navigation while preserving the legitimate Open-Meteo attribution contract.
+
+
+### 2026-09-04 00:26 TRT — standalone checkout cleanup remains audit-first and fail-closed
+- Direct `hava81-*` clones are never reclaimable by name alone. Only a read-only audit may mark one `SAFE_TO_ARCHIVE`, and only when it is clean, same-origin, and all local commit tips are already represented by canonical remote refs.
+- Dirty, foreign-origin, non-Git, status-failed, or unrepresented clones must remain untouched.

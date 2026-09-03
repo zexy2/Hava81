@@ -3224,3 +3224,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast metadata can supply `sourceUrl`, which Forecast Atlas renders as a clickable provider attribution link. The browser boundary validated provider/freshness/timezone fields but accepted any source URL string, so a malformed or unsafe scheme could reach an interactive link if the BFF contract were violated.
 - Forecast metadata validation now accepts optional source links only when they parse as absolute HTTPS URLs; malformed/non-HTTPS values fail closed through the existing retryable invalid-forecast path. The production Open-Meteo source remains valid.
 - Added a focused regression for a `javascript:` attribution URL. `git diff --check` passes; dependency-heavy local tests/build remain deferred while the host disk hard gate is active, so exact-head hosted CI/CD and CodeQL are required before merge. No forecast/weather value, provider attribution text, freshness, scoring, MGM or recommendation semantics changed.
+
+
+## 2026-09-04 00:26 TRT — refresh standalone checkout audit onto current main
+- Rebuilt PR #847 from exact production/main `6ca510ffdd88e189713a12a4b2b8befd4cdb94b0` after its append-only autonomous docs diverged. Replayed only the CI hook and read-only standalone-checkout audit scripts onto current main.
+- Local validation on the reconstructed head: shell syntax passes; the hermetic contract correctly classifies clean represented, dirty, and unrepresented fixtures; `git diff --check` passes.
+- No standalone checkout was deleted or modified by the audit. Fresh hosted CI/CD + CodeQL remain mandatory before merge.
