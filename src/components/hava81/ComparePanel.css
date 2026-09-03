@@ -104,7 +104,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .hava81-compare__winner strong {
@@ -126,7 +126,7 @@
   max-width: 100%;
   overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1.2;
   text-align: end;

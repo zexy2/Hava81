@@ -2985,3 +2985,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The first-view city/current-weather identity line still rendered observation time, provider and freshness at 0.75rem (12px), even though these fields define the provenance and recency of the evidence used by Hava81 decisions.
 - Raised only .hava81-decision-field__atlas-meta to the shared 13px-equivalent functional-copy floor and added a source regression locking that floor. No weather value, timestamp, provider, freshness computation, score, recommendation, API behavior or MGM semantics changed.
 - git diff --check passes. Node/npm exist on the host, but this fresh worktree intentionally has no node_modules because root disk pressure remains active; exact-head hosted frontend/unit/browser/build/Lighthouse/CodeQL gates are therefore mandatory before merge.
+
+## 2026-09-03 07:52 TRT — strengthen compare-result scanability
+- Continued independently from exact main 7e131404ffda4e1dcedaac62538a7075965c9201 while #756 exact-head gates were pending.
+- The city-comparison winner/tie note and each city's daily-plan band qualifier were still rendered around 11.5–12px even though they explain which city is preferable and why its score should be interpreted that way.
+- Raised only the winner/tie helper copy and score-band qualifier to the shared 13px-equivalent functional-copy floor. The numeric score denominator remains visually subordinate. No comparison score, winner selection, weather value, AQI, best-window, provider, freshness, API or MGM semantics changed.
+- Added focused source regressions; git diff --check passes. Hosted exact-head frontend/unit/browser/build/Lighthouse/CodeQL gates remain mandatory before merge.
