@@ -2918,3 +2918,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Found that App filters AQ by its own metadata at render time, but DecisionAlertsPanel's delivery-time freshness guard rechecked only current weather + forecast. AQ metadata has an independent provider TTL (API regressions already cover values such as 13 seconds), so an air-quality candidate could outlive AQ evidence while service-worker readiness was pending.
 - Extended only the air-quality candidate freshness path to require `getOptionalEvidenceFreshness(airQuality.meta).fresh`, including the final pre-delivery re-check. Other alert kinds continue to depend only on their relevant current/forecast evidence.
 - Added a regression where current + forecast remain fresh, AQ expires after one second, service-worker readiness resolves at 1.1 seconds, and neither service-worker nor direct notification delivery is allowed.
+
+## 2026-09-03 04:32 TRT — prevent repeated wait notifications after forecast refreshes
+- Continued on an isolated worktree rebased to exact main `acf5b99284714471ae41fc0674ab558a752fa691` after #729 merged.
+- Audited Decision Alert deduplication and found `wait` signatures embedded the suggested target timestamp. Hourly forecast refreshes can shift that target while the decision remains materially the same, bypassing the existing same-local-day sent marker and causing repeat notifications.
+- Made the `wait` signature stable per normalized city (`<city>:wait`); the existing location-date key still resets notification eligibility on the next local day.
+- Added a regression proving a one-hour target shift and score refresh retain the same wait signature. No wait threshold, score, target-time selection, weather evidence, provider, freshness, priority, permission behavior or official-warning handling changed.

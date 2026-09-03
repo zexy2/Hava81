@@ -101,6 +101,38 @@ describe('sharing and alerts', () => {
     );
     expect(candidate?.kind).toBe('wait');
   });
+
+  it('keeps same-day wait alert signatures stable when the suggested hour shifts', () => {
+    const first = buildAlertCandidate(
+      'İzmir',
+      plan({
+        nowOrLater: {
+          kind: 'later',
+          targetTime: new Date('2026-09-03T12:00:00.000Z'),
+          improvement: 25,
+          currentScore: 50,
+          targetScore: 75,
+          reasons: [],
+        },
+      })
+    );
+    const refreshed = buildAlertCandidate(
+      'İzmir',
+      plan({
+        nowOrLater: {
+          kind: 'later',
+          targetTime: new Date('2026-09-03T13:00:00.000Z'),
+          improvement: 24,
+          currentScore: 51,
+          targetScore: 75,
+          reasons: [],
+        },
+      })
+    );
+
+    expect(first?.signature).toBe('izmir:wait');
+    expect(refreshed?.signature).toBe(first?.signature);
+  });
   it('does not spam on an ordinary good day', () => {
     expect(buildAlertCandidate('Ankara', plan())).toBeNull();
   });

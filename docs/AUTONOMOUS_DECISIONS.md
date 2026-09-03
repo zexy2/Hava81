@@ -1123,3 +1123,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** An air-quality browser notification may be delivered only while its AQ evidence is still fresh according to the AQ payload's own metadata, including the final re-check after asynchronous service-worker readiness.
 
 **Why:** Current weather and forecast freshness are not substitutes for AQ freshness. AQ carries an independent provider TTL and can expire while those broader weather inputs remain valid. Health-adjacent notification delivery must fail closed on that evidence rather than rely on the App render-time filter alone.
+
+### 2026-09-03 04:32 TRT — wait notifications dedupe by city/day, not forecast target timestamp
+
+**Decision:** A material `wait` notification uses a stable city-level signature; the existing location-date key remains the freshness boundary for deduplication. A forecast refresh that merely shifts the suggested hour must not create another notification on the same local day.
+
+**Why:** The target hour can move as hourly forecasts refresh without representing a new notification-worthy event. Encoding that timestamp in the dedupe signature could repeatedly notify a user about the same `wait for better weather` decision. The body still reflects the current recommendation when the day's first notification is delivered; thresholds, scoring and target-time selection are unchanged.
