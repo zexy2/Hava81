@@ -1210,3 +1210,15 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Activity Planner time-window/band qualifier beside each numeric score renders at least at the 13px-equivalent functional-copy floor.
 
 **Why:** A large `/100` value without equally readable context can look like an unexplained absolute judgment. The existing qualifier tells users which planning window and qualitative band the number represents; increasing only its presentation hierarchy improves interpretation without changing the score model.
+
+### 2026-09-03 08:06 TRT — the primary Daily Plan score band is functional interpretation
+
+**Decision:** The qualitative band and band-range line directly beneath the primary Daily Plan `/100` score renders at least at the 13px-equivalent functional-copy floor.
+
+**Why:** The band/range is the user's immediate explanation of what the numeric score means. Keeping it readable beside a very large score reduces false precision in the visual hierarchy without changing any score or recommendation semantics.
+
+### 2026-09-03 08:18 TRT — mobile Daily Plan hierarchy should spend less vertical space between stacked header groups
+
+**Decision:** At <=26rem, the stacked Daily Plan header uses the shared small gap instead of the medium gap while preserving the new 13px-equivalent score-band interpretation text.
+
+**Why:** Hosted 390px/200% browser evidence showed the typography improvement alone pushed the header to 454.6px against the existing <450px readability budget. Tightening only the inter-group gap recovers vertical room without shrinking functional copy or changing score semantics.

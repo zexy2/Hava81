@@ -3003,3 +3003,14 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Activity cards already explain each score with the selected/default time-window label plus the qualitative Daily Plan band, but that explanation remained at the 11px-equivalent floor beside a 1.4rem numeric score. This let values such as 100/100 visually dominate the context that explains what the score means.
 - Raised only `.activity-card__score small` to the shared 13px-equivalent functional-copy floor and tightened the existing source regression to that floor. Existing 390px/200% Activity Planner resize coverage remains the browser overflow guard.
 - No activity score, thresholds, band assignment, best-window selection, weather inputs, provider/freshness behavior, API or MGM semantics changed. `git diff --check` passes; exact-head hosted lint/type/unit/browser/build/Lighthouse/CodeQL remain mandatory before merge.
+
+## 2026-09-03 08:06 TRT — make the primary Daily Plan score band readable beside `/100`
+- Continued independently from exact main `f600baae1be4d23246c1a2ffacaa8bb658aeef73` while #758/#759 gates ran.
+- The primary Daily Plan score already includes its qualitative band and numeric band range directly below the large `/100` value, but that interpretation line remained 0.75rem while the number scales up to 4.25rem. This made the score look more absolute than the UI's own band explanation intends.
+- Raised only `.daily-plan__score small` to the shared 13px-equivalent functional-copy floor and added a focused source regression. Existing mobile/200% Daily Plan browser coverage remains the reflow guard.
+- No score calculation, thresholds, band ranges, now/later advice, weather evidence, provider/freshness behavior, API or MGM semantics changed. `git diff --check` passes; exact-head hosted gates remain mandatory before merge.
+
+## 2026-09-03 08:18 TRT — recover mobile Daily Plan height after strengthening score context
+- Exact-head #760 browser CI exposed a deterministic regression at 390px/200% text: the strengthened score-band line raised the stacked header to 454.6px against the existing <450px guard.
+- Kept the 13px-equivalent band/range interpretation text and instead reduced only the <=26rem stacked header gap from the shared medium spacing token to the shared small token.
+- This is a bounded mobile-density adjustment: no score, threshold, recommendation, weather evidence, provider/freshness, API or MGM semantics changed. `git diff --check` passes; the exact browser regression and full hosted gates must pass after push before merge.

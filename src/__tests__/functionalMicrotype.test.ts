@@ -21,6 +21,11 @@ describe('functional microtype readability', () => {
     expectReadableFunctionalMicrotype('src/components/CityTabs.css', '.city-tabs__plate');
   });
 
+  it('keeps Daily Plan score band context at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/DailyPlanPanel.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.daily-plan__score small'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps Daily Plan local-day boundaries at or above the 11px-equivalent floor', () => {
     expectReadableFunctionalMicrotype('src/components/hava81/DailyPlanPanel.css', '.daily-plan__slot-day');
   });
