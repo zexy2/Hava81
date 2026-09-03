@@ -169,6 +169,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__range-button'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps Forecast Atlas daily precipitation evidence at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/ForecastAtlas.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__day-pop'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps Forecast Atlas first-precipitation annotation at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/ForecastAtlas.css', 'utf8');
     expect(

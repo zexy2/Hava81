@@ -3140,3 +3140,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - PR #838 exact-head browser CI deterministically measured the 390px/200% text Daily Plan header at 451.34375px against the existing <450px guard; the separate skip-link failure passed on retry and is classified as flaky rather than the blocking regression.
 - Kept the new 13px-equivalent shared `atlas-kicker` floor and reduced only the <=26rem stacked Daily Plan header gap from the shared small token to the shared extra-small token, reclaiming 4px of vertical whitespace.
 - No score, recommendation, weather evidence, provider/freshness, API, MGM, route, or notification semantics changed. The exact browser guard must pass on the rebased head before merge.
+## 2026-09-03 18:44 TRT — keep daily precipitation evidence readable
+- Continued independently from exact main `d33422545ef71fe8a43b0aa2b0ed92935781235d` while rebased PR #834 revalidates.
+- Forecast Atlas daily cards still rendered precipitation probability at 12px-equivalent even though that percentage is direct forecast evidence users compare across days.
+- Raised only `.hava81-forecast-atlas__day-pop` to the shared 13px-equivalent functional-copy floor and extended the central microtype regression.
+- No precipitation probability, timing, forecast values, interpolation, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.

@@ -1350,3 +1350,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** At <=26rem, the stacked Daily Plan header uses the shared extra-small gap while keeping the 13px-equivalent module kicker.
 
 **Why:** Hosted browser measurement showed the readable kicker pushed the 390px/200% text header only 1.34px beyond the existing 450px density guard. Reducing inter-block whitespace rather than shrinking functional text preserves accessibility and restores the bounded mobile layout.
+### 2026-09-03 18:44 TRT — daily precipitation probability is functional forecast evidence
+
+**Decision:** Forecast Atlas daily precipitation probability renders at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** The percentage is direct evidence users compare between forecast days when deciding what to do. Making it readable improves interpretation without changing precipitation data, timing, or guidance semantics.
