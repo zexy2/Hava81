@@ -434,7 +434,7 @@ export const tr = {
       airTitle: '{{city}} · Hava81 hava kalitesi zayıf görünüyor',
       airBody:
         'Mevcut hava kalitesi Hava81 karar katmanında zayıf görünüyor; açık hava planını yeniden değerlendir.',
-      waitTitle: '{{city}} · Hava açısından beklemek daha iyi',
+      waitTitle: '{{city}} · Hava81 · Hava açısından beklemek daha iyi',
       waitBody: 'Yakın saatlerde hava skoru yaklaşık {{improvement}} puan iyileşiyor.',
       difficultTitle: '{{city}} · Hava81 zorlayıcı hava görünümü',
       difficultBody:
