@@ -40,7 +40,7 @@
   width: min(12rem, 100%);
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   color: var(--color-atlas-muted);
 }
 .activity-planner__sensitivity select {
@@ -62,7 +62,7 @@
 }
 .activity-planner__sensitivity small {
   color: var(--color-atlas-muted);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   line-height: 1.35;
 }
 .activity-planner__chips {
@@ -79,7 +79,7 @@
   border-radius: 999px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.875rem;
   transition:
     color var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out),
@@ -103,7 +103,7 @@
 .activity-planner__selection-limit {
   margin: calc(var(--space-lg) * -0.65) 0 0;
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
 }
 .activity-planner__cards {
@@ -166,7 +166,7 @@
   color: var(--color-atlas-muted);
 }
 .activity-planner__note {
-  font-size: 0.76rem;
+  font-size: 0.875rem;
 }
 @media (max-width: 47.99rem) {
   .activity-planner {
@@ -225,7 +225,7 @@
 }
 .activity-planner__window label span {
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 .activity-planner__window-copy > strong,
 .activity-planner__window-help,
@@ -240,14 +240,14 @@
   align-items: center;
   cursor: pointer;
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   font-weight: 650;
 }
 .activity-planner__window-help p {
   grid-column: 1 / -1;
   margin: 0 0 var(--space-xs);
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
 }
 .activity-planner__window-help[open] {
@@ -257,7 +257,7 @@
   grid-column: 1 / -1;
   margin: 0;
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -294,7 +294,7 @@
   flex-wrap: wrap;
   gap: 0.35rem 0.75rem;
   color: var(--color-atlas-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 .activity-card__risk {
   color: var(--color-atlas-ink);
@@ -309,7 +309,7 @@
   align-items: center;
   cursor: pointer;
   color: var(--color-atlas-ink);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 650;
 }
 .activity-card__details-body {
@@ -362,7 +362,7 @@
   margin: var(--space-xs) 0 0;
   overflow-wrap: anywhere;
   color: var(--color-atlas-muted);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
