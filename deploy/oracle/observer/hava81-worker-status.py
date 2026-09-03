@@ -30,7 +30,8 @@ print(f"api_ready: http={ready.get('status')} reported={ready.get('reported_stat
 print(f"cors: {(prod.get('cors') or {}).get('allow_origin')} ok={(prod.get('cors') or {}).get('ok')}")
 for pr in gh.get('open_automation_prs', []):
     ci = pr.get('ci') or {}
-    print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')}")
+    codeql = pr.get('codeql') or {}
+    print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
 main = gh.get('latest_main_run') or {}
 if main:
     print(f"main_ci: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:8]} {main.get('status')}/{main.get('conclusion')}")
