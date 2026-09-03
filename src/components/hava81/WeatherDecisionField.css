@@ -181,7 +181,7 @@
 
 .hava81-decision-field__change-title {
   margin: 0 0 8px;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.1em;
@@ -227,7 +227,7 @@
   margin: 0 0 8px;
   overflow-wrap: anywhere;
   color: var(--decision-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.08em;
