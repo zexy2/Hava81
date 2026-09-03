@@ -816,15 +816,54 @@ class ObserverBrowserProcessTests(unittest.TestCase):
         self.assertEqual(state["processes"][0]["elapsed_seconds"], 9000)
         self.assertIsNone(state["error"])
 
-    def test_ps_failure_is_observationally_unknown(self) -> None:
-        with mock.patch.object(
-            observer.subprocess, "run", side_effect=observer.subprocess.TimeoutExpired("ps", 2.0)
+    def test_ps_failure_falls_back_to_proc(self) -> None:
+        fallback = {
+            "known": True,
+            "stale_after_seconds": observer.HAVA81_BROWSER_STALE_SECONDS,
+            "stale_count": 0,
+            "processes": [],
+            "error": None,
+        }
+        with (
+            mock.patch.object(
+                observer.subprocess, "run", side_effect=observer.subprocess.TimeoutExpired("ps", 2.0)
+            ),
+            mock.patch.object(
+                observer, "collect_hava81_browser_processes_from_proc", return_value=fallback
+            ) as proc_fallback,
         ):
             state = observer.collect_hava81_browser_processes()
 
-        self.assertFalse(state["known"])
-        self.assertEqual(state["stale_count"], 0)
-        self.assertIn("TimeoutExpired", state["error"])
+        self.assertEqual(state, fallback)
+        proc_fallback.assert_called_once_with()
+
+    def test_proc_fallback_reports_old_hava81_browser_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            proc_root = Path(temp_dir)
+            pid_dir = proc_root / "101"
+            pid_dir.mkdir()
+            (pid_dir / "cmdline").write_bytes(
+                b"/usr/bin/chromium\0--user-data-dir=/tmp/hava81-audit-1\0"
+            )
+            (pid_dir / "comm").write_text("chromium\n", encoding="utf-8")
+            clock_ticks = int(observer.os.sysconf("SC_CLK_TCK"))
+            start_ticks = 1000 * clock_ticks
+            stat_fields = ["S"] + ["0"] * 18 + [str(start_ticks)] + ["0"] * 10
+            (pid_dir / "stat").write_text(
+                f"101 (chromium) {' '.join(stat_fields)}\n", encoding="utf-8"
+            )
+            (pid_dir / "status").write_text(
+                f"Name:\tchromium\nUid:\t{observer.os.getuid()}\t{observer.os.getuid()}\t{observer.os.getuid()}\t{observer.os.getuid()}\n",
+                encoding="utf-8",
+            )
+
+            state = observer.collect_hava81_browser_processes_from_proc(proc_root, boot_seconds=10000.0)
+
+        self.assertTrue(state["known"])
+        self.assertEqual(state["stale_count"], 1)
+        self.assertEqual(state["processes"][0]["pid"], 101)
+        self.assertEqual(state["processes"][0]["elapsed_seconds"], 9000)
+        self.assertIsNone(state["error"])
 
     def test_stale_browser_process_is_warning_not_host_incident(self) -> None:
         original_statvfs = observer.os.statvfs

@@ -1255,3 +1255,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Generated Hava81 province-page JSON-LD describes the page subject as a Schema.org AdministrativeArea contained in Türkiye, not as a City.
 
 **Why:** Hava81 promises and routes all 81 Turkish provinces. A municipality/city schema type overstates the geographic object actually represented; administrative-area semantics keep structured metadata aligned with the product's province-level scope without changing weather behavior.
+
+
+### 2026-09-03 11:16 TRT — observer browser audits keep ProtectProc hardening
+
+**Decision:** If procps ps is unavailable or exits non-zero inside the hardened observer unit, stale Hava81 browser detection falls back to bounded read-only /proc inspection instead of weakening ProtectProc=invisible.
+
+**Why:** Production showed ps exited 102 under the hardened unit even though the same command works interactively. /proc exposes enough same-user process metadata to identify Hava81 temporary browser profiles while preserving the observer least-privilege boundary.
