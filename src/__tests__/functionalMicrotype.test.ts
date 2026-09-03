@@ -25,6 +25,11 @@ describe('functional microtype readability', () => {
     expectReadableFunctionalMicrotype('src/components/hava81/DailyPlanPanel.css', '.daily-plan__slot-day');
   });
 
+  it('keeps first-view weather provenance and freshness at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/WeatherDecisionField.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.hava81-decision-field__atlas-meta'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps modeled context provenance and guidance at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/ContextSignalsPanel.css', 'utf8');
     expect(remFontSize(cssRule(css, '.context-signals__source'))).toBeGreaterThanOrEqual(0.8125);
