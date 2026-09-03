@@ -22,6 +22,7 @@ interface Props {
 const ROUTE_MAX_DEPARTURE_MS = 18 * 60 * 60_000;
 const ROUTE_DEPARTURE_PAST_TOLERANCE_MS = 60_000;
 const ROUTE_RESULT_EXPIRY_CUSHION_MS = 100;
+const ROUTE_RESULT_MAX_AGE_MS = 5 * 60_000;
 
 const canonicalProvinceName = (name: string): string => {
   const slug = citySlug(name);
@@ -151,7 +152,12 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
       if (requestId !== requestIdRef.current) return;
       setResult(value);
       setResultExpiresAt(
-        departureTime + value.estimatedDurationMinutes * 60_000 + ROUTE_RESULT_EXPIRY_CUSHION_MS
+        Math.min(
+          departureTime +
+            value.estimatedDurationMinutes * 60_000 +
+            ROUTE_RESULT_EXPIRY_CUSHION_MS,
+          Date.now() + ROUTE_RESULT_MAX_AGE_MS + ROUTE_RESULT_EXPIRY_CUSHION_MS
+        )
       );
       trackProductEvent('route_checked', {
         origin: origin.name,

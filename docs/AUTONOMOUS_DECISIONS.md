@@ -1390,3 +1390,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Keep the weather-only safety boundary visible at all times, but move the long score signal/data-coverage explanation into a native <details> disclosure labelled “Veri kapsamı ve yöntem” / “Data coverage and method”.
 
 **Why:** The always-expanded methodology paragraph duplicated information hierarchy already established by the score-breakdown surface and consumed disproportionate mobile space, especially at 200% text size. Native disclosure preserves every methodological detail, keyboard/screen-reader semantics and a 44px interactive target while making the default planning flow materially easier to scan.
+
+
+### 2026-09-03 22:30 TRT — route decisions have a five-minute frontend freshness ceiling
+
+**Decision:** A successful modeled Route Weather result remains actionable only until the earlier of its projected trip completion or five minutes after receipt.
+
+**Why:** The route API does not currently expose an aggregate evidence TTL even though its corridor is sampled from cached hourly forecast data. A conservative five-minute UI ceiling prevents long-lived tabs or far-future departures from presenting an old modeled route decision as current without changing route scores or fabricating provider freshness metadata.
