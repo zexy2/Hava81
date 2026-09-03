@@ -2991,3 +2991,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The city-comparison winner/tie note and each city's daily-plan band qualifier were still rendered around 11.5–12px even though they explain which city is preferable and why its score should be interpreted that way.
 - Raised only the winner/tie helper copy and score-band qualifier to the shared 13px-equivalent functional-copy floor. The numeric score denominator remains visually subordinate. No comparison score, winner selection, weather value, AQI, best-window, provider, freshness, API or MGM semantics changed.
 - Added focused source regressions; git diff --check passes. Hosted exact-head frontend/unit/browser/build/Lighthouse/CodeQL gates remain mandatory before merge.
+
+## 2026-09-03 08:00 TRT — make the exact Pages revision observable from production HTML
+- Continued independently from exact main `0b18bf43d1454e34b924bc043f75e7ccd55e0af3` while #757 reran hosted gates.
+- GitHub Pages deploy smoke already compared public files byte-for-byte with the build artifact, but the public HTML itself did not expose the exact main revision. That made later operational verification dependent on correlating workflow history rather than reading the deployed shell directly.
+- Production city-shell generation now stamps `hava81-build-revision` with the full `GITHUB_SHA` in GitHub Actions, fails closed if Actions lacks a valid 40-character revision, and propagates the same stamp to root, all 81 city pages and the copied 404 shell. Local builds without a CI revision remain unstamped.
+- Public deploy smoke now explicitly requires the current `GITHUB_SHA` stamp on both `/` and `/istanbul/` in addition to the existing exact file-hash and asset-coherence checks. Added a focused source contract; `node --check`, `bash -n` and `git diff --check` pass locally. No weather, routing, metadata wording, SEO canonical, API or MGM semantics change.

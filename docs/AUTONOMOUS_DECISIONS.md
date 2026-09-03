@@ -1198,3 +1198,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Comparison winner/tie helper copy and per-city daily-plan band qualifiers render at least at the 13px-equivalent functional-copy floor.
 
 **Why:** These labels tell users how to interpret the comparison result and score quality. They are functional decision context, not decorative microtype; increasing only their presentation size preserves comparison calculations and weather semantics.
+
+### 2026-09-03 08:00 TRT — production Pages shells carry exact revision provenance
+
+**Decision:** GitHub Actions production builds stamp the full commit revision into root and generated city HTML, and deploy verification requires that exact revision on public root and İstanbul shells.
+
+**Why:** A healthy HTTP response or even a coherent prior-generation shell does not prove which commit is live. Hava81 operations require “merged” and “production-verified” to remain distinct; an inert build-revision meta tag gives direct, machine-readable deployment provenance without changing user-facing content or runtime weather behavior.

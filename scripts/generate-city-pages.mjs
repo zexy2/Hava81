@@ -5,7 +5,20 @@ import { join } from 'node:path';
 const root = new URL('..', import.meta.url).pathname;
 const dist = join(root, 'dist');
 const source = await readFile(join(root, 'src/constants/cities.ts'), 'utf8');
-const baseHtml = await readFile(join(dist, 'index.html'), 'utf8');
+const sourceBaseHtml = await readFile(join(dist, 'index.html'), 'utf8');
+const buildRevision = (process.env.HAVA81_BUILD_REVISION || process.env.GITHUB_SHA || '').trim();
+if (process.env.GITHUB_ACTIONS === 'true' && !/^[0-9a-f]{40}$/i.test(buildRevision)) {
+  throw new Error('GitHub Actions production build is missing a full 40-character build revision');
+}
+const baseHtml = buildRevision
+  ? sourceBaseHtml.replace(
+      '<meta charset="UTF-8" />',
+      `<meta charset="UTF-8" />\n    <meta name="hava81-build-revision" content="${buildRevision}" />`
+    )
+  : sourceBaseHtml;
+if (buildRevision && !baseHtml.includes(`name="hava81-build-revision" content="${buildRevision}"`)) {
+  throw new Error('Failed to stamp production HTML with the build revision');
+}
 const names = [...source.matchAll(/\{ name: '([^']+)'/g)].map(match => match[1]);
 const ascii = {
   ç: 'c',
