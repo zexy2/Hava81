@@ -3068,3 +3068,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast Atlas still rendered the horizon group label at 11px-equivalent and the selectable horizon buttons at 12px-equivalent even though they are interactive controls that determine which forecast interval users inspect.
 - Raised only the horizon label and button copy to the shared 13px-equivalent functional-copy floor and added a focused source regression for both selectors. Existing range-button browser coverage retains touch-target, pressed-state and overflow checks.
 - No forecast values, horizon options, selected interval behavior, weather evidence, provider/freshness semantics, scoring, API or MGM behavior changed. Exact-head hosted lint/type/unit/browser/build/Lighthouse/CodeQL remain mandatory before merge.
+
+## 2026-09-03 12:52 TRT — keep Environment Rail evidence labels readable
+- Continued independently from exact main `de3632e23ca1e337e93338f953d6181e1d98893f` while #781 validates.
+- Environment Rail still rendered the daylight, wind, air-quality and map module labels at 12px-equivalent even though these labels identify the evidence/action presented immediately below them.
+- Raised only `.environment-rail__label` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
+- No daylight calculation, wind data, AQI value/health semantics, map behavior, provider/freshness logic, API or MGM behavior changed. Existing mobile/browser checks remain the reflow guard; exact-head hosted gates are required before merge.

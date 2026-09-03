@@ -1276,3 +1276,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Forecast Atlas horizon group and selectable horizon labels render at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** These labels are not passive metadata: they tell users which forecast interval is selected and let them change it. Readable control text improves mobile/accessibility ergonomics without changing forecast data or interval semantics.
+
+### 2026-09-03 12:52 TRT — Environment Rail labels are functional evidence headings
+
+**Decision:** Environment Rail module labels render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** Daylight, wind, air-quality and map labels identify the evidence or action directly beneath them. Keeping those headings readily readable improves scanability without changing any underlying weather data or recommendation semantics.
