@@ -1129,3 +1129,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** A material `wait` notification uses a stable city-level signature; the existing location-date key remains the freshness boundary for deduplication. A forecast refresh that merely shifts the suggested hour must not create another notification on the same local day.
 
 **Why:** The target hour can move as hourly forecasts refresh without representing a new notification-worthy event. Encoding that timestamp in the dedupe signature could repeatedly notify a user about the same `wait for better weather` decision. The body still reflects the current recommendation when the day's first notification is delivered; thresholds, scoring and target-time selection are unchanged.
+
+### 2026-09-03 05:02 TRT — authenticate Codecov with job-scoped GitHub OIDC and fail closed on upload errors
+
+**Decision:** Frontend coverage upload uses Codecov's supported OIDC mode with `id-token: write` granted only to the `quality` job, and an upload failure fails that job instead of being logged as an error beneath a green check.
+
+**Why:** Hosted logs showed the current unauthenticated Codecov v7 upload returning `Token required - not valid tokenless upload` while `fail_ci_if_error: false` masked the loss of coverage telemetry. Codecov documents `use_oidc: true` as an alternative to repository tokens, and GitHub documents that `id-token: write` only permits requesting an OIDC JWT rather than repository writes. Job-scoping the permission keeps the trust surface narrow and makes the coverage integration observable instead of silently broken.

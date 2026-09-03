@@ -2924,3 +2924,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited Decision Alert deduplication and found `wait` signatures embedded the suggested target timestamp. Hourly forecast refreshes can shift that target while the decision remains materially the same, bypassing the existing same-local-day sent marker and causing repeat notifications.
 - Made the `wait` signature stable per normalized city (`<city>:wait`); the existing location-date key still resets notification eligibility on the next local day.
 - Added a regression proving a one-hour target shift and score refresh retain the same wait signature. No wait threshold, score, target-time selection, weather evidence, provider, freshness, priority, permission behavior or official-warning handling changed.
+
+## 2026-09-03 05:02 TRT — repair silently broken Codecov coverage uploads with OIDC
+- While #731/#732 ran hosted gates, inspected the completed frontend-quality log rather than treating its green status as sufficient. Vitest produced coverage successfully, but `codecov/codecov-action@v7` logged `Token required - not valid tokenless upload`; the workflow masked it with `fail_ci_if_error: false`.
+- Verified current Codecov guidance supports `use_oidc: true`, and GitHub's OIDC contract requires `id-token: write`; GitHub explicitly notes this permission enables JWT retrieval rather than repository writes.
+- Granted `contents: read` + `id-token: write` only to the frontend `quality` job, enabled Codecov OIDC, and made upload errors blocking so future telemetry loss cannot hide behind a green frontend-quality job.
+- No application/runtime/API/deploy behavior changed. Exact-head hosted CI must prove the OIDC exchange and Codecov upload before merge.

@@ -20,6 +20,9 @@ concurrency:
 jobs:
   quality:
     name: Frontend quality
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -50,10 +53,12 @@ jobs:
           PY
       - name: Verify observer installer shell syntax
         run: bash -n deploy/oracle/install-observer.sh
-      - uses: codecov/codecov-action@v7
+      - name: Upload frontend coverage to Codecov with OIDC
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
-          fail_ci_if_error: false
+          use_oidc: true
+          fail_ci_if_error: true
 
   api:
     name: API test & build
