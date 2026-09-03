@@ -1355,3 +1355,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Forecast Atlas daily precipitation probability renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** The percentage is direct evidence users compare between forecast days when deciding what to do. Making it readable improves interpretation without changing precipitation data, timing, or guidance semantics.
+
+
+### 2026-09-03 20:55 TRT — skip-link focus should not depend only on fragment navigation
+
+**Decision:** The primary skip link explicitly focuses the already-focusable main content before normal fragment navigation completes.
+
+**Why:** Hosted browser validation has intermittently observed fragment navigation without the expected focus assertion even though the target carries `tabIndex={-1}`. Explicit focus keeps the native `#main-content` link and scrolling behavior while making the keyboard focus transfer deterministic; it changes no weather, routing, scoring, API, MGM, or recommendation semantics.

@@ -409,7 +409,11 @@ const App: React.FC = () => {
         )}
       >
         <div className="app" data-color-mode={colorMode} data-active-nav={activeNav}>
-          <a className="skip-link" href="#main-content">
+          <a
+            className="skip-link"
+            href="#main-content"
+            onClick={() => overviewRef.current?.focus({ preventScroll: true })}
+          >
             {t('common.skipToContent')}
           </a>
 

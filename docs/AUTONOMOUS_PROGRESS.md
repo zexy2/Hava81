@@ -3145,3 +3145,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Forecast Atlas daily cards still rendered precipitation probability at 12px-equivalent even though that percentage is direct forecast evidence users compare across days.
 - Raised only `.hava81-forecast-atlas__day-pop` to the shared 13px-equivalent functional-copy floor and extended the central microtype regression.
 - No precipitation probability, timing, forecast values, interpolation, provider/freshness behavior, scoring, API, MGM semantics, or recommendation logic changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
+
+
+## 2026-09-03 20:55 TRT — harden keyboard skip-link focus
+- Continued independently from exact main `753cbe8a862ff5277b9576c43370dca6f25fa154` while its post-#835 production pipeline runs.
+- The existing browser regression had previously shown an intermittent skip-link focus miss. The markup already targets `#main-content` and the main node is programmatically focusable, but focus transfer relied entirely on browser fragment behavior.
+- Added an explicit focus handoff on skip-link activation while preserving the native href/fragment navigation and scroll semantics. Existing desktop keyboard browser coverage remains the behavior gate.
+- No weather values, city routing, scores, recommendation logic, provider/freshness behavior, API, MGM semantics, or visual hierarchy changed. Exact-head hosted gates remain mandatory before merge.
