@@ -22,6 +22,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.settings-section__title'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps product section kickers at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/styles/App.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.atlas-kicker'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps top navigation state labels at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/styles/App.css', 'utf8');
     expect(remFontSize(cssRule(css, '.atlas-compare-button span'))).toBeGreaterThanOrEqual(0.8125);
