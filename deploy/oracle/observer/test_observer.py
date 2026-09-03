@@ -968,6 +968,23 @@ class ObserverHostDiskTests(unittest.TestCase):
         self.assertIn('root_disk_pressure', host['issues'])
         self.assertNotIn('root_disk_low', host['issues'])
 
+    def test_disk_state_reports_exact_recovery_bytes_for_percentage_gate(self) -> None:
+        host = self._collect_with_available_blocks(750_000)  # ~3.1 GB free, 92.5% used
+        disk = host['disk']
+        expected_required_free = 800_000 * self._Statvfs.f_frsize
+
+        self.assertEqual(disk['required_free_bytes_for_usage_ok'], expected_required_free)
+        self.assertEqual(
+            disk['bytes_to_free_for_usage_ok'],
+            50_000 * self._Statvfs.f_frsize,
+        )
+        self.assertEqual(disk['bytes_to_free_for_ok'], disk['bytes_to_free_for_usage_ok'])
+
+    def test_disk_recovery_bytes_are_zero_when_both_gates_are_satisfied(self) -> None:
+        host = self._collect_with_available_blocks(805_000)  # 91.95% used and >2 GiB free
+        self.assertEqual(host['disk']['bytes_to_free_for_usage_ok'], 0)
+        self.assertEqual(host['disk']['bytes_to_free_for_ok'], 0)
+
     def test_usage_threshold_is_inclusive_and_not_decided_from_rounded_display(self) -> None:
         exact_threshold = self._collect_with_available_blocks(800_000)  # exactly 92.0% used
         rounded_up = self._collect_with_available_blocks(805_000)  # 91.95% used, displayed as 92.0%

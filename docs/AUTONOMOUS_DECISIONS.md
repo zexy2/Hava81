@@ -1325,3 +1325,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The active temperature unit beside Forecast Atlas renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** The unit defines the scale for every temperature value shown in the module. Readability improves interpretation without changing conversion or forecast semantics.
+
+
+### 2026-09-03 19:02 TRT — disk incidents should expose the recovery amount, not only the failed gate
+
+**Decision:** The read-only host observer reports the exact byte headroom needed to satisfy both root-disk health gates.
+
+**Why:** Operators can make bounded cleanup decisions without estimating from rounded `df` percentages. This improves recovery precision while keeping cleanup policy and all mutations outside the observer.

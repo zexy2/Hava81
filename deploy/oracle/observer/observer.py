@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import pwd
 import re
@@ -395,6 +396,15 @@ def collect_host() -> dict[str, Any]:
     free_ok = free_bytes >= MINIMUM_ROOT_FREE_BYTES
     usage_ok = raw_used_percent <= MAXIMUM_ROOT_USED_PERCENT
     pressure_warning = raw_used_percent >= ROOT_DISK_WARNING_USED_PERCENT
+    required_free_bytes_for_usage_ok = math.ceil(
+        total_bytes * (100 - MAXIMUM_ROOT_USED_PERCENT) / 100
+    )
+    bytes_to_free_for_usage_ok = max(required_free_bytes_for_usage_ok - free_bytes, 0)
+    bytes_to_free_for_ok = max(
+        MINIMUM_ROOT_FREE_BYTES - free_bytes,
+        bytes_to_free_for_usage_ok,
+        0,
+    )
     disk_ok = free_ok and usage_ok
     issues: list[str] = []
     warnings: list[str] = []
@@ -415,6 +425,9 @@ def collect_host() -> dict[str, Any]:
             'minimum_free_bytes': MINIMUM_ROOT_FREE_BYTES,
             'maximum_used_percent': MAXIMUM_ROOT_USED_PERCENT,
             'warning_used_percent': ROOT_DISK_WARNING_USED_PERCENT,
+            'required_free_bytes_for_usage_ok': required_free_bytes_for_usage_ok,
+            'bytes_to_free_for_usage_ok': bytes_to_free_for_usage_ok,
+            'bytes_to_free_for_ok': bytes_to_free_for_ok,
             'free_ok': free_ok,
             'usage_ok': usage_ok,
             'pressure_warning': pressure_warning,
