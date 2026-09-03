@@ -89,7 +89,7 @@
 
 .hava81-forecast-atlas__range-label {
   color: var(--forecast-muted);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -125,7 +125,7 @@
   border-radius: 0;
   scroll-snap-align: start;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   cursor: pointer;
   transition:

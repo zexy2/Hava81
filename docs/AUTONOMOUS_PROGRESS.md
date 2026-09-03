@@ -3061,3 +3061,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited collect_github and found runs_by_sha intentionally preferred CI/CD Pipeline, but ci_green_prs therefore ignored the CodeQL workflow on the same exact head. Direct pre-merge verification already checks both; the read-only observer did not model that requirement.
 - Split exact-head workflow selection into CI/CD and CodeQL records, expose both per automation PR, and derive green/running/failed/unknown from both gates. Missing CodeQL now fails closed to unknown; a CodeQL failure wins even when CI/CD succeeds.
 - Extended observer regressions with running-CI/success-CodeQL, missing workflow, explicit CodeQL failure, and fallback-page success coverage. Observer suite passes 36/36, in-memory compile and git diff --check pass.
+
+
+## 2026-09-03 12:48 TRT — keep Forecast Atlas horizon controls readable
+- Continued from exact main `de3632e23ca1e337e93338f953d6181e1d98893f` after #780 merged while its production rollout proceeds independently.
+- Forecast Atlas still rendered the horizon group label at 11px-equivalent and the selectable horizon buttons at 12px-equivalent even though they are interactive controls that determine which forecast interval users inspect.
+- Raised only the horizon label and button copy to the shared 13px-equivalent functional-copy floor and added a focused source regression for both selectors. Existing range-button browser coverage retains touch-target, pressed-state and overflow checks.
+- No forecast values, horizon options, selected interval behavior, weather evidence, provider/freshness semantics, scoring, API or MGM behavior changed. Exact-head hosted lint/type/unit/browser/build/Lighthouse/CodeQL remain mandatory before merge.
