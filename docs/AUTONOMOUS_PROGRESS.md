@@ -3091,3 +3091,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Activity Planner displayed each numeric activity score with a `/100` scale at 11.2px-equivalent; the adjacent score band was already protected by the 13px functional-copy floor.
 - Raised only the `/100` score-unit span to 13px-equivalent and extended the existing Activity Planner microtype regression.
 - No activity scoring, weather windows, profile settings, forecast evidence, API or MGM semantics changed. Existing activity 200% text-size browser coverage remains the reflow guard.
+
+## 2026-09-03 13:00 TRT — keep Settings control-group headings readable
+- Continued independently from exact main `f3efc46b6a601bc120864a15cf49f1ed24eb64a8` while post-#781 production CI and #782/#783 hosted gates run.
+- Settings group headings such as language, units and theme still rendered at 12px-equivalent even though they provide the accessible names for grouped controls.
+- Raised only `.settings-section__title` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
+- No setting values, persistence, language/theme behavior, focus handling, API, weather or MGM semantics changed. Exact-head hosted gates remain mandatory before merge.

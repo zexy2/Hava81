@@ -1300,3 +1300,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Activity Planner `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** A raw score without a readily readable denominator weakens interpretation of the adjacent recommendation. The scale is decision context rather than decorative microtype, and increasing it does not alter scoring behavior.
+
+### 2026-09-03 13:00 TRT — Settings group headings are functional control labels
+
+**Decision:** Settings section headings that label option groups render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** These headings identify grouped interactive controls and are referenced by `aria-labelledby`; they are functional labels rather than decorative microtype. Raising only their typography improves scanability without altering settings behavior.
