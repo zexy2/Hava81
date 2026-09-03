@@ -3231,3 +3231,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a fail-closed readiness calculation that blocks on production/host health, GitHub state, frontend/main/API rollout pending or unknown state, and preferred API-port drift while keeping `mode=read-only-observer` and `writes_repository=false`.
 - Added explicit blocking reasons so future autonomous runs can distinguish a real gate from the observer's read-only implementation.
 - Validation: Python compile, 42/42 observer tests, and `git diff --check` pass. No production mutation, weather semantics, provider choice, API runtime, or deploy topology changed.
+
+
+## 2026-09-04 00:34 TRT — re-anchor city-search IME fix after observer merge
+- Main advanced to `5307a0d529216e88eeb555de6e75d9a0ac2ddc59` with the observer readiness fix, while production and the new live observer both verified healthy and `worker.can_merge_or_deploy=true`.
+- Reconstructed PR #850 again from exact current main and replayed only its SearchBar implementation/test delta so append-only documentation remains lossless.
+- `git diff --check` passes; fresh exact-head hosted CI/CD + CodeQL are mandatory before merge. No weather/provider/freshness/API/MGM/scoring/recommendation semantics changed.
