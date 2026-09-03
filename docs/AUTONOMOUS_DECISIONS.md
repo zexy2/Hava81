@@ -1413,3 +1413,7 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ### 2026-09-04 00:30 TRT — persistent mobile navigation stays visually flat
 - Persistent navigation state meaning is carried by accent color, label weight and the existing underline. A second filled tile, icon scaling, backdrop blur and elevation shadow are unnecessary duplicate signals.
 - Preserve the solid editorial paper surface and interaction/accessibility semantics; remove decorative compositing work that does not improve wayfinding.
+
+### 2026-09-04 00:37 TRT — status output exposes readiness and observer capability separately
+- The human-readable worker status must print both merge/deploy readiness and `writes_repository`; hiding either recreates the ambiguity fixed in the observer schema.
+- Blocking reasons are part of the status line so autonomous/operator decisions can fail closed without parsing raw state JSON.

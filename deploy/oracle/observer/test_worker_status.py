@@ -10,6 +10,14 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("browser_processes.get('stale_count')", status_script)
         self.assertIn("browser_processes.get('error')", status_script)
 
+    def test_status_script_surfaces_merge_deploy_readiness(self) -> None:
+        status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn("s.get('worker', {})", status_script)
+        self.assertIn('merge_deploy_ready:', status_script)
+        self.assertIn("worker.get('can_merge_or_deploy')", status_script)
+        self.assertIn("worker.get('merge_deploy_blocking_reasons', [])", status_script)
+        self.assertIn("worker.get('writes_repository')", status_script)
+
     def test_status_script_surfaces_codeql_gate_state(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
         self.assertIn("pr.get('codeql')", status_script)
