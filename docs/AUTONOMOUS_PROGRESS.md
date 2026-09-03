@@ -3242,3 +3242,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After installing the new observer from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59`, live state correctly reported `worker.can_merge_or_deploy=true` with no blockers, but `/usr/local/bin/hava81-worker-status` did not print that operational signal.
 - Updated the status helper to show readiness, explicit blocking reasons, and the separate observer-write flag so operators can distinguish environment safety from the observer's read-only mode without opening raw JSON.
 - Local observer suite passes 45/45 plus `git diff --check`. No production/weather/provider/API behavior changes.
+
+
+## 2026-09-04 01:50 TRT — remove a false navigation landmark from header actions
+- Continued from exact main `0ca1d418feed87b7499d317247db49e36b131880` in isolated branch `automation/hava81-run12-header-actions-group` while #850/#845/#847 validate separately.
+- Audited the header quick-action cluster and found it marked as `<nav>` even though every child is an action button. Replaced only that semantic wrapper with a named `role="group"`; CSS class, behavior, labels, controls and layout stay unchanged.
+- Added a focused source regression preventing the action cluster from reverting to a navigation landmark. `git diff --check` and a dependency-free source assertion are required locally; hosted CI/CD + CodeQL remain mandatory before merge.
