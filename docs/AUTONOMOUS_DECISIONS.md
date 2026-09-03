@@ -1228,3 +1228,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The read-only production observer extracts the inert `hava81-build-revision` meta value from both root and İstanbul shells and reports whether both exact revisions are known and consistent, without yet treating absence/mismatch as a production-health failure.
 
 **Why:** Hava81 now stamps exact Pages revisions, but the observer still exposed only API deployment provenance. Surfacing root/city frontend revisions lets autonomous runs directly prove which frontend build is live while avoiding a false incident during rollout or legacy-shell propagation.
+
+### 2026-09-03 08:24 TRT — route segment timing and condition descriptions are decision evidence
+
+**Decision:** Route corridor segment ETA and modeled condition-description text render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** These fields tell users when a corridor segment is expected and what modeled condition drives its score. They are actionable interpretation, not decorative metadata; increasing readability changes no route geometry, weather evidence or recommendation logic.

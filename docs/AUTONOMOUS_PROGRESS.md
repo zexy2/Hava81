@@ -3020,3 +3020,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The production shell now carries `hava81-build-revision`, but `/var/lib/hava81-worker/state.json` still had no frontend revision field, forcing operators to correlate workflow history manually.
 - Added a strict 40-hex meta extractor, root/İstanbul `frontend_revision` state with `known`/`consistent` flags, and concise worker-status output. Deliberately did not make missing/mismatched revision a health gate yet, so rollout/propagation cannot create a false production incident.
 - Local observer suite passes 28/28, Python compile passes, and `git diff --check` passes. Hosted exact-head CI/CodeQL remain required before installing the observer copy on Oracle.
+
+## 2026-09-03 08:24 TRT — make route-segment timing and modeled condition context readable
+- Started from clean exact main `a7670ed8592cea702b974726d386414e5506b2e1` while #760 reruns exact-head gates in an isolated worktree.
+- Audited Route Weather microtype and found each segment's local ETA plus modeled condition description still shared a ~11.5px metadata rule even though those fields explain when the segment occurs and why its score matters.
+- Raised only `.route-segment time` and `.route-segment small` to the shared 13px-equivalent functional-copy floor with 1.4 line-height, and added a focused source regression.
+- No route geometry, score, segment weather values, departure advice, provider/freshness behavior, API or MGM semantics changed. `git diff --check` passes; exact-head hosted frontend/unit/browser/build/Lighthouse/CodeQL remain mandatory before merge.
