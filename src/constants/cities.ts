@@ -116,13 +116,27 @@ export const TURKIYE_SEHIRLERI: readonly string[] = Object.freeze(
   TURKISH_CITIES.map(city => city.name).sort((a, b) => a.localeCompare(b, 'tr'))
 );
 
+/** Normalize Turkish province names for case- and diacritic-insensitive matching. */
+export const normalizeCitySearchText = (value: string): string =>
+  value
+    .trim()
+    .replace(/[İIı]/g, 'i')
+    .replace(/[Üü]/g, 'u')
+    .replace(/[Öö]/g, 'o')
+    .replace(/[Şş]/g, 's')
+    .replace(/[Ğğ]/g, 'g')
+    .replace(/[Çç]/g, 'c')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
 /**
  * Get city by name
  */
 export const getCityByName = (name: string): TurkishCity | undefined => {
-  return TURKISH_CITIES.find(
-    city => city.name.toLowerCase() === name.toLowerCase()
-  );
+  const normalizedName = normalizeCitySearchText(name);
+  if (!normalizedName) return undefined;
+  return TURKISH_CITIES.find(city => normalizeCitySearchText(city.name) === normalizedName);
 };
 
 /**
@@ -136,11 +150,11 @@ export const getCitiesByRegion = (region: TurkishRegion): readonly TurkishCity[]
  * Search cities by partial name
  */
 export const searchCities = (query: string): readonly TurkishCity[] => {
-  const normalizedQuery = query.toLowerCase().trim();
+  const normalizedQuery = normalizeCitySearchText(query);
   if (!normalizedQuery) return [];
   
   return TURKISH_CITIES.filter(city =>
-    city.name.toLowerCase().includes(normalizedQuery)
+    normalizeCitySearchText(city.name).includes(normalizedQuery)
   );
 };
 
