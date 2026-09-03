@@ -3103,3 +3103,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited remaining sub-13px functional copy and found dust/pollen measurement units inside Context Signals still rendered at 11px-equivalent, despite being required to interpret the displayed modeled values.
 - Raised only `.context-signal > strong small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - Existing `mobile context signals reflow at 200 percent text size` browser coverage remains the layout guard. No UV, pollen, dust, marine value, provider/freshness, API, MGM, or recommendation semantics changed.
+
+## 2026-09-03 16:46 TRT — keep Daily Plan slot timing context readable
+- Continued independently from exact main `f9bc47b2c99bfa465549cb7761b87846871caf02` while its production rollout and hosted PR gates remain active.
+- Daily Plan slot timestamps and compact timing context still rendered at 12px-equivalent even though users rely on them to choose when to act on the recommendation.
+- Raised only `.daily-plan__slot time, .daily-plan__slot small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
+- No local-day calculation, hourly values, score, recommendation, provider/freshness behavior, API, timezone, or MGM semantics changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
