@@ -1228,3 +1228,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The read-only production observer extracts the inert `hava81-build-revision` meta value from both root and İstanbul shells and reports whether both exact revisions are known and consistent, without yet treating absence/mismatch as a production-health failure.
 
 **Why:** Hava81 now stamps exact Pages revisions, but the observer still exposed only API deployment provenance. Surfacing root/city frontend revisions lets autonomous runs directly prove which frontend build is live while avoiding a false incident during rollout or legacy-shell propagation.
+
+### 2026-09-03 08:39 TRT — frontend deployment drift is an explicit observer state, not a health incident
+
+**Decision:** The observer compares a known, internally consistent root/İstanbul build revision with the latest main revision and exposes `matches_main` plus `pending`; it records revision transitions in the state signature but does not classify deployment lag as production failure.
+
+**Why:** GitHub Pages propagation can legitimately trail a successful merge. Explicit pending state lets autonomous runs distinguish “healthy previous frontend still live” from “new main is live” without treating propagation as an outage or guessing from workflow timestamps.

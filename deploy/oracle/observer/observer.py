@@ -487,6 +487,20 @@ def collect_github() -> dict[str, Any]:
     }
 
 
+def frontend_deployment_state(frontend_revision: dict[str, Any], latest_main: dict[str, Any] | None) -> dict[str, Any]:
+    main_revision = latest_main.get('head_sha') if isinstance(latest_main, dict) else None
+    known = frontend_revision.get('known') is True
+    consistent = frontend_revision.get('consistent') is True
+    deployed_revision = frontend_revision.get('root') if known and consistent else None
+    comparable = isinstance(main_revision, str) and bool(main_revision) and isinstance(deployed_revision, str)
+    matches_main = bool(comparable and deployed_revision == main_revision)
+    return {
+        'main_revision': main_revision,
+        'matches_main': matches_main,
+        'pending': bool(comparable and not matches_main),
+    }
+
+
 def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     github = state.get('github') or {}
     production = state.get('production') or {}
@@ -508,6 +522,10 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
             for pr in prs
         ],
         'main': github.get('latest_main_run'),
+        'frontend_revision': {
+            key: (production.get('frontend_revision') or {}).get(key)
+            for key in ('root', 'city', 'known', 'consistent', 'main_revision', 'matches_main', 'pending')
+        },
         'api_deployment': {
             key: (github.get('api_deployment') or {}).get(key)
             for key in (
@@ -570,6 +588,9 @@ def main() -> int:
     production = collect_production()
     host = collect_host()
     github = collect_github()
+    frontend_revision = production.get('frontend_revision') or {}
+    frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('latest_main_run')))
+    production['frontend_revision'] = frontend_revision
     state = {
         'schema_version': 1,
         'collected_at': collected_at,
@@ -579,6 +600,7 @@ def main() -> int:
         'signals': {
             'production_incident': not production['healthy'],
             'host_incident': not host['healthy'],
+            'frontend_deploy_pending': frontend_revision.get('pending') is True,
             **github.get('signals', {}),
         },
         'worker': {

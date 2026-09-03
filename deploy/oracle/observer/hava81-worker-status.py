@@ -22,7 +22,7 @@ print(f"nginx_api_port: {(prod.get('nginx') or {}).get('port')} expected={(prod.
 boot_assets = prod.get('boot_assets') or {}
 print(f"boot_assets: ok={boot_assets.get('ok')} count={boot_assets.get('count')} root={boot_assets.get('root_count')} city={boot_assets.get('city_count')} failed={[item.get('path') for item in boot_assets.get('failed', [])]}")
 frontend_revision = prod.get('frontend_revision') or {}
-print(f"frontend_revision: known={frontend_revision.get('known')} consistent={frontend_revision.get('consistent')} root={str(frontend_revision.get('root') or '')[:12]} city={str(frontend_revision.get('city') or '')[:12]}")
+print(f"frontend_revision: known={frontend_revision.get('known')} consistent={frontend_revision.get('consistent')} root={str(frontend_revision.get('root') or '')[:12]} city={str(frontend_revision.get('city') or '')[:12]} main={str(frontend_revision.get('main_revision') or '')[:12]} matches_main={frontend_revision.get('matches_main')} pending={frontend_revision.get('pending')}")
 ready = prod.get('api_ready') or {}
 print(f"api_ready: http={ready.get('status')} reported={ready.get('reported_status')} age_s={ready.get('age_seconds')} cache={ready.get('cache_control')} provider={ready.get('provider')} circuit={ready.get('provider_state')}")
 print(f"cors: {(prod.get('cors') or {}).get('allow_origin')} ok={(prod.get('cors') or {}).get('ok')}")

@@ -3020,3 +3020,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The production shell now carries `hava81-build-revision`, but `/var/lib/hava81-worker/state.json` still had no frontend revision field, forcing operators to correlate workflow history manually.
 - Added a strict 40-hex meta extractor, root/İstanbul `frontend_revision` state with `known`/`consistent` flags, and concise worker-status output. Deliberately did not make missing/mismatched revision a health gate yet, so rollout/propagation cannot create a false production incident.
 - Local observer suite passes 28/28, Python compile passes, and `git diff --check` passes. Hosted exact-head CI/CodeQL remain required before installing the observer copy on Oracle.
+
+## 2026-09-03 08:39 TRT — make frontend deployment lag directly observable
+- Continued from exact main `7395881ba5807f56477970c1d553091242fb7ad5` after installing the first frontend-revision observer improvement. The live observer immediately proved root and İstanbul were both still on `f7800da3788753c846d148fb03e24c25f4385d83` while the new main pipeline for `7395881...` was running.
+- Added derived `main_revision`, `matches_main` and `pending` fields for a known/consistent frontend revision, surfaced `frontend_deploy_pending` as an observer signal, and included revision state in the event signature so an actual Pages transition is logged.
+- Unknown or inconsistent shells deliberately do not claim either a match or a pending deployment, and frontend lag remains observational rather than a production-health failure.
+- Observer suite passes 32/32, compile checks pass without bytecode artifacts, and `git diff --check` passes. Exact-head hosted CI/CodeQL and merge remain required before Oracle installation.
