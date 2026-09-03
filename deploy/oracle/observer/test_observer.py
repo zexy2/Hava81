@@ -670,7 +670,61 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['signals']['ci_unknown_prs'], [])
 
 
+class ObserverFrontendDeploymentStateTests(unittest.TestCase):
+    def test_reports_consistent_older_frontend_revision_as_pending(self) -> None:
+        deployed = 'a' * 40
+        main = 'b' * 40
+        state = observer.frontend_deployment_state(
+            {'known': True, 'consistent': True, 'root': deployed, 'city': deployed},
+            {'head_sha': main, 'status': 'completed'},
+        )
+        self.assertEqual(state['main_revision'], main)
+        self.assertFalse(state['matches_main'])
+        self.assertTrue(state['pending'])
+
+    def test_reports_exact_frontend_revision_match(self) -> None:
+        revision = 'c' * 40
+        state = observer.frontend_deployment_state(
+            {'known': True, 'consistent': True, 'root': revision, 'city': revision},
+            {'head_sha': revision, 'status': 'completed'},
+        )
+        self.assertTrue(state['matches_main'])
+        self.assertFalse(state['pending'])
+
+    def test_inconsistent_frontend_shells_do_not_claim_pending_or_match(self) -> None:
+        state = observer.frontend_deployment_state(
+            {'known': True, 'consistent': False, 'root': 'a' * 40, 'city': 'b' * 40},
+            {'head_sha': 'c' * 40, 'status': 'completed'},
+        )
+        self.assertFalse(state['matches_main'])
+        self.assertFalse(state['pending'])
+
+
 class ObserverStateSignatureTests(unittest.TestCase):
+    def test_frontend_revision_transition_creates_a_change_event(self) -> None:
+        base = {
+            'github': {'open_automation_prs': [], 'latest_main_run': {'head_sha': 'b' * 40, 'status': 'completed'}},
+            'production': {
+                'healthy': True, 'issues': [], 'nginx': {'port': 4001},
+                'frontend_revision': {
+                    'root': 'a' * 40, 'city': 'a' * 40, 'known': True, 'consistent': True,
+                    'main_revision': 'b' * 40, 'matches_main': False, 'pending': True,
+                },
+            },
+            'host': {'disk': {'ok': True}},
+        }
+        changed = {
+            **base,
+            'production': {
+                **base['production'],
+                'frontend_revision': {
+                    'root': 'b' * 40, 'city': 'b' * 40, 'known': True, 'consistent': True,
+                    'main_revision': 'b' * 40, 'matches_main': True, 'pending': False,
+                },
+            },
+        }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
+
     def test_api_lookup_latency_does_not_create_a_change_event(self) -> None:
         base_deployment = {
             'main_revision': 'main-sha',
