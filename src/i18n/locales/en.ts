@@ -434,7 +434,7 @@ export const en = {
       airBody:
         'Current air quality is poor in the Hava81 decision layer; reconsider prolonged outdoor plans.',
       waitTitle: '{{city}} · Hava81 · Weather looks better if you wait',
-      waitBody: 'The weather score improves by about {{improvement}} points in the next hours.',
+      waitBody: 'Around {{time}}, the weather score is about {{improvement}} points better.',
       difficultTitle: '{{city}} · Hava81 difficult weather outlook',
       difficultBody:
         "Today's Hava81 Score is {{score}}/100 · {{band}}. Adjust your plan for the weather risks.",
