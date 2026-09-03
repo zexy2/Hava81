@@ -1373,3 +1373,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Province codes shown inside interactive Weather Map markers must render at or above the 13px-equivalent functional microtype floor while preserving the existing 44px marker target.
 
 **Why:** These two-digit labels are not decorative; they identify selectable city markers before the popup opens. Keeping them below the functional floor made the map harder to scan even though popup province codes and other map evidence had already been raised.
+
+### 2026-09-03 22:10 TRT — mobile decision metrics use a responsive data matrix
+
+**Decision:** Below desktop width, keep the four Weather Decision metrics in one compact editorial row when space and text size allow, using a rem-based minimum track so enlarged text automatically reflows to fewer columns instead of shrinking copy or overflowing.
+
+**Why:** On the 390px production viewport the decision surface consumed most of the first screen and delayed the Forecast Atlas. The metrics are scan data, not four separate cards; a compact matrix improves first-viewport hierarchy while preserving every value and allowing 200% text to reflow safely.
