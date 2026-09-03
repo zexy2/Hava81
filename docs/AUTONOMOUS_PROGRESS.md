@@ -2970,3 +2970,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued independently from exact main `023a5c473978644903036fa634a1abcd9e20a381` while #752 reran hosted gates after rebase.
 - Weather Map attribution remained at the 11px-equivalent floor even though it identifies the underlying map/data source and is functional provenance. Raised only `.weather-map__attribution` to the shared 13px-equivalent functional-copy floor and extended the existing source contract.
 - No map tiles, weather overlays, coordinates, provider values, freshness, recommendation logic, API behavior or MGM semantics changed. Local `git diff --check` is required; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory because Node/npm are unavailable on this host.
+## 2026-09-03 07:18 TRT — keep forecast evidence attribution readable
+- Continued independently from exact main `0860e98c1bc8df14fc1bdf686ba8fdf34d351855` while #753 reran hosted gates.
+- Forecast Atlas provider/source attribution still rendered at the 11px-equivalent floor even though it identifies the forecast evidence source. Raised only `.hava81-forecast-atlas__source` to the shared 13px-equivalent functional-copy floor and added a source regression.
+- No forecast values, horizon, intervals, provider selection, freshness, weather symbols, scoring, API behavior or MGM semantics changed. `git diff --check` passes; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL remain mandatory because Node/npm are unavailable on this host.
