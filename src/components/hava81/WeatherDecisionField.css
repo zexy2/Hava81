@@ -53,7 +53,7 @@
   min-height: 2rem;
   overflow: hidden;
   color: var(--decision-ink);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums lining-nums;
   line-height: 1;
   background: var(--decision-field);
