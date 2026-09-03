@@ -50,6 +50,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.hava81-decision-field__atlas-meta'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps first-view province plate at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/WeatherDecisionField.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.hava81-decision-field__plate'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps first-view change and metric labels at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/WeatherDecisionField.css', 'utf8');
     expect(remFontSize(cssRule(css, '.hava81-decision-field__change-title'))).toBeGreaterThanOrEqual(0.8125);
