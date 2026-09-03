@@ -386,7 +386,7 @@
 .hava81-forecast-atlas__hour time,
 .hava81-forecast-atlas__hour-pop {
   color: var(--forecast-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.2;
 }
