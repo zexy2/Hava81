@@ -3217,3 +3217,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Route Weather previously kept a modeled corridor result visible until the projected trip ended. For departures many hours ahead, a response calculated now could therefore remain actionable long after its underlying hourly forecast/cache evidence had aged.
 - Route results now expire at the earlier of the projected trip end or five minutes after the successful response, with the existing 100ms timer cushion. The refresh message now says the estimate is no longer fresh rather than incorrectly implying only that the trip window ended.
 - Updated the existing fake-timer regression to prove the displayed route guidance disappears after the five-minute decision-freshness window. `git diff --check` passes; exact-head hosted CI/CD and CodeQL remain required before merge. No route scoring, forecast values, provider choice, MGM semantics, or API contract changed.
+
+
+## 2026-09-03 22:24 TRT — reject unsafe forecast attribution URLs at the browser trust boundary
+- Continued independently from exact current main `e8892520f0ed1347f1a9787431e792976108f9e7` while #850 validates and the main rollout proceeds separately.
+- Forecast metadata can supply `sourceUrl`, which Forecast Atlas renders as a clickable provider attribution link. The browser boundary validated provider/freshness/timezone fields but accepted any source URL string, so a malformed or unsafe scheme could reach an interactive link if the BFF contract were violated.
+- Forecast metadata validation now accepts optional source links only when they parse as absolute HTTPS URLs; malformed/non-HTTPS values fail closed through the existing retryable invalid-forecast path. The production Open-Meteo source remains valid.
+- Added a focused regression for a `javascript:` attribution URL. `git diff --check` passes; dependency-heavy local tests/build remain deferred while the host disk hard gate is active, so exact-head hosted CI/CD and CodeQL are required before merge. No forecast/weather value, provider attribution text, freshness, scoring, MGM or recommendation semantics changed.

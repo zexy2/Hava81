@@ -661,6 +661,7 @@ describe('weatherService BFF client', () => {
     ['humidity above 100%', { hourly: { humidity: 101 } }],
     ['invalid forecast timezone offset', { meta: { timezoneOffsetSeconds: 50_401 } }],
     ['non-positive forecast interval', { meta: { intervalHours: 0 } }],
+    ['unsafe forecast attribution URL', { meta: { sourceUrl: 'javascript:alert(1)' } }],
   ])('rejects impossible forecast domain value: %s', async (_label, invalid) => {
     mockGet.mockResolvedValue({
       daily: [

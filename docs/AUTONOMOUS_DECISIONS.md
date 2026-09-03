@@ -1397,3 +1397,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** A successful modeled Route Weather result remains actionable only until the earlier of its projected trip completion or five minutes after receipt.
 
 **Why:** The route API does not currently expose an aggregate evidence TTL even though its corridor is sampled from cached hourly forecast data. A conservative five-minute UI ceiling prevents long-lived tabs or far-future departures from presenting an old modeled route decision as current without changing route scores or fabricating provider freshness metadata.
+### 2026-09-03 22:24 TRT — forecast attribution links are HTTPS-only trust-boundary data
+
+**Decision:** Optional forecast `sourceUrl` metadata must parse as an absolute HTTPS URL before it can enter the normalized frontend forecast model.
+
+**Why:** Forecast Atlas turns this metadata into an interactive link. Failing closed at the BFF/browser boundary prevents malformed or unsafe schemes from becoming UI navigation while preserving the legitimate Open-Meteo attribution contract.

@@ -218,6 +218,18 @@ const validateForecastMeta = (meta: SerializedForecast['meta'], field: string): 
     if (condition) invalidForecastPayload(`${field}.${suffix}`);
   };
   invalid(typeof meta.provider !== 'string' || !meta.provider.trim(), 'provider');
+  if (meta.sourceUrl !== undefined) {
+    let safeSourceUrl = false;
+    if (typeof meta.sourceUrl === 'string') {
+      try {
+        const parsedSourceUrl = new URL(meta.sourceUrl);
+        safeSourceUrl = parsedSourceUrl.protocol === 'https:';
+      } catch {
+        safeSourceUrl = false;
+      }
+    }
+    invalid(!safeSourceUrl, 'sourceUrl');
+  }
   invalid(
     !isFiniteNumber(meta.timezoneOffsetSeconds) ||
       meta.timezoneOffsetSeconds < -43_200 ||
