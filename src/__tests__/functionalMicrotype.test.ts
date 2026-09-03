@@ -17,6 +17,11 @@ const expectReadableFunctionalMicrotype = (path: string, selector: string) => {
 };
 
 describe('functional microtype readability', () => {
+  it('keeps Settings control-group headings at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/SettingsPanel.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.settings-section__title'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps saved-city province plates at or above the 11px-equivalent floor', () => {
     expectReadableFunctionalMicrotype('src/components/CityTabs.css', '.city-tabs__plate');
   });
