@@ -106,6 +106,8 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
   const hasPartialWindow = Boolean(profile.activityStart) !== Boolean(profile.activityEnd);
   const activityWindowStatusId = hasPartialWindow ? 'activity-window-incomplete' : undefined;
   const temperatureSymbol = getTemperatureSymbol();
+  const sensitivityLabelId = 'activity-temperature-sensitivity-label';
+  const sensitivityHelpId = 'activity-temperature-sensitivity-help';
   const sensitivityShift = Math.round(Math.abs(convertTemperature(3) - convertTemperature(0)));
 
   const formatComfortCriteria = (activity: ActivityKind) => {
@@ -128,9 +130,11 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
           <p>{t('hava81.activities.subtitle')}</p>
         </div>
         <label className="activity-planner__sensitivity">
-          <span>{t('hava81.activities.sensitivity.label')}</span>
+          <span id={sensitivityLabelId}>{t('hava81.activities.sensitivity.label')}</span>
           <select
             value={profile.temperatureSensitivity}
+            aria-labelledby={sensitivityLabelId}
+            aria-describedby={sensitivityHelpId}
             onChange={event =>
               setTemperatureSensitivity(event.target.value as 'cold' | 'balanced' | 'heat')
             }
@@ -139,7 +143,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
             <option value="balanced">{t('hava81.activities.sensitivity.balanced')}</option>
             <option value="heat">{t('hava81.activities.sensitivity.heat')}</option>
           </select>
-          <small>
+          <small id={sensitivityHelpId}>
             {t(`hava81.activities.sensitivity.help.${profile.temperatureSensitivity}`, {
               value: sensitivityShift,
               unit: temperatureSymbol,
