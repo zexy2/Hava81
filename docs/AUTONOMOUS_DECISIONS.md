@@ -1306,3 +1306,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The saved-city comparison `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** The denominator communicates the scoring scale used to compare cities. It is functional decision context rather than decorative microtype, and making it readable does not alter ranking or scoring behavior.
+
+
+### 2026-09-03 14:08 TRT — hourly day/current labels are functional navigation context
+
+**Decision:** Forecast Atlas hourly day-boundary and current-time labels render at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** These labels orient users within the hourly timeline by identifying day changes and the current hour. They are navigation context for a decision surface, not decorative metadata; improving legibility does not alter forecast values or chronology.

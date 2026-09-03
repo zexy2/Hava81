@@ -3097,3 +3097,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Saved-city comparison displayed each Hava81 score with a `/100` scale at 11.2px-equivalent even though the adjacent band qualifier already uses the 13px functional-copy floor.
 - Raised only `.hava81-compare__score span` to 13px-equivalent and extended the existing comparison microtype regression.
 - No comparison scoring, winner selection, weather metrics, freshness, API or MGM semantics changed. Existing comparison 200% text-size browser coverage remains the reflow guard.
+
+
+## 2026-09-03 14:08 TRT — keep hourly timeline orientation labels readable
+- Continued independently from exact main `fd991f4f0afcf6a3352cb3daa51c9dd7f64d2f26` while its production rollout and other exact-head gates run.
+- Forecast Atlas hourly cards still rendered day-boundary and current-hour orientation labels at 11px-equivalent, making timeline navigation harder at a glance.
+- Raised only `.hava81-forecast-atlas__hour-day` and `.hava81-forecast-atlas__hour-now` to the shared 13px-equivalent functional-copy floor and added focused source regressions.
+- Existing forecast responsive/200% text-size browser coverage remains the layout guard. No hourly ordering, timestamps, forecast values, precipitation semantics, provider/freshness behavior, API or MGM semantics changed.
