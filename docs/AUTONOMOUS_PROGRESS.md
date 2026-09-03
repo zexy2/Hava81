@@ -3054,3 +3054,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Kept ProtectProc=invisible and added a read-only /proc fallback that uses Linux CLOCK_BOOTTIME plus same-visible process cmdline/comm/stat/status, filters only /tmp/hava81-* Chromium/Chrome/Playwright processes, preserves the two-hour threshold and bounded output, and skips raced/inaccessible process entries.
 - Exact systemd reproduction confirmed procps ps fails under ProtectProc=invisible + ProcSubset=pid because procps cannot see the proc mount shape it expects; the fallback was then exercised under those same transient-unit restrictions and returned a known healthy state without relaxing hardening.
 - Added regressions for ps failure fallback and synthetic /proc elapsed-time parsing. Observer suite passes 36/36, compile and git diff --check pass. No production health classification, disk threshold, weather/API/frontend behavior or process mutation changed.
+
+
+## 2026-09-03 11:34 TRT — close Route Weather reduced-motion gap
+- Continued independently from exact main da331d1b70361ba834a041d4555eec65336f1a9a while #771/#772 hosted gates run.
+- Audited transition-bearing component styles against prefers-reduced-motion coverage. Most uncovered transitions are color/border feedback; RouteWeatherPanel contained a spatial transform transition on its disclosure chevron with no override.
+- Added a narrowly scoped reduced-motion rule that disables only the chevron transition. Normal-motion visuals, disclosure behavior, route calculations, weather evidence and mobile layout are unchanged.
+- git diff --check passes locally; hosted lint/build/browser/Lighthouse/CodeQL gates remain required before merge.

@@ -1262,3 +1262,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** If procps ps is unavailable or exits non-zero inside the hardened observer unit, stale Hava81 browser detection falls back to bounded read-only /proc inspection instead of weakening ProtectProc=invisible.
 
 **Why:** Production showed ps exited 102 under the hardened unit even though the same command works interactively. /proc exposes enough same-user process metadata to identify Hava81 temporary browser profiles while preserving the observer least-privilege boundary.
+
+
+### 2026-09-03 11:34 TRT — route disclosure rotation respects reduced motion
+
+**Decision:** The Route Weather disclosure chevron switches instantly when the OS/browser requests reduced motion.
+
+**Why:** The disclosure rotation was the remaining transform transition in a component without a reduced-motion override. Preserving color/state transitions while removing the spatial rotation honors the user preference without flattening normal interaction feedback.

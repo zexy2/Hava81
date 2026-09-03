@@ -289,3 +289,10 @@
     scrollbar-width: thin;
   }
 }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .route-weather__chevron {
+    transition: none;
+  }
+}
