@@ -160,7 +160,7 @@
   line-height: 1;
 }
 .route-weather__score strong span {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--color-atlas-muted);
 }
 .route-weather__result p {

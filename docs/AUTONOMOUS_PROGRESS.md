@@ -3091,3 +3091,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Activity Planner displayed each numeric activity score with a `/100` scale at 11.2px-equivalent; the adjacent score band was already protected by the 13px functional-copy floor.
 - Raised only the `/100` score-unit span to 13px-equivalent and extended the existing Activity Planner microtype regression.
 - No activity scoring, weather windows, profile settings, forecast evidence, API or MGM semantics changed. Existing activity 200% text-size browser coverage remains the reflow guard.
+
+## 2026-09-03 13:24 TRT — keep route score scale readable
+- Continued independently from confirmed-production main `160627a27fa29871a08c34a72e42c4e70bdb58de` while rebased #783 validates.
+- Route Weather displayed each corridor score with a `/100` denominator at 12px-equivalent while its score band was already protected by the 13px functional-copy floor.
+- Raised only `.route-weather__score strong span` to 13px-equivalent and extended the existing route-score microtype regression.
+- No route scoring, corridor sampling, forecast-window choice, weather evidence, API or MGM semantics changed. Existing route 200% text-size browser coverage remains the reflow guard.

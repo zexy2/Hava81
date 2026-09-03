@@ -1300,3 +1300,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** The Activity Planner `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
 
 **Why:** A raw score without a readily readable denominator weakens interpretation of the adjacent recommendation. The scale is decision context rather than decorative microtype, and increasing it does not alter scoring behavior.
+
+### 2026-09-03 13:24 TRT — route score scale is functional context
+
+**Decision:** Route Weather `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** The denominator communicates the scale of the route suitability score and therefore contributes directly to interpreting the recommendation. Increasing only that context does not alter scoring or route behavior.
