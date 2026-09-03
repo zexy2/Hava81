@@ -140,6 +140,11 @@ describe('functional microtype readability', () => {
     expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__source'))).toBeGreaterThanOrEqual(0.8125);
   });
 
+  it('keeps Forecast Atlas temperature unit at or above the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/ForecastAtlas.css', 'utf8');
+    expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__unit'))).toBeGreaterThanOrEqual(0.8125);
+  });
+
   it('keeps Forecast Atlas hourly day and current-time labels at or above the 13px-equivalent floor', () => {
     const css = readFileSync('src/components/hava81/ForecastAtlas.css', 'utf8');
     expect(remFontSize(cssRule(css, '.hava81-forecast-atlas__hour-day'))).toBeGreaterThanOrEqual(0.8125);
