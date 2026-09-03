@@ -3085,3 +3085,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued independently from exact main `de3632e23ca1e337e93338f953d6181e1d98893f` while #781/#782 validate.
 - The interval selector exposed a visible translated label and a separate duplicated `aria-label` string on the button group. Replaced the duplicate accessible-name path with `aria-labelledby` pointing at the visible label.
 - Added a focused source regression locking the relationship. No interval options, forecast values, selection behavior, provider/freshness logic, scoring, API or MGM behavior changed.
+
+## 2026-09-03 13:15 TRT — keep Activity Planner score scale readable
+- Continued independently from production main `a57c499d1ea6950886824144637418da83de5f6b` while #785 validates.
+- Activity Planner displayed each numeric activity score with a `/100` scale at 11.2px-equivalent; the adjacent score band was already protected by the 13px functional-copy floor.
+- Raised only the `/100` score-unit span to 13px-equivalent and extended the existing Activity Planner microtype regression.
+- No activity scoring, weather windows, profile settings, forecast evidence, API or MGM semantics changed. Existing activity 200% text-size browser coverage remains the reflow guard.

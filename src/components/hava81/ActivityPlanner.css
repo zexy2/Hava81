@@ -155,7 +155,7 @@
   line-height: 1;
 }
 .activity-card header strong span {
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   color: var(--color-atlas-muted);
 }
 .activity-card p {
