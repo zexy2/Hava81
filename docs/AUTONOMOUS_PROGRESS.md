@@ -3242,3 +3242,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - After installing the new observer from exact main `5307a0d529216e88eeb555de6e75d9a0ac2ddc59`, live state correctly reported `worker.can_merge_or_deploy=true` with no blockers, but `/usr/local/bin/hava81-worker-status` did not print that operational signal.
 - Updated the status helper to show readiness, explicit blocking reasons, and the separate observer-write flag so operators can distinguish environment safety from the observer's read-only mode without opening raw JSON.
 - Local observer suite passes 45/45 plus `git diff --check`. No production/weather/provider/API behavior changes.
+
+
+## 2026-09-04 02:06 TRT — make append-only autonomous checkpoints rebase-safe
+- Repeated current-main rebases showed a recurring non-product conflict: independent branches append valid checkpoints to the same two autonomous log tails, forcing manual marker removal even when source code applies cleanly.
+- Added `.gitattributes` union merge semantics only for `AUTONOMOUS_PROGRESS.md` and `AUTONOMOUS_DECISIONS.md`, plus a hermetic rebase test that proves divergent entries from both sides survive with no conflict markers.
+- Wired the contract into frontend quality CI. Shell syntax, hermetic rebase contract and `git diff --check` pass locally; source/config files outside these two append-only logs retain normal conflict detection.

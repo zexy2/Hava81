@@ -33,6 +33,8 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test:ci
+      - name: Verify autonomous append-only log merge contract
+        run: bash scripts/test-autonomous-log-union-merge.sh
       - name: Verify safe worktree cleanup contract
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - name: Verify Hava81 browser temp cleanup contract

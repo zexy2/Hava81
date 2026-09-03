@@ -1,0 +1,3 @@
+# Autonomous logs are append-only. Preserve concurrent checkpoints during merge/rebase.
+docs/AUTONOMOUS_PROGRESS.md merge=union
+docs/AUTONOMOUS_DECISIONS.md merge=union

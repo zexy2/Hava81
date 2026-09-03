@@ -1417,3 +1417,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ### 2026-09-04 00:37 TRT — status output exposes readiness and observer capability separately
 - The human-readable worker status must print both merge/deploy readiness and `writes_repository`; hiding either recreates the ambiguity fixed in the observer schema.
 - Blocking reasons are part of the status line so autonomous/operator decisions can fail closed without parsing raw state JSON.
+
+
+## 2026-09-04 02:06 TRT — use Git union merge only for append-only autonomous logs
+- `docs/AUTONOMOUS_PROGRESS.md` and `docs/AUTONOMOUS_DECISIONS.md` are intentionally append-only and concurrent branches routinely add independent valid checkpoints at the same tail.
+- Mark only those two files with Git's built-in `merge=union` driver so rebase/merge preserves both concurrent append blocks without manual conflict-marker surgery. Do not apply union semantics to source, config, tests, workflows, or any document where conflicting edits may replace existing content.
+- Keep a hermetic rebase contract that creates divergent append-only checkpoints and proves both survive without conflict markers.
