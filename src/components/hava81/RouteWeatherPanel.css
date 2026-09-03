@@ -112,7 +112,7 @@
 .route-weather__hint {
   margin: calc(var(--space-lg) * -0.5) 0 0;
   color: var(--color-atlas-muted);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 .route-weather__result {
   display: grid;

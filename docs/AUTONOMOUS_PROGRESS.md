@@ -3103,3 +3103,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Audited remaining sub-13px functional copy and found dust/pollen measurement units inside Context Signals still rendered at 11px-equivalent, despite being required to interpret the displayed modeled values.
 - Raised only `.context-signal > strong small` to the shared 13px-equivalent functional-copy floor and added a focused source regression.
 - Existing `mobile context signals reflow at 200 percent text size` browser coverage remains the layout guard. No UV, pollen, dust, marine value, provider/freshness, API, MGM, or recommendation semantics changed.
+
+## 2026-09-03 16:39 TRT — keep route planning hint readable
+- Continued independently from exact main `f9bc47b2c99bfa465549cb7761b87846871caf02` while its production rollout and other PR gates run.
+- Route Weather's planning hint still rendered just under the shared functional-copy floor even though it explains how users should set up the route interaction.
+- Raised only `.route-weather__hint` from 0.78rem to 0.8125rem and added a focused source regression.
+- No route inputs, segment timing, weather values, scoring, provider/freshness behavior, API, MGM semantics, or routing behavior changed. Exact-head hosted CI/CodeQL remain mandatory before merge.
