@@ -18,6 +18,13 @@ describe('generated city-page metadata', () => {
     expect(smoke).toContain('${GITHUB_SHA}');
   });
 
+  it('describes province shells as administrative areas rather than municipalities', () => {
+    const generator = readFileSync('scripts/generate-city-pages.mjs', 'utf8');
+    expect(generator).toContain("'@type': 'AdministrativeArea'");
+    expect(generator).toContain("containedInPlace: { '@type': 'Country', name: 'Türkiye' }");
+    expect(generator).not.toContain("'@type': 'City'");
+  });
+
   it('fails closed unless all 81 province names and slugs remain unique', () => {
     const generator = readFileSync('scripts/generate-city-pages.mjs', 'utf8');
     expect(generator).toContain('const expectedProvinceCount = 81;');
