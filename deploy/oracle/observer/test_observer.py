@@ -853,14 +853,16 @@ class ObserverBrowserProcessTests(unittest.TestCase):
             "102 7100 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/tmp/hava81-audit-2",
             "103 12000 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/tmp/postify-audit",
             "104 15000 ubuntu node node /tmp/hava81-worker.js",
+            "105 10800 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/home/ubuntu/snap/chromium/common/hava81-cdp-audit",
+            "106 11000 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir /home/ubuntu/snap/chromium/common/h81deploycheck",
         ])
         with mock.patch.object(observer.subprocess, "run", return_value=self._Result(output)):
             state = observer.collect_hava81_browser_processes()
 
         self.assertTrue(state["known"])
-        self.assertEqual(state["stale_count"], 1)
-        self.assertEqual(state["processes"][0]["pid"], 101)
-        self.assertEqual(state["processes"][0]["elapsed_seconds"], 9000)
+        self.assertEqual(state["stale_count"], 3)
+        self.assertEqual([item["pid"] for item in state["processes"]], [106, 105, 101])
+        self.assertEqual(state["processes"][0]["elapsed_seconds"], 11000)
         self.assertIsNone(state["error"])
 
     def test_ps_failure_falls_back_to_proc(self) -> None:
@@ -890,7 +892,7 @@ class ObserverBrowserProcessTests(unittest.TestCase):
             pid_dir = proc_root / "101"
             pid_dir.mkdir()
             (pid_dir / "cmdline").write_bytes(
-                b"/usr/bin/chromium\0--user-data-dir=/tmp/hava81-audit-1\0"
+                b"/usr/bin/chromium\0--user-data-dir=/home/ubuntu/snap/chromium/common/hava81-cdp-audit\0"
             )
             (pid_dir / "comm").write_text("chromium\n", encoding="utf-8")
             clock_ticks = int(observer.os.sysconf("SC_CLK_TCK"))
