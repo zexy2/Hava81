@@ -76,6 +76,16 @@ mkdir -p "$primary/scripts"
 cp "$cleanup_script" "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
 chmod +x "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
 
+audit="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit)"
+grep -Fq "Audit: scanned=" <<<"$audit"
+grep -Fq "dirty=" <<<"$audit"
+grep -Fq "status_unreadable=" <<<"$audit"
+grep -Fq "No files, refs, or worktrees were changed." <<<"$audit"
+if (cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit --apply >/dev/null 2>&1); then
+  echo "audit mode accepted mutation" >&2
+  exit 1
+fi
+
 dry="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --remove-worktrees)"
 grep -Fq "WOULD_REMOVE_WORKTREE" <<<"$dry"
 grep -Fq "$merged" <<<"$dry"
