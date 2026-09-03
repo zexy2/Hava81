@@ -144,7 +144,7 @@ describe('ActivityPlanner time range', () => {
 
     expect(screen.getByText(/Koşuda 50–72°F/i)).toBeInTheDocument();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
-    expect(screen.getByText('Sıcak uyarıları yaklaşık 5°F daha erken başlar.')).toBeInTheDocument();
+    expect(screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 5°F daha erken başlar.')).toBeInTheDocument();
     expect(screen.queryByText(/Koşuda 10–22°C/i)).not.toBeInTheDocument();
   });
 
@@ -293,6 +293,6 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getAllByText('Hava açısından en uygun aralık: 18:00–20:00').length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
-    expect(screen.getByText('Sıcak uyarıları yaklaşık 3°C daha erken başlar.')).toBeInTheDocument();
+    expect(screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 3°C daha erken başlar.')).toBeInTheDocument();
   });
 });

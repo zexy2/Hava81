@@ -2890,3 +2890,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Verified current WHO UV guidance: sun protection is recommended at UV Index 3 and above. Updated the modeled UV context copy in Turkish and English to name that threshold/provenance explicitly instead of presenting health-related guidance as an unattributed Hava81 assertion.
 - Updated ContextSignalsPanel regressions to lock the attributed threshold. No Open-Meteo value, freshness TTL, UV category cutoff, score, recommendation trigger, official-warning behavior or API behavior changed.
 - Local Node/npm are unavailable on this host checkout; `git diff --check` and exact-head hosted frontend/browser/Lighthouse/CodeQL are required before merge. Next: inspect diff, commit/push/open this isolated PR if clean; keep #722/#723 merge/deploy path independent and reverify observer immediately before any merge.
+
+## 2026-09-03 03:04 TRT — align Activity Planner sensitivity wording with scoring behavior
+- Continued independently from exact main `616f06fce61384dd9402a96f709ca7209c3e7c6f` while post-#723 main and #724 hosted gates ran.
+- Audited Turkish activity-sensitivity help and found it said heat/cold `warnings` begin earlier, even though the control only shifts Hava81 activity-score comfort penalties. English already described penalties accurately.
+- Reworded Turkish help to `sıcak/soğuk kaynaklı puan düşüşleri ... daha erken başlar` and updated both Celsius/Fahrenheit component regressions. No threshold, score, weather evidence, official-warning behavior, provider or API behavior changed.
+- `git diff --check` is required locally; exact-head hosted frontend/browser/Lighthouse/CodeQL remain mandatory before merge. Keep this branch independent from #724 and rebase onto the latest green main before final merge.

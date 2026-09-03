@@ -1093,3 +1093,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** When Hava81 presents modeled UV guidance at UVI 3 or above, the user-facing recommendation must name the WHO UV Index threshold instead of presenting the protection advice as an unattributed product assertion.
 
 **Why:** WHO guidance recommends sun protection from UVI 3 upward. Carrying that provenance into the copy makes the health-related boundary explicit while leaving the modeled Open-Meteo value, freshness checks, UV bands, thresholds and scoring unchanged.
+
+### 2026-09-03 03:04 TRT — activity sensitivity copy must not imply official warnings
+
+**Decision:** Turkish Activity Planner sensitivity help describes earlier **score penalties** rather than earlier `warnings` when a user selects cold/heat sensitivity.
+
+**Why:** The control only shifts Hava81's activity-scoring comfort thresholds; it does not generate or move an official weather warning threshold. Matching the copy to the actual scoring behavior avoids overstating authority while preserving the personalized decision model unchanged.
