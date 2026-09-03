@@ -455,7 +455,7 @@ export const en = {
       better: 'Leaving around {{time}} looks about {{improvement}} points better for weather.',
       segments: 'Weather samples along the corridor',
       departureRangeError: 'Departure must be between now and the next 18 hours.',
-      resultExpired: 'This route estimate has passed its trip window. Check the corridor again for current guidance.',
+      resultExpired: 'This route estimate is no longer fresh. Check the corridor again for current guidance.',
       error: 'Route weather data could not be loaded.',
       noRain: 'No precipitation',
     },

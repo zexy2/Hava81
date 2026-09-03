@@ -343,7 +343,7 @@ describe('RouteWeatherPanel', () => {
     expect(screen.queryByText('eski Türkçe açıklama')).not.toBeInTheDocument();
   });
 
-  it('removes route guidance after the projected trip window ends', async () => {
+  it('removes route guidance once its five-minute decision freshness window ends', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-01T09:00:00.000Z'));
     try {
@@ -366,12 +366,12 @@ describe('RouteWeatherPanel', () => {
       expect(screen.getByRole('status')).toHaveTextContent('78/100');
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(2 * 60 * 60_000 + 101);
+        await vi.advanceTimersByTimeAsync(5 * 60_000 + 101);
       });
 
       expect(screen.queryByText('78/100')).not.toBeInTheDocument();
       expect(screen.getByRole('status')).toHaveTextContent(
-        'Bu rota tahmininin yolculuk süresi doldu.'
+        'Bu rota tahmininin güncelliği doldu.'
       );
     } finally {
       vi.useRealTimers();

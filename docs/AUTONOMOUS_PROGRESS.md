@@ -3210,3 +3210,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Live audit currently reports 50 non-primary linked worktrees scanned, 43 dirty, 0 status-unreadable, 0 missing, with one clean merged operational checkout eligible for removal. Dirty/unrepresented/open-PR work is preserved; no force-removal is authorized.
 - PR #852 remains open/mergeable at exact head `b8e515a32a3b6d774baaaa4480ec1b2e804b46a9`; direct GitHub verification confirms CI/CD #2062 and CodeQL #950 succeeded. Do not merge it or any other prepared PR until a fresh observer/direct disk verification makes `worker.can_merge_or_deploy=true`.
 - Current improvement branch: `automation/hava81-run11-linked-worktree-audit-2254`, based on exact main `e8892520f0ed1347f1a9787431e792976108f9e7`. Next queue: push/open this bounded audit improvement; continue safe Hava81-only storage compaction; re-check the disk gate; then merge one exact-head-green PR at a time with production smoke between merges.
+
+
+## 2026-09-03 22:30 TRT — expire route guidance on decision freshness, not only trip completion
+- Continued independently from exact main `e8892520f0ed1347f1a9787431e792976108f9e7` while earlier exact-head CI runs continue and the host disk merge/deploy gate remains active.
+- Route Weather previously kept a modeled corridor result visible until the projected trip ended. For departures many hours ahead, a response calculated now could therefore remain actionable long after its underlying hourly forecast/cache evidence had aged.
+- Route results now expire at the earlier of the projected trip end or five minutes after the successful response, with the existing 100ms timer cushion. The refresh message now says the estimate is no longer fresh rather than incorrectly implying only that the trip window ended.
+- Updated the existing fake-timer regression to prove the displayed route guidance disappears after the five-minute decision-freshness window. `git diff --check` passes; exact-head hosted CI/CD and CodeQL remain required before merge. No route scoring, forecast values, provider choice, MGM semantics, or API contract changed.
