@@ -1294,3 +1294,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Forecast Atlas interval controls use `aria-labelledby` to reference the visible translated interval label instead of duplicating that label through a separate `aria-label` expression.
 
 **Why:** One source of truth prevents visible and assistive labels from drifting while preserving the same localized meaning and interaction behavior.
+
+### 2026-09-03 13:15 TRT — activity score scale is functional context
+
+**Decision:** The Activity Planner `/100` score scale renders at least at the shared 13px-equivalent functional-copy floor.
+
+**Why:** A raw score without a readily readable denominator weakens interpretation of the adjacent recommendation. The scale is decision context rather than decorative microtype, and increasing it does not alter scoring behavior.
