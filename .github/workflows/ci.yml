@@ -29,10 +29,17 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci --no-audit
-      - run: npm audit --omit=dev --audit-level=high
+      - name: Audit frontend production dependencies
+        env:
+          NPM_AUDIT_MAX_ATTEMPTS: '2'
+          NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS: '60'
+          NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE: '1'
+        run: bash scripts/run-npm-audit-with-retry.sh npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test:ci
+      - name: Verify npm audit retry contract
+        run: bash scripts/test-run-npm-audit-with-retry.sh
       - name: Verify safe worktree cleanup contract
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - name: Verify Hava81 browser temp cleanup contract
@@ -70,7 +77,12 @@ jobs:
           cache: npm
           cache-dependency-path: apps/api/package-lock.json
       - run: npm ci --prefix apps/api --no-audit
-      - run: npm audit --prefix apps/api --audit-level=high
+      - name: Audit API dependencies
+        env:
+          NPM_AUDIT_MAX_ATTEMPTS: '2'
+          NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS: '60'
+          NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE: '1'
+        run: bash scripts/run-npm-audit-with-retry.sh npm audit --prefix apps/api --audit-level=high
       - run: npm run api:type-check
       - run: npm run api:test
       - run: npm run api:build
