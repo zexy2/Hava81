@@ -1442,3 +1442,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** When reduced motion is requested, Activity Planner chip hover and Daily Plan share press feedback keep their color/border state changes but suppress translate transforms.
 
 **Why:** The 1px lifts are decorative interaction motion rather than necessary state communication. Keeping stationary feedback respects the user preference without weakening affordance, focus, selection, or decision semantics.
+
+## 2026-09-04 — Compact mobile planning signals
+- Mobile first-view audit showed the planning-signal callout growing to ~212px with two useful but sentence-length signals, pushing Forecast Atlas down to ~764px on a 390px viewport.
+- Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
+- Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
+- Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.

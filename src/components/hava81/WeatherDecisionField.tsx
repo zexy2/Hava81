@@ -211,6 +211,66 @@ export function WeatherDecisionField({
     }
   };
 
+  const compactDecisionCopy = (decision: WeatherDecision): string => {
+    switch (decision.kind) {
+      case 'rain': {
+        const precipitationAmount = formatPrecipitationAmount(decision.amount, locale);
+        const probability = Math.round(decision.value * 100);
+        const time = decision.time ? formatForecastTime(decision.time) : '—';
+        if (precipitationAmount && probability > 0) {
+          return t('hava81.decision.compactActions.rainWithAmount', {
+            defaultValue: '{{time}} · Yağış %{{probability}} · {{amount}}',
+            time, probability, amount: precipitationAmount,
+          });
+        }
+        if (precipitationAmount) {
+          return t('hava81.decision.compactActions.rainAmount', {
+            defaultValue: '{{time}} · Yağış {{amount}}',
+            time, amount: precipitationAmount,
+          });
+        }
+        return t('hava81.decision.compactActions.rain', {
+          defaultValue: '{{time}} · Yağış %{{probability}}',
+          time, probability,
+        });
+      }
+      case 'wind':
+        return t('hava81.decision.compactActions.wind', {
+          defaultValue: 'Rüzgâr {{speed}} · Açık alanda dikkat',
+          speed: `${numberFormatter.format(convertWindSpeed(decision.value))} ${windSpeedSymbol}`,
+        });
+      case 'heat':
+        return t('hava81.decision.compactActions.heat', {
+          defaultValue: 'Hissedilen {{temperature}} · Su ve gölge planla',
+          temperature: formatTemperature(decision.value),
+        });
+      case 'cold':
+        return t('hava81.decision.compactActions.cold', {
+          defaultValue: 'Hissedilen {{temperature}} · Soğuğa dikkat',
+          temperature: formatTemperature(decision.value),
+        });
+      case 'air-quality':
+        return t('hava81.decision.compactActions.airQuality', {
+          defaultValue: 'AQI {{aqi}}/5 · Dış aktiviteyi azalt',
+          aqi: decision.value,
+        });
+      case 'uv':
+        return t('hava81.decision.compactActions.uv', {
+          defaultValue: 'UV model zirvesi {{uv}} · Korunma planla',
+          uv: uvFormatter.format(decision.value),
+        });
+      case 'outdoor-window':
+        return t('hava81.decision.compactActions.outdoor', {
+          defaultValue: 'Daha sakin hava · {{time}} civarı',
+          time: decision.time ? formatForecastTime(decision.time) : '—',
+        });
+      case 'stable':
+        return t('hava81.decision.compactActions.stable', { defaultValue: 'Belirgin hava riski yok' });
+      case 'unavailable':
+        return t('hava81.decision.compactActions.unavailable', { defaultValue: 'Karar verisi hazırlanıyor' });
+    }
+  };
+
   const [now, setNow] = useState(() => Date.now());
   const [, setForecastFreshnessRevision] = useState(0);
   const forecastFreshness = forecastMeta === undefined ? null : getForecastFreshness(forecastMeta);
@@ -391,11 +451,19 @@ export function WeatherDecisionField({
           {t('hava81.decision.nextChange', { defaultValue: 'Plan için öne çıkanlar' })}
         </h2>
         <ul className="hava81-decision-field__decision-list">
-          {decisions.map((decision, index) => (
-            <li key={`${decision.kind}-${index}`} data-severity={decision.severity}>
-              {decisionCopy(decision)}
-            </li>
-          ))}
+          {decisions.map((decision, index) => {
+            const fullCopy = decisionCopy(decision);
+            return (
+              <li key={`${decision.kind}-${index}`} data-severity={decision.severity} aria-label={fullCopy}>
+                <span className="hava81-decision-field__decision-copy--full" aria-hidden="true">
+                  {fullCopy}
+                </span>
+                <span className="hava81-decision-field__decision-copy--compact" aria-hidden="true">
+                  {compactDecisionCopy(decision)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </aside>
 

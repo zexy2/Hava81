@@ -175,6 +175,21 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByText(/35°C seviyesine çıkabilir/i)).not.toBeInTheDocument();
   });
 
+  it('keeps full planning guidance accessible while exposing compact mobile signal copy', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} uvIndexMax={6.35} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('UV model zirvesi 6,4 · Korunma planla')).toBeInTheDocument();
+    expect(
+      screen.getByRole('listitem', {
+        name: /Önümüzdeki 24 saatte UV model maksimumu 6,4; güneşten korunma planı yap/i,
+      })
+    ).toBeInTheDocument();
+  });
+
   it('keeps modeled UV guidance to one meaningful decimal', () => {
     render(
       <SettingsProvider>

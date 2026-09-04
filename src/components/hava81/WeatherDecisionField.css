@@ -394,3 +394,50 @@
   text-decoration: underline;
   text-underline-offset: 0.16em;
 }
+
+.hava81-decision-field__decision-copy--compact {
+  display: none;
+}
+
+@media (max-width: 39.99rem) {
+  .hava81-decision-field__change {
+    padding: 14px 16px;
+  }
+
+  .hava81-decision-field__change-title {
+    margin-bottom: 6px;
+  }
+
+  .hava81-decision-field__decision-list {
+    gap: 0;
+  }
+
+  .hava81-decision-field__decision-list li {
+    padding: 0.5rem 0;
+    border-left: 0;
+  }
+
+  .hava81-decision-field__decision-list li + li {
+    border-top: 1px solid color-mix(in srgb, var(--decision-saffron) 34%, transparent);
+  }
+
+  .hava81-decision-field__decision-list li:first-child {
+    padding-top: 0.2rem;
+  }
+
+  .hava81-decision-field__decision-list li:last-child {
+    padding-bottom: 0.2rem;
+  }
+
+  .hava81-decision-field__decision-copy--full {
+    display: none;
+  }
+
+  .hava81-decision-field__decision-copy--compact {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-wrap: pretty;
+  }
+}

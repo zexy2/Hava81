@@ -3284,3 +3284,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added scoped reduced-motion overrides that preserve color/border feedback while removing only the transform motion for those controls.
 - Added dependency-free source regressions for both contracts. `git diff --check` and a static reduced-motion contract pass locally; hosted CI/CD + CodeQL remain required before merge.
 - No weather values, scoring, provider/freshness logic, MGM semantics, recommendations, share payloads, or activity limits changed.
+
+## 2026-09-04 — Mobile planning-signal hierarchy
+- Audited current production `dffb3989…`: 390px decision field 662.7px; planning-signal callout 211.6px; Forecast Atlas starts at 763.7px.
+- Implemented compact mobile signal copy for rain, wind, heat, cold, AQI, UV, calmer outdoor window, stable and unavailable states; desktop full sentences are unchanged and mobile list items retain full accessible guidance.
+- Production-data browser simulation: callout 211.6px → 113.5px, decision field 662.7px → 564.6px, Forecast Atlas starts 98.1px earlier; page width remains 390/390.
+- Local gates so far: lint PASS, type-check PASS, WeatherDecisionField 18/18 PASS, production build PASS, mobile Chromium regressions 2/2 PASS.
