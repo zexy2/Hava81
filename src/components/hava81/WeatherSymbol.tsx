@@ -27,6 +27,13 @@ const renderCloud = (offsetY = 0): ReactNode => (
   />
 );
 
+const renderUnknown = (): ReactNode => (
+  <g>
+    <circle cx="24" cy="24" r="15" />
+    <path d="M19.5 19a4.8 4.8 0 0 1 9.4 1.4c0 3.4-4.9 3.7-4.9 7.1v1.2 M24 34h.01" />
+  </g>
+);
+
 const renderPrecipitation = (kind: 'rain' | 'shower' | 'snow'): ReactNode => {
   if (kind === 'snow') {
     return (
@@ -108,7 +115,7 @@ const renderSymbol = (code: string): ReactNode => {
         </g>
       );
     default:
-      return renderCloud();
+      return renderUnknown();
   }
 };
 
