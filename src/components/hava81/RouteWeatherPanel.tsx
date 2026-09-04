@@ -254,6 +254,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               value={departure}
               min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
               max={toTurkeyLocalInputValue(new Date(departureBoundsNow + ROUTE_MAX_DEPARTURE_MS))}
+              aria-label={t('hava81.route.departure')}
               aria-describedby="route-weather-departure-help"
               onFocus={refreshDepartureBounds}
               onChange={e => {
