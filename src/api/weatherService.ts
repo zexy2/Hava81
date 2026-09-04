@@ -84,6 +84,7 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
 const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
+const WEATHER_ICON_CODE_PATTERN = /^(?:0[1-4]|09|10|11|13|50)[dn]$/;
 const MAX_CONTEXT_FUTURE_SKEW_MS = 60_000;
 const MAX_AIR_QUALITY_FUTURE_SKEW_MS = 60_000;
 
@@ -273,7 +274,9 @@ const validateDailyForecastItem = (
   if (typeof item.description !== 'string' || !item.description.trim()) {
     invalidForecastPayload(`${field}.description`);
   }
-  if (typeof item.icon !== 'string' || !item.icon.trim()) invalidForecastPayload(`${field}.icon`);
+  if (typeof item.icon !== 'string' || !WEATHER_ICON_CODE_PATTERN.test(item.icon)) {
+    invalidForecastPayload(`${field}.icon`);
+  }
   if (
     item.precipitationMm !== undefined &&
     (!isFiniteNumber(item.precipitationMm) || item.precipitationMm < 0)
@@ -292,7 +295,7 @@ const validateHourlyForecastItem = (
     if (condition) invalidForecastPayload(`${field}.${suffix}`);
   };
   invalid(!isPlausibleTemperature(item.temp, units), 'temp');
-  invalid(typeof item.icon !== 'string' || !item.icon.trim(), 'icon');
+  invalid(typeof item.icon !== 'string' || !WEATHER_ICON_CODE_PATTERN.test(item.icon), 'icon');
   invalid(item.description !== undefined && (!item.description || !item.description.trim()), 'description');
   invalid(!isFiniteNumber(item.windSpeed) || item.windSpeed < 0, 'windSpeed');
   invalid(

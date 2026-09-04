@@ -1476,3 +1476,5 @@ A daily forecast card represents a calendar date rather than an instant. Keep it
 
 ## 2026-09-05 — Provider icon identifiers are validated before normalization
 OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation text. Validate it at provider ingress against the documented normalized families Hava81 supports, for both current and forecast payloads. Unsupported identifiers fail provider parsing rather than silently becoming a plausible weather glyph downstream; all valid OpenWeather identifiers remain unchanged.
+## 2026-09-05 — Weather icon codes are a validated browser trust-boundary field
+Forecast icon strings crossing the BFF boundary must match the normalized provider contract `(?:0[1-4]|09|10|11|13|50)[dn]`; a merely non-empty string is not sufficient. Invalid codes fail through the same retryable forecast-payload error path instead of being visually interpreted as a real condition. This keeps malformed provider/BFF data from becoming invented weather presentation while leaving all valid OpenWeather/Open-Meteo mappings unchanged.
