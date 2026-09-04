@@ -424,6 +424,50 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     assertFullHorizonScale();
   });
 
+  it('marks only the location-current daily forecast as the current date', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-04T09:00:00Z'));
+      const { container } = render(
+        <SettingsProvider>
+          <ForecastAtlas
+            daily={[
+              {
+                date: new Date('2026-09-04T12:00:00.000Z'),
+                tempMin: 20,
+                tempMax: 25,
+                icon: '01d',
+                description: 'açık',
+                pop: 0,
+              },
+              {
+                date: new Date('2026-09-05T12:00:00.000Z'),
+                tempMin: 19,
+                tempMax: 24,
+                icon: '02d',
+                description: 'parçalı bulutlu',
+                pop: 0,
+              },
+            ]}
+            hourly={[]}
+            meta={{
+              provider: 'Open-Meteo',
+              fetchedAt: new Date(),
+              timezoneOffsetSeconds: 0,
+              intervalHours: 1,
+            }}
+          />
+        </SettingsProvider>
+      );
+
+      const currentDate = container.querySelector('time[aria-current="date"]');
+      expect(currentDate).toHaveAttribute('datetime', '2026-09-04T12:00:00.000Z');
+      expect(container.querySelectorAll('time[aria-current="date"]')).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('shows daily precipitation totals without inventing a 0% rain label', () => {
     render(
       <SettingsProvider>
