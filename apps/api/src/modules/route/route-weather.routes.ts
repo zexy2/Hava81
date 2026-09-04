@@ -49,7 +49,8 @@ export const registerRouteWeatherRoutes = async (
       );
       validateRouteDistance(directDistanceKm);
       const now = Date.now();
-      if (departure.getTime() < now - 60 * 60_000 || departure.getTime() > now + 18 * 60 * 60_000) {
+      const latestDeparture = new Date(now + 18 * 60 * 60_000);
+      if (departure.getTime() < now - 60 * 60_000 || departure > latestDeparture) {
         throw new AppError(
           400,
           'ROUTE_DEPARTURE_RANGE',
@@ -60,6 +61,7 @@ export const registerRouteWeatherRoutes = async (
         origin: { lat: q.originLat, lon: q.originLon },
         destination: { lat: q.destinationLat, lon: q.destinationLon },
         departure,
+        latestDeparture,
         lang: q.lang,
       });
       reply.header('cache-control', 'private, max-age=300');

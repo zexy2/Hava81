@@ -95,6 +95,61 @@ test('route weather falls back to the three-hour forecast when hourly data is un
   assert.equal(fallbackCalls, 5);
 });
 
+test('route weather never recommends a departure outside the accepted 18-hour window', async () => {
+  const now = Date.now();
+  const departure = new Date(now + 17 * 60 * 60_000);
+  const windowForecast: ForecastDto = {
+    daily: [],
+    hourly: [
+      {
+        time: departure.toISOString(),
+        temp: 24,
+        icon: '10d',
+        description: 'şiddetli yağmur',
+        pop: 95,
+        windSpeed: 15,
+      },
+      {
+        time: new Date(departure.getTime() + 3 * 60 * 60_000).toISOString(),
+        temp: 22,
+        icon: '01d',
+        description: 'açık',
+        pop: 0,
+        windSpeed: 2,
+      },
+    ],
+    meta: {
+      provider: 'fake',
+      fetchedAt: new Date(now).toISOString(),
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 3,
+    },
+  };
+  const weather = {
+    getHourlyForecast: async () => {
+      throw new Error('hourly unavailable');
+    },
+    getForecast: async () => ({ value: windowForecast, status: 'MISS' as const }),
+  };
+  const service = new RouteWeatherService(weather as never);
+  const baseline = await service.evaluate({
+    origin: { lat: 41.01, lon: 28.97 },
+    destination: { lat: 39.93, lon: 32.86 },
+    departure,
+    lang: 'tr',
+  });
+  const result = await service.evaluate({
+    origin: { lat: 41.01, lon: 28.97 },
+    destination: { lat: 39.93, lon: 32.86 },
+    departure,
+    latestDeparture: new Date(now + 18 * 60 * 60_000),
+    lang: 'tr',
+  });
+
+  assert.ok(baseline.betterDeparture);
+  assert.equal(result.betterDeparture, undefined);
+});
+
 test('route safeguards reject wasteful or meaningless corridors before forecast fan-out', () => {
   assert.throws(() => validateRouteDistance(0.2), /başlangıç ve varış/);
   assert.throws(() => validateRouteDistance(2000.1), /en fazla 2000 km/);

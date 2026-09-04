@@ -103,6 +103,7 @@ export class RouteWeatherService {
     origin: { lat: number; lon: number };
     destination: { lat: number; lon: number };
     departure: Date;
+    latestDeparture?: Date;
     lang: 'tr' | 'en';
   }): Promise<RouteWeatherResult> {
     const distance = haversine(input.origin, input.destination);
@@ -175,6 +176,8 @@ export class RouteWeatherService {
     const laterDate = new Date(input.departure.getTime() + 3 * 60 * 60_000);
     const later = evaluateDeparture(laterDate);
     const improvement = later.score - primary.score;
+    const suggestionWithinWindow =
+      input.latestDeparture === undefined || laterDate <= input.latestDeparture;
 
     return {
       kind: 'corridor-estimate',
@@ -184,7 +187,7 @@ export class RouteWeatherService {
       score: primary.score,
       segments: primary.segments,
       betterDeparture:
-        improvement >= 8
+        suggestionWithinWindow && improvement >= 8
           ? { departure: laterDate.toISOString(), score: later.score, improvement }
           : undefined,
       disclaimer:
