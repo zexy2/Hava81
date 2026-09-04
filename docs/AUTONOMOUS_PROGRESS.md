@@ -3297,3 +3297,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a focused component regression proving the recommended instant is converted to Türkiye wall-clock time, applied to the input, and the previous result is removed after activation.
 - Local validation: focused RouteWeatherPanel Vitest 16/16 PASS, type-check PASS, ESLint PASS, production build PASS, git diff --check PASS. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
 - Branch: `automation/hava81-route-use-better-departure-1018`. Next: commit/push/open PR; inspect exact-head CI while re-checking main #886 rollout/production independently.
+
+## 2026-09-04 13:18 TRT — recover bounded observer-log retention from preserved autonomous work
+- Audited preserved Hava81 worktrees before inventing new operational code and found an unpushed, validated commit `2fc6b32a` that never reached main: bounded logrotate retention for the observer's append-only `history.jsonl` and `events.jsonl`.
+- Replayed that exact bounded change onto current main `cd3ccbb2a11e452c0deb25cf38898b0e17fed501` in a fresh worktree. The policy rotates either log at 8 MiB, keeps six compressed generations, uses `su ubuntu ubuntu`, recreates 0644 files, and is syntax-validated before the installer atomically replaces `/etc/logrotate.d/hava81-observer`.
+- Local validation on current main: installer/test shell syntax PASS, `scripts/test-observer-logrotate.sh` PASS, `git diff --check` PASS, and the Oracle host provides `/usr/sbin/logrotate` 3.19.0.
+- No observer sampling cadence, production traffic, weather/provider semantics, API behavior, scoring, MGM semantics or recommendation logic changed. Hosted exact-head CI/CD and CodeQL remain mandatory before merge/install.
