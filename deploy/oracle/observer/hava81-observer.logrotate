@@ -1,0 +1,10 @@
+/var/log/hava81-worker/history.jsonl /var/log/hava81-worker/events.jsonl {
+    su ubuntu ubuntu
+    size 8M
+    rotate 6
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 ubuntu ubuntu
+}

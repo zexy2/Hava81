@@ -1448,3 +1448,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+### 2026-09-04 13:18 TRT — observer append-only logs have bounded on-host retention
+
+**Decision:** Rotate Hava81 observer history/event logs at 8 MiB and retain six compressed generations, installing the policy only after logrotate accepts the generated configuration.
+
+**Why:** The observer is intentionally append-only and runs every five minutes. Without bounded retention, healthy long-lived operation can itself contribute to disk pressure. Rotation preserves recent operational evidence while preventing unbounded growth, and install-time validation fails closed before replacing the active policy.

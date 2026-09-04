@@ -18,13 +18,14 @@ for filename in sys.argv[1:]:
     compile(source, filename, 'exec')
 PY
 
-install -d -m 0755 /usr/local/lib/hava81-worker /usr/local/bin /etc/systemd/system
+install -d -m 0755 /usr/local/lib/hava81-worker /usr/local/bin /etc/systemd/system /etc/logrotate.d
 observer_tmp="$(mktemp /usr/local/lib/hava81-worker/.observer.py.XXXXXX)"
 status_tmp="$(mktemp /usr/local/bin/.hava81-worker-status.XXXXXX)"
 service_tmp="$(mktemp /etc/systemd/system/.hava81-observer.service.XXXXXX)"
 timer_tmp="$(mktemp /etc/systemd/system/.hava81-observer.timer.XXXXXX)"
+logrotate_tmp="$(mktemp /etc/logrotate.d/.hava81-observer.XXXXXX)"
 cleanup() {
-  rm -f "$observer_tmp" "$status_tmp" "$service_tmp" "$timer_tmp"
+  rm -f "$observer_tmp" "$status_tmp" "$service_tmp" "$timer_tmp" "$logrotate_tmp"
 }
 trap cleanup EXIT
 
@@ -32,6 +33,8 @@ install -o root -g root -m 0755 "$observer_dir/observer.py" "$observer_tmp"
 install -o root -g root -m 0755 "$observer_dir/hava81-worker-status.py" "$status_tmp"
 install -o root -g root -m 0644 "$observer_dir/hava81-observer.service" "$service_tmp"
 install -o root -g root -m 0644 "$observer_dir/hava81-observer.timer" "$timer_tmp"
+install -o root -g root -m 0644 "$observer_dir/hava81-observer.logrotate" "$logrotate_tmp"
+/usr/sbin/logrotate --debug "$logrotate_tmp" >/dev/null
 
 # Each replacement is atomic on its target filesystem. The running oneshot therefore
 # observes either a complete old collector or a complete new collector; the timer is
@@ -40,6 +43,7 @@ mv -f "$observer_tmp" /usr/local/lib/hava81-worker/observer.py
 mv -f "$status_tmp" /usr/local/bin/hava81-worker-status
 mv -f "$service_tmp" /etc/systemd/system/hava81-observer.service
 mv -f "$timer_tmp" /etc/systemd/system/hava81-observer.timer
+mv -f "$logrotate_tmp" /etc/logrotate.d/hava81-observer
 trap - EXIT
 
 systemctl daemon-reload
