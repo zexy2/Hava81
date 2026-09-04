@@ -3320,3 +3320,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - No city routing, favorite persistence, weather values, provider/freshness logic, scoring, MGM semantics, or layout changed.
 - Local validation: `git diff --check` PASS and dependency-free semantic selector checks PASS. A dependency install attempt was aborted by the repository's ignored-build policy; the generated `node_modules` directory was removed immediately, so hosted exact-head CI/CD + CodeQL remain mandatory before merge.
 - Branch: `automation/hava81-run11-a11y-audit-1941`. Next: commit/push/open PR; re-check #897 production and disk gate; if healthy, refresh the highest-value green queued PR onto current main and continue.
+
+## 2026-09-04 22:48 TRT — align saved-city selection semantics
+- Continued from exact main `fa44ced4d665148c389cb4324c6f1e1f4d938f3e` in isolated worktree `/home/chatgpt/hava81-auto-run11-2246-next`, branch `automation/hava81-home-a11y-run11-2246`, while the new main pipeline validates separately.
+- Accessibility audit found saved-city selection still exposed each city as a pressed/unpressed toggle even though activating it navigates the weather view to that location. Replaced the toggle state with `aria-current="location"` only on the active saved city, consistent with the app's comparison and mobile navigation semantics.
+- Updated the focused component regression and forced-colors browser contract/selectors; the active visual class remains unchanged. `git diff --check` passes. No dependency install was performed because the host is still at the disk warning boundary; protected exact-head CI/CodeQL/browser gates are mandatory before merge.
+- Next action: publish this bounded semantics PR after lease/main recheck, continue independent work while CI runs, and merge only after fresh observer + exact-head gates are green.

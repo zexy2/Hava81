@@ -46,7 +46,7 @@ export function CityTabs({ cities, activeCity, onSelect, onRemove, onAdd, canAdd
                 type="button"
                 className="city-tabs__tab"
                 onClick={() => onSelect(favorite)}
-                aria-pressed={isActive}
+                aria-current={isActive ? 'location' : undefined}
                 aria-label={t('weather.selectCity', { city: favorite.name })}
               >
                 <span className="city-tabs__plate" aria-hidden="true">
