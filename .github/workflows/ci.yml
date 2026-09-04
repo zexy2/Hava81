@@ -50,6 +50,8 @@ jobs:
         run: bash scripts/test-audit-hava81-standalone-checkouts.sh
       - name: Verify observer logrotate contract
         run: bash scripts/test-observer-logrotate.sh
+      - name: Verify Hava81 Git compaction contract
+        run: bash scripts/test-compact-hava81-git-objects.sh
       - name: Verify production observer contract
         run: |
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/oracle/observer -p 'test_*.py'
