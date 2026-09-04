@@ -374,3 +374,13 @@
     text-underline-offset: 4px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-planner__chips button {
+    transition-property: color, background-color, border-color;
+  }
+
+  .activity-planner__chips button:hover {
+    transform: none;
+  }
+}

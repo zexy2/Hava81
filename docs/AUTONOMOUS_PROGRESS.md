@@ -3278,3 +3278,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Renamed the control from “Tahmin aralığı / Forecast interval” to “Gösterim aralığı / Display interval” and added concise always-visible help that the 24-hour forecast horizon stays fixed while only displayed hours are sampled.
 - Accessible button names now say “Her N saatte bir göster / Show every N hours”, and the group references the help text with `aria-describedby`. The compact visible 1s/2s/3s/4s/6s/8s/12s controls and forecast calculations are unchanged.
 - Help copy uses the existing 13px-equivalent functional text floor; existing mobile coverage is extended to guard readability and overflow. `git diff --check` and source-level semantics checks pass; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL gates remain mandatory before merge.
+
+## 2026-09-04 08:55 TRT — keep decision-control feedback stationary for reduced-motion users
+- Audited decision-first controls on current main while deployment/CI work continued independently. Activity Planner chips still lifted 1px on hover and Daily Plan share still shifted 1px on press even when `prefers-reduced-motion: reduce` was active.
+- Added scoped reduced-motion overrides that preserve color/border feedback while removing only the transform motion for those controls.
+- Added dependency-free source regressions for both contracts. `git diff --check` and a static reduced-motion contract pass locally; hosted CI/CD + CodeQL remain required before merge.
+- No weather values, scoring, provider/freshness logic, MGM semantics, recommendations, share payloads, or activity limits changed.

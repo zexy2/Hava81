@@ -607,3 +607,13 @@
     grid-area: note;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-plan__share {
+    transition-property: background-color, border-color;
+  }
+
+  .daily-plan__share:active {
+    transform: none;
+  }
+}
