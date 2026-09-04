@@ -3290,3 +3290,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Implemented compact mobile signal copy for rain, wind, heat, cold, AQI, UV, calmer outdoor window, stable and unavailable states; desktop full sentences are unchanged and mobile list items retain full accessible guidance.
 - Production-data browser simulation: callout 211.6px → 113.5px, decision field 662.7px → 564.6px, Forecast Atlas starts 98.1px earlier; page width remains 390/390.
 - Local gates so far: lint PASS, type-check PASS, WeatherDecisionField 18/18 PASS, production build PASS, mobile Chromium regressions 2/2 PASS.
+
+## 2026-09-04 13:06 TRT — expose the bilingual Open Graph locale relationship
+- Continued independently from exact main `cd3ccbb2a11e452c0deb25cf38898b0e17fed501` in a separate worktree while #889 validates and #887 remains merge-ready but operationally gated.
+- Hava81 already updates `og:locale` between `tr_TR` and `en_US`, but social metadata did not declare the other supported locale as an alternate.
+- Added one `og:locale:alternate` tag to the static shell and keep it synchronized to the opposite locale whenever the user language changes. The existing social-metadata integration regression now covers the alternate locale too.
+- No page routing, weather data, scoring, provider/freshness behavior, API, MGM semantics, recommendations, or visible UI changed. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.

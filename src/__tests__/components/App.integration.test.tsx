@@ -617,6 +617,7 @@ describe('Hava81 app integration', () => {
       ['property', 'og:description'],
       ['property', 'og:image:alt'],
       ['property', 'og:locale'],
+      ['property', 'og:locale:alternate'],
       ['name', 'twitter:title'],
       ['name', 'twitter:description'],
       ['name', 'twitter:image:alt'],
@@ -657,6 +658,9 @@ describe('Hava81 app integration', () => {
       expect(document.querySelector<HTMLMetaElement>('meta[property="og:locale"]')?.content).toBe(
         'tr_TR'
       );
+      expect(
+        document.querySelector<HTMLMetaElement>('meta[property="og:locale:alternate"]')?.content
+      ).toBe('en_US');
     });
   });
 

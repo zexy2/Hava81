@@ -1448,3 +1448,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+### 2026-09-04 13:06 TRT — bilingual social metadata declares the alternate locale
+
+**Decision:** Open Graph metadata exposes the non-active supported locale through `og:locale:alternate` and flips it together with the active `og:locale`.
+
+**Why:** Hava81 supports Turkish and English and already localizes its social title/description/primary locale. Declaring the complementary locale makes that bilingual relationship explicit to social crawlers without changing page content or routing.
