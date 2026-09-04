@@ -31,6 +31,13 @@ test('current-weather schema accepts a current integer observation timestamp', (
   assert.doesNotThrow(() => currentWeatherUpstreamSchema.parse(sample()));
 });
 
+test('current-weather schema rejects unsupported provider icon codes', () => {
+  const payload = sample();
+  payload.weather[0].icon = '01x';
+
+  assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+});
+
 test('current-weather schema rejects materially future observation timestamps', () => {
   const payload = sample();
   payload.dt = Math.floor((Date.now() + 2 * 60_000) / 1_000);

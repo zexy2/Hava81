@@ -1473,3 +1473,6 @@ When both core forecast sources fail, render the existing localized forecast-una
 
 ## 2026-09-05 — Daily forecast `<time>` values use date-only semantics
 A daily forecast card represents a calendar date rather than an instant. Keep its machine-readable `datetime` in `YYYY-MM-DD` form instead of serializing an arbitrary noon/UTC timestamp. This avoids implying time-of-day precision and keeps the semantic value aligned with `aria-current="date"`; forecast values, timezone matching and guidance logic are unchanged.
+
+## 2026-09-05 — Provider icon identifiers are validated before normalization
+OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation text. Validate it at provider ingress against the documented normalized families Hava81 supports, for both current and forecast payloads. Unsupported identifiers fail provider parsing rather than silently becoming a plausible weather glyph downstream; all valid OpenWeather identifiers remain unchanged.
