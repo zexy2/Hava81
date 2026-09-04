@@ -587,6 +587,41 @@ test('mobile decision metadata prioritizes source freshness over coordinates', a
   expect(state.text).toMatch(/OpenWeather/i);
 });
 
+test('mobile planning signals use compact rows without losing full accessible guidance', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile planning-signal hierarchy regression');
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const change = page.locator('.hava81-decision-field__change');
+  const items = change.locator('.hava81-decision-field__decision-list li');
+  await expect(items.first()).toBeVisible();
+
+  const layout = await change.evaluate(element => {
+    const rows = Array.from(element.querySelectorAll<HTMLElement>('.hava81-decision-field__decision-list li'));
+    const compact = Array.from(
+      element.querySelectorAll<HTMLElement>('.hava81-decision-field__decision-copy--compact')
+    );
+    const full = Array.from(
+      element.querySelectorAll<HTMLElement>('.hava81-decision-field__decision-copy--full')
+    );
+    const rect = element.getBoundingClientRect();
+    return {
+      height: rect.height,
+      compactVisible: compact.every(node => getComputedStyle(node).display !== 'none'),
+      fullHidden: full.every(node => getComputedStyle(node).display === 'none'),
+      rowsNamed: rows.every(row => Boolean(row.getAttribute('aria-label')?.trim())),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.height).toBeLessThan(180);
+  expect(layout.compactVisible).toBe(true);
+  expect(layout.fullHidden).toBe(true);
+  expect(layout.rowsNamed).toBe(true);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('tablet forecast source links keep touch-friendly target heights', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-768', 'tablet forecast source target regression');
   await page.goto('/istanbul');
