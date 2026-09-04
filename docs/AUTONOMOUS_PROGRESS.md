@@ -3290,3 +3290,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Implemented compact mobile signal copy for rain, wind, heat, cold, AQI, UV, calmer outdoor window, stable and unavailable states; desktop full sentences are unchanged and mobile list items retain full accessible guidance.
 - Production-data browser simulation: callout 211.6px → 113.5px, decision field 662.7px → 564.6px, Forecast Atlas starts 98.1px earlier; page width remains 390/390.
 - Local gates so far: lint PASS, type-check PASS, WeatherDecisionField 18/18 PASS, production build PASS, mobile Chromium regressions 2/2 PASS.
+## 2026-09-04 10:19 TRT — make route better-departure guidance directly actionable
+- Continued from exact main `dffb39898750189ea078b6c3f825a5fc94d1704d` after merging #886 and while its post-merge workflows run independently.
+- Route Weather already surfaced a modeled +3h departure when weather conditions score materially better, but the recommendation was passive text. Converted only that recommendation surface into a keyboard-focusable button that applies the recommended Europe/Istanbul departure to the existing datetime-local control and invalidates the stale corridor result so the user can immediately re-check the route.
+- Preserved the existing localized recommendation copy, modeled-data disclaimer, route scoring, provider semantics, 18-hour server/client departure contract and freshness behavior. Added visible hover/focus states without decorative motion.
+- Added a focused component regression proving the recommended instant is converted to Türkiye wall-clock time, applied to the input, and the previous result is removed after activation.
+- Local validation: focused RouteWeatherPanel Vitest 16/16 PASS, type-check PASS, ESLint PASS, production build PASS, git diff --check PASS. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
+- Branch: `automation/hava81-route-use-better-departure-1018`. Next: commit/push/open PR; inspect exact-head CI while re-checking main #886 rollout/production independently.

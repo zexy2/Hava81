@@ -99,7 +99,8 @@ export const tr = {
         cold: 'Hissedilen sıcaklık {{temperature}} seviyesine inebilir; soğuk stresine karşı dikkat.',
         airQuality: 'Hava kalitesi zayıf (AQI {{aqi}}/5); uzun süreli dış aktiviteyi azalt.',
         uv: 'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
-        outdoor: '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
+        outdoor:
+          '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
         stable: 'Yakın tahmin aralığında belirgin bir hava riski görünmüyor.',
         unavailable: 'Yakın saatler için karar verisi henüz hazır değil.',
       },
@@ -128,11 +129,13 @@ export const tr = {
     },
     forecastAtlas: {
       title: 'Bugünün ritmi',
-      stale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar tahmin grafiği gösterilmiyor.',
+      stale:
+        'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar tahmin grafiği gösterilmiyor.',
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
       intervalControlLabel: 'Gösterim aralığı',
-      intervalControlHelp: '24 saatlik tahmin sabit kalır; seçim yalnız grafikte hangi saatlerin gösterildiğini değiştirir.',
+      intervalControlHelp:
+        '24 saatlik tahmin sabit kalır; seçim yalnız grafikte hangi saatlerin gösterildiğini değiştirir.',
       summaryLabel: 'Saatlik tahmin özeti',
       summaryLow: 'En düşük',
       summaryTemperature: 'Sıcaklık',
@@ -171,8 +174,10 @@ export const tr = {
       partialUnavailable:
         'Bazı şehirlerin verisi güncellenemedi; kullanılabilir sonuçlar gösteriliyor.',
       unavailable: 'Şehir karşılaştırması şu anda güncellenemedi.',
-      stale: 'Karşılaştırma verisinin güncelliği sona erdi. Güncel sonuçlar için karşılaştırmayı yeniden aç.',
-      partialStale: 'Bazı şehirlerin verisi artık güncel değil veya güncellenemedi; yalnızca güncel sonuçlar gösteriliyor.',
+      stale:
+        'Karşılaştırma verisinin güncelliği sona erdi. Güncel sonuçlar için karşılaştırmayı yeniden aç.',
+      partialStale:
+        'Bazı şehirlerin verisi artık güncel değil veya güncellenemedi; yalnızca güncel sonuçlar gösteriliyor.',
       winnerLabel: 'Bu hava kriterlerinde öne çıkan',
       winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       tieLabel: 'Bu hava kriterlerinde eşit',
@@ -187,7 +192,8 @@ export const tr = {
     dailyPlan: {
       eyebrow: 'Hava81 karar motoru',
       title: 'Gün planı',
-      forecastStale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar gün planı önerileri gösterilmiyor.',
+      forecastStale:
+        'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar gün planı önerileri gösterilmiyor.',
       bands: {
         excellent: 'Çok uygun',
         good: 'Uygun',
@@ -317,7 +323,8 @@ export const tr = {
       wind: 'Rüzgâr',
       empty: 'İki saati de seçtiğinde Hava81 bir sonraki çıkış–dönüş çiftini karşılaştıracak.',
       incomplete: 'Planı hesaplamak için çıkış ve dönüş saatini birlikte seç.',
-      forecastStale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar çıkış–dönüş önerisi gösterilmiyor.',
+      forecastStale:
+        'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar çıkış–dönüş önerisi gösterilmiyor.',
       forecastUnavailable:
         'Seçtiğin çıkış ve dönüş saatlerine yeterince yakın tahmin henüz yok. Tahmin kapsamı genişlediğinde plan otomatik olarak hesaplanacak.',
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
@@ -327,7 +334,8 @@ export const tr = {
       title: 'Bugün ne yapacaksın?',
       subtitle: 'En fazla üç aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
       choose: 'Aktivite seçimi',
-      forecastStale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar aktivite önerileri gösterilmiyor.',
+      forecastStale:
+        'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar aktivite önerileri gösterilmiyor.',
       limitReached:
         'Üç aktivite seçtin. Başka birini seçmek için önce seçili aktivitelerden birini kaldır.',
       names: {
@@ -470,9 +478,12 @@ export const tr = {
       estimate: 'Yaklaşık {{distance}} km · {{minutes}} dk',
       better:
         '{{time}} civarı kalkış hava açısından yaklaşık {{improvement}} puan daha iyi görünüyor.',
+      betterAction:
+        '{{time}} civarı kalkış yaklaşık {{improvement}} puan daha iyi görünüyor · Bu saati kullan',
       segments: 'Rota boyunca hava örnekleri',
       departureRangeError: 'Kalkış zamanı şimdi ile önümüzdeki 18 saat arasında olmalı.',
-      resultExpired: 'Bu rota tahmininin güncelliği doldu. Güncel koşullar için koridoru tekrar kontrol et.',
+      resultExpired:
+        'Bu rota tahmininin güncelliği doldu. Güncel koşullar için koridoru tekrar kontrol et.',
       error: 'Rota hava verisi alınamadı.',
       noRain: 'Yağış yok',
     },

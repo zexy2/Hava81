@@ -32,7 +32,9 @@ describe('RouteWeatherPanel', () => {
     await user.click(screen.getByText('Rota havası'));
 
     const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
-    const departureHelp = screen.getByText('Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.');
+    const departureHelp = screen.getByText(
+      'Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.'
+    );
 
     expect(departureInput).toHaveAttribute('aria-describedby', 'route-weather-departure-help');
     expect(departureHelp).toHaveAttribute('id', 'route-weather-departure-help');
@@ -140,11 +142,12 @@ describe('RouteWeatherPanel', () => {
     await user.click(screen.getByText('Rota havası'));
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
 
-    const result = await screen.findByRole('status');
-    expect(result).toHaveAttribute('aria-live', 'polite');
-    expect(result).toHaveAttribute('aria-atomic', 'true');
-    expect(result).toHaveTextContent('78/100');
-    expect(result).toHaveTextContent('Uygun');
+    const announcement = await screen.findByRole('status');
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+    expect(announcement).toHaveAttribute('aria-atomic', 'true');
+    expect(announcement).toHaveTextContent('78/100');
+    expect(announcement).toHaveTextContent('Uygun');
+    const result = document.querySelector('.route-weather__result');
     expect(result).toHaveTextContent('82/100 · Uygun');
     expect(result).toHaveTextContent('%20 · 0,4 mm');
     expect(screen.getByRole('list', { name: 'Rota boyunca hava örnekleri' })).toHaveAttribute(
@@ -183,7 +186,8 @@ describe('RouteWeatherPanel', () => {
     await user.click(screen.getByText('Rota havası'));
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
 
-    const result = await screen.findByRole('status');
+    await screen.findByRole('status');
+    const result = document.querySelector('.route-weather__result');
     expect(result).toHaveTextContent('Yağış yok');
     expect(result).not.toHaveTextContent('%0');
   });
@@ -226,7 +230,8 @@ describe('RouteWeatherPanel', () => {
     await user.click(screen.getByText('Rota havası'));
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
 
-    const result = await screen.findByRole('status');
+    await screen.findByRole('status');
+    const result = document.querySelector('.route-weather__result');
     expect(result).toHaveTextContent('77°F');
     expect(result).toHaveTextContent('Rüzgar 14 km/h');
     expect(result).not.toHaveTextContent('25° ·');
@@ -382,9 +387,7 @@ describe('RouteWeatherPanel', () => {
       });
 
       expect(screen.queryByText('78/100')).not.toBeInTheDocument();
-      expect(screen.getByRole('status')).toHaveTextContent(
-        'Bu rota tahmininin güncelliği doldu.'
-      );
+      expect(screen.getByRole('status')).toHaveTextContent('Bu rota tahmininin güncelliği doldu.');
     } finally {
       vi.useRealTimers();
     }

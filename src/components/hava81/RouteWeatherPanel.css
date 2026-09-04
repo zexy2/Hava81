@@ -118,14 +118,18 @@
   display: grid;
   gap: var(--space-md);
 }
-.route-weather__result > header {
+.route-weather__announcement {
+  display: grid;
+  gap: var(--space-md);
+}
+.route-weather__announcement > header {
   display: flex;
   align-items: start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
 }
-.route-weather__result > header > div:first-child {
+.route-weather__announcement > header > div:first-child {
   flex: 1 1 min(100%, 16rem);
   min-width: 0;
 }
@@ -167,11 +171,24 @@
   margin: 0;
 }
 .route-weather__better {
+  width: 100%;
   padding: 0.65rem 0.8rem;
+  color: var(--color-atlas-ink);
+  text-align: start;
   background: color-mix(in srgb, var(--color-aegean) 7%, transparent);
+  border: 0;
   border-inline-start: 4px solid var(--color-aegean);
   border-radius: 0;
+  font: inherit;
   font-weight: 600;
+  cursor: pointer;
+}
+.route-weather__better:hover {
+  background: color-mix(in srgb, var(--color-aegean) 12%, transparent);
+}
+.route-weather__better:focus-visible {
+  outline: 2px solid var(--color-atlas-focus, var(--color-aegean));
+  outline-offset: 2px;
 }
 .route-weather__segments {
   display: grid;

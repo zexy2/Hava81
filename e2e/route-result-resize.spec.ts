@@ -87,7 +87,7 @@ test('route result header stays inside the page at 200% text size', async ({ pag
     element.style.fontSize = '200%';
   });
 
-  const header = page.locator('.route-weather__result > header');
+  const header = page.locator('.route-weather__announcement > header');
   await header.scrollIntoViewIfNeeded();
   const layout = await header.evaluate(element => {
     const fits = (node: Element) => {

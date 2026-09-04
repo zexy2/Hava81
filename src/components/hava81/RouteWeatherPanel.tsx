@@ -48,8 +48,10 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const departureInputRef = useRef<HTMLInputElement>(null);
   const origin = useMemo(() => TURKISH_CITIES.find(city => city.name === originName), [originName]);
-  const routeSelectionStatusId = originName === destinationName ? 'route-weather-same-city' : undefined;
+  const routeSelectionStatusId =
+    originName === destinationName ? 'route-weather-same-city' : undefined;
   const destination = useMemo(
     () => TURKISH_CITIES.find(city => city.name === destinationName),
     [destinationName]
@@ -153,9 +155,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
       setResult(value);
       setResultExpiresAt(
         Math.min(
-          departureTime +
-            value.estimatedDurationMinutes * 60_000 +
-            ROUTE_RESULT_EXPIRY_CUSHION_MS,
+          departureTime + value.estimatedDurationMinutes * 60_000 + ROUTE_RESULT_EXPIRY_CUSHION_MS,
           Date.now() + ROUTE_RESULT_MAX_AGE_MS + ROUTE_RESULT_EXPIRY_CUSHION_MS
         )
       );
@@ -250,6 +250,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           <label>
             {t('hava81.route.departure')}
             <input
+              ref={departureInputRef}
               type="datetime-local"
               value={departure}
               min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
@@ -293,40 +294,53 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           </p>
         ) : null}
         {result ? (
-          <div
-            className="route-weather__result"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <header>
-              <div>
-                <span className="atlas-kicker">{t('hava81.route.corridor')}</span>
-                <h3>
-                  {originName} → {destinationName}
-                </h3>
-              </div>
-              <div className="route-weather__score">
-                <small>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</small>
-                <strong>
-                  {result.score}
-                  <span>/100</span>
-                </strong>
-              </div>
-            </header>
-            <p>
-              {t('hava81.route.estimate', {
-                distance: result.estimatedDistanceKm,
-                minutes: result.estimatedDurationMinutes,
-              })}
-            </p>
+          <div className="route-weather__result">
+            <div
+              className="route-weather__announcement"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <header>
+                <div>
+                  <span className="atlas-kicker">{t('hava81.route.corridor')}</span>
+                  <h3>
+                    {originName} → {destinationName}
+                  </h3>
+                </div>
+                <div className="route-weather__score">
+                  <small>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</small>
+                  <strong>
+                    {result.score}
+                    <span>/100</span>
+                  </strong>
+                </div>
+              </header>
+              <p>
+                {t('hava81.route.estimate', {
+                  distance: result.estimatedDistanceKm,
+                  minutes: result.estimatedDurationMinutes,
+                })}
+              </p>
+            </div>
             {result.betterDeparture ? (
-              <p className="route-weather__better">
-                {t('hava81.route.better', {
+              <button
+                type="button"
+                className="route-weather__better"
+                onClick={() => {
+                  setDepartureEdited(true);
+                  setDeparture(
+                    toTurkeyLocalInputValue(new Date(result.betterDeparture!.departure))
+                  );
+                  invalidateRequest();
+                  departureInputRef.current?.focus();
+                }}
+              >
+                {t('hava81.route.betterAction', {
                   time: formatTime(result.betterDeparture.departure),
                   improvement: result.betterDeparture.improvement,
                 })}
-              </p>
+              </button>
             ) : null}
             <div
               className="route-weather__segments"
