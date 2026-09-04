@@ -331,7 +331,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   invalidateRequest();
                 }}
               >
-                {t('hava81.route.better', {
+                {t('hava81.route.betterAction', {
                   time: formatTime(result.betterDeparture.departure),
                   improvement: result.betterDeparture.improvement,
                 })}

@@ -49,7 +49,7 @@ describe('RouteWeatherPanel better-departure action', () => {
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
 
     const recommendation = await screen.findByRole('button', {
-      name: /kalkış hava açısından yaklaşık 16 puan daha iyi görünüyor/i,
+      name: /yaklaşık 16 puan daha iyi görünüyor · bu saati kullan/i,
     });
     expect(screen.getByRole('status')).toHaveTextContent('62/100');
 

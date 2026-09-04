@@ -128,11 +128,13 @@ export const en = {
     },
     forecastAtlas: {
       title: "Today's rhythm",
-      stale: 'Forecast data is no longer fresh. The forecast chart is hidden until new data arrives.',
+      stale:
+        'Forecast data is no longer fresh. The forecast chart is hidden until new data arrives.',
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
       intervalControlLabel: 'Display interval',
-      intervalControlHelp: 'The 24-hour forecast stays fixed; this only changes which hours are shown on the chart.',
+      intervalControlHelp:
+        'The 24-hour forecast stays fixed; this only changes which hours are shown on the chart.',
       summaryLabel: 'Hourly forecast summary',
       summaryLow: 'Low',
       summaryTemperature: 'Temperature',
@@ -171,7 +173,8 @@ export const en = {
       partialUnavailable: 'Some city data could not update; available results are shown.',
       unavailable: 'City comparison could not update right now.',
       stale: 'The comparison data is no longer fresh. Reopen the comparison for current results.',
-      partialStale: 'Some city data is no longer fresh or could not update; only current results are shown.',
+      partialStale:
+        'Some city data is no longer fresh or could not update; only current results are shown.',
       winnerLabel: 'Leading under these weather criteria',
       winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       tieLabel: 'Tied under these weather criteria',
@@ -186,7 +189,8 @@ export const en = {
     dailyPlan: {
       eyebrow: 'Hava81 decision engine',
       title: 'Day plan',
-      forecastStale: 'Forecast data is no longer fresh. Day-plan recommendations are hidden until new data arrives.',
+      forecastStale:
+        'Forecast data is no longer fresh. Day-plan recommendations are hidden until new data arrives.',
       bands: {
         excellent: 'Very suitable',
         good: 'Suitable',
@@ -316,7 +320,8 @@ export const en = {
       wind: 'Wind',
       empty: 'Choose both times and Hava81 will compare your next departure–return pair.',
       incomplete: 'Choose both a departure and return time to calculate the plan.',
-      forecastStale: 'Forecast data is no longer fresh. The departure–return recommendation is hidden until new data arrives.',
+      forecastStale:
+        'Forecast data is no longer fresh. The departure–return recommendation is hidden until new data arrives.',
       forecastUnavailable:
         'There is not yet a forecast close enough to both selected times. The plan will calculate automatically as forecast coverage expands.',
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
@@ -327,7 +332,8 @@ export const en = {
       subtitle:
         'Pick up to three activities and Hava81 will re-score the same weather for your plan.',
       choose: 'Activity selection',
-      forecastStale: 'Forecast data is no longer fresh. Activity recommendations are hidden until new data arrives.',
+      forecastStale:
+        'Forecast data is no longer fresh. Activity recommendations are hidden until new data arrives.',
       limitReached: 'Three activities are selected. Deselect one before choosing another.',
       names: {
         walk: 'Walk',
@@ -468,9 +474,12 @@ export const en = {
       corridor: 'Approximate weather corridor',
       estimate: 'Approx. {{distance}} km · {{minutes}} min',
       better: 'Leaving around {{time}} looks about {{improvement}} points better for weather.',
+      betterAction:
+        'Leaving around {{time}} looks about {{improvement}} points better · Use this time',
       segments: 'Weather samples along the corridor',
       departureRangeError: 'Departure must be between now and the next 18 hours.',
-      resultExpired: 'This route estimate is no longer fresh. Check the corridor again for current guidance.',
+      resultExpired:
+        'This route estimate is no longer fresh. Check the corridor again for current guidance.',
       error: 'Route weather data could not be loaded.',
       noRain: 'No precipitation',
     },
