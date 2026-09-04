@@ -3297,3 +3297,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a focused component regression proving the recommended instant is converted to Türkiye wall-clock time, applied to the input, and the previous result is removed after activation.
 - Local validation: focused RouteWeatherPanel Vitest 16/16 PASS, type-check PASS, ESLint PASS, production build PASS, git diff --check PASS. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
 - Branch: `automation/hava81-route-use-better-departure-1018`. Next: commit/push/open PR; inspect exact-head CI while re-checking main #886 rollout/production independently.
+
+## 2026-09-04 13:34 TRT — align the Nginx install template with stable 4002 production
+- Production measurement showed the live API healthy on preferred port 4002 and the repository's compose/observer/deploy contracts all encode 4002 primary / 4001 rollback, but `deploy/oracle/nginx/api.hava81.zekiakgul.dev.conf` still defaulted a fresh install to legacy port 4000.
+- Changed only the repository Nginx install template to proxy 4002 and added a dependency-free contract that rejects 4000/4001 as template defaults while requiring compose to agree on 4002.
+- Local validation: shell syntax PASS, Nginx/compose preferred-port contract PASS, and `git diff --check` PASS. The currently running Nginx configuration and production traffic were not changed.
+- No weather/API semantics, provider logic, scoring, MGM behavior or recommendations changed. Exact-head hosted CI/CD and CodeQL remain mandatory before merge/deploy.

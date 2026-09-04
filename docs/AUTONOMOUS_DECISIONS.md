@@ -1448,3 +1448,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+### 2026-09-04 13:34 TRT — fresh Oracle installs default Nginx to the preferred 4002 API slot
+
+**Decision:** The checked-in Nginx API template and Docker Compose default both target host port 4002.
+
+**Why:** Runtime policy, observer policy and blue-green promotion all define 4002 as stable production and 4001 as rollback/canary. Leaving the installation template on legacy 4000 creates avoidable fresh-install drift before any controlled traffic switch runs.
