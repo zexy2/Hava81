@@ -53,6 +53,25 @@ fi
 
 git rev-parse --verify origin/main >/dev/null
 
+# Git metadata must be mutated by the repository owner. Running an apply pass as
+# another user (most commonly root via sudo) can leave refs/reflogs/worktree
+# metadata owned by that user and break later fetch/commit operations. Dry-run
+# and audit modes remain available from any readable identity.
+if [[ "$apply" == true ]]; then
+  git_dir="$(git rev-parse --absolute-git-dir)"
+  git_owner_uid="$(stat -c %u "$git_dir" 2>/dev/null || true)"
+  current_uid="$(id -u)"
+  if [[ ! "$git_owner_uid" =~ ^[0-9]+$ ]]; then
+    echo "cannot determine Git metadata owner; refusing apply" >&2
+    exit 2
+  fi
+  if [[ "$current_uid" != "$git_owner_uid" ]]; then
+    echo "refusing apply as uid $current_uid; Git metadata is owned by uid $git_owner_uid" >&2
+    echo "run the cleanup as the repository owner so refs/reflogs remain writable" >&2
+    exit 2
+  fi
+fi
+
 artifacts=(
   node_modules
   dist
