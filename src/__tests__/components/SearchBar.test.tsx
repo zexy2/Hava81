@@ -200,6 +200,21 @@ describe('SearchBar', () => {
     expect(input).toHaveAttribute('aria-activedescendant', options[0].id);
   });
 
+  it('leaves composition keyboard events to the active input method', () => {
+    const onSubmit = vi.fn();
+    render(<SearchBar {...defaultProps} value="İz" onSubmit={onSubmit} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    expect(screen.getAllByRole('option').length).toBeGreaterThan(0);
+
+    fireEvent.keyDown(input, { key: 'ArrowDown', isComposing: true });
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('keeps suggestions open when the input is immediately refocused after blur', () => {
     vi.useFakeTimers();
     try {
