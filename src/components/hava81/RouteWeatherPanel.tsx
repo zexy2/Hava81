@@ -254,6 +254,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               value={departure}
               min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
               max={toTurkeyLocalInputValue(new Date(departureBoundsNow + ROUTE_MAX_DEPARTURE_MS))}
+              aria-label={t('hava81.route.departure')}
+              aria-describedby="route-weather-departure-help"
               onFocus={refreshDepartureBounds}
               onChange={e => {
                 setDepartureEdited(true);
@@ -272,6 +274,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
             {loading ? t('common.loading') : t('hava81.route.check')}
           </button>
         </div>
+        <p id="route-weather-departure-help" className="route-weather__hint">
+          {t('hava81.route.departureHelp')}
+        </p>
         {originName === destinationName ? (
           <p id="route-weather-same-city" className="route-weather__hint" role="status">
             {t('hava81.route.sameCity')}

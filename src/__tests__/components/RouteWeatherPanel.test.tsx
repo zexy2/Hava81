@@ -26,6 +26,18 @@ describe('RouteWeatherPanel', () => {
     await i18n.changeLanguage('tr');
   });
 
+  it('explains the supported departure window through the input description', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByText('Rota havası'));
+
+    const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
+    const departureHelp = screen.getByText('Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.');
+
+    expect(departureInput).toHaveAttribute('aria-describedby', 'route-weather-departure-help');
+    expect(departureHelp).toHaveAttribute('id', 'route-weather-departure-help');
+  });
+
   it('refreshes the native departure bounds when the control is focused later', async () => {
     const initialNow = new Date('2026-09-01T09:00:00.000Z').getTime();
     const laterNow = new Date('2026-09-01T12:30:00.000Z').getTime();
