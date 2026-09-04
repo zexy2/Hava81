@@ -22,6 +22,7 @@ class WorkerStatusScriptTests(unittest.TestCase):
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
         self.assertIn("pr.get('codeql')", status_script)
         self.assertIn("codeql={codeql.get('status')}/{codeql.get('conclusion')}", status_script)
+        self.assertIn("failed_jobs={ci.get('failed_jobs', [])}", status_script)
 
 
 if __name__ == '__main__':

@@ -569,6 +569,27 @@ def collect_github() -> dict[str, Any]:
             same_sha[0] if same_sha else latest_main_candidates[0],
         )
 
+    def failed_ci_job_names(run: dict[str, Any]) -> list[str]:
+        run_id = run.get('id')
+        if (
+            not run_id
+            or run.get('status') != 'completed'
+            or run.get('conclusion') in (None, 'success')
+        ):
+            return []
+        jobs_result = http_get(
+            f'https://api.github.com/repos/{REPO}/actions/runs/{run_id}/jobs?per_page=100',
+            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+        )
+        jobs_json = jobs_result.get('json') if isinstance(jobs_result.get('json'), dict) else {}
+        jobs = jobs_json.get('jobs') if isinstance(jobs_json.get('jobs'), list) else []
+        ignored = {None, 'success', 'skipped', 'neutral'}
+        return [
+            str(job.get('name'))
+            for job in jobs
+            if job.get('name') and job.get('status') == 'completed' and job.get('conclusion') not in ignored
+        ][:8]
+
     automation_prs: list[dict[str, Any]] = []
     for pr in pulls_data:
         head = pr.get('head') if isinstance(pr.get('head'), dict) else {}
@@ -591,6 +612,7 @@ def collect_github() -> dict[str, Any]:
                 'status': ci_run.get('status'),
                 'conclusion': ci_run.get('conclusion'),
                 'url': ci_run.get('html_url'),
+                'failed_jobs': failed_ci_job_names(ci_run),
             },
             'codeql': {
                 'run_id': codeql_run.get('id'),
