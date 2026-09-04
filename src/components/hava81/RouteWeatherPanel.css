@@ -66,11 +66,6 @@
   color: var(--color-atlas-muted);
   font-size: 0.8125rem;
 }
-.route-weather__field-help {
-  color: var(--color-atlas-muted);
-  font-size: 0.75rem;
-  line-height: 1.35;
-}
 .route-weather__form select,
 .route-weather__form input {
   width: 100%;
