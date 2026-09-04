@@ -1459,3 +1459,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Disk recovery may compact loose objects in standalone Hava81 repositories with normal `git gc`, but only after same-origin validation and an explicit `--apply`; foreign repos, linked worktrees and working-tree files are outside the tool's mutation scope.
 
 **Why:** Autonomous runs accumulate many preserved checkouts because dirty or unrepresented work must not be deleted. Reachable Git objects can still be repacked safely. A narrow dry-run-first tool captures that low-risk recovery path without turning disk pressure into permission to discard source/history.
+### 2026-09-04 13:33 TRT — cleanup mutation must use the Git metadata owner
+
+**Decision:** Linked-worktree cleanup apply passes must run as the uid that owns the repository's shared Git directory; sudo/root is not an accepted shortcut for mutation when the repository is user-owned.
+
+**Why:** `git worktree remove` writes shared refs/reflogs/worktree metadata. A privileged apply can therefore leave ownership drift that breaks later normal fetch/commit operations. Failing closed is safer than repairing permissions after every disk incident, while audit/dry-run remains available to privileged operators.

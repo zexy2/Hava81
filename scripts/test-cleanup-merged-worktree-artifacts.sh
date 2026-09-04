@@ -91,6 +91,12 @@ grep -Fq "dirty=" <<<"$audit"
 grep -Eq "in_use=[1-9][0-9]*" <<<"$audit"
 grep -Fq "status_unreadable=" <<<"$audit"
 grep -Fq "No files, refs, or worktrees were changed." <<<"$audit"
+
+# Apply passes must be owned by the same uid that owns the repository Git dir.
+# This source-level guard prevents sudo/root cleanup from silently creating
+# root-owned refs/reflogs in a user-owned shared repository.
+grep -Fq 'git_owner_uid="$(stat -c %u "$git_dir"' "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
+grep -Fq 'if [[ "$current_uid" != "$git_owner_uid" ]]' "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
 if (cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit --apply >/dev/null 2>&1); then
   echo "audit mode accepted mutation" >&2
   exit 1
