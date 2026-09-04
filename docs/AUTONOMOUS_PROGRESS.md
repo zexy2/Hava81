@@ -3332,3 +3332,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The five-day forecast renders calendar-day labels inside `<time>`, but its `datetime` serialized an arbitrary full timestamp. Changed only the machine-readable value to `YYYY-MM-DD`, matching the visible day label and `aria-current="date"` semantics without changing forecast dates, weather values, provider evidence, timezone matching or guidance.
 - Updated the existing current-date regression to require `datetime="2026-09-04"`. `git diff --check` passes. No dependency install was attempted because the host remains near its disk-pressure threshold; protected exact-head CI/CodeQL is mandatory before merge.
 - Next action: after exact main `99f2235...` production is green, rebase if main moved, commit/push/open this bounded accessibility/semantics PR, then refresh #907 from current stable main with explicit lease if its remote head is unchanged.
+
+## 2026-09-05 01:28 TRT — reject unsupported OpenWeather icon codes at provider ingress
+- Continued independently from exact main `7effac303cea4a9ab24c947bc3a8a0adee8a01b0` while its frontend rollout validates and browser trust-boundary PRs remain isolated.
+- OpenWeather current/forecast Zod schemas accepted any non-empty `weather[].icon`, even though the provider contract exposes only `01`–`04`, `09`, `10`, `11`, `13`, `50` with `d`/`n`. A malformed upstream icon could therefore survive server-side provider validation.
+- Tightened the shared OpenWeather condition schema to the normalized icon contract and added current + forecast provider regressions for malformed/unsupported codes.
+- This is validation only: valid provider responses, weather values, scoring, MGM semantics, UV/AQI guidance and recommendation logic are unchanged. `git diff --check` passes; no dependency install was attempted under disk warning pressure, so exact-head hosted API/CI/CodeQL gates remain mandatory before merge.

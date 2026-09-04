@@ -12,7 +12,7 @@ const weatherConditionSchema = z.object({
   id: z.number(),
   main: z.string(),
   description: z.string(),
-  icon: z.string().min(1),
+  icon: z.string().regex(/^(?:0[1-4]|09|10|11|13|50)[dn]$/),
 });
 
 // The provider schema is shared by metric (°C), imperial (°F), and standard (K) queries.

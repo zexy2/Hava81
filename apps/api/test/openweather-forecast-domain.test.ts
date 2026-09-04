@@ -36,6 +36,13 @@ test('forecast schema accepts an integer epoch and valid provider timezone offse
   assert.doesNotThrow(() => forecastUpstreamSchema.parse(sample()));
 });
 
+test('forecast schema rejects unsupported provider icon codes', () => {
+  const payload = sample();
+  payload.list[0].weather[0].icon = '99d';
+
+  assert.throws(() => forecastUpstreamSchema.parse(payload));
+});
+
 test('forecast schema rejects negative and fractional forecast epochs', () => {
   for (const invalidTimestamp of [-1, 1_725_000_000.5]) {
     const payload = sample();
