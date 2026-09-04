@@ -4,7 +4,8 @@ set -euo pipefail
 project_root="$(git rev-parse --show-toplevel)"
 cleanup_script="$project_root/scripts/cleanup-merged-worktree-artifacts.sh"
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+busy_pid=""
+trap '[[ -n "$busy_pid" ]] && kill "$busy_pid" 2>/dev/null || true; chmod -R u+w "$tmp" 2>/dev/null || true; rm -rf "$tmp"' EXIT
 
 bare="$tmp/origin.git"
 primary="$tmp/repo"
@@ -26,6 +27,7 @@ stale="$tmp/stale"
 detached="$tmp/detached"
 dirty="$tmp/dirty"
 unreadable="$tmp/unreadable"
+busy="$tmp/busy"
 locked="$tmp/locked"
 git -C "$primary" worktree add -b feature-merged "$merged" "$base" >/dev/null
 printf 'same patch\n' > "$merged/merged.txt"
@@ -41,6 +43,13 @@ git -C "$primary" worktree add -b feature-locked "$locked" origin/main >/dev/nul
 mkdir -p "$locked/dist/locked"
 printf 'locked build\n' > "$locked/dist/locked/output.txt"
 chmod 0555 "$locked/dist/locked"
+git -C "$primary" worktree add -b feature-busy "$busy" origin/main >/dev/null
+mkdir -p "$busy/dist"
+printf 'busy build\n' > "$busy/dist/output.txt"
+(cd "$busy" && sleep 120) >/dev/null 2>&1 &
+busy_pid=$!
+sleep 0.1
+
 
 git -C "$primary" worktree add -b feature-unmerged "$unmerged" "$base" >/dev/null
 printf 'unique\n' > "$unmerged/unique.txt"
@@ -79,6 +88,7 @@ chmod +x "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
 audit="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit)"
 grep -Fq "Audit: scanned=" <<<"$audit"
 grep -Fq "dirty=" <<<"$audit"
+grep -Eq "in_use=[1-9][0-9]*" <<<"$audit"
 grep -Fq "status_unreadable=" <<<"$audit"
 grep -Fq "No files, refs, or worktrees were changed." <<<"$audit"
 if (cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit --apply >/dev/null 2>&1); then
@@ -94,7 +104,7 @@ grep -Fq "WOULD_SKIP_UNWRITABLE_WORKTREE" <<<"$dry"
 grep -Fq "$locked" <<<"$dry"
 grep -Fq "WOULD_SKIP_UNWRITABLE_ARTIFACT" <<<"$dry"
 grep -Fq "$locked/dist" <<<"$dry"
-if grep -Fq "$unmerged" <<<"$dry" || grep -Fq "$stale" <<<"$dry" || grep -Fq "$detached" <<<"$dry" || grep -Fq "$dirty" <<<"$dry" || grep -Fq "$unreadable" <<<"$dry"; then
+if grep -Fq "$unmerged" <<<"$dry" || grep -Fq "$stale" <<<"$dry" || grep -Fq "$detached" <<<"$dry" || grep -Fq "$dirty" <<<"$dry" || grep -Fq "$unreadable" <<<"$dry" || grep -Fq "$busy" <<<"$dry"; then
   echo 'unsafe worktree appeared in default dry-run eligibility' >&2
   exit 1
 fi
@@ -103,6 +113,8 @@ fi
 [[ ! -d "$merged" ]]
 [[ -d "$locked" ]]
 [[ -f "$locked/dist/locked/output.txt" ]]
+[[ -d "$busy" ]]
+[[ -f "$busy/dist/output.txt" ]]
 [[ -d "$unmerged" ]]
 [[ -d "$dirty" ]]
 git -C "$primary" show-ref --verify --quiet refs/heads/feature-merged
