@@ -40,6 +40,8 @@ jobs:
       - run: npm run test:ci
       - name: Verify npm audit retry contract
         run: bash scripts/test-run-npm-audit-with-retry.sh
+      - name: Verify autonomous append-only log merge contract
+        run: bash scripts/test-autonomous-log-union-merge.sh
       - name: Verify safe worktree cleanup contract
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - name: Verify Hava81 browser temp cleanup contract
