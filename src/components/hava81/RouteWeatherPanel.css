@@ -118,14 +118,18 @@
   display: grid;
   gap: var(--space-md);
 }
-.route-weather__result > header {
+.route-weather__announcement {
+  display: grid;
+  gap: var(--space-md);
+}
+.route-weather__announcement > header {
   display: flex;
   align-items: start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
 }
-.route-weather__result > header > div:first-child {
+.route-weather__announcement > header > div:first-child {
   flex: 1 1 min(100%, 16rem);
   min-width: 0;
 }

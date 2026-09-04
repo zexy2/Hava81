@@ -292,33 +292,35 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           </p>
         ) : null}
         {result ? (
-          <div
-            className="route-weather__result"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <header>
-              <div>
-                <span className="atlas-kicker">{t('hava81.route.corridor')}</span>
-                <h3>
-                  {originName} → {destinationName}
-                </h3>
-              </div>
-              <div className="route-weather__score">
-                <small>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</small>
-                <strong>
-                  {result.score}
-                  <span>/100</span>
-                </strong>
-              </div>
-            </header>
-            <p>
-              {t('hava81.route.estimate', {
-                distance: result.estimatedDistanceKm,
-                minutes: result.estimatedDurationMinutes,
-              })}
-            </p>
+          <div className="route-weather__result">
+            <div
+              className="route-weather__announcement"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <header>
+                <div>
+                  <span className="atlas-kicker">{t('hava81.route.corridor')}</span>
+                  <h3>
+                    {originName} → {destinationName}
+                  </h3>
+                </div>
+                <div className="route-weather__score">
+                  <small>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</small>
+                  <strong>
+                    {result.score}
+                    <span>/100</span>
+                  </strong>
+                </div>
+              </header>
+              <p>
+                {t('hava81.route.estimate', {
+                  distance: result.estimatedDistanceKm,
+                  minutes: result.estimatedDurationMinutes,
+                })}
+              </p>
+            </div>
             {result.betterDeparture ? (
               <button
                 type="button"

@@ -51,7 +51,9 @@ describe('RouteWeatherPanel better-departure action', () => {
     const recommendation = await screen.findByRole('button', {
       name: /yaklaşık 16 puan daha iyi görünüyor · bu saati kullan/i,
     });
-    expect(screen.getByRole('status')).toHaveTextContent('62/100');
+    const announcement = screen.getByRole('status');
+    expect(announcement).toHaveTextContent('62/100');
+    expect(announcement).not.toContainElement(recommendation);
 
     await user.click(recommendation);
 
