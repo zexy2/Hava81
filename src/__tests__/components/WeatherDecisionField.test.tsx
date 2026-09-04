@@ -286,6 +286,45 @@ describe('WeatherDecisionField daily range', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('scopes decision evidence while the hourly forecast is still loading', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} forecastStatus="loading" />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.getByText(
+        'Saatlik tahmin yükleniyor; şu an yalnız mevcut ölçüm ve hazır bağlam sinyalleri değerlendiriliyor.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Yakın saatler için karar verisi henüz hazır değil.')
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps current-observation guidance while declaring unavailable hourly coverage', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, windSpeed: 12 }}
+          hourly={[]}
+          forecastStatus="unavailable"
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.getByText(
+        'Saatlik tahmin şu an alınamadı; bu bölüm yalnız mevcut ölçüm ve hazır bağlam sinyallerine dayanıyor.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Rüzgâr veya hamleler/)).toBeInTheDocument();
+    expect(
+      screen.queryByText('Yakın saatler için karar verisi henüz hazır değil.')
+    ).not.toBeInTheDocument();
+  });
+
   it('does not expose the whole decision surface as a live region', () => {
     const { container } = render(
       <SettingsProvider>

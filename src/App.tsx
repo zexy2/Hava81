@@ -597,6 +597,13 @@ const App: React.FC = () => {
                     airQuality={freshAirQuality}
                     uvIndexMax={freshUvIndexMax}
                     forecastMeta={forecast.displayMeta ?? forecast.meta}
+                    forecastStatus={
+                      forecast.hourly.length > 0
+                        ? 'available'
+                        : forecast.isLoading
+                          ? 'loading'
+                          : 'unavailable'
+                    }
                   />
 
                   {forecast.isLoading && forecast.hourly.length === 0 ? (

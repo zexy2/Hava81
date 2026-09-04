@@ -88,6 +88,12 @@ export const en = {
       longitude: 'Longitude',
       feelsLike: 'Feels like {{temperature}}',
       nextChange: 'Planning signals',
+      forecastCoverage: {
+        loading:
+          'Hourly forecast is loading; for now this section uses only the current observation and available context signals.',
+        unavailable:
+          'Hourly forecast is unavailable right now; this section uses only the current observation and available context signals.',
+      },
       actions: {
         rain: 'Rain chance reaches {{probability}}% around {{time}}; taking an umbrella is a good idea.',
         rainWithAmount:

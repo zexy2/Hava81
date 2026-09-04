@@ -88,6 +88,12 @@ export const tr = {
       longitude: 'Boylam',
       feelsLike: 'Hissedilen {{temperature}}',
       nextChange: 'Plan için öne çıkanlar',
+      forecastCoverage: {
+        loading:
+          'Saatlik tahmin yükleniyor; şu an yalnız mevcut ölçüm ve hazır bağlam sinyalleri değerlendiriliyor.',
+        unavailable:
+          'Saatlik tahmin şu an alınamadı; bu bölüm yalnız mevcut ölçüm ve hazır bağlam sinyallerine dayanıyor.',
+      },
       actions: {
         rain: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
         rainWithAmount:

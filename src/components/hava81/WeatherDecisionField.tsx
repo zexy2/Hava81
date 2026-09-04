@@ -24,6 +24,7 @@ export interface WeatherDecisionFieldProps {
   airQuality?: AirQuality;
   uvIndexMax?: number;
   forecastMeta?: ForecastMeta | null;
+  forecastStatus?: 'loading' | 'available' | 'unavailable';
   className?: string;
 }
 
@@ -34,6 +35,7 @@ export function WeatherDecisionField({
   airQuality,
   uvIndexMax,
   forecastMeta,
+  forecastStatus = 'available',
   className = '',
 }: WeatherDecisionFieldProps) {
   const headingId = useId();
@@ -334,10 +336,18 @@ export function WeatherDecisionField({
   const decisions = useMemo(
     () =>
       decisionEvidenceFresh
-        ? getWeatherDecisions({ weather, hourly, airQuality: freshAirQuality, uvIndexMax })
+        ? getWeatherDecisions({ weather, hourly, airQuality: freshAirQuality, uvIndexMax }).filter(
+            decision => forecastStatus === 'available' || decision.kind !== 'unavailable'
+          )
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
-    [decisionEvidenceFresh, freshAirQuality, hourly, uvIndexMax, weather]
+    [decisionEvidenceFresh, forecastStatus, freshAirQuality, hourly, uvIndexMax, weather]
   );
+  const forecastCoverageText =
+    !decisionEvidenceFresh || forecastStatus === 'available'
+      ? null
+      : forecastStatus === 'loading'
+        ? t('hava81.decision.forecastCoverage.loading')
+        : t('hava81.decision.forecastCoverage.unavailable');
   const freshnessText =
     ageMinutes === null
       ? t('hava81.decision.freshness.unknown', { defaultValue: 'Güncellik bilinmiyor' })
@@ -451,6 +461,9 @@ export function WeatherDecisionField({
           {t('hava81.decision.nextChange', { defaultValue: 'Plan için öne çıkanlar' })}
         </h2>
         <ul className="hava81-decision-field__decision-list">
+          {forecastCoverageText ? (
+            <li data-severity="info">{forecastCoverageText}</li>
+          ) : null}
           {decisions.map((decision, index) => {
             const fullCopy = decisionCopy(decision);
             return (
