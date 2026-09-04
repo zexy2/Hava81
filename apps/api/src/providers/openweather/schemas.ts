@@ -10,8 +10,8 @@ const coordinatesSchema = z.object({
 
 const weatherConditionSchema = z.object({
   id: z.number(),
-  main: z.string(),
-  description: z.string(),
+  main: z.string().trim().min(1),
+  description: z.string().trim().min(1),
   icon: z.string().regex(/^(?:0[1-4]|09|10|11|13|50)[dn]$/),
 });
 
@@ -54,13 +54,13 @@ export const currentWeatherUpstreamSchema = z
         'Current-weather observation timestamp is materially in the future',
       ),
     sys: z.object({
-      country: z.string(),
+      country: z.string().trim().min(1),
       sunrise: z.number().int().nonnegative(),
       sunset: z.number().int().nonnegative(),
     }),
     timezone: z.number().min(-43_200).max(50_400),
     id: z.number(),
-    name: z.string(),
+    name: z.string().trim().min(1),
   })
   .refine((data) => data.main.temp_min <= data.main.temp_max, {
     message: 'Current-weather minimum temperature exceeds maximum temperature',
@@ -100,9 +100,9 @@ export const forecastUpstreamSchema = z.object({
   list: z.array(forecastItemSchema).min(1),
   city: z.object({
     id: z.number().optional(),
-    name: z.string(),
+    name: z.string().trim().min(1),
     coord: coordinatesSchema,
-    country: z.string(),
+    country: z.string().trim().min(1),
     timezone: z.number().min(-43_200).max(50_400),
   }),
 });
