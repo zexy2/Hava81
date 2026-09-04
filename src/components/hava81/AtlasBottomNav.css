@@ -147,6 +147,10 @@
   .atlas-bottom-nav__icon {
     transition: none;
   }
+
+  .atlas-bottom-nav__button:active .atlas-bottom-nav__icon {
+    transform: none;
+  }
 }
 
 

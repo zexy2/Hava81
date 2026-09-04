@@ -1448,3 +1448,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+### 2026-09-04 13:10 TRT — reduced-motion removes decorative press displacement everywhere
+
+**Decision:** Environment Rail actions and mobile bottom-navigation icons do not translate on press when reduced motion is requested.
+
+**Why:** Disabling transition duration alone still leaves an instantaneous 1px displacement. The transform is decorative rather than necessary state communication, so reduced-motion users should receive stationary color/focus/state feedback instead.

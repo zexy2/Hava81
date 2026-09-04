@@ -3290,3 +3290,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Implemented compact mobile signal copy for rain, wind, heat, cold, AQI, UV, calmer outdoor window, stable and unavailable states; desktop full sentences are unchanged and mobile list items retain full accessible guidance.
 - Production-data browser simulation: callout 211.6px → 113.5px, decision field 662.7px → 564.6px, Forecast Atlas starts 98.1px earlier; page width remains 390/390.
 - Local gates so far: lint PASS, type-check PASS, WeatherDecisionField 18/18 PASS, production build PASS, mobile Chromium regressions 2/2 PASS.
+
+## 2026-09-04 13:10 TRT — keep remaining press feedback stationary for reduced-motion users
+- Continued independently from exact main `cd3ccbb2a11e452c0deb25cf38898b0e17fed501` while #889/#890 validate in separate branches.
+- Environment Rail action modules and the fixed mobile bottom navigation still applied 1px press translations when `prefers-reduced-motion: reduce` was active; their media queries disabled transitions but left the instantaneous motion itself in place.
+- Added scoped reduced-motion overrides that preserve all color, focus, expanded-state and active-state feedback while suppressing only those decorative press translations. Extended the central decision-control reduced-motion regression for both surfaces.
+- No navigation destination, environment evidence, weather data, scoring, provider/freshness logic, MGM semantics or recommendations changed. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.
