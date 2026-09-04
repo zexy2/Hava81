@@ -1470,3 +1470,6 @@ Saved-city buttons change the weather location being viewed; they are not indepe
 
 ## 2026-09-04 — Core forecast failure belongs next to the forecast surface
 When both core forecast sources fail, render the existing localized forecast-unavailable status immediately after the primary decision/forecast region instead of after lower planners and Route Weather. The error explains why forecast-dependent content is missing, so users should encounter it before unrelated lower tools. Preserve retryability rules, current-weather guidance, provider behavior and all weather/safety semantics; this is placement/state clarity only.
+
+## 2026-09-05 — Daily forecast `<time>` values use date-only semantics
+A daily forecast card represents a calendar date rather than an instant. Keep its machine-readable `datetime` in `YYYY-MM-DD` form instead of serializing an arbitrary noon/UTC timestamp. This avoids implying time-of-day precision and keeps the semantic value aligned with `aria-current="date"`; forecast values, timezone matching and guidance logic are unchanged.

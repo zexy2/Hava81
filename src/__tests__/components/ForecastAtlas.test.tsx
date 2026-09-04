@@ -461,7 +461,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       );
 
       const currentDate = container.querySelector('time[aria-current="date"]');
-      expect(currentDate).toHaveAttribute('datetime', '2026-09-04T12:00:00.000Z');
+      expect(currentDate).toHaveAttribute('datetime', '2026-09-04');
       expect(container.querySelectorAll('time[aria-current="date"]')).toHaveLength(1);
     } finally {
       vi.useRealTimers();
