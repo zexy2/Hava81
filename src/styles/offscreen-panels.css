@@ -14,3 +14,13 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 24rem;
 }
+
+.atlas-dashboard > .commute-plan {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 28rem;
+}
+
+.atlas-dashboard > .route-weather {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 7rem;
+}

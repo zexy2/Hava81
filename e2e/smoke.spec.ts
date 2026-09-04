@@ -2822,6 +2822,25 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
   expect(boxes.every(height => height >= 44)).toBe(true);
 });
 
+test('lower decision tools keep offscreen rendering containment', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop offscreen rendering regression');
+  await page.goto('/istanbul');
+
+  for (const selector of ['.commute-plan', '.route-weather']) {
+    const panel = page.locator(selector);
+    await expect(panel).toBeAttached();
+    const style = await panel.evaluate(element => {
+      const computed = getComputedStyle(element);
+      return {
+        contentVisibility: computed.contentVisibility,
+        containIntrinsicSize: computed.containIntrinsicSize,
+      };
+    });
+    expect(style.contentVisibility).toBe('auto');
+    expect(style.containIntrinsicSize).not.toBe('none');
+  }
+});
+
 test('desktop forecast reads as one editorial data surface', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop forecast visual regression');
   await page.goto('/istanbul');
