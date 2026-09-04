@@ -658,7 +658,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
           <h3 id={`${id}-daily-title`} className="hava81-forecast-atlas__section-title">
             {t('weather.forecast')}
           </h3>
-          <ol className="hava81-forecast-atlas__days">
+          <ol
+            className="hava81-forecast-atlas__days"
+            tabIndex={0}
+            aria-label={t('hava81.forecastAtlas.dailyRegion')}
+          >
             {dailyData.map(day => {
               const precipitation = Math.round(day.precipitation * 100);
               const precipitationAmount = formatPrecipitationAmount(day.precipitationMm, locale);
