@@ -3312,3 +3312,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The disk-recovery pass exposed a repeatable ownership failure: running linked-worktree cleanup via sudo/root can make shared `.git` refs/reflogs/worktree metadata root-owned, after which the normal repository owner cannot fetch or commit without a repair.
 - Added an apply-only fail-closed ownership guard to `cleanup-merged-worktree-artifacts.sh`: dry-run/audit remain readable from any identity, but mutation is refused unless the effective uid matches the owner of the shared absolute Git directory.
 - Validation: shell syntax PASS; hermetic cleanup safety contract PASS; direct live root invocation against a chatgpt-owned Hava81 worktree refused with exit 2 before mutation; `git diff --check` PASS. No source checkout, branch, weather/API behavior, production traffic, or user data changed.
+
+## 2026-09-04 19:44 TRT — expose saved-city selection as a pressed state
+- Continued from exact main `3a834056e970a7c5085116ba82bf7746b6a7f1bc` after merging #897 and while its main pipeline rolls out independently.
+- Audited the saved-city selector and found active city buttons marked `aria-current="page"` even though the control is a button-based selection group, not page navigation.
+- Switched the city choice buttons to `aria-pressed={isActive}` so assistive technology receives the actual selectable/toggled state; updated the forced-colors active selector and focused component/browser regressions to guard the same contract.
+- No city routing, favorite persistence, weather values, provider/freshness logic, scoring, MGM semantics, or layout changed.
+- Local validation: `git diff --check` PASS and dependency-free semantic selector checks PASS. A dependency install attempt was aborted by the repository's ignored-build policy; the generated `node_modules` directory was removed immediately, so hosted exact-head CI/CD + CodeQL remain mandatory before merge.
+- Branch: `automation/hava81-run11-a11y-audit-1941`. Next: commit/push/open PR; re-check #897 production and disk gate; if healthy, refresh the highest-value green queued PR onto current main and continue.
