@@ -951,11 +951,11 @@ test('forced colors keeps the active saved city visibly distinct', async ({ page
   await page.emulateMedia({ forcedColors: 'active' });
   await page.goto('/istanbul');
 
-  const current = page.locator('.city-tabs__tab[aria-current="page"]');
-  const inactive = page.locator('.city-tabs__tab:not([aria-current])').first();
+  const current = page.locator('.city-tabs__tab[aria-pressed="true"]');
+  const inactive = page.locator('.city-tabs__tab[aria-pressed="false"]').first();
   await expect(current).toBeVisible();
   await expect(inactive).toBeVisible();
-  await expect(current).toHaveAttribute('aria-current', 'page');
+  await expect(current).toHaveAttribute('aria-pressed', 'true');
 
   const state = await current.evaluate((element, inactiveElement) => {
     if (!(inactiveElement instanceof HTMLElement)) throw new Error('Missing inactive saved-city tab');
