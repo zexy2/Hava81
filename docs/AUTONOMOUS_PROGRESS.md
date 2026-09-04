@@ -3266,3 +3266,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Exact main `39e240b2ea91aac3e6b9d2091288336bc63f0484` already encodes stable production on 4002 with 4001 as rollback, but `deploy/oracle/README.md` still claimed that the active slot alternates permanently between them.
 - Updated only the operator documentation: normal deploys finish on validated 4002, restore the previous production image to 4001, and use 4001 publicly only during the controlled promotion window or an explicit rollback.
 - No deploy script, traffic, API, weather/provider, scoring, MGM or recommendation behavior changed. `git diff --check` passes.
+
+
+## 2026-09-04 07:24 TRT — give the interactive Weather Map a visible-heading landmark name
+- Continued independently from exact main `3c99359594f8aaa91d2bde4c6661585f318b038f` while its production pipeline runs.
+- Weather Map had a visible heading and individually named Leaflet markers, but the interactive map surface itself had no explicit named region relationship to that heading.
+- Added a per-instance React `useId` to the existing heading and exposed only the map container as `role="region"` with `aria-labelledby` pointing to the visible title. Added a source-level semantic regression to prevent the relationship from drifting.
+- No map data, marker values, city selection, weather freshness, scoring, providers, MGM semantics or recommendations changed. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.

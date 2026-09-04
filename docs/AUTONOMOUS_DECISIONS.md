@@ -1429,3 +1429,5 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Blue-green API deploys allow at most 600 seconds for the candidate Docker image build by default, configurable only with a positive integer, with a short forced-termination grace period.
 
 **Why:** Image construction happens before any traffic switch. Bounding that network-sensitive step prevents an unavailable registry from holding the deployment lock indefinitely while leaving the currently validated production slot untouched.
+
+- 2026-09-04 — Interactive map surfaces should expose a named region tied to their visible heading. Use per-instance IDs rather than hard-coded landmark IDs so lazy/reused map instances cannot create duplicate document IDs.

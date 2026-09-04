@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -91,6 +91,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
 }) => {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
+  const mapTitleId = useId();
   const colorMode = useResolvedColorMode(settings.themeMode);
   const [, setFreshnessRevision] = useState(0);
   const currentFreshness = getCurrentWeatherFreshness(weather?.meta ?? null);
@@ -145,9 +146,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
 
   return (
     <div className={`weather-map ${className}`}>
-      <h3 className="weather-map__title">{t('weather.mapTitle')}</h3>
+      <h3 id={mapTitleId} className="weather-map__title">
+        {t('weather.mapTitle')}
+      </h3>
 
-      <div className="weather-map__container">
+      <div className="weather-map__container" role="region" aria-labelledby={mapTitleId}>
         <MapContainer
           center={center}
           zoom={6}
