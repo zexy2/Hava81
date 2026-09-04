@@ -1422,3 +1422,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 ## 2026-09-04 01:50 TRT — header action controls are not navigation landmarks
 - The top-header search/location/favorite/map/settings controls are actions, not destination navigation. Expose them as one named `group` rather than a `nav` landmark so assistive-technology landmark lists remain reserved for actual navigation regions.
 - Keep the existing class, labels, button behavior and visual layout unchanged; this is a semantic-only accessibility correction.
+
+
+### 2026-09-04 07:01 TRT — API image builds have a bounded pre-traffic deadline
+
+**Decision:** Blue-green API deploys allow at most 600 seconds for the candidate Docker image build by default, configurable only with a positive integer, with a short forced-termination grace period.
+
+**Why:** Image construction happens before any traffic switch. Bounding that network-sensitive step prevents an unavailable registry from holding the deployment lock indefinitely while leaving the currently validated production slot untouched.

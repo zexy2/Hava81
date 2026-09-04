@@ -3255,3 +3255,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Changed only the brand destination to `/`; the dedicated skip-to-content control remains untouched and retains its focus-management behavior.
 - Tightened the existing App integration assertion so the accessible `Hava81` brand link must remain a real home link.
 - No weather values, providers, scoring, route-weather logic or safety guidance changed.
+
+
+## 2026-09-04 07:01 TRT — bound API image-build time before traffic changes
+- Continued independently from exact main `39e240b2ea91aac3e6b9d2091288336bc63f0484` while its post-#875 rollout runs.
+- The just-completed blue-green deployment spent roughly seven minutes in the Docker image build before any traffic switch. A registry/network stall could therefore hold the shared deploy lock indefinitely even while production remains healthy.
+- Added a configurable 600s default build timeout with a 30s TERM→KILL grace window. Invalid timeout configuration fails closed; timeout/build failure exits before candidate startup or any traffic switch and states that traffic is unchanged.
+- Added a dependency-free policy regression and CI wiring. `bash -n`, stable-slot PLAN_ONLY regression, timeout-policy regression, and `git diff --check` pass locally. No weather/API semantics, provider logic, scoring, readiness contract, MGM semantics or recommendation behavior changed.
