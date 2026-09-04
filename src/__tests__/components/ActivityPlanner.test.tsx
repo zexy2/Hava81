@@ -159,6 +159,7 @@ describe('ActivityPlanner time range', () => {
 
     const limitStatus = screen.getByText(/Üç aktivite seçtin/i);
     expect(limitStatus).toBeVisible();
+    expect(limitStatus).toHaveAttribute('role', 'status');
     expect(screen.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Motosiklet' })).toHaveAttribute(
       'aria-describedby',

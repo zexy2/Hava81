@@ -223,7 +223,11 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
         })}
       </div>
       {profile.activities.length >= 3 ? (
-        <p id="activity-selection-limit" className="activity-planner__selection-limit">
+        <p
+          id="activity-selection-limit"
+          className="activity-planner__selection-limit"
+          role="status"
+        >
           {t('hava81.activities.limitReached')}
         </p>
       ) : null}
