@@ -4075,6 +4075,10 @@ test('mobile header keeps current-location action reachable without horizontal o
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile header assertion');
   await page.goto('/istanbul');
 
+  const brandAtlas = page.locator('.atlas-brand__index small');
+  await expect(brandAtlas).toBeVisible();
+  expect(await brandAtlas.evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(10);
+
   const locationAction = page.locator('.atlas-icon-button--location');
   await expect(locationAction).toBeVisible();
   await expect(locationAction).toHaveAttribute('aria-label', /konum/i);

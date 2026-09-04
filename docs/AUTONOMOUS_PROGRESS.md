@@ -3248,3 +3248,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued from exact main `0ca1d418feed87b7499d317247db49e36b131880` in isolated branch `automation/hava81-run12-header-actions-group` while #850/#845/#847 validate separately.
 - Audited the header quick-action cluster and found it marked as `<nav>` even though every child is an action button. Replaced only that semantic wrapper with a named `role="group"`; CSS class, behavior, labels, controls and layout stay unchanged.
 - Added a focused source regression preventing the action cluster from reverting to a navigation landmark. `git diff --check` and a dependency-free source assertion are required locally; hosted CI/CD + CodeQL remain mandatory before merge.
+
+## 2026-09-04 05:20 TRT — raise compact Hava81 brand microcopy to a legible floor
+- Continued independently from exact main `9642369d33d1d190b44eb58f3af0cdac4bfb2dd7` in isolated `/home/chatgpt/hava81-auto-run11-0512`, branch `automation/hava81-run11-0512`, while rebased PRs #867/#868/#870 validate separately.
+- Visual hierarchy audit found the decorative `ATLAS` label inside the Hava81 81-index rendered at about 8.8px desktop and 9px at 390px mobile. Raised it to 0.625rem / 10px while preserving the existing compact badge geometry and the existing <=384px behavior that hides the badge entirely to protect header width.
+- Extended the existing mobile-header browser regression to require the visible ATLAS microcopy to compute to at least 10px at 390px, while retaining the 390/320 horizontal-overflow checks.
+- Local production build, TypeScript, ESLint and `git diff --check` pass. Playwright's bundled Chromium is not installed on the host and the system snap Chromium cannot launch inside the MCP systemd cgroup (`not a snap cgroup`), so no local browser pass is claimed; exact-head protected CI/Playwright must validate before merge. Temporary `node_modules`, `dist`, browser artifacts were removed after gates because root disk remains under pressure.
+- No weather values, decision scores, provider attribution, MGM/UV/AQI semantics or safety guidance changed.
