@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     ports:
-      - "127.0.0.1:${HOST_PORT:-4000}:4000"
+      - "127.0.0.1:${HOST_PORT:-4002}:4000"
     restart: unless-stopped
     stop_grace_period: 15s
     logging:
