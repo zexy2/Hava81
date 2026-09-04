@@ -354,7 +354,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   key={`${segment.fraction}-${index}`}
                   className={`route-segment route-segment--${segment.risk}`}
                 >
-                  <time>{formatTime(segment.eta)}</time>
+                  <time dateTime={segment.eta}>{formatTime(segment.eta)}</time>
                   <strong>
                     {segment.score}/100 ·{' '}
                     {t(`hava81.dailyPlan.bands.${getScoreBand(segment.score)}`)}
