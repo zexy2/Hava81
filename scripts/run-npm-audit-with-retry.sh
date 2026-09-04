@@ -9,6 +9,7 @@ fi
 max_attempts="${NPM_AUDIT_MAX_ATTEMPTS:-3}"
 sleep_seconds="${NPM_AUDIT_RETRY_SLEEP_SECONDS:-5}"
 attempt_timeout_seconds="${NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS:-90}"
+allow_transient_unavailable="${NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE:-0}"
 
 if [[ ! "$max_attempts" =~ ^[1-9][0-9]*$ ]]; then
   echo "NPM_AUDIT_MAX_ATTEMPTS must be an integer >= 1" >&2
@@ -20,6 +21,10 @@ if [[ ! "$sleep_seconds" =~ ^[0-9]+$ ]]; then
 fi
 if [[ ! "$attempt_timeout_seconds" =~ ^[1-9][0-9]*$ ]]; then
   echo "NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS must be an integer >= 1" >&2
+  exit 2
+fi
+if [[ "$allow_transient_unavailable" != "0" && "$allow_transient_unavailable" != "1" ]]; then
+  echo "NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE must be 0 or 1" >&2
   exit 2
 fi
 
@@ -51,6 +56,12 @@ while (( attempt <= max_attempts )); do
   fi
 
   if (( attempt == max_attempts )); then
+    if [[ "$allow_transient_unavailable" == "1" ]]; then
+      echo "::warning::npm audit registry remained unavailable after ${max_attempts} bounded attempts; continuing without converting infrastructure unavailability into a product failure. Known advisories still fail closed." >&2
+      rm -f "$log_file"
+      trap - EXIT
+      exit 0
+    fi
     echo "npm audit failed after ${max_attempts} attempts because the registry remained unavailable." >&2
     rm -f "$log_file"
     trap - EXIT
