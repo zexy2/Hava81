@@ -3290,3 +3290,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Implemented compact mobile signal copy for rain, wind, heat, cold, AQI, UV, calmer outdoor window, stable and unavailable states; desktop full sentences are unchanged and mobile list items retain full accessible guidance.
 - Production-data browser simulation: callout 211.6px → 113.5px, decision field 662.7px → 564.6px, Forecast Atlas starts 98.1px earlier; page width remains 390/390.
 - Local gates so far: lint PASS, type-check PASS, WeatherDecisionField 18/18 PASS, production build PASS, mobile Chromium regressions 2/2 PASS.
+
+## 2026-09-04 13:00 TRT — keep Settings release metadata on one source of truth
+- Continued independently from exact main `cd3ccbb2a11e452c0deb25cf38898b0e17fed501` while PR #887 remains exact-head green but merge/deploy is blocked by the root-disk and API-rollout gates.
+- Settings displayed a duplicated literal `v2.1.0` even though the release version already lives in root `package.json`; a future package version bump could therefore leave user-visible support metadata stale.
+- Settings now renders `package.json`'s version directly and the existing Settings component suite gains a regression asserting the displayed version follows package metadata.
+- No weather data, provider/freshness behavior, scoring, route logic, API, MGM semantics, recommendations, theme behavior, or settings persistence changed. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.
+- Operationally in this run, seven clean merged Hava81 linked worktrees were safely removed with branch refs preserved, the canonical Hava81 repository plus six Hava81 standalone Git object stores were compacted without deleting refs or dirty source, and root free space improved from ~3.28 GB to ~3.39 GB. The configured 92% hard gate remains active, so no merge or production deploy was attempted.

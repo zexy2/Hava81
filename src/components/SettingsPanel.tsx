@@ -7,6 +7,7 @@ import {
   type ThemeMode,
   type Language,
 } from '../context';
+import packageMeta from '../../package.json';
 import './SettingsPanel.css';
 
 interface SettingsPanelProps {
@@ -309,7 +310,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             </div>
 
             <div className="settings-panel__footer">
-              <p className="settings-panel__version">v2.1.0</p>
+              <p className="settings-panel__version">v{packageMeta.version}</p>
             </div>
           </aside>
         </>
