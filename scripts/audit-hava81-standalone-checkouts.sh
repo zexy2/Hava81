@@ -48,11 +48,18 @@ canonical_origin="$(normalize_origin "$(git remote get-url origin)")"
 
 represented_in_canonical() {
   local sha="$1"
+  local remote_ref
   git cat-file -e "${sha}^{commit}" 2>/dev/null || return 1
   if git merge-base --is-ancestor "$sha" origin/main 2>/dev/null; then
     return 0
   fi
-  [[ -n "$(git for-each-ref --points-at "$sha" --format='%(refname)' refs/remotes/origin 2>/dev/null)" ]]
+  while IFS= read -r remote_ref; do
+    [[ -n "$remote_ref" ]] || continue
+    if git merge-base --is-ancestor "$sha" "$remote_ref" 2>/dev/null; then
+      return 0
+    fi
+  done < <(git for-each-ref --format='%(refname)' refs/remotes/origin 2>/dev/null)
+  return 1
 }
 
 registered_file="$(mktemp)"
