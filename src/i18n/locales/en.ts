@@ -160,6 +160,7 @@ export const en = {
         'Precipitation chance is {{percent}}% for {{day}}; daily total is {{amount}}.',
       dailyPrecipitationAmount: 'Daily precipitation total for {{day}} is {{amount}}.',
       noDailyPrecipitation: 'No precipitation is expected for {{day}}.',
+      dailyRegion: 'Scrollable 5-day forecast',
       dailyRange: 'High {{high}}{{unit}}, low {{low}}{{unit}}',
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },

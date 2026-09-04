@@ -643,6 +643,82 @@
   }
 }
 
+@media (max-width: 39.99rem) {
+  .hava81-forecast-atlas__days {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(9rem, 42%);
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    border-block: 1px solid var(--forecast-line);
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--forecast-teal) 45%, transparent) transparent;
+    overscroll-behavior-inline: contain;
+  }
+
+  .hava81-forecast-atlas__days:focus-visible {
+    outline: 2px solid var(--forecast-teal);
+    outline-offset: -2px;
+  }
+
+  .hava81-forecast-atlas__days::-webkit-scrollbar {
+    height: 0.4rem;
+  }
+
+  .hava81-forecast-atlas__days::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .hava81-forecast-atlas__days::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--forecast-teal) 45%, transparent);
+  }
+
+  .hava81-forecast-atlas__day {
+    grid-template-areas:
+      'day day'
+      'symbol description'
+      'precipitation temperatures';
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-content: start;
+    align-items: start;
+    gap: 8px 10px;
+    min-width: 0;
+    min-height: 0;
+    padding: 12px;
+    border-top: 0;
+    border-inline-start: 1px solid var(--forecast-line);
+    scroll-snap-align: start;
+  }
+
+  .hava81-forecast-atlas__day:first-child {
+    border-inline-start: 0;
+  }
+
+  .hava81-forecast-atlas__day-name {
+    align-self: center;
+  }
+
+  .hava81-forecast-atlas__day-symbol {
+    align-self: start;
+  }
+
+  .hava81-forecast-atlas__description {
+    align-self: start;
+  }
+
+  .hava81-forecast-atlas__day-pop,
+  .hava81-forecast-atlas__day-temperatures {
+    align-self: end;
+  }
+
+  .hava81-forecast-atlas__day-pop {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (forced-colors: active) {
   .hava81-forecast-atlas__range-button[aria-pressed='true'] {
     color: Highlight;
