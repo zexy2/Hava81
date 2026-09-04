@@ -618,6 +618,17 @@ const App: React.FC = () => {
                   ) : null}
                 </div>
 
+                {forecast.error && (
+                  <section className="atlas-message atlas-message--inline" role="status">
+                    <p>{t('errors.forecastUnavailable')}</p>
+                    {canRetryForecast && (
+                      <button type="button" className="atlas-text-button" onClick={retryForecast}>
+                        {t('common.retry')}
+                      </button>
+                    )}
+                  </section>
+                )}
+
                 {forecast.hourly.length > 0 && (
                   <Suspense fallback={null}>
                     <DailyPlanPanel
@@ -711,17 +722,6 @@ const App: React.FC = () => {
                 <Suspense fallback={null}>
                   <RouteWeatherPanel currentCityName={weather.cityName} />
                 </Suspense>
-
-                {forecast.error && (
-                  <section className="atlas-message atlas-message--inline" role="status">
-                    <p>{t('errors.forecastUnavailable')}</p>
-                    {canRetryForecast && (
-                      <button type="button" className="atlas-text-button" onClick={retryForecast}>
-                        {t('common.retry')}
-                      </button>
-                    )}
-                  </section>
-                )}
               </div>
             )}
 

@@ -427,6 +427,15 @@ test('mobile forecast error message reflows at 200 percent text size', async ({ 
 
   const message = page.locator('.atlas-message--inline');
   await expect(message).toBeVisible();
+  const environmentRail = page.locator('.environment-rail');
+  await expect(environmentRail).toBeVisible();
+  const [messageBox, environmentBox] = await Promise.all([
+    message.boundingBox(),
+    environmentRail.boundingBox(),
+  ]);
+  expect(messageBox).not.toBeNull();
+  expect(environmentBox).not.toBeNull();
+  expect(messageBox!.y + messageBox!.height).toBeLessThanOrEqual(environmentBox!.y);
   const normalHeight = await message.evaluate(element => element.getBoundingClientRect().height);
   await page.locator('html').evaluate(element => {
     element.style.fontSize = '200%';
