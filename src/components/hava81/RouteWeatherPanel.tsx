@@ -48,6 +48,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const departureInputRef = useRef<HTMLInputElement>(null);
   const origin = useMemo(() => TURKISH_CITIES.find(city => city.name === originName), [originName]);
   const routeSelectionStatusId =
     originName === destinationName ? 'route-weather-same-city' : undefined;
@@ -249,6 +250,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
           <label>
             {t('hava81.route.departure')}
             <input
+              ref={departureInputRef}
               type="datetime-local"
               value={departure}
               min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
@@ -331,6 +333,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                     toTurkeyLocalInputValue(new Date(result.betterDeparture!.departure))
                   );
                   invalidateRequest();
+                  departureInputRef.current?.focus();
                 }}
               >
                 {t('hava81.route.betterAction', {

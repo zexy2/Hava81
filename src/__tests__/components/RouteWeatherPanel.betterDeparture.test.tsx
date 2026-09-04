@@ -57,7 +57,9 @@ describe('RouteWeatherPanel better-departure action', () => {
 
     await user.click(recommendation);
 
-    expect(screen.getByLabelText('Kalkış zamanı · Türkiye saati')).toHaveValue('2026-09-04T14:00');
+    const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
+    expect(departureInput).toHaveValue('2026-09-04T14:00');
+    expect(departureInput).toHaveFocus();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     nowSpy.mockRestore();
   });
