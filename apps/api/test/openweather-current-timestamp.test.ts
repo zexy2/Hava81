@@ -38,6 +38,14 @@ test('current-weather schema rejects unsupported provider icon codes', () => {
   assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
 });
 
+test('current-weather schema preserves valid provider text verbatim', () => {
+  const payload = sample();
+  payload.weather[0].description = '  açık  ';
+
+  const parsed = currentWeatherUpstreamSchema.parse(payload);
+  assert.equal(parsed.weather[0].description, '  açık  ');
+});
+
 test('current-weather schema rejects blank provider text fields', () => {
   for (const mutate of [
     (payload: ReturnType<typeof sample>) => {
