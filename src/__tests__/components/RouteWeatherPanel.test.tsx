@@ -149,6 +149,7 @@ describe('RouteWeatherPanel', () => {
     expect(announcement).toHaveTextContent('Uygun');
     const result = document.querySelector('.route-weather__result');
     expect(result).toHaveTextContent('82/100 · Uygun');
+    expect(result?.querySelector('time')).toHaveAttribute('datetime', '2026-08-28T18:00:00.000Z');
     expect(result).toHaveTextContent('%20 · 0,4 mm');
     expect(screen.getByRole('list', { name: 'Rota boyunca hava örnekleri' })).toHaveAttribute(
       'tabindex',
