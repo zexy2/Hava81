@@ -214,7 +214,7 @@ textarea:focus-visible {
 .atlas-brand__index small {
   margin-top: -0.15rem;
   color: var(--color-atlas-muted);
-  font-size: 0.55rem;
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.12em;
 }
@@ -1035,7 +1035,7 @@ kbd {
   }
 
   .atlas-brand__index small {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .atlas-header__actions {
