@@ -421,7 +421,7 @@ const App: React.FC = () => {
             className={`atlas-header${isMobileSearchOpen ? ' atlas-header--search-open' : ''}`}
           >
             <div className="atlas-header__inner">
-              <a className="atlas-brand" href="#main-content">
+              <a className="atlas-brand" href="/">
                 <span className="atlas-brand__name">Hava81</span>
                 <span className="atlas-brand__index" aria-hidden="true">
                   <b>81</b>
