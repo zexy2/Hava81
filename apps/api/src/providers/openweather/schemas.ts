@@ -8,10 +8,14 @@ const coordinatesSchema = z.object({
   lat: z.number().min(-90).max(90),
 });
 
+const nonBlankProviderTextSchema = z
+  .string()
+  .refine((value) => value.trim().length > 0, 'Provider text must not be blank');
+
 const weatherConditionSchema = z.object({
   id: z.number(),
-  main: z.string().trim().min(1),
-  description: z.string().trim().min(1),
+  main: nonBlankProviderTextSchema,
+  description: nonBlankProviderTextSchema,
   icon: z.string().regex(/^(?:0[1-4]|09|10|11|13|50)[dn]$/),
 });
 
@@ -54,13 +58,13 @@ export const currentWeatherUpstreamSchema = z
         'Current-weather observation timestamp is materially in the future',
       ),
     sys: z.object({
-      country: z.string().trim().min(1),
+      country: nonBlankProviderTextSchema,
       sunrise: z.number().int().nonnegative(),
       sunset: z.number().int().nonnegative(),
     }),
     timezone: z.number().min(-43_200).max(50_400),
     id: z.number(),
-    name: z.string().trim().min(1),
+    name: nonBlankProviderTextSchema,
   })
   .refine((data) => data.main.temp_min <= data.main.temp_max, {
     message: 'Current-weather minimum temperature exceeds maximum temperature',
@@ -100,9 +104,9 @@ export const forecastUpstreamSchema = z.object({
   list: z.array(forecastItemSchema).min(1),
   city: z.object({
     id: z.number().optional(),
-    name: z.string().trim().min(1),
+    name: nonBlankProviderTextSchema,
     coord: coordinatesSchema,
-    country: z.string().trim().min(1),
+    country: nonBlankProviderTextSchema,
     timezone: z.number().min(-43_200).max(50_400),
   }),
 });
