@@ -102,6 +102,8 @@ jobs:
         run: bash scripts/test-api-operation-lock.sh
       - name: Verify API stable-slot deployment plan
         run: bash scripts/test-api-stable-slot-plan.sh
+      - name: Verify Nginx preferred-port install template
+        run: bash scripts/test-nginx-primary-template.sh
       - name: Verify API build timeout policy
         run: bash scripts/test-api-build-timeout-policy.sh
       - name: Verify API rollback target state
