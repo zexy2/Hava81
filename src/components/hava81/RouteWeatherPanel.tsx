@@ -49,7 +49,8 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
   const origin = useMemo(() => TURKISH_CITIES.find(city => city.name === originName), [originName]);
-  const routeSelectionStatusId = originName === destinationName ? 'route-weather-same-city' : undefined;
+  const routeSelectionStatusId =
+    originName === destinationName ? 'route-weather-same-city' : undefined;
   const destination = useMemo(
     () => TURKISH_CITIES.find(city => city.name === destinationName),
     [destinationName]
@@ -153,9 +154,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
       setResult(value);
       setResultExpiresAt(
         Math.min(
-          departureTime +
-            value.estimatedDurationMinutes * 60_000 +
-            ROUTE_RESULT_EXPIRY_CUSHION_MS,
+          departureTime + value.estimatedDurationMinutes * 60_000 + ROUTE_RESULT_EXPIRY_CUSHION_MS,
           Date.now() + ROUTE_RESULT_MAX_AGE_MS + ROUTE_RESULT_EXPIRY_CUSHION_MS
         )
       );
@@ -321,12 +320,22 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               })}
             </p>
             {result.betterDeparture ? (
-              <p className="route-weather__better">
+              <button
+                type="button"
+                className="route-weather__better"
+                onClick={() => {
+                  setDepartureEdited(true);
+                  setDeparture(
+                    toTurkeyLocalInputValue(new Date(result.betterDeparture!.departure))
+                  );
+                  invalidateRequest();
+                }}
+              >
                 {t('hava81.route.better', {
                   time: formatTime(result.betterDeparture.departure),
                   improvement: result.betterDeparture.improvement,
                 })}
-              </p>
+              </button>
             ) : null}
             <div
               className="route-weather__segments"
