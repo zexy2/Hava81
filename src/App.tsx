@@ -230,6 +230,7 @@ const App: React.FC = () => {
       setMetaContent('meta[name="twitter:description"]', cityDescription);
       setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
       setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
+      setMetaContent('meta[property="og:locale:alternate"]', settings.language === 'en' ? 'tr_TR' : 'en_US');
     }
   }, [settings.language, t, weather]);
 
