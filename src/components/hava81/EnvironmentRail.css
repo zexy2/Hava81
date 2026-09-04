@@ -180,4 +180,8 @@
   .environment-rail__module--action::after {
     transition: none;
   }
+
+  .environment-rail__module--action:active {
+    transform: none;
+  }
 }
