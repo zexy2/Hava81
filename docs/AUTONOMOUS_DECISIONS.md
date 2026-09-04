@@ -1454,3 +1454,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Rotate Hava81 observer history/event logs at 8 MiB and retain six compressed generations, installing the policy only after logrotate accepts the generated configuration.
 
 **Why:** The observer is intentionally append-only and runs every five minutes. Without bounded retention, healthy long-lived operation can itself contribute to disk pressure. Rotation preserves recent operational evidence while preventing unbounded growth, and install-time validation fails closed before replacing the active policy.
+### 2026-09-04 13:25 TRT — Git compaction is same-origin, dry-run-first and source-preserving
+
+**Decision:** Disk recovery may compact loose objects in standalone Hava81 repositories with normal `git gc`, but only after same-origin validation and an explicit `--apply`; foreign repos, linked worktrees and working-tree files are outside the tool's mutation scope.
+
+**Why:** Autonomous runs accumulate many preserved checkouts because dirty or unrepresented work must not be deleted. Reachable Git objects can still be repacked safely. A narrow dry-run-first tool captures that low-risk recovery path without turning disk pressure into permission to discard source/history.
