@@ -3297,3 +3297,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a focused component regression proving the recommended instant is converted to Türkiye wall-clock time, applied to the input, and the previous result is removed after activation.
 - Local validation: focused RouteWeatherPanel Vitest 16/16 PASS, type-check PASS, ESLint PASS, production build PASS, git diff --check PASS. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
 - Branch: `automation/hava81-route-use-better-departure-1018`. Next: commit/push/open PR; inspect exact-head CI while re-checking main #886 rollout/production independently.
+
+## 2026-09-04 13:40 TRT — expose overflow on mobile horizontal choice rails
+- Current mobile Forecast interval choices and Activity sensitivity chips were horizontally scrollable but deliberately hid the native scrollbar, making off-screen choices less discoverable for touchpad/mouse users even though keyboard focus handling was already correct.
+- Kept the same compact rails, snap behavior, touch targets and selected-state styling, but changed only their overflow affordance to a thin native scrollbar with existing design-token line colors; no extra labels or decorative chrome were added.
+- Extended the existing mobile-390 browser regression to require the two horizontal choice rails to remain `overflow-x:auto` with `scrollbar-width:thin`, while preserving the focus indicator contract.
+- Dependency-free gates: `git diff --check` and static scroll-affordance contract PASS. Full hosted browser/Lighthouse/lint/type/build/CodeQL remain mandatory before merge.

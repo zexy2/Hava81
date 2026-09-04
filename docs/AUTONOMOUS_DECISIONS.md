@@ -1448,3 +1448,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+### 2026-09-04 13:40 TRT — overflowing mobile choice rails keep a visible native cue
+
+**Decision:** When compact horizontal controls genuinely overflow, retain a thin native scrollbar instead of hiding it entirely.
+
+**Why:** Hidden scrollbars reduce discoverability for pointer users and make partially off-screen options look clipped. A thin native cue costs little vertical space, preserves platform behavior and aligns Forecast/Activity controls with the new five-day mobile forecast strip.
