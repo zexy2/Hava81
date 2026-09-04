@@ -44,20 +44,6 @@ async function waitForFile(path: string, timeoutMs = 5_000) {
   throw new Error(`Timed out waiting for ${path}`);
 }
 
-async function waitForProcessExit(pid: number, timeoutMs = 5_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      process.kill(pid, 0);
-      await new Promise(resolveWait => setTimeout(resolveWait, 25));
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ESRCH') return;
-      throw error;
-    }
-  }
-  throw new Error(`Process ${pid} did not exit`);
-}
-
 afterEach(async () => {
   await Promise.all(cleanupRoots.splice(0).map(path => rm(path, { recursive: true, force: true })));
 });
@@ -77,12 +63,28 @@ describe('Playwright temp runner', () => {
     expect(await runnerTempDirs(root)).toHaveLength(0);
   });
 
-  it.skipIf(process.platform === 'win32')('terminates the child process group and cleans temp on SIGTERM', async () => {
+  it.skipIf(process.platform === 'win32')('forwards SIGTERM to the child process group and cleans temp', async () => {
     const root = await makeTempRoot();
     const bin = join(root, 'bin');
     const parentPidFile = join(root, 'fake-parent.pid');
     const childPidFile = join(root, 'fake-child.pid');
+    const parentSignalFile = join(root, 'fake-parent.signal');
+    const childSignalFile = join(root, 'fake-child.signal');
     await mkdir(bin);
+
+    const fakeChild = join(bin, 'fake-child');
+    await writeFile(
+      fakeChild,
+      [
+        '#!/bin/sh',
+        `printf '%s' "$$" > "$FAKE_CHILD_PID"`,
+        `trap 'printf "%s" TERM > "$FAKE_CHILD_SIGNAL"; exit 0' TERM`,
+        `trap 'printf "%s" INT > "$FAKE_CHILD_SIGNAL"; exit 0' INT`,
+        'while :; do sleep 1; done',
+        '',
+      ].join('\n')
+    );
+    await chmod(fakeChild, 0o755);
 
     const fakeNpx = join(bin, 'npx');
     await writeFile(
@@ -90,8 +92,9 @@ describe('Playwright temp runner', () => {
       [
         '#!/bin/sh',
         `printf '%s' "$$" > "$FAKE_PARENT_PID"`,
-        'sleep 300 &',
-        `printf '%s' "$!" > "$FAKE_CHILD_PID"`,
+        `trap 'printf "%s" TERM > "$FAKE_PARENT_SIGNAL"; exit 0' TERM`,
+        `trap 'printf "%s" INT > "$FAKE_PARENT_SIGNAL"; exit 0' INT`,
+        '"$FAKE_CHILD" &',
         'wait',
         '',
       ].join('\n')
@@ -107,6 +110,9 @@ describe('Playwright temp runner', () => {
         TMP: root,
         FAKE_PARENT_PID: parentPidFile,
         FAKE_CHILD_PID: childPidFile,
+        FAKE_PARENT_SIGNAL: parentSignalFile,
+        FAKE_CHILD_SIGNAL: childSignalFile,
+        FAKE_CHILD: fakeChild,
       },
       stdio: 'ignore',
     });
@@ -116,14 +122,20 @@ describe('Playwright temp runner', () => {
     expect(parentPid).toBeGreaterThan(0);
     expect(childPid).toBeGreaterThan(0);
 
-    wrapper.kill('SIGTERM');
-    await new Promise<void>((resolveClose, reject) => {
+    const wrapperClosed = new Promise<void>((resolveClose, reject) => {
       wrapper.once('error', reject);
       wrapper.once('close', () => resolveClose());
     });
+    wrapper.kill('SIGTERM');
 
-    await waitForProcessExit(parentPid);
-    await waitForProcessExit(childPid);
+    const [parentSignal, childSignal] = await Promise.all([
+      waitForFile(parentSignalFile),
+      waitForFile(childSignalFile),
+      wrapperClosed,
+    ]);
+
+    expect(parentSignal).toBe('TERM');
+    expect(childSignal).toBe('TERM');
     expect(await runnerTempDirs(root)).toHaveLength(0);
   }, 12_000);
 });
