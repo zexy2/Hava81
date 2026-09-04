@@ -1448,3 +1448,10 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+
+### 2026-09-04 13:18 TRT — five-day mobile forecast favors horizontal scanning
+
+**Decision:** Below 640px, keep the same five forecast days and data but present them as one keyboard-focusable horizontal strip with snap points and a visible scrollbar; desktop/tablet retain the existing vertical list.
+
+**Why:** Five full-width mobile rows spend a large amount of the decision flow on repeated day structure. A bounded horizontal strip keeps all days available without collapsing data, preserves text-resize/page-overflow safety, and exposes its scrollability to keyboard and assistive-technology users.

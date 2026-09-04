@@ -3102,6 +3102,59 @@ test('desktop forecast days use compact rows only when the card narrows', async 
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
+test('mobile five-day forecast becomes a compact keyboard-scrollable strip', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile five-day forecast hierarchy regression');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const stripDaily = Array.from({ length: 5 }, (_, index) => ({
+    date: fixtureLocalDate(index),
+    tempMin: 18 + index,
+    tempMax: 25 + index,
+    icon: index % 2 === 0 ? '02d' : '10d',
+    description: index % 2 === 0 ? 'parçalı bulutlu' : 'hafif yağmurlu',
+    pop: index % 2 === 0 ? 15 : 55,
+  }));
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.route('**/api/v1/weather/forecast**', route =>
+    route.fulfill({ json: { ...forecast, daily: stripDaily } })
+  );
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ json: { ...hourlyForecast, daily: stripDaily } })
+  );
+  await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  const days = page.locator('.hava81-forecast-atlas__days');
+  await expect(days).toBeVisible();
+  await expect(days).toHaveAttribute('tabindex', '0');
+  const layout = await days.evaluate(element => {
+    const rows = Array.from(element.querySelectorAll<HTMLElement>('.hava81-forecast-atlas__day'));
+    const rect = element.getBoundingClientRect();
+    const rowRects = rows.map(row => row.getBoundingClientRect());
+    return {
+      height: rect.height,
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      overflowX: getComputedStyle(element).overflowX,
+      rowCount: rows.length,
+      rowTops: rowRects.map(row => Math.round(row.top)),
+      rowWidths: rowRects.map(row => row.width),
+      rowsFit: rows.every(row => row.scrollWidth <= row.clientWidth + 1),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+
+  expect(layout.rowCount).toBeGreaterThanOrEqual(5);
+  expect(layout.height).toBeLessThan(220);
+  expect(layout.scrollWidth).toBeGreaterThan(layout.clientWidth);
+  expect(layout.overflowX).toBe('auto');
+  expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeLessThanOrEqual(1);
+  expect(layout.rowWidths.every(width => width >= 140)).toBe(true);
+  expect(layout.rowsFit).toBe(true);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
 test('mobile daily forecast reflows instead of clipping at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile daily forecast text-resize regression');
   await page.setViewportSize({ width: 390, height: 844 });

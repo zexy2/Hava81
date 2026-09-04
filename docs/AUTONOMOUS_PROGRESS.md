@@ -3297,3 +3297,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a focused component regression proving the recommended instant is converted to Türkiye wall-clock time, applied to the input, and the previous result is removed after activation.
 - Local validation: focused RouteWeatherPanel Vitest 16/16 PASS, type-check PASS, ESLint PASS, production build PASS, git diff --check PASS. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
 - Branch: `automation/hava81-route-use-better-departure-1018`. Next: commit/push/open PR; inspect exact-head CI while re-checking main #886 rollout/production independently.
+
+
+## 2026-09-04 13:18 TRT — compact five-day forecast into a mobile scan strip
+- Continued independently from exact main `cd3ccbb2a11e452c0deb25cf38898b0e17fed501` while host disk/API rollout gates remain closed.
+- On sub-640px layouts, the five daily rows consumed substantial vertical space before users reached later planning content. Converted only the mobile presentation to a horizontal snap strip with 9rem minimum cards, thin visible scrollbar, keyboard focus, and an explicit localized accessible name. Desktop/tablet layout and all forecast values remain unchanged.
+- Added a mobile-390 Chromium regression proving at least five days stay in one horizontal row, cards remain readable, the strip is keyboard-focusable/scrollable, and the page itself does not overflow horizontally. Existing 200% text-resize coverage remains in place.
+- Local dependency-free gates: `git diff --check` and source contract inspection pass. Dependency installation is intentionally avoided while the disk hard gate is active; exact-head hosted lint/type/unit/build/browser/Lighthouse/CodeQL remain mandatory before merge.

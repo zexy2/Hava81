@@ -161,6 +161,7 @@ export const tr = {
         '{{day}} için yağış olasılığı %{{percent}}; günlük toplam {{amount}}.',
       dailyPrecipitationAmount: '{{day}} için günlük toplam yağış {{amount}}.',
       noDailyPrecipitation: '{{day}} için yağış beklenmiyor.',
+      dailyRegion: 'Kaydırılabilir 5 günlük tahmin',
       dailyRange: 'Yüksek {{high}}{{unit}}, düşük {{low}}{{unit}}',
       dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
