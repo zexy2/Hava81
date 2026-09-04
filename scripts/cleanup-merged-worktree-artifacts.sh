@@ -21,9 +21,9 @@ Docker resources and the current/primary worktrees are never removed. With
 branch/ref is preserved. With --stale-clean-hours=N, clean attached linked
 checkouts older than N hours may also be removed even when their branch is not
 merged, but only when the local branch ref still points exactly at that HEAD.
-Detached, dirty, recent, current and primary worktrees remain excluded. With
---audit, the command remains read-only and reports aggregate exclusion counts so
-ownership/status failures are visible during disk incidents.
+Detached, dirty, recent, current, primary and process-in-use worktrees remain
+excluded. Process use is detected from open files/cwd under the checkout before
+any artifact or worktree removal. With --audit, the command remains read-only and reports aggregate exclusion counts so ownership/status failures are visible during disk incidents.
 USAGE
 }
 
@@ -79,7 +79,16 @@ audit_scanned_count=0
 audit_dirty_count=0
 audit_status_unreadable_count=0
 audit_missing_count=0
+audit_in_use_count=0
 
+worktree_is_in_use() {
+  local target="$1" cwd_snapshot
+  cwd_snapshot="$(ls -l /proc/[0-9]*/cwd 2>/dev/null || true)"
+  if awk -v target="$target" '{ marker=index($0, " -> "); if (marker) { path=substr($0, marker+4); if (path == target || index(path, target "/") == 1) found=1 } } END { exit found ? 0 : 1 }' <<<"$cwd_snapshot"; then
+    return 0
+  fi
+  ps -eo args= 2>/dev/null | grep -F -- "$target" | grep -qv -F -- "grep -F -- $target"
+}
 tree_is_removable() {
   local target="$1"
   local parent
@@ -108,6 +117,11 @@ while IFS= read -r wt; do
   fi
   if [[ -n "$status_output" ]]; then
     audit_dirty_count=$((audit_dirty_count + 1))
+    continue
+  fi
+
+  if worktree_is_in_use "$wt"; then
+    audit_in_use_count=$((audit_in_use_count + 1))
     continue
   fi
 
@@ -203,7 +217,7 @@ while IFS= read -r wt; do
 done < <(git worktree list --porcelain | awk '/^worktree / {sub(/^worktree /, ""); print}')
 
 if [[ "$audit" == true ]]; then
-  printf "Audit: scanned=%d dirty=%d status_unreadable=%d missing=%d. No files, refs, or worktrees were changed.\n" "$audit_scanned_count" "$audit_dirty_count" "$audit_status_unreadable_count" "$audit_missing_count"
+  printf "Audit: scanned=%d dirty=%d in_use=%d status_unreadable=%d missing=%d. No files, refs, or worktrees were changed.\n" "$audit_scanned_count" "$audit_dirty_count" "$audit_in_use_count" "$audit_status_unreadable_count" "$audit_missing_count"
 fi
 
 if [[ "$remove_worktrees" == true ]]; then
