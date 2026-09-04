@@ -3248,3 +3248,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Continued from exact main `0ca1d418feed87b7499d317247db49e36b131880` in isolated branch `automation/hava81-run12-header-actions-group` while #850/#845/#847 validate separately.
 - Audited the header quick-action cluster and found it marked as `<nav>` even though every child is an action button. Replaced only that semantic wrapper with a named `role="group"`; CSS class, behavior, labels, controls and layout stay unchanged.
 - Added a focused source regression preventing the action cluster from reverting to a navigation landmark. `git diff --check` and a dependency-free source assertion are required locally; hosted CI/CD + CodeQL remain mandatory before merge.
+
+## 2026-09-04 05:28 TRT — restore conventional home behavior for the Hava81 brand link
+- Audited header navigation semantics on exact main `271672bec0908b87c88c89225230ee1c6e814fb9` while its production rollout runs independently.
+- The visible Hava81 brand link duplicated the dedicated skip link by targeting `#main-content`; users activating a conventional header brand therefore stayed on the same city page instead of returning home.
+- Changed only the brand destination to `/`; the dedicated skip-to-content control remains untouched and retains its focus-management behavior.
+- Tightened the existing App integration assertion so the accessible `Hava81` brand link must remain a real home link.
+- No weather values, providers, scoring, route-weather logic or safety guidance changed.
