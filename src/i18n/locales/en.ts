@@ -450,6 +450,7 @@ export const en = {
       swap: 'Swap direction',
       sameCity: 'Choose different cities for origin and destination.',
       departure: 'Departure time · Türkiye time',
+      departureHelp: 'Choose a departure between now and the next 18 hours.',
       check: 'Check corridor',
       corridor: 'Approximate weather corridor',
       estimate: 'Approx. {{distance}} km · {{minutes}} min',
