@@ -3262,3 +3262,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The just-completed blue-green deployment spent roughly seven minutes in the Docker image build before any traffic switch. A registry/network stall could therefore hold the shared deploy lock indefinitely even while production remains healthy.
 - Added a configurable 600s default build timeout with a 30s TERM→KILL grace window. Invalid timeout configuration fails closed; timeout/build failure exits before candidate startup or any traffic switch and states that traffic is unchanged.
 - Added a dependency-free policy regression and CI wiring. `bash -n`, stable-slot PLAN_ONLY regression, timeout-policy regression, and `git diff --check` pass locally. No weather/API semantics, provider logic, scoring, readiness contract, MGM semantics or recommendation behavior changed.
+## 2026-09-04 07:02 TRT — align Oracle deploy docs with stable 4002 production topology
+- Exact main `39e240b2ea91aac3e6b9d2091288336bc63f0484` already encodes stable production on 4002 with 4001 as rollback, but `deploy/oracle/README.md` still claimed that the active slot alternates permanently between them.
+- Updated only the operator documentation: normal deploys finish on validated 4002, restore the previous production image to 4001, and use 4001 publicly only during the controlled promotion window or an explicit rollback.
+- No deploy script, traffic, API, weather/provider, scoring, MGM or recommendation behavior changed. `git diff --check` passes.
