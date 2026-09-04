@@ -1464,3 +1464,6 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Linked-worktree cleanup apply passes must run as the uid that owns the repository's shared Git directory; sudo/root is not an accepted shortcut for mutation when the repository is user-owned.
 
 **Why:** `git worktree remove` writes shared refs/reflogs/worktree metadata. A privileged apply can therefore leave ownership drift that breaks later normal fetch/commit operations. Failing closed is safer than repairing permissions after every disk incident, while audit/dry-run remains available to privileged operators.
+
+## 2026-09-04 — Saved-city selectors expose current location, not pressed toggle state
+Saved-city buttons change the weather location being viewed; they are not independent on/off toggles. Expose only the active saved city with `aria-current="location"`, matching the main comparison and bottom-navigation location semantics. Preserve the existing visual active class and forced-colors distinction. This changes only accessibility semantics; saved-city persistence, weather fetching and guidance are unchanged.

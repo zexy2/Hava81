@@ -17,8 +17,8 @@ describe('CityTabs', () => {
     );
 
     expect(screen.getByRole('button', { name: 'İstanbul hava durumunu göster' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
+      'aria-current',
+      'location'
     );
     expect(screen.queryByText('20°')).not.toBeInTheDocument();
     expect(document.querySelector('.city-tabs__symbol')).not.toBeInTheDocument();
