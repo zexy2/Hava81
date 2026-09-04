@@ -75,6 +75,30 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+BUILD_DISK_RESERVE_BYTES="${HAVA81_API_BUILD_DISK_RESERVE_BYTES:-536870912}"
+BUILD_DISK_MAX_USED_PERCENT="${HAVA81_API_BUILD_DISK_MAX_USED_PERCENT:-92}"
+if [[ ! "$BUILD_DISK_RESERVE_BYTES" =~ ^[0-9]+$ ]]; then
+  echo "invalid HAVA81_API_BUILD_DISK_RESERVE_BYTES: $BUILD_DISK_RESERVE_BYTES" >&2
+  exit 1
+fi
+if [[ ! "$BUILD_DISK_MAX_USED_PERCENT" =~ ^[0-9]+$ || "$BUILD_DISK_MAX_USED_PERCENT" -lt 1 || "$BUILD_DISK_MAX_USED_PERCENT" -gt 99 ]]; then
+  echo "invalid HAVA81_API_BUILD_DISK_MAX_USED_PERCENT: $BUILD_DISK_MAX_USED_PERCENT" >&2
+  exit 1
+fi
+read -r BUILD_DISK_TOTAL_BYTES BUILD_DISK_FREE_BYTES < <(df -B1 --output=size,avail "$REPO_ROOT" | awk 'NR == 2 { print $1, $2 }')
+if [[ ! "$BUILD_DISK_TOTAL_BYTES" =~ ^[0-9]+$ || ! "$BUILD_DISK_FREE_BYTES" =~ ^[0-9]+$ ]]; then
+  echo "could not determine filesystem capacity before API build; traffic unchanged" >&2
+  exit 1
+fi
+BUILD_DISK_REQUIRED_FOR_USAGE=$((
+  (BUILD_DISK_TOTAL_BYTES * (100 - BUILD_DISK_MAX_USED_PERCENT) + 99) / 100
+))
+BUILD_DISK_REQUIRED_BYTES=$((BUILD_DISK_REQUIRED_FOR_USAGE + BUILD_DISK_RESERVE_BYTES))
+if (( BUILD_DISK_FREE_BYTES < BUILD_DISK_REQUIRED_BYTES )); then
+  echo "insufficient disk headroom for API build: free=$BUILD_DISK_FREE_BYTES required=$BUILD_DISK_REQUIRED_BYTES reserve=$BUILD_DISK_RESERVE_BYTES max_used_percent=$BUILD_DISK_MAX_USED_PERCENT; traffic unchanged" >&2
+  exit 1
+fi
+
 PREVIOUS_PRODUCTION_IMAGE=""
 if [[ "$PROMOTE_TO_PREFERRED" == "1" ]]; then
   preferred_container="$(HOST_PORT=4002 docker compose -p "$SLOT_4002_PROJECT" ps -q weather-api)"
