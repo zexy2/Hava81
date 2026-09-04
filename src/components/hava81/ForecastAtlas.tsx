@@ -255,7 +255,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     (hourlySummary.peakPrecipitation.precipitation > 0 ||
       (hourlySummary.peakPrecipitation.precipitationMm ?? 0) > 0)
   );
-  const currentLocationHourKey = atLocationTime(new Date(currentTimeMs)).toISOString().slice(0, 13);
+  const currentLocationTime = atLocationTime(new Date(currentTimeMs));
+  const currentLocationDateKey = currentLocationTime.toISOString().slice(0, 10);
+  const currentLocationHourKey = currentLocationTime.toISOString().slice(0, 13);
 
   const intervalOptions = useMemo(
     () =>
@@ -661,6 +663,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               const precipitation = Math.round(day.precipitation * 100);
               const precipitationAmount = formatPrecipitationAmount(day.precipitationMm, locale);
               const hasPrecipitation = precipitation > 0 || Boolean(precipitationAmount);
+              const isCurrentDate = day.date.toISOString().slice(0, 10) === currentLocationDateKey;
               const roundedRangeCollapsed =
                 day.convertedMax === day.convertedMin &&
                 Math.abs(day.convertedMaxExact - day.convertedMinExact) >= 0.1;
@@ -675,6 +678,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                   <time
                     className="hava81-forecast-atlas__day-name"
                     dateTime={day.date.toISOString()}
+                    aria-current={isCurrentDate ? 'date' : undefined}
                   >
                     {formatDay(day.date)}
                   </time>
