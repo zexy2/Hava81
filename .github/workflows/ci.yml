@@ -30,6 +30,10 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Audit frontend production dependencies
+        env:
+          NPM_AUDIT_MAX_ATTEMPTS: '2'
+          NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS: '60'
+          NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE: '1'
         run: bash scripts/run-npm-audit-with-retry.sh npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run type-check
@@ -74,6 +78,10 @@ jobs:
           cache-dependency-path: apps/api/package-lock.json
       - run: npm ci --prefix apps/api
       - name: Audit API dependencies
+        env:
+          NPM_AUDIT_MAX_ATTEMPTS: '2'
+          NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS: '60'
+          NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE: '1'
         run: bash scripts/run-npm-audit-with-retry.sh npm audit --prefix apps/api --audit-level=high
       - run: npm run api:type-check
       - run: npm run api:test
