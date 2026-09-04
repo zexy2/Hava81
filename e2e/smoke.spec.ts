@@ -677,10 +677,12 @@ test('mobile horizontal choice rails keep focused actions inside the scroll view
         outlineWidth: parseFloat(style.outlineWidth),
         outlineOffset: parseFloat(style.outlineOffset),
         railOverflowX: railStyle.overflowX,
+        railScrollbarWidth: railStyle.scrollbarWidth,
       };
     }, railSelector);
 
     expect(state.railOverflowX).toBe('auto');
+    expect(state.railScrollbarWidth).toBe('thin');
     expect(state.outlineStyle).not.toBe('none');
     expect(state.outlineWidth).toBeGreaterThanOrEqual(2);
     expect(state.outlineOffset).toBeLessThanOrEqual(0);
