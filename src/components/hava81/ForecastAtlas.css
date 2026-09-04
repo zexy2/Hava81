@@ -111,12 +111,13 @@
   padding: 0 10px 0 0;
   border-block: 1px solid var(--forecast-line);
   scroll-snap-type: x proximity;
-  scrollbar-width: none;
+  scrollbar-color: var(--forecast-line) transparent;
+  scrollbar-width: thin;
   overscroll-behavior-inline: contain;
 }
 
 .hava81-forecast-atlas__range::-webkit-scrollbar {
-  display: none;
+  height: 0.35rem;
 }
 
 .hava81-forecast-atlas__range-button {
