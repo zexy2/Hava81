@@ -779,11 +779,11 @@ test('forced colors keeps the active bottom navigation visibly distinct', async 
   await page.emulateMedia({ forcedColors: 'active' });
   await page.goto('/istanbul');
 
-  const current = page.locator('.atlas-bottom-nav__button[aria-current="page"]');
+  const current = page.locator('.atlas-bottom-nav__button[aria-current="location"]');
   const inactive = page.locator('.atlas-bottom-nav__button:not([aria-current])').first();
   await expect(current).toBeVisible();
   await expect(inactive).toBeVisible();
-  await expect(current).toHaveAttribute('aria-current', 'page');
+  await expect(current).toHaveAttribute('aria-current', 'location');
 
   const state = await current.evaluate((element, inactiveElement) => {
     if (!(inactiveElement instanceof HTMLElement)) throw new Error('Missing inactive bottom navigation item');
@@ -4558,7 +4558,7 @@ test('mobile map province marker previews the city before switching views', asyn
   await cityButton.click();
   await expect(bursaWeatherRequest).resolves.toBeTruthy();
   await expect(page.locator('#weather-map-region')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');
 });
 
 test('mobile saved navigation does not create a favorite just by opening the view', async ({ page }, testInfo) => {
@@ -4592,7 +4592,7 @@ test('mobile saved navigation replaces the today dashboard', async ({ page }, te
   await page.getByRole('button', { name: 'Kayıtlı' }).click();
   await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
   await expect(page.locator('.atlas-dashboard')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Kayıtlı' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: 'Kayıtlı' })).toHaveAttribute('aria-current', 'location');
 });
 
 test('activity preference and time range change the personalized plan', async ({ page }, testInfo) => {
