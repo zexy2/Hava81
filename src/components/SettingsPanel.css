@@ -196,81 +196,6 @@
   stroke-linejoin: round;
 }
 
-.settings-toggle {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 4.5rem;
-  padding: 1rem;
-  background: var(--color-atlas-field, #f3f6f4);
-  border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: var(--radius-sm, 4px);
-}
-
-.settings-toggle--disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-
-.settings-toggle__text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9375rem;
-}
-
-.settings-toggle__text small {
-  max-width: 30ch;
-  color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.settings-toggle input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.settings-toggle__slider {
-  position: relative;
-  flex: 0 0 auto;
-  width: 3rem;
-  height: 1.75rem;
-  background: var(--color-atlas-line, #c8d6d2);
-  border: 1px solid var(--color-atlas-muted, #5c6c6a);
-  border-radius: 999px;
-}
-
-.settings-toggle__slider::before {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 1.25rem;
-  height: 1.25rem;
-  content: '';
-  background: var(--color-atlas-paper, #fff);
-  border: 1px solid var(--color-atlas-muted, #5c6c6a);
-  border-radius: 50%;
-  transition: transform 220ms cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.settings-toggle input:checked + .settings-toggle__slider {
-  background: var(--color-aegean, #146b73);
-}
-
-.settings-toggle input:checked + .settings-toggle__slider::before {
-  transform: translateX(1.25rem);
-}
-
 .settings-panel__footer {
   padding: clamp(0.5rem, 5dvh, 1rem) 1.5rem
     max(clamp(0.5rem, 5dvh, 1rem), env(safe-area-inset-bottom));
@@ -285,8 +210,7 @@
 }
 
 .settings-option:focus-visible,
-.settings-panel__close:focus-visible,
-.settings-toggle:focus-within {
+.settings-panel__close:focus-visible {
   outline: 2px solid var(--color-focus, #146b73);
   outline-offset: 2px;
 }
