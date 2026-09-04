@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run type-check
@@ -69,7 +69,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: apps/api/package-lock.json
-      - run: npm ci --prefix apps/api
+      - run: npm ci --prefix apps/api --no-audit
       - run: npm audit --prefix apps/api --audit-level=high
       - run: npm run api:type-check
       - run: npm run api:test
@@ -96,7 +96,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit
       - run: npm run build
         env:
           VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
@@ -125,7 +125,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit
       - name: Cache Playwright Chromium
         uses: actions/cache@v5
         with:
@@ -150,7 +150,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit
       - uses: actions/download-artifact@v8
         with:
           name: dist
