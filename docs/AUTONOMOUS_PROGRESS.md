@@ -3297,3 +3297,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a focused component regression proving the recommended instant is converted to Türkiye wall-clock time, applied to the input, and the previous result is removed after activation.
 - Local validation: focused RouteWeatherPanel Vitest 16/16 PASS, type-check PASS, ESLint PASS, production build PASS, git diff --check PASS. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
 - Branch: `automation/hava81-route-use-better-departure-1018`. Next: commit/push/open PR; inspect exact-head CI while re-checking main #886 rollout/production independently.
+
+## 2026-09-04 13:42 TRT — remove dead Settings toggle styling
+- A reduced-motion audit found a full `.settings-toggle*` control/animation style block, but repository-wide source/test/E2E search confirmed no component emits or references any of those selectors.
+- Removed the unused toggle block and its orphaned focus selector instead of adding more reduced-motion code for an element that does not exist. This trims Settings CSS and removes an unowned animation/focus maintenance surface with no rendered behavior change.
+- Local validation: repository selector search returns no `settings-toggle` references, CSS brace balance PASS, and `git diff --check` PASS. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.
+- No settings options, accessibility semantics of rendered controls, weather data, provider/freshness logic, API, scoring, MGM behavior or recommendations changed.

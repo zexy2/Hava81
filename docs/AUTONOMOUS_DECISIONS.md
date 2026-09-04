@@ -1448,3 +1448,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 - Keep the existing full guidance and decision domain unchanged; render concise mobile “data · action” rows while retaining the full sentence as the accessible list-item name. Desktop keeps the full copy.
 - Mobile signal rows use the existing outer saffron callout boundary plus light horizontal separators instead of nested left rails.
 - Acceptance: mobile-390 callout <180px in fixture, no page overflow, full accessible names retained, 320px/200 0.000000e+00xisting decision containment remains green.
+
+### 2026-09-04 13:42 TRT — remove unowned Settings CSS instead of maintaining it
+
+**Decision:** Delete the unused `.settings-toggle*` styling rather than preserving or extending reduced-motion rules for selectors that no rendered Hava81 component owns.
+
+**Why:** Dead styling adds bytes and creates false maintenance obligations. Repository-wide selector search is a stronger signal than patching an animation that cannot currently execute; future toggles should ship their styling together with an actual component and tests.
