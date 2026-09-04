@@ -1431,3 +1431,8 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Why:** Image construction happens before any traffic switch. Bounding that network-sensitive step prevents an unavailable registry from holding the deployment lock indefinitely while leaving the currently validated production slot untouched.
 
 - 2026-09-04 — Interactive map surfaces should expose a named region tied to their visible heading. Use per-instance IDs rather than hard-coded landmark IDs so lazy/reused map instances cannot create duplicate document IDs.
+### 2026-09-04 06:57 TRT — hourly range controls describe display sampling explicitly
+
+**Decision:** Forecast Atlas labels its 1/2/3/4/6/8/12-hour buttons as a display interval and keeps a visible sentence stating that the 24-hour forecast horizon does not change.
+
+**Why:** “Forecast interval” can imply that selecting 6h reduces the forecast to six hours. The control actually samples the same fixed 24-hour evidence window. Naming that distinction directly improves user understanding without changing any forecast data or calculation.

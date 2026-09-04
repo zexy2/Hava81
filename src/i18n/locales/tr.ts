@@ -118,7 +118,8 @@ export const tr = {
       stale: 'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar tahmin grafiği gösterilmiyor.',
 
       hourlyForecast: 'Saatlik tahmin · sonraki 24 saat',
-      intervalControlLabel: 'Tahmin aralığı',
+      intervalControlLabel: 'Gösterim aralığı',
+      intervalControlHelp: '24 saatlik tahmin sabit kalır; seçim yalnız grafikte hangi saatlerin gösterildiğini değiştirir.',
       summaryLabel: 'Saatlik tahmin özeti',
       summaryLow: 'En düşük',
       summaryTemperature: 'Sıcaklık',
@@ -129,7 +130,7 @@ export const tr = {
       hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} saat',
       hourUnitSingular: 'saat',
       hourUnitPlural: 'saat',
-      intervalOption: '{{hours}} saatlik',
+      intervalOption: 'Her {{hours}} saatte bir göster',
       intervalOptionCompact: '{{hours}}s',
       formattedByHava81: 'Hava81 tarafından biçimlendirildi',
       intervalForecast: '{{hours}} saat aralıklarla tahmin',
