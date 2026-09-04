@@ -40,7 +40,7 @@ printf "%s" "$count" > "$COUNTER_FILE"
 echo "high severity vulnerability found" >&2
 exit 1
 '
-if COUNTER_FILE="$counter" NPM_AUDIT_RETRY_SLEEP_SECONDS=0 "$script" "$root/advisory"; then
+if COUNTER_FILE="$counter" NPM_AUDIT_RETRY_SLEEP_SECONDS=0 NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE=1 "$script" "$root/advisory"; then
   echo "expected advisory failure" >&2
   exit 1
 fi
@@ -61,6 +61,10 @@ fi
 [[ "$(cat "$counter")" == "3" ]]
 
 printf '0' >"$counter"
+COUNTER_FILE="$counter" NPM_AUDIT_RETRY_SLEEP_SECONDS=0 NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE=1 "$script" "$root/persistent-transient"
+[[ "$(cat "$counter")" == "3" ]]
+
+printf '0' >"$counter"
 make_fake "$root/timeout" '
 count=$(cat "$COUNTER_FILE")
 count=$((count + 1))
@@ -72,5 +76,14 @@ if COUNTER_FILE="$counter" NPM_AUDIT_MAX_ATTEMPTS=2 NPM_AUDIT_ATTEMPT_TIMEOUT_SE
   exit 1
 fi
 [[ "$(cat "$counter")" == "2" ]]
+
+printf '0' >"$counter"
+COUNTER_FILE="$counter" NPM_AUDIT_MAX_ATTEMPTS=2 NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS=1 NPM_AUDIT_RETRY_SLEEP_SECONDS=0 NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE=1 "$script" "$root/timeout"
+[[ "$(cat "$counter")" == "2" ]]
+
+if NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE=maybe "$script" true; then
+  echo "expected invalid availability policy to fail" >&2
+  exit 1
+fi
 
 echo "npm audit retry contract passed"
