@@ -1436,3 +1436,9 @@ Forecast interval choices and mobile activity preference chips intentionally use
 **Decision:** Forecast Atlas labels its 1/2/3/4/6/8/12-hour buttons as a display interval and keeps a visible sentence stating that the 24-hour forecast horizon does not change.
 
 **Why:** “Forecast interval” can imply that selecting 6h reduces the forecast to six hours. The control actually samples the same fixed 24-hour evidence window. Naming that distinction directly improves user understanding without changing any forecast data or calculation.
+
+### 2026-09-04 08:55 TRT — reduced-motion keeps decision controls stationary
+
+**Decision:** When reduced motion is requested, Activity Planner chip hover and Daily Plan share press feedback keep their color/border state changes but suppress translate transforms.
+
+**Why:** The 1px lifts are decorative interaction motion rather than necessary state communication. Keeping stationary feedback respects the user preference without weakening affordance, focus, selection, or decision semantics.
