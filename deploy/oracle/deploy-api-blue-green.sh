@@ -90,7 +90,15 @@ if [[ "$PROMOTE_TO_PREFERRED" == "1" ]]; then
 fi
 
 export HOST_PORT="$TARGET_PORT"
-docker compose -p "$PROJECT_NAME" build weather-api
+BUILD_TIMEOUT_SECONDS="${HAVA81_API_BUILD_TIMEOUT_SECONDS:-600}"
+if [[ ! "$BUILD_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+  echo "invalid HAVA81_API_BUILD_TIMEOUT_SECONDS: $BUILD_TIMEOUT_SECONDS" >&2
+  exit 1
+fi
+if ! timeout --signal=TERM --kill-after=30s "$BUILD_TIMEOUT_SECONDS" docker compose -p "$PROJECT_NAME" build weather-api; then
+  echo "API image build failed or exceeded ${BUILD_TIMEOUT_SECONDS}s; traffic unchanged" >&2
+  exit 1
+fi
 docker compose -p "$PROJECT_NAME" up -d weather-api
 
 READY_FILE="$(mktemp "/tmp/hava81-api-ready.XXXXXX.json")"
