@@ -2627,7 +2627,16 @@ test('narrow hourly atlas keeps its interval chip rail and summary readable', as
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/istanbul');
 
-  const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
+  const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
+  const intervalHelp = page.locator('.hava81-forecast-atlas__range-help');
+  await expect(intervalHelp).toBeVisible();
+  const helpLayout = await intervalHelp.evaluate(element => ({
+    fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(helpLayout.fontSize).toBeGreaterThanOrEqual(13);
+  expect(helpLayout.scrollWidth).toBeLessThanOrEqual(helpLayout.clientWidth + 1);
   const buttons = interval.getByRole('button');
   await expect(buttons).toHaveCount(7);
   const buttonBoxes = await buttons.evaluateAll(elements =>
@@ -2768,7 +2777,7 @@ test('tablet hourly interval controls keep touch-sized targets', async ({ page }
   test.skip(testInfo.project.name !== 'tablet-768', 'tablet interval touch-target regression');
   await page.goto('/istanbul');
 
-  const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
+  const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
   const buttons = interval.getByRole('button');
   await expect(buttons).toHaveCount(7);
   const boxes = await buttons.evaluateAll(elements =>
@@ -3683,21 +3692,23 @@ test('hourly interval controls resample the same 24-hour forecast', async ({ pag
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser interval coverage');
   await page.goto('/istanbul');
 
-  const interval = page.getByRole('group', { name: 'Tahmin aralığı' });
-  await expect(interval.getByRole('button', { name: '1s 1 saatlik' })).toHaveAttribute('aria-pressed', 'true');
+  const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
+  await expect(page.getByText(/24 saatlik tahmin sabit kalır/i)).toBeVisible();
+  await expect(interval).toHaveAttribute('aria-describedby', /-interval-help$/);
+  await expect(interval.getByRole('button', { name: '1s Her 1 saatte bir göster' })).toHaveAttribute('aria-pressed', 'true');
   await expect(interval.getByRole('button')).toHaveCount(7);
   for (const hours of [2, 3, 4, 6, 8, 12]) {
-    await expect(interval.getByRole('button', { name: `${hours}s ${hours} saatlik`, exact: true })).toBeVisible();
+    await expect(interval.getByRole('button', { name: `${hours}s Her ${hours} saatte bir göster`, exact: true })).toBeVisible();
   }
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
 
   const displayedTimes = async () =>
     page.locator('.hava81-forecast-atlas__hour time > span:last-child').allTextContents();
 
-  await interval.getByRole('button', { name: '2s 2 saatlik', exact: true }).click();
+  await interval.getByRole('button', { name: '2s Her 2 saatte bir göster', exact: true }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(12);
 
-  await interval.getByRole('button', { name: '3s 3 saatlik' }).click();
+  await interval.getByRole('button', { name: '3s Her 3 saatte bir göster' }).click();
   await expect(page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })).toBeVisible();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(8);
   expect((await displayedTimes()).slice(0, 4)).toEqual(['12:00', '15:00', '18:00', '21:00']);
@@ -3706,17 +3717,17 @@ test('hourly interval controls resample the same 24-hour forecast', async ({ pag
     page.locator('.hava81-forecast-atlas__hour.is-day-boundary')
   ).toContainText('00:00');
 
-  await interval.getByRole('button', { name: '4s 4 saatlik' }).click();
+  await interval.getByRole('button', { name: '4s Her 4 saatte bir göster' }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(6);
 
-  await interval.getByRole('button', { name: '6s 6 saatlik' }).click();
+  await interval.getByRole('button', { name: '6s Her 6 saatte bir göster' }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(4);
   expect(await displayedTimes()).toEqual(['12:00', '18:00', '00:00', '06:00']);
 
-  await interval.getByRole('button', { name: '8s 8 saatlik' }).click();
+  await interval.getByRole('button', { name: '8s Her 8 saatte bir göster' }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(3);
 
-  await interval.getByRole('button', { name: '12s 12 saatlik' }).click();
+  await interval.getByRole('button', { name: '12s Her 12 saatte bir göster' }).click();
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(2);
   expect(await displayedTimes()).toEqual(['12:00', '00:00']);
 });

@@ -6,6 +6,7 @@ describe('Forecast Atlas interval semantics', () => {
     const source = readFileSync('src/components/hava81/ForecastAtlas.tsx', 'utf8');
     expect(source).toContain('id={`${id}-interval-label`}');
     expect(source).toContain('aria-labelledby={`${id}-interval-label`}');
+    expect(source).toContain('aria-describedby={`${id}-interval-help`}');
     expect(source).not.toContain("aria-label={t('hava81.forecastAtlas.intervalControlLabel')}");
   });
 });

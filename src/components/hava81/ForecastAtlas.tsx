@@ -320,10 +320,14 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                 <span id={`${id}-interval-label`} className="hava81-forecast-atlas__range-label">
                   {t('hava81.forecastAtlas.intervalControlLabel')}
                 </span>
+                <small id={`${id}-interval-help`} className="hava81-forecast-atlas__range-help">
+                  {t('hava81.forecastAtlas.intervalControlHelp')}
+                </small>
                 <div
                   className="hava81-forecast-atlas__range"
                   role="group"
                   aria-labelledby={`${id}-interval-label`}
+                  aria-describedby={`${id}-interval-help`}
                 >
                   {intervalOptions.map(hours => (
                     <button

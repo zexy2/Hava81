@@ -3273,3 +3273,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Weather Map had a visible heading and individually named Leaflet markers, but the interactive map surface itself had no explicit named region relationship to that heading.
 - Added a per-instance React `useId` to the existing heading and exposed only the map container as `role="region"` with `aria-labelledby` pointing to the visible title. Added a source-level semantic regression to prevent the relationship from drifting.
 - No map data, marker values, city selection, weather freshness, scoring, providers, MGM semantics or recommendations changed. Exact-head hosted CI/CD and CodeQL remain mandatory before merge.
+## 2026-09-04 06:57 TRT — clarify that hourly controls change display sampling, not forecast horizon
+- Rebuilt the bounded Forecast Atlas control clarification on exact main `ce6d55d885225a657ab3366645b63729c1f290ed` rather than mutating the older dirty UI worktree where it was first drafted.
+- Renamed the control from “Tahmin aralığı / Forecast interval” to “Gösterim aralığı / Display interval” and added concise always-visible help that the 24-hour forecast horizon stays fixed while only displayed hours are sampled.
+- Accessible button names now say “Her N saatte bir göster / Show every N hours”, and the group references the help text with `aria-describedby`. The compact visible 1s/2s/3s/4s/6s/8s/12s controls and forecast calculations are unchanged.
+- Help copy uses the existing 13px-equivalent functional text floor; existing mobile coverage is extended to guard readability and overflow. `git diff --check` and source-level semantics checks pass; hosted exact-head frontend/unit/browser/Lighthouse/CodeQL gates remain mandatory before merge.

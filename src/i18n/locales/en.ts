@@ -118,7 +118,8 @@ export const en = {
       stale: 'Forecast data is no longer fresh. The forecast chart is hidden until new data arrives.',
 
       hourlyForecast: 'Hourly forecast · next 24 hours',
-      intervalControlLabel: 'Forecast interval',
+      intervalControlLabel: 'Display interval',
+      intervalControlHelp: 'The 24-hour forecast stays fixed; this only changes which hours are shown on the chart.',
       summaryLabel: 'Hourly forecast summary',
       summaryLow: 'Low',
       summaryTemperature: 'Temperature',
@@ -129,7 +130,7 @@ export const en = {
       hourlyForecastNext: 'Hourly forecast · next {{hours}} {{unit}}',
       hourUnitSingular: 'hour',
       hourUnitPlural: 'hours',
-      intervalOption: '{{hours}}-hour',
+      intervalOption: 'Show every {{hours}} hours',
       intervalOptionCompact: '{{hours}}h',
       formattedByHava81: 'Formatted by Hava81',
       intervalForecast: 'Forecast every {{hours}} hours',
