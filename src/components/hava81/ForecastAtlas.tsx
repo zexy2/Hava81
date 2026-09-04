@@ -681,7 +681,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                 <li className="hava81-forecast-atlas__day" key={`day-${day.timestamp}`}>
                   <time
                     className="hava81-forecast-atlas__day-name"
-                    dateTime={day.date.toISOString()}
+                    dateTime={day.date.toISOString().slice(0, 10)}
                     aria-current={isCurrentDate ? 'date' : undefined}
                   >
                     {formatDay(day.date)}
