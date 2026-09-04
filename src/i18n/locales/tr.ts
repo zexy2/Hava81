@@ -451,6 +451,7 @@ export const tr = {
       swap: 'Yönü değiştir',
       sameCity: 'Başlangıç ve varış için farklı şehirler seç.',
       departure: 'Kalkış zamanı · Türkiye saati',
+      departureHelp: 'Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.',
       check: 'Koridoru kontrol et',
       corridor: 'Yaklaşık hava koridoru',
       estimate: 'Yaklaşık {{distance}} km · {{minutes}} dk',
