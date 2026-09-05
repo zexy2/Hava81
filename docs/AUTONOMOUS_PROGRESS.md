@@ -3338,3 +3338,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - OpenWeather current/forecast Zod schemas accepted any non-empty `weather[].icon`, even though the provider contract exposes only `01`–`04`, `09`, `10`, `11`, `13`, `50` with `d`/`n`. A malformed upstream icon could therefore survive server-side provider validation.
 - Tightened the shared OpenWeather condition schema to the normalized icon contract and added current + forecast provider regressions for malformed/unsupported codes.
 - This is validation only: valid provider responses, weather values, scoring, MGM semantics, UV/AQI guidance and recommendation logic are unchanged. `git diff --check` passes; no dependency install was attempted under disk warning pressure, so exact-head hosted API/CI/CodeQL gates remain mandatory before merge.
+
+## 2026-09-05 07:05 TRT — stop prefetching İstanbul before root location choice
+- Continued independently from exact main `70f9ac69443e3bdee976889fbd62fda7979d917a` while #949/#950/#951 validate separately.
+- The static generator injected an İstanbul current-weather bootstrap into `/` even though root has no `initialCity` and intentionally renders the location/search gate. That bootstrap immediately fans out to current weather and then hourly weather, so every root visit could consume two API requests before the user chooses a city and without feeding the initial root UI.
+- Root `dist/index.html` now stays as the plain built shell. Province deep links still receive their existing city-specific current+hourly bootstrap, preserving the fast deep-link path. Added a generator regression that requires province injection while forbidding the root İstanbul injection.
+- `git diff --check` passes. No location permission behavior, fallback button behavior, city deep-link bootstrap, weather values, scoring, API runtime, MGM semantics, or recommendation logic changed. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.

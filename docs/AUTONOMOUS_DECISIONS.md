@@ -1476,3 +1476,6 @@ A daily forecast card represents a calendar date rather than an instant. Keep it
 
 ## 2026-09-05 — Provider icon identifiers are validated before normalization
 OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation text. Validate it at provider ingress against the documented normalized families Hava81 supports, for both current and forecast payloads. Unsupported identifiers fail provider parsing rather than silently becoming a plausible weather glyph downstream; all valid OpenWeather identifiers remain unchanged.
+
+## 2026-09-05 — eager weather bootstrap is scoped to a resolved city route
+- Only static province routes with a resolved city identity should start the current+hourly bootstrap before React mounts. The root route is location-gated and must not silently spend provider/API requests on İstanbul before the user chooses location/search/fallback. The explicit İstanbul fallback still works through the normal app flow.
