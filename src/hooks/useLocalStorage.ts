@@ -36,10 +36,21 @@ export function useLocalStorage<T>(
 
   const [storedValue, setStoredValue] = useState<T>(readValue);
   const storedValueRef = useRef(storedValue);
+  const keyRef = useRef(key);
 
   useEffect(() => {
     storedValueRef.current = storedValue;
   }, [storedValue]);
+
+  // A hook consumer may switch to another persisted preference at runtime.
+  // Rehydrate that key instead of carrying the previous key's value forward.
+  useEffect(() => {
+    if (keyRef.current === key) return;
+    keyRef.current = key;
+    const nextValue = readValue();
+    storedValueRef.current = nextValue;
+    setStoredValue(nextValue);
+  }, [key, readValue]);
 
   // Update localStorage when value changes
   const setValue: SetValue<T> = useCallback(

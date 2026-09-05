@@ -63,6 +63,21 @@ describe('useLocalStorage synchronization', () => {
     expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
+  it('rehydrates persisted state when the storage key changes', () => {
+    localStorage.setItem('first-pref', JSON.stringify('dark'));
+    localStorage.setItem('second-pref', JSON.stringify('light'));
+    const { result, rerender } = renderHook(
+      ({ storageKey }) => useLocalStorage(storageKey, 'auto'),
+      { initialProps: { storageKey: 'first-pref' } }
+    );
+
+    expect(result.current[0]).toBe('dark');
+
+    rerender({ storageKey: 'second-pref' });
+
+    expect(result.current[0]).toBe('light');
+  });
+
   it('treats a native cross-tab removal event as a reset', () => {
     localStorage.setItem('remote-pref', JSON.stringify('dark'));
     const { result } = renderHook(() => useLocalStorage('remote-pref', 'auto'));
