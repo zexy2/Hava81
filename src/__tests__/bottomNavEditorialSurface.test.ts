@@ -36,6 +36,13 @@ describe('mobile bottom navigation editorial surface', () => {
     expect(css).toContain(".atlas-bottom-nav__button[aria-current='location']");
   });
 
+  it('names the saved-city destination for the comparison it actually opens', () => {
+    expect(component).toContain("label: t('hava81.compare.action')");
+    expect(component).not.toContain("label: t('navigation.saved'");
+    expect(app).toContain("if (item === 'saved')");
+    expect(app).toContain("<ComparePanel cities={favorites}");
+  });
+
   it('does not offer an unusable map destination before weather exists', () => {
     expect(component).toContain("const isDisabled = item.value === 'map' && !canMap;");
     expect(component).toContain('disabled={isDisabled}');
