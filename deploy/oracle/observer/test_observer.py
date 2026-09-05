@@ -408,8 +408,10 @@ class ObserverApiDeploymentTests(unittest.TestCase):
         compare_status: str = 'ahead',
         changed_files: list[str] | None = None,
         compare_ok: bool = True,
+        snapshot_result: dict[str, Any] | None = None,
     ):  # noqa: ANN201
         original_http_get = observer.http_get
+        original_snapshot_drift = observer.resolve_api_runtime_snapshot_drift
         original_tree_file = observer.DEPLOYED_API_TREE_FILE
         original_revision_file = observer.DEPLOYED_API_REVISION_FILE
         with tempfile.TemporaryDirectory() as tmp:
@@ -444,13 +446,22 @@ class ObserverApiDeploymentTests(unittest.TestCase):
                     }
                 raise AssertionError(f'unexpected GitHub lookup: {url}')
 
+            def fake_snapshot_drift(deployed: str, current: str):  # noqa: ANN001
+                self.assertEqual(deployed, deployed_revision)
+                self.assertEqual(current, main_revision)
+                if snapshot_result is None:
+                    return {'ok': False, 'error': 'snapshot fallback unavailable'}
+                return snapshot_result
+
             try:
                 observer.http_get = fake_http_get
+                observer.resolve_api_runtime_snapshot_drift = fake_snapshot_drift
                 observer.DEPLOYED_API_TREE_FILE = tree_file
                 observer.DEPLOYED_API_REVISION_FILE = revision_file
                 return observer.collect_api_deployment({'head_sha': main_revision})
             finally:
                 observer.http_get = original_http_get
+                observer.resolve_api_runtime_snapshot_drift = original_snapshot_drift
                 observer.DEPLOYED_API_TREE_FILE = original_tree_file
                 observer.DEPLOYED_API_REVISION_FILE = original_revision_file
 
@@ -517,7 +528,37 @@ class ObserverApiDeploymentTests(unittest.TestCase):
         deployment = self._collect(compare_ok=False)
         self.assertFalse(deployment['known'])
         self.assertFalse(deployment['pending'])
-        self.assertEqual(deployment['error'], 'HTTP 503')
+        self.assertIn('HTTP 503', deployment['error'])
+        self.assertIn('snapshot fallback unavailable', deployment['error'])
+
+    def test_recovers_failed_compare_from_matching_runtime_snapshots(self) -> None:
+        deployment = self._collect(
+            compare_ok=False,
+            snapshot_result={
+                'ok': True,
+                'main_tree': 'main-api-tree',
+                'runtime_changed_files': [],
+            },
+        )
+        self.assertTrue(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertEqual(deployment['main_tree'], 'main-api-tree')
+        self.assertEqual(deployment['runtime_changed_files'], [])
+        self.assertIsNone(deployment['error'])
+
+    def test_recovers_failed_compare_and_keeps_runtime_drift_pending(self) -> None:
+        deployment = self._collect(
+            compare_ok=False,
+            snapshot_result={
+                'ok': True,
+                'main_tree': 'main-api-tree',
+                'runtime_changed_files': ['apps/api/src/app.ts'],
+            },
+        )
+        self.assertTrue(deployment['known'])
+        self.assertTrue(deployment['pending'])
+        self.assertEqual(deployment['runtime_changed_files'], ['apps/api/src/app.ts'])
+        self.assertIsNone(deployment['error'])
 
     def test_reports_non_ancestor_deployment_as_unknown(self) -> None:
         deployment = self._collect(compare_status='diverged', changed_files=['apps/api/src/app.ts'])
@@ -532,6 +573,91 @@ class ObserverApiDeploymentTests(unittest.TestCase):
         self.assertFalse(deployment['known'])
         self.assertFalse(deployment['pending'])
         self.assertIn('maximum file count', deployment['error'])
+
+
+class ObserverApiRuntimeSnapshotTests(unittest.TestCase):
+    def test_snapshot_drift_compares_only_runtime_blob_content(self) -> None:
+        original_http_get = observer.http_get
+        responses = {
+            'deployed': [
+                {'path': 'apps/api', 'type': 'tree', 'sha': 'api-tree-old'},
+                {'path': 'apps/api/src/app.ts', 'type': 'blob', 'sha': 'app-old'},
+                {'path': 'apps/api/test/app.test.ts', 'type': 'blob', 'sha': 'test-old'},
+                {'path': 'deploy/oracle/docker-compose.yml', 'type': 'blob', 'sha': 'compose-same'},
+            ],
+            'main': [
+                {'path': 'apps/api', 'type': 'tree', 'sha': 'api-tree-new'},
+                {'path': 'apps/api/src/app.ts', 'type': 'blob', 'sha': 'app-new'},
+                {'path': 'apps/api/test/app.test.ts', 'type': 'blob', 'sha': 'test-new'},
+                {'path': 'deploy/oracle/docker-compose.yml', 'type': 'blob', 'sha': 'compose-same'},
+            ],
+        }
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            self.assertEqual(timeout, observer.GITHUB_COMPARE_TIMEOUT_SECONDS)
+            if '/git/commits/' in url:
+                revision = url.rsplit('/', 1)[-1]
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'json': {'tree': {'sha': f'root-{revision}'}},
+                    'headers': {},
+                    'elapsed_ms': 1,
+                    'error': None,
+                }
+            if '/git/trees/root-' in url:
+                revision = url.split('/git/trees/root-', 1)[1].split('?', 1)[0]
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'json': {'tree': responses[revision], 'truncated': False},
+                    'headers': {},
+                    'elapsed_ms': 1,
+                    'error': None,
+                }
+            raise AssertionError(f'unexpected GitHub lookup: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.resolve_api_runtime_snapshot_drift('deployed', 'main')
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['main_tree'], 'api-tree-new')
+        self.assertEqual(result['runtime_changed_files'], ['apps/api/src/app.ts'])
+
+    def test_truncated_runtime_snapshot_stays_unknown(self) -> None:
+        original_http_get = observer.http_get
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/git/commits/' in url:
+                revision = url.rsplit('/', 1)[-1]
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'json': {'tree': {'sha': f'root-{revision}'}},
+                    'headers': {},
+                    'elapsed_ms': 1,
+                    'error': None,
+                }
+            return {
+                'ok': True,
+                'status': 200,
+                'json': {'tree': [], 'truncated': True},
+                'headers': {},
+                'elapsed_ms': 1,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.resolve_api_runtime_snapshot_drift('deployed', 'main')
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertFalse(result['ok'])
+        self.assertIn('truncated', result['error'])
 
 
 

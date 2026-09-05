@@ -1535,3 +1535,9 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 - MGM's own MeteoUyarı browser code currently calls `https://servis.mgm.gov.tr/web/meteoalarm/today` and `/tomorrow`, so the service is genuinely first-party rather than a third-party scrape.
 - Direct server-side access is explicitly denied with `{"error":"ServerError","message":"Not allowed by MGM"}`; successful browser-shaped requests are CORS-scoped to `https://www.mgm.gov.tr`.
 - Therefore Hava81 will not spoof MGM Origin/Referer headers or depend on this restricted service. MeteoUyarı remains deferred until MGM exposes a stable, authorized machine-readable integration path with usable freshness semantics for Hava81.
+
+
+### 2026-09-05 17:22 TRT — observer compare timeout fallback uses runtime content snapshots
+**Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
+
+**Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.

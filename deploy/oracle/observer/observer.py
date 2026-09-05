@@ -479,6 +479,85 @@ def is_api_runtime_path(path: str) -> bool:
     return path in API_RUNTIME_PATHS or path.startswith(API_RUNTIME_PREFIXES)
 
 
+
+def collect_api_runtime_snapshot(revision: str) -> dict[str, Any]:
+    """Resolve the API runtime inputs for one revision without comparing history."""
+    commit_lookup = http_get(
+        f'https://api.github.com/repos/{REPO}/git/commits/{revision}',
+        timeout=GITHUB_COMPARE_TIMEOUT_SECONDS,
+    )
+    commit = commit_lookup.get('json') if isinstance(commit_lookup.get('json'), dict) else {}
+    root_tree = commit.get('tree') if isinstance(commit.get('tree'), dict) else {}
+    root_tree_sha = root_tree.get('sha') if isinstance(root_tree.get('sha'), str) else None
+    if not commit_lookup.get('ok') or not root_tree_sha:
+        return {
+            'ok': False,
+            'error': commit_lookup.get('error') or 'GitHub commit response did not include a tree SHA',
+            'lookup': slim_http(commit_lookup),
+        }
+
+    tree_lookup = http_get(
+        f'https://api.github.com/repos/{REPO}/git/trees/{root_tree_sha}?recursive=1',
+        timeout=GITHUB_COMPARE_TIMEOUT_SECONDS,
+    )
+    payload = tree_lookup.get('json') if isinstance(tree_lookup.get('json'), dict) else {}
+    entries = payload.get('tree') if isinstance(payload.get('tree'), list) else None
+    if not tree_lookup.get('ok') or entries is None or payload.get('truncated') is True:
+        if payload.get('truncated') is True:
+            error = 'GitHub recursive tree response was truncated'
+        else:
+            error = tree_lookup.get('error') or 'GitHub tree response did not include entries'
+        return {'ok': False, 'error': error, 'lookup': slim_http(tree_lookup)}
+
+    api_tree: str | None = None
+    runtime_entries: dict[str, str] = {}
+    for item in entries:
+        if not isinstance(item, dict):
+            continue
+        path = item.get('path')
+        sha = item.get('sha')
+        item_type = item.get('type')
+        if path == 'apps/api' and item_type == 'tree' and isinstance(sha, str):
+            api_tree = sha
+        if (
+            item_type == 'blob'
+            and isinstance(path, str)
+            and isinstance(sha, str)
+            and is_api_runtime_path(path)
+        ):
+            runtime_entries[path] = sha
+
+    return {
+        'ok': True,
+        'error': None,
+        'api_tree': api_tree,
+        'runtime_entries': runtime_entries,
+        'lookup': slim_http(tree_lookup),
+    }
+
+
+def resolve_api_runtime_snapshot_drift(deployed_revision: str, main_revision: str) -> dict[str, Any]:
+    deployed = collect_api_runtime_snapshot(deployed_revision)
+    if not deployed.get('ok'):
+        return {'ok': False, 'error': f"deployed snapshot: {deployed.get('error') or 'unknown error'}"}
+    current = collect_api_runtime_snapshot(main_revision)
+    if not current.get('ok'):
+        return {'ok': False, 'error': f"main snapshot: {current.get('error') or 'unknown error'}"}
+
+    deployed_entries = deployed.get('runtime_entries') or {}
+    current_entries = current.get('runtime_entries') or {}
+    changed = sorted(
+        path
+        for path in set(deployed_entries) | set(current_entries)
+        if deployed_entries.get(path) != current_entries.get(path)
+    )
+    return {
+        'ok': True,
+        'error': None,
+        'main_tree': current.get('api_tree'),
+        'runtime_changed_files': changed,
+    }
+
 def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]:
     main_sha = latest_main.get('head_sha') if latest_main else None
     deployed_revision = read_optional_marker(DEPLOYED_API_REVISION_FILE)
@@ -502,7 +581,16 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
             status = comparison.get('status')
             files = comparison.get('files') if isinstance(comparison.get('files'), list) else None
             if not lookup.get('ok') or files is None:
-                error = lookup.get('error') or 'GitHub compare response did not include changed files'
+                compare_error = lookup.get('error') or 'GitHub compare response did not include changed files'
+                snapshot = resolve_api_runtime_snapshot_drift(deployed_revision, main_sha)
+                if snapshot.get('ok'):
+                    runtime_changed_files = snapshot.get('runtime_changed_files') or []
+                    main_tree = snapshot.get('main_tree')
+                    known = True
+                    pending = bool(runtime_changed_files)
+                else:
+                    fallback_error = snapshot.get('error') or 'unknown runtime snapshot error'
+                    error = f'{compare_error}; runtime snapshot fallback failed: {fallback_error}'
             elif status == 'identical':
                 known = True
             elif status != 'ahead':
