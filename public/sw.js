@@ -58,7 +58,9 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    const oldShellKeys = keys.filter(key => key.startsWith('hava81-') && key !== CACHE_NAME);
+    const oldShellKeys = keys.filter(
+      key => key.startsWith('hava81-shell-') && key !== CACHE_NAME
+    );
     const upgradingLegacyShell = oldShellKeys.some(key => LEGACY_RELOAD_CACHE_NAMES.has(key));
     await Promise.all(oldShellKeys.map(key => caches.delete(key)));
     await self.clients.claim();
