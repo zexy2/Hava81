@@ -154,9 +154,21 @@ export function EnvironmentRail({
           <DaylightIcon />
         </span>
         <span className="environment-rail__label">{t('daylight.sunset')}</span>
-        <strong className="environment-rail__value">{sunsetTime}</strong>
+        <strong className="environment-rail__value">
+          {hasValidDaylight ? (
+            <time dateTime={weather.sunset.toISOString()}>{sunsetTime}</time>
+          ) : (
+            sunsetTime
+          )}
+        </strong>
         <span className="environment-rail__detail">
-          {t('daylight.sunrise')} {sunriseTime} · {t('daylight.dayLength')} · {daylightLength}
+          {t('daylight.sunrise')}{' '}
+          {hasValidDaylight ? (
+            <time dateTime={weather.sunrise.toISOString()}>{sunriseTime}</time>
+          ) : (
+            sunriseTime
+          )}{' '}
+          · {t('daylight.dayLength')} · {daylightLength}
         </span>
       </div>
 
