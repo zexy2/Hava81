@@ -3469,3 +3469,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the bounded cleanup accounting fix from exact current main after #1005 moved main, rather than mutating the now-conflicting PR branch.
 - Dry-run accounting now separates clean linked worktrees removable under the current uid from clean worktrees that are currently unwritable, so disk-pressure recovery estimates no longer overstate immediately recoverable bytes.
 - Dirty/in-use/detached protections, branch/ref preservation, apply behavior and fail-closed Git-metadata checks are unchanged. The hermetic cleanup safety contract and `git diff --check` remain mandatory before publish.
+
+## 2026-09-05 15:23 TRT — make city metadata integration assertion effect-aware
+- Hosted CI for the API-only provider-text branch exposed a pre-existing race in the root-history integration test: it waited for the city heading, then synchronously asserted metadata that is intentionally updated by a React effect after the city render commit.
+- Replaced only that immediate title assertion with the existing Testing Library `waitFor` primitive. The production metadata effect, route behavior and expected title are unchanged; the regression now waits for the actual asynchronous contract instead of depending on scheduler timing.
+- `git diff --check` passes. Exact-head hosted frontend/browser gates remain mandatory before merge.
