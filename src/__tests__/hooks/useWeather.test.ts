@@ -356,6 +356,50 @@ describe('useWeather', () => {
     expect(result.current.weather?.description).not.toBe('stale cache');
   });
 
+  it('rejects persisted weather cache with a blank current description', async () => {
+    const now = Date.now();
+    localStorage.setItem(
+      'weather_cache',
+      JSON.stringify({
+        data: {
+          cityName: 'İstanbul',
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          visibility: 10000,
+          windSpeed: 3,
+          windDirection: 180,
+          description: '   ',
+          icon: '01d',
+          sunrise: '2026-09-05T03:30:00.000Z',
+          sunset: '2026-09-05T16:30:00.000Z',
+          timestamp: new Date(now).toISOString(),
+          coordinates: { lat: 41.01, lon: 28.97 },
+          clouds: 0,
+          meta: {
+            provider: 'OpenWeather',
+            fetchedAt: new Date(now).toISOString(),
+            freshForSeconds: 300,
+          },
+        },
+        timestamp: now,
+        language: 'tr',
+      })
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+    await waitFor(() =>
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' })
+    );
+    await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+    expect(result.current.weather?.description).not.toBe('   ');
+  });
+
   it('ignores malformed persisted weather cache instead of rendering untrusted weather values', async () => {
     localStorage.setItem(
       'weather_cache',
