@@ -1494,3 +1494,7 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Keep the visible `81 / ATLAS` header index at least 13px/11px on mobile while preserving the existing compact 36px badge and 44px brand target.
 
 **Why:** The index is decorative for assistive technology but visually carries the 81-province identity. The former 12px/10px rendering was unnecessarily faint on the highest-frequency mobile header, and the existing no-overflow browser gate provides a bounded way to improve legibility without enlarging the header.
+### 2026-09-05 10:24 TRT — visible product copy stays decision-first
+**Decision:** The footer tagline describes Hava81 as decision guidance for all 81 provinces rather than a generic meteorological atlas.
+
+**Why:** Forecast data is an input; the product promise is helping people decide what to do about the weather. Keeping that promise visible in both Turkish and English makes the shipped UI consistent with the product's actual differentiated behavior without changing any weather or safety semantics.

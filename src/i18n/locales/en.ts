@@ -63,7 +63,7 @@ export const en = {
   },
   hava81: {
     closeSearch: 'Close city search',
-    tagline: "Turkey's Meteorological Atlas",
+    tagline: 'Decision-first weather guidance for all 81 provinces',
     homeLabel: 'Hava81 home view',
     systemStatus: 'Hava81 · System status',
     cityDocumentTitle: '{{city}} weather — Hava81',
