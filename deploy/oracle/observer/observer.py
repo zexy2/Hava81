@@ -544,10 +544,16 @@ def collect_github() -> dict[str, Any]:
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
         timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
     )
-    if not runs_result.get('ok'):
+    runs_status = runs_result.get('status')
+    should_retry_runs = (
+        not runs_result.get('ok')
+        and (runs_status is None or (isinstance(runs_status, int) and 500 <= runs_status < 600))
+    )
+    if should_retry_runs:
         # The 100-run response is occasionally slow enough to exceed the observer's
-        # bounded timeout. Retry once with a materially smaller payload so a transient
-        # GitHub read does not erase otherwise actionable PR/main CI state.
+        # bounded timeout. Retry once with a materially smaller payload for transport/5xx
+        # failures, but do not spend a second request on deterministic 4xx responses such
+        # as GitHub's anonymous rate-limit 403.
         runs_result = http_get(
             f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
