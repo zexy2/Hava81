@@ -80,9 +80,14 @@ describe('EnvironmentRail', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText('19:30')).toBeInTheDocument();
-    expect(screen.getByText(/Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk/i)).toBeInTheDocument();
+    const sunset = screen.getByText('19:30');
+    const sunrise = screen.getByText('06:00');
+    expect(sunset).toBeInTheDocument();
+    expect(sunrise).toBeInTheDocument();
+    expect(sunset.closest('time')).toHaveAttribute('datetime', '2026-08-28T16:30:00.000Z');
+    expect(sunrise.closest('time')).toHaveAttribute('datetime', '2026-08-28T03:00:00.000Z');
+    expect(sunrise.parentElement).toHaveTextContent('Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk');
     expect(screen.queryByText('16:30')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Doğuş 03:00/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('03:00')).not.toBeInTheDocument();
   });
 });
