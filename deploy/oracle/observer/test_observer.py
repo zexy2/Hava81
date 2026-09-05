@@ -1123,6 +1123,26 @@ class ObserverHostDiskTests(unittest.TestCase):
         self.assertEqual(host['disk']['bytes_to_free_for_usage_ok'], 0)
         self.assertEqual(host['disk']['bytes_to_free_for_ok'], 0)
 
+    def test_api_build_headroom_is_reported_separately_from_host_health(self) -> None:
+        host = self._collect_with_available_blocks(805_000)  # host gate passes, build reserve does not
+        disk = host['disk']
+        expected_required = disk['required_free_bytes_for_usage_ok'] + observer.API_BUILD_DISK_RESERVE_BYTES
+
+        self.assertTrue(host['healthy'])
+        self.assertFalse(disk['api_build_headroom_ok'])
+        self.assertEqual(disk['required_free_bytes_for_api_build'], expected_required)
+        self.assertEqual(disk['bytes_to_free_for_api_build'], expected_required - disk['free_bytes'])
+        self.assertIn('api_build_headroom_low', host['warnings'])
+
+    def test_api_build_headroom_is_ready_when_usage_floor_and_reserve_fit(self) -> None:
+        host = self._collect_with_available_blocks(1_000_000)  # ~4.1 GB free
+        disk = host['disk']
+
+        self.assertTrue(host['healthy'])
+        self.assertTrue(disk['api_build_headroom_ok'])
+        self.assertEqual(disk['bytes_to_free_for_api_build'], 0)
+        self.assertNotIn('api_build_headroom_low', host['warnings'])
+
     def test_usage_threshold_is_inclusive_and_not_decided_from_rounded_display(self) -> None:
         exact_threshold = self._collect_with_available_blocks(800_000)  # exactly 92.0% used
         rounded_up = self._collect_with_available_blocks(805_000)  # 91.95% used, displayed as 92.0%
