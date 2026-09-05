@@ -303,7 +303,18 @@
     padding-inline: var(--space-md);
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+    scrollbar-color: color-mix(in srgb, var(--color-aegean) 45%, transparent) transparent;
     scrollbar-width: thin;
+  }
+  .route-weather__segments::-webkit-scrollbar {
+    height: 0.4rem;
+  }
+  .route-weather__segments::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .route-weather__segments::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-aegean) 45%, transparent);
+    border-radius: 999px;
   }
 }
 
