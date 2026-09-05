@@ -19,5 +19,7 @@ describe('Hava81 score explanation copy', () => {
     expect(tr.hava81.decision.compactActions.stable).toContain('görünmüyor');
     expect(en.hava81.dailyPlan.reasons.clear).toContain('stands out');
     expect(en.hava81.decision.compactActions.stable).toContain('stands out');
+    expect(tr.hava81.dailyPlan.explain.stable).toContain('öne çıkmıyor');
+    expect(en.hava81.dailyPlan.explain.stable).toContain('stands out');
   });
 });
