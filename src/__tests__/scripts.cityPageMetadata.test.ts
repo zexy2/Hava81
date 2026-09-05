@@ -25,6 +25,13 @@ describe('generated city-page metadata', () => {
     expect(generator).not.toContain("'@type': 'City'");
   });
 
+  it('keeps eager weather bootstrap on province shells, not the location-gated root shell', () => {
+    const generator = readFileSync('scripts/generate-city-pages.mjs', 'utf8');
+    expect(generator).toContain('html = injectBootstrapWeather(html, name, `/${slug}/`);');
+    expect(generator).toContain("await writeFile(join(dist, 'index.html'), baseHtml);");
+    expect(generator).not.toContain("injectBootstrapWeather(baseHtml, 'İstanbul', '/')");
+  });
+
   it('fails closed unless all 81 province names and slugs remain unique', () => {
     const generator = readFileSync('scripts/generate-city-pages.mjs', 'utf8');
     expect(generator).toContain('const expectedProvinceCount = 81;');
