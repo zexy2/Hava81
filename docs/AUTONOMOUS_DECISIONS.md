@@ -1521,3 +1521,7 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Keep the five-point route corridor horizontally scrollable on narrow screens and style its native thin scrollbar rather than hiding overflow affordance.
 
 **Why:** The full corridor intentionally exceeds a 390px viewport. A visible, low-emphasis native scrollbar makes that additional content discoverable without adding decorative controls or changing route/weather calculations.
+### 2026-09-05 11:15 TRT — activity score detail names both compared scores
+**Decision:** Label the activity detail as `general weather score → activity score` rather than calling the entire baseline→result expression an activity-criteria impact in points.
+
+**Why:** The rendered value already contains two absolute scores plus their delta. Naming both sides makes the comparison self-explanatory and avoids implying that `80 → 65 (-15)` itself is a single point-impact value.
