@@ -38,6 +38,35 @@ test('current-weather schema rejects unsupported provider icon codes', () => {
   assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
 });
 
+test('current-weather schema preserves valid provider text verbatim', () => {
+  const payload = sample();
+  payload.weather[0].description = '  açık  ';
+
+  const parsed = currentWeatherUpstreamSchema.parse(payload);
+  assert.equal(parsed.weather[0].description, '  açık  ');
+});
+
+test('current-weather schema rejects blank provider text fields', () => {
+  for (const mutate of [
+    (payload: ReturnType<typeof sample>) => {
+      payload.weather[0].main = '   ';
+    },
+    (payload: ReturnType<typeof sample>) => {
+      payload.weather[0].description = '   ';
+    },
+    (payload: ReturnType<typeof sample>) => {
+      payload.sys.country = '   ';
+    },
+    (payload: ReturnType<typeof sample>) => {
+      payload.name = '   ';
+    },
+  ]) {
+    const payload = sample();
+    mutate(payload);
+    assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+  }
+});
+
 test('current-weather schema rejects materially future observation timestamps', () => {
   const payload = sample();
   payload.dt = Math.floor((Date.now() + 2 * 60_000) / 1_000);
