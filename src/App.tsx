@@ -544,11 +544,14 @@ const App: React.FC = () => {
             )}
           </header>
 
-          <AtlasBottomNav
-            active={showMap ? 'map' : activeNav === 'saved' ? 'saved' : 'today'}
-            onSelect={handleBottomNav}
-            hasSaved={favorites.length > 0}
-          />
+          {weather || favorites.length > 0 ? (
+            <AtlasBottomNav
+              active={showMap ? 'map' : activeNav === 'saved' ? 'saved' : 'today'}
+              onSelect={handleBottomNav}
+              hasSaved={favorites.length > 0}
+              canMap={Boolean(weather)}
+            />
+          ) : null}
 
           <main
             className="atlas-main"

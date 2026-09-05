@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync('src/components/hava81/AtlasBottomNav.css', 'utf8');
 const component = readFileSync('src/components/hava81/AtlasBottomNav.tsx', 'utf8');
+const app = readFileSync('src/App.tsx', 'utf8');
 
 function rule(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -33,5 +34,13 @@ describe('mobile bottom navigation editorial surface', () => {
     expect(component).toContain("aria-current={isActive ? 'location' : undefined}");
     expect(component).not.toContain("aria-current={isActive ? 'page' : undefined}");
     expect(css).toContain(".atlas-bottom-nav__button[aria-current='location']");
+  });
+
+  it('does not offer an unusable map destination before weather exists', () => {
+    expect(component).toContain("const isDisabled = item.value === 'map' && !canMap;");
+    expect(component).toContain('disabled={isDisabled}');
+    expect(app).toContain('{weather || favorites.length > 0 ? (');
+    expect(app).toContain('canMap={Boolean(weather)}');
+    expect(css).toContain('.atlas-bottom-nav__button:disabled');
   });
 });
