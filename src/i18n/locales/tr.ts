@@ -299,7 +299,7 @@ export const tr = {
       umbrella: {
         take: 'Şemsiyeyi al',
         consider: 'Şemsiye yanında olsun',
-        no: 'Şemsiye gerekmiyor',
+        no: 'Tahmin gerektirmiyor',
       },
       change: {
         'rain-increase': 'Dönüşte yağmur riski çıkışa göre yaklaşık {{value}} puan artıyor.',

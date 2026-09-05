@@ -296,7 +296,7 @@ export const en = {
       umbrella: {
         take: 'Take an umbrella',
         consider: 'Keep an umbrella with you',
-        no: 'No umbrella needed',
+        no: "Forecast doesn't indicate one",
       },
       change: {
         'rain-increase': 'Rain risk is about {{value}} points higher when you return.',
