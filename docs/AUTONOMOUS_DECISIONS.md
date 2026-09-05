@@ -1508,3 +1508,7 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Root WebSite JSON-LD describes Hava81 as a decision-focused weather guide rather than only a meteorological atlas.
 
 **Why:** Search engines should receive the same product promise users see: Hava81 converts weather evidence into daily decisions. Static structured data still avoids live weather claims, so the SEO description remains safe to publish at build time.
+### 2026-09-05 10:49 TRT — PWA shortcuts describe the decision outcome
+**Decision:** Installed-app city shortcuts describe opening decision-oriented daily weather guidance, not merely viewing weather.
+
+**Why:** Shortcut metadata is part of the product surface users see outside the browser shell. Matching it to Hava81's decision-first promise improves positioning without making any dynamic weather claim or changing shortcut destinations.

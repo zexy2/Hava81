@@ -3376,3 +3376,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the bounded #970 change from exact current main `f3030c2570b8b6f99130f5b51b181dee488ab282` rather than force-updating the conflicting PR branch.
 - Root WebSite JSON-LD now describes Hava81 as a decision-focused weather guide for Türkiye's 81 provinces, matching visible product positioning without making any live weather claim.
 - Added the focused JSON-LD regression unchanged from the validated prior branch. City-page structured data, weather values, provider/freshness behavior, routing, UI and API runtime are unchanged.
+## 2026-09-05 10:49 TRT — rebuild decision-first PWA shortcut guidance on current main
+- Rebuilt the bounded #971 change from exact current main `f3030c2570b8b6f99130f5b51b181dee488ab282` rather than mutating the conflicting branch.
+- İstanbul/Ankara installed-app shortcut descriptions now state that Hava81 turns weather into daily decisions, matching the shipped product promise outside the browser shell.
+- Kept shortcut destinations and raster icon metadata unchanged; extended the existing manifest regression to guard the decision-first descriptions. No weather values, safety semantics, provider/freshness behavior, navigation target, UI runtime or API behavior changed.

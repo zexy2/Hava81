@@ -11,6 +11,7 @@ interface ManifestIcon {
 }
 
 interface ManifestShortcut {
+  description?: string;
   icons?: ManifestIcon[];
 }
 
@@ -48,6 +49,7 @@ describe('PWA branding manifest', () => {
 
     expect(manifest.shortcuts?.length).toBeGreaterThan(0);
     for (const shortcut of manifest.shortcuts ?? []) {
+      expect(shortcut.description).toContain('günlük kararlara çevir');
       expect(shortcut.icons).toEqual([
         expect.objectContaining({
           src: 'hava81-icon-192.png',
