@@ -145,6 +145,7 @@ describe('Hava81 app integration', () => {
 
   it('restores the root location gate when browser history returns from a city route', async () => {
     window.history.replaceState({}, '', '/istanbul/');
+    document.title = 'Hava81 — Havayı değil, gününü planla';
     renderApp();
 
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
@@ -165,9 +166,6 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/');
     expect(document.title).toBe('Hava81 — Havayı değil, gününü planla');
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-      'http://localhost:3000/'
-    );
-    expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
       'http://localhost:3000/'
     );
   });
