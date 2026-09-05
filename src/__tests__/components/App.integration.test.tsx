@@ -148,7 +148,9 @@ describe('Hava81 app integration', () => {
     renderApp();
 
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
-    expect(document.title).toBe('İstanbul hava durumu — Hava81');
+    await waitFor(() => {
+      expect(document.title).toBe('İstanbul hava durumu — Hava81');
+    });
 
     await act(async () => {
       window.history.pushState({}, '', '/');
