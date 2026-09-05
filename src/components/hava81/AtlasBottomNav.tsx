@@ -28,10 +28,10 @@ function MapIcon() {
   );
 }
 
-function SavedIcon() {
+function CompareIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M6.5 4.5h11v15l-5.5-3-5.5 3z" />
+      <path d="M5 8h12M14 5l3 3-3 3M19 16H7M10 13l-3 3 3 3" />
     </svg>
   );
 }
@@ -57,7 +57,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
     {
       value: 'saved',
       label: t('hava81.compare.action'),
-      icon: <SavedIcon />,
+      icon: <CompareIcon />,
     },
   ];
 
