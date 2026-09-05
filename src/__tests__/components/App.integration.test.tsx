@@ -163,10 +163,12 @@ describe('Hava81 app integration', () => {
     expect(locationGate).not.toBeNull();
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(service.getCurrentWeather).not.toHaveBeenCalled();
+    expect(document.querySelector('.app')).toHaveAttribute('data-has-bottom-nav', 'false');
 
     await user.click(within(locationGate!).getByRole('button', { name: 'Konumumu Kullan' }));
 
     expect(await screen.findByRole('heading', { name: 'Ankara', level: 1 })).toBeInTheDocument();
+    expect(document.querySelector('.app')).toHaveAttribute('data-has-bottom-nav', 'true');
     expect(service.getCurrentLocationWeather).toHaveBeenCalledWith('tr');
     expect(service.getCurrentWeather).not.toHaveBeenCalled();
     expect(window.location.pathname).toBe('/ankara/');

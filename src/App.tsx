@@ -405,7 +405,12 @@ const App: React.FC = () => {
           </div>
         )}
       >
-        <div className="app" data-color-mode={colorMode} data-active-nav={activeNav}>
+        <div
+          className="app"
+          data-color-mode={colorMode}
+          data-active-nav={activeNav}
+          data-has-bottom-nav={weather || favorites.length > 0 ? 'true' : 'false'}
+        >
           <a
             className="skip-link"
             href="#main-content"

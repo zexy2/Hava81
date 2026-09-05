@@ -3434,3 +3434,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Removed only the automatic İstanbul substitution from the geolocation action. Permission/unavailable/timeout failures now stay explicit on `/`; the existing separate “İstanbul ile devam et” and city-search choices remain available after dismissing the error. Successful geolocation behavior is unchanged.
 - Updated integration and real-mobile browser regressions to require no İstanbul weather request, no city URL change, and a visible localized location error after permission denial. `git diff --check` passes locally; hosted exact-head CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
 - No weather values, provider evidence, scoring, MGM semantics, API runtime, or safety guidance changed.
+
+## 2026-09-05 14:26 TRT — reserve mobile bottom-nav space only when the nav exists
+- Exact base: `9e5062a58baeda38f8a56bc81d512dd0100766ab` while the #997 main rollout validates independently.
+- #996 correctly hides the mobile bottom navigation on the empty root gate, but the mobile `.app` shell still reserved the nav's fixed 4.75rem bottom space unconditionally. That left dead vertical space on the no-city first view.
+- Added an explicit shell state for bottom-nav presence and scopes the mobile safe-area/nav padding to that state only. Weather/favorites views retain the existing reserved space; the empty root no longer pays for a control that is not rendered.
+- Integration coverage requires the shell to transition from no-nav to nav-present after successful location weather; mobile browser coverage requires zero bottom padding on the empty root. `git diff --check` passes locally; hosted CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
+- No weather values, location semantics, provider/freshness evidence, scoring, MGM guidance, API runtime, or safety guidance changed.
