@@ -1530,3 +1530,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Treat the desktop header comparison action as navigation to the saved-city comparison view: expose `aria-current="page"` only while that view is active, and do not expose `aria-pressed`.
 
 **Why:** The action does not toggle a persistent binary preference; it changes the active application view. Navigation semantics match the user-visible behavior and avoid announcing a misleading pressed-button state.
+
+## 2026-09-05 — official MeteoUyarı service verification
+- MGM's own MeteoUyarı browser code currently calls `https://servis.mgm.gov.tr/web/meteoalarm/today` and `/tomorrow`, so the service is genuinely first-party rather than a third-party scrape.
+- Direct server-side access is explicitly denied with `{"error":"ServerError","message":"Not allowed by MGM"}`; successful browser-shaped requests are CORS-scoped to `https://www.mgm.gov.tr`.
+- Therefore Hava81 will not spoof MGM Origin/Referer headers or depend on this restricted service. MeteoUyarı remains deferred until MGM exposes a stable, authorized machine-readable integration path with usable freshness semantics for Hava81.
