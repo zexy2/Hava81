@@ -291,11 +291,22 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
                       {row.plan.bestWindowRange
                         ? row.plan.bestWindowRange.start.time.getTime() ===
                           row.plan.bestWindowRange.end.time.getTime()
-                          ? offsetTime(row, row.plan.bestWindowRange.peak.time)
-                          : `${offsetTime(row, row.plan.bestWindowRange.start.time)}–${offsetTime(
-                              row,
-                              row.plan.bestWindowRange.end.time
-                            )}`
+                          ? (
+                              <time dateTime={row.plan.bestWindowRange.peak.time.toISOString()}>
+                                {offsetTime(row, row.plan.bestWindowRange.peak.time)}
+                              </time>
+                            )
+                          : (
+                              <>
+                                <time dateTime={row.plan.bestWindowRange.start.time.toISOString()}>
+                                  {offsetTime(row, row.plan.bestWindowRange.start.time)}
+                                </time>
+                                {'–'}
+                                <time dateTime={row.plan.bestWindowRange.end.time.toISOString()}>
+                                  {offsetTime(row, row.plan.bestWindowRange.end.time)}
+                                </time>
+                              </>
+                            )
                         : '—'}
                     </b>
                   </span>
