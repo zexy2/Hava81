@@ -998,7 +998,7 @@ kbd {
 }
 
 @media (max-width: 47.99rem) {
-  .app {
+  .app[data-has-bottom-nav='true'] {
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
   }
 
