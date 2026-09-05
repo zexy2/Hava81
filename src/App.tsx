@@ -76,7 +76,7 @@ const StarIcon = ({ filled = false }: { filled?: boolean }) => (
 );
 
 const AtlasLoadingState = ({ label, slowMessage }: { label: string; slowMessage?: string }) => (
-  <div className="atlas-loading" role="status" aria-live="polite">
+  <div className="atlas-loading" role="status" aria-live="polite" aria-atomic="true">
     <div className="atlas-loading__copy">
       <p className="atlas-loading__status">{label}</p>
       {slowMessage ? <p className="atlas-loading__notice">{slowMessage}</p> : null}
