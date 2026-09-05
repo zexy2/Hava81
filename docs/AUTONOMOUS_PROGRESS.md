@@ -3360,3 +3360,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The visible Hava81 `81 / ATLAS` index still dropped to 12px/10px on the mobile header even though functional microtype elsewhere has been raised and the header already has room inside its 36px badge.
 - Raised only the badge numerals/label to 13px/11px on mobile (0.8125rem/0.6875rem at the base rule) and tightened the existing real-Chromium header regression to guard both floors while retaining the existing 320px no-overflow assertion.
 - No weather values, scoring, provider/freshness logic, MGM semantics, navigation behavior, API runtime or layout structure changed. `git diff --check` passes; dependency installation is intentionally avoided while API build headroom is below reserve, so hosted exact-head CI/CD + CodeQL/browser gates are required before merge.
+## 2026-09-05 10:24 TRT — align the visible tagline with decision-first positioning
+- Prepared independently from exact main `b83e6f3592e524a846b117c27b8c597013e5ebbc` while PR #968 browser/Lighthouse gates run separately.
+- The desktop footer still called Hava81 a generic “Meteorological Atlas”, which undersold the shipped decision-first product and diverged from the standing positioning that Hava81 tells people what to do about the weather.
+- Replaced only the localized footer tagline with `Havaya göre ne yapacağını söyleyen 81 il rehberi` / `Decision-first weather guidance for all 81 provinces` and added a focused locale contract test.
+- No weather values, safety guidance, scoring, provider/freshness behavior, routing or API runtime changed. `git diff --check` passes; hosted exact-head frontend/browser/Lighthouse/CodeQL gates remain mandatory before merge.

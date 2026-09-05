@@ -63,7 +63,7 @@ export const tr = {
   },
   hava81: {
     closeSearch: 'Şehir aramasını kapat',
-    tagline: "Türkiye'nin Meteorolojik Atlası",
+    tagline: 'Havaya göre ne yapacağını söyleyen 81 il rehberi',
     homeLabel: 'Hava81 ana görünüm',
     systemStatus: 'Hava81 · Sistem durumu',
     cityDocumentTitle: '{{city}} hava durumu — Hava81',
