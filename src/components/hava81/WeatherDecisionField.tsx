@@ -265,7 +265,7 @@ export function WeatherDecisionField({
           time: decision.time ? formatForecastTime(decision.time) : '—',
         });
       case 'stable':
-        return t('hava81.decision.compactActions.stable', { defaultValue: 'Belirgin hava riski yok' });
+        return t('hava81.decision.compactActions.stable', { defaultValue: 'Belirgin hava riski görünmüyor' });
       case 'unavailable':
         return t('hava81.decision.compactActions.unavailable', { defaultValue: 'Karar verisi hazırlanıyor' });
     }

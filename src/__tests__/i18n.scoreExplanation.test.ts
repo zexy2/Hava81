@@ -15,5 +15,9 @@ describe('Hava81 score explanation copy', () => {
     expect(en.hava81.dailyPlan.reasons.clear).toContain('weather risk');
     expect(tr.hava81.decision.actions.stable).toContain('hava riski');
     expect(en.hava81.decision.actions.stable).toContain('weather risk');
+    expect(tr.hava81.dailyPlan.reasons.clear).toContain('görünmüyor');
+    expect(tr.hava81.decision.compactActions.stable).toContain('görünmüyor');
+    expect(en.hava81.dailyPlan.reasons.clear).toContain('stands out');
+    expect(en.hava81.decision.compactActions.stable).toContain('stands out');
   });
 });
