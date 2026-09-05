@@ -816,6 +816,42 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['signals']['ci_green_prs'], [662])
         self.assertEqual(result['signals']['ci_unknown_prs'], [])
 
+    def test_does_not_retry_smaller_runs_page_after_rate_limit_403(self) -> None:
+        requested_urls: list[str] = []
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if '/pulls?' in url:
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1,
+                    'headers': {'x-ratelimit-remaining': '1'}, 'json': [], 'error': None,
+                }
+            if '/actions/runs?per_page=100' in url:
+                return {
+                    'ok': False, 'status': 403, 'elapsed_ms': 5,
+                    'headers': {'x-ratelimit-remaining': '0'}, 'json': None, 'error': 'HTTP 403',
+                }
+            raise AssertionError(f'unexpected fallback request after deterministic 403: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': False, 'pending': False, 'error': 'main revision unavailable',
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(len(requested_urls), 2)
+        self.assertIn('/actions/runs?per_page=100', requested_urls[1])
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['error'], 'HTTP 403')
+        self.assertEqual(result['rate_limit_remaining'], '0')
+        self.assertTrue(result['signals']['api_deploy_unknown'])
+
 
 class ObserverFrontendDeploymentStateTests(unittest.TestCase):
     def test_reports_consistent_older_frontend_revision_as_pending(self) -> None:
