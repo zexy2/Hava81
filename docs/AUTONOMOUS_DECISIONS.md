@@ -1476,3 +1476,6 @@ A daily forecast card represents a calendar date rather than an instant. Keep it
 
 ## 2026-09-05 — Provider icon identifiers are validated before normalization
 OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation text. Validate it at provider ingress against the documented normalized families Hava81 supports, for both current and forecast payloads. Unsupported identifiers fail provider parsing rather than silently becoming a plausible weather glyph downstream; all valid OpenWeather identifiers remain unchanged.
+
+## 2026-09-05 — route-weather browser boundary preserves the five-point corridor contract
+- The route API models a corridor with exactly five ordered samples at fractions `0, 0.25, 0.5, 0.75, 1`. The browser must reject incomplete, extra, or reordered samples rather than presenting a malformed payload as a complete corridor. This is a trust-boundary validation rule, not a change to route scoring or route generation.

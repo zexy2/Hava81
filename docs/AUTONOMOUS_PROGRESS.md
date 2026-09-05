@@ -3338,3 +3338,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - OpenWeather current/forecast Zod schemas accepted any non-empty `weather[].icon`, even though the provider contract exposes only `01`–`04`, `09`, `10`, `11`, `13`, `50` with `d`/`n`. A malformed upstream icon could therefore survive server-side provider validation.
 - Tightened the shared OpenWeather condition schema to the normalized icon contract and added current + forecast provider regressions for malformed/unsupported codes.
 - This is validation only: valid provider responses, weather values, scoring, MGM semantics, UV/AQI guidance and recommendation logic are unchanged. `git diff --check` passes; no dependency install was attempted under disk warning pressure, so exact-head hosted API/CI/CodeQL gates remain mandatory before merge.
+
+## 2026-09-05 06:59 TRT — fail closed on malformed route-corridor shapes
+- Continued independently from exact main `70f9ac69443e3bdee976889fbd62fda7979d917a` while #949/#950 validate on isolated branches.
+- Audited the route-weather browser trust boundary against the server implementation. The API deterministically samples five corridor points at fractions `0, 0.25, 0.5, 0.75, 1`, but the browser accepted any non-empty segment array, so an incomplete or reordered BFF payload could still be rendered as a complete modeled corridor.
+- Tightened only the frontend payload validator to require the five-point corridor contract and exact ordered fractions. Added focused incomplete/misordered regressions and upgraded existing route fixtures so unrelated invalid-field tests still exercise otherwise-valid five-point corridors.
+- `git diff --check` passes. No route scoring, provider calls, departure math, displayed values, API runtime, MGM semantics, or recommendation thresholds changed. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
