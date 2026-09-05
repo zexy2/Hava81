@@ -1041,9 +1041,9 @@ class ObserverBrowserProcessTests(unittest.TestCase):
             state = observer.collect_hava81_browser_processes()
 
         self.assertTrue(state["known"])
-        self.assertEqual(state["stale_count"], 4)
-        self.assertEqual([item["pid"] for item in state["processes"]], [107, 106, 105, 101])
-        self.assertEqual(state["processes"][0]["elapsed_seconds"], 13000)
+        self.assertEqual(state["stale_count"], 3)
+        self.assertEqual([item["pid"] for item in state["processes"]], [106, 105, 101])
+        self.assertEqual(state["processes"][0]["elapsed_seconds"], 11000)
         self.assertIsNone(state["error"])
 
     def test_ps_failure_falls_back_to_proc(self) -> None:

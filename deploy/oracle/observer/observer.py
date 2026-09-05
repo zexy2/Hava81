@@ -52,7 +52,7 @@ GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
 MAX_STALE_BROWSER_PROCESSES_REPORTED = 8
-HAVA81_BROWSER_PROFILE_NAMES = {'browser-profile', 'h81deploycheck', 'h81meta', 'h81text'}
+HAVA81_BROWSER_PROFILE_NAMES = {'h81deploycheck', 'h81meta', 'h81text'}
 HAVA81_BROWSER_PROFILE_ARG = re.compile(r'--user-data-dir(?:=|\s+)([^\s]+)')
 
 
