@@ -207,14 +207,14 @@ textarea:focus-visible {
 }
 
 .atlas-brand__index b {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
 }
 
 .atlas-brand__index small {
   margin-top: -0.15rem;
   color: var(--color-atlas-muted);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.12em;
 }
@@ -1031,11 +1031,11 @@ kbd {
   }
 
   .atlas-brand__index b {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .atlas-brand__index small {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .atlas-header__actions {

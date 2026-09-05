@@ -1489,3 +1489,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** `cleanup-merged-worktree-artifacts.sh --apply` must refuse all mutation unless the shared Git metadata writability audit passes under the same effective uid.
 
 **Why:** Matching the owner of the top-level `.git` directory is insufficient: nested object fan-out directories can drift to another owner independently. A cleanup that starts removing files before discovering that Git worktree metadata cannot be updated can leave an inconsistent checkout; preflight the complete writable boundary first.
+
+### 2026-09-05 10:18 TRT — mobile brand index keeps a readable microtype floor
+**Decision:** Keep the visible `81 / ATLAS` header index at least 13px/11px on mobile while preserving the existing compact 36px badge and 44px brand target.
+
+**Why:** The index is decorative for assistive technology but visually carries the 81-province identity. The former 12px/10px rendering was unnecessarily faint on the highest-frequency mobile header, and the existing no-overflow browser gate provides a bounded way to improve legibility without enlarging the header.

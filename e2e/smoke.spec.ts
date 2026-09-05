@@ -4185,9 +4185,12 @@ test('mobile header keeps current-location action reachable without horizontal o
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile header assertion');
   await page.goto('/istanbul');
 
+  const brandIndex = page.locator('.atlas-brand__index b');
   const brandAtlas = page.locator('.atlas-brand__index small');
+  await expect(brandIndex).toBeVisible();
   await expect(brandAtlas).toBeVisible();
-  expect(await brandAtlas.evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(10);
+  expect(await brandIndex.evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(13);
+  expect(await brandAtlas.evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(11);
 
   const locationAction = page.locator('.atlas-icon-button--location');
   await expect(locationAction).toBeVisible();
