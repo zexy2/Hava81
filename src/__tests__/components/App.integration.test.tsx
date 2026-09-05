@@ -143,6 +143,35 @@ describe('Hava81 app integration', () => {
     service.getContextSignals.mockReset().mockResolvedValue(null);
   });
 
+  it('restores the root location gate when browser history returns from a city route', async () => {
+    window.history.replaceState({}, '', '/istanbul/');
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    expect(document.title).toBe('İstanbul hava durumu — Hava81');
+
+    await act(async () => {
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Havayı bulunduğun yere göre gösterelim',
+        level: 1,
+      })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'İstanbul', level: 1 })).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+    expect(document.title).toBe('Hava81 — Havayı değil, gününü planla');
+    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+      'http://localhost:3000/'
+    );
+    expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
+      'http://localhost:3000/'
+    );
+  });
+
   it('asks for a location choice on the root route before requesting browser permission', async () => {
     const user = userEvent.setup();
     window.history.replaceState({}, '', '/');

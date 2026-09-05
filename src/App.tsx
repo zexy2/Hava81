@@ -113,6 +113,19 @@ const App: React.FC = () => {
   const mapRegionRef = useRef<HTMLElement>(null);
   const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
+  const rootDocumentMetadataRef = useRef({
+    title: document.title,
+    description: document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '',
+    ogTitle: document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content ?? '',
+    ogDescription:
+      document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content ?? '',
+    ogImageAlt: document.querySelector<HTMLMetaElement>('meta[property="og:image:alt"]')?.content ?? '',
+    twitterTitle: document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.content ?? '',
+    twitterDescription:
+      document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.content ?? '',
+    twitterImageAlt:
+      document.querySelector<HTMLMetaElement>('meta[name="twitter:image:alt"]')?.content ?? '',
+  });
 
   const [initialCity] = useState(() => cityFromPathname(window.location.pathname)?.name ?? '');
 
@@ -124,6 +137,7 @@ const App: React.FC = () => {
     isLoading,
     fetchWeather,
     fetchCurrentLocation,
+    clearWeather,
     clearError,
     recentSearches,
   } = useWeather({ initialCity, language: settings.language });
@@ -189,14 +203,53 @@ const App: React.FC = () => {
   useEffect(() => {
     const handlePopState = () => {
       const routeCity = cityFromPathname(window.location.pathname);
-      if (routeCity) fetchWeather(routeCity.name);
+      if (routeCity) {
+        void fetchWeather(routeCity.name);
+        return;
+      }
+      if (window.location.pathname === '/') {
+        clearWeather();
+        setShowMap(false);
+        setActiveNav('today');
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [fetchWeather]);
+  }, [clearWeather, fetchWeather]);
 
   useEffect(() => {
-    if (!weather) return;
+    const setMetaContent = (selector: string, content: string) => {
+      const meta = document.querySelector<HTMLMetaElement>(selector);
+      if (meta) meta.content = content;
+    };
+
+    if (!weather) {
+      if (window.location.pathname !== '/') return;
+      const rootMetadata = rootDocumentMetadataRef.current;
+      const canonicalUrl = new URL('/', window.location.origin).toString();
+      document.title = rootMetadata.title;
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+      }
+      canonical.href = canonicalUrl;
+      setMetaContent('meta[name="description"]', rootMetadata.description);
+      setMetaContent('meta[property="og:url"]', canonicalUrl);
+      setMetaContent('meta[property="og:title"]', rootMetadata.ogTitle);
+      setMetaContent('meta[property="og:description"]', rootMetadata.ogDescription);
+      setMetaContent('meta[property="og:image:alt"]', rootMetadata.ogImageAlt);
+      setMetaContent('meta[name="twitter:title"]', rootMetadata.twitterTitle);
+      setMetaContent('meta[name="twitter:description"]', rootMetadata.twitterDescription);
+      setMetaContent('meta[name="twitter:image:alt"]', rootMetadata.twitterImageAlt);
+      setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
+      setMetaContent(
+        'meta[property="og:locale:alternate"]',
+        settings.language === 'en' ? 'tr_TR' : 'en_US'
+      );
+      return;
+    }
     const path = cityPath(weather.cityName);
     if (path && window.location.pathname !== path) {
       const routeCity = cityFromPathname(window.location.pathname);
@@ -217,10 +270,6 @@ const App: React.FC = () => {
       }
       canonical.href = canonicalUrl;
 
-      const setMetaContent = (selector: string, content: string) => {
-        const meta = document.querySelector<HTMLMetaElement>(selector);
-        if (meta) meta.content = content;
-      };
       setMetaContent('meta[name="description"]', cityDescription);
       setMetaContent('meta[property="og:url"]', canonicalUrl);
       setMetaContent('meta[property="og:title"]', cityTitle);

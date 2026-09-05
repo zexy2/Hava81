@@ -3434,3 +3434,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Removed only the automatic İstanbul substitution from the geolocation action. Permission/unavailable/timeout failures now stay explicit on `/`; the existing separate “İstanbul ile devam et” and city-search choices remain available after dismissing the error. Successful geolocation behavior is unchanged.
 - Updated integration and real-mobile browser regressions to require no İstanbul weather request, no city URL change, and a visible localized location error after permission denial. `git diff --check` passes locally; hosted exact-head CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
 - No weather values, provider evidence, scoring, MGM semantics, API runtime, or safety guidance changed.
+
+## 2026-09-05 14:29 TRT — make browser history able to return to the root gate
+- Exact base: `9e5062a58baeda38f8a56bc81d512dd0100766ab`. Auditing custom pathname/history handling found `popstate` only handled recognized city routes.
+- A history transition from a city view to `/` therefore left the prior weather state alive; the city synchronization effect could immediately rewrite `/` back to that stale city route, defeating browser Back semantics.
+- Added an explicit current-weather reset action that invalidates both city/location async state without deleting persisted recent searches/cache, and uses it only for root `popstate`. Root history also closes map mode and returns navigation state to Today.
+- The same handoff now restores the original root title, canonical URL, description, Open Graph and Twitter metadata captured from the static shell, preventing stale city SEO/social metadata after browser Back.
+- Added integration and real-browser regressions requiring a city view to hand back to the root location gate without the old city heading/URL and with root title/canonical metadata restored. `git diff --check` passes locally; hosted CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
+- No weather values, provider/freshness evidence, scoring, MGM guidance, API runtime, or safety guidance changed.
