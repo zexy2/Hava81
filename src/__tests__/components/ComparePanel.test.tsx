@@ -327,7 +327,7 @@ describe('ComparePanel', () => {
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
     expect(screen.getByText(/Hava81 \d+\/100 · (Çok uygun|Uygun|Dikkat|Zorlayıcı)/)).toBeVisible();
     expect(screen.getAllByText(/^(Çok uygun|Uygun|Dikkat|Zorlayıcı)$/).length).toBeGreaterThanOrEqual(2);
-    expect(api.getForecast).toHaveBeenCalledTimes(2);
+    expect(api.getForecast).not.toHaveBeenCalled();
     expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
@@ -550,8 +550,8 @@ describe('ComparePanel', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/güncelliği sona erdi/i);
   });
 
-  it('keeps a city usable when the dedicated hourly forecast succeeds but the general forecast fails', async () => {
-    api.getForecast.mockRejectedValue(new Error('forecast unavailable'));
+  it('does not fetch the general forecast when dedicated hourly data is usable', async () => {
+    api.getForecast.mockRejectedValue(new Error('forecast should not be requested'));
 
     render(
       <SettingsProvider>
@@ -568,6 +568,28 @@ describe('ComparePanel', () => {
     expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
     expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
     expect(screen.queryByText(/Bazı şehirlerin verisi güncellenemedi/i)).not.toBeInTheDocument();
+    expect(api.getForecast).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the general forecast when dedicated hourly data is unavailable', async () => {
+    api.getHourlyForecast.mockRejectedValue(new Error('hourly unavailable'));
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'İzmir' })).toBeVisible();
+    expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
+    expect(api.getForecast).toHaveBeenCalledTimes(2);
   });
 
   it('explains partial failures while keeping successful city results usable', async () => {
