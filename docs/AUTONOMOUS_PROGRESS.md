@@ -3461,6 +3461,6 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - `git diff --check` passes. Reused dependencies were unavailable (the preserved node_modules directory is empty), so the corrected exact-head hosted frontend/browser/Lighthouse/CodeQL gates remain mandatory before merge. No weather evidence, provider/freshness semantics, scoring, MGM guidance, API runtime, or safety logic changed.
 
 ### 2026-09-05 15:03 TRT — fix city-shell metadata capture in root history restoration
-- Exact-head browser CI exposed a production-realistic case the jsdom fixture missed: when the SPA starts from a generated  shell, capturing document metadata at mount captures İstanbul metadata, so returning to  correctly cleared weather/UI but restored the city title instead of the root title.
+- Exact-head browser CI exposed a production-realistic case the jsdom fixture missed: when the SPA starts from a generated `/istanbul/` shell, capturing document metadata at mount captures İstanbul metadata, so returning to `/` correctly cleared weather/UI but restored the city title instead of the root title.
 - Replaced route-dependent mount capture with a small canonical root metadata contract shared by the runtime restoration path and a static-shell regression. Root title/description/social copy now restores deterministically regardless of which generated city shell booted the SPA.
-- Removed the artificial unit-test title seed that had hidden this distinction.  passes; exact-head hosted unit/browser/Lighthouse/CodeQL gates remain required before merge.
+- Removed the artificial unit-test title seed that had hidden this distinction. `git diff --check` passes; exact-head hosted unit/browser/Lighthouse/CodeQL gates remain required before merge.
