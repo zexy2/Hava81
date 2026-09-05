@@ -3464,3 +3464,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Exact-head browser CI exposed a production-realistic case the jsdom fixture missed: when the SPA starts from a generated `/istanbul/` shell, capturing document metadata at mount captures İstanbul metadata, so returning to `/` correctly cleared weather/UI but restored the city title instead of the root title.
 - Replaced route-dependent mount capture with a small canonical root metadata contract shared by the runtime restoration path and a static-shell regression. Root title/description/social copy now restores deterministically regardless of which generated city shell booted the SPA.
 - Removed the artificial unit-test title seed that had hidden this distinction. `git diff --check` passes; exact-head hosted unit/browser/Lighthouse/CodeQL gates remain required before merge.
+
+## 2026-09-05 15:14 TRT — rebuild immediately recoverable worktree accounting on current main
+- Rebuilt the bounded cleanup accounting fix from exact current main after #1005 moved main, rather than mutating the now-conflicting PR branch.
+- Dry-run accounting now separates clean linked worktrees removable under the current uid from clean worktrees that are currently unwritable, so disk-pressure recovery estimates no longer overstate immediately recoverable bytes.
+- Dirty/in-use/detached protections, branch/ref preservation, apply behavior and fail-closed Git-metadata checks are unchanged. The hermetic cleanup safety contract and `git diff --check` remain mandatory before publish.

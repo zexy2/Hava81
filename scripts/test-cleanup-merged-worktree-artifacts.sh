@@ -124,6 +124,11 @@ grep -Fq "WOULD_SKIP_UNWRITABLE_WORKTREE" <<<"$dry"
 grep -Fq "$locked" <<<"$dry"
 grep -Fq "WOULD_SKIP_UNWRITABLE_ARTIFACT" <<<"$dry"
 grep -Fq "$locked/dist" <<<"$dry"
+grep -Eq 'Dry run: [1-9][0-9]* clean linked worktrees \([1-9][0-9]* bytes\) can be removed now; [1-9][0-9]* \([1-9][0-9]* bytes\) are currently unwritable;' <<<"$dry"
+if grep -Fq 'eligible clean linked worktrees' <<<"$dry"; then
+  echo 'dry-run summary still overstates unwritable worktrees as removable' >&2
+  exit 1
+fi
 if grep -Fq "$unmerged" <<<"$dry" || grep -Fq "$stale" <<<"$dry" || grep -Fq "$detached" <<<"$dry" || grep -Fq "$dirty" <<<"$dry" || grep -Fq "$unreadable" <<<"$dry" || grep -Fq "$busy" <<<"$dry"; then
   echo 'unsafe worktree appeared in default dry-run eligibility' >&2
   exit 1
