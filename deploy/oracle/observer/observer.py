@@ -31,6 +31,7 @@ ALLOWED_API_PORTS = {4000, 4001, 4002}
 REPO = 'zexy2/Hava81'
 MINIMUM_ROOT_FREE_BYTES = 2 * 1024 * 1024 * 1024
 MAXIMUM_ROOT_USED_PERCENT = 92.0
+API_BUILD_DISK_RESERVE_BYTES = 512 * 1024 * 1024
 ROOT_DISK_WARNING_USED_PERCENT = 85.0
 MAX_READY_AGE_SECONDS = 180
 MAX_FUTURE_SKEW_SECONDS = 60
@@ -411,6 +412,9 @@ def collect_host() -> dict[str, Any]:
         total_bytes * (100 - MAXIMUM_ROOT_USED_PERCENT) / 100
     )
     bytes_to_free_for_usage_ok = max(required_free_bytes_for_usage_ok - free_bytes, 0)
+    required_free_bytes_for_api_build = required_free_bytes_for_usage_ok + API_BUILD_DISK_RESERVE_BYTES
+    bytes_to_free_for_api_build = max(required_free_bytes_for_api_build - free_bytes, 0)
+    api_build_headroom_ok = bytes_to_free_for_api_build == 0
     bytes_to_free_for_ok = max(
         MINIMUM_ROOT_FREE_BYTES - free_bytes,
         bytes_to_free_for_usage_ok,
@@ -425,6 +429,8 @@ def collect_host() -> dict[str, Any]:
         issues.append('root_disk_pressure')
     elif pressure_warning:
         warnings.append('root_disk_pressure_warning')
+    if disk_ok and not api_build_headroom_ok:
+        warnings.append('api_build_headroom_low')
     if browser_processes['stale_count'] > 0:
         warnings.append('stale_hava81_browser_processes')
     return {
@@ -438,6 +444,10 @@ def collect_host() -> dict[str, Any]:
             'warning_used_percent': ROOT_DISK_WARNING_USED_PERCENT,
             'required_free_bytes_for_usage_ok': required_free_bytes_for_usage_ok,
             'bytes_to_free_for_usage_ok': bytes_to_free_for_usage_ok,
+            'api_build_reserve_bytes': API_BUILD_DISK_RESERVE_BYTES,
+            'required_free_bytes_for_api_build': required_free_bytes_for_api_build,
+            'bytes_to_free_for_api_build': bytes_to_free_for_api_build,
+            'api_build_headroom_ok': api_build_headroom_ok,
             'bytes_to_free_for_ok': bytes_to_free_for_ok,
             'free_ok': free_ok,
             'usage_ok': usage_ok,
@@ -743,6 +753,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'nginx_preferred_ok': ((production.get('nginx') or {}).get('preferred_ok')),
         'host_disk_ok': ((host.get('disk') or {}).get('ok')),
         'host_disk_pressure_warning': ((host.get('disk') or {}).get('pressure_warning')),
+        'api_build_headroom_ok': ((host.get('disk') or {}).get('api_build_headroom_ok')),
         'stale_hava81_browser_processes': ((host.get('browser_processes') or {}).get('stale_count')),
         'prs': [
             {
