@@ -242,7 +242,7 @@ for (const name of names) {
   await writeFile(join(dist, slug, 'index.html'), html);
 }
 
-await writeFile(join(dist, 'index.html'), injectBootstrapWeather(baseHtml, 'İstanbul', '/'));
+await writeFile(join(dist, 'index.html'), baseHtml);
 
 const urls = [`${baseUrl}/`, ...names.map(name => `${baseUrl}/${slugify(name)}/`)];
 await writeFile(
