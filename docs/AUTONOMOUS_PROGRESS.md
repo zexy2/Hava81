@@ -3478,3 +3478,10 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Fresh post-#1007 observer marked production unhealthy after one CSS asset hit a 4-second read timeout even though immediate direct verification fetched that exact asset three times at ~60ms and root/İstanbul/local-4002 were healthy. The same observer cycle also had an independent GitHub read timeout.
 - Keep fail-closed boot-asset verification, but allow at most two **global** retries for transport failures (`status is None`) across the entire boot-asset set. Deterministic HTTP failures such as 404 are never retried, and persistent timeouts still fail production health.
 - Global budgeting caps added network work instead of multiplying retries by every asset. Added hermetic regressions for one transient recovery plus budget/HTTP-error behavior; observer suite and diff-check are required before publish.
+
+
+## 2026-09-05 17:22 TRT — recover API deployment state when GitHub compare times out
+- Fresh observer on exact main `a6b751d947561749615e835e7f6d0653ae296204` reported production healthy on preferred API port 4002 and the normal disk gate green, but a 12-second GitHub history-compare timeout left `api_deploy_unknown=true` and blocked otherwise safe merge/deploy decisions.
+- Added a fail-closed fallback used only when that compare lookup fails: resolve the deployed and current revisions to recursive Git trees, fingerprint only the existing API-runtime path contract by blob SHA, and mark deployment pending only when those runtime inputs actually differ. Test-only API paths remain excluded.
+- A failed/truncated commit/tree lookup remains unknown; the fallback never guesses from the stored `apps/api` tree alone because runtime inputs also include the Oracle compose file. Observer suite: 53/53 PASS; Python compile and `git diff --check` PASS.
+- No API traffic, weather/provider semantics, MGM behavior, frontend runtime, score logic, or deployment marker is changed by this observer-only patch. Install only after exact-head CI is green, the PR is merged, and the resulting main is re-verified.
