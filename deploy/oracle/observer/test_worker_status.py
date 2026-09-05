@@ -24,6 +24,8 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("disk.get('bytes_to_free_for_api_build')", status_script)
         self.assertIn('api_build_headroom_ok=', status_script)
         self.assertIn('api_build_recovery_gib=', status_script)
+        self.assertIn("disk.get('bytes_to_free_for_ok')", status_script)
+        self.assertIn('recovery_mib=', status_script)
 
     def test_status_script_surfaces_codeql_gate_state(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')

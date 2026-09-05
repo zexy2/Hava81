@@ -21,13 +21,14 @@ used_gib = round(used_bytes / (1024 ** 3), 1) if isinstance(used_bytes, (int, fl
 free_gib = round(free_bytes / (1024 ** 3), 1) if isinstance(free_bytes, (int, float)) else None
 bytes_to_free = disk.get('bytes_to_free_for_ok')
 recovery_gib = round(bytes_to_free / (1024 ** 3), 2) if isinstance(bytes_to_free, (int, float)) else None
+recovery_mib = round(bytes_to_free / (1024 ** 2), 1) if isinstance(bytes_to_free, (int, float)) else None
 api_build_bytes_to_free = disk.get('bytes_to_free_for_api_build')
 api_build_recovery_gib = (
     round(api_build_bytes_to_free / (1024 ** 3), 2)
     if isinstance(api_build_bytes_to_free, (int, float))
     else None
 )
-print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} used_gib={used_gib} free_gib={free_gib} recovery_gib={recovery_gib} api_build_headroom_ok={disk.get('api_build_headroom_ok')} api_build_recovery_gib={api_build_recovery_gib} issues={host.get('issues', [])} warnings={host.get('warnings', [])}")
+print(f"host_disk: ok={disk.get('ok')} warning={disk.get('pressure_warning', False)} used_pct={disk.get('used_percent')} used_gib={used_gib} free_gib={free_gib} recovery_gib={recovery_gib} recovery_mib={recovery_mib} api_build_headroom_ok={disk.get('api_build_headroom_ok')} api_build_recovery_gib={api_build_recovery_gib} issues={host.get('issues', [])} warnings={host.get('warnings', [])}")
 browser_processes = host.get('browser_processes') or {}
 print(f"browser_audits: known={browser_processes.get('known')} stale_count={browser_processes.get('stale_count')} threshold_s={browser_processes.get('stale_after_seconds')} processes={browser_processes.get('processes', [])} error={browser_processes.get('error')}")
 nginx = prod.get('nginx') or {}
