@@ -1503,3 +1503,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Current-weather descriptions restored from localStorage must satisfy the same non-blank text boundary as live BFF responses and are trimmed during cache normalization.
 
 **Why:** Persisted weather is still weather evidence. Allowing a malformed cache to bypass a stricter live-response validator creates a trust-boundary inconsistency and can surface meaningless conditions without any provider failure. The cache must fail closed and refresh instead.
+
+### 2026-09-05 10:46 TRT — root structured data reflects the decision product
+**Decision:** Root WebSite JSON-LD describes Hava81 as a decision-focused weather guide rather than only a meteorological atlas.
+
+**Why:** Search engines should receive the same product promise users see: Hava81 converts weather evidence into daily decisions. Static structured data still avoids live weather claims, so the SEO description remains safe to publish at build time.
