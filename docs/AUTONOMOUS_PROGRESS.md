@@ -3354,3 +3354,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The new read-only Git metadata guard also found 12 non-writable loose-object fan-out directories in the legacy `/home/ubuntu/Hava81` repository. That checkout contains 56 dirty linked worktrees, so no ownership rewrite or cleanup was attempted there.
 - Hardened the current source-preserving worktree cleaner so every `--apply` pass requires both the existing top-level Git-owner match and a passing nested metadata writability audit before any artifact/worktree mutation. Missing audit tooling also fails closed.
 - Extended the cleanup regression with a non-writable object fan-out directory and proved an otherwise eligible `dist` artifact remains intact when the metadata preflight fails.
+
+## 2026-09-05 10:18 TRT — keep the mobile brand index legible
+- Continued from exact main `b83e6f3592e524a846b117c27b8c597013e5ebbc` while the API-only #962/#963 queue remains intentionally held behind the separate API-build disk reserve.
+- The visible Hava81 `81 / ATLAS` index still dropped to 12px/10px on the mobile header even though functional microtype elsewhere has been raised and the header already has room inside its 36px badge.
+- Raised only the badge numerals/label to 13px/11px on mobile (0.8125rem/0.6875rem at the base rule) and tightened the existing real-Chromium header regression to guard both floors while retaining the existing 320px no-overflow assertion.
+- No weather values, scoring, provider/freshness logic, MGM semantics, navigation behavior, API runtime or layout structure changed. `git diff --check` passes; dependency installation is intentionally avoided while API build headroom is below reserve, so hosted exact-head CI/CD + CodeQL/browser gates are required before merge.
