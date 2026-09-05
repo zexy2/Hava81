@@ -1078,7 +1078,7 @@ kbd {
     scroll-margin-top: var(--space-sm);
   }
 
-  .app[data-active-nav='saved'] .atlas-city-rail {
+  .app[data-active-nav='compare'] .atlas-city-rail {
     display: block;
   }
 
