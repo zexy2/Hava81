@@ -148,6 +148,15 @@ const bootstrapWeatherScript = (cityName, expectedPath) => `    <script>
       })();
     </script>`;
 
+const apiConnectionHints = `    <link rel="dns-prefetch" href="//api.hava81.zekiakgul.dev" />\n    <link rel="preconnect" href="https://api.hava81.zekiakgul.dev" crossorigin />`;
+
+const injectApiConnectionHints = html => {
+  const canonicalIndex = html.indexOf('    <link rel="canonical"');
+  if (canonicalIndex < 0) throw new Error('Production HTML is missing its canonical link');
+  if (html.includes('rel="preconnect" href="https://api.hava81.zekiakgul.dev"')) return html;
+  return `${html.slice(0, canonicalIndex)}${apiConnectionHints}\n${html.slice(canonicalIndex)}`;
+};
+
 const injectBootstrapWeather = (html, cityName, expectedPath) => {
   const moduleScriptIndex = html.indexOf('    <script type="module"');
   if (moduleScriptIndex < 0) throw new Error('Production HTML is missing the Vite module entry script');
@@ -237,6 +246,7 @@ for (const name of names) {
     const count = html.match(pattern)?.length ?? 0;
     if (count !== 1) throw new Error(`${name}: expected exactly one ${label}, found ${count}`);
   }
+  html = injectApiConnectionHints(html);
   html = injectBootstrapWeather(html, name, `/${slug}/`);
   await mkdir(join(dist, slug), { recursive: true });
   await writeFile(join(dist, slug, 'index.html'), html);
