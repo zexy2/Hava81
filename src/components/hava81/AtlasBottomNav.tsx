@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import './AtlasBottomNav.css';
 
-export type AtlasNavValue = 'today' | 'map' | 'saved';
+export type AtlasNavValue = 'today' | 'map' | 'compare';
 
 export interface AtlasBottomNavProps {
   active: AtlasNavValue;
@@ -55,7 +55,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
       icon: <MapIcon />,
     },
     {
-      value: 'saved',
+      value: 'compare',
       label: t('hava81.compare.action'),
       icon: <CompareIcon />,
     },
@@ -81,7 +81,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
           >
             <span className="atlas-bottom-nav__icon">
               {item.icon}
-              {item.value === 'saved' && hasSaved ? (
+              {item.value === 'compare' && hasSaved ? (
                 <span className="atlas-bottom-nav__saved-mark" aria-hidden="true" />
               ) : null}
             </span>

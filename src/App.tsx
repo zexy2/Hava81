@@ -34,7 +34,7 @@ const ContextSignalsPanel = lazy(() => import('./components/hava81/ContextSignal
 const DecisionAlertsPanel = lazy(() => import('./components/hava81/DecisionAlertsPanel'));
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
-type AtlasNavItem = 'today' | 'map' | 'saved';
+type AtlasNavItem = 'today' | 'map' | 'compare';
 
 const SearchIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
@@ -375,10 +375,10 @@ const App: React.FC = () => {
         return;
       }
 
-      if (item === 'saved') {
+      if (item === 'compare') {
         trackProductEvent('compare_opened', { favorites: favorites.length });
         setShowMap(false);
-        setActiveNav('saved');
+        setActiveNav('compare');
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (cityRailRef.current) {
@@ -544,8 +544,8 @@ const App: React.FC = () => {
                   <button
                     type="button"
                     className="atlas-compare-button"
-                    onClick={() => handleBottomNav('saved')}
-                    aria-current={activeNav === 'saved' ? 'page' : undefined}
+                    onClick={() => handleBottomNav('compare')}
+                    aria-current={activeNav === 'compare' ? 'page' : undefined}
                   >
                     {t('hava81.compare.action')}
                     <span aria-hidden="true">{favorites.length}</span>
@@ -596,7 +596,7 @@ const App: React.FC = () => {
 
           {weather || favorites.length > 0 ? (
             <AtlasBottomNav
-              active={showMap ? 'map' : activeNav === 'saved' ? 'saved' : 'today'}
+              active={showMap ? 'map' : activeNav === 'compare' ? 'compare' : 'today'}
               onSelect={handleBottomNav}
               hasSaved={favorites.length > 0}
               canMap={Boolean(weather)}
@@ -610,12 +610,12 @@ const App: React.FC = () => {
             aria-busy={isLoading}
             ref={overviewRef}
           >
-            {activeNav === 'saved' ? (
+            {activeNav === 'compare' ? (
               <Suspense fallback={<p role="status">{t('common.loading')}</p>}>
                 <ComparePanel cities={favorites} language={settings.language} />
               </Suspense>
             ) : null}
-            {activeNav !== 'saved' && error && (
+            {activeNav !== 'compare' && error && (
               <section className="atlas-message atlas-message--error" role="alert">
                 <div>
                   <span className="atlas-kicker">{t('common.error')}</span>
@@ -634,14 +634,14 @@ const App: React.FC = () => {
               </section>
             )}
 
-            {activeNav !== 'saved' && isLoading && !weather && (
+            {activeNav !== 'compare' && isLoading && !weather && (
               <AtlasLoadingState
                 label={t('hava81.loadingWeather')}
                 slowMessage={isSlowLoading ? t('hava81.slowLoading') : undefined}
               />
             )}
 
-            {activeNav !== 'saved' && weather && (
+            {activeNav !== 'compare' && weather && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
                   <WeatherDecisionField
@@ -779,7 +779,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {activeNav !== 'saved' && !weather && !isLoading && !error && (
+            {activeNav !== 'compare' && !weather && !isLoading && !error && (
               <section className={`atlas-empty${isRootRoute ? ' atlas-empty--location' : ''}`}>
                 {!isRootRoute ? (
                   <>

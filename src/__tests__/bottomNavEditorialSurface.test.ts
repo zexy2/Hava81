@@ -42,7 +42,7 @@ describe('mobile bottom navigation editorial surface', () => {
     expect(component).toContain('icon: <CompareIcon />');
     expect(component).not.toContain('function SavedIcon()');
     expect(component).not.toContain("label: t('navigation.saved'");
-    expect(app).toContain("if (item === 'saved')");
+    expect(app).toContain("if (item === 'compare')");
     expect(app).toContain("<ComparePanel cities={favorites}");
   });
 
