@@ -56,7 +56,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
     },
     {
       value: 'saved',
-      label: t('navigation.saved', { defaultValue: t('weather.favoriteCities') }),
+      label: t('hava81.compare.action'),
       icon: <SavedIcon />,
     },
   ];

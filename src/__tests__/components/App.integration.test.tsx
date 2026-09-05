@@ -363,8 +363,6 @@ describe('Hava81 app integration', () => {
 
     renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
-    // The decision surface can render from fresh data before the initial request's
-    // loading flag settles. Wait for that observable state before simulating a later resume.
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Ara' })).toHaveAttribute('aria-busy', 'false')
     );
@@ -581,7 +579,7 @@ describe('Hava81 app integration', () => {
     await screen.findByRole('heading', { name: 'İstanbul' });
 
     expect(localStorage.getItem('favorites')).toBeNull();
-    await user.click(screen.getByRole('button', { name: /kayıtlı/i }));
+    await user.click(screen.getByRole('button', { name: /karşılaştır/i }));
 
     expect(
       await screen.findByRole('heading', { name: /şehir karşılaştırması/i }, { timeout: 3_000 })
@@ -600,7 +598,7 @@ describe('Hava81 app integration', () => {
     await screen.findByRole('heading', { name: 'İstanbul' });
     await user.click(screen.getByRole('button', { name: /favorilere ekle/i }));
     expect(screen.getByText('İstanbul', { selector: '.city-tabs__name' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /kayıtlı/i }));
+    await user.click(screen.getByRole('button', { name: /karşılaştır/i }));
     expect(
       await screen.findByRole('heading', { name: /şehir karşılaştırması/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
@@ -628,16 +626,18 @@ describe('Hava81 app integration', () => {
 
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
-    const compare = screen.getByRole('button', { name: /karşılaştır/i });
+    const compare = screen
+      .getAllByRole('button', { name: /karşılaştır/i })
+      .find(button => button.classList.contains('atlas-compare-button'));
     expect(compare).toBeInTheDocument();
-    expect(compare).not.toHaveAttribute('aria-current');
-    expect(compare).not.toHaveAttribute('aria-pressed');
-    await user.click(compare);
+    expect(compare!).not.toHaveAttribute('aria-current');
+    expect(compare!).not.toHaveAttribute('aria-pressed');
+    await user.click(compare!);
     expect(
       await screen.findByRole('heading', { name: /şehir karşılaştırması/i })
     ).toBeInTheDocument();
-    expect(compare).toHaveAttribute('aria-current', 'page');
-    expect(compare).not.toHaveAttribute('aria-pressed');
+    expect(compare!).toHaveAttribute('aria-current', 'page');
+    expect(compare!).not.toHaveAttribute('aria-pressed');
   });
 
   it('keeps social metadata aligned with the active city and language', async () => {
