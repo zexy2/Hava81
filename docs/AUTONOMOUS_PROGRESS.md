@@ -3338,3 +3338,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - OpenWeather current/forecast Zod schemas accepted any non-empty `weather[].icon`, even though the provider contract exposes only `01`–`04`, `09`, `10`, `11`, `13`, `50` with `d`/`n`. A malformed upstream icon could therefore survive server-side provider validation.
 - Tightened the shared OpenWeather condition schema to the normalized icon contract and added current + forecast provider regressions for malformed/unsupported codes.
 - This is validation only: valid provider responses, weather values, scoring, MGM semantics, UV/AQI guidance and recommendation logic are unchanged. `git diff --check` passes; no dependency install was attempted under disk warning pressure, so exact-head hosted API/CI/CodeQL gates remain mandatory before merge.
+
+## 2026-09-05 06:46 TRT — expose header comparison as a pressed action
+- Continued independently from exact main `70f9ac69443e3bdee976889fbd62fda7979d917a` while API PRs #946/#947 remain exact-head green but intentionally unmerged because API build headroom is below the reserved threshold.
+- Accessibility audit found the header compare control inside the quick-action button group using `aria-current="location"`, a navigation-current state even though the control is an action button that reveals the saved comparison view.
+- Replaced only that state with `aria-pressed={activeNav === 'saved'}` and added a source regression preventing the navigation semantic from returning. Visual styling, saved-city data, navigation behavior, weather values, scoring, provider/freshness, API and MGM semantics are unchanged.
+- `git diff --check` passes; hosted exact-head CI/CD + CodeQL remain mandatory before merge.
