@@ -50,6 +50,7 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
 MAX_STALE_BROWSER_PROCESSES_REPORTED = 8
 HAVA81_BROWSER_PROFILE_NAMES = {'h81deploycheck', 'h81meta', 'h81text'}
@@ -184,8 +185,12 @@ def collect_boot_assets(root: dict[str, Any], city: dict[str, Any] | None = None
     city_paths = extract_boot_asset_paths(city.get('text')) if city is not None else root_paths
     paths = sorted(set(root_paths) | set(city_paths))
     failed: list[dict[str, Any]] = []
+    transient_retries_remaining = BOOT_ASSET_TRANSIENT_RETRY_LIMIT
     for path in paths[:32]:
         result = http_get(f'https://hava81.zekiakgul.dev{path}', timeout=4.0)
+        if result.get('status') is None and transient_retries_remaining > 0:
+            transient_retries_remaining -= 1
+            result = http_get(f'https://hava81.zekiakgul.dev{path}', timeout=4.0)
         if result.get('status') != 200:
             failed.append({'path': path, **slim_http(result)})
     return {

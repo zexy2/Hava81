@@ -227,6 +227,79 @@ class ObserverBootAssetTests(unittest.TestCase):
         self.assertEqual(result['count'], 3)
         self.assertEqual([failure['path'] for failure in result['failed']], ['/assets/missing.js'])
 
+    def test_transient_boot_asset_failure_gets_one_bounded_retry(self) -> None:
+        original_http_get = observer.http_get
+        attempts: dict[str, int] = {}
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            attempts[url] = attempts.get(url, 0) + 1
+            first_transient = url.endswith('/assets/index.css') and attempts[url] == 1
+            return {
+                'ok': not first_transient,
+                'status': None if first_transient else 200,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': None,
+                'error': 'TimeoutError: timed out' if first_transient else None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.collect_boot_assets(
+                {
+                    'text': (
+                        '<script src="/assets/index.js"></script>'
+                        '<link rel="stylesheet" href="/assets/index.css">'
+                    )
+                }
+            )
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertTrue(result['ok'])
+        self.assertEqual(attempts['https://hava81.zekiakgul.dev/assets/index.css'], 2)
+        self.assertEqual(attempts['https://hava81.zekiakgul.dev/assets/index.js'], 1)
+
+    def test_boot_asset_retry_budget_is_global_and_http_errors_are_not_retried(self) -> None:
+        original_http_get = observer.http_get
+        attempts: dict[str, int] = {}
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            attempts[url] = attempts.get(url, 0) + 1
+            if url.endswith('/assets/missing.js'):
+                status, error = 404, 'HTTP 404'
+            else:
+                status, error = None, 'TimeoutError: timed out'
+            return {
+                'ok': False,
+                'status': status,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': None,
+                'error': error,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.collect_boot_assets(
+                {
+                    'text': (
+                        '<script src="/assets/a.js"></script>'
+                        '<script src="/assets/b.js"></script>'
+                        '<script src="/assets/c.js"></script>'
+                        '<script src="/assets/missing.js"></script>'
+                    )
+                }
+            )
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(sum(attempts.values()), 6)
+        self.assertEqual(attempts['https://hava81.zekiakgul.dev/assets/missing.js'], 1)
+
     def test_city_shell_boot_asset_is_verified(self) -> None:
         original_http_get = observer.http_get
 
