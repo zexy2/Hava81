@@ -10,8 +10,13 @@ interface ManifestIcon {
   purpose?: string;
 }
 
+interface ManifestShortcut {
+  icons?: ManifestIcon[];
+}
+
 interface WebManifest {
   icons?: ManifestIcon[];
+  shortcuts?: ManifestShortcut[];
 }
 
 describe('PWA branding manifest', () => {
@@ -32,6 +37,26 @@ describe('PWA branding manifest', () => {
     for (const source of rasterSources) {
       expect(source).toMatch(/^hava81-/);
       expect(existsSync(resolve(publicDir, source))).toBe(true);
+    }
+  });
+
+  it('uses an explicit raster icon for installable app shortcuts', () => {
+    const publicDir = resolve(cwd(), 'public');
+    const manifest = JSON.parse(
+      readFileSync(resolve(publicDir, 'manifest.json'), 'utf8')
+    ) as WebManifest;
+
+    expect(manifest.shortcuts?.length).toBeGreaterThan(0);
+    for (const shortcut of manifest.shortcuts ?? []) {
+      expect(shortcut.icons).toEqual([
+        expect.objectContaining({
+          src: 'hava81-icon-192.png',
+          type: 'image/png',
+          sizes: '192x192',
+          purpose: 'any',
+        }),
+      ]);
+      expect(existsSync(resolve(publicDir, 'hava81-icon-192.png'))).toBe(true);
     }
   });
 

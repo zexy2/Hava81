@@ -1476,3 +1476,6 @@ A daily forecast card represents a calendar date rather than an instant. Keep it
 
 ## 2026-09-05 — Provider icon identifiers are validated before normalization
 OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation text. Validate it at provider ingress against the documented normalized families Hava81 supports, for both current and forecast payloads. Unsupported identifiers fail provider parsing rather than silently becoming a plausible weather glyph downstream; all valid OpenWeather identifiers remain unchanged.
+
+## 2026-09-05 — PWA shortcut icons prefer explicit existing raster sizes
+- Hava81 app shortcuts may reuse the existing branded 192×192 PNG and should declare its exact size/type. This gives user agents an unambiguous shortcut-menu raster candidate without adding a new asset or changing shortcut destinations.

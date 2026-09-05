@@ -3338,3 +3338,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - OpenWeather current/forecast Zod schemas accepted any non-empty `weather[].icon`, even though the provider contract exposes only `01`–`04`, `09`, `10`, `11`, `13`, `50` with `d`/`n`. A malformed upstream icon could therefore survive server-side provider validation.
 - Tightened the shared OpenWeather condition schema to the normalized icon contract and added current + forecast provider regressions for malformed/unsupported codes.
 - This is validation only: valid provider responses, weather values, scoring, MGM semantics, UV/AQI guidance and recommendation logic are unchanged. `git diff --check` passes; no dependency install was attempted under disk warning pressure, so exact-head hosted API/CI/CodeQL gates remain mandatory before merge.
+
+## 2026-09-05 06:52 TRT — make PWA shortcut icons explicit raster assets
+- Continued independently from exact main `70f9ac69443e3bdee976889fbd62fda7979d917a` while #949 validates on its own branch.
+- Current MDN manifest guidance processes shortcut icons like app icons and recommends declaring exact sizes for raster assets. Hava81 already ships a branded 192×192 PNG but its İstanbul/Ankara shortcuts referenced only the scalable SVG `sizes="any"`.
+- Pointed both shortcut icon entries at the existing `hava81-icon-192.png` with explicit `192x192`, `image/png`, and `purpose="any"`; added a branding-manifest regression that verifies every shortcut uses the existing raster asset.
+- JSON parse validation and `git diff --check` pass. No shortcut URLs, weather behavior, data, scoring, API, MGM semantics, or application runtime code changed. Hosted exact-head CI/CD + CodeQL remain mandatory before merge.
