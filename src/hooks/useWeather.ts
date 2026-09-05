@@ -178,6 +178,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     data.windDirection < 0 ||
     data.windDirection > 360 ||
     typeof data.description !== 'string' ||
+    !data.description.trim() ||
     !WEATHER_ICON_CODES.has(String(data.icon)) ||
     !isPercentage(data.clouds) ||
     !coordinates ||
@@ -231,6 +232,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
       ...(data as unknown as NormalizedWeatherData),
       cityName: data.cityName.trim(),
       country: data.country.trim(),
+      description: data.description.trim(),
       sunrise,
       sunset,
       timestamp,

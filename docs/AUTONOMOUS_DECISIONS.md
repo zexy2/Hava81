@@ -1498,3 +1498,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** The footer tagline describes Hava81 as decision guidance for all 81 provinces rather than a generic meteorological atlas.
 
 **Why:** Forecast data is an input; the product promise is helping people decide what to do about the weather. Keeping that promise visible in both Turkish and English makes the shipped UI consistent with the product's actual differentiated behavior without changing any weather or safety semantics.
+
+### 2026-09-05 10:38 TRT — persisted weather evidence follows the live-response contract
+**Decision:** Current-weather descriptions restored from localStorage must satisfy the same non-blank text boundary as live BFF responses and are trimmed during cache normalization.
+
+**Why:** Persisted weather is still weather evidence. Allowing a malformed cache to bypass a stricter live-response validator creates a trust-boundary inconsistency and can surface meaningless conditions without any provider failure. The cache must fail closed and refresh instead.

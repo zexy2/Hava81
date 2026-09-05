@@ -3365,3 +3365,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The desktop footer still called Hava81 a generic “Meteorological Atlas”, which undersold the shipped decision-first product and diverged from the standing positioning that Hava81 tells people what to do about the weather.
 - Replaced only the localized footer tagline with `Havaya göre ne yapacağını söyleyen 81 il rehberi` / `Decision-first weather guidance for all 81 provinces` and added a focused locale contract test.
 - No weather values, safety guidance, scoring, provider/freshness behavior, routing or API runtime changed. `git diff --check` passes; hosted exact-head frontend/browser/Lighthouse/CodeQL gates remain mandatory before merge.
+
+## 2026-09-05 10:38 TRT — align persisted current-weather cache with the network trust boundary
+- Continued from exact main `89551454b3f12d1382c4bf11f79fffe524558a6c` in an isolated branch while its Pages rollout validates separately.
+- The BFF/browser current-weather response validator already rejects whitespace-only descriptions, but the localStorage cache deserializer accepted any string. A previously persisted malformed cache could therefore re-enter the UI even though the live network path would reject the same evidence.
+- Added the missing `trim()` emptiness check at cache ingress and normalize accepted cached descriptions by trimming surrounding whitespace. Added a focused hook regression proving a fresh-looking blank-description cache is ignored and triggers the normal current-weather fetch.
+- `git diff --check` passes; no weather value, provider choice, freshness TTL, scoring, MGM semantics or recommendation logic changed. Exact-head hosted frontend/unit/browser/CodeQL gates remain mandatory before merge.
