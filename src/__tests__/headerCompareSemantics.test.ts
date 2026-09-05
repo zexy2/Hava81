@@ -9,5 +9,9 @@ describe('header compare action semantics', () => {
     expect(source).toContain("className=\"atlas-compare-button\"");
     expect(source).toContain("aria-pressed={activeNav === 'saved'}");
     expect(source).not.toContain("aria-current={activeNav === 'saved' ? 'location' : undefined}");
+
+    const css = readFileSync('src/styles/App.css', 'utf8');
+    expect(css).toContain(".atlas-compare-button[aria-pressed='true']");
+    expect(css).not.toContain(".atlas-compare-button[aria-current='location']");
   });
 });
