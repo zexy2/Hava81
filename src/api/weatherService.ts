@@ -107,6 +107,8 @@ const isPlausibleTemperature = (value: unknown, units: WeatherUnits): value is n
   return value >= min && value <= max;
 };
 
+const CURRENT_WEATHER_ICON_CODE_PATTERN = /^(?:0[1-4]|09|10|11|13|50)[dn]$/;
+
 const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: WeatherUnits): void => {
   const invalid = (condition: boolean, field: string) => {
     if (condition) invalidWeatherPayload(field);
@@ -146,6 +148,10 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: Weath
       data.coordinates.lon < -180 ||
       data.coordinates.lon > 180,
     'current.coordinates.lon'
+  );
+  invalid(
+    typeof data.icon !== 'string' || !CURRENT_WEATHER_ICON_CODE_PATTERN.test(data.icon),
+    'current.icon'
   );
   invalid(typeof data.description !== 'string', 'current.description');
   invalid(

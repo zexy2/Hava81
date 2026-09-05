@@ -287,6 +287,7 @@ describe('weatherService BFF client', () => {
     ['longitude outside the globe', { coordinates: { ...serializedWeather.coordinates, lon: 181 } }],
     ['blank city name', { cityName: '   ' }],
     ['blank country', { country: '   ' }],
+    ['unsupported weather icon', { icon: '01x' }],
     ['blank provider', { meta: { ...serializedWeather.meta, provider: '   ' } }],
     ['missing timezone offset', { meta: { provider: 'OpenWeather', fetchedAt: serializedWeather.meta.fetchedAt } }],
     ['timezone outside global offset bounds', { meta: { ...serializedWeather.meta, timezoneOffsetSeconds: 50_401 } }],
