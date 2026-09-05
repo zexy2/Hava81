@@ -1517,3 +1517,7 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Give the observer's API deployment compare lookup a dedicated 12-second timeout, matching the bounded Actions lookup budget, while preserving fail-closed behavior on timeout/failure.
 
 **Why:** GitHub compare responses can take longer than the generic 6-second HTTP budget even when production is healthy. A bounded extended timeout reduces false `api_deploy_unknown` states without allowing the observer to wait indefinitely or guess deployment safety.
+### 2026-09-05 11:13 TRT — mobile route overflow keeps a visible scrollbar cue
+**Decision:** Keep the five-point route corridor horizontally scrollable on narrow screens and style its native thin scrollbar rather than hiding overflow affordance.
+
+**Why:** The full corridor intentionally exceeds a 390px viewport. A visible, low-emphasis native scrollbar makes that additional content discoverable without adding decorative controls or changing route/weather calculations.

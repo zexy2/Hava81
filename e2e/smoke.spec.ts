@@ -4825,6 +4825,28 @@ test('narrow route labels reflow at 200 percent text size', async ({ page }, tes
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
+test('mobile route corridor keeps horizontal overflow visibly scrollable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile route scrollbar regression');
+  await page.goto('/istanbul');
+  await page.getByText('Rota havası', { exact: true }).click();
+  await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+  await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
+
+  const state = await page.locator('.route-weather__segments').evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      overflowX: style.overflowX,
+      scrollbarWidth: style.scrollbarWidth,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    };
+  });
+
+  expect(state.overflowX).toBe('auto');
+  expect(state.scrollbarWidth).toBe('thin');
+  expect(state.scrollWidth).toBeGreaterThan(state.clientWidth);
+});
+
 test('route weather renders a transparent corridor result', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route assertion');
   await page.goto('/istanbul');
