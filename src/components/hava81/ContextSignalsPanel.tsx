@@ -107,7 +107,14 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           ) : (
             signals.attribution
           )}
-          {fetchedTime ? ` · ${t('hava81.context.fetchedAt', { time: fetchedTime })}` : ''}
+          {fetchedTime ? (
+            <>
+              {' · '}
+              <time dateTime={signals.fetchedAt.toISOString()}>
+                {t('hava81.context.fetchedAt', { time: fetchedTime })}
+              </time>
+            </>
+          ) : null}
         </small>
       </header>
       <div className="context-signals__grid">
