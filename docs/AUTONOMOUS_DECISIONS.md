@@ -1476,3 +1476,6 @@ A daily forecast card represents a calendar date rather than an instant. Keep it
 
 ## 2026-09-05 — Provider icon identifiers are validated before normalization
 OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation text. Validate it at provider ingress against the documented normalized families Hava81 supports, for both current and forecast payloads. Unsupported identifiers fail provider parsing rather than silently becoming a plausible weather glyph downstream; all valid OpenWeather identifiers remain unchanged.
+
+## 2026-09-05 — quick-action state semantics
+- Header quick actions that reveal/toggle an application view use button state semantics (`aria-pressed` or `aria-expanded` as appropriate), not `aria-current`, which is reserved for the current item within navigation/location sets.
