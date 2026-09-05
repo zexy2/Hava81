@@ -25,11 +25,16 @@ describe('generated city-page metadata', () => {
     expect(generator).not.toContain("'@type': 'City'");
   });
 
-  it('keeps eager weather bootstrap on province shells, not the location-gated root shell', () => {
+  it('keeps eager weather bootstrap and API connection hints on province shells only', () => {
     const generator = readFileSync('scripts/generate-city-pages.mjs', 'utf8');
+    const rootShell = readFileSync('index.html', 'utf8');
+    expect(generator).toContain('html = injectApiConnectionHints(html);');
     expect(generator).toContain('html = injectBootstrapWeather(html, name, `/${slug}/`);');
+    expect(generator).toContain('rel="preconnect" href="https://api.hava81.zekiakgul.dev"');
     expect(generator).toContain("await writeFile(join(dist, 'index.html'), baseHtml);");
     expect(generator).not.toContain("injectBootstrapWeather(baseHtml, 'İstanbul', '/')");
+    expect(rootShell).not.toContain('rel="preconnect" href="https://api.hava81.zekiakgul.dev"');
+    expect(rootShell).not.toContain('rel="dns-prefetch" href="//api.hava81.zekiakgul.dev"');
   });
 
   it('fails closed unless all 81 province names and slugs remain unique', () => {
