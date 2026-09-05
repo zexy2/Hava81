@@ -98,12 +98,14 @@ candidate_bytes=0
 removed_count=0
 removed_bytes=0
 skipped_artifact_count=0
-worktree_count=0
-worktree_bytes=0
+removable_worktree_count=0
+removable_worktree_bytes=0
+unwritable_worktree_count=0
+unwritable_worktree_bytes=0
 removed_worktree_count=0
 skipped_worktree_count=0
-stale_worktree_count=0
-stale_worktree_bytes=0
+removable_stale_worktree_count=0
+removable_stale_worktree_bytes=0
 audit_scanned_count=0
 audit_dirty_count=0
 audit_status_unreadable_count=0
@@ -192,15 +194,17 @@ while IFS= read -r wt; do
   wt_bytes="$(du -sb "$wt" 2>/dev/null | awk '{print $1}')"
   [[ "$wt_bytes" =~ ^[0-9]+$ ]] || wt_bytes=0
   if [[ "$remove_worktrees" == true ]]; then
-    worktree_count=$((worktree_count + 1))
-    worktree_bytes=$((worktree_bytes + wt_bytes))
-    if [[ "$stale_clean" == true ]]; then
-      stale_worktree_count=$((stale_worktree_count + 1))
-      stale_worktree_bytes=$((stale_worktree_bytes + wt_bytes))
-    fi
     if tree_is_removable "$wt"; then
+      removable_worktree_count=$((removable_worktree_count + 1))
+      removable_worktree_bytes=$((removable_worktree_bytes + wt_bytes))
+      if [[ "$stale_clean" == true ]]; then
+        removable_stale_worktree_count=$((removable_stale_worktree_count + 1))
+        removable_stale_worktree_bytes=$((removable_stale_worktree_bytes + wt_bytes))
+      fi
       printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo REMOVE_WORKTREE || echo WOULD_REMOVE_WORKTREE)" "$wt_bytes" "$wt"
     else
+      unwritable_worktree_count=$((unwritable_worktree_count + 1))
+      unwritable_worktree_bytes=$((unwritable_worktree_bytes + wt_bytes))
       printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo SKIP_UNWRITABLE_WORKTREE || echo WOULD_SKIP_UNWRITABLE_WORKTREE)" "$wt_bytes" "$wt"
     fi
   fi
@@ -253,7 +257,7 @@ if [[ "$remove_worktrees" == true ]]; then
   if [[ "$apply" == true ]]; then
     printf 'Removed %d eligible clean linked worktrees; skipped %d unwritable/failed removals; branch refs were preserved.\n' "$removed_worktree_count" "$skipped_worktree_count"
   else
-    printf 'Dry run: %d eligible clean linked worktrees (%d bytes) are eligible for checkout removal; %d (%d bytes) qualify only via the stale-clean guard.\n' "$worktree_count" "$worktree_bytes" "$stale_worktree_count" "$stale_worktree_bytes"
+    printf 'Dry run: %d clean linked worktrees (%d bytes) can be removed now; %d (%d bytes) are currently unwritable; %d removable worktrees (%d bytes) qualify only via the stale-clean guard.\n' "$removable_worktree_count" "$removable_worktree_bytes" "$unwritable_worktree_count" "$unwritable_worktree_bytes" "$removable_stale_worktree_count" "$removable_stale_worktree_bytes"
   fi
 fi
 

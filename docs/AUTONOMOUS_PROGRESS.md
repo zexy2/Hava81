@@ -3447,3 +3447,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The header map button is now natively disabled until current weather exists. Root integration and desktop browser regressions require the disabled control and no map region before city/weather selection; city-page behavior is unchanged.
 - `git diff --check` passes locally. The SentinelX execution environment does not expose Node/npm on PATH, so exact-head hosted CI/CD + CodeQL/browser/Lighthouse remain the executable quality gate before merge.
 - No weather values, provider/freshness evidence, score logic, MGM guidance, API runtime, route geometry, or safety semantics changed.
+
+## 2026-09-05 14:59 TRT — report only immediately recoverable worktree disk space
+- During the root-disk recovery pass, the cleanup dry-run reported 18 clean linked worktrees / 62,003,109 bytes as eligible even though 13 were unwritable and therefore correctly skipped by apply. That overstated disk space an operator could actually recover without first changing ownership/permissions.
+- Split dry-run accounting into immediately removable versus currently unwritable worktrees, and scope the stale-clean byte/count summary to the removable subset. Apply/exclusion logic, dirty/in-use/detached protections, branch preservation, and fail-closed metadata checks are unchanged.
+- Hermetic cleanup safety contract passes and `git diff --check` is clean. A real read-only audit now reports 1 removable checkout / 3,486,441 bytes versus 13 currently unwritable / 44,743,678 bytes instead of combining them into one optimistic total.
