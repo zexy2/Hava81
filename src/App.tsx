@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
 import { CityTabs } from './components/CityTabs';
-import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
@@ -22,6 +21,10 @@ import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness'
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 
+const loadWeatherDecisionField = () => import('./components/hava81/WeatherDecisionField');
+const WeatherDecisionField = lazy(() =>
+  loadWeatherDecisionField().then(module => ({ default: module.WeatherDecisionField }))
+);
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
@@ -150,6 +153,12 @@ const App: React.FC = () => {
     removeFavorite: handleRemoveFavorite,
     toggleFavorite: handleToggleFavorite,
   } = useFavorites(weather);
+
+  useEffect(() => {
+    if (isLoading && !weather) {
+      void loadWeatherDecisionField();
+    }
+  }, [isLoading, weather]);
 
   useEffect(() => {
     if (!isLoading || weather) {
@@ -644,14 +653,16 @@ const App: React.FC = () => {
             {activeNav !== 'saved' && weather && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
-                  <WeatherDecisionField
-                    weather={weather}
-                    hourly={forecast.hourly}
-                    daily={forecast.daily}
-                    airQuality={freshAirQuality}
-                    uvIndexMax={freshUvIndexMax}
-                    forecastMeta={forecast.displayMeta ?? forecast.meta}
-                  />
+                  <Suspense fallback={null}>
+                    <WeatherDecisionField
+                      weather={weather}
+                      hourly={forecast.hourly}
+                      daily={forecast.daily}
+                      airQuality={freshAirQuality}
+                      uvIndexMax={freshUvIndexMax}
+                      forecastMeta={forecast.displayMeta ?? forecast.meta}
+                    />
+                  </Suspense>
 
                   {forecast.isLoading && forecast.hourly.length === 0 ? (
                     <section className="atlas-forecast-loading" role="status" aria-live="polite">

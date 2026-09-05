@@ -3474,3 +3474,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Hosted CI for the API-only provider-text branch exposed a pre-existing race in the root-history integration test: it waited for the city heading, then synchronously asserted metadata that is intentionally updated by a React effect after the city render commit.
 - Replaced only that immediate title assertion with the existing Testing Library `waitFor` primitive. The production metadata effect, route behavior and expected title are unchanged; the regression now waits for the actual asynchronous contract instead of depending on scheduler timing.
 - `git diff --check` passes. Exact-head hosted frontend/browser gates remain mandatory before merge.
+
+## 2026-09-05 15:34 TRT — isolate root-only decision-panel parse cost for measurement
+- Exact-main build evidence on `4ea17e6e...` showed Lighthouse performance 86 with 400 ms TBT and a 268.65 kB (83.92 kB gzip) main JS chunk. `WeatherDecisionField` was still eagerly bundled even though the empty root location gate cannot render it.
+- Prepared a bounded experiment that code-splits only `WeatherDecisionField` and preloads that chunk whenever a current-weather request is already in flight, so root/no-city startup avoids its parse/evaluation cost while city/user-selection flows can overlap chunk transfer with the API request.
+- No weather values, scoring, provider/freshness, MGM semantics, routes, or copy change. Keep this branch only if hosted production-build evidence lowers the main chunk and browser/Lighthouse gates do not regress; otherwise close it without merge.
