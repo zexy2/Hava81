@@ -94,7 +94,7 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getAllByText(/18:00–20:00 uygunluğu · /i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Koşuda 10–22°C/i)).toBeInTheDocument();
     expect(
-      screen.getAllByText(/Aktivite ölçütlerinin etkisi: \d+ → \d+ \([+-]?\d+\) puan/i).length
+      screen.getAllByText(/Genel hava skoru → aktivite skoru: \d+ → \d+ \([+-]?\d+\)/i).length
     ).toBeGreaterThan(0);
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('18:00');
     expect(localStorage.getItem('hava81-decision-profile-v1')).toContain('20:00');
@@ -207,7 +207,7 @@ describe('ActivityPlanner time range', () => {
 
     fireEvent.click(screen.getAllByText('Skor detayı')[0]);
     expect(details[0]).toHaveAttribute('open');
-    expect(screen.getAllByText(/Aktivite ölçütlerinin etkisi:/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Genel hava skoru → aktivite skoru:/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Yürüyüşte 12–26°C/i)).toBeInTheDocument();
   });
 

@@ -3389,3 +3389,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the preserved route-scrollbar polish from exact main `9475fe41486a813052ad0bf1d49adcb6e9dbf86a` instead of mutating its old dirty worktree.
 - The five-segment mobile corridor already scrolls horizontally; it now keeps a subtle native thin scrollbar cue in Firefox/WebKit and a browser regression proves real overflow remains scrollable at 390px.
 - No route geometry, weather values, score thresholds, provider/freshness behavior, recommendations, MGM semantics or API runtime changed.
+## 2026-09-05 11:15 TRT — clarify activity score comparison copy
+- Rebuilt a preserved copy-only improvement on exact main `9475fe41486a813052ad0bf1d49adcb6e9dbf86a` after confirming the current UI still rendered `baseline → activity score (delta)` under the ambiguous label “activity criteria impact”.
+- Turkish/English now explicitly label the two sides as general weather score → activity score; the underlying scores, thresholds, activity weights and calculations are unchanged.
+- Updated the focused component expectation and added a bilingual locale contract so the meaning cannot drift independently between languages.
