@@ -16,6 +16,20 @@ const expectApiDataError = (promise: Promise<unknown>, field: string) =>
     details: { field },
   });
 
+const routeSegments = (departure: Date, durationMinutes = 300) =>
+  [0, 0.25, 0.5, 0.75, 1].map(fraction => ({
+    fraction,
+    lat: 41.01,
+    lon: 28.97,
+    eta: new Date(departure.getTime() + durationMinutes * 60_000 * fraction).toISOString(),
+    temperature: 24,
+    precipitationProbability: 10,
+    windSpeed: 3,
+    description: 'açık',
+    score: 80,
+    risk: 'low',
+  }));
+
 describe('weatherService secondary BFF envelope validation', () => {
   beforeEach(() => mockGet.mockReset());
 
@@ -110,46 +124,37 @@ describe('weatherService secondary BFF envelope validation', () => {
   });
 
   it('rejects a non-object route segment before reading segment fields', async () => {
+    const departure = new Date();
+    const segments: unknown[] = routeSegments(departure);
+    segments[0] = null;
     mockGet.mockResolvedValue({
       kind: 'corridor-estimate',
       estimatedDistanceKm: 450,
       estimatedDurationMinutes: 300,
-      requestedDeparture: new Date().toISOString(),
+      requestedDeparture: departure.toISOString(),
       score: 75,
-      segments: [null],
+      segments,
       disclaimer: 'Model tabanlı rota tahmini.',
     });
     await expectApiDataError(
       weatherService.getRouteWeather(
         { lat: 41.01, lon: 28.97 },
         { lat: 39.93, lon: 32.86 },
-        new Date()
+        departure
       ),
       'route.segments.0'
     );
   });
 
   it('rejects a non-object better-departure payload', async () => {
+    const departure = new Date();
     mockGet.mockResolvedValue({
       kind: 'corridor-estimate',
       estimatedDistanceKm: 450,
       estimatedDurationMinutes: 300,
-      requestedDeparture: new Date().toISOString(),
+      requestedDeparture: departure.toISOString(),
       score: 75,
-      segments: [
-        {
-          fraction: 0,
-          lat: 41.01,
-          lon: 28.97,
-          eta: new Date().toISOString(),
-          temperature: 24,
-          precipitationProbability: 10,
-          windSpeed: 3,
-          description: 'açık',
-          score: 80,
-          risk: 'low',
-        },
-      ],
+      segments: routeSegments(departure),
       disclaimer: 'Model tabanlı rota tahmini.',
       betterDeparture: [],
     });
@@ -157,7 +162,7 @@ describe('weatherService secondary BFF envelope validation', () => {
       weatherService.getRouteWeather(
         { lat: 41.01, lon: 28.97 },
         { lat: 39.93, lon: 32.86 },
-        new Date()
+        departure
       ),
       'route.betterDeparture'
     );
@@ -165,26 +170,18 @@ describe('weatherService secondary BFF envelope validation', () => {
 
   it('rejects a route segment ETA that is inconsistent with its corridor fraction', async () => {
     const departure = new Date('2026-08-31T06:00:00.000Z');
+    const segments = routeSegments(departure);
+    segments[2] = {
+      ...segments[2],
+      eta: new Date(departure.getTime() + 60 * 60_000).toISOString(),
+    };
     mockGet.mockResolvedValue({
       kind: 'corridor-estimate',
       estimatedDistanceKm: 450,
       estimatedDurationMinutes: 300,
       requestedDeparture: departure.toISOString(),
       score: 75,
-      segments: [
-        {
-          fraction: 0.5,
-          lat: 40.47,
-          lon: 30.91,
-          eta: new Date(departure.getTime() + 60 * 60_000).toISOString(),
-          temperature: 24,
-          precipitationProbability: 10,
-          windSpeed: 3,
-          description: 'açık',
-          score: 80,
-          risk: 'low',
-        },
-      ],
+      segments,
       disclaimer: 'Model tabanlı rota tahmini.',
     });
 
@@ -194,7 +191,7 @@ describe('weatherService secondary BFF envelope validation', () => {
         { lat: 39.93, lon: 32.86 },
         departure
       ),
-      'route.segments.0.eta'
+      'route.segments.2.eta'
     );
   });
 
@@ -206,20 +203,7 @@ describe('weatherService secondary BFF envelope validation', () => {
       estimatedDurationMinutes: 300,
       requestedDeparture: departure.toISOString(),
       score: 75,
-      segments: [
-        {
-          fraction: 0,
-          lat: 41.01,
-          lon: 28.97,
-          eta: departure.toISOString(),
-          temperature: 24,
-          precipitationProbability: 10,
-          windSpeed: 3,
-          description: 'açık',
-          score: 80,
-          risk: 'low',
-        },
-      ],
+      segments: routeSegments(departure),
       betterDeparture: {
         departure: new Date(departure.getTime() + 2 * 60 * 60_000).toISOString(),
         score: 90,
@@ -237,5 +221,4 @@ describe('weatherService secondary BFF envelope validation', () => {
       'route.betterDeparture.departure'
     );
   });
-
 });
