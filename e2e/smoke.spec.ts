@@ -903,7 +903,7 @@ test('saved city tab rail stays contained at 200 percent text size', async ({ pa
   await page.locator('html').evaluate(element => {
     element.style.fontSize = '200%';
   });
-  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Saved|Kayıtlı/ }).click();
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Compare|Karşılaştır/ }).click();
 
   const rail = page.locator('.city-tabs__scroll');
   await expect(rail).toBeVisible();
@@ -946,7 +946,7 @@ test('saved city add action keeps its focus ring inside the scroll rail', async 
     localStorage.setItem('favorites', JSON.stringify([{ name: 'Ankara', lat: 39.93, lon: 32.86 }]));
   });
   await page.goto('/istanbul');
-  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Saved|Kayıtlı/ }).click();
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Compare|Karşılaştır/ }).click();
 
   const add = page.locator('.city-tabs__add');
   await expect(add).toBeVisible();
@@ -3311,7 +3311,7 @@ test('saved comparison reflows at 200 percent text size', async ({ page }, testI
   await page.locator('html').evaluate(element => {
     element.style.fontSize = '200%';
   });
-  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Saved|Kayıtlı/ }).click();
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: /Compare|Karşılaştır/ }).click();
 
   const compare = page.locator('.hava81-compare');
   await expect(compare).toBeVisible();
@@ -4656,7 +4656,7 @@ test('mobile saved navigation does not create a favorite just by opening the vie
   await page.goto('/istanbul');
   await expect(page.evaluate(() => localStorage.getItem('favorites'))).resolves.toBeNull();
 
-  await page.getByRole('button', { name: 'Kayıtlı' }).click();
+  await page.getByRole('button', { name: 'Karşılaştır' }).click();
 
   await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
   await expect(page.getByText(/en az iki şehri favorilere ekle/i)).toBeVisible();
@@ -4679,10 +4679,10 @@ test('mobile saved navigation replaces the today dashboard', async ({ page }, te
     );
   });
   await page.goto('/istanbul');
-  await page.getByRole('button', { name: 'Kayıtlı' }).click();
+  await page.getByRole('button', { name: 'Karşılaştır' }).click();
   await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
   await expect(page.locator('.atlas-dashboard')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Kayıtlı' })).toHaveAttribute('aria-current', 'location');
+  await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');
 });
 
 test('activity preference and time range change the personalized plan', async ({ page }, testInfo) => {
