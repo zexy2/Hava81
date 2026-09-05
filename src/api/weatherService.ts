@@ -154,7 +154,7 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: Weath
     typeof data.icon !== 'string' || !CURRENT_WEATHER_ICON_CODE_PATTERN.test(data.icon),
     'current.icon'
   );
-  invalid(typeof data.description !== 'string', 'current.description');
+  invalid(typeof data.description !== 'string' || !data.description.trim(), 'current.description');
   invalid(
     typeof data.meta?.provider !== 'string' || !data.meta.provider.trim(),
     'current.meta.provider'
