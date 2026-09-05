@@ -350,6 +350,7 @@ class ObserverApiDeploymentTests(unittest.TestCase):
             def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
                 if '/compare/' in url:
                     self.assertTrue(url.endswith('?per_page=1&page=1'), url)
+                    self.assertEqual(timeout, observer.GITHUB_COMPARE_TIMEOUT_SECONDS)
                     return {
                         'ok': compare_ok,
                         'status': 200 if compare_ok else 503,
@@ -379,6 +380,13 @@ class ObserverApiDeploymentTests(unittest.TestCase):
                 observer.http_get = original_http_get
                 observer.DEPLOYED_API_TREE_FILE = original_tree_file
                 observer.DEPLOYED_API_REVISION_FILE = original_revision_file
+
+    def test_compare_timeout_is_extended_but_bounded(self) -> None:
+        self.assertGreater(observer.GITHUB_COMPARE_TIMEOUT_SECONDS, 6.0)
+        self.assertEqual(observer.GITHUB_COMPARE_TIMEOUT_SECONDS, observer.GITHUB_RUNS_TIMEOUT_SECONDS)
+        deployment = self._collect(changed_files=[])
+        self.assertTrue(deployment['known'])
+        self.assertFalse(deployment['pending'])
 
     def test_reports_identical_deployed_revision_as_current_without_lookup(self) -> None:
         deployment = self._collect(

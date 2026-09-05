@@ -3380,3 +3380,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt the bounded #971 change from exact current main `f3030c2570b8b6f99130f5b51b181dee488ab282` rather than mutating the conflicting branch.
 - İstanbul/Ankara installed-app shortcut descriptions now state that Hava81 turns weather into daily decisions, matching the shipped product promise outside the browser shell.
 - Kept shortcut destinations and raster icon metadata unchanged; extended the existing manifest regression to guard the decision-first descriptions. No weather values, safety semantics, provider/freshness behavior, navigation target, UI runtime or API behavior changed.
+
+## 2026-09-05 11:10 TRT — recover bounded observer compare timeout on current main
+- Recovered preserved commit `96b43467f` because `git cherry origin/main` proved the behavior never reached main.
+- Rebuilt only the observer compare-timeout code/test onto exact main `9475fe41486a813052ad0bf1d49adcb6e9dbf86a`; historical append-only documentation was rewritten as a fresh checkpoint instead of replaying stale document context.
+- The GitHub compare lookup now receives a dedicated 12-second bound; lookup failure still leaves deployment state unknown and therefore fail-closed. No production traffic, weather/provider semantics, scoring, MGM logic, API runtime, or UI behavior changes.

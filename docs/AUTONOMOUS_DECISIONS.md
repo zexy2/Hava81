@@ -1512,3 +1512,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Installed-app city shortcuts describe opening decision-oriented daily weather guidance, not merely viewing weather.
 
 **Why:** Shortcut metadata is part of the product surface users see outside the browser shell. Matching it to Hava81's decision-first promise improves positioning without making any dynamic weather claim or changing shortcut destinations.
+
+### 2026-09-05 11:10 TRT — bound GitHub compare latency separately
+**Decision:** Give the observer's API deployment compare lookup a dedicated 12-second timeout, matching the bounded Actions lookup budget, while preserving fail-closed behavior on timeout/failure.
+
+**Why:** GitHub compare responses can take longer than the generic 6-second HTTP budget even when production is healthy. A bounded extended timeout reduces false `api_deploy_unknown` states without allowing the observer to wait indefinitely or guess deployment safety.
