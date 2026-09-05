@@ -52,9 +52,9 @@
       "url": "/istanbul/",
       "icons": [
         {
-          "src": "hava81-mark.svg",
-          "sizes": "any",
-          "type": "image/svg+xml",
+          "src": "hava81-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
           "purpose": "any"
         }
       ]
@@ -66,9 +66,9 @@
       "url": "/ankara/",
       "icons": [
         {
-          "src": "hava81-mark.svg",
-          "sizes": "any",
-          "type": "image/svg+xml",
+          "src": "hava81-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
           "purpose": "any"
         }
       ]
