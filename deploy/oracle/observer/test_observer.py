@@ -408,6 +408,7 @@ class ObserverApiDeploymentTests(unittest.TestCase):
         compare_status: str = 'ahead',
         changed_files: list[str] | None = None,
         compare_ok: bool = True,
+        compare_http_status: int = 503,
         snapshot_result: dict[str, Any] | None = None,
     ):  # noqa: ANN201
         original_http_get = observer.http_get
@@ -428,7 +429,7 @@ class ObserverApiDeploymentTests(unittest.TestCase):
                     self.assertEqual(timeout, observer.GITHUB_COMPARE_TIMEOUT_SECONDS)
                     return {
                         'ok': compare_ok,
-                        'status': 200 if compare_ok else 503,
+                        'status': 200 if compare_ok else compare_http_status,
                         'elapsed_ms': 1,
                         'headers': {},
                         'json': (
@@ -442,7 +443,7 @@ class ObserverApiDeploymentTests(unittest.TestCase):
                             if compare_ok
                             else None
                         ),
-                        'error': None if compare_ok else 'HTTP 503',
+                        'error': None if compare_ok else f'HTTP {compare_http_status}',
                     }
                 raise AssertionError(f'unexpected GitHub lookup: {url}')
 
@@ -530,6 +531,12 @@ class ObserverApiDeploymentTests(unittest.TestCase):
         self.assertFalse(deployment['pending'])
         self.assertIn('HTTP 503', deployment['error'])
         self.assertIn('snapshot fallback unavailable', deployment['error'])
+
+    def test_does_not_spend_snapshot_requests_after_deterministic_compare_4xx(self) -> None:
+        deployment = self._collect(compare_ok=False, compare_http_status=403)
+        self.assertFalse(deployment['known'])
+        self.assertFalse(deployment['pending'])
+        self.assertEqual(deployment['error'], 'HTTP 403')
 
     def test_recovers_failed_compare_from_matching_runtime_snapshots(self) -> None:
         deployment = self._collect(

@@ -582,15 +582,24 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
             files = comparison.get('files') if isinstance(comparison.get('files'), list) else None
             if not lookup.get('ok') or files is None:
                 compare_error = lookup.get('error') or 'GitHub compare response did not include changed files'
-                snapshot = resolve_api_runtime_snapshot_drift(deployed_revision, main_sha)
-                if snapshot.get('ok'):
-                    runtime_changed_files = snapshot.get('runtime_changed_files') or []
-                    main_tree = snapshot.get('main_tree')
-                    known = True
-                    pending = bool(runtime_changed_files)
+                lookup_status = lookup.get('status')
+                fallback_allowed = (
+                    lookup.get('ok') is True
+                    or lookup_status is None
+                    or (isinstance(lookup_status, int) and lookup_status >= 500)
+                )
+                if fallback_allowed:
+                    snapshot = resolve_api_runtime_snapshot_drift(deployed_revision, main_sha)
+                    if snapshot.get('ok'):
+                        runtime_changed_files = snapshot.get('runtime_changed_files') or []
+                        main_tree = snapshot.get('main_tree')
+                        known = True
+                        pending = bool(runtime_changed_files)
+                    else:
+                        fallback_error = snapshot.get('error') or 'unknown runtime snapshot error'
+                        error = f'{compare_error}; runtime snapshot fallback failed: {fallback_error}'
                 else:
-                    fallback_error = snapshot.get('error') or 'unknown runtime snapshot error'
-                    error = f'{compare_error}; runtime snapshot fallback failed: {fallback_error}'
+                    error = compare_error
             elif status == 'identical':
                 known = True
             elif status != 'ahead':
