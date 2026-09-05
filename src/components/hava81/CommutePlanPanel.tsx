@@ -224,7 +224,9 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                 >
                   <header>
                     <span>{t(`hava81.commute.${kind}`)}</span>
-                    <strong>{window.targetClock}</strong>
+                    <strong>
+                      <time dateTime={window.targetTime.toISOString()}>{window.targetClock}</time>
+                    </strong>
                   </header>
                   <p>
                     {t('hava81.commute.forecastUsed', {
