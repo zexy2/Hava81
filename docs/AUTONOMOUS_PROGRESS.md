@@ -3371,3 +3371,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The BFF/browser current-weather response validator already rejects whitespace-only descriptions, but the localStorage cache deserializer accepted any string. A previously persisted malformed cache could therefore re-enter the UI even though the live network path would reject the same evidence.
 - Added the missing `trim()` emptiness check at cache ingress and normalize accepted cached descriptions by trimming surrounding whitespace. Added a focused hook regression proving a fresh-looking blank-description cache is ignored and triggers the normal current-weather fetch.
 - `git diff --check` passes; no weather value, provider choice, freshness TTL, scoring, MGM semantics or recommendation logic changed. Exact-head hosted frontend/unit/browser/CodeQL gates remain mandatory before merge.
+
+## 2026-09-05 10:46 TRT — rebuild decision-first root structured data on current main
+- Rebuilt the bounded #970 change from exact current main `f3030c2570b8b6f99130f5b51b181dee488ab282` rather than force-updating the conflicting PR branch.
+- Root WebSite JSON-LD now describes Hava81 as a decision-focused weather guide for Türkiye's 81 provinces, matching visible product positioning without making any live weather claim.
+- Added the focused JSON-LD regression unchanged from the validated prior branch. City-page structured data, weather values, provider/freshness behavior, routing, UI and API runtime are unchanged.
