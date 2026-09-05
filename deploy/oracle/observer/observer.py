@@ -47,6 +47,7 @@ API_RUNTIME_PATHS = {
 }
 API_RUNTIME_PREFIXES = ('apps/api/src/',)
 GITHUB_COMPARE_FILE_LIMIT = 300
+GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
@@ -489,7 +490,8 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
             known = True
         else:
             lookup = http_get(
-                f'https://api.github.com/repos/{REPO}/compare/{deployed_revision}...{main_sha}?per_page=1&page=1'
+                f'https://api.github.com/repos/{REPO}/compare/{deployed_revision}...{main_sha}?per_page=1&page=1',
+                timeout=GITHUB_COMPARE_TIMEOUT_SECONDS,
             )
             comparison = lookup.get('json') if isinstance(lookup.get('json'), dict) else {}
             status = comparison.get('status')
