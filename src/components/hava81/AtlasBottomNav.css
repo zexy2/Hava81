@@ -102,8 +102,13 @@
   border-radius: 50%;
 }
 
-.atlas-bottom-nav__button:hover {
+.atlas-bottom-nav__button:hover:not(:disabled) {
   color: var(--bottom-nav-ink);
+}
+
+.atlas-bottom-nav__button:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .atlas-bottom-nav__button--active {

@@ -7,6 +7,7 @@ export interface AtlasBottomNavProps {
   active: AtlasNavValue;
   onSelect: (value: AtlasNavValue) => void;
   hasSaved: boolean;
+  canMap: boolean;
 }
 
 function TodayIcon() {
@@ -35,7 +36,7 @@ function SavedIcon() {
   );
 }
 
-export function AtlasBottomNav({ active, onSelect, hasSaved }: AtlasBottomNavProps) {
+export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBottomNavProps) {
   const { t } = useTranslation();
 
   const items: Array<{
@@ -67,6 +68,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved }: AtlasBottomNavPro
     >
       {items.map(item => {
         const isActive = active === item.value;
+        const isDisabled = item.value === 'map' && !canMap;
 
         return (
           <button
@@ -75,6 +77,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved }: AtlasBottomNavPro
             className={`atlas-bottom-nav__button${isActive ? ' atlas-bottom-nav__button--active' : ''}`}
             onClick={() => onSelect(item.value)}
             aria-current={isActive ? 'location' : undefined}
+            disabled={isDisabled}
           >
             <span className="atlas-bottom-nav__icon">
               {item.icon}
