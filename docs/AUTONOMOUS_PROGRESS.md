@@ -3441,3 +3441,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added an explicit shell state for bottom-nav presence and scopes the mobile safe-area/nav padding to that state only. Weather/favorites views retain the existing reserved space; the empty root no longer pays for a control that is not rendered.
 - Integration coverage requires the shell to transition from no-nav to nav-present after successful location weather; mobile browser coverage requires zero bottom padding on the empty root. `git diff --check` passes locally; hosted CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
 - No weather values, location semantics, provider/freshness evidence, scoring, MGM guidance, API runtime, or safety guidance changed.
+
+## 2026-09-05 14:40 TRT — rebuild desktop root map gate on current main
+- Rebuilt the bounded desktop map-gating fix from exact current main `7f1c493cc54de7644f89d9fc90777a1da325bbfb` because #1001 became unmergeable after #1002 changed overlapping App/test surfaces.
+- The header map button is now natively disabled until current weather exists. Root integration and desktop browser regressions require the disabled control and no map region before city/weather selection; city-page behavior is unchanged.
+- `git diff --check` passes locally. The SentinelX execution environment does not expose Node/npm on PATH, so exact-head hosted CI/CD + CodeQL/browser/Lighthouse remain the executable quality gate before merge.
+- No weather values, provider/freshness evidence, score logic, MGM guidance, API runtime, route geometry, or safety semantics changed.
