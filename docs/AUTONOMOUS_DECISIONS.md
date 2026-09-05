@@ -1489,3 +1489,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** `cleanup-merged-worktree-artifacts.sh --apply` must refuse all mutation unless the shared Git metadata writability audit passes under the same effective uid.
 
 **Why:** Matching the owner of the top-level `.git` directory is insufficient: nested object fan-out directories can drift to another owner independently. A cleanup that starts removing files before discovering that Git worktree metadata cannot be updated can leave an inconsistent checkout; preflight the complete writable boundary first.
+
+### 2026-09-05 10:34 TRT — PWA shortcuts describe the decision outcome
+**Decision:** Installed-app city shortcuts describe opening decision-oriented daily weather guidance, not merely viewing weather.
+
+**Why:** Shortcut metadata is part of the product surface users see outside the browser shell. Matching it to Hava81's decision-first promise improves positioning without making any dynamic weather claim or changing shortcut destinations.

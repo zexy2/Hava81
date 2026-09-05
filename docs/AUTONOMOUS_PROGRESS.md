@@ -3354,3 +3354,9 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The new read-only Git metadata guard also found 12 non-writable loose-object fan-out directories in the legacy `/home/ubuntu/Hava81` repository. That checkout contains 56 dirty linked worktrees, so no ownership rewrite or cleanup was attempted there.
 - Hardened the current source-preserving worktree cleaner so every `--apply` pass requires both the existing top-level Git-owner match and a passing nested metadata writability audit before any artifact/worktree mutation. Missing audit tooling also fails closed.
 - Extended the cleanup regression with a non-writable object fan-out directory and proved an otherwise eligible `dist` artifact remains intact when the metadata preflight fails.
+
+## 2026-09-05 10:34 TRT — make installed-app shortcuts decision-first
+- Prepared independently from exact stable main `b83e6f3592e524a846b117c27b8c597013e5ebbc` while the #968 main rollout runs separately.
+- The İstanbul/Ankara PWA shortcuts still described themselves as generic weather viewers. Updated only their manifest descriptions to say they turn weather into daily decisions, matching Hava81's shipped product promise.
+- Extended the existing manifest regression to guard the shortcut descriptions alongside the raster-icon contract. Static manifest parsing and `git diff --check` pass.
+- No weather values, safety semantics, provider/freshness behavior, navigation targets, icon assets or API runtime changed. Hosted exact-head CI/CD + CodeQL/browser/PWA gates remain mandatory before merge.
