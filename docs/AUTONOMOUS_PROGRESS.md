@@ -3393,3 +3393,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Rebuilt a preserved copy-only improvement on exact main `9475fe41486a813052ad0bf1d49adcb6e9dbf86a` after confirming the current UI still rendered `baseline → activity score (delta)` under the ambiguous label “activity criteria impact”.
 - Turkish/English now explicitly label the two sides as general weather score → activity score; the underlying scores, thresholds, activity weights and calculations are unchanged.
 - Updated the focused component expectation and added a bilingual locale contract so the meaning cannot drift independently between languages.
+
+## 2026-09-05 11:51 TRT — restore comparison navigation semantics on exact main
+- Audited exact main `eeab64f0fb62e5f59aa2782f91b69caca92c155a` while #976/#977 exact-head CI ran independently and found the desktop header comparison action still exposed `aria-pressed` despite navigating to the saved-city comparison view.
+- Replaced the toggle semantics with `aria-current="page"` only while that view is active; aligned normal and forced-colors active CSS selectors and updated static/integration regressions.
+- No favorites storage, comparison weather requests, score logic, provider attribution, MGM/UV/AQI semantics, route logic or safety guidance changed.

@@ -1525,3 +1525,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Label the activity detail as `general weather score → activity score` rather than calling the entire baseline→result expression an activity-criteria impact in points.
 
 **Why:** The rendered value already contains two absolute scores plus their delta. Naming both sides makes the comparison self-explanatory and avoids implying that `80 → 65 (-15)` itself is a single point-impact value.
+
+### 2026-09-05 11:51 TRT — header compare action uses navigation semantics
+**Decision:** Treat the desktop header comparison action as navigation to the saved-city comparison view: expose `aria-current="page"` only while that view is active, and do not expose `aria-pressed`.
+
+**Why:** The action does not toggle a persistent binary preference; it changes the active application view. Navigation semantics match the user-visible behavior and avoid announcing a misleading pressed-button state.
