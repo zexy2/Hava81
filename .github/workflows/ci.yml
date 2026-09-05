@@ -44,6 +44,8 @@ jobs:
         run: bash scripts/test-autonomous-log-union-merge.sh
       - name: Verify safe worktree cleanup contract
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
+      - name: Verify Git metadata writability contract
+        run: bash scripts/test-git-metadata-writability.sh
       - name: Verify Hava81 browser temp cleanup contract
         run: bash scripts/test-cleanup-hava81-browser-temp.sh
       - name: Verify standalone checkout audit contract

@@ -1479,3 +1479,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 
 ## 2026-09-05 — quick-action state semantics
 - Header quick actions that reveal/toggle an application view use button state semantics (`aria-pressed` or `aria-expanded` as appropriate), not `aria-current`, which is reserved for the current item within navigation/location sets.
+
+### 2026-09-05 09:49 TRT — repository mutation requires writable shared Git metadata
+**Decision:** Autonomous repository mutation should first pass a read-only writability audit of the shared Git object fan-out and mutable refs/logs/worktree metadata under the effective uid. The audit reports drift but never repairs permissions itself.
+
+**Why:** A privileged historical command can leave only part of `.git` root-owned while the checkout still looks clean. That latent drift can make the next ordinary fetch fail after an otherwise successful GitHub merge. Detecting it before mutation is safer than weakening ownership boundaries or automatically chowning unknown paths.
