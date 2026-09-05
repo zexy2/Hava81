@@ -279,8 +279,8 @@ test('desktop root location gate gives the location choice a clear primary row',
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
 });
 
-test('root route falls back to İstanbul without an error when chosen location permission is denied', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location fallback regression');
+test('root route keeps location denial explicit instead of substituting a city', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location trust regression');
   await page.addInitScript(() => {
     (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
     Object.defineProperty(navigator, 'geolocation', {
@@ -299,11 +299,11 @@ test('root route falls back to İstanbul without an error when chosen location p
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
   await page.locator('.atlas-empty').getByRole('button', { name: 'Konumumu Kullan' }).click();
 
-  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
-  await expect(page).toHaveURL(/\/istanbul\/?$/);
+  await expect(page.locator('.atlas-message--error')).toBeVisible();
+  await expect(page.getByText('Konum izni reddedildi')).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(1);
-  await expect(page.getByText('Konum izni reddedildi')).toHaveCount(0);
-  await expect(page.locator('.atlas-message--error')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toHaveCount(0);
 });
 
 test('root route can continue with İstanbul without touching browser location', async ({ page }, testInfo) => {

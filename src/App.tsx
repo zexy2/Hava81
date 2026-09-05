@@ -352,12 +352,8 @@ const App: React.FC = () => {
 
   const handleInitialLocation = useCallback(async () => {
     clearError();
-    const locationResult = await fetchCurrentLocation();
-    if (!locationResult) {
-      clearError();
-      await fetchWeather('İstanbul');
-    }
-  }, [clearError, fetchCurrentLocation, fetchWeather]);
+    await fetchCurrentLocation();
+  }, [clearError, fetchCurrentLocation]);
 
   const handleInitialIstanbul = useCallback(() => {
     clearError();

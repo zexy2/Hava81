@@ -172,7 +172,7 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/ankara/');
   });
 
-  it('falls back to İstanbul after the user chooses location but browser permission is denied', async () => {
+  it('keeps location denial explicit instead of silently substituting İstanbul', async () => {
     const user = userEvent.setup();
     window.history.replaceState({}, '', '/');
     service.getCurrentLocationWeather.mockRejectedValueOnce(
@@ -188,11 +188,11 @@ describe('Hava81 app integration', () => {
     expect(locationGate).not.toBeNull();
     await user.click(within(locationGate!).getByRole('button', { name: 'Konumumu Kullan' }));
 
-    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByText('Konum izni reddedildi')).toBeInTheDocument();
     expect(service.getCurrentLocationWeather).toHaveBeenCalledWith('tr');
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
-    expect(screen.queryByText('Konum izni reddedildi')).not.toBeInTheDocument();
-    expect(window.location.pathname).toBe('/istanbul/');
+    expect(service.getCurrentWeather).not.toHaveBeenCalled();
+    expect(screen.queryByRole('heading', { name: 'İstanbul', level: 1 })).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
   });
 
   it('lets the user continue with İstanbul without requesting browser location', async () => {
