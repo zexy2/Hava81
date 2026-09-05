@@ -70,13 +70,22 @@ export function EnvironmentRail({
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const [, setFreshnessRevision] = useState(0);
   const currentFreshness = getCurrentWeatherFreshness(weather.meta);
+  const airQualityFreshness = getCurrentWeatherFreshness(airQuality?.meta ?? null);
+  const nextFreshnessExpiryMs = [
+    currentFreshness.expiresInMs,
+    airQuality ? airQualityFreshness.expiresInMs : null,
+  ].reduce<number | null>(
+    (soonest, candidate) =>
+      candidate === null ? soonest : soonest === null ? candidate : Math.min(soonest, candidate),
+    null
+  );
 
   useEffect(() => {
     const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
     const timerId =
-      currentFreshness.expiresInMs === null
+      nextFreshnessExpiryMs === null
         ? undefined
-        : window.setTimeout(resyncFreshness, currentFreshness.expiresInMs);
+        : window.setTimeout(resyncFreshness, nextFreshnessExpiryMs);
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -86,7 +95,13 @@ export function EnvironmentRail({
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [currentFreshness.expiresInMs, weather.meta.fetchedAt, weather.meta.freshForSeconds]);
+  }, [
+    airQuality?.meta.fetchedAt,
+    airQuality?.meta.freshForSeconds,
+    nextFreshnessExpiryMs,
+    weather.meta.fetchedAt,
+    weather.meta.freshForSeconds,
+  ]);
 
   const timeFormatter = useMemo(
     () =>
@@ -137,7 +152,10 @@ export function EnvironmentRail({
   const windSpeed = hasValidWind
     ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${getWindSpeedSymbol()}`
     : t('weather.noData');
-  const airQualityLabelKey = airQuality ? getOpenWeatherAqiLabelKey(airQuality.aqi) : undefined;
+  const freshAirQuality = airQuality && airQualityFreshness.fresh ? airQuality : undefined;
+  const airQualityLabelKey = freshAirQuality
+    ? getOpenWeatherAqiLabelKey(freshAirQuality.aqi)
+    : undefined;
   const airQualityLabel = airQualityLabelKey ? t(airQualityLabelKey) : t('weather.noData');
 
   const sectionLabel = [
@@ -198,12 +216,12 @@ export function EnvironmentRail({
         </span>
         <span className="environment-rail__label">{t('weather.airQuality')}</span>
         <strong className="environment-rail__value">
-          {airQualityLabelKey ? `${airQuality?.aqi} / 5` : '—'}
+          {airQualityLabelKey ? `${freshAirQuality?.aqi} / 5` : '—'}
         </strong>
         <span className="environment-rail__detail">
-          {airQuality && airQualityLabelKey
+          {freshAirQuality && airQualityLabelKey
             ? `${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
-                airQuality.pm25
+                freshAirQuality.pm25
               )} µg/m³`
             : t('weather.noData')}
         </span>
