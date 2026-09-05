@@ -3474,3 +3474,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Hosted CI for the API-only provider-text branch exposed a pre-existing race in the root-history integration test: it waited for the city heading, then synchronously asserted metadata that is intentionally updated by a React effect after the city render commit.
 - Replaced only that immediate title assertion with the existing Testing Library `waitFor` primitive. The production metadata effect, route behavior and expected title are unchanged; the regression now waits for the actual asynchronous contract instead of depending on scheduler timing.
 - `git diff --check` passes. Exact-head hosted frontend/browser gates remain mandatory before merge.
+## 2026-09-05 15:18 TRT — refresh OpenWeather text trust boundary on current main
+- Rebuilt the reviewed #989 API-only provider-ingress validation from exact current main rather than mutating the now-conflicting old branch.
+- Whitespace-only OpenWeather condition text, city names and country codes fail schema parsing before they can become weather evidence; valid provider text remains verbatim. Existing icon/timestamp/domain validation is preserved.
+- This remains an API runtime change and stays HOLD until fresh Oracle `api_build_headroom_ok=true`; exact-head hosted API/CI/CodeQL must be green before any 4001 canary / 4002 stable rollout.
