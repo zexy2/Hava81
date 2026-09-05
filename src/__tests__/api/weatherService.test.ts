@@ -958,21 +958,21 @@ describe('weatherService BFF client', () => {
       estimatedDurationMinutes: 360,
       requestedDeparture: '2026-08-29T18:00:00.000Z',
       score: 82,
-      segments: [
-        {
-          fraction: 0,
-          lat: 41.01,
-          lon: 28.97,
-          eta: '2026-08-29T18:00:00.000Z',
-          temperature: 24,
-          precipitationProbability: 20,
-          precipitationMm: 0.4,
-          windSpeed: 3.5,
-          description: 'açık',
-          score: 88,
-          risk: 'low' as const,
-        },
-      ],
+      segments: [0, 0.25, 0.5, 0.75, 1].map(fraction => ({
+        fraction,
+        lat: 41.01,
+        lon: 28.97,
+        eta: new Date(
+          Date.parse('2026-08-29T18:00:00.000Z') + 360 * 60_000 * fraction
+        ).toISOString(),
+        temperature: 24,
+        precipitationProbability: 20,
+        precipitationMm: 0.4,
+        windSpeed: 3.5,
+        description: 'açık',
+        score: 88,
+        risk: 'low' as const,
+      })),
       betterDeparture: {
         departure: '2026-08-29T21:00:00.000Z',
         score: 91,
@@ -992,6 +992,41 @@ describe('weatherService BFF client', () => {
   });
 
   it.each([
+    ['incomplete corridor', [0, 0.25, 0.5, 0.75]],
+    ['misordered corridor', [0, 0.5, 0.25, 0.75, 1]],
+  ])('rejects route-weather with %s fractions', async (_label, fractions) => {
+    const requestedDeparture = '2026-08-29T18:00:00.000Z';
+    mockGet.mockResolvedValue({
+      kind: 'corridor-estimate',
+      estimatedDistanceKm: 450,
+      estimatedDurationMinutes: 360,
+      requestedDeparture,
+      score: 82,
+      segments: fractions.map(fraction => ({
+        fraction,
+        lat: 41.01,
+        lon: 28.97,
+        eta: new Date(Date.parse(requestedDeparture) + 360 * 60_000 * fraction).toISOString(),
+        temperature: 24,
+        precipitationProbability: 20,
+        windSpeed: 3.5,
+        description: 'açık',
+        score: 88,
+        risk: 'low',
+      })),
+      disclaimer: 'Yaklaşık hava koridoru.',
+    });
+
+    await expect(
+      weatherService.getRouteWeather(
+        { lat: 41.01, lon: 28.97 },
+        { lat: 39.93, lon: 32.86 },
+        new Date(requestedDeparture)
+      )
+    ).rejects.toMatchObject({ code: ErrorCode.API_ERROR, retryable: true });
+  });
+
+  it.each([
     ['invalid departure', { requestedDeparture: 'invalid' }],
     ['score above 100', { score: 101 }],
     ['empty segments', { segments: [] }],
@@ -1008,26 +1043,27 @@ describe('weatherService BFF client', () => {
     ['invalid better departure', { betterDeparture: { departure: 'invalid', score: 90, improvement: 8 } }],
     ['non-positive better-departure improvement', { betterDeparture: { departure: '2026-08-29T21:00:00.000Z', score: 90, improvement: 0 } }],
   ])('rejects impossible route-weather %s from the BFF', async (_label, invalidField) => {
-    const segment = {
-      fraction: 0,
+    const requestedDeparture = '2026-08-29T18:00:00.000Z';
+    const segments = [0, 0.25, 0.5, 0.75, 1].map((fraction, index) => ({
+      fraction,
       lat: 41.01,
       lon: 28.97,
-      eta: '2026-08-29T18:00:00.000Z',
+      eta: new Date(Date.parse(requestedDeparture) + 360 * 60_000 * fraction).toISOString(),
       temperature: 24,
       precipitationProbability: 20,
       windSpeed: 3.5,
       description: 'açık',
       score: 88,
       risk: 'low',
-      ...('segment' in invalidField ? invalidField.segment : {}),
-    };
+      ...(index === 0 && 'segment' in invalidField ? invalidField.segment : {}),
+    }));
     const route = {
       kind: 'corridor-estimate',
       estimatedDistanceKm: 450,
       estimatedDurationMinutes: 360,
-      requestedDeparture: '2026-08-29T18:00:00.000Z',
+      requestedDeparture,
       score: 82,
-      segments: [segment],
+      segments,
       disclaimer: 'Yaklaşık hava koridoru.',
       ...Object.fromEntries(Object.entries(invalidField).filter(([key]) => key !== 'segment')),
     };

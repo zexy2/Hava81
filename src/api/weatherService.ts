@@ -471,13 +471,21 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
   invalid(!validDateString(data.requestedDeparture), 'route.requestedDeparture');
   const requestedDepartureMs = Date.parse(data.requestedDeparture);
   invalid(!validScore(data.score), 'route.score');
-  invalid(!Array.isArray(data.segments) || data.segments.length === 0, 'route.segments');
+  const expectedRouteFractions = [0, 0.25, 0.5, 0.75, 1] as const;
+  invalid(
+    !Array.isArray(data.segments) || data.segments.length !== expectedRouteFractions.length,
+    'route.segments'
+  );
   invalid(typeof data.disclaimer !== 'string' || !data.disclaimer.trim(), 'route.disclaimer');
 
   for (const [index, segment] of data.segments.entries()) {
     const prefix = `route.segments.${index}`;
     if (!isRecord(segment)) invalidForecastPayload(prefix);
-    invalid(!isFiniteNumber(segment.fraction) || segment.fraction < 0 || segment.fraction > 1, `${prefix}.fraction`);
+    invalid(
+      !isFiniteNumber(segment.fraction) ||
+        Math.abs(segment.fraction - expectedRouteFractions[index]) > Number.EPSILON,
+      `${prefix}.fraction`
+    );
     invalid(!isFiniteNumber(segment.lat) || segment.lat < -90 || segment.lat > 90, `${prefix}.lat`);
     invalid(!isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180, `${prefix}.lon`);
     invalid(!validDateString(segment.eta), `${prefix}.eta`);
