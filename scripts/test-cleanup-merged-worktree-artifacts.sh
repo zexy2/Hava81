@@ -3,6 +3,7 @@ set -euo pipefail
 
 project_root="$(git rev-parse --show-toplevel)"
 cleanup_script="$project_root/scripts/cleanup-merged-worktree-artifacts.sh"
+metadata_audit_script="$project_root/scripts/audit-git-metadata-writability.sh"
 tmp="$(mktemp -d)"
 busy_pid=""
 trap '[[ -n "$busy_pid" ]] && kill "$busy_pid" 2>/dev/null || true; chmod -R u+w "$tmp" 2>/dev/null || true; rm -rf "$tmp"' EXIT
@@ -83,7 +84,8 @@ printf 'build\n' > "$merged/dist/output.txt"
 
 mkdir -p "$primary/scripts"
 cp "$cleanup_script" "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
-chmod +x "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
+cp "$metadata_audit_script" "$primary/scripts/audit-git-metadata-writability.sh"
+chmod +x "$primary/scripts/cleanup-merged-worktree-artifacts.sh" "$primary/scripts/audit-git-metadata-writability.sh"
 
 audit="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit)"
 grep -Fq "Audit: scanned=" <<<"$audit"
@@ -101,6 +103,18 @@ if (cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --audit --appl
   echo "audit mode accepted mutation" >&2
   exit 1
 fi
+
+# A nested permission/ownership drift must stop apply before an eligible
+# worktree or its rebuildable artifacts can be removed.
+object_fanout="$primary/.git/objects/aa"
+mkdir -p "$object_fanout"
+chmod 0555 "$object_fanout"
+if (cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --apply >/dev/null 2>&1); then
+  echo "cleanup apply accepted non-writable shared Git metadata" >&2
+  exit 1
+fi
+[[ -f "$merged/dist/output.txt" ]]
+chmod 0755 "$object_fanout"
 
 dry="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --remove-worktrees)"
 grep -Fq "WOULD_REMOVE_WORKTREE" <<<"$dry"
