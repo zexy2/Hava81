@@ -18,6 +18,13 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("worker.get('merge_deploy_blocking_reasons', [])", status_script)
         self.assertIn("worker.get('writes_repository')", status_script)
 
+    def test_status_script_surfaces_api_build_disk_headroom(self) -> None:
+        status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn("disk.get('api_build_headroom_ok')", status_script)
+        self.assertIn("disk.get('bytes_to_free_for_api_build')", status_script)
+        self.assertIn('api_build_headroom_ok=', status_script)
+        self.assertIn('api_build_recovery_gib=', status_script)
+
     def test_status_script_surfaces_codeql_gate_state(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
         self.assertIn("pr.get('codeql')", status_script)
