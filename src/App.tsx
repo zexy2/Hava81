@@ -16,6 +16,7 @@ import type { FavoriteCity } from './types/weather.types';
 import { ErrorCode } from './types';
 import { ApiError } from './api/errors/ApiError';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
+import { ROOT_DOCUMENT_METADATA } from './utils/rootDocumentMetadata';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
@@ -114,17 +115,14 @@ const App: React.FC = () => {
   const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
   const rootDocumentMetadataRef = useRef({
-    title: document.title,
-    description: document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '',
-    ogTitle: document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content ?? '',
-    ogDescription:
-      document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content ?? '',
-    ogImageAlt: document.querySelector<HTMLMetaElement>('meta[property="og:image:alt"]')?.content ?? '',
-    twitterTitle: document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.content ?? '',
-    twitterDescription:
-      document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.content ?? '',
-    twitterImageAlt:
-      document.querySelector<HTMLMetaElement>('meta[name="twitter:image:alt"]')?.content ?? '',
+    title: ROOT_DOCUMENT_METADATA.title,
+    description: ROOT_DOCUMENT_METADATA.description,
+    ogTitle: ROOT_DOCUMENT_METADATA.title,
+    ogDescription: ROOT_DOCUMENT_METADATA.socialDescription,
+    ogImageAlt: ROOT_DOCUMENT_METADATA.title,
+    twitterTitle: ROOT_DOCUMENT_METADATA.title,
+    twitterDescription: ROOT_DOCUMENT_METADATA.socialDescription,
+    twitterImageAlt: ROOT_DOCUMENT_METADATA.title,
   });
 
   const [initialCity] = useState(() => cityFromPathname(window.location.pathname)?.name ?? '');
