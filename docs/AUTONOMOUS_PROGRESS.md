@@ -3365,3 +3365,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The desktop footer still called Hava81 a generic “Meteorological Atlas”, which undersold the shipped decision-first product and diverged from the standing positioning that Hava81 tells people what to do about the weather.
 - Replaced only the localized footer tagline with `Havaya göre ne yapacağını söyleyen 81 il rehberi` / `Decision-first weather guidance for all 81 provinces` and added a focused locale contract test.
 - No weather values, safety guidance, scoring, provider/freshness behavior, routing or API runtime changed. `git diff --check` passes; hosted exact-head frontend/browser/Lighthouse/CodeQL gates remain mandatory before merge.
+## 2026-09-05 10:29 TRT — align root structured data with decision-first positioning
+- Prepared independently from exact main `b83e6f3592e524a846b117c27b8c597013e5ebbc` while #968/#969 validate separately.
+- The root WebSite JSON-LD still described Hava81 as a “meteorological atlas” even though visible social/meta copy and the shipped product are decision-first.
+- Reworded only the structured description to a decision-focused weather guide for Türkiye's 81 provinces and added a focused JSON-LD regression. City-page structured data already uses per-city decision guidance and is unchanged.
+- Static JSON parsing and `git diff --check` pass. No weather values, safety semantics, provider/freshness behavior, routing, UI layout or API runtime changed; hosted exact-head CI/CD + CodeQL remain mandatory before merge.

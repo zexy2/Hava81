@@ -1498,3 +1498,7 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** The footer tagline describes Hava81 as decision guidance for all 81 provinces rather than a generic meteorological atlas.
 
 **Why:** Forecast data is an input; the product promise is helping people decide what to do about the weather. Keeping that promise visible in both Turkish and English makes the shipped UI consistent with the product's actual differentiated behavior without changing any weather or safety semantics.
+### 2026-09-05 10:29 TRT — root structured data reflects the decision product
+**Decision:** Root WebSite JSON-LD describes Hava81 as a decision-focused weather guide rather than only a meteorological atlas.
+
+**Why:** Search engines should receive the same product promise users see: Hava81 converts weather evidence into daily decisions. Static structured data still avoids live weather claims, so the SEO description remains safe to publish at build time.
