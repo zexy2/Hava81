@@ -3474,3 +3474,7 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Hosted CI for the API-only provider-text branch exposed a pre-existing race in the root-history integration test: it waited for the city heading, then synchronously asserted metadata that is intentionally updated by a React effect after the city render commit.
 - Replaced only that immediate title assertion with the existing Testing Library `waitFor` primitive. The production metadata effect, route behavior and expected title are unchanged; the regression now waits for the actual asynchronous contract instead of depending on scheduler timing.
 - `git diff --check` passes. Exact-head hosted frontend/browser gates remain mandatory before merge.
+## 2026-09-05 15:20 TRT — refresh API error no-store contract on current main
+- Rebuilt the reviewed #991 API-only error cache-control change from exact current main rather than mutating its old conflicting branch.
+- Handled API errors plus not-found responses explicitly emit `Cache-Control: no-store`; inject-level coverage protects validation 400, not-found 404 and transient 503 responses.
+- This remains an API runtime change and stays HOLD until fresh Oracle `api_build_headroom_ok=true`; exact-head hosted API/CI/CodeQL must be green before any 4001 canary / 4002 stable rollout.
