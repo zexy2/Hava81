@@ -37,6 +37,7 @@ interface UseWeatherReturn {
   setCity: (city: string) => void;
   fetchWeather: (city?: string) => Promise<NormalizedWeatherData | null>;
   fetchCurrentLocation: () => Promise<NormalizedWeatherData | null>;
+  clearWeather: () => void;
   clearError: () => void;
 
   // Cache/History
@@ -367,6 +368,14 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     return locationAsync.execute();
   }, [locationAsync, weatherAsync]);
 
+  const clearWeather = useCallback(() => {
+    weatherAsync.reset();
+    locationAsync.reset();
+    activeSourceRef.current = 'city';
+    setCity('');
+    setLastUpdated(null);
+  }, [locationAsync, weatherAsync]);
+
   // Clear error
   const clearError = useCallback(() => {
     weatherAsync.clearError();
@@ -500,6 +509,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     setCity,
     fetchWeather,
     fetchCurrentLocation,
+    clearWeather,
     clearError,
 
     // Cache/History

@@ -154,6 +154,25 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/weather/route**', route => route.fulfill({ json: routeResult }));
 });
 
+test('browser history can return from a city view to the root location gate', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop history regression');
+  await page.goto('/istanbul/');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+
+  await expect(page.locator('.atlas-empty--location')).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toHaveCount(0);
+  await expect(page).toHaveTitle('Hava81 — Havayı değil, gününü planla');
+  expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe(
+    'http://127.0.0.1:4173/'
+  );
+});
+
 test('root route explains the location choice before requesting browser permission', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location regression');
   await page.unroute('**/api/v1/weather/current**');

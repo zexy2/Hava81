@@ -16,6 +16,7 @@ import type { FavoriteCity } from './types/weather.types';
 import { ErrorCode } from './types';
 import { ApiError } from './api/errors/ApiError';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
+import { ROOT_DOCUMENT_METADATA } from './utils/rootDocumentMetadata';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
@@ -113,8 +114,19 @@ const App: React.FC = () => {
   const mapRegionRef = useRef<HTMLElement>(null);
   const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
+  const rootDocumentMetadataRef = useRef({
+    title: ROOT_DOCUMENT_METADATA.title,
+    description: ROOT_DOCUMENT_METADATA.description,
+    ogTitle: ROOT_DOCUMENT_METADATA.title,
+    ogDescription: ROOT_DOCUMENT_METADATA.socialDescription,
+    ogImageAlt: ROOT_DOCUMENT_METADATA.title,
+    twitterTitle: ROOT_DOCUMENT_METADATA.title,
+    twitterDescription: ROOT_DOCUMENT_METADATA.socialDescription,
+    twitterImageAlt: ROOT_DOCUMENT_METADATA.title,
+  });
 
   const [initialCity] = useState(() => cityFromPathname(window.location.pathname)?.name ?? '');
+  const isRootRoute = window.location.pathname === '/';
 
   const {
     city,
@@ -124,6 +136,7 @@ const App: React.FC = () => {
     isLoading,
     fetchWeather,
     fetchCurrentLocation,
+    clearWeather,
     clearError,
     recentSearches,
   } = useWeather({ initialCity, language: settings.language });
@@ -189,14 +202,53 @@ const App: React.FC = () => {
   useEffect(() => {
     const handlePopState = () => {
       const routeCity = cityFromPathname(window.location.pathname);
-      if (routeCity) fetchWeather(routeCity.name);
+      if (routeCity) {
+        void fetchWeather(routeCity.name);
+        return;
+      }
+      if (window.location.pathname === '/') {
+        clearWeather();
+        setShowMap(false);
+        setActiveNav('today');
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [fetchWeather]);
+  }, [clearWeather, fetchWeather]);
 
   useEffect(() => {
-    if (!weather) return;
+    const setMetaContent = (selector: string, content: string) => {
+      const meta = document.querySelector<HTMLMetaElement>(selector);
+      if (meta) meta.content = content;
+    };
+
+    if (!weather) {
+      if (window.location.pathname !== '/') return;
+      const rootMetadata = rootDocumentMetadataRef.current;
+      const canonicalUrl = new URL('/', window.location.origin).toString();
+      document.title = rootMetadata.title;
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+      }
+      canonical.href = canonicalUrl;
+      setMetaContent('meta[name="description"]', rootMetadata.description);
+      setMetaContent('meta[property="og:url"]', canonicalUrl);
+      setMetaContent('meta[property="og:title"]', rootMetadata.ogTitle);
+      setMetaContent('meta[property="og:description"]', rootMetadata.ogDescription);
+      setMetaContent('meta[property="og:image:alt"]', rootMetadata.ogImageAlt);
+      setMetaContent('meta[name="twitter:title"]', rootMetadata.twitterTitle);
+      setMetaContent('meta[name="twitter:description"]', rootMetadata.twitterDescription);
+      setMetaContent('meta[name="twitter:image:alt"]', rootMetadata.twitterImageAlt);
+      setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
+      setMetaContent(
+        'meta[property="og:locale:alternate"]',
+        settings.language === 'en' ? 'tr_TR' : 'en_US'
+      );
+      return;
+    }
     const path = cityPath(weather.cityName);
     if (path && window.location.pathname !== path) {
       const routeCity = cityFromPathname(window.location.pathname);
@@ -217,10 +269,6 @@ const App: React.FC = () => {
       }
       canonical.href = canonicalUrl;
 
-      const setMetaContent = (selector: string, content: string) => {
-        const meta = document.querySelector<HTMLMetaElement>(selector);
-        if (meta) meta.content = content;
-      };
       setMetaContent('meta[name="description"]', cityDescription);
       setMetaContent('meta[property="og:url"]', canonicalUrl);
       setMetaContent('meta[property="og:title"]', cityTitle);
@@ -469,7 +517,7 @@ const App: React.FC = () => {
                 <button
                   type="button"
                   className="atlas-icon-button atlas-icon-button--location"
-                  onClick={initialCity || weather ? fetchCurrentLocation : handleInitialLocation}
+                  onClick={!isRootRoute || weather ? fetchCurrentLocation : handleInitialLocation}
                   disabled={isLoading}
                   aria-busy={isLoading}
                   aria-label={t('weather.useMyLocation')}
@@ -732,8 +780,8 @@ const App: React.FC = () => {
             )}
 
             {activeNav !== 'saved' && !weather && !isLoading && !error && (
-              <section className={`atlas-empty${initialCity ? '' : ' atlas-empty--location'}`}>
-                {initialCity ? (
+              <section className={`atlas-empty${isRootRoute ? ' atlas-empty--location' : ''}`}>
+                {!isRootRoute ? (
                   <>
                     <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
                     <h1>{t('weather.searchLabel')}</h1>

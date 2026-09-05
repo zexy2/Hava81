@@ -3447,3 +3447,20 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The header map button is now natively disabled until current weather exists. Root integration and desktop browser regressions require the disabled control and no map region before city/weather selection; city-page behavior is unchanged.
 - `git diff --check` passes locally. The SentinelX execution environment does not expose Node/npm on PATH, so exact-head hosted CI/CD + CodeQL/browser/Lighthouse remain the executable quality gate before merge.
 - No weather values, provider/freshness evidence, score logic, MGM guidance, API runtime, route geometry, or safety semantics changed.
+## 2026-09-05 14:29 TRT — make browser history able to return to the root gate
+- Exact base: `9e5062a58baeda38f8a56bc81d512dd0100766ab`. Auditing custom pathname/history handling found `popstate` only handled recognized city routes.
+- A history transition from a city view to `/` therefore left the prior weather state alive; the city synchronization effect could immediately rewrite `/` back to that stale city route, defeating browser Back semantics.
+- Added an explicit current-weather reset action that invalidates both city/location async state without deleting persisted recent searches/cache, and uses it only for root `popstate`. Root history also closes map mode and returns navigation state to Today.
+- The same handoff now restores the original root title, canonical URL, description, Open Graph and Twitter metadata captured from the static shell, preventing stale city SEO/social metadata after browser Back.
+- Added integration and real-browser regressions requiring a city view to hand back to the root location gate without the old city heading/URL and with root title/canonical metadata restored. `git diff --check` passes locally; hosted CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
+- No weather values, provider/freshness evidence, scoring, MGM guidance, API runtime, or safety guidance changed.
+
+## 2026-09-05 14:47 TRT — repair root history rendering after hosted regression
+- Rebuilt #1003 onto exact current main `7f1c493cc54de7644f89d9fc90777a1da325bbfb` and inspected its exact failed hosted log rather than retrying blindly. The only failing test showed weather was cleared correctly, but the empty state still used the mount-time `initialCity=İstanbul`, rendering the generic city-search empty state after history returned to `/`.
+- Kept `initialCity` only for deep-link bootstrap and made current root-vs-city UI semantics derive from the live pathname during render. The location quick action and empty-state branch now follow the current route, so a root `popstate` can actually restore the location gate while city deep links keep their prior behavior.
+- `git diff --check` passes. Reused dependencies were unavailable (the preserved node_modules directory is empty), so the corrected exact-head hosted frontend/browser/Lighthouse/CodeQL gates remain mandatory before merge. No weather evidence, provider/freshness semantics, scoring, MGM guidance, API runtime, or safety logic changed.
+
+### 2026-09-05 15:03 TRT — fix city-shell metadata capture in root history restoration
+- Exact-head browser CI exposed a production-realistic case the jsdom fixture missed: when the SPA starts from a generated `/istanbul/` shell, capturing document metadata at mount captures İstanbul metadata, so returning to `/` correctly cleared weather/UI but restored the city title instead of the root title.
+- Replaced route-dependent mount capture with a small canonical root metadata contract shared by the runtime restoration path and a static-shell regression. Root title/description/social copy now restores deterministically regardless of which generated city shell booted the SPA.
+- Removed the artificial unit-test title seed that had hidden this distinction. `git diff --check` passes; exact-head hosted unit/browser/Lighthouse/CodeQL gates remain required before merge.
