@@ -86,9 +86,7 @@ describe('EnvironmentRail', () => {
     expect(sunrise).toBeInTheDocument();
     expect(sunset.closest('time')).toHaveAttribute('datetime', '2026-08-28T16:30:00.000Z');
     expect(sunrise.closest('time')).toHaveAttribute('datetime', '2026-08-28T03:00:00.000Z');
-    expect(screen.getByText('13 s 30 dk').parentElement).toHaveTextContent(
-      'Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk'
-    );
+    expect(sunrise.parentElement).toHaveTextContent('Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk');
     expect(screen.queryByText('16:30')).not.toBeInTheDocument();
     expect(screen.queryByText('03:00')).not.toBeInTheDocument();
   });
