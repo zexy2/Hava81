@@ -3434,3 +3434,8 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Removed only the automatic İstanbul substitution from the geolocation action. Permission/unavailable/timeout failures now stay explicit on `/`; the existing separate “İstanbul ile devam et” and city-search choices remain available after dismissing the error. Successful geolocation behavior is unchanged.
 - Updated integration and real-mobile browser regressions to require no İstanbul weather request, no city URL change, and a visible localized location error after permission denial. `git diff --check` passes locally; hosted exact-head CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge.
 - No weather values, provider evidence, scoring, MGM semantics, API runtime, or safety guidance changed.
+## 2026-09-05 14:23 TRT — recover desktop map gating after duplicate-close race
+- Exact stable base: `f58be640a07d2f006593c235a49019469c23b612` after #996 completed green CI/CD and production matched main.
+- Concurrent duplicate handling closed both #998 and #999 without merging either, so the root desktop map dead-destination fix would otherwise have been lost. Rebuilt it from current main instead of reopening or mutating either stale branch.
+- The desktop header map button is now natively disabled until current weather exists; root integration and desktop browser regressions require the disabled state and absence of the map region before a city/weather selection. City-page map behavior is unchanged.
+- Local `git diff --check` passes. Exact-head hosted CI/CD + CodeQL/browser/Lighthouse remain mandatory before merge. No weather values, map data, provider/freshness semantics, scoring, MGM guidance, API runtime, or safety guidance changed.

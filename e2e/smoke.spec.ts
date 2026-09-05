@@ -238,6 +238,8 @@ test('desktop root location gate gives the location choice a clear primary row',
   await page.goto('/');
   const gate = page.locator('.atlas-empty--location');
   await expect(gate).toBeVisible();
+  await expect(page.locator('.atlas-icon-button--map')).toBeDisabled();
+  await expect(page.locator('#weather-map-region')).toHaveCount(0);
 
   const layout = await gate.evaluate(element => {
     const actions = element.querySelector<HTMLElement>('.atlas-empty__actions');
