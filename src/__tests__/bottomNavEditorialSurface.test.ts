@@ -38,6 +38,9 @@ describe('mobile bottom navigation editorial surface', () => {
 
   it('names the saved-city destination for the comparison it actually opens', () => {
     expect(component).toContain("label: t('hava81.compare.action')");
+    expect(component).toContain('function CompareIcon()');
+    expect(component).toContain('icon: <CompareIcon />');
+    expect(component).not.toContain('function SavedIcon()');
     expect(component).not.toContain("label: t('navigation.saved'");
     expect(app).toContain("if (item === 'saved')");
     expect(app).toContain("<ComparePanel cities={favorites}");
