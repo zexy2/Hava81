@@ -63,18 +63,23 @@ export function ComparePanel({ cities, language }: ComparePanelProps) {
     Promise.allSettled(
       selected.map(async city => {
         const weather = await weatherService.getCurrentWeather({ city: city.name, lang: language });
-        const [forecastResult, hourlyResult, airResult] = await Promise.allSettled([
-          weatherService.getForecast(weather.coordinates.lat, weather.coordinates.lon, language),
+        const [hourlyResult, airResult] = await Promise.allSettled([
           weatherService.getHourlyForecast(weather.coordinates.lat, weather.coordinates.lon, language),
           weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language),
         ]);
         const airQuality = airResult.status === 'fulfilled' ? airResult.value : undefined;
-        const hourlySource =
+        let hourlySource =
           hourlyResult.status === 'fulfilled' && hourlyResult.value.hourly.length
             ? hourlyResult.value
-            : forecastResult.status === 'fulfilled' && forecastResult.value.hourly.length
-              ? forecastResult.value
-              : undefined;
+            : undefined;
+        if (!hourlySource) {
+          const fallbackForecast = await weatherService.getForecast(
+            weather.coordinates.lat,
+            weather.coordinates.lon,
+            language
+          );
+          hourlySource = fallbackForecast.hourly.length ? fallbackForecast : undefined;
+        }
         if (!hourlySource) {
           throw new Error('No usable hourly comparison forecast');
         }
