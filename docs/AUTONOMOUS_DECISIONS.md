@@ -1484,3 +1484,8 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Autonomous repository mutation should first pass a read-only writability audit of the shared Git object fan-out and mutable refs/logs/worktree metadata under the effective uid. The audit reports drift but never repairs permissions itself.
 
 **Why:** A privileged historical command can leave only part of `.git` root-owned while the checkout still looks clean. That latent drift can make the next ordinary fetch fail after an otherwise successful GitHub merge. Detecting it before mutation is safer than weakening ownership boundaries or automatically chowning unknown paths.
+
+### 2026-09-05 09:58 TRT — cleanup must preflight nested Git metadata before mutation
+**Decision:** `cleanup-merged-worktree-artifacts.sh --apply` must refuse all mutation unless the shared Git metadata writability audit passes under the same effective uid.
+
+**Why:** Matching the owner of the top-level `.git` directory is insufficient: nested object fan-out directories can drift to another owner independently. A cleanup that starts removing files before discovering that Git worktree metadata cannot be updated can leave an inconsistent checkout; preflight the complete writable boundary first.

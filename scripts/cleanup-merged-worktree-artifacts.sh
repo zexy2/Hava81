@@ -70,6 +70,16 @@ if [[ "$apply" == true ]]; then
     echo "run the cleanup as the repository owner so refs/reflogs remain writable" >&2
     exit 2
   fi
+
+  metadata_audit="$repo/scripts/audit-git-metadata-writability.sh"
+  if [[ ! -x "$metadata_audit" ]]; then
+    echo "Git metadata writability audit is unavailable; refusing apply" >&2
+    exit 2
+  fi
+  if ! "$metadata_audit" "$repo" >/dev/null; then
+    echo "Git metadata is not fully writable; refusing cleanup before any mutation" >&2
+    exit 2
+  fi
 fi
 
 artifacts=(
