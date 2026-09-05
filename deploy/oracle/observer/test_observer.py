@@ -991,14 +991,15 @@ class ObserverBrowserProcessTests(unittest.TestCase):
             "104 15000 ubuntu node node /tmp/hava81-worker.js",
             "105 10800 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/home/ubuntu/snap/chromium/common/hava81-cdp-audit",
             "106 11000 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir /home/ubuntu/snap/chromium/common/h81deploycheck",
+            "107 13000 ubuntu chromium /snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=/home/ubuntu/browser-profile",
         ])
         with mock.patch.object(observer.subprocess, "run", return_value=self._Result(output)):
             state = observer.collect_hava81_browser_processes()
 
         self.assertTrue(state["known"])
-        self.assertEqual(state["stale_count"], 3)
-        self.assertEqual([item["pid"] for item in state["processes"]], [106, 105, 101])
-        self.assertEqual(state["processes"][0]["elapsed_seconds"], 11000)
+        self.assertEqual(state["stale_count"], 4)
+        self.assertEqual([item["pid"] for item in state["processes"]], [107, 106, 105, 101])
+        self.assertEqual(state["processes"][0]["elapsed_seconds"], 13000)
         self.assertIsNone(state["error"])
 
     def test_ps_failure_falls_back_to_proc(self) -> None:
@@ -1090,11 +1091,20 @@ class ObserverHostDiskTests(unittest.TestCase):
 
     def _collect_with_available_blocks(self, available_blocks: int):  # noqa: ANN201
         original_statvfs = observer.os.statvfs
+        original_collect = observer.collect_hava81_browser_processes
         try:
             observer.os.statvfs = lambda _path: self._Statvfs(available_blocks)
+            observer.collect_hava81_browser_processes = lambda: {
+                "known": True,
+                "stale_after_seconds": observer.HAVA81_BROWSER_STALE_SECONDS,
+                "stale_count": 0,
+                "processes": [],
+                "error": None,
+            }
             return observer.collect_host()
         finally:
             observer.os.statvfs = original_statvfs
+            observer.collect_hava81_browser_processes = original_collect
 
     def test_high_disk_percentage_is_unhealthy_even_above_absolute_free_floor(self) -> None:
         host = self._collect_with_available_blocks(750_000)  # ~3.1 GB free, 92.5% used
