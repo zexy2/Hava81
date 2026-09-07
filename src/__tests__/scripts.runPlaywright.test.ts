@@ -35,11 +35,12 @@ async function waitForFile(path: string, timeoutMs = 5_000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      return await readFile(path, 'utf8');
+      const content = await readFile(path, 'utf8');
+      if (content.length > 0) return content;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      await new Promise(resolveWait => setTimeout(resolveWait, 25));
     }
+    await new Promise(resolveWait => setTimeout(resolveWait, 25));
   }
   throw new Error(`Timed out waiting for ${path}`);
 }
