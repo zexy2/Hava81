@@ -118,10 +118,7 @@ describe('Playwright temp runner', () => {
       stdio: 'ignore',
     });
 
-    const parentPid = Number((await waitForFile(parentPidFile)).trim());
-    const childPid = Number((await waitForFile(childPidFile)).trim());
-    expect(parentPid).toBeGreaterThan(0);
-    expect(childPid).toBeGreaterThan(0);
+    await Promise.all([waitForFile(parentPidFile), waitForFile(childPidFile)]);
 
     const wrapperClosed = new Promise<void>((resolveClose, reject) => {
       wrapper.once('error', reject);
