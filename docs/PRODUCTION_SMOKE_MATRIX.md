@@ -18,7 +18,9 @@ This matrix is a compact release contract for verifying the public Hava81 surfac
 
 ## API contract
 
-- `/api/v1/ready` returns 200 with `status=ready` and a fresh timestamp.
+- `/api/v1/health/ready` returns 200 with `status=ready`, a fresh timestamp and `cache-control: no-store`.
+- `/api/v1/health/live` returns 200 for liveness.
+- The shorthand `/api/v1/ready` is not a canonical route and should not be used as a readiness assertion.
 - CORS allows only `https://hava81.zekiakgul.dev`.
 - `/api/v1/cities/istanbul/current` returns a successful attributed provider payload or an explicit unavailable/error state; tests must not require a particular temperature.
 - Provider circuit state is observed and reported; no test may silently turn provider failures into fabricated values.
