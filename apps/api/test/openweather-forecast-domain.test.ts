@@ -43,6 +43,27 @@ test('forecast schema rejects unsupported provider icon codes', () => {
   assert.throws(() => forecastUpstreamSchema.parse(payload));
 });
 
+test('forecast schema rejects blank provider text fields', () => {
+  for (const mutate of [
+    (payload: ReturnType<typeof sample>) => {
+      payload.list[0].weather[0].main = '   ';
+    },
+    (payload: ReturnType<typeof sample>) => {
+      payload.list[0].weather[0].description = '   ';
+    },
+    (payload: ReturnType<typeof sample>) => {
+      payload.city.name = '   ';
+    },
+    (payload: ReturnType<typeof sample>) => {
+      payload.city.country = '   ';
+    },
+  ]) {
+    const payload = sample();
+    mutate(payload);
+    assert.throws(() => forecastUpstreamSchema.parse(payload));
+  }
+});
+
 test('forecast schema rejects negative and fractional forecast epochs', () => {
   for (const invalidTimestamp of [-1, 1_725_000_000.5]) {
     const payload = sample();
