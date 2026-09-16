@@ -125,6 +125,8 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
       request.log.warn({ code: errorMetadata.code, statusCode }, 'Request rejected');
     }
 
+    reply.header('Cache-Control', 'no-store');
+
     if (statusCode === 429 && 'error' in (error as object)) {
       reply.status(statusCode).send(error);
       return;
@@ -189,6 +191,7 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
 
   app.setNotFoundHandler((request, reply) => {
     reply
+      .header('Cache-Control', 'no-store')
       .status(404)
       .send(
         toErrorEnvelope(
