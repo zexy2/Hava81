@@ -181,7 +181,6 @@ describe('SearchBar', () => {
     const input = screen.getByRole('combobox');
     await user.click(input);
 
-    // Input should be focused after click
     expect(input).toHaveFocus();
   });
 
@@ -194,7 +193,7 @@ describe('SearchBar', () => {
     expect(options.length).toBeGreaterThan(1);
 
     fireEvent.keyDown(input, { key: 'End' });
-    expect(input).toHaveAttribute('aria-activedescendant', options.at(-1)?.id);
+    expect(input).toHaveAttribute('aria-activedescendant', options[options.length - 1]?.id);
 
     fireEvent.keyDown(input, { key: 'Home' });
     expect(input).toHaveAttribute('aria-activedescendant', options[0].id);
