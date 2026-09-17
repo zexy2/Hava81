@@ -6,7 +6,7 @@
 - Production frontend/API are healthy: root, Istanbul, readiness and boot-assets checks are green.
 - API readiness reports `status=ready` with `Cache-Control: no-store`; OpenWeather provider circuit is `closed`.
 - Stable API remains on port `4002`; rollback/canary port `4001` is preserved.
-- Frontend revision is consistent with current main at `9af4ef6bc37e67e6f63a60503162478114910746` before this checkpoint merge sequence; no live restart, port switch or rollback was attempted.
+- Frontend revision is consistent with current main at `9af4ef6bc37e67e6f63a60503162478113043d43` before this checkpoint merge sequence; no live restart, port switch or rollback was attempted.
 - Root disk remains under the hard safety ceiling but carries a pressure warning at approximately 90.8% used. No unrelated cleanup was performed.
 
 ## Repository action
