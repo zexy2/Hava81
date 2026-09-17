@@ -30,12 +30,12 @@ describe('mobile bottom navigation editorial surface', () => {
     expect(css).not.toContain('.atlas-bottom-nav__button--active .atlas-bottom-nav__icon');
   });
 
-  it('describes the selected single-page destination as the current location', () => {
-    expect(component).toContain("aria-current={isActive ? 'location' : undefined}");
-    expect(component).not.toContain("aria-current={isActive ? 'page' : undefined}");
-    expect(css).toContain(".atlas-bottom-nav__button[aria-current='location']");
-    expect(app).toContain("aria-current={activeNav === 'compare' ? 'location' : undefined}");
-    expect(app).not.toContain("aria-current={activeNav === 'compare' ? 'page' : undefined}");
+  it('describes the selected single-page destination as the current page', () => {
+    expect(component).toContain("aria-current={isActive ? 'page' : undefined}");
+    expect(component).not.toContain("aria-current={isActive ? 'location' : undefined}");
+    expect(css).toContain(".atlas-bottom-nav__button[aria-current='page']");
+    expect(app).toContain("aria-current={activeNav === 'compare' ? 'page' : undefined}");
+    expect(app).not.toContain("aria-current={activeNav === 'compare' ? 'location' : undefined}");
   });
 
   it('names the saved-city destination for the comparison it actually opens', () => {
