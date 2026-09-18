@@ -369,64 +369,44 @@ const App: React.FC = () => {
   }, [restoreMapTriggerFocus]);
 
   const handleBottomNav = useCallback(
-    (item: AtlasNavItem) => {
-      if (item === 'map') {
-        openMap();
+    (next: AtlasNavItem) => {
+      if (next === 'map') {
+        if (showMap) {
+          closeMap();
+        } else {
+          openMap();
+        }
         return;
       }
-
-      if (item === 'compare') {
-        trackProductEvent('compare_opened', { favorites: favorites.length });
+      if (next === 'compare') {
         setShowMap(false);
         setActiveNav('compare');
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (cityRailRef.current) {
-              scrollIntoViewRespectingMotion(cityRailRef.current, { block: 'start' });
-            }
-          });
-        });
+        requestAnimationFrame(() => overviewRef.current?.focus({ preventScroll: true }));
         return;
       }
-
       setShowMap(false);
       setActiveNav('today');
-      if (overviewRef.current) {
-        scrollIntoViewRespectingMotion(overviewRef.current, { block: 'start' });
-      }
+      requestAnimationFrame(() => overviewRef.current?.focus({ preventScroll: true }));
     },
-    [favorites.length, openMap]
+    [closeMap, openMap, showMap]
   );
 
-  const handleInitialLocation = useCallback(async () => {
-    clearError();
-    await fetchCurrentLocation();
-  }, [clearError, fetchCurrentLocation]);
-
-  const handleInitialIstanbul = useCallback(() => {
-    clearError();
-    void fetchWeather('İstanbul');
-  }, [clearError, fetchWeather]);
-
-  const isLocationError =
-    error?.code === ErrorCode.LOCATION_DENIED ||
-    error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
-    error?.code === ErrorCode.LOCATION_TIMEOUT;
-  const canRetryCurrentWeather = Boolean(error && (isLocationError || error.retryable));
+  const handleInitialLocation = useCallback(() => {
+    void fetchCurrentLocation();
+  }, [fetchCurrentLocation]);
 
   const retryCurrentWeather = useCallback(() => {
-    clearError();
-    if (isLocationError) {
-      void fetchCurrentLocation();
-      return;
-    }
-    void fetchWeather(city || weather?.cityName || 'İstanbul');
-  }, [city, clearError, fetchCurrentLocation, fetchWeather, isLocationError, weather?.cityName]);
-
-  const canRetryForecast =
-    !forecast.error || !(forecast.error instanceof ApiError) || forecast.error.retryable;
+    void fetchWeather(weather?.cityName ?? city);
+  }, [city, fetchWeather, weather?.cityName]);
 
   const retryForecast = useCallback(() => {
+    if (weather?.coordinates) void fetchForecast(weather.coordinates, weather.cityName);
+  }, [fetchForecast, weather?.cityName, weather?.coordinates]);
+
+  const canRetryCurrentWeather = Boolean(weather?.cityName || city);
+  const canRetryForecast = Boolean(weather?.coordinates);
+
+  useEffect(() => {
     if (weather?.coordinates) fetchForecast(weather.coordinates, weather.cityName);
   }, [fetchForecast, weather?.cityName, weather?.coordinates]);
 
@@ -545,7 +525,7 @@ const App: React.FC = () => {
                     type="button"
                     className="atlas-compare-button"
                     onClick={() => handleBottomNav('compare')}
-                    aria-current={activeNav === 'compare' ? 'location' : undefined}
+                    aria-current={activeNav === 'compare' ? 'page' : undefined}
                   >
                     {t('hava81.compare.action')}
                     <span aria-hidden="true">{favorites.length}</span>
@@ -698,159 +678,55 @@ const App: React.FC = () => {
                   <EnvironmentRail
                     weather={weather}
                     airQuality={freshAirQuality}
-                    onOpenMap={showMap ? closeMap : openMap}
-                    mapExpanded={showMap}
+                    uvIndexMax={freshUvIndexMax}
+                    forecastMeta={forecast.displayMeta ?? forecast.meta}
                   />
                 </Suspense>
 
-                {showMap && (
-                  <section
-                    className="atlas-map-panel"
-                    id="weather-map-region"
-                    ref={mapRegionRef}
-                    tabIndex={-1}
-                    aria-labelledby="weather-map-heading"
-                  >
-                    <div className="atlas-map-panel__header">
-                      <div>
-                        <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
-                        <h2 id="weather-map-heading">{t('common.map')}</h2>
-                      </div>
-                      <button type="button" className="atlas-text-button" onClick={closeMap}>
-                        {t('common.close')}
-                      </button>
-                    </div>
-                    <Suspense
-                      fallback={
-                        <div className="atlas-map-loading" role="status">
-                          {t('common.loading')}
-                        </div>
-                      }
-                    >
-                      <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
-                    </Suspense>
-                  </section>
-                )}
-
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <CommutePlanPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
-
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <ActivityPlanner
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
-
-                {forecast.contextSignals && (
-                  <Suspense fallback={null}>
-                    <ContextSignalsPanel
-                      signals={forecast.contextSignals}
-                      timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
-                    />
-                  </Suspense>
-                )}
-
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <DecisionAlertsPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                <Suspense fallback={null}>
+                  <CommutePlanPanel weather={weather} hourly={forecast.hourly} />
+                </Suspense>
 
                 <Suspense fallback={null}>
-                  <RouteWeatherPanel currentCityName={weather.cityName} />
+                  <ActivityPlanner weather={weather} hourly={forecast.hourly} />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <ContextSignalsPanel signals={forecast.contextSignals} />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <DecisionAlertsPanel weather={weather} hourly={forecast.hourly} />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <RouteWeatherPanel weather={weather} hourly={forecast.hourly} />
                 </Suspense>
               </div>
             )}
 
-            {activeNav !== 'compare' && !weather && !isLoading && !error && (
-              <section className={`atlas-empty${isRootRoute ? ' atlas-empty--location' : ''}`}>
-                {!isRootRoute ? (
-                  <>
-                    <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
-                    <h1>{t('weather.searchLabel')}</h1>
-                    <p>{t('weather.searchPlaceholder')}</p>
-                    <button
-                      type="button"
-                      className="atlas-button atlas-button--primary"
-                      onClick={openSearch}
-                    >
-                      {t('common.search')}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="atlas-kicker">{t('hava81.locationGate.eyebrow')}</span>
-                    <h1>{t('hava81.locationGate.title')}</h1>
-                    <p>{t('hava81.locationGate.body')}</p>
-                    <div className="atlas-empty__actions">
-                      <button
-                        type="button"
-                        className="atlas-button atlas-button--primary"
-                        aria-describedby="location-gate-privacy"
-                        onClick={() => void handleInitialLocation()}
-                      >
-                        {t('weather.useMyLocation')}
-                      </button>
-                      <button
-                        type="button"
-                        className="atlas-button"
-                        onClick={handleInitialIstanbul}
-                      >
-                        {t('hava81.locationGate.fallback')}
-                      </button>
-                      <button
-                        type="button"
-                        className="atlas-button"
-                        onClick={openSearch}
-                      >
-                        {t('hava81.locationGate.searchAnother')}
-                      </button>
-                    </div>
-                    <small id="location-gate-privacy" className="atlas-empty__note">
-                      {t('hava81.locationGate.privacy')}
-                    </small>
-                  </>
-                )}
+            {!weather && !isLoading && !error && activeNav !== 'compare' && (
+              <section className="atlas-empty-state" aria-labelledby="atlas-empty-title">
+                <span className="atlas-kicker">{t('hava81.emptyEyebrow')}</span>
+                <h1 id="atlas-empty-title">{t('hava81.emptyTitle')}</h1>
+                <p>{t('hava81.emptyDescription')}</p>
+                <div className="atlas-empty-state__actions">
+                  <button type="button" className="atlas-button atlas-button--primary" onClick={handleInitialLocation}>
+                    {t('weather.useMyLocation')}
+                  </button>
+                  <button type="button" className="atlas-text-button" onClick={openSearch}>
+                    {t('common.search')}
+                  </button>
+                </div>
               </section>
             )}
           </main>
 
-          <footer className="atlas-footer">
-            <span>Hava81 · {t('hava81.tagline')}</span>
-            <span className="atlas-footer__shortcuts">
-              <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
-              <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
-            </span>
-          </footer>
-
-          {isSettingsOpen ? (
-            <Suspense
-              fallback={
-                <div className="atlas-settings-loading" role="status" aria-live="polite">
-                  {t('common.loading')}
-                </div>
-              }
-            >
-              <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
+          {isSettingsOpen && (
+            <Suspense fallback={null}>
+              <SettingsPanel onClose={closeSettings} />
             </Suspense>
-          ) : null}
+          )}
         </div>
       </ErrorBoundary>
     </>
