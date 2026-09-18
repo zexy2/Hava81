@@ -76,7 +76,7 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
             type="button"
             className={`atlas-bottom-nav__button${isActive ? ' atlas-bottom-nav__button--active' : ''}`}
             onClick={() => onSelect(item.value)}
-            aria-current={isActive ? 'location' : undefined}
+            aria-current={isActive ? 'page' : undefined}
             disabled={isDisabled}
           >
             <span className="atlas-bottom-nav__icon">
