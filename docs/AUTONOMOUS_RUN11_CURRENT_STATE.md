@@ -1,10 +1,10 @@
 # Autonomous Run 11 — Current State
 
-Date: 2026-09-10 09:39 TRT
+Date: 2026-09-18 19:40 TRT
 
 ## Verified production state
 
-- Frontend main revision: `0fe135f436a1757ef5f44d3667e79bb108ab1dfd`
+- Frontend main revision: `00ff93bc5b3d2310033c9a957ce11bfb3485cba5`
 - API deployed revision: `d8445e8af156a147d888bf64efbeabb3dc8c66c5`
 - API traffic: port `4002`
 - Rollback/canary slot: port `4001`
@@ -13,21 +13,19 @@ Date: 2026-09-10 09:39 TRT
 
 ## Host gate
 
-- Root disk usage: `94.8%`
-- Free space: `2,487,320,576` bytes
-- `api_build_headroom_ok`: `false`
-- API build reserve shortfall: `1,911,750,001` bytes
-- Consequence: API merge/deploy and unverified cleanup remain fail-closed.
+- Root disk usage: `90.5%`
+- Free space: `4,604,915,712` bytes
+- `api_build_headroom_ok`: `true`
+- Pressure warning remains active; no unrelated cleanup was attempted.
 
-## Repository safety
+## Open PR #1120 diagnosis
 
-- Dirty primary worktree `/home/ubuntu/Hava81` on `automation/hava81-share-polish-0902` was not modified.
-- Pending API PRs #1008 and #1009 remain untouched.
-- This checkpoint is docs-only and based on the exact current `main` SHA above.
+- Exact head: `703883c555d26e3d66bce11a1be24b858985e3ff`
+- API test/build, frontend quality, production build, Lighthouse, and CodeQL are green.
+- Browser flows remain red because three e2e assertions still expect `aria-current="location"` for bottom navigation, while the shipped runtime contract is `aria-current="page"`.
+- The `location` value remains correct for saved-city tabs; the repair must stay scoped to bottom navigation.
+- Prepared local fix: `713fbe08624a23e65cbd67cdb56c9c5c1be23fd7` on `automation/hava81-run11-e2e-contract`.
 
-## Next queue
+## Safe continuation
 
-1. Re-verify PR #1008/#1009 exact-head CI and mergeability directly from GitHub; do not merge while the host gate is red.
-2. Continue independent non-API work from clean `main` in isolated branches.
-3. Investigate only Hava81-owned/rebuildable disk consumers; preserve recovery paths and do not delete unrelated data.
-4. Before any merge/deploy/rollback, re-read SentinelX state immediately and confirm production/host gate freshness.
+Publish the prepared e2e-only correction from current `main` as an isolated PR when the GitHub write path is available. Re-run exact-head CI and merge only after every required gate is green. Do not mutate PR #1120 while another branch is pending, and do not touch production API topology for this frontend-only correction.
