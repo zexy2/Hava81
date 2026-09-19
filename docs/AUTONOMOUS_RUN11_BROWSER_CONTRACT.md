@@ -1,19 +1,24 @@
-# Autonomous run 11 — browser contract continuity
+# Hava81 Autonomous Progress — Browser contract publication checkpoint
 
-## Current production baseline
+## Verified this invocation
 
-- Frontend `main`: `dc7d2526b823cf20028d1ed8ca90fa94ce1da494`
-- Public frontend smoke: `/` and `/istanbul/` return HTTP 200.
-- Public API readiness returns HTTP 200 with `Cache-Control: no-store`.
-- Production API remains on port 4002; port 4001 remains the rollback/canary slot.
-- Observer state reports the host healthy and API build headroom available, with a root-disk pressure warning at ~90.5% usage.
+- Production frontend root and `/istanbul/` remain HTTP 200.
+- API readiness remains HTTP 200 with `Cache-Control: no-store`.
+- Stable API remains on port 4002; port 4001 remains the rollback/canary target.
+- The observer still reports `api_deploy_pending=true`; merge/deploy remains fail-closed until runtime state is reconciled.
 
-## Open PR #1120 diagnosis
+## Browser flows blocker
 
-PR #1120 changes the shipped mobile bottom-navigation contract to `aria-current="page"` and aligns the forced-colors CSS selector plus the focused component contract test. Its API, frontend quality, production build, Lighthouse and CodeQL jobs passed. The remaining Browser flows failure is a stale test contract in `e2e/smoke.spec.ts`: three bottom-navigation assertions still expect `aria-current="location"`.
+- The shipped primary bottom navigation contract uses `aria-current="page"`.
+- The remaining failing Browser flows assertions in `e2e/smoke.spec.ts` still expect `aria-current="location"` for the bottom-navigation current page.
+- Saved-city/location rails intentionally retain `aria-current="location"` and must not be changed.
+- A clean local test-only fix exists at commit `f65b9341a739d129cbe502e74897ce6aa6dbed37`, based on `c7e0234443956de4854c500b3cebf93d779b6181`.
 
-The `location` value remains correct for saved-city tabs, so the e2e repair must be scoped to bottom navigation only. The prepared local replacement commit is `713fbe08624a23e65cbd67cdb56c9c5c1be23fd7` on branch `automation/hava81-run11-e2e-contract`.
+## Publication constraint
 
-## Next safe action
+- Oracle GitHub push authentication is unavailable in this invocation, so the prepared local test-only commit could not be published through the host's git remote.
+- No pending PR branch or dirty primary checkout was mutated.
 
-Publish the prepared e2e-only replacement from the current `main` base as an isolated PR, re-run all gates, then merge only after exact-head CI is green. Do not mutate PR #1120 while another branch is pending. Do not switch production traffic or restart the API for this frontend-only correction.
+## Next action
+
+Publish the exact local test-only commit through the authenticated GitHub write path, then run CI/CodeQL and merge only after exact-head green checks, fresh observer verification, and production health confirmation.
