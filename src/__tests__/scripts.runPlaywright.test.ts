@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const runner = resolve('scripts/run-playwright.mjs');
@@ -107,7 +107,7 @@ describe('Playwright temp runner', () => {
     const wrapper = spawn(process.execPath, [runner, '--list'], {
       env: {
         ...process.env,
-        PATH: `${bin}:/usr/bin:/bin`,
+        PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`,
         TMPDIR: root,
         TEMP: root,
         TMP: root,
