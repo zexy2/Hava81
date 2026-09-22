@@ -77,11 +77,11 @@ describe('Playwright temp runner', () => {
     await writeFile(
       fakeChild,
       [
-        '#!/bin/sh',
-        `printf '%s' "$$" > "$FAKE_CHILD_PID"`,
-        `trap 'printf "%s" TERM > "$FAKE_CHILD_SIGNAL"; exit 0' TERM`,
-        `trap 'printf "%s" INT > "$FAKE_CHILD_SIGNAL"; exit 0' INT`,
-        'while :; do sleep 1; done',
+        '#!/usr/bin/env node',
+        "const fs = require('node:fs');",
+        "fs.writeFileSync(process.env.FAKE_CHILD_PID, String(process.pid));",
+        "for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { fs.writeFileSync(process.env.FAKE_CHILD_SIGNAL, signal.replace('SIG', '')); process.exit(0); });",
+        'setInterval(() => {}, 1000);',
         '',
       ].join('\n')
     );
@@ -91,12 +91,14 @@ describe('Playwright temp runner', () => {
     await writeFile(
       fakeNpx,
       [
-        '#!/bin/sh',
-        `printf '%s' "$$" > "$FAKE_PARENT_PID"`,
-        `trap 'printf "%s" TERM > "$FAKE_PARENT_SIGNAL"; exit 0' TERM`,
-        `trap 'printf "%s" INT > "$FAKE_PARENT_SIGNAL"; exit 0' INT`,
-        '"$FAKE_CHILD" &',
-        'wait',
+        '#!/usr/bin/env node',
+        "const { spawn } = require('node:child_process');",
+        "const fs = require('node:fs');",
+        "fs.writeFileSync(process.env.FAKE_PARENT_PID, String(process.pid));",
+        "for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { fs.writeFileSync(process.env.FAKE_PARENT_SIGNAL, signal.replace('SIG', '')); process.exit(0); });",
+        "const child = spawn(process.env.FAKE_CHILD, { stdio: 'ignore', env: process.env });",
+        'child.on(\'exit\', () => process.exit(0));',
+        'setInterval(() => {}, 1000);',
         '',
       ].join('\n')
     );
