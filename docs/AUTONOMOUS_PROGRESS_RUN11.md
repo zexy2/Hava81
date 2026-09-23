@@ -1,32 +1,23 @@
-# Hava81 Autonomous Run 11 — Continuity Checkpoint
+# Autonomous Run 11 Continuity Note
 
-Date: 2026-09-07
+## Current production safety state
 
-## Verified state
+- Frontend production remains on the current merged `main` lineage.
+- Stable API remains on port 4002; rollback/canary remains on port 4001.
+- API promotion is fail-closed while the deployed API revision is behind current `main`.
+- Do not switch ports or restart production API without fresh readiness, CORS, smoke, and blue-green checks.
 
-- Oracle host `nexus-hermes` is connected and observer state is readable.
-- Latest worker observer collection: `2026-09-06T21:37:32.982341Z`.
-- Production is healthy: frontend matches main, root/boot assets/API readiness/CORS/İstanbul smoke checks are green.
-- API traffic remains on port `4002`; provider circuit is `closed`.
-- Root disk is at `93.2%` used; `api_build_headroom_ok=false` and the worker remains fail-closed for API merge/deploy.
-- Latest observed main: `658eb9d449715c5892312a76e368422e35cd6403`; main CI run `#2510` succeeded.
+## Browser-contract work
 
-## Safety decisions
-
-- Do not merge or deploy API changes until a fresh observer state reports `api_build_headroom_ok=true` immediately before the operation.
-- Do not remove worktrees, caches, logs, or other files without explicit ownership/reachability evidence and a reversible backup path.
-- Preserve the validated topology: production on `4002`, `4001` reserved for controlled canary/rollback.
-- Do not introduce authoritative MGM warning data or interpolated precipitation nowcast claims.
-
-## Open PRs requiring independent exact-head verification
-
-- PR #1009 — `78b5e7e5c71a0b8162b3c08d79db13ea42a2edf6` — Prevent caching API error responses.
-- PR #1008 — `01d33359d0870239c5ff2c3b4acd65a5e1eae00c` — Reject blank OpenWeather text fields.
+- PR #1208 head `32d15454991a781a75a6e891bc8e425d3725a99b` is open and mergeable but its CI/CD run `35923905845` failed only in Browser flows; API, frontend quality, build, Lighthouse, and CodeQL passed.
+- Failure is isolated to stale bottom-navigation expectations of `aria-current="location"`; the correct single-page navigation contract is `aria-current="page"`. Saved-city comparison tabs must retain `location`.
+- A complete isolated local fix exists in `/home/ubuntu/hava81-run11-clean-2241`, but Oracle-host HTTPS Git push is unavailable. Do not force-update or mutate PR #1208.
+- GitHub connector branch `automation/hava81-e2e-contract-final-0141` was created from current `main`; publishing the full test-file correction still requires a safe authenticated write path or low-level Git blob/tree commit transfer.
 
 ## Next queue
 
-1. Re-read fresh SentinelX state immediately before any merge/deploy decision.
-2. Query GitHub exact-head CI/CodeQL for PRs #1008 and #1009; preserve their branches and do not mutate them from a second workstream.
-3. While API headroom is red, continue independent low-risk frontend/a11y/PWA/performance/docs work from current `origin/main` in isolated branches.
-4. When a bounded branch is ready, run local static checks available in the gateway, then publish for protected CI/CodeQL validation.
-5. If disk headroom becomes green, re-verify production and exact PR heads, then use the validated `4001` canary → `4002` stable flow for API changes.
+1. Publish the isolated E2E correction as a new branch/PR without mutating PR #1208.
+2. Run exact-head CI and CodeQL; merge only when Browser flows are green.
+3. Re-verify SentinelX state immediately before any merge/deploy.
+4. Continue an independent UX/accessibility/performance loop while workflows run.
+5. Keep MGM warning integration deferred until a stable official freshness-aware machine-readable source is verified; never label interpolated precipitation as radar nowcast.
