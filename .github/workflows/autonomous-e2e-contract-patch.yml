@@ -24,16 +24,16 @@ jobs:
           p = Path('e2e/smoke.spec.ts')
           s = p.read_text()
           old = [
-              'const current = page.locator(\'.atlas-bottom-nav__button[aria-current="location"]\');',
-              'await expect(current).toHaveAttribute(\'aria-current\', \'location\');',
-              'await expect(page.getByRole(\'button\', { name: \'Bugün\' })).toHaveAttribute(\'aria-current\', \'location\');',
-              'await expect(page.getByRole(\'button\', { name: \'Karşılaştır\' })).toHaveAttribute(\'aria-current\', \'location\');',
+              "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');",
+              "await expect(current).toHaveAttribute('aria-current', 'location');",
+              "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');",
+              "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');",
           ]
           new = [
-              'const current = page.locator(\'.atlas-bottom-nav__button[aria-current="page"]\');',
-              'await expect(current).toHaveAttribute(\'aria-current\', \'page\');',
-              'await expect(page.getByRole(\'button\', { name: \'Bugün\' })).toHaveAttribute(\'aria-current\', \'page\');',
-              'await expect(page.getByRole(\'button\', { name: \'Karşılaştır\' })).toHaveAttribute(\'aria-current\', \'page\');',
+              "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');",
+              "await expect(current).toHaveAttribute('aria-current', 'page');",
+              "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');",
+              "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');",
           ]
           for a, b in zip(old, new):
               if s.count(a) != 1:
