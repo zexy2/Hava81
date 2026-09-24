@@ -20,33 +20,23 @@ jobs:
             const path = 'e2e/smoke.spec.ts';
             const branch = context.ref.replace('refs/heads/', '');
             const { owner, repo } = context.repo;
-            core.info(`Patching ${owner}/${repo}:${branch}/${path}`);
-            const response = await github.request('GET /repos/{owner}/{repo}/contents/{path}', {
-              owner, repo, path, ref: branch,
-              headers: { accept: 'application/vnd.github+json' },
-            });
+            const response = await github.request('GET /repos/{owner}/{repo}/contents/{path}', { owner, repo, path, ref: branch });
             const file = response.data;
             if (Array.isArray(file) || !file.content || !file.sha) throw new Error('Expected a single text file');
-            const source = Buffer.from(file.content, 'base64').toString('utf8');
-            const replacements = new Map([
-              ["const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');", "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');"],
-              ["await expect(current).toHaveAttribute('aria-current', 'location');", "await expect(current).toHaveAttribute('aria-current', 'page');"],
-              ["await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');", "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');"],
-              ["await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');", "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');"],
-            ]);
-            let next = source;
-            for (const [oldText, newText] of replacements) {
-              const occurrences = next.split(oldText).length - 1;
-              if (occurrences !== 1) throw new Error(`Expected exactly one occurrence, found ${occurrences}: ${oldText}`);
-              next = next.replace(oldText, newText);
-            }
+            let next = Buffer.from(file.content, 'base64').toString('utf8');
+            const replaceFirst = (oldText, newText) => {
+              const index = next.indexOf(oldText);
+              if (index < 0) throw new Error(`Missing expected text: ${oldText}`);
+              next = next.slice(0, index) + newText + next.slice(index + oldText.length);
+            };
+            replaceFirst("const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');", "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');");
+            replaceFirst("await expect(current).toHaveAttribute('aria-current', 'location');", "await expect(current).toHaveAttribute('aria-current', 'page');");
+            replaceFirst("await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');", "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');");
+            replaceFirst("await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');", "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');");
             const result = await github.request('PUT /repos/{owner}/{repo}/contents/{path}', {
-              owner, repo, path,
+              owner, repo, path, branch,
               message: 'test(e2e): align bottom navigation current-page contract',
               content: Buffer.from(next, 'utf8').toString('base64'),
               sha: file.sha,
-              branch,
-              headers: { accept: 'application/vnd.github+json' },
             });
             core.info(`Created commit ${result.data.commit.sha}`);
-# nonce: retrigger after workflow-only edits
