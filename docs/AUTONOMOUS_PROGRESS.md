@@ -3485,3 +3485,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added a fail-closed fallback used only when that compare lookup fails: resolve the deployed and current revisions to recursive Git trees, fingerprint only the existing API-runtime path contract by blob SHA, and mark deployment pending only when those runtime inputs actually differ. Test-only API paths remain excluded.
 - A failed/truncated commit/tree lookup remains unknown; the fallback never guesses from the stored `apps/api` tree alone because runtime inputs also include the Oracle compose file. Observer suite: 53/53 PASS; Python compile and `git diff --check` PASS.
 - No API traffic, weather/provider semantics, MGM behavior, frontend runtime, score logic, or deployment marker is changed by this observer-only patch. Install only after exact-head CI is green, the PR is merged, and the resulting main is re-verified.
+
+## 2026-09-24 10:44 TRT — run 11 continuation: current-main Fastify security rebuild
+
+- Fresh SentinelX state at `2026-09-24T07:36:14.801319Z`: production healthy; frontend revision `a41106d34832fb0ab87a68814143d456b9204973`; nginx stable API port 4002; rollback/canary 4001 retained; readiness/CORS/root/Istanbul/boot-assets green; OpenWeather circuit closed.
+- Host root disk is 90.8% used with 4.445 GB free; `api_build_headroom_ok=true`, but pressure warning remains. No unrelated cleanup or gate weakening performed.
+- Current GitHub main is `a41106d34832fb0ab87a68814143d456b9204973`; main pipeline #2839 succeeded. Docs PR #1214 head `c8c290122016cd56d6239505f8975b48ac9d46d8` is green; it has not been merged in this continuation because the observer still reports `api_deploy_pending` as the merge/deploy blocking reason.
+- Rebuilt the security-sensitive Fastify Dependabot patch from exact current main in isolated worktree `/home/ubuntu/hava81-fastify-security-1040`: Fastify `5.12.4` → `5.12.5`, preserving the lockfile integrity/resolved metadata. Local JSON and lock consistency checks passed; Oracle has no Node/npm toolchain, so full API tests are delegated to hosted CI.
+- Published PR #1215: head `7eedfb6c51ad2078554a6bbf7b0ee26f24f6250`, branch `automation/hava81-fastify-security-1040`, exactly 2 changed files / 5 additions / 5 deletions. Superseded Dependabot PR #1170 remains untouched until replacement gates are green.
+- PR #1215 hosted workflow lookup is currently empty immediately after publication; continue polling directly rather than treating this as failure.
+- Exact next action: poll #1215 CI/CodeQL; when all gates are green, fresh-read SentinelX immediately before merge. After merge, observe main pipeline and production, then reassess API deployment pending state and continue an independent queue.
