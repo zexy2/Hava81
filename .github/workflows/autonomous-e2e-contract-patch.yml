@@ -13,14 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Apply current-page E2E contract through GitHub API
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ github.token }}
           script: |
             const path = 'e2e/smoke.spec.ts';
             const branch = context.ref.replace('refs/heads/', '');
             const { owner, repo } = context.repo;
-            const { data: file } = await github.rest.repos.getContent({ owner, repo, path, ref: branch });
+            core.info(`Patching ${owner}/${repo}:${branch}/${path}`);
+            const response = await github.request('GET /repos/{owner}/{repo}/contents/{path}', {
+              owner, repo, path, ref: branch,
+              headers: { accept: 'application/vnd.github+json' },
+            });
+            const file = response.data;
             if (Array.isArray(file) || !file.content || !file.sha) throw new Error('Expected a single text file');
             const source = Buffer.from(file.content, 'base64').toString('utf8');
             const replacements = new Map([
@@ -35,13 +40,12 @@ jobs:
               if (occurrences !== 1) throw new Error(`Expected exactly one occurrence, found ${occurrences}: ${oldText}`);
               next = next.replace(oldText, newText);
             }
-            await github.rest.repos.createOrUpdateFileContents({
-              owner,
-              repo,
-              path,
-              branch,
+            const result = await github.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+              owner, repo, path,
               message: 'test(e2e): align bottom navigation current-page contract',
               content: Buffer.from(next, 'utf8').toString('base64'),
               sha: file.sha,
+              branch,
+              headers: { accept: 'application/vnd.github+json' },
             });
-# nonce: retrigger after workflow-only edits
+            core.info(`Created commit ${result.data.commit.sha}`);
