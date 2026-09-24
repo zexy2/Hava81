@@ -101,11 +101,12 @@ fi
 
 PREVIOUS_PRODUCTION_IMAGE=""
 if [[ "$PROMOTE_TO_PREFERRED" == "1" ]]; then
-  preferred_container="$(HOST_PORT=4002 docker compose -p "$SLOT_4002_PROJECT" ps -q weather-api)"
-  if [[ -z "$preferred_container" ]]; then
-    echo "preferred production container on 4002 is missing; refusing deploy" >&2
+  mapfile -t preferred_containers < <(docker ps --filter "publish=127.0.0.1:4002" --format '{{.ID}}')
+  if [[ "${#preferred_containers[@]}" != "1" ]]; then
+    echo "expected exactly one active production container on 4002; found ${#preferred_containers[@]}; refusing deploy" >&2
     exit 1
   fi
+  preferred_container="${preferred_containers[0]}"
   PREVIOUS_PRODUCTION_IMAGE="$(docker inspect --format '{{.Image}}' "$preferred_container")"
   if [[ -z "$PREVIOUS_PRODUCTION_IMAGE" ]]; then
     echo "could not resolve current 4002 production image; refusing deploy" >&2
