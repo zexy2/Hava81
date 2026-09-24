@@ -5178,3 +5178,22 @@ test('english daily plan explanation reflows at 200 percent text size', async ({
     expect(enlarged.impactColumns).toBe(1);
   }
 });
+
+test('desktop compare navigation exposes the comparison page as current', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1440', 'desktop compare navigation semantics regression');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'Ankara', lat: 39.93, lon: 32.86 },
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+      ])
+    );
+  });
+  await page.goto('/istanbul');
+
+  const compare = page.locator('.atlas-compare-button');
+  await expect(compare).toBeVisible();
+  await compare.click();
+  await expect(compare).toHaveAttribute('aria-current', 'page');
+});
