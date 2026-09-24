@@ -49,3 +49,4 @@ jobs:
               headers: { accept: 'application/vnd.github+json' },
             });
             core.info(`Created commit ${result.data.commit.sha}`);
+# nonce: retrigger after workflow-only edits
