@@ -1,0 +1,50 @@
+name: autonomous one-shot e2e contract patch
+
+on:
+  push:
+    branches:
+      - automation/hava81-e2e-aria-current-final-0643
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - name: Apply current-page E2E contract and remove helper workflow
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('e2e/smoke.spec.ts')
+          s = p.read_text()
+          old = [
+              'const current = page.locator(\'.atlas-bottom-nav__button[aria-current="location"]\');',
+              'await expect(current).toHaveAttribute(\'aria-current\', \'location\');',
+              'await expect(page.getByRole(\'button\', { name: \'Bugün\' })).toHaveAttribute(\'aria-current\', \'location\');',
+              'await expect(page.getByRole(\'button\', { name: \'Karşılaştır\' })).toHaveAttribute(\'aria-current\', \'location\');',
+          ]
+          new = [
+              'const current = page.locator(\'.atlas-bottom-nav__button[aria-current="page"]\');',
+              'await expect(current).toHaveAttribute(\'aria-current\', \'page\');',
+              'await expect(page.getByRole(\'button\', { name: \'Bugün\' })).toHaveAttribute(\'aria-current\', \'page\');',
+              'await expect(page.getByRole(\'button\', { name: \'Karşılaştır\' })).toHaveAttribute(\'aria-current\', \'page\');',
+          ]
+          for a, b in zip(old, new):
+              if s.count(a) != 1:
+                  raise SystemExit(f'expected exactly one occurrence: {a}')
+              s = s.replace(a, b, 1)
+          p.write_text(s)
+          PY
+          rm .github/workflows/autonomous-e2e-contract-patch.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add e2e/smoke.spec.ts .github/workflows/autonomous-e2e-contract-patch.yml
+          git commit -m 'test(e2e): align bottom navigation current-page contract'
+          git push
