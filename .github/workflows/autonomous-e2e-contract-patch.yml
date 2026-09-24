@@ -12,39 +12,36 @@ jobs:
   patch:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout exact branch
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - name: Apply current-page E2E contract and remove helper workflow
+      - name: Apply current-page E2E contract through GitHub API
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          gh api repos/zexy2/Hava81/contents/e2e/smoke.spec.ts?ref="$GITHUB_REF_NAME" --jq '.content' | tr -d '\n' | base64 -d > /tmp/smoke.spec.ts
+          SHA="$(gh api repos/zexy2/Hava81/contents/e2e/smoke.spec.ts?ref="$GITHUB_REF_NAME" --jq '.sha')"
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('e2e/smoke.spec.ts')
+          p = Path('/tmp/smoke.spec.ts')
           s = p.read_text()
-          old = [
-              "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');",
-              "await expect(current).toHaveAttribute('aria-current', 'location');",
-              "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');",
-              "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');",
-          ]
-          new = [
-              "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');",
-              "await expect(current).toHaveAttribute('aria-current', 'page');",
-              "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');",
-              "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');",
-          ]
-          for a, b in zip(old, new):
-              if s.count(a) != 1:
-                  raise SystemExit(f'expected exactly one occurrence: {a}')
-              s = s.replace(a, b, 1)
+          replacements = {
+              "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');": "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');",
+              "await expect(current).toHaveAttribute('aria-current', 'location');": "await expect(current).toHaveAttribute('aria-current', 'page');",
+              "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');": "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');",
+              "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');": "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');",
+          }
+          for old, new in replacements.items():
+              if s.count(old) != 1:
+                  raise SystemExit(f'expected exactly one occurrence: {old}')
+              s = s.replace(old, new, 1)
           p.write_text(s)
           PY
-          rm .github/workflows/autonomous-e2e-contract-patch.yml
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add e2e/smoke.spec.ts .github/workflows/autonomous-e2e-contract-patch.yml
-          git commit -m 'test(e2e): align bottom navigation current-page contract'
-          git push
+          git diff --no-index -- /dev/null /tmp/smoke.spec.ts >/dev/null || true
+          CONTENT="$(base64 -w0 /tmp/smoke.spec.ts)"
+          gh api --method PUT repos/zexy2/Hava81/contents/e2e/smoke.spec.ts \
+            -f message='test(e2e): align bottom navigation current-page contract' \
+            -f content="$CONTENT" \
+            -f sha="$SHA" \
+            -f branch="$GITHUB_REF_NAME" \
+            >/tmp/update.json
+          jq -e '.commit.sha and .content.sha' /tmp/update.json >/dev/null
