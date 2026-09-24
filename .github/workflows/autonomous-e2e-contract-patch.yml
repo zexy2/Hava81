@@ -13,35 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Apply current-page E2E contract through GitHub API
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh api repos/zexy2/Hava81/contents/e2e/smoke.spec.ts?ref="$GITHUB_REF_NAME" --jq '.content' | tr -d '\n' | base64 -d > /tmp/smoke.spec.ts
-          SHA="$(gh api repos/zexy2/Hava81/contents/e2e/smoke.spec.ts?ref="$GITHUB_REF_NAME" --jq '.sha')"
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('/tmp/smoke.spec.ts')
-          s = p.read_text()
-          replacements = {
-              "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');": "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');",
-              "await expect(current).toHaveAttribute('aria-current', 'location');": "await expect(current).toHaveAttribute('aria-current', 'page');",
-              "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');": "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');",
-              "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');": "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');",
-          }
-          for old, new in replacements.items():
-              if s.count(old) != 1:
-                  raise SystemExit(f'expected exactly one occurrence: {old}')
-              s = s.replace(old, new, 1)
-          p.write_text(s)
-          PY
-          CONTENT="$(base64 -w0 /tmp/smoke.spec.ts)"
-          gh api --method PUT repos/zexy2/Hava81/contents/e2e/smoke.spec.ts \
-            -f message='test(e2e): align bottom navigation current-page contract' \
-            -f content="$CONTENT" \
-            -f sha="$SHA" \
-            -f branch="$GITHUB_REF_NAME" \
-            >/tmp/update.json
-          jq -e '.commit.sha and .content.sha' /tmp/update.json >/dev/null
-# nonce: force a fresh push event after the API-based patch workflow revision
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const path = 'e2e/smoke.spec.ts';
+            const branch = context.ref.replace('refs/heads/', '');
+            const { owner, repo } = context.repo;
+            const { data: file } = await github.rest.repos.getContent({ owner, repo, path, ref: branch });
+            if (Array.isArray(file) || !file.content || !file.sha) throw new Error('Expected a single text file');
+            const source = Buffer.from(file.content, 'base64').toString('utf8');
+            const replacements = new Map([
+              ["const current = page.locator('.atlas-bottom-nav__button[aria-current=\"location\"]');", "const current = page.locator('.atlas-bottom-nav__button[aria-current=\"page\"]');"],
+              ["await expect(current).toHaveAttribute('aria-current', 'location');", "await expect(current).toHaveAttribute('aria-current', 'page');"],
+              ["await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'location');", "await expect(page.getByRole('button', { name: 'Bugün' })).toHaveAttribute('aria-current', 'page');"],
+              ["await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'location');", "await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');"],
+            ]);
+            let next = source;
+            for (const [oldText, newText] of replacements) {
+              const occurrences = next.split(oldText).length - 1;
+              if (occurrences !== 1) throw new Error(`Expected exactly one occurrence, found ${occurrences}: ${oldText}`);
+              next = next.replace(oldText, newText);
+            }
+            await github.rest.repos.createOrUpdateFileContents({
+              owner,
+              repo,
+              path,
+              branch,
+              message: 'test(e2e): align bottom navigation current-page contract',
+              content: Buffer.from(next, 'utf8').toString('base64'),
+              sha: file.sha,
+            });
