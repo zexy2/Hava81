@@ -36,7 +36,6 @@ jobs:
               s = s.replace(old, new, 1)
           p.write_text(s)
           PY
-          git diff --no-index -- /dev/null /tmp/smoke.spec.ts >/dev/null || true
           CONTENT="$(base64 -w0 /tmp/smoke.spec.ts)"
           gh api --method PUT repos/zexy2/Hava81/contents/e2e/smoke.spec.ts \
             -f message='test(e2e): align bottom navigation current-page contract' \
@@ -45,3 +44,4 @@ jobs:
             -f branch="$GITHUB_REF_NAME" \
             >/tmp/update.json
           jq -e '.commit.sha and .content.sha' /tmp/update.json >/dev/null
+# nonce: force a fresh push event after the API-based patch workflow revision
