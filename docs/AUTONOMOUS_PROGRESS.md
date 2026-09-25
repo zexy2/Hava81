@@ -3495,3 +3495,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Published PR #1215: head `7eedfb6c51ad2078554a6bbf7b0ee26f24f6250`, branch `automation/hava81-fastify-security-1040`, exactly 2 changed files / 5 additions / 5 deletions. Superseded Dependabot PR #1170 remains untouched until replacement gates are green.
 - PR #1215 hosted workflow lookup is currently empty immediately after publication; continue polling directly rather than treating this as failure.
 - Exact next action: poll #1215 CI/CodeQL; when all gates are green, fresh-read SentinelX immediately before merge. After merge, observe main pipeline and production, then reassess API deployment pending state and continue an independent queue.
+
+
+## 2026-09-26 02:44 TRT — run 11 checkpoint: fresh observer + branch safety audit
+
+- Fresh observer state at 2026-09-25T23:42:29Z: production healthy; frontend main 0202f93b4b23af9772b70071dd269868ff155375; deployed API 7c14954228588a6966aed76078479e9cccea92d4; stable API remains on 4002 with 4001 retained for rollback/canary; readiness 200/no-store; OpenWeather circuit closed.
+- Host remains healthy but under disk pressure: 91.6% used, 4,044,083,200 bytes free, API build headroom short by 354,987,377 bytes. No gate weakening, port switch, restart, or unrelated-data deletion.
+- Primary checkout /home/ubuntu/Hava81 remains dirty on automation/hava81-share-polish-0902 (9 staged, 1 unstaged, 4 untracked) and was left untouched.
+- Re-read current-main e2e/smoke.spec.ts and src/App.tsx: the current city-tab accessibility contract still intentionally uses aria-current="location"; no stale-test fix was published because changing it would contradict current application semantics.
+- GitHub search currently shows no open pull requests for zexy2/Hava81; no merge/deploy action was available.
+- Exact next queue: (1) inspect current-main non-API UX/performance candidates from an isolated clean branch; (2) prioritize first-load/mobile/accessibility improvements that do not touch weather semantics; (3) run hosted gates before any merge; (4) keep 4002 stable / 4001 rollback topology and disk gate unchanged.
