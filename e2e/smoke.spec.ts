@@ -4685,6 +4685,30 @@ test('mobile saved navigation replaces the today dashboard', async ({ page }, te
   await expect(page.getByRole('button', { name: 'Karşılaştır' })).toHaveAttribute('aria-current', 'page');
 });
 
+test('desktop compare header exposes the active page semantics', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop compare navigation semantics');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'favorites',
+      JSON.stringify([
+        { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+        { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      ])
+    );
+  });
+
+  await page.goto('/istanbul');
+  const compare = page.getByRole('button', { name: 'Karşılaştır' });
+  await expect(compare).toBeVisible();
+  await expect(compare).not.toHaveAttribute('aria-current');
+
+  await compare.click();
+
+  await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+  await expect(compare).toHaveAttribute('aria-current', 'page');
+  await expect(compare).not.toHaveAttribute('aria-current', 'location');
+});
+
 test('activity preference and time range change the personalized plan', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop interaction assertion');
   await page.goto('/istanbul');
