@@ -1,37 +1,26 @@
-# Build stage
 FROM node:22-alpine AS builder
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
+RUN npm ci --no-audit
 
-# Install dependencies
-RUN npm ci --silent
-
-# Copy source code
-COPY . .
-
-# The package homepage targets GitHub Pages; containers serve the app at /.
-
-# Build the application
+COPY tsconfig.json ./
+COPY src ./src
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine AS production
+FROM node:22-alpine AS production
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV NODE_ENV=production
+WORKDIR /app
 
-# Copy built assets from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY package*.json ./
+RUN npm ci --omit=dev --no-audit && npm cache clean --force
+COPY --from=builder /app/dist ./dist
 
-# Add healthcheck
+USER node
+EXPOSE 4000
+
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
+  CMD node -e "fetch('http://127.0.0.1:4000/api/v1/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
-# Expose port
-EXPOSE 80
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "dist/src/server.js"]

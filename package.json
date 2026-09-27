@@ -1,103 +1,31 @@
 {
-  "name": "hava81-weather-atlas",
-  "version": "2.1.0",
+  "name": "@hava81/api",
+  "version": "1.0.0",
   "private": true,
-  "description": "Hava81: a decision-first meteorological atlas for all 81 Turkish provinces",
-  "keywords": [
-    "weather",
-    "turkey",
-    "meteorological-atlas",
-    "react",
-    "typescript",
-    "openweather",
-    "weather-forecast"
-  ],
-  "dependencies": {
-    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
-    "@fontsource-variable/source-serif-4": "^5.2.9",
-    "@types/leaflet": "^1.9.21",
-    "i18next": "^25.8.0",
-    "leaflet": "^1.9.4",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-i18next": "^16.5.4",
-    "react-leaflet": "^5.0.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.62.1",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/node": "^26.5.1",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "@vitejs/plugin-react": "^6.1.0",
-    "@vitest/coverage-v8": "^4.1.11",
-    "eslint": "^10.9.1",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.5",
-    "gh-pages": "^6.1.1",
-    "globals": "^17.11.0",
-    "husky": "^9.1.7",
-    "jsdom": "^30.0.1",
-    "lighthouse": "^13.4.1",
-    "lint-staged": "^16.2.7",
-    "msw": "^2.1.0",
-    "prettier": "^3.8.1",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.70.0",
-    "vite": "^8.2.2",
-    "vitest": "^4.1.11"
+  "description": "Fastify weather API and BFF for Hava81",
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
-    "start": "vite --host 0.0.0.0",
-    "build": "vite build && node scripts/stamp-service-worker.mjs && node scripts/generate-city-pages.mjs && cp dist/index.html dist/404.html",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:ci": "vitest run --coverage",
-    "type-check": "tsc --noEmit",
-    "api:dev": "npm --prefix apps/api run dev",
-    "api:build": "npm --prefix apps/api run build",
-    "api:test": "npm --prefix apps/api test",
-    "api:type-check": "npm --prefix apps/api run type-check",
-    "lint": "eslint src vite.config.ts playwright.config.ts e2e/**/*.ts",
-    "lint:fix": "eslint . --fix",
-    "analyze": "ANALYZE=true npm run build && npx source-map-explorer \\\"dist/assets/*.js\\\"",
-    "docker:build": "docker compose build",
-    "docker:run": "docker compose up",
-    "docker:dev": "docker compose --profile dev up weather-api weather-app-dev",
-    "prepare": "husky",
-    "dev": "vite --host 0.0.0.0",
-    "preview": "vite preview --host 0.0.0.0",
-    "test:watch": "vitest",
-    "e2e": "node scripts/run-playwright.mjs",
-    "lighthouse": "node scripts/run-lighthouse.mjs",
-    "verify:81": "node scripts/verify-81-cities.mjs"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/server.js",
+    "test": "tsx --test test/*.test.ts",
+    "type-check": "tsc --noEmit"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@fastify/helmet": "^13.1.0",
+    "@fastify/rate-limit": "^11.1.0",
+    "@fastify/swagger": "^9.8.1",
+    "@fastify/swagger-ui": "^6.1.0",
+    "dotenv": "^17.2.3",
+    "fastify": "^5.12.5",
+    "zod": "^4.6.3"
   },
-  "lint-staged": {
-    "src/**/*.{ts,tsx,js,jsx}": [
-      "prettier --write",
-      "eslint --fix"
-    ],
-    "src/**/*.{css,json,md}": [
-      "prettier --write"
-    ]
-  },
-  "type": "module"
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3"
+  }
 }
