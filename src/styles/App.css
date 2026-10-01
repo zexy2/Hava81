@@ -477,7 +477,7 @@ textarea:focus-visible {
 }
 
 .atlas-compare-button:hover,
-.atlas-compare-button[aria-current='location'] {
+.atlas-compare-button[aria-current='page'] {
   color: var(--color-aegean);
   background: var(--color-atlas-paper);
 }
