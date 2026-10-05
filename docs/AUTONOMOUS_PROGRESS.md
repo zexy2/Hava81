@@ -3495,3 +3495,11 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Published PR #1215: head `7eedfb6c51ad2078554a6bbf7b0ee26f24f6250`, branch `automation/hava81-fastify-security-1040`, exactly 2 changed files / 5 additions / 5 deletions. Superseded Dependabot PR #1170 remains untouched until replacement gates are green.
 - PR #1215 hosted workflow lookup is currently empty immediately after publication; continue polling directly rather than treating this as failure.
 - Exact next action: poll #1215 CI/CodeQL; when all gates are green, fresh-read SentinelX immediately before merge. After merge, observe main pipeline and production, then reassess API deployment pending state and continue an independent queue.
+
+
+## 2026-10-05 accessibility continuation
+
+- Branch `automation/a11y-compare-page-20261005-r24` advanced from current `main` to `c384bb97e85a935f00253e5575c67d5b6730025e`.
+- Issue #1218 patch is now committed: header Compare uses `aria-current="page"`; the focused semantic regression test rejects the old `location` value and the CSS selector follows `page` semantics.
+- GitHub workflow runs for the new commit have not been created yet. PR creation was blocked by the execution safety boundary; no second worktree/branch was mutated.
+- SentinelX remains offline, so Oracle production verification/deploy remains gated. Next action: obtain PR/CI when permitted, run the full frontend/accessibility/browser/Lighthouse gates, then merge only after fresh Oracle verification.
