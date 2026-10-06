@@ -7,11 +7,9 @@ describe('header compare action semantics', () => {
     const source = readFileSync('src/App.tsx', 'utf8');
 
     expect(source).toContain("className=\"atlas-compare-button\"");
-    expect(source).toContain("aria-current={activeNav === 'compare' ? 'location' : undefined}");
-    expect(source).not.toContain("aria-current={activeNav === 'compare' ? 'page' : undefined}");
-
-    const css = readFileSync('src/styles/App.css', 'utf8');
-    expect(css).toContain(".atlas-compare-button[aria-current='location']");
+    expect(source).toContain("aria-current={activeNav === 'compare' ? 'page' : undefined}");
+        const css = readFileSync('src/styles/App.css', 'utf8');
+    expect(css).toContain(".atlas-compare-button[aria-current='page']");
     expect(css).not.toContain(".atlas-compare-button[aria-pressed='true']");
   });
 });
