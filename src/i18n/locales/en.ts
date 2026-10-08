@@ -35,7 +35,7 @@ export const en = {
     forecast: '5-Day Forecast',
     hourlyForecast: 'Hourly Forecast',
     precipitation: 'Precipitation Chance',
-    searchPlaceholder: 'Search province or district...',
+    searchPlaceholder: 'City / area',
     districtSearchHint: 'Searching for a district? Press Search to try the weather provider.',
     searchLabel: 'Search city',
     citySuggestions: 'City suggestions',

@@ -35,7 +35,7 @@ export const tr = {
     forecast: '5 Günlük Tahmin',
     hourlyForecast: 'Saatlik Tahmin',
     precipitation: 'Yağış İhtimali',
-    searchPlaceholder: 'İl veya ilçe ara...',
+    searchPlaceholder: 'İl / ilçe',
     districtSearchHint: 'İlçe adı yazdıysan Ara tuşuyla sorgulayabilirsin.',
     searchLabel: 'Şehir ara',
     citySuggestions: 'Şehir önerileri',

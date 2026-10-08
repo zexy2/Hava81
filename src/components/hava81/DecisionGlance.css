@@ -99,3 +99,14 @@
     line-height: 1.35;
   }
 }
+
+/* The explanation link is a primary mobile action: retain a 44px hit target. */
+.decision-glance__details {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.45rem 0.5rem;
+  margin-right: -0.5rem;
+}
