@@ -249,7 +249,7 @@ export const tr = {
           label: 'Şemsiye',
           yes: 'Evet',
           maybe: 'Yanında olsun',
-          no: 'Tahmin gerektirmiyor',
+          no: 'Tahmine göre gerek görünmüyor',
           unknown: 'Veri yok',
         },
         wind: { label: 'Rüzgâr', strong: 'Güçlü', caution: 'Dikkat', normal: 'Normal' },
@@ -333,7 +333,7 @@ export const tr = {
       umbrella: {
         take: 'Şemsiyeyi al',
         consider: 'Şemsiye yanında olsun',
-        no: 'Tahmin gerektirmiyor',
+        no: 'Tahmine göre gerek görünmüyor',
       },
       change: {
         'rain-increase': 'Dönüşte yağmur riski çıkışa göre yaklaşık {{value}} puan artıyor.',

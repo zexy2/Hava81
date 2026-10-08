@@ -5,17 +5,17 @@ import { buildDecisionShare } from '../utils/shareDecision';
 
 describe('umbrella guidance evidence scope', () => {
   it('phrases a no-umbrella result as a forecast indication, not a universal guarantee', () => {
-    expect(en.hava81.dailyPlan.quick.umbrella.no).toBe("Forecast doesn't indicate one");
-    expect(tr.hava81.dailyPlan.quick.umbrella.no).toBe('Tahmin gerektirmiyor');
-    expect(en.hava81.commute.umbrella.no).toBe("Forecast doesn't indicate one");
-    expect(tr.hava81.commute.umbrella.no).toBe('Tahmin gerektirmiyor');
+    expect(en.hava81.dailyPlan.quick.umbrella.no).toBe("Forecast suggests no need");
+    expect(tr.hava81.dailyPlan.quick.umbrella.no).toBe('Tahmine göre gerek görünmüyor');
+    expect(en.hava81.commute.umbrella.no).toBe("Forecast suggests no need");
+    expect(tr.hava81.commute.umbrella.no).toBe('Tahmine göre gerek görünmüyor');
 
     const common = { cityName: 'İstanbul', score: 80, band: 'good' as const, umbrella: 'no' as const };
     expect(buildDecisionShare({ ...common, language: 'en' }).text).toContain(
-      "Umbrella: Forecast doesn't indicate one"
+      "Umbrella: Forecast suggests no need"
     );
     expect(buildDecisionShare({ ...common, language: 'tr' }).text).toContain(
-      'Şemsiye: Tahmin gerektirmiyor'
+      'Şemsiye: Tahmine göre gerek görünmüyor'
     );
   });
 });
