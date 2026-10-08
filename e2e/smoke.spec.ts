@@ -6065,3 +6065,57 @@ test('English mobile navigation labels fit at enlarged text sizes', async ({ pag
     }
   }
 });
+
+// At 200% text on tiny phones, the city plate used to steal enough width for
+// "İzmir" to wrap as "İzm"/"ir". Let the label use a whole row as needed.
+test('small phone city heading preserves short names at enlarged text sizes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single responsive city-name regression');
+  await page.goto('/izmir/');
+  const city = page.locator('.hava81-decision-field__city');
+  await expect(city).toBeVisible();
+  const badge = page.locator('.hava81-decision-field__plate');
+  await expect(badge).toBeVisible();
+
+  for (const width of [320, 360, 390, 428]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const zoom of ['100%', '200%']) {
+      await page.evaluate(value => { document.documentElement.style.fontSize = value; }, zoom);
+      for (const name of ['İzmir', 'İstanbul', 'Kahramanmaraş']) {
+        await city.evaluate((element, value) => { element.textContent = value; }, name);
+        const geometry = await city.evaluate((element) => {
+          const cityRect = element.getBoundingClientRect();
+          const badgeRect = document.querySelector('.hava81-decision-field__plate')!.getBoundingClientRect();
+          const row = element.parentElement!.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          const lines = [...range.getClientRects()].filter(rect => rect.width > 0).length;
+          const overlap = Math.max(0, Math.min(cityRect.right, badgeRect.right) - Math.max(cityRect.left, badgeRect.left)) *
+            Math.max(0, Math.min(cityRect.bottom, badgeRect.bottom) - Math.max(cityRect.top, badgeRect.top));
+          return {
+            lines,
+            overlap,
+            cityInside: cityRect.left >= row.left - 1 && cityRect.right <= row.right + 1,
+            badgeInside: badgeRect.left >= row.left - 1 && badgeRect.right <= row.right + 1,
+            badgeBelow: badgeRect.top >= cityRect.bottom - 1,
+            pageFits: document.documentElement.scrollWidth <= innerWidth,
+          };
+        });
+        expect(geometry.cityInside, `${name} title fits at ${width}px and ${zoom}`).toBe(true);
+        expect(geometry.badgeInside, `plate fits at ${width}px and ${zoom}`).toBe(true);
+        expect(geometry.overlap, `title and plate separate at ${width}px and ${zoom}`).toBe(0);
+        expect(geometry.pageFits, `no horizontal overflow at ${width}px and ${zoom}`).toBe(true);
+        if (name === 'İzmir' || name === 'İstanbul') {
+          expect(geometry.lines, `${name} intact at ${width}px and ${zoom}`).toBe(1);
+        }
+        if (zoom === '200%' && width <= 390) {
+          expect(geometry.badgeBelow, `${name} plate reflows at ${width}px and ${zoom}`).toBe(true);
+        }
+        if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320 && zoom === '200%' && name === 'İzmir') {
+          await city.evaluate(element => window.scrollTo(0, Math.max(0, scrollY + element.getBoundingClientRect().top - 160)));
+          await page.waitForTimeout(150);
+          await page.screenshot({ path: 'test-results/visual-audit/izmir-title-320-zoom200-after.png' });
+        }
+      }
+    }
+  }
+});
