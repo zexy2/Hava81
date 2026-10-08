@@ -86,4 +86,13 @@ if NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE=maybe bash "$script" true; then
   exit 1
 fi
 
+# Guard against narrowing the security gate back to only production
+# dependencies; dev tooling contains the frontend build and test supply chain.
+workflow="$(dirname "$script")/../.github/workflows/ci.yml"
+grep -Fq 'run: bash scripts/run-npm-audit-with-retry.sh npm audit --audit-level=high' "$workflow"
+if grep -Eq '^ *run: bash scripts/run-npm-audit-with-retry[.]sh npm audit .*--omit=dev' "$workflow"; then
+  echo 'frontend security audit must include dev dependencies' >&2
+  exit 1
+fi
+
 echo "npm audit retry contract passed"
