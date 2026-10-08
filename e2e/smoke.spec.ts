@@ -4175,11 +4175,12 @@ test('recovers once when a lazy chunk disappears during deploy', async ({ page }
 
   await page.goto('/istanbul');
   await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible({
-    timeout: 10_000,
-  });
+  // A visible skeleton now deliberately shares this heading with the real
+  // forecast. Wait for the lazy component itself before asserting recovery.
+  await expect(page.locator('.hava81-forecast-atlas')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);
   await expect(page).toHaveURL(/\/istanbul\/$/);
-  expect(forecastChunkRequests).toBeGreaterThanOrEqual(2);
+  await expect.poll(() => forecastChunkRequests).toBeGreaterThanOrEqual(2);
   await expect(page.locator('.app-fatal')).toHaveCount(0);
 });
 
