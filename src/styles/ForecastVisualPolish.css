@@ -239,3 +239,41 @@
     max-width: 100%;
   }
 }
+
+/* A 320–384px weather card otherwise stacks a tiny 48px scene under the
+ * temperature, leaving a large empty stripe. Give the scene a balanced
+ * second column at standard font sizes, without changing its real-weather art. */
+@media (max-width: 24rem) {
+  .app .hava81-decision-field__current {
+    container: hava81-temperature-card / inline-size;
+  }
+  .app .hava81-decision-field__reading {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 7.25rem;
+  }
+  .app .hava81-decision-field__symbol {
+    flex: 0 0 76px;
+    width: 76px;
+    height: 76px;
+    align-self: center;
+  }
+}
+
+/* At enlarged text sizes keep the original stacked safety layout so a wide
+ * temperature number can never crowd or overlap the weather illustration. */
+@container hava81-temperature-card (max-width: 14rem) {
+  .app .hava81-decision-field__reading {
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 9.2rem;
+  }
+  .app .hava81-decision-field__symbol {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    align-self: flex-end;
+  }
+}

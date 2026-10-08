@@ -5650,3 +5650,50 @@ test('enlarged mobile decision score and explanation stay readable', async ({ pa
     }
   }
 });
+
+// Small phone weather scenes should be recognizable, not a tiny 48px icon
+// floating in an otherwise empty reading panel. Respect 200% text resizing.
+test('tiny phone temperature card balances weather art with accessible text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single small phone illustration regression');
+  await page.goto('/izmir/');
+  const card = page.locator('.hava81-decision-field__current');
+  await expect(card.locator('.hava81-decision-field__temperature-value')).toBeVisible();
+  await expect(card.locator('.hava81-decision-field__weather-symbol')).toBeVisible();
+  // Existing smoke fixtures return Istanbul weather for any route; validate layout, not fixture city.
+
+  for (const width of [320, 360, 375, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const zoom of ['100%', '200%']) {
+      await page.evaluate(value => { document.documentElement.style.fontSize = value; }, zoom);
+      const result = await card.evaluate(container => {
+        const rect = (selector: string) => container.querySelector(selector)!.getBoundingClientRect();
+        const temperature = rect('.hava81-decision-field__temperature');
+        const art = rect('.hava81-decision-field__symbol');
+        const cardBounds = container.getBoundingClientRect();
+        return {
+          artWidth: art.width,
+          artInside: art.left >= cardBounds.left - 1 && art.right <= cardBounds.right + 1,
+          artOverlapsTemperature: Math.max(0, Math.min(art.right, temperature.right) - Math.max(art.left, temperature.left)) *
+            Math.max(0, Math.min(art.bottom, temperature.bottom) - Math.max(art.top, temperature.top)) > 1,
+          sideBySide: art.left >= temperature.right - 1 &&
+            Math.max(temperature.top, art.top) < Math.min(temperature.bottom, art.bottom),
+          pageFits: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      expect(result.artInside, `icon inside card at ${width}px, ${zoom}`).toBe(true);
+      expect(result.artOverlapsTemperature, `no icon-temperature collision at ${width}px, ${zoom}`).toBe(false);
+      expect(result.pageFits, `page fits at ${width}px, ${zoom}`).toBe(true);
+      if (width === 320 && zoom === '100%') {
+        expect(result.artWidth, '320px scene should be recognizable').toBeGreaterThanOrEqual(75);
+        expect(result.sideBySide, 'normal text keeps weather art beside temperature').toBe(true);
+      }
+      if (width === 320 && zoom === '200%') {
+        expect(result.sideBySide, 'enlarged text permits stacked layout').toBe(false);
+      }
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+        await card.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `test-results/visual-audit/weather-card-320-${zoom}.png` });
+      }
+    }
+  }
+});
