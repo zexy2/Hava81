@@ -582,7 +582,7 @@
   }
 }
 /* Container-relative rem breakpoint responds to a 200% font preference. */
-@container (max-width: 55rem) {
+@container (min-width: 25rem) and (max-width: 55rem) {
   .app .route-weather__form {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   }
@@ -599,5 +599,23 @@
     text-decoration: underline 2px;
     text-underline-offset: 4px;
     background: Canvas;
+  }
+}
+
+/* Do not let elevated action shadows create horizontal scroll at enlarged text sizes. */
+@media (max-width: 47.99rem) {
+  .app .decision-alerts button {
+    box-shadow: none;
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .decision-alerts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .decision-alerts > div,
+  .app .decision-alerts button {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 }
