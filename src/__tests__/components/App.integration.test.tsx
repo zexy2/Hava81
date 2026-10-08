@@ -226,6 +226,69 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/');
   });
 
+  it('loads a directly shared district URL without falling back to a province', async () => {
+    window.history.replaceState({}, '', '/?yer=Urla');
+    service.getCurrentWeather.mockResolvedValue({
+      ...current,
+      cityName: 'Urla',
+      coordinates: { lat: 38.3229, lon: 26.764 },
+    });
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'Urla', level: 1 })).toBeInTheDocument();
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'Urla,TR', lang: 'tr' });
+    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
+    expect(window.location.pathname + window.location.search).toBe('/?yer=Urla');
+    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+      'http://localhost:3000/?yer=Urla'
+    );
+  });
+
+  it('changes the URL when a district replaces a province', async () => {
+    window.history.replaceState({}, '', '/istanbul/');
+    service.getCurrentWeather.mockResolvedValueOnce(current).mockResolvedValue({
+      ...current,
+      cityName: 'Urla',
+      coordinates: { lat: 38.3229, lon: 26.764 },
+    });
+    const user = userEvent.setup();
+    renderApp();
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    const input = screen.getByRole('combobox', { name: 'Şehir ara' });
+    await user.clear(input);
+    await user.type(input, 'Urla{Enter}');
+    expect(await screen.findByRole('heading', { name: 'Urla', level: 1 })).toBeInTheDocument();
+    expect(window.location.pathname + window.location.search).toBe('/?yer=Urla');
+  });
+
+  it('opens a previously selected province on return without prompting for geolocation again', async () => {
+    window.history.replaceState({}, '', '/');
+    localStorage.setItem(
+      'recent_weather_searches',
+      JSON.stringify([{ city: 'İstanbul', timestamp: Date.now() }])
+    );
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
+    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
+    expect(screen.queryByText('Havayı bulunduğun yere göre gösterelim')).not.toBeInTheDocument();
+  });
+
+  it('does not automatically open a city from outdated location history', () => {
+    window.history.replaceState({}, '', '/');
+    localStorage.setItem(
+      'recent_weather_searches',
+      JSON.stringify([{ city: 'İstanbul', timestamp: Date.now() - 31 * 86_400_000 }])
+    );
+    renderApp();
+    expect(
+      screen.getByRole('heading', { name: 'Havayı bulunduğun yere göre gösterelim' })
+    ).toBeInTheDocument();
+    expect(service.getCurrentWeather).not.toHaveBeenCalled();
+    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
+  });
+
   it('lets the user continue with İstanbul without requesting browser location', async () => {
     const user = userEvent.setup();
     window.history.replaceState({}, '', '/');
@@ -721,7 +784,9 @@ describe('Hava81 app integration', () => {
       );
     });
     expect(await screen.findByRole('heading', { name: 'Planning signals' })).toBeInTheDocument();
-    expect(screen.getByText(/looks like a calmer weather window for being outdoors/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/looks like a calmer weather window for being outdoors/i)
+    ).toBeInTheDocument();
   }, 12_000);
 
   it('keeps browser theme metadata aligned with an explicit dark theme', async () => {

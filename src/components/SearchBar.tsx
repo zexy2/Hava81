@@ -33,6 +33,7 @@ interface SearchBarProps {
   submitLabel?: string;
   loadingLabel?: string;
   suggestionsLabel?: string;
+  manualQueryHint?: string;
   onDismiss?: () => void;
 }
 
@@ -67,6 +68,7 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
     submitLabel = 'Ara',
     loadingLabel = 'Yükleniyor...',
     suggestionsLabel = 'Şehir önerileri',
+    manualQueryHint = 'İlçe adını yazdıysan Ara ile sorgulayabilirsin.',
     onDismiss,
   },
   forwardedRef
@@ -128,6 +130,11 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
   }, [debouncedValue, suggestions, recentSearches, value]);
 
   const showDropdown = isFocused && combinedItems.length > 0;
+  const showManualQueryHint =
+    isFocused &&
+    value.trim().length >= MIN_QUERY_LENGTH &&
+    combinedItems.length === 0 &&
+    (debouncedValue ?? '').trim() === value.trim();
 
   // Reset highlight when value changes
   useEffect(() => {
@@ -285,6 +292,12 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
             aria-haspopup="listbox"
             aria-expanded={showDropdown}
           />
+
+          {showManualQueryHint && (
+            <p className="search-bar__manual-query-hint" role="status">
+              {manualQueryHint}
+            </p>
+          )}
 
           {showDropdown && (
             <ul

@@ -35,7 +35,8 @@ export const tr = {
     forecast: '5 Günlük Tahmin',
     hourlyForecast: 'Saatlik Tahmin',
     precipitation: 'Yağış İhtimali',
-    searchPlaceholder: 'Şehir ara...',
+    searchPlaceholder: 'İl / ilçe',
+    districtSearchHint: 'İlçe adı yazdıysan Ara tuşuyla sorgulayabilirsin.',
     searchLabel: 'Şehir ara',
     citySuggestions: 'Şehir önerileri',
     quickActions: 'Hızlı işlemler',
@@ -62,6 +63,18 @@ export const tr = {
     temperatureHot: 'Çok sıcak (>{{thirty}}{{unit}})',
   },
   hava81: {
+    glance: {
+      title: 'BUGÜNÜN KARARI',
+      loading: 'Günün önerisi güncel verilerle hazırlanıyor.',
+      pending: 'Güncel tahmin bekleniyor',
+      now: 'Şu an dışarı çıkmak için hava uygun.',
+      later: 'Dışarı çıkmak için biraz beklemek daha iyi olabilir.',
+      similar: 'Yakın saatlerde hava koşulları benzer görünüyor.',
+      bestHours: 'Hava açısından en yüksek puanlı saatler: {{hours}}',
+      score: 'Hava81 Skoru',
+      umbrella: 'Şemsiye: {{advice}}',
+      details: 'Skorun nedenini gör',
+    },
     closeSearch: 'Şehir aramasını kapat',
     tagline: 'Havaya göre ne yapacağını söyleyen 81 il rehberi',
     homeLabel: 'Hava81 ana görünüm',
@@ -84,10 +97,14 @@ export const tr = {
     },
     decision: {
       plateCodeLabel: 'Plaka kodu {{code}}',
+      districtLabel: 'İlçe',
       latitude: 'Enlem',
       longitude: 'Boylam',
       feelsLike: 'Hissedilen {{temperature}}',
       nextChange: 'Plan için öne çıkanlar',
+      forecastHighLow: 'Tahmini yüksek / düşük',
+      sourceDifference:
+        'Anlık ölçüm ({{currentProvider}}) ve günlük tahmin ({{forecastProvider}}) farklı kaynak veya zamanlardan gelebilir.',
       actions: {
         rain: '{{time}} civarında yağış olasılığı %{{probability}}; şemsiye iyi fikir.',
         rainWithAmount:
