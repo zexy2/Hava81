@@ -6015,3 +6015,53 @@ test('English recommended weather window uses readable AM/PM clock at mobile wid
     expect(dimensions.pageFits, `page fits at ${width}px ${zoom}`).toBe(true);
   }
 });
+
+// With 200% text on small English phones, "Compare" used to break mid-word.
+// All three short labels can fit in a row by assigning proportional widths.
+test('English mobile navigation labels fit at enlarged text sizes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single responsive language layout check');
+  await page.addInitScript(() => {
+    localStorage.setItem('user-settings', JSON.stringify({
+      temperatureUnit: 'metric', windSpeedUnit: 'ms', themeMode: 'dark', language: 'en',
+    }));
+  });
+  await page.goto('/izmir/');
+  const nav = page.locator('.atlas-bottom-nav');
+  await expect(nav).toBeVisible();
+
+  for (const width of [280, 320, 360, 390, 428]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const zoom of ['100%', '200%']) {
+      await page.evaluate(z => { document.documentElement.style.fontSize = z; }, zoom);
+      const result = await nav.evaluate(element => {
+        const buttons = [...element.querySelectorAll<HTMLButtonElement>('.atlas-bottom-nav__button')];
+        const labels = buttons.map(button => button.querySelector<HTMLElement>('.atlas-bottom-nav__label')!);
+        return {
+          language: document.documentElement.lang,
+          words: labels.map(label => label.textContent?.trim()),
+          oneLine: labels.map(label => label.getBoundingClientRect().height < parseFloat(getComputedStyle(label).lineHeight) * 1.3),
+          contained: labels.every((label, index) => {
+            const b = buttons[index].getBoundingClientRect(), r = label.getBoundingClientRect();
+            return r.left >= b.left - 1 && r.right <= b.right + 1 && r.bottom <= b.bottom + 1;
+          }),
+          touchTargets: buttons.every(button => {
+            const r = button.getBoundingClientRect();
+            return r.width >= 44 && r.height >= 44;
+          }),
+          pageFits: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      expect(result.language).toBe('en');
+      expect(result.words).toEqual(['Today', 'Map', 'Compare']);
+      expect(result.contained, `labels stay inside targets at ${width}px, ${zoom}`).toBe(true);
+      expect(result.touchTargets, `touch targets at ${width}px, ${zoom}`).toBe(true);
+      expect(result.pageFits, `no viewport overflow at ${width}px, ${zoom}`).toBe(true);
+      if (width >= 320) {
+        expect(result.oneLine, `each label stays on one line at ${width}px, ${zoom}`).toEqual([true, true, true]);
+      }
+      if (width === 320 && zoom === '200%' && process.env.HAVA81_VISUAL_AUDIT === '1') {
+        await page.screenshot({ path: 'test-results/visual-audit/english-bottom-nav-320-zoom200.png' });
+      }
+    }
+  }
+});
