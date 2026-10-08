@@ -42,6 +42,8 @@ jobs:
       - run: npm run test:ci
       - name: Verify npm audit retry contract
         run: bash scripts/test-run-npm-audit-with-retry.sh
+      - name: Verify parallel build and strict deploy gates
+        run: python3 scripts/test-ci-parallel-build-gates.py
       - name: Verify autonomous append-only log merge contract
         run: bash scripts/test-autonomous-log-union-merge.sh
       - name: Verify safe worktree cleanup contract
@@ -119,7 +121,7 @@ jobs:
     name: Production build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [quality, api]
+    # Build and test in parallel; downstream publish jobs retain strict gates.
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -191,7 +193,8 @@ jobs:
     name: Build Docker image
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build, browser]
+    # Publishing must wait for security, API, production build and browser tests.
+    needs: [quality, api, build, browser]
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
@@ -222,7 +225,8 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     timeout-minutes: 12
-    needs: [build, browser, lighthouse]
+    # Do not publish Pages until both quality gates and all UI checks pass.
+    needs: [quality, api, build, browser, lighthouse]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
