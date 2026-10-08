@@ -619,3 +619,52 @@
     overflow-wrap: anywhere;
   }
 }
+
+
+/* Compact mobile disclosure and complete activity selection without hidden choices. */
+@media (max-width: 47.99rem) {
+  .app .daily-plan__explain { display: block; }
+  .app .daily-plan__explain-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .35rem .6rem;
+    min-height: 48px;
+    padding: .7rem .85rem;
+  }
+  .app .daily-plan__explain-head > div { display: block; }
+  .app .daily-plan__explain-head > div span { display: none; }
+  .app .daily-plan__explain-head > div strong {
+    font-size: .92rem;
+    line-height: 1.35;
+  }
+  .app .daily-plan__explain-head > small { display: none; }
+  .app .daily-plan__explain[open] .daily-plan__explain-head > small {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: .68rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .app .daily-plan__explain-head::after {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+  }
+  .app .activity-planner__chips {
+    flex-wrap: wrap;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: .15rem 0;
+    gap: .5rem;
+  }
+  .app .activity-planner__chips button {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    scroll-snap-align: none;
+  }
+}
