@@ -5927,3 +5927,39 @@ test('hourly forecast arrows remain available on tablet and desktop', async ({ p
     }
   }
 });
+
+// The best four-hour forecast window can be tomorrow even though the clock
+// labels look like earlier hours today. Show the destination city's day.
+test('decision hero labels a next-day forecast window in the city timezone', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single night-to-next-day forecast regression');
+  const fixed = new Date('2026-10-08T20:15:00.000Z'); // 23:15 in Istanbul
+  await page.clock.install({ time: fixed });
+  await page.unroute('**/api/v1/weather/current**');
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/current**', route => route.fulfill({
+    json: { ...current, timestamp: fixed.toISOString(), meta: { ...current.meta, fetchedAt: fixed.toISOString() } },
+  }));
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({
+    json: {
+      ...hourlyForecast,
+      hourly: Array.from({ length: 24 }, (_, index) => ({
+        time: new Date(Date.parse('2026-10-08T21:00:00.000Z') + index * 60 * 60_000).toISOString(),
+        temp: 18 + Math.min(index, 3),
+        icon: '02n',
+        description: 'az bulutlu',
+        pop: 0,
+        windSpeed: 2,
+      })),
+      meta: { ...hourlyForecast.meta, fetchedAt: fixed.toISOString() },
+    },
+  }));
+
+  await page.goto('/istanbul/');
+  const hero = page.locator('.decision-glance');
+  await expect(hero.locator('.decision-glance__window')).toContainText('Yarın');
+  await expect(hero.locator('.decision-glance__quick').first()).toContainText('Yarın');
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});

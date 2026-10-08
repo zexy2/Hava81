@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
+import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DecisionGlance.css';
 
@@ -48,11 +49,6 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
     () => (evidenceFresh && hourly.length ? buildDailyPlan({ weather, hourly, airQuality }) : null),
     [evidenceFresh, weather, hourly, airQuality]
   );
-  const localTime = (time: Date) =>
-    new Date(time.getTime() + weather.meta.timezoneOffsetSeconds * 1000).toLocaleTimeString(
-      i18n.language,
-      { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' }
-    );
   const dateLabel = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'tr-TR', {
     weekday: 'long',
     month: 'long',
@@ -61,9 +57,15 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
   }).format(new Date(now + weather.meta.timezoneOffsetSeconds * 1000));
   const bestRange = plan?.bestWindowRange;
   const bestHours = bestRange
-    ? bestRange.start.time.getTime() === bestRange.end.time.getTime()
-      ? localTime(bestRange.peak.time)
-      : `${localTime(bestRange.start.time)}–${localTime(bestRange.end.time)}`
+    ? formatBestWindowTime({
+        start: bestRange.start.time,
+        end: bestRange.end.time,
+        now: new Date(now),
+        timezoneOffsetSeconds: weather.meta.timezoneOffsetSeconds,
+        language: i18n.language,
+        todayLabel: t('days.today'),
+        tomorrowLabel: t('days.tomorrow'),
+      })
     : null;
 
   const guidance = !plan
