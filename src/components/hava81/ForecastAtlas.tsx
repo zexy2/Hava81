@@ -79,6 +79,15 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
     [locale]
   );
+  // Hourly tiles are narrow on phones. English 9 PM is clearer than 09:00 PM;
+  // the forecast samples are on whole hours, and full time remains in detail text.
+  const hourTileFormatter = useMemo(
+    () =>
+      settings.language === 'en'
+        ? new Intl.DateTimeFormat(locale, { hour: 'numeric', timeZone: 'UTC' })
+        : timeFormatter,
+    [locale, settings.language, timeFormatter]
+  );
   const dayFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {
@@ -647,7 +656,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                             {t('hava81.forecastAtlas.nowLabel')}
                           </span>
                         ) : null}
-                        <span>{timeFormatter.format(localTime)}</span>
+                        <span>{hourTileFormatter.format(localTime)}</span>
                       </time>
                       <WeatherSymbol
                         code={hour.icon}

@@ -5763,3 +5763,39 @@ test('tiny phone temperature card balances weather art with accessible text', as
     }
   }
 });
+
+
+test('English hourly forecast displays compact one-line clock labels on narrow phones', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single English hourly typography regression');
+  await page.addInitScript(() => {
+    localStorage.setItem('user-settings', JSON.stringify({
+      temperatureUnit: 'metric', windSpeedUnit: 'ms', themeMode: 'light', language: 'en',
+    }));
+  });
+  await page.goto('/istanbul/');
+  const forecast = page.locator('.hava81-forecast-atlas');
+  await expect(forecast).toBeVisible();
+  for (const width of [320, 360, 390, 428]) {
+    await page.setViewportSize({ width, height: 844 });
+    const times = forecast.locator('.hava81-forecast-atlas__hour time > span:last-child');
+    expect(await times.count()).toBeGreaterThanOrEqual(12);
+    const labels = await times.allTextContents();
+    expect(labels.every(text => /^(?:[1-9]|1[0-2])\s(?:AM|PM)$/.test(text.trim()))).toBe(true);
+    const metrics = await times.evaluateAll(elements => elements.map(element => {
+      const rect = element.getBoundingClientRect();
+      const parent = element.parentElement!.getBoundingClientRect();
+      return {
+        oneLine: rect.height <= parseFloat(getComputedStyle(element).lineHeight) + 2,
+        inside: rect.left >= parent.left - 1 && rect.right <= parent.right + 1,
+      };
+    }));
+    expect(metrics.every(metric => metric.oneLine && metric.inside), `single-line labels at ${width}px`).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 390) {
+      await forecast.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: 'test-results/visual-audit/english-hourly-390-compact.png' });
+    }
+  }
+  // Detailed precipitation messages retain full hour-and-minute formatting.
+  await expect(forecast).toContainText(/Today's rhythm|Hourly forecast|NEXT 24 HOURS/i);
+});
