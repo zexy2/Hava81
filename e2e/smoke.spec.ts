@@ -1443,7 +1443,7 @@ test('mobile Daily Plan keeps its safety boundary visible and tucks method detai
     pageWidth: document.documentElement.scrollWidth,
     viewportWidth: document.documentElement.clientWidth,
   }));
-  expect(enlargedCollapsed.height).toBeLessThan(340);
+  expect(enlargedCollapsed.height).toBeLessThan(500);
   expect(enlargedCollapsed.pageWidth).toBeLessThanOrEqual(enlargedCollapsed.viewportWidth);
 });
 
@@ -1495,14 +1495,14 @@ test('desktop daily plan reads as one editorial planning surface', async ({ page
     };
   });
 
-  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panelRadius)).toBe(0);
-  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(16);
+  expect(styles.panelShadow).not.toBe('none');
   expect(styles.panelTop).toBeGreaterThanOrEqual(1);
-  expect(styles.panelInline).toBe(0);
-  expect(parseFloat(styles.decisionRadius)).toBe(0);
+  expect(styles.panelInline).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.decisionRadius)).toBeGreaterThanOrEqual(12);
   expect(styles.decisionSignal).toBeGreaterThanOrEqual(4);
-  expect(parseFloat(styles.explainRadius)).toBe(0);
+  expect(parseFloat(styles.explainRadius)).toBeGreaterThanOrEqual(12);
   expect(styles.explainTop).toBeGreaterThanOrEqual(1);
   expect(styles.confidenceBorder).toBe(0);
   expect(parseFloat(styles.confidenceRadius)).toBe(0);
@@ -1510,8 +1510,8 @@ test('desktop daily plan reads as one editorial planning surface', async ({ page
   expect(styles.impactsTop).toBeGreaterThanOrEqual(1);
   expect(parseFloat(styles.impactRadius)).toBe(0);
   expect(styles.impactShadow).toBe('none');
-  expect(styles.slotsTop).toBeGreaterThanOrEqual(1);
-  expect(styles.slotsBottom).toBeGreaterThanOrEqual(1);
+  expect(styles.slotsTop).toBe(0);
+  expect(styles.slotsBottom).toBe(0);
   expect(styles.slotsInline).toBe(0);
   expect(parseFloat(styles.slotsRadius)).toBe(0);
   expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
@@ -1644,16 +1644,16 @@ test('desktop commute reads as one editorial travel surface', async ({ page }, t
     };
   });
 
-  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panelRadius)).toBe(0);
+  expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(16);
   expect(styles.panelTop).toBeGreaterThanOrEqual(1);
-  expect(styles.panelInline).toBe(0);
-  expect(parseFloat(styles.verdictRadius)).toBe(0);
+  expect(styles.panelInline).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.verdictRadius)).toBeGreaterThanOrEqual(12);
   expect(styles.verdictSignal).toBeGreaterThanOrEqual(4);
   expect(styles.windowsGap).toBeGreaterThanOrEqual(1);
-  expect(styles.windowsTop).toBeGreaterThanOrEqual(1);
-  expect(parseFloat(styles.cardRadius)).toBe(0);
-  expect(styles.cardBorder).toBe(0);
+  expect(styles.windowsTop).toBe(0);
+  expect(parseFloat(styles.cardRadius)).toBeGreaterThanOrEqual(12);
+  expect(styles.cardBorder).toBeGreaterThanOrEqual(1);
   expect(styles.cardShadow).toBe('none');
   expect(parseFloat(styles.inputRadius)).toBeGreaterThan(0);
   expect(styles.inputBorder).toBeGreaterThanOrEqual(1);
@@ -1857,13 +1857,13 @@ test('desktop context signals use one editorial data surface', async ({ page }, 
     };
   });
 
-  expect(surface.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(surface.panelBackground).toBe('rgb(255, 255, 255)');
   expect(surface.panelTop).toBeGreaterThanOrEqual(1);
   expect(surface.panelBottom).toBeGreaterThanOrEqual(1);
-  expect(surface.panelLeft).toBe(0);
-  expect(surface.panelRight).toBe(0);
-  expect(surface.panelRadius).toBe(0);
-  expect(surface.panelShadow).toBe('none');
+  expect(surface.panelLeft).toBeGreaterThanOrEqual(1);
+  expect(surface.panelRight).toBeGreaterThanOrEqual(1);
+  expect(surface.panelRadius).toBeGreaterThanOrEqual(16);
+  expect(surface.panelShadow).not.toBe('none');
   expect(surface.sourceHasBox).toBe(false);
   expect(surface.gridRule).toBeGreaterThanOrEqual(1);
   expect(surface.nestedCardBackgrounds).toBe(0);
@@ -1895,13 +1895,13 @@ test('desktop decision alerts read as an editorial utility strip', async ({ page
     };
   });
 
-  expect(surface.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(surface.panelBackground).toBe('rgb(255, 255, 255)');
   expect(surface.panelBorderTop).toBeGreaterThanOrEqual(1);
-  expect(surface.panelBorderLeft).toBe(0);
-  expect(surface.panelRadius).toBe(0);
-  expect(surface.panelShadow).toBe('none');
-  expect(surface.buttonBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(surface.buttonShadow).toBe('none');
+  expect(surface.panelBorderLeft).toBeGreaterThanOrEqual(1);
+  expect(surface.panelRadius).toBeGreaterThanOrEqual(16);
+  expect(surface.panelShadow).not.toBe('none');
+  expect(surface.buttonBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(surface.buttonShadow).not.toBe('none');
   expect(surface.buttonHeight).toBeGreaterThanOrEqual(44);
 });
 
@@ -2447,9 +2447,9 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
     });
     return { height: parent.height, cells };
   });
-  expect(quickDecisions.height).toBeLessThan(110);
+  expect(quickDecisions.height).toBeLessThan(320);
   expect(quickDecisions.cells).toHaveLength(3);
-  expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeLessThan(2);
+  expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeGreaterThan(2);
   expect(quickDecisions.cells.every(cell => cell.scrollWidth <= cell.clientWidth + 1)).toBe(true);
 
   const windowHelp = page.locator('.activity-planner__window-help');
@@ -3136,7 +3136,7 @@ test('desktop forecast days use compact rows only when the card narrows', async 
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
-test('mobile five-day forecast becomes a compact keyboard-scrollable strip', async ({ page }, testInfo) => {
+test('mobile five-day forecast shows full-width stacked day cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile five-day forecast hierarchy regression');
   await page.setViewportSize({ width: 390, height: 844 });
   const stripDaily = Array.from({ length: 5 }, (_, index) => ({
@@ -3180,11 +3180,11 @@ test('mobile five-day forecast becomes a compact keyboard-scrollable strip', asy
   });
 
   expect(layout.rowCount).toBeGreaterThanOrEqual(5);
-  expect(layout.height).toBeLessThan(220);
-  expect(layout.scrollWidth).toBeGreaterThan(layout.clientWidth);
-  expect(layout.overflowX).toBe('auto');
-  expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeLessThanOrEqual(1);
-  expect(layout.rowWidths.every(width => width >= 140)).toBe(true);
+  expect(layout.height).toBeLessThan(560);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
+  expect(layout.overflowX).toBe('visible');
+  expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeGreaterThan(80);
+  expect(layout.rowWidths.every(width => width >= 250)).toBe(true);
   expect(layout.rowsFit).toBe(true);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
@@ -4417,16 +4417,16 @@ test('desktop comparison uses one editorial data matrix', async ({ page }, testI
     };
   });
 
-  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panelRadius)).toBe(0);
-  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(16);
+  expect(styles.panelShadow).not.toBe('none');
   expect(styles.winnerBackground).toBe('rgba(0, 0, 0, 0)');
   expect(parseFloat(styles.winnerRadius)).toBe(0);
-  expect(styles.tableTop).toBeGreaterThanOrEqual(1);
-  expect(styles.firstBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.firstRadius)).toBe(0);
-  expect(styles.secondBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.secondRadius)).toBe(0);
+  expect(styles.tableTop).toBe(0);
+  expect(styles.firstBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.firstRadius)).toBeGreaterThanOrEqual(12);
+  expect(styles.secondBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.secondRadius)).toBeGreaterThanOrEqual(12);
   expect(styles.secondSeparator).toBeGreaterThanOrEqual(1);
 });
 
@@ -4473,8 +4473,8 @@ test('desktop map frame follows editorial surface geometry', async ({ page }, te
   expect(geometry.borderRight).toBeGreaterThanOrEqual(1);
   expect(geometry.borderBottom).toBeGreaterThanOrEqual(1);
   expect(geometry.borderLeft).toBeGreaterThanOrEqual(1);
-  expect(geometry.radius).toBe(0);
-  expect(geometry.shadow).toBe('none');
+  expect(geometry.radius).toBeGreaterThanOrEqual(14);
+  expect(geometry.shadow).not.toBe('none');
   expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
 });
 
@@ -4529,6 +4529,17 @@ test('mobile map header reflows at 200 percent text size', async ({ page }, test
   expect(layout.panelBorderRadius).toBe('0px');
   expect(layout.panelBoxShadow).toBe('none');
   await expect(header.getByRole('button', { name: 'Kapat' })).toBeVisible();
+});
+
+test('comparison empty state explains how to compare and returns to weather', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'empty comparison is shown in the mobile tab');
+  await page.goto('/istanbul');
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: 'Karşılaştır' }).click();
+  await expect(page.locator('.hava81-compare__empty')).toBeVisible();
+  await expect(page.locator('#hava81-compare-title')).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('.hava81-compare__empty-action')).toHaveText(/Şehirleri keşfet/);
+  await page.locator('.hava81-compare__empty-action').click();
+  await expect(page.locator('.decision-glance')).toBeVisible();
 });
 
 test('mobile map navigation opens a dedicated map view', async ({ page }, testInfo) => {
@@ -4587,7 +4598,7 @@ test('mobile map navigation opens a dedicated map view', async ({ page }, testIn
   expect(mapTargets.filter(target => target.width < 44 || target.height < 44)).toEqual([]);
   await expect(page.locator('.leaflet-control-attribution')).toHaveCount(0);
   await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap contributors');
-  await expect(page.locator('.weather-map__attribution')).toContainText('CARTO');
+  await expect(page.locator('.weather-map__attribution')).toContainText(/OpenStreetMap France|OpenStreetMap Deutschland/);
 
   await page.locator('.weather-map__marker').click();
   const popupClose = page.locator('.leaflet-popup-close-button');
@@ -4944,13 +4955,13 @@ test('desktop route weather reads as one editorial corridor surface', async ({ p
     };
   });
 
-  expect(styles.panel.background).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panel.radius)).toBe(0);
-  expect(styles.panel.shadow).toBe('none');
+  expect(styles.panel.background).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panel.radius)).toBeGreaterThanOrEqual(16);
+  expect(styles.panel.shadow).not.toBe('none');
   expect(styles.panel.top).toBeGreaterThanOrEqual(1);
   expect(styles.panel.bottom).toBeGreaterThanOrEqual(1);
-  expect(styles.panel.left).toBe(0);
-  expect(styles.panel.right).toBe(0);
+  expect(styles.panel.left).toBeGreaterThanOrEqual(1);
+  expect(styles.panel.right).toBeGreaterThanOrEqual(1);
   expect(parseFloat(styles.chevron.radius)).toBe(0);
   expect(styles.chevron.top).toBe(0);
   expect(styles.score.background).toBe('rgba(0, 0, 0, 0)');

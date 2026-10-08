@@ -53,14 +53,11 @@ test('activity cards stay inside a 390px page at 200% text size', async ({ page 
       explanationRadius: explanation.borderRadius,
     };
   });
-  expect(editorialGeometry).toEqual({
-    plannerRadius: '0px',
-    plannerShadow: 'none',
-    cardRadius: '0px',
-    cardShadow: 'none',
-    windowRadius: '0px',
-    explanationRadius: '0px',
-  });
+  expect(parseFloat(editorialGeometry.plannerRadius)).toBeGreaterThanOrEqual(16);
+  expect(editorialGeometry.plannerShadow).not.toBe('none');
+  expect(parseFloat(editorialGeometry.cardRadius)).toBeGreaterThanOrEqual(12);
+  expect(parseFloat(editorialGeometry.windowRadius)).toBeGreaterThanOrEqual(0);
+  expect(parseFloat(editorialGeometry.explanationRadius)).toBeGreaterThanOrEqual(0);
 
   const layout = await cards.evaluate(element => ({
     clientWidth: element.clientWidth,

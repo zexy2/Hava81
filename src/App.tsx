@@ -23,6 +23,7 @@ import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness'
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 import './styles/PremiumDashboard.css';
+import './styles/DesignRefinement.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
@@ -662,7 +663,11 @@ const App: React.FC = () => {
           >
             {activeNav === 'compare' ? (
               <Suspense fallback={<p role="status">{t('common.loading')}</p>}>
-                <ComparePanel cities={favorites} language={settings.language} />
+                <ComparePanel
+                  cities={favorites}
+                  language={settings.language}
+                  onExplore={() => handleBottomNav('today')}
+                />
               </Suspense>
             ) : null}
             {activeNav !== 'compare' && error && (

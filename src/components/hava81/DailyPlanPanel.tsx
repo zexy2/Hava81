@@ -259,12 +259,8 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
         ) : null}
       </div>
 
-      <div
-        className="daily-plan__explain"
-        role="group"
-        aria-label={t('hava81.dailyPlan.explain.label')}
-      >
-        <div className="daily-plan__explain-head">
+      <details className="daily-plan__explain">
+        <summary className="daily-plan__explain-head">
           <div>
             <span>{t('hava81.dailyPlan.explain.eyebrow')}</span>
             <strong>{t('hava81.dailyPlan.explain.title')}</strong>
@@ -272,7 +268,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
           <small data-confidence={plan.confidence}>
             {t(`hava81.dailyPlan.confidence.${plan.confidence}`)}
           </small>
-        </div>
+        </summary>
         {plan.impacts.length ? (
           <ul className="daily-plan__impacts">
             {plan.impacts.slice(0, 3).map(impact => (
@@ -286,7 +282,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
           <p className="daily-plan__stable">{t('hava81.dailyPlan.explain.stable')}</p>
         )}
         <p>{t('hava81.dailyPlan.explain.method')}</p>
-      </div>
+      </details>
 
       <div className="daily-plan__quick" role="group" aria-label={t('hava81.dailyPlan.quickLabel')}>
         <div>
@@ -367,7 +363,6 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
   );
 }
 
-
 export function DailyPlanPanel({ weather, hourly, airQuality, forecastMeta }: DailyPlanPanelProps) {
   const { t } = useTranslation();
   const [, setForecastFreshnessRevision] = useState(0);
@@ -388,7 +383,6 @@ export function DailyPlanPanel({ weather, hourly, airQuality, forecastMeta }: Da
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [forecastMeta, freshness.expiresInMs]);
-
 
   if (!freshness.fresh) {
     return (

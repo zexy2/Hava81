@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import { useTranslation } from 'react-i18next';
 import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
-import { useResolvedColorMode } from '../hooks/useResolvedColorMode';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import './WeatherMap.css';
@@ -90,9 +89,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
-  const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
+  const { convertTemperature, getTemperatureSymbol } = useSettings();
   const mapTitleId = useId();
-  const colorMode = useResolvedColorMode(settings.themeMode);
+  const [fallbackTiles, setFallbackTiles] = useState(false);
   const [, setFreshnessRevision] = useState(0);
   const currentFreshness = getCurrentWeatherFreshness(weather?.meta ?? null);
 
@@ -127,7 +126,13 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     [weather?.cityName]
   );
 
-  const tileStyle = colorMode === 'dark' ? 'dark_all' : 'light_all';
+  // CARTO's old anonymous raster endpoint now returns a successful HTTP response
+  // containing 'API KEY REQUIRED' watermark tiles. Use usable OSM raster sources.
+  // Both sources require OSM attribution; the fallback prevents a single host outage
+  // from blanking the interactive map.
+  const tileUrl = fallbackTiles
+    ? 'https://a.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png'
+    : 'https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
   const temperatureSymbol = getTemperatureSymbol();
   const currentMarkerName = weather
     ? currentFreshness.fresh
@@ -160,7 +165,12 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         >
           <MapController center={center} />
 
-          <TileLayer url={`https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`} />
+          <TileLayer
+            key={fallbackTiles ? 'osmde' : 'osmfr'}
+            url={tileUrl}
+            eventHandlers={{ tileerror: () => setFallbackTiles(true) }}
+            maxZoom={18}
+          />
 
           {weather && (
             <Marker
@@ -169,7 +179,10 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
               title={currentMarkerName}
               icon={
                 currentFreshness.fresh
-                  ? createTemperatureIcon(weather.temperature, convertTemperature(weather.temperature))
+                  ? createTemperatureIcon(
+                      weather.temperature,
+                      convertTemperature(weather.temperature)
+                    )
                   : createUnavailableObservationIcon()
               }
               eventHandlers={{
@@ -237,10 +250,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           OpenStreetMap contributors
         </a>
-        <span>· ©</span>
-        <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">
-          CARTO
-        </a>
+        <span>·</span>
+        {fallbackTiles ? (
+          <a href="https://www.openstreetmap.de/" target="_blank" rel="noreferrer">
+            OpenStreetMap Deutschland
+          </a>
+        ) : (
+          <a href="https://www.openstreetmap.fr/" target="_blank" rel="noreferrer">
+            Humanitarian style · OpenStreetMap France
+          </a>
+        )}
       </p>
 
       <div className="weather-map__legend" role="list" aria-label={t('weather.temperatureLegend')}>

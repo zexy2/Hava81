@@ -185,6 +185,10 @@ export const en = {
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },
     compare: {
+      emptyTitle: 'Two cities, one clear choice',
+      emptyTip:
+        'Explore a city and use the star in the header to save it. Add two cities to compare conditions side by side.',
+      emptyAction: 'Explore cities',
       action: 'Compare',
       title: 'City comparison',
       noRain: 'Not expected',

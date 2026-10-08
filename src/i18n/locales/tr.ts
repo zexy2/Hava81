@@ -186,6 +186,10 @@ export const tr = {
       dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
     compare: {
+      emptyTitle: 'İki şehir, tek karar',
+      emptyTip:
+        'Şehirleri gezip başlıktaki yıldızla favorilerine ekle. İki şehir seçtiğinde hava koşullarını yan yana görebilirsin.',
+      emptyAction: 'Şehirleri keşfet',
       action: 'Karşılaştır',
       title: 'Şehir karşılaştırması',
       noRain: 'Beklenmiyor',
