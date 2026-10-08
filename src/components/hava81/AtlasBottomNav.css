@@ -85,11 +85,14 @@
 }
 
 .atlas-bottom-nav__label {
+  max-width: 100%;
   margin-block-start: 3px;
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.2;
   letter-spacing: 0.01em;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .atlas-bottom-nav__saved-mark {
@@ -164,5 +167,13 @@
     color: Highlight;
     text-decoration: underline 2px;
     text-underline-offset: 4px;
+  }
+}
+
+/* Narrowest supported phones need the full label width when text is zoomed.
+ * Keep buttons large while avoiding unnecessary single-letter wrapping. */
+@media (max-width: 24rem) {
+  .atlas-bottom-nav__button {
+    padding-inline: 2px;
   }
 }

@@ -5498,3 +5498,50 @@ test('mobile hourly forecast offers accessible forward and back navigation', asy
   await page.getByRole('button', { name: /12s.*12 saatte bir göster/i }).click();
   await expect(navigation).toBeHidden();
 });
+
+// At 320px with 200% text, the long "Karşılaştır" label must wrap inside
+// its own navigation target instead of covering "Harita".
+test('mobile bottom navigation labels remain separate with enlarged text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile enlarged text navigation regression');
+  await page.goto('/izmir/');
+  const nav = page.locator('.atlas-bottom-nav');
+  await expect(nav).toBeVisible();
+
+  for (const width of [320, 360, 390, 428]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const scale of ['100%', '200%']) {
+      await page.evaluate(value => { document.documentElement.style.fontSize = value; }, scale);
+      const metrics = await nav.evaluate(element => {
+        const buttons = Array.from(element.querySelectorAll<HTMLButtonElement>('.atlas-bottom-nav__button'));
+        const labels = buttons.map(button => button.querySelector<HTMLElement>('.atlas-bottom-nav__label'));
+        const fits = buttons.every((button, index) => {
+          const label = labels[index];
+          if (!label) return false;
+          const outer = button.getBoundingClientRect();
+          const text = label.getBoundingClientRect();
+          return text.left >= outer.left - 1 && text.right <= outer.right + 1 &&
+            text.top >= outer.top - 1 && text.bottom <= outer.bottom + 1;
+        });
+        const labelRects = labels.map(label => label!.getBoundingClientRect());
+        const separated = labelRects.every((rect, index) =>
+          index === 0 || rect.left >= labelRects[index - 1].right - 1);
+        return {
+          fits,
+          separated,
+          allLabelsVisible: labels.every(label => label && getComputedStyle(label).display !== 'none'),
+          targetsAccessible: buttons.every(button => button.getBoundingClientRect().width >= 44 &&
+            button.getBoundingClientRect().height >= 44),
+          pageFits: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      expect(metrics.fits, `label fits its navigation item at ${width}px, ${scale}`).toBe(true);
+      expect(metrics.separated, `labels do not overlap at ${width}px, ${scale}`).toBe(true);
+      expect(metrics.allLabelsVisible, `labels remain visible at ${width}px, ${scale}`).toBe(true);
+      expect(metrics.targetsAccessible, `touch targets at ${width}px, ${scale}`).toBe(true);
+      expect(metrics.pageFits, `viewport fits at ${width}px, ${scale}`).toBe(true);
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320 && scale === '200%') {
+        await page.screenshot({ path: 'test-results/visual-audit/mobile-bottom-nav-320-zoom200.png' });
+      }
+    }
+  }
+});
