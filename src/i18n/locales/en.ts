@@ -99,6 +99,12 @@ export const en = {
       privacy: 'Your location is used only to load nearby weather data.',
     },
     decision: {
+      freshness: {
+        unknown: 'Update time unavailable',
+        now: 'Just updated',
+        minutes: 'Updated {{count}} min ago',
+        stale: 'Outdated observation',
+      },
       plateCodeLabel: 'Province plate code {{code}}',
       districtLabel: 'District',
       latitude: 'Latitude',

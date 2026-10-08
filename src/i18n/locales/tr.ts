@@ -99,6 +99,12 @@ export const tr = {
       privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
     },
     decision: {
+      freshness: {
+        unknown: 'Güncellik bilinmiyor',
+        now: 'şimdi güncellendi',
+        minutes: '{{count}} dk önce',
+        stale: 'Eski veri',
+      },
       plateCodeLabel: 'Plaka kodu {{code}}',
       districtLabel: 'İlçe',
       latitude: 'Enlem',
