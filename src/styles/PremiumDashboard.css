@@ -1163,3 +1163,30 @@
     grid-row: 2;
   }
 }
+
+/* Environment icons were 2.4rem wide but occupied a 24px grid column,
+ * letting glyphs cross over the label/value at every screen size. Keep the
+ * icon track equal to its rendered width with a genuine text gutter. */
+.app .environment-rail__module {
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+}
+
+@media (max-width: 47.99rem) {
+  .app .environment-rail__module {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    column-gap: 0.7rem;
+  }
+  .app .environment-rail__icon {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+@media (max-width: 24rem) {
+  /* A single-column phone rail shouldn't waste 144px per compact metric. */
+  .app .environment-rail__module:nth-child(n) {
+    min-height: 6.25rem;
+    padding: 0.75rem 0.8rem;
+  }
+}

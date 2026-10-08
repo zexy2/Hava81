@@ -5799,3 +5799,43 @@ test('English hourly forecast displays compact one-line clock labels on narrow p
   // Detailed precipitation messages retain full hour-and-minute formatting.
   await expect(forecast).toContainText(/Today's rhythm|Hourly forecast|NEXT 24 HOURS/i);
 });
+
+// Premium icons used to overflow their 24px grid track by ~14px and collide
+// with their adjacent label/time. Retain a readable gutter at every width.
+test('environment metric icons never intersect labels, values, or details', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single responsive environment-rail geometry test');
+  await page.goto('/istanbul/');
+  const rail = page.locator('.environment-rail');
+  await expect(rail).toBeVisible();
+
+  for (const width of [320, 360, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const fontSize of ['100%', '200%']) {
+      await page.evaluate(size => { document.documentElement.style.fontSize = size; }, fontSize);
+      const layout = await rail.evaluate(element => {
+        const modules = Array.from(element.querySelectorAll<HTMLElement>('.environment-rail__module'));
+        const clearance = modules.map(module => {
+          const icon = module.querySelector('.environment-rail__icon')!.getBoundingClientRect();
+          const texts = ['__label', '__value', '__detail'].map(part =>
+            module.querySelector(`.environment-rail${part}`)!.getBoundingClientRect());
+          return Math.min(...texts.map(text => text.left - icon.right));
+        });
+        return {
+          clearance,
+          height: element.getBoundingClientRect().height,
+          horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+        };
+      });
+      expect(layout.clearance.length).toBe(4);
+      expect(layout.clearance.every(px => px >= 8), `8px icon/text gutter at ${width}px ${fontSize}`).toBe(true);
+      expect(layout.horizontalOverflow, `no page overflow at ${width}px ${fontSize}`).toBe(false);
+      if (width === 320 && fontSize === '100%') {
+        expect(layout.height, 'compact single-column 320px metric rail').toBeLessThan(520);
+      }
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && [320, 390, 1440].includes(width) && fontSize === '100%') {
+        await rail.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `test-results/visual-audit/environment-rail-${width}.png`, animations: 'disabled' });
+      }
+    }
+  }
+});
