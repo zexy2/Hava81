@@ -475,13 +475,31 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     const isEndpoint = index === 0 || index === chart.points.length - 1;
                     if (!isCurrentPoint && !isExtrema && !isEndpoint) return null;
                     return (
-                      <circle
-                        key={`point-${point.timestamp}`}
-                        className={`hava81-forecast-atlas__point${isCurrentPoint ? ' is-current' : ''}`}
-                        cx={point.x}
-                        cy={point.y}
-                        r={isCurrentPoint ? 4.75 : 3.5}
-                      />
+                      <g key={`point-${point.timestamp}`} aria-hidden="true">
+                        {isCurrentPoint ? (
+                          <>
+                            <line
+                              className="hava81-forecast-atlas__current-guide"
+                              x1={point.x}
+                              x2={point.x}
+                              y1={CHART_TOP - 12}
+                              y2={CHART_HEIGHT - 8}
+                            />
+                            <circle
+                              className="hava81-forecast-atlas__point-halo"
+                              cx={point.x}
+                              cy={point.y}
+                              r="11"
+                            />
+                          </>
+                        ) : null}
+                        <circle
+                          className={`hava81-forecast-atlas__point${isCurrentPoint ? ' is-current' : ''}`}
+                          cx={point.x}
+                          cy={point.y}
+                          r={isCurrentPoint ? 5.5 : 3.5}
+                        />
+                      </g>
                     );
                   })}
                   {chart.firstPrecipitation ? (

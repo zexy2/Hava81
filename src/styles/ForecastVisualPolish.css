@@ -1,0 +1,215 @@
+/* The hourly trend and condition illustration share a softer, legible visual
+ * language. Weather values and timing calculations are unchanged. */
+.app .hava81-forecast-atlas__hourly-viewport {
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 18% 8%, rgb(178 221 255 / 0.34), transparent 58%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-atlas-paper) 78%, var(--color-aegean-pale)),
+      var(--color-atlas-paper) 76%
+    );
+  box-shadow: inset 0 1px 2px rgb(33 111 173 / 0.03);
+}
+.app .hava81-forecast-atlas__chart {
+  margin-top: 0.3rem;
+}
+.app .hava81-forecast-atlas__area-stop.is-start {
+  stop-color: #2986d9;
+  stop-opacity: 0.22;
+}
+.app .hava81-forecast-atlas__area-stop.is-end {
+  stop-color: #2986d9;
+  stop-opacity: 0.012;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__area-stop.is-start {
+  stop-color: #88d3ff;
+  stop-opacity: 0.25;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__area-stop.is-end {
+  stop-color: #88d3ff;
+  stop-opacity: 0.01;
+}
+.app .hava81-forecast-atlas__curve {
+  stroke: #2476c4;
+  stroke-width: 3.25;
+  filter: drop-shadow(0 2px 2px rgb(47 143 225 / 0.12));
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__curve {
+  stroke: #9cd6ff;
+}
+.app .hava81-forecast-atlas__guide {
+  stroke: color-mix(in srgb, var(--color-atlas-line) 65%, transparent);
+  stroke-dasharray: 4 7;
+}
+.app .hava81-forecast-atlas__axis-label {
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 8px;
+  background: var(--color-atlas-paper);
+  color: var(--color-atlas-muted);
+  font-size: 0.72rem;
+  padding: 0 2px;
+}
+.app .hava81-forecast-atlas__point {
+  fill: #327fd0;
+  stroke: var(--color-atlas-paper);
+  stroke-width: 2;
+}
+.app .hava81-forecast-atlas__point.is-current {
+  fill: #1365c7;
+  stroke: #fff;
+  stroke-width: 2.6;
+}
+.app .hava81-forecast-atlas__point-halo {
+  fill: rgb(45 137 223 / 0.18);
+  stroke: rgb(45 137 223 / 0.19);
+  stroke-width: 1;
+}
+.app .hava81-forecast-atlas__current-guide {
+  stroke: rgb(42 131 222 / 0.35);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  vector-effect: non-scaling-stroke;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__point.is-current {
+  fill: #97d5ff;
+  stroke: #183a53;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__point-halo {
+  fill: rgb(147 216 255 / 0.25);
+  stroke: rgb(147 216 255 / 0.35);
+}
+.app .hava81-forecast-atlas__hourly-track {
+  padding-bottom: 0.3rem;
+}
+.app .hava81-forecast-atlas__hours {
+  gap: 0.35rem;
+  padding: 0.25rem 0.35rem 0.35rem;
+  border: 0;
+}
+.app .hava81-forecast-atlas__hour {
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 92%, var(--color-aegean-pale));
+  box-shadow: none;
+}
+.app .hava81-forecast-atlas__hour.is-current {
+  border-color: #8dbcf3;
+  box-shadow:
+    0 1px 8px rgb(31 110 212 / 0.08),
+    inset 0 0 0 1px #bedafd;
+  background: color-mix(in srgb, var(--color-atlas-paper) 58%, var(--color-aegean-pale));
+}
+.app .hava81-forecast-atlas__hour:hover {
+  background: color-mix(in srgb, var(--color-atlas-paper) 45%, var(--color-aegean-pale));
+}
+.app .hava81-forecast-atlas__hour.is-day-boundary {
+  border-inline-start: 2px solid var(--color-aegean);
+  box-shadow: none;
+}
+.app .hava81-forecast-atlas__hour strong {
+  font-weight: 750;
+  color: var(--premium-ink);
+}
+.app .hava81-decision-field__symbol {
+  width: min(100%, 9.5rem);
+  height: 9.5rem;
+  flex-basis: 9.5rem;
+  filter: drop-shadow(0 11px 16px rgb(66 130 180 / 0.15));
+}
+@media (max-width: 63.99rem) {
+  .app .hava81-decision-field__symbol {
+    width: 6rem;
+    height: 6rem;
+    flex-basis: 6rem;
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .hava81-forecast-atlas__hourly-viewport {
+    border-radius: 14px;
+  }
+  .app .hava81-forecast-atlas__hours {
+    gap: 0.3rem;
+  }
+  .app .hava81-decision-field__symbol {
+    width: 6.4rem;
+    height: 6.4rem;
+    flex-basis: 6.4rem;
+  }
+}
+@media (max-width: 24rem) {
+  .app .hava81-decision-field__symbol {
+    width: 3rem;
+    height: 3rem;
+    flex-basis: 3rem;
+  }
+}
+@media (forced-colors: active) {
+  .app .hava81-forecast-atlas__hour.is-current {
+    outline: 2px solid Highlight;
+  }
+  .app .hava81-forecast-atlas__point-halo {
+    display: none;
+  }
+  .app .hava81-forecast-atlas__current-guide {
+    stroke: CanvasText;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .hava81-forecast-atlas__hour {
+    transition: none;
+  }
+}
+/* Five-day outlook: readable rows that visually match the forecast's hour tiles. */
+.app .hava81-forecast-atlas__days {
+  display: grid;
+  gap: 0.4rem;
+}
+.app .hava81-forecast-atlas__day {
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 94%, var(--color-aegean-pale));
+  transition: background-color 0.16s ease;
+}
+.app .hava81-forecast-atlas__day:hover {
+  background: color-mix(in srgb, var(--color-atlas-paper) 65%, var(--color-aegean-pale));
+}
+.app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+  border-color: color-mix(in srgb, var(--color-aegean) 35%, var(--refine-panel-line));
+  background: var(--refine-highlight);
+}
+.app .hava81-forecast-atlas__day-name[aria-current='date'] {
+  color: var(--color-aegean-deep);
+  font-weight: 800;
+}
+.app .hava81-forecast-atlas__day-temperatures strong {
+  color: var(--premium-ink);
+  font-weight: 760;
+}
+.app .hava81-forecast-atlas__day-pop.is-signal {
+  color: var(--color-saffron-ink, #805500);
+  font-weight: 750;
+}
+@media (max-width: 39.99rem) {
+  .app .hava81-forecast-atlas__days {
+    gap: 0.4rem;
+  }
+  .app .hava81-forecast-atlas__day {
+    padding: 0.65rem 0.7rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .hava81-forecast-atlas__day {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+    border-color: Highlight;
+  }
+  .app .hava81-forecast-atlas__day-name[aria-current='date'] {
+    color: Highlight;
+  }
+}
