@@ -35,7 +35,8 @@ export const en = {
     forecast: '5-Day Forecast',
     hourlyForecast: 'Hourly Forecast',
     precipitation: 'Precipitation Chance',
-    searchPlaceholder: 'Search city...',
+    searchPlaceholder: 'Search province or district...',
+    districtSearchHint: 'Searching for a district? Press Search to try the weather provider.',
     searchLabel: 'Search city',
     citySuggestions: 'City suggestions',
     quickActions: 'Quick actions',
@@ -62,6 +63,18 @@ export const en = {
     temperatureHot: 'Very warm (>{{thirty}}{{unit}})',
   },
   hava81: {
+    glance: {
+      title: 'TODAY’S DECISION',
+      loading: 'Preparing today’s guidance from fresh weather data.',
+      pending: 'Waiting for a fresh forecast',
+      now: 'Weather is suitable for going outside now.',
+      later: 'Waiting a little could mean better outdoor weather.',
+      similar: 'Weather looks similar over the next few hours.',
+      bestHours: 'Highest-scoring weather window: {{hours}}',
+      score: 'Hava81 Score',
+      umbrella: 'Umbrella: {{advice}}',
+      details: 'See why this score',
+    },
     closeSearch: 'Close city search',
     tagline: 'Decision-first weather guidance for all 81 provinces',
     homeLabel: 'Hava81 home view',
@@ -84,10 +97,14 @@ export const en = {
     },
     decision: {
       plateCodeLabel: 'Province plate code {{code}}',
+      districtLabel: 'District',
       latitude: 'Latitude',
       longitude: 'Longitude',
       feelsLike: 'Feels like {{temperature}}',
       nextChange: 'Planning signals',
+      forecastHighLow: 'Forecast high / low',
+      sourceDifference:
+        'The live observation ({{currentProvider}}) and daily forecast ({{forecastProvider}}) may use different sources or times.',
       actions: {
         rain: 'Rain chance reaches {{probability}}% around {{time}}; taking an umbrella is a good idea.',
         rainWithAmount:

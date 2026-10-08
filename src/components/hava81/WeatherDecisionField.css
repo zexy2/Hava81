@@ -441,3 +441,13 @@
     text-wrap: pretty;
   }
 }
+
+.hava81-decision-field__source-note {
+  display: block;
+  margin: -0.75rem 0 0;
+  color: var(--decision-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.35;
+}

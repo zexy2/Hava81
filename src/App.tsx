@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
 import { CityTabs } from './components/CityTabs';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
+import { DecisionGlance } from './components/hava81/DecisionGlance';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
@@ -35,6 +36,13 @@ const DecisionAlertsPanel = lazy(() => import('./components/hava81/DecisionAlert
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
 type AtlasNavItem = 'today' | 'map' | 'compare';
+
+// A district URL uses a query parameter rather than pretending to be a province.
+// Keep the original, accented place name so the provider lookup survives refresh/share.
+const districtFromQuery = (search: string): string | null => {
+  const district = new URLSearchParams(search).get('yer')?.trim();
+  return district && /^[\p{L}][\p{L}\s'-]{1,79}$/u.test(district) ? district : null;
+};
 
 const SearchIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
@@ -125,7 +133,32 @@ const App: React.FC = () => {
     twitterImageAlt: ROOT_DOCUMENT_METADATA.title,
   });
 
-  const [initialCity] = useState(() => cityFromPathname(window.location.pathname)?.name ?? '');
+  // Returning visitors should not have to grant geolocation again just to see
+  // weather for a province they previously chose. Never request location silently.
+  const [initialCity] = useState(() => {
+    const routeCity = cityFromPathname(window.location.pathname);
+    if (routeCity) return routeCity.name;
+    if (window.location.pathname !== '/') return '';
+    const queriedDistrict = districtFromQuery(window.location.search);
+    if (queriedDistrict) return `${queriedDistrict},TR`;
+    try {
+      const entries: unknown = JSON.parse(
+        window.localStorage.getItem('recent_weather_searches') ?? '[]'
+      );
+      if (!Array.isArray(entries)) return '';
+      for (const entry of entries) {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+        const item = entry as { city?: unknown; timestamp?: unknown };
+        if (typeof item.city !== 'string' || typeof item.timestamp !== 'number') continue;
+        if (item.timestamp > Date.now() || Date.now() - item.timestamp > 30 * 86_400_000) continue;
+        const path = cityPath(item.city);
+        if (path) return cityFromPathname(path)?.name ?? '';
+      }
+    } catch {
+      // Storage can be blocked or contain invalid JSON; keep the manual city picker.
+    }
+    return '';
+  });
   const isRootRoute = window.location.pathname === '/';
 
   const {
@@ -206,6 +239,12 @@ const App: React.FC = () => {
         void fetchWeather(routeCity.name);
         return;
       }
+      const district =
+        window.location.pathname === '/' ? districtFromQuery(window.location.search) : null;
+      if (district) {
+        void fetchWeather(`${district},TR`);
+        return;
+      }
       if (window.location.pathname === '/') {
         clearWeather();
         setShowMap(false);
@@ -249,11 +288,17 @@ const App: React.FC = () => {
       );
       return;
     }
-    const path = cityPath(weather.cityName);
-    if (path && window.location.pathname !== path) {
-      const routeCity = cityFromPathname(window.location.pathname);
+    const path =
+      cityPath(weather.cityName) ??
+      (weather.country.toUpperCase() === 'TR'
+        ? `/?yer=${encodeURIComponent(weather.cityName)}`
+        : null);
+    if (path && `${window.location.pathname}${window.location.search}` !== path) {
+      const previousCity =
+        cityFromPathname(window.location.pathname)?.name ??
+        districtFromQuery(window.location.search);
       const historyMethod =
-        routeCity && routeCity.name !== weather.cityName ? 'pushState' : 'replaceState';
+        previousCity && previousCity !== weather.cityName ? 'pushState' : 'replaceState';
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
     const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
@@ -278,7 +323,10 @@ const App: React.FC = () => {
       setMetaContent('meta[name="twitter:description"]', cityDescription);
       setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
       setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
-      setMetaContent('meta[property="og:locale:alternate"]', settings.language === 'en' ? 'tr_TR' : 'en_US');
+      setMetaContent(
+        'meta[property="og:locale:alternate"]',
+        settings.language === 'en' ? 'tr_TR' : 'en_US'
+      );
     }
   }, [settings.language, t, weather]);
 
@@ -488,6 +536,7 @@ const App: React.FC = () => {
                   isLoading={isLoading}
                   recentSearches={recentSearches}
                   placeholder={t('weather.searchPlaceholder')}
+                  manualQueryHint={t('weather.districtSearchHint')}
                   label={t('weather.searchLabel')}
                   submitLabel={t('common.search')}
                   loadingLabel={t('common.loading')}
@@ -644,6 +693,12 @@ const App: React.FC = () => {
             {activeNav !== 'compare' && weather && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
+                  <DecisionGlance
+                    weather={weather}
+                    hourly={forecast.hourly}
+                    airQuality={freshAirQuality}
+                    forecastMeta={forecast.displayMeta ?? forecast.meta}
+                  />
                   <WeatherDecisionField
                     weather={weather}
                     hourly={forecast.hourly}
@@ -815,11 +870,7 @@ const App: React.FC = () => {
                       >
                         {t('hava81.locationGate.fallback')}
                       </button>
-                      <button
-                        type="button"
-                        className="atlas-button"
-                        onClick={openSearch}
-                      >
+                      <button type="button" className="atlas-button" onClick={openSearch}>
                         {t('hava81.locationGate.searchAnother')}
                       </button>
                     </div>

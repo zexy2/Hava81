@@ -55,6 +55,17 @@ describe('WeatherDecisionField daily range', () => {
     vi.useRealTimers();
   });
 
+  it('identifies a district without inventing a province plate code', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={{ ...weather, cityName: 'Urla' }} hourly={[]} />
+      </SettingsProvider>
+    );
+    expect(screen.getByRole('heading', { name: 'Urla' })).toBeInTheDocument();
+    expect(screen.getByText('İlçe')).toBeInTheDocument();
+    expect(screen.queryByText('--')).not.toBeInTheDocument();
+  });
+
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {
     render(
       <SettingsProvider>
@@ -74,10 +85,42 @@ describe('WeatherDecisionField daily range', () => {
         />
       </SettingsProvider>
     );
-    expect(screen.getByText('Bugünün yüksek / düşük')).toBeInTheDocument();
+    expect(screen.getByText('Tahmini yüksek / düşük')).toBeInTheDocument();
     expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
+  it('explains a current observation outside the independently sourced daily forecast without altering either value', () => {
+    const freshMeta: ForecastMeta = {
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-29T13:00:00Z'),
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 1,
+    };
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, temperature: 34 }}
+          hourly={[]}
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00Z'),
+              tempMin: 20,
+              tempMax: 32,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+            },
+          ]}
+          forecastMeta={freshMeta}
+        />
+      </SettingsProvider>
+    );
+    expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Anlık ölçüm \(OpenWeather\) ve günlük tahmin \(Open-Meteo\)/)
+    ).toBeInTheDocument();
+  });
+
   it('shows one temperature when the daily high and low are exactly equal', () => {
     render(
       <SettingsProvider>
@@ -197,7 +240,9 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText(/UV model maksimumu 6,4; güneşten korunma planı yap/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/UV model maksimumu 6,4; güneşten korunma planı yap/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText(/UV model maksimumu 6,35/i)).not.toBeInTheDocument();
   });
 
@@ -366,7 +411,9 @@ describe('WeatherDecisionField daily range', () => {
       await vi.advanceTimersByTimeAsync(30_200);
     });
 
-    expect(screen.queryByText(/Hissedilen sıcaklık 38°C seviyesine çıkabilir/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Hissedilen sıcaklık 38°C seviyesine çıkabilir/i)
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')
     ).toBeInTheDocument();
@@ -445,7 +492,7 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    const label = screen.getByText('Bugünün yüksek / düşük');
+    const label = screen.getByText('Tahmini yüksek / düşük');
     expect(label.parentElement).toHaveTextContent('—');
     expect(screen.queryByText('34°C / 21°C')).not.toBeInTheDocument();
   });

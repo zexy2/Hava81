@@ -197,7 +197,8 @@ export function WeatherDecisionField({
         });
       case 'outdoor-window':
         return t('hava81.decision.actions.outdoor', {
-          defaultValue: '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
+          defaultValue:
+            '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
           time: decision.time ? formatForecastTime(decision.time) : '—',
         });
       case 'stable':
@@ -220,18 +221,22 @@ export function WeatherDecisionField({
         if (precipitationAmount && probability > 0) {
           return t('hava81.decision.compactActions.rainWithAmount', {
             defaultValue: '{{time}} · Yağış %{{probability}} · {{amount}}',
-            time, probability, amount: precipitationAmount,
+            time,
+            probability,
+            amount: precipitationAmount,
           });
         }
         if (precipitationAmount) {
           return t('hava81.decision.compactActions.rainAmount', {
             defaultValue: '{{time}} · Yağış {{amount}}',
-            time, amount: precipitationAmount,
+            time,
+            amount: precipitationAmount,
           });
         }
         return t('hava81.decision.compactActions.rain', {
           defaultValue: '{{time}} · Yağış %{{probability}}',
-          time, probability,
+          time,
+          probability,
         });
       }
       case 'wind':
@@ -265,9 +270,13 @@ export function WeatherDecisionField({
           time: decision.time ? formatForecastTime(decision.time) : '—',
         });
       case 'stable':
-        return t('hava81.decision.compactActions.stable', { defaultValue: 'Belirgin hava riski görünmüyor' });
+        return t('hava81.decision.compactActions.stable', {
+          defaultValue: 'Belirgin hava riski görünmüyor',
+        });
       case 'unavailable':
-        return t('hava81.decision.compactActions.unavailable', { defaultValue: 'Karar verisi hazırlanıyor' });
+        return t('hava81.decision.compactActions.unavailable', {
+          defaultValue: 'Karar verisi hazırlanıyor',
+        });
     }
   };
 
@@ -328,6 +337,14 @@ export function WeatherDecisionField({
   const ageMinutes = currentFreshness.ageMinutes;
   const currentEvidenceFresh = currentFreshness.fresh;
   const isStale = currentFreshness.status === 'stale';
+  // An observation and a daily forecast can come from different models/providers.
+  // Preserve their real values; explicitly explain differences instead of falsifying a high/low.
+  const outsideForecastRange =
+    Boolean(todayDaily) &&
+    forecastFreshness?.fresh === true &&
+    currentEvidenceFresh &&
+    (weather.temperature > (todayDaily?.tempMax ?? Infinity) + 0.5 ||
+      weather.temperature < (todayDaily?.tempMin ?? -Infinity) - 0.5);
   const airQualityFreshness = airQuality ? getCurrentWeatherFreshness(airQuality.meta, now) : null;
   const freshAirQuality = airQualityFreshness?.fresh ? airQuality : undefined;
   const decisionEvidenceFresh = currentEvidenceFresh && (forecastFreshness?.fresh ?? true);
@@ -370,17 +387,23 @@ export function WeatherDecisionField({
           <h1 id={headingId} className="hava81-decision-field__city">
             {weather.cityName}
           </h1>
-          <span
-            className="hava81-decision-field__plate"
-            role="group"
-            aria-label={t('hava81.decision.plateCodeLabel', {
-              defaultValue: 'Plaka kodu {{code}}',
-              code: plateCode,
-            })}
-          >
-            <span aria-hidden="true">TR</span>
-            <strong aria-hidden="true">{plateCode}</strong>
-          </span>
+          {cityMetadata ? (
+            <span
+              className="hava81-decision-field__plate"
+              role="group"
+              aria-label={t('hava81.decision.plateCodeLabel', {
+                defaultValue: 'Plaka kodu {{code}}',
+                code: plateCode,
+              })}
+            >
+              <span aria-hidden="true">TR</span>
+              <strong aria-hidden="true">{plateCode}</strong>
+            </span>
+          ) : (
+            <span className="hava81-decision-field__plate hava81-decision-field__plate--district">
+              <strong>{t('hava81.decision.districtLabel')}</strong>
+            </span>
+          )}
         </div>
 
         <div className="hava81-decision-field__atlas-meta">
@@ -390,17 +413,23 @@ export function WeatherDecisionField({
           <time className="hava81-decision-field__observed-compact" dateTime={observedAtDateTime}>
             {compactObservedAtText}
           </time>
-          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
+          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">
+            ·
+          </span>
           <span className="hava81-decision-field__coordinate-meta">
             {t('hava81.decision.latitude', { defaultValue: 'Enlem' })}{' '}
             {coordinateFormatter.format(weather.coordinates.lat)}°
           </span>
-          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
+          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">
+            ·
+          </span>
           <span className="hava81-decision-field__coordinate-meta">
             {t('hava81.decision.longitude', { defaultValue: 'Boylam' })}{' '}
             {coordinateFormatter.format(weather.coordinates.lon)}°
           </span>
-          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">·</span>
+          <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">
+            ·
+          </span>
           <span>{weather.meta.provider}</span>
           <span aria-hidden="true">·</span>
           <span className={isStale ? 'is-stale' : undefined}>
@@ -454,7 +483,11 @@ export function WeatherDecisionField({
           {decisions.map((decision, index) => {
             const fullCopy = decisionCopy(decision);
             return (
-              <li key={`${decision.kind}-${index}`} data-severity={decision.severity} aria-label={fullCopy}>
+              <li
+                key={`${decision.kind}-${index}`}
+                data-severity={decision.severity}
+                aria-label={fullCopy}
+              >
                 <span className="hava81-decision-field__decision-copy--full" aria-hidden="true">
                   {fullCopy}
                 </span>
@@ -469,7 +502,9 @@ export function WeatherDecisionField({
 
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
-          <dt>{t('hava81.decision.highLow', { defaultValue: 'Bugünün yüksek / düşük' })}</dt>
+          <dt>
+            {t('hava81.decision.forecastHighLow', { defaultValue: 'Tahmini yüksek / düşük' })}
+          </dt>
           <dd>
             {forecastFreshness?.fresh !== false && todayDaily
               ? formatDailyRange(todayDaily.tempMax, todayDaily.tempMin)
@@ -489,6 +524,14 @@ export function WeatherDecisionField({
           <dd>{airQualityValue}</dd>
         </div>
       </dl>
+      {outsideForecastRange && (
+        <p className="hava81-decision-field__source-note">
+          {t('hava81.decision.sourceDifference', {
+            currentProvider: weather.meta.provider,
+            forecastProvider: forecastMeta?.provider ?? 'Open-Meteo',
+          })}
+        </p>
+      )}
     </section>
   );
 }
