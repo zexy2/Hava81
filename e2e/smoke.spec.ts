@@ -5603,3 +5603,50 @@ test('small phone header stays compact but reflows for enlarged text', async ({ 
   await expect(page.locator('.atlas-header__search')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+// With 200% text on a 320px phone, the score explanation must span the hero
+// rather than compress into a narrow column and split words letter by letter.
+test('enlarged mobile decision score and explanation stay readable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile hero text-zoom regression');
+  await page.goto('/izmir/');
+  const hero = page.locator('.decision-glance');
+  await expect(hero.locator('.decision-glance__score')).toBeVisible();
+
+  for (const width of [320, 360, 390, 428]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const fontSize of ['100%', '200%']) {
+      await page.evaluate(value => { document.documentElement.style.fontSize = value; }, fontSize);
+      const layout = await hero.evaluate(element => {
+        const rect = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+        const card = element.getBoundingClientRect();
+        const side = rect('.decision-glance__side');
+        const score = rect('.decision-glance__score');
+        const label = rect('.decision-glance__score-label');
+        const details = rect('.decision-glance__details');
+        const intersects = (a: DOMRect, b: DOMRect) =>
+          Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+          Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) > 1;
+        return {
+          detailWidth: details.width,
+          detailHeight: details.height,
+          scoreWidth: score.width,
+          scoreInside: score.left >= side.left - 1 && score.right <= side.right + 1,
+          detailInside: details.left >= card.left - 1 && details.right <= card.right + 1,
+          overlap: intersects(score, label) || intersects(score, details) || intersects(label, details),
+          fitsPage: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      expect(layout.scoreInside, `score within hero at ${width}px, ${fontSize}`).toBe(true);
+      expect(layout.detailInside, `explanation within hero at ${width}px, ${fontSize}`).toBe(true);
+      expect(layout.overlap, `score and explanation separate at ${width}px, ${fontSize}`).toBe(false);
+      expect(layout.fitsPage, `no horizontal overflow at ${width}px, ${fontSize}`).toBe(true);
+      if (fontSize === '200%') {
+        expect(layout.detailWidth, `readable link width at ${width}px`).toBeGreaterThan(140);
+        expect(layout.detailHeight, `readable link height at ${width}px`).toBeLessThan(105);
+      }
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+        await page.screenshot({ path: `test-results/visual-audit/score-320-${fontSize}.png` });
+      }
+    }
+  }
+});
