@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
 import i18n from '../i18n';
 import { TURKISH_CITIES } from '../constants/cities';
+import { getCityMetadata } from '../constants/cityMetadata';
 import { citySlug } from '../utils/cityRoute';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import { useAsync } from './useAsync';
@@ -65,7 +66,8 @@ const isWeatherResultStale = (
   const age = now - lastUpdated.getTime();
   return age < -MAX_CACHE_FUTURE_SKEW_MS || age > STALE_TIME;
 };
-const cityIdentity = (name: string): string => citySlug(name) || name.trim().toLowerCase();
+const cityIdentity = (name: string): string =>
+  citySlug(getCityMetadata(name)?.name ?? name) || name.trim().toLowerCase();
 const canonicalCityByIdentity = new Map(
   TURKISH_CITIES.map(city => [cityIdentity(city.name), city.name] as const)
 );

@@ -226,6 +226,27 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/');
   });
 
+  it('keeps province URLs canonical when an English weather provider adds Province', async () => {
+    window.history.replaceState({}, '', '/sanliurfa/');
+    service.getCurrentWeather.mockResolvedValue({
+      ...current,
+      cityName: 'Şanlıurfa Province',
+      coordinates: { lat: 37.1591, lon: 38.7969 },
+    });
+    renderApp();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Şanlıurfa Province', level: 1 })
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.location.pathname + window.location.search).toBe('/sanliurfa/');
+      expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+        'http://localhost:3000/sanliurfa/'
+      );
+    });
+    expect(screen.getByRole('group', { name: 'Plaka kodu 63' })).toBeInTheDocument();
+  });
+
   it('loads a directly shared district URL without falling back to a province', async () => {
     window.history.replaceState({}, '', '/?yer=Urla');
     service.getCurrentWeather.mockResolvedValue({

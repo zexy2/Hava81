@@ -66,6 +66,20 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByText('--')).not.toBeInTheDocument();
   });
 
+  it('recognizes an English provider province label without showing District', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, cityName: 'Şanlıurfa Province' }}
+          hourly={[]}
+        />
+      </SettingsProvider>
+    );
+    expect(screen.getByRole('heading', { name: 'Şanlıurfa Province' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Plaka kodu 63' })).toBeInTheDocument();
+    expect(screen.queryByText('İlçe')).not.toBeInTheDocument();
+  });
+
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {
     render(
       <SettingsProvider>
