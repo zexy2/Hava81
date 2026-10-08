@@ -567,3 +567,9 @@
     transition: none;
   }
 }
+
+/* Programmatic heading focus announces the new comparison view to screen readers.
+ * It is not a tab stop; remove the browser's accidental black rectangle. */
+.app .hava81-compare__header h2:focus {
+  outline: none;
+}

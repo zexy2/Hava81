@@ -4536,6 +4536,7 @@ test('comparison empty state explains how to compare and returns to weather', as
   await page.goto('/istanbul');
   await page.locator('.atlas-bottom-nav__button').filter({ hasText: 'Karşılaştır' }).click();
   await expect(page.locator('.hava81-compare__empty')).toBeVisible();
+  await expect(page.locator('#hava81-compare-title')).toHaveCSS('outline-style', 'none');
   await expect(page.locator('.hava81-compare__empty-action')).toHaveText(/Şehirleri keşfet/);
   await page.locator('.hava81-compare__empty-action').click();
   await expect(page.locator('.decision-glance')).toBeVisible();
