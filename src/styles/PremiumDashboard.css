@@ -277,10 +277,13 @@
   gap: 0.5rem;
   text-align: center;
 }
+.app .decision-glance__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+}
 .app .decision-glance__date {
-  position: absolute;
-  top: 0;
-  right: 0;
   white-space: nowrap;
   border-radius: 40px;
   padding: 0.3rem 0.7rem;

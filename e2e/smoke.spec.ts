@@ -5357,3 +5357,38 @@ test('weather hero sky decoration never overlaps the score at responsive widths'
     }
   }
 });
+
+// The date pill used to share the score column and visually cross the ring.
+// Its new heading position must stay clear at every layout breakpoint.
+test('hero date pill never collides with the score ring', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single responsive geometry check');
+  await page.goto('/sanliurfa/');
+  await expect(page.locator('.decision-glance__score')).toBeVisible();
+
+  for (const width of [390, 768, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await page.locator('.decision-glance').evaluate(section => {
+      const hero = section.getBoundingClientRect();
+      const date = section.querySelector('.decision-glance__date')!;
+      const pill = date.getBoundingClientRect();
+      const score = section.querySelector('.decision-glance__score')!.getBoundingClientRect();
+      const overlapWidth = Math.max(0, Math.min(pill.right, score.right) - Math.max(pill.left, score.left));
+      const overlapHeight = Math.max(0, Math.min(pill.bottom, score.bottom) - Math.max(pill.top, score.top));
+      return {
+        dateVisible: getComputedStyle(date).display !== 'none',
+        dateInsideHero: pill.left >= hero.left && pill.right <= hero.right && pill.top >= hero.top && pill.bottom <= hero.bottom,
+        overlapsScore: overlapWidth * overlapHeight > 1,
+        horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    expect(layout.dateVisible, `date visible at ${width}px`).toBe(width >= 768);
+    if (layout.dateVisible) {
+      expect(layout.dateInsideHero, `date within hero at ${width}px`).toBe(true);
+      expect(layout.overlapsScore, `date clear of score at ${width}px`).toBe(false);
+    }
+    expect(layout.horizontalOverflow, `page fits at ${width}px`).toBe(false);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && [390, 768, 1440].includes(width)) {
+      await page.screenshot({ path: `test-results/visual-audit/hero-date-${width}-after.png` });
+    }
+  }
+});
