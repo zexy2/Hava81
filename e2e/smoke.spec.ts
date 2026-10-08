@@ -5313,3 +5313,47 @@ test('mobile weather icon fits the temperature card at normal and enlarged type'
     }
   }
 });
+
+// A clear sky used to put the sun directly behind the score on Şanlıurfa
+// and other cities, including 390px phones. Keep this geometry invariant.
+test('weather hero sky decoration never overlaps the score at responsive widths', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single responsive decoration regression');
+  await page.goto('/sanliurfa/');
+  await expect(page.locator('.decision-glance__score')).toBeVisible();
+  await expect(page.locator('.decision-glance[data-weather-scene="clear"]')).toBeVisible();
+
+  for (const width of [390, 767, 768, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await page.locator('.decision-glance').evaluate(section => {
+      const score = section.querySelector('.decision-glance__score')!.getBoundingClientRect();
+      const decoration = section.querySelector('.decision-glance__sun')!;
+      const sky = decoration.getBoundingClientRect();
+      const visible = getComputedStyle(decoration).display !== 'none';
+      const overlapWidth = Math.max(
+        0,
+        Math.min(score.right, sky.right) - Math.max(score.left, sky.left)
+      );
+      const overlapHeight = Math.max(
+        0,
+        Math.min(score.bottom, sky.bottom) - Math.max(score.top, sky.top)
+      );
+      return {
+        visible,
+        overlapsScore: visible && overlapWidth * overlapHeight > 1,
+        scoreWithinHero:
+          score.left >= section.getBoundingClientRect().left &&
+          score.right <= section.getBoundingClientRect().right,
+        documentFits: document.documentElement.scrollWidth <= innerWidth,
+      };
+    });
+    expect(layout.overlapsScore, `sun must not overlap score at ${width}px`).toBe(false);
+    expect(layout.visible, `sun visibility at ${width}px`).toBe(width >= 1024);
+    expect(layout.scoreWithinHero, `score fits hero at ${width}px`).toBe(true);
+    expect(layout.documentFits, `document fits viewport at ${width}px`).toBe(true);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && (width === 390 || width === 1440)) {
+      await page.screenshot({ path: `test-results/visual-audit/sanliurfa-${width}-after.png` });
+    }
+  }
+});

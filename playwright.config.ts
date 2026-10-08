@@ -18,6 +18,11 @@ export default defineConfig({
   use: {
     baseURL: previewUrl,
     trace: 'on-first-retry',
+    // Use an already-installed system browser on remote QA hosts when supplied.
+    // CI keeps Playwright's managed browser by default.
+    ...(process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH
+      ? { launchOptions: { executablePath: process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH } }
+      : {}),
   },
   projects: [
     {
