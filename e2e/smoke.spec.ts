@@ -621,6 +621,20 @@ test('mobile decision metadata prioritizes source freshness over coordinates', a
   expect(state.text).toMatch(/OpenWeather/i);
 });
 
+test('English weather freshness labels use English instead of Turkish fallbacks', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single English freshness regression');
+  await page.addInitScript(() => {
+    localStorage.setItem('user-settings', JSON.stringify({
+      temperatureUnit: 'metric', windSpeedUnit: 'ms', themeMode: 'light', language: 'en',
+    }));
+  });
+  await page.goto('/istanbul/');
+  await expect(page.locator('.hava81-decision-field__city')).toHaveText('İstanbul');
+  const metadata = page.locator('.hava81-decision-field__atlas-meta');
+  await expect(metadata).toContainText('Just updated');
+  await expect(metadata).not.toContainText(/güncellendi|Güncellik|Eski veri|dk önce/i);
+});
+
 test('mobile planning signals use compact rows without losing full accessible guidance', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile planning-signal hierarchy regression');
   await page.goto('/istanbul');

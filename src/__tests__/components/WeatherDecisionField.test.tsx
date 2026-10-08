@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../i18n';
+import i18n from '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
 import { SettingsProvider } from '../../context';
 import type { AirQuality, ForecastMeta, NormalizedWeatherData } from '../../types';
@@ -341,6 +341,23 @@ describe('WeatherDecisionField daily range', () => {
     const section = container.querySelector('.hava81-decision-field');
     expect(section).toHaveAttribute('aria-labelledby');
     expect(section).not.toHaveAttribute('aria-live');
+  });
+
+  it('localizes all observation freshness states in Turkish and English', () => {
+    const labels = {
+      now: ['şimdi güncellendi', 'Just updated'],
+      unknown: ['Güncellik bilinmiyor', 'Update time unavailable'],
+      stale: ['Eski veri', 'Outdated observation'],
+    } as const;
+    for (const [state, translations] of Object.entries(labels)) {
+      const key = `hava81.decision.freshness.${state}`;
+      expect(i18n.t(key, { lng: 'tr' })).toBe(translations[0]);
+      expect(i18n.t(key, { lng: 'en' })).toBe(translations[1]);
+    }
+    expect(i18n.t('hava81.decision.freshness.minutes', { lng: 'tr', count: 2 }))
+      .toBe('2 dk önce');
+    expect(i18n.t('hava81.decision.freshness.minutes', { lng: 'en', count: 2 }))
+      .toBe('Updated 2 min ago');
   });
 
   it('advances freshness text at the next minute boundary without waiting a full minute from mount', async () => {
