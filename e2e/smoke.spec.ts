@@ -2575,6 +2575,8 @@ test('mobile shell tracks dynamic viewport height changes', async ({ page }, tes
 test('skip link moves keyboard focus into the main weather content', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop keyboard regression');
   await page.goto('/istanbul');
+  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
 
   await page.keyboard.press('Tab');
   const skipLink = page.getByRole('link', { name: 'İçeriğe Geç' });

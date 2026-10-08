@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 interface Props {
   code: string;
   label?: string;
@@ -5,7 +7,10 @@ interface Props {
 }
 
 export function WeatherIllustration({ code, label, className = '' }: Props) {
+  const uniqueId = useId().replace(/:/g, '');
+  const id = (part: string) => `weather-${uniqueId}-${part}`;
   const family = code.slice(0, 2);
+  const overcast = ['03', '04', '09', '11', '13'].includes(family);
   const night = code.endsWith('n');
   const cloud = ['02', '03', '04', '09', '10', '11', '13'].includes(family);
   const sun = ['02', '10'].includes(family) && !night;
@@ -26,39 +31,49 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
       focusable="false"
     >
       <defs>
-        <linearGradient id="hava81-rich-cloud" x1="0" x2=".3" y1="0" y2="1">
-          <stop offset="0" stopColor="#fff" />
-          <stop offset=".65" stopColor="#edf7ff" />
-          <stop offset="1" stopColor="#b6d4ee" />
+        <linearGradient id={id('cloud')} x1="0" x2=".3" y1="0" y2="1">
+          <stop offset="0" stopColor={overcast ? '#f0f7fe' : '#fff'} />
+          <stop offset=".65" stopColor={overcast ? '#dceaf6' : '#edf7ff'} />
+          <stop offset="1" stopColor={overcast ? '#99b6ce' : '#b6d4ee'} />
         </linearGradient>
-        <radialGradient id="hava81-rich-sun" cx=".4" cy=".38" r=".7">
+        <radialGradient id={id('sun')} cx=".4" cy=".38" r=".7">
           <stop offset="0" stopColor="#fff3ad" />
           <stop offset=".58" stopColor="#ffc95d" />
           <stop offset="1" stopColor="#f6a533" />
         </radialGradient>
-        <linearGradient id="hava81-rich-moon" x1="0" x2="1" y1="0" y2="1">
+        <linearGradient id={id('moon')} x1="0" x2="1" y1="0" y2="1">
           <stop stopColor="#fff4c0" />
           <stop offset="1" stopColor="#9ebfff" />
         </linearGradient>
-        <filter id="hava81-rich-shadow" x="-30%" y="-40%" width="160%" height="190%">
+        <filter id={id('shadow')} x="-30%" y="-40%" width="160%" height="190%">
           <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#4582ad" floodOpacity=".22" />
         </filter>
       </defs>
-      {sun && <circle cx="111" cy="42" r="31" fill="url(#hava81-rich-sun)" />}
-      {moon && (
-        <path d="M126 21a32 32 0 1 0 8 53 29 29 0 0 1-8-53Z" fill="url(#hava81-rich-moon)" />
+      {sun && <circle cx="111" cy="42" r="31" fill={`url(#${id('sun')})`} />}
+      {family === '01' && !night && (
+        <g stroke="#ffcc69" strokeWidth="4" strokeLinecap="round" opacity=".8" aria-hidden="true">
+          <path d="M80 5v10 M80 113v10 M23 64h10 M127 64h10 M40 24l7 7 M112 101l7 7 M41 103l7-7 M112 30l7-7" />
+        </g>
       )}
+      {family === '01' && night && (
+        <g fill="#b7d5ed" aria-hidden="true">
+          <circle cx="40" cy="25" r="2.5" />
+          <circle cx="120" cy="28" r="2.1" />
+          <circle cx="35" cy="105" r="1.8" />
+        </g>
+      )}
+      {moon && <path d="M126 21a32 32 0 1 0 8 53 29 29 0 0 1-8-53Z" fill={`url(#${id('moon')})`} />}
       {family === '01' && !cloud && !haze && !rain && (
         <circle
           cx="80"
           cy="63"
           r="43"
-          fill={night ? 'url(#hava81-rich-moon)' : 'url(#hava81-rich-sun)'}
-          filter="url(#hava81-rich-shadow)"
+          fill={`url(#${id(night ? 'moon' : 'sun')})`}
+          filter={`url(#${id('shadow')})`}
         />
       )}
       {cloud && (
-        <g filter="url(#hava81-rich-shadow)">
+        <g filter={`url(#${id('shadow')})`}>
           {family === '04' && (
             <path
               d="M29 73c-1-17 11-26 25-24 10-26 48-26 59 1 22 0 29 28 15 36H38C29 85 27 79 29 73Z"
@@ -68,7 +83,7 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
           )}
           <path
             d="M27 81c0-14 11-24 25-24 5 0 10 1 14 4 6-18 23-29 42-23 14 4 23 16 23 31 15 1 24 12 24 25 0 14-11 24-25 24H43c-17 0-28-14-25-27 1-5 4-8 9-10Z"
-            fill="url(#hava81-rich-cloud)"
+            fill={`url(#${id('cloud')})`}
             stroke="#d1e5f6"
             strokeWidth="1.5"
           />
