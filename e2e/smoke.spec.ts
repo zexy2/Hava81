@@ -4099,6 +4099,57 @@ test('lazy forecast chunk does not block the decision-first view', async ({ page
   await expect(page.getByRole('heading', { name: /Bugünün ritmi/i })).toBeVisible();
 });
 
+test('cold forecast chunk keeps a visible skeleton instead of blank dashboard space', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single cold-chunk visual regression');
+
+  // Service-worker cache can satisfy imported chunks before Playwright routes
+  // see them. Force a genuine cold import for this regression.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator.serviceWorker, 'register', {
+      configurable: true,
+      value: () => Promise.reject(new Error('service worker disabled for cold-chunk test')),
+    });
+  });
+  await page.route('**/sw.js', route => route.abort());
+  let releaseChunk: (() => void) | undefined;
+  let chunkRequested = false;
+  const pausedChunk = new Promise<void>(resolve => { releaseChunk = resolve; });
+  await page.route('**/assets/ForecastAtlas-*.js', async route => {
+    chunkRequested = true;
+    await pausedChunk;
+    await route.continue();
+  });
+
+  try {
+    await page.goto('/istanbul/');
+    await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    await expect.poll(() => chunkRequested).toBe(true);
+    const skeleton = page.locator('.atlas-forecast-loading--card');
+    await expect(skeleton).toBeVisible();
+    await expect(skeleton.getByRole('heading', { name: 'Bugünün ritmi' })).toBeVisible();
+    const aligned = await skeleton.evaluate((element, selector) => {
+      const r = element.getBoundingClientRect();
+      const neighbor = document.querySelector(selector)!.getBoundingClientRect();
+      return r.width > 300 && r.height > 300 && r.left >= neighbor.right - 1 &&
+        Math.abs(r.top - neighbor.top) < 2 && document.documentElement.scrollWidth <= innerWidth;
+    }, '.hava81-decision-field');
+    expect(aligned).toBe(true);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+      await page.screenshot({ path: 'test-results/visual-audit/forecast-skeleton-desktop.png' });
+    }
+    await page.setViewportSize({ width: 320, height: 844 });
+    await expect(skeleton).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+      await page.screenshot({ path: 'test-results/visual-audit/forecast-skeleton-mobile.png' });
+    }
+  } finally {
+    releaseChunk?.();
+  }
+  await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Bugünün ritmi' })).toBeVisible();
+});
+
 test('recovers once when a lazy chunk disappears during deploy', async ({ page }, testInfo) => {
   test.skip(
     testInfo.project.name !== 'desktop-1280',

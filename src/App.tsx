@@ -108,6 +108,18 @@ const AtlasLoadingState = ({ label, slowMessage }: { label: string; slowMessage?
   </div>
 );
 
+// Keep the forecast column visible both while the API responds and while
+// the split ForecastAtlas bundle is being downloaded on a cold connection.
+const ForecastLoadingCard = ({ title, label }: { title: string; label: string }) => (
+  <section className="atlas-forecast-loading atlas-forecast-loading--card" role="status" aria-live="polite">
+    <h2 className="atlas-forecast-loading__title">{title}</h2>
+    <span className="sr-only">{label}</span>
+    <div className="atlas-loading__line atlas-loading__line--short" aria-hidden="true" />
+    <div className="atlas-loading__chart" aria-hidden="true" />
+    <div className="atlas-loading__rows" aria-hidden="true" />
+  </section>
+);
+
 const App: React.FC = () => {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -716,16 +728,21 @@ const App: React.FC = () => {
                     forecastMeta={forecast.displayMeta ?? forecast.meta}
                   />
 
-                  {forecast.isLoading && forecast.hourly.length === 0 ? (
-                    <section className="atlas-forecast-loading" role="status" aria-live="polite">
-                      <span className="sr-only">{t('common.loading')}</span>
-                      <div className="atlas-loading__line atlas-loading__line--short" />
-                      <div className="atlas-loading__chart" />
-                      <div className="atlas-loading__rows" />
-                    </section>
+                  {!forecast.displayMeta && !forecast.error ? (
+                    <ForecastLoadingCard
+                      title={t('hava81.forecastAtlas.title')}
+                      label={t('common.loading')}
+                    />
                   ) : forecast.displayMeta &&
                     (forecast.daily.length > 0 || forecast.displayHourly.length > 0) ? (
-                    <Suspense fallback={null}>
+                    <Suspense
+                      fallback={
+                        <ForecastLoadingCard
+                          title={t('hava81.forecastAtlas.title')}
+                          label={t('common.loading')}
+                        />
+                      }
+                    >
                       <ForecastAtlas
                         daily={forecast.daily}
                         hourly={forecast.displayHourly}
