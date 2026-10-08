@@ -746,54 +746,49 @@
   }
 }
 
-/* Touch-friendly, accessible navigation for a forecast that extends past the
- * phone viewport. Kept below the graph so it never obscures data points. */
+/* Keep explicit keyboard/mouse navigation wherever hourly content overflows.
+ * The component itself hides this rail when all hours are already visible.
+ * The controls sit below the graph instead of covering temperature points. */
 .hava81-forecast-atlas__scroll-navigation {
-  display: none;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-block: 0.35rem 0;
 }
 
-@media (max-width: 47.99rem) {
-  .hava81-forecast-atlas__scroll-navigation {
-    display: flex;
-    min-height: 48px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-block: 0.35rem 0;
-  }
+.hava81-forecast-atlas__scroll-hint {
+  color: var(--forecast-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
 
-  .hava81-forecast-atlas__scroll-hint {
-    color: var(--forecast-muted);
-    font-size: 0.75rem;
-    line-height: 1.4;
-  }
+.hava81-forecast-atlas__scroll-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+}
 
-  .hava81-forecast-atlas__scroll-actions {
-    display: inline-flex;
-    flex: 0 0 auto;
-    gap: 0.35rem;
-  }
+.hava81-forecast-atlas__scroll-actions button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--forecast-line);
+  border-radius: 12px;
+  background: var(--forecast-paper);
+  color: var(--forecast-teal);
+  font: 700 1.3rem/1 var(--font-ui);
+  cursor: pointer;
+}
 
-  .hava81-forecast-atlas__scroll-actions button {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border: 1px solid var(--forecast-line);
-    border-radius: 12px;
-    background: var(--forecast-paper);
-    color: var(--forecast-teal);
-    font: 700 1.3rem/1 var(--font-ui);
-    cursor: pointer;
-  }
+.hava81-forecast-atlas__scroll-actions button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
 
-  .hava81-forecast-atlas__scroll-actions button:disabled {
-    opacity: 0.38;
-    cursor: default;
-  }
-
-  .hava81-forecast-atlas__scroll-actions button:focus-visible {
-    outline: 2px solid var(--forecast-teal);
-    outline-offset: 2px;
-  }
+.hava81-forecast-atlas__scroll-actions button:focus-visible {
+  outline: 2px solid var(--forecast-teal);
+  outline-offset: 2px;
 }
