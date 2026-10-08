@@ -213,3 +213,14 @@
     color: Highlight;
   }
 }
+
+/* Keep the five-day rows compact even when the visitor doubles text size:
+ * line-height can expand naturally, while padding remains a fixed tap-safe rhythm. */
+.app .hava81-forecast-atlas__day {
+  padding-block: 9px;
+}
+@media (max-width: 39.99rem) {
+  .app .hava81-forecast-atlas__day {
+    padding-block: 10px;
+  }
+}
