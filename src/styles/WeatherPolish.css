@@ -276,3 +276,24 @@
     font-size: 14px;
   }
 }
+
+/* Keep decorative sky objects in the open atmosphere, not behind the score.
+ * The score is the hero's decision focal point and must remain unobstructed. */
+@media (min-width: 64rem) {
+  .app .decision-glance__sun,
+  .app .decision-glance__moon {
+    right: 48%;
+  }
+  .app .decision-glance__cloud--one {
+    right: 42%;
+  }
+}
+
+/* On compact screens the condition icon is already present in the temperature card.
+ * Avoid duplicating a large sun/moon in the compact score area. */
+@media (max-width: 63.99rem) {
+  .app .decision-glance__sun,
+  .app .decision-glance__moon {
+    display: none;
+  }
+}
