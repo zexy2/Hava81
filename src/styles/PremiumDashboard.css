@@ -1061,6 +1061,9 @@
 }
 
 @media (min-width: 64rem) and (max-width: 72rem) {
+  .app .atlas-header {
+    container-type: inline-size;
+  }
   .app .atlas-header__inner {
     grid-template-columns: auto minmax(0, 1fr) auto;
     column-gap: 1rem;
@@ -1072,6 +1075,48 @@
   }
   .app .atlas-header__actions {
     grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+/* At enlarged root text sizes, restore the 2-row layout: a compact row
+ * must not sacrifice the existing tablet text-resize contract. */
+@container (max-width: 50rem) {
+  .app .atlas-header__inner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .app .atlas-header__search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    max-width: none;
+  }
+  .app .atlas-header__actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/* Container em units follow the effective text size. At 200% text, a
+ * 1024px tablet needs the search beneath the controls, not squeezed inline.
+ * Normal-size 1024–1152px tablets retain the efficient one-row header. */
+@media (min-width: 48rem) and (max-width: 72rem) {
+  .app .atlas-header {
+    container: hava81-header / inline-size;
+  }
+}
+
+@container hava81-header (max-width: 48em) {
+  .app .atlas-header__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .app .atlas-header__search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: none;
+  }
+  .app .atlas-header__actions {
+    grid-column: 2;
     grid-row: 1;
   }
 }

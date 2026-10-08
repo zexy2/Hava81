@@ -5456,6 +5456,7 @@ test('tablet header remains usable with 200 percent text', async ({ page }, test
         brandSearchOverlap: intersects(brand,search),
         actionSearchOverlap: intersects(actions,search),
         brandActionOverlap: intersects(brand,actions),
+        stackedAfterActions: search.top >= actions.bottom,
       };
     });
     expect(measure.pageFits, `200% document at ${width}px`).toBe(true);
@@ -5463,5 +5464,6 @@ test('tablet header remains usable with 200 percent text', async ({ page }, test
     expect(measure.brandSearchOverlap, `200% brand vs search at ${width}px`).toBe(false);
     expect(measure.actionSearchOverlap, `200% actions vs search at ${width}px`).toBe(false);
     expect(measure.brandActionOverlap, `200% brand vs actions at ${width}px`).toBe(false);
+    expect(measure.stackedAfterActions, `200% search stays below actions at ${width}px`).toBe(true);
   }
 });
