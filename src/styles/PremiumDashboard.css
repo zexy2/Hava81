@@ -104,13 +104,7 @@
 .app .decision-glance,
 .app .hava81-decision-field,
 .app .hava81-forecast-atlas,
-.app .environment-rail,
-.app .daily-plan,
-.app .commute-plan,
-.app .context-signals,
-.app .activity-planner,
-.app .decision-alerts,
-.app .route-weather-panel {
+.app .environment-rail {
   min-width: 0;
   border: 1px solid var(--premium-card-border);
   border-radius: var(--radius-lg);
@@ -663,14 +657,6 @@
 .app .environment-rail__detail {
   font-size: 0.79rem;
 }
-.app .daily-plan,
-.app .commute-plan,
-.app .context-signals,
-.app .activity-planner,
-.app .decision-alerts,
-.app .route-weather-panel {
-  padding: clamp(1rem, 2vw, 1.6rem);
-}
 @media (min-width: 64rem) {
   .app .atlas-dashboard {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.05fr);
@@ -689,15 +675,15 @@
   .app .atlas-dashboard__primary > .hava81-forecast-atlas,
   .app .atlas-dashboard__primary > .atlas-forecast-loading {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 2 / span 2;
   }
   .app .atlas-dashboard > .commute-plan {
-    grid-column: 1 / -1;
-    grid-row: auto;
+    grid-column: 1;
+    grid-row: 3;
   }
   .app .atlas-dashboard > .daily-plan {
     grid-column: 1 / -1;
-    grid-row: auto;
+    grid-row: 4;
   }
   .app .atlas-dashboard > :not(.atlas-dashboard__primary):not(.commute-plan):not(.daily-plan) {
     grid-column: 1 / -1;
@@ -898,5 +884,147 @@
   }
   .app .decision-glance__side {
     flex: 0 0 6rem;
+  }
+}
+
+/* Preserve readable long-form planning tools; the redesign focuses on weather surfaces. */
+@media (max-width: 47.99rem) {
+  .app .atlas-brand__name {
+    font-size: 1.125rem;
+  }
+  .app .atlas-brand__index {
+    width: 36px;
+    height: 36px;
+  }
+  .app .atlas-header__inner {
+    column-gap: 4px;
+    padding-inline: 12px;
+  }
+  .app .decision-glance__date {
+    display: none;
+  }
+  .app .hava81-decision-field__metric dt {
+    font-size: 0.68rem;
+    overflow-wrap: anywhere;
+  }
+}
+@media (max-width: 24rem) {
+  .app .atlas-brand__index {
+    display: none;
+  }
+  .app .atlas-brand__name {
+    font-size: 1rem;
+  }
+  .app .atlas-header__actions {
+    gap: 0;
+  }
+  .app .atlas-header__inner {
+    padding-inline: 8px;
+  }
+  .app .hava81-decision-field__rail,
+  .app .environment-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .hava81-decision-field__temperature-value {
+    font-size: clamp(3.3rem, 17vw, 4.2rem);
+  }
+  .app .hava81-decision-field__reading {
+    gap: 0.4rem;
+  }
+  .app .hava81-decision-field__symbol {
+    width: 3rem;
+    height: 3rem;
+    flex-basis: 3rem;
+  }
+  .app .hava81-decision-field__current {
+    padding: 0.35rem;
+  }
+  .app .hava81-decision-field {
+    padding: 0.5rem;
+  }
+  .app .environment-rail__module {
+    padding: 0.4rem;
+  }
+}
+@media (max-width: 47.99rem) and (max-height: 28rem) {
+  .app .search-bar__suggestions {
+    max-height: min(120px, calc(100dvh - 150px));
+  }
+  .app .atlas-header--search-open .atlas-header__inner {
+    padding-block: 4px;
+  }
+}
+.app .environment-rail__module--action:focus-visible {
+  outline: 2px solid var(--color-aegean);
+  outline-offset: -3px;
+}
+
+/* Compact cards use two columns on standard phones, one on very narrow screens. */
+@media (max-width: 24rem) {
+  .app .hava81-decision-field__reading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+  }
+  .app .hava81-decision-field__temperature {
+    flex: none;
+    max-width: 100%;
+  }
+  .app .hava81-decision-field__symbol {
+    align-self: flex-end;
+  }
+  .app .hava81-decision-field__current {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .app .hava81-decision-field__metric {
+    min-width: 0;
+  }
+}
+@media (min-width: 47.99rem) {
+  .app .hava81-decision-field__temperature-value {
+    font-size: clamp(6.3rem, 8.3vw, 8rem);
+  }
+}
+
+/* At tablet scale the enlarged header must not exceed the browser viewport. */
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .app .atlas-header__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.5rem;
+    padding-inline: 1rem;
+  }
+  .app .atlas-brand {
+    min-width: 0;
+  }
+  .app .atlas-header__actions {
+    min-width: 0;
+  }
+}
+/* Compact forecast day rows within the right-hand dashboard card. */
+@container (max-width: 30rem) {
+  .app .hava81-forecast-atlas__day {
+    grid-template-areas:
+      'day day temperatures'
+      'symbol description description'
+      'precipitation precipitation precipitation';
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: start;
+  }
+  .app .hava81-forecast-atlas__description {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    align-self: start;
+  }
+}
+/* The card's tinted signal retains a solid semantic background, too. */
+.app .hava81-decision-field__change {
+  background-color: #fff3df;
+}
+@media (max-width: 47.99rem) {
+  .app .atlas-map-panel {
+    margin-inline: -0.8rem;
   }
 }
