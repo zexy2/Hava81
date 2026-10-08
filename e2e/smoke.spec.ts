@@ -5392,3 +5392,76 @@ test('hero date pill never collides with the score ring', async ({ page }, testI
     }
   }
 });
+
+// Tablet search used to inherit the desktop 640px width cap, leaving a large
+// dead strip on the right. Wider tablets can use one compact sticky header row.
+test('tablet header uses its available width without losing actions', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single responsive header check');
+  await page.goto('/izmir/');
+  await expect(page.locator('.atlas-header__search')).toBeVisible();
+
+  for (const width of [768, 900, 1024, 1152, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await page.evaluate(() => {
+      const bounds = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const row = bounds('.atlas-header__inner');
+      const brand = bounds('.atlas-brand');
+      const search = bounds('.atlas-header__search');
+      const actions = bounds('.atlas-header__actions');
+      const padding = getComputedStyle(document.querySelector('.atlas-header__inner')!);
+      const innerWidth = row.width - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight);
+      return {
+        headerHeight: row.height,
+        innerWidth,
+        searchWidth: search.width,
+        sameRow: Math.abs(search.top - brand.top) < 8,
+        actionsInRow: Math.abs(actions.top - brand.top) < 8,
+        noOverlap: search.right <= actions.left + 1 || search.top > actions.bottom - 1,
+        viewportFits: document.documentElement.scrollWidth <= window.innerWidth,
+      };
+    });
+    if (width < 1024) {
+      expect(layout.searchWidth, `search should fill tablet row at ${width}px`).toBeGreaterThan(layout.innerWidth - 4);
+    } else if (width <= 1152) {
+      expect(layout.sameRow, `search should share header row at ${width}px`).toBe(true);
+      expect(layout.actionsInRow, `actions should share header row at ${width}px`).toBe(true);
+      expect(layout.headerHeight, `sticky header height at ${width}px`).toBeLessThan(110);
+    }
+    expect(layout.noOverlap, `search never overlaps controls at ${width}px`).toBe(true);
+    expect(layout.viewportFits, `no horizontal overflow at ${width}px`).toBe(true);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && [768, 1024, 1152].includes(width)) {
+      await page.screenshot({ path: `test-results/visual-audit/tablet-header-${width}-after.png` });
+    }
+  }
+});
+
+test('tablet header remains usable with 200 percent text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single responsive header accessibility check');
+  await page.goto('/izmir/');
+  await expect(page.locator('.atlas-header__search')).toBeVisible();
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  for (const width of [768, 900, 1024, 1152]) {
+    await page.setViewportSize({ width, height: 900 });
+    const measure = await page.evaluate(() => {
+      const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const brand = rect('.atlas-brand');
+      const search = rect('.atlas-header__search');
+      const actions = rect('.atlas-header__actions');
+      const intersects = (a: DOMRect, b: DOMRect) =>
+        Math.max(0, Math.min(a.right,b.right) - Math.max(a.left,b.left)) *
+        Math.max(0, Math.min(a.bottom,b.bottom) - Math.max(a.top,b.top)) > 1;
+      return {
+        pageFits: document.documentElement.scrollWidth <= innerWidth,
+        searchFits: search.width > 100,
+        brandSearchOverlap: intersects(brand,search),
+        actionSearchOverlap: intersects(actions,search),
+        brandActionOverlap: intersects(brand,actions),
+      };
+    });
+    expect(measure.pageFits, `200% document at ${width}px`).toBe(true);
+    expect(measure.searchFits, `200% search input at ${width}px`).toBe(true);
+    expect(measure.brandSearchOverlap, `200% brand vs search at ${width}px`).toBe(false);
+    expect(measure.actionSearchOverlap, `200% actions vs search at ${width}px`).toBe(false);
+    expect(measure.brandActionOverlap, `200% brand vs actions at ${width}px`).toBe(false);
+  }
+});
