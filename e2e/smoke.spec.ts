@@ -1180,13 +1180,13 @@ test('keyboard map close restores focus to the map trigger', async ({ page }, te
 
   for (const control of [zoomIn, attribution]) {
     await control.focus();
-    await page.waitForTimeout(150);
-    const isHitTarget = await control.evaluate(element => {
+    // Browser-initiated focus scrolling can still be settling after focus().
+    // Poll the actual hit target rather than checking an intermediate frame.
+    await expect.poll(async () => control.evaluate(element => {
       const rect = element.getBoundingClientRect();
       const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
       return hit === element || element.contains(hit);
-    });
-    expect(isHitTarget).toBe(true);
+    })).toBe(true);
   }
 
   const close = mapRegion.getByRole('button', { name: 'Kapat' });
