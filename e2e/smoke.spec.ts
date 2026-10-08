@@ -5893,3 +5893,37 @@ test('tiny phone exposes every hourly sampling interval without horizontal scrol
   await options.first().click();
   await expect(options.first()).toHaveAttribute('aria-pressed', 'true');
 });
+
+
+// Forecast hours remain horizontally scrollable at tablet/desktop widths;
+// visible arrow controls make the additional 24-hour content discoverable.
+test('hourly forecast arrows remain available on tablet and desktop', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single cross-breakpoint navigation regression');
+  await page.goto('/izmir/');
+  const viewport = page.locator('.hava81-forecast-atlas__hourly-viewport');
+  await expect(viewport).toBeVisible();
+  const navigation = page.locator('.hava81-forecast-atlas__scroll-navigation');
+  const previous = navigation.getByRole('button', { name: 'Önceki saatleri göster' });
+  const next = navigation.getByRole('button', { name: 'Sonraki saatleri göster' });
+
+  for (const width of [390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(navigation, `navigation visible at ${width}px`).toBeVisible();
+    const metrics = await viewport.evaluate(el => ({ total: el.scrollWidth, visible: el.clientWidth }));
+    expect(metrics.total - metrics.visible).toBeGreaterThan(100);
+    await expect(next).toBeEnabled();
+    await next.click();
+    await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBeGreaterThan(100);
+    await expect(previous).toBeEnabled();
+    await previous.click();
+    await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBeLessThan(17);
+    await expect(previous).toBeDisabled();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      `no horizontal document overflow at ${width}px`).toBe(true);
+
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && [390, 768, 1440].includes(width)) {
+      await navigation.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: `test-results/visual-audit/hourly-arrows-${width}.png` });
+    }
+  }
+});
