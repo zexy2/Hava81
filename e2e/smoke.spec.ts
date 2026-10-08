@@ -2736,13 +2736,16 @@ test('narrow hourly atlas keeps its interval chip rail and summary readable', as
   expect(buttonBoxes.every(box => box.height >= 44 && box.width >= 44)).toBe(true);
   const intervalBox = await interval.boundingBox();
   expect(intervalBox).not.toBeNull();
+  // The 320px sampling control now wraps all seven options instead of
+  // requiring a horizontal swipe to reach the last interval.
   const intervalRight = (intervalBox?.x ?? 0) + (intervalBox?.width ?? 0);
-  expect(buttonBoxes.some(box => box.left < intervalRight && box.right > intervalRight)).toBe(true);
+  const intervalLeft = intervalBox?.x ?? 0;
+  expect(buttonBoxes.every(box => box.left >= intervalLeft - 1 && box.right <= intervalRight + 1)).toBe(true);
   const intervalScroll = await interval.evaluate(element => ({
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,
   }));
-  expect(intervalScroll.scrollWidth).toBeGreaterThan(intervalScroll.clientWidth);
+  expect(intervalScroll.scrollWidth).toBeLessThanOrEqual(intervalScroll.clientWidth + 1);
 
   const summary = page.getByRole('list', { name: 'Saatlik tahmin özeti' });
   await expect(summary.getByRole('listitem')).toHaveCount(3);
