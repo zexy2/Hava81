@@ -302,3 +302,25 @@
     scroll-snap-align: none;
   }
 }
+
+/* On tiny phones at enlarged text, reserving a full row for the licence
+ * plate leaves too little inline space for even short city names. Keep the
+ * heading intact before the plate and allow genuinely long names to wrap. */
+@media (max-width: 47.99rem) {
+  .app .hava81-decision-field__identity {
+    container: hava81-city-identity / inline-size;
+  }
+}
+
+@container hava81-city-identity (max-width: 12em) {
+  .app .hava81-decision-field__city-row {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+  .app .hava81-decision-field__city {
+    flex: 1 1 100%;
+  }
+  .app .hava81-decision-field__plate {
+    margin-inline-start: auto;
+  }
+}
