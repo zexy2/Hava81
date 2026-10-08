@@ -239,9 +239,11 @@ describe('Hava81 app integration', () => {
     expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'Urla,TR', lang: 'tr' });
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(window.location.pathname + window.location.search).toBe('/?yer=Urla');
-    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-      'http://localhost:3000/?yer=Urla'
-    );
+    await waitFor(() => {
+      expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+        'http://localhost:3000/?yer=Urla'
+      );
+    });
   });
 
   it('changes the URL when a district replaces a province', async () => {

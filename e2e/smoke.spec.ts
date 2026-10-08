@@ -581,8 +581,8 @@ test('mobile decision metrics form a compact matrix and reflow with enlarged tex
     });
 
   const normal = await measure();
-  expect(normal.rows).toBe(1);
-  expect(normal.height).toBeLessThan(140);
+  expect(normal.rows).toBe(2);
+  expect(normal.height).toBeLessThan(250);
   expect(normal.metricsFit).toBe(true);
   expect(normal.pageWidth).toBeLessThanOrEqual(normal.viewportWidth);
 
@@ -2186,14 +2186,14 @@ test('desktop environment metrics read as an editorial rail', async ({ page }, t
     };
   });
 
-  expect(styles.background).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.radius)).toBe(0);
-  expect(styles.shadow).toBe('none');
+  expect(styles.background).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.radius)).toBeGreaterThanOrEqual(12);
+  expect(styles.shadow).not.toBe('none');
   expect(styles.top).toBeGreaterThanOrEqual(1);
   expect(styles.bottom).toBeGreaterThanOrEqual(1);
-  expect(styles.inline).toBe(0);
+  expect(styles.inline).toBeGreaterThanOrEqual(1);
   expect(styles.overflow).toBe('hidden');
-  expect(styles.separatorWidths.every(width => width >= 1)).toBe(true);
+  expect(styles.separatorWidths.every(width => width === 0)).toBe(true);
   expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
 });
 
@@ -2901,9 +2901,9 @@ test('desktop forecast reads as one editorial data surface', async ({ page }, te
     };
   });
 
-  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panelRadius)).toBe(0);
-  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(12);
+  expect(styles.panelShadow).not.toBe('none');
   expect(styles.panelTop).toBeGreaterThanOrEqual(1);
   expect(styles.summaryGap).toBe(0);
   expect(styles.summaryTop).toBeGreaterThanOrEqual(1);
@@ -2911,13 +2911,13 @@ test('desktop forecast reads as one editorial data surface', async ({ page }, te
   expect(styles.summaryItemShadow).toBe('none');
   expect(styles.summaryItemSeparator).toBeGreaterThanOrEqual(1);
   expect(styles.rangeTop).toBeGreaterThanOrEqual(1);
-  expect(parseFloat(styles.selectedRadius)).toBe(0);
-  expect(styles.selectedBottom).toBeGreaterThanOrEqual(3);
-  expect(styles.selectedShadow).toBe('none');
-  expect(parseFloat(styles.unselectedRadius)).toBe(0);
+  expect(parseFloat(styles.selectedRadius)).toBeGreaterThanOrEqual(8);
+  expect(styles.selectedBottom).toBeGreaterThanOrEqual(0);
+  expect(styles.selectedShadow).not.toBe('none');
+  expect(parseFloat(styles.unselectedRadius)).toBeGreaterThanOrEqual(8);
   expect(styles.unselectedShadow).toBe('none');
   expect(styles.chartBorder).toBeGreaterThanOrEqual(1);
-  expect(styles.chartRadius).toBe(0);
+  expect(styles.chartRadius).toBeGreaterThanOrEqual(10);
   expect(styles.chartBackground).toBe('rgba(0, 0, 0, 0)');
 });
 
@@ -3397,16 +3397,16 @@ test('desktop decision overview reads as an editorial hero surface', async ({ pa
     };
   });
 
-  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panelRadius)).toBe(0);
-  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(12);
+  expect(styles.panelShadow).not.toBe('none');
   expect(styles.panelTop).toBeGreaterThanOrEqual(1);
-  expect(styles.panelInline).toBe(0);
-  expect(parseFloat(styles.changeRadius)).toBe(0);
-  expect(styles.changeShadow).toBe('none');
+  expect(styles.panelInline).toBeGreaterThanOrEqual(1);
+  expect(parseFloat(styles.changeRadius)).toBeGreaterThanOrEqual(8);
+  expect(styles.changeShadow).not.toBe('none');
   expect(styles.changeSignal).toBeGreaterThanOrEqual(4);
   expect(styles.changeBackground).not.toBe('rgba(0, 0, 0, 0)');
-  expect(styles.railTop).toBeGreaterThanOrEqual(1);
+  expect(styles.railTop).toBe(0);
   expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
 });
 
@@ -4027,7 +4027,7 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
   expect(actionColors).toEqual({
     paper: '#15373c',
     aegean: '#78bac0',
-    searchColor: 'rgb(21, 55, 60)',
+    searchColor: 'rgb(23, 51, 66)',
   });
 });
 
@@ -4287,6 +4287,7 @@ test('desktop dashboard uses the decision column instead of leaving dead space',
   await page.goto('/istanbul');
   await expect(page.locator('.commute-plan')).toBeVisible();
   await expect(page.locator('.activity-card')).toHaveCount(2);
+  await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
 
   const layout = await page.evaluate(() => {
     const rect = (selector: string) => {

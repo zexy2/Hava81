@@ -22,6 +22,7 @@ import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
+import './styles/PremiumDashboard.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
