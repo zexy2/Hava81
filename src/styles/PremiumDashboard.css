@@ -1120,3 +1120,46 @@
     grid-row: 1;
   }
 }
+
+/* Root-text enlargement changes the header's effective typography but not
+ * media-query rem breakpoints. Keep the compact row only while it genuinely
+ * fits; restore the safe three-row search/controls grid when scaled up. */
+@container hava81-phone-header (max-width: 19em) {
+  .app .atlas-header__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .atlas-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app .atlas-header__actions {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .app .atlas-header__search {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+/* On short landscape phones, preserve one compact action row while search is
+ * expanded, even when root text is enlarged. This reserves enough viewport
+ * space for the scrollable suggestions popup without clipping its bottom. */
+@media (min-width: 30rem) and (max-width: 47.99rem) and (max-height: 28rem) {
+  .app .atlas-header--search-open .atlas-header__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .app .atlas-header--search-open .atlas-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app .atlas-header--search-open .atlas-header__actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .app .atlas-header--search-open .atlas-header__search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
