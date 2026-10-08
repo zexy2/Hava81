@@ -116,7 +116,10 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
         <div className="decision-glance__hills" />
       </div>
       <div className="decision-glance__main">
-        <span className="atlas-kicker">{t('hava81.glance.title')}</span>
+        <div className="decision-glance__heading">
+          <span className="atlas-kicker">{t('hava81.glance.title')}</span>
+          <time className="decision-glance__date">{dateLabel}</time>
+        </div>
         <strong className="decision-glance__message">{guidance}</strong>
         {plan && bestHours ? (
           <p className="decision-glance__window">
@@ -163,7 +166,6 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
         </div>
       </div>
       <div className="decision-glance__side">
-        <time className="decision-glance__date">{dateLabel}</time>
         {plan ? (
           <>
             <div
