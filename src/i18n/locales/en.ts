@@ -246,7 +246,7 @@ export const en = {
           label: 'Umbrella',
           yes: 'Yes',
           maybe: 'Take one',
-          no: "Forecast doesn't indicate one",
+          no: "Forecast suggests no need",
           unknown: 'No data',
         },
         wind: { label: 'Wind', strong: 'Strong', caution: 'Caution', normal: 'Normal' },
@@ -330,7 +330,7 @@ export const en = {
       umbrella: {
         take: 'Take an umbrella',
         consider: 'Keep an umbrella with you',
-        no: "Forecast doesn't indicate one",
+        no: "Forecast suggests no need",
       },
       change: {
         'rain-increase': 'Rain risk is about {{value}} points higher when you return.',
