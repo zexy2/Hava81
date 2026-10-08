@@ -224,3 +224,18 @@
     padding-block: 10px;
   }
 }
+
+/* Keep the real-weather illustration inside its mobile grid column. Width is
+ * fixed in CSS pixels so doubling text size never doubles the icon past the
+ * available space. Narrower screens retain the existing 48px layout. */
+@media (min-width: 24.01rem) and (max-width: 47.99rem) {
+  .app .hava81-decision-field__reading {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 88px);
+  }
+  .app .hava81-decision-field__symbol {
+    width: 88px;
+    height: 88px;
+    flex-basis: 88px;
+    max-width: 100%;
+  }
+}
