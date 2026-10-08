@@ -1,0 +1,278 @@
+/* Hava81 weather-aware polish — presentation only, with current observations
+ * controlling decorative sky. Every weather scene remains accessible via text. */
+.app .decision-glance {
+  transition: background-color 180ms ease;
+}
+.app .decision-glance[data-weather-scene='cloud'] {
+  background: linear-gradient(112deg, #e7f4ff 0%, #e0f0ff 58%, #b5d7ef 100%);
+}
+.app .decision-glance[data-weather-scene='rain'] {
+  background: linear-gradient(108deg, #e4f0fd 0%, #d2e7f6 54%, #9bbfd9 100%);
+}
+.app .decision-glance[data-weather-scene='snow'] {
+  background: linear-gradient(110deg, #eff9ff 0%, #e3f1ff 55%, #c8e4f8 100%);
+}
+.app .decision-glance[data-weather-scene='mist'] {
+  background: linear-gradient(112deg, #f0f5fa 0%, #deeaf1 62%, #b4ccd6 100%);
+}
+.app .decision-glance[data-night='true'] {
+  background: linear-gradient(115deg, #dce7fa 0%, #cfddf5 55%, #9bbee1 100%);
+}
+.app[data-color-mode='dark'] .decision-glance[data-weather-scene='clear'] {
+  background: linear-gradient(112deg, #174d57 0%, #183f56 55%, #27577a 100%);
+}
+.app[data-color-mode='dark'] .decision-glance[data-weather-scene='cloud'] {
+  background: linear-gradient(108deg, #193b52 0%, #214b60 60%, #3e6481 100%);
+}
+.app[data-color-mode='dark'] .decision-glance[data-weather-scene='rain'],
+.app[data-color-mode='dark'] .decision-glance[data-weather-scene='snow'],
+.app[data-color-mode='dark'] .decision-glance[data-weather-scene='mist'] {
+  background: linear-gradient(110deg, #1f384c 0%, #2d4c64 55%, #466e85 100%);
+}
+.app[data-color-mode='dark'] .decision-glance[data-night='true'] {
+  background: linear-gradient(108deg, #182a46 0%, #243d5d 60%, #325678 100%);
+}
+.app .decision-glance[data-weather-scene='cloud'] .decision-glance__cloud,
+.app .decision-glance[data-weather-scene='rain'] .decision-glance__cloud,
+.app .decision-glance[data-weather-scene='snow'] .decision-glance__cloud {
+  width: 9.2rem;
+  height: 2.6rem;
+  background: rgb(244 251 255 / 0.8);
+  box-shadow:
+    1.4rem -0.7rem 0 -0.1rem rgb(243 250 255 / 0.62),
+    -1rem -0.35rem 0 0.15rem rgb(240 250 255 / 0.67);
+}
+.app .decision-glance[data-weather-scene='mist'] .decision-glance__cloud {
+  width: 14rem;
+  height: 1.7rem;
+  right: 8%;
+  border-radius: 2rem;
+  background: rgb(255 255 255 / 0.52);
+  box-shadow: 0 2.4rem 0 -0.1rem rgb(255 255 255 / 0.4);
+  filter: blur(6px);
+}
+.app .decision-glance__moon {
+  position: absolute;
+  top: 13%;
+  right: 16%;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #fcf6d1, #c9ddf6);
+  box-shadow: 0 0 40px 17px rgb(215 231 255 / 0.36);
+}
+.app .decision-glance__moon::before {
+  content: '';
+  position: absolute;
+  right: -1rem;
+  top: -1rem;
+  width: 4.9rem;
+  height: 4.9rem;
+  border-radius: 50%;
+  background: #bdd3ed;
+}
+.app[data-color-mode='dark'] .decision-glance__moon::before {
+  background: #2e5075;
+}
+.app .decision-glance__precipitation {
+  position: absolute;
+  inset: 18% 5% 13% 12%;
+  opacity: 0.58;
+  transform: rotate(12deg);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 12px,
+    rgb(70 143 196 / 0.5) 12px 14px,
+    transparent 14px 27px
+  );
+  mask-image: repeating-linear-gradient(to bottom, #000 0 13px, transparent 13px 32px);
+}
+.app .decision-glance[data-weather-scene='snow'] .decision-glance__precipitation {
+  opacity: 0.72;
+  transform: none;
+  background-image: radial-gradient(circle, #fff 2px, transparent 3px);
+  background-size: 22px 28px;
+  mask-image: none;
+}
+.app .decision-glance[data-weather-scene='mist'] .decision-glance__hills {
+  opacity: 0.45;
+}
+.app[data-color-mode='dark'] .decision-glance .decision-glance__quick-icon {
+  color: #0d4b67;
+}
+.app .hava81-forecast-atlas__range-help {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  overflow: hidden;
+  border: 0;
+}
+.app .hava81-forecast-atlas__range {
+  background: var(--refine-highlight);
+  border-color: var(--refine-panel-line);
+  border-radius: 12px;
+}
+.app .hava81-forecast-atlas__range-button[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-aegean) 35%, transparent);
+}
+@media (min-width: 64rem) {
+  .app .hava81-forecast-atlas__interval-control {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .app .hava81-forecast-atlas__range-label {
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .app .hava81-forecast-atlas__range {
+    max-width: 100%;
+    margin-left: auto;
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .decision-glance__quick-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.4rem;
+    margin-top: 0.65rem;
+    padding-top: 0;
+    width: 100%;
+  }
+  .app .decision-glance__quick {
+    padding: 0.4rem 0.55rem;
+    gap: 0.45rem;
+    border-radius: 11px;
+  }
+  .app .decision-glance__quick-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 1.05rem;
+  }
+  .app .decision-glance__quick small {
+    font-size: 0.66rem;
+    line-height: 1.1;
+  }
+  .app .decision-glance__quick strong {
+    font-size: 0.76rem;
+    line-height: 1.22;
+  }
+  .app .decision-glance__quick:last-child {
+    display: none;
+  }
+  .app .decision-glance__window {
+    display: none;
+  }
+  .app .hava81-forecast-atlas__range-label {
+    font-size: 0.73rem;
+    letter-spacing: 0.04em;
+  }
+}
+@media (max-width: 24rem) {
+  .app .decision-glance__quick-list {
+    display: none;
+  }
+  .app .decision-glance__window {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .decision-glance {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .app .decision-glance__precipitation {
+    display: none;
+  }
+  .app .hava81-forecast-atlas__range-button[aria-pressed='true'] {
+    border: 2px solid Highlight;
+    color: Highlight;
+  }
+}
+
+/* Container units are relative to the visitor's text scale: at 200% zoom a
+ * 390px phone is only ~12rem wide. Stack the hero rather than making Turkish
+ * words wrap one letter at a time beside a giant score ring. */
+@media (max-width: 47.99rem) {
+  .app .atlas-dashboard__primary {
+    container-type: inline-size;
+  }
+}
+@container (max-width: 18rem) {
+  .app .decision-glance {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+  .app .decision-glance__main {
+    flex: 0 1 auto;
+    width: 100%;
+  }
+  .app .decision-glance__message {
+    max-width: 100%;
+    font-size: 1rem;
+    overflow-wrap: break-word;
+  }
+  .app .decision-glance__quick-list {
+    display: none;
+  }
+  .app .decision-glance__window {
+    display: block;
+  }
+  .app .decision-glance__side {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    justify-items: start;
+    width: 100%;
+    padding: 0;
+    gap: 0.25rem 0.65rem;
+    text-align: left;
+  }
+  .app .decision-glance__score {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 88px;
+    height: 88px;
+  }
+  .app .decision-glance__score::before {
+    inset: 9px;
+  }
+  .app .decision-glance__score strong {
+    font-size: 1.45rem;
+  }
+  .app .decision-glance__score-label {
+    grid-column: 2;
+    grid-row: 1;
+    line-height: 1.2;
+    font-size: 0.8rem;
+  }
+  .app .decision-glance__details {
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 44px;
+    margin: 0;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.45rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+@container (max-width: 18rem) {
+  .app .decision-glance__score strong {
+    font-size: 34px;
+    line-height: 1;
+  }
+  .app .decision-glance__score strong span {
+    font-size: 14px;
+  }
+}

@@ -78,16 +78,41 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
     ? t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)
     : t('hava81.glance.pending');
 
+  // Match the decorative hero to real current conditions. The illustration
+  // must never show a sunny sky during rain, snow or nighttime.
+  const iconFamily = weather.icon.slice(0, 2);
+  const scene =
+    iconFamily === '09' || iconFamily === '10' || iconFamily === '11'
+      ? 'rain'
+      : iconFamily === '13'
+        ? 'snow'
+        : iconFamily === '50'
+          ? 'mist'
+          : iconFamily === '03' || iconFamily === '04'
+            ? 'cloud'
+            : 'clear';
+  const night = weather.icon.endsWith('n');
+
   return (
     <section
       className="decision-glance"
+      data-weather-scene={scene}
+      data-night={night}
       aria-label={t('hava81.glance.title')}
       data-testid="decision-glance"
     >
       <div className="decision-glance__atmosphere" aria-hidden="true">
-        <div className="decision-glance__sun" />
+        {scene === 'clear' &&
+          (night ? (
+            <div className="decision-glance__moon" />
+          ) : (
+            <div className="decision-glance__sun" />
+          ))}
         <div className="decision-glance__cloud decision-glance__cloud--one" />
         <div className="decision-glance__cloud decision-glance__cloud--two" />
+        {(scene === 'rain' || scene === 'snow') && (
+          <div className="decision-glance__precipitation" />
+        )}
         <div className="decision-glance__hills" />
       </div>
       <div className="decision-glance__main">
