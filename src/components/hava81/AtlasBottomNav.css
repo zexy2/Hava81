@@ -177,3 +177,12 @@
     padding-inline: 2px;
   }
 }
+
+/* The English Compare label needs more inline space when users enlarge text.
+ * Today and Map are shorter, so distribute the same available nav width
+ * without clipping text, reducing its size, or changing touch targets. */
+@media (max-width: 47.99rem) {
+  .atlas-bottom-nav:lang(en) {
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 0.69fr) minmax(0, 1.37fr);
+  }
+}
