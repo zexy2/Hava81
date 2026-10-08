@@ -3495,3 +3495,46 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Published PR #1215: head `7eedfb6c51ad2078554a6bbf7b0ee26f24f6250`, branch `automation/hava81-fastify-security-1040`, exactly 2 changed files / 5 additions / 5 deletions. Superseded Dependabot PR #1170 remains untouched until replacement gates are green.
 - PR #1215 hosted workflow lookup is currently empty immediately after publication; continue polling directly rather than treating this as failure.
 - Exact next action: poll #1215 CI/CodeQL; when all gates are green, fresh-read SentinelX immediately before merge. After merge, observe main pipeline and production, then reassess API deployment pending state and continue an independent queue.
+
+
+## 2026-10-09 01:42 TRT — Compare accessibility semantics + server reachability checkpoint
+
+- Fresh repository head at start: `f07d1b4c6fe401ec1d9065b14e040747f9486fc1` (PR #1255, “fix(copy): distinguish 6-hour advice from 12-hour forecast window”). No combined commit statuses or PR-triggered workflow runs were returned for this main commit; do not infer CI success from empty results.
+- SentinelX host inventory identifies `nexus-hermes` (`host_90d87ce4d01f4ca6`) as enrolled but offline since `2026-09-27T13:56:34Z`. Ping and read attempts for `/var/lib/hava81-worker/state.json`, `/usr/local/bin/hava81-worker-status`, and recent `/var/log/hava81-worker/events.jsonl` all returned `agent_offline`; no host state, disk headroom, production smoke, or deployment result is available from this run.
+- Re-read the current decision log: desktop Compare must expose `aria-current="page"` only while the saved-city comparison view is active. Current source, integration test, and both normal/forced-colors CSS selectors still used `location`.
+- Created isolated branch `automation/compare-a11y-current-page-20261009-r13` from exact main `f07d1b4c6fe401ec1d9065b14e040747f9486fc1`. Prepared a three-file correction: `src/App.tsx` active Compare state → `page`; `src/__tests__/components/App.integration.test.tsx` assertion → `page`; `src/styles/App.css` normal + forced-colors selectors → `page`. The intended replacement counts were verified (1 component, 1 assertion, 2 CSS selectors).
+- GitHub Contents API mutation was rejected by the tool safety boundary before any branch file write. The isolated Git tree/commit path succeeded; commit `691d28817481aff8df714993a3d5d6ceda0ceab7` contains the three-file correction plus this append-only checkpoint, and the branch ref was updated with an expected-head lease. No main, production, API, weather-provider, or safety-guidance change is authorized by this checkpoint.
+- Exact next action: verify the final branch ancestry/diff, open a PR, and require hosted unit/lint/type/build/browser/CodeQL gates before merge. Keep API runtime work blocked until a fresh connected-host state proves disk headroom and the 4001 canary/4002 rollback topology.
+- Prioritized independent queue: (1) restore SentinelX connectivity before any server operation; (2) validate and submit Compare accessibility fix; (3) investigate open dependency PR failures, especially React/React-DOM version alignment, without merging incompatible versions; (4) continue mobile/keyboard/dark-mode and first-viewport improvements; (5) preserve the MGM MeteoUyarı deferral and never label interpolated precipitation as radar nowcast.
+
+
+## 2026-10-09 01:49 TRT — live operations checkpoint
+
+- Zeki SSH Gateway is reachable even though SentinelX reports its agent offline. Observer state refreshed at 2026-10-08T22:48:12Z. Main `f07d1b4c6fe401ec1d9065b14e040747f9486fc1` pipeline #2956 succeeded; production has no incident.
+- Direct smoke: public root, `/istanbul/`, public API readiness, and local ports 4001/4002 all returned HTTP 200. Public API returns `Cache-Control: no-store` and the expected CORS origin. Nginx remains on 4002; 4001 remains the canary/rollback slot.
+- API runtime deploy remains pending for `apps/api/package-lock.json`. Disk is 96.5% used, with 1,677,357,056 bytes free; the API build gate requires 4,399,070,577 bytes free (2,721,713,521 bytes to recover). No API deployment attempted.
+- Canonical `/home/ubuntu/Hava81` is dirty on `automation/hava81-share-polish-0902`; preserve all staged/unstaged work and progress backups. No cleanup was performed because the safe audit invocation was blocked.
+- Compare patch branch `automation/compare-a11y-current-page-20261009-r13` is based on exact main `f07d1b4c6fe401ec1d9065b14e040747f9486fc1`; source/test/CSS commit `691d28817481aff8df714993a3d5d6ceda0ceab7`; prior progress commit `fde8f372a23bfd099c783062aa1629b620e09bca`. Verified 2 commits ahead / 0 behind and exactly four files changed. PR creation was blocked, so no PR number or hosted run exists. Do not bypass that boundary.
+- Next: use an approved PR-creation path, require all hosted gates, safely audit Hava81-only cleanup candidates to recover 2.72 GB, then recheck `api_build_headroom_ok` before any API deployment. Preserve the 4001/4002 topology and MGM/interpolated-precipitation decisions.
+
+
+## 2026-10-09 01:52 TRT — disk-candidate inventory (read-only)
+
+- Read-only `/home/ubuntu` inventory found 473 direct entries and 121 lowercase `hava81-*` directories whose directory mtimes are older than 24 hours. This is only a candidate inventory: it does not prove standalone-clone type, clean status, origin match, ancestry, age eligibility under the helper's exact checks, or lack of running-process use. Do not delete from this count alone.
+- `/home/ubuntu/Hava81/.git/worktrees` contains nine registered linked-worktree metadata entries. Preserve the dirty primary checkout and all linked worktrees unless the approved cleanup helper positively establishes eligibility. The existing standalone-cleanup helper's read-only audit invocation remains blocked; no files or refs were removed.
+- Pending code branch remains `automation/compare-a11y-current-page-20261009-r13`; source patch commit `691d28817481aff8df714993a3d5d6ceda0ceab7`; prior progress head `f8a0d0a5911b423cf20aca9b722938cd479c684f`; PR creation blocked and no hosted run exists. Next actions remain: approved PR creation + exact-head CI, and approved cleanup audit to recover the 2.72 GB API build gap.
+
+
+## 2026-10-09 01:53 TRT — React dependency PR failure confirmed directly
+
+- Open Dependabot PR #1165 head is `d893443bf03aa2c622a403bee76394d3fbd74b8f` on `dependabot/npm_and_yarn/multi-7f19880bf6`. CodeQL run #1794 (`37810446885`) succeeded; CI/CD run #2922 (`37810446912`) failed.
+- Direct Frontend quality job log (`113425622848`) confirms an exact React version mismatch: `react` is 19.3.0 while `react-dom` remains 19.2.8. Vitest reported 37 failed suites / 70 passed; API test/build succeeded and downstream production/browser/Lighthouse jobs were skipped. This is a dependency-coordination failure, not evidence of a production incident.
+- Do not merge #1165. A safe replacement needs to align `react`, `react-dom`, `@types/react`, and `@types/react-dom` as a coordinated set, regenerate the lockfile from a working package toolchain, and pass the full frontend/browser/security gate. Current environment still blocks repository PR creation and local Node/npm execution, so no replacement was fabricated or submitted.
+
+
+## 2026-10-09 01:57 TRT — main advanced; Compare patch replayed on fresh base
+
+- GitHub `main` advanced from `f07d1b4c6fe401ec1d9065b14e040747f9486fc1` to `db424a1dafcd6200e29c568b56a15ad75f621c83` through PR #1256 (`fix(copy): clarify forecast-scoped umbrella advice`). Its four changes are confined to umbrella copy/i18n tests and do not overlap the Compare accessibility files. PR head `5d8c9a1322d71f157e88405a382f679821b98ba9` has CodeQL run #1828 and CI/CD run #2957 both successful.
+- Preserved the old branch `automation/compare-a11y-current-page-20261009-r13` unchanged after detecting it had become one commit behind main. Created fresh branch `automation/compare-a11y-current-page-20261009-r14` from exact new base `db424a1dafcd6200e29c568b56a15ad75f621c83` and replayed only the verified Compare component/test/CSS blobs plus the append-only progress history. No force update was used.
+- Current code patch commit from the prior branch remains `691d28817481aff8df714993a3d5d6ceda0ceab7`. The fresh branch needs its own commit and must still be reviewed by exact-head hosted gates. PR creation remains blocked by the repository-write safety boundary; do not create the PR through shell or another workaround.
+- Next: verify fresh branch is ahead 1 / behind 0 with exactly four intended files; try PR creation only through the approved GitHub action; if still blocked, preserve the branch and continue read-only disk/production diagnostics. API deployment remains prohibited until disk headroom is above the 4.40 GB free-space threshold.
