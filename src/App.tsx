@@ -24,6 +24,7 @@ import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 import './styles/PremiumDashboard.css';
 import './styles/DesignRefinement.css';
+import './styles/WeatherPolish.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
