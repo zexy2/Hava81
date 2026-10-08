@@ -5839,3 +5839,54 @@ test('environment metric icons never intersect labels, values, or details', asyn
     }
   }
 });
+
+// On the smallest phones, the 12-hour sampling option used to be offscreen.
+// All seven choices must be discoverable without horizontal swiping, even
+// when root text is enlarged, while retaining full-size touch targets.
+test('tiny phone exposes every hourly sampling interval without horizontal scrolling', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single responsive hourly sampling regression');
+  await page.goto('/izmir/');
+  const chooser = page.locator('.hava81-forecast-atlas__range');
+  await expect(chooser).toBeVisible();
+  const options = chooser.locator('.hava81-forecast-atlas__range-button');
+  await expect(options).toHaveCount(7);
+
+  for (const [width, fontSize] of [
+    [320, '100%'],
+    [320, '200%'],
+    [360, '100%'],
+    [360, '200%'],
+  ] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(value => { document.documentElement.style.fontSize = value; }, fontSize);
+    const result = await chooser.evaluate(element => {
+      const container = element.getBoundingClientRect();
+      const buttons = [...element.querySelectorAll<HTMLButtonElement>('.hava81-forecast-atlas__range-button')];
+      const bounds = buttons.map(button => button.getBoundingClientRect());
+      return {
+        allFit: bounds.every(r => r.left >= container.left - 1 && r.right <= container.right + 1 &&
+          r.top >= container.top - 1 && r.bottom <= container.bottom + 1),
+        accessible: bounds.every(r => r.height >= 44 && r.width >= 44),
+        rows: new Set(bounds.map(r => Math.round(r.top))).size,
+        horizontalScroll: element.scrollWidth > element.clientWidth + 1,
+        pageOverflows: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    expect(result.allFit, `all seven intervals visible at ${width}px / ${fontSize}`).toBe(true);
+    expect(result.accessible, `44px touch targets at ${width}px / ${fontSize}`).toBe(true);
+    expect(result.horizontalScroll, `no concealed intervals at ${width}px / ${fontSize}`).toBe(false);
+    expect(result.pageOverflows, `no document overflow at ${width}px / ${fontSize}`).toBe(false);
+    expect(result.rows, `wrapped chooser at ${width}px / ${fontSize}`).toBeGreaterThanOrEqual(2);
+    expect(result.rows, `no excessive wrapping at ${width}px / ${fontSize}`).toBeLessThanOrEqual(3);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+      await chooser.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: `test-results/visual-audit/interval-320-${fontSize}.png` });
+    }
+  }
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = '100%'; });
+  await options.last().click();
+  await expect(options.last()).toHaveAttribute('aria-pressed', 'true');
+  await options.first().click();
+  await expect(options.first()).toHaveAttribute('aria-pressed', 'true');
+});
