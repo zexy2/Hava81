@@ -676,16 +676,16 @@ test('tablet forecast source links keep touch-friendly target heights', async ({
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
-test('mobile horizontal choice rails keep focused actions inside the scroll viewport', async ({ page }, testInfo) => {
+test('mobile forecast rail and wrapping activity choices preserve keyboard focus', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile horizontal focus regression');
   await page.goto('/istanbul');
 
   const checks = [
-    ['.hava81-forecast-atlas__range-button', '.hava81-forecast-atlas__range'],
-    ['.activity-planner__chips button', '.activity-planner__chips'],
+    ['.hava81-forecast-atlas__range-button', '.hava81-forecast-atlas__range', 'auto'],
+    ['.activity-planner__chips button', '.activity-planner__chips', 'visible'],
   ] as const;
 
-  for (const [controlSelector, railSelector] of checks) {
+  for (const [controlSelector, railSelector, expectedOverflow] of checks) {
     const control = page.locator(controlSelector).first();
     await control.scrollIntoViewIfNeeded();
     await control.focus();
@@ -706,8 +706,10 @@ test('mobile horizontal choice rails keep focused actions inside the scroll view
       };
     }, railSelector);
 
-    expect(state.railOverflowX).toBe('auto');
-    expect(state.railScrollbarWidth).toBe('thin');
+    expect(state.railOverflowX).toBe(expectedOverflow);
+    if (expectedOverflow === 'auto') {
+      expect(state.railScrollbarWidth).toBe('thin');
+    }
     expect(state.outlineStyle).not.toBe('none');
     expect(state.outlineWidth).toBeGreaterThanOrEqual(2);
     expect(state.outlineOffset).toBeLessThanOrEqual(0);
@@ -2490,17 +2492,17 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
       height: rail.height,
       clientWidth: element.clientWidth,
       scrollWidth: element.scrollWidth,
+      left: rail.left,
       right: rail.right,
       buttons,
     };
   });
-  expect(activityChips.height).toBeLessThan(60);
-  expect(activityChips.scrollWidth).toBeGreaterThan(activityChips.clientWidth);
+  expect(activityChips.height).toBeGreaterThan(75);
+  expect(activityChips.height).toBeLessThan(250);
+  expect(activityChips.scrollWidth).toBeLessThanOrEqual(activityChips.clientWidth + 1);
   expect(activityChips.buttons.every(button => button.height >= 44)).toBe(true);
   expect(activityChips.buttons.every(button => button.scrollWidth <= button.clientWidth + 1)).toBe(true);
-  expect(
-    activityChips.buttons.some(button => button.left < activityChips.right && button.right > activityChips.right)
-  ).toBe(true);
+  expect(activityChips.buttons.every(button => button.left >= activityChips.left - 1 && button.right <= activityChips.right + 1)).toBe(true);
 
   const activityDetails = page.locator('.activity-card__details');
   await expect(activityDetails).toHaveCount(2);
@@ -5230,4 +5232,57 @@ test('200 percent mobile text keeps hero readable and score inside the card', as
   expect(layout.numberFits).toBe(true);
   expect(layout.scoreFits).toBe(true);
   expect(layout.screenFits).toBe(true);
+});
+
+test('mobile score explanation stays compact while every activity stays visible', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile density regression');
+  await page.goto('/istanbul');
+  const breakdown = page.locator('.daily-plan__explain');
+  await expect(breakdown).toBeVisible();
+  const collapsed = await breakdown.boundingBox();
+  expect(collapsed).not.toBeNull();
+  expect(collapsed!.height).toBeLessThan(75);
+  await breakdown.locator('summary').click();
+  await expect(breakdown).toHaveAttribute('open', '');
+  await expect(breakdown.locator('.daily-plan__impacts, .daily-plan__stable')).toBeVisible();
+  await breakdown.locator('summary').click();
+  await expect(breakdown).not.toHaveAttribute('open');
+
+  const chips = page.locator('.activity-planner__chips');
+  const layout = await chips.evaluate(element => {
+    const box = element.getBoundingClientRect();
+    const buttons = Array.from(element.querySelectorAll('button')).map(button => {
+      const rect = button.getBoundingClientRect();
+      return {left:rect.left, right:rect.right};
+    });
+    return {
+      count:buttons.length,
+      height:box.height,
+      scrollWidth:element.scrollWidth,
+      width:element.clientWidth,
+      visible:buttons.every(b=>b.left >= box.left - 1 && b.right <= box.right + 1),
+    };
+  });
+  expect(layout.count).toBe(6);
+  expect(layout.height).toBeGreaterThan(75);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width + 1);
+  expect(layout.visible).toBe(true);
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const enlarged = await chips.evaluate(element => {
+    const rail = element.getBoundingClientRect();
+    const buttons = Array.from(element.querySelectorAll('button')).map(e => e.getBoundingClientRect());
+    return {
+      width: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      buttonsFit: buttons.every(rect => rect.left >= rail.left - 1 && rect.right <= rail.right + 1),
+      pageFits: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    };
+  });
+  expect(enlarged.scrollWidth).toBeLessThanOrEqual(enlarged.width + 1);
+  expect(enlarged.buttonsFit).toBe(true);
+  expect(enlarged.pageFits).toBe(true);
 });
