@@ -14,7 +14,7 @@ import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
-import { WeatherSymbol } from './WeatherSymbol';
+import { WeatherIllustration } from './WeatherIllustration';
 import './WeatherDecisionField.css';
 
 export interface WeatherDecisionFieldProps {
@@ -452,7 +452,7 @@ export function WeatherDecisionField({
               </p>
 
               <div className="hava81-decision-field__symbol" aria-hidden="true">
-                <WeatherSymbol
+                <WeatherIllustration
                   code={weather.icon}
                   label={weather.description}
                   className="hava81-decision-field__weather-symbol"

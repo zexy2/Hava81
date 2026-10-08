@@ -64,6 +64,9 @@ export const en = {
   },
   hava81: {
     glance: {
+      bestLabel: 'Best time',
+      umbrellaLabel: 'Umbrella advice',
+      summaryLabel: 'Conditions',
       title: 'TODAY’S DECISION',
       loading: 'Preparing today’s guidance from fresh weather data.',
       pending: 'Waiting for a fresh forecast',

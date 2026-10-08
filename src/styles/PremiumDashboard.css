@@ -1,0 +1,902 @@
+/* Hava81 premium dashboard. Pure presentation; core meteorology and navigation remain unchanged. */
+.app {
+  --premium-blue: #1765d8;
+  --premium-ink: #12264b;
+  --premium-soft: #eef5ff;
+  --premium-card-border: rgb(135 165 206 / 0.19);
+  --premium-elevation: 0 16px 42px rgb(40 85 146 / 0.07), 0 2px 7px rgb(40 85 146 / 0.035);
+  --decision-ring: #22b788;
+  --decision-ring-track: #ceeae5;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --color-atlas-field: #f0f5fb;
+  --color-atlas-ink: #13264b;
+  --color-atlas-muted: #617797;
+  --color-atlas-line: #dbe5f2;
+  --color-control-line: #c7d7eb;
+  --color-aegean: #226bd9;
+  --color-aegean-deep: #174ea6;
+  --color-aegean-pale: #e3efff;
+  --font-display: var(--font-ui);
+  background:
+    radial-gradient(ellipse at 18% -5%, rgb(176 216 255 / 0.3), transparent 52%),
+    linear-gradient(180deg, #f6faff 0%, #edf4fb 56%, #f5f8fd 100%);
+}
+.app::before {
+  opacity: 0;
+}
+.app[data-color-mode='dark'] {
+  --premium-blue: #8bbaff;
+  --premium-ink: #eef7ff;
+  --premium-soft: #203f56;
+  --premium-card-border: rgb(125 178 209 / 0.19);
+  --premium-elevation: 0 16px 42px rgb(0 0 0 / 0.16), 0 2px 7px rgb(0 0 0 / 0.09);
+  --decision-ring: #4ed7aa;
+  --decision-ring-track: #2c545b;
+  --color-atlas-field: #102733;
+  --color-atlas-paper: #173342;
+  --color-atlas-ink: #f0f7ff;
+  --color-atlas-muted: #b4c8da;
+  --color-atlas-line: #345365;
+  --color-control-line: #486e83;
+  --color-aegean: #8abafc;
+  --color-aegean-deep: #a5ceff;
+  --color-aegean-pale: #264a61;
+  background: linear-gradient(150deg, #0b2432 0%, #122e40 60%, #102733 100%);
+}
+.app .atlas-header {
+  background: color-mix(in srgb, var(--color-atlas-paper) 82%, #e4efff);
+  border-color: var(--premium-card-border);
+  box-shadow: 0 4px 30px rgb(55 108 172 / 0.035);
+  backdrop-filter: blur(16px);
+}
+.app .atlas-header__inner,
+.app .atlas-main,
+.app .atlas-city-rail {
+  width: min(100%, 96rem);
+}
+.app .atlas-header__inner {
+  min-height: 5rem;
+}
+.app .atlas-brand__name {
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.05em;
+}
+.app .atlas-brand__index {
+  width: 3.05rem;
+  height: 3.05rem;
+  color: var(--premium-blue);
+  background: color-mix(in srgb, var(--color-aegean-pale) 60%, var(--color-atlas-paper));
+  border: 1px solid var(--premium-card-border);
+  border-radius: 9px;
+}
+.app .atlas-header__search {
+  max-width: 40rem;
+}
+.app .search-bar__controls {
+  filter: drop-shadow(0 2px 6px rgb(48 112 177 / 0.06));
+}
+.app .search-bar__input {
+  background: var(--color-atlas-paper);
+  border-color: var(--premium-card-border);
+  border-radius: 13px 0 0 13px;
+}
+.app .search-bar__submit {
+  border-radius: 0 13px 13px 0;
+}
+.app .atlas-icon-button:hover:not(:disabled) {
+  background: var(--color-aegean-pale);
+  border-radius: 14px;
+}
+.app .atlas-main {
+  padding-top: 1.2rem;
+}
+.app .atlas-dashboard,
+.app .atlas-dashboard__primary {
+  gap: 1.1rem;
+}
+.app .atlas-dashboard__primary {
+  align-items: stretch;
+}
+.app .decision-glance,
+.app .hava81-decision-field,
+.app .hava81-forecast-atlas,
+.app .environment-rail,
+.app .daily-plan,
+.app .commute-plan,
+.app .context-signals,
+.app .activity-planner,
+.app .decision-alerts,
+.app .route-weather-panel {
+  min-width: 0;
+  border: 1px solid var(--premium-card-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-atlas-paper);
+  box-shadow: var(--premium-elevation);
+}
+.app .decision-glance {
+  --decision-ring: #2cb88d;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  isolation: isolate;
+  min-height: 15rem;
+  padding: clamp(1.15rem, 2.2vw, 2rem);
+  gap: clamp(1rem, 2vw, 2.5rem);
+  overflow: hidden;
+  border-color: rgb(151 203 230 / 0.45);
+  background: linear-gradient(110deg, #e3fbf4 0%, #e7f7ff 52%, #b7defa 100%);
+  box-shadow: 0 18px 42px rgb(49 135 185 / 0.09);
+}
+.app[data-color-mode='dark'] .decision-glance {
+  background: linear-gradient(112deg, #174d57 0%, #183f56 55%, #27577a 100%);
+}
+.app .decision-glance__atmosphere {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: 0 0 0 auto;
+  width: 39%;
+  opacity: 0.84;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(182 231 249 / 0.09) 18%,
+    rgb(80 179 227 / 0.27) 100%
+  );
+}
+.app .decision-glance__sun {
+  position: absolute;
+  width: 6.4rem;
+  height: 6.4rem;
+  border-radius: 50%;
+  top: 12%;
+  right: 15%;
+  background: radial-gradient(circle at 40% 40%, #fff6b3, #ffce80 60%, rgb(253 205 130 / 0.12) 75%);
+  box-shadow: 0 0 65px 36px rgb(255 229 166 / 0.45);
+}
+.app .decision-glance__cloud {
+  position: absolute;
+  width: 8rem;
+  height: 1.9rem;
+  border-radius: 4rem;
+  background: rgb(255 255 255 / 0.6);
+  box-shadow:
+    1.4rem -0.7rem 0 -0.1rem rgb(255 255 255 / 0.5),
+    -0.9rem -0.25rem 0 0.1rem rgb(255 255 255 / 0.45);
+  filter: blur(2px);
+}
+.app .decision-glance__cloud--one {
+  right: 4%;
+  top: 29%;
+  transform: scale(0.7);
+}
+.app .decision-glance__cloud--two {
+  right: 50%;
+  top: 58%;
+  transform: scale(0.45);
+}
+.app .decision-glance__hills {
+  position: absolute;
+  bottom: -5rem;
+  right: -4rem;
+  width: 135%;
+  height: 11.5rem;
+  background: linear-gradient(160deg, rgb(92 178 199 / 0.46), rgb(44 140 186 / 0.16));
+  border-radius: 60% 50% 0 0;
+  transform: rotate(-9deg);
+  box-shadow: -14rem 3rem 0 -1rem rgb(116 192 190 / 0.22);
+}
+.app .decision-glance__main {
+  flex: 1 1 70%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.app .decision-glance .atlas-kicker {
+  color: #3d6c83;
+  font-weight: 750;
+}
+.app[data-color-mode='dark'] .decision-glance .atlas-kicker {
+  color: #add9e7;
+}
+.app .decision-glance__message {
+  margin-top: 0.65rem;
+  max-width: 33ch;
+  font-size: clamp(1.25rem, 2.05vw, 2rem);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  line-height: 1.22;
+}
+.app .decision-glance__window {
+  margin-top: 0.6rem;
+  color: color-mix(in srgb, var(--color-atlas-ink) 72%, transparent);
+}
+.app .decision-glance__quick-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  width: min(100%, 51rem);
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+.app .decision-glance__quick {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.72);
+}
+.app[data-color-mode='dark'] .decision-glance__quick {
+  background: rgb(12 41 54 / 0.72);
+  border-color: rgb(255 255 255 / 0.12);
+}
+.app .decision-glance__quick-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: #138e70;
+  background: #d5f9ed;
+  font-size: 1.45rem;
+}
+.app .decision-glance__quick-icon--umbrella {
+  color: #2865d7;
+  background: #e0edff;
+}
+.app .decision-glance__quick-icon--weather {
+  color: #d78c00;
+  background: #fff1d2;
+}
+.app .decision-glance__quick span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+.app .decision-glance__quick small {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  color: #526b86;
+}
+.app .decision-glance__quick strong {
+  font-size: 0.79rem;
+  line-height: 1.3;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.app[data-color-mode='dark'] .decision-glance__quick small {
+  color: #b8d3de;
+}
+.app .decision-glance__side {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 clamp(10rem, 19%, 15rem);
+  gap: 0.5rem;
+  text-align: center;
+}
+.app .decision-glance__date {
+  position: absolute;
+  top: 0;
+  right: 0;
+  white-space: nowrap;
+  border-radius: 40px;
+  padding: 0.3rem 0.7rem;
+  background: rgb(255 255 255 / 0.74);
+  color: #34628a;
+  font-size: 0.7rem;
+}
+.app[data-color-mode='dark'] .decision-glance__date {
+  background: rgb(19 55 75 / 0.75);
+  color: #d0e5f8;
+}
+.app .decision-glance__score {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 7.3rem;
+  height: 7.3rem;
+  border-radius: 50%;
+  box-shadow: 0 10px 26px rgb(15 126 115 / 0.16);
+  text-align: center;
+}
+.app .decision-glance__score::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: #f4fcfe;
+}
+.app[data-color-mode='dark'] .decision-glance__score::before {
+  background: #173f51;
+}
+.app .decision-glance__score strong {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  align-items: center;
+  color: var(--premium-ink);
+  font-size: 2.45rem;
+  font-weight: 760;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.app .decision-glance__score strong span {
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: var(--color-atlas-muted);
+  font-weight: 600;
+}
+.app .decision-glance__score--caution {
+  --decision-ring: #d8a042;
+}
+.app .decision-glance__score--difficult {
+  --decision-ring: #e46b64;
+}
+.app .decision-glance__score-label {
+  font-weight: 700;
+  color: var(--premium-ink);
+}
+.app .decision-glance__details {
+  margin: 0.15rem 0 0;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border-radius: 99px;
+  border: 1px solid rgb(46 115 207 / 0.26);
+  color: #1455b1;
+  background: rgb(255 255 255 / 0.76);
+  text-decoration: none;
+  font-size: 0.78rem;
+}
+.app[data-color-mode='dark'] .decision-glance__details {
+  background: #224b62;
+  color: #d9eaff;
+}
+.app .decision-glance__details:hover {
+  background: #fff;
+  box-shadow: 0 3px 12px rgb(30 100 175 / 0.12);
+}
+.app .decision-glance__pending {
+  text-align: center;
+}
+
+.app .hava81-decision-field,
+.app .hava81-forecast-atlas {
+  padding: clamp(1.05rem, 1.65vw, 1.7rem);
+  border: 1px solid var(--premium-card-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-atlas-paper);
+}
+.app .hava81-decision-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.15rem;
+  align-content: start;
+  overflow: hidden;
+}
+.app .hava81-decision-field__identity,
+.app .hava81-decision-field__rail {
+  grid-column: 1 / -1;
+}
+.app .hava81-decision-field__identity {
+  padding-bottom: 0.85rem;
+  gap: 0.6rem;
+}
+.app .hava81-decision-field__city {
+  font-family: var(--font-ui);
+  font-size: clamp(2rem, 2.6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+}
+.app .hava81-decision-field__city::before {
+  content: '●';
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  margin-right: 0.85rem;
+  border-radius: 50%;
+  vertical-align: 0.2rem;
+  background: #e3f0ff;
+  color: #1c6bd9;
+  font-size: 1rem;
+}
+.app[data-color-mode='dark'] .hava81-decision-field__city::before {
+  background: #2c4f70;
+  color: #a3cfff;
+}
+.app .hava81-decision-field__plate {
+  color: var(--color-aegean-deep);
+  border: 1px solid var(--premium-card-border);
+  border-radius: 9px;
+  background: var(--color-aegean-pale);
+}
+.app .hava81-decision-field__plate span {
+  color: #fff;
+  background: #3883db;
+}
+.app .hava81-decision-field__atlas-meta {
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  gap: 5px 9px;
+}
+.app .hava81-decision-field__current {
+  position: relative;
+  z-index: 0;
+  min-height: 14rem;
+  align-self: center;
+  border-radius: 20px;
+  padding: 1rem 1.15rem 1.2rem;
+  background:
+    radial-gradient(ellipse at 68% 50%, #d8efff, transparent 56%),
+    linear-gradient(150deg, #f5faff 0%, #f6fbff 58%, #ebf4ff 100%);
+  overflow: hidden;
+}
+.app[data-color-mode='dark'] .hava81-decision-field__current {
+  background:
+    radial-gradient(ellipse at 70% 60%, #27668b, transparent 55%),
+    linear-gradient(140deg, #19394d, #183747);
+}
+.app .hava81-decision-field__reading {
+  align-items: center;
+  min-height: 9.2rem;
+}
+.app .hava81-decision-field__temperature-value {
+  font-family: var(--font-ui);
+  font-weight: 770;
+  font-size: clamp(5.7rem, 8.3vw, 8rem);
+  letter-spacing: -0.09em;
+  line-height: 1;
+}
+.app .hava81-decision-field__temperature-unit {
+  margin: 0.8rem 0 0 0.35rem;
+  color: var(--premium-ink);
+  font-size: 1.15rem;
+}
+.app .hava81-decision-field__symbol {
+  flex: 0 0 9rem;
+  width: 9rem;
+  height: 9rem;
+  color: #428cda;
+  filter: drop-shadow(0 10px 13px rgb(68 145 207 / 0.14));
+}
+.app .hava81-decision-field__weather-symbol {
+  stroke-width: 1.7;
+}
+.app .hava81-decision-field__condition {
+  margin-top: 0.3rem;
+  color: var(--premium-ink);
+  font-weight: 710;
+  font-size: 1.4rem;
+}
+.app .hava81-decision-field__feels-like {
+  color: var(--color-atlas-muted);
+}
+.app .hava81-decision-field__change {
+  padding: 0.9rem 1rem;
+  border: 1px solid #ffe6b8;
+  border-left: 4px solid #ffb13f;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #fff8e8, #ffeed1);
+  box-shadow: 0 3px 10px rgb(197 140 55 / 0.05);
+}
+.app[data-color-mode='dark'] .hava81-decision-field__change {
+  background: #3c392f;
+  border-color: #806d43;
+  border-left-color: #f4b956;
+}
+.app .hava81-decision-field__change-title {
+  letter-spacing: 0.05em;
+}
+.app .hava81-decision-field__rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-top: 0;
+}
+.app .hava81-decision-field__metric,
+.app .hava81-decision-field__metric:nth-child(even),
+.app .hava81-decision-field__metric:nth-child(n + 3) {
+  margin: 0;
+  padding: 0.85rem;
+  min-width: 0;
+  border: 1px solid var(--premium-card-border);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 80%, var(--premium-soft));
+}
+.app .hava81-decision-field__metric dt {
+  margin-bottom: 0.5rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.035em;
+  line-height: 1.35;
+}
+.app .hava81-decision-field__metric dd {
+  font-weight: 750;
+  color: var(--premium-ink);
+  font-size: 0.98rem;
+}
+.app .hava81-decision-field__source-note {
+  font-size: 0.7rem;
+  margin-top: -0.6rem;
+}
+.app .hava81-forecast-atlas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+.app .hava81-forecast-atlas__header {
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--premium-card-border);
+}
+.app .hava81-forecast-atlas__title {
+  color: var(--premium-ink);
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+.app .hava81-forecast-atlas__section {
+  border-top: 0;
+  padding-top: 0.75rem;
+}
+.app .hava81-forecast-atlas__section-title {
+  font-size: 0.73rem;
+  letter-spacing: 0.09em;
+}
+.app .hava81-forecast-atlas__range {
+  gap: 0.3rem;
+  padding: 0.2rem;
+  background: var(--premium-soft);
+  border: 1px solid var(--premium-card-border);
+  border-radius: 13px;
+}
+.app .hava81-forecast-atlas__range-button {
+  min-height: 44px;
+  padding-inline: 0.65rem;
+  border: 0;
+  border-radius: 9px;
+  font-weight: 650;
+}
+.app .hava81-forecast-atlas__range-button[aria-pressed='true'],
+.app .hava81-forecast-atlas__range-button.is-active {
+  background: var(--color-atlas-paper);
+  color: var(--premium-blue);
+  box-shadow: 0 3px 9px rgb(30 93 173 / 0.09);
+}
+.app .hava81-forecast-atlas__hourly-viewport {
+  border-radius: 13px;
+}
+.app .hava81-forecast-atlas__hourly-track {
+  min-width: 0;
+}
+.app .hava81-forecast-atlas__hour {
+  margin-inline: 0.2rem;
+  min-height: 8rem;
+  padding: 0.7rem 0.5rem;
+  border: 1px solid var(--premium-card-border);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 90%, var(--premium-soft));
+  box-shadow: none;
+}
+.app .hava81-forecast-atlas__hour:first-child {
+  border-left: 1px solid var(--premium-card-border);
+}
+.app .hava81-forecast-atlas__hour.is-current {
+  border-color: #75aff5;
+  background: color-mix(in srgb, var(--color-atlas-paper) 45%, var(--color-aegean-pale));
+  box-shadow: inset 0 0 0 1px #91bafa;
+}
+.app .hava81-forecast-atlas__hour:hover {
+  background: var(--color-aegean-pale);
+}
+.app .environment-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0.45rem;
+  gap: 0.4rem;
+  overflow: hidden;
+}
+.app .environment-rail__module,
+.app .environment-rail__module:nth-child(odd),
+.app .environment-rail__module:nth-child(n + 3),
+.app .environment-rail__module + .environment-rail__module {
+  min-height: 9rem;
+  padding: 1rem;
+  border: 0;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 78%, var(--premium-soft));
+}
+.app .environment-rail__module:nth-child(4n + 1) {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--color-atlas-paper) 86%, #cdf8e2),
+    color-mix(in srgb, var(--color-atlas-paper) 73%, #b6ecd3)
+  );
+}
+.app .environment-rail__module:nth-child(4n + 2) {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--color-atlas-paper) 88%, #fff0c4),
+    color-mix(in srgb, var(--color-atlas-paper) 75%, #ffe5ad)
+  );
+}
+.app .environment-rail__module:nth-child(4n + 3) {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--color-atlas-paper) 88%, #d7e9ff),
+    color-mix(in srgb, var(--color-atlas-paper) 76%, #c1dbff)
+  );
+}
+.app .environment-rail__module:nth-child(4n + 4) {
+  background: var(--premium-soft);
+}
+.app .environment-rail__icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-atlas-paper) 80%, var(--color-aegean-pale));
+}
+.app .environment-rail__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.025em;
+  text-transform: none;
+}
+.app .environment-rail__value {
+  color: var(--premium-ink);
+  font-size: 1.1rem;
+  font-weight: 750;
+}
+.app .environment-rail__detail {
+  font-size: 0.79rem;
+}
+.app .daily-plan,
+.app .commute-plan,
+.app .context-signals,
+.app .activity-planner,
+.app .decision-alerts,
+.app .route-weather-panel {
+  padding: clamp(1rem, 2vw, 1.6rem);
+}
+@media (min-width: 64rem) {
+  .app .atlas-dashboard {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.05fr);
+  }
+  .app .atlas-dashboard__primary {
+    display: contents;
+  }
+  .app .atlas-dashboard__primary > .decision-glance {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .app .atlas-dashboard__primary > .hava81-decision-field {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .app .atlas-dashboard__primary > .hava81-forecast-atlas,
+  .app .atlas-dashboard__primary > .atlas-forecast-loading {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .app .atlas-dashboard > .commute-plan {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .app .atlas-dashboard > .daily-plan {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .app .atlas-dashboard > :not(.atlas-dashboard__primary):not(.commute-plan):not(.daily-plan) {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 64rem) and (max-width: 87rem) {
+  .app .hava81-decision-field__rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .decision-glance__quick-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .decision-glance__quick:last-child {
+    display: none;
+  }
+  .app .hava81-decision-field__temperature-value {
+    font-size: 5.6rem;
+  }
+  .app .hava81-decision-field__symbol {
+    width: 6rem;
+    height: 6rem;
+    flex-basis: 6rem;
+  }
+}
+@media (max-width: 63.99rem) {
+  .app .atlas-dashboard__primary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .environment-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .decision-glance__quick-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .decision-glance__quick:last-child {
+    display: none;
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .atlas-header__inner {
+    min-height: auto;
+  }
+  .app .atlas-brand__name {
+    font-size: 1.3rem;
+  }
+  .app .atlas-main {
+    padding: 0.8rem;
+  }
+  .app .atlas-dashboard,
+  .app .atlas-dashboard__primary {
+    gap: 0.85rem;
+  }
+  .app .decision-glance {
+    min-height: 0;
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 18px;
+  }
+  .app .decision-glance__message {
+    font-size: 1.1rem;
+  }
+  .app .decision-glance__side {
+    flex-basis: 6.2rem;
+    justify-content: flex-start;
+    padding-top: 0.4rem;
+    gap: 0.35rem;
+  }
+  .app .decision-glance__date {
+    display: none;
+  }
+  .app .decision-glance__score {
+    width: 5.8rem;
+    height: 5.8rem;
+  }
+  .app .decision-glance__score::before {
+    inset: 9px;
+  }
+  .app .decision-glance__score strong {
+    font-size: 1.9rem;
+  }
+  .app .decision-glance__score-label {
+    font-size: 0.68rem;
+  }
+  .app .decision-glance__details {
+    padding: 0.35rem 0.4rem;
+    font-size: 0.68rem;
+    text-align: center;
+  }
+  .app .decision-glance__quick-list {
+    display: none;
+  }
+  .app .decision-glance__atmosphere {
+    width: 55%;
+    opacity: 0.42;
+  }
+  .app .hava81-decision-field,
+  .app .hava81-forecast-atlas {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+  .app .hava81-decision-field {
+    gap: 0.9rem;
+  }
+  .app .hava81-decision-field__city {
+    font-size: 2rem;
+  }
+  .app .hava81-decision-field__city::before {
+    width: 1.45rem;
+    height: 1.45rem;
+    margin-right: 0.4rem;
+    font-size: 0.7rem;
+  }
+  .app .hava81-decision-field__current {
+    min-height: 10rem;
+    padding: 0.8rem;
+  }
+  .app .hava81-decision-field__temperature-value {
+    font-size: clamp(4rem, 19vw, 6rem);
+  }
+  .app .hava81-decision-field__symbol {
+    width: 6rem;
+    height: 6rem;
+    flex-basis: 6rem;
+  }
+  .app .hava81-decision-field__rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .hava81-decision-field__metric,
+  .app .hava81-decision-field__metric:nth-child(even),
+  .app .hava81-decision-field__metric:nth-child(n + 3) {
+    padding: 0.7rem;
+  }
+  .app .environment-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+  .app .environment-rail__module {
+    min-height: 8.5rem;
+    padding: 0.8rem;
+  }
+  .app .atlas-dashboard > .daily-plan {
+    grid-row: auto;
+  }
+}
+@media (max-width: 23rem) {
+  .app .decision-glance__side {
+    flex-basis: 5rem;
+  }
+  .app .decision-glance__score {
+    width: 4.8rem;
+    height: 4.8rem;
+  }
+  .app .decision-glance__details {
+    font-size: 0.64rem;
+  }
+  .app .hava81-decision-field__symbol {
+    width: 4rem;
+    height: 4rem;
+    flex-basis: 4rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .decision-glance__cloud {
+    filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .app .decision-glance__score {
+    border: 4px solid CanvasText;
+    background: Canvas !important;
+  }
+  .app .decision-glance__score::before {
+    display: none;
+  }
+}
+
+/* Collapse the legacy eight-column decision grid into a single card flow. */
+.app .hava81-decision-field__identity,
+.app .hava81-decision-field__current,
+.app .hava81-decision-field__change,
+.app .hava81-decision-field__rail,
+.app .hava81-decision-field__source-note {
+  grid-column: 1;
+  grid-row: auto;
+  min-width: 0;
+  width: 100%;
+}
+@media (max-width: 47.99rem) {
+  .app .decision-glance__main {
+    flex-basis: 0;
+    flex-grow: 1;
+    min-width: 0;
+  }
+  .app .decision-glance__message {
+    font-size: 1rem;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+  }
+  .app .decision-glance__side {
+    flex: 0 0 6rem;
+  }
+}

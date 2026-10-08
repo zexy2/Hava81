@@ -64,6 +64,9 @@ export const tr = {
   },
   hava81: {
     glance: {
+      bestLabel: 'En uygun saatler',
+      umbrellaLabel: 'Şemsiye önerisi',
+      summaryLabel: 'Genel durum',
       title: 'BUGÜNÜN KARARI',
       loading: 'Günün önerisi güncel verilerle hazırlanıyor.',
       pending: 'Güncel tahmin bekleniyor',

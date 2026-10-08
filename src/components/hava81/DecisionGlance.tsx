@@ -53,6 +53,12 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
       i18n.language,
       { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' }
     );
+  const dateLabel = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'tr-TR', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(now + weather.meta.timezoneOffsetSeconds * 1000));
   const bestRange = plan?.bestWindowRange;
   const bestHours = bestRange
     ? bestRange.start.time.getTime() === bestRange.end.time.getTime()
@@ -68,12 +74,22 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
         ? t('hava81.glance.now')
         : t('hava81.glance.similar');
 
+  const umbrellaAdvice = plan
+    ? t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)
+    : t('hava81.glance.pending');
+
   return (
     <section
       className="decision-glance"
       aria-label={t('hava81.glance.title')}
       data-testid="decision-glance"
     >
+      <div className="decision-glance__atmosphere" aria-hidden="true">
+        <div className="decision-glance__sun" />
+        <div className="decision-glance__cloud decision-glance__cloud--one" />
+        <div className="decision-glance__cloud decision-glance__cloud--two" />
+        <div className="decision-glance__hills" />
+      </div>
       <div className="decision-glance__main">
         <span className="atlas-kicker">{t('hava81.glance.title')}</span>
         <strong className="decision-glance__message">{guidance}</strong>
@@ -82,22 +98,61 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
             {t('hava81.glance.bestHours', { hours: bestHours })}
           </p>
         ) : null}
+        <div className="decision-glance__quick-list">
+          <div className="decision-glance__quick">
+            <span
+              className="decision-glance__quick-icon decision-glance__quick-icon--time"
+              aria-hidden="true"
+            >
+              ◷
+            </span>
+            <span>
+              <small>{t('hava81.glance.bestLabel')}</small>
+              <strong>{bestHours ?? '—'}</strong>
+            </span>
+          </div>
+          <div className="decision-glance__quick">
+            <span
+              className="decision-glance__quick-icon decision-glance__quick-icon--umbrella"
+              aria-hidden="true"
+            >
+              ☂
+            </span>
+            <span>
+              <small>{t('hava81.glance.umbrellaLabel')}</small>
+              <strong>{umbrellaAdvice}</strong>
+            </span>
+          </div>
+          <div className="decision-glance__quick">
+            <span
+              className="decision-glance__quick-icon decision-glance__quick-icon--weather"
+              aria-hidden="true"
+            >
+              ☼
+            </span>
+            <span>
+              <small>{t('hava81.glance.summaryLabel')}</small>
+              <strong>{weather.description}</strong>
+            </span>
+          </div>
+        </div>
       </div>
       <div className="decision-glance__side">
+        <time className="decision-glance__date">{dateLabel}</time>
         {plan ? (
           <>
-            <div className={`decision-glance__score decision-glance__score--${plan.band}`}>
+            <div
+              className={`decision-glance__score decision-glance__score--${plan.band}`}
+              style={{
+                background: `conic-gradient(var(--decision-ring) ${plan.score}%, var(--decision-ring-track) 0)`,
+              }}
+            >
               <strong>
                 {plan.score}
                 <span>/100</span>
               </strong>
-              <small>{t('hava81.glance.score')}</small>
             </div>
-            <p className="decision-glance__umbrella">
-              {t('hava81.glance.umbrella', {
-                advice: t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`),
-              })}
-            </p>
+            <small className="decision-glance__score-label">{t('hava81.glance.score')}</small>
             <a className="decision-glance__details" href="#daily-plan-title">
               {t('hava81.glance.details')} <span aria-hidden="true">↗</span>
             </a>
