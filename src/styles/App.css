@@ -1157,7 +1157,15 @@ kbd {
   }
 }
 
-@media (max-width: 21rem) {
+/* A compact phone's normal text can fit beside the actions. Use a named
+ * container so enlarged root text still triggers the two-row safety layout. */
+@media (max-width: 47.99rem) {
+  .atlas-header {
+    container: hava81-phone-header / inline-size;
+  }
+}
+
+@container hava81-phone-header (max-width: 19em) {
   .atlas-header__inner {
     grid-template-columns: minmax(0, 1fr);
   }

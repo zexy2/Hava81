@@ -1120,3 +1120,25 @@
     grid-row: 1;
   }
 }
+
+/* Root-text enlargement changes the header's effective typography but not
+ * media-query rem breakpoints. Keep the compact row only while it genuinely
+ * fits; restore the safe three-row search/controls grid when scaled up. */
+@container hava81-phone-header (max-width: 19em) {
+  .app .atlas-header__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .atlas-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app .atlas-header__actions {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .app .atlas-header__search {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}

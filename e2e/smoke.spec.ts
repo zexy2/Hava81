@@ -5545,3 +5545,61 @@ test('mobile bottom navigation labels remain separate with enlarged text', async
     }
   }
 });
+
+// The 320–336px header formerly stacked into a 120px-tall empty strip even
+// though the 44px actions fit beside the compact logo. Retain a zoom fallback.
+test('small phone header stays compact but reflows for enlarged text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single small-phone header regression');
+  await page.goto('/izmir/');
+  await expect(page.locator('.atlas-header__actions')).toBeVisible();
+
+  for (const [width, zoom, expectSingleRow] of [
+    [280, '100%', false],
+    [300, '100%', false],
+    [320, '100%', true],
+    [336, '100%', true],
+    [340, '100%', true],
+    [390, '100%', true],
+    [320, '200%', false],
+    [390, '200%', false],
+  ] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(value => { document.documentElement.style.fontSize = value; }, zoom);
+    const measured = await page.evaluate(() => {
+      const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const brand = rect('.atlas-brand');
+      const actions = rect('.atlas-header__actions');
+      const header = rect('.atlas-header__inner');
+      const buttons = [...document.querySelectorAll<HTMLButtonElement>('.atlas-header__actions button')].filter(button =>
+        getComputedStyle(button).display !== 'none');
+      const overlapArea = Math.max(0, Math.min(brand.right, actions.right) - Math.max(brand.left, actions.left)) *
+        Math.max(0, Math.min(brand.bottom, actions.bottom) - Math.max(brand.top, actions.top));
+      return {
+        sameRow: Math.abs(brand.top - actions.top) < 5,
+        height: header.height,
+        overlaps: overlapArea > 1,
+        fitsPage: document.documentElement.scrollWidth <= innerWidth,
+        touchTargets: buttons.every(button => {
+          const r = button.getBoundingClientRect();
+          return r.width >= 44 && r.height >= 44;
+        }),
+      };
+    });
+    expect(measured.sameRow, `row layout at ${width}px, ${zoom}`).toBe(expectSingleRow);
+    expect(measured.overlaps, `brand and actions at ${width}px, ${zoom}`).toBe(false);
+    expect(measured.fitsPage, `no horizontal overflow at ${width}px, ${zoom}`).toBe(true);
+    expect(measured.touchTargets, `44px action controls at ${width}px, ${zoom}`).toBe(true);
+    if (expectSingleRow) expect(measured.height, `compact header at ${width}px`).toBeLessThan(80);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+      await page.screenshot({ path: `test-results/visual-audit/mobile-header-${width}-${zoom}.png` });
+    }
+  }
+
+  await page.evaluate(() => { document.documentElement.style.fontSize = '100%'; });
+  await page.setViewportSize({ width: 320, height: 844 });
+  const searchButton = page.locator('.atlas-icon-button--search');
+  await searchButton.click();
+  await expect(searchButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('.atlas-header__search')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
