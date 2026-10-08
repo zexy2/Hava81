@@ -749,10 +749,24 @@ const App: React.FC = () => {
                         meta={forecast.displayMeta}
                       />
                     </Suspense>
+                  ) : forecast.error ? (
+                    <section className="atlas-forecast-error-card" aria-labelledby="forecast-error-title">
+                      <h2 id="forecast-error-title" className="atlas-forecast-loading__title">
+                        {t('hava81.forecastAtlas.title')}
+                      </h2>
+                      <div className="atlas-message atlas-message--inline" role="status">
+                        <p>{t('errors.forecastUnavailable')}</p>
+                        {canRetryForecast && (
+                          <button type="button" className="atlas-text-button" onClick={retryForecast}>
+                            {t('common.retry')}
+                          </button>
+                        )}
+                      </div>
+                    </section>
                   ) : null}
                 </div>
 
-                {forecast.error && (
+                {forecast.error && forecast.displayMeta && (
                   <section className="atlas-message atlas-message--inline" role="status">
                     <p>{t('errors.forecastUnavailable')}</p>
                     {canRetryForecast && (
