@@ -701,7 +701,7 @@ describe('Hava81 app integration', () => {
     expect(
       await screen.findByRole('heading', { name: /şehir karşılaştırması/i })
     ).toBeInTheDocument();
-    expect(compare!).toHaveAttribute('aria-current', 'location');
+    expect(compare!).toHaveAttribute('aria-current', 'page');
     expect(compare!).not.toHaveAttribute('aria-pressed');
   });
 
