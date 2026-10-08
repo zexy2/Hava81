@@ -62,6 +62,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const [displayIntervalHours, setDisplayIntervalHours] = useState(1);
   const hourlyViewportRef = useRef<HTMLDivElement>(null);
+  const [hourlyScroll, setHourlyScroll] = useState({
+    scrollable: false,
+    canGoBack: false,
+    canGoForward: false,
+  });
   const id = useId();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const temperatureSymbol = getTemperatureSymbol();
@@ -270,6 +275,46 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     MIN_CHART_WIDTH,
     hourlyData.length * MIN_DISPLAY_COLUMN_WIDTH
   )}px)`;
+  useEffect(() => {
+    const viewport = hourlyViewportRef.current;
+    if (!viewport) return;
+    const update = () => {
+      const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+      const next = {
+        scrollable: maxScroll > 16,
+        // Scroll snapping may place the first forecast tile a few pixels off zero.
+        canGoBack: viewport.scrollLeft > 16,
+        canGoForward: viewport.scrollLeft < maxScroll - 16,
+      };
+      setHourlyScroll(previous =>
+        previous.scrollable === next.scrollable &&
+        previous.canGoBack === next.canGoBack &&
+        previous.canGoForward === next.canGoForward
+          ? previous
+          : next
+      );
+    };
+    update();
+    viewport.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;
+    observer?.observe(viewport);
+    return () => {
+      viewport.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      observer?.disconnect();
+    };
+  }, [hourlyData.length, displayIntervalHours, forecastFreshness.fresh]);
+
+  const scrollHourly = (direction: -1 | 1) => {
+    const viewport = hourlyViewportRef.current;
+    if (!viewport) return;
+    viewport.scrollBy({
+      left: direction * Math.round(viewport.clientWidth * 0.75),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+  };
+
   const selectDisplayInterval = (hours: number) => {
     setDisplayIntervalHours(hours);
     if (hourlyViewportRef.current) hourlyViewportRef.current.scrollLeft = 0;
@@ -407,6 +452,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
           <div
             ref={hourlyViewportRef}
+            id={`${id}-hourly-viewport`}
             className="hava81-forecast-atlas__hourly-viewport"
             role="region"
             aria-label={t('hava81.forecastAtlas.hourlyRegion')}
@@ -646,6 +692,37 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               </ol>
             </div>
           </div>
+          {hourlyScroll.scrollable ? (
+            <div
+              className="hava81-forecast-atlas__scroll-navigation"
+              role="group"
+              aria-label={t('hava81.forecastAtlas.scrollNavigation')}
+            >
+              <span className="hava81-forecast-atlas__scroll-hint">
+                {t('hava81.forecastAtlas.scrollHint')}
+              </span>
+              <div className="hava81-forecast-atlas__scroll-actions">
+                <button
+                  type="button"
+                  aria-controls={`${id}-hourly-viewport`}
+                  aria-label={t('hava81.forecastAtlas.scrollPrevious')}
+                  disabled={!hourlyScroll.canGoBack}
+                  onClick={() => scrollHourly(-1)}
+                >
+                  <span aria-hidden="true">←</span>
+                </button>
+                <button
+                  type="button"
+                  aria-controls={`${id}-hourly-viewport`}
+                  aria-label={t('hava81.forecastAtlas.scrollNext')}
+                  disabled={!hourlyScroll.canGoForward}
+                  onClick={() => scrollHourly(1)}
+                >
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
           {intervalHours === 1 && meta?.provider ? (
             <p className="hava81-forecast-atlas__source">
               <span className="hava81-forecast-atlas__source-label">

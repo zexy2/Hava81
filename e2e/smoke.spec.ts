@@ -5467,3 +5467,34 @@ test('tablet header remains usable with 200 percent text', async ({ page }, test
     expect(measure.stackedAfterActions, `200% search stays below actions at ${width}px`).toBe(true);
   }
 });
+
+// The 24-hour rail extends beyond phone screens. Buttons should reveal the
+// remaining forecast without changing its selected sampling interval.
+test('mobile hourly forecast offers accessible forward and back navigation', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile hourly navigation regression');
+  await page.goto('/izmir/');
+  const chart = page.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+  await expect(chart).toBeVisible();
+  const navigation = page.getByRole('group', { name: 'Saatlik tahminde gezin' });
+  await expect(navigation).toBeVisible();
+  if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+    await navigation.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'test-results/visual-audit/forecast-navigation-mobile-390.png' });
+  }
+  const previous = navigation.getByRole('button', { name: 'Önceki saatleri göster' });
+  const next = navigation.getByRole('button', { name: 'Sonraki saatleri göster' });
+  await expect(previous).toBeDisabled();
+  await expect(next).toBeEnabled();
+  await next.click();
+  await expect.poll(() => chart.evaluate(el => el.scrollLeft)).toBeGreaterThan(10);
+  await expect(previous).toBeEnabled();
+  await previous.click();
+  await expect.poll(() => chart.evaluate(el => el.scrollLeft)).toBeLessThan(17);
+  await expect(previous).toBeDisabled();
+  await expect(next).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  // Sampling down the 24-hour forecast avoids needless navigation controls.
+  await page.getByRole('button', { name: /12s.*12 saatte bir göster/i }).click();
+  await expect(navigation).toBeHidden();
+});
