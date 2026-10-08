@@ -73,7 +73,7 @@ export const tr = {
       now: 'Şu an dışarı çıkmak için hava uygun.',
       later: 'Dışarı çıkmak için biraz beklemek daha iyi olabilir.',
       similar: 'Yakın saatlerde hava koşulları benzer görünüyor.',
-      bestHours: 'Hava açısından en yüksek puanlı saatler: {{hours}}',
+      bestHours: 'Önümüzdeki 12 saatte hava açısından en yüksek puanlı saatler: {{hours}}',
       score: 'Hava81 Skoru',
       umbrella: 'Şemsiye: {{advice}}',
       details: 'Skorun nedenini gör',
@@ -237,12 +237,12 @@ export const tr = {
       },
       nowOrLater: {
         label: 'Şimdi mi, sonra mı?',
-        later: '{{time}} civarı hava koşulları dışarı çıkmak için daha rahat görünüyor.',
+        later: 'Önümüzdeki 6 saatte {{time}} civarı hava koşulları şu ana göre daha elverişli görünüyor.',
         now: 'Hava koşulları şimdi çıkmak için yakın saatlere göre daha avantajlı görünüyor.',
         similar: 'Yakın saatler arasında hava açısından belirgin bir avantaj görünmüyor.',
       },
-      bestWindow: 'Hava açısından en iyi görünen saat: {{time}}',
-      bestRange: 'Hava açısından en uygun görünen aralık: {{start}}–{{end}}',
+      bestWindow: 'Hava açısından önümüzdeki 12 saatte en iyi görünen saat: {{time}}',
+      bestRange: 'Hava açısından önümüzdeki 12 saatte en uygun görünen aralık: {{start}}–{{end}}',
       quickLabel: 'Pratik hava kararları',
       quick: {
         umbrella: {

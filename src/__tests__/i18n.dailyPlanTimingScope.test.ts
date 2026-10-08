@@ -14,7 +14,24 @@ describe('daily plan timing weather scope', () => {
       cityName: 'İstanbul', score: 80, band: 'good' as const, bestTime: '18:00–20:00',
       umbrella: 'maybe' as const,
     };
-    expect(buildDecisionShare({ ...common, language: 'en' }).text).toContain('Best weather window: 18:00–20:00');
-    expect(buildDecisionShare({ ...common, language: 'tr' }).text).toContain('En uygun hava penceresi: 18:00–20:00');
+    expect(buildDecisionShare({ ...common, language: 'en' }).text).toContain('Best weather window in the next 12 hours: 18:00–20:00');
+    expect(buildDecisionShare({ ...common, language: 'tr' }).text).toContain('Önümüzdeki 12 saatte en uygun hava penceresi: 18:00–20:00');
   });
+  it('explains the 6-hour now-or-later recommendation versus the 12-hour peak', () => {
+    for (const locale of [tr, en]) {
+      expect(locale.hava81.dailyPlan.nowOrLater.later).toContain('6');
+      expect(locale.hava81.dailyPlan.bestWindow).toContain('12');
+      expect(locale.hava81.dailyPlan.bestRange).toContain('12');
+      expect(locale.hava81.glance.bestHours).toContain('12');
+    }
+    // Keep translation placeholders intact, so both visible and shared
+    // recommendations continue to include their actual local times.
+    for (const locale of [tr, en]) {
+      expect(locale.hava81.dailyPlan.nowOrLater.later).toContain('{{time}}');
+      expect(locale.hava81.dailyPlan.bestWindow).toContain('{{time}}');
+      expect(locale.hava81.dailyPlan.bestRange).toContain('{{start}}–{{end}}');
+      expect(locale.hava81.glance.bestHours).toContain('{{hours}}');
+    }
+  });
+
 });
