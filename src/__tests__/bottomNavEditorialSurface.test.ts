@@ -44,7 +44,7 @@ describe('mobile bottom navigation editorial surface', () => {
     expect(component).not.toContain('function SavedIcon()');
     expect(component).not.toContain("label: t('navigation.saved'");
     expect(app).toContain("if (item === 'compare')");
-    expect(app).toContain("<ComparePanel cities={favorites}");
+    expect(app).toMatch(/<ComparePanel\s+[\s\S]*?cities=\{favorites\}/);
   });
 
   it('does not offer an unusable map destination before weather exists', () => {

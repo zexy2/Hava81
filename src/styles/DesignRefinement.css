@@ -1,0 +1,569 @@
+/* Hava81 v2 refinement: a single surface and spacing language from hero to footer.
+ * Kept separate from existing CSS to avoid rewriting proven weather calculations.
+ */
+.app {
+  --refine-card-shadow: 0 14px 36px rgb(47 89 139 / 0.07), 0 3px 10px rgb(40 76 126 / 0.035);
+  --refine-panel-line: color-mix(in srgb, var(--color-atlas-line) 65%, transparent);
+  --refine-highlight: color-mix(in srgb, var(--color-aegean-pale) 55%, var(--color-atlas-paper));
+  --refine-radius: 22px;
+}
+.app[data-color-mode='dark'] {
+  --refine-card-shadow: 0 16px 35px rgb(0 0 0 / 0.16), 0 3px 9px rgb(0 0 0 / 0.08);
+  --refine-highlight: color-mix(in srgb, var(--color-aegean-pale) 32%, var(--color-atlas-paper));
+}
+.app .daily-plan,
+.app .commute-plan,
+.app .activity-planner,
+.app .decision-alerts,
+.app .route-weather,
+.app .hava81-compare,
+.app .context-signals {
+  min-width: 0;
+  margin: 0;
+  padding: clamp(1.1rem, 2.3vw, 1.8rem);
+  color: var(--color-atlas-ink);
+  background: var(--color-atlas-paper);
+  border: 1px solid var(--refine-panel-line);
+  border-radius: var(--refine-radius);
+  box-shadow: var(--refine-card-shadow);
+}
+.app .daily-plan,
+.app .activity-planner {
+  gap: clamp(0.9rem, 1.5vw, 1.3rem);
+}
+.app .daily-plan__header h2,
+.app .commute-plan__header h2,
+.app .activity-planner__header h2,
+.app .decision-alerts h2,
+.app .hava81-compare__header h2 {
+  color: var(--premium-ink);
+  font-weight: 760;
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+}
+.app .daily-plan__header,
+.app .commute-plan__header,
+.app .activity-planner__header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--refine-panel-line);
+}
+.app .daily-plan__share {
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--color-atlas-line);
+  background: var(--refine-highlight);
+  border-radius: 12px;
+  color: var(--color-aegean-deep);
+  font-weight: 700;
+}
+.app .daily-plan__score {
+  min-width: auto;
+  grid-template-columns: auto auto;
+  gap: 0.1rem;
+  align-self: center;
+}
+.app .daily-plan__score strong {
+  font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+  font-weight: 780;
+  color: var(--premium-ink);
+}
+.app .daily-plan__score small {
+  font-size: 0.64rem;
+  letter-spacing: 0.025em;
+  text-align: end;
+}
+.app .daily-plan__decision {
+  padding: 1.2rem 1.35rem;
+  gap: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 18%, var(--color-atlas-line));
+  border-left: 4px solid var(--color-aegean);
+  background: var(--refine-highlight);
+  border-radius: 15px;
+}
+.app .daily-plan__decision strong {
+  font-size: clamp(1rem, 1.45vw, 1.18rem);
+  line-height: 1.45;
+}
+.app .daily-plan__quick {
+  gap: 0.65rem;
+  border: none;
+  background: transparent;
+}
+.app .daily-plan__quick > div,
+.app .daily-plan__quick > div + div {
+  min-width: 0;
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 13px;
+  padding: 0.85rem;
+  background: var(--refine-highlight);
+}
+.app .daily-plan__quick strong {
+  overflow-wrap: anywhere;
+}
+.app .daily-plan__slots {
+  gap: 0.45rem;
+  padding: 0.15rem 0 0.6rem;
+  border: none;
+  background: transparent;
+  scroll-snap-type: x proximity;
+}
+.app .daily-plan__slot {
+  min-height: 8rem;
+  padding: 0.85rem;
+  border: 1px solid var(--refine-panel-line);
+  border-top: 3px solid var(--color-aegean);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 82%, var(--color-aegean-pale));
+  scroll-snap-align: start;
+}
+.app .daily-plan__slot + .daily-plan__slot {
+  border-inline-start: 1px solid var(--refine-panel-line);
+}
+.app .daily-plan__slot > strong {
+  color: var(--premium-ink);
+  font-size: 1.75rem;
+  font-weight: 750;
+}
+.app .daily-plan__slot--caution {
+  border-top-color: var(--color-saffron);
+}
+.app .daily-plan__slot--difficult {
+  border-top-color: var(--color-vermilion);
+}
+.app .daily-plan__notes {
+  border-top: 1px solid var(--refine-panel-line);
+  padding-top: 0.7rem;
+}
+.app .daily-plan__explain {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 89%, var(--color-aegean-pale));
+}
+.app .daily-plan__explain-head {
+  gap: 0.7rem;
+}
+.app .daily-plan__explain > p {
+  max-width: 75ch;
+}
+.app .commute-plan__times {
+  gap: 0.85rem;
+}
+.app .commute-plan__times input {
+  background: var(--color-atlas-field);
+  border-radius: 12px;
+  border-color: var(--color-atlas-line);
+}
+.app .commute-plan__verdict {
+  border: 1px solid var(--refine-panel-line);
+  border-left: 4px solid var(--color-aegean);
+  border-radius: 14px;
+  background: var(--refine-highlight);
+}
+.app .commute-plan__windows {
+  gap: 0.7rem;
+  background: transparent;
+  border: none;
+}
+.app .commute-window {
+  background: var(--refine-highlight);
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 14px;
+}
+.app .activity-planner__window,
+.app .activity-planner__header {
+  border-bottom: 1px solid var(--refine-panel-line);
+}
+.app .activity-planner__chips {
+  gap: 0.55rem;
+}
+.app .activity-planner__chips button {
+  border: 1px solid var(--color-atlas-line);
+  border-radius: 99px;
+  background: var(--refine-highlight);
+  box-shadow: 0 2px 6px rgb(30 75 135 / 0.025);
+}
+.app .activity-planner__chips button.is-active {
+  color: #fff;
+  background: #236bd9;
+  border-color: #236bd9;
+}
+.app .activity-planner__cards {
+  gap: 0.85rem;
+}
+.app .activity-card {
+  padding: 1.15rem;
+  min-height: 10rem;
+  gap: 0.7rem;
+  border: 1px solid var(--refine-panel-line);
+  border-top: 4px solid var(--color-aegean);
+  border-radius: 16px;
+  background: var(--refine-highlight);
+}
+.app .activity-card--caution {
+  border-top-color: var(--color-saffron);
+}
+.app .activity-card--difficult {
+  border-top-color: var(--color-vermilion);
+}
+.app .activity-card > header,
+.app .activity-card header {
+  gap: 0.65rem;
+}
+.app .activity-planner__sensitivity select {
+  background: var(--color-atlas-field);
+}
+.app .decision-alerts {
+  gap: 1rem;
+  align-items: center;
+}
+.app .decision-alerts button {
+  padding-inline: 1.15rem;
+  border-radius: 12px;
+  color: #fff;
+  background: #246ad6;
+  border-color: #246ad6;
+  box-shadow: 0 3px 10px rgb(36 106 214 / 0.17);
+}
+.app .decision-alerts button:hover:not(:disabled) {
+  color: #fff;
+  background: #1654b5;
+}
+.app .route-weather {
+  padding: 0;
+}
+.app .route-weather summary {
+  padding: 1.15rem clamp(1.1rem, 2.3vw, 1.8rem);
+  font-weight: 700;
+}
+.app .route-weather__body {
+  padding-inline: clamp(1.1rem, 2.3vw, 1.8rem);
+  padding-bottom: 1.3rem;
+}
+.app .route-weather summary:hover {
+  background: var(--refine-highlight);
+}
+.app .route-weather__form select,
+.app .route-weather__form input {
+  border-radius: 11px;
+}
+.app .hava81-compare {
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.app .hava81-compare__table {
+  gap: 1rem;
+  border: none;
+}
+.app .hava81-compare__city,
+.app .hava81-compare__city:first-child {
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 16px;
+  background: var(--refine-highlight);
+}
+.app .hava81-compare__city.is-winner {
+  border-color: var(--color-aegean);
+  box-shadow: inset 0 3px var(--color-aegean);
+}
+.app .weather-map {
+  padding-top: 0;
+}
+.app .weather-map__container {
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 18px;
+  box-shadow: var(--refine-card-shadow);
+}
+.app .weather-map__plate-marker span {
+  border-radius: 10px;
+  background: #1954a8;
+}
+.app .weather-map__attribution {
+  margin-top: 0.8rem;
+  font-size: 0.77rem;
+}
+.app .weather-map__legend {
+  gap: 0.6rem 1rem;
+}
+@media (max-width: 63.99rem) {
+  .app .daily-plan,
+  .app .commute-plan,
+  .app .activity-planner,
+  .app .decision-alerts,
+  .app .route-weather,
+  .app .hava81-compare {
+    padding: clamp(1rem, 2.8vw, 1.5rem);
+    border-radius: 18px;
+  }
+  .app .route-weather {
+    padding: 0;
+  }
+  .app .daily-plan__quick {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .daily-plan__header {
+    gap: 0.75rem;
+  }
+  .app .daily-plan__header-actions {
+    gap: 0.4rem;
+  }
+  .app .daily-plan__score strong {
+    font-size: 1.85rem;
+  }
+  .app .daily-plan__score small {
+    font-size: 0.6rem;
+  }
+  .app .daily-plan__quick {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .daily-plan__quick > div:last-child {
+    grid-column: 1 / -1;
+  }
+  .app .daily-plan__quick > div {
+    padding: 0.7rem;
+  }
+  .app .daily-plan__slots {
+    grid-auto-columns: 7.5rem;
+  }
+  .app .daily-plan__slot {
+    min-width: 7.5rem;
+  }
+  .app .commute-plan__times {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .activity-planner__header {
+    gap: 0.8rem;
+  }
+  .app .activity-planner__cards {
+    gap: 0.7rem;
+  }
+  .app .decision-alerts {
+    grid-template-columns: 1fr;
+  }
+  .app .decision-alerts button {
+    justify-self: start;
+  }
+  .app .route-weather__body {
+    padding-inline: 1rem;
+  }
+  .app .hava81-compare__header {
+    flex-wrap: wrap;
+  }
+  .app .weather-map__container {
+    height: clamp(20rem, 60vh, 32rem);
+  }
+}
+/* Forecast day rows do not impersonate a hidden horizontal carousel on phones. */
+@media (max-width: 39.99rem) {
+  .app .hava81-forecast-atlas__days {
+    display: grid;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    gap: 0.35rem;
+    overflow: visible;
+    border: none;
+    scroll-snap-type: none;
+  }
+  .app .hava81-forecast-atlas__day {
+    display: grid;
+    grid-template-areas: 'day symbol description temperatures' 'precipitation precipitation precipitation precipitation';
+    grid-template-columns: minmax(3.2rem, 0.65fr) 1.6rem minmax(0, 1fr) auto;
+    gap: 0.35rem 0.5rem;
+    min-height: 50px;
+    padding: 0.6rem 0.65rem;
+    align-items: center;
+    border: 1px solid var(--refine-panel-line);
+    border-radius: 12px;
+    background: var(--refine-highlight);
+  }
+  .app .hava81-forecast-atlas__day-name {
+    font-size: 0.75rem;
+  }
+  .app .hava81-forecast-atlas__description {
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+  .app .hava81-forecast-atlas__day-temperatures {
+    font-size: 0.75rem;
+    gap: 2px;
+  }
+  .app .hava81-forecast-atlas__day-temperatures strong {
+    font-size: 0.85rem;
+    font-weight: 750;
+  }
+  .app .hava81-forecast-atlas__day-pop {
+    font-size: 0.7rem;
+  }
+}
+@media (max-width: 24rem) {
+  .app .hava81-forecast-atlas__day {
+    grid-template-areas: 'day day temperatures' 'symbol description description' 'precipitation precipitation precipitation';
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+  }
+  .app .commute-plan__times {
+    grid-template-columns: 1fr;
+  }
+  .app .daily-plan__quick {
+    grid-template-columns: 1fr;
+  }
+  .app .daily-plan__quick > div:last-child {
+    grid-column: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .activity-planner__chips button:hover {
+    transform: none;
+  }
+}
+
+/* Decision method stays available but does not repeat the hero on every visit. */
+.app .daily-plan__explain {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--refine-panel-line);
+  border-radius: 14px;
+  background: var(--refine-highlight);
+}
+.app .daily-plan__explain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--premium-ink);
+}
+.app .daily-plan__explain-head::-webkit-details-marker {
+  display: none;
+}
+.app .daily-plan__explain-head::after {
+  content: '⌄';
+  color: var(--color-aegean);
+  font-size: 1.45rem;
+  line-height: 1;
+  transition: transform 0.16s ease;
+}
+.app .daily-plan__explain[open] .daily-plan__explain-head::after {
+  transform: rotate(180deg);
+}
+.app .daily-plan__explain-head:focus-visible {
+  outline: 3px solid var(--color-aegean);
+  outline-offset: -3px;
+}
+.app .daily-plan__explain > .daily-plan__impacts,
+.app .daily-plan__explain > .daily-plan__stable,
+.app .daily-plan__explain > p {
+  margin: 0.75rem 1rem;
+}
+.app .daily-plan__explain > p {
+  padding-bottom: 0.5rem;
+}
+.app .daily-plan__explain[open] .daily-plan__explain-head {
+  border-bottom: 1px solid var(--refine-panel-line);
+}
+.app .daily-plan__explain-head > div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.app .daily-plan__explain-head > div strong {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+.app .hava81-compare__empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  max-width: 42rem;
+  width: 100%;
+  margin: 0.4rem auto 0.8rem;
+  padding: clamp(1.25rem, 3.5vw, 2.6rem);
+  border: 1px dashed color-mix(in srgb, var(--color-aegean) 30%, var(--refine-panel-line));
+  border-radius: 20px;
+  background: var(--refine-highlight);
+  gap: 0.7rem;
+}
+.app .hava81-compare__empty h3 {
+  margin: 0.1rem 0;
+  color: var(--premium-ink);
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  letter-spacing: -0.03em;
+}
+.app .hava81-compare__empty p {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--color-atlas-muted);
+  line-height: 1.55;
+}
+.app .hava81-compare__empty-tip {
+  font-size: 0.9rem;
+}
+.app .hava81-compare__empty-illustration {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 6.2rem;
+  height: 5.3rem;
+  padding: 0.65rem;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--color-aegean-pale) 68%, var(--color-atlas-paper));
+}
+.app .hava81-compare__empty-bar {
+  width: 1.2rem;
+  height: 45%;
+  border-radius: 6px 6px 3px 3px;
+  background: #83b6f7;
+}
+.app .hava81-compare__empty-bar:nth-child(2) {
+  height: 78%;
+  background: #276cdc;
+}
+.app .hava81-compare__empty-bar:nth-child(3) {
+  height: 61%;
+  background: #30ba94;
+}
+.app .hava81-compare__empty-action {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.3rem;
+  color: #fff;
+  background: #216bdc;
+  border: 1px solid #216bdc;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 740;
+  cursor: pointer;
+}
+.app .hava81-compare__empty-action:hover {
+  background: #154da7;
+}
+.app .hava81-compare__empty-action:focus-visible {
+  outline: 3px solid var(--color-atlas-ink);
+  outline-offset: 3px;
+}
+@media (max-width: 47.99rem) {
+  .app .daily-plan__explain-head {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .app .daily-plan__explain-head::after {
+    margin-left: auto;
+  }
+  .app .hava81-compare__empty {
+    margin-top: 0.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .daily-plan__explain-head::after {
+    transition: none;
+  }
+}
