@@ -73,7 +73,7 @@ export const en = {
       now: 'Weather is suitable for going outside now.',
       later: 'Waiting a little could mean better outdoor weather.',
       similar: 'Weather looks similar over the next few hours.',
-      bestHours: 'Highest-scoring weather window: {{hours}}',
+      bestHours: 'Highest-scoring weather window in the next 12 hours: {{hours}}',
       score: 'Hava81 Score',
       umbrella: 'Umbrella: {{advice}}',
       details: 'See why this score',
@@ -234,12 +234,12 @@ export const en = {
       },
       nowOrLater: {
         label: 'Now or later?',
-        later: 'Weather conditions look more comfortable for going out around {{time}}.',
+        later: 'Weather conditions in the next 6 hours look more comfortable around {{time}} than now.',
         now: 'Weather conditions look better for going out now than in the next few hours.',
         similar: 'There is no meaningful weather advantage between the next few hours.',
       },
-      bestWindow: 'Best-looking weather time: {{time}}',
-      bestRange: 'Best-looking weather range: {{start}}–{{end}}',
+      bestWindow: 'Best-looking weather time in the next 12 hours: {{time}}',
+      bestRange: 'Best-looking weather range in the next 12 hours: {{start}}–{{end}}',
       quickLabel: 'Practical weather decisions',
       quick: {
         umbrella: {
