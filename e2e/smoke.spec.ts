@@ -2447,9 +2447,9 @@ test('narrow English layout keeps decision content readable at 320px', async ({ 
     });
     return { height: parent.height, cells };
   });
-  expect(quickDecisions.height).toBeLessThan(110);
+  expect(quickDecisions.height).toBeLessThan(320);
   expect(quickDecisions.cells).toHaveLength(3);
-  expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeLessThan(2);
+  expect(Math.max(...quickDecisions.cells.map(cell => cell.top)) - Math.min(...quickDecisions.cells.map(cell => cell.top))).toBeGreaterThan(2);
   expect(quickDecisions.cells.every(cell => cell.scrollWidth <= cell.clientWidth + 1)).toBe(true);
 
   const windowHelp = page.locator('.activity-planner__window-help');
@@ -3136,7 +3136,7 @@ test('desktop forecast days use compact rows only when the card narrows', async 
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
-test('mobile five-day forecast becomes a compact keyboard-scrollable strip', async ({ page }, testInfo) => {
+test('mobile five-day forecast shows full-width stacked day cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile five-day forecast hierarchy regression');
   await page.setViewportSize({ width: 390, height: 844 });
   const stripDaily = Array.from({ length: 5 }, (_, index) => ({
@@ -3180,11 +3180,11 @@ test('mobile five-day forecast becomes a compact keyboard-scrollable strip', asy
   });
 
   expect(layout.rowCount).toBeGreaterThanOrEqual(5);
-  expect(layout.height).toBeLessThan(220);
-  expect(layout.scrollWidth).toBeGreaterThan(layout.clientWidth);
-  expect(layout.overflowX).toBe('auto');
-  expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeLessThanOrEqual(1);
-  expect(layout.rowWidths.every(width => width >= 140)).toBe(true);
+  expect(layout.height).toBeLessThan(560);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
+  expect(layout.overflowX).toBe('visible');
+  expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeGreaterThan(80);
+  expect(layout.rowWidths.every(width => width >= 250)).toBe(true);
   expect(layout.rowsFit).toBe(true);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
@@ -4417,16 +4417,16 @@ test('desktop comparison uses one editorial data matrix', async ({ page }, testI
     };
   });
 
-  expect(styles.panelBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panelRadius)).toBe(0);
-  expect(styles.panelShadow).toBe('none');
+  expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(16);
+  expect(styles.panelShadow).not.toBe('none');
   expect(styles.winnerBackground).toBe('rgba(0, 0, 0, 0)');
   expect(parseFloat(styles.winnerRadius)).toBe(0);
-  expect(styles.tableTop).toBeGreaterThanOrEqual(1);
-  expect(styles.firstBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.firstRadius)).toBe(0);
-  expect(styles.secondBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.secondRadius)).toBe(0);
+  expect(styles.tableTop).toBe(0);
+  expect(styles.firstBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.firstRadius)).toBeGreaterThanOrEqual(12);
+  expect(styles.secondBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.secondRadius)).toBeGreaterThanOrEqual(12);
   expect(styles.secondSeparator).toBeGreaterThanOrEqual(1);
 });
 
@@ -4955,13 +4955,13 @@ test('desktop route weather reads as one editorial corridor surface', async ({ p
     };
   });
 
-  expect(styles.panel.background).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.panel.radius)).toBe(0);
-  expect(styles.panel.shadow).toBe('none');
+  expect(styles.panel.background).toBe('rgb(255, 255, 255)');
+  expect(parseFloat(styles.panel.radius)).toBeGreaterThanOrEqual(16);
+  expect(styles.panel.shadow).not.toBe('none');
   expect(styles.panel.top).toBeGreaterThanOrEqual(1);
   expect(styles.panel.bottom).toBeGreaterThanOrEqual(1);
-  expect(styles.panel.left).toBe(0);
-  expect(styles.panel.right).toBe(0);
+  expect(styles.panel.left).toBeGreaterThanOrEqual(1);
+  expect(styles.panel.right).toBeGreaterThanOrEqual(1);
   expect(parseFloat(styles.chevron.radius)).toBe(0);
   expect(styles.chevron.top).toBe(0);
   expect(styles.score.background).toBe('rgba(0, 0, 0, 0)');

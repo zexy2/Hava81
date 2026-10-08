@@ -573,3 +573,31 @@
 .app .hava81-compare__header h2:focus {
   outline: none;
 }
+
+/* Keep forecast descriptions readable even when the visitor doubles font size. */
+@media (max-width: 39.99rem) {
+  .app .hava81-forecast-atlas__day {
+    grid-template-areas: 'day day temperatures' 'symbol description description' 'precipitation precipitation precipitation';
+    grid-template-columns: minmax(1.6rem, auto) minmax(0, 1fr) auto;
+  }
+}
+/* Container-relative rem breakpoint responds to a 200% font preference. */
+@container (max-width: 55rem) {
+  .app .route-weather__form {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .app .route-weather__form > label:nth-of-type(3),
+  .app .route-weather__form > button:last-child {
+    grid-column: 1 / -1;
+  }
+}
+/* Windows high contrast: selected buttons must have a distinct semantic border. */
+@media (forced-colors: active) {
+  .app .activity-planner__chips button[aria-pressed='true'] {
+    color: Highlight;
+    border-color: Highlight;
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+    background: Canvas;
+  }
+}
