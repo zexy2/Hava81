@@ -85,7 +85,15 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
                 <span className="atlas-bottom-nav__saved-mark" aria-hidden="true" />
               ) : null}
             </span>
-            <span className="atlas-bottom-nav__label">{item.label}</span>
+            <span className="atlas-bottom-nav__label">
+              {item.value === 'compare' && item.label === 'Karşılaştır' ? (
+                <>
+                  Karşı<wbr />laştır
+                </>
+              ) : (
+                item.label
+              )}
+            </span>
           </button>
         );
       })}
