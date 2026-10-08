@@ -5288,3 +5288,28 @@ test('mobile score explanation stays compact while every activity stays visible'
   expect(enlarged.buttonsFit).toBe(true);
   expect(enlarged.pageFits).toBe(true);
 });
+
+test('mobile weather icon fits the temperature card at normal and enlarged type', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile-only icon containment regression');
+
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/izmir/');
+    const icon = page.locator('.hava81-decision-field__weather-symbol');
+    await expect(icon).toBeVisible();
+
+    for (const rootFontSize of ['100%', '200%']) {
+      await page.evaluate(size => { document.documentElement.style.fontSize = size; }, rootFontSize);
+      const dims = await page.evaluate(() => {
+        const card = document.querySelector('.hava81-decision-field__current')!.getBoundingClientRect();
+        const icon = document.querySelector('.hava81-decision-field__weather-symbol')!.getBoundingClientRect();
+        return { fits: icon.left >= card.left - 1 && icon.right <= card.right + 1 &&
+          icon.top >= card.top - 1 && icon.bottom <= card.bottom + 1,
+          iconWidth: icon.width, horizontalOverflow: document.documentElement.scrollWidth > innerWidth };
+      });
+      expect(dims.fits, `icon must fit at ${width}px and ${rootFontSize}`).toBe(true);
+      expect(dims.horizontalOverflow).toBe(false);
+      expect(dims.iconWidth).toBeGreaterThan(30);
+    }
+  }
+});
