@@ -29,12 +29,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci --no-audit
-      - name: Audit frontend production dependencies
+      # Frontend dev tooling also ships in CI and previously contained audit
+      # findings. Audit the entire locked graph, not only production packages.
+      - name: Audit all frontend dependencies (including dev tooling)
         env:
           NPM_AUDIT_MAX_ATTEMPTS: '2'
           NPM_AUDIT_ATTEMPT_TIMEOUT_SECONDS: '60'
           NPM_AUDIT_ALLOW_TRANSIENT_UNAVAILABLE: '1'
-        run: bash scripts/run-npm-audit-with-retry.sh npm audit --omit=dev --audit-level=high
+        run: bash scripts/run-npm-audit-with-retry.sh npm audit --audit-level=high
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test:ci
