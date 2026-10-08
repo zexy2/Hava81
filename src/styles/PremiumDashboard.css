@@ -1028,3 +1028,23 @@
     margin-inline: -0.8rem;
   }
 }
+
+/* Focusable environment actions sit against the inset border, keeping the
+   accessible focus ring visible without adding blank trailing space. */
+@media (max-width: 47.99rem) {
+  .app .environment-rail {
+    padding: 0;
+  }
+}
+/* At 320px with 200% text enlargement keep long activity guidance legible
+   without creating a 1000px header. */
+@media (max-width: 24rem) {
+  .app .activity-planner__header h2 {
+    font-size: 1.35rem;
+    line-height: 1.18;
+  }
+  .app .activity-planner__header p {
+    font-size: 0.93rem;
+    line-height: 1.35;
+  }
+}
