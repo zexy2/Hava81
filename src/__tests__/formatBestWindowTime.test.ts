@@ -44,7 +44,31 @@ describe('formatBestWindowTime calendar-day semantics', () => {
       tomorrowLabel: 'Tomorrow',
       start: date('2026-10-08T12:00:00Z'),
       end: date('2026-10-08T14:00:00Z'),
-    })).toBe('Tomorrow 07:00–09:00');
+    })).toBe('Tomorrow 7:00–9:00 AM');
+  });
+
+  it('uses AM/PM consistently for a window crossing midnight in English', () => {
+    expect(formatBestWindowTime({
+      now: date('2026-10-08T20:15:00Z'),
+      timezoneOffsetSeconds: 3 * 3600,
+      language: 'en',
+      todayLabel: 'Today',
+      tomorrowLabel: 'Tomorrow',
+      start: date('2026-10-08T20:30:00Z'),
+      end: date('2026-10-08T22:30:00Z'),
+    })).toBe('Today 11:30 PM–Tomorrow 1:30 AM');
+  });
+
+  it('keeps late afternoon ranges readable in English', () => {
+    expect(formatBestWindowTime({
+      now: date('2026-10-08T12:00:00Z'),
+      timezoneOffsetSeconds: 3 * 3600,
+      language: 'en',
+      todayLabel: 'Today',
+      tomorrowLabel: 'Tomorrow',
+      start: date('2026-10-08T13:00:00Z'),
+      end: date('2026-10-08T15:00:00Z'),
+    })).toBe('4:00–6:00 PM');
   });
 
   it('labels later dates explicitly when the window is beyond tomorrow', () => {

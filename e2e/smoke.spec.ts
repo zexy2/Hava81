@@ -5963,3 +5963,55 @@ test('decision hero labels a next-day forecast window in the city timezone', asy
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
+
+// English hourly tiles use AM/PM; the recommended window must use the same
+// clock, without overlapping the score on a narrow mobile hero.
+test('English recommended weather window uses readable AM/PM clock at mobile widths', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single English hero locale regression');
+  await page.addInitScript(() => {
+    localStorage.setItem('user-settings', JSON.stringify({
+      temperatureUnit: 'metric', windSpeedUnit: 'ms', themeMode: 'light', language: 'en',
+    }));
+  });
+  const hourly = Array.from({ length: 24 }, (_, index) => ({
+    time: fixtureIsoAtHour(index + 1),
+    temp: 20 + Math.round(5 * Math.sin(index / 5)),
+    icon: '01d', description: 'clear', pop: 5,
+    windSpeed: 2,
+  }));
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({
+    json: { ...hourlyForecast, hourly },
+  }));
+  await page.goto('/istanbul/');
+  const hero = page.locator('.decision-glance');
+  await expect(hero.locator('.decision-glance__window')).toContainText(/AM|PM/);
+  for (const [width, zoom] of [[320, '100%'], [390, '100%'], [320, '200%']] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(value => { document.documentElement.style.fontSize = value; }, zoom);
+    const dimensions = await hero.evaluate(element => {
+      const container = element.getBoundingClientRect();
+      const window = element.querySelector<HTMLElement>('.decision-glance__window')!;
+      // The compact hero intentionally substitutes the first quick chip for
+      // the paragraph. Test whichever one is visible at this breakpoint.
+      const activeWindow = getComputedStyle(window).display === 'none'
+        ? element.querySelector('.decision-glance__quick')!
+        : window;
+      const recommendation = activeWindow.getBoundingClientRect();
+      const score = element.querySelector('.decision-glance__score')!.getBoundingClientRect();
+      const overlaps = Math.max(0, Math.min(recommendation.right, score.right) - Math.max(recommendation.left, score.left)) *
+        Math.max(0, Math.min(recommendation.bottom, score.bottom) - Math.max(recommendation.top, score.top));
+      return {
+        windowInside: recommendation.left >= container.left - 1 && recommendation.right <= container.right + 1,
+        overlap: overlaps,
+        pageFits: document.documentElement.scrollWidth <= innerWidth,
+      };
+    });
+    if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+      await page.screenshot({ path: `test-results/visual-audit/english-best-window-${width}-${zoom}.png` });
+    }
+    expect(dimensions.windowInside, `window inside hero at ${width}px ${zoom}`).toBe(true);
+    expect(dimensions.overlap, `window and score do not collide at ${width}px ${zoom}`).toBe(0);
+    expect(dimensions.pageFits, `page fits at ${width}px ${zoom}`).toBe(true);
+  }
+});

@@ -31,10 +31,14 @@ export function formatBestWindowTime({
   const tomorrowKey = new Date(Date.parse(`${todayKey}T00:00:00.000Z`) + DAY_MS)
     .toISOString()
     .slice(0, 10);
-  const timeFormatter = new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
+  // Other English hourly cards display 12-hour clocks (e.g. 11 PM).
+  // Use the same clock here while preserving tr-TR's 24-hour format and
+  // the en-GB style already used for explicit calendar dates.
+  const english = language.startsWith('en');
+  const timeFormatter = new Intl.DateTimeFormat(english ? 'en-US' : 'tr-TR', {
+    hour: english ? 'numeric' : '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hour12: english,
     timeZone: 'UTC',
   });
   const dateFormatter = new Intl.DateTimeFormat(locale, {
@@ -55,10 +59,16 @@ export function formatBestWindowTime({
   const sameInstant = start.getTime() === end.getTime();
   const sameLocalDay = dayKey(start) === dayKey(end);
   const startsToday = dayKey(start) === todayKey;
+  // Repeating AM/PM needlessly wraps the narrow hero chip. Omit it from the
+  // first clock only when both endpoints share the same local day and period.
+  const samePeriod = english && sameLocalDay &&
+    timeFormatter.formatToParts(local(start)).find(part => part.type === 'dayPeriod')?.value ===
+      timeFormatter.formatToParts(local(end)).find(part => part.type === 'dayPeriod')?.value;
+  const conciseStart = samePeriod ? startTime.replace(/\s*(?:AM|PM)$/, '') : startTime;
 
   if (sameInstant) return startsToday ? startTime : `${prefix(start)} ${startTime}`;
   if (sameLocalDay) {
-    const timeRange = `${startTime}–${endTime}`;
+    const timeRange = `${conciseStart}–${endTime}`;
     return startsToday ? timeRange : `${prefix(start)} ${timeRange}`;
   }
   return `${prefix(start)} ${startTime}–${prefix(end)} ${endTime}`;
