@@ -275,6 +275,8 @@
     border-radius: 16px;
     min-height: 7rem;
   }
+  .app .daily-plan__header > div:first-child { width: 100%; }
+  .app .daily-plan__header::after { right: 0; }
   .app .daily-plan__header h2 { font-size: 1.6rem; }
   .app .daily-plan__score {
     min-width: 5.8rem;
@@ -301,9 +303,11 @@
   .app .context-signal:nth-child(n + 3) { padding: .85rem; border-radius: 13px; }
 }
 @media (max-width: 24rem) {
+  .app .daily-plan__header { padding: .6rem; gap: .2rem; }
+  .app .daily-plan__header-actions { gap: .2rem; }
   .app .daily-plan__header h2 { font-size: 1.35rem; }
-  .app .daily-plan__score { min-width: 5rem; }
-  .app .daily-plan__score strong { font-size: 2rem; }
+  .app .daily-plan__score { min-width: 5rem; padding: .3rem .45rem; }
+  .app .daily-plan__score strong { font-size: 1.55rem; }
   .app .daily-plan__decision { overflow-wrap: anywhere; }
   .app .commute-plan__times { padding: .5rem; }
 }
@@ -319,4 +323,13 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .app .activity-planner__chips button { transition: none; }
+}
+
+/* Mobile English and 200% text: keep the score panel compact enough to
+   leave a full-width heading and predictable non-scrolling header. */
+@media (max-width: 26rem) {
+  .app .daily-plan__header { padding: .65rem; gap: .2rem; }
+  .app .daily-plan__header-actions { gap: .2rem; }
+  .app .daily-plan__score { padding: .3rem .45rem; }
+  .app .daily-plan__score strong { font-size: clamp(1.5rem, 8vw, 2.5rem); }
 }
