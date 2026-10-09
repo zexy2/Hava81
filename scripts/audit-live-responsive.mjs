@@ -5,6 +5,7 @@ import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
+import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
 
 function parseOptions(args) {
   const options = {
@@ -42,6 +43,10 @@ function parseOptions(args) {
   if (!options.cities.length || options.cities.some(v => !/^[a-z]+(?:-[a-z]+)*$/.test(v))) {
     throw new Error('Cities must be a non-empty, comma-separated list of URL-safe slugs');
   }
+  const unknownCities = options.cities.filter(city => !provinceNamesBySlug.has(city));
+  if (unknownCities.length) {
+    throw new Error(`Unknown Turkish province slug(s): ${unknownCities.join(', ')}`);
+  }
   if (!options.languages.length || options.languages.some(v => !['tr', 'en'].includes(v))) {
     throw new Error('Languages must be one or more of: tr,en');
   }
@@ -52,7 +57,6 @@ function parseOptions(args) {
 }
 
 const options = parseOptions(process.argv.slice(2));
-const cityNames = { izmir: 'İzmir', sanliurfa: 'Şanlıurfa' };
 console.log(`Starting read-only audit at ${options.baseUrl} for ${options.cities.length} cities, ${options.languages.join('/')} languages, ${options.themes.join('/')} themes...`);
 const browser = await chromium.launch({
   timeout: 30_000,
@@ -134,9 +138,9 @@ try {
               },
             };
           });
-          const expectedCity = cityNames[city];
+          const expectedCity = provinceNamesBySlug.get(city);
           item.errors = [
-            ...(expectedCity && item.metrics.city !== expectedCity ? [`Expected ${expectedCity}, got ${item.metrics.city}`] : []),
+            ...(item.metrics.city !== expectedCity ? [`Expected ${expectedCity}, got ${item.metrics.city}`] : []),
             ...(item.metrics.language !== language ? [`Expected language ${language}, got ${item.metrics.language}`] : []),
             ...(item.metrics.theme !== theme ? [`Expected theme ${theme}, got ${item.metrics.theme}`] : []),
             ...(item.metrics.forecastState !== 'ready' ? [`Forecast ${item.metrics.forecastState}: final chart not available`] : []),
