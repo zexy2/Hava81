@@ -50,6 +50,7 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
 MAX_STALE_BROWSER_PROCESSES_REPORTED = 8
@@ -558,6 +559,46 @@ def resolve_api_runtime_snapshot_drift(deployed_revision: str, main_revision: st
         'runtime_changed_files': changed,
     }
 
+def api_deploy_freshness(
+    known: bool,
+    pending: bool,
+    latest_main: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Read-only triage: a green GitHub build never implies Oracle API deploy.
+
+    The timestamp describes the *CI run*, not an attempted Oracle deployment.
+    Aging drift means an operator should review the manual deploy; it cannot
+    establish that a deployment is stuck.
+    """
+    age: float | None = None
+    if not known:
+        state = 'unknown'
+    elif not pending:
+        state = 'up_to_date'
+    elif not latest_main or latest_main.get('status') != 'completed':
+        state = 'awaiting_main_ci'
+    elif latest_main.get('conclusion') != 'success':
+        state = 'main_ci_not_green'
+    else:
+        age = timestamp_age_seconds(
+            latest_main.get('updated_at') or latest_main.get('created_at')
+        )
+        if age is None or age < -MAX_FUTURE_SKEW_SECONDS:
+            state = 'pending_age_unknown'
+            age = None
+        elif age < API_DEPLOY_REVIEW_AFTER_SECONDS:
+            state = 'recent_runtime_drift'
+        else:
+            state = 'manual_deploy_review'
+
+    return {
+        'state': state,
+        'ci_age_seconds': round(max(0.0, age)) if age is not None else None,
+        'review_required': state == 'manual_deploy_review',
+        'ci_is_not_api_deploy': True,
+    }
+
+
 def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]:
     main_sha = latest_main.get('head_sha') if latest_main else None
     deployed_revision = read_optional_marker(DEPLOYED_API_REVISION_FILE)
@@ -627,6 +668,7 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
     elif not deployed_revision:
         error = 'deployed API revision marker is missing'
 
+    freshness = api_deploy_freshness(known, pending, latest_main)
     return {
         'main_revision': main_sha,
         'main_tree': main_tree,
@@ -637,6 +679,7 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
         'pending': pending,
         'error': error,
         'lookup': slim_http(lookup) if lookup else None,
+        'freshness': freshness,
     }
 
 
@@ -891,6 +934,11 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
                 'pending',
                 'error',
             )
+        } | {
+            'freshness': {
+                key: ((github.get('api_deployment') or {}).get('freshness') or {}).get(key)
+                for key in ('state', 'review_required')
+            }
         },
     }
 

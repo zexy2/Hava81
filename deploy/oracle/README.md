@@ -23,3 +23,29 @@ sudo deploy/oracle/rollback-api.sh
 ```
 
 Successful deployments also record the deployed repository revision and `apps/api` tree IDs in `/var/lib/hava81/current-api-revision` and `/var/lib/hava81/current-api-tree` for later audits. Keep `deploy/oracle/.env` host-local and untracked.
+
+
+## CI success versus manual API deployment
+
+The frontend GitHub Actions workflow does **not** switch the Oracle API.
+A green `main` CI run is therefore not proof that the API was redeployed.
+The read-only observer compares `current-api-revision` against the latest
+main revision and checks **runtime-relevant** API files before it reports
+`github.api_deployment.pending=true`.
+
+The additional `github.api_deployment.freshness.state` classifies that drift:
+
+- `recent_runtime_drift`: CI succeeded less than two hours ago; allow for
+  operator scheduling or propagation. This does not imply an auto-deploy.
+- `manual_deploy_review`: CI has been green for at least two hours and
+  API runtime drift remains; inspect the deployment history and use
+  `sudo PLAN_ONLY=1 deploy/oracle/deploy-api-blue-green.sh` before
+  considering a manual deployment.
+- `awaiting_main_ci`, `main_ci_not_green`, `pending_age_unknown`,
+  `up_to_date`, `unknown`: distinguish in-flight builds, failed builds,
+  unavailable age evidence, synchronized revisions, and unknown comparisons.
+
+The timestamp used for `ci_age_seconds` is the GitHub **run updated time**,
+not the start or progress of any Oracle deployment. The observer never changes
+Nginx upstreams, ports, or containers, and it does not label any deploy as
+stuck merely because the main branch advanced.
