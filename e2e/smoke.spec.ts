@@ -4501,7 +4501,7 @@ test('mobile interactive controls preserve 44px touch targets', async ({ page },
   expect(undersized).toEqual([]);
 });
 
-test('desktop comparison uses one editorial data matrix', async ({ page }, testInfo) => {
+test('desktop comparison highlights the winner and distinct city cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop comparison visual regression');
   await page.addInitScript(() => {
     localStorage.setItem(
@@ -4547,8 +4547,8 @@ test('desktop comparison uses one editorial data matrix', async ({ page }, testI
   expect(styles.panelBackground).toBe('rgb(255, 255, 255)');
   expect(parseFloat(styles.panelRadius)).toBeGreaterThanOrEqual(16);
   expect(styles.panelShadow).not.toBe('none');
-  expect(styles.winnerBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.winnerRadius)).toBe(0);
+  expect(styles.winnerBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.winnerRadius)).toBeGreaterThanOrEqual(12);
   expect(styles.tableTop).toBe(0);
   expect(styles.firstBackground).not.toBe('rgba(0, 0, 0, 0)');
   expect(parseFloat(styles.firstRadius)).toBeGreaterThanOrEqual(12);
