@@ -14,6 +14,7 @@ import {
   toTurkeyLocalInputValue,
 } from '../../utils/turkeyTime';
 import './RouteWeatherPanel.css';
+import './RouteVisualPolish.css';
 
 interface Props {
   currentCityName: string;
