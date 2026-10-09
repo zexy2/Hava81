@@ -1318,8 +1318,18 @@ kbd {
 
 @media (max-width: 47.99rem) {
   .app .atlas-forecast-loading--card {
-    min-height: 24rem;
+    min-height: 18rem;
     padding: 1rem;
+  }
+
+  /* Keep a readable forecast preview without a tall blank loading column. */
+  .app .atlas-forecast-loading--card .atlas-loading__chart {
+    height: 7rem;
+    margin-block: .75rem;
+  }
+
+  .app .atlas-forecast-loading--card .atlas-loading__rows {
+    height: 4rem;
   }
 }
 
