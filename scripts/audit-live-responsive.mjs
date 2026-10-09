@@ -96,6 +96,12 @@ try {
           await page.locator('.decision-glance__score').waitFor({ timeout: 20_000 });
           await page.locator('.hava81-decision-field__city').waitFor({ timeout: 15_000 });
           await page.evaluate(value => { document.documentElement.style.fontSize = `${value}%`; }, zoom);
+          // The city header and hero can finish before the forecast API and
+          // lazily imported chart. Measure and screenshot the finished content,
+          // not an empty column or transient skeleton. A real error card also
+          // settles the UI, but must be reported rather than counted as pass.
+          await page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card').first()
+            .waitFor({ state: 'visible', timeout: 15_000 });
           item.metrics = await page.evaluate(() => {
             const element = selector => document.querySelector(selector);
             const bounds = selector => element(selector)?.getBoundingClientRect() || null;
@@ -112,6 +118,8 @@ try {
               city: element('.hava81-decision-field__city')?.textContent?.trim(),
               language: document.documentElement.lang,
               theme: element('.app')?.getAttribute('data-color-mode'),
+              forecastState: isVisible('.hava81-forecast-atlas') ? 'ready'
+                : isVisible('.atlas-forecast-error-card') ? 'error' : 'pending',
               documentWidth: document.documentElement.scrollWidth,
               viewportWidth: innerWidth,
               headerHeight: Math.round(bounds('.atlas-header__inner')?.height || 0),
@@ -129,6 +137,7 @@ try {
             ...(expectedCity && item.metrics.city !== expectedCity ? [`Expected ${expectedCity}, got ${item.metrics.city}`] : []),
             ...(item.metrics.language !== language ? [`Expected language ${language}, got ${item.metrics.language}`] : []),
             ...(item.metrics.theme !== theme ? [`Expected theme ${theme}, got ${item.metrics.theme}`] : []),
+            ...(item.metrics.forecastState !== 'ready' ? [`Forecast ${item.metrics.forecastState}: final chart not available`] : []),
             ...(item.metrics.documentWidth > width + 1 ? [`Horizontal overflow: ${item.metrics.documentWidth}px > ${width}px`] : []),
             ...Object.entries(item.metrics.overlaps).filter(([,area]) => area > 1).map(([name,area]) => `${name} overlap: ${area}px²`),
             ...pageErrors.map(error => `JavaScript: ${error}`),
