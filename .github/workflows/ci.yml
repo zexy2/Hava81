@@ -58,6 +58,8 @@ jobs:
         run: node --test scripts/test-live-audit-options.mjs
       - name: Verify live audit API replay avoids rate-limit storms
         run: node --test scripts/test-live-audit-response-cache.mjs
+      - name: Verify published SEO smoke contract
+        run: node --test scripts/test-verify-public-seo.mjs
       - name: Verify observer logrotate contract
         run: bash scripts/test-observer-logrotate.sh
       - name: Verify Hava81 Git compaction contract
@@ -256,3 +258,8 @@ jobs:
           # but allow a bounded ~10 minute edge-propagation window before failing deploy.
           HAVA81_SMOKE_ATTEMPTS: 120
         run: bash scripts/verify-public-shell.sh
+      - name: Verify all 81 published province SEO pages
+        env:
+          HAVA81_PUBLIC_URL: https://hava81.zekiakgul.dev
+          HAVA81_PUBLIC_SEO_ATTEMPTS: '3'
+        run: node scripts/verify-public-seo.mjs
