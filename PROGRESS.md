@@ -128,3 +128,24 @@
 
 ### 🚀 Sıradaki Adım
 - Bağımsız dalı GitHub'a gönderip PR aç; zorunlu `[self-hosted, linux]` CI/CD ile CodeQL başarılı olmadan merge etme. Opak olmayan gradientlerin yanlış yeşil sonuç vermesini önlemek için ayrı negatif fixture testi eklemeyi değerlendir.
+
+## [Hava81 #04] PR #1314 merge ve negatif kontrast fixture
+
+### 🎯 Tamamlanan Geliştirmeler
+- PR #1314 bütün zorunlu self-hosted CI/CD job'ları ve CodeQL `completed/success` doğrulandıktan sonra `expected_head_sha=fd2c341a5722eaff688475fcab5e8d5f2ee90d1c` ile squash merge edildi. Yeni `main`: `cdbabe4510d09e459ac1f4093724c39f989333ed`.
+- Güncel main üzerinden izole `test/hava81-04-negative-contrast-20261009` dalı açıldı.
+- `e2e/mobile-dock-contrast.spec.ts` negatif fixture ile genişletildi: açık/koyu 320px/%200 İngilizce menüde normal metin kontrastı >=4.5:1, düşük kontrast simülasyonunda pasif etiketler <4.5:1 olmalı. Negatif fixture yalnızca değerlendirme fonksiyonunun renk girdisini değiştirir; gerçek CSS mutasyonunu test etmez.
+- İlk gerçek CSS mutasyonu denemesi beklenen kontrast değişimini üretmedi; test yanlış güven vermesin diye DOM mutasyonu yaklaşımı kullanılmadı. Renk girdisine deterministik negatif fixture ile `1/1 PASS`; type-check ve lint başarılı.
+
+### 📸 Görsel Kanıtlar
+- `test-results/playwright-runs/` altında light/dark normal ve negatif fixture ekran görüntüleri bulunur. Negatif fixture üretim DOM'unu değiştirmediği için negatif ekran görüntüsü görsel bozulma kanıtı değildir; hesaplama testi kanıtı olarak değerlendirilmelidir.
+
+### 🚀 Sıradaki Adım
+- Negatif fixture testinin adlandırmasını gerçek kapsamıyla eşleştir, normal/negatif ekranların karıştırılmasını önle; GitHub PR açmadan önce CI kapsamı ve kod incelemesi yap. Merge için yine yeni HEAD'in bütün zorunlu CI/CD+CodeQL kontrollerini bekle.
+
+### [Hava81 #04] Negatif fixture kanıt ayrımı
+- Değerlendiriciye sentetik düşük kontrast girişi veriliyor; üretim CSS/DOM değişmiyor. Negatif ekran görüntüsü üretilmesi kaldırıldı: yalnız normal render için `dock-contrast-320-zoom200-light-baseline.png`, `dock-contrast-320-zoom200-dark-baseline.png` kaydedilir.
+- 320px/%200 English light/dark Playwright 1/1, TypeScript type-check ve ESLint başarılı. Düşük kontrastlı sentetik girdide oran <4.5, normal duraklarda >=4.5 olması sınandı.
+
+### 🚀 Sıradaki Adım
+- Bu test netleştirmesini PR'da incelemeye gönder, CI/CD ve CodeQL sonuçlarını doğrula; başarısız veya bekleyen kontrol varken merge yapma.
