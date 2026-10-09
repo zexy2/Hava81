@@ -37,3 +37,6 @@ yarn-error.log*
 /.lighthouseci
 
 /.lighthouse-results
+
+# Local Playwright browser binaries for isolated visual QA worktrees
+/.pw-browsers/
