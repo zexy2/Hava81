@@ -81,3 +81,16 @@ No production deployment or direct `main` modification is part of this branch.
 PR #1282 is merged and confirmed on `main`. This visual hierarchy follow-up is
 branched from its squash-merged commit `ef053bc` and should merge directly to `main`
 **only after** its own CI/CD, CodeQL, and deployment checks pass.
+
+## Full GitHub browser suite correction
+
+The first CI run on this PR (commit `4b6d13c`) passed the API,
+frontend-quality, Lighthouse, production-build and CodeQL jobs, but
+its browser suite reported a single existing responsive contract failure:
+the weather atmosphere had 0.32 opacity on normal-size mobile screens.
+The revised CSS uses 0.42 for standard mobile type and explicitly keeps
+0.1 opacity in a narrow container at 200% enlarged text. The targeted
+Playwright test for both 320px and 390px passed locally after the change.
+Five full-page screenshot variants were recaptured from the updated
+production preview, again with no page errors or horizontal overflow.
+Do not squash merge until the rerun GitHub browser suite is green.

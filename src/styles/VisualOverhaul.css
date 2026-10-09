@@ -269,7 +269,7 @@
       radial-gradient(ellipse at 98% 0%, rgb(45 157 172 / .26), transparent 57%),
       linear-gradient(114deg, #0a2a40, #164760 70%, #235f78);
   }
-  .app .decision-glance__atmosphere { width: 50%; opacity: .32; }
+  .app .decision-glance__atmosphere { width: 50%; opacity: .42; }
   .app .hava81-decision-field__current {
     background:
       radial-gradient(circle at 80% 24%, rgb(255 255 255 / .56), transparent 31%),
@@ -315,5 +315,13 @@
 @media (max-width: 24rem) {
   .app .hava81-decision-field__city {
     font-size: clamp(1.5rem, 8vw, 2rem);
+  }
+}
+
+/* At 200% enlarged text, atmospheric illustration must fade behind text.
+   Keep this after the mobile-art baseline so the container query wins. */
+@container (max-width: 18rem) {
+  .app .decision-glance__atmosphere {
+    opacity: .1;
   }
 }
