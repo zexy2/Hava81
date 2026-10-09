@@ -350,7 +350,8 @@
 }
 .app .hava81-compare__city.is-winner {
   border: 2px solid color-mix(in srgb, var(--color-aegean) 70%, transparent);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--color-aegean-pale) 53%, var(--color-atlas-paper)), var(--color-atlas-paper) 65%);
+  background-color: var(--color-atlas-paper);
+  background-image: linear-gradient(145deg, color-mix(in srgb, var(--color-aegean-pale) 53%, var(--color-atlas-paper)), var(--color-atlas-paper) 65%);
 }
 .app .hava81-compare__score { font-size: clamp(1.8rem, 2.5vw, 2.35rem); letter-spacing: -.045em; }
 .app .hava81-compare__winner {
