@@ -6442,3 +6442,40 @@ test('map reports dual provider failure and retry recovers tiles', async ({ page
   await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
   await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap France');
 });
+
+// At enlarged text sizes decorative clouds once obscured the decision headline.
+// Keep the weather artwork for standard phones without sacrificing legibility.
+test('mobile decision scenery fades when text is enlarged', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'responsive mobile scenery regression');
+  await page.goto('/izmir/');
+  const hero = page.locator('.decision-glance');
+  await expect(hero.locator('.decision-glance__message')).toBeVisible();
+
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const textSize of ['100%', '200%']) {
+      await page.evaluate(size => { document.documentElement.style.fontSize = size; }, textSize);
+      const result = await hero.evaluate(section => {
+        const atmosphere = section.querySelector('.decision-glance__atmosphere');
+        const headline = section.querySelector('.decision-glance__message');
+        const text = headline!.getBoundingClientRect();
+        const bounds = section.getBoundingClientRect();
+        return {
+          sceneOpacity: Number(getComputedStyle(atmosphere!).opacity),
+          headlineInside: text.left >= bounds.left - 1 && text.right <= bounds.right + 1,
+          viewportFits: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      expect(result.headlineInside, `headline fits at ${width}px ${textSize}`).toBe(true);
+      expect(result.viewportFits, `page fits at ${width}px ${textSize}`).toBe(true);
+      if (textSize === '200%') {
+        expect(result.sceneOpacity, 'enlarged text should have quiet atmospheric artwork').toBeLessThanOrEqual(0.15);
+      } else {
+        expect(result.sceneOpacity, 'normal text retains weather artwork').toBeGreaterThan(0.7);
+      }
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+        await page.screenshot({ path: `test-results/visual-audit/decision-art-${width}-${textSize.replace('%', '')}.png` });
+      }
+    }
+  }
+});
