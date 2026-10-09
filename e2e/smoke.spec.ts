@@ -1943,6 +1943,99 @@ test('desktop context signals present four rounded bento tiles', async ({ page }
   expect(surface.pageWidth).toBeLessThanOrEqual(surface.viewportWidth);
 });
 
+test('blocked notification action remains readable in light, dark and 200% text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'tablet-768', 'desktop/mobile contrast boundary check');
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: { permission: 'denied', requestPermission: async () => 'denied' },
+    });
+  });
+  await page.goto('/istanbul');
+  const button = page.locator('.decision-alerts button');
+  await expect(button).toBeVisible();
+  await expect(button).toBeDisabled();
+  await expect(button).toContainText(/bildirim|notification/i);
+  // DecisionAlertsPanel is lazy-loaded: wait for its split stylesheet before
+  // measuring contrast, not merely for its DOM button to appear.
+  await expect(button).toHaveCSS('opacity', '1');
+  await expect(button).toHaveCSS('background-color', 'rgb(225, 237, 248)');
+
+  const inspect = async () =>
+    button.evaluate(element => {
+      const style = getComputedStyle(element);
+      const parse = (value: string) =>
+        (value.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+      const lightness = (value: string) => {
+        const rgb = parse(value);
+        const channels = rgb.map(c => {
+          const s = c / 255;
+          return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        });
+        return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+      };
+      const foreground = lightness(style.color);
+      const background = lightness(style.backgroundColor);
+      const ratio = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      return {
+        ratio,
+        color: style.color,
+        background: style.backgroundColor,
+        textFill: style.webkitTextFillColor,
+        text: element.textContent?.trim(),
+        buttonScroll: element.scrollWidth,
+        buttonClient: element.clientWidth,
+        pageScroll: document.documentElement.scrollWidth,
+        pageClient: document.documentElement.clientWidth,
+      };
+    });
+
+  for (const mode of ['light', 'dark']) {
+    await page.locator('.app').evaluate((el, mode) => el.setAttribute('data-color-mode', mode), mode);
+    await expect(button).toHaveCSS(
+      'color', mode === 'dark' ? 'rgb(223, 237, 248)' : 'rgb(52, 84, 113)'
+    );
+    // Background transitions for 150ms; measuring immediately can compare
+    // the new dark text against the previous light button background.
+    await expect(button).toHaveCSS(
+      'background-color', mode === 'dark' ? 'rgb(37, 75, 97)' : 'rgb(225, 237, 248)'
+    );
+    const result = await inspect();
+    expect(result.ratio).toBeGreaterThanOrEqual(4.5);
+    expect(result.text).toBeTruthy();
+    expect(result.buttonScroll).toBeLessThanOrEqual(result.buttonClient + 1);
+    expect(result.pageScroll).toBeLessThanOrEqual(result.pageClient);
+  }
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
+  const zoomed = await inspect();
+  expect(zoomed.buttonScroll).toBeLessThanOrEqual(zoomed.buttonClient + 1);
+  expect(zoomed.pageScroll).toBeLessThanOrEqual(zoomed.pageClient);
+  expect(zoomed.ratio).toBeGreaterThanOrEqual(4.5);
+});
+
+test('available notification action is visibly distinct from blocked state', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'one desktop default permission contract');
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: { permission: 'default', requestPermission: async () => 'default' },
+    });
+  });
+  await page.goto('/istanbul');
+  const button = page.locator('.decision-alerts button');
+  await expect(button).toBeEnabled();
+  const colors = await button.evaluate(element => {
+    const style = getComputedStyle(element);
+    return { text: element.textContent?.trim(), foreground: style.color, background: style.backgroundColor, gradient: style.backgroundImage };
+  });
+  expect(colors.text).toBeTruthy();
+  expect(colors.foreground).toBe('rgb(255, 255, 255)');
+  expect(colors.background).not.toBe('rgb(255, 255, 255)');
+  expect(colors.gradient).toContain('linear-gradient');
+});
+
 test('desktop decision alerts read as an editorial utility strip', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision-alerts editorial regression');
   await page.goto('/istanbul');

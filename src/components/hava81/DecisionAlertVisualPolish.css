@@ -48,3 +48,98 @@
   .app .decision-alerts { border: 1px solid CanvasText; }
   .app .decision-alerts button[aria-pressed='true'] { border: 2px solid Highlight; }
 }
+
+/* When notification permission is denied, keep the disabled control legible. */
+.app .decision-alerts {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 92% -15%, rgb(106 197 236 / .25), transparent 48%),
+    linear-gradient(112deg,
+      color-mix(in srgb, var(--color-atlas-paper) 94%, #d9edff),
+      color-mix(in srgb, var(--color-atlas-paper) 72%, #d3eafa));
+  background-color: var(--color-atlas-paper);
+}
+.app .decision-alerts h2 {
+  font-size: clamp(1.4rem, 2.1vw, 1.85rem);
+  letter-spacing: -.045em;
+}
+.app .decision-alerts button {
+  min-width: 11.4rem;
+  min-height: 3.2rem;
+  justify-self: end;
+  text-align: center;
+  line-height: 1.28;
+  font-weight: 750;
+  border-radius: 14px;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+.app .decision-alerts button:not(:disabled) {
+  color: #fff;
+  background-color: #135aa2;
+  background-image: linear-gradient(120deg, #176bc1, #126c9c);
+  border-color: #1d65af;
+  box-shadow: 0 8px 18px rgb(16 85 153 / .17);
+}
+.app .decision-alerts button:not(:disabled):hover {
+  color: #fff;
+  border-color: #14548c;
+  background-color: #0f4a8a;
+  background-image: linear-gradient(120deg, #1553a1, #0d577d);
+}
+.app .decision-alerts button[aria-pressed='true']:not(:disabled) {
+  background: linear-gradient(120deg, #0b766e, #0a626c);
+  border-color: #0e6b66;
+  color: #fff;
+}
+.app .decision-alerts button:disabled {
+  opacity: 1;
+  color: #345471;
+  -webkit-text-fill-color: #345471;
+  background-color: #e1edf8;
+  background-image: none;
+  border: 1px solid #91b4d1;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .72);
+  cursor: not-allowed;
+}
+.app .decision-alerts button:disabled::before {
+  content: '⊘';
+  display: inline-block;
+  margin-right: .5rem;
+  color: #557ca0;
+  font-size: 1.12em;
+  line-height: 1;
+  vertical-align: -.035em;
+}
+.app[data-color-mode='dark'] .decision-alerts {
+  background:
+    radial-gradient(ellipse at 92% 0%, rgb(42 123 152 / .22), transparent 48%),
+    linear-gradient(112deg, #112c43, #173c54);
+  background-color: #112c43;
+}
+.app[data-color-mode='dark'] .decision-alerts button:disabled {
+  color: #dfedf8;
+  -webkit-text-fill-color: #dfedf8;
+  background-color: #254b61;
+  background-image: none;
+  border-color: #678ca4;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .08);
+}
+.app[data-color-mode='dark'] .decision-alerts button:disabled::before {
+  color: #b5d8ef;
+}
+@media (max-width: 63.99rem) {
+  .app .decision-alerts button { justify-self: stretch; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .decision-alerts button { transition: none; }
+}
+@media (forced-colors: active) {
+  .app .decision-alerts button:disabled {
+    border: 1px solid GrayText;
+    color: GrayText;
+    -webkit-text-fill-color: GrayText;
+    opacity: 1;
+    background: Canvas;
+  }
+}
