@@ -4,6 +4,7 @@
 import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
 
 function parseOptions(args) {
   const options = {
@@ -57,6 +58,7 @@ const browser = await chromium.launch({
   args: process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH ? ['--no-sandbox'] : [],
 });
 const results = [];
+const responseCache = createLiveAuditResponseCache();
 try {
   if (options.screenshots) await mkdir(options.output, { recursive: true });
   const variants = options.cities.flatMap(city =>
@@ -71,6 +73,10 @@ try {
         console.log(`CHECK ${city} ${language}/${theme} ${width}px zoom=${zoom}% (attempt ${attempt}/2)`);
         const page = await browser.newPage({ viewport: { width, height: 900 } });
         page.setDefaultTimeout(15_000);
+        // Every first response is from the real API; later layout/theme cases
+        // replay the same successful city/language snapshot without flooding
+        // the public API or hitting provider rate limits.
+        await page.route('**/api/v1/**', route => responseCache.handle(route, language));
         // Browser context is isolated per case; live user settings are never changed.
         await page.addInitScript(({ language, theme }) => {
           localStorage.setItem('user-settings', JSON.stringify({
@@ -160,4 +166,5 @@ if (options.screenshots) {
   await writeFile(join(options.output, 'results.json'), JSON.stringify({ checkedAt: new Date().toISOString(), baseUrl: options.baseUrl, results }, null, 2));
 }
 console.log(`Responsive audit: ${results.length - failed.length}/${results.length} passed.`);
+console.log(`Live API responses: ${responseCache.stats.captured} captured, ${responseCache.stats.replayed} safely replayed, ${responseCache.stats.uncached} uncached (failures/non-JSON/oversized).`);
 if (failed.length) process.exitCode = 1;
