@@ -2019,7 +2019,7 @@ test('mobile decision alerts reflow at 200 percent text size', async ({ page }, 
   await assertFits();
 });
 
-test('desktop settings use shared preference matrices', async ({ page }, testInfo) => {
+test('desktop settings expose distinct tactile preference cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop settings visual regression');
   await page.goto('/istanbul');
   await page.locator('.atlas-settings-button').click();
@@ -2052,12 +2052,12 @@ test('desktop settings use shared preference matrices', async ({ page }, testInf
   });
 
   expect(styles.panelShadow).not.toBe('none');
-  expect(styles.groupTop).toBeGreaterThanOrEqual(1);
-  expect(styles.groupGap).toBeGreaterThanOrEqual(1);
-  expect(parseFloat(styles.selectedRadius)).toBe(0);
-  expect(styles.selectedShadow).toBe('none');
-  expect(styles.selectedBottom).toBeGreaterThanOrEqual(3);
-  expect(parseFloat(styles.unselectedRadius)).toBe(0);
+  expect(styles.groupTop).toBe(0);
+  expect(styles.groupGap).toBeGreaterThanOrEqual(4);
+  expect(parseFloat(styles.selectedRadius)).toBeGreaterThanOrEqual(12);
+  expect(styles.selectedShadow).not.toBe('none');
+  expect(styles.selectedBottom).toBeGreaterThanOrEqual(2);
+  expect(parseFloat(styles.unselectedRadius)).toBeGreaterThanOrEqual(10);
   expect(styles.unselectedShadow).toBe('none');
   expect(styles.unselectedBorder).toBeGreaterThanOrEqual(1);
   expect(styles.selectedBackground).not.toBe(styles.unselectedBackground);
@@ -4648,13 +4648,13 @@ test('mobile map header reflows at 200 percent text size', async ({ page }, test
   expect(layout.panelLeft).toBeGreaterThanOrEqual(0);
   expect(layout.panelRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
-  expect(layout.panelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(layout.panelBackground).not.toBe('rgba(0, 0, 0, 0)');
   expect(layout.panelBorderTopWidth).toBe('1px');
-  expect(layout.panelBorderRightWidth).toBe('0px');
+  expect(layout.panelBorderRightWidth).toBe('1px');
   expect(layout.panelBorderBottomWidth).toBe('1px');
-  expect(layout.panelBorderLeftWidth).toBe('0px');
-  expect(layout.panelBorderRadius).toBe('0px');
-  expect(layout.panelBoxShadow).toBe('none');
+  expect(layout.panelBorderLeftWidth).toBe('1px');
+  expect(parseFloat(layout.panelBorderRadius)).toBeGreaterThanOrEqual(18);
+  expect(layout.panelBoxShadow).not.toBe('none');
   await expect(header.getByRole('button', { name: 'Kapat' })).toBeVisible();
 });
 

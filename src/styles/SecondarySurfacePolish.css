@@ -1,0 +1,290 @@
+/*
+ * Secondary destinations — Maps and Settings
+ * 2026-10-09. Presentation only: settings, geodata and map behavior unchanged.
+ */
+
+/* Settings becomes a branded, tactile preference workspace instead of
+   flat table rows. Keep the modal, focus trap and button semantics intact. */
+.app .settings-panel {
+  width: min(100%, 32rem);
+  background: #f3f7fd;
+  border-left: 1px solid #b3c9e5;
+  box-shadow: -28px 0 78px rgb(11 34 72 / .22);
+}
+.app .settings-panel__header {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 7.3rem;
+  padding: 2rem 1.75rem;
+  border-bottom: 0;
+  color: #fff;
+  background:
+    radial-gradient(circle at 95% 0%, rgb(97 212 229 / .42), transparent 42%),
+    linear-gradient(112deg, #102c58, #145c8b 68%, #178da0);
+}
+.app .settings-panel__header h2 {
+  position: relative;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -.045em;
+}
+.app .settings-panel__close {
+  position: relative;
+  flex: 0 0 2.75rem;
+  border-radius: 14px;
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / .36);
+  background: rgb(255 255 255 / .13);
+}
+.app .settings-panel__close:hover {
+  color: #072d53;
+  background: #e8f7ff;
+  border-color: #fff;
+}
+.app .settings-panel__content {
+  padding: 1.35rem;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+.app .settings-section {
+  min-width: 0;
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid #d5e4f5;
+  border-radius: 21px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(25 79 138 / .055);
+}
+.app .settings-section__title {
+  margin: 0 0 .9rem;
+  color: #4c6d91;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+.app .settings-option-group,
+.app .settings-option-group--three {
+  gap: .55rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.app .settings-option {
+  min-width: 0;
+  min-height: 5.35rem;
+  padding: .78rem .5rem;
+  gap: .45rem;
+  border: 1px solid #dbe5f3;
+  border-radius: 15px;
+  background: #f8fbff;
+  color: #233c62;
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+.app .settings-option:hover {
+  color: #115caa;
+  border-color: #9dbfe9;
+  background: #edf6ff;
+}
+.app .settings-option--active,
+.app .settings-option[aria-pressed='true'] {
+  color: #0750a2;
+  background: linear-gradient(145deg, #e5f3ff 0%, #dceaff 100%);
+  border: 2px solid #2875e0;
+  box-shadow: 0 5px 16px rgb(24 101 193 / .12);
+  font-weight: 750;
+}
+.app .settings-option__flag {
+  width: 2.25rem;
+  height: 1.65rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+.app .settings-option__icon {
+  font-size: 1.2rem;
+}
+.app .settings-panel__footer {
+  background: #f3f7fd;
+  border-top: 1px solid #d8e4f3;
+  padding: 1rem 1.5rem max(1rem, env(safe-area-inset-bottom));
+}
+.app .settings-panel__version { color: #5c7696; }
+
+/* Dark mode is deliberately distinct, not a low-contrast blue overlay. */
+.app[data-color-mode='dark'] .settings-panel {
+  background: #0c2131;
+  border-color: #375772;
+}
+.app[data-color-mode='dark'] .settings-panel__header {
+  background:
+    radial-gradient(circle at 92% -12%, rgb(51 150 169 / .32), transparent 46%),
+    linear-gradient(112deg, #102b40, #173d5a 68%, #205b6b);
+}
+.app[data-color-mode='dark'] .settings-section {
+  background: #142e44;
+  border-color: #31546a;
+  box-shadow: 0 10px 30px rgb(0 0 0 / .13);
+}
+.app[data-color-mode='dark'] .settings-section__title { color: #a5c7e4; }
+.app[data-color-mode='dark'] .settings-option {
+  color: #d8eafb;
+  background: #1b3b52;
+  border-color: #34566f;
+}
+.app[data-color-mode='dark'] .settings-option:hover {
+  color: #fff;
+  background: #245675;
+  border-color: #6da7c9;
+}
+.app[data-color-mode='dark'] .settings-option--active,
+.app[data-color-mode='dark'] .settings-option[aria-pressed='true'] {
+  color: #e7f6ff;
+  background: linear-gradient(135deg, #205a87, #25687d);
+  border-color: #83c9ef;
+}
+.app[data-color-mode='dark'] .settings-panel__footer {
+  background: #0c2131;
+  border-color: #375772;
+}
+.app[data-color-mode='dark'] .settings-panel__version { color: #aec9d9; }
+
+/* Maps: an intentional visual destination with context and readable legend. */
+.app .atlas-map-panel {
+  padding: clamp(1rem, 2.2vw, 1.9rem);
+  background: var(--color-atlas-paper);
+  border: 1px solid var(--premium-card-border);
+  border-radius: 27px;
+  box-shadow: var(--premium-elevation);
+}
+.app .atlas-map-panel__header {
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: .75rem;
+  border: 1px solid #c4def5;
+  border-radius: 19px;
+  background:
+    radial-gradient(circle at 96% 0%, rgb(116 203 245 / .38), transparent 46%),
+    linear-gradient(115deg, #f1faff, #dceeff);
+}
+.app .atlas-map-panel__header h2 {
+  color: #13395f;
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+.app .atlas-map-panel__header .atlas-kicker { color: #476e98; }
+.app .atlas-map-panel__header button {
+  position: relative;
+  border-radius: 12px;
+}
+.app .weather-map { padding-top: .35rem; }
+.app .weather-map__container {
+  border: 1px solid #bed7ec;
+  border-radius: 20px;
+  box-shadow: 0 15px 31px rgb(22 75 113 / .14);
+}
+.app .weather-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: .55rem;
+  margin-top: .85rem;
+  padding: .9rem;
+  border: 1px solid var(--premium-card-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-atlas-field) 86%, var(--color-atlas-paper));
+}
+.app .weather-map__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .5rem .7rem;
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 16%, var(--color-atlas-line));
+  border-radius: 999px;
+  background: var(--color-atlas-paper);
+  color: var(--color-atlas-ink);
+  font-size: .76rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.app .weather-map__legend-item::before {
+  width: .7rem;
+  height: .7rem;
+  border: 1px solid rgb(255 255 255 / .65);
+  box-shadow: 0 0 0 1px rgb(29 59 79 / .16);
+}
+.app .weather-map .leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid #a9cee5;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgb(20 54 91 / .19);
+}
+.app .weather-map .leaflet-control-zoom a {
+  color: #153c66;
+  background: #fff;
+  border-color: #d8e8f6;
+}
+.app .weather-map__marker-content {
+  box-shadow: 0 7px 22px rgb(5 40 70 / .25), inset 0 1px 0 rgb(255 255 255 / .15);
+}
+.app[data-color-mode='dark'] .atlas-map-panel__header {
+  background: linear-gradient(110deg, #183c57, #225c74);
+  border-color: #3b728d;
+}
+.app[data-color-mode='dark'] .atlas-map-panel__header h2 { color: #f1f9ff; }
+.app[data-color-mode='dark'] .atlas-map-panel__header .atlas-kicker { color: #b2d7e8; }
+.app[data-color-mode='dark'] .weather-map__container { border-color: #356786; }
+
+@media (max-width: 47.99rem) {
+  .app .settings-panel { width: 100%; }
+  .app .settings-panel__header { min-height: 6rem; padding: 1.3rem 1.1rem; }
+  .app .settings-panel__content { padding: 1rem; gap: .85rem; }
+  .app .settings-section { padding: 1rem; border-radius: 17px; }
+  .app .settings-option-group,
+  .app .settings-option-group--three { gap: .45rem; }
+  .app .settings-option { min-height: 4.8rem; border-radius: 12px; padding: .65rem .4rem; }
+  .app .settings-panel__footer { padding-inline: 1rem; }
+  .app .atlas-map-panel { padding: .85rem; border-radius: 21px; }
+  .app .atlas-map-panel__header {
+    gap: .5rem; padding: .9rem; margin-bottom: .65rem; border-radius: 15px;
+  }
+  .app .atlas-map-panel__header h2 { font-size: 1.6rem; }
+  .app .weather-map__container {
+    height: min(61dvh, 35rem);
+    min-height: 22rem;
+    border-radius: 15px;
+  }
+  .app .weather-map__legend { padding: .65rem; gap: .4rem; border-radius: 13px; }
+  .app .weather-map__legend-item { padding: .45rem .58rem; font-size: .72rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .settings-option { transition: none; }
+}
+@media (forced-colors: active) {
+  .app .settings-option--active,
+  .app .settings-option[aria-pressed='true'] { border: 2px solid Highlight; }
+  .app .settings-section, .app .atlas-map-panel__header,
+  .app .weather-map__legend-item { border: 1px solid CanvasText; }
+}
+
+/* Text resize: two wind/theme columns at 390px, one at 320px. */
+@media (max-width: 47.99rem) {
+  .app .settings-panel__content,
+  .app .settings-section {
+    padding: clamp(.5rem, 2.5vw, 1rem);
+  }
+  .app .settings-panel__content { min-height: 0; }
+}
+/* Short landscape still reserves genuine scrolling room and a visible footer. */
+@media (max-height: 30rem) {
+  .app .settings-panel__header {
+    min-height: 0;
+    padding: .45rem .75rem;
+  }
+  .app .settings-panel__content { min-height: 0; }
+  .app .settings-panel__footer {
+    padding: .45rem .75rem max(.45rem, env(safe-area-inset-bottom));
+  }
+}
