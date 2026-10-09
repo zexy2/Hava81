@@ -1,4 +1,5 @@
 import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
+import { getCityMetadata } from '../constants/cityMetadata';
 
 const turkishAscii: Record<string, string> = {
   ç: 'c',
@@ -69,6 +70,6 @@ export const cityFromPathname = (pathname: string): TurkishCity | undefined => {
 };
 
 export const cityPath = (name: string): string | null => {
-  const city = cityBySlug.get(citySlug(name));
+  const city = getCityMetadata(name);
   return city ? `/${citySlug(city.name)}/` : null;
 };
