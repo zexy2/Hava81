@@ -48,14 +48,14 @@
   content: '';
   width: min(35vw, 25rem);
   aspect-ratio: 1;
-  right: -6rem;
+  right: 0;
   top: -11rem;
   border: 1px solid rgb(200 239 255 / 0.18);
   border-radius: 50%;
   pointer-events: none;
 }
 .app .activity-planner__header::after {
-  right: -1.6rem;
+  right: 0;
   top: -6rem;
   width: min(24vw, 17rem);
   border-color: rgb(200 239 255 / 0.12);
@@ -128,6 +128,9 @@
 }
 .app .activity-planner__chips {
   gap: 0.6rem;
+  flex-wrap: wrap;
+  overflow: visible;
+  scroll-snap-type: none;
 }
 .app .activity-planner__chips button {
   display: inline-flex;
@@ -142,7 +145,14 @@
   box-shadow: 0 3px 9px rgb(34 92 148 / 0.045);
   color: var(--activity-ink);
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
+}
+.app .activity-planner__chips button > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .app .activity-planner__chips button:hover:not(:disabled) {
   border-color: #1d92bd;
