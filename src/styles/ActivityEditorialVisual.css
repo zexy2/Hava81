@@ -1,0 +1,547 @@
+/* Activity Planner: an editorial decision studio.
+   Isolated visual layer; activity scoring, windows and persistence are unchanged. */
+.app .activity-planner {
+  --activity-ink: #142d50;
+  --activity-muted: #516b87;
+  --activity-line: #cddfec;
+  --activity-surface: #f1f7fe;
+  --activity-soft: #e5f1fc;
+  --activity-card: #f7fbff;
+  position: relative;
+  isolation: isolate;
+  gap: clamp(1rem, 2vw, 1.45rem);
+  padding: clamp(1rem, 2.7vw, 2rem);
+  border: 1px solid var(--activity-line);
+  border-radius: 28px;
+  color: var(--activity-ink);
+  background: color-mix(in srgb, var(--color-atlas-paper) 92%, #d8efff);
+  box-shadow:
+    0 16px 42px rgb(21 56 105 / 0.1),
+    0 3px 10px rgb(21 56 105 / 0.035);
+}
+.app[data-color-mode='dark'] .activity-planner {
+  --activity-ink: #e9f5ff;
+  --activity-muted: #bbd0e4;
+  --activity-line: #395875;
+  --activity-surface: #102b47;
+  --activity-soft: #24445d;
+  --activity-card: #132f4b;
+}
+.app .activity-planner__header {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+  padding: clamp(1.25rem, 2.8vw, 2.15rem);
+  border: 1px solid rgb(188 229 255 / 0.18);
+  border-radius: 23px;
+  background: linear-gradient(117deg, #0d294d 8%, #164b77 62%, #0d839d 115%);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 0.13),
+    0 10px 28px rgb(13 54 94 / 0.16);
+}
+.app .activity-planner__header::before,
+.app .activity-planner__header::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  width: min(35vw, 25rem);
+  aspect-ratio: 1;
+  right: -6rem;
+  top: -11rem;
+  border: 1px solid rgb(200 239 255 / 0.18);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.app .activity-planner__header::after {
+  right: -1.6rem;
+  top: -6rem;
+  width: min(24vw, 17rem);
+  border-color: rgb(200 239 255 / 0.12);
+  background: radial-gradient(circle at center, rgb(135 232 242 / 0.13), transparent 70%);
+}
+.app .activity-planner__header > * {
+  position: relative;
+  z-index: 1;
+}
+.app .activity-planner__header .atlas-kicker {
+  color: #a6e9ff;
+  letter-spacing: 0.18em;
+}
+.app .activity-planner__header h2 {
+  color: #fff;
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  letter-spacing: -0.05em;
+  font-weight: 800;
+  line-height: 1.12;
+}
+.app .activity-planner__header p {
+  max-width: 40rem;
+  color: #d0e9f8;
+  line-height: 1.55;
+}
+.app .activity-planner__sensitivity {
+  flex: 0 1 13rem;
+  width: min(13rem, 100%);
+  padding: 0.85rem;
+  border: 1px solid rgb(205 239 255 / 0.22);
+  border-radius: 15px;
+  background: rgb(3 28 59 / 0.3);
+  backdrop-filter: blur(6px);
+  color: #e0f3ff;
+}
+.app .activity-planner__sensitivity small,
+.app .activity-planner__sensitivity > span {
+  color: #d0e8f8;
+}
+.app .activity-planner__sensitivity select {
+  min-height: 44px;
+  border: 1px solid #afd4f1;
+  border-radius: 10px;
+  background: #f4faff;
+  color: #153b68;
+}
+.app .activity-planner__window {
+  gap: 0.8rem;
+  padding: clamp(0.95rem, 2vw, 1.4rem);
+  border: 1px solid var(--activity-line);
+  border-radius: 19px;
+  background: var(--activity-surface);
+}
+.app .activity-planner__window-copy > strong {
+  color: var(--activity-ink);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.app .activity-planner__window-help summary,
+.app .activity-planner__window label span,
+.app .activity-planner__window-help p,
+.app .activity-planner__window-status {
+  color: var(--activity-muted);
+}
+.app .activity-planner__window input {
+  min-height: 46px;
+  border-color: var(--activity-line);
+  background: var(--activity-card);
+  color: var(--activity-ink);
+}
+.app .activity-planner__chips {
+  gap: 0.6rem;
+}
+.app .activity-planner__chips button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  min-height: 52px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--activity-line);
+  border-radius: 15px;
+  background: var(--activity-card);
+  box-shadow: 0 3px 9px rgb(34 92 148 / 0.045);
+  color: var(--activity-ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.app .activity-planner__chips button:hover:not(:disabled) {
+  border-color: #1d92bd;
+  box-shadow: 0 7px 19px rgb(34 92 148 / 0.13);
+}
+.app .activity-planner__chips button.is-active {
+  border-color: #138da6;
+  background: linear-gradient(120deg, #144f85, #087e96);
+  color: #fff;
+  box-shadow: 0 9px 18px rgb(7 101 146 / 0.23);
+}
+.app .activity-planner .activity-glyph {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border: 1px solid var(--activity-line);
+  border-radius: 11px;
+  color: #147da2;
+  background: var(--activity-soft);
+}
+.app .activity-glyph svg {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+.app .activity-planner__chips button.is-active .activity-glyph {
+  border-color: rgb(226 254 255 / 0.2);
+  background: rgb(234 253 255 / 0.18);
+  color: #e5faff;
+}
+.app .activity-planner__score-explanation {
+  padding: 0.1rem 0.7rem;
+  border: 1px solid var(--activity-line);
+  border-radius: 13px;
+  background: var(--activity-surface);
+  color: var(--activity-ink);
+}
+.app .activity-planner__score-explanation p {
+  color: var(--activity-muted);
+}
+.app .activity-planner__cards {
+  gap: clamp(0.85rem, 1.6vw, 1.15rem);
+}
+.app .activity-card {
+  --activity-accent: #1397a5;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  gap: 0.9rem;
+  padding: clamp(1.05rem, 2.2vw, 1.5rem);
+  border: 1px solid var(--activity-line);
+  border-top: 5px solid var(--activity-accent);
+  border-radius: 20px;
+  background: linear-gradient(145deg, var(--activity-card), var(--activity-surface));
+  color: var(--activity-ink);
+  box-shadow: 0 9px 24px rgb(27 70 113 / 0.07);
+}
+.app .activity-card--excellent {
+  --activity-accent: #0d9c8b;
+  border-top-color: var(--activity-accent);
+}
+.app .activity-card--good {
+  --activity-accent: #2085c8;
+  border-top-color: var(--activity-accent);
+}
+.app .activity-card--caution {
+  --activity-accent: #b66d0b;
+  border-top-color: var(--activity-accent);
+}
+.app .activity-card--difficult {
+  --activity-accent: #cf4c4c;
+  border-top-color: var(--activity-accent);
+}
+.app .activity-card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  top: -5rem;
+  width: 13rem;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--activity-accent) 22%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5rem color-mix(in srgb, var(--activity-accent) 4%, transparent);
+  pointer-events: none;
+}
+.app .activity-card header {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+.app .activity-card__identity {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+}
+.app .activity-card__identity .activity-glyph {
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--activity-accent) 11%, var(--activity-card));
+  color: var(--activity-accent);
+  border-color: color-mix(in srgb, var(--activity-accent) 22%, var(--activity-line));
+}
+.app .activity-card__identity .activity-glyph svg {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+.app .activity-card h3 {
+  flex: initial;
+  font-size: clamp(1.06rem, 1.8vw, 1.3rem);
+  line-height: 1.3;
+  font-weight: 800;
+  color: var(--activity-ink);
+}
+.app .activity-card__score {
+  flex: 0 1 10rem;
+  gap: 0.32rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 15px;
+  border: 1px solid rgb(202 237 255 / 0.15);
+  background: linear-gradient(145deg, #11335e, #155b82);
+  color: #fff;
+  box-shadow: 0 7px 14px rgb(11 46 86 / 0.13);
+}
+.app .activity-card__score small {
+  color: #d0eaff;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+.app .activity-card__score strong {
+  color: #fff;
+  font-size: clamp(2rem, 3.3vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: -0.07em;
+  line-height: 0.95;
+}
+.app .activity-card__score strong span {
+  color: #bbddf3;
+  letter-spacing: -0.02em;
+}
+.app .activity-card > p {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--activity-accent) 25%, var(--activity-line));
+  background: color-mix(in srgb, var(--activity-accent) 8%, var(--activity-card));
+  color: var(--activity-ink);
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 750;
+}
+.app .activity-card__conditions {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+.app .activity-card__conditions > span {
+  flex: 0 1 auto;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--activity-line);
+  border-radius: 10px;
+  background: var(--activity-card);
+  color: var(--activity-muted);
+  line-height: 1.45;
+}
+.app .activity-card__risk {
+  color: var(--activity-ink);
+}
+.app .activity-card__details {
+  border-top: 1px solid var(--activity-line);
+}
+.app .activity-card__details summary {
+  color: var(--activity-ink);
+}
+.app .activity-card__details-body small,
+.app .activity-planner__note,
+.app .activity-planner__selection-limit,
+.app .activity-planner__empty {
+  color: var(--activity-muted);
+}
+.app .activity-card__details .activity-card__impact {
+  color: var(--activity-ink);
+}
+
+@media (max-width: 47.99rem) {
+  .app .activity-planner {
+    padding: 0.8rem;
+    border-radius: 23px;
+  }
+  .app .activity-planner__header {
+    padding: 1.25rem;
+    align-items: stretch;
+  }
+  .app .activity-planner__header::before {
+    width: 18rem;
+  }
+  .app .activity-planner__header::after {
+    width: 13rem;
+  }
+  .app .activity-planner__sensitivity {
+    width: 100%;
+    max-width: 100%;
+  }
+  .app .activity-planner__window {
+    padding: 0.9rem;
+  }
+  .app .activity-planner__chips {
+    padding: 0.2rem 0 0.5rem;
+  }
+  .app .activity-planner__chips button {
+    padding: 0.45rem 0.65rem;
+  }
+  .app .activity-card {
+    padding: 1rem;
+  }
+}
+@media (max-width: 350px) {
+  .app .activity-card header {
+    flex-wrap: wrap;
+  }
+  .app .activity-card__score {
+    flex: 1 1 100%;
+    width: 100%;
+    justify-items: start;
+  }
+  .app .activity-card__score small {
+    text-align: left;
+  }
+  .app .activity-planner__window {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .activity-planner__window-copy {
+    grid-column: 1;
+  }
+}
+@media (forced-colors: active) {
+  .app .activity-planner__header,
+  .app .activity-planner__window,
+  .app .activity-card,
+  .app .activity-card__score {
+    background: Canvas;
+    color: CanvasText;
+    border: 2px solid CanvasText;
+  }
+  .app .activity-planner__header h2,
+  .app .activity-planner__header p,
+  .app .activity-planner__header .atlas-kicker,
+  .app .activity-card__score strong,
+  .app .activity-card__score small {
+    color: CanvasText;
+  }
+  .app .activity-planner__chips button.is-active {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .activity-planner__chips button {
+    transition: none;
+  }
+}
+
+/* Container-driven layout is based on the space left for text, not on the
+   device's pixels. This also handles 200% browser text enlargement without
+   forcing all mobile users into an unnecessarily tall layout. */
+.app .activity-planner {
+  container-type: inline-size;
+  container-name: activity-planner;
+}
+@container activity-planner (max-width: 18rem) {
+  .app .activity-planner__window {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .activity-planner__window-copy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .activity-planner__window-copy > strong,
+  .app .activity-planner__window-help summary {
+    overflow-wrap: break-word;
+  }
+  .app .activity-card header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .app .activity-card__identity {
+    width: 100%;
+    flex: initial;
+  }
+  .app .activity-card__score {
+    width: 100%;
+    min-width: 0;
+    flex: initial;
+    justify-items: start;
+  }
+  .app .activity-card__score small {
+    text-align: left;
+  }
+}
+@media (max-width: 600px) {
+  .app .activity-planner {
+    padding: 10px;
+  }
+  .app .activity-planner__header {
+    padding: 16px;
+  }
+  .app .activity-planner__header h2 {
+    font-size: clamp(25px, 1.25rem, 40px);
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .app .activity-planner__header p {
+    font-size: clamp(15px, 0.9rem, 23px);
+    overflow-wrap: break-word;
+  }
+  .app .activity-planner__header .atlas-kicker {
+    font-size: clamp(11px, 0.65rem, 18px);
+    letter-spacing: 0.1em;
+  }
+  .app .activity-planner__header .activity-planner__sensitivity {
+    flex-basis: auto;
+    width: 100%;
+    padding: 12px;
+  }
+  .app .activity-card__identity .activity-glyph {
+    width: clamp(44px, 2.9rem, 64px);
+    height: clamp(44px, 2.9rem, 64px);
+  }
+  .app .activity-card h3 {
+    font-size: clamp(18px, 1.06rem, 30px);
+    overflow-wrap: break-word;
+  }
+  .app .activity-card__score strong {
+    font-size: clamp(32px, 2rem, 58px);
+  }
+  .app .activity-card__score small {
+    overflow-wrap: break-word;
+    font-size: clamp(12px, 0.7rem, 17px);
+  }
+  .app .activity-planner__window-copy,
+  .app .activity-card__score,
+  .app .activity-card__identity {
+    min-width: 0;
+  }
+}
+
+/* The layout switches by available relative text space, not solely pixels.
+   On a 390px phone at 200% text size, 16rem = 512px, so form fields,
+   card identity and the score all reflow instead of clipping each other. */
+.app .activity-planner {
+  container: activity-studio / inline-size;
+}
+.app[data-color-mode='dark'] .activity-planner__chips button:not(.is-active) .activity-glyph {
+  color: #a7e2f7;
+  background: #204a66;
+  border-color: #4d7794;
+}
+@container activity-studio (max-width: 16rem) {
+  .app .activity-planner__window {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .activity-planner__window-copy {
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .app .activity-planner__window label {
+    grid-column: 1;
+  }
+  .app .activity-card header {
+    flex-wrap: wrap;
+  }
+  .app .activity-card__identity {
+    flex-basis: 100%;
+  }
+  .app .activity-card__score {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    justify-items: start;
+  }
+  .app .activity-card__score small {
+    text-align: left;
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .activity-planner__sensitivity {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-self: stretch;
+    gap: 0.4rem;
+  }
+  .app .activity-card header {
+    flex-wrap: wrap;
+  }
+}

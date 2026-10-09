@@ -59,6 +59,11 @@ test('activity cards stay inside a 390px page at 200% text size', async ({ page 
   expect(parseFloat(editorialGeometry.windowRadius)).toBeGreaterThanOrEqual(0);
   expect(parseFloat(editorialGeometry.explanationRadius)).toBeGreaterThanOrEqual(0);
 
+  // Premium editorial hierarchy must remain present even with large fonts.
+  await expect(page.locator('.activity-planner__header')).toHaveCSS('background-image', /linear-gradient/);
+  await expect(cards.locator('.activity-card__identity .activity-glyph')).toHaveCount(2);
+  await expect(page.locator('.activity-planner__chips .activity-glyph')).toHaveCount(6);
+
   const layout = await cards.evaluate(element => ({
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,

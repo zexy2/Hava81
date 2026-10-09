@@ -21,6 +21,63 @@ interface Props {
 }
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
+
+function ActivityGlyph({ kind }: { kind: ActivityKind }) {
+  const shapes: Record<ActivityKind, string[]> = {
+    walk: [
+      'M13 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+      'm11 10-2 5-5 3',
+      'm11 10 5 3 4 1',
+      'm9 15 5 2 1 4',
+    ],
+    run: [
+      'M14 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+      'm11 10 4-1 3 4',
+      'm12 11-4 4-5 1',
+      'm8 15 5 2-1 5',
+      'm15 10 4-1 2 2',
+    ],
+    picnic: [
+      'M4 13h16l-2 8H6l-2-8Z',
+      'M8 13c0-5 2-7 4-7s4 2 4 7',
+      'M4 17h16',
+      'M10 14v6',
+      'M14 14v6',
+    ],
+    children: [
+      'M12 2 21 11 12 20 3 11 12 2Z',
+      'M12 20v3',
+      'm12 23 3-2',
+      'M7 7l10 10',
+      'M17 7 7 17',
+    ],
+    motorcycle: [
+      'M6 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+      'M19 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+      'm6 17 5-7 4 7h4',
+      'm11 10 4-1 3 2',
+      'M8 7h3',
+    ],
+    laundry: ['M5 5h14l2 5-4 3v8H7v-8l-4-3 2-5Z', 'M9 5c0 4 6 4 6 0', 'M10 16h4', 'M10 19h4'],
+  };
+
+  return (
+    <span className="activity-glyph" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {shapes[kind].map((shape, index) => (
+          <path key={index} d={shape} />
+        ))}
+      </svg>
+    </span>
+  );
+}
 const reasonKey: Record<DecisionReasonCode, string> = {
   'extreme-heat': 'extremeHeat',
   heat: 'heat',
@@ -217,7 +274,8 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
               disabled={disabled}
               onClick={() => toggleActivity(activity)}
             >
-              {t(`hava81.activities.names.${activity}`)}
+              <ActivityGlyph kind={activity} />
+              <span>{t(`hava81.activities.names.${activity}`)}</span>
             </button>
           );
         })}
@@ -278,7 +336,10 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
                   className={`activity-card activity-card--${plan.band}`}
                 >
                   <header>
-                    <h3>{t(`hava81.activities.names.${plan.activity}`)}</h3>
+                    <div className="activity-card__identity">
+                      <ActivityGlyph kind={plan.activity} />
+                      <h3>{t(`hava81.activities.names.${plan.activity}`)}</h3>
+                    </div>
                     <div className="activity-card__score">
                       <small>
                         {scoreLabel} · {scoreBandLabel}
