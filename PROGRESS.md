@@ -58,3 +58,11 @@
 - Playwright 2/2, production build, TypeScript type-check ve ESLint başarılı.
 - CSS değişikliği yok; yeni test regresyon koruması sağlar.
 - GitHub PR ve CI/CD doğrulaması yapılmadan merge etme.
+
+## [Hava81 #03] Production dağıtım kabuğu karşılaştırması
+- Yeni temiz worktree: `/home/ubuntu/Hava81-03-deployment-audit-20261009`, dal `test/hava81-03-deployment-audit-20261009`, başlangıç `origin/main` = `d3a15450`.
+- Güncel `main` üzerinde `npm ci` ve `npm run build` başarılı; üretilen JS `/assets/index-C0k5Idt5.js`.
+- Canlı `/istanbul/` HTML'i HTTP 200 dönüyor, ancak `/assets/index-fvqpkSE8.js` referansı var. Altı başlangıç asset'inden beşi eşleşirken ana JS hash'i farklı. Service Worker namespace'i de farklı (`e28a96ae96d4` yerel, `f4568cf2cb0d` canlı).
+- `scripts/check-live-build.mjs` canlı HTML ile yerel dist başlangıç asset'lerini read-only karşılaştırıyor; fark varsa exit 1 döndürüyor. Bilerek zorunlu CI gate yapılmadı: dış dağıtım ve build ortamları farklı olabilir.
+- `scripts/test-check-live-build.mjs` 2/2 geçti. Yeni diagnostic canlı sitede beklenen drift'i raporlayıp exit 1 döndürdü. `npm run lint`, `npm run type-check` başarılı.
+- Sonraki adım: GitHub Pages deploy durumunu ve live sürüm eşlemesini araştır; deploy işlemi yapmadan önce neden eski hash sunulduğunu belirle. Yeni kod için CI/CD + CodeQL doğrulaması olmadan merge yapma.
