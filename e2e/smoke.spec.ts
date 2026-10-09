@@ -439,6 +439,59 @@ test('mobile location denial explains the permission failure', async ({ page }, 
   expect(errorLayout.boxShadow).toBe('none');
 });
 
+
+// A failed forecast used to leave the desktop forecast column blank and place
+// its retry message beneath both cards. Keep the error in the forecast slot.
+test('failed forecast keeps a visible aligned dashboard card', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop forecast fallback geometry check');
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/forecast**', route =>
+    route.fulfill({ status: 400, json: { error: 'forecast unavailable' } })
+  );
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ status: 400, json: { error: 'hourly unavailable' } })
+  );
+  await page.goto('/istanbul/');
+  await expect(page.locator('.hava81-decision-field')).toBeVisible();
+  const fallback = page.locator('.atlas-forecast-error-card');
+  await expect(fallback).toBeVisible();
+  await expect(fallback.getByRole('heading', { name: 'Bugünün ritmi' })).toBeVisible();
+  await expect(fallback.getByRole('status')).toContainText('Yakın tahmin');
+  await expect(fallback.getByRole('button', { name: 'Tekrar dene' })).toHaveCount(0);
+
+  const layout = await fallback.evaluate(element => {
+    const card = element.getBoundingClientRect();
+    const neighbor = document.querySelector('.hava81-decision-field')!.getBoundingClientRect();
+    return {
+      sameRow: Math.abs(card.top - neighbor.top) < 2,
+      adjacent: card.left >= neighbor.right - 2,
+      sizeOK: card.width > 350 && card.height > 320,
+      noPageOverflow: document.documentElement.scrollWidth <= innerWidth,
+    };
+  });
+  expect(layout).toEqual({ sameRow: true, adjacent: true, sizeOK: true, noPageOverflow: true });
+  if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+    await page.screenshot({ path: 'test-results/visual-audit/forecast-failure-desktop.png' });
+  }
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  await expect(fallback).toBeVisible();
+  const mobile = await fallback.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return {
+      withinPage: rect.left >= -1 && rect.right <= innerWidth + 1,
+      readable: element.scrollWidth <= element.clientWidth + 1,
+      noPageOverflow: document.documentElement.scrollWidth <= innerWidth,
+    };
+  });
+  expect(mobile).toEqual({ withinPage: true, readable: true, noPageOverflow: true });
+  if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+    await fallback.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'test-results/visual-audit/forecast-failure-mobile-zoom200.png' });
+  }
+});
+
 test('mobile forecast error message reflows at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile forecast-error text-resize regression');
   // This test covers the visual error state, not retry timing. Use non-retryable
@@ -6157,5 +6210,107 @@ test('dashboard text contrast meets WCAG AA in light and dark themes', async ({ 
     });
     expect(failures, `text contrast at ${width}px (${language}, ${themeMode})`).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
+// Text-resizing a 768-1024px tablet formerly forced the decision copy into a
+// 200px-wide column beside a 234px score ring, creating a very tall hero.
+test('tablet decision hero remains readable with enlarged system text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single tablet text-size regression');
+  await page.goto('/izmir/');
+  const hero = page.locator('.decision-glance');
+  await expect(hero.locator('.decision-glance__score')).toBeVisible();
+
+  for (const [width, scale, expectStacked] of [
+    [768, '100%', false],
+    [768, '200%', true],
+    [1024, '100%', false],
+    [1024, '200%', true],
+    [1280, '200%', false],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(value => { document.documentElement.style.fontSize = value; }, scale);
+    const metric = await hero.evaluate(element => {
+      const bounds = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+      const card = element.getBoundingClientRect();
+      const message = bounds('.decision-glance__message');
+      const score = bounds('.decision-glance__score');
+      const side = bounds('.decision-glance__side');
+      const main = bounds('.decision-glance__main');
+      const details = bounds('.decision-glance__details');
+      return {
+        stacked: getComputedStyle(element).flexDirection === 'column',
+        messageShare: message.width / card.width,
+        scoreWidth: score.width,
+        scoreBelowCopy: score.top >= main.bottom - 2,
+        detailsInsideCard: details.left >= card.left - 1 && details.right <= card.right + 1,
+        sideInsideCard: side.left >= card.left - 1 && side.right <= card.right + 1,
+        fitsViewport: document.documentElement.scrollWidth <= innerWidth,
+      };
+    });
+    expect(metric.stacked, `${width}px at ${scale} uses the correct layout`).toBe(expectStacked);
+    expect(metric.fitsViewport, `no horizontal page overflow at ${width}px ${scale}`).toBe(true);
+    expect(metric.detailsInsideCard, `details remain inside hero ${width}px ${scale}`).toBe(true);
+    expect(metric.sideInsideCard, `score remains inside hero ${width}px ${scale}`).toBe(true);
+    if (expectStacked) {
+      expect(metric.messageShare, `readable copy width at ${width}px ${scale}`).toBeGreaterThan(0.7);
+      expect(metric.scoreWidth, `compact ring at ${width}px ${scale}`).toBeLessThanOrEqual(130);
+      expect(metric.scoreBelowCopy, `score follows copy at ${width}px ${scale}`).toBe(true);
+    }
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && scale === '200%') {
+      await page.screenshot({ path: `test-results/visual-audit/hero-tablet-${width}-200.png`, animations: 'disabled' });
+    }
+  }
+});
+
+// Comparison is a primary mobile destination; names and numeric rows should
+// never sit flush against the card border at the narrowest phone sizes.
+test('mobile comparison cards keep interior spacing at normal and enlarged text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single populated mobile comparison regression');
+  await page.addInitScript(() => {
+    localStorage.setItem('favorites', JSON.stringify([
+      { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      { name: 'Ankara', lat: 39.93, lon: 32.86 },
+    ]));
+  });
+  await page.goto('/izmir/');
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: 'Karşılaştır' }).click();
+  const cities = page.locator('.hava81-compare__city');
+  await expect(cities).toHaveCount(2);
+
+  for (const width of [320, 360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const scale of ['100%', '200%']) {
+      await page.evaluate(value => { document.documentElement.style.fontSize = value; }, scale);
+      const state = await cities.evaluateAll(elements => {
+        const rows = elements.map(element => {
+          const box = element.getBoundingClientRect();
+          const heading = element.querySelector('h3')!.getBoundingClientRect();
+          const metric = element.querySelector('.hava81-compare__metrics')!.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return {
+            inset: heading.left - box.left,
+            metricInset: metric.left - box.left,
+            padding: parseFloat(style.paddingLeft),
+            headingFits: heading.right <= box.right - 8,
+            metricFits: metric.right <= box.right - 8,
+          };
+        });
+        return { rows, fitsPage: document.documentElement.scrollWidth <= innerWidth };
+      });
+      expect(state.rows, `two comparison cards at ${width}px ${scale}`).toHaveLength(2);
+      for (const row of state.rows) {
+        expect(row.inset, `city heading inset at ${width}px ${scale}`).toBeGreaterThanOrEqual(11);
+        expect(row.metricInset, `metric inset at ${width}px ${scale}`).toBeGreaterThanOrEqual(11);
+        expect(row.padding, `card padding at ${width}px ${scale}`).toBeGreaterThanOrEqual(11);
+        expect(row.headingFits, `heading fits card at ${width}px ${scale}`).toBe(true);
+        expect(row.metricFits, `metrics fit card at ${width}px ${scale}`).toBe(true);
+      }
+      expect(state.fitsPage, `no horizontal overflow at ${width}px ${scale}`).toBe(true);
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+        await cities.first().scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `test-results/visual-audit/compare-inset-320-${scale}.png`, animations: 'disabled' });
+      }
+    }
   }
 });

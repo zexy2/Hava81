@@ -16,6 +16,10 @@ describe('city routes', () => {
   it('accepts localized provider spellings for canonical province routes', () => {
     expect(cityPath('Istanbul')).toBe('/istanbul/');
     expect(cityPath('Canakkale')).toBe('/canakkale/');
+    expect(cityPath('Şanlıurfa Province')).toBe('/sanliurfa/');
+    expect(cityPath('Izmir Province')).toBe('/izmir/');
+    expect(cityPath('Urla Province')).toBeNull();
+    expect(cityPath('Şanlıurfa District')).toBeNull();
   });
 
   it('rejects non-canonical nested deep links instead of treating them as a city page', () => {
