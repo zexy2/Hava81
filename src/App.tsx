@@ -29,6 +29,7 @@ import './styles/ForecastVisualPolish.css';
 import './styles/VisualOverhaul.css';
 import './styles/SecondarySurfacePolish.css';
 import './styles/PlanningVisualPolish.css';
+import './styles/HomeEditorialRefresh.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
