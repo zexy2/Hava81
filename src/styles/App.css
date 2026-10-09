@@ -1361,7 +1361,8 @@ kbd {
 
 @media (max-width: 47.99rem) {
   .app .atlas-forecast-error-card {
-    min-height: 14rem;
+    /* Match the loading preview's rendered footprint so errors do not shift the page. */
+    min-height: 18.25rem;
     padding: 1rem;
   }
 }
