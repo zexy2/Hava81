@@ -9,6 +9,7 @@ function parseOptions(args) {
   const options = {
     baseUrl: process.env.HAVA81_AUDIT_BASE_URL || 'https://hava81.zekiakgul.dev',
     screenshots: false,
+    themes: ['light', 'dark'],
     output: 'test-results/live-responsive-audit',
     cities: ['izmir', 'sanliurfa'],
     cases: [
@@ -20,14 +21,15 @@ function parseOptions(args) {
     const flag = args[i];
     if (flag === '--screenshots') options.screenshots = true;
     else if (flag === '--quick') options.cases = [[320, 100], [320, 200], [390, 100], [768, 100], [1440, 100]];
-    else if (flag === '--base-url' || flag === '--output' || flag === '--cities') {
+    else if (flag === '--base-url' || flag === '--output' || flag === '--cities' || flag === '--themes') {
       const value = args[++i];
       if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
       if (flag === '--base-url') options.baseUrl = value;
       if (flag === '--output') options.output = value;
       if (flag === '--cities') options.cities = value.split(',').map(v => v.trim()).filter(Boolean);
+      if (flag === '--themes') options.themes = value.split(',').map(v => v.trim()).filter(Boolean);
     } else if (flag === '--help') {
-      console.log('Usage: npm run audit:live-ui -- [--base-url URL] [--cities izmir,sanliurfa] [--quick] [--screenshots] [--output DIRECTORY]');
+      console.log('Usage: npm run audit:live-ui -- [--base-url URL] [--cities izmir,sanliurfa] [--themes light,dark] [--quick] [--screenshots] [--output DIRECTORY]');
       process.exit(0);
     } else throw new Error(`Unknown argument: ${flag}`);
   }
@@ -35,6 +37,10 @@ function parseOptions(args) {
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Base URL must be HTTP(S)');
   options.baseUrl = url.origin;
   if (options.cities.some(v => !/^[a-z-]+$/.test(v))) throw new Error('Cities must be URL-safe slugs');
+  if (!options.themes.length || new Set(options.themes).size !== options.themes.length ||
+      options.themes.some(v => !['light', 'dark'].includes(v))) {
+    throw new Error('Themes must be a non-empty, unique list of light and/or dark');
+  }
   return options;
 }
 
@@ -49,15 +55,24 @@ const browser = await chromium.launch({
 const results = [];
 try {
   if (options.screenshots) await mkdir(options.output, { recursive: true });
+  const auditCases = options.cases.flatMap(([width, zoom]) =>
+    options.themes.map(theme => [width, zoom, theme]));
   for (const city of options.cities) {
-    for (const [width, zoom] of options.cases) {
-      const item = { city, width, zoom, ok: false, errors: [], metrics: null };
+    for (const [width, zoom, theme] of auditCases) {
+      const item = { city, width, zoom, theme, ok: false, errors: [], metrics: null };
       // A single failed external weather request must not be misdiagnosed as
       // a stable CSS regression. Retry a cold page once before recording it.
       for (let attempt = 1; attempt <= 2; attempt += 1) {
-        console.log(`CHECK ${city} ${width}px zoom=${zoom}% (attempt ${attempt}/2)`);
+        console.log(`CHECK ${city} ${width}px zoom=${zoom}% theme=${theme} (attempt ${attempt}/2)`);
         const page = await browser.newPage({ viewport: { width, height: 900 } });
         page.setDefaultTimeout(15_000);
+        // Theme must be selected before React mounts to catch true cold-load styling.
+        await page.addInitScript(selectedTheme => {
+          localStorage.setItem('user-settings', JSON.stringify({
+            temperatureUnit: 'metric', windSpeedUnit: 'ms',
+            themeMode: selectedTheme, language: 'tr',
+          }));
+        }, theme);
         const pageErrors = [];
         page.on('pageerror', error => pageErrors.push(error.message));
         try {
@@ -79,6 +94,7 @@ try {
             };
             return {
               city: element('.hava81-decision-field__city')?.textContent?.trim(),
+              theme: element('.app')?.getAttribute('data-color-mode'),
               documentWidth: document.documentElement.scrollWidth,
               viewportWidth: innerWidth,
               headerHeight: Math.round(bounds('.atlas-header__inner')?.height || 0),
@@ -94,13 +110,14 @@ try {
           const expectedCity = cityNames[city];
           item.errors = [
             ...(expectedCity && item.metrics.city !== expectedCity ? [`Expected ${expectedCity}, got ${item.metrics.city}`] : []),
+            ...(item.metrics.theme !== theme ? [`Expected ${theme} theme, got ${item.metrics.theme}`] : []),
             ...(item.metrics.documentWidth > width + 1 ? [`Horizontal overflow: ${item.metrics.documentWidth}px > ${width}px`] : []),
             ...Object.entries(item.metrics.overlaps).filter(([,area]) => area > 1).map(([name,area]) => `${name} overlap: ${area}px²`),
             ...pageErrors.map(error => `JavaScript: ${error}`),
           ];
           item.ok = item.errors.length === 0;
           if (options.screenshots) {
-            await page.screenshot({ path: join(options.output, `${city}-${width}-zoom${zoom}.png`), animations: 'disabled' });
+            await page.screenshot({ path: join(options.output, `${city}-${width}-zoom${zoom}-${theme}.png`), animations: 'disabled' });
           }
           if (item.ok || attempt === 2) break;
         } catch (error) {
@@ -110,7 +127,7 @@ try {
         }
       }
       results.push(item);
-      console.log(`${item.ok ? 'PASS' : 'FAIL'} ${city} ${width}px zoom=${zoom}% ${item.errors.join('; ')}`.trim());
+      console.log(`${item.ok ? 'PASS' : 'FAIL'} ${city} ${width}px zoom=${zoom}% theme=${theme} ${item.errors.join('; ')}`.trim());
     }
   }
 } finally {
