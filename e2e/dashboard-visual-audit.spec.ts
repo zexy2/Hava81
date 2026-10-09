@@ -1,4 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+
+const visualEvidenceDir = join(process.cwd(), 'test-results');
+const captureEvidence = async (page: import('@playwright/test').Page, name: string) => {
+  mkdirSync(visualEvidenceDir, { recursive: true });
+  await page.screenshot({ path: join(visualEvidenceDir, name), fullPage: false, animations: 'disabled' });
+};
 
 const now = Date.now();
 const iso = (hours = 0) => new Date(now + hours * 60 * 60_000).toISOString();
@@ -52,7 +60,7 @@ test('dashboard hero and current weather fit mobile and desktop viewports', asyn
     expect(geometry.hero).toBeTruthy();
     expect(geometry.hero!.left).toBeGreaterThanOrEqual(-1);
     expect(geometry.hero!.right).toBeLessThanOrEqual(width + 1);
-    await page.screenshot({ path: testInfo.outputPath(`dashboard-${width}x${height}.png`), fullPage: false });
+    await captureEvidence(page, `dashboard-${width}x${height}.png`);
   }
 });
 
@@ -76,7 +84,7 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     await expect(page.locator('.decision-glance')).toBeVisible();
     const loadingHeight = await skeleton.evaluate(element => element.getBoundingClientRect().height);
     expect(loadingHeight, 'mobile forecast placeholder should be compact').toBeLessThanOrEqual(320);
-    await page.screenshot({ path: testInfo.outputPath('forecast-mobile-loading.png') });
+    await captureEvidence(page, 'forecast-mobile-loading.png');
     releaseForecast();
     await expect(skeleton).toHaveCount(0, { timeout: 15000 });
     const loaded = page.locator('.hava81-forecast-atlas');
@@ -87,7 +95,7 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     expect(loadedBounds!.x + loadedBounds!.width, 'loaded forecast must stay within the right viewport edge').toBeLessThanOrEqual(391);
     expect(await page.evaluate(() => document.documentElement.scrollWidth))
       .toBeLessThanOrEqual(391);
-    await page.screenshot({ path: testInfo.outputPath('forecast-mobile-loaded.png') });
+    await captureEvidence(page, 'forecast-mobile-loaded.png');
   } finally {
     releaseForecast();
   }
@@ -119,7 +127,7 @@ test('mobile forecast failure retains the loading card footprint', async ({ page
     expect(after!.height).toBeGreaterThanOrEqual(before!.height - 1);
     expect(after!.height).toBeLessThanOrEqual(320);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
-    await page.screenshot({ path: testInfo.outputPath('forecast-mobile-error.png') });
+    await captureEvidence(page, 'forecast-mobile-error.png');
   } finally {
     releaseFailure();
   }

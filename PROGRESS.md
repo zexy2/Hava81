@@ -74,3 +74,33 @@
 - Yeniden çalıştırılan 5/5 görsel denetimde hero/forecast örtüşmesi **0**. CSS değiştirilmedi.
 - TypeScript, ESLint ve production build kontrol edildi.
 - Sonraki görev: istenirse bu audit script korumasını CI/CD ve CodeQL kontrollerinden geçirerek PR ile ekle; canlı sayfa görsellerinde kanıtlanmamış tasarım değişikliği yapma.
+
+
+## [Hava81 #04] Otonom Geliştirme — 2026-10-09
+
+### 🎯 Tamamlanan Geliştirmeler
+- `AGENTS.md` ve [Hava81 #03] devir notları incelendi; kirli ana worktree korunarak `test/hava81-04-standard-screens-20261009` dalı ve `/home/ubuntu/Hava81-04-standard-screens-20261009` worktree açıldı.
+- PR #1312 (`16868b2d`) için self-hosted CI/CD run `37988182690` (Frontend quality, API, production build, Lighthouse, Browser flows) ve CodeQL run `37988182872` success doğrulandı; beklenen HEAD SHA korumasıyla squash merge edildi: `53d9628a63faa4a71310f941177191cef70b70b8`.
+- `e2e/dashboard-visual-audit.spec.ts` ekran görüntülerini testInfo geçici çıktısı yerine `test-results/` altındaki Watchdog standart adlarına yazacak şekilde güncellendi; loaded ekranlar için `.hava81-forecast-atlas` ve `.atlas-forecast-loading--card` koşulları korunuyor.
+- `npm ci`, `npm run type-check`, `npm run lint`, `npm run build` başarılı; hedefli Playwright 3/3 başarılı. Testlerde kontrollü mock API kullanıldı; canlı deployment bu testlerle doğrulanmış sayılmaz.
+
+### 📸 Görsel Kanıtlar
+- `test-results/dashboard-390x844.png` — 390×844, verisi yüklenmiş mobil dashboard.
+- `test-results/dashboard-1280x900.png` — 1280×900, verisi yüklenmiş masaüstü dashboard.
+- `test-results/forecast-mobile-loading.png` — bekletilmiş tahmin isteğinde skeleton.
+- `test-results/forecast-mobile-loaded.png` — isteğin çözülmesi sonrası atlas görünür / skeleton sıfır.
+- `test-results/forecast-mobile-error.png` — 503 sonrası hata kartı.
+- Görseller gitignore nedeniyle sunucuda kalır; PR'a görsel binary eklenmez.
+
+### 🚀 Sıradaki Adım
+- Bu dal için yeni PR açıp yalnız `[self-hosted, linux]` koşullarındaki CI/CD ve CodeQL tamamen başarılı olursa merge et.
+- 320px/%200 yakınlaştırma, 390px açık/koyu, 768px ve 1440px canlı görsel taramasını güncel Pages yayınıyla yeniden çalıştır; somut CSS kusuru bulunmadan stil değiştirme.
+- Ekran görüntülerini inceleyip erişilebilirlik ve yerleşim regresyonlarını raporla; ana kirli worktree'ye dokunma.
+
+
+### [Hava81 #04] Ek doğrulama — test çıktısı izolasyonu
+- PR #1313 açıldı; CodeQL ilk HEAD'de başarılı, CI/CD sırasında görüntü kayıplarına neden olan Playwright çıktı temizliği tespit edildi.
+- `playwright.config.ts` `outputDir: './test-results/playwright-runs'` olarak ayrıldı; Watchdog ekranları `test-results/` kökünde kalır.
+- Ardışık Playwright çalıştırmaları: dashboard visual 3/3, 320px/%200 nav 2/2 başarılı; ikinci çalışmadan sonra standart beş ekran görüntüsünün hâlâ mevcut olduğu doğrulandı. Type-check başarılı.
+- Canlı İzmir görsel denetimi 1440, 768, 390 açık/koyu ve 320 için 5/5 başarılı; yatay overflow, sayfa JS hatası ve hero/forecast örtüşmesi 0. Bu canlı kanıtlar `test-results/hava81-04-live/validated/` altına yeniden oluşturulmalıdır (önceki Playwright temizliği bu ilk kopyayı kaldırdı).
+- Yeni HEAD'in CI/CD ve CodeQL başarı sonucu doğrulanmadan PR merge edilmeyecek.

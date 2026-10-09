@@ -10,6 +10,8 @@ const previewUrl = `http://127.0.0.1:${previewPort}`;
 
 export default defineConfig({
   testDir: './e2e',
+  // Keep disposable Playwright output separate from stable Watchdog screenshots.
+  outputDir: './test-results/playwright-runs',
   timeout: 30_000,
   expect: { timeout: 8_000 },
   fullyParallel: true,
