@@ -1,0 +1,287 @@
+/*
+ * Hava81 / Weather editorial refresh, 2026-10-09.
+ * Focus: decisive first fold, asymmetric weather instruments, and a richer
+ * visual distinction between current conditions and the hourly forecast.
+ *
+ * Presentation-only. No weather data, copy, API or decision logic is changed.
+ */
+
+/* The large forecast/conditions pair should read as two intentional surfaces
+ * rather than matching generic white cards. */
+@media (min-width: 64rem) {
+  .app[data-color-mode='light'] .hava81-decision-field {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.3rem, 2.1vw, 2.1rem);
+    border: 1px solid #244b79;
+    border-radius: 30px;
+    /* Opaque backing preserves the existing desktop panel contract; the
+       image layers below supply the navy visual surface. */
+    background-color: #fff;
+    background-image:
+      radial-gradient(ellipse at 98% 7%, rgb(34 180 211 / .25), transparent 53%),
+      linear-gradient(151deg, #112849 0%, #123a63 65%, #114c71 100%);
+    box-shadow: 0 24px 48px rgb(17 61 114 / .19);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__identity {
+    border-color: rgb(202 232 255 / .24);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__city {
+    color: #f9fcff;
+    letter-spacing: -.067em;
+    font-size: clamp(2.25rem, 2.9vw, 3.3rem);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__city::before {
+    background: rgb(163 218 255 / .17);
+    color: #a1eaff;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__atlas-meta,
+  .app[data-color-mode='light'] .hava81-decision-field__source-note {
+    color: #d0e7fa;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__plate {
+    background: rgb(218 239 255 / .14);
+    border-color: rgb(218 239 255 / .28);
+    color: #fff;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__plate > strong {
+    color: #fff;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__plate span {
+    background: #2e86d7;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__current {
+    min-height: 17.8rem;
+    padding: 1.35rem 1.4rem;
+    border: 1px solid rgb(202 239 255 / .8);
+    border-radius: 25px;
+    background:
+      radial-gradient(circle at 79% 28%, rgb(255 255 255 / .64), transparent 26%),
+      radial-gradient(ellipse at 110% 110%, rgb(29 121 217 / .43), transparent 54%),
+      linear-gradient(125deg, #e9f8ff 0%, #acdffc 51%, #75bcf3 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .78), 0 18px 36px rgb(5 24 62 / .20);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__temperature-value {
+    font-size: clamp(7rem, 9vw, 9.75rem);
+    letter-spacing: -.105em;
+    line-height: 1;
+    color: #0c2f57;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__temperature-unit,
+  .app[data-color-mode='light'] .hava81-decision-field__condition {
+    color: #103760;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__feels-like {
+    color: #285c7d;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__change {
+    border: 1px solid #efce8b;
+    border-left: 5px solid #eda838;
+    border-radius: 17px;
+    background: linear-gradient(115deg, #fff8e7, #ffe8b5);
+    background-color: #ffedbf;
+    box-shadow: 0 8px 17px rgb(10 24 45 / .13);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__rail {
+    gap: .55rem;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__metric,
+  .app[data-color-mode='light'] .hava81-decision-field__metric:nth-child(even),
+  .app[data-color-mode='light'] .hava81-decision-field__metric:nth-child(n + 3) {
+    min-height: 6.25rem;
+    padding: .9rem;
+    border-radius: 17px;
+    border: 1px solid rgb(181 219 247 / .22);
+    background: rgb(212 238 255 / .105);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .05);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__metric dt {
+    color: #bad7ed;
+    letter-spacing: .075em;
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__metric dd {
+    color: #fcffff;
+  }
+}
+
+/* The current hero is now a true editorial masthead. It retains the
+ * real-condition-dependent night/precipitation art and existing score. */
+@media (min-width: 64rem) {
+  .app .decision-glance {
+    min-height: 20rem;
+    padding: 2.1rem 2.6rem;
+    border-radius: 29px;
+    background:
+      radial-gradient(ellipse at 90% 22%, rgb(47 202 220 / .38), transparent 49%),
+      linear-gradient(110deg, #081e40 0%, #153969 54%, #15798f 100%);
+    box-shadow: 0 25px 53px rgb(16 62 119 / .17);
+  }
+  .app .decision-glance__message {
+    max-width: 31ch;
+    font-size: clamp(2rem, 2.5vw, 2.85rem);
+    line-height: 1.12;
+    letter-spacing: -.052em;
+  }
+  .app .decision-glance__window {
+    font-size: .98rem;
+  }
+  .app .decision-glance__quick-list {
+    gap: .75rem;
+    max-width: 52rem;
+    padding-top: 1.3rem;
+  }
+  .app .decision-glance__quick,
+  .app[data-color-mode='dark'] .decision-glance__quick {
+    min-height: 5.1rem;
+    border: 1px solid rgb(197 232 255 / .27);
+    border-radius: 17px;
+    background: rgb(7 37 76 / .45);
+    box-shadow: 0 6px 24px rgb(4 23 52 / .08), inset 0 1px 0 rgb(255 255 255 / .08);
+  }
+  .app .decision-glance__quick-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .app .decision-glance__side {
+    gap: .45rem;
+    padding-block: .6rem;
+  }
+  .app .decision-glance__details {
+    border-radius: 99px;
+    box-shadow: 0 9px 22px rgb(2 17 44 / .18);
+  }
+}
+
+/* Forecast becomes a focused reading instrument, not a flat spreadsheet. */
+.app .hava81-forecast-atlas {
+  border-radius: 28px;
+}
+.app .hava81-forecast-atlas__header {
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--premium-card-border);
+}
+.app .hava81-forecast-atlas__title {
+  font-size: clamp(1.5rem, 1.7vw, 1.85rem);
+  letter-spacing: -.052em;
+  font-weight: 790;
+}
+.app .hava81-forecast-atlas__range {
+  padding: .28rem;
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 19%, transparent);
+  border-radius: 16px;
+}
+.app .hava81-forecast-atlas__range-button[aria-pressed='true'],
+.app .hava81-forecast-atlas__range-button.is-active {
+  background: #2269b5;
+  color: #fff;
+  box-shadow: 0 4px 12px rgb(21 85 155 / .2);
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__range-button[aria-pressed='true'],
+.app[data-color-mode='dark'] .hava81-forecast-atlas__range-button.is-active {
+  background: #2a76ab;
+  color: #fff;
+}
+.app .hava81-forecast-atlas__hourly-viewport {
+  border: 1px solid rgb(118 181 233 / .35);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgb(188 226 252 / .54), rgb(244 250 255 / .1) 85%);
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__hourly-viewport {
+  background: linear-gradient(180deg, rgb(23 91 123 / .45), rgb(18 60 82 / .08));
+}
+.app .hava81-forecast-atlas__hour,
+.app .hava81-forecast-atlas__hour:first-child {
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 15%, transparent);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 91%, var(--color-aegean-pale));
+}
+.app .hava81-forecast-atlas__hour.is-current {
+  border: 1px solid #4c94f2;
+  background: color-mix(in srgb, var(--color-atlas-paper) 46%, var(--color-aegean-pale));
+  box-shadow: inset 0 4px 0 #2582ec;
+}
+.app .hava81-forecast-atlas__day {
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 15%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-atlas-paper) 94%, var(--color-aegean-pale));
+}
+.app .hava81-forecast-atlas__day:first-child {
+  border: 1px solid #76aef3;
+  background: color-mix(in srgb, var(--color-atlas-paper) 60%, var(--color-aegean-pale));
+  box-shadow: inset 4px 0 0 #287add;
+}
+
+/* Mobile uses a brighter sky rather than stacking another dark block.
+ * Preserve the existing 320px + 200% accessible layouts. */
+@media (max-width: 63.99rem) {
+  .app .hava81-decision-field__current {
+    border: 1px solid #8fc4f3;
+    background:
+      radial-gradient(circle at 90% 16%, rgb(255 255 255 / .55), transparent 35%),
+      linear-gradient(132deg, #e9f9ff 0%, #bde4ff 53%, #84c5f5 100%);
+  }
+  .app[data-color-mode='dark'] .hava81-decision-field__current {
+    border-color: #4581a1;
+    background: linear-gradient(132deg, #12344f 0%, #1c537a 72%, #246886 100%);
+  }
+  .app .hava81-decision-field__temperature-value {
+    letter-spacing: -.10em;
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .decision-glance {
+    border-radius: 24px;
+    border-color: rgb(93 186 224 / .38);
+    box-shadow: 0 16px 30px rgb(15 61 105 / .14);
+  }
+  .app .hava81-decision-field {
+    border-radius: 24px;
+  }
+  .app .hava81-decision-field__current {
+    border-radius: 21px;
+  }
+  .app .hava81-forecast-atlas {
+    border-radius: 23px;
+  }
+  .app .hava81-forecast-atlas__title {
+    font-size: 1.4rem;
+  }
+  .app .hava81-forecast-atlas__hourly-viewport {
+    border-radius: 15px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .hava81-forecast-atlas__range-button { transition: none; }
+}
+@media (forced-colors: active) {
+  .app .hava81-decision-field__current,
+  .app .hava81-forecast-atlas__hourly-viewport {
+    background: Canvas !important;
+    border: 1px solid CanvasText;
+  }
+}
+
+/* On handheld screens the current-condition plate becomes a saturated sky
+ * poster. Current weather icon remains data-driven (rain/cloud/snow/night). */
+@media (max-width: 47.99rem) {
+  .app[data-color-mode='light'] .hava81-decision-field__current {
+    border: 1px solid #3c8fcb;
+    background:
+      radial-gradient(ellipse at 85% 18%, rgb(138 226 251 / .30), transparent 41%),
+      radial-gradient(ellipse at 100% 110%, rgb(23 166 206 / .55), transparent 56%),
+      linear-gradient(122deg, #153762 0%, #205a97 52%, #2880a7 100%);
+    box-shadow: 0 13px 24px rgb(29 84 144 / .18), inset 0 1px 0 rgb(255 255 255 / .16);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__temperature-value,
+  .app[data-color-mode='light'] .hava81-decision-field__temperature-unit,
+  .app[data-color-mode='light'] .hava81-decision-field__condition {
+    color: #fff;
+    text-shadow: 0 4px 18px rgb(8 28 60 / .13);
+  }
+  .app[data-color-mode='light'] .hava81-decision-field__feels-like {
+    color: #dceefc;
+  }
+  .app .hava81-decision-field__symbol {
+    filter: drop-shadow(0 11px 16px rgb(11 35 70 / .25));
+  }
+}
