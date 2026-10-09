@@ -15,7 +15,7 @@ const states = [
   {name:'compact-light',width:320,height:720,theme:'light'}
 ];
 const browser=await chromium.launch({headless:true,
- executablePath:'/home/ubuntu/Hava81-visual-overhaul-20261009/.pw-browsers/chromium_headless_shell-1234/chrome-linux/headless_shell',
+ executablePath:process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH || undefined,
  args:['--no-sandbox','--disable-dev-shm-usage']});
 const cache=new Map(),reports=[];
 await fs.mkdir(outputDir,{recursive:true});
