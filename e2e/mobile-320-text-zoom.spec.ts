@@ -38,14 +38,16 @@ test('320px navigation remains operable with 200% text in both languages', async
   await page.route('**/api/v1/weather/context**', route => route.fulfill({ status: 503, json: { error: { code: 'UNAVAILABLE' } } }));
   await page.goto('/istanbul');
   await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
+  for (const themeMode of ['light', 'dark'] as const) {
   for (const lang of ['tr', 'en'] as const) {
-    await page.evaluate(language => {
+    await page.evaluate(({ language, themeMode }) => {
       const currentSettings = JSON.parse(localStorage.getItem('user-settings') || '{}');
-      localStorage.setItem('user-settings', JSON.stringify({ ...currentSettings, language }));
-    }, lang);
+      localStorage.setItem('user-settings', JSON.stringify({ ...currentSettings, language, themeMode }));
+    }, { language: lang, themeMode });
     await page.reload();
     await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
     await expect(page.locator('html')).toHaveAttribute('lang', lang);
+    await expect(page.locator('.app')).toHaveAttribute('data-color-mode', themeMode);
     const nav = page.locator('.atlas-bottom-nav');
     await expect(nav).toBeVisible();
     const buttons = nav.locator('button');
@@ -62,7 +64,7 @@ test('320px navigation remains operable with 200% text in both languages', async
         labelFits: !!labelRect && labelRect.left >= rect.left - 1 && labelRect.right <= rect.right + 1,
       };
     }));
-    await page.screenshot({ path: testInfo.outputPath(`nav-320-zoom200-${lang}.png`), fullPage: false });
+    await page.screenshot({ path: testInfo.outputPath(`nav-320-zoom200-${lang}-${themeMode}.png`), fullPage: false });
     expect(measurements, `${lang} navigation button geometry`).toEqual(
       expect.arrayContaining([expect.objectContaining({ labelFits: true })]),
     );
@@ -74,5 +76,6 @@ test('320px navigation remains operable with 200% text in both languages', async
       expect(item.labelFits, `${lang} label must fit its button`).toBe(true);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(321);
+  }
   }
 });
