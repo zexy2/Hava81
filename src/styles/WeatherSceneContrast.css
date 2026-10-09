@@ -1,0 +1,89 @@
+/*
+ * Weather-aware decision hero: foreground/background contrast repair.
+ *
+ * The scene-specific gradients in WeatherPolish.css used very pale daytime
+ * blues and lilac for cloud/rain/snow/mist/night, but the premium redesign
+ * made the decision headline, summary and kicker nearly white. These
+ * condition selectors outranked the generic navy hero, leaving illegible
+ * white-on-pastel text after sunset and in bad weather.
+ *
+ * Keep real-weather art and every accessible label, restore dark cinematic
+ * scene variations that give the white text a consistent readable backdrop.
+ */
+
+/* Light-mode weather states: each scene retains a distinctive identity
+   while keeping the left/content half dark enough for white type. */
+.app[data-color-mode='light'] .decision-glance[data-weather-scene='cloud'][data-night='false'] {
+  background:
+    radial-gradient(ellipse at 92% 15%, rgb(134 198 230 / .21), transparent 46%),
+    linear-gradient(112deg, #102a4a 0%, #264b71 55%, #42778f 100%);
+}
+.app[data-color-mode='light'] .decision-glance[data-weather-scene='rain'][data-night='false'] {
+  background:
+    radial-gradient(ellipse at 92% 18%, rgb(106 183 220 / .17), transparent 48%),
+    linear-gradient(110deg, #0a263f 0%, #1a4561 55%, #316b80 100%);
+}
+.app[data-color-mode='light'] .decision-glance[data-weather-scene='snow'][data-night='false'] {
+  background:
+    radial-gradient(ellipse at 90% 12%, rgb(188 221 249 / .23), transparent 47%),
+    linear-gradient(112deg, #193451 0%, #325571 54%, #4b758b 100%);
+}
+.app[data-color-mode='light'] .decision-glance[data-weather-scene='mist'][data-night='false'] {
+  background:
+    radial-gradient(ellipse at 92% 16%, rgb(190 210 222 / .15), transparent 48%),
+    linear-gradient(114deg, #23374d 0%, #385167 54%, #516e7b 100%);
+}
+
+/* Real night condition is dominant regardless of precipitation: never put
+   near-white premium typography over the former #dce7fa night gradient. */
+.app[data-color-mode='light'] .decision-glance[data-night='true'] {
+  background:
+    radial-gradient(ellipse at 92% 16%, rgb(71 166 199 / .26), transparent 44%),
+    linear-gradient(113deg, #0b2341 0%, #143c67 57%, #17647b 100%);
+}
+
+/* Dark mode already uses deep scene colors. Keep those, with a little
+   more separation between the card and backdrop for moonlit weather. */
+.app[data-color-mode='dark'] .decision-glance[data-night='true'] {
+  background:
+    radial-gradient(ellipse at 93% 13%, rgb(64 147 180 / .22), transparent 48%),
+    linear-gradient(112deg, #081c31 0%, #193a54 60%, #205d73 100%);
+}
+.app .decision-glance[data-night='true'] .decision-glance__moon::before {
+  background: #173d62;
+}
+
+/* Decorations remain recognizable but cannot wash out the typography. */
+.app .decision-glance[data-night='true'] .decision-glance__atmosphere {
+  opacity: .5;
+}
+.app .decision-glance[data-night='true'] .decision-glance__cloud {
+  opacity: .28;
+}
+.app .decision-glance[data-night='true'] .decision-glance__quick,
+.app .decision-glance[data-night='true'] .decision-glance__quick:last-child {
+  border-color: rgb(195 231 255 / .27);
+  background: rgb(5 24 51 / .46);
+}
+.app .decision-glance[data-night='true'] .decision-glance__window {
+  color: #dcecff;
+}
+
+/* The existing 200% text zoom contract deliberately fades decorative
+   layers; do not regress that adaptation on small mobile containers. */
+@container (max-width: 18rem) {
+  .app .decision-glance[data-night='true'] .decision-glance__atmosphere {
+    opacity: .1;
+  }
+}
+@media (forced-colors: active) {
+  .app .decision-glance[data-night='true'],
+  .app .decision-glance[data-weather-scene='cloud'],
+  .app .decision-glance[data-weather-scene='rain'],
+  .app .decision-glance[data-weather-scene='snow'],
+  .app .decision-glance[data-weather-scene='mist'] {
+    color: CanvasText;
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+}
