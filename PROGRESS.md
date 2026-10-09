@@ -27,3 +27,34 @@
 - Test tekrarında 390×844 mobil ile 1280×900 masaüstü görselleri yeniden üretildi; masaüstünde saatlik tahmin grafiği ve saat aralığı sekmeleri artık ekranda görünüyor. Yeni CSS gerektiren açık bir kusur tespit edilmedi; rastgele stil değiştirilmedi.
 - Playwright 3/3 geçti; TypeScript, ESLint ve production build yeniden başarılı çalıştırıldı.
 - Sonraki adım: CI/CD + CodeQL için branch push ve PR; korumalar başarıyla tamamlanmadan merge yapılmamalı. Ekran görüntüleri `test-results/` içinde yerel kaldı.
+
+---
+
+# Hava81 — [Hava81 #03] Canlı Görsel Doğrulama
+
+**Tarih:** 2026-10-09
+**Worktree:** `/home/ubuntu/Hava81-03-live-audit-20261009`
+**Dal:** `test/hava81-live-audit-20261009`
+**Başlangıç:** `83f9240c` (PR #1309 merge edilmiş `origin/main`)
+
+## Tamamlananlar
+- [Hava81 #03] PR #1309, CI/CD ve CodeQL başarıyla geçtikten sonra `83f9240c` squash merge olarak `main` dalına girdi.
+- Canlı site `https://hava81.zekiakgul.dev/izmir/` HTTP 200 döndürüyor.
+- Canlı Playwright denetimi İzmir TR/light için 320px, 320px/%200 font, 390px, 768px, 1440px: **5/5 başarılı**. Gerçek API: 5 alınan, 19 cache replay, 0 uncached.
+- Genişletilmiş canlı Playwright denetimi İstanbul ve Ankara için TR/EN × light/dark × 5 ekran/zoom: **40/40 başarılı**. Gerçek API: 20 alınan, 179 replay, 0 uncached.
+- Ekran görüntüleri (git dışı): `test-results/hava81-03-live/` ve `test-results/hava81-03-live-expanded/`.
+- İlk tarayıcı denemesi Snap Chromium cgroup kısıtıyla başarısız oldu. Playwright kurulu Chromium binary'si (`/opt/sentinelx-cloud-core/.cache/ms-playwright/chromium-1234/chrome-linux/chrome`) ile yeniden çalıştırılıp başarılı oldu.
+- Bu turda somut bir UI regresyonu bulunmadığı için uygulama CSS'inde değişiklik yapılmadı.
+
+## Sıradaki somut görev
+- Kaydedilen canlı ekran görüntülerini görsel olarak ayrıntılı değerlendir; renk kontrastı, metin kesilmesi ve 200% ölçekte gerçek kullanılabilirlik kusurlarını araştır.
+- Gerekiyorsa ayrı bir feature worktree'de küçük CSS değişikliği, Playwright regresyon testi, type-check/lint/build ve CI/CD+CodeQL ile doğrula.
+- Canlı testlerin başarıyla geçmesi, yayındaki dosyaların birebir `main` commit SHA'sı olduğunu tek başına kanıtlamaz. Canlı deployment sürüm eşlemesi ayrıca doğrulanmalı.
+- Orijinal `/home/ubuntu/Hava81` içindeki untracked/kirli dosyalara dokunma.
+
+## [Hava81 #03] 320px/%200 mobil gezinme etiket regresyonu
+- Canlı mobil görsellerde etiketlerin çok satıra bölünebildiği görüldü.
+- `e2e/mobile-320-text-zoom.spec.ts`: gezinme etiketi butonun dikey sınırlarında da kalmalı assertion eklendi.
+- Playwright 2/2, production build, TypeScript type-check ve ESLint başarılı.
+- CSS değişikliği yok; yeni test regresyon koruması sağlar.
+- GitHub PR ve CI/CD doğrulaması yapılmadan merge etme.

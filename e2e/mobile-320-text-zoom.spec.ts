@@ -62,6 +62,7 @@ test('320px navigation remains operable with 200% text in both languages', async
         left: rect.left,
         right: rect.right,
         labelFits: !!labelRect && labelRect.left >= rect.left - 1 && labelRect.right <= rect.right + 1,
+        labelFitsVertically: !!labelRect && labelRect.top >= rect.top - 1 && labelRect.bottom <= rect.bottom + 1,
       };
     }));
     await page.screenshot({ path: testInfo.outputPath(`nav-320-zoom200-${lang}-${themeMode}.png`), fullPage: false });
@@ -74,6 +75,7 @@ test('320px navigation remains operable with 200% text in both languages', async
       expect(item.left, `${lang} left bound`).toBeGreaterThanOrEqual(-1);
       expect(item.right, `${lang} right bound`).toBeLessThanOrEqual(321);
       expect(item.labelFits, `${lang} label must fit its button`).toBe(true);
+      expect(item.labelFitsVertically, `${lang} wrapped label must fit button height`).toBe(true);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(321);
   }
