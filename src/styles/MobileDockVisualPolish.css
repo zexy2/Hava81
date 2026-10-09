@@ -135,3 +135,15 @@
     padding-inline: 2px;
   }
 }
+
+/* Readable, stable dock surface for users who disable transparency. */
+@media (prefers-reduced-transparency: reduce) and (max-width: 47.99rem) {
+  .app .atlas-bottom-nav {
+    background: #103c60;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .app[data-color-mode='dark'] .atlas-bottom-nav {
+    background: #102f45;
+  }
+}
