@@ -38,6 +38,9 @@ test('dashboard hero and current weather fit mobile and desktop viewports', asyn
     await page.goto('/istanbul');
     const hero = page.locator('.decision-glance').first();
     await expect(hero).toBeVisible();
+    // A screenshot taken while the forecast skeleton is visible cannot audit the loaded dashboard.
+    await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
+    await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);
     const city = page.getByText('İstanbul', { exact: true }).first();
     await expect(city).toBeVisible();
     const geometry = await page.evaluate(() => ({
@@ -78,6 +81,10 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     await expect(skeleton).toHaveCount(0, { timeout: 15000 });
     const loaded = page.locator('.hava81-forecast-atlas');
     await expect(loaded).toBeVisible();
+    const loadedBounds = await loaded.boundingBox();
+    expect(loadedBounds, 'loaded forecast should have measurable geometry').not.toBeNull();
+    expect(loadedBounds!.x, 'loaded forecast must stay within the left viewport edge').toBeGreaterThanOrEqual(-1);
+    expect(loadedBounds!.x + loadedBounds!.width, 'loaded forecast must stay within the right viewport edge').toBeLessThanOrEqual(391);
     expect(await page.evaluate(() => document.documentElement.scrollWidth))
       .toBeLessThanOrEqual(391);
     await page.screenshot({ path: testInfo.outputPath('forecast-mobile-loaded.png') });
