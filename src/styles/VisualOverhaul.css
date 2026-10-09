@@ -160,3 +160,168 @@
   .app .decision-glance__quick { border: 1px solid CanvasText; }
   .app .decision-glance__details { border: 1px solid ButtonText; }
 }
+
+/* Phase 2 — larger visual hierarchy and deliberate desktop asymmetry.
+   Keep the earlier, separately captured baseline intact. */
+@media (min-width: 80rem) {
+  .app .atlas-dashboard {
+    grid-template-columns: minmax(0, .91fr) minmax(0, 1.09fr);
+  }
+}
+
+/* A restrained meteorological contour replaces the sun behind the score ring. */
+.app .decision-glance {
+  background:
+    radial-gradient(circle at 75% 0%, rgb(105 223 245 / .34), transparent 35%),
+    radial-gradient(ellipse at 106% 105%, rgb(29 188 199 / .30), transparent 47%),
+    linear-gradient(114deg, #0c244b 4%, #164b7f 60%, #168ba3 100%);
+}
+.app[data-color-mode='dark'] .decision-glance {
+  background:
+    radial-gradient(ellipse at 96% 15%, rgb(57 169 186 / .34), transparent 43%),
+    linear-gradient(113deg, #071f35, #143d60 58%, #146c78);
+}
+.app .decision-glance__atmosphere {
+  width: 47%;
+  opacity: .7;
+  background:
+    repeating-radial-gradient(circle at 95% 25%, transparent 0 43px, rgb(220 246 255 / .16) 44px 45px, transparent 46px 92px),
+    linear-gradient(90deg, transparent, rgb(101 207 225 / .10));
+}
+.app .decision-glance__sun { display: none; }
+.app .decision-glance__cloud { opacity: .44; }
+.app .decision-glance__hills {
+  height: 10rem;
+  bottom: -8rem;
+  transform: rotate(-7deg);
+  background: linear-gradient(140deg, rgb(120 235 232 / .35), rgb(50 102 168 / .05));
+}
+.app .decision-glance__score {
+  box-shadow: 0 13px 36px rgb(3 22 50 / .26);
+}
+.app .decision-glance__score-label {
+  text-shadow: 0 1px 3px rgb(6 40 65 / .35);
+}
+
+/* A true sky-colored weather plate is the second visual anchor. */
+.app .hava81-decision-field__current {
+  border: 1px solid #93cdfa;
+  background:
+    radial-gradient(circle at 83% 27%, rgb(255 255 255 / .64), transparent 27%),
+    radial-gradient(ellipse at 95% 95%, rgb(100 177 243 / .34), transparent 57%),
+    linear-gradient(130deg, #f0faff, #c5e7ff 52%, #a3d4fa);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .75);
+}
+.app[data-color-mode='dark'] .hava81-decision-field__current {
+  border-color: #3d769b;
+  background:
+    radial-gradient(ellipse at 93% 12%, rgb(46 141 188 / .38), transparent 47%),
+    linear-gradient(125deg, #10344f, #1a4b6a 65%, #265d76);
+}
+.app .hava81-decision-field__temperature-value {
+  text-shadow: 0 6px 22px rgb(23 81 130 / .07);
+}
+.app .hava81-decision-field__symbol {
+  filter: drop-shadow(0 12px 22px rgb(21 107 163 / .20));
+}
+
+/* Connect the hourly graph, controls and daily strip into one forecast surface. */
+.app .hava81-forecast-atlas__hourly-viewport {
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 13%, transparent);
+  border-radius: 17px;
+  background:
+    linear-gradient(180deg, rgb(198 231 254 / .52), rgb(237 248 255 / .27) 75%, transparent);
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__hourly-viewport {
+  background: linear-gradient(180deg, rgb(31 87 117 / .55), rgb(24 60 78 / .17));
+}
+.app .hava81-forecast-atlas__hours {
+  border-top-color: color-mix(in srgb, var(--color-aegean) 18%, transparent);
+}
+.app .hava81-forecast-atlas__hour.is-current {
+  background: color-mix(in srgb, var(--color-aegean-pale) 38%, transparent);
+  box-shadow: inset 0 3px 0 #2675df;
+}
+.app .hava81-forecast-atlas__day:first-child {
+  background: color-mix(in srgb, var(--color-aegean-pale) 62%, var(--color-atlas-paper));
+  border: 1px solid #9fc7fd;
+}
+.app .hava81-forecast-atlas__range {
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 17%, transparent);
+}
+
+/* Bento-like planning cards retain their functionality and readability. */
+@media (min-width: 64rem) {
+  .app .atlas-dashboard > .commute-plan,
+  .app .atlas-dashboard > .daily-plan {
+    border-radius: 25px;
+  }
+  .app .decision-glance__message { max-width: 36ch; }
+}
+@media (max-width: 47.99rem) {
+  .app .decision-glance {
+    background:
+      radial-gradient(ellipse at 98% 0%, rgb(60 192 209 / .44), transparent 53%),
+      linear-gradient(114deg, #0d294f, #155b86 68%, #188ba2);
+  }
+  .app[data-color-mode='dark'] .decision-glance {
+    background:
+      radial-gradient(ellipse at 98% 0%, rgb(45 157 172 / .26), transparent 57%),
+      linear-gradient(114deg, #0a2a40, #164760 70%, #235f78);
+  }
+  .app .decision-glance__atmosphere { width: 50%; opacity: .42; }
+  .app .hava81-decision-field__current {
+    background:
+      radial-gradient(circle at 80% 24%, rgb(255 255 255 / .56), transparent 31%),
+      linear-gradient(135deg, #edf9ff, #bedfff 60%, #a9d7fd);
+  }
+  .app[data-color-mode='dark'] .hava81-decision-field__current {
+    background:
+      radial-gradient(circle at 88% 28%, rgb(54 151 188 / .28), transparent 43%),
+      linear-gradient(115deg, #103249, #205170);
+  }
+  .app .hava81-forecast-atlas__hourly-viewport { border-radius: 15px; }
+}
+@media (forced-colors: active) {
+  .app .hava81-decision-field__current,
+  .app .hava81-forecast-atlas__hourly-viewport {
+    border: 1px solid CanvasText;
+    background: Canvas !important;
+  }
+}
+
+/* Compatibility corrections from full CI: keep tangible filled surfaces,
+   inward keyboard focus, and legible city names under 200% text zoom. */
+.app .hava81-decision-field__change {
+  background-color: #fff3df;
+}
+.app[data-color-mode='dark'] .hava81-decision-field__change {
+  background-color: #413b2c;
+}
+@media (min-width: 64rem) {
+  .app .decision-glance__sun {
+    display: block;
+    top: 11%;
+    right: 60%;
+    width: 3.8rem;
+    height: 3.8rem;
+    opacity: .16;
+    box-shadow: 0 0 43px 20px rgb(255 225 170 / .09);
+  }
+}
+@media (max-width: 47.99rem) {
+  .app .environment-rail { padding: 0; }
+}
+@media (max-width: 24rem) {
+  .app .hava81-decision-field__city {
+    font-size: clamp(1.5rem, 8vw, 2rem);
+  }
+}
+
+/* At 200% enlarged text, atmospheric illustration must fade behind text.
+   Keep this after the mobile-art baseline so the container query wins. */
+@container (max-width: 18rem) {
+  .app .decision-glance__atmosphere {
+    opacity: .1;
+  }
+}
