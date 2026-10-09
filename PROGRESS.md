@@ -149,3 +149,16 @@
 
 ### 🚀 Sıradaki Adım
 - Bu test netleştirmesini PR'da incelemeye gönder, CI/CD ve CodeQL sonuçlarını doğrula; başarısız veya bekleyen kontrol varken merge yapma.
+
+## [Hava81 #04] Linear gradyan taban kontrast koruması
+
+### 🎯 Tamamlanan Geliştirmeler
+- Güncel main `09205ff2` üzerinden izole `test/hava81-04-contrast-parser-20261009` worktree oluşturuldu.
+- `e2e/mobile-dock-contrast.spec.ts` yalnızca CSS `linear-gradient(...)` taban katmanının opak RGB duraklarını kontrast testine dahil edecek şekilde daraltıldı. Radyal overlay'deki renkler taban durak sayılamaz; taban linear gradient zorunlu ve onun içinde `rgba(...)` varsa test bilinçli olarak başarısız olur.
+- Üretim arayüzü CSS/DOM değiştirilmedi. Playwright 320px/%200 İngilizce light/dark negatif fixture + normal görüntü **1/1 PASS**, `npm run type-check`, `npm run lint`, `npm run build` başarılı.
+
+### 📸 Görsel Kanıtlar
+- `test-results/playwright-runs/` dizininde normal light/dark dock baseline ekran görüntüleri üretildi; screenshot öncesi forecast atlas görünür ve loading card sayısı sıfır.
+
+### 🚀 Sıradaki Adım
+- Bu dar kapsamlı test güçlendirmesini GitHub PR ile self-hosted CI/CD ve CodeQL doğrulamasına geçir. Son HEAD kontrollerinin tümü yeşil olmadan merge yapma.
