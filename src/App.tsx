@@ -31,6 +31,7 @@ import './styles/SecondarySurfacePolish.css';
 import './styles/PlanningVisualPolish.css';
 import './styles/HomeEditorialRefresh.css';
 import './styles/NavigationVisualPolish.css';
+import './styles/MobileDockVisualPolish.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
