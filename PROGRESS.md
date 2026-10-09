@@ -163,3 +163,16 @@
 
 ### 🚀 Sıradaki Adım
 - Değişikliği commit edip GitHub PR oluştur; self-hosted CI/CD ve CodeQL onayı olmadan merge yapma. Özellikle `main` üzerinde gerçekleşen Docker publish denemesini takip et; PR'da bu job koşul nedeniyle skipped kalabilir.
+
+## [Hava81 #04] Buildx başlangıç OAuth timeout düzeltmesi — 2026-10-09
+
+### 🎯 Tamamlanan Geliştirmeler
+- Main CI/CD run `37993627130` Docker job'ı, Buildx kurulumundaki `moby/buildkit:buildx-stable-1` Docker Hub OAuth token timeout nedeniyle başarısız oldu. Önceki #1317 düzeltmesi yalnız build-push adımlarında çalıştığından bu erken hatayı karşılayamıyordu.
+- İzole `fix/hava81-buildx-setup-timeout-20261009` dalında Docker Buildx kurulumu iki aşamalı güvenli tekrar ile güncellendi. İlk hata sadece ikinci denemeyi tetikler; ikinci deneme de başarısız olursa Docker işi başarısız kalır. Diğer uygulama testleri ve Docker yayınlama gate'leri korunur.
+- Yerel kullanıcının Docker daemon izni olmadığından gerçek Buildx image pull testi sunucuda koşulamadı; YAML ve akış semantiği kontrol edildi.
+
+### 📸 Görsel Kanıtlar
+- Yalnız CI altyapısı değişti, UI etkilenmedi; önceki standard Playwright ekran görüntüleri diğer izole çalışma ağaçlarında bulunuyor.
+
+### 🚀 Sıradaki Adım
+- PR'da self-hosted CI/CD ve CodeQL'ı doğrula, onay sonrası main'e al, main Docker publish sonucunda Buildx kurulumu ve publish'i teyit et.
