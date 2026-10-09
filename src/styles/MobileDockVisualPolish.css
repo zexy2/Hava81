@@ -147,3 +147,25 @@
     background: #102f45;
   }
 }
+
+/* Landscape phones: keep weather content visible above the floating dock. */
+@media (max-width: 47.99rem) and (max-height: 31.25rem) and (orientation: landscape) {
+  .app .atlas-bottom-nav {
+    min-height: 55px;
+    padding: 3px 6px;
+    gap: 4px;
+    border-radius: 17px;
+  }
+  .app .atlas-bottom-nav__button {
+    min-height: 48px;
+    padding-block: 2px;
+    flex-direction: row;
+    gap: 5px;
+    border-radius: 12px;
+  }
+  .app .atlas-bottom-nav__icon { width: 20px; height: 20px; flex: none; }
+  .app .atlas-bottom-nav__label { margin-block-start: 0; font-size: .75rem; }
+  .app[data-has-bottom-nav='true'] {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+}
