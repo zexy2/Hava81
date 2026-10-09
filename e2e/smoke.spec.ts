@@ -1895,7 +1895,7 @@ test('mobile context signals reflow at 200 percent text size', async ({ page }, 
   await assertContextFits();
 });
 
-test('desktop context signals use one editorial data surface', async ({ page }, testInfo) => {
+test('desktop context signals present four rounded bento tiles', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop context-signals editorial-surface regression');
   await page.goto('/istanbul');
 
@@ -1936,9 +1936,9 @@ test('desktop context signals use one editorial data surface', async ({ page }, 
   expect(surface.panelRadius).toBeGreaterThanOrEqual(16);
   expect(surface.panelShadow).not.toBe('none');
   expect(surface.sourceHasBox).toBe(false);
-  expect(surface.gridRule).toBeGreaterThanOrEqual(1);
-  expect(surface.nestedCardBackgrounds).toBe(0);
-  expect(surface.roundedNestedCards).toBe(0);
+  expect(surface.gridRule).toBe(0);
+  expect(surface.nestedCardBackgrounds).toBe(4);
+  expect(surface.roundedNestedCards).toBe(4);
   expect(surface.separatedColumns).toBeGreaterThanOrEqual(1);
   expect(surface.pageWidth).toBeLessThanOrEqual(surface.viewportWidth);
 });
