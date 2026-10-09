@@ -1,0 +1,137 @@
+/* Hava81 — Mobile dock visual alignment with the premium masthead.
+   Presentation-only: do not alter button ordering, disabled state, keyboard semantics. */
+@media (max-width: 47.99rem) {
+  .app .atlas-bottom-nav {
+    left: 12px;
+    right: 12px;
+    bottom: max(9px, env(safe-area-inset-bottom));
+    min-height: 71px;
+    padding: 6px;
+    gap: 7px;
+    border: 1px solid rgb(137 217 242 / .45);
+    border-radius: 23px;
+    background:
+      radial-gradient(ellipse at 90% -30%, rgb(63 207 232 / .30), transparent 55%),
+      linear-gradient(108deg, #0b264b, #10476c 66%, #116c81);
+    box-shadow: 0 13px 36px rgb(6 34 72 / .26), inset 0 1px 0 rgb(255 255 255 / .14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #d5ebf6;
+  }
+
+  .app .atlas-bottom-nav__button {
+    min-height: 57px;
+    border-radius: 17px;
+    padding: .4rem .4rem .45rem;
+    color: #dbedf8;
+  }
+  .app .atlas-bottom-nav__label {
+    font-size: .8rem;
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: .005em;
+  }
+  .app .atlas-bottom-nav__icon {
+    width: 23px;
+    height: 23px;
+  }
+  .app .atlas-bottom-nav__button:hover:not(:disabled) {
+    color: #fff;
+    background: rgb(227 246 255 / .13);
+  }
+  .app .atlas-bottom-nav__button--active {
+    color: #123c66;
+    background: linear-gradient(140deg, #f9fdff, #d5efff);
+    border: 1px solid rgb(255 255 255 / .67);
+    box-shadow: 0 5px 16px rgb(4 29 55 / .2), inset 0 1px 0 #fff;
+  }
+  .app .atlas-bottom-nav__button--active:hover:not(:disabled) {
+    color: #0b3970;
+    background: #f1fbff;
+  }
+  .app .atlas-bottom-nav__button--active::after {
+    bottom: 3px;
+    height: 3px;
+    width: 28px;
+    border-radius: 4px;
+    background: #217acc;
+  }
+  .app .atlas-bottom-nav__button--active .atlas-bottom-nav__label {
+    font-weight: 800;
+  }
+  .app .atlas-bottom-nav__button:focus-visible {
+    outline: 3px solid #9ce6ff;
+    outline-offset: -3px;
+  }
+  .app[data-color-mode='dark'] .atlas-bottom-nav {
+    border-color: rgb(86 177 199 / .45);
+    background: linear-gradient(115deg, #0b253a, #123f56 69%, #175967);
+    box-shadow: 0 12px 34px rgb(0 12 27 / .42);
+  }
+  .app[data-color-mode='dark'] .atlas-bottom-nav__button--active {
+    color: #f5fbff;
+    border-color: #6dbbcc;
+    background: linear-gradient(140deg, #205976, #176b81);
+    box-shadow: 0 5px 16px rgb(0 0 0 / .18);
+  }
+  .app[data-color-mode='dark'] .atlas-bottom-nav__button--active::after {
+    background: #97eaf0;
+  }
+  .app[data-color-mode='dark'] .atlas-bottom-nav__button--active:hover:not(:disabled) {
+    background: linear-gradient(140deg, #256a88, #1a748a);
+  }
+
+  /* Reserve room for a floating bottom dock, including keyboard-safe areas.
+     The original map-view rule still hides the dock on map mode. */
+  .app[data-has-bottom-nav='true'] {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 24rem) {
+  .app .atlas-bottom-nav {
+    left: 6px;
+    right: 6px;
+    bottom: max(5px, env(safe-area-inset-bottom));
+    padding: 4px;
+    gap: 3px;
+    border-radius: 18px;
+  }
+  .app .atlas-bottom-nav__button {
+    padding-inline: 2px;
+    min-width: 44px;
+    border-radius: 12px;
+  }
+}
+@media (forced-colors: active) {
+  .app .atlas-bottom-nav {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+  .app .atlas-bottom-nav__button--active {
+    background: Canvas;
+    color: Highlight;
+    border: 2px solid Highlight;
+    box-shadow: none;
+    text-decoration: underline 2px;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .app .atlas-bottom-nav__button:not(.atlas-bottom-nav__button--active) {
+    color: CanvasText;
+  }
+  .app .atlas-bottom-nav__button:focus-visible {
+    outline: 3px solid Highlight;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .atlas-bottom-nav__button { transition: none; }
+}
+/* English "Map" must stay on a single line at 200% enlarged text.
+   Reclaim horizontal room from decorative padding, never from the
+   44px target itself. The existing 0.94 / 0.69 / 1.37 grid is preserved. */
+@media (max-width: 47.99rem) {
+  .app .atlas-bottom-nav:lang(en) .atlas-bottom-nav__button {
+    padding-inline: 2px;
+  }
+}
