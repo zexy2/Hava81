@@ -98,6 +98,10 @@ candidate_bytes=0
 removed_count=0
 removed_bytes=0
 skipped_artifact_count=0
+writable_artifact_count=0
+writable_artifact_bytes=0
+unwritable_artifact_count=0
+unwritable_artifact_bytes=0
 removable_worktree_count=0
 removable_worktree_bytes=0
 unwritable_worktree_count=0
@@ -217,12 +221,16 @@ while IFS= read -r wt; do
     candidate_count=$((candidate_count + 1))
     candidate_bytes=$((candidate_bytes + bytes))
     if ! tree_is_removable "$target"; then
+      unwritable_artifact_count=$((unwritable_artifact_count + 1))
+      unwritable_artifact_bytes=$((unwritable_artifact_bytes + bytes))
       printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo SKIP_UNWRITABLE_ARTIFACT || echo WOULD_SKIP_UNWRITABLE_ARTIFACT)" "$bytes" "$target"
       if [[ "$apply" == true ]]; then
         skipped_artifact_count=$((skipped_artifact_count + 1))
       fi
       continue
     fi
+    writable_artifact_count=$((writable_artifact_count + 1))
+    writable_artifact_bytes=$((writable_artifact_bytes + bytes))
     printf '%s\t%s\t%s\n' "$([[ "$apply" == true ]] && echo REMOVE || echo WOULD_REMOVE)" "$bytes" "$target"
     if [[ "$apply" == true ]]; then
       if rm -rf --one-file-system "$target"; then
@@ -264,5 +272,6 @@ fi
 if [[ "$apply" == true ]]; then
   printf 'Removed %d rebuildable artifact directories (%d bytes); skipped %d unwritable/failed removals.\n' "$removed_count" "$removed_bytes" "$skipped_artifact_count"
 else
-  printf 'Dry run: %d rebuildable artifact directories (%d bytes) are eligible. Re-run with --apply to remove only these artifacts.\n' "$candidate_count" "$candidate_bytes"
+  printf 'Dry run: %d writable rebuildable artifact directories (%d bytes) are candidates; %d unwritable directories (%d bytes) excluded, from %d scanned (%d bytes). --apply also requires Git metadata ownership and writability.\n' \
+    "$writable_artifact_count" "$writable_artifact_bytes" "$unwritable_artifact_count" "$unwritable_artifact_bytes" "$candidate_count" "$candidate_bytes"
 fi

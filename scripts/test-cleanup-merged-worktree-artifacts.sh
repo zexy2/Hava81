@@ -124,6 +124,16 @@ grep -Fq "WOULD_SKIP_UNWRITABLE_WORKTREE" <<<"$dry"
 grep -Fq "$locked" <<<"$dry"
 grep -Fq "WOULD_SKIP_UNWRITABLE_ARTIFACT" <<<"$dry"
 grep -Fq "$locked/dist" <<<"$dry"
+# A non-writable artifact is visible during audit but must not inflate the
+# count of space that this caller could actually reclaim.
+writable_rows="$(awk -F '\t' '$1 == "WOULD_REMOVE" { n++ } END { print n+0 }' <<<"$dry")"
+blocked_rows="$(awk -F '\t' '$1 == "WOULD_SKIP_UNWRITABLE_ARTIFACT" { n++ } END { print n+0 }' <<<"$dry")"
+grep -Fq "Dry run: ${writable_rows} writable rebuildable artifact directories" <<<"$dry"
+grep -Fq "; ${blocked_rows} unwritable directories" <<<"$dry"
+if grep -Fq 'are eligible. Re-run with --apply' <<<"$dry"; then
+  echo 'dry run still counts non-writable artifacts as eligible' >&2
+  exit 1
+fi
 grep -Eq 'Dry run: [1-9][0-9]* clean linked worktrees \([1-9][0-9]* bytes\) can be removed now; [1-9][0-9]* \([1-9][0-9]* bytes\) are currently unwritable;' <<<"$dry"
 if grep -Fq 'eligible clean linked worktrees' <<<"$dry"; then
   echo 'dry-run summary still overstates unwritable worktrees as removable' >&2
