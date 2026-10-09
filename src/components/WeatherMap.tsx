@@ -95,6 +95,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   // Leaflet can display markers before the raster map loads. Keep an honest
   // loading state instead of showing an unexplained blank grey map.
   const [tilesLoading, setTilesLoading] = useState(true);
+  const [tilesFailed, setTilesFailed] = useState(false);
+  const [tileAttempt, setTileAttempt] = useState(0);
+
+  const retryTiles = () => {
+    setTilesFailed(false);
+    setTilesLoading(true);
+    setFallbackTiles(false);
+    // A different key forces a fresh TileLayer even if it was on the primary.
+    setTileAttempt(previous => previous + 1);
+  };
   const [, setFreshnessRevision] = useState(0);
   const currentFreshness = getCurrentWeatherFreshness(weather?.meta ?? null);
 
@@ -169,14 +179,23 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           <MapController center={center} />
 
           <TileLayer
-            key={fallbackTiles ? 'osmde' : 'osmfr'}
+            key={`${fallbackTiles ? 'osmde' : 'osmfr'}-${tileAttempt}`}
             url={tileUrl}
             eventHandlers={{
-              loading: () => setTilesLoading(true),
+              loading: () => {
+                if (!tilesFailed) setTilesLoading(true);
+              },
               load: () => setTilesLoading(false),
               tileerror: () => {
-                setTilesLoading(true);
-                setFallbackTiles(true);
+                if (fallbackTiles) {
+                  // Both independent providers failed: do not keep showing a
+                  // spinner indefinitely or claim the map is still loading.
+                  setTilesFailed(true);
+                  setTilesLoading(false);
+                } else {
+                  setTilesLoading(true);
+                  setFallbackTiles(true);
+                }
               },
             }}
             maxZoom={18}
@@ -253,10 +272,25 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             );
           })}
         </MapContainer>
-        {tilesLoading && (
-          <div className="weather-map__tile-status" role="status" aria-live="polite">
-            <span className="weather-map__tile-spinner" aria-hidden="true" />
-            {t('weather.mapTilesLoading')}
+        {(tilesLoading || tilesFailed) && (
+          <div
+            className={`weather-map__tile-status${tilesFailed ? ' weather-map__tile-status--failed' : ''}`}
+            role={tilesFailed ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {tilesFailed ? (
+              <>
+                <span>{t('weather.mapTilesUnavailable')}</span>
+                <button type="button" onClick={retryTiles}>
+                  {t('weather.mapTilesRetry')}
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="weather-map__tile-spinner" aria-hidden="true" />
+                {t('weather.mapTilesLoading')}
+              </>
+            )}
           </div>
         )}
       </div>

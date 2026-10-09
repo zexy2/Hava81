@@ -55,6 +55,8 @@ export const tr = {
     staleCurrentData: 'Anlık veri güncel değil',
     mapTitle: 'Türkiye hava atlası',
     mapTilesLoading: 'Harita hazırlanıyor',
+    mapTilesUnavailable: 'Harita yüklenemedi. Şehir işaretleri kullanılabilir.',
+    mapTilesRetry: 'Tekrar dene',
     viewCityWeather: 'Şehrin havasını gör',
     temperatureLegend: 'Harita sıcaklık renkleri',
     temperatureCold: 'Soğuk (<{{zero}}{{unit}})',
