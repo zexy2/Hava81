@@ -108,7 +108,7 @@
   min-width: 0;
   color: inherit;
   opacity: .88;
-  font-size: .77rem;
+  font-size: max(.8125rem, 13px);
   font-weight: 760;
   line-height: 1.25;
   letter-spacing: .055em;
@@ -135,7 +135,7 @@
   min-width: 0;
   color: inherit;
   opacity: .83;
-  font-size: .76rem;
+  font-size: max(.8125rem, 13px);
   font-weight: 560;
   line-height: 1.42;
   overflow-wrap: anywhere;
@@ -195,9 +195,9 @@
   }
   .app .environment-rail__icon {height:2.2rem;width:2.2rem;border-radius: 11px}
   .app .environment-rail__icon svg{width:1.4rem;height:1.4rem}
-  .app .environment-rail__label {font-size:.68rem;letter-spacing:.02em}
+  .app .environment-rail__label {font-size:max(.8125rem, 13px);letter-spacing:.02em}
   .app .environment-rail__value{font-size:clamp(1.25rem,4.3vw,1.65rem)}
-  .app .environment-rail__detail{font-size:.68rem}
+  .app .environment-rail__detail{font-size:max(.8125rem, 13px)}
 }
 @media (max-width: 23rem) {
   .app .environment-rail__module,
@@ -208,7 +208,7 @@
     padding: .7rem;
   }
   .app .environment-rail__icon{width:1.9rem;height:1.9rem}
-  .app .environment-rail__label{font-size:.62rem}
+  .app .environment-rail__label{font-size:max(.8125rem, 13px)}
   .app .environment-rail__value{font-size:1.14rem}
 }
 @media (prefers-reduced-motion: reduce) {
