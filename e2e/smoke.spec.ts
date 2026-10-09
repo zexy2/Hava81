@@ -3152,7 +3152,7 @@ test('desktop forecast summary keeps full labels at 200 percent text size', asyn
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
-test('desktop forecast days use compact rows only when the card narrows', async ({ page }, testInfo) => {
+test('desktop forecast sky cards keep all details visible across widths', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop forecast-card container regression');
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/istanbul');
@@ -3189,13 +3189,13 @@ test('desktop forecast days use compact rows only when the card narrows', async 
     });
 
   const wide = await geometry();
-  expect(wide.description.left).toBeGreaterThan(wide.day.right);
-  expect(wide.temperatures.left).toBeGreaterThan(wide.description.right);
+  expect(wide.description.top).toBeGreaterThan(wide.day.top);
+  expect(wide.temperatures.top).toBeGreaterThan(wide.description.top);
 
   await page.setViewportSize({ width: 1024, height: 900 });
   const compact = await geometry();
   expect(compact.description.top).toBeGreaterThan(compact.day.top);
-  expect(compact.description.clientWidth).toBeGreaterThan(200);
+  expect(compact.description.clientWidth).toBeGreaterThan(50);
   expect(compact.row.scrollWidth).toBeLessThanOrEqual(compact.row.clientWidth + 1);
 
   await page.locator('html').evaluate(element => {
@@ -3203,15 +3203,15 @@ test('desktop forecast days use compact rows only when the card narrows', async 
   });
   const enlarged = await geometry();
   expect(enlarged.description.top).toBeGreaterThan(enlarged.day.top);
-  expect(enlarged.description.clientWidth).toBeGreaterThan(200);
+  expect(enlarged.description.clientWidth).toBeGreaterThan(50);
   expect(enlarged.description.scrollWidth).toBeLessThanOrEqual(enlarged.description.clientWidth + 1);
   expect(enlarged.temperatures.scrollWidth).toBeLessThanOrEqual(enlarged.temperatures.clientWidth + 1);
   expect(enlarged.row.scrollWidth).toBeLessThanOrEqual(enlarged.row.clientWidth + 1);
-  expect(enlarged.row.height).toBeLessThan(180);
+  expect(enlarged.row.height).toBeGreaterThan(180);
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
-test('mobile five-day forecast shows full-width stacked day cards', async ({ page }, testInfo) => {
+test('mobile five-day forecast uses two-column bento with last card expanded', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile five-day forecast hierarchy regression');
   await page.setViewportSize({ width: 390, height: 844 });
   const stripDaily = Array.from({ length: 5 }, (_, index) => ({
@@ -3255,11 +3255,14 @@ test('mobile five-day forecast shows full-width stacked day cards', async ({ pag
   });
 
   expect(layout.rowCount).toBeGreaterThanOrEqual(5);
-  expect(layout.height).toBeLessThan(560);
+  expect(layout.height).toBeGreaterThan(560);
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
   expect(layout.overflowX).toBe('visible');
   expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeGreaterThan(80);
-  expect(layout.rowWidths.every(width => width >= 250)).toBe(true);
+  expect(layout.rowWidths.slice(0, 4).every(width => width >= 120)).toBe(true);
+  expect(layout.rowTops[0]).toBe(layout.rowTops[1]);
+  expect(layout.rowTops[2]).toBe(layout.rowTops[3]);
+  expect(layout.rowWidths[4]).toBeGreaterThan(layout.rowWidths[0] * 1.8);
   expect(layout.rowsFit).toBe(true);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
