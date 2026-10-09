@@ -58,6 +58,7 @@ The capture command uses `scripts/capture-visual-audit.mjs`; it checks HTTP 200,
 - Playwright responsive capture: 5/5 viewport/theme combinations passed for both production baseline and preview (10 captures); no JavaScript page exceptions or horizontal overflow.
 - Targeted browser regressions: **5 passed** (hero, score artwork collision, 320px city / text zoom, atmospheric scene text zoom and mobile map focus).
 - Follow-up CSS correction retains the existing opaque panel computed-style contract without losing the navy gradient appearance.
+- The first GitHub browser suite flagged light-theme plate-label contrast. The **TR label backing was darkened to #1659a5** (the readable white text was kept). The full axe-core WCAG-AA color-contrast regression across 320px/390px/1440px and light/dark, Turkish/English was rerun locally and passed.
 
 ## Release gate
 

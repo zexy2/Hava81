@@ -48,7 +48,8 @@
     color: #fff;
   }
   .app[data-color-mode='light'] .hava81-decision-field__plate span {
-    background: #2e86d7;
+    /* White TR lettering needs AA contrast, including on the navy panel. */
+    background: #1659a5;
   }
   .app[data-color-mode='light'] .hava81-decision-field__current {
     min-height: 17.8rem;
