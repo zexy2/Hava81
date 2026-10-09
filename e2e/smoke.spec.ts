@@ -5761,6 +5761,12 @@ test('enlarged mobile decision score and explanation stay readable', async ({ pa
         const score = rect('.decision-glance__score');
         const label = rect('.decision-glance__score-label');
         const details = rect('.decision-glance__details');
+        const scoreScale = element.querySelector('.decision-glance__score strong span')!;
+        const scoreLabel = element.querySelector('.decision-glance__score-label')!;
+        const detailsLink = element.querySelector('.decision-glance__details')!;
+        const scoreScaleFontSize = Number.parseFloat(getComputedStyle(scoreScale).fontSize);
+        const scoreLabelFontSize = Number.parseFloat(getComputedStyle(scoreLabel).fontSize);
+        const detailsFontSize = Number.parseFloat(getComputedStyle(detailsLink).fontSize);
         const intersects = (a: DOMRect, b: DOMRect) =>
           Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
           Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) > 1;
@@ -5768,6 +5774,9 @@ test('enlarged mobile decision score and explanation stay readable', async ({ pa
           detailWidth: details.width,
           detailHeight: details.height,
           scoreWidth: score.width,
+          scoreScaleFontSize,
+          scoreLabelFontSize,
+          detailsFontSize,
           scoreInside: score.left >= side.left - 1 && score.right <= side.right + 1,
           detailInside: details.left >= card.left - 1 && details.right <= card.right + 1,
           overlap: intersects(score, label) || intersects(score, details) || intersects(label, details),
@@ -5775,6 +5784,9 @@ test('enlarged mobile decision score and explanation stay readable', async ({ pa
         };
       });
       expect(layout.scoreInside, `score within hero at ${width}px, ${fontSize}`).toBe(true);
+      expect(layout.scoreScaleFontSize, `/100 scale stays readable at ${width}px, ${fontSize}`).toBeGreaterThanOrEqual(13);
+      expect(layout.scoreLabelFontSize, `score label stays readable at ${width}px, ${fontSize}`).toBeGreaterThanOrEqual(13);
+      expect(layout.detailsFontSize, `score explanation link stays readable at ${width}px, ${fontSize}`).toBeGreaterThanOrEqual(13);
       expect(layout.detailInside, `explanation within hero at ${width}px, ${fontSize}`).toBe(true);
       expect(layout.overlap, `score and explanation separate at ${width}px, ${fontSize}`).toBe(false);
       expect(layout.fitsPage, `no horizontal overflow at ${width}px, ${fontSize}`).toBe(true);
