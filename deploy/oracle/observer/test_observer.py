@@ -399,6 +399,64 @@ class ObserverNginxTargetTests(unittest.TestCase):
         self.assertIn('unsupported API port', target['error'])
 
 
+class ObserverApiDeploymentFreshnessTests(unittest.TestCase):
+    def test_reports_unknown_without_deployment_evidence(self) -> None:
+        data = observer.api_deploy_freshness(False, False, None)
+        self.assertEqual(data['state'], 'unknown')
+        self.assertFalse(data['review_required'])
+
+    def test_up_to_date_never_requests_operator_review(self) -> None:
+        data = observer.api_deploy_freshness(True, False, {
+            'status': 'completed',
+            'conclusion': 'success',
+            'updated_at': '2000-01-01T00:00:00Z',
+        })
+        self.assertEqual(data['state'], 'up_to_date')
+        self.assertIsNone(data['ci_age_seconds'])
+
+    def test_pending_waits_for_main_ci_and_remains_fail_closed(self) -> None:
+        self.assertEqual(
+            observer.api_deploy_freshness(True, True, {'status': 'in_progress'})['state'],
+            'awaiting_main_ci',
+        )
+        self.assertEqual(
+            observer.api_deploy_freshness(True, True, {
+                'status': 'completed', 'conclusion': 'failure',
+            })['state'],
+            'main_ci_not_green',
+        )
+
+    def test_recent_green_main_is_propagation_window_not_stuck(self) -> None:
+        run = {
+            'status': 'completed',
+            'conclusion': 'success',
+            'updated_at': observer.now_iso(),
+        }
+        data = observer.api_deploy_freshness(True, True, run)
+        self.assertEqual(data['state'], 'recent_runtime_drift')
+        self.assertFalse(data['review_required'])
+        self.assertTrue(data['ci_is_not_api_deploy'])
+
+    def test_old_green_main_prompts_manual_deploy_review_without_switch(self) -> None:
+        stamp = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
+        data = observer.api_deploy_freshness(True, True, {
+            'status': 'completed', 'conclusion': 'success', 'updated_at': stamp,
+        })
+        self.assertEqual(data['state'], 'manual_deploy_review')
+        self.assertTrue(data['review_required'])
+        self.assertGreaterEqual(data['ci_age_seconds'], 2 * 60 * 60)
+
+    def test_unknown_and_future_timestamps_do_not_claim_stuck_deploy(self) -> None:
+        future = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+        for timestamp in ('invalid', future, None):
+            data = observer.api_deploy_freshness(True, True, {
+                'status': 'completed', 'conclusion': 'success', 'updated_at': timestamp,
+            })
+            self.assertEqual(data['state'], 'pending_age_unknown')
+            self.assertFalse(data['review_required'])
+            self.assertIsNone(data['ci_age_seconds'])
+
+
 class ObserverApiDeploymentTests(unittest.TestCase):
     def _collect(
         self,
@@ -1193,6 +1251,55 @@ class ObserverStateSignatureTests(unittest.TestCase):
         }
 
         self.assertEqual(observer.state_signature(first), observer.state_signature(second))
+
+    def test_api_freshness_age_does_not_spam_change_signatures(self) -> None:
+        base = {
+            'github': {
+                'open_automation_prs': [],
+                'latest_main_run': {'head_sha': 'main-sha', 'status': 'completed'},
+                'api_deployment': {
+                    'pending': True,
+                    'known': True,
+                    'freshness': {
+                        'state': 'recent_runtime_drift',
+                        'review_required': False,
+                        'ci_age_seconds': 15,
+                    },
+                },
+            },
+            'production': {'healthy': True, 'issues': [], 'nginx': {'port': 4002}},
+            'host': {'disk': {'ok': True}},
+        }
+        changed_age = {
+            **base,
+            'github': {
+                **base['github'],
+                'api_deployment': {
+                    **base['github']['api_deployment'],
+                    'freshness': {
+                        'state': 'recent_runtime_drift',
+                        'review_required': False,
+                        'ci_age_seconds': 1500,
+                    },
+                },
+            },
+        }
+        self.assertEqual(observer.state_signature(base), observer.state_signature(changed_age))
+        changed_bucket = {
+            **base,
+            'github': {
+                **base['github'],
+                'api_deployment': {
+                    **base['github']['api_deployment'],
+                    'freshness': {
+                        'state': 'manual_deploy_review',
+                        'review_required': True,
+                        'ci_age_seconds': 7200,
+                    },
+                },
+            },
+        }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed_bucket))
 
     def test_api_tree_change_remains_part_of_the_change_signature(self) -> None:
         base = {
