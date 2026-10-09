@@ -1,0 +1,314 @@
+/*
+ * Hava81 navigation visual pass
+ * Decorative styles only: existing controls, search/favorite behavior,
+ * shortcuts, semantic labels, and responsive navigation are unchanged.
+ */
+
+/* A confident editorial navigation bar matching the atmospheric hero. */
+.app .atlas-header {
+  color: #f2faff;
+  background:
+    radial-gradient(ellipse at 90% -90%, rgb(71 204 222 / .25), transparent 43%),
+    linear-gradient(105deg, #102a50 0%, #123d67 58%, #14677e 100%);
+  border-bottom: 1px solid rgb(139 202 237 / .32);
+  box-shadow: 0 9px 25px rgb(7 34 78 / .16);
+  backdrop-filter: blur(18px);
+}
+.app[data-color-mode='dark'] .atlas-header {
+  background:
+    radial-gradient(ellipse at 93% -75%, rgb(53 158 181 / .2), transparent 46%),
+    linear-gradient(105deg, #0b2237, #123c54 58%, #15576a);
+  border-bottom-color: #376a80;
+}
+.app .atlas-header__inner {
+  column-gap: clamp(.75rem, 1.7vw, 1.5rem);
+}
+.app .atlas-brand {
+  position: relative;
+  color: #f5fbff;
+  gap: .65rem;
+  text-decoration: none;
+}
+.app .atlas-brand__name {
+  color: inherit;
+  font-weight: 820;
+  letter-spacing: -.065em;
+  text-shadow: 0 2px 14px rgb(0 0 0 / .13);
+}
+.app .atlas-brand__index {
+  color: #e1f9ff;
+  border: 1px solid rgb(174 231 255 / .42);
+  border-radius: 13px;
+  background: linear-gradient(150deg, rgb(190 242 255 / .24), rgb(51 169 210 / .1));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .25);
+}
+.app .atlas-brand__index b { color: #fff; font-weight: 820; }
+.app .atlas-brand__index small { color: #bbddf1; }
+.app .atlas-header__search {
+  max-width: 42rem;
+}
+.app .search-bar__controls {
+  min-height: 3.4rem;
+  padding: 3px;
+  border: 1px solid rgb(187 230 253 / .36);
+  border-radius: 17px;
+  background: rgb(255 255 255 / .12);
+  box-shadow: 0 7px 20px rgb(5 27 64 / .18), inset 0 1px 0 rgb(255 255 255 / .14);
+  filter: none;
+}
+.app .search-bar__field { min-width: 0; }
+.app .search-bar__input {
+  height: 100%;
+  min-height: 3rem;
+  padding: 0 1.1rem;
+  border: 0;
+  border-radius: 13px 5px 5px 13px;
+  color: #18365e;
+  background: #f3f9ff;
+  caret-color: #1a72c4;
+  font-weight: 550;
+}
+.app .search-bar__input::placeholder { color: #536e8a; }
+.app .search-bar__input:focus-visible {
+  outline: 3px solid #80cfff;
+  outline-offset: -3px;
+  border: 0;
+}
+.app .search-bar__submit {
+  min-height: 3rem;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: 9px 13px 13px 9px;
+  color: #fff;
+  font-weight: 740;
+  letter-spacing: .005em;
+  background: linear-gradient(120deg, #2169c9, #1478bc);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .14);
+}
+.app .search-bar__submit:hover:not(:disabled) {
+  border: 0;
+  background: linear-gradient(120deg, #1557b3, #0e699b);
+}
+.app .search-bar__suggestions {
+  padding: .5rem;
+  border: 1px solid #bad4ed;
+  border-radius: 17px;
+  box-shadow: 0 23px 55px rgb(5 31 76 / .25);
+}
+.app .search-bar__suggestion {
+  min-height: 3rem;
+  border-radius: 11px;
+}
+.app .search-bar__suggestion.is-active {
+  box-shadow: inset 4px 0 0 #267bd5;
+}
+.app .atlas-header__actions { gap: .35rem; }
+.app .atlas-icon-button {
+  border-radius: 13px;
+  color: #e4f1fc;
+  border: 1px solid rgb(208 244 255 / .12);
+  background: rgb(236 250 255 / .045);
+}
+.app .atlas-icon-button svg {
+  stroke-width: 1.85;
+}
+.app .atlas-icon-button:hover:not(:disabled),
+.app .atlas-icon-button[aria-pressed='true'],
+.app .atlas-icon-button--map[aria-expanded='true'] {
+  color: #fff;
+  border-color: rgb(185 229 255 / .45);
+  background: rgb(174 224 255 / .22);
+  box-shadow: 0 5px 17px rgb(0 24 57 / .12);
+}
+.app .atlas-icon-button:disabled {
+  color: #c2d0e4;
+  background: transparent;
+  border-color: transparent;
+  opacity: .45;
+}
+.app .atlas-settings-button {
+  background: rgb(118 198 237 / .14);
+  border-color: rgb(172 226 249 / .38);
+}
+.app .atlas-settings-button__language { color: #e4f5ff; }
+.app .atlas-compare-button {
+  color: #fff;
+  background: rgb(230 248 255 / .1);
+  border-color: rgb(185 229 255 / .4);
+  border-radius: 12px;
+}
+.app .atlas-city-rail {
+  padding-top: .6rem;
+  padding-bottom: .6rem;
+  background: rgb(5 29 63 / .18);
+  border-top: 1px solid rgb(200 242 255 / .16);
+}
+/* Dark glass atop the gradient, not a pale detached bottom navigation. */
+@media (max-width: 47.99rem) {
+  .app .atlas-header__inner {
+    min-height: 4.5rem;
+    column-gap: .4rem;
+    padding: .6rem .85rem;
+  }
+  .app .atlas-brand__name { font-size: clamp(1.15rem, 4vw, 1.4rem); }
+  .app .atlas-brand__index {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 11px;
+  }
+  .app .atlas-header__actions { gap: .25rem; }
+  .app .atlas-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+  .app .atlas-header__search {
+    grid-column: 1 / -1;
+    margin-top: .25rem;
+  }
+  .app .search-bar__controls { padding: 3px; }
+  .app .search-bar__input { padding-inline: .85rem; }
+  .app .search-bar__submit { padding-inline: .8rem; }
+  .app .atlas-header--search-open .atlas-header__inner {
+    padding-bottom: .9rem;
+  }
+}
+@media (max-width: 24rem) {
+  .app .atlas-header__inner { padding-inline: .5rem; }
+  .app .atlas-brand__name { font-size: 1.05rem; }
+  .app .atlas-header__actions { gap: 0; }
+  .app .atlas-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+  .app .atlas-brand__index { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .atlas-icon-button { transition: none; }
+}
+@media (forced-colors: active) {
+  .app .atlas-header,
+  .app .atlas-brand__index,
+  .app .search-bar__controls,
+  .app .atlas-icon-button { border: 1px solid CanvasText; }
+  .app .atlas-icon-button[aria-pressed='true'],
+  .app .atlas-icon-button--map[aria-expanded='true'] {
+    color: HighlightText;
+    background: Highlight;
+    border: 2px solid Highlight;
+  }
+  .app .search-bar__suggestion[aria-selected='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
+
+/* Container-based text enlargement guard: at 1280px and 200% root text
+   the search must not crowd the settings buttons. At normal root size
+   desktop search retains its full editorial width. */
+@media (min-width: 48rem) {
+  .app .atlas-header { container-type: inline-size; }
+  @container (max-width: 48em) {
+    .app .atlas-header__search { max-width: min(100%, 300px); }
+  }
+}
+
+/* Short landscape phones reserve the final pixels for the suggestion list.
+   The general mobile polish has a larger open-search bottom padding. */
+@media (max-width: 47.99rem) and (max-height: 28rem) {
+  .app .atlas-header--search-open .atlas-header__inner {
+    padding-block: 4px;
+  }
+}
+
+@media (max-width: 47.99rem) and (max-height: 28rem) {
+  .app .search-bar__controls { min-height: 2.9rem; }
+  .app .search-bar__input,
+  .app .search-bar__submit { min-height: 2.7rem; }
+}
+
+/* At 200% text zoom a 1280px desktop no longer has room for an enormous
+   submit button next to the brand + quick actions. Place the whole search
+   on its own short row, keeping it to a readable 360px and leaving quick
+   actions fully clickable in row one. Normal-size desktops are untouched. */
+@media (min-width: 48rem) {
+  @container (max-width: 48em) {
+    .app .atlas-header__inner {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+    .app .atlas-header__search {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      justify-self: start;
+      max-width: 360px;
+    }
+    .app .atlas-header__actions {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+    }
+    .app .search-bar__submit {
+      min-width: 5.5rem;
+      padding-inline: .55rem;
+      font-size: 1rem;
+    }
+  }
+}
+
+/* Keep suggestion popovers a few pixels above the bottom of a 320px-tall
+   landscape screen at 200% zoom, including their border/shadow. */
+@media (max-width: 47.99rem) and (max-height: 28rem) {
+  .app .search-bar__suggestions {
+    max-height: min(106px, calc(100dvh - 164px));
+  }
+}
+
+/* Keep the full city name and placeholder visible when the desktop search
+   itself becomes narrow under text enlargement. The width is a container
+   query, so normal wide-desktop searches retain their original proportions. */
+@media (min-width: 48rem) {
+  @container header-search (max-width: 380px) {
+    .app .search-bar__controls {
+      grid-template-columns: minmax(0, 1fr) 128px;
+    }
+    .app .search-bar__input {
+      padding-inline: 14px;
+    }
+    .app .search-bar__submit {
+      min-width: 0;
+      width: 100%;
+      padding-inline: 8px;
+      font-size: clamp(16px, .75rem, 24px);
+      white-space: nowrap;
+    }
+  }
+}
+
+/* 114px includes the first selected result plus list padding at 200% text
+   while still clearing the bottom of a short landscape viewport. */
+@media (max-width: 47.99rem) and (max-height: 28rem) {
+  .app .search-bar__suggestions {
+    max-height: min(114px, calc(100dvh - 164px));
+  }
+}
+
+/* A short desktop viewport is not tall enough for a 2-row, fully scaled
+   chrome plus a city suggestion popup. Preserve both rows but compress
+   chrome spacing and input heights; the popover remains independently
+   scrollable and never requires scrolling the weather page. */
+@media (min-width: 48rem) and (max-height: 28rem) {
+  .app .atlas-header__inner {
+    padding-block: 4px;
+    row-gap: 4px;
+  }
+  .app .atlas-header__search { margin-top: 0; }
+  .app .search-bar__controls { min-height: 48px; }
+  .app .search-bar__input,
+  .app .search-bar__submit { min-height: 46px; height: 48px; }
+  .app .search-bar__suggestions {
+    max-height: min(124px, calc(100dvh - 184px));
+  }
+}
