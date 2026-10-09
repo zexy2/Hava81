@@ -5676,7 +5676,7 @@ test('mobile bottom navigation labels remain separate with enlarged text', async
       expect(metrics.fits, `label fits its navigation item at ${width}px, ${scale}`).toBe(true);
       expect(metrics.separated, `labels do not overlap at ${width}px, ${scale}`).toBe(true);
       expect(metrics.allLabelsVisible, `labels remain visible at ${width}px, ${scale}`).toBe(true);
-      expect(metrics.fontSizes.every(size => size >= 13), `functional nav labels stay at least 13px at ${width}px, ${scale}`).toBe(true);
+      expect(metrics.fontSizes.every(size => size >= 13), `nav font floor ${width}px/${scale}`).toBe(true);
       expect(metrics.targetsAccessible, `touch targets at ${width}px, ${scale}`).toBe(true);
       expect(metrics.pageFits, `viewport fits at ${width}px, ${scale}`).toBe(true);
       if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320 && scale === '200%') {
@@ -5786,9 +5786,9 @@ test('enlarged mobile decision score and explanation stay readable', async ({ pa
         };
       });
       expect(layout.scoreInside, `score within hero at ${width}px, ${fontSize}`).toBe(true);
-      expect(layout.scoreScaleFontSize, `/100 scale stays readable at ${width}px, ${fontSize}`).toBeGreaterThanOrEqual(13);
-      expect(layout.scoreLabelFontSize, `score label stays readable at ${width}px, ${fontSize}`).toBeGreaterThanOrEqual(13);
-      expect(layout.detailsFontSize, `score explanation link stays readable at ${width}px, ${fontSize}`).toBeGreaterThanOrEqual(13);
+      expect(layout.scoreScaleFontSize, `score scale ${width}px/${fontSize}`).toBeGreaterThanOrEqual(13);
+      expect(layout.scoreLabelFontSize, `score label ${width}px/${fontSize}`).toBeGreaterThanOrEqual(13);
+      expect(layout.detailsFontSize, `score link ${width}px/${fontSize}`).toBeGreaterThanOrEqual(13);
       expect(layout.detailInside, `explanation within hero at ${width}px, ${fontSize}`).toBe(true);
       expect(layout.overlap, `score and explanation separate at ${width}px, ${fontSize}`).toBe(false);
       expect(layout.fitsPage, `no horizontal overflow at ${width}px, ${fontSize}`).toBe(true);
