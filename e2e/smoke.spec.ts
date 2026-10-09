@@ -5666,6 +5666,7 @@ test('mobile bottom navigation labels remain separate with enlarged text', async
         return {
           fits,
           separated,
+          fontSizes: labels.map(label => label ? Number.parseFloat(getComputedStyle(label).fontSize) : 0),
           allLabelsVisible: labels.every(label => label && getComputedStyle(label).display !== 'none'),
           targetsAccessible: buttons.every(button => button.getBoundingClientRect().width >= 44 &&
             button.getBoundingClientRect().height >= 44),
@@ -5675,6 +5676,7 @@ test('mobile bottom navigation labels remain separate with enlarged text', async
       expect(metrics.fits, `label fits its navigation item at ${width}px, ${scale}`).toBe(true);
       expect(metrics.separated, `labels do not overlap at ${width}px, ${scale}`).toBe(true);
       expect(metrics.allLabelsVisible, `labels remain visible at ${width}px, ${scale}`).toBe(true);
+      expect(metrics.fontSizes.every(size => size >= 13), `functional nav labels stay at least 13px at ${width}px, ${scale}`).toBe(true);
       expect(metrics.targetsAccessible, `touch targets at ${width}px, ${scale}`).toBe(true);
       expect(metrics.pageFits, `viewport fits at ${width}px, ${scale}`).toBe(true);
       if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320 && scale === '200%') {
