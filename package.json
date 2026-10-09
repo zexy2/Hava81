@@ -77,6 +77,7 @@
     "test:watch": "vitest",
     "e2e": "node scripts/run-playwright.mjs",
     "lighthouse": "node scripts/run-lighthouse.mjs",
+    "audit:live-ui": "node scripts/audit-live-responsive.mjs",
     "verify:81": "node scripts/verify-81-cities.mjs"
   },
   "browserslist": {
