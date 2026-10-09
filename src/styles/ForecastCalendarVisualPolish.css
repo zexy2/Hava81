@@ -43,7 +43,7 @@
   position: absolute;
   z-index: -1;
   top: -55px;
-  right: -75px;
+  right: 0;
   width: 160px;
   height: 160px;
   border: 1px solid #1976ae21;
