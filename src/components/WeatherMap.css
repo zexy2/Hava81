@@ -46,6 +46,32 @@
   pointer-events: none;
 }
 
+/* Preserve functional map markers and controls when both tile hosts fail.
+ * The retry action is the only interactive element in the status overlay. */
+.weather-map__tile-status--failed {
+  border-radius: 0.875rem;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+.weather-map__tile-status--failed button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 0.65rem;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.weather-map__tile-status--failed button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 .weather-map__tile-spinner {
   flex: 0 0 auto;
   width: 0.8rem;

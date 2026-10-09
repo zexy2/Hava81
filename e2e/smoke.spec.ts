@@ -6401,3 +6401,44 @@ test('map tile loading switches to backup tiles if the primary host fails', asyn
   await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap Deutschland');
   await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible();
 });
+
+// When *both* independent OSM tile hosts fail, loading must not spin forever.
+// The markers remain usable and a deliberate retry can recover once online.
+test('map reports dual provider failure and retry recovers tiles', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single offline map recovery regression');
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==',
+    'base64'
+  );
+  let firstHostIsDown = true;
+  let backupFailures = 0;
+  await page.route('**/hot/**', route =>
+    firstHostIsDown
+      ? route.fulfill({ status: 503, body: 'Primary unavailable' })
+      : route.fulfill({ status: 200, contentType: 'image/png', body: png })
+  );
+  await page.route('**/tiles/osmde/**', route => {
+    backupFailures += 1;
+    return route.fulfill({ status: 503, body: 'Secondary unavailable' });
+  });
+
+  await page.goto('/istanbul/');
+  await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Harita' }).click();
+  await expect.poll(() => backupFailures).toBeGreaterThan(0);
+
+  const failed = page.locator('.weather-map__tile-status--failed');
+  await expect(failed).toBeVisible();
+  await expect(failed).toContainText('Harita yüklenemedi');
+  const retry = failed.getByRole('button', { name: 'Tekrar dene' });
+  await expect(retry).toBeEnabled();
+  const buttonSize = await retry.boundingBox();
+  expect(buttonSize?.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator('.leaflet-marker-icon').first()).toBeVisible();
+
+  firstHostIsDown = false;
+  await retry.click();
+  await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
+  await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
+  await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap France');
+});

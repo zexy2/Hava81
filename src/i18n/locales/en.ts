@@ -55,6 +55,8 @@ export const en = {
     staleCurrentData: 'Current observation is not fresh',
     mapTitle: 'Turkey weather atlas',
     mapTilesLoading: 'Loading map tiles',
+    mapTilesUnavailable: 'Map tiles unavailable. City markers still work.',
+    mapTilesRetry: 'Try again',
     viewCityWeather: 'View city weather',
     temperatureLegend: 'Map temperature colors',
     temperatureCold: 'Cold (<{{zero}}{{unit}})',
