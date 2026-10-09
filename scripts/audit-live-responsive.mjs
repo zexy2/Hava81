@@ -151,6 +151,11 @@ try {
             await page.screenshot({ path: join(options.output, `${city}-failed-${variant}.png`), timeout: 4_000 }).catch(() => {});
           }
         } finally {
+          // The weather API can still be responding when the visual audit has
+          // finished a viewport. Wait for handlers to detach safely before the
+          // page closes, or route.fetch can reject after its context is gone
+          // and abort the entire multi-city audit with TargetClosedError.
+          await page.unrouteAll({ behavior: 'ignoreErrors' });
           await page.close();
         }
       }
