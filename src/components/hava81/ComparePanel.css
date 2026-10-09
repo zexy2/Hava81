@@ -224,3 +224,174 @@
     row-gap: 0.25rem;
   }
 }
+
+
+/* Visual QA 2026-10-09 — editorial comparison surface.
+   This affects the compare view only; no changes to shared dashboard cards. */
+.app .hava81-compare {
+  gap: clamp(1.15rem, 2.4vw, 2rem);
+  padding: clamp(1rem, 2vw, 1.7rem) clamp(1rem, 2.2vw, 1.75rem);
+}
+.app .hava81-compare__header h2 {
+  font-size: clamp(1.65rem, 2.7vw, 2.35rem);
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+}
+.app .hava81-compare__empty {
+  width: 100%;
+  max-width: none;
+  min-height: 20rem;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.9fr) minmax(0, 1.35fr);
+  grid-template-areas:
+    "illustration heading"
+    "illustration summary"
+    "illustration hint"
+    "illustration action";
+  justify-items: start;
+  align-content: center;
+  align-items: center;
+  column-gap: clamp(1.5rem, 5vw, 4.5rem);
+  row-gap: 0.7rem;
+  padding: clamp(1.4rem, 3.5vw, 3.1rem);
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 23%, var(--color-atlas-line));
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 15% 22%, color-mix(in srgb, var(--color-aegean-pale) 82%, transparent), transparent 44%),
+    linear-gradient(119deg, color-mix(in srgb, var(--color-aegean-pale) 44%, var(--color-atlas-paper)), var(--color-atlas-paper));
+  box-shadow: 0 23px 45px rgb(21 67 122 / 0.09), 0 3px 9px rgb(21 67 122 / 0.04);
+}
+.app .hava81-compare__empty-illustration {
+  grid-area: illustration;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  justify-self: stretch;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(.6rem, 2.5vw, 1.1rem);
+  width: 100%;
+  height: clamp(12.5rem, 23vw, 17rem);
+  padding: 2.4rem clamp(1.3rem, 2.5vw, 2rem) 1.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 18%, transparent);
+  border-radius: 25px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2.65rem, color-mix(in srgb, var(--color-aegean) 7%, transparent) 2.65rem calc(2.65rem + 1px)),
+    radial-gradient(circle at 48% 10%, rgb(159 207 255 / .7), transparent 55%),
+    color-mix(in srgb, var(--color-aegean-pale) 79%, var(--color-atlas-paper));
+}
+.app .hava81-compare__empty-illustration::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 13.5rem;
+  height: 13.5rem;
+  bottom: -7.5rem;
+  border-radius: 50%;
+  background: rgb(26 109 216 / .17);
+  filter: blur(12px);
+}
+.app .hava81-compare__empty-bar {
+  width: clamp(2.6rem, 5vw, 3.8rem);
+  height: 52%;
+  border-radius: 14px 14px 7px 7px;
+  background: linear-gradient(180deg, #a5d0ff, #509fe5);
+  box-shadow: inset 0 2px 2px rgb(255 255 255 / .45), 0 12px 28px rgb(30 99 176 / .17);
+}
+.app .hava81-compare__empty-bar:nth-child(2) {
+  height: 90%;
+  background: linear-gradient(180deg, #4b95f1, #1d58c5);
+}
+.app .hava81-compare__empty-bar:nth-child(3) {
+  height: 68%;
+  background: linear-gradient(180deg, #5bd6b7, #13977c);
+}
+.app .hava81-compare__empty h3 {
+  grid-area: heading;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.05em;
+}
+.app .hava81-compare__empty > p:not(.hava81-compare__empty-tip) {
+  grid-area: summary;
+  font-size: clamp(1rem, 1.35vw, 1.13rem);
+  font-weight: 650;
+  color: var(--color-atlas-ink);
+}
+.app .hava81-compare__empty-tip {
+  grid-area: hint;
+  max-width: 46ch;
+}
+.app .hava81-compare__empty-action {
+  grid-area: action;
+  min-height: 48px;
+  padding: .75rem 1.4rem;
+  border-radius: 14px;
+  background: linear-gradient(115deg, #1759bd, #267bea);
+  border: 1px solid rgb(21 94 203 / .5);
+  box-shadow: 0 10px 21px rgb(32 102 201 / .17);
+}
+.app .hava81-compare__table {
+  gap: clamp(.7rem, 2vw, 1.25rem);
+  border: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+.app .hava81-compare__city,
+.app .hava81-compare__city:nth-child(n + 2) {
+  gap: .7rem;
+  padding: clamp(1rem, 2.2vw, 1.55rem);
+  border: 1px solid var(--color-atlas-line);
+  border-radius: 22px;
+  background: var(--color-atlas-paper);
+  box-shadow: 0 12px 30px rgb(21 67 122 / .07);
+}
+.app .hava81-compare__city.is-winner {
+  border: 2px solid color-mix(in srgb, var(--color-aegean) 70%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-aegean-pale) 53%, var(--color-atlas-paper)), var(--color-atlas-paper) 65%);
+}
+.app .hava81-compare__score { font-size: clamp(1.8rem, 2.5vw, 2.35rem); letter-spacing: -.045em; }
+.app .hava81-compare__winner {
+  padding: .75rem 1.2rem;
+  max-width: 28rem;
+  border: 1px solid color-mix(in srgb, var(--color-aegean) 28%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-aegean-pale) 60%, var(--color-atlas-paper));
+}
+.app[data-color-mode="dark"] .hava81-compare__empty {
+  background: radial-gradient(circle at 19% 16%, rgb(41 90 145 / .5), transparent 55%), var(--color-atlas-paper);
+  box-shadow: 0 22px 44px rgb(0 0 0 / .18);
+}
+.app[data-color-mode="dark"] .hava81-compare__empty-illustration {
+  background: radial-gradient(circle at 50% 20%, rgb(24 91 147 / .65), transparent 67%), #16354f;
+}
+.app[data-color-mode="dark"] .hava81-compare__empty-bar:nth-child(1) { background: linear-gradient(#86c2fa, #2b78c4); }
+.app[data-color-mode="dark"] .hava81-compare__empty-bar:nth-child(2) { background: linear-gradient(#468ef5, #2154ae); }
+.app[data-color-mode="dark"] .hava81-compare__empty-bar:nth-child(3) { background: linear-gradient(#5ad3b1, #198875); }
+@media (max-width: 47.99rem) {
+  .app .hava81-compare { padding-block: .7rem; }
+  .app .hava81-compare__empty {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "illustration" "heading" "summary" "hint" "action";
+    justify-items: center;
+    min-height: 0;
+    gap: .75rem;
+    padding: 1.15rem 1.1rem 1.45rem;
+    text-align: center;
+    border-radius: 22px;
+  }
+  .app .hava81-compare__empty-illustration {
+    width: 100%;
+    height: 11.5rem;
+    gap: .75rem;
+    border-radius: 17px;
+    padding-top: 1.5rem;
+    padding-bottom: 1.25rem;
+  }
+  .app .hava81-compare__empty-bar { width: 2.85rem; }
+  .app .hava81-compare__empty h3 { font-size: clamp(1.5rem, 5.7vw, 2rem); }
+  .app .hava81-compare__empty-action { width: 100%; justify-content: center; }
+  .app .hava81-compare__winner { width: 100%; }
+}
