@@ -85,3 +85,35 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     releaseForecast();
   }
 });
+
+
+test('mobile forecast failure retains the loading card footprint', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390');
+  await page.setViewportSize({ width: 390, height: 844 });
+  let releaseFailure!: () => void;
+  const pendingFailure = new Promise<void>(resolve => { releaseFailure = resolve; });
+  await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
+  await page.route('**/api/v1/weather/forecast**', async route => {
+    await pendingFailure;
+    await route.fulfill({ status: 503, json: { error: { code: 'UNAVAILABLE', message: 'Temporarily unavailable' } } });
+  });
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ status: 503, json: { error: { code: 'UNAVAILABLE' } } }));
+  await page.route('**/api/v1/weather/air-quality**', route => route.fulfill({ status: 503, json: {} }));
+  await page.route('**/api/v1/weather/context**', route => route.fulfill({ status: 503, json: {} }));
+  try {
+    await page.goto('/istanbul');
+    const skeleton = page.locator('.atlas-forecast-loading--card');
+    await expect(skeleton).toBeVisible();
+    const before = await skeleton.boundingBox();
+    releaseFailure();
+    const failure = page.locator('.atlas-forecast-error-card');
+    await expect(failure).toBeVisible();
+    const after = await failure.boundingBox();
+    expect(after!.height).toBeGreaterThanOrEqual(before!.height - 1);
+    expect(after!.height).toBeLessThanOrEqual(320);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
+    await page.screenshot({ path: testInfo.outputPath('forecast-mobile-error.png') });
+  } finally {
+    releaseFailure();
+  }
+});
