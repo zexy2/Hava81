@@ -54,6 +54,8 @@ jobs:
         run: bash scripts/test-cleanup-hava81-browser-temp.sh
       - name: Verify standalone checkout audit contract
         run: bash scripts/test-audit-hava81-standalone-checkouts.sh
+      - name: Verify live audit rejects invalid city input
+        run: node --test scripts/test-live-audit-options.mjs
       - name: Verify live audit API replay avoids rate-limit storms
         run: node --test scripts/test-live-audit-response-cache.mjs
       - name: Verify observer logrotate contract
