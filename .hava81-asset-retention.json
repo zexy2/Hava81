@@ -1,8 +1,47 @@
 {
   "schemaVersion": 1,
   "retentionMinutes": 30,
-  "generatedAt": "2026-10-09T02:21:06Z",
+  "generatedAt": "2026-10-09T02:36:19Z",
   "generations": [
+    {
+      "publishedAt": "2026-10-09T02:36:19Z",
+      "files": [
+        "assets/ActivityPlanner-ByA_dEuH.js",
+        "assets/ActivityPlanner-s52rFatz.css",
+        "assets/CommutePlanPanel-DCfXeKVe.js",
+        "assets/CommutePlanPanel-Ddu06UPX.css",
+        "assets/ComparePanel-BSPf82Cm.css",
+        "assets/ComparePanel-CQlTV6hW.js",
+        "assets/ContextSignalsPanel-DpFL6mT2.css",
+        "assets/ContextSignalsPanel-mRak-d02.js",
+        "assets/DailyPlanPanel-D-55pCeH.css",
+        "assets/DailyPlanPanel-RQQOfcGe.js",
+        "assets/DecisionAlertsPanel-B4Wj4Mv_.js",
+        "assets/DecisionAlertsPanel-qDtsiU0r.css",
+        "assets/EnvironmentRail-9GC4mnyh.css",
+        "assets/EnvironmentRail-Ci9Mhhj1.js",
+        "assets/ForecastAtlas-CgV7DfiF.css",
+        "assets/ForecastAtlas-CxnjqMl4.js",
+        "assets/RouteWeatherPanel-C5wS-QDw.css",
+        "assets/RouteWeatherPanel-Cszvb_dy.js",
+        "assets/SettingsContext-WW0lrz2X.js",
+        "assets/SettingsPanel-BZkVR32p.css",
+        "assets/SettingsPanel-ChI1PNoo.js",
+        "assets/WeatherMap-CiH-yjlR.js",
+        "assets/WeatherMap-DdG8enZx.css",
+        "assets/buildActivityPlan-DqcEaqbJ.js",
+        "assets/cities-BjmucSzM.js",
+        "assets/ibm-plex-sans-latin-ext-wght-normal-CIII54If.woff2",
+        "assets/ibm-plex-sans-latin-wght-normal-IvpUvPa2.woff2",
+        "assets/index-D572ppqz.css",
+        "assets/index-H-ybkr6F.js",
+        "assets/jsx-runtime-CEuv_zDX.js",
+        "assets/rolldown-runtime-CbXtAM7H.js",
+        "assets/source-serif-4-latin-ext-wght-normal-CxNHBx-q.woff2",
+        "assets/source-serif-4-latin-wght-normal-D9elroTD.woff2",
+        "assets/useDecisionProfile-BZ-bhXQu.js"
+      ]
+    },
     {
       "publishedAt": "2026-10-09T02:21:06Z",
       "files": [
