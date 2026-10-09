@@ -13,7 +13,7 @@
   --radius-xl: 26px;
   --color-atlas-field: #f0f5fb;
   --color-atlas-ink: #13264b;
-  --color-atlas-muted: #617797;
+  --color-atlas-muted: #506985; /* readable small text on pale cards (WCAG AA) */
   --color-atlas-line: #dbe5f2;
   --color-control-line: #c7d7eb;
   --color-aegean: #226bd9;
@@ -418,7 +418,7 @@
 }
 .app .hava81-decision-field__plate span {
   color: #fff;
-  background: #3883db;
+  background: #2565b0; /* white plate label reaches AA contrast */
 }
 .app .hava81-decision-field__atlas-meta {
   font-size: 0.76rem;

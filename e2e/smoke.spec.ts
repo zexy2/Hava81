@@ -6173,6 +6173,46 @@ test('small phone city heading preserves short names at enlarged text sizes', as
   }
 });
 
+// Light theme muted labels previously fell just below WCAG AA against pale
+// cards (4.16-4.49:1) and the white city plate text measured only 3.86:1.
+// Keep this automated contrast gate for both languages and color modes.
+test('dashboard text contrast meets WCAG AA in light and dark themes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'one responsive a11y audit across viewports');
+
+  for (const [width, language, themeMode] of [
+    [320, 'tr', 'light'],
+    [390, 'en', 'light'],
+    [1440, 'tr', 'light'],
+    [390, 'tr', 'dark'],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/izmir/');
+    await page.evaluate(({ language, themeMode }) => {
+      localStorage.setItem('user-settings', JSON.stringify({
+        temperatureUnit: 'metric', windSpeedUnit: 'ms', language, themeMode,
+      }));
+    }, { language, themeMode });
+    await page.reload();
+    await expect(page.locator('.decision-glance__score')).toBeVisible();
+    await expect(page.locator('.daily-plan__decision')).toBeVisible();
+    await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+    const failures = await page.evaluate(async () => {
+      const axe = (window as Window & {
+        axe: { run: (root: Document, options: unknown) => Promise<{
+          violations: Array<{ id: string; nodes: Array<{ target: string[] }> }>;
+        }> };
+      }).axe;
+      const result = await axe.run(document, {
+        runOnly: { type: 'rule', values: ['color-contrast'] },
+      });
+      return result.violations.flatMap(violation =>
+        violation.nodes.map(node => `${violation.id}: ${node.target.join(', ')}`));
+    });
+    expect(failures, `text contrast at ${width}px (${language}, ${themeMode})`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
 // Text-resizing a 768-1024px tablet formerly forced the decision copy into a
 // 200px-wide column beside a 234px score ring, creating a very tall hero.
 test('tablet decision hero remains readable with enlarged system text', async ({ page }, testInfo) => {
