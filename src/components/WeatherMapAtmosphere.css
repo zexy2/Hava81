@@ -1,0 +1,160 @@
+/*
+ * Map empty-state visual refinement.
+ * Abstract navigation-chart grid / contours are decorative ONLY. They never
+ * represent loaded geographic tiles or meteorological observations.
+ *
+ * Drawn behind the actual Leaflet tiles, so an available tile has full
+ * priority. Keep the marker controls and tile retry functionality intact.
+ */
+.app .atlas-map-panel .weather-map__container {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 83% 4%, rgba(107, 210, 242, .58), transparent 49%),
+    linear-gradient(131deg, #e7f4fd 0%, #d2e9f5 49%, #b9dceb 100%);
+}
+.app .atlas-map-panel .weather-map__container::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background:
+    repeating-radial-gradient(ellipse at 80% 36%,
+      transparent 0 38px,
+      rgba(23, 106, 151, .18) 39px 40px,
+      transparent 41px 85px),
+    linear-gradient(90deg, rgba(30, 108, 149, .07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(30, 108, 149, .07) 1px, transparent 1px);
+  background-size: auto, 64px 64px, 64px 64px;
+}
+.app .atlas-map-panel .weather-map__container::after {
+  position: absolute;
+  z-index: 0;
+  top: 10%;
+  right: 12%;
+  width: 7.5rem;
+  height: 7.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(35, 132, 175, .22);
+  box-shadow: 0 0 0 32px rgba(86, 177, 206, .08), 0 0 0 72px rgba(86, 177, 206, .055);
+  content: '';
+  pointer-events: none;
+}
+/* Leaflet's default opaque gray fills an unloaded tile canvas. Only its
+ * background becomes transparent; actual raster tile images stay opaque. */
+.app .atlas-map-panel .weather-map__leaflet.leaflet-container {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+/* Give the actual localized map state a deliberate, readable status panel.
+ * It is an informational overlay and must not consume map pointer events. */
+.app .atlas-map-panel .weather-map__tile-status {
+  z-index: 550;
+  bottom: clamp(.7rem, 2vw, 1.25rem);
+  left: clamp(.7rem, 2vw, 1.25rem);
+  max-width: calc(100% - 1.4rem);
+  gap: .75rem;
+  padding: .75rem 1rem;
+  min-height: 3.1rem;
+  color: #103c62;
+  border: 1px solid #9fc9e1;
+  border-left: 4px solid #1c8bb5;
+  border-radius: 14px;
+  background: rgba(246, 252, 255, .95);
+  box-shadow: 0 12px 36px rgba(20, 70, 114, .22);
+  backdrop-filter: blur(10px);
+  font-size: .875rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  pointer-events: none;
+}
+.app .atlas-map-panel .weather-map__tile-spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-width: 2.5px;
+  border-color: #1a81bd;
+  border-right-color: transparent;
+}
+.app .atlas-map-panel .weather-map__tile-status--failed {
+  border-color: #d6a8a8;
+  border-left-color: #bb543b;
+  color: #643425;
+  background: rgba(255, 246, 243, .97);
+  pointer-events: auto;
+}
+.app .atlas-map-panel .weather-map__tile-status--failed button {
+  color: #5a2c1f;
+  background: #fff;
+  border: 1px solid #ce9a89;
+  border-radius: 11px;
+  box-shadow: 0 3px 12px rgba(113, 60, 41, .1);
+}
+.app .atlas-map-panel .weather-map__tile-status--failed button:hover {
+  background: #fff1ec;
+}
+.app[data-color-mode='dark'] .atlas-map-panel .weather-map__container {
+  background:
+    radial-gradient(ellipse at 84% 5%, rgba(30, 110, 143, .5), transparent 52%),
+    linear-gradient(125deg, #193c53, #1b5168 55%, #206d7d);
+}
+.app[data-color-mode='dark'] .atlas-map-panel .weather-map__container::before {
+  background:
+    repeating-radial-gradient(ellipse at 80% 36%,
+      transparent 0 38px,
+      rgba(161, 221, 236, .15) 39px 40px,
+      transparent 41px 85px),
+    linear-gradient(90deg, rgba(184, 235, 245, .075) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(184, 235, 245, .075) 1px, transparent 1px);
+  background-size: auto, 64px 64px, 64px 64px;
+}
+.app[data-color-mode='dark'] .atlas-map-panel .weather-map__tile-status {
+  color: #d9f3ff;
+  background: rgba(13, 42, 62, .94);
+  border-color: #397b9c;
+  border-left-color: #68bce0;
+}
+.app[data-color-mode='dark'] .atlas-map-panel .weather-map__tile-status--failed {
+  color: #ffe4d8;
+  background: rgba(64, 40, 39, .95);
+  border-color: #975f53;
+  border-left-color: #f3aa84;
+}
+.app[data-color-mode='dark'] .atlas-map-panel .weather-map__tile-status--failed button {
+  color: #ffebdf;
+  background: #493634;
+  border-color: #ca8d7a;
+}
+@media (max-width: 47.99rem) {
+  .app .atlas-map-panel .weather-map__tile-status {
+    bottom: .65rem;
+    left: .65rem;
+    padding: .68rem .78rem;
+    max-width: calc(100% - 1.3rem);
+    font-size: .8rem;
+  }
+  .app .atlas-map-panel .weather-map__container::after {
+    right: -2rem;
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+}
+@media (forced-colors: active) {
+  .app .atlas-map-panel .weather-map__container { background: Canvas; }
+  .app .atlas-map-panel .weather-map__container::before,
+  .app .atlas-map-panel .weather-map__container::after { display: none; }
+  .app .atlas-map-panel .weather-map__tile-status {
+    background: Canvas;
+    color: CanvasText;
+    border: 2px solid CanvasText;
+  }
+  .app .atlas-map-panel .weather-map__tile-status--failed button {
+    background: ButtonFace;
+    color: ButtonText;
+    border: 2px solid ButtonText;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .atlas-map-panel .weather-map__tile-spinner { animation: none; }
+}

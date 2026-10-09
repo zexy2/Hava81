@@ -8,6 +8,7 @@ import { useSettings } from '../context/SettingsContext';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import './WeatherMap.css';
+import './WeatherMapAtmosphere.css';
 
 interface WeatherMapProps {
   weather: NormalizedWeatherData | null;
