@@ -4806,6 +4806,24 @@ test('mobile saved navigation does not create a favorite just by opening the vie
   );
 });
 
+test('desktop Compare control marks only the active view as the current page', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop header semantics');
+  await page.addInitScript(() => {
+    localStorage.setItem('favorites', JSON.stringify([
+      { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+      { name: 'İzmir', lat: 38.42, lon: 27.14 },
+    ]));
+  });
+  await page.goto('/istanbul/');
+  const compare = page.locator('.atlas-compare-button');
+  await expect(compare).toBeVisible();
+  await expect(compare).not.toHaveAttribute('aria-current');
+  await compare.click();
+  await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+  await expect(compare).toHaveAttribute('aria-current', 'page');
+  await expect(compare).not.toHaveAttribute('aria-pressed');
+});
+
 test('mobile saved navigation replaces the today dashboard', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile saved-view assertion');
   await page.addInitScript(() => {
