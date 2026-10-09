@@ -190,4 +190,20 @@ describe('functional microtype readability', () => {
     const css = readFileSync('src/components/hava81/EnvironmentRail.css', 'utf8');
     expect(remFontSize(cssRule(css, '.environment-rail__label'))).toBeGreaterThanOrEqual(0.8125);
   });
+
+  it('keeps all Environment Rail functional label and detail rules at the 13px-equivalent floor', () => {
+    const css = readFileSync('src/components/hava81/EnvironmentRailVisualPolish.css', 'utf8');
+    const rulesFor = (selector: string) => {
+      const escaped = selector.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+      return Array.from(css.matchAll(new RegExp(`${escaped}\\\\s*\\\\{([^}]*)\\\\}`, 'g')), match => match[1]);
+    };
+    const labelRules = rulesFor('.app .environment-rail__label');
+    const detailRules = rulesFor('.app .environment-rail__detail');
+    expect(labelRules).toHaveLength(3);
+    expect(detailRules).toHaveLength(2);
+    for (const rule of [...labelRules, ...detailRules]) {
+      expect(remFontSize(rule)).toBeGreaterThanOrEqual(0.8125);
+      expect(rule).toContain('13px');
+    }
+  });
 });
