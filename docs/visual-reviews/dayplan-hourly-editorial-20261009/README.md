@@ -39,6 +39,8 @@ Aşağıdaki dosyalar **gerçek Chromium** ile aynı ekran genişliklerinde alı
 - Vite üretim derlemesi: **başarılı**; 81 şehir giriş sayfası üretimi de başarılı.
 - Vitest: **763 / 763**, 108 dosya başarılı.
 - Hedef Playwright kontrolleri: **5 başarılı**, 7 cihaz/koşul filtresiyle atlandı.
+- **PR #1298 CI düzeltmesi:** 390 px mobil başlık normal yazıda 180 px altında, %200 yazıda 450 px altında; paylaş düğmesi ve puan yan yana kalır, hiçbir kelime bölünmez.
+- Güncellenen mobil başlığın doğru gösterildiğini kanıtlamak için önce/sonra arşivi yeniden oluşturuldu.
 - Gerçek ekran ve tema çekimi: normal masaüstü/tablet/mobil, koyu tema, 320 px, %200 metin; Chromium test raporu yerel `.visual-dayplan/final-captures/audit.json` dosyasında.
 - Yalnızca bu ekran için eklenen kod: `src/styles/DailyTimelineEditorial.css`, `src/components/hava81/DailyPlanPanel.tsx`, CSS kaydını yapan `src/App.tsx` ve yeni Playwright regresyon testi.
 - GitHub CI/CD, CodeQL, browser flows ve Lighthouse yeşil olmadan PR birleştirilmez.
