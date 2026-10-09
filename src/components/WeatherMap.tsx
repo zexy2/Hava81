@@ -92,6 +92,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   const { convertTemperature, getTemperatureSymbol } = useSettings();
   const mapTitleId = useId();
   const [fallbackTiles, setFallbackTiles] = useState(false);
+  // Leaflet can display markers before the raster map loads. Keep an honest
+  // loading state instead of showing an unexplained blank grey map.
+  const [tilesLoading, setTilesLoading] = useState(true);
   const [, setFreshnessRevision] = useState(0);
   const currentFreshness = getCurrentWeatherFreshness(weather?.meta ?? null);
 
@@ -168,7 +171,14 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           <TileLayer
             key={fallbackTiles ? 'osmde' : 'osmfr'}
             url={tileUrl}
-            eventHandlers={{ tileerror: () => setFallbackTiles(true) }}
+            eventHandlers={{
+              loading: () => setTilesLoading(true),
+              load: () => setTilesLoading(false),
+              tileerror: () => {
+                setTilesLoading(true);
+                setFallbackTiles(true);
+              },
+            }}
             maxZoom={18}
           />
 
@@ -243,6 +253,12 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             );
           })}
         </MapContainer>
+        {tilesLoading && (
+          <div className="weather-map__tile-status" role="status" aria-live="polite">
+            <span className="weather-map__tile-spinner" aria-hidden="true" />
+            {t('weather.mapTilesLoading')}
+          </div>
+        )}
       </div>
 
       <p className="weather-map__attribution">

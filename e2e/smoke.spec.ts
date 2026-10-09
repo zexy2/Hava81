@@ -6332,3 +6332,72 @@ test('mobile comparison cards keep interior spacing at normal and enlarged text'
     }
   }
 });
+
+// Leaflet markers can render before the actual map images. A slow tile response
+// must expose a localized status, then clear it without blocking map controls.
+test('mobile map announces delayed tiles and removes loading badge after display', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile map tile loading regression');
+  let releaseTiles: (() => void) | undefined;
+  const tileGate = new Promise<void>(resolve => { releaseTiles = resolve; });
+  let intercepted = 0;
+  // Valid 1x1 PNG; no external map host needed for deterministic CI.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==',
+    'base64'
+  );
+  await page.route('**/hot/**', async route => {
+    intercepted += 1;
+    await tileGate;
+    await route.fulfill({ status: 200, contentType: 'image/png', body: png }).catch(() => {});
+  });
+
+  try {
+    await page.goto('/istanbul/');
+    await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Harita' }).click();
+    const loading = page.locator('.weather-map__tile-status');
+    await expect.poll(() => intercepted).toBeGreaterThan(0);
+    await expect(loading).toBeVisible();
+    await expect(loading).toContainText('Harita hazırlanıyor');
+    expect(await loading.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
+    const geometry = await loading.evaluate(el => {
+      const badge = el.getBoundingClientRect();
+      const map = document.querySelector('.weather-map__container')!.getBoundingClientRect();
+      return {
+        inside: badge.left >= map.left && badge.right <= map.right && badge.bottom <= map.bottom,
+        viewportFits: document.documentElement.scrollWidth <= innerWidth,
+      };
+    });
+    expect(geometry.inside).toBe(true);
+    expect(geometry.viewportFits).toBe(true);
+    if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+      await page.screenshot({ path: 'test-results/visual-audit/map-tiles-loading-390.png' });
+    }
+  } finally {
+    releaseTiles?.();
+  }
+  await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
+  await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
+  if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+    await page.screenshot({ path: 'test-results/visual-audit/map-tiles-loaded-390.png' });
+  }
+});
+
+test('map tile loading switches to backup tiles if the primary host fails', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single map tile fallback regression');
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==',
+    'base64'
+  );
+  let backupRequests = 0;
+  await page.route('**/hot/**', route => route.fulfill({ status: 503, body: 'Unavailable' }));
+  await page.route('**/tiles/osmde/**', route => {
+    backupRequests += 1;
+    return route.fulfill({ status: 200, contentType: 'image/png', body: png });
+  });
+  await page.goto('/istanbul/');
+  await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Harita' }).click();
+  await expect.poll(() => backupRequests).toBeGreaterThan(0);
+  await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
+  await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap Deutschland');
+  await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible();
+});
