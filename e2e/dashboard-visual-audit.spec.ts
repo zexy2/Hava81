@@ -71,6 +71,8 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     const skeleton = page.locator('.atlas-forecast-loading--card');
     await expect(skeleton).toBeVisible();
     await expect(page.locator('.decision-glance')).toBeVisible();
+    const loadingHeight = await skeleton.evaluate(element => element.getBoundingClientRect().height);
+    expect(loadingHeight, 'mobile forecast placeholder should be compact').toBeLessThanOrEqual(320);
     await page.screenshot({ path: testInfo.outputPath('forecast-mobile-loading.png') });
     releaseForecast();
     await expect(skeleton).toHaveCount(0, { timeout: 15000 });
