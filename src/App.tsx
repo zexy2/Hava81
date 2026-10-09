@@ -34,6 +34,7 @@ import './styles/NavigationVisualPolish.css';
 import './styles/MobileDockVisualPolish.css';
 import './components/hava81/EnvironmentRailVisualPolish.css';
 import './styles/WeatherSceneContrast.css';
+import './styles/ActivityEditorialVisual.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));

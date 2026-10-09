@@ -6485,3 +6485,48 @@ test('mobile decision scenery fades when text is enlarged', async ({ page }, tes
     }
   }
 });
+
+test('activity planner editorial cards keep scores readable with 200% text on small phones', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'mobile decision studio visual regression');
+  await page.goto('/istanbul/');
+  const planner = page.locator('section.activity-planner');
+  await expect(planner).toBeVisible();
+  const chips = planner.locator('.activity-planner__chips button');
+  for (let index = 0; index < 2; index += 1) {
+    if ((await chips.nth(index).getAttribute('aria-pressed')) !== 'true')
+      await chips.nth(index).click();
+  }
+  await expect(planner.locator('.activity-card')).toHaveCount(2);
+  await expect(planner.locator('.activity-card__identity .activity-glyph svg')).toHaveCount(2);
+  await expect(planner.locator('.activity-planner__chips button[aria-pressed="true"]')).toHaveCount(
+    2
+  );
+  await page.setViewportSize({ width: 320, height: 760 });
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+  const geometry = await planner.evaluate(section => {
+    const card = section.querySelector('.activity-card') as HTMLElement;
+    const score = card.querySelector('.activity-card__score') as HTMLElement;
+    const identity = card.querySelector('.activity-card__identity') as HTMLElement;
+    const windowInputs = Array.from(section.querySelectorAll('.activity-planner__window input'));
+    const cardRect = card.getBoundingClientRect();
+    const scoreRect = score.getBoundingClientRect();
+    const identityRect = identity.getBoundingClientRect();
+    return {
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      scoreInsideCard: scoreRect.left >= cardRect.left - 1 && scoreRect.right <= cardRect.right + 1,
+      scoreAfterTitle: scoreRect.top >= identityRect.bottom - 1,
+      scoreTextFits: score.scrollWidth <= score.clientWidth + 1,
+      inputsFit: windowInputs.every(input => input.scrollWidth <= input.clientWidth + 1),
+    };
+  });
+  expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+  expect(geometry.scoreInsideCard).toBe(true);
+  expect(geometry.scoreAfterTitle).toBe(true);
+  expect(geometry.scoreTextFits).toBe(true);
+  expect(geometry.inputsFit).toBe(true);
+});
