@@ -11,6 +11,8 @@ function parseOptions(args) {
     screenshots: false,
     output: 'test-results/live-responsive-audit',
     cities: ['izmir', 'sanliurfa'],
+    languages: ['tr'],
+    themes: ['light'],
     cases: [
       [320, 100], [320, 200], [390, 100], [390, 200],
       [768, 100], [768, 200], [1024, 100], [1440, 100],
@@ -20,14 +22,16 @@ function parseOptions(args) {
     const flag = args[i];
     if (flag === '--screenshots') options.screenshots = true;
     else if (flag === '--quick') options.cases = [[320, 100], [320, 200], [390, 100], [768, 100], [1440, 100]];
-    else if (flag === '--base-url' || flag === '--output' || flag === '--cities') {
+    else if (['--base-url', '--output', '--cities', '--languages', '--themes'].includes(flag)) {
       const value = args[++i];
       if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
       if (flag === '--base-url') options.baseUrl = value;
       if (flag === '--output') options.output = value;
       if (flag === '--cities') options.cities = value.split(',').map(v => v.trim()).filter(Boolean);
+      if (flag === '--languages') options.languages = value.split(',').map(v => v.trim()).filter(Boolean);
+      if (flag === '--themes') options.themes = value.split(',').map(v => v.trim()).filter(Boolean);
     } else if (flag === '--help') {
-      console.log('Usage: npm run audit:live-ui -- [--base-url URL] [--cities izmir,sanliurfa] [--quick] [--screenshots] [--output DIRECTORY]');
+      console.log('Usage: npm run audit:live-ui -- [--base-url URL] [--cities izmir,sanliurfa] [--quick] [--languages tr,en] [--themes light,dark] [--screenshots] [--output DIRECTORY]');
       process.exit(0);
     } else throw new Error(`Unknown argument: ${flag}`);
   }
@@ -35,12 +39,18 @@ function parseOptions(args) {
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Base URL must be HTTP(S)');
   options.baseUrl = url.origin;
   if (options.cities.some(v => !/^[a-z-]+$/.test(v))) throw new Error('Cities must be URL-safe slugs');
+  if (!options.languages.length || options.languages.some(v => !['tr', 'en'].includes(v))) {
+    throw new Error('Languages must be one or more of: tr,en');
+  }
+  if (!options.themes.length || options.themes.some(v => !['light', 'dark'].includes(v))) {
+    throw new Error('Themes must be one or more of: light,dark');
+  }
   return options;
 }
 
 const options = parseOptions(process.argv.slice(2));
 const cityNames = { izmir: 'İzmir', sanliurfa: 'Şanlıurfa' };
-console.log(`Starting read-only audit at ${options.baseUrl} for ${options.cities.length} cities...`);
+console.log(`Starting read-only audit at ${options.baseUrl} for ${options.cities.length} cities, ${options.languages.join('/')} languages, ${options.themes.join('/')} themes...`);
 const browser = await chromium.launch({
   timeout: 30_000,
   executablePath: process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH || undefined,
@@ -49,17 +59,32 @@ const browser = await chromium.launch({
 const results = [];
 try {
   if (options.screenshots) await mkdir(options.output, { recursive: true });
-  for (const city of options.cities) {
+  const variants = options.cities.flatMap(city =>
+    options.languages.flatMap(language =>
+      options.themes.map(theme => ({ city, language, theme }))));
+  for (const { city, language, theme } of variants) {
     for (const [width, zoom] of options.cases) {
-      const item = { city, width, zoom, ok: false, errors: [], metrics: null };
+      const item = { city, language, theme, width, zoom, ok: false, errors: [], metrics: null };
       // A single failed external weather request must not be misdiagnosed as
       // a stable CSS regression. Retry a cold page once before recording it.
       for (let attempt = 1; attempt <= 2; attempt += 1) {
-        console.log(`CHECK ${city} ${width}px zoom=${zoom}% (attempt ${attempt}/2)`);
+        console.log(`CHECK ${city} ${language}/${theme} ${width}px zoom=${zoom}% (attempt ${attempt}/2)`);
         const page = await browser.newPage({ viewport: { width, height: 900 } });
         page.setDefaultTimeout(15_000);
+        // Browser context is isolated per case; live user settings are never changed.
+        await page.addInitScript(({ language, theme }) => {
+          localStorage.setItem('user-settings', JSON.stringify({
+            temperatureUnit: 'metric', windSpeedUnit: 'ms', language, themeMode: theme,
+          }));
+        }, { language, theme });
         const pageErrors = [];
+        const weatherFailures = [];
         page.on('pageerror', error => pageErrors.push(error.message));
+        page.on('response', response => {
+          if (response.url().includes('/api/v1/weather/') && response.status() >= 400) {
+            weatherFailures.push(`${response.status()} ${response.url().split('?')[0]}`);
+          }
+        });
         try {
           await page.goto(`${options.baseUrl}/${city}/`, { waitUntil: 'domcontentloaded', timeout: 25_000 });
           await page.locator('.decision-glance__score').waitFor({ timeout: 20_000 });
@@ -79,6 +104,8 @@ try {
             };
             return {
               city: element('.hava81-decision-field__city')?.textContent?.trim(),
+              language: document.documentElement.lang,
+              theme: element('.app')?.getAttribute('data-color-mode'),
               documentWidth: document.documentElement.scrollWidth,
               viewportWidth: innerWidth,
               headerHeight: Math.round(bounds('.atlas-header__inner')?.height || 0),
@@ -94,23 +121,35 @@ try {
           const expectedCity = cityNames[city];
           item.errors = [
             ...(expectedCity && item.metrics.city !== expectedCity ? [`Expected ${expectedCity}, got ${item.metrics.city}`] : []),
+            ...(item.metrics.language !== language ? [`Expected language ${language}, got ${item.metrics.language}`] : []),
+            ...(item.metrics.theme !== theme ? [`Expected theme ${theme}, got ${item.metrics.theme}`] : []),
             ...(item.metrics.documentWidth > width + 1 ? [`Horizontal overflow: ${item.metrics.documentWidth}px > ${width}px`] : []),
             ...Object.entries(item.metrics.overlaps).filter(([,area]) => area > 1).map(([name,area]) => `${name} overlap: ${area}px²`),
             ...pageErrors.map(error => `JavaScript: ${error}`),
           ];
           item.ok = item.errors.length === 0;
           if (options.screenshots) {
-            await page.screenshot({ path: join(options.output, `${city}-${width}-zoom${zoom}.png`), animations: 'disabled' });
+            const variant = language === 'tr' && theme === 'light' ? '' : `-${language}-${theme}`;
+            await page.screenshot({ path: join(options.output, `${city}-${width}-zoom${zoom}${variant}.png`), animations: 'disabled' });
           }
           if (item.ok || attempt === 2) break;
         } catch (error) {
-          item.errors = [`Attempt ${attempt}: ${error.message}`];
+          item.errors = [`Attempt ${attempt}: ${error.message}`, ...weatherFailures, ...pageErrors];
+          // A timeout might be a weather-provider failure, not a CSS regression.
+          // Save the visible error state and failed network status for diagnosis.
+          const message = await page.locator('.atlas-message--error').first()
+            .textContent({ timeout: 500 }).catch(() => null);
+          if (message) item.errors.push(`Visible message: ${message.trim().slice(0, 180)}`);
+          if (options.screenshots) {
+            const variant = `${language}-${theme}-${width}-zoom${zoom}-attempt${attempt}`;
+            await page.screenshot({ path: join(options.output, `${city}-failed-${variant}.png`), timeout: 4_000 }).catch(() => {});
+          }
         } finally {
           await page.close();
         }
       }
       results.push(item);
-      console.log(`${item.ok ? 'PASS' : 'FAIL'} ${city} ${width}px zoom=${zoom}% ${item.errors.join('; ')}`.trim());
+      console.log(`${item.ok ? 'PASS' : 'FAIL'} ${city} ${language}/${theme} ${width}px zoom=${zoom}% ${item.errors.join('; ')}`.trim());
     }
   }
 } finally {
