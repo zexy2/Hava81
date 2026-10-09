@@ -8,6 +8,7 @@ import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness'
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import './DecisionAlertsPanel.css';
+import './DecisionAlertVisualPolish.css';
 
 interface Props {
   weather: NormalizedWeatherData;

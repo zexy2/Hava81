@@ -1,0 +1,50 @@
+/* Alerts as a compact, recognizable utility panel, not a floating row. */
+.app .decision-alerts {
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.35rem clamp(1rem,2vw,1.8rem);
+  border: 1px solid var(--premium-card-border);
+  border-left: 5px solid var(--color-aegean);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 93% 4%, rgb(152 208 246 / .28), transparent 42%),
+    color-mix(in srgb, var(--color-atlas-paper) 87%, var(--color-aegean-pale));
+  box-shadow: var(--premium-elevation);
+}
+.app .decision-alerts h2 {
+  margin: .3rem 0;
+  font-size: clamp(1.25rem,1.8vw,1.55rem);
+  font-weight: 760;
+  letter-spacing: -.03em;
+}
+.app .decision-alerts p { max-width: 58ch;line-height: 1.57; }
+.app .decision-alerts button {
+  justify-self: end;
+  min-width: 10.5rem;
+  min-height: 3rem;
+  padding: .8rem 1.1rem;
+  border: 1px solid color-mix(in srgb,var(--color-aegean) 44%,var(--color-atlas-line));
+  border-radius: 13px;
+  background: var(--color-atlas-paper);
+  box-shadow: 0 6px 17px rgb(25 78 141 / .08);
+  font-weight: 740;
+}
+.app .decision-alerts button:hover:not(:disabled) {
+  background: color-mix(in srgb,var(--color-atlas-paper) 65%,var(--color-aegean-pale));
+}
+.app .decision-alerts button[aria-pressed='true'] {
+  border-color: var(--color-aegean);
+  background: color-mix(in srgb,var(--color-atlas-paper) 61%,var(--color-aegean-pale));
+}
+@media (max-width: 63.99rem) {
+  .app .decision-alerts { grid-template-columns: 1fr;gap: .85rem; }
+  .app .decision-alerts button { justify-self: stretch;max-width: none; }
+}
+@media (max-width: 47.99rem) {
+  .app .decision-alerts { padding: 1rem;border-radius: 16px;gap: .7rem; }
+  .app .decision-alerts button { min-width: 0; }
+}
+@media (forced-colors: active) {
+  .app .decision-alerts { border: 1px solid CanvasText; }
+  .app .decision-alerts button[aria-pressed='true'] { border: 2px solid Highlight; }
+}

@@ -1943,7 +1943,7 @@ test('desktop context signals present four rounded bento tiles', async ({ page }
   expect(surface.pageWidth).toBeLessThanOrEqual(surface.viewportWidth);
 });
 
-test('desktop decision alerts read as an editorial utility strip', async ({ page }, testInfo) => {
+test('desktop decision alerts have distinct layered utility cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision-alerts editorial regression');
   await page.goto('/istanbul');
 
@@ -1966,7 +1966,7 @@ test('desktop decision alerts read as an editorial utility strip', async ({ page
     };
   });
 
-  expect(surface.panelBackground).toBe('rgb(255, 255, 255)');
+  expect(surface.panelBackground).not.toBe('rgba(0, 0, 0, 0)');
   expect(surface.panelBorderTop).toBeGreaterThanOrEqual(1);
   expect(surface.panelBorderLeft).toBeGreaterThanOrEqual(1);
   expect(surface.panelRadius).toBeGreaterThanOrEqual(16);
@@ -5039,7 +5039,7 @@ test('route weather renders a transparent corridor result', async ({ page }, tes
   ).toHaveCount(5);
 });
 
-test('desktop route weather reads as one editorial corridor surface', async ({ page }, testInfo) => {
+test('desktop route weather has distinct navigable corridor cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop route visual regression');
   await page.goto('/istanbul');
 
@@ -5107,20 +5107,20 @@ test('desktop route weather reads as one editorial corridor surface', async ({ p
   expect(styles.panel.bottom).toBeGreaterThanOrEqual(1);
   expect(styles.panel.left).toBeGreaterThanOrEqual(1);
   expect(styles.panel.right).toBeGreaterThanOrEqual(1);
-  expect(parseFloat(styles.chevron.radius)).toBe(0);
-  expect(styles.chevron.top).toBe(0);
-  expect(styles.score.background).toBe('rgba(0, 0, 0, 0)');
-  expect(parseFloat(styles.score.radius)).toBe(0);
+  expect(parseFloat(styles.chevron.radius)).toBeGreaterThanOrEqual(12);
+  expect(styles.chevron.top).toBeGreaterThanOrEqual(1);
+  expect(styles.score.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.score.radius)).toBeGreaterThanOrEqual(12);
   expect(styles.score.left).toBeGreaterThanOrEqual(1);
-  expect(styles.score.top).toBe(0);
-  expect(styles.score.right).toBe(0);
-  expect(styles.score.bottom).toBe(0);
-  expect(styles.segments.gap).toBe(1);
-  expect(styles.segments.top).toBeGreaterThanOrEqual(1);
-  expect(styles.segments.bottom).toBeGreaterThanOrEqual(1);
-  expect(styles.items.every(item => parseFloat(item.radius) === 0)).toBe(true);
+  expect(styles.score.top).toBeGreaterThanOrEqual(1);
+  expect(styles.score.right).toBeGreaterThanOrEqual(1);
+  expect(styles.score.bottom).toBeGreaterThanOrEqual(1);
+  expect(styles.segments.gap).toBeGreaterThanOrEqual(8);
+  expect(styles.segments.top).toBe(0);
+  expect(styles.segments.bottom).toBe(0);
+  expect(styles.items.every(item => parseFloat(item.radius) >= 12)).toBe(true);
   expect(styles.items.every(item => item.top >= 4)).toBe(true);
-  expect(styles.items.every(item => item.left === 0 && item.right === 0 && item.bottom === 0)).toBe(
+  expect(styles.items.every(item => item.left >= 1 && item.right >= 1 && item.bottom >= 1)).toBe(
     true
   );
   expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
