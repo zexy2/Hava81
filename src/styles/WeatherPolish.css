@@ -206,6 +206,11 @@
   }
 }
 @container (max-width: 18rem) {
+  /* At 200% text zoom clouds and scenery would sit behind the enlarged
+   * decision headline. Keep the weather theme, but protect text contrast. */
+  .app .decision-glance__atmosphere {
+    opacity: 0.1;
+  }
   .app .decision-glance {
     flex-direction: column;
     align-items: stretch;
