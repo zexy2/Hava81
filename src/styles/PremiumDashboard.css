@@ -328,7 +328,7 @@
 }
 .app .decision-glance__score strong span {
   margin-top: 0.1rem;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--color-atlas-muted);
   font-weight: 600;
 }
@@ -768,11 +768,11 @@
     font-size: 1.9rem;
   }
   .app .decision-glance__score-label {
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
   }
   .app .decision-glance__details {
     padding: 0.35rem 0.4rem;
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     text-align: center;
   }
   .app .decision-glance__quick-list {
@@ -840,7 +840,7 @@
     height: 4.8rem;
   }
   .app .decision-glance__details {
-    font-size: 0.64rem;
+    font-size: 0.8125rem;
   }
   .app .hava81-decision-field__symbol {
     width: 4rem;
