@@ -6172,3 +6172,55 @@ test('small phone city heading preserves short names at enlarged text sizes', as
     }
   }
 });
+
+// Comparison is a primary mobile destination; names and numeric rows should
+// never sit flush against the card border at the narrowest phone sizes.
+test('mobile comparison cards keep interior spacing at normal and enlarged text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'single populated mobile comparison regression');
+  await page.addInitScript(() => {
+    localStorage.setItem('favorites', JSON.stringify([
+      { name: 'İzmir', lat: 38.42, lon: 27.14 },
+      { name: 'Ankara', lat: 39.93, lon: 32.86 },
+    ]));
+  });
+  await page.goto('/izmir/');
+  await page.locator('.atlas-bottom-nav__button').filter({ hasText: 'Karşılaştır' }).click();
+  const cities = page.locator('.hava81-compare__city');
+  await expect(cities).toHaveCount(2);
+
+  for (const width of [320, 360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const scale of ['100%', '200%']) {
+      await page.evaluate(value => { document.documentElement.style.fontSize = value; }, scale);
+      const state = await cities.evaluateAll(elements => {
+        const rows = elements.map(element => {
+          const box = element.getBoundingClientRect();
+          const heading = element.querySelector('h3')!.getBoundingClientRect();
+          const metric = element.querySelector('.hava81-compare__metrics')!.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return {
+            inset: heading.left - box.left,
+            metricInset: metric.left - box.left,
+            padding: parseFloat(style.paddingLeft),
+            headingFits: heading.right <= box.right - 8,
+            metricFits: metric.right <= box.right - 8,
+          };
+        });
+        return { rows, fitsPage: document.documentElement.scrollWidth <= innerWidth };
+      });
+      expect(state.rows, `two comparison cards at ${width}px ${scale}`).toHaveLength(2);
+      for (const row of state.rows) {
+        expect(row.inset, `city heading inset at ${width}px ${scale}`).toBeGreaterThanOrEqual(11);
+        expect(row.metricInset, `metric inset at ${width}px ${scale}`).toBeGreaterThanOrEqual(11);
+        expect(row.padding, `card padding at ${width}px ${scale}`).toBeGreaterThanOrEqual(11);
+        expect(row.headingFits, `heading fits card at ${width}px ${scale}`).toBe(true);
+        expect(row.metricFits, `metrics fit card at ${width}px ${scale}`).toBe(true);
+      }
+      expect(state.fitsPage, `no horizontal overflow at ${width}px ${scale}`).toBe(true);
+      if (process.env.HAVA81_VISUAL_AUDIT === '1' && width === 320) {
+        await cities.first().scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `test-results/visual-audit/compare-inset-320-${scale}.png`, animations: 'disabled' });
+      }
+    }
+  }
+});
