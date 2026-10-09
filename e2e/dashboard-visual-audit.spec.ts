@@ -52,3 +52,34 @@ test('dashboard hero and current weather fit mobile and desktop viewports', asyn
     await page.screenshot({ path: testInfo.outputPath(`dashboard-${width}x${height}.png`), fullPage: false });
   }
 });
+
+test('forecast loading skeleton resolves to real hourly content on mobile', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390');
+  await page.setViewportSize({ width: 390, height: 844 });
+  let releaseForecast!: () => void;
+  const pendingForecast = new Promise<void>(resolve => { releaseForecast = resolve; });
+  await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
+  await page.route('**/api/v1/weather/forecast**', async route => {
+    await pendingForecast;
+    await route.fulfill({ json: forecast });
+  });
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));
+  await page.route('**/api/v1/weather/air-quality**', route => route.fulfill({ status: 503, json: {} }));
+  await page.route('**/api/v1/weather/context**', route => route.fulfill({ status: 503, json: {} }));
+  try {
+    await page.goto('/istanbul');
+    const skeleton = page.locator('.atlas-forecast-loading--card');
+    await expect(skeleton).toBeVisible();
+    await expect(page.locator('.decision-glance')).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('forecast-mobile-loading.png') });
+    releaseForecast();
+    await expect(skeleton).toHaveCount(0, { timeout: 15000 });
+    const loaded = page.locator('.hava81-forecast-atlas');
+    await expect(loaded).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(391);
+    await page.screenshot({ path: testInfo.outputPath('forecast-mobile-loaded.png') });
+  } finally {
+    releaseForecast();
+  }
+});
