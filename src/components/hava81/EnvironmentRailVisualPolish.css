@@ -1,0 +1,242 @@
+/* Environmental metrics — atmospheric bento cards.
+   Presentation-only: no changes to weather data, values, map behavior,
+   freshness signalling or accessibility semantics. */
+.app .environment-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(.65rem, 1.2vw, 1rem);
+  padding: clamp(.25rem, .5vw, .45rem);
+  border: 0;
+  border-radius: 25px;
+  overflow: hidden;
+  background: transparent;
+  container-type: inline-size;
+}
+.app .environment-rail__module,
+.app .environment-rail__module:nth-child(odd),
+.app .environment-rail__module:nth-child(n + 3),
+.app .environment-rail__module + .environment-rail__module {
+  isolation: isolate;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0,1fr) auto;
+  gap: .65rem .6rem;
+  align-content: start;
+  min-width: 0;
+  min-height: 11rem;
+  padding: clamp(1.05rem, 1.7vw, 1.5rem);
+  border: 1px solid rgb(139 175 208 / .28);
+  border-radius: 21px;
+  color: #f5fbff;
+  background:
+    radial-gradient(ellipse at 105% -18%, rgb(134 217 247 / .38), transparent 57%),
+    linear-gradient(145deg, #153b6b, #15598c);
+  box-shadow: 0 12px 25px rgb(20 61 108 / .10), inset 0 1px 0 rgb(255 255 255 / .26);
+}
+.app .environment-rail__module::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: repeating-radial-gradient(circle at 115% -10%,
+    transparent 0 38px, rgb(255 255 255 / .18) 39px 40px,
+    transparent 41px 74px);
+  box-shadow: none;
+  pointer-events: none;
+}
+.app .environment-rail__module {
+  overflow: hidden;
+}
+.app .environment-rail__module:nth-child(2) {
+  color: #123e56;
+  border-color: #a9d4db;
+  background:
+    radial-gradient(ellipse at 104% -18%, rgb(255 255 255 / .88), transparent 56%),
+    linear-gradient(145deg, #d9f5f2, #ace2df);
+}
+.app .environment-rail__module:nth-child(3) {
+  color: #253b71;
+  border-color: #c3d0f5;
+  background:
+    radial-gradient(ellipse at 110% -5%, rgb(255 255 255 / .88), transparent 57%),
+    linear-gradient(148deg, #e7eefe, #c7d8ff);
+}
+.app .environment-rail__module:nth-child(4) {
+  color: #f3fcff;
+  border-color: #358eab;
+  background:
+    radial-gradient(ellipse at 105% 0%, rgb(133 239 248 / .38), transparent 54%),
+    linear-gradient(145deg, #126d92, #0e5a7b);
+}
+.app .environment-rail__module:nth-child(2)::before,
+.app .environment-rail__module:nth-child(3)::before {
+  background: repeating-radial-gradient(circle at 115% -10%,
+    transparent 0 38px, rgb(33 105 137 / .12) 39px 40px,
+    transparent 41px 74px);
+  box-shadow: none;
+}
+.app .environment-rail__icon {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  align-self: start;
+  justify-self: end;
+  width: 2.8rem;
+  height: 2.8rem;
+  border: 1px solid rgb(237 250 255 / .25);
+  border-radius: 14px;
+  color: currentColor;
+  background: rgb(255 255 255 / .16);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .12);
+}
+.app .environment-rail__module:nth-child(2) .environment-rail__icon,
+.app .environment-rail__module:nth-child(3) .environment-rail__icon {
+  border-color: rgb(22 95 137 / .16);
+  background: rgb(255 255 255 / .54);
+}
+.app .environment-rail__icon svg {width: 1.65rem;height: 1.65rem;stroke-width: 1.75}
+.app .environment-rail__label {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  min-width: 0;
+  color: inherit;
+  opacity: .88;
+  font-size: .77rem;
+  font-weight: 760;
+  line-height: 1.25;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.app .environment-rail__value {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-self: end;
+  min-width: 0;
+  margin-top: .15rem;
+  color: inherit;
+  font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+  font-weight: 820;
+  line-height: 1.1;
+  letter-spacing: -.05em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.app .environment-rail__detail {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  align-self: start;
+  min-width: 0;
+  color: inherit;
+  opacity: .83;
+  font-size: .76rem;
+  font-weight: 560;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+.app .environment-rail__module--action {
+  cursor: pointer;
+  transition: transform 150ms ease,box-shadow 150ms ease,filter 150ms ease;
+}
+.app .environment-rail__module--action:hover {
+  color: #fff;
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 17px 27px rgb(20 61 108 / .18);
+}
+.app .environment-rail__module--action::after {
+  right: 1rem;
+  left: 1rem;
+  bottom: .4rem;
+  height: 2px;
+  background: #d4f6ff;
+}
+.app .environment-rail__module--action[aria-expanded='true'] {
+  box-shadow: inset 0 0 0 2px #bcecff, 0 10px 22px rgb(20 61 108 / .15);
+}
+.app .environment-rail__module--action:focus-visible {
+  outline: 3px solid #f8b95c;
+  outline-offset: -3px;
+}
+.app[data-color-mode='dark'] .environment-rail__module:nth-child(2) {
+  color: #dffbfa;
+  border-color: #327785;
+  background: linear-gradient(145deg, #1a4c59, #18435b);
+}
+.app[data-color-mode='dark'] .environment-rail__module:nth-child(3) {
+  color: #e6edff;
+  border-color: #415e94;
+  background: linear-gradient(145deg, #2a4167, #24365a);
+}
+.app[data-color-mode='dark'] .environment-rail__module:nth-child(2) .environment-rail__icon,
+.app[data-color-mode='dark'] .environment-rail__module:nth-child(3) .environment-rail__icon {
+  border-color: rgb(212 245 255 / .16);
+  background: rgb(239 248 255 / .1);
+}
+@media (max-width: 63.99rem) {
+  .app .environment-rail {grid-template-columns: repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 47.99rem) {
+  .app .environment-rail {gap: .55rem;padding: .15rem;border-radius: 20px}
+  .app .environment-rail__module,
+  .app .environment-rail__module:nth-child(odd),
+  .app .environment-rail__module:nth-child(n + 3),
+  .app .environment-rail__module + .environment-rail__module {
+    min-height: 10rem;
+    padding: .95rem;
+    gap: .55rem .6rem;
+    border-radius: 17px;
+  }
+  .app .environment-rail__icon {height:2.2rem;width:2.2rem;border-radius: 11px}
+  .app .environment-rail__icon svg{width:1.4rem;height:1.4rem}
+  .app .environment-rail__label {font-size:.68rem;letter-spacing:.02em}
+  .app .environment-rail__value{font-size:clamp(1.25rem,4.3vw,1.65rem)}
+  .app .environment-rail__detail{font-size:.68rem}
+}
+@media (max-width: 23rem) {
+  .app .environment-rail__module,
+  .app .environment-rail__module:nth-child(odd),
+  .app .environment-rail__module:nth-child(n + 3),
+  .app .environment-rail__module + .environment-rail__module {
+    min-height: 9.5rem;
+    padding: .7rem;
+  }
+  .app .environment-rail__icon{width:1.9rem;height:1.9rem}
+  .app .environment-rail__label{font-size:.62rem}
+  .app .environment-rail__value{font-size:1.14rem}
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .environment-rail__module--action {transition:none}
+  .app .environment-rail__module--action:hover {transform:none}
+}
+@media (forced-colors: active) {
+  .app .environment-rail__module,
+  .app .environment-rail__module:nth-child(2),
+  .app .environment-rail__module:nth-child(3),
+  .app .environment-rail__module:nth-child(4) {
+    color: CanvasText;
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .app .environment-rail__module--action:focus-visible {
+    outline: 3px solid Highlight;
+  }
+}
+
+
+/* At 200% text enlargement small devices need full-width cards rather
+   than two 80px text columns. The container threshold scales in rem,
+   so ordinary 320px phones retain the compact 2×2 bento arrangement. */
+@container (max-width: 11.5rem) {
+  .app .environment-rail__module,
+  .app .environment-rail__module:nth-child(n) {
+    grid-column: 1 / -1;
+    min-height: 9rem;
+  }
+}
