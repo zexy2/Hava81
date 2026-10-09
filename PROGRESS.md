@@ -96,3 +96,11 @@
 - Bu dal için yeni PR açıp yalnız `[self-hosted, linux]` koşullarındaki CI/CD ve CodeQL tamamen başarılı olursa merge et.
 - 320px/%200 yakınlaştırma, 390px açık/koyu, 768px ve 1440px canlı görsel taramasını güncel Pages yayınıyla yeniden çalıştır; somut CSS kusuru bulunmadan stil değiştirme.
 - Ekran görüntülerini inceleyip erişilebilirlik ve yerleşim regresyonlarını raporla; ana kirli worktree'ye dokunma.
+
+
+### [Hava81 #04] Ek doğrulama — test çıktısı izolasyonu
+- PR #1313 açıldı; CodeQL ilk HEAD'de başarılı, CI/CD sırasında görüntü kayıplarına neden olan Playwright çıktı temizliği tespit edildi.
+- `playwright.config.ts` `outputDir: './test-results/playwright-runs'` olarak ayrıldı; Watchdog ekranları `test-results/` kökünde kalır.
+- Ardışık Playwright çalıştırmaları: dashboard visual 3/3, 320px/%200 nav 2/2 başarılı; ikinci çalışmadan sonra standart beş ekran görüntüsünün hâlâ mevcut olduğu doğrulandı. Type-check başarılı.
+- Canlı İzmir görsel denetimi 1440, 768, 390 açık/koyu ve 320 için 5/5 başarılı; yatay overflow, sayfa JS hatası ve hero/forecast örtüşmesi 0. Bu canlı kanıtlar `test-results/hava81-04-live/validated/` altına yeniden oluşturulmalıdır (önceki Playwright temizliği bu ilk kopyayı kaldırdı).
+- Yeni HEAD'in CI/CD ve CodeQL başarı sonucu doğrulanmadan PR merge edilmeyecek.
