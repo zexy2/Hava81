@@ -40,10 +40,12 @@ test('320px navigation remains operable with 200% text in both languages', async
   await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
   for (const lang of ['tr', 'en'] as const) {
     await page.evaluate(language => {
-      localStorage.setItem('i18nextLng', language);
+      const currentSettings = JSON.parse(localStorage.getItem('user-settings') || '{}');
+      localStorage.setItem('user-settings', JSON.stringify({ ...currentSettings, language }));
     }, lang);
     await page.reload();
     await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
+    await expect(page.locator('html')).toHaveAttribute('lang', lang);
     const nav = page.locator('.atlas-bottom-nav');
     await expect(nav).toBeVisible();
     const buttons = nav.locator('button');
