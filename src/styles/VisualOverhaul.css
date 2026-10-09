@@ -62,8 +62,8 @@
 }
 .app .decision-glance__sun {
   top: 5%;
-  right: 25%;
-  opacity: .72;
+  right: 50%;
+  opacity: .5;
   box-shadow: 0 0 70px 38px rgb(255 213 126 / .2);
 }
 .app .decision-glance__hills {
@@ -79,7 +79,7 @@
 .app[data-color-mode='dark'] .hava81-decision-field__current {
   background: radial-gradient(circle at 88% 25%, rgb(59 153 198 / .38), transparent 44%), linear-gradient(125deg, #123a54, #204b66);
 }
-.app .hava81-decision-field__change { border-radius: 16px; background: linear-gradient(115deg, #fff9ea, #fff0cd); }
+.app .hava81-decision-field__change { border-radius: 16px; background: linear-gradient(115deg, #fff9ea, #fff0cd); background-color: #fff3df; }
 .app[data-color-mode='dark'] .hava81-decision-field__change { background: linear-gradient(115deg, #413b2c, #39342b); }
 .app .hava81-decision-field__metric,
 .app .hava81-decision-field__metric:nth-child(even),
@@ -147,11 +147,12 @@
   }
   .app .hava81-decision-field__metric dt { margin-bottom: .3rem; }
   .app .hava81-forecast-atlas { padding: 1rem; border-radius: 21px; }
-  .app .environment-rail { gap: .3rem; padding: .35rem; }
+  .app .environment-rail { gap: .3rem; padding: 0; }
   .app .environment-rail__module { border-radius: 13px; }
 }
 @media (max-width: 24rem) {
   .app .decision-glance__quick-list { padding-top: .55rem; }
+  .app .hava81-decision-field { padding: .5rem; }
   .app .hava81-decision-field__reading { min-height: 7.3rem; }
   .app .hava81-decision-field__current { padding: .65rem; }
 }
