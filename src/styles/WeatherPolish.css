@@ -304,3 +304,64 @@
     display: none;
   }
 }
+
+/* At 200% browser text sizing, a tablet still uses a physical desktop-width
+ * viewport but its hero message has too few characters per line next to the
+ * score. Query the type-scaled width instead of changing normal breakpoints. */
+@media (min-width: 48rem) and (max-width: 79.99rem) {
+  .app .atlas-dashboard {
+    container: hero-enlarged-type / inline-size;
+  }
+}
+
+@container hero-enlarged-type (max-width: 34rem) {
+  .app .decision-glance {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .app .decision-glance__main {
+    flex: 0 1 auto;
+    width: 100%;
+  }
+  .app .decision-glance__message {
+    max-width: 100%;
+  }
+  .app .decision-glance__quick-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin-top: 0;
+  }
+  .app .decision-glance__side {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    justify-items: start;
+    gap: 0.25rem 1rem;
+    width: 100%;
+    flex: 0 0 auto;
+    text-align: left;
+  }
+  .app .decision-glance__score {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 120px;
+    height: 120px;
+  }
+  .app .decision-glance__score strong {
+    font-size: 1.65rem;
+  }
+  .app .decision-glance__score strong span {
+    font-size: 0.68rem;
+  }
+  .app .decision-glance__score-label {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .app .decision-glance__details {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    max-width: 100%;
+  }
+}

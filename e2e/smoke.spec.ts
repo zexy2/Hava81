@@ -6172,3 +6172,53 @@ test('small phone city heading preserves short names at enlarged text sizes', as
     }
   }
 });
+
+// Text-resizing a 768-1024px tablet formerly forced the decision copy into a
+// 200px-wide column beside a 234px score ring, creating a very tall hero.
+test('tablet decision hero remains readable with enlarged system text', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single tablet text-size regression');
+  await page.goto('/izmir/');
+  const hero = page.locator('.decision-glance');
+  await expect(hero.locator('.decision-glance__score')).toBeVisible();
+
+  for (const [width, scale, expectStacked] of [
+    [768, '100%', false],
+    [768, '200%', true],
+    [1024, '100%', false],
+    [1024, '200%', true],
+    [1280, '200%', false],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(value => { document.documentElement.style.fontSize = value; }, scale);
+    const metric = await hero.evaluate(element => {
+      const bounds = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+      const card = element.getBoundingClientRect();
+      const message = bounds('.decision-glance__message');
+      const score = bounds('.decision-glance__score');
+      const side = bounds('.decision-glance__side');
+      const main = bounds('.decision-glance__main');
+      const details = bounds('.decision-glance__details');
+      return {
+        stacked: getComputedStyle(element).flexDirection === 'column',
+        messageShare: message.width / card.width,
+        scoreWidth: score.width,
+        scoreBelowCopy: score.top >= main.bottom - 2,
+        detailsInsideCard: details.left >= card.left - 1 && details.right <= card.right + 1,
+        sideInsideCard: side.left >= card.left - 1 && side.right <= card.right + 1,
+        fitsViewport: document.documentElement.scrollWidth <= innerWidth,
+      };
+    });
+    expect(metric.stacked, `${width}px at ${scale} uses the correct layout`).toBe(expectStacked);
+    expect(metric.fitsViewport, `no horizontal page overflow at ${width}px ${scale}`).toBe(true);
+    expect(metric.detailsInsideCard, `details remain inside hero ${width}px ${scale}`).toBe(true);
+    expect(metric.sideInsideCard, `score remains inside hero ${width}px ${scale}`).toBe(true);
+    if (expectStacked) {
+      expect(metric.messageShare, `readable copy width at ${width}px ${scale}`).toBeGreaterThan(0.7);
+      expect(metric.scoreWidth, `compact ring at ${width}px ${scale}`).toBeLessThanOrEqual(130);
+      expect(metric.scoreBelowCopy, `score follows copy at ${width}px ${scale}`).toBe(true);
+    }
+    if (process.env.HAVA81_VISUAL_AUDIT === '1' && scale === '200%') {
+      await page.screenshot({ path: `test-results/visual-audit/hero-tablet-${width}-200.png`, animations: 'disabled' });
+    }
+  }
+});
