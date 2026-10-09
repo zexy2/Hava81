@@ -149,3 +149,17 @@
 
 ### 🚀 Sıradaki Adım
 - Bu test netleştirmesini PR'da incelemeye gönder, CI/CD ve CodeQL sonuçlarını doğrula; başarısız veya bekleyen kontrol varken merge yapma.
+
+## [Hava81 #04] Docker Hub 504 OAuth hata düzeltmesi — 2026-10-09
+
+### 🎯 Tamamlanan Geliştirmeler
+- GitHub CI/CD run `37992655398` içindeki `Build Docker image` işinde `auth.docker.io/token` OAuth 504 Gateway Timeout nedeniyle dış servis kaynaklı buildx hatası tespit edildi. Aynı koşudaki frontend, API, browser, Lighthouse ve Pages işleri başarılıydı.
+- Ana çalışma ağacını değiştirmeden güncel `origin/main` (`09205ff2`) üzerinden `fix/hava81-docker-hub-504-20261009` izole worktree/dalı oluşturuldu.
+- `.github/workflows/ci.yml` Docker yayınlama adımı iki denemeli hale getirildi: ilk deneme hata verebilir; yalnız hata verirse aynı context/tags/labels/GHA cache ile ikinci zorunlu deneme çalışır. İkinci deneme de başarısızsa workflow başarısız kalır. Docker Hub 504 sorununun mutlak çözümü değil, geçici ağ/registry arızalarına dayanıklılık iyileştirmesidir.
+- PyYAML ile YAML parse edildi; ikinci adım koşulu, zorunlu başarısızlık semantiği ve her iki denemenin eşit `with` girdileri doğrulandı; `git diff --check` başarılı.
+
+### 📸 Görsel Kanıtlar
+- Bu değişiklik CI altyapısına yöneliktir; UI değişikliği olmadığı için yeni görsel kanıt gerekmiyor. Önceki standart dashboard ve forecast görselleri diğer izole worktree'lerde korunuyor.
+
+### 🚀 Sıradaki Adım
+- Değişikliği commit edip GitHub PR oluştur; self-hosted CI/CD ve CodeQL onayı olmadan merge yapma. Özellikle `main` üzerinde gerçekleşen Docker publish denemesini takip et; PR'da bu job koşul nedeniyle skipped kalabilir.
