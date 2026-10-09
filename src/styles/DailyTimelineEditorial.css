@@ -1,0 +1,273 @@
+/* Hava81 — decision timeline: blue-hour editorial cards and evidence-first
+   scoring. Scoring and the hourly forecast remain unchanged. */
+.app .daily-plan {
+  --timeline-ink: #19365d;
+  --timeline-muted: #506f91;
+  --timeline-line: #cedfed;
+  --timeline-card: #f7fbff;
+  --timeline-tint: #e7f3ff;
+  --timeline-accent: #227ac5;
+  gap: clamp(1rem, 1.5vw, 1.4rem);
+  border-color: var(--timeline-line);
+  box-shadow: 0 20px 44px rgb(17 59 100 / .09), 0 4px 11px rgb(17 59 100 / .04);
+}
+.app[data-color-mode='dark'] .daily-plan {
+  --timeline-ink: #e8f5ff;
+  --timeline-muted: #bbd4e7;
+  --timeline-line: #365573;
+  --timeline-card: #153451;
+  --timeline-tint: #163955;
+  --timeline-accent: #60c6e5;
+}
+.app .daily-plan__header {
+  border-radius: 24px;
+  padding: clamp(1.35rem, 2.8vw, 2.35rem);
+  box-shadow: 0 16px 32px rgb(12 52 91 / .16), inset 0 1px rgb(255 255 255 / .13);
+}
+.app .daily-plan__header::after {
+  right: 0;
+  top: -40%;
+  width: min(40%, 24rem);
+}
+.app .daily-plan__header h2 {
+  font-weight: 820;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+}
+.app .daily-plan__score {
+  padding: 1rem 1.25rem;
+  min-width: 9rem;
+  box-shadow: inset 0 1px rgb(238 251 255 / .18), 0 8px 24px rgb(4 27 58 / .16);
+}
+.app .daily-plan__score strong {
+  font-size: clamp(3rem, 5vw, 4.5rem);
+}
+.app .daily-plan__decision {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: clamp(1.1rem, 2vw, 1.5rem);
+  background: linear-gradient(128deg, #e3f2ff, #f7fbff);
+}
+.app .daily-plan__decision::after {
+  content: '';
+  position: absolute;
+  width: 7rem;
+  aspect-ratio: 1;
+  right: 0;
+  top: -4rem;
+  border: 1px solid #abcef2;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.app .daily-plan__decision > * { position: relative; z-index: 1; }
+.app[data-color-mode='dark'] .daily-plan__decision {
+  background: linear-gradient(125deg, #123552, #1a405a);
+  border-color: #487fa5;
+  border-left-color: #55c6df;
+}
+.app[data-color-mode='dark'] .daily-plan__decision > span,
+.app[data-color-mode='dark'] .daily-plan__decision small { color: #c3daed; }
+.app[data-color-mode='dark'] .daily-plan__decision strong { color: #effaff; }
+.app .daily-plan__quick > div,
+.app .daily-plan__quick > div + div {
+  background: var(--timeline-card);
+  border-color: var(--timeline-line);
+  border-radius: 17px;
+  min-width: 0;
+  box-shadow: 0 5px 15px rgb(29 75 118 / .045);
+}
+.app .daily-plan__quick strong { color: var(--timeline-ink); }
+.app .daily-plan__quick span { color: var(--timeline-muted); }
+.app .daily-plan__slots {
+  gap: clamp(.6rem, 1vw, .9rem);
+  padding: .55rem .25rem 1.2rem;
+  scroll-padding-inline: .25rem;
+  scroll-snap-type: x proximity;
+  grid-auto-columns: minmax(9rem, 1fr);
+}
+.app .daily-plan__slot,
+.app .daily-plan__slot + .daily-plan__slot {
+  --slot-accent: #278ac3;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  align-content: start;
+  min-width: 0;
+  min-height: 12.75rem;
+  gap: .75rem;
+  padding: 1.1rem 1rem 1.3rem;
+  border: 1px solid var(--timeline-line);
+  border-top: 5px solid var(--slot-accent);
+  border-radius: 19px;
+  background: linear-gradient(150deg, var(--timeline-card), var(--timeline-tint));
+  color: var(--timeline-ink);
+  box-shadow: 0 9px 22px rgb(22 68 113 / .09), inset 0 1px rgb(255 255 255 / .45);
+}
+.app .daily-plan__slot--excellent { --slot-accent: #109b89; }
+.app .daily-plan__slot--good { --slot-accent: #278ac3; }
+.app .daily-plan__slot--caution { --slot-accent: #c18a28; }
+.app .daily-plan__slot--difficult { --slot-accent: #d35a58; }
+.app .daily-plan__slot::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto auto;
+  z-index: -1;
+  width: 5.2rem;
+  height: 5.2rem;
+  border-radius: 0 0 0 100%;
+  background: color-mix(in srgb, var(--slot-accent) 8%, transparent);
+  pointer-events: none;
+}
+.app .daily-plan__slot::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--hour-score, 0%);
+  height: 5px;
+  background: var(--slot-accent);
+  border-radius: 0 999px 999px 0;
+  pointer-events: none;
+}
+.app .daily-plan__slot.is-best-window {
+  border-color: color-mix(in srgb, var(--slot-accent) 75%, var(--timeline-line));
+  border-top-width: 5px;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--slot-accent) 13%, var(--timeline-card)),
+    var(--timeline-card));
+  box-shadow: 0 12px 28px rgb(9 115 142 / .15), inset 0 0 0 1px color-mix(in srgb, var(--slot-accent) 21%, transparent);
+}
+.app .daily-plan__slot.is-best-window > strong { color: color-mix(in srgb, var(--slot-accent) 75%, var(--timeline-ink)); }
+.app .daily-plan__slot.is-day-boundary {
+  border-left: 3px solid #4789cb;
+  box-shadow: inset 2px 0 0 rgb(67 137 195 / .16), 0 9px 22px rgb(22 68 113 / .08);
+}
+.app .daily-plan__slot time {
+  display: grid;
+  gap: .2rem;
+  align-content: start;
+  min-height: 2.5rem;
+  font-size: .84rem;
+  font-weight: 750;
+  color: var(--timeline-muted);
+  font-variant-numeric: tabular-nums;
+}
+.app .daily-plan__slot-day {
+  font-size: .72rem;
+  color: var(--slot-accent);
+  letter-spacing: .07em;
+}
+.app .daily-plan__slot > strong {
+  font-size: clamp(2.15rem, 2.75vw, 2.75rem);
+  font-weight: 830;
+  letter-spacing: -.085em;
+  line-height: 1;
+  color: var(--timeline-ink);
+  font-variant-numeric: tabular-nums;
+}
+.app .daily-plan__slot em {
+  font-size: .77rem;
+  color: var(--timeline-muted);
+  line-height: 1.4;
+}
+.app .daily-plan__slot small {
+  align-self: end;
+  font-weight: 690;
+  color: var(--timeline-muted);
+  font-size: .85rem;
+  overflow-wrap: anywhere;
+}
+.app .daily-plan__method {
+  border-color: var(--timeline-line);
+  border-radius: 15px;
+}
+.app .daily-plan__method summary { min-height: 48px; }
+@media (max-width: 47.99rem) {
+  .app .daily-plan { padding: .85rem; border-radius: 23px; }
+  .app .daily-plan__header { padding: .75rem; }
+  .app .daily-plan__header h2 { font-size: clamp(1.75rem, 7vw, 2.25rem); }
+  .app .daily-plan__score strong { font-size: 2.3rem; }
+  .app .daily-plan__slots { grid-auto-columns: minmax(8.35rem, 43%); gap: .65rem; padding-bottom: 1rem; }
+  .app .daily-plan__slot,
+  .app .daily-plan__slot + .daily-plan__slot { min-height: 11.5rem; padding: .95rem .8rem 1.2rem; gap: .55rem; }
+  .app .daily-plan__slot > strong { font-size: 2.15rem; }
+  .app .daily-plan__quick > div { padding: .8rem; }
+}
+@media (max-width: 350px) {
+  .app .daily-plan__slots { grid-auto-columns: minmax(7.75rem, 62%); }
+  .app .daily-plan__header h2 { font-size: 1.85rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .daily-plan__slots { scroll-behavior: auto; }
+  .app .daily-plan__slot { transition: none; }
+}
+@media (forced-colors: active) {
+  .app .daily-plan__slot,
+  .app .daily-plan__slot.is-best-window,
+  .app .daily-plan__quick > div {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app .daily-plan__slot::after { background: Highlight; }
+  .app .daily-plan__slot.is-best-window { outline: 2px solid Highlight; outline-offset: -3px; }
+}
+
+/* Content-responsive layout for browser text enlargement.
+   The container threshold is expressed in rem so 200% text creates more
+   readable single-column summaries without penalizing normal 390px phones. */
+.app .daily-plan {
+  container-name: decision-timeline;
+  container-type: inline-size;
+}
+@container decision-timeline (max-width: 19rem) {
+  .app .daily-plan__quick {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .daily-plan__quick > div:last-child {
+    grid-column: auto;
+  }
+  .app .daily-plan__quick > div {
+    min-width: 0;
+  }
+  .app .daily-plan__quick span,
+  .app .daily-plan__quick strong {
+    overflow-wrap: anywhere;
+  }
+  .app .daily-plan__header-actions {
+    display: flex;
+    width: 100%;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    gap: 8px;
+  }
+  .app .daily-plan__share {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding-inline: 4px;
+    font-size: .75rem;
+    white-space: nowrap;
+  }
+  .app .daily-plan__score {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
+    justify-items: end;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+  }
+  .app .daily-plan__score strong {
+    font-size: 1.65rem;
+  }
+  .app .daily-plan__score > span {
+    font-size: .625rem;
+  }
+  .app .daily-plan__score small {
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}

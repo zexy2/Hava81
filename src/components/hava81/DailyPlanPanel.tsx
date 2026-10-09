@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
@@ -310,6 +310,12 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
           const isDayBoundary = Boolean(
             previous && localDateKey(previous.time) !== localDateKey(slot.time)
           );
+          // Highlight the actual recommendation interval; this only affects presentation.
+          const isBestWindow = Boolean(
+            plan.bestWindowRange &&
+              slot.time.getTime() >= plan.bestWindowRange.start.time.getTime() &&
+              slot.time.getTime() <= plan.bestWindowRange.end.time.getTime()
+          );
           const primaryReason = slot.reasons[0];
           const primaryReasonText = primaryReason
             ? t(`hava81.dailyPlan.reasons.${reasonKey[primaryReason]}`)
@@ -330,7 +336,8 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
             .join(', ');
           return (
             <div
-              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}`}
+              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}`}
+              style={{ '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%` } as CSSProperties}
               key={slot.time.toISOString()}
               role="listitem"
               aria-label={slotAriaLabel}

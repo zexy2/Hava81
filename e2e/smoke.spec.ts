@@ -6530,3 +6530,86 @@ test('activity planner editorial cards keep scores readable with 200% text on sm
   expect(geometry.scoreTextFits).toBe(true);
   expect(geometry.inputsFit).toBe(true);
 });
+
+test('editorial Daily Plan timeline preserves the best-hour recommendation and score meter', async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'desktop-1280' && testInfo.project.name !== 'mobile-390',
+    'desktop/mobile editorial decision timeline regression'
+  );
+  await page.unroute('**/api/v1/weather/hourly**');
+  const hour = new Date(fixtureNow);
+  hour.setUTCMinutes(0, 0, 0);
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({
+      json: {
+        ...hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          ...hourlyForecast.hourly[index],
+          time: new Date(hour.getTime() + index * 60 * 60_000).toISOString(),
+          temp: 21 - Math.floor(index / 6),
+          apparentTemperature: 20,
+          humidity: 55,
+          windGust: 5,
+          uvIndex: 0,
+          weatherCode: 1,
+          visibility: 20000,
+        })),
+      },
+    })
+  );
+  await page.goto('/istanbul');
+  const panel = page.locator('.daily-plan');
+  const timeline = panel.locator('.daily-plan__slots');
+  const slots = timeline.locator('.daily-plan__slot');
+  await expect(slots).toHaveCount(12);
+  const scores = (await slots.locator('> strong').allTextContents()).map(Number);
+  const layout = await timeline.evaluate(element => {
+    const cards = Array.from(element.querySelectorAll<HTMLElement>('.daily-plan__slot'));
+    return {
+      overflowX: getComputedStyle(element).overflowX,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      peakCount: cards.filter(card => card.classList.contains('is-best-window')).length,
+      metersMatch: cards.every(card => {
+        const score = Number(card.querySelector('strong')?.textContent);
+        const actual = card.style.getPropertyValue('--hour-score').trim();
+        return Number.isFinite(score) && score >= 0 && score <= 100 && actual === score + '%';
+      }),
+      peakVisible: cards.some(card => {
+        if (!card.classList.contains('is-best-window')) return false;
+        const meter = getComputedStyle(card, '::after');
+        return parseFloat(meter.height) >= 4;
+      }),
+    };
+  });
+  expect(scores).toHaveLength(12);
+  expect(layout.overflowX).toBe('auto');
+  expect(layout.scrollWidth).toBeGreaterThan(layout.clientWidth);
+  expect(layout.metersMatch).toBe(true);
+  expect(layout.peakCount).toBeGreaterThan(0);
+  expect(layout.peakVisible).toBe(true);
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+
+  if (testInfo.project.name === 'mobile-390') {
+    await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
+    const zoom = await panel.evaluate(element => {
+      const cards = Array.from(element.querySelectorAll<HTMLElement>('.daily-plan__quick > div'));
+      const score = element.querySelector<HTMLElement>('.daily-plan__score');
+      return {
+        quickColumns: getComputedStyle(element.querySelector('.daily-plan__quick')!).gridTemplateColumns,
+        quickTop: cards.map(card => card.getBoundingClientRect().top),
+        cardsFit: cards.every(card => card.scrollWidth <= card.clientWidth + 1),
+        scoreFits: Boolean(score && score.scrollWidth <= score.clientWidth + 1),
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+    expect(zoom.quickTop[1]).toBeGreaterThan(zoom.quickTop[0] + 10);
+    expect(zoom.quickTop[2]).toBeGreaterThan(zoom.quickTop[1] + 10);
+    expect(zoom.cardsFit).toBe(true);
+    expect(zoom.scoreFits).toBe(true);
+    expect(zoom.documentWidth).toBeLessThanOrEqual(zoom.viewportWidth);
+  }
+});
