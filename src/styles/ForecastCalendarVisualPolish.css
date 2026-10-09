@@ -1,0 +1,233 @@
+/* Five-day sky-calendar. Visual-only: forecast data and keyboard semantics remain unchanged. */
+.app .hava81-forecast-atlas__days {
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 0 10px;
+  overflow: visible;
+  border: 0;
+  scroll-snap-type: none;
+}
+
+.app .hava81-forecast-atlas__day {
+  position: relative;
+  display: grid;
+  grid-template-areas: 'day' 'symbol' 'description' 'temperatures' 'precipitation';
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 59px minmax(2.7rem, 1fr) auto auto;
+  align-content: stretch;
+  gap: 8px;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 224px;
+  padding: 16px 13px 14px;
+  overflow: hidden;
+  border: 1px solid #c6e2fa;
+  border-radius: 21px;
+  background:
+    radial-gradient(ellipse at 85% 7%, #ffffffed, transparent 52%),
+    linear-gradient(165deg, #e4f4ff, #f5faff 60%, #fff);
+  box-shadow:
+    0 9px 22px #18488312,
+    inset 0 1px 0 #ffffffd9;
+  transition:
+    box-shadow 160ms ease-out,
+    transform 160ms ease-out;
+}
+.app .hava81-forecast-atlas__day::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -55px;
+  right: -75px;
+  width: 160px;
+  height: 160px;
+  border: 1px solid #1976ae21;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 28px #389dce0d,
+    0 0 0 55px #389dce0a;
+  pointer-events: none;
+}
+.app .hava81-forecast-atlas__day:nth-child(2n) {
+  border-color: #b2e5e6;
+  background:
+    radial-gradient(ellipse at 85% 7%, #ffffffed, transparent 52%),
+    linear-gradient(165deg, #d9f4f2, #f0fcfa 64%, #fff);
+}
+.app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-pop.is-signal) {
+  border-color: #c2d2f4;
+  background:
+    radial-gradient(ellipse at 85% 7%, #ffffffe6, transparent 53%),
+    linear-gradient(165deg, #e2e9ff, #f2f5ff 60%, #fff);
+}
+.app .hava81-forecast-atlas__day:first-child,
+.app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+  border-color: #81bef2;
+  background:
+    radial-gradient(ellipse at 85% 7%, #ffffffcc, transparent 50%),
+    linear-gradient(165deg, #ccecff, #e4f5ff 62%, #f4fbff);
+  box-shadow:
+    inset 0 4px 0 #1b84cf,
+    0 10px 24px #156db41f;
+}
+.app .hava81-forecast-atlas__day:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px #164d8e24;
+}
+.app .hava81-forecast-atlas__day-name {
+  grid-area: day;
+  color: #174574;
+  font-size: 0.78rem;
+  font-weight: 790;
+  letter-spacing: 0.025em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.app .hava81-forecast-atlas__day-symbol {
+  grid-area: symbol;
+  display: grid;
+  place-items: center;
+  width: 55px;
+  height: 55px;
+  padding: 10px;
+  border: 1px solid #5292c038;
+  border-radius: 18px;
+  background: #ffffffa6;
+  color: #27658f;
+  box-shadow: 0 5px 14px #17568714;
+}
+.app .hava81-forecast-atlas__description {
+  grid-area: description;
+  align-self: start;
+  color: #345b78;
+  font-size: 0.8rem;
+  font-weight: 550;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.app .hava81-forecast-atlas__day-temperatures {
+  grid-area: temperatures;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 4px;
+  color: #526c82;
+  font-size: 0.91rem;
+  font-weight: 580;
+  line-height: 1.2;
+}
+.app .hava81-forecast-atlas__day-temperatures strong {
+  color: #102f52;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 820;
+  letter-spacing: -0.05em;
+}
+.app .hava81-forecast-atlas__day-pop {
+  grid-area: precipitation;
+  align-self: end;
+  min-height: 1.25rem;
+  color: #4a718f;
+  font-size: 0.75rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.app .hava81-forecast-atlas__day-pop.is-signal {
+  color: #755100;
+}
+
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day {
+  border-color: #2c6380;
+  background: linear-gradient(155deg, #173c56, #102d44 72%, #102b3e);
+  box-shadow: 0 9px 22px #00091d26;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day:nth-child(2n) {
+  border-color: #30777c;
+  background: linear-gradient(155deg, #164e59, #12343f 78%);
+}
+.app[data-color-mode='dark']
+  .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-pop.is-signal) {
+  border-color: #6775a9;
+  background: linear-gradient(155deg, #303f69, #1b294a 78%);
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day:first-child,
+.app[data-color-mode='dark']
+  .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+  border-color: #69b1e2;
+  background: linear-gradient(155deg, #1d668d, #123a60 78%);
+  box-shadow:
+    inset 0 4px 0 #5dd1f2,
+    0 10px 24px #000b3326;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day-name,
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day-temperatures strong {
+  color: #f3fbff;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__description,
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day-pop,
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day-temperatures {
+  color: #d3e6f3;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day-symbol {
+  border-color: #4b839c;
+  background: #dcf4ff1a;
+  color: #d0efff;
+}
+.app[data-color-mode='dark'] .hava81-forecast-atlas__day-pop.is-signal {
+  color: #ffe6a4;
+}
+
+@media (max-width: 47.99rem) {
+  .app .hava81-forecast-atlas__days {
+    gap: 9px;
+  }
+  .app .hava81-forecast-atlas__day {
+    min-height: 211px;
+    padding: 13px 12px 12px;
+  }
+  .app .hava81-forecast-atlas__day:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 22rem) {
+  .app .hava81-forecast-atlas__days {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app .hava81-forecast-atlas__day {
+    grid-template-areas: 'symbol day temperatures' 'symbol description description' 'precipitation precipitation precipitation';
+    grid-template-columns: 50px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    min-height: 108px;
+    align-content: center;
+    gap: 5px 10px;
+  }
+  .app .hava81-forecast-atlas__day-symbol {
+    width: 49px;
+    height: 49px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .hava81-forecast-atlas__day {
+    transition: none;
+  }
+  .app .hava81-forecast-atlas__day:hover {
+    transform: none;
+  }
+}
+@media (forced-colors: active) {
+  .app .hava81-forecast-atlas__day,
+  .app .hava81-forecast-atlas__day:first-child {
+    border: 2px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+  .app .hava81-forecast-atlas__day::before {
+    display: none;
+  }
+  .app .hava81-forecast-atlas__day-name[aria-current='date'] {
+    color: Highlight;
+  }
+}
