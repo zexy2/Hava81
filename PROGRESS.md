@@ -104,3 +104,27 @@
 - Ardışık Playwright çalıştırmaları: dashboard visual 3/3, 320px/%200 nav 2/2 başarılı; ikinci çalışmadan sonra standart beş ekran görüntüsünün hâlâ mevcut olduğu doğrulandı. Type-check başarılı.
 - Canlı İzmir görsel denetimi 1440, 768, 390 açık/koyu ve 320 için 5/5 başarılı; yatay overflow, sayfa JS hatası ve hero/forecast örtüşmesi 0. Bu canlı kanıtlar `test-results/hava81-04-live/validated/` altına yeniden oluşturulmalıdır (önceki Playwright temizliği bu ilk kopyayı kaldırdı).
 - Yeni HEAD'in CI/CD ve CodeQL başarı sonucu doğrulanmadan PR merge edilmeyecek.
+
+## [Hava81 #04] Otonom Geliştirme — gradyan kontrast regresyonu
+
+### 🎯 Tamamlanan Geliştirmeler
+- Kirli ve belgelendirme amaçlı eski worktree'lere dokunmadan güncel `origin/main` (`fe7fc2b3`) üzerinden `test/hava81-04-contrast-regression-20261009` izole dalı açıldı.
+- `e2e/mobile-dock-contrast.spec.ts` eklendi: 320px/%200 İngilizce açık/koyu mobil nav butonlarının 44px hedef ölçülerini, etiketlerin sınırlar içine sığmasını ve mobil dock gradyan temel duraklarına karşı metin renginin kontrastını (`>=4.5:1`) kontrol ediyor. Bu yalnızca temel durak doğrulamasıdır; saydam radial overlay ve her gerçek piksel için WCAG sertifikası değildir.
+- İlk tarayıcı testinde yerel API 127.0.0.1:4000 çalışmadığı için forecast yüklenmedi; deterministik mock hava API verileri eklenerek izole regresyon tekrarlandı: **1/1 PASS**.
+- `npm run type-check`, `npm run lint`, `npm run build` başarılı.
+
+### 📸 Görsel Kanıtlar
+- Yeni test Playwright artifact altında `dock-contrast-320-zoom200-light.png` ve `dock-contrast-320-zoom200-dark.png` üretiyor (`test-results/playwright-runs/`).
+- Loaded ekran yakalama öncesi `.hava81-forecast-atlas` görünür ve `.atlas-forecast-loading--card` sayısı sıfır.
+- Önceki canlı 320/%200 kanıtları `test-results/hava81-04-pixel-contrast/` altında korunuyor.
+
+### 🚀 Sıradaki Adım
+- Testi GitHub PR'a taşımadan önce dinamik CSS gradyan duraklarını okuyacak biçimde sertleştir; renk değerlerinin gelecekte değişmesinde sabit durak varsayımı yanlış negatif doğurmamalı. Yeni HEAD CI/CD+CodeQL başarıyla sonuçlanmadan merge yapma.
+
+### [Hava81 #04] Dinamik gradient durak regresyonu
+- `e2e/mobile-dock-contrast.spec.ts` sabit hex durakları yerine `getComputedStyle` ile tarayıcının hesapladığı buton/dock gradientinden opak rgb renk duraklarını çıkarıyor.
+- En az iki durak olması aranıyor ve bütün çıkarılabilen opak duraklara karşı min kontrast 4.5:1 kontrol ediliyor. Transparent radial overlay ve gerçek piksel kompoziti bu testin dışında; bilinçli kapsam sınırı.
+- 320px/%200 İngilizce açık/koyu, mock weather response, loaded `.hava81-forecast-atlas` ve sıfır skeleton: Playwright **1/1**, TypeScript, ESLint başarılı.
+
+### 🚀 Sıradaki Adım
+- Bağımsız dalı GitHub'a gönderip PR aç; zorunlu `[self-hosted, linux]` CI/CD ile CodeQL başarılı olmadan merge etme. Opak olmayan gradientlerin yanlış yeşil sonuç vermesini önlemek için ayrı negatif fixture testi eklemeyi değerlendir.
