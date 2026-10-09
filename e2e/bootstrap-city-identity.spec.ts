@@ -54,6 +54,10 @@ test('localized cached city identity suppresses the static bootstrap request', a
   });
 
   await page.goto('/istanbul');
-  await expect(page.getByRole('heading', { name: 'Istanbul', level: 1 })).toBeVisible();
+  // Display the canonical Turkish province label even with English provider data.
+  // The decorative location dot is included in the heading's accessible name.
+  const cityHeading = page.getByRole('heading', { name: /İstanbul$/, level: 1 });
+  await expect(cityHeading).toBeVisible();
+  await expect(cityHeading).toContainText('İstanbul');
   expect(currentRequests).toBe(0);
 });
