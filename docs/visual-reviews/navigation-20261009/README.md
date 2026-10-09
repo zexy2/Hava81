@@ -44,6 +44,7 @@ Playwright çekimini yenilemek için `node scripts/capture-navigation-visual.mjs
 - **Playwright ekran/tema taraması:** **10 / 10** (önce + sonra), HTTP 200, öneriler görünür, JavaScript hatası ve yatay taşma yok.
 - **Playwright erişilebilirlik:** şehir önerileri, kısa masaüstü ve yatay telefon, %200 metin büyütme, ayarlar düğmesinin erişilebilirliği, zorlanmış kontrast, odak ve mobil aksiyonlar.
 - **Git diff --check:** Başarılı.
+- **GitHub ilk Browser flows taramasında bulunan 2 stil regresyonu:** 768 px tablette arama genişliği düzeltildi; yeni koyu tema düğmesinin beyaz metni için görsel E2E beklentisi güncellendi. Üç ilgili test yerelde geçti. Tablet karşılaştırma görselleri düzeltme sonrası yeniden çekildi.
 - **GitHub CI/CD ve CodeQL:** PR açıldıktan sonra doğrulanacak. **Tamamı başarılı olmadan squash merge veya dağıtım yapılmayacak.**
 
 **Koruma:** `/home/ubuntu/Hava81-latest` içindeki üç commit edilmemiş dosya silinmedi, değiştirilmedi veya resetlenmedi. Geliştirme ayrı worktree'de yapıldı.

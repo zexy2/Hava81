@@ -234,7 +234,7 @@
    submit button next to the brand + quick actions. Place the whole search
    on its own short row, keeping it to a readable 360px and leaving quick
    actions fully clickable in row one. Normal-size desktops are untouched. */
-@media (min-width: 48rem) {
+@media (min-width: 64rem) {
   @container (max-width: 48em) {
     .app .atlas-header__inner {
       grid-template-columns: auto minmax(0, 1fr);
@@ -310,5 +310,13 @@
   .app .search-bar__submit { min-height: 46px; height: 48px; }
   .app .search-bar__suggestions {
     max-height: min(124px, calc(100dvh - 184px));
+  }
+}
+
+/* At 768–1023px the two-row tablet header must use the *full* search row.
+   Override the older 300px tablet cap, not only the new enlarged-text rule. */
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .app .atlas-header__search {
+    max-width: none;
   }
 }

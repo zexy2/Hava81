@@ -4102,7 +4102,7 @@ test('theme choice keeps browser chrome color in sync', async ({ page }, testInf
   expect(actionColors).toEqual({
     paper: '#15373c',
     aegean: '#78bac0',
-    searchColor: 'rgb(23, 51, 66)',
+    searchColor: 'rgb(255, 255, 255)',
   });
 });
 
