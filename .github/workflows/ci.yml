@@ -220,7 +220,22 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v7
+      # Docker Hub may transiently return 5xx while exchanging OAuth tokens.
+      # The primary attempt is non-blocking ONLY because a mandatory retry follows.
+      - name: Build and publish Docker image (first attempt)
+        id: docker_build_first
+        uses: docker/build-push-action@v7
+        continue-on-error: true
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Retry Docker image build after registry error
+        if: steps.docker_build_first.outcome == 'failure'
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
