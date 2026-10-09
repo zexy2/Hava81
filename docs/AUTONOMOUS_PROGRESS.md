@@ -3495,3 +3495,17 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Published PR #1215: head `7eedfb6c51ad2078554a6bbf7b0ee26f24f6250`, branch `automation/hava81-fastify-security-1040`, exactly 2 changed files / 5 additions / 5 deletions. Superseded Dependabot PR #1170 remains untouched until replacement gates are green.
 - PR #1215 hosted workflow lookup is currently empty immediately after publication; continue polling directly rather than treating this as failure.
 - Exact next action: poll #1215 CI/CodeQL; when all gates are green, fresh-read SentinelX immediately before merge. After merge, observe main pipeline and production, then reassess API deployment pending state and continue an independent queue.
+
+## 2026-10-09 08:55 TRT — guarded cleanup of stale Hava81 test dependencies
+
+- Operational issue: [#1072](https://github.com/zexy2/Hava81/issues/1072). Root `/dev/sda1` was 45 GiB total, 768 MiB free (99% used) on 2026-10-09. GitHub main at start: `011a13f6c712d86523c9c4780a41661188538e04`. Original `/home/ubuntu/Hava81-latest` had three pre-existing uncommitted files; it was **not** modified.
+- Read-only inventory attributed usage to `/home` (~20.5 GiB), `/var` (~12.2 GiB), `/tmp` (~6.2 GiB). The desktop-commander service-private temp (~3.6 GiB), snap-private temp (~1.4 GiB), `/home/ubuntu/.hermes` (~7.8 GiB), and active Docker assets were explicitly **excluded**. Docker reported 11 active containers and virtually no reclaimable image data.
+- Exactly three **generated, untracked** dependency directories were removed, 398 MiB each (~1,194 MiB total):
+  - `/tmp/hava81-a11y-verify/node_modules`
+  - `/tmp/hava81-a11y-fix2/node_modules`
+  - `/tmp/hava81-a11y-check/node_modules`
+- Before each removal, checks required the exact checkout path, `chatgpt` ownership of checkout and real (non-symlink) `node_modules`, package manifest + lockfile present, age over 7 days, zero Git-tracked `node_modules` files, and no process references. No other paths were removed.
+- **Recoverability:** Source trees, Git metadata, manifests, test results, and the untracked `/tmp/hava81-a11y-fix2/pw-reuse.config.mjs` were retained. To reconstruct a removed dependency folder, run `npm ci` in that specific temporary checkout. No source or user-data rollback was needed.
+- Post-cleanup `df -h /`: 45 GiB total, 44 GiB used, **2.0 GiB available (96% used)**. Saved approximately 1.2 GiB. The 05:52 UTC observer snapshot still reported pre-cleanup 768 MiB: wait for the five-minute collector to refresh rather than treating this as current.
+- **Fail-closed:** Deployment floor is not yet satisfied. Latest observer reported `api_build_headroom_ok=false`, `api_deployment.pending=true` for `apps/api/package-lock.json` runtime drift; production remained healthy on preferred port 4002. Port 4001 rollback, Nginx, containers, and API deployment state were not touched. Do **not** attempt a blue/green API deployment until the fresh observer reports headroom and all deployment safety gates pass.
+- Next owner-reviewed action: identify additional Hava81-owned, reproducible data if more free space is needed; never blindly prune Docker or delete a private service directory, other projects, browser profiles, or an active/dirty worktree.
