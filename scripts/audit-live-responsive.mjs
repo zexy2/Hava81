@@ -28,7 +28,7 @@ function parseOptions(args) {
       if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
       if (flag === '--base-url') options.baseUrl = value;
       if (flag === '--output') options.output = value;
-      if (flag === '--cities') options.cities = value.split(',').map(v => v.trim()).filter(Boolean);
+      if (flag === '--cities') options.cities = value.split(',').map(v => v.trim());
       if (flag === '--languages') options.languages = value.split(',').map(v => v.trim()).filter(Boolean);
       if (flag === '--themes') options.themes = value.split(',').map(v => v.trim()).filter(Boolean);
     } else if (flag === '--help') {
@@ -39,7 +39,9 @@ function parseOptions(args) {
   const url = new URL(options.baseUrl);
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Base URL must be HTTP(S)');
   options.baseUrl = url.origin;
-  if (options.cities.some(v => !/^[a-z-]+$/.test(v))) throw new Error('Cities must be URL-safe slugs');
+  if (!options.cities.length || options.cities.some(v => !/^[a-z]+(?:-[a-z]+)*$/.test(v))) {
+    throw new Error('Cities must be a non-empty, comma-separated list of URL-safe slugs');
+  }
   if (!options.languages.length || options.languages.some(v => !['tr', 'en'].includes(v))) {
     throw new Error('Languages must be one or more of: tr,en');
   }
