@@ -57,7 +57,13 @@ try{
    await page.addStyleTag({content: '.atlas-dashboard > .activity-planner, .atlas-dashboard > .context-signals, .atlas-dashboard > .decision-alerts, .atlas-dashboard > .commute-plan, .atlas-dashboard > .route-weather { content-visibility: visible !important; }'});
    const snapshot=await page.evaluate(()=>{
       const b=(sel)=>{const e=document.querySelector(sel);if(!e)return null;const r=e.getBoundingClientRect();return {x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}};
-      return {title:document.title, bodyWidth:document.documentElement.scrollWidth, viewportWidth:innerWidth, scrollHeight:document.documentElement.scrollHeight, city:b('.hava81-decision-field__city'), hero:b('.hava81-decision-field'), forecast:b('.hava81-forecast-atlas'), appMode:document.querySelector('.app')?.getAttribute('data-color-mode'), mainHeadings:[...document.querySelectorAll('h1,h2')].slice(0,16).map(n=>n.textContent.trim().slice(0,95))};
+      const hero = b('.hava81-decision-field');
+      const forecast = b('.hava81-forecast-atlas');
+      const overlap = hero && forecast
+        ? Math.max(0, Math.min(hero.x + hero.w, forecast.x + forecast.w) - Math.max(hero.x, forecast.x)) *
+          Math.max(0, Math.min(hero.y + hero.h, forecast.y + forecast.h) - Math.max(hero.y, forecast.y))
+        : null;
+      return {title:document.title, bodyWidth:document.documentElement.scrollWidth, viewportWidth:innerWidth, scrollHeight:document.documentElement.scrollHeight, city:b('.hava81-decision-field__city'), hero, forecast, heroForecastOverlap:overlap, appMode:document.querySelector('.app')?.getAttribute('data-color-mode'), mainHeadings:[...document.querySelectorAll('h1,h2')].slice(0,16).map(n=>n.textContent.trim().slice(0,95))};
    });
    const file=path.join(dest,v.name+'.png');
    await page.screenshot({path:file,fullPage:true,animations:'disabled',timeout:25000});
@@ -71,7 +77,8 @@ await fs.writeFile(path.join(dest,'report.json'),JSON.stringify(reports,null,2))
 
 const failures = reports.filter(item =>
   item.error || item.errors?.length || item.httpStatus !== 200 ||
-  !item.city || !item.forecast || item.bodyWidth > item.viewportWidth + 1
+  !item.city || !item.forecast || item.bodyWidth > item.viewportWidth + 1 ||
+  item.heroForecastOverlap === null || item.heroForecastOverlap > 1
 );
 console.log(`Visual audit: ${reports.length - failures.length}/${reports.length} viewport states passed`);
 if (failures.length) process.exitCode = 1;

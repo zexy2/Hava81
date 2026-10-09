@@ -66,3 +66,11 @@
 - `scripts/check-live-build.mjs` canlı HTML ile yerel dist başlangıç asset'lerini read-only karşılaştırıyor; fark varsa exit 1 döndürüyor. Bilerek zorunlu CI gate yapılmadı: dış dağıtım ve build ortamları farklı olabilir.
 - `scripts/test-check-live-build.mjs` 2/2 geçti. Yeni diagnostic canlı sitede beklenen drift'i raporlayıp exit 1 döndürdü. `npm run lint`, `npm run type-check` başarılı.
 - Sonraki adım: GitHub Pages deploy durumunu ve live sürüm eşlemesini araştır; deploy işlemi yapmadan önce neden eski hash sunulduğunu belirle. Yeni kod için CI/CD + CodeQL doğrulaması olmadan merge yapma.
+
+## [Hava81 #03] Gerçek mobil/masaüstü görsel denetim
+- Yeni temiz worktree `/home/ubuntu/Hava81-03-mobile-visual-20261009`, dal `feat/hava81-03-mobile-visual-20261009`, başlangıç `origin/main` `4a413778`.
+- Gerçek yayımlanmış İzmir sayfası Playwright ile masaüstü 1440, tablet 768, mobil 390 light/dark ve 320 px olarak tam sayfa yakalandı: **5/5 başarılı**. Görseller `test-results/hava81-03-visual/baseline` ve `validated` klasörlerinde; git dışı.
+- Görsel incelemede hero ile forecast kartları arasında belirgin bir yerleşim çakışması görülmedi. Bu önemli koşulun otomatik denetlenmesi için `scripts/capture-visual-audit.mjs` raporuna `heroForecastOverlap` ölçümü ve hata eşiği eklendi.
+- Yeniden çalıştırılan 5/5 görsel denetimde hero/forecast örtüşmesi **0**. CSS değiştirilmedi.
+- TypeScript, ESLint ve production build kontrol edildi.
+- Sonraki görev: istenirse bu audit script korumasını CI/CD ve CodeQL kontrollerinden geçirerek PR ile ekle; canlı sayfa görsellerinde kanıtlanmamış tasarım değişikliği yapma.
