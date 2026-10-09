@@ -385,7 +385,7 @@ export function WeatherDecisionField({
       <header className="hava81-decision-field__identity">
         <div className="hava81-decision-field__city-row">
           <h1 id={headingId} className="hava81-decision-field__city">
-            {weather.cityName}
+            {cityMetadata?.name ?? weather.cityName}
           </h1>
           {cityMetadata ? (
             <span
