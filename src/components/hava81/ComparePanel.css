@@ -201,7 +201,9 @@
   }
 
   .hava81-compare__city {
-    padding-inline: 0;
+    /* The refined cards have their own borders: preserve breathing room for
+       city names, metrics and scores even on 320px phones. */
+    padding-inline: clamp(0.75rem, 3vw, 1rem);
     border-inline-start: 0;
   }
 
