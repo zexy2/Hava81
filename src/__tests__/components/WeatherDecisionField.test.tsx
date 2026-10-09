@@ -75,9 +75,23 @@ describe('WeatherDecisionField daily range', () => {
         />
       </SettingsProvider>
     );
-    expect(screen.getByRole('heading', { name: 'Şanlıurfa Province' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Şanlıurfa' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Plaka kodu 63' })).toBeInTheDocument();
     expect(screen.queryByText('İlçe')).not.toBeInTheDocument();
+  });
+
+  it('keeps unknown provider localities unchanged rather than inventing a province', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, cityName: 'Urla Province' }}
+          hourly={[]}
+        />
+      </SettingsProvider>
+    );
+    expect(screen.getByRole('heading', { name: 'Urla Province' })).toBeInTheDocument();
+    expect(screen.getByText('İlçe')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Plaka kodu 35' })).not.toBeInTheDocument();
   });
 
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {

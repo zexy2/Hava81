@@ -236,7 +236,7 @@ describe('Hava81 app integration', () => {
     renderApp();
 
     expect(
-      await screen.findByRole('heading', { name: 'Şanlıurfa Province', level: 1 })
+      await screen.findByRole('heading', { name: 'Şanlıurfa', level: 1 })
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(window.location.pathname + window.location.search).toBe('/sanliurfa/');
