@@ -17,5 +17,15 @@ const CITY_METADATA_BY_NAME = new Map<string, TurkishCity>(
  * Resolves API city names against the canonical 81-province dataset.
  * Diacritic-free values such as "Istanbul" and "Sanliurfa" are supported.
  */
-export const getCityMetadata = (cityName: string): TurkishCity | undefined =>
-  CITY_METADATA_BY_NAME.get(normalizeCityName(cityName));
+export const getCityMetadata = (cityName: string): TurkishCity | undefined => {
+  const exact = CITY_METADATA_BY_NAME.get(normalizeCityName(cityName));
+  if (exact) return exact;
+
+  // Some English geocoding results explicitly append the administrative
+  // level (e.g. "Şanlıurfa Province"). Match only known provinces, and never
+  // assume an arbitrary district is a province.
+  const provinceName = cityName.trim().replace(/\s+province$/i, '');
+  return provinceName === cityName.trim()
+    ? undefined
+    : CITY_METADATA_BY_NAME.get(normalizeCityName(provinceName));
+};

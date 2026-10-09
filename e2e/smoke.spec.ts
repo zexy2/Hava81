@@ -439,6 +439,59 @@ test('mobile location denial explains the permission failure', async ({ page }, 
   expect(errorLayout.boxShadow).toBe('none');
 });
 
+
+// A failed forecast used to leave the desktop forecast column blank and place
+// its retry message beneath both cards. Keep the error in the forecast slot.
+test('failed forecast keeps a visible aligned dashboard card', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280', 'single desktop forecast fallback geometry check');
+  await page.unroute('**/api/v1/weather/forecast**');
+  await page.unroute('**/api/v1/weather/hourly**');
+  await page.route('**/api/v1/weather/forecast**', route =>
+    route.fulfill({ status: 400, json: { error: 'forecast unavailable' } })
+  );
+  await page.route('**/api/v1/weather/hourly**', route =>
+    route.fulfill({ status: 400, json: { error: 'hourly unavailable' } })
+  );
+  await page.goto('/istanbul/');
+  await expect(page.locator('.hava81-decision-field')).toBeVisible();
+  const fallback = page.locator('.atlas-forecast-error-card');
+  await expect(fallback).toBeVisible();
+  await expect(fallback.getByRole('heading', { name: 'Bugünün ritmi' })).toBeVisible();
+  await expect(fallback.getByRole('status')).toContainText('Yakın tahmin');
+  await expect(fallback.getByRole('button', { name: 'Tekrar dene' })).toHaveCount(0);
+
+  const layout = await fallback.evaluate(element => {
+    const card = element.getBoundingClientRect();
+    const neighbor = document.querySelector('.hava81-decision-field')!.getBoundingClientRect();
+    return {
+      sameRow: Math.abs(card.top - neighbor.top) < 2,
+      adjacent: card.left >= neighbor.right - 2,
+      sizeOK: card.width > 350 && card.height > 320,
+      noPageOverflow: document.documentElement.scrollWidth <= innerWidth,
+    };
+  });
+  expect(layout).toEqual({ sameRow: true, adjacent: true, sizeOK: true, noPageOverflow: true });
+  if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+    await page.screenshot({ path: 'test-results/visual-audit/forecast-failure-desktop.png' });
+  }
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  await expect(fallback).toBeVisible();
+  const mobile = await fallback.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return {
+      withinPage: rect.left >= -1 && rect.right <= innerWidth + 1,
+      readable: element.scrollWidth <= element.clientWidth + 1,
+      noPageOverflow: document.documentElement.scrollWidth <= innerWidth,
+    };
+  });
+  expect(mobile).toEqual({ withinPage: true, readable: true, noPageOverflow: true });
+  if (process.env.HAVA81_VISUAL_AUDIT === '1') {
+    await fallback.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'test-results/visual-audit/forecast-failure-mobile-zoom200.png' });
+  }
+});
+
 test('mobile forecast error message reflows at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile forecast-error text-resize regression');
   // This test covers the visual error state, not retry timing. Use non-retryable
