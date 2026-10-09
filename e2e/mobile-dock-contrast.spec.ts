@@ -45,7 +45,9 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
     await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
     await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
     await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);
-    const result = await page.evaluate(() => {
+    // Evaluator-only negative fixture: production DOM and CSS remain unchanged.
+    for (const degraded of [false, true]) {
+      const result = await page.evaluate((degraded) => {
       const luminance = (value: number) => {
         const channel = value / 255;
         return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
@@ -69,8 +71,9 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
         width: document.documentElement.scrollWidth,
         gradient: dockGradient,
         labels: buttons.map(button => {
-          const foreground = rgb(getComputedStyle(button).color);
           const isActive = button.classList.contains('atlas-bottom-nav__button--active');
+          // Negative fixture mutates only the contrast input; it must not alter production DOM/CSS.
+          const foreground = degraded && !isActive ? [100, 123, 139] : rgb(getComputedStyle(button).color);
           const background = getComputedStyle(button).backgroundImage;
           // Read current rendered gradients rather than stale theme-specific hardcoded colors.
           // Only fully opaque color stops are comparable; radial/translucent overlays remain unmodeled.
@@ -82,7 +85,7 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
           const rect = button.getBoundingClientRect();
           const labelRect = button.querySelector('.atlas-bottom-nav__label')?.getBoundingClientRect();
           return {
-            text: button.textContent?.trim(), active: isActive, background,
+            text: button.textContent?.trim(), active: isActive, background, foregroundCss: getComputedStyle(button).color,
             minBaseStopContrast: foreground && stops.length >= 2 ? Math.min(...stops.map(stop => ratio(foreground, stop))) : 0,
             stopCount: stops.length, hasTranslucentStops,
             targetWidth: rect.width, targetHeight: rect.height,
@@ -91,18 +94,25 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
           };
         }),
       };
-    });
+      }, degraded);
     expect(result).not.toBeNull();
     expect(result!.width).toBeLessThanOrEqual(321);
     expect(result!.gradient).toContain('gradient');
     expect(result!.labels).toHaveLength(3);
     for (const label of result!.labels) {
       expect(label.stopCount).toBeGreaterThanOrEqual(2);
-      expect(label.minBaseStopContrast, `${themeMode} ${label.text} base gradient contrast`).toBeGreaterThanOrEqual(4.5);
+      if (degraded && !label.active) {
+        expect(label.minBaseStopContrast, `${themeMode} ${label.text} should detect bad contrast`).toBeLessThan(4.5);
+      } else {
+        expect(label.minBaseStopContrast, `${themeMode} ${label.text} base gradient contrast`).toBeGreaterThanOrEqual(4.5);
+      }
       expect(label.targetWidth).toBeGreaterThanOrEqual(44);
       expect(label.targetHeight).toBeGreaterThanOrEqual(44);
       expect(label.labelInside).toBe(true);
     }
-    await page.screenshot({ path: testInfo.outputPath(`dock-contrast-320-zoom200-${themeMode}.png`), animations: 'disabled' });
+      if (!degraded) {
+        await page.screenshot({ path: testInfo.outputPath(`dock-contrast-320-zoom200-${themeMode}-baseline.png`), animations: 'disabled' });
+      }
+    }
   }
 });
