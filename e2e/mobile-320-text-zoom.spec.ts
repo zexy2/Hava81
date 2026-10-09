@@ -79,3 +79,29 @@ test('320px navigation remains operable with 200% text in both languages', async
   }
   }
 });
+
+// Transparency preferences must not leave a translucent dock over forecast content.
+test('mobile dock uses an opaque surface when transparency is reduced', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
+  await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
+  await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));
+  await page.route('**/api/v1/weather/air-quality**', route => route.fulfill({ status: 503, json: {} }));
+  await page.route('**/api/v1/weather/context**', route => route.fulfill({ status: 503, json: {} }));
+  await page.goto('/istanbul');
+  await page.addStyleTag({ content: '@media (prefers-reduced-transparency: reduce) {}' });
+  // Chromium's Playwright media API does not expose the nonstandard transparency preference;
+  // CDP allows us to exercise the real CSS media query rather than mocking CSS rules.
+  const client = await page.context().newCDPSession(page);
+  await client.send('Emulation.setEmulatedMedia', { features: [
+    { name: 'prefers-reduced-transparency', value: 'reduce' },
+    { name: 'prefers-color-scheme', value: 'light' },
+  ] });
+  const dock = page.locator('.atlas-bottom-nav');
+  await expect(dock).toBeVisible();
+  await expect.poll(() => dock.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(16, 60, 96)');
+  expect(await dock.evaluate(element => getComputedStyle(element).backdropFilter)).toBe('none');
+  await page.screenshot({ path: testInfo.outputPath('nav-reduced-transparency.png') });
+});
