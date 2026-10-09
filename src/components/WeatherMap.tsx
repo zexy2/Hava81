@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,6 +7,7 @@ import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
+import { shouldFailTileProvider } from '../utils/mapTileHealth';
 import './WeatherMap.css';
 
 interface WeatherMapProps {
@@ -97,8 +98,10 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   const [tilesLoading, setTilesLoading] = useState(true);
   const [tilesFailed, setTilesFailed] = useState(false);
   const [tileAttempt, setTileAttempt] = useState(0);
+  const tileCycleRef = useRef({ successful: 0, failed: 0 });
 
   const retryTiles = () => {
+    tileCycleRef.current = { successful: 0, failed: 0 };
     setTilesFailed(false);
     setTilesLoading(true);
     setFallbackTiles(false);
@@ -183,19 +186,32 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             url={tileUrl}
             eventHandlers={{
               loading: () => {
+                tileCycleRef.current = { successful: 0, failed: 0 };
                 if (!tilesFailed) setTilesLoading(true);
               },
-              load: () => setTilesLoading(false),
+              tileload: () => {
+                tileCycleRef.current.successful += 1;
+              },
               tileerror: () => {
-                if (fallbackTiles) {
-                  // Both independent providers failed: do not keep showing a
-                  // spinner indefinitely or claim the map is still loading.
-                  setTilesFailed(true);
-                  setTilesLoading(false);
-                } else {
-                  setTilesLoading(true);
-                  setFallbackTiles(true);
+                // A single missing raster tile is not a provider outage. Wait
+                // for Leaflet's batch-level load event before deciding fallback.
+                tileCycleRef.current.failed += 1;
+              },
+              load: () => {
+                const { successful, failed } = tileCycleRef.current;
+                if (shouldFailTileProvider(successful, failed)) {
+                  if (fallbackTiles) {
+                    // Both independent providers failed: expose a retryable state.
+                    setTilesFailed(true);
+                    setTilesLoading(false);
+                  } else {
+                    setTilesLoading(true);
+                    setFallbackTiles(true);
+                  }
+                  return;
                 }
+                setTilesFailed(false);
+                setTilesLoading(false);
               },
             }}
             maxZoom={18}

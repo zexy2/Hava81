@@ -1541,3 +1541,10 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+
+## 2026-10-09 — map tile provider failover is batch-aware
+
+- Leaflet's `tileerror` event reports an individual raster tile, not a whole-provider outage. Track successes and failures within each loading cycle and only switch providers after the cycle finishes with at least one failure and zero successful tiles.
+- Apply the same rule to the fallback provider; expose the existing retry state only when the fallback cycle also has errors and no successes. Partial tile loss should not churn the whole map or hide already-rendered tiles.
+- This is map reliability/state clarity only: do not alter weather evidence, provider freshness, forecast/scoring semantics, official-warning attribution, or API behavior.

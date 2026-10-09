@@ -9,4 +9,11 @@ describe('Weather Map semantics', () => {
     expect(source).toContain('<h3 id={mapTitleId} className="weather-map__title">');
     expect(source).toContain('className="weather-map__container" role="region" aria-labelledby={mapTitleId}');
   });
+  
+  it('waits for a completed tile batch before switching providers', () => {
+    expect(source).toContain('tileload: () => {');
+    expect(source).toContain('tileCycleRef.current.successful += 1;');
+    expect(source).toContain('tileCycleRef.current.failed += 1;');
+    expect(source).toContain('shouldFailTileProvider(successful, failed)');
+  });
 });
