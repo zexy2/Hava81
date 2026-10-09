@@ -2232,7 +2232,7 @@ test('forced colors keeps selected activity and settings options distinct', asyn
   expect(settingsState.border).not.toBe(settingsState.otherBorder);
 });
 
-test('desktop environment metrics read as an editorial rail', async ({ page }, testInfo) => {
+test('desktop environment metrics present four vibrant bento cards', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop environment visual regression');
   await page.goto('/istanbul');
 
@@ -2251,20 +2251,20 @@ test('desktop environment metrics read as an editorial rail', async ({ page }, t
       bottom: parseFloat(panel.borderBottomWidth),
       inline: parseFloat(panel.borderLeftWidth),
       overflow: panel.overflow,
-      separatorWidths: moduleStyles.slice(1).map(style => parseFloat(style.borderLeftWidth)),
+      moduleRadius: moduleStyles.map(style => parseFloat(style.borderRadius)),
+      moduleBorders: moduleStyles.map(style => parseFloat(style.borderTopWidth)),
+      distinctSurfaces: new Set(moduleStyles.map(style => style.backgroundImage)).size,
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,
     };
   });
 
-  expect(styles.background).toBe('rgb(255, 255, 255)');
-  expect(parseFloat(styles.radius)).toBeGreaterThanOrEqual(12);
-  expect(styles.shadow).not.toBe('none');
-  expect(styles.top).toBeGreaterThanOrEqual(1);
-  expect(styles.bottom).toBeGreaterThanOrEqual(1);
-  expect(styles.inline).toBeGreaterThanOrEqual(1);
+  expect(styles.background).toBe('rgba(0, 0, 0, 0)');
+  expect(parseFloat(styles.radius)).toBeGreaterThanOrEqual(20);
   expect(styles.overflow).toBe('hidden');
-  expect(styles.separatorWidths.every(width => width === 0)).toBe(true);
+  expect(styles.moduleRadius.every(radius => radius >= 15)).toBe(true);
+  expect(styles.moduleBorders.every(width => width >= 1)).toBe(true);
+  expect(styles.distinctSurfaces).toBeGreaterThanOrEqual(3);
   expect(styles.pageWidth).toBeLessThanOrEqual(styles.viewportWidth);
 });
 
@@ -5886,20 +5886,24 @@ test('environment metric icons never intersect labels, values, or details', asyn
       await page.evaluate(size => { document.documentElement.style.fontSize = size; }, fontSize);
       const layout = await rail.evaluate(element => {
         const modules = Array.from(element.querySelectorAll<HTMLElement>('.environment-rail__module'));
-        const clearance = modules.map(module => {
+        const overlaps = modules.map(module => {
           const icon = module.querySelector('.environment-rail__icon')!.getBoundingClientRect();
           const texts = ['__label', '__value', '__detail'].map(part =>
             module.querySelector(`.environment-rail${part}`)!.getBoundingClientRect());
-          return Math.min(...texts.map(text => text.left - icon.right));
+          return texts.some(text => {
+            const width = Math.min(icon.right, text.right) - Math.max(icon.left, text.left);
+            const height = Math.min(icon.bottom, text.bottom) - Math.max(icon.top, text.top);
+            return width > 0 && height > 0;
+          });
         });
         return {
-          clearance,
+          overlaps,
           height: element.getBoundingClientRect().height,
           horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
         };
       });
-      expect(layout.clearance.length).toBe(4);
-      expect(layout.clearance.every(px => px >= 8), `8px icon/text gutter at ${width}px ${fontSize}`).toBe(true);
+      expect(layout.overlaps.length).toBe(4);
+      expect(layout.overlaps.every(overlap => !overlap), `icons never overlap text at ${width}px ${fontSize}`).toBe(true);
       expect(layout.horizontalOverflow, `no page overflow at ${width}px ${fontSize}`).toBe(false);
       if (width === 320 && fontSize === '100%') {
         expect(layout.height, 'compact single-column 320px metric rail').toBeLessThan(520);
