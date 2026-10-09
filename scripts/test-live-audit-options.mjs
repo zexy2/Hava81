@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
+import { provinceNamesBySlug, provinceCentersBySlug, cityCenterDistanceKm } from './lib/live-audit-city-catalog.mjs';
 
 const auditScript = fileURLToPath(new URL('./audit-live-responsive.mjs', import.meta.url));
 
@@ -62,4 +62,24 @@ test('live audit refuses unknown but syntactically valid cities before browser s
       assert.doesNotMatch(result.stdout, /Starting read-only audit/);
     });
   }
+});
+
+test('all 81 province release checks have canonical and valid center coordinates', () => {
+  assert.equal(provinceCentersBySlug.size, 81);
+  for (const [slug, name] of provinceNamesBySlug) {
+    const center = provinceCentersBySlug.get(slug);
+    assert.ok(center, `Missing center for ${name}`);
+    assert.ok(Number.isFinite(center.lat) && Number.isFinite(center.lon), `Invalid center for ${name}`);
+    assert.equal(cityCenterDistanceKm(slug, center), 0, `Expected zero distance for ${name}`);
+  }
+});
+
+test('release gate rejects another province weather even when it contains valid numeric data', () => {
+  const izmir = provinceCentersBySlug.get('izmir');
+  const istanbul = provinceCentersBySlug.get('istanbul');
+  assert.ok(cityCenterDistanceKm('izmir', istanbul) > 300);
+  assert.ok(cityCenterDistanceKm('izmir', { lat: izmir.lat + 0.12, lon: izmir.lon }) < 100);
+  assert.equal(cityCenterDistanceKm('unknown', izmir), Number.POSITIVE_INFINITY);
+  assert.equal(cityCenterDistanceKm('izmir', { lat: NaN, lon: izmir.lon }), Number.POSITIVE_INFINITY);
+  assert.equal(cityCenterDistanceKm('izmir', { lat: 91, lon: 0 }), Number.POSITIVE_INFINITY);
 });

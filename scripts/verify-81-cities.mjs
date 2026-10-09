@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { provinceNamesBySlug, cityCenterDistanceKm } from './lib/live-audit-city-catalog.mjs';
 
 const baseUrl = (process.env.BASE_URL || 'http://127.0.0.1:4001/api/v1').replace(/\/$/, '');
 const delayMs = Number(process.env.DELAY_MS || 1100);
@@ -8,16 +9,9 @@ const requestTimeoutMs =
     ? requestedTimeoutMs
     : 10000;
 
-const cities = [
-  'Adana','Adıyaman','Afyonkarahisar','Ağrı','Amasya','Ankara','Antalya','Artvin','Aydın','Balıkesir',
-  'Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır',
-  'Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkari','Hatay',
-  'Isparta','Mersin','İstanbul','İzmir','Kars','Kastamonu','Kayseri','Kırklareli','Kırşehir','Kocaeli',
-  'Konya','Kütahya','Malatya','Manisa','Kahramanmaraş','Mardin','Muğla','Muş','Nevşehir','Niğde','Ordu',
-  'Rize','Sakarya','Samsun','Siirt','Sinop','Sivas','Tekirdağ','Tokat','Trabzon','Tunceli','Şanlıurfa',
-  'Uşak','Van','Yozgat','Zonguldak','Aksaray','Bayburt','Karaman','Kırıkkale','Batman','Şırnak','Bartın',
-  'Ardahan','Iğdır','Yalova','Karabük','Kilis','Osmaniye','Düzce'
-];
+// The live UI audit and API release gate must use the same 81 canonical provinces.
+const cities = [...provinceNamesBySlug.entries()];
+const MAX_PROVINCE_DISTANCE_KM = 100;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const finite = value => typeof value === 'number' && Number.isFinite(value);
@@ -50,7 +44,7 @@ let currentOk = 0;
 let forecastOk = 0;
 const startedAt = Date.now();
 
-for (const [index, city] of cities.entries()) {
+for (const [index, [provinceSlug, city]] of cities.entries()) {
   process.stdout.write(`[${String(index + 1).padStart(2, '0')}/81] ${city} ... `);
   try {
     const current = await getJson(`${baseUrl}/weather/current?city=${encodeURIComponent(city)}&lang=tr`);
@@ -58,6 +52,13 @@ for (const [index, city] of cities.entries()) {
     if (!finite(current.temperature)) throw new Error('current.temperature invalid');
     if (!validDate(current.timestamp)) throw new Error('current.timestamp invalid');
     if (!finite(current.coordinates?.lat) || !finite(current.coordinates?.lon)) throw new Error('coordinates invalid');
+    // A valid temperature is insufficient if a provider accidentally returns
+    // another city's weather. Allow generous geocoding variation within a
+    // province, but reject obviously mismatched coordinates.
+    const distanceKm = cityCenterDistanceKm(provinceSlug, current.coordinates);
+    if (distanceKm > MAX_PROVINCE_DISTANCE_KM) {
+      throw new Error(`current coordinates are ${distanceKm.toFixed(1)}km from ${city} center (max ${MAX_PROVINCE_DISTANCE_KM}km)`);
+    }
     currentOk += 1;
 
     await sleep(delayMs);
