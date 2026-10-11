@@ -163,3 +163,22 @@
 
 ### 🚀 Sıradaki Adım
 - Değişikliği commit edip GitHub PR oluştur; self-hosted CI/CD ve CodeQL onayı olmadan merge yapma. Özellikle `main` üzerinde gerçekleşen Docker publish denemesini takip et; PR'da bu job koşul nedeniyle skipped kalabilir.
+
+## [Hava81 #121] Otonom Geliştirme — 2026-10-11
+
+### 🎯 Tamamlanan Geliştirmeler
+- Saatlik tahmin özetinde yağış zirvesinin yerel saatini **Bugün/Yarın** ayrımıyla gösteren iki dilli mikro kart eklendi.
+- Yağış sinyali varken amber vurgu ve okunabilir zaman etiketi; yağış yokken ilave etiket gösterilmiyor.
+- Yeni deterministik Playwright testi, veri yüklenmesi/skeleton tamamlandıktan sonra mobil (390×844) ve masaüstü (1280×900) görüntüleri kaydediyor.
+- TypeScript, ESLint ve production build başarılı; hedefli Playwright **2/2 PASS**. Canlı hava sağlayıcısı kullanmadan mock verilerle test edildi.
+
+### 📸 Görsel Kanıtlar
+- `docs/visual-reviews/hourly-rain-peak-20261011/before-mobile-390.png`
+- `docs/visual-reviews/hourly-rain-peak-20261011/after-mobile-390.png`
+- `docs/visual-reviews/hourly-rain-peak-20261011/before-desktop-1280.png`
+- `docs/visual-reviews/hourly-rain-peak-20261011/after-desktop-1280.png`
+- `docs/visual-reviews/hourly-rain-peak-20261011/README.md` — görsel inceleme ve mock veri kapsamı
+
+### 🚀 Sıradaki Adım
+- Feature PR'ı aç, yalnız self-hosted CI/CD ve CodeQL doğrulaması tamamen başarılı olduğunda merge kararı ver.
+- 320px/%200 yakınlaştırma ve İngilizce/karanlık tema yağış özeti için genişletilmiş görsel regresyon incelemesi yap.
