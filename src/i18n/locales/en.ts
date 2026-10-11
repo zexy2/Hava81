@@ -169,6 +169,8 @@ export const en = {
       summaryTemperature: 'Temperature',
       summaryHigh: 'High',
       summaryRain: 'Rain peak',
+      rainPeakToday: 'Today · {{time}}',
+      rainPeakTomorrow: 'Tomorrow · {{time}}',
       precipitationNone: 'None',
       nowLabel: 'Now',
       hourlyForecastNext: 'Hourly forecast · next {{hours}} {{unit}}',

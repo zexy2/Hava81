@@ -170,6 +170,8 @@ export const tr = {
       summaryTemperature: 'Sıcaklık',
       summaryHigh: 'En yüksek',
       summaryRain: 'Yağış piki',
+      rainPeakToday: 'Bugün · {{time}}',
+      rainPeakTomorrow: 'Yarın · {{time}}',
       precipitationNone: 'Yok',
       nowLabel: 'Şimdi',
       hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} saat',
