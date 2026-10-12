@@ -20,13 +20,24 @@ test('rain peak time remains readable on loaded hourly card', async ({page}, tes
   await page.goto('/istanbul');
   await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
   await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);
-  const rain=page.locator('.hava81-forecast-atlas__summary-item.is-precipitation');
-  await expect(rain).toHaveClass(/has-signal/);
+  const rain = page.locator('.hava81-forecast-atlas__summary-item.is-precipitation');
   await rain.scrollIntoViewIfNeeded();
-  const state=process.env.HAVA81_VISUAL_CAPTURE_STATE==='before'?'before':'after';
-  if(state==='after'){
-    await expect(rain.locator('.hava81-forecast-atlas__summary-note')).toBeVisible();
-    await expect(rain.locator('.hava81-forecast-atlas__summary-note')).toContainText(/\d/);
+  const state = process.env.HAVA81_VISUAL_CAPTURE_STATE === 'before' ? 'before' : 'after';
+  const note = rain.locator('.hava81-forecast-atlas__summary-note');
+
+  if (state === 'before') {
+    // Reconstruct the pre-feature surface from the same deterministic mock:
+    // remove only the new highlight modifier and timestamp node before capture.
+    await rain.evaluate((element) => {
+      element.classList.remove('has-signal');
+      element.querySelector('.hava81-forecast-atlas__summary-note')?.remove();
+    });
+    await expect(rain).not.toHaveClass(/has-signal/);
+    await expect(note).toHaveCount(0);
+  } else {
+    await expect(rain).toHaveClass(/has-signal/);
+    await expect(note).toBeVisible();
+    await expect(note).toContainText(/\d/);
   }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(testInfo.project.use.viewport!.width+1);
   const dir=join(process.cwd(),'docs/visual-reviews/hourly-rain-peak-20261011');

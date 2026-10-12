@@ -19,4 +19,5 @@ Each screenshot is captured after `.hava81-forecast-atlas` becomes visible and `
 - `npm run lint` — passed
 - `npm run build` — passed
 - `e2e/hourly-rain-peak.spec.ts` — Playwright mobile and desktop, 2/2 passed
-- Screenshots intentionally include the new timestamp only in the `after-` files.
+- The `before-` capture explicitly removes only the feature-specific `has-signal` highlight modifier and timestamp node from the same deterministic mock page, then asserts both are absent. This is a controlled pre-feature surface reconstruction, not a separately built `main` screenshot; the README states that distinction so the evidence is not misrepresented.
+- The `after-` capture asserts the highlight modifier and visible timestamp are present before saving the image.
