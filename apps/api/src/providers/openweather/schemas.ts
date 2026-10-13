@@ -95,7 +95,7 @@ const forecastItemSchema = z.object({
   clouds: cloudsSchema,
   wind: windSchema,
   visibility: z.number().min(0).max(10_000).optional(),
-  pop: z.number().min(0).max(1).default(0),
+  pop: z.number().min(0).max(1),
   dt_txt: z.string().min(1),
 });
 

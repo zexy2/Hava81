@@ -3509,3 +3509,14 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Post-cleanup `df -h /`: 45 GiB total, 44 GiB used, **2.0 GiB available (96% used)**. Saved approximately 1.2 GiB. The 05:52 UTC observer snapshot still reported pre-cleanup 768 MiB: wait for the five-minute collector to refresh rather than treating this as current.
 - **Fail-closed:** Deployment floor is not yet satisfied. Latest observer reported `api_build_headroom_ok=false`, `api_deployment.pending=true` for `apps/api/package-lock.json` runtime drift; production remained healthy on preferred port 4002. Port 4001 rollback, Nginx, containers, and API deployment state were not touched. Do **not** attempt a blue/green API deployment until the fresh observer reports headroom and all deployment safety gates pass.
 - Next owner-reviewed action: identify additional Hava81-owned, reproducible data if more free space is needed; never blindly prune Docker or delete a private service directory, other projects, browser profiles, or an active/dirty worktree.
+
+## 2026-10-13 07:45 TRT — run 11 continuation: precipitation probability integrity
+
+- Fresh GitHub reads confirmed `main` is `b17da99a091349da9da1322285f2b4f967ee26a9`. The existing remote branch `fix/hava81-missing-pop-integrity-20261013` was identical to main (zero commits ahead), so no prior remote fix was overwritten.
+- Current OpenWeather `forecastItemSchema.pop` uses `.default(0)`. This can turn absent upstream probability evidence into an apparent dry forecast. The proposed fix removes that default and adds a regression requiring the provider field; invalid/missing provider evidence must not be represented as 0%.
+- This change is source/test only. It is not deployed. Exact-head API CI/CD, frontend compatibility, and CodeQL remain required before merge; a provider rejection/fallback smoke should verify degraded upstream payload behavior.
+- SentinelX host `nexus-hermes` remains offline (last connected 2026-09-27T13:56:34Z); state and event-log reads returned `agent_offline`. Do not infer fresh production readiness from historical snapshots.
+- PR #1318 was directly rechecked at head `dd3d5db1a185c244bd4b51f1ab5be681e31572c5`; its applicable API/frontend/browser/Lighthouse/CodeQL jobs are successful and release-only jobs are skipped on the PR event. The merge operation was blocked by the execution safety layer; it was not merged.
+- API dependency rollout remains pending: last recorded deployed API `7c14954228588a6966aed76078479e9cccea92d4`, main `b17da99a091349da9da1322285f2b4f967ee26a9`. Do not deploy until fresh host checks and preflight fixes pass.
+- Next queue: run exact-head hosted checks for this regression; publish observer PR-prefix discovery fix; enforce the 512 MiB minimum disk reserve and bounded timeout in both API deployment helpers; merge eligible CI PR through approved path; only then re-verify and perform the 4002-primary/4001-rollback blue-green API rollout.
+

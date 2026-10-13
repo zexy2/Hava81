@@ -85,3 +85,11 @@ test('forecast schema rejects impossible provider timezone offsets', () => {
     assert.throws(() => forecastUpstreamSchema.parse(payload));
   }
 });
+
+
+test('forecast schema rejects missing provider precipitation probability instead of assuming dry weather', () => {
+  const payload = sample();
+  delete (payload.list[0] as Partial<(typeof payload.list)[number]>).pop;
+
+  assert.throws(() => forecastUpstreamSchema.parse(payload));
+});
