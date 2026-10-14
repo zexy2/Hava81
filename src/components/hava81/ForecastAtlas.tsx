@@ -456,6 +456,17 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     t('hava81.forecastAtlas.precipitationNone')
                   )}
                 </strong>
+                {hasHourlyPrecipitationSignal ? (
+                  <small className="hava81-forecast-atlas__summary-note">
+                    {t(
+                      atLocationTime(hourlySummary.peakPrecipitation.time).toISOString().slice(0, 10) ===
+                        currentLocationDateKey
+                        ? 'hava81.forecastAtlas.rainPeakToday'
+                        : 'hava81.forecastAtlas.rainPeakTomorrow',
+                      { time: timeFormatter.format(atLocationTime(hourlySummary.peakPrecipitation.time)) }
+                    )}
+                  </small>
+                ) : null}
               </div>
             </div>
           ) : null}
