@@ -21,7 +21,7 @@
     "@fastify/swagger-ui": "^6.1.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.12.5",
-    "zod": "^4.6.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
