@@ -1541,3 +1541,10 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+### 2026-10-14 — observer discovers first-party pull requests completely and fails closed
+
+**Decision:** The read-only observer must fetch open pull requests in bounded pages of 100 (maximum five pages), follow GitHub's `Link: rel="next"` pagination signal, and treat a full page without a Link header as potentially incomplete. Retry only transport failures and HTTP 5xx once. Malformed PR/head metadata, malformed workflow-run payloads, and pagination-cap exhaustion must make GitHub state unknown instead of representing it as an empty queue. Recognize the observed first-party branch families `automation/hava81-*`, `automation/api-deploy-guard-*`, `automation/api-deploy-revision-guard-*`, `fix/hava81-*`, `feat/hava81-*`, `test/hava81-*`, and `fix/notification-cta-*`.
+
+**Why:** A first-page-only query and an overly narrow branch-prefix filter hid real open Hava81 PRs while the observer reported `open_prs=0`. That false-empty state also removed their CI/CodeQL status from operational visibility. Bounded pagination and strict payload validation preserve finite observer runtime while failing closed if GitHub's listing cannot be proven complete.
+

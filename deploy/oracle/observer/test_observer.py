@@ -877,7 +877,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
             observer.collect_api_deployment = original_collect_api_deployment
 
         self.assertIn('/actions/runs?per_page=100', requested_urls[1])
-        self.assertEqual(requested_timeouts[0], 6.0)
+        self.assertEqual(requested_timeouts[0], observer.GITHUB_PULLS_TIMEOUT_SECONDS)
         self.assertEqual(requested_timeouts[1], observer.GITHUB_RUNS_TIMEOUT_SECONDS)
         self.assertGreater(requested_timeouts[1], requested_timeouts[0])
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-new')
@@ -1115,6 +1115,376 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['error'], 'HTTP 403')
         self.assertEqual(result['rate_limit_remaining'], '0')
         self.assertTrue(result['signals']['api_deploy_unknown'])
+
+
+
+class ObserverPullRequestDiscoveryTests(unittest.TestCase):
+    def _valid_response(self, payload, headers=None):
+        return {
+            'ok': True,
+            'status': 200,
+            'elapsed_ms': 1,
+            'headers': headers or {},
+            'json': payload,
+            'error': None,
+        }
+
+    def _run_collection(self, fake_http_get):
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True,
+                'pending': False,
+                'error': None,
+            }
+            return observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+    def test_discovers_documented_first_party_branch_families(self) -> None:
+        refs = [
+            'automation/hava81-observer-test',
+            'automation/api-deploy-guard-hardening-20261009-1940',
+            'automation/api-deploy-revision-guard-20261009',
+            'fix/hava81-buildx-setup-timeout-20261009',
+            'feat/hava81-121-rain-peak-20261011',
+            'test/hava81-04-contrast-parser-20261009',
+            'fix/notification-cta-readability-20261009',
+            'feature/unrelated-project',
+            'fix/unrelated-project',
+        ]
+        pulls = [
+            {
+                'number': index + 1,
+                'title': ref,
+                'html_url': f'https://example.test/pr/{index + 1}',
+                'draft': False,
+                'head': {'ref': ref, 'sha': f'{index + 1:040x}'},
+            }
+            for index, ref in enumerate(refs)
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return self._valid_response(pulls)
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertTrue(result['ok'])
+        self.assertEqual(
+            [pr['head_ref'] for pr in result['open_automation_prs']],
+            refs[:7],
+        )
+
+    def test_paginates_until_github_link_header_has_no_next_page(self) -> None:
+        first_page = [
+            {
+                'number': index + 1,
+                'title': f'Unrelated {index + 1}',
+                'head': {'ref': f'feature/unrelated-{index + 1}', 'sha': f'{index + 1:040x}'},
+            }
+            for index in range(observer.GITHUB_PULLS_PAGE_SIZE)
+        ]
+        second_page = [{
+            'number': 1318,
+            'title': 'Buildx setup retry',
+            'html_url': 'https://github.com/zexy2/Hava81/pull/1318',
+            'draft': False,
+            'head': {
+                'ref': 'fix/hava81-buildx-setup-timeout-20261009',
+                'sha': 'd' * 40,
+            },
+        }]
+        requested = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                requested.append(url)
+                if url.endswith('&page=1'):
+                    return self._valid_response(
+                        first_page,
+                        {'link': '<https://api.github.com/repos/zexy2/Hava81/pulls?state=open&per_page=100&page=2>; rel="next"'},
+                    )
+                if url.endswith('&page=2'):
+                    return self._valid_response(second_page)
+                raise AssertionError(f'unexpected page URL: {url}')
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertTrue(result['ok'])
+        self.assertEqual(len(requested), 2)
+        self.assertIn('page=1', requested[0])
+        self.assertIn('page=2', requested[1])
+        self.assertEqual(
+            [pr['head_ref'] for pr in result['open_automation_prs']],
+            ['fix/hava81-buildx-setup-timeout-20261009'],
+        )
+
+    def test_fails_closed_when_pull_request_pagination_limit_is_exhausted(self) -> None:
+        page = [
+            {
+                'number': index + 1,
+                'title': f'PR {index + 1}',
+                'head': {'ref': f'feature/unrelated-{index + 1}', 'sha': f'{index + 1:040x}'},
+            }
+            for index in range(observer.GITHUB_PULLS_PAGE_SIZE)
+        ]
+        requested = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                requested.append(url)
+                return self._valid_response(
+                    page,
+                    {'link': '<https://api.github.com/repos/zexy2/Hava81/pulls?state=open&per_page=100&page=next>; rel="next"'},
+                )
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertFalse(result['ok'])
+        self.assertIn('pagination limit reached', result['error'])
+        self.assertEqual(len(requested), observer.GITHUB_PULLS_MAX_PAGES)
+
+    def test_retries_transient_pull_request_failure_once(self) -> None:
+        requested = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                requested.append(url)
+                if len(requested) == 1:
+                    return {
+                        'ok': False,
+                        'status': 503,
+                        'elapsed_ms': 1,
+                        'headers': {},
+                        'json': None,
+                        'error': 'HTTP 503',
+                    }
+                return self._valid_response([])
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertTrue(result['ok'])
+        self.assertEqual(len(requested), 2)
+
+    def test_fails_closed_on_malformed_pull_or_workflow_payloads(self) -> None:
+        def malformed_pull(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return self._valid_response({'message': 'not a list'})
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        pull_result = self._run_collection(malformed_pull)
+        self.assertFalse(pull_result['ok'])
+        self.assertIn('Malformed GitHub pull-request payload', pull_result['error'])
+
+        def malformed_runs(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return self._valid_response([])
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': {'unexpected': 'object'}})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        run_result = self._run_collection(malformed_runs)
+        self.assertFalse(run_result['ok'])
+        self.assertIn('Malformed GitHub workflow-runs payload', run_result['error'])
+
+
+
+class ObserverPullRequestDiscoveryTests(unittest.TestCase):
+    def _valid_response(self, payload, headers=None):
+        return {
+            'ok': True,
+            'status': 200,
+            'elapsed_ms': 1,
+            'headers': headers or {},
+            'json': payload,
+            'error': None,
+        }
+
+    def _run_collection(self, fake_http_get):
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True,
+                'pending': False,
+                'error': None,
+            }
+            return observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+    def test_discovers_documented_first_party_branch_families(self) -> None:
+        refs = [
+            'automation/hava81-observer-test',
+            'automation/api-deploy-guard-hardening-20261009-1940',
+            'automation/api-deploy-revision-guard-20261009',
+            'fix/hava81-buildx-setup-timeout-20261009',
+            'feat/hava81-121-rain-peak-20261011',
+            'test/hava81-04-contrast-parser-20261009',
+            'fix/notification-cta-readability-20261009',
+            'feature/unrelated-project',
+            'fix/unrelated-project',
+        ]
+        pulls = [
+            {
+                'number': index + 1,
+                'title': ref,
+                'html_url': f'https://example.test/pr/{index + 1}',
+                'draft': False,
+                'head': {'ref': ref, 'sha': f'{index + 1:040x}'},
+            }
+            for index, ref in enumerate(refs)
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return self._valid_response(pulls)
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertTrue(result['ok'])
+        self.assertEqual(
+            [pr['head_ref'] for pr in result['open_automation_prs']],
+            refs[:7],
+        )
+
+    def test_paginates_until_github_link_header_has_no_next_page(self) -> None:
+        first_page = [
+            {
+                'number': index + 1,
+                'title': f'Unrelated {index + 1}',
+                'head': {'ref': f'feature/unrelated-{index + 1}', 'sha': f'{index + 1:040x}'},
+            }
+            for index in range(observer.GITHUB_PULLS_PAGE_SIZE)
+        ]
+        second_page = [{
+            'number': 1318,
+            'title': 'Buildx setup retry',
+            'html_url': 'https://github.com/zexy2/Hava81/pull/1318',
+            'draft': False,
+            'head': {
+                'ref': 'fix/hava81-buildx-setup-timeout-20261009',
+                'sha': 'd' * 40,
+            },
+        }]
+        requested = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                requested.append(url)
+                if url.endswith('&page=1'):
+                    return self._valid_response(
+                        first_page,
+                        {'link': '<https://api.github.com/repos/zexy2/Hava81/pulls?state=open&per_page=100&page=2>; rel="next"'},
+                    )
+                if url.endswith('&page=2'):
+                    return self._valid_response(second_page)
+                raise AssertionError(f'unexpected page URL: {url}')
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertTrue(result['ok'])
+        self.assertEqual(len(requested), 2)
+        self.assertIn('page=1', requested[0])
+        self.assertIn('page=2', requested[1])
+        self.assertEqual(
+            [pr['head_ref'] for pr in result['open_automation_prs']],
+            ['fix/hava81-buildx-setup-timeout-20261009'],
+        )
+
+    def test_fails_closed_when_pull_request_pagination_limit_is_exhausted(self) -> None:
+        page = [
+            {
+                'number': index + 1,
+                'title': f'PR {index + 1}',
+                'head': {'ref': f'feature/unrelated-{index + 1}', 'sha': f'{index + 1:040x}'},
+            }
+            for index in range(observer.GITHUB_PULLS_PAGE_SIZE)
+        ]
+        requested = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                requested.append(url)
+                return self._valid_response(
+                    page,
+                    {'link': '<https://api.github.com/repos/zexy2/Hava81/pulls?state=open&per_page=100&page=next>; rel="next"'},
+                )
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertFalse(result['ok'])
+        self.assertIn('pagination limit reached', result['error'])
+        self.assertEqual(len(requested), observer.GITHUB_PULLS_MAX_PAGES)
+
+    def test_retries_transient_pull_request_failure_once(self) -> None:
+        requested = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                requested.append(url)
+                if len(requested) == 1:
+                    return {
+                        'ok': False,
+                        'status': 503,
+                        'elapsed_ms': 1,
+                        'headers': {},
+                        'json': None,
+                        'error': 'HTTP 503',
+                    }
+                return self._valid_response([])
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        result = self._run_collection(fake_http_get)
+        self.assertTrue(result['ok'])
+        self.assertEqual(len(requested), 2)
+
+    def test_fails_closed_on_malformed_pull_or_workflow_payloads(self) -> None:
+        def malformed_pull(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return self._valid_response({'message': 'not a list'})
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': []})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        pull_result = self._run_collection(malformed_pull)
+        self.assertFalse(pull_result['ok'])
+        self.assertIn('Malformed GitHub pull-request payload', pull_result['error'])
+
+        def malformed_runs(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return self._valid_response([])
+            if '/actions/runs?' in url:
+                return self._valid_response({'workflow_runs': {'unexpected': 'object'}})
+            raise AssertionError(f'unexpected URL: {url}')
+
+        run_result = self._run_collection(malformed_runs)
+        self.assertFalse(run_result['ok'])
+        self.assertIn('Malformed GitHub workflow-runs payload', run_result['error'])
 
 
 class ObserverFrontendDeploymentStateTests(unittest.TestCase):

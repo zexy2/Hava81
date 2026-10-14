@@ -50,6 +50,18 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+GITHUB_PULLS_TIMEOUT_SECONDS = 8.0
+GITHUB_PULLS_PAGE_SIZE = 100
+GITHUB_PULLS_MAX_PAGES = 5
+FIRST_PARTY_PR_BRANCH_PREFIXES = (
+    'automation/hava81-',
+    'automation/api-deploy-guard-',
+    'automation/api-deploy-revision-guard-',
+    'fix/hava81-',
+    'feat/hava81-',
+    'test/hava81-',
+    'fix/notification-cta-',
+)
 API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
@@ -91,6 +103,7 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
                 'headers': {
                     'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
                     'cache-control': response.headers.get('cache-control'),
+                    'link': response.headers.get('link'),
                     'x-ratelimit-remaining': response.headers.get('x-ratelimit-remaining'),
                     'x-ratelimit-reset': response.headers.get('x-ratelimit-reset'),
                 },
@@ -106,6 +119,7 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
             'headers': {
                 'access-control-allow-origin': exc.headers.get('access-control-allow-origin') if exc.headers else None,
                 'cache-control': exc.headers.get('cache-control') if exc.headers else None,
+                'link': exc.headers.get('link') if exc.headers else None,
                 'x-ratelimit-remaining': exc.headers.get('x-ratelimit-remaining') if exc.headers else None,
                 'x-ratelimit-reset': exc.headers.get('x-ratelimit-reset') if exc.headers else None,
             },
@@ -121,6 +135,81 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
             'json': None,
             'error': f'{type(exc).__name__}: {exc}',
         }
+
+
+def fetch_open_pull_requests() -> dict[str, Any]:
+    """Fetch the complete bounded open-PR listing or fail closed.
+
+    GitHub's Link header is the primary continuation signal. A full page without
+    a Link header is treated as potentially truncated too, because proxies and
+    test doubles can omit that header. Never report an incomplete listing as empty.
+    """
+    all_prs: list[dict[str, Any]] = []
+    last_result: dict[str, Any] | None = None
+
+    for page in range(1, GITHUB_PULLS_MAX_PAGES + 1):
+        url = (
+            f'https://api.github.com/repos/{REPO}/pulls?state=open'
+            f'&per_page={GITHUB_PULLS_PAGE_SIZE}&page={page}'
+        )
+        result = http_get(url, timeout=GITHUB_PULLS_TIMEOUT_SECONDS)
+        status = result.get('status')
+        if not result.get('ok') and (
+            status is None or (isinstance(status, int) and 500 <= status < 600)
+        ):
+            result = http_get(url, timeout=GITHUB_PULLS_TIMEOUT_SECONDS)
+
+        if not result.get('ok'):
+            return {**result, 'json': None, 'error': result.get('error') or 'GitHub pull-request lookup failed'}
+
+        payload = result.get('json')
+        if not isinstance(payload, list) or any(not isinstance(pr, dict) for pr in payload):
+            return {
+                **result,
+                'ok': False,
+                'json': None,
+                'error': 'Malformed GitHub pull-request payload',
+            }
+        for pr in payload:
+            head = pr.get('head')
+            if (
+                not isinstance(head, dict)
+                or not isinstance(head.get('ref'), str)
+                or not isinstance(head.get('sha'), str)
+            ):
+                return {
+                    **result,
+                    'ok': False,
+                    'json': None,
+                    'error': 'Malformed GitHub pull-request head metadata',
+                }
+
+        all_prs.extend(payload)
+        last_result = result
+        response_headers = result.get('headers') if isinstance(result.get('headers'), dict) else {}
+        link_header = response_headers.get('link') or response_headers.get('Link') or ''
+        has_next_link = bool(re.search(r'<[^>]+>;\s*rel="?next"?', str(link_header), flags=re.IGNORECASE))
+        possibly_more = has_next_link or len(payload) >= GITHUB_PULLS_PAGE_SIZE
+        if not possibly_more:
+            return {**result, 'ok': True, 'json': all_prs, 'error': None}
+        if page == GITHUB_PULLS_MAX_PAGES:
+            return {
+                **result,
+                'ok': False,
+                'json': None,
+                'error': f'GitHub pull-request pagination limit reached ({GITHUB_PULLS_MAX_PAGES} pages)',
+            }
+
+    return {
+        **(last_result or {}),
+        'ok': False,
+        'json': None,
+        'error': 'GitHub pull-request pagination ended without a complete listing',
+    }
+
+
+def is_first_party_pr_branch(ref: str) -> bool:
+    return any(ref.startswith(prefix) for prefix in FIRST_PARTY_PR_BRANCH_PREFIXES)
 
 
 def expected_api_port() -> int:
@@ -684,7 +773,7 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
 
 
 def collect_github() -> dict[str, Any]:
-    pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
+    pulls_result = fetch_open_pull_requests()
     runs_result = http_get(
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
         timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
@@ -703,9 +792,21 @@ def collect_github() -> dict[str, Any]:
             f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
         )
+    runs_json = runs_result.get('json')
+    if runs_result.get('ok') and (
+        not isinstance(runs_json, dict)
+        or not isinstance(runs_json.get('workflow_runs'), list)
+        or any(not isinstance(run, dict) for run in runs_json.get('workflow_runs', []))
+    ):
+        runs_result = {
+            **runs_result,
+            'ok': False,
+            'json': None,
+            'error': 'Malformed GitHub workflow-runs payload',
+        }
+        runs_json = None
     pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
-    runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
-    runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
+    runs_data = runs_json.get('workflow_runs') if isinstance(runs_json, dict) and isinstance(runs_json.get('workflow_runs'), list) else []
 
     ci_runs_by_sha: dict[str, dict[str, Any]] = {}
     codeql_runs_by_sha: dict[str, dict[str, Any]] = {}
@@ -757,7 +858,7 @@ def collect_github() -> dict[str, Any]:
     for pr in pulls_data:
         head = pr.get('head') if isinstance(pr.get('head'), dict) else {}
         ref = head.get('ref') or ''
-        if not ref.startswith('automation/hava81-'):
+        if not is_first_party_pr_branch(ref):
             continue
         sha = head.get('sha')
         ci_run = ci_runs_by_sha.get(sha, {})
