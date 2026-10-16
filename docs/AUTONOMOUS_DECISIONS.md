@@ -1550,3 +1550,10 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 - Track only explicit Hava81 first-party branch families. Include current product/test/fix namespaces and documented automation/capture/checkpoint namespaces, but do not absorb arbitrary branches or Dependabot work into the autonomous engineering queue.
 - Expose discovery completeness, page count, total open PR count, and an explicit error in observer state/status so operators can distinguish “no first-party PRs” from “the PR queue could not be read completely.”
 - Why: an empty queue is a safety-relevant assertion. Silent truncation or schema drift can hide a green PR or an active failed/running gate, so incomplete discovery must block merge/deploy readiness and must never look like success.
+
+
+### 2026-10-16 — temporary-copy tests are not a substitute for hosted exact-head gates
+
+- When the repository worktree write path is denied, the exact committed branch contents may be copied into a separate temporary validation directory and tested without altering existing worktrees.
+- Passing local tests and syntax checks do not authorize merge or deployment. A PR-creation restriction must be reported honestly; do not switch to an unapproved mechanism to trigger CI or merge.
+- Production smoke should use the application's actual route contract (`/api/v1/health/ready`, `/manifest.json`, and `/sw.js`) rather than interpreting 404s from guessed paths as incidents.
