@@ -1541,3 +1541,12 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+
+## 2026-10-16 — GitHub PR discovery must be bounded, complete, and fail-closed
+
+- Fetch open pull requests in pages of 100 with a strict five-page ceiling. A malformed payload, invalid PR/head shape, duplicate PR number, failed page request, or exhausted page budget makes GitHub state unknown rather than reporting an empty healthy queue.
+- Validate every PR's positive integer number, head branch, and full 40-hex head SHA before using the response for queue decisions.
+- Track only explicit Hava81 first-party branch families. Include current product/test/fix namespaces and documented automation/capture/checkpoint namespaces, but do not absorb arbitrary branches or Dependabot work into the autonomous engineering queue.
+- Expose discovery completeness, page count, total open PR count, and an explicit error in observer state/status so operators can distinguish “no first-party PRs” from “the PR queue could not be read completely.”
+- Why: an empty queue is a safety-relevant assertion. Silent truncation or schema drift can hide a green PR or an active failed/running gate, so incomplete discovery must block merge/deploy readiness and must never look like success.

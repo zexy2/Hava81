@@ -44,6 +44,12 @@ for pr in gh.get('open_automation_prs', []):
     ci = pr.get('ci') or {}
     codeql = pr.get('codeql') or {}
     print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} failed_jobs={ci.get('failed_jobs', [])} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
+print(
+    f"github_pr_discovery: ok={gh.get('ok')} complete={gh.get('pr_discovery_complete')} "
+    f"pages={gh.get('pr_pages_collected')} total_open={gh.get('open_pull_requests_count')} "
+    f"tracked={len(gh.get('open_automation_prs', []))} "
+    f"error={gh.get('pr_discovery_error') or gh.get('error')}"
+)
 main = gh.get('latest_main_run') or {}
 if main:
     print(f"main_ci: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:8]} {main.get('status')}/{main.get('conclusion')}")

@@ -27,6 +27,12 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("disk.get('bytes_to_free_for_ok')", status_script)
         self.assertIn('recovery_mib=', status_script)
 
+    def test_status_script_surfaces_pr_discovery_completeness(self) -> None:
+        status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn('github_pr_discovery:', status_script)
+        self.assertIn("gh.get('pr_discovery_complete')", status_script)
+        self.assertIn("gh.get('pr_discovery_error')", status_script)
+
     def test_status_script_surfaces_codeql_gate_state(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
         self.assertIn("pr.get('codeql')", status_script)

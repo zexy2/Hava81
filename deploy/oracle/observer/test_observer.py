@@ -726,6 +726,152 @@ class ObserverApiRuntimeSnapshotTests(unittest.TestCase):
 
 
 
+class ObserverGithubPullDiscoveryTests(unittest.TestCase):
+    @staticmethod
+    def pr(number, ref, sha=None):
+        return {
+            'number': number,
+            'title': f'PR {number}',
+            'html_url': f'https://github.com/zexy2/Hava81/pull/{number}',
+            'draft': False,
+            'head': {'ref': ref, 'sha': sha or f'{number:040x}'},
+        }
+
+    def collect_with(self, pages, failed_pages=None):
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        requested_urls = []
+        failed_pages = failed_pages or set()
+
+        def fake_http_get(url, *, headers=None, timeout=6.0):
+            requested_urls.append(url)
+            if '/pulls?' in url:
+                page = int(url.split('page=')[-1])
+                if page in failed_pages:
+                    return {
+                        'ok': False, 'status': 503, 'elapsed_ms': 1,
+                        'headers': {}, 'json': None, 'error': 'HTTP 503',
+                    }
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1,
+                    'headers': {'x-ratelimit-remaining': '50'},
+                    'json': pages.get(page, []), 'error': None,
+                }
+            if '/actions/runs?' in url:
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1,
+                    'headers': {'x-ratelimit-remaining': '49'},
+                    'json': {'workflow_runs': []}, 'error': None,
+                }
+            raise AssertionError(f'unexpected URL: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+        return result, requested_urls
+
+    def test_first_party_branch_families_are_explicit(self):
+        for ref in (
+            'automation/hava81-observer-test',
+            'automation/capture-run',
+            'automation/portable-capture-run',
+            'feat/hava81-rain-peak',
+            'test/hava81-dock-contrast',
+            'fix/hava81-provider-copy',
+            'fix/notification-cta-readability-20261009',
+            'docs/autonomous-checkpoint-20261016',
+        ):
+            self.assertTrue(observer.is_first_party_pr_branch(ref), ref)
+        for ref in (
+            'dependabot/npm_and_yarn/react-19',
+            'feature/random-experiment',
+            'fix/unrelated-repo-work',
+            'automation/unapproved-namespace',
+        ):
+            self.assertFalse(observer.is_first_party_pr_branch(ref), ref)
+
+    def test_paginates_and_finds_first_party_prs_after_first_page(self):
+        first = [self.pr(number, f'dependabot/test-{number}') for number in range(1, 101)]
+        second = [
+            self.pr(101, 'feat/hava81-rain-peak'),
+            self.pr(102, 'test/hava81-dock-contrast'),
+            self.pr(103, 'fix/notification-cta-readability-20261009'),
+            self.pr(104, 'automation/capture-smoke'),
+            self.pr(105, 'automation/portable-capture-smoke'),
+            self.pr(106, 'docs/autonomous-checkpoint-20261016'),
+            self.pr(107, 'automation/hava81-observer-test'),
+        ]
+        result, requested_urls = self.collect_with({1: first, 2: second})
+        self.assertTrue(result['ok'])
+        self.assertTrue(result['pr_discovery_complete'])
+        self.assertEqual(result['pr_pages_collected'], 2)
+        self.assertEqual(result['open_pull_requests_count'], 107)
+        self.assertEqual(
+            {pr['number'] for pr in result['open_automation_prs']},
+            {101, 102, 103, 104, 105, 106, 107},
+        )
+        self.assertTrue(any('page=1' in url for url in requested_urls))
+        self.assertTrue(any('page=2' in url for url in requested_urls))
+
+    def test_malformed_success_payload_fails_closed(self):
+        result, _ = self.collect_with({1: {'message': 'not a list'}})
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['pr_discovery_complete'])
+        self.assertIn('must be a JSON array', result['pr_discovery_error'])
+        self.assertEqual(result['open_automation_prs'], [])
+
+    def test_invalid_full_head_sha_fails_closed(self):
+        result, _ = self.collect_with({1: [self.pr(1, 'automation/hava81-test', 'not-a-sha')]})
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['pr_discovery_complete'])
+        self.assertIn('invalid full head SHA', result['pr_discovery_error'])
+
+    def test_duplicate_pr_across_pages_fails_closed(self):
+        first = [self.pr(number, f'dependabot/test-{number}') for number in range(1, 101)]
+        result, requested_urls = self.collect_with({
+            1: first,
+            2: [self.pr(100, 'automation/hava81-duplicate')],
+        })
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['pr_discovery_complete'])
+        self.assertIn('duplicate PR number 100', result['pr_discovery_error'])
+        self.assertTrue(any('page=2' in url for url in requested_urls))
+
+    def test_page_limit_is_bounded_and_incomplete(self):
+        pages = {
+            page: [
+                self.pr(
+                    (page - 1) * observer.GITHUB_PULLS_PAGE_SIZE + index + 1,
+                    f'dependabot/test-{(page - 1) * observer.GITHUB_PULLS_PAGE_SIZE + index + 1}',
+                )
+                for index in range(observer.GITHUB_PULLS_PAGE_SIZE)
+            ]
+            for page in range(1, observer.GITHUB_PULLS_MAX_PAGES + 1)
+        }
+        result, requested_urls = self.collect_with(pages)
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['pr_discovery_complete'])
+        self.assertEqual(result['pr_pages_collected'], observer.GITHUB_PULLS_MAX_PAGES)
+        self.assertIn('safety limit', result['pr_discovery_error'])
+        self.assertEqual(
+            sum('/pulls?' in url for url in requested_urls),
+            observer.GITHUB_PULLS_MAX_PAGES,
+        )
+
+    def test_transport_failure_on_later_page_fails_closed(self):
+        first = [self.pr(number, f'dependabot/test-{number}') for number in range(1, 101)]
+        result, _ = self.collect_with({1: first}, failed_pages={2})
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['pr_discovery_complete'])
+        self.assertIn('page 2 unavailable', result['pr_discovery_error'])
+
+
 class ObserverGithubRunSelectionTests(unittest.TestCase):
     def test_prefers_ci_pipeline_for_pr_and_latest_main_sha(self) -> None:
         original_http_get = observer.http_get
@@ -740,7 +886,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'draft': False,
                 'head': {
                     'ref': 'automation/hava81-observer-test',
-                    'sha': 'pr-sha',
+                    'sha': 'a' * 40,
                 },
             },
             {
@@ -750,7 +896,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'draft': False,
                 'head': {
                     'ref': 'automation/hava81-old-observer-test',
-                    'sha': 'old-pr-sha-outside-window',
+                    'sha': 'b' * 40,
                 },
             },
             {
@@ -760,7 +906,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'draft': False,
                 'head': {
                     'ref': 'automation/hava81-codeql-failure-test',
-                    'sha': 'codeql-failed-pr-sha',
+                    'sha': 'c' * 40,
                 },
             },
         ]
@@ -791,7 +937,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 13,
                 'run_number': 13,
                 'name': 'CodeQL',
-                'head_sha': 'pr-sha',
+                'head_sha': 'a' * 40,
                 'head_branch': 'automation/hava81-observer-test',
                 'event': 'pull_request',
                 'status': 'completed',
@@ -802,7 +948,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 14,
                 'run_number': 14,
                 'name': 'CI/CD Pipeline',
-                'head_sha': 'pr-sha',
+                'head_sha': 'a' * 40,
                 'head_branch': 'automation/hava81-observer-test',
                 'event': 'pull_request',
                 'status': 'in_progress',
@@ -824,7 +970,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 16,
                 'run_number': 16,
                 'name': 'CI/CD Pipeline',
-                'head_sha': 'codeql-failed-pr-sha',
+                'head_sha': 'c' * 40,
                 'head_branch': 'automation/hava81-codeql-failure-test',
                 'event': 'pull_request',
                 'status': 'completed',
@@ -835,7 +981,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 17,
                 'run_number': 17,
                 'name': 'CodeQL',
-                'head_sha': 'codeql-failed-pr-sha',
+                'head_sha': 'c' * 40,
                 'head_branch': 'automation/hava81-codeql-failure-test',
                 'event': 'pull_request',
                 'status': 'completed',
@@ -906,7 +1052,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'draft': False,
                 'head': {
                     'ref': 'automation/hava81-route-helper-test',
-                    'sha': 'failed-pr-sha',
+                    'sha': 'f' * 40,
                 },
             }
         ]
@@ -926,7 +1072,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 42,
                 'run_number': 2167,
                 'name': 'CI/CD Pipeline',
-                'head_sha': 'failed-pr-sha',
+                'head_sha': 'f' * 40,
                 'head_branch': 'automation/hava81-route-helper-test',
                 'event': 'pull_request',
                 'status': 'completed',
@@ -937,7 +1083,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 43,
                 'run_number': 920,
                 'name': 'CodeQL',
-                'head_sha': 'failed-pr-sha',
+                'head_sha': 'f' * 40,
                 'head_branch': 'automation/hava81-route-helper-test',
                 'event': 'pull_request',
                 'status': 'completed',
@@ -994,7 +1140,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'draft': False,
                 'head': {
                     'ref': 'automation/hava81-context-shell-1156',
-                    'sha': 'pr-sha',
+                    'sha': 'a' * 40,
                 },
             }
         ]
@@ -1014,7 +1160,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 22,
                 'run_number': 1586,
                 'name': 'CI/CD Pipeline',
-                'head_sha': 'pr-sha',
+                'head_sha': 'a' * 40,
                 'head_branch': 'automation/hava81-context-shell-1156',
                 'event': 'pull_request',
                 'status': 'completed',
@@ -1025,7 +1171,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'id': 23,
                 'run_number': 1587,
                 'name': 'CodeQL',
-                'head_sha': 'pr-sha',
+                'head_sha': 'a' * 40,
                 'head_branch': 'automation/hava81-context-shell-1156',
                 'event': 'pull_request',
                 'status': 'completed',

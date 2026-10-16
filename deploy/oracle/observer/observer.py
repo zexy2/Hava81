@@ -50,6 +50,18 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+GITHUB_PULLS_PAGE_SIZE = 100
+GITHUB_PULLS_MAX_PAGES = 5
+FIRST_PARTY_PR_BRANCH_PREFIXES = (
+    'automation/hava81-',
+    'automation/capture-',
+    'automation/portable-capture-',
+    'feat/hava81-',
+    'test/hava81-',
+    'fix/hava81-',
+    'fix/notification-cta-readability-',
+    'docs/autonomous-checkpoint-',
+)
 API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
@@ -683,8 +695,78 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
     }
 
 
+def is_first_party_pr_branch(ref: Any) -> bool:
+    return isinstance(ref, str) and any(
+        ref.startswith(prefix) for prefix in FIRST_PARTY_PR_BRANCH_PREFIXES
+    )
+
+
+def collect_open_pull_requests() -> dict[str, Any]:
+    """Read every open PR within a strict budget and fail closed on incomplete data."""
+    pulls: list[dict[str, Any]] = []
+    seen_numbers: set[int] = set()
+    last_headers: dict[str, Any] = {}
+
+    def failed(error: str, page: int) -> dict[str, Any]:
+        return {
+            'ok': False, 'complete': False, 'error': error,
+            'pulls': pulls, 'pages': page, 'headers': last_headers,
+        }
+
+    for page in range(1, GITHUB_PULLS_MAX_PAGES + 1):
+        result = http_get(
+            f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page={GITHUB_PULLS_PAGE_SIZE}&page={page}'
+        )
+        headers = result.get('headers')
+        last_headers = headers if isinstance(headers, dict) else {}
+        if result.get('ok') is not True:
+            detail = result.get('error') or f"HTTP {result.get('status')}"
+            return failed(f'GitHub open PR page {page} unavailable: {detail}', page)
+
+        payload = result.get('json')
+        if not isinstance(payload, list):
+            return failed(f'GitHub open PR page {page} payload must be a JSON array', page)
+        if len(payload) > GITHUB_PULLS_PAGE_SIZE:
+            return failed(f'GitHub open PR page {page} exceeded the requested page size', page)
+
+        for index, pr in enumerate(payload):
+            if not isinstance(pr, dict):
+                return failed(f'GitHub open PR page {page} item {index} must be an object', page)
+            number = pr.get('number')
+            if type(number) is not int or number < 1:
+                return failed(f'GitHub open PR page {page} item {index} has an invalid PR number', page)
+            if number in seen_numbers:
+                return failed(f'GitHub open PR discovery returned duplicate PR number {number}', page)
+            head = pr.get('head')
+            if not isinstance(head, dict):
+                return failed(f'GitHub open PR #{number} has a malformed head object', page)
+            ref = head.get('ref')
+            sha = head.get('sha')
+            if not isinstance(ref, str) or not ref.strip():
+                return failed(f'GitHub open PR #{number} has an invalid head branch', page)
+            if not isinstance(sha, str) or re.fullmatch(r'[0-9a-fA-F]{40}', sha) is None:
+                return failed(f'GitHub open PR #{number} has an invalid full head SHA', page)
+            if pr.get('state') not in (None, 'open'):
+                return failed(f'GitHub open PR #{number} unexpectedly reported a non-open state', page)
+            seen_numbers.add(number)
+            pulls.append(pr)
+
+        if len(payload) < GITHUB_PULLS_PAGE_SIZE:
+            return {
+                'ok': True, 'complete': True, 'error': None,
+                'pulls': pulls, 'pages': page, 'headers': last_headers,
+            }
+
+    return failed(
+        f'GitHub open PR discovery reached the {GITHUB_PULLS_MAX_PAGES}-page safety limit; '
+        'the queue may be truncated',
+        GITHUB_PULLS_MAX_PAGES,
+    )
+
+
 def collect_github() -> dict[str, Any]:
-    pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
+    pulls_state = collect_open_pull_requests()
+    pulls_data = pulls_state['pulls']
     runs_result = http_get(
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
         timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
@@ -703,7 +785,6 @@ def collect_github() -> dict[str, Any]:
             f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
         )
-    pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
 
@@ -719,8 +800,7 @@ def collect_github() -> dict[str, Any]:
             codeql_runs_by_sha[sha] = run
 
     latest_main_candidates = [
-        run
-        for run in runs_data
+        run for run in runs_data
         if run.get('head_branch') == 'main' and run.get('event') in ('push', 'workflow_dispatch')
     ]
     latest_main: dict[str, Any] | None = None
@@ -748,40 +828,30 @@ def collect_github() -> dict[str, Any]:
         jobs = jobs_json.get('jobs') if isinstance(jobs_json.get('jobs'), list) else []
         ignored = {None, 'success', 'skipped', 'neutral'}
         return [
-            str(job.get('name'))
-            for job in jobs
+            str(job.get('name')) for job in jobs
             if job.get('name') and job.get('status') == 'completed' and job.get('conclusion') not in ignored
         ][:8]
 
     automation_prs: list[dict[str, Any]] = []
     for pr in pulls_data:
-        head = pr.get('head') if isinstance(pr.get('head'), dict) else {}
-        ref = head.get('ref') or ''
-        if not ref.startswith('automation/hava81-'):
+        head = pr['head']
+        ref = head['ref']
+        if not is_first_party_pr_branch(ref):
             continue
-        sha = head.get('sha')
+        sha = head['sha']
         ci_run = ci_runs_by_sha.get(sha, {})
         codeql_run = codeql_runs_by_sha.get(sha, {})
         automation_prs.append({
-            'number': pr.get('number'),
-            'title': pr.get('title'),
-            'url': pr.get('html_url'),
-            'head_ref': ref,
-            'head_sha': sha,
-            'draft': pr.get('draft'),
+            'number': pr['number'], 'title': pr.get('title'), 'url': pr.get('html_url'),
+            'head_ref': ref, 'head_sha': sha, 'draft': pr.get('draft'),
             'ci': {
-                'run_id': ci_run.get('id'),
-                'run_number': ci_run.get('run_number'),
-                'status': ci_run.get('status'),
-                'conclusion': ci_run.get('conclusion'),
-                'url': ci_run.get('html_url'),
-                'failed_jobs': failed_ci_job_names(ci_run),
+                'run_id': ci_run.get('id'), 'run_number': ci_run.get('run_number'),
+                'status': ci_run.get('status'), 'conclusion': ci_run.get('conclusion'),
+                'url': ci_run.get('html_url'), 'failed_jobs': failed_ci_job_names(ci_run),
             },
             'codeql': {
-                'run_id': codeql_run.get('id'),
-                'run_number': codeql_run.get('run_number'),
-                'status': codeql_run.get('status'),
-                'conclusion': codeql_run.get('conclusion'),
+                'run_id': codeql_run.get('id'), 'run_number': codeql_run.get('run_number'),
+                'status': codeql_run.get('status'), 'conclusion': codeql_run.get('conclusion'),
                 'url': codeql_run.get('html_url'),
             },
         })
@@ -790,14 +860,10 @@ def collect_github() -> dict[str, Any]:
         if not run:
             return None
         return {
-            'run_id': run.get('id'),
-            'run_number': run.get('run_number'),
-            'head_sha': run.get('head_sha'),
-            'status': run.get('status'),
-            'conclusion': run.get('conclusion'),
-            'url': run.get('html_url'),
-            'created_at': run.get('created_at'),
-            'updated_at': run.get('updated_at'),
+            'run_id': run.get('id'), 'run_number': run.get('run_number'),
+            'head_sha': run.get('head_sha'), 'status': run.get('status'),
+            'conclusion': run.get('conclusion'), 'url': run.get('html_url'),
+            'created_at': run.get('created_at'), 'updated_at': run.get('updated_at'),
         }
 
     pending_statuses = {'queued', 'in_progress', 'waiting', 'pending'}
@@ -823,20 +889,22 @@ def collect_github() -> dict[str, Any]:
     ci_running = [number for number, state in gate_states.items() if state == 'running']
     ci_unknown = [number for number, state in gate_states.items() if state == 'unknown']
     api_deployment = collect_api_deployment(latest_main)
-
-    rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
+    rate_headers = runs_result.get('headers') or pulls_state.get('headers') or {}
+    pulls_error = pulls_state.get('error')
     return {
-        'ok': pulls_result.get('ok') and runs_result.get('ok'),
-        'error': pulls_result.get('error') or runs_result.get('error'),
+        'ok': pulls_state['ok'] and runs_result.get('ok') is True,
+        'error': pulls_error or runs_result.get('error'),
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
+        'pr_discovery_complete': pulls_state['complete'],
+        'pr_discovery_error': pulls_error,
+        'pr_pages_collected': pulls_state['pages'],
+        'open_pull_requests_count': len(pulls_data),
         'open_automation_prs': automation_prs,
         'latest_main_run': slim_run(latest_main),
         'api_deployment': api_deployment,
         'signals': {
-            'ci_green_prs': ci_green,
-            'ci_failed_prs': ci_failed,
-            'ci_running_prs': ci_running,
-            'ci_unknown_prs': ci_unknown,
+            'ci_green_prs': ci_green, 'ci_failed_prs': ci_failed,
+            'ci_running_prs': ci_running, 'ci_unknown_prs': ci_unknown,
             'main_pipeline_pending': bool(latest_main and latest_main.get('status') != 'completed'),
             'api_deploy_pending': api_deployment['pending'],
             'api_deploy_unknown': not api_deployment['known'],
