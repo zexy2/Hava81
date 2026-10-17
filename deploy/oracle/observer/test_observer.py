@@ -864,6 +864,117 @@ class ObserverGithubPullDiscoveryTests(unittest.TestCase):
             observer.GITHUB_PULLS_MAX_PAGES,
         )
 
+    def test_workflow_runs_payload_variants_fail_closed(self):
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        cases = [
+            ([], 'must be a JSON object'),
+            ({}, 'must contain a workflow_runs array'),
+            ({'workflow_runs': {}}, 'must contain a workflow_runs array'),
+            ({'workflow_runs': [None]}, 'item 0 must be an object'),
+            ({'workflow_runs': [{'id': 1, 'name': 'CI/CD Pipeline', 'status': 'completed'}]}, 'invalid head SHA'),
+        ]
+        for payload, expected_error in cases:
+            with self.subTest(payload=payload):
+                def fake_http_get(url, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+                    if '/pulls?' in url:
+                        response_payload = []
+                    elif '/actions/runs?' in url:
+                        response_payload = payload
+                    else:
+                        raise AssertionError(f'unexpected URL: {url}')
+                    return {
+                        'ok': True, 'status': 200, 'elapsed_ms': 1,
+                        'headers': {'x-ratelimit-remaining': '49'},
+                        'json': response_payload, 'error': None,
+                    }
+                try:
+                    observer.http_get = fake_http_get
+                    observer.collect_api_deployment = lambda latest_main: {
+                        'known': True, 'pending': False, 'error': None,
+                    }
+                    result = observer.collect_github()
+                finally:
+                    observer.http_get = original_http_get
+                    observer.collect_api_deployment = original_collect_api_deployment
+                self.assertFalse(result['ok'])
+                self.assertFalse(result['workflow_runs_complete'])
+                self.assertIn(expected_error, result['workflow_runs_error'])
+                self.assertEqual(result['workflow_runs_count'], 0)
+
+    def test_failed_job_detail_lookups_obey_global_budget(self):
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        requested_job_ids = []
+        pulls = []
+        runs = [{
+            'id': 1, 'run_number': 1, 'name': 'CI/CD Pipeline',
+            'head_sha': 'e' * 40, 'head_branch': 'main', 'event': 'push',
+            'status': 'completed', 'conclusion': 'success',
+            'html_url': 'https://example.test/main-ci',
+        }]
+        for number in range(1, 7):
+            sha = f'{number:040x}'
+            pulls.append({
+                'number': number, 'title': f'Failed PR {number}',
+                'html_url': f'https://example.test/pr/{number}', 'draft': False,
+                'head': {'ref': f'automation/hava81-failed-{number}', 'sha': sha},
+            })
+            runs.extend([
+                {
+                    'id': 100 + number, 'run_number': 100 + number,
+                    'name': 'CI/CD Pipeline', 'head_sha': sha,
+                    'head_branch': f'automation/hava81-failed-{number}', 'event': 'pull_request',
+                    'status': 'completed', 'conclusion': 'failure',
+                    'html_url': f'https://example.test/ci/{number}',
+                },
+                {
+                    'id': 200 + number, 'run_number': 200 + number,
+                    'name': 'CodeQL', 'head_sha': sha,
+                    'head_branch': f'automation/hava81-failed-{number}', 'event': 'pull_request',
+                    'status': 'completed', 'conclusion': 'success',
+                    'html_url': f'https://example.test/codeql/{number}',
+                },
+            ])
+        def fake_http_get(url, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                payload = pulls
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            elif '/actions/runs/' in url and '/jobs?' in url:
+                run_id = int(url.split('/actions/runs/')[1].split('/')[0])
+                requested_job_ids.append(run_id)
+                payload = {'jobs': [{
+                    'name': f'failed job for {run_id}',
+                    'status': 'completed', 'conclusion': 'failure',
+                }]}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {
+                'ok': True, 'status': 200, 'elapsed_ms': 1,
+                'headers': {'x-ratelimit-remaining': '49'},
+                'json': payload, 'error': None,
+            }
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+        self.assertEqual(requested_job_ids, [101, 102, 103, 104])
+        self.assertEqual(result['failed_job_details']['lookups'], 4)
+        self.assertEqual(result['failed_job_details']['budget'], 4)
+        self.assertFalse(result['failed_job_details']['complete'])
+        self.assertEqual(result['failed_job_details']['incomplete_run_ids'], [105, 106])
+        self.assertTrue(all(pr['ci']['failed_jobs_complete'] for pr in result['open_automation_prs'][:4]))
+        self.assertTrue(all(
+            pr['ci']['failed_jobs_status'] == 'budget_exhausted'
+            for pr in result['open_automation_prs'][4:]
+        ))
+
     def test_transport_failure_on_later_page_fails_closed(self):
         first = [self.pr(number, f'dependabot/test-{number}') for number in range(1, 101)]
         result, _ = self.collect_with({1: first}, failed_pages={2})
@@ -1313,6 +1424,16 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         result = observer.merge_deploy_readiness(*self.healthy_inputs())
         self.assertTrue(result['ok'])
         self.assertEqual(result['blocking_reasons'], [])
+
+    def test_api_deploy_pending_blocks_deploy_but_not_independent_merge(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        github['signals']['api_deploy_pending'] = True
+        result = observer.merge_deploy_readiness(production, host, github, frontend)
+        self.assertTrue(result['merge_ok'])
+        self.assertEqual(result['merge_blocking_reasons'], [])
+        self.assertFalse(result['deploy_ok'])
+        self.assertEqual(result['deploy_blocking_reasons'], ['api_deploy_pending'])
+        self.assertFalse(result['ok'])
 
     def test_blocks_when_host_disk_is_outside_hard_gate(self) -> None:
         production, host, github, frontend = self.healthy_inputs()

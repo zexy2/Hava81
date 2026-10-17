@@ -17,6 +17,10 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("worker.get('can_merge_or_deploy')", status_script)
         self.assertIn("worker.get('merge_deploy_blocking_reasons', [])", status_script)
         self.assertIn("worker.get('writes_repository')", status_script)
+        self.assertIn('merge_ready:', status_script)
+        self.assertIn("worker.get('can_merge')", status_script)
+        self.assertIn('deploy_ready:', status_script)
+        self.assertIn("worker.get('can_deploy')", status_script)
 
     def test_status_script_surfaces_api_build_disk_headroom(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
@@ -32,12 +36,16 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn('github_pr_discovery:', status_script)
         self.assertIn("gh.get('pr_discovery_complete')", status_script)
         self.assertIn("gh.get('pr_discovery_error')", status_script)
+        self.assertIn('github_workflow_runs:', status_script)
+        self.assertIn("gh.get('workflow_runs_complete')", status_script)
+        self.assertIn("job_details.get('budget')", status_script)
 
     def test_status_script_surfaces_codeql_gate_state(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
         self.assertIn("pr.get('codeql')", status_script)
         self.assertIn("codeql={codeql.get('status')}/{codeql.get('conclusion')}", status_script)
         self.assertIn("failed_jobs={ci.get('failed_jobs', [])}", status_script)
+        self.assertIn("failed_jobs_status={ci.get('failed_jobs_status')}", status_script)
 
 
 if __name__ == '__main__':

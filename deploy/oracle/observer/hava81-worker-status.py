@@ -12,6 +12,8 @@ sig = s.get('signals', {})
 worker = s.get('worker', {})
 print(f"collected_at: {s.get('collected_at')}")
 print(f"merge_deploy_ready: {worker.get('can_merge_or_deploy')} blockers={worker.get('merge_deploy_blocking_reasons', [])} observer_writes={worker.get('writes_repository')}")
+print(f"merge_ready: {worker.get('can_merge')} blockers={worker.get('merge_blocking_reasons', [])}")
+print(f"deploy_ready: {worker.get('can_deploy')} blockers={worker.get('deploy_blocking_reasons', [])}")
 print(f"production: {'HEALTHY' if prod.get('healthy') else 'UNHEALTHY'} issues={prod.get('issues', [])}")
 host = s.get('host', {})
 disk = host.get('disk') or {}
@@ -43,12 +45,20 @@ print(f"cors: {(prod.get('cors') or {}).get('allow_origin')} ok={(prod.get('cors
 for pr in gh.get('open_automation_prs', []):
     ci = pr.get('ci') or {}
     codeql = pr.get('codeql') or {}
-    print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} failed_jobs={ci.get('failed_jobs', [])} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
+    print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} failed_jobs={ci.get('failed_jobs', [])} failed_jobs_status={ci.get('failed_jobs_status')} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
 print(
     f"github_pr_discovery: ok={gh.get('ok')} complete={gh.get('pr_discovery_complete')} "
     f"pages={gh.get('pr_pages_collected')} total_open={gh.get('open_pull_requests_count')} "
     f"tracked={len(gh.get('open_automation_prs', []))} "
     f"error={gh.get('pr_discovery_error') or gh.get('error')}"
+)
+job_details = gh.get('failed_job_details') or {}
+print(
+    f"github_workflow_runs: complete={gh.get('workflow_runs_complete')} "
+    f"count={gh.get('workflow_runs_count')} error={gh.get('workflow_runs_error')} "
+    f"failed_job_details_complete={job_details.get('complete')} "
+    f"lookups={job_details.get('lookups')} budget={job_details.get('budget')} "
+    f"incomplete_run_ids={job_details.get('incomplete_run_ids', [])}"
 )
 main = gh.get('latest_main_run') or {}
 if main:

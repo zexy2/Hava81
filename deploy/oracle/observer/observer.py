@@ -52,6 +52,7 @@ GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 GITHUB_PULLS_PAGE_SIZE = 100
 GITHUB_PULLS_MAX_PAGES = 5
+MAX_FAILED_JOB_DETAIL_LOOKUPS = 4
 FIRST_PARTY_PR_BRANCH_PREFIXES = (
     'automation/hava81-',
     'automation/capture-',
@@ -767,8 +768,9 @@ def collect_open_pull_requests() -> dict[str, Any]:
 def collect_github() -> dict[str, Any]:
     pulls_state = collect_open_pull_requests()
     pulls_data = pulls_state['pulls']
+    runs_page_size = 100
     runs_result = http_get(
-        f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
+        f'https://api.github.com/repos/{REPO}/actions/runs?per_page={runs_page_size}',
         timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
     )
     runs_status = runs_result.get('status')
@@ -781,12 +783,44 @@ def collect_github() -> dict[str, Any]:
         # bounded timeout. Retry once with a materially smaller payload for transport/5xx
         # failures, but do not spend a second request on deterministic 4xx responses such
         # as GitHub's anonymous rate-limit 403.
+        runs_page_size = GITHUB_RUNS_FALLBACK_PAGE_SIZE
         runs_result = http_get(
-            f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
+            f'https://api.github.com/repos/{REPO}/actions/runs?per_page={runs_page_size}',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
         )
-    runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
-    runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
+
+    runs_error: str | None = None
+    runs_data: list[dict[str, Any]] = []
+    runs_payload = runs_result.get('json')
+    if runs_result.get('ok') is not True:
+        runs_error = runs_result.get('error') or f"GitHub workflow runs unavailable: HTTP {runs_result.get('status')}"
+    elif not isinstance(runs_payload, dict):
+        runs_error = 'GitHub workflow runs payload must be a JSON object'
+    else:
+        raw_runs = runs_payload.get('workflow_runs')
+        if not isinstance(raw_runs, list):
+            runs_error = 'GitHub workflow runs payload must contain a workflow_runs array'
+        elif len(raw_runs) > runs_page_size:
+            runs_error = 'GitHub workflow runs payload exceeded the requested page size'
+        else:
+            for index, run in enumerate(raw_runs):
+                if not isinstance(run, dict):
+                    runs_error = f'GitHub workflow runs item {index} must be an object'
+                    break
+                if type(run.get('id')) is not int or run['id'] < 1:
+                    runs_error = f'GitHub workflow runs item {index} has an invalid run id'
+                    break
+                if not isinstance(run.get('name'), str) or not run['name'].strip():
+                    runs_error = f'GitHub workflow runs item {index} has an invalid name'
+                    break
+                if not isinstance(run.get('status'), str) or not run['status'].strip():
+                    runs_error = f'GitHub workflow runs item {index} has an invalid status'
+                    break
+                if not isinstance(run.get('head_sha'), str) or not run['head_sha'].strip():
+                    runs_error = f'GitHub workflow runs item {index} has an invalid head SHA'
+                    break
+            if runs_error is None:
+                runs_data = raw_runs
 
     ci_runs_by_sha: dict[str, dict[str, Any]] = {}
     codeql_runs_by_sha: dict[str, dict[str, Any]] = {}
@@ -812,20 +846,39 @@ def collect_github() -> dict[str, Any]:
             same_sha[0] if same_sha else latest_main_candidates[0],
         )
 
+    failed_job_lookup_count = 0
+    failed_job_lookup_states: dict[int, str] = {}
+
     def failed_ci_job_names(run: dict[str, Any]) -> list[str]:
+        nonlocal failed_job_lookup_count
         run_id = run.get('id')
         if (
-            not run_id
+            type(run_id) is not int
+            or run_id < 1
             or run.get('status') != 'completed'
             or run.get('conclusion') in (None, 'success')
         ):
             return []
+        if failed_job_lookup_count >= MAX_FAILED_JOB_DETAIL_LOOKUPS:
+            failed_job_lookup_states[run_id] = 'budget_exhausted'
+            return []
+        failed_job_lookup_count += 1
         jobs_result = http_get(
             f'https://api.github.com/repos/{REPO}/actions/runs/{run_id}/jobs?per_page=100',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
         )
-        jobs_json = jobs_result.get('json') if isinstance(jobs_result.get('json'), dict) else {}
-        jobs = jobs_json.get('jobs') if isinstance(jobs_json.get('jobs'), list) else []
+        if jobs_result.get('ok') is not True:
+            failed_job_lookup_states[run_id] = 'unavailable'
+            return []
+        jobs_json = jobs_result.get('json')
+        if not isinstance(jobs_json, dict) or not isinstance(jobs_json.get('jobs'), list):
+            failed_job_lookup_states[run_id] = 'malformed'
+            return []
+        jobs = jobs_json['jobs']
+        if len(jobs) > 100 or any(not isinstance(job, dict) for job in jobs):
+            failed_job_lookup_states[run_id] = 'malformed'
+            return []
+        failed_job_lookup_states[run_id] = 'complete'
         ignored = {None, 'success', 'skipped', 'neutral'}
         return [
             str(job.get('name')) for job in jobs
@@ -841,13 +894,17 @@ def collect_github() -> dict[str, Any]:
         sha = head['sha']
         ci_run = ci_runs_by_sha.get(sha, {})
         codeql_run = codeql_runs_by_sha.get(sha, {})
+        failed_jobs = failed_ci_job_names(ci_run)
+        failed_jobs_status = failed_job_lookup_states.get(ci_run.get('id'), 'not_needed')
         automation_prs.append({
             'number': pr['number'], 'title': pr.get('title'), 'url': pr.get('html_url'),
             'head_ref': ref, 'head_sha': sha, 'draft': pr.get('draft'),
             'ci': {
                 'run_id': ci_run.get('id'), 'run_number': ci_run.get('run_number'),
                 'status': ci_run.get('status'), 'conclusion': ci_run.get('conclusion'),
-                'url': ci_run.get('html_url'), 'failed_jobs': failed_ci_job_names(ci_run),
+                'url': ci_run.get('html_url'), 'failed_jobs': failed_jobs,
+                'failed_jobs_complete': failed_jobs_status in ('complete', 'not_needed'),
+                'failed_jobs_status': failed_jobs_status,
             },
             'codeql': {
                 'run_id': codeql_run.get('id'), 'run_number': codeql_run.get('run_number'),
@@ -891,13 +948,26 @@ def collect_github() -> dict[str, Any]:
     api_deployment = collect_api_deployment(latest_main)
     rate_headers = runs_result.get('headers') or pulls_state.get('headers') or {}
     pulls_error = pulls_state.get('error')
+    failed_job_incomplete_ids = sorted(
+        run_id for run_id, status in failed_job_lookup_states.items() if status != 'complete'
+    )
+    failed_job_details = {
+        'complete': not failed_job_incomplete_ids,
+        'lookups': failed_job_lookup_count,
+        'budget': MAX_FAILED_JOB_DETAIL_LOOKUPS,
+        'incomplete_run_ids': failed_job_incomplete_ids,
+    }
     return {
-        'ok': pulls_state['ok'] and runs_result.get('ok') is True,
-        'error': pulls_error or runs_result.get('error'),
+        'ok': pulls_state['ok'] and runs_result.get('ok') is True and runs_error is None,
+        'error': pulls_error or runs_error or runs_result.get('error'),
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
         'pr_discovery_complete': pulls_state['complete'],
         'pr_discovery_error': pulls_error,
         'pr_pages_collected': pulls_state['pages'],
+        'workflow_runs_complete': runs_error is None,
+        'workflow_runs_error': runs_error,
+        'workflow_runs_count': len(runs_data),
+        'failed_job_details': failed_job_details,
         'open_pull_requests_count': len(pulls_data),
         'open_automation_prs': automation_prs,
         'latest_main_run': slim_run(latest_main),
@@ -932,10 +1002,11 @@ def merge_deploy_readiness(
     github: dict[str, Any],
     frontend_revision: dict[str, Any],
 ) -> dict[str, Any]:
-    """Summarize whether an autonomous merge/deploy is safe to start now.
+    """Summarize merge and deployment readiness independently.
 
-    The observer remains read-only; this signal describes environment readiness,
-    not permission for the observer process itself to mutate the repository.
+    Known API runtime drift blocks a traffic-changing deployment, not an unrelated
+    merge. Unknown evidence, unhealthy production/host, port drift and pending
+    main/frontend rollouts remain blockers for both. The observer remains read-only.
     """
     reasons: list[str] = []
     github_signals = github.get('signals') or {}
@@ -954,12 +1025,22 @@ def merge_deploy_readiness(
         reasons.append('api_primary_port_drift')
     if github_signals.get('main_pipeline_pending') is True:
         reasons.append('main_pipeline_pending')
-    if github_signals.get('api_deploy_pending') is True:
-        reasons.append('api_deploy_pending')
     if github_signals.get('api_deploy_unknown') is True:
         reasons.append('api_deploy_unknown')
 
-    return {'ok': not reasons, 'blocking_reasons': reasons}
+    merge_reasons = list(reasons)
+    deploy_reasons = list(reasons)
+    if github_signals.get('api_deploy_pending') is True:
+        deploy_reasons.append('api_deploy_pending')
+
+    return {
+        'ok': not deploy_reasons,
+        'blocking_reasons': deploy_reasons,
+        'merge_ok': not merge_reasons,
+        'merge_blocking_reasons': merge_reasons,
+        'deploy_ok': not deploy_reasons,
+        'deploy_blocking_reasons': deploy_reasons,
+    }
 
 
 def state_signature(state: dict[str, Any]) -> dict[str, Any]:
@@ -969,6 +1050,16 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     prs = github.get('open_automation_prs') or []
     return {
         'production_healthy': production.get('healthy'),
+        'workflow_runs_complete': github.get('workflow_runs_complete'),
+        'workflow_runs_error': github.get('workflow_runs_error'),
+        'failed_job_details': {
+            key: (github.get('failed_job_details') or {}).get(key)
+            for key in ('complete', 'lookups', 'budget', 'incomplete_run_ids')
+        },
+        'worker_readiness': {
+            key: worker.get(key)
+            for key in ('can_merge', 'can_deploy', 'merge_blocking_reasons', 'deploy_blocking_reasons')
+        },
         'production_issues': production.get('issues'),
         'nginx_port': ((production.get('nginx') or {}).get('port')),
         'nginx_preferred_ok': ((production.get('nginx') or {}).get('preferred_ok')),
@@ -982,6 +1073,9 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
                 'sha': pr.get('head_sha'),
                 'status': (pr.get('ci') or {}).get('status'),
                 'conclusion': (pr.get('ci') or {}).get('conclusion'),
+                'codeql_status': (pr.get('codeql') or {}).get('status'),
+                'codeql_conclusion': (pr.get('codeql') or {}).get('conclusion'),
+                'failed_jobs_status': (pr.get('ci') or {}).get('failed_jobs_status'),
             }
             for pr in prs
         ],
@@ -1079,6 +1173,10 @@ def main() -> int:
             'writes_repository': False,
             'can_merge_or_deploy': merge_deploy['ok'],
             'merge_deploy_blocking_reasons': merge_deploy['blocking_reasons'],
+            'can_merge': merge_deploy['merge_ok'],
+            'merge_blocking_reasons': merge_deploy['merge_blocking_reasons'],
+            'can_deploy': merge_deploy['deploy_ok'],
+            'deploy_blocking_reasons': merge_deploy['deploy_blocking_reasons'],
             'duration_ms': round((time.monotonic() - started) * 1000),
         },
     }
@@ -1091,7 +1189,7 @@ def main() -> int:
             'current': state_signature(state),
         })
     level = 'OK' if production['healthy'] else 'WARN'
-    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} ci_unknown={github['signals']['ci_unknown_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
+    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} ci_unknown={github['signals']['ci_unknown_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']} merge_ready={merge_deploy['merge_ok']} deploy_ready={merge_deploy['deploy_ok']} workflow_runs_complete={github['workflow_runs_complete']} failed_job_details_complete={github['failed_job_details']['complete']}")
     return 0
 
 

@@ -3529,3 +3529,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - The worker snapshot collected at `2026-10-16T20:11:20Z` reported production healthy, Nginx on 4002, disk 60.9% used, and `api_deploy_pending=true` solely for deployed-vs-main `apps/api/package-lock.json` drift. This readiness blocker remains active, so no merge/deployment was attempted, including the otherwise-green UI PR #1294.
 - Next exact action: obtain an approved PR-creation path for `automation/hava81-observer-pr-discovery-robust-20261016-2315`, then require fresh exact-head CI/CD, observer installer/tests and CodeQL before merge. Re-read the worker state and exact PR head immediately before any merge/deploy.
 - Prioritized queue: (1) publish and validate this observer branch; (2) resolve API lockfile deployment drift only after deployment-guard tests and normal preflight pass; (3) reassess #1294/#1316/#1319 against exact current heads and mergeability; (4) continue independent UX/performance/accessibility work while external gates are pending.
+
+
+## 2026-10-17 04:38 TRT — observer workflow evidence and readiness split
+
+- Re-verified exact main `280859574bef5d02ed67b9fd67f2ecc5136e4585` and observer candidate `ed153b360239cc05f1e4b19942c545a39df7411c`. The original candidate was left untouched; a separate branch `automation/hava81-observer-validation-budget-20261017-r11` was created from that exact candidate head.
+- SentinelX still reports the enrolled Oracle host `nexus-hermes` offline (last connected `2026-09-27T13:56:34Z`). Worker state and events cannot be read from that host in this run. No remote deployment or host mutation was attempted.
+- Follow-up patch validates the GitHub Actions workflow-runs JSON contract, caps failed-job detail calls at four per collection, reports omitted/unavailable details, and separates `can_merge` from `can_deploy`. Known API runtime drift blocks deployment but no longer blocks an independent merge; unknown state remains fail-closed.
+- Added regression coverage for malformed workflow payload variants, the global job-detail budget, and API-pending readiness separation; extended worker-status coverage. Hosted CI/CD and CodeQL are required before merge or Oracle installation.
+- Exact branch base before patch: `ed153b360239cc05f1e4b19942c545a39df7411c`. The patch must be validated at exact head. Do not install while the Oracle host is offline.
+- Next queue: (1) validate this branch with hosted CI/CD/CodeQL and repair failures; (2) restore Oracle connectivity and read fresh worker state/events; (3) revalidate #1294/#1316/#1319 against current main; (4) finish deployment-guard tests before the API lockfile rollout; (5) finish nullable precipitation-probability handling end-to-end.
