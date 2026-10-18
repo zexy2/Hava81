@@ -107,6 +107,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
   const [, setFreshnessRevision] = useState(0);
   const forecastFreshness = getForecastFreshness(meta);
+  const fetchedAtMs = meta.fetchedAt.getTime();
+  const forecastAgeMinutes = Number.isFinite(fetchedAtMs)
+    ? Math.max(0, Math.floor((Date.now() - fetchedAtMs) / 60_000))
+    : null;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
 
   useEffect(() => {
@@ -138,6 +142,9 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       forecastFreshness.expiresInMs === null
         ? undefined
         : window.setTimeout(resyncFreshness, forecastFreshness.expiresInMs);
+    const minuteTimerId = forecastFreshness.fresh
+      ? window.setInterval(resyncFreshness, 60_000)
+      : undefined;
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -145,9 +152,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       if (timerId !== undefined) window.clearTimeout(timerId);
+      if (minuteTimerId !== undefined) window.clearInterval(minuteTimerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [forecastFreshness.expiresInMs, meta]);
+  }, [forecastFreshness.expiresInMs, forecastFreshness.fresh, meta]);
 
   const intervalHours = meta.intervalHours;
   const realHourlyHorizon = Math.min(REAL_HOURLY_HORIZON, hourly.length);
@@ -752,6 +760,18 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                 </>
               ) : meta.attribution && meta.attribution !== meta.provider ? (
                 <> · {meta.attribution}</>
+              ) : null}
+              {forecastAgeMinutes !== null ? (
+                <>
+                  {' · '}
+                  <time dateTime={meta.fetchedAt.toISOString()}>
+                    {forecastAgeMinutes < 1
+                      ? t('hava81.forecastAtlas.updatedRecently')
+                      : t('hava81.forecastAtlas.updatedMinutesAgo', {
+                          minutes: forecastAgeMinutes,
+                        })}
+                  </time>
+                </>
               ) : null}
             </p>
           ) : null}
