@@ -27,7 +27,7 @@ const forecast = {
 
 
 
-test('320px English dock keeps readable foreground against gradient stops', async ({ page }, testInfo) => {
+test('320px English dock keeps readable foreground against its actual surface', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390');
   await page.setViewportSize({ width: 320, height: 720 });
   for (const themeMode of ['light', 'dark'] as const) {
@@ -60,34 +60,35 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
         return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
       };
       const rgb = (value: string): number[] | null => {
-        const match = value.match(/^rgba?\((\d+)[, ]+(\d+)[, ]+(\d+)/);
-        return match ? match.slice(1, 4).map(Number) : null;
+        // Only opaque colors are valid contrast backgrounds. Transparent button
+        // backgrounds must be evaluated against the actual navigation surface.
+        const match = value.match(/^rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)$/);
+        if (match) return match.slice(1, 4).map(Number);
+        const opaqueRgba = value.match(/^rgba\\((\\d+),\\s*(\\d+),\\s*(\\d+),\\s*1(?:\\.0+)?\\)$/);
+        return opaqueRgba ? opaqueRgba.slice(1, 4).map(Number) : null;
       };
       const dock = document.querySelector('.atlas-bottom-nav');
       if (!dock) return null;
-      const dockGradient = getComputedStyle(dock).backgroundImage;
+      const dockStyle = getComputedStyle(dock);
+      const dockBackground = rgb(dockStyle.backgroundColor);
       const buttons = [...dock.querySelectorAll<HTMLButtonElement>('button')];
       return {
         width: document.documentElement.scrollWidth,
-        gradient: dockGradient,
+        surfaceBackground: dockStyle.backgroundColor,
         labels: buttons.map(button => {
           const isActive = button.classList.contains('atlas-bottom-nav__button--active');
+          const style = getComputedStyle(button);
           // Negative fixture mutates only the contrast input; it must not alter production DOM/CSS.
-          const foreground = degraded && !isActive ? [100, 123, 139] : rgb(getComputedStyle(button).color);
-          const background = getComputedStyle(button).backgroundImage;
-          // Read current rendered gradients rather than stale theme-specific hardcoded colors.
-          // Only fully opaque color stops are comparable; radial/translucent overlays remain unmodeled.
-          const gradient = isActive ? background : dockGradient;
-          const stops = [...gradient.matchAll(/rgb\((\d+), (\d+), (\d+)\)/g)]
-            .map(match => match.slice(1, 4).map(Number));
-          // An rgba() stop must not be silently treated as an opaque rgb() stop.
-          const hasTranslucentStops = /rgba\(/.test(gradient);
+          const foreground = degraded && !isActive ? [100, 123, 139] : rgb(style.color);
+          // The dock uses a solid paper surface and buttons are transparent. If a future
+          // button gets an opaque fill, measure that fill instead of the parent surface.
+          const background = rgb(style.backgroundColor) ?? dockBackground;
           const rect = button.getBoundingClientRect();
           const labelRect = button.querySelector('.atlas-bottom-nav__label')?.getBoundingClientRect();
           return {
-            text: button.textContent?.trim(), active: isActive, background, foregroundCss: getComputedStyle(button).color,
-            minBaseStopContrast: foreground && stops.length >= 2 ? Math.min(...stops.map(stop => ratio(foreground, stop))) : 0,
-            stopCount: stops.length, hasTranslucentStops,
+            text: button.textContent?.trim(), active: isActive, foregroundCss: style.color,
+            backgroundCss: style.backgroundColor,
+            surfaceContrast: foreground && background ? ratio(foreground, background) : 0,
             targetWidth: rect.width, targetHeight: rect.height,
             labelInside: !!labelRect && labelRect.left >= rect.left - 1 && labelRect.right <= rect.right + 1 &&
               labelRect.top >= rect.top - 1 && labelRect.bottom <= rect.bottom + 1,
@@ -97,14 +98,13 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
       }, degraded);
     expect(result).not.toBeNull();
     expect(result!.width).toBeLessThanOrEqual(321);
-    expect(result!.gradient).toContain('gradient');
+    expect(result!.surfaceBackground).not.toBe('rgba(0, 0, 0, 0)');
     expect(result!.labels).toHaveLength(3);
     for (const label of result!.labels) {
-      expect(label.stopCount).toBeGreaterThanOrEqual(2);
       if (degraded && !label.active) {
-        expect(label.minBaseStopContrast, `${themeMode} ${label.text} should detect bad contrast`).toBeLessThan(4.5);
+        expect(label.surfaceContrast, `${themeMode} ${label.text} should detect bad contrast`).toBeLessThan(4.5);
       } else {
-        expect(label.minBaseStopContrast, `${themeMode} ${label.text} base gradient contrast`).toBeGreaterThanOrEqual(4.5);
+        expect(label.surfaceContrast, `${themeMode} ${label.text} contrast against the rendered surface`).toBeGreaterThanOrEqual(4.5);
       }
       expect(label.targetWidth).toBeGreaterThanOrEqual(44);
       expect(label.targetHeight).toBeGreaterThanOrEqual(44);
