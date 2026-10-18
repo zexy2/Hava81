@@ -900,6 +900,14 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     host = state.get('host') or {}
     prs = github.get('open_automation_prs') or []
     return {
+        'github_state': {
+            'ok': github.get('ok'),
+            'error': github.get('error'),
+            'open_pr_discovery': {
+                key: github.get(key)
+                for key in ('open_prs_known', 'open_prs_count', 'open_prs_error')
+            },
+        },
         'production_healthy': production.get('healthy'),
         'production_issues': production.get('issues'),
         'nginx_port': ((production.get('nginx') or {}).get('port')),

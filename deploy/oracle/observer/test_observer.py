@@ -1193,6 +1193,39 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
 
 
 class ObserverStateSignatureTests(unittest.TestCase):
+    def test_pull_discovery_known_unknown_and_count_transitions_create_change_events(self) -> None:
+        base = {
+            'github': {
+                'ok': True,
+                'error': None,
+                'open_prs_known': True,
+                'open_prs_count': 13,
+                'open_prs_error': None,
+                'open_automation_prs': [],
+                'latest_main_run': {'head_sha': 'main-sha', 'status': 'completed'},
+                'api_deployment': {'known': True, 'pending': False, 'error': None},
+            },
+            'production': {'healthy': True, 'issues': [], 'nginx': {'port': 4002}},
+            'host': {'disk': {'ok': True}},
+        }
+        unknown = {
+            **base,
+            'github': {
+                **base['github'],
+                'ok': False,
+                'error': 'HTTP 403',
+                'open_prs_known': False,
+                'open_prs_count': None,
+                'open_prs_error': 'HTTP 403',
+            },
+        }
+        count_changed = {
+            **base,
+            'github': {**base['github'], 'open_prs_count': 14},
+        }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(unknown))
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(count_changed))
+
     def test_frontend_revision_transition_creates_a_change_event(self) -> None:
         base = {
             'github': {'open_automation_prs': [], 'latest_main_run': {'head_sha': 'b' * 40, 'status': 'completed'}},
