@@ -1541,3 +1541,9 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+
+### 2026-10-18 — observer PR discovery is complete-or-unknown
+**Decision:** Enumerate open pull requests with bounded pagination (100 per page, at most five pages). A failed page, malformed payload, or a full final page at the configured cap must set discovery to unknown and block merge/deploy readiness; never interpret an incomplete snapshot as an empty queue. Track recognized Hava81 automation, feature, test, fix, accessibility, performance, documentation, security and chore branch families; keep Dependabot on its separate dependency-review path.
+
+**Why:** The observer is read-only but drives the safety gate for the autonomous operator. Missing product branches or silently turning an HTTP/rate-limit error into an empty PR list creates false confidence. Bounded pagination prevents unbounded API work, and an explicit known/unknown field preserves fail-closed behavior without disabling productive independent work.
