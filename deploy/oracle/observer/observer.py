@@ -50,6 +50,8 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+OPEN_PULL_REQUEST_PAGE_SIZE = 100
+OPEN_PULL_REQUEST_MAX_PAGES = 5
 API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
@@ -683,8 +685,70 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
     }
 
 
+def is_tracked_pull_request_branch(ref: str) -> bool:
+    """Track Hava81 work across established automation and product branch conventions.
+
+    Dependabot updates are intentionally handled by their own dependency-review
+    policy; all other recognized Hava81 work branches must remain visible even
+    when their prefix is feat/, test/, or fix/ rather than automation/hava81-.
+    """
+    return ref.startswith((
+        'automation/',
+        'feat/hava81-',
+        'test/hava81-',
+        'fix/hava81-',
+        'fix/notification-cta-',
+        'a11y/hava81-',
+        'perf/hava81-',
+        'docs/hava81-',
+        'security/hava81-',
+        'chore/hava81-',
+    ))
+
+
 def collect_github() -> dict[str, Any]:
-    pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
+    pulls_data: list[dict[str, Any]] = []
+    pulls_result: dict[str, Any] = {}
+    pulls_ok = True
+    pulls_error: str | None = None
+    for page in range(1, OPEN_PULL_REQUEST_MAX_PAGES + 1):
+        pulls_result = http_get(
+            f'https://api.github.com/repos/{REPO}/pulls?state=open'
+            f'&per_page={OPEN_PULL_REQUEST_PAGE_SIZE}&page={page}'
+        )
+        if not pulls_result.get('ok'):
+            pulls_ok = False
+            pulls_error = pulls_result.get('error') or f"HTTP {pulls_result.get('status') or 'unknown'}"
+            break
+        page_data = pulls_result.get('json')
+        if not isinstance(page_data, list):
+            pulls_ok = False
+            pulls_error = 'unexpected GitHub open pull request response'
+            break
+        if any(
+            not isinstance(pr, dict)
+            or not isinstance(pr.get('number'), int)
+            or isinstance(pr.get('number'), bool)
+            or pr.get('number', 0) < 1
+            or not isinstance(pr.get('head'), dict)
+            or not isinstance(pr['head'].get('ref'), str)
+            or not pr['head'].get('ref')
+            or not isinstance(pr['head'].get('sha'), str)
+            or not pr['head'].get('sha')
+            for pr in page_data
+        ):
+            pulls_ok = False
+            pulls_error = 'malformed GitHub open pull request item'
+            break
+        pulls_data.extend(page_data)
+        if len(page_data) < OPEN_PULL_REQUEST_PAGE_SIZE:
+            break
+    else:
+        # Reaching the cap with a full last page means the list may be truncated.
+        # Do not present the partial snapshot as a complete, known-empty/known-small list.
+        pulls_ok = False
+        pulls_error = f'open pull request pagination limit reached ({OPEN_PULL_REQUEST_MAX_PAGES} pages)'
+
     runs_result = http_get(
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
         timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
@@ -703,7 +767,6 @@ def collect_github() -> dict[str, Any]:
             f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
         )
-    pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
 
@@ -757,7 +820,7 @@ def collect_github() -> dict[str, Any]:
     for pr in pulls_data:
         head = pr.get('head') if isinstance(pr.get('head'), dict) else {}
         ref = head.get('ref') or ''
-        if not ref.startswith('automation/hava81-'):
+        if not is_tracked_pull_request_branch(ref):
             continue
         sha = head.get('sha')
         ci_run = ci_runs_by_sha.get(sha, {})
@@ -826,9 +889,12 @@ def collect_github() -> dict[str, Any]:
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
     return {
-        'ok': pulls_result.get('ok') and runs_result.get('ok'),
-        'error': pulls_result.get('error') or runs_result.get('error'),
+        'ok': pulls_ok and runs_result.get('ok') is True,
+        'error': pulls_error or runs_result.get('error'),
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
+        'open_prs_known': pulls_ok,
+        'open_prs_count': len(pulls_data) if pulls_ok else None,
+        'open_prs_error': pulls_error,
         'open_automation_prs': automation_prs,
         'latest_main_run': slim_run(latest_main),
         'api_deployment': api_deployment,
@@ -900,6 +966,9 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     host = state.get('host') or {}
     prs = github.get('open_automation_prs') or []
     return {
+        'github_ok': github.get('ok'),
+        'open_prs_known': github.get('open_prs_known'),
+        'open_prs_count': github.get('open_prs_count'),
         'production_healthy': production.get('healthy'),
         'production_issues': production.get('issues'),
         'nginx_port': ((production.get('nginx') or {}).get('port')),
