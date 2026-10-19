@@ -1541,3 +1541,9 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+
+### 2026-10-19 — PR discovery completeness is part of the event signature
+**Decision:** Include the GitHub collection success flag, PR-snapshot known/unknown state, and total open-PR count in `state_signature()`. Do not include raw transport-error text in the signature. Treat a malformed PR item as an unknown/incomplete snapshot rather than silently dropping it.
+
+**Why:** The previous signature made a verified empty PR snapshot indistinguishable from a failed discovery request when both produced an empty tracked-PR list. That could suppress an event during a GitHub failure. Signing stable state fields surfaces the transition while avoiding repeated events caused only by variable timeout/error wording.
