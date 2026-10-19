@@ -1217,6 +1217,41 @@ class ObserverStateSignatureTests(unittest.TestCase):
         }
         self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
 
+    def test_open_pr_discovery_known_empty_to_unknown_creates_event_without_error_spam(self) -> None:
+        base = {
+            'github': {
+                'ok': True,
+                'open_prs_known': True,
+                'open_prs_count': 0,
+                'open_automation_prs': [],
+                'latest_main_run': {'head_sha': 'main-sha', 'status': 'completed'},
+            },
+            'production': {'healthy': True, 'issues': [], 'nginx': {'port': 4002}},
+            'host': {'disk': {'ok': True}},
+        }
+        unknown = {
+            **base,
+            'github': {
+                **base['github'],
+                'ok': False,
+                'open_prs_known': False,
+                'open_prs_count': None,
+                'open_prs_error': 'HTTP 403',
+            },
+        }
+        unknown_after_timeout = {
+            **unknown,
+            'github': {
+                **unknown['github'],
+                'open_prs_error': 'request timed out after 12 seconds',
+            },
+        }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(unknown))
+        self.assertEqual(
+            observer.state_signature(unknown),
+            observer.state_signature(unknown_after_timeout),
+        )
+
     def test_api_lookup_latency_does_not_create_a_change_event(self) -> None:
         base_deployment = {
             'main_revision': 'main-sha',
@@ -1545,6 +1580,145 @@ class ObserverHostDiskTests(unittest.TestCase):
         self.assertTrue(host['healthy'])
         self.assertEqual(host['issues'], [])
         self.assertEqual(host['warnings'], [])
+
+
+class ObserverPullDiscoveryTests(unittest.TestCase):
+    def collect_with_payloads(self, pages, runs=None):  # noqa: ANN001, ANN201
+        requested_urls: list[str] = []
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        runs = [] if runs is None else runs
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if '/pulls?' in url:
+                page = int(url.rsplit('page=', 1)[-1])
+                payload = pages.get(page)
+                if isinstance(payload, dict) and payload.get('_http_error'):
+                    return {
+                        'ok': False,
+                        'status': payload.get('status', 403),
+                        'headers': {'x-ratelimit-remaining': '0'},
+                        'json': None,
+                        'error': payload.get('_http_error'),
+                    }
+                return {
+                    'ok': True, 'status': 200, 'headers': {'x-ratelimit-remaining': '49'},
+                    'json': payload, 'error': None,
+                }
+            if '/actions/runs?' in url:
+                return {
+                    'ok': True, 'status': 200, 'headers': {'x-ratelimit-remaining': '48'},
+                    'json': {'workflow_runs': runs}, 'error': None,
+                }
+            raise AssertionError(f'unexpected GitHub lookup: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda _latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+        return result, requested_urls
+
+    def test_tracks_product_and_deploy_guard_branch_conventions(self) -> None:
+        refs = [
+            (901, 'automation/api-deploy-guard-r2'),
+            (902, 'feat/hava81-121-rain-peak-20261011'),
+            (903, 'test/hava81-04-contrast-parser-20261009'),
+            (904, 'fix/notification-cta-readability-20261009'),
+            (905, 'automation/hava81-observer-test'),
+            (906, 'dependabot/npm_and_yarn/vite-6'),
+        ]
+        pulls = [
+            {
+                'number': number, 'title': f'PR {number}',
+                'html_url': f'https://github.com/zexy2/Hava81/pull/{number}',
+                'draft': False, 'head': {'ref': ref, 'sha': f'sha-{number}'},
+            }
+            for number, ref in refs
+        ]
+        result, requested = self.collect_with_payloads({1: pulls})
+        self.assertTrue(result['open_prs_known'])
+        self.assertEqual(result['open_prs_count'], len(pulls))
+        self.assertEqual(
+            [pr['number'] for pr in result['open_automation_prs']],
+            [901, 902, 903, 904, 905],
+        )
+        self.assertNotIn(906, [pr['number'] for pr in result['open_automation_prs']])
+        self.assertIn('page=1', requested[0])
+
+    def test_paginates_past_first_hundred_open_pull_requests(self) -> None:
+        first_page = [
+            {
+                'number': number, 'title': f'Dependency {number}',
+                'html_url': f'https://github.com/zexy2/Hava81/pull/{number}',
+                'draft': False,
+                'head': {'ref': f'dependabot/npm-{number}', 'sha': f'dep-{number}'},
+            }
+            for number in range(1, 101)
+        ]
+        second_page = [{
+            'number': 1319, 'title': 'Rain peak',
+            'html_url': 'https://github.com/zexy2/Hava81/pull/1319',
+            'draft': False,
+            'head': {'ref': 'feat/hava81-121-rain-peak-20261011', 'sha': 'rain-peak-sha'},
+        }]
+        result, requested = self.collect_with_payloads({1: first_page, 2: second_page})
+        self.assertTrue(result['ok'])
+        self.assertTrue(result['open_prs_known'])
+        self.assertEqual(result['open_prs_count'], 101)
+        self.assertEqual([pr['number'] for pr in result['open_automation_prs']], [1319])
+        self.assertTrue(any('page=1' in url for url in requested))
+        self.assertTrue(any('page=2' in url for url in requested))
+
+    def test_pull_discovery_http_failure_is_unknown_not_known_empty(self) -> None:
+        result, requested = self.collect_with_payloads({
+            1: {'_http_error': 'HTTP 403', 'status': 403},
+        })
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['open_prs_known'])
+        self.assertIsNone(result['open_prs_count'])
+        self.assertEqual(result['open_prs_error'], 'HTTP 403')
+        self.assertEqual(result['error'], 'HTTP 403')
+        self.assertEqual(result['open_automation_prs'], [])
+        self.assertTrue(any('/actions/runs?' in url for url in requested))
+
+    def test_malformed_pull_item_is_unknown_not_silently_dropped(self) -> None:
+        result, _requested = self.collect_with_payloads({
+            1: [{'number': 1, 'title': 'Malformed PR', 'head': None}],
+        })
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['open_prs_known'])
+        self.assertIsNone(result['open_prs_count'])
+        self.assertEqual(result['open_prs_error'], 'malformed GitHub open pull request item')
+        self.assertEqual(result['open_automation_prs'], [])
+
+    def test_pagination_cap_is_reported_as_incomplete(self) -> None:
+        full_pages = {
+            page: [
+                {
+                    'number': page * 100 + offset, 'title': 'Dependency',
+                    'html_url': 'https://github.com/zexy2/Hava81/pull/1',
+                    'draft': False,
+                    'head': {'ref': f'dependabot/npm-{page}-{offset}', 'sha': f'dep-{page}-{offset}'},
+                }
+                for offset in range(100)
+            ]
+            for page in range(1, observer.OPEN_PULL_REQUEST_MAX_PAGES + 1)
+        }
+        result, requested = self.collect_with_payloads(full_pages)
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['open_prs_known'])
+        self.assertIsNone(result['open_prs_count'])
+        self.assertIn('pagination limit reached', result['open_prs_error'])
+        self.assertEqual(
+            len([url for url in requested if '/pulls?' in url]),
+            observer.OPEN_PULL_REQUEST_MAX_PAGES,
+        )
 
 
 if __name__ == '__main__':
