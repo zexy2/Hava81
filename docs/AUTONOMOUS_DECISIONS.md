@@ -1547,3 +1547,6 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** Include the GitHub collection success flag, PR-snapshot known/unknown state, and total open-PR count in `state_signature()`. Do not include raw transport-error text in the signature. Treat a malformed PR item as an unknown/incomplete snapshot rather than silently dropping it.
 
 **Why:** The previous signature made a verified empty PR snapshot indistinguishable from a failed discovery request when both produced an empty tracked-PR list. That could suppress an event during a GitHub failure. Signing stable state fields surfaces the transition while avoiding repeated events caused only by variable timeout/error wording.
+
+## 2026-10-20 — bound all PR/CI discovery under one deadline and fail closed on partial results
+The observer's open-PR pagination, Actions-run lookup/retry and failed-job detail lookups share a 12-second monotonic deadline; each request timeout is capped by the remaining budget. If PR pagination or Actions payload validation is incomplete, preserve the discovery error and mark every discovered PR's CI gate `unknown` rather than presenting partial results as definitive green/failed/running. Keep the worker status read-only and keep the independent API deployment comparison under its existing bounded timeout.

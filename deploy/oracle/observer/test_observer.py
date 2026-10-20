@@ -877,8 +877,9 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
             observer.collect_api_deployment = original_collect_api_deployment
 
         self.assertIn('/actions/runs?per_page=100', requested_urls[1])
-        self.assertEqual(requested_timeouts[0], 6.0)
-        self.assertEqual(requested_timeouts[1], observer.GITHUB_RUNS_TIMEOUT_SECONDS)
+        self.assertEqual(requested_timeouts[0], observer.GITHUB_PULLS_TIMEOUT_SECONDS)
+        self.assertGreater(requested_timeouts[1], 0)
+        self.assertLessEqual(requested_timeouts[1], observer.GITHUB_RUNS_DISCOVERY_TIMEOUT_SECONDS)
         self.assertGreater(requested_timeouts[1], requested_timeouts[0])
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-new')
         self.assertEqual(result['latest_main_run']['run_id'], 12)
@@ -1071,7 +1072,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
             f'/actions/runs?per_page={observer.GITHUB_RUNS_FALLBACK_PAGE_SIZE}', requested_urls[2]
         )
         self.assertEqual(requested_timeouts[1:], [
-            observer.GITHUB_RUNS_TIMEOUT_SECONDS, observer.GITHUB_RUNS_TIMEOUT_SECONDS
+            observer.GITHUB_RUNS_DISCOVERY_TIMEOUT_SECONDS, observer.GITHUB_RUNS_FALLBACK_TIMEOUT_SECONDS
         ])
         self.assertTrue(result['ok'])
         self.assertIsNone(result['error'])
@@ -1115,6 +1116,104 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['error'], 'HTTP 403')
         self.assertEqual(result['rate_limit_remaining'], '0')
         self.assertTrue(result['signals']['api_deploy_unknown'])
+
+
+    def test_pr_discovery_deadline_suppresses_partial_ci_classification(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        requested_urls: list[str] = []
+        page_one = [
+            {
+                'number': 900 + i,
+                'title': f'PR {900 + i}',
+                'html_url': f'https://example.test/pr/{900 + i}',
+                'draft': False,
+                'head': {
+                    'ref': 'automation/hava81-deadline-fixture' if i == 0 else f'users/branch-{i}',
+                    'sha': f'deadline-sha-{i}',
+                },
+            }
+            for i in range(observer.OPEN_PULL_REQUEST_PAGE_SIZE)
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if 'pulls?state=open' in url and url.endswith('page=1'):
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1,
+                    'headers': {}, 'json': page_one, 'error': None,
+                }
+            if 'pulls?state=open' in url and 'page=2' in url:
+                self.assertGreater(timeout, 0)
+                self.assertLessEqual(timeout, 0.11)
+                return {
+                    'ok': False, 'status': None, 'elapsed_ms': 100,
+                    'headers': {}, 'json': None, 'error': 'TimeoutError: timed out',
+                }
+            raise AssertionError(f'no request should start after the shared deadline: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': False, 'pending': False, 'error': 'main revision unavailable',
+            }
+            with mock.patch.object(observer.time, 'monotonic', side_effect=[0.0, 0.0, 11.9, 12.1, 12.1, 12.1]):
+                result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(len(requested_urls), 2)
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['open_prs_known'])
+        self.assertIsNone(result['open_prs_count'])
+        self.assertFalse(result['runs_known'])
+        self.assertFalse(result['ci_classification_complete'])
+        self.assertEqual(result['signals']['ci_green_prs'], [])
+        self.assertEqual(result['signals']['ci_failed_prs'], [])
+        self.assertEqual(result['signals']['ci_running_prs'], [])
+        self.assertEqual(result['signals']['ci_unknown_prs'], [900])
+        self.assertIn('timed out', result['error'])
+        self.assertGreaterEqual(result['discovery_elapsed_ms'], 12000)
+
+    def test_malformed_actions_run_item_is_not_classified_as_empty_green_state(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        pulls = [{
+            'number': 901,
+            'title': 'Malformed run fixture',
+            'html_url': 'https://example.test/pr/901',
+            'draft': False,
+            'head': {'ref': 'automation/hava81-malformed-run-fixture', 'sha': 'malformed-run-sha'},
+        }]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if 'pulls?state=open' in url:
+                return {'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {}, 'json': pulls, 'error': None}
+            if '/actions/runs?' in url:
+                return {'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {}, 'json': {'workflow_runs': [None]}, 'error': None}
+            raise AssertionError(f'unexpected URL: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': False, 'pending': False, 'error': 'main revision unavailable',
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertFalse(result['ok'])
+        self.assertTrue(result['open_prs_known'])
+        self.assertFalse(result['runs_known'])
+        self.assertFalse(result['ci_classification_complete'])
+        self.assertIn('unexpected GitHub Actions response', result['error'])
+        self.assertEqual(result['signals']['ci_green_prs'], [])
+        self.assertEqual(result['signals']['ci_failed_prs'], [])
+        self.assertEqual(result['signals']['ci_running_prs'], [])
+        self.assertEqual(result['signals']['ci_unknown_prs'], [901])
+
 
 
 class ObserverFrontendDeploymentStateTests(unittest.TestCase):

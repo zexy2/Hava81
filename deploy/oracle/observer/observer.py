@@ -49,6 +49,11 @@ API_RUNTIME_PREFIXES = ('apps/api/src/',)
 GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
+# One shared deadline covers PR pagination, Actions runs, retries and failed-job details.
+GITHUB_PR_CI_DISCOVERY_BUDGET_SECONDS = 12.0
+GITHUB_PULLS_TIMEOUT_SECONDS = 3.0
+GITHUB_RUNS_DISCOVERY_TIMEOUT_SECONDS = 7.0
+GITHUB_RUNS_FALLBACK_TIMEOUT_SECONDS = 2.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 OPEN_PULL_REQUEST_PAGE_SIZE = 100
 OPEN_PULL_REQUEST_MAX_PAGES = 5
@@ -707,14 +712,27 @@ def is_tracked_pull_request_branch(ref: str) -> bool:
 
 
 def collect_github() -> dict[str, Any]:
+    discovery_started = time.monotonic()
+    discovery_deadline = discovery_started + GITHUB_PR_CI_DISCOVERY_BUDGET_SECONDS
+
+    def discovery_get(url: str, *, timeout: float = 6.0) -> dict[str, Any]:
+        remaining = discovery_deadline - time.monotonic()
+        if remaining <= 0:
+            return {
+                'ok': False, 'status': None, 'elapsed_ms': 0, 'headers': {},
+                'json': None, 'error': 'GitHub discovery budget exhausted',
+            }
+        return http_get(url, timeout=min(timeout, remaining))
+
     pulls_data: list[dict[str, Any]] = []
     pulls_result: dict[str, Any] = {}
     pulls_ok = True
     pulls_error: str | None = None
     for page in range(1, OPEN_PULL_REQUEST_MAX_PAGES + 1):
-        pulls_result = http_get(
+        pulls_result = discovery_get(
             f'https://api.github.com/repos/{REPO}/pulls?state=open'
-            f'&per_page={OPEN_PULL_REQUEST_PAGE_SIZE}&page={page}'
+            f'&per_page={OPEN_PULL_REQUEST_PAGE_SIZE}&page={page}',
+            timeout=GITHUB_PULLS_TIMEOUT_SECONDS,
         )
         if not pulls_result.get('ok'):
             pulls_ok = False
@@ -749,9 +767,9 @@ def collect_github() -> dict[str, Any]:
         pulls_ok = False
         pulls_error = f'open pull request pagination limit reached ({OPEN_PULL_REQUEST_MAX_PAGES} pages)'
 
-    runs_result = http_get(
+    runs_result = discovery_get(
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
-        timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+        timeout=GITHUB_RUNS_DISCOVERY_TIMEOUT_SECONDS,
     )
     runs_status = runs_result.get('status')
     should_retry_runs = (
@@ -763,12 +781,20 @@ def collect_github() -> dict[str, Any]:
         # bounded timeout. Retry once with a materially smaller payload for transport/5xx
         # failures, but do not spend a second request on deterministic 4xx responses such
         # as GitHub's anonymous rate-limit 403.
-        runs_result = http_get(
+        runs_result = discovery_get(
             f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
-            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+            timeout=GITHUB_RUNS_FALLBACK_TIMEOUT_SECONDS,
         )
-    runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
-    runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
+    runs_payload = runs_result.get('json')
+    runs_complete = (
+        runs_result.get('ok') is True
+        and isinstance(runs_payload, dict)
+        and isinstance(runs_payload.get('workflow_runs'), list)
+        and all(isinstance(run, dict) for run in runs_payload.get('workflow_runs', []))
+    )
+    runs_json = runs_payload if runs_complete else {}
+    runs_data = runs_json.get('workflow_runs') if runs_complete else []
+    discovery_complete = pulls_ok and runs_complete
 
     ci_runs_by_sha: dict[str, dict[str, Any]] = {}
     codeql_runs_by_sha: dict[str, dict[str, Any]] = {}
@@ -803,9 +829,9 @@ def collect_github() -> dict[str, Any]:
             or run.get('conclusion') in (None, 'success')
         ):
             return []
-        jobs_result = http_get(
+        jobs_result = discovery_get(
             f'https://api.github.com/repos/{REPO}/actions/runs/{run_id}/jobs?per_page=100',
-            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+            timeout=GITHUB_RUNS_DISCOVERY_TIMEOUT_SECONDS,
         )
         jobs_json = jobs_result.get('json') if isinstance(jobs_result.get('json'), dict) else {}
         jobs = jobs_json.get('jobs') if isinstance(jobs_json.get('jobs'), list) else []
@@ -880,17 +906,29 @@ def collect_github() -> dict[str, Any]:
             return 'running'
         return 'unknown'
 
-    gate_states = {pr['number']: pr_gate_state(pr) for pr in automation_prs}
+    gate_states = {
+        pr['number']: (pr_gate_state(pr) if discovery_complete else 'unknown')
+        for pr in automation_prs
+    }
     ci_green = [number for number, state in gate_states.items() if state == 'green']
     ci_failed = [number for number, state in gate_states.items() if state == 'failed']
     ci_running = [number for number, state in gate_states.items() if state == 'running']
     ci_unknown = [number for number, state in gate_states.items() if state == 'unknown']
+    discovery_elapsed_ms = round((time.monotonic() - discovery_started) * 1000)
     api_deployment = collect_api_deployment(latest_main)
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
+    discovery_error = (
+        pulls_error or runs_result.get('error')
+        or (None if runs_complete else 'unexpected GitHub Actions response')
+        or (None if discovery_complete else 'GitHub discovery incomplete')
+    )
     return {
-        'ok': pulls_ok and runs_result.get('ok') is True,
-        'error': pulls_error or runs_result.get('error'),
+        'ok': discovery_complete,
+        'error': discovery_error,
+        'runs_known': runs_complete,
+        'ci_classification_complete': discovery_complete,
+        'discovery_elapsed_ms': discovery_elapsed_ms,
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
         'open_prs_known': pulls_ok,
         'open_prs_count': len(pulls_data) if pulls_ok else None,
@@ -967,6 +1005,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     prs = github.get('open_automation_prs') or []
     return {
         'github_ok': github.get('ok'),
+        'ci_classification_complete': github.get('ci_classification_complete'),
         'open_prs_known': github.get('open_prs_known'),
         'open_prs_count': github.get('open_prs_count'),
         'production_healthy': production.get('healthy'),
@@ -1092,7 +1131,24 @@ def main() -> int:
             'current': state_signature(state),
         })
     level = 'OK' if production['healthy'] else 'WARN'
-    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} ci_unknown={github['signals']['ci_unknown_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
+    open_prs_summary = str(len(github['open_automation_prs'])) if github.get('open_prs_known') else 'unknown'
+    if github.get('ci_classification_complete'):
+        ci_summary = (
+            f"ci_green={github['signals']['ci_green_prs']} "
+            f"ci_running={github['signals']['ci_running_prs']} "
+            f"ci_unknown={github['signals']['ci_unknown_prs']}"
+        )
+    else:
+        ci_summary = 'ci_green=unknown ci_running=unknown ci_unknown=unknown'
+    print(
+        f"{level} collected={collected_at} production_healthy={production['healthy']} "
+        f"disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} "
+        f"open_prs={open_prs_summary} {ci_summary} "
+        f"pr_ci_discovery_ms={github.get('discovery_elapsed_ms')} "
+        f"main_pending={github['signals']['main_pipeline_pending']} "
+        f"api_deploy_pending={github['signals']['api_deploy_pending']} "
+        f"api_deploy_unknown={github['signals']['api_deploy_unknown']}"
+    )
     return 0
 
 
