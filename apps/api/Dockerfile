@@ -2,7 +2,7 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --no-audit
+RUN apk add --no-cache --virtual .npm-git-deps git && npm ci --no-audit && apk del .npm-git-deps
 
 COPY tsconfig.json ./
 COPY src ./src
@@ -14,7 +14,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev --no-audit && npm cache clean --force
+RUN apk add --no-cache --virtual .npm-git-deps git && npm ci --omit=dev --no-audit && npm cache clean --force && apk del .npm-git-deps
 COPY --from=builder /app/dist ./dist
 
 USER node
