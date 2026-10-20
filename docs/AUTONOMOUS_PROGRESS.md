@@ -3509,3 +3509,12 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Post-cleanup `df -h /`: 45 GiB total, 44 GiB used, **2.0 GiB available (96% used)**. Saved approximately 1.2 GiB. The 05:52 UTC observer snapshot still reported pre-cleanup 768 MiB: wait for the five-minute collector to refresh rather than treating this as current.
 - **Fail-closed:** Deployment floor is not yet satisfied. Latest observer reported `api_build_headroom_ok=false`, `api_deployment.pending=true` for `apps/api/package-lock.json` runtime drift; production remained healthy on preferred port 4002. Port 4001 rollback, Nginx, containers, and API deployment state were not touched. Do **not** attempt a blue/green API deployment until the fresh observer reports headroom and all deployment safety gates pass.
 - Next owner-reviewed action: identify additional Hava81-owned, reproducible data if more free space is needed; never blindly prune Docker or delete a private service directory, other projects, browser profiles, or an active/dirty worktree.
+
+
+## 2026-10-20 14:38 TRT — fast-uri advisory response
+
+- Re-verified current main at `280859574bef5d02ed67b9fd67f2ecc5136e4585` and inspected the API lockfile: `node_modules/fast-uri` was 3.1.8 and `node_modules/fast-json-stringify/node_modules/fast-uri` was 4.2.1.
+- Checked the official `fastify/fast-uri` repository and advisory-fixed release tags. Upstream tags `v3.1.9` (`0def70338a0fa2f12a10c83ae8eafc2139ae9a07`) and `v4.2.3` (`00f41407ef64b4944060ca3e7fd2d637916a71ea`) contain the patched release lines; the npm package listing still advertised 4.2.2 during this check.
+- Updated only the two lockfile entries on isolated branch `automation/hava81-fast-uri-security-20261020-1438` to immutable Git commit references for those upstream tags. Removed registry integrity values only for these Git-resolved entries; no package manifest ranges or API behavior changed.
+- Validation boundary: no connected SentinelX host is available, so no Oracle commands or local Node/npm tests were run. Hosted PR CI must verify `npm ci`, API tests, type-check, build, audit/CodeQL, and lockfile reproducibility before merge. Do not deploy until hosted gates are green and a fresh Oracle observer snapshot confirms disk/build headroom and the 4002/4001 topology.
+- Pending: docs checkpoint and PR creation; production traffic was not changed.
