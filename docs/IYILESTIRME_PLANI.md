@@ -59,7 +59,8 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava8
 - [ ] **2.1** Tokenları tek bir `tokens.css` dosyasında topla (light/dark). 14 polish dosyasını bileşen CSS'lerine göm ve sil. CSS `@layer` kullan. Stylelint ile ham hex, izinsiz radius ve izinsiz breakpoint kullanımını yasakla — _L (kademeli)_
 - [ ] **2.2** İlk ekranı tek bir kompozisyon olarak yeniden tasarla: şehir + plaka + dev serif sıcaklık + "sıradaki değişim" cümlesi + 24 saatlik grafik. Kart mozaiği olmasın — _M_
 - [ ] **2.3** Bilgi mimarisini sadeleştir. Sayfada 10 modül ve 4 skor türü var. Ana akış Karar + Ritim + tek bir çevresel yüzey olsun. Çıkış planı, aktiviteler, bildirimler ve rota ikinci seviye bir "Planla" görünümüne taşınsın. Tek skor gösterilsin, saatlik skorlara etiket konsun — _L_
-- [ ] **2.4** İlk ziyarette konum izni beklemeden İstanbul'u (ya da tahmini ili) hemen göster — _M_
+- [x] **2.4** İlk ziyarette konum izni beklemeden İstanbul'u (ya da tahmini ili) hemen göster — _M_
+  - Kaldığı yer: `src/App.tsx` — kök adreste geçmiş yoksa doğrudan İstanbul açılıyor (URL `/istanbul/`), konum izni istenmiyor; konum seçeneği başlıktaki konum düğmesinde. Engelleyici konum kapısı yalnızca geri tuşuyla köke dönüldüğünde görünür. Eski kapı testleri (birim + e2e) yeni davranışa göre güncellendi. Tahmini il (IP) yok: API desteği gerekirdi.
 - [ ] **2.5** Haritayı 81 ilin gerçek verisiyle bir "atlas" ekranına dönüştür. Bu, ürünün imza ekranı olabilir. Plaka işaretçisi sıcaklıkla karışmasın. Harita ve Karşılaştır için URL desteği ekle (`?view=map`) — _M_
 - [x] **2.6** 5 günlük tahmini 5 sütun ya da DESIGN.md'deki gibi günlük satırlar olarak göster. Şu an 4+1 düzeninde — _S_
   - Kaldığı yer: `src/styles/ForecastCalendarVisualPolish.css` — 48rem ve üstünde sabit 5 sütun, altında günlük satırlar; tek kalan günü yayan kural kaldırıldı.

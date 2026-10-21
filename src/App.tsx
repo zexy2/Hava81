@@ -179,7 +179,7 @@ const App: React.FC = () => {
       const entries: unknown = JSON.parse(
         window.localStorage.getItem('recent_weather_searches') ?? '[]'
       );
-      if (!Array.isArray(entries)) return '';
+      if (!Array.isArray(entries)) return 'İstanbul';
       for (const entry of entries) {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
         const item = entry as { city?: unknown; timestamp?: unknown };
@@ -189,9 +189,11 @@ const App: React.FC = () => {
         if (path) return cityFromPathname(path)?.name ?? '';
       }
     } catch {
-      // Storage can be blocked or contain invalid JSON; keep the manual city picker.
+      // Storage can be blocked or contain invalid JSON; fall back to İstanbul.
     }
-    return '';
+    // Faz 2.4: first visit shows İstanbul immediately; location stays an explicit
+    // choice in the header instead of a blocking gate.
+    return 'İstanbul';
   });
   const isRootRoute = window.location.pathname === '/';
 

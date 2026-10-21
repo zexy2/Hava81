@@ -171,61 +171,16 @@ describe('Hava81 app integration', () => {
     );
   });
 
-  it('asks for a location choice on the root route before requesting browser permission', async () => {
-    const user = userEvent.setup();
+  it('shows İstanbul immediately on the root route without requesting browser location', async () => {
     window.history.replaceState({}, '', '/');
-    service.getCurrentLocationWeather.mockResolvedValueOnce({
-      ...current,
-      cityName: 'Ankara',
-      coordinates: { lat: 39.93, lon: 32.86 },
-    });
 
     renderApp();
 
-    const locationGateHeading = screen.getByRole('heading', {
-      name: 'Havayı bulunduğun yere göre gösterelim',
-      level: 1,
-    });
-    expect(locationGateHeading).toBeInTheDocument();
-    const locationGate = locationGateHeading.closest('section');
-    expect(locationGate).not.toBeNull();
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
-    expect(service.getCurrentWeather).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Haritayı göster' })).toBeDisabled();
-    expect(document.querySelector('.app')).toHaveAttribute('data-has-bottom-nav', 'false');
-
-    await user.click(within(locationGate!).getByRole('button', { name: 'Konumumu Kullan' }));
-
-    expect(await screen.findByRole('heading', { name: 'Ankara', level: 1 })).toBeInTheDocument();
-    expect(document.querySelector('.app')).toHaveAttribute('data-has-bottom-nav', 'true');
-    expect(service.getCurrentLocationWeather).toHaveBeenCalledWith('tr');
-    expect(service.getCurrentWeather).not.toHaveBeenCalled();
-    expect(window.location.pathname).toBe('/ankara/');
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
+    expect(window.location.pathname).toBe('/istanbul/');
   });
-
-  it('keeps location denial explicit instead of silently substituting İstanbul', async () => {
-    const user = userEvent.setup();
-    window.history.replaceState({}, '', '/');
-    service.getCurrentLocationWeather.mockRejectedValueOnce(
-      new ApiError('Konum izni reddedildi', ErrorCode.LOCATION_DENIED, { retryable: false })
-    );
-
-    renderApp();
-    const locationGateHeading = screen.getByRole('heading', {
-      name: 'Havayı bulunduğun yere göre gösterelim',
-      level: 1,
-    });
-    const locationGate = locationGateHeading.closest('section');
-    expect(locationGate).not.toBeNull();
-    await user.click(within(locationGate!).getByRole('button', { name: 'Konumumu Kullan' }));
-
-    expect(await screen.findByText('Konum izni reddedildi')).toBeInTheDocument();
-    expect(service.getCurrentLocationWeather).toHaveBeenCalledWith('tr');
-    expect(service.getCurrentWeather).not.toHaveBeenCalled();
-    expect(screen.queryByRole('heading', { name: 'İstanbul', level: 1 })).not.toBeInTheDocument();
-    expect(window.location.pathname).toBe('/');
-  });
-
   it('keeps province URLs canonical when an English weather provider adds Province', async () => {
     window.history.replaceState({}, '', '/sanliurfa/');
     service.getCurrentWeather.mockResolvedValue({
@@ -235,9 +190,7 @@ describe('Hava81 app integration', () => {
     });
     renderApp();
 
-    expect(
-      await screen.findByRole('heading', { name: 'Şanlıurfa', level: 1 })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Şanlıurfa', level: 1 })).toBeInTheDocument();
     await waitFor(() => {
       expect(window.location.pathname + window.location.search).toBe('/sanliurfa/');
       expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
@@ -296,33 +249,6 @@ describe('Hava81 app integration', () => {
     expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(screen.queryByText('Havayı bulunduğun yere göre gösterelim')).not.toBeInTheDocument();
-  });
-
-  it('does not automatically open a city from outdated location history', () => {
-    window.history.replaceState({}, '', '/');
-    localStorage.setItem(
-      'recent_weather_searches',
-      JSON.stringify([{ city: 'İstanbul', timestamp: Date.now() - 31 * 86_400_000 }])
-    );
-    renderApp();
-    expect(
-      screen.getByRole('heading', { name: 'Havayı bulunduğun yere göre gösterelim' })
-    ).toBeInTheDocument();
-    expect(service.getCurrentWeather).not.toHaveBeenCalled();
-    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
-  });
-
-  it('lets the user continue with İstanbul without requesting browser location', async () => {
-    const user = userEvent.setup();
-    window.history.replaceState({}, '', '/');
-
-    renderApp();
-    await user.click(screen.getByRole('button', { name: 'İstanbul ile devam et' }));
-
-    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
-    expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
-    expect(window.location.pathname).toBe('/istanbul/');
   });
 
   it('renders the decision-first city view and forecast metadata', async () => {
