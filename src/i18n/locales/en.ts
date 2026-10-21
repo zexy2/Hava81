@@ -103,6 +103,10 @@ export const en = {
       searchAnother: 'Search another city',
       privacy: 'Your location is used only to load nearby weather data.',
     },
+    planView: {
+      eyebrow: 'Next step',
+      title: 'Plan',
+    },
     decision: {
       upcoming: {
         rainStarts: 'Rain starts around {{time}}.',

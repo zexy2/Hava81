@@ -868,17 +868,6 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <DailyPlanPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
-
                 <Suspense fallback={null}>
                   <EnvironmentRail
                     weather={weather}
@@ -917,50 +906,67 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <CommutePlanPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                <section className="atlas-plan-view" aria-labelledby="atlas-plan-view-title">
+                  <header className="atlas-plan-view__header">
+                    <span className="atlas-kicker">{t('hava81.planView.eyebrow')}</span>
+                    <h2 id="atlas-plan-view-title">{t('hava81.planView.title')}</h2>
+                  </header>
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <DailyPlanPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <ActivityPlanner
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <CommutePlanPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
 
-                {forecast.contextSignals && (
-                  <Suspense fallback={null}>
-                    <ContextSignalsPanel
-                      signals={forecast.contextSignals}
-                      timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
-                    />
-                  </Suspense>
-                )}
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <ActivityPlanner
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <DecisionAlertsPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                  {forecast.contextSignals && (
+                    <Suspense fallback={null}>
+                      <ContextSignalsPanel
+                        signals={forecast.contextSignals}
+                        timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
+                      />
+                    </Suspense>
+                  )}
 
-                <Suspense fallback={null}>
-                  <RouteWeatherPanel currentCityName={weather.cityName} />
-                </Suspense>
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <DecisionAlertsPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
+
+                  <Suspense fallback={null}>
+                    <RouteWeatherPanel currentCityName={weather.cityName} />
+                  </Suspense>
+                </section>
               </div>
             )}
 

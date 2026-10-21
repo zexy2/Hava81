@@ -552,12 +552,12 @@ textarea:focus-visible {
     grid-row: 2 / span 2;
   }
 
-  .atlas-dashboard > .commute-plan {
+  .atlas-dashboard .commute-plan {
     grid-column: 1;
     grid-row: 3;
   }
 
-  .atlas-dashboard > .daily-plan {
+  .atlas-dashboard .daily-plan {
     grid-column: 1 / -1;
     grid-row: 4;
   }

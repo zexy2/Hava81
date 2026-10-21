@@ -680,11 +680,11 @@
     grid-column: 2;
     grid-row: 2 / span 2;
   }
-  .app .atlas-dashboard > .commute-plan {
+  .app .atlas-dashboard .commute-plan {
     grid-column: 1;
     grid-row: 3;
   }
-  .app .atlas-dashboard > .daily-plan {
+  .app .atlas-dashboard .daily-plan {
     grid-column: 1 / -1;
     grid-row: 4;
   }
@@ -827,7 +827,7 @@
     min-height: 8.5rem;
     padding: 0.8rem;
   }
-  .app .atlas-dashboard > .daily-plan {
+  .app .atlas-dashboard .daily-plan {
     grid-row: auto;
   }
 }

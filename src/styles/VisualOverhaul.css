@@ -355,8 +355,8 @@
 
 /* Bento-like planning cards retain their functionality and readability. */
 @media (min-width: 64rem) {
-  .app .atlas-dashboard > .commute-plan,
-  .app .atlas-dashboard > .daily-plan {
+  .app .atlas-dashboard .commute-plan,
+  .app .atlas-dashboard .daily-plan {
     border-radius: 25px;
   }
   .app .decision-glance__message {

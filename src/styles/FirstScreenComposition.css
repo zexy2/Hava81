@@ -73,3 +73,33 @@
     grid-row: 2;
   }
 }
+
+/* Faz 2.3 — secondary "Planla" surface: plan, activities, alerts, signals, route. */
+.app .atlas-plan-view {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4, 1rem);
+  margin-top: var(--space-4, 1rem);
+  padding-top: var(--space-5, 1.5rem);
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.app .atlas-plan-view__header h2 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: -0.02em;
+}
+.app .atlas-dashboard .atlas-plan-view > * {
+  grid-column: auto;
+  grid-row: auto;
+}
+@media (min-width: 64rem) {
+  .app .atlas-plan-view {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header,
+  .app .atlas-dashboard .atlas-plan-view > .daily-plan,
+  .app .atlas-dashboard .atlas-plan-view > .route-weather {
+    grid-column: 1 / -1;
+  }
+}

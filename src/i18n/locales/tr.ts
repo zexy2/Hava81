@@ -103,6 +103,10 @@ export const tr = {
       searchAnother: 'Başka şehir ara',
       privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
     },
+    planView: {
+      eyebrow: 'İkinci adım',
+      title: 'Planla',
+    },
     decision: {
       upcoming: {
         rainStarts: '{{time}} civarı yağış başlıyor.',
