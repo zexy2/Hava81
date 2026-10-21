@@ -31,7 +31,7 @@
 
   .app .weather-map__attribution {
     margin-top: 0.8rem;
-    font-size: 0.77rem;
+    font-size: 0.8125rem;
   }
 
   .app .weather-map__legend {
@@ -116,7 +116,7 @@
     border-radius: 999px;
     background: var(--color-atlas-paper);
     color: var(--color-atlas-ink);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     font-weight: 650;
     line-height: 1.2;
   }
@@ -190,7 +190,7 @@
     }
     .app .weather-map__legend-item {
       padding: 0.45rem 0.58rem;
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
     }
   }
 

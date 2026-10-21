@@ -1,0 +1,208 @@
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import { describe, expect, it, vi } from 'vitest';
+
+/**
+ * Faz 3.4: the service worker is executed in a VM with fake `caches` / `clients` and its
+ * listeners are driven with synthetic events, instead of matching strings in public/sw.js.
+ */
+const source = readFileSync('public/sw.js', 'utf8');
+const ORIGIN = 'https://hava81.example';
+const CURRENT = 'hava81-shell-__HAVA81_BUILD_ID__';
+
+type Listener = (event: Record<string, unknown>) => void;
+
+interface FakeClient {
+  url: string;
+  focus: ReturnType<typeof vi.fn>;
+  navigate: ReturnType<typeof vi.fn>;
+}
+
+function loadWorker({
+  cacheKeys = [] as string[],
+  clients = [] as FakeClient[],
+  fetchImpl = vi.fn().mockResolvedValue({ ok: true, clone: () => ({ ok: true }) }),
+  cached = undefined as unknown,
+} = {}) {
+  const listeners = new Map<string, Listener>();
+  const cache = {
+    put: vi.fn().mockResolvedValue(undefined),
+    match: vi.fn().mockResolvedValue(cached),
+  };
+  const caches = {
+    open: vi.fn().mockResolvedValue(cache),
+    keys: vi.fn().mockResolvedValue(cacheKeys),
+    delete: vi.fn().mockResolvedValue(true),
+  };
+  const workerClients = {
+    claim: vi.fn().mockResolvedValue(undefined),
+    matchAll: vi.fn().mockResolvedValue(clients),
+    openWindow: vi.fn().mockResolvedValue(undefined),
+  };
+  runInNewContext(source, {
+    self: {
+      location: { origin: ORIGIN },
+      clients: workerClients,
+      skipWaiting: vi.fn(),
+      addEventListener: (name: string, listener: Listener) => listeners.set(name, listener),
+    },
+    caches,
+    fetch: fetchImpl,
+    URL,
+    Set,
+    Error,
+    Promise,
+  });
+
+  const dispatch = async (name: string, event: Record<string, unknown>) => {
+    let pending: Promise<unknown> | undefined;
+    listeners.get(name)?.({
+      ...event,
+      waitUntil: (promise: Promise<unknown>) => {
+        pending = promise;
+      },
+      respondWith: (promise: Promise<unknown>) => {
+        pending = promise;
+      },
+    });
+    return pending ? await pending : undefined;
+  };
+
+  return { dispatch, caches, cache, workerClients, fetchImpl };
+}
+
+const client = (url = `${ORIGIN}/`): FakeClient => ({
+  url,
+  focus: vi.fn().mockResolvedValue('focused'),
+  navigate: vi.fn().mockResolvedValue(undefined),
+});
+
+describe('service worker activation', () => {
+  it('deletes only older versioned Hava81 shell caches', async () => {
+    const worker = loadWorker({
+      cacheKeys: [
+        CURRENT,
+        'hava81-shell-abc123',
+        'hava81-tiles',
+        'hava81-weather-api',
+        'other-app',
+      ],
+    });
+    await worker.dispatch('activate', {});
+    expect(worker.caches.delete.mock.calls.map(([key]) => key)).toEqual(['hava81-shell-abc123']);
+    expect(worker.workerClients.claim).toHaveBeenCalled();
+  });
+
+  it('reloads open tabs once when upgrading from a legacy shell worker', async () => {
+    const tab = client(`${ORIGIN}/istanbul/`);
+    const worker = loadWorker({ cacheKeys: ['hava81-shell-v2'], clients: [tab] });
+    await worker.dispatch('activate', {});
+    expect(tab.navigate).toHaveBeenCalledWith(`${ORIGIN}/istanbul/`);
+  });
+
+  it('does not reload tabs for a regular versioned upgrade', async () => {
+    const tab = client();
+    const worker = loadWorker({ cacheKeys: ['hava81-shell-abc123'], clients: [tab] });
+    await worker.dispatch('activate', {});
+    expect(tab.navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('service worker notification clicks', () => {
+  const click = (url?: string) => ({
+    notification: { close: vi.fn(), data: url === undefined ? undefined : { url } },
+  });
+
+  it('focuses an open window on the same-origin target path', async () => {
+    const tab = client();
+    const worker = loadWorker({ clients: [tab] });
+    const event = click(`${ORIGIN}/ankara/?view=plan#saat`);
+    await expect(worker.dispatch('notificationclick', event)).resolves.toBe('focused');
+    expect(event.notification.close).toHaveBeenCalled();
+    expect(tab.navigate).toHaveBeenCalledWith('/ankara/?view=plan#saat');
+    expect(worker.workerClients.openWindow).not.toHaveBeenCalled();
+  });
+
+  it('never navigates to another origin', async () => {
+    const worker = loadWorker();
+    await worker.dispatch('notificationclick', click('https://evil.example/phish'));
+    expect(worker.workerClients.openWindow).toHaveBeenCalledWith('/');
+  });
+
+  it('falls back to the app root for malformed data', async () => {
+    const worker = loadWorker();
+    await worker.dispatch('notificationclick', click('http://[bad'));
+    expect(worker.workerClients.openWindow).toHaveBeenCalledWith('/');
+  });
+
+  it('opens the intended URL when every open window is stale', async () => {
+    const stale = client();
+    stale.navigate.mockRejectedValue(new Error('gone'));
+    const worker = loadWorker({ clients: [stale] });
+    await worker.dispatch('notificationclick', click('/izmir/'));
+    expect(worker.workerClients.openWindow).toHaveBeenCalledWith('/izmir/');
+  });
+});
+
+describe('service worker fetch strategy', () => {
+  it('keeps navigations network-fresh and caches them under a query-free key', async () => {
+    const worker = loadWorker();
+    await worker.dispatch('fetch', {
+      request: {
+        method: 'GET',
+        mode: 'navigate',
+        destination: 'document',
+        url: `${ORIGIN}/bursa/?v=2`,
+      },
+    });
+    expect(worker.fetchImpl).toHaveBeenCalledWith(expect.anything(), { cache: 'no-store' });
+    expect(worker.cache.put).toHaveBeenCalledWith(`${ORIGIN}/bursa/`, expect.anything());
+  });
+
+  it('serves the cached shell when the network is down', async () => {
+    const worker = loadWorker({
+      fetchImpl: vi.fn().mockRejectedValue(new Error('offline')),
+      cached: 'cached-shell',
+    });
+    const response = await worker.dispatch('fetch', {
+      request: {
+        method: 'GET',
+        mode: 'navigate',
+        destination: 'document',
+        url: `${ORIGIN}/bursa/`,
+      },
+    });
+    expect(response).toBe('cached-shell');
+  });
+
+  it('caches hashed static assets from the versioned cache only', async () => {
+    const worker = loadWorker();
+    const request = {
+      method: 'GET',
+      mode: 'no-cors',
+      destination: 'script',
+      url: `${ORIGIN}/assets/index-abc.js`,
+    };
+    await worker.dispatch('fetch', { request });
+    expect(worker.caches.open).toHaveBeenCalledWith(CURRENT);
+    expect(worker.cache.match).toHaveBeenCalledWith(request);
+    expect(worker.cache.put).toHaveBeenCalledWith(request, expect.anything());
+  });
+
+  it('leaves API calls, other origins and non-GET requests to the network', async () => {
+    const worker = loadWorker();
+    for (const request of [
+      { method: 'GET', mode: 'cors', destination: '', url: `${ORIGIN}/api/v1/weather/current` },
+      {
+        method: 'GET',
+        mode: 'cors',
+        destination: 'script',
+        url: 'https://cdn.example/assets/x.js',
+      },
+      { method: 'POST', mode: 'cors', destination: '', url: `${ORIGIN}/assets/x.js` },
+    ]) {
+      await expect(worker.dispatch('fetch', { request })).resolves.toBeUndefined();
+    }
+    expect(worker.caches.open).not.toHaveBeenCalled();
+  });
+});

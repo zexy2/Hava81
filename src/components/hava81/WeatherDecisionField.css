@@ -527,7 +527,7 @@
   }
 
   .app .hava81-decision-field__atlas-meta {
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     letter-spacing: 0.005em;
     gap: 5px 9px;
@@ -635,7 +635,7 @@
 
   .app .hava81-decision-field__metric dt {
     margin-bottom: 0.5rem;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     letter-spacing: 0.035em;
     line-height: 1.35;
   }
@@ -732,7 +732,7 @@
 
   @media (max-width: 47.99rem) {
     .app .hava81-decision-field__metric dt {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       overflow-wrap: anywhere;
     }
   }

@@ -1,10 +1,8 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { SearchBar } from './components/SearchBar';
 import { suggestCity } from './utils/citySuggestion';
 import { formatCityTime } from './utils/format';
-import { CityTabs } from './components/CityTabs';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { DecisionGlance } from './components/hava81/DecisionGlance';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
@@ -20,13 +18,7 @@ import { ErrorCode } from './types';
 import { ApiError } from './api/errors/ApiError';
 import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
-import {
-  LocationIcon,
-  MapIcon,
-  SearchIcon,
-  SettingsIcon,
-  StarIcon,
-} from './components/app/AppIcons';
+import { AppHeader } from './components/app/AppHeader';
 import { AtlasLoadingState, ForecastLoadingCard } from './components/app/AppSkeletons';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { parseAtlasView, resolveAtlasView, type AtlasView } from './utils/atlasView';
@@ -379,164 +371,40 @@ const App: React.FC = () => {
             {t('common.skipToContent')}
           </a>
 
-          <header
-            className={`atlas-header${isMobileSearchOpen ? ' atlas-header--search-open' : ''}`}
-          >
-            <div className="atlas-header__inner">
-              <a className="atlas-brand" href="/">
-                <span className="atlas-brand__name">Hava81</span>
-                <span className="atlas-brand__index" aria-hidden="true">
-                  <b>81</b>
-                  <small>ATLAS</small>
-                </span>
-              </a>
-
-              <div className="atlas-header__search" id="atlas-search-region">
-                <SearchBar
-                  ref={searchInputRef}
-                  value={city}
-                  onChange={setCity}
-                  onSubmit={handleSubmit}
-                  isLoading={isLoading}
-                  recentSearches={recentSearches}
-                  placeholder={t('weather.searchPlaceholder')}
-                  manualQueryHint={t('weather.districtSearchHint')}
-                  label={t('weather.searchLabel')}
-                  submitLabel={t('common.search')}
-                  loadingLabel={t('common.loading')}
-                  suggestionsLabel={t('weather.citySuggestions')}
-                  onDismiss={isMobileSearchOpen ? closeSearch : undefined}
-                />
-                {searchNotFound && (
-                  <p className="atlas-search-inline-error" role="alert">
-                    {t('weather.searchNotFound', { query: failedQuery })}{' '}
-                    {searchSuggestion && (
-                      <>
-                        {t('weather.didYouMean')}{' '}
-                        <button
-                          type="button"
-                          className="atlas-text-button"
-                          onClick={() => {
-                            setCity(searchSuggestion.name);
-                            handleSubmit(searchSuggestion.name);
-                          }}
-                        >
-                          {searchSuggestion.name}
-                        </button>
-                        ?
-                      </>
-                    )}
-                  </p>
-                )}
-              </div>
-
-              <div
-                className="atlas-header__actions"
-                role="group"
-                aria-label={t('weather.quickActions')}
-              >
-                <button
-                  ref={searchToggleRef}
-                  type="button"
-                  className="atlas-icon-button atlas-icon-button--search"
-                  onClick={toggleMobileSearch}
-                  aria-expanded={isMobileSearchOpen}
-                  aria-controls="atlas-search-region"
-                  aria-label={
-                    isMobileSearchOpen ? t('hava81.closeSearch') : t('weather.searchLabel')
-                  }
-                >
-                  <SearchIcon />
-                </button>
-                <button
-                  type="button"
-                  className="atlas-icon-button atlas-icon-button--location"
-                  onClick={!isRootRoute || weather ? fetchCurrentLocation : handleInitialLocation}
-                  disabled={isLoading}
-                  aria-busy={isLoading}
-                  aria-label={t('weather.useMyLocation')}
-                  title={t('weather.useMyLocation')}
-                >
-                  <LocationIcon />
-                </button>
-                <button
-                  type="button"
-                  className="atlas-icon-button"
-                  onClick={handleToggleFavorite}
-                  disabled={!weather}
-                  aria-pressed={isFavorite}
-                  aria-label={
-                    isFavorite ? t('weather.removeFromFavorites') : t('weather.addToFavorites')
-                  }
-                  title={
-                    isFavorite ? t('weather.removeFromFavorites') : t('weather.addToFavorites')
-                  }
-                >
-                  <StarIcon filled={isFavorite} />
-                </button>
-                {weather && (
-                  <button
-                    type="button"
-                    className="atlas-plan-button"
-                    onClick={() => handleBottomNav('plan')}
-                    aria-current={isPlanView ? 'page' : undefined}
-                  >
-                    {t('navigation.plan')}
-                  </button>
-                )}
-                {favorites.length >= 2 && (
-                  <button
-                    type="button"
-                    className="atlas-compare-button"
-                    onClick={() => handleBottomNav('compare')}
-                    aria-current={activeNav === 'compare' ? 'page' : undefined}
-                  >
-                    {t('hava81.compare.action')}
-                    <span aria-hidden="true">{favorites.length}</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="atlas-icon-button atlas-icon-button--map"
-                  onClick={showMap ? closeMap : openMap}
-                  disabled={!weather}
-                  aria-expanded={showMap}
-                  aria-controls="weather-map-region"
-                  aria-label={showMap ? t('weather.hideMap') : t('weather.showMap')}
-                  title={showMap ? t('weather.hideMap') : t('weather.showMap')}
-                >
-                  <MapIcon />
-                </button>
-                <button
-                  type="button"
-                  className="atlas-icon-button atlas-settings-button"
-                  onClick={openSettings}
-                  aria-haspopup="dialog"
-                  aria-expanded={isSettingsOpen}
-                  aria-controls="settings-panel-dialog"
-                  aria-label={t('common.settings')}
-                >
-                  <span className="atlas-settings-button__language" aria-hidden="true">
-                    {settings.language.toUpperCase()}
-                  </span>
-                  <SettingsIcon />
-                </button>
-              </div>
-            </div>
-
-            {favorites.length > 0 && (
-              <div className="atlas-city-rail" ref={cityRailRef}>
-                <CityTabs
-                  cities={favorites}
-                  activeCity={weather?.cityName ?? ''}
-                  onSelect={handleSelectFavorite}
-                  onRemove={handleRemoveFavorite}
-                  onAdd={handleAddFavorite}
-                  canAdd={Boolean(weather && !isFavorite)}
-                />
-              </div>
-            )}
-          </header>
+          <AppHeader
+            isMobileSearchOpen={isMobileSearchOpen}
+            searchInputRef={searchInputRef}
+            searchToggleRef={searchToggleRef}
+            cityRailRef={cityRailRef}
+            query={city}
+            onQueryChange={setCity}
+            onSubmit={handleSubmit}
+            onCloseSearch={closeSearch}
+            onToggleMobileSearch={toggleMobileSearch}
+            isLoading={isLoading}
+            recentSearches={recentSearches}
+            searchNotFound={searchNotFound}
+            failedQuery={failedQuery}
+            searchSuggestion={searchSuggestion}
+            onLocate={!isRootRoute || weather ? fetchCurrentLocation : handleInitialLocation}
+            hasWeather={Boolean(weather)}
+            activeCity={weather?.cityName ?? ''}
+            isFavorite={isFavorite}
+            onToggleFavorite={handleToggleFavorite}
+            isPlanView={isPlanView}
+            onOpenPlan={() => handleBottomNav('plan')}
+            favorites={favorites}
+            isCompareActive={activeNav === 'compare'}
+            onOpenCompare={() => handleBottomNav('compare')}
+            showMap={showMap}
+            onToggleMap={showMap ? closeMap : openMap}
+            isSettingsOpen={isSettingsOpen}
+            onOpenSettings={openSettings}
+            language={settings.language}
+            onSelectFavorite={handleSelectFavorite}
+            onRemoveFavorite={handleRemoveFavorite}
+            onAddFavorite={handleAddFavorite}
+          />
 
           {weather || favorites.length > 0 ? (
             <AtlasBottomNav

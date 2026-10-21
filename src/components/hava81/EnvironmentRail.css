@@ -40,7 +40,7 @@
   }
 
   .app .environment-rail__label {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     letter-spacing: 0.025em;
     text-transform: none;
   }
@@ -285,7 +285,7 @@
     min-width: 0;
     color: inherit;
     opacity: 0.88;
-    font-size: 0.77rem;
+    font-size: 0.8125rem;
     font-weight: 760;
     line-height: 1.25;
     letter-spacing: 0.055em;
@@ -405,7 +405,7 @@
       height: 1.4rem;
     }
     .app .environment-rail__label {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       letter-spacing: 0.02em;
     }
     .app .environment-rail__value {
@@ -431,7 +431,7 @@
       height: 1.9rem;
     }
     .app .environment-rail__label {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
     }
     .app .environment-rail__value {
       font-size: 1.14rem;
