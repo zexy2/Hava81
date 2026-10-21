@@ -310,7 +310,10 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   </h3>
                 </div>
                 <div className="route-weather__score">
-                  <small>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</small>
+                  <small>
+                    {t('hava81.scoreScope.route')} ·{' '}
+                    {t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}
+                  </small>
                   <strong>
                     {result.score}
                     <span>/100</span>
@@ -343,6 +346,9 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                 })}
               </button>
             ) : null}
+            <p className="route-weather__segments-caption">
+              {t('hava81.scoreScope.hourly')} · {t('hava81.scoreScope.scale')}
+            </p>
             <div
               className="route-weather__segments"
               role="list"

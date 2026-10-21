@@ -351,7 +351,8 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                     {row.activityPlan ? (
                       <span>
                         <span className="hava81-compare__metric-label">
-                          {t(`hava81.activities.names.${row.activityPlan.activity}`)}
+                          {t(`hava81.activities.names.${row.activityPlan.activity}`)} (
+                          {t('hava81.scoreScope.activity').toLocaleLowerCase(language)})
                         </span>
                         <b>
                           {row.activityPlan.score}/100 ·{' '}

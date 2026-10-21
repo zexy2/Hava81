@@ -31,6 +31,8 @@ type ReflowCase = {
   degraded?: boolean;
   /** Known, documented gaps per width (selector skipped by the clipping check). */
   knownGaps?: Record<number, string>;
+  /** Region lives in the secondary Planla view (`?view=plan`, Faz 2.3). */
+  plan?: boolean;
 };
 
 const openRoute = async (page: Page) => {
@@ -52,34 +54,67 @@ const CASES: ReflowCase[] = [
     widths: [320, 390, 1024, 1280],
   },
   { name: 'environment rail', region: '.environment-rail', widths: [320, 768, 1440] },
-  { name: 'daily plan', region: '.daily-plan', widths: [320, 390, 768, 1024, 1280] },
+  { name: 'Planla entry', region: '.atlas-plan-entry', widths: [320, 768, 1280] },
+  {
+    name: 'Planla header',
+    region: '.atlas-plan-view__header',
+    widths: [320, 768, 1280],
+    plan: true,
+  },
+  {
+    name: 'Planla header (English)',
+    region: '.atlas-plan-view__header',
+    widths: [320, 768],
+    language: 'en',
+    plan: true,
+  },
+  { name: 'daily plan', region: '.daily-plan', widths: [320, 390, 768, 1024, 1280], plan: true },
   {
     name: 'daily plan (English)',
     region: '.daily-plan',
     widths: [768, 1024, 1280],
     language: 'en',
+    plan: true,
   },
-  { name: 'commute plan', region: '.commute-plan', widths: [320, 1024] },
-  { name: 'activity planner', region: '.activity-planner', widths: [320, 768, 1280] },
+  { name: 'commute plan', region: '.commute-plan', widths: [320, 1024], plan: true },
+  {
+    name: 'activity planner',
+    region: '.activity-planner',
+    widths: [320, 768, 1280],
+    plan: true,
+  },
   {
     name: 'activity planner (air/context unavailable)',
     region: '.activity-planner',
     widths: [390],
     degraded: true,
+    plan: true,
   },
   {
     name: 'activity planner (English)',
     region: '.activity-planner',
     widths: [768],
     language: 'en',
+    plan: true,
   },
-  { name: 'decision alerts', region: '.decision-alerts', widths: [320, 390, 768] },
-  { name: 'context signals', region: '.context-signals', widths: [320, 390] },
-  { name: 'route form', region: '.route-weather__form', widths: [320, 1024], prepare: openRoute },
+  {
+    name: 'decision alerts',
+    region: '.decision-alerts',
+    widths: [320, 390, 768],
+    plan: true,
+  },
+  { name: 'context signals', region: '.context-signals', widths: [320, 390], plan: true },
+  {
+    name: 'route form',
+    region: '.route-weather__form',
+    widths: [320, 1024],
+    prepare: openRoute,
+    plan: true,
+  },
 ];
 
 test.describe('200% text reflow', () => {
-  for (const { name, region, widths, language, prepare, knownGaps, degraded } of CASES) {
+  for (const { name, region, widths, language, prepare, knownGaps, degraded, plan } of CASES) {
     test(
       `${name} stays readable at 200% text (${widths.join(', ')}px)`,
       DESKTOP,
@@ -90,9 +125,12 @@ test.describe('200% text reflow', () => {
           await overrideApiJson(page, 'context', { error: { code: 'UNAVAILABLE' } }, 503);
         }
         await setWidth(page, widths[0], 900);
-        await page.goto('/istanbul');
-        await expect(page.locator('.hava81-decision-field__city')).toBeVisible();
+        await page.goto(plan ? '/istanbul/?view=plan' : '/istanbul');
+        await expect(
+          page.locator(plan ? '.atlas-plan-view__header h1' : '.hava81-decision-field__city')
+        ).toBeVisible();
         if (prepare) await prepare(page);
+        await expect(page.locator(region)).toBeVisible();
         await setTextScale(page, 200);
         for (const width of widths) {
           await setWidth(page, width, 900);
@@ -115,11 +153,19 @@ test.describe('200% text reflow', () => {
       await page.goto('/istanbul');
       await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
       await expectWithinViewportWidth(page.locator('.atlas-dashboard__primary'), '320px dashboard');
-      for (const width of [320, 390, 768, 1024, 1280]) {
-        await setWidth(page, width, 900);
-        for (const scale of [100, 200] as const) {
-          await setTextScale(page, scale);
-          await expectNoHorizontalScroll(page, `${width}px/${scale}%`);
+      for (const view of ['today', 'plan'] as const) {
+        if (view === 'plan') {
+          await setTextScale(page, 100);
+          await setWidth(page, 1280, 900);
+          await page.getByRole('button', { name: /Planla’yı aç/ }).click();
+          await expect(page.locator('.atlas-plan-view .daily-plan')).toBeVisible();
+        }
+        for (const width of [320, 390, 768, 1024, 1280]) {
+          await setWidth(page, width, 900);
+          for (const scale of [100, 200] as const) {
+            await setTextScale(page, scale);
+            await expectNoHorizontalScroll(page, `${view} ${width}px/${scale}%`);
+          }
         }
       }
     }
@@ -153,7 +199,7 @@ test.describe('200% text reflow', () => {
   );
 
   test('route corridor result stays readable at 200% text', DESKTOP, async ({ page }) => {
-    await page.goto('/istanbul');
+    await page.goto('/istanbul/?view=plan');
     await openRoute(page);
     await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
     await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();

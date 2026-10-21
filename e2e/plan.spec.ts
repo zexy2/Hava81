@@ -14,8 +14,119 @@ import { fixtures, overrideApi, overrideApiJson, seedSettings } from './helpers/
 
 const { current, hourlyForecast, now: fixtureNow } = fixtures;
 
-// Planla: Gün planı, Çıkış planı, aktiviteler, uyarılar, bağlam sinyalleri ve rota
-// (all grouped under `.atlas-plan-view` since Faz 2.3).
+// Planla: Gün planı, Çıkış planı, aktiviteler, uyarılar, bağlam sinyalleri ve rota.
+// Since Faz 2.3 these live in a separate view reached via the bottom navigation, the
+// desktop header or `?view=plan`; the panel tests open that view directly.
+const PLAN = '/istanbul/?view=plan';
+
+test.describe('Planla view', () => {
+  test('?view=plan opens Planla on load and Today leaves it', async ({ page }) => {
+    await page.goto(PLAN);
+    const plan = page.locator('.atlas-plan-view');
+    await expect(plan.getByRole('heading', { name: 'Planla · İstanbul', level: 1 })).toBeVisible();
+    await expect(plan.getByRole('heading', { name: 'Gün planı' })).toBeVisible();
+    // The main flow is not rendered behind Planla.
+    await expect(page.locator('.hava81-decision-field')).toHaveCount(0);
+    await expect(page.locator('.decision-glance')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/istanbul\/\?view=plan$/);
+
+    await plan.getByRole('button', { name: 'Bugüne dön' }).click();
+    await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
+    await expect(plan).toBeHidden();
+    await expect(page).toHaveURL(/\/istanbul\/$/);
+  });
+
+  test(
+    'mobile bottom navigation switches between Today and Planla and updates the URL',
+    MOBILE,
+    async ({ page }) => {
+      await page.goto('/istanbul/');
+      const nav = page.locator('.atlas-bottom-nav');
+      const planButton = nav.getByRole('button', { name: 'Planla' });
+      const todayButton = nav.getByRole('button', { name: 'Bugün' });
+      await expect(todayButton).toHaveAttribute('aria-current', 'page');
+      await expect(page.locator('.daily-plan')).toBeHidden();
+
+      await planButton.click();
+      await expect(planButton).toHaveAttribute('aria-current', 'page');
+      await expect(page).toHaveURL(/\?view=plan$/);
+      await expect(page.locator('.daily-plan')).toBeVisible();
+      await expect(page.locator('.activity-planner')).toBeVisible();
+
+      await todayButton.click();
+      await expect(todayButton).toHaveAttribute('aria-current', 'page');
+      await expect(page).toHaveURL(/\/istanbul\/$/);
+      await expect(page.locator('.hava81-decision-field')).toBeVisible();
+      await expect(page.locator('.daily-plan')).toBeHidden();
+    }
+  );
+
+  test(
+    'desktop header offers Planla when the bottom navigation is hidden',
+    DESKTOP,
+    async ({ page }) => {
+      await page.goto('/istanbul/');
+      await expect(page.locator('.atlas-bottom-nav')).toBeHidden();
+      const headerPlan = page.locator('.atlas-plan-button');
+      await expect(headerPlan).toBeVisible();
+      await expect(headerPlan).not.toHaveAttribute('aria-current');
+      await headerPlan.click();
+      await expect(headerPlan).toHaveAttribute('aria-current', 'page');
+      await expect(page).toHaveURL(/\?view=plan$/);
+      await expect(page.locator('.atlas-plan-view .commute-plan')).toBeVisible();
+    }
+  );
+
+  test(
+    'the decision summary score explanation opens the day plan in Planla',
+    DESKTOP,
+    async ({ page }) => {
+      await page.goto('/istanbul/');
+      await page.locator('.decision-glance__details').click();
+      await expect(page).toHaveURL(/\?view=plan$/);
+      const title = page.locator('#daily-plan-title');
+      await expect(title).toBeVisible();
+      await expect(title).toBeFocused();
+    }
+  );
+
+  test('plan-view state survives a round trip to Today', DESKTOP, async ({ page }) => {
+    await page.goto(PLAN);
+    const picnic = page.getByRole('button', { name: 'Piknik' });
+    await picnic.click();
+    await expect(picnic).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Bugüne dön' }).click();
+    await expect(page.locator('.hava81-decision-field')).toBeVisible();
+    await page.locator('.atlas-plan-button').click();
+    await expect(page.getByRole('button', { name: 'Piknik' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+  });
+
+  test('scores in Planla are labelled hourly or per activity', DESKTOP, async ({ page }) => {
+    await page.goto(PLAN);
+    await expect(page.locator('.daily-plan__slots-caption')).toHaveText(
+      'Saatlik uygunluk · 0–100 · yüksek daha uygun'
+    );
+    await expect(page.locator('.daily-plan__score small')).toContainText('Hava81 Skoru');
+    const cards = page.locator('.activity-card');
+    await expect(cards).toHaveCount(2);
+    for (const card of await cards.all())
+      await expect(card.locator('.activity-card__score')).toContainText('Bu aktivite için');
+  });
+
+  test('English Planla uses "Plan" and labels activity scores', DESKTOP, async ({ page }) => {
+    await seedSettings(page, { language: 'en' });
+    await page.goto(PLAN);
+    await expect(page.getByRole('heading', { name: 'Plan · İstanbul', level: 1 })).toBeVisible();
+    await expect(page.locator('.atlas-plan-button')).toHaveText('Plan');
+    await expect(page.locator('.daily-plan__slots-caption')).toHaveText(
+      'Hourly suitability · 0–100 · higher is better'
+    );
+    await expect(page.locator('.activity-card__score').first()).toContainText('For this activity');
+  });
+});
 
 test.describe('daily plan', () => {
   test(
@@ -44,7 +155,7 @@ test.describe('daily plan', () => {
         })
       );
 
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       const timeline = page.getByRole('list', { name: 'Günün hava uygunluk zaman çizelgesi' });
       await expect(timeline.locator('.daily-plan__slot')).toHaveCount(12);
       await expect(timeline).not.toContainText('Çok uygun');
@@ -135,7 +246,7 @@ test.describe('daily plan', () => {
         })
       );
 
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       const timeline = page.getByRole('list', { name: 'Günün hava uygunluk zaman çizelgesi' });
       await expect(timeline.locator('.daily-plan__slot')).toHaveCount(profile.length);
       const scores = (await timeline.locator('.daily-plan__slot > strong').allTextContents()).map(
@@ -171,7 +282,7 @@ test.describe('daily plan', () => {
           visibility: 20000,
         })),
       });
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       const timeline = page.locator('.daily-plan .daily-plan__slots');
       const slots = timeline.locator('.daily-plan__slot');
       await expect(slots).toHaveCount(12);
@@ -205,7 +316,7 @@ test.describe('daily plan', () => {
     'mobile Daily Plan keeps its safety boundary visible and tucks method detail behind a disclosure',
     MOBILE,
     async ({ page }) => {
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       await expect(page.getByRole('heading', { name: 'Gün planı' })).toBeVisible();
       const safety = page.locator('.daily-plan__safety');
       const method = page.locator('.daily-plan__method');
@@ -229,7 +340,7 @@ test.describe('daily plan', () => {
     'mobile score explanation opens on demand and every activity choice stays visible',
     MOBILE,
     async ({ page }) => {
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       const breakdown = page.locator('.daily-plan__explain');
       await expect(breakdown).toBeVisible();
       await breakdown.locator('summary').click();
@@ -261,7 +372,7 @@ test.describe('daily plan', () => {
     MOBILE,
     async ({ page }) => {
       await seedSettings(page, { language: 'en', themeMode: 'dark' });
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
       const header = page.locator('.daily-plan__header');
       for (const scale of [100, 200] as const) {
@@ -283,7 +394,7 @@ test.describe('activities', () => {
     'activity preference and time range change the personalized plan',
     DESKTOP,
     async ({ page }) => {
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       const picnic = page.getByRole('button', { name: 'Piknik' });
       await expect(picnic).toHaveAttribute('aria-pressed', 'false');
       await picnic.click();
@@ -310,7 +421,7 @@ test.describe('activities', () => {
     async ({ page }) => {
       await seedSettings(page, { language: 'en' });
       await setWidth(page, 320, 720);
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
       await expect(page.getByRole('heading', { name: 'What are you doing today?' })).toBeAttached();
       await expect(page.locator('.daily-plan__quick > *')).toHaveCount(3);
@@ -344,7 +455,7 @@ test.describe('activities', () => {
     'expanded activity cards stay readable at 320px with 200% text',
     MOBILE,
     async ({ page }) => {
-      await page.goto('/istanbul/');
+      await page.goto(PLAN);
       const planner = page.locator('section.activity-planner');
       const chips = planner.locator('.activity-planner__chips button');
       for (let index = 0; index < 2; index += 1) {
@@ -371,7 +482,7 @@ test.describe('activities', () => {
   );
 
   test('activity disclosures keep a visible keyboard focus ring', DESKTOP, async ({ page }) => {
-    await page.goto('/istanbul');
+    await page.goto(PLAN);
     for (const summary of [
       page.locator('.activity-planner__window-help summary'),
       page.locator('.activity-planner__score-explanation summary'),
@@ -393,7 +504,7 @@ test.describe('commute (Çıkış planı)', () => {
       const outboundClock = fixtures.localClockAt(2);
       const returnClock = fixtures.localClockAt(5);
 
-      await page.goto('/istanbul/');
+      await page.goto(PLAN);
       await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
       await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(outboundClock);
       await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(returnClock);
@@ -421,7 +532,7 @@ test.describe('commute (Çıkış planı)', () => {
   test('commute windows reflow at 200% text on phones', MOBILE, async ({ page }) => {
     await overrideApiJson(page, 'hourly', fixtures.hourlyFromNow());
     await page.clock.setFixedTime(new Date(fixtureNow));
-    await page.goto('/istanbul');
+    await page.goto(PLAN);
     await setTextScale(page, 200);
     await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(fixtures.localClockAt(2));
     await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(fixtures.localClockAt(5));
@@ -436,7 +547,7 @@ test.describe('commute (Çıkış planı)', () => {
 
 test.describe('route weather', () => {
   test('route weather renders a transparent corridor result', DESKTOP, async ({ page }) => {
-    await page.goto('/istanbul');
+    await page.goto(PLAN);
     await page.getByText('Rota havası', { exact: true }).click();
     await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
     await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
@@ -447,7 +558,7 @@ test.describe('route weather', () => {
   });
 
   test('route disclosure keeps a visible keyboard focus ring', DESKTOP, async ({ page }) => {
-    await page.goto('/istanbul');
+    await page.goto(PLAN);
     await expectVisibleFocusRing(page.locator('.route-weather > summary'), {
       insideClippingRail: true,
     });
@@ -455,7 +566,7 @@ test.describe('route weather', () => {
 
   test('narrow route form keeps endpoints usable and swaps direction', MOBILE, async ({ page }) => {
     await setWidth(page, 320, 720);
-    await page.goto('/istanbul');
+    await page.goto(PLAN);
     await page.getByText('Rota havası', { exact: true }).click();
     const form = page.locator('.route-weather__form');
     const origin = form.getByLabel('Başlangıç');
@@ -478,7 +589,7 @@ test.describe('route weather', () => {
     'mobile route corridor scrolls horizontally inside its own rail',
     MOBILE,
     async ({ page }) => {
-      await page.goto('/istanbul');
+      await page.goto(PLAN);
       await page.getByText('Rota havası', { exact: true }).click();
       await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
       await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();

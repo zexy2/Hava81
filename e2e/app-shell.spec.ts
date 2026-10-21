@@ -26,6 +26,10 @@ test('core city experience renders and uses a shareable city URL', async ({ page
     'Hava81 tarafından biçimlendirildi'
   );
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
+  // Faz 2.3: plan, activities and route are one step away in Planla, not in the main flow.
+  await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeHidden();
+  await page.getByRole('button', { name: /Planla’yı aç/ }).click();
+  await expect(page).toHaveURL(/\?view=plan$/);
   await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
   const dailyPlan = page.locator('.daily-plan');
   await expect(dailyPlan).toContainText('%45 · 0,2 mm');
@@ -33,7 +37,7 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
   await expect(page.getByText('UV · 24s model maksimumu', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Rota havası/i)).toBeVisible();
+  await expect(page.getByText('Rota havası', { exact: true })).toBeVisible();
 });
 
 test.describe('routing and location', () => {

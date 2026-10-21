@@ -51,7 +51,7 @@ test('320px navigation remains operable with 200% text in both languages', async
     const nav = page.locator('.atlas-bottom-nav');
     await expect(nav).toBeVisible();
     const buttons = nav.locator('button');
-    await expect(buttons).toHaveCount(3);
+    await expect(buttons).toHaveCount(4);
     const measurements = await buttons.evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
       const label = element.querySelector('.atlas-bottom-nav__label');

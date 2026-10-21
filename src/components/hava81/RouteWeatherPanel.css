@@ -323,3 +323,12 @@
     transition: none;
   }
 }
+
+/* Faz 2.3: segment numbers are hourly suitability at that point of the route. */
+.route-weather__segments-caption {
+  margin: 0 0 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  opacity: 0.82;
+}

@@ -4,6 +4,7 @@ import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
+import { withAtlasView } from '../../utils/atlasView';
 import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DecisionGlance.css';
 
@@ -12,9 +13,17 @@ interface Props {
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
   forecastMeta: ForecastMeta | null;
+  /** Opens the Planla view on the day plan, where this score is explained (Faz 2.3). */
+  onOpenDetails?: () => void;
 }
 
-export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Props) {
+export function DecisionGlance({
+  weather,
+  hourly,
+  airQuality,
+  forecastMeta,
+  onOpenDetails,
+}: Props) {
   const { t, i18n } = useTranslation();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -183,7 +192,20 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
               </strong>
             </div>
             <small className="decision-glance__score-label">{t('hava81.glance.score')}</small>
-            <a className="decision-glance__details" href="#daily-plan-title">
+            <a
+              className="decision-glance__details"
+              href={`${withAtlasView(`${window.location.pathname}${window.location.search}`, 'plan')}#daily-plan-title`}
+              onClick={
+                onOpenDetails
+                  ? event => {
+                      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)
+                        return;
+                      event.preventDefault();
+                      onOpenDetails();
+                    }
+                  : undefined
+              }
+            >
               {t('hava81.glance.details')} <span aria-hidden="true">↗</span>
             </a>
           </>

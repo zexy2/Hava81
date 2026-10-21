@@ -10,8 +10,11 @@
   bottom: 0;
   left: 0;
   z-index: 40;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Four destinations (Faz 2.3). Flex-wrap with an em basis keeps one row at 100%
+   * text and falls back to a 2×2 dock when text is enlarged, so labels never clip. */
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
   gap: 4px;
   min-height: 64px;
   padding: 4px 12px max(4px, env(safe-area-inset-bottom));
@@ -33,6 +36,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex: 1 1 3.5em;
   min-width: 44px;
   min-height: 56px;
   padding: 6px 8px 9px;
@@ -175,14 +179,5 @@
 @media (max-width: 24rem) {
   .atlas-bottom-nav__button {
     padding-inline: 2px;
-  }
-}
-
-/* The English Compare label needs more inline space when users enlarge text.
- * Today and Map are shorter, so distribute the same available nav width
- * without clipping text, reducing its size, or changing touch targets. */
-@media (max-width: 47.99rem) {
-  .atlas-bottom-nav:lang(en) {
-    grid-template-columns: minmax(0, 0.94fr) minmax(0, 0.69fr) minmax(0, 1.37fr);
   }
 }

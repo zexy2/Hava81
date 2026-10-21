@@ -14,9 +14,14 @@ test.describe('target size', () => {
     await expect(
       page.locator('.hava81-forecast-atlas__source').getByRole('link', { name: 'Open-Meteo' })
     ).toBeVisible();
+    expect(await findUndersizedTargets(page.locator('body'))).toEqual([]);
+
+    // Planla (?view=plan) holds the context signals, plan, activity and route controls.
+    await page.goto('/istanbul/?view=plan');
     await expect(
       page.locator('.context-signals__source').getByRole('link', { name: 'Open-Meteo' })
     ).toBeVisible();
+    await expect(page.locator('.activity-planner__chips button').first()).toBeVisible();
     expect(await findUndersizedTargets(page.locator('body'))).toEqual([]);
   });
 
@@ -66,34 +71,40 @@ test.describe('contrast', () => {
           },
           { language, themeMode }
         );
-        await page.reload();
-        await expect(page.locator('.decision-glance__score')).toBeVisible();
-        await expect(page.locator('.daily-plan__decision')).toBeVisible();
-        await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
-        const failures = await page.evaluate(async () => {
-          const axe = (
-            window as unknown as Window & {
-              axe: {
-                run: (
-                  root: Document,
-                  options: unknown
-                ) => Promise<{
-                  violations: Array<{ id: string; nodes: Array<{ target: string[] }> }>;
-                }>;
-              };
-            }
-          ).axe;
-          const result = await axe.run(document, {
-            runOnly: { type: 'rule', values: ['color-contrast'] },
+        for (const view of ['today', 'plan'] as const) {
+          await page.goto(view === 'plan' ? '/izmir/?view=plan' : '/izmir/');
+          await expect(
+            page.locator(view === 'plan' ? '.daily-plan__decision' : '.decision-glance__score')
+          ).toBeVisible();
+          await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+          const failures = await page.evaluate(async () => {
+            const axe = (
+              window as unknown as Window & {
+                axe: {
+                  run: (
+                    root: Document,
+                    options: unknown
+                  ) => Promise<{
+                    violations: Array<{ id: string; nodes: Array<{ target: string[] }> }>;
+                  }>;
+                };
+              }
+            ).axe;
+            const result = await axe.run(document, {
+              runOnly: { type: 'rule', values: ['color-contrast'] },
+            });
+            return result.violations.flatMap(violation =>
+              violation.nodes.map(node => `${violation.id}: ${node.target.join(', ')}`)
+            );
           });
-          return result.violations.flatMap(violation =>
-            violation.nodes.map(node => `${violation.id}: ${node.target.join(', ')}`)
-          );
-        });
-        expect(failures, `text contrast at ${width}px (${language}, ${themeMode})`).toEqual([]);
-        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-          true
-        );
+          expect(
+            failures,
+            `text contrast at ${width}px (${language}, ${themeMode}, ${view})`
+          ).toEqual([]);
+          expect(
+            await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
+          ).toBe(true);
+        }
       }
     }
   );
@@ -114,6 +125,7 @@ test.describe('forced colors', () => {
       page.locator('.atlas-bottom-nav__button:not([aria-current])').first(),
       'bottom navigation'
     );
+    await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Planla' }).click();
     await expectSelectedStateDistinct(
       page.locator('.activity-planner__chips button[aria-pressed="true"]').first(),
       page.locator('.activity-planner__chips button[aria-pressed="false"]').first(),
@@ -198,12 +210,15 @@ test.describe('keyboard focus', () => {
       await page.goto('/istanbul');
       for (const control of [
         page.locator('.hava81-forecast-atlas__range-button').first(),
-        page.locator('.activity-planner__chips button').first(),
         page.locator('.environment-rail__module--action'),
       ]) {
         await control.scrollIntoViewIfNeeded();
         await expectVisibleFocusRing(control, { insideClippingRail: true });
       }
+      await page.goto('/istanbul/?view=plan');
+      const chip = page.locator('.activity-planner__chips button').first();
+      await chip.scrollIntoViewIfNeeded();
+      await expectVisibleFocusRing(chip, { insideClippingRail: true });
     }
   );
 });
