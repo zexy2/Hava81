@@ -36,6 +36,8 @@ Asıl sorunlar başka yerde:
 
 Durum: 1.1–1.5 tamamlandı, inceleme bekliyor — dal fix/faz1-veri-tutarliligi, PR https://github.com/zexy2/Hava81/pull/1325
 
+Kaldığı yer (CI): PR #1325'te `Browser flows` (Playwright e2e) kırmızı; diğer tüm kontroller yeşil (Frontend quality, API, build, CodeQL, Lighthouse). Hata ayrıntısı alınamadı: https://github.com/zexy2/Hava81/actions/runs/39641837137/job/119367263620 loguna bak. Olası sebepler: değişen metinler ("Rüzgâr", "1 sa", "24 saatte en düşük/yüksek", "Bugün (takvim günü) yüksek / düşük", yeni hata mesajları) veya başarısız aramanın artık şehri silmeyip satır içi `.atlas-search-inline-error` göstermesi. e2e/ içindeki ilgili beklentiyi yeni davranışa göre güncelle.
+
 - [x] **1.1** Tek bir "decision snapshot" seçici yaz: en iyi pencere, koşul, min/max ve rüzgâr tek yerden hesaplansın — _Aynı ekranda çelişen veriler var. Ürünün "5 saniyede karar" vaadini doğrudan bozuyor — M_
   - Kaldığı yer: `src/domain/decision/decisionSnapshot.ts` (`getDecisionSnapshot`) eklendi; Karar özeti (hero), Karar alanı ("…civarı daha sakin pencere") ve Gün planı artık aynı en iyi pencereyi okuyor; "benzer görünüyor" durumunda en uygun saat gösterilmiyor. Aktivite kartları bilinçli olarak aktiviteye özel pencere hesaplıyor (farklı eşikler); istenirse etiketleri "bu aktivite için" diye netleştirilebilir.
 - [x] **1.2** "Şu an" için tek sağlayıcı kullan. Min/max değerlerinde "önümüzdeki 24 saat" ile "takvim günü" ayrımını etiketle — _OpenWeather ve Open-Meteo verisi uzlaştırılmadan yan yana basılıyor — M_
