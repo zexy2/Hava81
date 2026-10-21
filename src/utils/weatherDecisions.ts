@@ -38,6 +38,11 @@ export interface WeatherDecisionInput {
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
   uvIndexMax?: number;
+  /**
+   * Best window from the shared decision snapshot (Faz 1.1). When given, the outdoor-window
+   * decision uses this time (or is omitted for `null`) instead of a separate local pick.
+   */
+  bestWindowTime?: Date | null;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -59,6 +64,7 @@ export const getWeatherDecisions = ({
   hourly,
   airQuality,
   uvIndexMax,
+  bestWindowTime,
 }: WeatherDecisionInput): WeatherDecision[] => {
   const next = nextHours(hourly, 12);
   const decisions: WeatherDecision[] = [];
@@ -167,12 +173,18 @@ export const getWeatherDecisions = ({
     (best, entry) => (!best || entry.result.score > best.result.score ? entry : best),
     undefined
   );
-  if (outdoor && outdoor.result.score >= 85) {
+  const snapshotPoint =
+    bestWindowTime === undefined
+      ? outdoor
+      : bestWindowTime === null
+        ? undefined
+        : scored.find(entry => entry.point.time.getTime() === bestWindowTime.getTime());
+  if (snapshotPoint && snapshotPoint.result.score >= 85) {
     decisions.push({
       kind: 'outdoor-window',
       severity: 'info',
-      time: outdoor.point.time,
-      value: outdoor.point.apparentTemperature ?? outdoor.point.temp,
+      time: snapshotPoint.point.time,
+      value: snapshotPoint.point.apparentTemperature ?? snapshotPoint.point.temp,
     });
   }
 

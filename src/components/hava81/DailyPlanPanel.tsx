@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
-import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
+import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
@@ -73,10 +73,12 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
   const shareFeedbackTimerRef = useRef<number | null>(null);
   const shareInFlightRef = useRef(false);
   const trackedPlanRef = useRef<string | null>(null);
-  const plan = useMemo(
-    () => buildDailyPlan({ weather, hourly, airQuality }),
+  const snapshot = useMemo(
+    () => getDecisionSnapshot({ weather, hourly, airQuality }),
     [airQuality, hourly, weather]
   );
+  const plan = snapshot.plan;
+  const bestWindowRange = snapshot.bestWindow;
   const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const temperatureSymbol = getTemperatureSymbol();
   const formatTemperature = (temperature: number) =>
@@ -131,10 +133,10 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
         ? t('hava81.dailyPlan.nowOrLater.now')
         : t('hava81.dailyPlan.nowOrLater.similar');
 
-  const bestWindowShareText = plan.bestWindowRange
-    ? plan.bestWindowRange.start.time.getTime() === plan.bestWindowRange.end.time.getTime()
-      ? formatTime(plan.bestWindowRange.peak.time)
-      : `${formatTime(plan.bestWindowRange.start.time)}–${formatTime(plan.bestWindowRange.end.time)}`
+  const bestWindowShareText = bestWindowRange
+    ? bestWindowRange.start.time.getTime() === bestWindowRange.end.time.getTime()
+      ? formatTime(bestWindowRange.peak.time)
+      : `${formatTime(bestWindowRange.start.time)}–${formatTime(bestWindowRange.end.time)}`
     : undefined;
 
   // Keep the visible timeline aligned with the same 12-hour horizon used by the score.
@@ -245,15 +247,15 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
       <div className="daily-plan__decision">
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         <strong>{nowOrLaterText}</strong>
-        {plan.bestWindowRange ? (
+        {bestWindowRange ? (
           <small>
-            {plan.bestWindowRange.start.time.getTime() === plan.bestWindowRange.end.time.getTime()
+            {bestWindowRange.start.time.getTime() === bestWindowRange.end.time.getTime()
               ? t('hava81.dailyPlan.bestWindow', {
-                  time: formatTime(plan.bestWindowRange.peak.time),
+                  time: formatTime(bestWindowRange.peak.time),
                 })
               : t('hava81.dailyPlan.bestRange', {
-                  start: formatTime(plan.bestWindowRange.start.time),
-                  end: formatTime(plan.bestWindowRange.end.time),
+                  start: formatTime(bestWindowRange.start.time),
+                  end: formatTime(bestWindowRange.end.time),
                 })}
           </small>
         ) : null}
@@ -312,9 +314,9 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
           );
           // Highlight the actual recommendation interval; this only affects presentation.
           const isBestWindow = Boolean(
-            plan.bestWindowRange &&
-              slot.time.getTime() >= plan.bestWindowRange.start.time.getTime() &&
-              slot.time.getTime() <= plan.bestWindowRange.end.time.getTime()
+            bestWindowRange &&
+              slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
+              slot.time.getTime() <= bestWindowRange.end.time.getTime()
           );
           const primaryReason = slot.reasons[0];
           const primaryReasonText = primaryReason
