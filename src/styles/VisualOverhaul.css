@@ -2,28 +2,32 @@
 .app {
   --premium-card-border: rgb(113 157 214 / 0.22);
   --premium-elevation: 0 18px 42px rgb(18 63 125 / 0.1), 0 3px 9px rgb(40 84 142 / 0.04);
-  background: radial-gradient(ellipse at 85% 4%, rgb(185 228 255 / .5), transparent 44%), #f5f9ff;
+  background: radial-gradient(ellipse at 85% 4%, rgb(185 228 255 / 0.5), transparent 44%), #f5f9ff;
 }
 .app[data-color-mode='dark'] {
-  --premium-card-border: rgb(107 165 198 / .3);
-  --premium-elevation: 0 18px 44px rgb(0 0 0 / .22);
+  --premium-card-border: rgb(107 165 198 / 0.3);
+  --premium-elevation: 0 18px 44px rgb(0 0 0 / 0.22);
   background: radial-gradient(ellipse at 85% 5%, #17394e, transparent 44%), #0c202f;
 }
 .app .decision-glance {
   min-height: 18rem;
   padding: clamp(1.3rem, 2.4vw, 2.3rem);
-  border-color: rgb(148 207 248 / .32);
+  border-color: rgb(148 207 248 / 0.32);
   color: #f9fcff;
-  background: radial-gradient(ellipse at 85% 10%, rgb(91 192 231 / .4), transparent 40%), linear-gradient(113deg, #112a52, #164e82 58%, #1d8ba6);
-  box-shadow: 0 23px 48px rgb(19 72 133 / .18);
+  background:
+    radial-gradient(ellipse at 85% 10%, rgb(91 192 231 / 0.4), transparent 40%),
+    linear-gradient(113deg, #112a52, #164e82 58%, #1d8ba6);
+  box-shadow: 0 23px 48px rgb(19 72 133 / 0.18);
 }
 .app[data-color-mode='dark'] .decision-glance {
-  background: radial-gradient(ellipse at 90% 10%, rgb(43 155 199 / .3), transparent 45%), linear-gradient(111deg, #0d2741, #16415c 57%, #176b78);
+  background:
+    radial-gradient(ellipse at 90% 10%, rgb(43 155 199 / 0.3), transparent 45%),
+    linear-gradient(111deg, #0d2741, #16415c 57%, #176b78);
 }
 .app .decision-glance .atlas-kicker,
 .app[data-color-mode='dark'] .decision-glance .atlas-kicker {
   color: #bce6fb;
-  letter-spacing: .14em;
+  letter-spacing: 0.14em;
 }
 .app .decision-glance__message {
   max-width: 35ch;
@@ -31,56 +35,81 @@
   font-size: clamp(1.65rem, 2.35vw, 2.4rem);
   font-weight: 780;
   line-height: 1.18;
-  letter-spacing: -.045em;
+  letter-spacing: -0.045em;
 }
-.app .decision-glance__window { color: #d9ebfa; line-height: 1.5; }
+.app .decision-glance__window {
+  color: #d9ebfa;
+  line-height: 1.5;
+}
 .app .decision-glance__date,
 .app[data-color-mode='dark'] .decision-glance__date {
   color: #d9f2ff;
-  background: rgb(255 255 255 / .13);
-  border: 1px solid rgb(255 255 255 / .17);
+  background: rgb(255 255 255 / 0.13);
+  border: 1px solid rgb(255 255 255 / 0.17);
 }
-.app .decision-glance__quick-list { gap: .7rem; padding-top: 1.25rem; }
+.app .decision-glance__quick-list {
+  gap: 0.7rem;
+  padding-top: 1.25rem;
+}
 .app .decision-glance__quick,
 .app[data-color-mode='dark'] .decision-glance__quick {
   min-height: 5rem;
-  padding: .8rem;
-  background: rgb(10 39 72 / .36);
-  border: 1px solid rgb(212 241 255 / .22);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .1);
+  padding: 0.8rem;
+  background: rgb(10 39 72 / 0.36);
+  border: 1px solid rgb(212 241 255 / 0.22);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
   backdrop-filter: blur(8px);
 }
-.app .decision-glance__quick strong { color: #fff; font-size: .83rem; }
+.app .decision-glance__quick strong {
+  color: #fff;
+  font-size: 0.83rem;
+}
 .app .decision-glance__quick small,
-.app[data-color-mode='dark'] .decision-glance__quick small { color: #d2e7f7; }
-.app .decision-glance__score-label { color: #f6fcff; }
+.app[data-color-mode='dark'] .decision-glance__quick small {
+  color: #d2e7f7;
+}
+.app .decision-glance__score-label {
+  color: #f6fcff;
+}
 .app .decision-glance__details {
   color: #133f7a;
   background: #f2f9ff;
-  border-color: rgb(255 255 255 / .7);
-  box-shadow: 0 5px 15px rgb(0 28 71 / .15);
+  border-color: rgb(255 255 255 / 0.7);
+  box-shadow: 0 5px 15px rgb(0 28 71 / 0.15);
 }
 .app .decision-glance__sun {
   top: 5%;
   right: 50%;
-  opacity: .5;
-  box-shadow: 0 0 70px 38px rgb(255 213 126 / .2);
+  opacity: 0.5;
+  box-shadow: 0 0 70px 38px rgb(255 213 126 / 0.2);
 }
 .app .decision-glance__hills {
   bottom: -6.8rem;
-  background: linear-gradient(145deg, rgb(102 223 230 / .32), rgb(11 76 149 / .11));
+  background: linear-gradient(145deg, rgb(102 223 230 / 0.32), rgb(11 76 149 / 0.11));
 }
 .app .hava81-decision-field,
-.app .hava81-forecast-atlas { border-radius: 26px; }
+.app .hava81-forecast-atlas {
+  border-radius: 26px;
+}
 .app .hava81-decision-field__current {
   border: 1px solid color-mix(in srgb, var(--color-aegean) 16%, transparent);
-  background: radial-gradient(circle at 87% 25%, rgb(172 224 255 / .7), transparent 38%), linear-gradient(133deg, #edf9ff, #e4f2ff 56%, #dcecff);
+  background:
+    radial-gradient(circle at 87% 25%, rgb(172 224 255 / 0.7), transparent 38%),
+    linear-gradient(133deg, #edf9ff, #e4f2ff 56%, #dcecff);
 }
 .app[data-color-mode='dark'] .hava81-decision-field__current {
-  background: radial-gradient(circle at 88% 25%, rgb(59 153 198 / .38), transparent 44%), linear-gradient(125deg, #123a54, #204b66);
+  background:
+    radial-gradient(circle at 88% 25%, rgb(59 153 198 / 0.38), transparent 44%),
+    linear-gradient(125deg, #123a54, #204b66);
 }
-.app .hava81-decision-field__change { border-radius: 16px; background: linear-gradient(115deg, #fff9ea, #fff0cd); background-color: #fff3df; }
-.app[data-color-mode='dark'] .hava81-decision-field__change { background: linear-gradient(115deg, #413b2c, #39342b); }
+.app .hava81-decision-field__change {
+  border-radius: 16px;
+  background: linear-gradient(115deg, #fff9ea, #fff0cd);
+  background-color: #fff3df;
+}
+.app[data-color-mode='dark'] .hava81-decision-field__change {
+  background: linear-gradient(115deg, #413b2c, #39342b);
+}
 .app .hava81-decision-field__metric,
 .app .hava81-decision-field__metric:nth-child(even),
 .app .hava81-decision-field__metric:nth-child(n + 3) {
@@ -91,149 +120,223 @@
   border-radius: 14px;
   background: color-mix(in srgb, var(--color-aegean-pale) 70%, var(--color-atlas-paper));
 }
-.app .hava81-forecast-atlas__day { border-radius: 13px; }
-.app .hava81-forecast-atlas__day:nth-child(odd) { background: color-mix(in srgb, var(--color-atlas-paper) 83%, var(--premium-soft)); }
-.app .environment-rail { gap: .6rem; padding: .5rem; border-radius: 24px; }
-.app .environment-rail__module { border-radius: 16px; }
+.app .hava81-forecast-atlas__day {
+  border-radius: 13px;
+}
+.app .hava81-forecast-atlas__day:nth-child(odd) {
+  background: color-mix(in srgb, var(--color-atlas-paper) 83%, var(--premium-soft));
+}
+.app .environment-rail {
+  gap: 0.6rem;
+  padding: 0.5rem;
+  border-radius: 24px;
+}
+.app .environment-rail__module {
+  border-radius: 16px;
+}
 
 /* A shorter current-weather stack keeps the actual forecast nearer the fold. */
 @media (max-width: 47.99rem) {
   .app .atlas-dashboard,
-  .app .atlas-dashboard__primary { gap: .85rem; }
-  .app .atlas-main { padding-top: .85rem; }
+  .app .atlas-dashboard__primary {
+    gap: 0.85rem;
+  }
+  .app .atlas-main {
+    padding-top: 0.85rem;
+  }
   .app .decision-glance {
     min-height: 0;
     padding: 1.05rem;
-    gap: .7rem;
+    gap: 0.7rem;
     border-radius: 21px;
   }
   .app .decision-glance__message {
-    margin-top: .4rem;
+    margin-top: 0.4rem;
     font-size: clamp(1rem, 4.1vw, 1.25rem);
     line-height: 1.26;
-    letter-spacing: -.025em;
+    letter-spacing: -0.025em;
   }
-  .app .decision-glance__quick-list { padding-top: .6rem; gap: .4rem; }
+  .app .decision-glance__quick-list {
+    padding-top: 0.6rem;
+    gap: 0.4rem;
+  }
   .app .decision-glance__quick,
   .app[data-color-mode='dark'] .decision-glance__quick {
     min-height: 3.5rem;
-    padding: .45rem .5rem;
+    padding: 0.45rem 0.5rem;
     border-radius: 11px;
   }
-  .app .decision-glance__quick strong { font-size: .72rem; }
-  .app .decision-glance__quick small { font-size: .62rem; }
-  .app .decision-glance__sun { display: none; }
-  .app .decision-glance__score { box-shadow: 0 8px 16px rgb(0 35 72 / .2); }
-  .app .decision-glance__details { font-weight: 750; box-shadow: none; }
+  .app .decision-glance__quick strong {
+    font-size: 0.75rem;
+  }
+  .app .decision-glance__quick small {
+    font-size: 0.75rem;
+  }
+  .app .decision-glance__sun {
+    display: none;
+  }
+  .app .decision-glance__score {
+    box-shadow: 0 8px 16px rgb(0 35 72 / 0.2);
+  }
+  .app .decision-glance__details {
+    font-weight: 750;
+    box-shadow: none;
+  }
   .app .hava81-decision-field {
     padding: 1rem;
-    gap: .8rem;
+    gap: 0.8rem;
     border-radius: 21px;
   }
-  .app .hava81-decision-field__identity { gap: .4rem; padding-bottom: .7rem; }
+  .app .hava81-decision-field__identity {
+    gap: 0.4rem;
+    padding-bottom: 0.7rem;
+  }
   .app .hava81-decision-field__current {
     min-height: 0;
-    padding: .9rem 1rem;
+    padding: 0.9rem 1rem;
     border-radius: 18px;
   }
-  .app .hava81-decision-field__reading { min-height: 7.1rem; }
-  .app .hava81-decision-field__condition { margin-top: 0; }
-  .app .hava81-decision-field__change { padding: .7rem .85rem; }
-  .app .hava81-decision-field__change-title { margin-bottom: .35rem; }
+  .app .hava81-decision-field__reading {
+    min-height: 7.1rem;
+  }
+  .app .hava81-decision-field__condition {
+    margin-top: 0;
+  }
+  .app .hava81-decision-field__change {
+    padding: 0.7rem 0.85rem;
+  }
+  .app .hava81-decision-field__change-title {
+    margin-bottom: 0.35rem;
+  }
   .app .hava81-decision-field__metric,
   .app .hava81-decision-field__metric:nth-child(even),
   .app .hava81-decision-field__metric:nth-child(n + 3) {
-    padding: .65rem .75rem;
+    padding: 0.65rem 0.75rem;
   }
-  .app .hava81-decision-field__metric dt { margin-bottom: .3rem; }
-  .app .hava81-forecast-atlas { padding: 1rem; border-radius: 21px; }
-  .app .environment-rail { gap: .3rem; padding: 0; }
-  .app .environment-rail__module { border-radius: 13px; }
+  .app .hava81-decision-field__metric dt {
+    margin-bottom: 0.3rem;
+  }
+  .app .hava81-forecast-atlas {
+    padding: 1rem;
+    border-radius: 21px;
+  }
+  .app .environment-rail {
+    gap: 0.3rem;
+    padding: 0;
+  }
+  .app .environment-rail__module {
+    border-radius: 13px;
+  }
 }
 @media (max-width: 24rem) {
-  .app .decision-glance__quick-list { padding-top: .55rem; }
-  .app .hava81-decision-field { padding: .5rem; }
-  .app .hava81-decision-field__reading { min-height: 7.3rem; }
-  .app .hava81-decision-field__current { padding: .65rem; }
+  .app .decision-glance__quick-list {
+    padding-top: 0.55rem;
+  }
+  .app .hava81-decision-field {
+    padding: 0.5rem;
+  }
+  .app .hava81-decision-field__reading {
+    min-height: 7.3rem;
+  }
+  .app .hava81-decision-field__current {
+    padding: 0.65rem;
+  }
 }
 @media (forced-colors: active) {
-  .app .decision-glance__quick { border: 1px solid CanvasText; }
-  .app .decision-glance__details { border: 1px solid ButtonText; }
+  .app .decision-glance__quick {
+    border: 1px solid CanvasText;
+  }
+  .app .decision-glance__details {
+    border: 1px solid ButtonText;
+  }
 }
 
 /* Phase 2 — larger visual hierarchy and deliberate desktop asymmetry.
    Keep the earlier, separately captured baseline intact. */
 @media (min-width: 80rem) {
   .app .atlas-dashboard {
-    grid-template-columns: minmax(0, .91fr) minmax(0, 1.09fr);
+    grid-template-columns: minmax(0, 0.91fr) minmax(0, 1.09fr);
   }
 }
 
 /* A restrained meteorological contour replaces the sun behind the score ring. */
 .app .decision-glance {
   background:
-    radial-gradient(circle at 75% 0%, rgb(105 223 245 / .34), transparent 35%),
-    radial-gradient(ellipse at 106% 105%, rgb(29 188 199 / .30), transparent 47%),
+    radial-gradient(circle at 75% 0%, rgb(105 223 245 / 0.34), transparent 35%),
+    radial-gradient(ellipse at 106% 105%, rgb(29 188 199 / 0.3), transparent 47%),
     linear-gradient(114deg, #0c244b 4%, #164b7f 60%, #168ba3 100%);
 }
 .app[data-color-mode='dark'] .decision-glance {
   background:
-    radial-gradient(ellipse at 96% 15%, rgb(57 169 186 / .34), transparent 43%),
+    radial-gradient(ellipse at 96% 15%, rgb(57 169 186 / 0.34), transparent 43%),
     linear-gradient(113deg, #071f35, #143d60 58%, #146c78);
 }
 .app .decision-glance__atmosphere {
   width: 47%;
-  opacity: .7;
+  opacity: 0.7;
   background:
-    repeating-radial-gradient(circle at 95% 25%, transparent 0 43px, rgb(220 246 255 / .16) 44px 45px, transparent 46px 92px),
-    linear-gradient(90deg, transparent, rgb(101 207 225 / .10));
+    repeating-radial-gradient(
+      circle at 95% 25%,
+      transparent 0 43px,
+      rgb(220 246 255 / 0.16) 44px 45px,
+      transparent 46px 92px
+    ),
+    linear-gradient(90deg, transparent, rgb(101 207 225 / 0.1));
 }
-.app .decision-glance__sun { display: none; }
-.app .decision-glance__cloud { opacity: .44; }
+.app .decision-glance__sun {
+  display: none;
+}
+.app .decision-glance__cloud {
+  opacity: 0.44;
+}
 .app .decision-glance__hills {
   height: 10rem;
   bottom: -8rem;
   transform: rotate(-7deg);
-  background: linear-gradient(140deg, rgb(120 235 232 / .35), rgb(50 102 168 / .05));
+  background: linear-gradient(140deg, rgb(120 235 232 / 0.35), rgb(50 102 168 / 0.05));
 }
 .app .decision-glance__score {
-  box-shadow: 0 13px 36px rgb(3 22 50 / .26);
+  box-shadow: 0 13px 36px rgb(3 22 50 / 0.26);
 }
 .app .decision-glance__score-label {
-  text-shadow: 0 1px 3px rgb(6 40 65 / .35);
+  text-shadow: 0 1px 3px rgb(6 40 65 / 0.35);
 }
 
 /* A true sky-colored weather plate is the second visual anchor. */
 .app .hava81-decision-field__current {
   border: 1px solid #93cdfa;
   background:
-    radial-gradient(circle at 83% 27%, rgb(255 255 255 / .64), transparent 27%),
-    radial-gradient(ellipse at 95% 95%, rgb(100 177 243 / .34), transparent 57%),
+    radial-gradient(circle at 83% 27%, rgb(255 255 255 / 0.64), transparent 27%),
+    radial-gradient(ellipse at 95% 95%, rgb(100 177 243 / 0.34), transparent 57%),
     linear-gradient(130deg, #f0faff, #c5e7ff 52%, #a3d4fa);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .75);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.75);
 }
 .app[data-color-mode='dark'] .hava81-decision-field__current {
   border-color: #3d769b;
   background:
-    radial-gradient(ellipse at 93% 12%, rgb(46 141 188 / .38), transparent 47%),
+    radial-gradient(ellipse at 93% 12%, rgb(46 141 188 / 0.38), transparent 47%),
     linear-gradient(125deg, #10344f, #1a4b6a 65%, #265d76);
 }
 .app .hava81-decision-field__temperature-value {
-  text-shadow: 0 6px 22px rgb(23 81 130 / .07);
+  text-shadow: 0 6px 22px rgb(23 81 130 / 0.07);
 }
 .app .hava81-decision-field__symbol {
-  filter: drop-shadow(0 12px 22px rgb(21 107 163 / .20));
+  filter: drop-shadow(0 12px 22px rgb(21 107 163 / 0.2));
 }
 
 /* Connect the hourly graph, controls and daily strip into one forecast surface. */
 .app .hava81-forecast-atlas__hourly-viewport {
   border: 1px solid color-mix(in srgb, var(--color-aegean) 13%, transparent);
   border-radius: 17px;
-  background:
-    linear-gradient(180deg, rgb(198 231 254 / .52), rgb(237 248 255 / .27) 75%, transparent);
+  background: linear-gradient(
+    180deg,
+    rgb(198 231 254 / 0.52),
+    rgb(237 248 255 / 0.27) 75%,
+    transparent
+  );
 }
 .app[data-color-mode='dark'] .hava81-forecast-atlas__hourly-viewport {
-  background: linear-gradient(180deg, rgb(31 87 117 / .55), rgb(24 60 78 / .17));
+  background: linear-gradient(180deg, rgb(31 87 117 / 0.55), rgb(24 60 78 / 0.17));
 }
 .app .hava81-forecast-atlas__hours {
   border-top-color: color-mix(in srgb, var(--color-aegean) 18%, transparent);
@@ -256,31 +359,38 @@
   .app .atlas-dashboard > .daily-plan {
     border-radius: 25px;
   }
-  .app .decision-glance__message { max-width: 36ch; }
+  .app .decision-glance__message {
+    max-width: 36ch;
+  }
 }
 @media (max-width: 47.99rem) {
   .app .decision-glance {
     background:
-      radial-gradient(ellipse at 98% 0%, rgb(60 192 209 / .44), transparent 53%),
+      radial-gradient(ellipse at 98% 0%, rgb(60 192 209 / 0.44), transparent 53%),
       linear-gradient(114deg, #0d294f, #155b86 68%, #188ba2);
   }
   .app[data-color-mode='dark'] .decision-glance {
     background:
-      radial-gradient(ellipse at 98% 0%, rgb(45 157 172 / .26), transparent 57%),
+      radial-gradient(ellipse at 98% 0%, rgb(45 157 172 / 0.26), transparent 57%),
       linear-gradient(114deg, #0a2a40, #164760 70%, #235f78);
   }
-  .app .decision-glance__atmosphere { width: 50%; opacity: .42; }
+  .app .decision-glance__atmosphere {
+    width: 50%;
+    opacity: 0.42;
+  }
   .app .hava81-decision-field__current {
     background:
-      radial-gradient(circle at 80% 24%, rgb(255 255 255 / .56), transparent 31%),
+      radial-gradient(circle at 80% 24%, rgb(255 255 255 / 0.56), transparent 31%),
       linear-gradient(135deg, #edf9ff, #bedfff 60%, #a9d7fd);
   }
   .app[data-color-mode='dark'] .hava81-decision-field__current {
     background:
-      radial-gradient(circle at 88% 28%, rgb(54 151 188 / .28), transparent 43%),
+      radial-gradient(circle at 88% 28%, rgb(54 151 188 / 0.28), transparent 43%),
       linear-gradient(115deg, #103249, #205170);
   }
-  .app .hava81-forecast-atlas__hourly-viewport { border-radius: 15px; }
+  .app .hava81-forecast-atlas__hourly-viewport {
+    border-radius: 15px;
+  }
 }
 @media (forced-colors: active) {
   .app .hava81-decision-field__current,
@@ -305,12 +415,14 @@
     right: 60%;
     width: 3.8rem;
     height: 3.8rem;
-    opacity: .16;
-    box-shadow: 0 0 43px 20px rgb(255 225 170 / .09);
+    opacity: 0.16;
+    box-shadow: 0 0 43px 20px rgb(255 225 170 / 0.09);
   }
 }
 @media (max-width: 47.99rem) {
-  .app .environment-rail { padding: 0; }
+  .app .environment-rail {
+    padding: 0;
+  }
 }
 @media (max-width: 24rem) {
   .app .hava81-decision-field__city {
@@ -322,6 +434,6 @@
    Keep this after the mobile-art baseline so the container query wins. */
 @container (max-width: 18rem) {
   .app .decision-glance__atmosphere {
-    opacity: .1;
+    opacity: 0.1;
   }
 }

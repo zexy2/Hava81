@@ -48,7 +48,7 @@ Durum: tamamlandı (PR #1325)
 
 ## Faz 2: Tasarım kimliği, Awwwards'a giden yol (~2–3 hafta)
 
-Durum: devam ediyor — dal feat/faz2-tasarim, PR PRURL
+Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava81/pull/1326
 
 > **Senin kararın gerekiyor:** Hangisi geçerli olacak?
 > - **DESIGN.md:** teal, kâğıt zemin, serif rakam, düz yüzeyler.
@@ -62,7 +62,8 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR PRURL
 - [ ] **2.4** İlk ziyarette konum izni beklemeden İstanbul'u (ya da tahmini ili) hemen göster — _M_
 - [ ] **2.5** Haritayı 81 ilin gerçek verisiyle bir "atlas" ekranına dönüştür. Bu, ürünün imza ekranı olabilir. Plaka işaretçisi sıcaklıkla karışmasın. Harita ve Karşılaştır için URL desteği ekle (`?view=map`) — _M_
 - [ ] **2.6** 5 günlük tahmini 5 sütun ya da DESIGN.md'deki gibi günlük satırlar olarak göster. Şu an 4+1 düzeninde — _S_
-- [ ] **2.7** Bütün yazıları en az 12 px, eylem ve uyarı metinlerini en az 14 px yap. Şu an 9,6 px metinler var — _S_
+- [x] **2.7** Bütün yazıları en az 12 px, eylem ve uyarı metinlerini en az 14 px yap. Şu an 9,6 px metinler var — _S_
+  - Kaldığı yer: CSS'teki tüm 12 px altı `font-size` değerleri 0.75rem/12px'e, buton/eylem/uyarı seçicilerindeki 14 px altı değerler 0.875rem'e yükseltildi (14 dosya).
 
 ## Faz 3: Mühendislik temizliği (~1–2 hafta, Faz 2 ile paralel yürüyebilir)
 
