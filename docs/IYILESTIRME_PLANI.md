@@ -48,9 +48,13 @@ Durum: tamamlandı (PR #1325)
 
 ## Faz 2: Tasarım kimliği, Awwwards'a giden yol (~2–3 hafta)
 
+Durum: devam ediyor — dal feat/faz2-tasarim, PR PRURL
+
 > **Senin kararın gerekiyor:** Hangisi geçerli olacak?
-> - **DESIGN.md:** teal, kâğıt zemin, serif rakam, düz yüzeyler. Bizim önerimiz bu, çünkü ayırt edici olan bu.
+> - **DESIGN.md:** teal, kâğıt zemin, serif rakam, düz yüzeyler.
 > - **Canlıdaki mavi "premium" görünüm.**
+>
+> **Karar: canlıdaki mavi premium görünüm.** 2.2'deki "dev serif sıcaklık" mevcut mavi premium yazı karakteriyle dev sıcaklık olarak yorumlanır.
 
 - [ ] **2.1** Tokenları tek bir `tokens.css` dosyasında topla (light/dark). 14 polish dosyasını bileşen CSS'lerine göm ve sil. CSS `@layer` kullan. Stylelint ile ham hex, izinsiz radius ve izinsiz breakpoint kullanımını yasakla — _L (kademeli)_
 - [ ] **2.2** İlk ekranı tek bir kompozisyon olarak yeniden tasarla: şehir + plaka + dev serif sıcaklık + "sıradaki değişim" cümlesi + 24 saatlik grafik. Kart mozaiği olmasın — _M_
