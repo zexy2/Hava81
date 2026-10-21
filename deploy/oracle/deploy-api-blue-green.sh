@@ -101,7 +101,7 @@ fi
 
 PREVIOUS_PRODUCTION_IMAGE=""
 if [[ "$PROMOTE_TO_PREFERRED" == "1" ]]; then
-  mapfile -t preferred_containers < <(docker ps --filter "publish=127.0.0.1:4002" --format '{{.ID}}')
+  mapfile -t preferred_containers < <(docker ps --filter "publish=4002" --format '{{.ID}}')
   if [[ "${#preferred_containers[@]}" != "1" ]]; then
     echo "expected exactly one active production container on 4002; found ${#preferred_containers[@]}; refusing deploy" >&2
     exit 1

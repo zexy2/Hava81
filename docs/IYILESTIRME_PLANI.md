@@ -25,7 +25,7 @@ Asıl sorunlar başka yerde:
 ## Faz 0: Bu hafta, küçük ve acil işler (toplam ~1–2 gün)
 
 - [x] **0.1** API'de lat/lon değerlerini Türkiye sınırlarıyla kısıtla, cache anahtarını 2 ondalık haneye yuvarla, upstream çağrıları için global limit koy — _Canlıda `lat=40.71&lon=-74` sorgusu New York verisi döndürüyor. Bir döngü kotayı bitirip bütün kullanıcıları veri alamaz hale getirebilir — S_
-- [ ] **0.2** fast-uri güvenlik PR'ını hazır yap, merge et, ardından API'yi deploy et — _CI'ı yeşil, çakışmasız ama draft halinde bekliyor — S_
+- [x] **0.2** fast-uri güvenlik PR'ını hazır yap, merge et, ardından API'yi deploy et — _CI'ı yeşil, çakışmasız ama draft halinde bekliyor — S_
 - [x] **0.3** Açık temada favori şehir sekmelerinin kontrastını düzelt — _Kontrast 1,04–2,33:1, sekmeler okunmuyor — S_
 - [x] **0.4** Açık temada "Bildirim engelli" butonunu görünür yap — _Beyaz zemin üstünde beyaz metin — S_
 - [x] **0.5** Mobilde native scrollbar'ları kaldır — _Aralık seçicide yalnızca 13 px taşma için scrollbar çıkıyor ve "12s" kesiliyor — S_
@@ -119,3 +119,14 @@ Kaynak: `deploy/oracle/README.md`. CI web sitesini yayınlar ama **API'yi deploy
 - **Tasarım:** canlıdaki mavi premium görünüm esastır; teal'e dönme.
 - **Merge ve deploy sahibin (Zeki/meryem) onayını gerektirir.** `main`'e doğrudan push yapma, PR'ı draft'tan çıkarma, deploy etme.
 - Bir madde yapılamazsa kutuyu boş bırak ve altına nedenini not et.
+
+
+## Deploy günlüğü
+
+- **2026-10-21:** Faz 0 ve fast-uri API'ye deploy edildi; canlı API sürümü `9692181`. Kontrol: New York koordinatı 400, İstanbul 200.
+  - Kullanılan temiz kopya: `/home/ubuntu/hava81-prod-20261021`. Eski `/home/ubuntu/Hava81` klasöründe commit'lenmemiş değişiklikler var ve `.git` izinleri bozuk, o klasörü kullanma.
+  - `deploy/oracle/.env` repoda yok, sunucudaki kopyalardan alınıyor. Üç kopyası da aynı.
+  - `/var/lock/hava81-api-operation.lock` dosyasının sahibi `chatgpt` kullanıcısı, bu yüzden root bile o dosyayı açamıyor. Geçici çözüm: `sudo HAVA81_API_OPERATION_LOCK=/var/lib/hava81/api-operation.lock deploy/oracle/deploy-api-blue-green.sh`. Kalıcı çözüm: `sudo rm /var/lock/hava81-api-operation.lock` (çalışan bir deploy yokken).
+  - Sunucudaki Docker sürümü `publish=127.0.0.1:4002` filtresini kabul etmiyor. Bu PR'da filtre `publish=4002` olarak düzeltildi.
+  - API yolları `/api/v1/...` altında, örnek: `/api/v1/weather/current?lat=41.01&lon=28.98`.
+  - Sunucuda eski ajanlardan kalma yüzlerce Hava81 kopyası var (`/home/ubuntu`, `/home/chatgpt`, `/tmp`). Temizlik yapılması gerekiyor.
