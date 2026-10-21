@@ -116,7 +116,7 @@ export const tr = {
       longitude: 'Boylam',
       feelsLike: 'Hissedilen {{temperature}}',
       nextChange: 'Plan için öne çıkanlar',
-      forecastHighLow: 'Tahmini yüksek / düşük',
+      forecastHighLow: 'Bugün (takvim günü) yüksek / düşük',
       sourceDifference:
         'Anlık ölçüm ({{currentProvider}}) ve günlük tahmin ({{forecastProvider}}) farklı kaynak veya zamanlardan gelebilir.',
       actions: {
@@ -168,9 +168,9 @@ export const tr = {
       intervalControlHelp:
         '24 saatlik tahmin sabit kalır; seçim yalnız grafikte hangi saatlerin gösterildiğini değiştirir.',
       summaryLabel: 'Saatlik tahmin özeti',
-      summaryLow: 'En düşük',
+      summaryLow: '24 saatte en düşük',
       summaryTemperature: 'Sıcaklık',
-      summaryHigh: 'En yüksek',
+      summaryHigh: '24 saatte en yüksek',
       summaryRain: 'Yağış piki',
       precipitationNone: 'Yok',
       nightLabel: 'Gece',

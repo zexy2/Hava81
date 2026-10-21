@@ -513,7 +513,7 @@ export function WeatherDecisionField({
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
           <dt>
-            {t('hava81.decision.forecastHighLow', { defaultValue: 'Tahmini yüksek / düşük' })}
+            {t('hava81.decision.forecastHighLow', { defaultValue: 'Bugün (takvim günü) yüksek / düşük' })}
           </dt>
           <dd>
             {forecastFreshness?.fresh !== false && todayDaily

@@ -792,6 +792,11 @@ const App: React.FC = () => {
                         daily={forecast.daily}
                         hourly={forecast.displayHourly}
                         meta={forecast.displayMeta}
+                        current={{
+                          temperature: weather.temperature,
+                          icon: weather.icon,
+                          description: weather.description,
+                        }}
                       />
                     </Suspense>
                   ) : forecast.error ? (

@@ -253,8 +253,8 @@ describe('ForecastAtlas hourly precipitation labels', () => {
 
     const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
     expect(within(summary).getAllByRole('listitem')).toHaveLength(3);
-    expect(summary).toHaveTextContent('En düşük');
-    expect(summary).toHaveTextContent('En yüksek');
+    expect(summary).toHaveTextContent('24 saatte en düşük');
+    expect(summary).toHaveTextContent('24 saatte en yüksek');
     expect(summary).toHaveTextContent('Yağış piki');
     expect(summary).toHaveTextContent('Yok');
     expect(within(summary).getByText('Yağış piki').closest('[role="listitem"]')).not.toHaveClass(
@@ -315,8 +315,8 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
     expect(within(summary).getAllByRole('listitem')).toHaveLength(2);
     expect(summary).toHaveTextContent('Sıcaklık24°C');
-    expect(summary).not.toHaveTextContent('En düşük');
-    expect(summary).not.toHaveTextContent('En yüksek');
+    expect(summary).not.toHaveTextContent('24 saatte en düşük');
+    expect(summary).not.toHaveTextContent('24 saatte en yüksek');
     expect(summary).toHaveTextContent('Yağış piki');
     expect(document.querySelectorAll('.hava81-forecast-atlas__guide')).toHaveLength(1);
     expect(document.querySelectorAll('.hava81-forecast-atlas__axis-label')).toHaveLength(1);

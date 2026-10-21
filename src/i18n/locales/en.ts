@@ -116,7 +116,7 @@ export const en = {
       longitude: 'Longitude',
       feelsLike: 'Feels like {{temperature}}',
       nextChange: 'Planning signals',
-      forecastHighLow: 'Forecast high / low',
+      forecastHighLow: 'Today (calendar day) high / low',
       sourceDifference:
         'The live observation ({{currentProvider}}) and daily forecast ({{forecastProvider}}) may use different sources or times.',
       actions: {
@@ -167,9 +167,9 @@ export const en = {
       intervalControlHelp:
         'The 24-hour forecast stays fixed; this only changes which hours are shown on the chart.',
       summaryLabel: 'Hourly forecast summary',
-      summaryLow: 'Low',
+      summaryLow: 'Next 24h low',
       summaryTemperature: 'Temperature',
-      summaryHigh: 'High',
+      summaryHigh: 'Next 24h high',
       summaryRain: 'Rain peak',
       precipitationNone: 'None',
       nightLabel: 'Night',
