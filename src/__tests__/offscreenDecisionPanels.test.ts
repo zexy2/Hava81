@@ -6,10 +6,10 @@ describe('offscreen decision panel containment', () => {
     const css = readFileSync('src/styles/offscreen-panels.css', 'utf8');
 
     expect(css).toMatch(
-      /\.atlas-dashboard > \.commute-plan\s*\{[\s\S]*?content-visibility:\s*auto;[\s\S]*?contain-intrinsic-size:\s*auto 28rem;/
+      /\.atlas-dashboard \.commute-plan\s*\{[\s\S]*?content-visibility:\s*auto;[\s\S]*?contain-intrinsic-size:\s*auto 28rem;/
     );
     expect(css).toMatch(
-      /\.atlas-dashboard > \.route-weather\s*\{[\s\S]*?content-visibility:\s*auto;[\s\S]*?contain-intrinsic-size:\s*auto 7rem;/
+      /\.atlas-dashboard \.route-weather\s*\{[\s\S]*?content-visibility:\s*auto;[\s\S]*?contain-intrinsic-size:\s*auto 7rem;/
     );
   });
 });

@@ -103,7 +103,19 @@ export const tr = {
       searchAnother: 'Başka şehir ara',
       privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
     },
+    planView: {
+      eyebrow: 'İkinci adım',
+      title: 'Planla',
+    },
     decision: {
+      upcoming: {
+        rainStarts: '{{time}} civarı yağış başlıyor.',
+        rainStops: 'Yağış {{time}} civarı diniyor.',
+        warmer: '{{time}} civarı {{temperature}} ile ısınıyor.',
+        cooler: '{{time}} civarı {{temperature}} ile serinliyor.',
+        steady: 'Önümüzdeki 24 saatte belirgin bir değişim yok.',
+        chart: 'Önümüzdeki 24 saatin sıcaklık eğrisi: en düşük {{min}}, en yüksek {{max}}',
+      },
       freshness: {
         unknown: 'Güncellik bilinmiyor',
         now: 'şimdi güncellendi',
@@ -624,7 +636,8 @@ export const tr = {
   errors: {
     networkError: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.',
     offline: 'İnternet bağlantın yok. Bağlantı gelince otomatik yenilenecek.',
-    serverUnreachable: 'Hava81 sunucusuna şu an ulaşılamıyor. Sorun sende değil; biraz sonra tekrar dene.',
+    serverUnreachable:
+      'Hava81 sunucusuna şu an ulaşılamıyor. Sorun sende değil; biraz sonra tekrar dene.',
     serverError: 'Hava81 sunucusunda bir sorun oluştu. Biraz sonra tekrar dene.',
     providerUnavailable: 'Hava durumu sağlayıcısı şu an yanıt vermiyor. Biraz sonra tekrar dene.',
     showingLastKnown: 'Son bilinen veri gösteriliyor ({{time}}).',

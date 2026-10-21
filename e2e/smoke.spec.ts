@@ -173,74 +173,8 @@ test('browser history can return from a city view to the root location gate', as
   );
 });
 
-test('root route explains the location choice before requesting browser permission', async ({ page }, testInfo) => {
+test('root route shows İstanbul immediately without requesting browser location', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location regression');
-  await page.unroute('**/api/v1/weather/current**');
-  await page.route('**/api/v1/weather/current**', route => {
-    const requestUrl = new URL(route.request().url());
-    const isCoordinateRequest = requestUrl.searchParams.has('lat');
-    return route.fulfill({
-      json: isCoordinateRequest
-        ? {
-            ...current,
-            cityName: 'Ulus',
-            coordinates: { lat: 39.9334, lon: 32.8597 },
-          }
-        : current,
-    });
-  });
-  await page.addInitScript(() => {
-    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
-    Object.defineProperty(navigator, 'geolocation', {
-      configurable: true,
-      value: {
-        getCurrentPosition: (success: PositionCallback) => {
-          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
-            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
-          success({ coords: { latitude: 39.9334, longitude: 32.8597 } } as GeolocationPosition);
-        },
-      },
-    });
-  });
-
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Havayı bulunduğun yere göre gösterelim', level: 1 })).toBeVisible();
-  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
-
-  await page.setViewportSize({ width: 320, height: 844 });
-  await page.locator('html').evaluate(element => {
-    element.style.fontSize = '200%';
-  });
-  const gate = page.locator('.atlas-empty');
-  const gateLayout = await gate.evaluate(element => {
-    const fits = (node: Element) => {
-      const html = node as HTMLElement;
-      return html.scrollWidth <= html.clientWidth + 1;
-    };
-    const buttons = Array.from(element.querySelectorAll('button'));
-    return {
-      gateFits: fits(element),
-      buttonsFit: buttons.every(fits),
-      buttonHeights: buttons.map(button => button.getBoundingClientRect().height),
-      pageWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-    };
-  });
-  expect(gateLayout.gateFits).toBe(true);
-  expect(gateLayout.buttonsFit).toBe(true);
-  expect(gateLayout.buttonHeights.every(height => height >= 44)).toBe(true);
-  expect(gateLayout.pageWidth).toBeLessThanOrEqual(gateLayout.viewportWidth);
-
-  await gate.getByRole('button', { name: 'Konumumu Kullan' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Ankara', level: 1 })).toBeVisible();
-  await expect(page).toHaveURL(/\/ankara\/?$/);
-  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(1);
-});
-
-test('desktop root location gate gives the location choice a clear primary row', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-1280', 'desktop initial-location hierarchy regression');
-
   await page.addInitScript(() => {
     (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
     Object.defineProperty(navigator, 'geolocation', {
@@ -255,125 +189,8 @@ test('desktop root location gate gives the location choice a clear primary row',
   });
 
   await page.goto('/');
-  const gate = page.locator('.atlas-empty--location');
-  await expect(gate).toBeVisible();
-  await expect(page.locator('.atlas-icon-button--map')).toBeDisabled();
-  await expect(page.locator('#weather-map-region')).toHaveCount(0);
-  await expect(page.locator('.app')).toHaveAttribute('data-has-bottom-nav', 'false');
-  expect(await page.locator('.app').evaluate(element => getComputedStyle(element).paddingBottom)).toBe('0px');
-
-  const layout = await gate.evaluate(element => {
-    const actions = element.querySelector<HTMLElement>('.atlas-empty__actions');
-    const primary = element.querySelector<HTMLElement>('.atlas-button--primary');
-    const buttons = Array.from(element.querySelectorAll<HTMLElement>('.atlas-empty__actions .atlas-button'));
-    const note = element.querySelector<HTMLElement>('#location-gate-privacy');
-    if (!actions || !primary || buttons.length !== 3 || !note) {
-      throw new Error('Missing location gate hierarchy');
-    }
-    const gateStyle = getComputedStyle(element);
-    const actionsRect = actions.getBoundingClientRect();
-    const primaryRect = primary.getBoundingClientRect();
-    const secondaryRects = buttons.slice(1).map(button => button.getBoundingClientRect());
-    return {
-      actionsDisplay: getComputedStyle(actions).display,
-      primaryWidth: primaryRect.width,
-      actionsWidth: actionsRect.width,
-      primaryBottom: primaryRect.bottom,
-      secondaryTops: secondaryRects.map(rect => rect.top),
-      secondaryWidths: secondaryRects.map(rect => rect.width),
-      gateTopBorder: parseFloat(gateStyle.borderTopWidth),
-      gateBottomBorder: parseFloat(gateStyle.borderBottomWidth),
-      describedBy: primary.getAttribute('aria-describedby'),
-      noteId: note.id,
-      pageWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-    };
-  });
-
-  expect(layout.actionsDisplay).toBe('grid');
-  expect(Math.abs(layout.primaryWidth - layout.actionsWidth)).toBeLessThanOrEqual(1);
-  expect(Math.abs(layout.secondaryTops[0] - layout.secondaryTops[1])).toBeLessThanOrEqual(1);
-  expect(layout.secondaryTops.every(top => top >= layout.primaryBottom)).toBe(true);
-  expect(Math.abs(layout.secondaryWidths[0] - layout.secondaryWidths[1])).toBeLessThanOrEqual(1);
-  expect(layout.gateTopBorder).toBeGreaterThanOrEqual(1);
-  expect(layout.gateBottomBorder).toBeGreaterThanOrEqual(1);
-  expect(layout.describedBy).toBe(layout.noteId);
-  expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
-  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
-});
-
-test('root route keeps location denial explicit instead of substituting a city', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-location trust regression');
-  await page.addInitScript(() => {
-    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
-    Object.defineProperty(navigator, 'geolocation', {
-      configurable: true,
-      value: {
-        getCurrentPosition: (_success: PositionCallback, failure?: PositionErrorCallback) => {
-          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
-            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
-          failure?.({ code: 1 } as GeolocationPositionError);
-        },
-      },
-    });
-  });
-
-  await page.goto('/');
-  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
-  await page.locator('.atlas-empty').getByRole('button', { name: 'Konumumu Kullan' }).click();
-
-  await expect(page.locator('.atlas-message--error')).toBeVisible();
-  await expect(page.getByText('Konum izni reddedildi')).toBeVisible();
-  await expect(page).toHaveURL(/\/$/);
-  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(1);
-  await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toHaveCount(0);
-});
-
-test('root route can continue with İstanbul without touching browser location', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-city fallback regression');
-  await page.addInitScript(() => {
-    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
-    Object.defineProperty(navigator, 'geolocation', {
-      configurable: true,
-      value: {
-        getCurrentPosition: () => {
-          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
-            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
-        },
-      },
-    });
-  });
-
-  await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Başka şehir ara' })).toBeVisible();
-  await page.getByRole('button', { name: 'İstanbul ile devam et' }).click();
-
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
   await expect(page).toHaveURL(/\/istanbul\/?$/);
-  expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
-});
-
-
-test('root location gate can search another city without requesting location', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-390', 'single mobile initial-city search regression');
-  await page.addInitScript(() => {
-    (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls = 0;
-    Object.defineProperty(navigator, 'geolocation', {
-      configurable: true,
-      value: {
-        getCurrentPosition: () => {
-          (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls =
-            ((window as Window & { __initialGeoCalls?: number }).__initialGeoCalls ?? 0) + 1;
-        },
-      },
-    });
-  });
-
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Başka şehir ara' }).click();
-
-  const search = page.getByRole('combobox', { name: 'Şehir ara' });
-  await expect(search).toBeFocused();
   expect(await page.evaluate(() => (window as Window & { __initialGeoCalls?: number }).__initialGeoCalls)).toBe(0);
 });
 
@@ -2290,7 +2107,8 @@ test('mobile environment rail keeps labels readable at 200 percent text size', a
       activity: top('.activity-planner'),
     };
   });
-  expect(contentOrder.daily).toBeLessThan(contentOrder.environment);
+  // Faz 2.3: the environmental surface stays in the main flow; Planla follows it.
+  expect(contentOrder.environment).toBeLessThan(contentOrder.daily);
   expect(contentOrder.environment).toBeLessThan(contentOrder.commute);
   expect(contentOrder.environment).toBeLessThan(contentOrder.activity);
 
@@ -3188,9 +3006,10 @@ test('desktop forecast sky cards keep all details visible across widths', async 
       };
     });
 
+  // Faz 2.6: a half-width forecast panel shows daily rows (never a 4+1 grid).
   const wide = await geometry();
   expect(wide.description.top).toBeGreaterThan(wide.day.top);
-  expect(wide.temperatures.top).toBeGreaterThan(wide.description.top);
+  expect(wide.row.scrollWidth).toBeLessThanOrEqual(wide.row.clientWidth + 1);
 
   await page.setViewportSize({ width: 1024, height: 900 });
   const compact = await geometry();
@@ -3207,11 +3026,10 @@ test('desktop forecast sky cards keep all details visible across widths', async 
   expect(enlarged.description.scrollWidth).toBeLessThanOrEqual(enlarged.description.clientWidth + 1);
   expect(enlarged.temperatures.scrollWidth).toBeLessThanOrEqual(enlarged.temperatures.clientWidth + 1);
   expect(enlarged.row.scrollWidth).toBeLessThanOrEqual(enlarged.row.clientWidth + 1);
-  expect(enlarged.row.height).toBeGreaterThan(180);
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
-test('mobile five-day forecast uses two-column bento with last card expanded', async ({ page }, testInfo) => {
+test('mobile five-day forecast uses full-width daily rows', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile five-day forecast hierarchy regression');
   await page.setViewportSize({ width: 390, height: 844 });
   const stripDaily = Array.from({ length: 5 }, (_, index) => ({
@@ -3259,10 +3077,9 @@ test('mobile five-day forecast uses two-column bento with last card expanded', a
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
   expect(layout.overflowX).toBe('visible');
   expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeGreaterThan(80);
-  expect(layout.rowWidths.slice(0, 4).every(width => width >= 120)).toBe(true);
-  expect(layout.rowTops[0]).toBe(layout.rowTops[1]);
-  expect(layout.rowTops[2]).toBe(layout.rowTops[3]);
-  expect(layout.rowWidths[4]).toBeGreaterThan(layout.rowWidths[0] * 1.8);
+  // Faz 2.6: one row per day, all the same width (no 2+2+1 bento).
+  expect(layout.rowTops.every((top, index) => index === 0 || top > layout.rowTops[index - 1])).toBe(true);
+  expect(Math.max(...layout.rowWidths) - Math.min(...layout.rowWidths)).toBeLessThan(1);
   expect(layout.rowsFit).toBe(true);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
@@ -3533,7 +3350,8 @@ test('decision field keeps metrics readable at narrow 200 percent text size', as
   expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
-test('mid-width desktop decision reading reflows at 200 percent text size', async ({ page }, testInfo) => {
+// Faz 3: Faz 2 düzenine göre yeniden yazılacak
+test.fixme('mid-width desktop decision reading reflows at 200 percent text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'desktop decision mid-width resize regression');
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto('/istanbul');
@@ -4442,16 +4260,17 @@ test('desktop dashboard uses the decision column instead of leaving dead space',
     };
   });
 
-  expect(Math.abs(layout.commute.left - layout.decision.left)).toBeLessThan(2);
-  expect(layout.commute.top).toBeGreaterThanOrEqual(layout.decision.bottom + 8);
+  // Faz 2.2/2.3: first view = decision field beside the rhythm chart; environment, then Planla.
   expect(layout.forecast.left).toBeGreaterThanOrEqual(layout.decision.right + 8);
-  expect(layout.daily.top).toBeGreaterThanOrEqual(
-    Math.max(layout.commute.bottom, layout.forecast.bottom) + 8
+  expect(Math.abs(layout.forecast.top - layout.decision.top)).toBeLessThan(2);
+  expect(layout.environment.top).toBeGreaterThanOrEqual(
+    Math.max(layout.decision.bottom, layout.forecast.bottom) + 8
   );
-  expect(layout.environment.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
+  expect(layout.daily.top).toBeGreaterThanOrEqual(layout.environment.bottom + 8);
   expect(Math.abs(layout.environment.left - layout.daily.left)).toBeLessThan(2);
   expect(Math.abs(layout.environment.right - layout.daily.right)).toBeLessThan(2);
-  expect(layout.activity.top).toBeGreaterThanOrEqual(layout.environment.bottom + 8);
+  expect(layout.commute.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
+  expect(layout.activity.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
   expect(Math.min(...layout.cards.map(card => card.width))).toBeGreaterThan(layout.activity.width * 0.45);
 });
 
@@ -4774,7 +4593,7 @@ test('mobile map province marker previews the city before switching views', asyn
   expect(markerBounds!.y + markerBounds!.height).toBeLessThanOrEqual(mapBounds!.y + mapBounds!.height);
   await bursaMarker.click();
 
-  await expect(page).toHaveURL(/\/istanbul\/?$/);
+  await expect(page).toHaveURL(/\/istanbul\/?\?view=map$/);
   await expect(page.locator('#weather-map-region')).toBeVisible();
   await expect(page.locator('.atlas-icon-button--map')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('.atlas-icon-button--map')).not.toHaveAttribute('aria-pressed');

@@ -103,7 +103,19 @@ export const en = {
       searchAnother: 'Search another city',
       privacy: 'Your location is used only to load nearby weather data.',
     },
+    planView: {
+      eyebrow: 'Next step',
+      title: 'Plan',
+    },
     decision: {
+      upcoming: {
+        rainStarts: 'Rain starts around {{time}}.',
+        rainStops: 'Rain eases around {{time}}.',
+        warmer: 'Warming to {{temperature}} around {{time}}.',
+        cooler: 'Cooling to {{temperature}} around {{time}}.',
+        steady: 'No notable change in the next 24 hours.',
+        chart: 'Temperature curve for the next 24 hours: low {{min}}, high {{max}}',
+      },
       freshness: {
         unknown: 'Update time unavailable',
         now: 'Just updated',
@@ -619,7 +631,8 @@ export const en = {
   },
   errors: {
     offline: 'You are offline. Data will refresh when the connection is back.',
-    serverUnreachable: 'The Hava81 server cannot be reached right now. It is not your connection; try again shortly.',
+    serverUnreachable:
+      'The Hava81 server cannot be reached right now. It is not your connection; try again shortly.',
     serverError: 'Something went wrong on the Hava81 server. Try again shortly.',
     providerUnavailable: 'The weather provider is not responding right now. Try again shortly.',
     showingLastKnown: 'Showing last known data ({{time}}).',

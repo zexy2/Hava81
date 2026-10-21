@@ -3,7 +3,7 @@
   display: grid;
   grid-auto-flow: row;
   grid-auto-columns: auto;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: stretch;
   gap: 10px;
   width: 100%;
@@ -188,11 +188,9 @@
     min-height: 211px;
     padding: 13px 12px 12px;
   }
-  .app .hava81-forecast-atlas__day:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
 }
-@media (max-width: 22rem) {
+/* 2.6: when the forecast panel is narrower than 40rem the five days become daily rows (no 4+1). */
+@container (max-width: 39.99rem) {
   .app .hava81-forecast-atlas__days {
     grid-template-columns: minmax(0, 1fr);
   }

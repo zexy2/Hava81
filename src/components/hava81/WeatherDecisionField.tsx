@@ -14,6 +14,8 @@ import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
+import { getNextChange } from '../../domain/decision/nextChange';
+import { formatCityTime } from '../../utils/format';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherIllustration } from './WeatherIllustration';
 import './WeatherDecisionField.css';
@@ -390,6 +392,26 @@ export function WeatherDecisionField({
       ? `${numberFormatter.format(freshAirQuality.aqi)}/5 · ${t(airQualityLabelKey)}`
       : t('hava81.decision.notAvailable', { defaultValue: '—' });
 
+  const nextChange = getNextChange(hourly, weather.temperature, new Date(now));
+  const nextChangeText = t(`hava81.decision.upcoming.${nextChange.kind}`, {
+    time: formatCityTime(nextChange.time, weather.meta.timezoneOffsetSeconds, settings.language),
+    temperature: nextChange.temp === null ? '' : formatTemperature(nextChange.temp),
+  });
+  const trendHours = hourly.filter(hour => hour.time.getTime() > now).slice(0, 24);
+  const trend = (() => {
+    if (trendHours.length < 2) return null;
+    const temps = trendHours.map(hour => hour.temp);
+    const min = Math.min(...temps);
+    const max = Math.max(...temps);
+    const span = Math.max(max - min, 1);
+    const points = temps.map((temp, index) => {
+      const x = (index / (temps.length - 1)) * 240;
+      const y = 6 + (1 - (temp - min) / span) * 36;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    return { min, max, line: points.join(' '), area: `0,48 ${points.join(' ')} 240,48` };
+  })();
+
   return (
     <section className={`hava81-decision-field ${className}`.trim()} aria-labelledby={headingId}>
       <header className="hava81-decision-field__identity">
@@ -477,6 +499,22 @@ export function WeatherDecisionField({
                 temperature: formatTemperature(weather.feelsLike),
               })}
             </p>
+            <p className="hava81-decision-field__next-change">{nextChangeText}</p>
+            {trend ? (
+              <svg
+                className="hava81-decision-field__trend"
+                viewBox="0 0 240 48"
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={t('hava81.decision.upcoming.chart', {
+                  min: formatTemperature(trend.min),
+                  max: formatTemperature(trend.max),
+                })}
+              >
+                <polygon className="hava81-decision-field__trend-area" points={trend.area} />
+                <polyline className="hava81-decision-field__trend-line" points={trend.line} />
+              </svg>
+            ) : null}
           </>
         ) : (
           <p className="hava81-decision-field__condition" role="status">
@@ -513,7 +551,9 @@ export function WeatherDecisionField({
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
           <dt>
-            {t('hava81.decision.forecastHighLow', { defaultValue: 'Bugün (takvim günü) yüksek / düşük' })}
+            {t('hava81.decision.forecastHighLow', {
+              defaultValue: 'Bugün (takvim günü) yüksek / düşük',
+            })}
           </dt>
           <dd>
             {forecastFreshness?.fresh !== false && todayDaily

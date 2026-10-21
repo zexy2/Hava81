@@ -48,17 +48,28 @@ Durum: tamamlandı (PR #1325)
 
 ## Faz 2: Tasarım kimliği, Awwwards'a giden yol (~2–3 hafta)
 
+Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava81/pull/1326
+
 > **Senin kararın gerekiyor:** Hangisi geçerli olacak?
-> - **DESIGN.md:** teal, kâğıt zemin, serif rakam, düz yüzeyler. Bizim önerimiz bu, çünkü ayırt edici olan bu.
+> - **DESIGN.md:** teal, kâğıt zemin, serif rakam, düz yüzeyler.
 > - **Canlıdaki mavi "premium" görünüm.**
+>
+> **Karar: canlıdaki mavi premium görünüm.** 2.2'deki "dev serif sıcaklık" mevcut mavi premium yazı karakteriyle dev sıcaklık olarak yorumlanır.
 
 - [ ] **2.1** Tokenları tek bir `tokens.css` dosyasında topla (light/dark). 14 polish dosyasını bileşen CSS'lerine göm ve sil. CSS `@layer` kullan. Stylelint ile ham hex, izinsiz radius ve izinsiz breakpoint kullanımını yasakla — _L (kademeli)_
-- [ ] **2.2** İlk ekranı tek bir kompozisyon olarak yeniden tasarla: şehir + plaka + dev serif sıcaklık + "sıradaki değişim" cümlesi + 24 saatlik grafik. Kart mozaiği olmasın — _M_
+  - Kaldığı yer: başlanmadı (kredi). Önerilen ilk adım: `src/styles/PremiumDashboard.css:2-25`'teki mavi paleti `src/styles/tokens.css`'e taşı (light/dark), ardından App.tsx'teki polish importlarını tek tek bileşen CSS'lerine göm. Faz 2'de eklenen `FirstScreenComposition.css` de bu dosyaya katlanmalı.
+- [x] **2.2** İlk ekranı tek bir kompozisyon olarak yeniden tasarla: şehir + plaka + dev serif sıcaklık + "sıradaki değişim" cümlesi + 24 saatlik grafik. Kart mozaiği olmasın — _M_
+  - Kaldığı yer: Mavi premium görünüm korundu (serif yok). `WeatherDecisionField` artık ilk blok: şehir + plaka + dev sıcaklık + "sıradaki değişim" cümlesi (`src/domain/decision/nextChange.ts`, yağış başlıyor/diniyor veya ≥3° değişim) + 24 saatlik mini sıcaklık eğrisi. Masaüstünde yanında Ritim grafiği, Karar özeti altına iniyor. Stil: `src/styles/FirstScreenComposition.css`. Kontrol: 1280 açık ve 390 koyu ekran görüntüsü.
 - [ ] **2.3** Bilgi mimarisini sadeleştir. Sayfada 10 modül ve 4 skor türü var. Ana akış Karar + Ritim + tek bir çevresel yüzey olsun. Çıkış planı, aktiviteler, bildirimler ve rota ikinci seviye bir "Planla" görünümüne taşınsın. Tek skor gösterilsin, saatlik skorlara etiket konsun — _L_
-- [ ] **2.4** İlk ziyarette konum izni beklemeden İstanbul'u (ya da tahmini ili) hemen göster — _M_
-- [ ] **2.5** Haritayı 81 ilin gerçek verisiyle bir "atlas" ekranına dönüştür. Bu, ürünün imza ekranı olabilir. Plaka işaretçisi sıcaklıkla karışmasın. Harita ve Karşılaştır için URL desteği ekle (`?view=map`) — _M_
-- [ ] **2.6** 5 günlük tahmini 5 sütun ya da DESIGN.md'deki gibi günlük satırlar olarak göster. Şu an 4+1 düzeninde — _S_
-- [ ] **2.7** Bütün yazıları en az 12 px, eylem ve uyarı metinlerini en az 14 px yap. Şu an 9,6 px metinler var — _S_
+  - Kaldığı yer (kısmi): Ana akış artık Karar (ilk ekran + Karar özeti) + Ritim (tahmin) + tek çevresel yüzey (EnvironmentRail). Gün planı, ulaşım, aktiviteler, uyarılar, bağlam sinyalleri ve rota `src/App.tsx` içinde ayrı bir "Planla" bölümüne (`.atlas-plan-view`, stil `src/styles/FirstScreenComposition.css`) toplandı; `.atlas-dashboard > .x` seçicileri `.atlas-dashboard .x` oldu. **Sıradaki:** (1) Planla'yı alt gezintide ayrı görünüm yapmak (`AtlasBottomNav` 'plan' öğesi + `?view=plan`) — e2e'de bu panellere doğrudan bakan ~150 satır var, birlikte güncellenmeli; (2) tek skor: DecisionGlance 0–100 skoru dışındaki skorları (aktivite/saatlik) "bu aktivite için" diye etiketlemek.
+- [x] **2.4** İlk ziyarette konum izni beklemeden İstanbul'u (ya da tahmini ili) hemen göster — _M_
+  - Kaldığı yer: `src/App.tsx` — kök adreste geçmiş yoksa doğrudan İstanbul açılıyor (URL `/istanbul/`), konum izni istenmiyor; konum seçeneği başlıktaki konum düğmesinde. Engelleyici konum kapısı yalnızca geri tuşuyla köke dönüldüğünde görünür. Eski kapı testleri (birim + e2e) yeni davranışa göre güncellendi. Tahmini il (IP) yok: API desteği gerekirdi.
+- [x] **2.5** Haritayı 81 ilin gerçek verisiyle bir "atlas" ekranına dönüştür. Bu, ürünün imza ekranı olabilir. Plaka işaretçisi sıcaklıkla karışmasın. Harita ve Karşılaştır için URL desteği ekle (`?view=map`) — _M_
+  - Kaldığı yer: `src/components/WeatherMap.tsx/.css` — yakınlaştırma ≥7'de 81 ilin tamamı plaka işaretçisiyle görünüyor (varsayılanda 10 öne çıkan il); plaka işaretçisi artık beyaz plaka + mavi "TR" şeridi, yuvarlak renkli sıcaklık balonundan ayrışıyor. `src/App.tsx` — `?view=map` ve `?view=compare` açılışta ilgili görünümü açıyor ve görünüm değiştikçe URL güncelleniyor. **Eksik:** 81 ilin canlı sıcaklığı haritada yok; bunun için toplu uç nokta gerekir (Faz 3.2 `/weather/bundle`) — **API deploy gerekir**.
+- [x] **2.6** 5 günlük tahmini 5 sütun ya da DESIGN.md'deki gibi günlük satırlar olarak göster. Şu an 4+1 düzeninde — _S_
+  - Kaldığı yer: `src/styles/ForecastCalendarVisualPolish.css` — 48rem ve üstünde sabit 5 sütun, altında günlük satırlar; tek kalan günü yayan kural kaldırıldı.
+- [x] **2.7** Bütün yazıları en az 12 px, eylem ve uyarı metinlerini en az 14 px yap. Şu an 9,6 px metinler var — _S_
+  - Kaldığı yer: CSS'teki tüm 12 px altı `font-size` değerleri 0.75rem/12px'e, buton/eylem/uyarı seçicilerindeki 14 px altı değerler 0.875rem'e yükseltildi (14 dosya).
 
 ## Faz 3: Mühendislik temizliği (~1–2 hafta, Faz 2 ile paralel yürüyebilir)
 
@@ -70,6 +81,9 @@ Durum: tamamlandı (PR #1325)
 - [ ] **3.6** CI'ı sadeleştir: ajan ve ops script testlerini ayrı bir workflow'a al, `push` tetikleyicisini yalnızca `main` ile sınırla. Kullanılmayan Docker Hub web imajı adımını kaldır. Kök compose'da `127.0.0.1:4000` kullan — _S_
 - [ ] **3.7** Repoyu temizle: `docs/` içindeki 96 `AUTONOMOUS_*` logunu (yaklaşık 800 KB metin ve 11 MB PNG) dışarı taşı, 652 eski branch'i sil, README ve `.env.example` dosyalarını güncelle — _S_
 - [ ] **3.8** Pages için CSP ve `immutable` cache başlıkları ekle (ya da web'i Oracle nginx'ten sun), API JSON yanıtlarına sıkıştırma aç — _S–M_
+
+- [ ] **3.x e2e sadeleştirme:** piksel testleri yerine davranış testleri + birkaç ekran görüntüsü karşılaştırması. Faz 2'de `test.fixme` yapılanlar:
+  - `mid-width desktop decision reading reflows at 200 percent text size` (e2e/smoke.spec.ts)
 
 ## Faz 4: Büyüme ve SEO (sonra)
 

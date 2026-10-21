@@ -68,7 +68,7 @@
   color: var(--premium-ink);
 }
 .app .daily-plan__score small {
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   letter-spacing: 0.025em;
   text-align: end;
 }
@@ -312,7 +312,7 @@
     font-size: 1.85rem;
   }
   .app .daily-plan__score small {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
   }
   .app .daily-plan__quick {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -395,7 +395,7 @@
     font-weight: 750;
   }
   .app .hava81-forecast-atlas__day-pop {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 }
 @media (max-width: 24rem) {
@@ -620,30 +620,37 @@
   }
 }
 
-
 /* Compact mobile disclosure and complete activity selection without hidden choices. */
 @media (max-width: 47.99rem) {
-  .app .daily-plan__explain { display: block; }
+  .app .daily-plan__explain {
+    display: block;
+  }
   .app .daily-plan__explain-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: .35rem .6rem;
+    gap: 0.35rem 0.6rem;
     min-height: 48px;
-    padding: .7rem .85rem;
+    padding: 0.7rem 0.85rem;
   }
-  .app .daily-plan__explain-head > div { display: block; }
-  .app .daily-plan__explain-head > div span { display: none; }
+  .app .daily-plan__explain-head > div {
+    display: block;
+  }
+  .app .daily-plan__explain-head > div span {
+    display: none;
+  }
   .app .daily-plan__explain-head > div strong {
-    font-size: .92rem;
+    font-size: 0.92rem;
     line-height: 1.35;
   }
-  .app .daily-plan__explain-head > small { display: none; }
+  .app .daily-plan__explain-head > small {
+    display: none;
+  }
   .app .daily-plan__explain[open] .daily-plan__explain-head > small {
     display: block;
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: .68rem;
+    font-size: 0.75rem;
     white-space: normal;
     overflow-wrap: anywhere;
   }
@@ -656,8 +663,8 @@
     flex-wrap: wrap;
     overflow: visible;
     scroll-snap-type: none;
-    padding: .15rem 0;
-    gap: .5rem;
+    padding: 0.15rem 0;
+    gap: 0.5rem;
   }
   .app .activity-planner__chips button {
     flex: 0 0 auto;

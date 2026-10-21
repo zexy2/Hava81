@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,13 @@ const FEATURED_CITY_NAMES = new Set([
   'Diyarbakır',
   'Konya',
 ]);
+
+/** Faz 2.5: the atlas reveals all 81 provinces once the user zooms in. */
+const ATLAS_ZOOM = 7;
+const ZoomWatcher: React.FC<{ onZoom: (zoom: number) => void }> = ({ onZoom }) => {
+  useMapEvents({ zoomend: event => onZoom(event.target.getZoom()) });
+  return null;
+};
 
 const MapController: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
@@ -75,9 +82,9 @@ const createUnavailableObservationIcon = (): L.DivIcon =>
 const createPlateIcon = (plateCode: number): L.DivIcon =>
   L.divIcon({
     className: 'weather-map__plate-marker',
-    html: `<span>${String(plateCode).padStart(2, '0')}</span>`,
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
+    html: `<span><i aria-hidden="true">TR</i>${String(plateCode).padStart(2, '0')}</span>`,
+    iconSize: [60, 44],
+    iconAnchor: [30, 22],
   });
 
 const labelMarker = (marker: L.Marker | null, accessibleName: string) => {
@@ -132,12 +139,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     return lat !== undefined && lon !== undefined ? [lat, lon] : DEFAULT_CENTER;
   }, [weather?.coordinates.lat, weather?.coordinates.lon]);
 
+  const [zoom, setZoom] = useState(6);
+  const showAllProvinces = zoom >= ATLAS_ZOOM;
   const featuredCities = useMemo(
     () =>
       TURKISH_CITIES.filter(
-        candidate => FEATURED_CITY_NAMES.has(candidate.name) && candidate.name !== weather?.cityName
+        candidate =>
+          (showAllProvinces || FEATURED_CITY_NAMES.has(candidate.name)) &&
+          candidate.name !== weather?.cityName
       ),
-    [weather?.cityName]
+    [showAllProvinces, weather?.cityName]
   );
 
   // CARTO's old anonymous raster endpoint now returns a successful HTTP response
@@ -178,6 +189,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           className="weather-map__leaflet"
         >
           <MapController center={center} />
+          <ZoomWatcher onZoom={setZoom} />
 
           <TileLayer
             key={`${fallbackTiles ? 'osmde' : 'osmfr'}-${tileAttempt}`}

@@ -1,0 +1,107 @@
+/* Faz 2.2 — first screen as one composition (blue premium look kept).
+   City + plate + big temperature + "what changes next" + 24h curve read as one block. */
+@media (min-width: 64rem) {
+  .app .atlas-dashboard__primary .hava81-decision-field__temperature-value {
+    font-size: clamp(6rem, 8.5vw, 9rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.075em;
+  }
+}
+.app .hava81-decision-field__next-change {
+  margin: 0.75rem 0 0;
+  max-width: 34ch;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.app .hava81-decision-field__trend {
+  display: block;
+  width: 100%;
+  height: 3.25rem;
+  margin-top: 0.75rem;
+  overflow: visible;
+  color: var(--color-aegean, #226bd9);
+}
+.app .hava81-decision-field__trend-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.app .hava81-decision-field__trend-area {
+  fill: currentColor;
+  opacity: 0.12;
+}
+.app[data-color-mode='dark'] .hava81-decision-field__trend {
+  color: #8fd3ff;
+}
+.app[data-color-mode='dark'] .hava81-decision-field__next-change {
+  color: #eef7ff;
+}
+@media (max-width: 47.99rem) {
+  .app .hava81-decision-field__trend {
+    color: #bfe6ff;
+  }
+  .app .hava81-decision-field__next-change {
+    color: #fff;
+  }
+}
+@media (forced-colors: active) {
+  .app .hava81-decision-field__trend {
+    color: CanvasText;
+  }
+}
+/* Identity + temperature lead; the decision summary follows it. */
+.app .atlas-dashboard__primary > .hava81-decision-field {
+  order: -1;
+}
+@media (min-width: 64rem) {
+  /* Desktop: city/temperature beside the 24h rhythm chart form the first view. */
+  .app .atlas-dashboard__primary > .hava81-decision-field {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app .atlas-dashboard__primary > .hava81-forecast-atlas,
+  .app .atlas-dashboard__primary > .atlas-forecast-loading {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .app .atlas-dashboard__primary > .decision-glance {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* Faz 2.3 — secondary "Planla" surface: plan, activities, alerts, signals, route. */
+.app .atlas-plan-view {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4, 1rem);
+  margin-top: var(--space-4, 1rem);
+  padding-top: var(--space-5, 1.5rem);
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.app .atlas-plan-view__header h2 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: -0.02em;
+}
+.app .atlas-dashboard .atlas-plan-view > * {
+  grid-column: auto;
+  grid-row: auto;
+}
+@media (min-width: 64rem) {
+  .app .atlas-plan-view {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header,
+  .app .atlas-dashboard .atlas-plan-view > .daily-plan,
+  .app .atlas-dashboard .atlas-plan-view > .route-weather {
+    grid-column: 1 / -1;
+  }
+}

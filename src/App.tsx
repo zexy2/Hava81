@@ -40,6 +40,7 @@ import './styles/ActivityEditorialVisual.css';
 import './styles/DailyTimelineEditorial.css';
 import './styles/MobileScrollbars.css';
 import './styles/FocusRing.css';
+import './styles/FirstScreenComposition.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
@@ -146,8 +147,12 @@ const App: React.FC = () => {
   }, [settings.language]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [activeNav, setActiveNav] = useState<AtlasNavItem>('today');
+  // Faz 2.5: `?view=map` and `?view=compare` open those views directly.
+  const [initialView] = useState(() => new URLSearchParams(window.location.search).get('view'));
+  const [showMap, setShowMap] = useState(initialView === 'map');
+  const [activeNav, setActiveNav] = useState<AtlasNavItem>(
+    initialView === 'map' ? 'map' : initialView === 'compare' ? 'compare' : 'today'
+  );
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchToggleRef = useRef<HTMLButtonElement>(null);
@@ -179,7 +184,7 @@ const App: React.FC = () => {
       const entries: unknown = JSON.parse(
         window.localStorage.getItem('recent_weather_searches') ?? '[]'
       );
-      if (!Array.isArray(entries)) return '';
+      if (!Array.isArray(entries)) return 'İstanbul';
       for (const entry of entries) {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
         const item = entry as { city?: unknown; timestamp?: unknown };
@@ -189,9 +194,11 @@ const App: React.FC = () => {
         if (path) return cityFromPathname(path)?.name ?? '';
       }
     } catch {
-      // Storage can be blocked or contain invalid JSON; keep the manual city picker.
+      // Storage can be blocked or contain invalid JSON; fall back to İstanbul.
     }
-    return '';
+    // Faz 2.4: first visit shows İstanbul immediately; location stays an explicit
+    // choice in the header instead of a blocking gate.
+    return 'İstanbul';
   });
   const isRootRoute = window.location.pathname === '/';
 
@@ -328,7 +335,10 @@ const App: React.FC = () => {
       (weather.country.toUpperCase() === 'TR'
         ? `/?yer=${encodeURIComponent(weather.cityName)}`
         : null);
-    if (path && `${window.location.pathname}${window.location.search}` !== path) {
+    const searchWithoutView = new URLSearchParams(window.location.search);
+    searchWithoutView.delete('view');
+    const currentSearch = searchWithoutView.toString();
+    if (path && `${window.location.pathname}${currentSearch ? `?${currentSearch}` : ''}` !== path) {
       const previousCity =
         cityFromPathname(window.location.pathname)?.name ??
         districtFromQuery(window.location.search);
@@ -364,6 +374,17 @@ const App: React.FC = () => {
       );
     }
   }, [settings.language, t, weather]);
+
+  useEffect(() => {
+    if (!weather) return;
+    const url = new URL(window.location.href);
+    const view =
+      activeNav === 'map' && showMap ? 'map' : activeNav === 'compare' ? 'compare' : null;
+    if (url.searchParams.get('view') === view) return;
+    if (view) url.searchParams.set('view', view);
+    else url.searchParams.delete('view');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}`);
+  }, [activeNav, showMap, weather]);
 
   const shortcuts = useMemo(
     () =>
@@ -771,18 +792,18 @@ const App: React.FC = () => {
             {activeNav !== 'compare' && weather && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
-                  <DecisionGlance
-                    weather={weather}
-                    hourly={forecast.hourly}
-                    airQuality={freshAirQuality}
-                    forecastMeta={forecast.displayMeta ?? forecast.meta}
-                  />
                   <WeatherDecisionField
                     weather={weather}
                     hourly={forecast.hourly}
                     daily={forecast.daily}
                     airQuality={freshAirQuality}
                     uvIndexMax={freshUvIndexMax}
+                    forecastMeta={forecast.displayMeta ?? forecast.meta}
+                  />
+                  <DecisionGlance
+                    weather={weather}
+                    hourly={forecast.hourly}
+                    airQuality={freshAirQuality}
                     forecastMeta={forecast.displayMeta ?? forecast.meta}
                   />
 
@@ -847,17 +868,6 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <DailyPlanPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
-
                 <Suspense fallback={null}>
                   <EnvironmentRail
                     weather={weather}
@@ -896,50 +906,67 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <CommutePlanPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                <section className="atlas-plan-view" aria-labelledby="atlas-plan-view-title">
+                  <header className="atlas-plan-view__header">
+                    <span className="atlas-kicker">{t('hava81.planView.eyebrow')}</span>
+                    <h2 id="atlas-plan-view-title">{t('hava81.planView.title')}</h2>
+                  </header>
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <DailyPlanPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <ActivityPlanner
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <CommutePlanPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
 
-                {forecast.contextSignals && (
-                  <Suspense fallback={null}>
-                    <ContextSignalsPanel
-                      signals={forecast.contextSignals}
-                      timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
-                    />
-                  </Suspense>
-                )}
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <ActivityPlanner
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
 
-                {forecast.hourly.length > 0 && (
-                  <Suspense fallback={null}>
-                    <DecisionAlertsPanel
-                      weather={weather}
-                      hourly={forecast.hourly}
-                      airQuality={freshAirQuality}
-                      forecastMeta={forecast.displayMeta ?? forecast.meta}
-                    />
-                  </Suspense>
-                )}
+                  {forecast.contextSignals && (
+                    <Suspense fallback={null}>
+                      <ContextSignalsPanel
+                        signals={forecast.contextSignals}
+                        timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
+                      />
+                    </Suspense>
+                  )}
 
-                <Suspense fallback={null}>
-                  <RouteWeatherPanel currentCityName={weather.cityName} />
-                </Suspense>
+                  {forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
+                      <DecisionAlertsPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
+
+                  <Suspense fallback={null}>
+                    <RouteWeatherPanel currentCityName={weather.cityName} />
+                  </Suspense>
+                </section>
               </div>
             )}
 

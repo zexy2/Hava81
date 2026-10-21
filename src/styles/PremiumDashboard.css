@@ -256,7 +256,7 @@
   gap: 0.2rem;
 }
 .app .decision-glance__quick small {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.2;
   color: #526b86;
 }
@@ -289,7 +289,7 @@
   padding: 0.3rem 0.7rem;
   background: rgb(255 255 255 / 0.74);
   color: #34628a;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 .app[data-color-mode='dark'] .decision-glance__date {
   background: rgb(19 55 75 / 0.75);
@@ -515,7 +515,7 @@
 }
 .app .hava81-decision-field__metric dt {
   margin-bottom: 0.5rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.035em;
   line-height: 1.35;
 }
@@ -525,7 +525,7 @@
   font-size: 0.98rem;
 }
 .app .hava81-decision-field__source-note {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   margin-top: -0.6rem;
 }
 .app .hava81-forecast-atlas {
@@ -549,7 +549,7 @@
   padding-top: 0.75rem;
 }
 .app .hava81-forecast-atlas__section-title {
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   letter-spacing: 0.09em;
 }
 .app .hava81-forecast-atlas__range {
@@ -648,7 +648,7 @@
   background: color-mix(in srgb, var(--color-atlas-paper) 80%, var(--color-aegean-pale));
 }
 .app .environment-rail__label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.025em;
   text-transform: none;
 }
@@ -680,11 +680,11 @@
     grid-column: 2;
     grid-row: 2 / span 2;
   }
-  .app .atlas-dashboard > .commute-plan {
+  .app .atlas-dashboard .commute-plan {
     grid-column: 1;
     grid-row: 3;
   }
-  .app .atlas-dashboard > .daily-plan {
+  .app .atlas-dashboard .daily-plan {
     grid-column: 1 / -1;
     grid-row: 4;
   }
@@ -768,11 +768,11 @@
     font-size: 1.9rem;
   }
   .app .decision-glance__score-label {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
   .app .decision-glance__details {
     padding: 0.35rem 0.4rem;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     text-align: center;
   }
   .app .decision-glance__quick-list {
@@ -797,7 +797,7 @@
     width: 1.45rem;
     height: 1.45rem;
     margin-right: 0.4rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
   .app .hava81-decision-field__current {
     min-height: 10rem;
@@ -827,7 +827,7 @@
     min-height: 8.5rem;
     padding: 0.8rem;
   }
-  .app .atlas-dashboard > .daily-plan {
+  .app .atlas-dashboard .daily-plan {
     grid-row: auto;
   }
 }
@@ -840,7 +840,7 @@
     height: 4.8rem;
   }
   .app .decision-glance__details {
-    font-size: 0.64rem;
+    font-size: 0.75rem;
   }
   .app .hava81-decision-field__symbol {
     width: 4rem;
@@ -907,7 +907,7 @@
     display: none;
   }
   .app .hava81-decision-field__metric dt {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     overflow-wrap: anywhere;
   }
 }
