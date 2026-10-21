@@ -45,8 +45,6 @@ const CASES: ReflowCase[] = [
     name: 'decision field',
     region: '.hava81-decision-field',
     widths: [320, 768, 1280],
-    // Known gap: at 320px/200% the single word "Önümüzdeki" is ~7px wider than the column.
-    knownGaps: { 320: '.hava81-decision-field__next-change' },
   },
   {
     name: 'forecast summary',

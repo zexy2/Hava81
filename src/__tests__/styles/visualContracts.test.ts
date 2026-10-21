@@ -9,6 +9,8 @@ import dailyPlan from '../../components/hava81/DailyPlanPanel.css?inline';
 import environment from '../../components/hava81/EnvironmentRail.css?inline';
 import route from '../../components/hava81/RouteWeatherPanel.css?inline';
 import forecast from '../../components/hava81/ForecastAtlas.css?inline';
+import compare from '../../components/hava81/ComparePanel.css?inline';
+import decisionField from '../../components/hava81/WeatherDecisionField.css?inline';
 import {
   DESKTOP,
   MOBILE,
@@ -259,5 +261,37 @@ describe('offscreen decision panel containment', () => {
     expect(computed(el('.commute-plan'), 'contain-intrinsic-size')).toBe('auto 28rem');
     expect(computed(el('.route-weather'), 'content-visibility')).toBe('auto');
     expect(computed(el('.route-weather'), 'contain-intrinsic-size')).toBe('auto 7rem');
+  });
+});
+
+describe('200% text overflow guards', () => {
+  it.each([
+    {
+      name: 'the next-change sentence ("Önümüzdeki" at 320px)',
+      sheets: [decisionField],
+      html: '<div class="app"><section class="hava81-decision-field"><p class="hava81-decision-field__next-change target">Önümüzdeki saatlerde</p></section></div>',
+    },
+    {
+      name: 'the 1sa…12sa interval buttons (320–360px)',
+      sheets: [forecast],
+      html: '<div class="app"><section class="hava81-forecast-atlas"><div class="hava81-forecast-atlas__rhythm"><div class="hava81-forecast-atlas__range"><button class="hava81-forecast-atlas__range-button target">12sa</button></div></div></section></div>',
+    },
+    {
+      name: 'the Compare kicker ("FAVORITE CITIES" at 768px)',
+      sheets: [app, compare],
+      html: '<div class="app"><section class="hava81-compare"><header class="hava81-compare__header"><span class="atlas-kicker target">Favorite cities</span></header></section></div>',
+    },
+  ])('lets $name break inside long words instead of overflowing', ({ sheets, html }) => {
+    for (const viewport of [
+      { width: 320, height: 640 },
+      { width: 360, height: 640 },
+      { width: 768, height: 1024 },
+    ]) {
+      mountStyles(sheets, { viewport });
+      markup(html);
+      const target = el('.target');
+      expect(computed(target, 'overflow-wrap')).toBe('anywhere');
+      expect(computed(target, 'white-space')).not.toBe('nowrap');
+    }
   });
 });

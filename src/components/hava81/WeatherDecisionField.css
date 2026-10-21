@@ -1239,6 +1239,8 @@
     font-weight: 600;
     line-height: 1.35;
     text-wrap: balance;
+    /* %200 metinde 320 px'de tek uzun sözcük ("Önümüzdeki") sütundan taşmasın. */
+    overflow-wrap: anywhere;
   }
 
   .app .hava81-decision-field__trend {
