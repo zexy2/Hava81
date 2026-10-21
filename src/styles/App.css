@@ -2474,4 +2474,26 @@
       grid-column: 1 / -1;
     }
   }
+
+  /* Faz 4: 404 görünümü ("Bu adreste bir il yok") */
+  .atlas-not-found__heading {
+    margin: var(--space-lg) 0 var(--space-xs);
+    font-size: 1rem;
+  }
+
+  .atlas-not-found__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .atlas-not-found a.atlas-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
 }

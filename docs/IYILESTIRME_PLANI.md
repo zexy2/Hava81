@@ -96,9 +96,12 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava8
 
 ## Faz 4: Büyüme ve SEO (sonra)
 
-- [ ] İngilizce sürüm için `/en/<il>/` sayfaları ve `hreflang` etiketleri. Şu an İngilizce içerik indekslenemiyor.
-- [ ] Build sırasında her il için statik bir özet render edilmesi ve il bazlı OG görseli. Şu an tek bir OG görseli var ve o da eski markayı taşıyor.
-- [ ] Gerçek bir 404 sayfası: "Bu adreste bir il yok" mesajı ve benzer il önerileri.
+- [x] İngilizce sürüm için `/en/<il>/` sayfaları ve `hreflang` etiketleri. Şu an İngilizce içerik indekslenemiyor.
+  - Kaldığı yer: Build artık 81 TR + 81 EN il sayfası (`/en/<il>/`, `<html lang="en">`, İngilizce başlık/açıklama, `og:locale en_US`) ve `/en/` ana sayfası üretiyor. Her sayfada `hreflang` tr/en/x-default (x-default = Türkçe); sitemap 164 URL + `xhtml:link` alternatifleri. Uygulama: `/en/…` adresi dili İngilizce yapar (`i18n` ilk dil + `SettingsProvider`), dil değişince URL `/…` ↔ `/en/…` olarak yeniden yazılır, `hreflang` linkleri gezinmede güncellenir (`cityRoute.ts`: `languageFromPathname`, `isHomePathname`, `cityPath(name, lang)`; `useAppRouting`). Üretici saf fonksiyonlara bölündü: `scripts/lib/city-pages.mjs` (+ `scripts.cityPages.test.ts`, eski kaynak-okuyan `scripts.cityPageMetadata.test.ts` silindi). `verify-generated-seo.mjs` ve canlı `verify-public-seo.mjs` (+ testi) EN sayfaları ve 164 URL'lik sitemap'i doğruluyor. e2e: `e2e/seo-language.spec.ts`.
+- [x] Build sırasında her il için statik bir özet render edilmesi ve il bazlı OG görseli. Şu an tek bir OG görseli var ve o da eski markayı taşıyor.
+  - Kaldığı yer: Her il sayfasının `#root`'una build'de taranabilir statik özet yazılıyor (il adı, plaka, bölge, koordinat, ne sunduğu, en yakın 5 ile iç link, diğer dile link); React açılınca yerini uygulama alır. İl bazlı OG kartları (1200×630 JPEG, mavi premium palet, il adı + bölge + plaka) `public/og/<il>.jpg` olarak repoda (~4 MB); üretici `scripts/generate-og-images.mjs` (Playwright Chromium, tasarım/il listesi değişince elle çalıştırılır). Build, kart eksikse hata verir. Ana sayfa OG görseli (eski marka) değişmedi — istenirse aynı şablonla yenilenebilir.
+- [x] Gerçek bir 404 sayfası: "Bu adreste bir il yok" mesajı ve benzer il önerileri.
+  - Kaldığı yer: `dist/404.html` artık index kopyası değil: `noindex`, canonical yok, başlık "Sayfa bulunamadı — Hava81", JS'siz durumda da "Bu adreste bir il yok" + ana sayfa linki (GitHub Pages bunu HTTP 404 ile sunar). Uygulama bilinmeyen yolda `NotFoundState` gösterir: mesaj, adrese en yakın 3 il (düzenleme mesafesi) gerçek link olarak, "İl ara" ve ana sayfa düğmeleri; EN'de `/en/` linkleri. Docker/nginx `try_files … /index.html` fallback'i dokunulmadı (SPA yine 404 görünümünü gösterir ama HTTP 200 döner).
 
 ---
 

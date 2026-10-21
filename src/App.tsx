@@ -19,6 +19,8 @@ import { ApiError } from './api/errors/ApiError';
 import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
+import { NotFoundState } from './components/app/NotFoundState';
+import { isHomePathname, isUnknownPathname } from './utils/cityRoute';
 import { AtlasLoadingState, ForecastLoadingCard } from './components/app/AppSkeletons';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { parseAtlasView, resolveAtlasView, type AtlasView } from './utils/atlasView';
@@ -63,7 +65,8 @@ const App: React.FC = () => {
   const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
   const [initialCity] = useState(() => resolveInitialCity(window.location));
-  const isRootRoute = window.location.pathname === '/';
+  const isRootRoute = isHomePathname(window.location.pathname);
+  const isUnknownRoute = isUnknownPathname(window.location.pathname);
 
   const {
     city,
@@ -711,7 +714,15 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {activeNav !== 'compare' && !weather && !isLoading && !error && (
+            {activeNav !== 'compare' && !weather && !isLoading && !error && isUnknownRoute && (
+              <NotFoundState
+                pathname={window.location.pathname}
+                language={settings.language}
+                onSearch={openSearch}
+              />
+            )}
+
+            {activeNav !== 'compare' && !weather && !isLoading && !error && !isUnknownRoute && (
               <section className={`atlas-empty${isRootRoute ? ' atlas-empty--location' : ''}`}>
                 {!isRootRoute ? (
                   <>

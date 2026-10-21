@@ -4,8 +4,10 @@ import { tr } from './locales/tr';
 import { en } from './locales/en';
 import { detectBrowserLanguage } from './detectLanguage';
 
-// Stored language first, then the browser's preferred language, then Turkish
+// The /en/ URL first (Faz 4), then the stored language, then the browser's preferred language,
+// then Turkish
 const getStoredLanguage = (): string => {
+  if (typeof window !== 'undefined' && /^\/en(\/|$)/.test(window.location.pathname)) return 'en';
   try {
     const userSettings = localStorage.getItem('user-settings');
     if (userSettings) {
