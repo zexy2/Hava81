@@ -2,7 +2,7 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="hava81-build-revision" content="6c53ceeaccbd021a5cec32b9bed242f3bb935fdd" />
+    <meta name="hava81-build-revision" content="adce1d65597561990edc5ed84a9768dcb084abc7" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#F3F6F4" media="(prefers-color-scheme: light)" />
@@ -20,11 +20,14 @@
     <link rel="icon" href="/hava81-favicon.ico?v=20260828" sizes="16x16 24x24 32x32 48x48 64x64" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260828" sizes="180x180" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="alternate" hreflang="tr" href="https://hava81.zekiakgul.dev/istanbul/" />
+    <link rel="alternate" hreflang="en" href="https://hava81.zekiakgul.dev/en/istanbul/" />
+    <link rel="alternate" hreflang="x-default" href="https://hava81.zekiakgul.dev/istanbul/" />
     <link rel="dns-prefetch" href="//api.hava81.zekiakgul.dev" />
     <link rel="preconnect" href="https://api.hava81.zekiakgul.dev" crossorigin />
     <link rel="canonical" href="https://hava81.zekiakgul.dev/istanbul/" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebPage","name":"İstanbul hava durumu ve gün planı — Hava81","description":"İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.","url":"https://hava81.zekiakgul.dev/istanbul/","isPartOf":{"@type":"WebSite","name":"Hava81","url":"https://hava81.zekiakgul.dev/"},"about":{"@type":"AdministrativeArea","name":"İstanbul","containedInPlace":{"@type":"Country","name":"Türkiye"}},"inLanguage":["tr","en"]}
+      {"@context":"https://schema.org","@type":"WebPage","name":"İstanbul hava durumu ve gün planı — Hava81","description":"İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.","url":"https://hava81.zekiakgul.dev/istanbul/","isPartOf":{"@type":"WebSite","name":"Hava81","url":"https://hava81.zekiakgul.dev/"},"about":{"@type":"AdministrativeArea","name":"İstanbul","containedInPlace":{"@type":"Country","name":"Türkiye"}},"inLanguage":"tr"}
     </script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Hava81" />
@@ -35,9 +38,9 @@
     <meta property="og:description" content="İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri." />
     <meta
       property="og:image"
-      content="https://hava81.zekiakgul.dev/hava81-social-card.png?v=20260828"
+      content="https://hava81.zekiakgul.dev/og/istanbul.jpg"
     />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="İstanbul hava durumu ve gün planı — Hava81" />
@@ -46,7 +49,7 @@
     <meta name="twitter:description" content="İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri." />
     <meta
       name="twitter:image"
-      content="https://hava81.zekiakgul.dev/hava81-social-card.png?v=20260828"
+      content="https://hava81.zekiakgul.dev/og/istanbul.jpg"
     />
     <meta name="twitter:image:alt" content="İstanbul hava durumu ve gün planı — Hava81" />
     <title>İstanbul hava durumu ve gün planı — Hava81</title>
@@ -113,10 +116,7 @@
           hourlyUrl.searchParams.set('lon', String(lon));
           hourlyUrl.searchParams.set('lang', lang);
           const hourlyController = new AbortController();
-          const hourlyTimeoutId = window.setTimeout(
-            () => hourlyController.abort(),
-            10000
-          );
+          const hourlyTimeoutId = window.setTimeout(() => hourlyController.abort(), 10000);
           return window
             .fetch(hourlyUrl.toString(), {
               headers: { Accept: 'application/json' },
@@ -131,16 +131,16 @@
         window.__HAVA81_BOOTSTRAP_HOURLY__ = { lang, promise: hourlyPromise };
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-B_u1l_Jp.js"></script>
+    <script type="module" crossorigin src="/assets/index-C4n2ebqL.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-WkwZ5CU-.js">
     <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-Bc_zHfLR.js">
-    <link rel="modulepreload" crossorigin href="/assets/SettingsContext-YboZ8LnB.js">
+    <link rel="modulepreload" crossorigin href="/assets/SettingsContext-BNeGit98.js">
     <link rel="modulepreload" crossorigin href="/assets/bestWindowRange-CwY4WMNi.js">
     <link rel="modulepreload" crossorigin href="/assets/productEvents-B0RXc9Qw.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-cBpt3N5p.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-CQi9blrn.css">
   </head>
   <body>
     <noscript>Hava81'i kullanmak için JavaScript'i etkinleştirin.</noscript>
-    <div id="root"></div>
+    <div id="root"><main class="hava81-static-summary" data-static-summary="istanbul" style='max-width:46rem;margin:0 auto;padding:2.5rem 1.25rem;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;color:#0b264b'><p style="margin:0;font-size:.8125rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#10476c">Hava81 · Türkiye’nin 81 ili için karar odaklı hava rehberi</p><h1 style="margin:.5rem 0 1rem;font-size:2.25rem;line-height:1.15">İstanbul hava durumu</h1><p>İstanbul (plaka 34) Marmara Bölgesi’nde; il merkezi 41,01° K, 28,97° D.</p><p>Bu sayfa İstanbul için güncel havayı, saatlik ve günlük tahmini, Hava81 Skorunu ve hava açısından en iyi dışarı çıkma penceresini gösterir. Canlı veriler uygulama açılınca gelir.</p><nav aria-label="Yakındaki iller"><h2 style="font-size:1.125rem;margin:1.5rem 0 .5rem">Yakındaki iller</h2><ul style="display:flex;flex-wrap:wrap;gap:.5rem 1rem;padding:0;margin:0;list-style:none"><li><a href="/yalova/">Yalova</a></li><li><a href="/kocaeli/">Kocaeli</a></li><li><a href="/bursa/">Bursa</a></li><li><a href="/tekirdag/">Tekirdağ</a></li><li><a href="/sakarya/">Sakarya</a></li></ul></nav><p style="margin-top:1.5rem"><a href="/en/istanbul/" hreflang="en" lang="en">English</a></p></main></div>
   </body>
 </html>
