@@ -1,453 +1,1289 @@
-.hava81-decision-field {
-  --decision-paper: var(--color-atlas-paper, #ffffff);
-  --decision-field: var(--color-atlas-field, #f3f6f4);
-  --decision-ink: var(--color-atlas-ink, #142524);
-  --decision-muted: var(--color-atlas-muted, #5c6c6a);
-  --decision-line: var(--color-atlas-line, #c8d6d2);
-  --decision-teal: var(--color-aegean, #146b73);
-  --decision-saffron: var(--color-saffron, #e7a531);
-
-  display: grid;
-  gap: 24px;
-  width: 100%;
-  padding: 20px 0;
-  color: var(--decision-ink);
-  font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
-  background: transparent;
-  border-block: 1px solid var(--decision-line);
-  border-inline: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.hava81-decision-field__identity {
-  display: grid;
-  gap: 8px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--decision-line);
-}
-
-.hava81-decision-field__city-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.hava81-decision-field__city {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-  color: var(--decision-ink);
-  font-size: clamp(2rem, 4vw, 2.65rem);
-  font-weight: 650;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-}
-
-.hava81-decision-field__plate {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  min-height: 2rem;
-  overflow: hidden;
-  color: var(--decision-ink);
-  font-size: 0.8125rem;
-  font-variant-numeric: tabular-nums lining-nums;
-  line-height: 1;
-  background: var(--decision-field);
-  border: 1px solid var(--decision-ink);
-  border-radius: 4px;
-}
-
-.hava81-decision-field__plate span,
-.hava81-decision-field__plate strong {
-  display: inline-flex;
-  align-items: center;
-  align-self: stretch;
-  padding: 0 8px;
-}
-
-.hava81-decision-field__plate span {
-  color: var(--decision-paper);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  background: var(--decision-teal);
-}
-
-.hava81-decision-field__plate strong {
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.hava81-decision-field__atlas-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  color: var(--decision-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums lining-nums;
-  line-height: 1.4;
-  letter-spacing: 0.04em;
-}
-
-.hava81-decision-field__observed-compact {
-  display: none;
-}
-
-.hava81-decision-field__current {
-  min-width: 0;
-}
-
-.hava81-decision-field__reading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 88px;
-  gap: 16px;
-  align-items: center;
-}
-
-.hava81-decision-field__temperature {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  margin: 0;
-  color: var(--decision-ink);
-  font-variant-numeric: tabular-nums lining-nums;
-  line-height: 0.88;
-  white-space: nowrap;
-}
-
-.hava81-decision-field__temperature-value {
-  font-family: var(--font-display, 'Source Serif 4 Variable', 'Source Serif 4', Georgia, serif);
-  font-size: clamp(4.75rem, 10vw, 6.25rem);
-  font-weight: 320;
-  letter-spacing: -0.045em;
-}
-
-.hava81-decision-field__temperature-unit {
-  margin-top: 8px;
-  color: var(--decision-muted);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.hava81-decision-field__symbol {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 88px;
-  height: 88px;
-  color: var(--decision-teal);
-}
-
-.hava81-decision-field__weather-symbol {
-  width: 100%;
-  height: 100%;
-}
-
-.hava81-decision-field__condition {
-  max-width: 36ch;
-  margin: 12px 0 0;
-  color: var(--decision-ink);
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.25;
-  text-transform: capitalize;
-  text-wrap: balance;
-}
-
-.hava81-decision-field__feels-like {
-  margin: 4px 0 0;
-  color: var(--decision-muted);
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.hava81-decision-field__change {
-  min-width: 0;
-  align-self: end;
-  overflow-wrap: anywhere;
-  padding: 16px 18px;
-  color: var(--decision-ink);
-  background: color-mix(in srgb, var(--decision-saffron) 18%, transparent);
-  border-inline-start: 4px solid var(--decision-saffron);
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.hava81-decision-field__change-title {
-  margin: 0 0 8px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.hava81-decision-field__change-copy {
-  max-width: 44ch;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.45;
-  text-wrap: pretty;
-}
-
-.hava81-decision-field__rail {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--decision-line);
-}
-
-.hava81-decision-field__metric {
-  min-width: 0;
-  padding: 16px 12px 0 0;
-}
-
-.hava81-decision-field__metric:nth-child(even) {
-  padding-right: 0;
-  padding-left: 12px;
-  border-left: 1px solid var(--decision-line);
-}
-
-.hava81-decision-field__metric:nth-child(n + 3) {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--decision-line);
-}
-
-.hava81-decision-field__metric dt {
-  margin: 0 0 8px;
-  overflow-wrap: anywhere;
-  color: var(--decision-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hava81-decision-field__metric dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-  color: var(--decision-ink);
-  font-size: 1rem;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums lining-nums;
-  line-height: 1.35;
-}
-
-@media (max-width: 55.99rem) {
-  .hava81-decision-field__rail {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
-    gap: 1px;
-    background: var(--decision-line);
-  }
-
-  .hava81-decision-field__metric,
-  .hava81-decision-field__metric:nth-child(even),
-  .hava81-decision-field__metric:nth-child(n + 3) {
-    margin-top: 0;
-    padding: 12px 8px;
-    background: var(--decision-field);
-    border-top: 0;
-    border-left: 0;
-  }
-
-  .hava81-decision-field__metric dt {
-    margin-bottom: 6px;
-  }
-}
-
-@media (max-width: 39.99rem) {
-  .hava81-decision-field__coordinate-meta,
-  .hava81-decision-field__observed-full {
-    display: none;
-  }
-
-  .hava81-decision-field__observed-compact {
-    display: inline;
-  }
-}
-
-@media (min-width: 40rem) {
+@layer components {
   .hava81-decision-field {
-    padding: 24px 0;
+    --decision-paper: var(--color-atlas-paper, #ffffff);
+    --decision-field: var(--color-atlas-field, #f3f6f4);
+    --decision-ink: var(--color-atlas-ink, #142524);
+    --decision-muted: var(--color-atlas-muted, #5c6c6a);
+    --decision-line: var(--color-atlas-line, #c8d6d2);
+    --decision-teal: var(--color-aegean, #146b73);
+    --decision-saffron: var(--color-saffron, #e7a531);
+
+    display: grid;
+    gap: 24px;
+    width: 100%;
+    padding: 20px 0;
+    color: var(--decision-ink);
+    font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
+    background: transparent;
+    border-block: 1px solid var(--decision-line);
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
-  .hava81-decision-field__reading {
-    grid-template-columns: minmax(0, 1fr) 112px;
+  .hava81-decision-field__identity {
+    display: grid;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--decision-line);
   }
 
-  .hava81-decision-field__symbol {
-    width: 112px;
-    height: 112px;
-  }
-
-  .hava81-decision-field__temperature-value {
-    font-size: 6rem;
-  }
-}
-
-@media (min-width: 56rem) {
-  .hava81-decision-field {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    column-gap: 24px;
-    row-gap: 32px;
-    padding: 32px 0;
-  }
-
-  .hava81-decision-field__identity,
-  .hava81-decision-field__rail {
-    grid-column: 1 / -1;
-  }
-
-  .hava81-decision-field__current {
-    grid-column: 1 / span 5;
-  }
-
-  .hava81-decision-field__change {
-    grid-column: 6 / -1;
-  }
-
-  .hava81-decision-field__reading {
+  .hava81-decision-field__city-row {
     display: flex;
-    flex-wrap: wrap;
-  }
-
-  .hava81-decision-field__temperature {
-    flex: 1 1 7rem;
-    min-width: 0;
-  }
-
-  .hava81-decision-field__symbol {
-    flex: 0 0 112px;
-  }
-
-  .hava81-decision-field__temperature-value {
-    font-size: 7.5rem;
-  }
-
-  .hava81-decision-field__rail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .hava81-decision-field__metric,
-  .hava81-decision-field__metric:nth-child(even),
-  .hava81-decision-field__metric:nth-child(n + 3) {
-    margin-top: 0;
-    padding: 0 24px;
-    border-top: 0;
-    border-left: 1px solid var(--decision-line);
-  }
-
-  .hava81-decision-field__metric:first-child {
-    padding-left: 0;
-    border-left: 0;
-  }
-
-  .hava81-decision-field__metric:last-child {
-    padding-right: 0;
-  }
-}
-
-@media (max-width: 24.375rem) {
-  .hava81-decision-field__reading {
-    grid-template-columns: minmax(0, 1fr) 72px;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
   }
 
-  .hava81-decision-field__symbol {
-    width: 72px;
-    height: 72px;
-  }
-}
-
-.hava81-decision-field__decision-list {
-  display: grid;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.hava81-decision-field__decision-list li {
-  min-width: 0;
-  padding-left: 0.75rem;
-  overflow-wrap: anywhere;
-  border-left: 2px solid currentColor;
-}
-
-.hava81-decision-field__decision-list li[data-severity='high'] {
-  font-weight: 650;
-}
-
-.hava81-decision-field__atlas-meta .is-stale {
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 0.16em;
-}
-
-.hava81-decision-field__decision-copy--compact {
-  display: none;
-}
-
-@media (max-width: 39.99rem) {
-  .hava81-decision-field__change {
-    padding: 14px 16px;
+  .hava81-decision-field__city {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--decision-ink);
+    font-size: clamp(2rem, 4vw, 2.65rem);
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
-  .hava81-decision-field__change-title {
-    margin-bottom: 6px;
+  .hava81-decision-field__plate {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 2rem;
+    overflow: hidden;
+    color: var(--decision-ink);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 1;
+    background: var(--decision-field);
+    border: 1px solid var(--decision-ink);
+    border-radius: 4px;
   }
 
-  .hava81-decision-field__decision-list {
-    gap: 0;
+  .hava81-decision-field__plate span,
+  .hava81-decision-field__plate strong {
+    display: inline-flex;
+    align-items: center;
+    align-self: stretch;
+    padding: 0 8px;
   }
 
-  .hava81-decision-field__decision-list li {
-    padding: 0.5rem 0;
-    border-left: 0;
+  .hava81-decision-field__plate span {
+    color: var(--decision-paper);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    background: var(--decision-teal);
   }
 
-  .hava81-decision-field__decision-list li + li {
-    border-top: 1px solid color-mix(in srgb, var(--decision-saffron) 34%, transparent);
+  .hava81-decision-field__plate strong {
+    font-size: 0.875rem;
+    font-weight: 600;
   }
 
-  .hava81-decision-field__decision-list li:first-child {
-    padding-top: 0.2rem;
+  .hava81-decision-field__atlas-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    color: var(--decision-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
   }
 
-  .hava81-decision-field__decision-list li:last-child {
-    padding-bottom: 0.2rem;
-  }
-
-  .hava81-decision-field__decision-copy--full {
+  .hava81-decision-field__observed-compact {
     display: none;
   }
 
-  .hava81-decision-field__decision-copy--compact {
-    display: block;
-    font-size: 0.9375rem;
+  .hava81-decision-field__current {
+    min-width: 0;
+  }
+
+  .hava81-decision-field__reading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .hava81-decision-field__temperature {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin: 0;
+    color: var(--decision-ink);
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 0.88;
+    white-space: nowrap;
+  }
+
+  .hava81-decision-field__temperature-value {
+    font-family: var(--font-display, 'Source Serif 4 Variable', 'Source Serif 4', Georgia, serif);
+    font-size: clamp(4.75rem, 10vw, 6.25rem);
+    font-weight: 320;
+    letter-spacing: -0.045em;
+  }
+
+  .hava81-decision-field__temperature-unit {
+    margin-top: 8px;
+    color: var(--decision-muted);
+    font-size: 1rem;
     font-weight: 600;
-    line-height: 1.35;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .hava81-decision-field__symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    color: var(--decision-teal);
+  }
+
+  .hava81-decision-field__weather-symbol {
+    width: 100%;
+    height: 100%;
+  }
+
+  .hava81-decision-field__condition {
+    max-width: 36ch;
+    margin: 12px 0 0;
+    color: var(--decision-ink);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-transform: capitalize;
+    text-wrap: balance;
+  }
+
+  .hava81-decision-field__feels-like {
+    margin: 4px 0 0;
+    color: var(--decision-muted);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .hava81-decision-field__change {
+    min-width: 0;
+    align-self: end;
+    overflow-wrap: anywhere;
+    padding: 16px 18px;
+    color: var(--decision-ink);
+    background: color-mix(in srgb, var(--decision-saffron) 18%, transparent);
+    border-inline-start: 4px solid var(--decision-saffron);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .hava81-decision-field__change-title {
+    margin: 0 0 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hava81-decision-field__change-copy {
+    max-width: 44ch;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.45;
     text-wrap: pretty;
   }
-}
 
-.hava81-decision-field__source-note {
-  display: block;
-  margin: -0.75rem 0 0;
-  color: var(--decision-muted);
-  font-size: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.35;
+  .hava81-decision-field__rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--decision-line);
+  }
+
+  .hava81-decision-field__metric {
+    min-width: 0;
+    padding: 16px 12px 0 0;
+  }
+
+  .hava81-decision-field__metric:nth-child(even) {
+    padding-right: 0;
+    padding-left: 12px;
+    border-left: 1px solid var(--decision-line);
+  }
+
+  .hava81-decision-field__metric:nth-child(n + 3) {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--decision-line);
+  }
+
+  .hava81-decision-field__metric dt {
+    margin: 0 0 8px;
+    overflow-wrap: anywhere;
+    color: var(--decision-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hava81-decision-field__metric dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--decision-ink);
+    font-size: 1rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 55.99rem) {
+    .hava81-decision-field__rail {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
+      gap: 1px;
+      background: var(--decision-line);
+    }
+
+    .hava81-decision-field__metric,
+    .hava81-decision-field__metric:nth-child(even),
+    .hava81-decision-field__metric:nth-child(n + 3) {
+      margin-top: 0;
+      padding: 12px 8px;
+      background: var(--decision-field);
+      border-top: 0;
+      border-left: 0;
+    }
+
+    .hava81-decision-field__metric dt {
+      margin-bottom: 6px;
+    }
+  }
+
+  @media (max-width: 39.99rem) {
+    .hava81-decision-field__coordinate-meta,
+    .hava81-decision-field__observed-full {
+      display: none;
+    }
+
+    .hava81-decision-field__observed-compact {
+      display: inline;
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .hava81-decision-field {
+      padding: 24px 0;
+    }
+
+    .hava81-decision-field__reading {
+      grid-template-columns: minmax(0, 1fr) 112px;
+    }
+
+    .hava81-decision-field__symbol {
+      width: 112px;
+      height: 112px;
+    }
+
+    .hava81-decision-field__temperature-value {
+      font-size: 6rem;
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .hava81-decision-field {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      column-gap: 24px;
+      row-gap: 32px;
+      padding: 32px 0;
+    }
+
+    .hava81-decision-field__identity,
+    .hava81-decision-field__rail {
+      grid-column: 1 / -1;
+    }
+
+    .hava81-decision-field__current {
+      grid-column: 1 / span 5;
+    }
+
+    .hava81-decision-field__change {
+      grid-column: 6 / -1;
+    }
+
+    .hava81-decision-field__reading {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .hava81-decision-field__temperature {
+      flex: 1 1 7rem;
+      min-width: 0;
+    }
+
+    .hava81-decision-field__symbol {
+      flex: 0 0 112px;
+    }
+
+    .hava81-decision-field__temperature-value {
+      font-size: 7.5rem;
+    }
+
+    .hava81-decision-field__rail {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .hava81-decision-field__metric,
+    .hava81-decision-field__metric:nth-child(even),
+    .hava81-decision-field__metric:nth-child(n + 3) {
+      margin-top: 0;
+      padding: 0 24px;
+      border-top: 0;
+      border-left: 1px solid var(--decision-line);
+    }
+
+    .hava81-decision-field__metric:first-child {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .hava81-decision-field__metric:last-child {
+      padding-right: 0;
+    }
+  }
+
+  @media (max-width: 24.375rem) {
+    .hava81-decision-field__reading {
+      grid-template-columns: minmax(0, 1fr) 72px;
+      gap: 12px;
+    }
+
+    .hava81-decision-field__symbol {
+      width: 72px;
+      height: 72px;
+    }
+  }
+
+  .hava81-decision-field__decision-list {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hava81-decision-field__decision-list li {
+    min-width: 0;
+    padding-left: 0.75rem;
+    overflow-wrap: anywhere;
+    border-left: 2px solid currentColor;
+  }
+
+  .hava81-decision-field__decision-list li[data-severity='high'] {
+    font-weight: 650;
+  }
+
+  .hava81-decision-field__atlas-meta .is-stale {
+    font-weight: 650;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+  }
+
+  .hava81-decision-field__decision-copy--compact {
+    display: none;
+  }
+
+  @media (max-width: 39.99rem) {
+    .hava81-decision-field__change {
+      padding: 14px 16px;
+    }
+
+    .hava81-decision-field__change-title {
+      margin-bottom: 6px;
+    }
+
+    .hava81-decision-field__decision-list {
+      gap: 0;
+    }
+
+    .hava81-decision-field__decision-list li {
+      padding: 0.5rem 0;
+      border-left: 0;
+    }
+
+    .hava81-decision-field__decision-list li + li {
+      border-top: 1px solid color-mix(in srgb, var(--decision-saffron) 34%, transparent);
+    }
+
+    .hava81-decision-field__decision-list li:first-child {
+      padding-top: 0.2rem;
+    }
+
+    .hava81-decision-field__decision-list li:last-child {
+      padding-bottom: 0.2rem;
+    }
+
+    .hava81-decision-field__decision-copy--full {
+      display: none;
+    }
+
+    .hava81-decision-field__decision-copy--compact {
+      display: block;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      line-height: 1.35;
+      text-wrap: pretty;
+    }
+  }
+
+  .hava81-decision-field__source-note {
+    display: block;
+    margin: -0.75rem 0 0;
+    color: var(--decision-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.35;
+  }
+
+  /* ── Premium mavi görünüm ── */
+
+  .app .hava81-decision-field {
+    min-width: 0;
+    border: 1px solid var(--premium-card-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-atlas-paper);
+    box-shadow: var(--premium-elevation);
+  }
+
+  .app .hava81-decision-field {
+    padding: clamp(1.05rem, 1.65vw, 1.7rem);
+    border: 1px solid var(--premium-card-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-atlas-paper);
+  }
+
+  .app .hava81-decision-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.15rem;
+    align-content: start;
+    overflow: hidden;
+  }
+
+  .app .hava81-decision-field__identity,
+  .app .hava81-decision-field__rail {
+    grid-column: 1 / -1;
+  }
+
+  .app .hava81-decision-field__identity {
+    padding-bottom: 0.85rem;
+    gap: 0.6rem;
+  }
+
+  .app .hava81-decision-field__city {
+    font-family: var(--font-ui);
+    font-size: clamp(2rem, 2.6vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+  }
+
+  .app .hava81-decision-field__city::before {
+    content: '●';
+    display: inline-grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    margin-right: 0.85rem;
+    border-radius: 50%;
+    vertical-align: 0.2rem;
+    background: #e3f0ff;
+    color: #1c6bd9;
+    font-size: 1rem;
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__city::before {
+    background: #2c4f70;
+    color: #a3cfff;
+  }
+
+  .app .hava81-decision-field__plate {
+    color: var(--color-aegean-deep);
+    border: 1px solid var(--premium-card-border);
+    border-radius: 9px;
+    background: var(--color-aegean-pale);
+  }
+
+  .app .hava81-decision-field__plate span {
+    color: #fff;
+    background: #2565b0; /* white plate label reaches AA contrast */
+  }
+
+  .app .hava81-decision-field__atlas-meta {
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    gap: 5px 9px;
+  }
+
+  .app .hava81-decision-field__current {
+    position: relative;
+    z-index: 0;
+    min-height: 14rem;
+    align-self: center;
+    border-radius: 20px;
+    padding: 1rem 1.15rem 1.2rem;
+    background:
+      radial-gradient(ellipse at 68% 50%, #d8efff, transparent 56%),
+      linear-gradient(150deg, #f5faff 0%, #f6fbff 58%, #ebf4ff 100%);
+    overflow: hidden;
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__current {
+    background:
+      radial-gradient(ellipse at 70% 60%, #27668b, transparent 55%),
+      linear-gradient(140deg, #19394d, #183747);
+  }
+
+  .app .hava81-decision-field__reading {
+    align-items: center;
+    min-height: 9.2rem;
+  }
+
+  .app .hava81-decision-field__temperature-value {
+    font-family: var(--font-ui);
+    font-weight: 770;
+    font-size: clamp(5.7rem, 8.3vw, 8rem);
+    letter-spacing: -0.09em;
+    line-height: 1;
+  }
+
+  .app .hava81-decision-field__temperature-unit {
+    margin: 0.8rem 0 0 0.35rem;
+    color: var(--premium-ink);
+    font-size: 1.15rem;
+  }
+
+  .app .hava81-decision-field__symbol {
+    flex: 0 0 9rem;
+    width: 9rem;
+    height: 9rem;
+    color: #428cda;
+    filter: drop-shadow(0 10px 13px rgb(68 145 207 / 0.14));
+  }
+
+  .app .hava81-decision-field__weather-symbol {
+    stroke-width: 1.7;
+  }
+
+  .app .hava81-decision-field__condition {
+    margin-top: 0.3rem;
+    color: var(--premium-ink);
+    font-weight: 710;
+    font-size: 1.4rem;
+  }
+
+  .app .hava81-decision-field__feels-like {
+    color: var(--color-atlas-muted);
+  }
+
+  .app .hava81-decision-field__change {
+    padding: 0.9rem 1rem;
+    border: 1px solid #ffe6b8;
+    border-left: 4px solid #ffb13f;
+    border-radius: 14px;
+    background: linear-gradient(110deg, #fff8e8, #ffeed1);
+    box-shadow: 0 3px 10px rgb(197 140 55 / 0.05);
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__change {
+    background: #3c392f;
+    border-color: #806d43;
+    border-left-color: #f4b956;
+  }
+
+  .app .hava81-decision-field__change-title {
+    letter-spacing: 0.05em;
+  }
+
+  .app .hava81-decision-field__rail {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border-top: 0;
+  }
+
+  .app .hava81-decision-field__metric,
+  .app .hava81-decision-field__metric:nth-child(even) {
+    margin: 0;
+    padding: 0.85rem;
+    min-width: 0;
+    border: 1px solid var(--premium-card-border);
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--color-atlas-paper) 80%, var(--premium-soft));
+  }
+
+  .app .hava81-decision-field__metric dt {
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.035em;
+    line-height: 1.35;
+  }
+
+  .app .hava81-decision-field__metric dd {
+    font-weight: 750;
+    color: var(--premium-ink);
+    font-size: 0.98rem;
+  }
+
+  .app .hava81-decision-field__source-note {
+    font-size: 0.75rem;
+    margin-top: -0.6rem;
+  }
+
+  @media (min-width: 64rem) and (max-width: 87rem) {
+    .app .hava81-decision-field__rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) and (max-width: 87rem) {
+    .app .hava81-decision-field__temperature-value {
+      font-size: 5.6rem;
+    }
+    .app .hava81-decision-field__symbol {
+      width: 6rem;
+      height: 6rem;
+      flex-basis: 6rem;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field {
+      padding: 1rem;
+      border-radius: 18px;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field {
+      gap: 0.9rem;
+    }
+    .app .hava81-decision-field__city {
+      font-size: 2rem;
+    }
+    .app .hava81-decision-field__city::before {
+      width: 1.45rem;
+      height: 1.45rem;
+      margin-right: 0.4rem;
+      font-size: 0.75rem;
+    }
+    .app .hava81-decision-field__current {
+      min-height: 10rem;
+      padding: 0.8rem;
+    }
+    .app .hava81-decision-field__temperature-value {
+      font-size: clamp(4rem, 19vw, 6rem);
+    }
+    .app .hava81-decision-field__symbol {
+      width: 6rem;
+      height: 6rem;
+      flex-basis: 6rem;
+    }
+    .app .hava81-decision-field__rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .app .hava81-decision-field__metric,
+    .app .hava81-decision-field__metric:nth-child(even) {
+      padding: 0.7rem;
+    }
+  }
+
+  @media (max-width: 23rem) {
+    .app .hava81-decision-field__symbol {
+      width: 4rem;
+      height: 4rem;
+      flex-basis: 4rem;
+    }
+  }
+
+  /* Collapse the legacy eight-column decision grid into a single card flow. */
+
+  .app .hava81-decision-field__identity,
+  .app .hava81-decision-field__current,
+  .app .hava81-decision-field__change,
+  .app .hava81-decision-field__rail,
+  .app .hava81-decision-field__source-note {
+    grid-column: 1;
+    grid-row: auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field__metric dt {
+      font-size: 0.75rem;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field__rail {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field__temperature-value {
+      font-size: clamp(3.3rem, 17vw, 4.2rem);
+    }
+    .app .hava81-decision-field__reading {
+      gap: 0.4rem;
+    }
+    .app .hava81-decision-field__symbol {
+      width: 3rem;
+      height: 3rem;
+      flex-basis: 3rem;
+    }
+    .app .hava81-decision-field__current {
+      padding: 0.35rem;
+    }
+    .app .hava81-decision-field {
+      padding: 0.5rem;
+    }
+  }
+
+  /* Compact cards use two columns on standard phones, one on very narrow screens. */
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field__reading {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 0;
+    }
+    .app .hava81-decision-field__temperature {
+      flex: none;
+      max-width: 100%;
+    }
+    .app .hava81-decision-field__symbol {
+      align-self: flex-end;
+    }
+    .app .hava81-decision-field__current {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .app .hava81-decision-field__metric {
+      min-width: 0;
+    }
+  }
+
+  @media (min-width: 47.99rem) {
+    .app .hava81-decision-field__temperature-value {
+      font-size: clamp(6.3rem, 8.3vw, 8rem);
+    }
+  }
+
+  /* The card's tinted signal retains a solid semantic background, too. */
+
+  .app .hava81-decision-field__change {
+    background-color: #fff3df;
+  }
+
+  /* ── Durum illüstrasyonu ölçüleri ── */
+
+  .app .hava81-decision-field__symbol {
+    width: min(100%, 140px);
+    height: 140px;
+    flex-basis: 140px;
+    filter: drop-shadow(0 11px 16px rgb(66 130 180 / 0.15));
+  }
+
+  @media (max-width: 63.99rem) {
+    .app .hava81-decision-field__symbol {
+      width: 96px;
+      height: 96px;
+      flex-basis: 96px;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field__symbol {
+      width: 102px;
+      height: 102px;
+      flex-basis: 102px;
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field__symbol {
+      width: 48px;
+      height: 48px;
+      flex-basis: 48px;
+    }
+  }
+
+  /* Keep the real-weather illustration inside its mobile grid column. Width is
+ * fixed in CSS pixels so doubling text size never doubles the icon past the
+ * available space. Narrower screens retain the existing 48px layout. */
+
+  @media (min-width: 24.01rem) and (max-width: 47.99rem) {
+    .app .hava81-decision-field__reading {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 88px);
+    }
+    .app .hava81-decision-field__symbol {
+      width: 88px;
+      height: 88px;
+      flex-basis: 88px;
+      max-width: 100%;
+    }
+  }
+
+  /* A 320–384px weather card otherwise stacks a tiny 48px scene under the
+ * temperature, leaving a large empty stripe. Give the scene a balanced
+ * second column at standard font sizes, without changing its real-weather art. */
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field__current {
+      container: hava81-temperature-card / inline-size;
+    }
+    .app .hava81-decision-field__reading {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-height: 7.25rem;
+    }
+    .app .hava81-decision-field__symbol {
+      flex: 0 0 76px;
+      width: 76px;
+      height: 76px;
+      align-self: center;
+    }
+  }
+
+  /* At enlarged text sizes keep the original stacked safety layout so a wide
+ * temperature number can never crowd or overlap the weather illustration. */
+
+  @container hava81-temperature-card (max-width: 14rem) {
+    .app .hava81-decision-field__reading {
+      flex-direction: column;
+      align-items: flex-start;
+      min-height: 9.2rem;
+    }
+    .app .hava81-decision-field__symbol {
+      flex: 0 0 64px;
+      width: 64px;
+      height: 64px;
+      align-self: flex-end;
+    }
+  }
+
+  /* On tiny phones at enlarged text, reserving a full row for the licence
+ * plate leaves too little inline space for even short city names. Keep the
+ * heading intact before the plate and allow genuinely long names to wrap. */
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field__identity {
+      container: hava81-city-identity / inline-size;
+    }
+  }
+
+  @container hava81-city-identity (max-width: 12em) {
+    .app .hava81-decision-field__city-row {
+      flex-wrap: wrap;
+      row-gap: 0.35rem;
+    }
+    .app .hava81-decision-field__city {
+      flex: 1 1 100%;
+    }
+    .app .hava81-decision-field__plate {
+      margin-inline-start: auto;
+    }
+  }
+
+  /* ── Gökyüzü ve bento ritmi (2026 görsel yenileme) ── */
+
+  .app .hava81-decision-field {
+    border-radius: 26px;
+  }
+
+  .app .hava81-decision-field__current {
+    border: 1px solid color-mix(in srgb, var(--color-aegean) 16%, transparent);
+    background:
+      radial-gradient(circle at 87% 25%, rgb(172 224 255 / 0.7), transparent 38%),
+      linear-gradient(133deg, #edf9ff, #e4f2ff 56%, #dcecff);
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__current {
+    background:
+      radial-gradient(circle at 88% 25%, rgb(59 153 198 / 0.38), transparent 44%),
+      linear-gradient(125deg, #123a54, #204b66);
+  }
+
+  .app .hava81-decision-field__change {
+    border-radius: 16px;
+    background: linear-gradient(115deg, #fff9ea, #fff0cd);
+    background-color: #fff3df;
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__change {
+    background: linear-gradient(115deg, #413b2c, #39342b);
+  }
+
+  .app .hava81-decision-field__metric,
+  .app .hava81-decision-field__metric:nth-child(even) {
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--color-atlas-paper) 67%, var(--premium-soft));
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field {
+      padding: 1rem;
+      gap: 0.8rem;
+      border-radius: 21px;
+    }
+    .app .hava81-decision-field__identity {
+      gap: 0.4rem;
+      padding-bottom: 0.7rem;
+    }
+    .app .hava81-decision-field__current {
+      min-height: 0;
+      padding: 0.9rem 1rem;
+      border-radius: 18px;
+    }
+    .app .hava81-decision-field__reading {
+      min-height: 7.1rem;
+    }
+    .app .hava81-decision-field__condition {
+      margin-top: 0;
+    }
+    .app .hava81-decision-field__change {
+      padding: 0.7rem 0.85rem;
+    }
+    .app .hava81-decision-field__change-title {
+      margin-bottom: 0.35rem;
+    }
+    .app .hava81-decision-field__metric,
+    .app .hava81-decision-field__metric:nth-child(even) {
+      padding: 0.65rem 0.75rem;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field__metric dt {
+      margin-bottom: 0.3rem;
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field {
+      padding: 0.5rem;
+    }
+    .app .hava81-decision-field__reading {
+      min-height: 7.3rem;
+    }
+    .app .hava81-decision-field__current {
+      padding: 0.65rem;
+    }
+  }
+
+  /* A true sky-colored weather plate is the second visual anchor. */
+
+  .app .hava81-decision-field__current {
+    border: 1px solid #93cdfa;
+    background:
+      radial-gradient(circle at 83% 27%, rgb(255 255 255 / 0.64), transparent 27%),
+      radial-gradient(ellipse at 95% 95%, rgb(100 177 243 / 0.34), transparent 57%),
+      linear-gradient(130deg, #f0faff, #c5e7ff 52%, #a3d4fa);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.75);
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__current {
+    border-color: #3d769b;
+    background:
+      radial-gradient(ellipse at 93% 12%, rgb(46 141 188 / 0.38), transparent 47%),
+      linear-gradient(125deg, #10344f, #1a4b6a 65%, #265d76);
+  }
+
+  .app .hava81-decision-field__temperature-value {
+    text-shadow: 0 6px 22px rgb(23 81 130 / 0.07);
+  }
+
+  .app .hava81-decision-field__symbol {
+    filter: drop-shadow(0 12px 22px rgb(21 107 163 / 0.2));
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field__current {
+      background:
+        radial-gradient(circle at 80% 24%, rgb(255 255 255 / 0.56), transparent 31%),
+        linear-gradient(135deg, #edf9ff, #bedfff 60%, #a9d7fd);
+    }
+    .app[data-color-mode='dark'] .hava81-decision-field__current {
+      background:
+        radial-gradient(circle at 88% 28%, rgb(54 151 188 / 0.28), transparent 43%),
+        linear-gradient(115deg, #103249, #205170);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .app .hava81-decision-field__current {
+      border: 1px solid CanvasText;
+      background: Canvas !important;
+    }
+  }
+
+  /* Compatibility corrections from full CI: keep tangible filled surfaces,
+   inward keyboard focus, and legible city names under 200% text zoom. */
+
+  .app .hava81-decision-field__change {
+    background-color: #fff3df;
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__change {
+    background-color: #413b2c;
+  }
+
+  @media (max-width: 24rem) {
+    .app .hava81-decision-field__city {
+      font-size: clamp(1.5rem, 8vw, 2rem);
+    }
+  }
+
+  /* ── İlk ekran editoryal düzen ── */
+
+  /* The large forecast/conditions pair should read as two intentional surfaces
+ * rather than matching generic white cards. */
+
+  @media (min-width: 64rem) {
+    .app[data-color-mode='light'] .hava81-decision-field {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(1.3rem, 2.1vw, 2.1rem);
+      border: 1px solid #244b79;
+      border-radius: 30px;
+      /* Opaque backing preserves the existing desktop panel contract; the
+       image layers below supply the navy visual surface. */
+      background-color: #fff;
+      background-image:
+        radial-gradient(ellipse at 98% 7%, rgb(34 180 211 / 0.25), transparent 53%),
+        linear-gradient(151deg, #112849 0%, #123a63 65%, #114c71 100%);
+      box-shadow: 0 24px 48px rgb(17 61 114 / 0.19);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__identity {
+      border-color: rgb(202 232 255 / 0.24);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__city {
+      color: #f9fcff;
+      letter-spacing: -0.067em;
+      font-size: clamp(2.25rem, 2.9vw, 3.3rem);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__city::before {
+      background: rgb(163 218 255 / 0.17);
+      color: #a1eaff;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__atlas-meta,
+    .app[data-color-mode='light'] .hava81-decision-field__source-note {
+      color: #d0e7fa;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__plate {
+      background: rgb(218 239 255 / 0.14);
+      border-color: rgb(218 239 255 / 0.28);
+      color: #fff;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__plate > strong {
+      color: #fff;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__plate span {
+      /* White TR lettering needs AA contrast, including on the navy panel. */
+      background: #1659a5;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__current {
+      min-height: 17.8rem;
+      padding: 1.35rem 1.4rem;
+      border: 1px solid rgb(202 239 255 / 0.8);
+      border-radius: 25px;
+      background:
+        radial-gradient(circle at 79% 28%, rgb(255 255 255 / 0.64), transparent 26%),
+        radial-gradient(ellipse at 110% 110%, rgb(29 121 217 / 0.43), transparent 54%),
+        linear-gradient(125deg, #e9f8ff 0%, #acdffc 51%, #75bcf3 100%);
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.78),
+        0 18px 36px rgb(5 24 62 / 0.2);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__temperature-value {
+      font-size: clamp(7rem, 9vw, 9.75rem);
+      letter-spacing: -0.105em;
+      line-height: 1;
+      color: #0c2f57;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__temperature-unit,
+    .app[data-color-mode='light'] .hava81-decision-field__condition {
+      color: #103760;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__feels-like {
+      color: #285c7d;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__change {
+      border: 1px solid #efce8b;
+      border-left: 5px solid #eda838;
+      border-radius: 17px;
+      background: linear-gradient(115deg, #fff8e7, #ffe8b5);
+      background-color: #ffedbf;
+      box-shadow: 0 8px 17px rgb(10 24 45 / 0.13);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__rail {
+      gap: 0.55rem;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__metric,
+    .app[data-color-mode='light'] .hava81-decision-field__metric:nth-child(even) {
+      min-height: 6.25rem;
+      padding: 0.9rem;
+      border-radius: 17px;
+      border: 1px solid rgb(181 219 247 / 0.22);
+      background: rgb(212 238 255 / 0.105);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .app[data-color-mode='light'] .hava81-decision-field__metric dt {
+      color: #bad7ed;
+      letter-spacing: 0.075em;
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__metric dd {
+      color: #fcffff;
+    }
+  }
+
+  /* Mobile uses a brighter sky rather than stacking another dark block.
+ * Preserve the existing 320px + 200% accessible layouts. */
+
+  @media (max-width: 63.99rem) {
+    .app .hava81-decision-field__current {
+      border: 1px solid #8fc4f3;
+      background:
+        radial-gradient(circle at 90% 16%, rgb(255 255 255 / 0.55), transparent 35%),
+        linear-gradient(132deg, #e9f9ff 0%, #bde4ff 53%, #84c5f5 100%);
+    }
+    .app[data-color-mode='dark'] .hava81-decision-field__current {
+      border-color: #4581a1;
+      background: linear-gradient(132deg, #12344f 0%, #1c537a 72%, #246886 100%);
+    }
+    .app .hava81-decision-field__temperature-value {
+      letter-spacing: -0.1em;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field {
+      border-radius: 24px;
+    }
+    .app .hava81-decision-field__current {
+      border-radius: 21px;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .app .hava81-decision-field__current {
+      background: Canvas !important;
+      border: 1px solid CanvasText;
+    }
+  }
+
+  /* On handheld screens the current-condition plate becomes a saturated sky
+ * poster. Current weather icon remains data-driven (rain/cloud/snow/night). */
+
+  @media (max-width: 47.99rem) {
+    .app[data-color-mode='light'] .hava81-decision-field__current {
+      border: 1px solid #3c8fcb;
+      background:
+        radial-gradient(ellipse at 85% 18%, rgb(138 226 251 / 0.3), transparent 41%),
+        radial-gradient(ellipse at 100% 110%, rgb(23 166 206 / 0.55), transparent 56%),
+        linear-gradient(122deg, #153762 0%, #205a97 52%, #2880a7 100%);
+      box-shadow:
+        0 13px 24px rgb(29 84 144 / 0.18),
+        inset 0 1px 0 rgb(255 255 255 / 0.16);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__temperature-value,
+    .app[data-color-mode='light'] .hava81-decision-field__temperature-unit,
+    .app[data-color-mode='light'] .hava81-decision-field__condition {
+      color: #fff;
+      text-shadow: 0 4px 18px rgb(8 28 60 / 0.13);
+    }
+    .app[data-color-mode='light'] .hava81-decision-field__feels-like {
+      color: #dceefc;
+    }
+    .app .hava81-decision-field__symbol {
+      filter: drop-shadow(0 11px 16px rgb(11 35 70 / 0.25));
+    }
+  }
+
+  /* ── İlk ekran kompozisyonu (Faz 2.2) ── */
+
+  .app .hava81-decision-field__next-change {
+    margin: 0.75rem 0 0;
+    max-width: 34ch;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+
+  .app .hava81-decision-field__trend {
+    display: block;
+    width: 100%;
+    height: 3.25rem;
+    margin-top: 0.75rem;
+    overflow: visible;
+    color: var(--color-aegean, #226bd9);
+  }
+
+  .app .hava81-decision-field__trend-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .app .hava81-decision-field__trend-area {
+    fill: currentColor;
+    opacity: 0.12;
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__trend {
+    color: #8fd3ff;
+  }
+
+  .app[data-color-mode='dark'] .hava81-decision-field__next-change {
+    color: #eef7ff;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-decision-field__trend {
+      color: #bfe6ff;
+    }
+    .app .hava81-decision-field__next-change {
+      color: #fff;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .app .hava81-decision-field__trend {
+      color: CanvasText;
+    }
+  }
 }

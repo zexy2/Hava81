@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
-const css = readFileSync('src/components/hava81/AtlasBottomNav.css', 'utf8');
+const css = readCss('src/components/hava81/AtlasBottomNav.css');
 const component = readFileSync('src/components/hava81/AtlasBottomNav.tsx', 'utf8');
 const app = readFileSync('src/App.tsx', 'utf8');
 

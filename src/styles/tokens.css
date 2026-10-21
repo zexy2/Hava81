@@ -1,0 +1,146 @@
+/*
+ * Hava81 tasarım tokenları — tek kaynak.
+ *
+ * Katman sırası (önce gelen zayıftır):
+ *   tokens     → bu dosyadaki değişkenler
+ *   base       → sıfırlama ve belge düzeyi (index.css)
+ *   vendor     → üçüncü taraf CSS (Leaflet)
+ *   components → uygulama kabuğu ve bileşen stilleri
+ *   utilities  → tek amaçlı yardımcılar
+ *
+ * :root ve [data-color-mode='dark'] temel ölçek ile geri dönüş değerlerini taşır.
+ * Uygulamanın gerçek görünümü (mavi premium palet) .app üzerinde tanımlanır ve
+ * bunları ezer; koyu tema .app[data-color-mode='dark'] ile gelir.
+ *
+ * Ham renk, köşe yarıçapı ve breakpoint değerleri yalnız bu dosyada serbesttir
+ * (bkz. .stylelintrc.json).
+ */
+@layer tokens, base, vendor, components, utilities;
+
+@layer tokens {
+  :root {
+    /* Metin seçimi (::selection) */
+    --selection-ink: #142524;
+    --selection-paper: #a8c9c5;
+    --color-atlas-field: #f3f6f4;
+    --color-atlas-paper: #ffffff;
+    --color-atlas-ink: #142524;
+    --color-atlas-muted: #5c6c6a;
+    --color-atlas-line: #c8d6d2;
+    --color-control-line: #78908a;
+    --color-aegean: #146b73;
+    --color-aegean-deep: #0f555c;
+    --color-aegean-pale: #a8c9c5;
+    --color-saffron: #e7a531;
+    --color-saffron-ink: #805500;
+    --color-vermilion: #d6543d;
+    --color-night-atlas: #0e2c32;
+    --color-focus: #146b73;
+    --color-overlay: rgb(14 44 50 / 0.52);
+    /* Compatibility aliases used by the Hava81 presentational components. */
+    --atlas-field: var(--color-atlas-field);
+    --atlas-paper: var(--color-atlas-paper);
+    --atlas-ink: var(--color-atlas-ink);
+    --atlas-muted: var(--color-atlas-muted);
+    --atlas-line: var(--color-atlas-line);
+    --aegean-main: var(--color-aegean);
+    --aegean-deep: var(--color-aegean-deep);
+    --saffron-signal: var(--color-saffron);
+    --font-ui: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+    --font-display: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, serif;
+    --space-2xs: 0.25rem;
+    --space-xs: 0.5rem;
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+    --space-4xl: 6rem;
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --shadow-card: 0 1px 2px rgb(14 44 50 / 0.04), 0 8px 24px rgb(14 44 50 / 0.05);
+    --shadow-card-hover: 0 2px 4px rgb(14 44 50 / 0.06), 0 14px 36px rgb(14 44 50 / 0.08);
+    --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-panel: cubic-bezier(0.22, 1, 0.36, 1);
+    --duration-fast: 140ms;
+    --duration-standard: 220ms;
+    --shadow-overlay: 0 16px 48px rgb(14 44 50 / 0.16);
+  }
+
+  [data-color-mode='dark'] {
+    --color-atlas-field: #0e2c32;
+    --color-atlas-paper: #15373c;
+    --color-atlas-ink: #f3f6f4;
+    --color-atlas-muted: #b5c8c4;
+    --color-atlas-line: #36565b;
+    --color-control-line: #78908a;
+    --color-aegean: #78bac0;
+    --color-aegean-deep: #9acdd0;
+    --color-aegean-pale: #315c61;
+    --color-saffron-ink: #f2b94c;
+    --color-focus: #e7a531;
+    --color-overlay: rgb(3 17 20 / 0.72);
+    --shadow-overlay: 0 20px 56px rgb(0 0 0 / 0.32);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.18), 0 10px 30px rgb(0 0 0 / 0.14);
+    --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 0.2), 0 16px 38px rgb(0 0 0 / 0.18);
+  }
+
+  .app {
+    --premium-blue: #1765d8;
+    --premium-ink: #12264b;
+    --premium-soft: #eef5ff;
+    --decision-ring: #22b788;
+    --decision-ring-track: #ceeae5;
+    --radius-md: 16px;
+    --radius-sm: 10px;
+    --radius-lg: 22px;
+    --radius-xl: 26px;
+    --color-atlas-field: #f0f5fb;
+    --color-atlas-ink: #13264b;
+    --color-atlas-muted: #506985; /* readable small text on pale cards (WCAG AA) */
+    --color-atlas-line: #dbe5f2;
+    --color-control-line: #c7d7eb;
+    --color-aegean: #226bd9;
+    --color-aegean-deep: #174ea6;
+    --color-aegean-pale: #e3efff;
+    --font-display: var(--font-ui);
+    --refine-card-shadow: 0 14px 36px rgb(47 89 139 / 0.07), 0 3px 10px rgb(40 76 126 / 0.035);
+    --refine-panel-line: color-mix(in srgb, var(--color-atlas-line) 65%, transparent);
+    --refine-highlight: color-mix(in srgb, var(--color-aegean-pale) 55%, var(--color-atlas-paper));
+    --refine-radius: 22px;
+    --premium-card-border: rgb(113 157 214 / 0.22);
+    --premium-elevation: 0 18px 42px rgb(18 63 125 / 0.1), 0 3px 9px rgb(40 84 142 / 0.04);
+    --focus-ring-color: #0b4fb3;
+    --focus-ring-halo: #ffffff;
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+    --color-focus: var(--focus-ring-color);
+  }
+
+  .app[data-color-mode='dark'] {
+    --premium-blue: #8bbaff;
+    --premium-ink: #eef7ff;
+    --premium-soft: #203f56;
+    --decision-ring: #4ed7aa;
+    --decision-ring-track: #2c545b;
+    --color-atlas-field: #102733;
+    --color-atlas-paper: #173342;
+    --color-atlas-ink: #f0f7ff;
+    --color-atlas-muted: #b4c8da;
+    --color-atlas-line: #345365;
+    --color-control-line: #486e83;
+    --color-aegean: #8abafc;
+    --color-aegean-deep: #a5ceff;
+    --color-aegean-pale: #264a61;
+    --refine-card-shadow: 0 16px 35px rgb(0 0 0 / 0.16), 0 3px 9px rgb(0 0 0 / 0.08);
+    --refine-highlight: color-mix(in srgb, var(--color-aegean-pale) 32%, var(--color-atlas-paper));
+    --premium-card-border: rgb(107 165 198 / 0.3);
+    --premium-elevation: 0 18px 44px rgb(0 0 0 / 0.22);
+    --focus-ring-color: #a9d4ff;
+    --focus-ring-halo: #06182f;
+  }
+}

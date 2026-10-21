@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
 const cssRule = (source: string, selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -13,7 +13,9 @@ const remFontSize = (rule: string) => {
 
 describe('first-view functional microtype', () => {
   it('keeps the province plate at or above the 13px-equivalent floor', () => {
-    const css = readFileSync('src/components/hava81/WeatherDecisionField.css', 'utf8');
-    expect(remFontSize(cssRule(css, '.hava81-decision-field__plate'))).toBeGreaterThanOrEqual(0.8125);
+    const css = readCss('src/components/hava81/WeatherDecisionField.css');
+    expect(remFontSize(cssRule(css, '.hava81-decision-field__plate'))).toBeGreaterThanOrEqual(
+      0.8125
+    );
   });
 });

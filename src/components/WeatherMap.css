@@ -1,347 +1,749 @@
-.weather-map {
-  padding-top: 1rem;
-}
+@import 'leaflet/dist/leaflet.css' layer(vendor);
 
-.weather-map__title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
+@layer components {
+  /* Aşağıdaki görünüm bölümleri bileşenin temel kurallarından ÖNCE gelir (eski yükleme sırası korunur;
+   aynı özgüllükteki temel kurallar bunları ezer). Sırayı değiştirmeden önce ekran görüntüsüyle doğrula. */
 
-.weather-map__container {
-  position: relative;
-  width: 100%;
-  height: 30rem;
-  overflow: hidden;
-  background: var(--color-atlas-field, #f3f6f4);
-  border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: 0;
-  box-shadow: none;
-}
+  /* ── Premium mavi görünüm ── */
 
-.weather-map__tile-status {
-  position: absolute;
-  z-index: 550;
-  bottom: 0.75rem;
-  left: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  max-width: calc(100% - 1.5rem);
-  min-height: 2.5rem;
-  padding: 0.5rem 0.8rem;
-  border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: 999px;
-  color: var(--color-atlas-ink, #142524);
-  background: var(--color-atlas-paper, #fff);
-  box-shadow: 0 4px 16px rgb(14 44 50 / 0.14);
-  font-size: 0.8125rem;
-  line-height: 1.3;
-  pointer-events: none;
-}
-
-/* Preserve functional map markers and controls when both tile hosts fail.
- * The retry action is the only interactive element in the status overlay. */
-.weather-map__tile-status--failed {
-  border-radius: 0.875rem;
-  flex-wrap: wrap;
-  pointer-events: auto;
-}
-
-.weather-map__tile-status--failed button {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid currentColor;
-  border-radius: 0.65rem;
-  color: inherit;
-  background: transparent;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.weather-map__tile-status--failed button:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 2px;
-}
-
-.weather-map__tile-spinner {
-  flex: 0 0 auto;
-  width: 0.8rem;
-  height: 0.8rem;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: weather-map-spin 0.8s linear infinite;
-}
-
-@keyframes weather-map-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .weather-map__tile-spinner {
-    animation: none;
-  }
-}
-
-.weather-map__leaflet {
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  font-family: var(--font-ui, 'IBM Plex Sans', sans-serif);
-}
-
-.weather-map__marker,
-.weather-map__plate-marker {
-  display: grid !important;
-  place-items: center;
-  background: transparent !important;
-  border: 0 !important;
-}
-
-.weather-map__marker-content {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  color: var(--marker-fg);
-  background: var(--marker-bg);
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 4px 16px rgb(14 44 50 / 0.22);
-  font-size: 0.875rem;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-}
-
-.weather-map__plate-marker span {
-  /* Faz 2.5: a licence-plate chip (white plate, blue TR strip), never read as a temperature. */
-  display: inline-flex;
-  align-items: stretch;
-  overflow: hidden;
-  color: #0b1b2e;
-  background: #fff;
-  border: 1px solid #0b1b2e;
-  border-radius: 3px;
-  box-shadow: 0 3px 10px rgb(11 27 46 / 0.22);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  line-height: 1.5rem;
-  padding-right: 0.3rem;
-  white-space: nowrap;
-  width: max-content;
-  flex-shrink: 0;
-}
-.weather-map__plate-marker span i {
-  display: inline-block;
-  margin-right: 0.25rem;
-  padding: 0 0.2rem;
-  color: #fff;
-  background: #1f5fbf;
-  font-size: 0.75rem;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.weather-map__popup .leaflet-popup-content-wrapper,
-.weather-map__popup .leaflet-popup-tip {
-  color: var(--color-atlas-ink, #142524);
-  background: var(--color-atlas-paper, #fff);
-}
-
-.weather-map__popup .leaflet-popup-content-wrapper {
-  border: 1px solid var(--color-atlas-line, #c8d6d2);
-  border-radius: var(--radius-md, 8px);
-  box-shadow: var(--shadow-overlay, 0 16px 48px rgb(14 44 50 / 0.16));
-}
-
-.weather-map__popup .leaflet-popup-content {
-  margin: 0;
-}
-
-.weather-map__popup-content {
-  width: min(10rem, calc(100vw - 4rem));
-  min-width: 0;
-  max-width: 100%;
-  padding: 1rem;
-}
-
-.weather-map__popup-content h4 {
-  margin: 0.25rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.weather-map__popup-plate {
-  color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-}
-
-.weather-map__popup-temp {
-  margin: 0;
-  color: var(--color-aegean, #146b73);
-  font-size: 1.25rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.weather-map__popup-desc,
-.weather-map__popup-region {
-  margin: 0.25rem 0 0;
-  color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.875rem;
-}
-
-.weather-map__popup-btn {
-  min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
-  margin-top: 0.75rem;
-  color: var(--color-atlas-paper, #fff);
-  cursor: pointer;
-  background: var(--color-aegean, #146b73);
-  border: 1px solid var(--color-aegean, #146b73);
-  border-radius: var(--radius-md, 8px);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.weather-map__popup-btn:hover {
-  background: var(--color-aegean-deep, #0f555c);
-  border-color: var(--color-aegean-deep, #0f555c);
-}
-
-.weather-map__popup-btn:focus-visible {
-  outline: 2px solid var(--color-focus, #146b73);
-  outline-offset: 2px;
-}
-
-.weather-map__legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  padding-top: 1rem;
-  margin-top: 1rem;
-  border-top: 1px solid var(--color-atlas-line, #c8d6d2);
-}
-
-.weather-map__legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.8125rem;
-}
-
-.weather-map__legend-item::before {
-  width: 0.75rem;
-  height: 0.75rem;
-  content: '';
-  background: var(--legend-color);
-  border: 1px solid rgb(20 37 36 / 0.16);
-  border-radius: 50%;
-}
-
-.weather-map__legend-item--cold {
-  --legend-color: #0e2c32;
-}
-
-.weather-map__legend-item--cool {
-  --legend-color: #146b73;
-}
-
-.weather-map__legend-item--mild {
-  --legend-color: #a8c9c5;
-}
-
-.weather-map__legend-item--warm {
-  --legend-color: #e7a531;
-}
-
-.weather-map__legend-item--hot {
-  --legend-color: #d6543d;
-}
-
-.weather-map .leaflet-control-zoom a {
-  color: var(--color-atlas-ink, #142524);
-  background: var(--color-atlas-paper, #fff);
-  border-color: var(--color-atlas-line, #c8d6d2);
-}
-
-.weather-map .leaflet-control-zoom a:hover {
-  color: var(--color-aegean, #146b73);
-  background: var(--color-atlas-field, #f3f6f4);
-}
-
-.weather-map__attribution {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.3rem;
-  min-height: 1.5rem;
-  margin: 0.25rem 0 0;
-  color: var(--color-atlas-muted, #5c6c6a);
-  font-size: 0.8125rem;
-  line-height: 1.2;
-}
-
-.weather-map__attribution a {
-  color: var(--color-aegean, #146b73);
-}
-
-@media (max-width: 48rem) {
-  .weather-map__container {
-    height: min(27rem, calc(62vh - 2.75rem));
-    border-right: 0;
-    border-left: 0;
-    border-radius: 0;
+  @media (max-width: 47.99rem) {
+    .app .atlas-map-panel {
+      margin-inline: -0.8rem;
+    }
   }
 
-  .weather-map__legend {
-    padding-inline: 0;
+  /* ── Yüzey ve boşluk dili (v2 inceltme) ── */
+
+  .app .weather-map {
+    padding-top: 0;
   }
 
-  .weather-map .leaflet-control-zoom a {
-    width: 44px;
-    height: 44px;
-    line-height: 44px;
+  .app .weather-map__container {
+    border: 1px solid var(--refine-panel-line);
+    border-radius: 18px;
+    box-shadow: var(--refine-card-shadow);
   }
 
-  .weather-map__attribution {
+  .app .weather-map__plate-marker span {
+    border-radius: 10px;
+    background: #1954a8;
+  }
+
+  .app .weather-map__attribution {
+    margin-top: 0.8rem;
+    font-size: 0.77rem;
+  }
+
+  .app .weather-map__legend {
+    gap: 0.6rem 1rem;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .weather-map__container {
+      height: clamp(20rem, 60vh, 32rem);
+    }
+  }
+
+  /* ── İkincil yüzeyler: harita ve ayarlar ── */
+
+  /* Maps: an intentional visual destination with context and readable legend. */
+
+  .app .atlas-map-panel {
+    padding: clamp(1rem, 2.2vw, 1.9rem);
+    background: var(--color-atlas-paper);
+    border: 1px solid var(--premium-card-border);
+    border-radius: 27px;
+    box-shadow: var(--premium-elevation);
+  }
+
+  .app .atlas-map-panel__header {
+    position: relative;
+    overflow: hidden;
+    align-items: center;
+    padding: clamp(1rem, 2vw, 1.5rem);
+    margin-bottom: 0.75rem;
+    border: 1px solid #c4def5;
+    border-radius: 19px;
+    background:
+      radial-gradient(circle at 96% 0%, rgb(116 203 245 / 0.38), transparent 46%),
+      linear-gradient(115deg, #f1faff, #dceeff);
+  }
+
+  .app .atlas-map-panel__header h2 {
+    color: #13395f;
+    font-size: clamp(1.6rem, 2.5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+
+  .app .atlas-map-panel__header .atlas-kicker {
+    color: #476e98;
+  }
+
+  .app .atlas-map-panel__header button {
+    position: relative;
+    border-radius: 12px;
+  }
+
+  .app .weather-map {
+    padding-top: 0.35rem;
+  }
+
+  .app .weather-map__container {
+    border: 1px solid #bed7ec;
+    border-radius: 20px;
+    box-shadow: 0 15px 31px rgb(22 75 113 / 0.14);
+  }
+
+  .app .weather-map__legend {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    min-height: 44px;
-    margin-top: 0;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+    padding: 0.9rem;
+    border: 1px solid var(--premium-card-border);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-atlas-field) 86%, var(--color-atlas-paper));
   }
 
-  .weather-map__attribution a {
+  .app .weather-map__legend-item {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
+    gap: 0.45rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--color-aegean) 16%, var(--color-atlas-line));
+    border-radius: 999px;
+    background: var(--color-atlas-paper);
+    color: var(--color-atlas-ink);
+    font-size: 0.76rem;
+    font-weight: 650;
+    line-height: 1.2;
   }
 
-  .weather-map a.leaflet-popup-close-button {
-    width: 44px;
-    height: 44px;
-    line-height: 44px;
+  .app .weather-map__legend-item::before {
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 1px solid rgb(255 255 255 / 0.65);
+    box-shadow: 0 0 0 1px rgb(29 59 79 / 0.16);
+  }
+
+  .app .weather-map .leaflet-control-zoom {
+    overflow: hidden;
+    border: 1px solid #a9cee5;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgb(20 54 91 / 0.19);
+  }
+
+  .app .weather-map .leaflet-control-zoom a {
+    color: #153c66;
+    background: #fff;
+    border-color: #d8e8f6;
+  }
+
+  .app .weather-map__marker-content {
+    box-shadow:
+      0 7px 22px rgb(5 40 70 / 0.25),
+      inset 0 1px 0 rgb(255 255 255 / 0.15);
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel__header {
+    background: linear-gradient(110deg, #183c57, #225c74);
+    border-color: #3b728d;
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel__header h2 {
+    color: #f1f9ff;
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel__header .atlas-kicker {
+    color: #b2d7e8;
+  }
+
+  .app[data-color-mode='dark'] .weather-map__container {
+    border-color: #356786;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-map-panel {
+      padding: 0.85rem;
+      border-radius: 21px;
+    }
+    .app .atlas-map-panel__header {
+      gap: 0.5rem;
+      padding: 0.9rem;
+      margin-bottom: 0.65rem;
+      border-radius: 15px;
+    }
+    .app .atlas-map-panel__header h2 {
+      font-size: 1.6rem;
+    }
+    .app .weather-map__container {
+      height: min(61dvh, 35rem);
+      min-height: 22rem;
+      border-radius: 15px;
+    }
+    .app .weather-map__legend {
+      padding: 0.65rem;
+      gap: 0.4rem;
+      border-radius: 13px;
+    }
+    .app .weather-map__legend-item {
+      padding: 0.45rem 0.58rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .app .atlas-map-panel__header,
+    .app .weather-map__legend-item {
+      border: 1px solid CanvasText;
+    }
+  }
+
+  /* ── Bileşenin temel stilleri ── */
+
+  .weather-map {
+    padding-top: 1rem;
+  }
+
+  .weather-map__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .weather-map__container {
+    position: relative;
+    width: 100%;
+    height: 30rem;
+    overflow: hidden;
+    background: var(--color-atlas-field, #f3f6f4);
+    border: 1px solid var(--color-atlas-line, #c8d6d2);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .weather-map__tile-status {
+    position: absolute;
+    z-index: 550;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: calc(100% - 1.5rem);
+    min-height: 2.5rem;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--color-atlas-line, #c8d6d2);
+    border-radius: 999px;
+    color: var(--color-atlas-ink, #142524);
+    background: var(--color-atlas-paper, #fff);
+    box-shadow: 0 4px 16px rgb(14 44 50 / 0.14);
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    pointer-events: none;
+  }
+
+  /* Preserve functional map markers and controls when both tile hosts fail.
+ * The retry action is the only interactive element in the status overlay. */
+  .weather-map__tile-status--failed {
+    border-radius: 0.875rem;
+    flex-wrap: wrap;
+    pointer-events: auto;
+  }
+
+  .weather-map__tile-status--failed button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid currentColor;
+    border-radius: 0.65rem;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .weather-map__tile-status--failed button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .weather-map__tile-spinner {
+    flex: 0 0 auto;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: weather-map-spin 0.8s linear infinite;
+  }
+
+  @keyframes weather-map-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .weather-map__tile-spinner {
+      animation: none;
+    }
+  }
+
+  .weather-map__leaflet {
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-ui, 'IBM Plex Sans', sans-serif);
+  }
+
+  .weather-map__marker,
+  .weather-map__plate-marker {
+    display: grid !important;
+    place-items: center;
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  .weather-map__marker-content {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: var(--marker-fg);
+    background: var(--marker-bg);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgb(14 44 50 / 0.22);
+    font-size: 0.875rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .weather-map__plate-marker span {
+    /* Faz 2.5: a licence-plate chip (white plate, blue TR strip), never read as a temperature. */
+    display: inline-flex;
+    align-items: stretch;
+    overflow: hidden;
+    color: #0b1b2e;
+    background: #fff;
+    border: 1px solid #0b1b2e;
+    border-radius: 3px;
+    box-shadow: 0 3px 10px rgb(11 27 46 / 0.22);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    line-height: 1.5rem;
+    padding-right: 0.3rem;
+    white-space: nowrap;
+    width: max-content;
+    flex-shrink: 0;
+  }
+  .weather-map__plate-marker span i {
+    display: inline-block;
+    margin-right: 0.25rem;
+    padding: 0 0.2rem;
+    color: #fff;
+    background: #1f5fbf;
+    font-size: 0.75rem;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .weather-map__popup .leaflet-popup-content-wrapper,
+  .weather-map__popup .leaflet-popup-tip {
+    color: var(--color-atlas-ink, #142524);
+    background: var(--color-atlas-paper, #fff);
+  }
+
+  .weather-map__popup .leaflet-popup-content-wrapper {
+    border: 1px solid var(--color-atlas-line, #c8d6d2);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: var(--shadow-overlay, 0 16px 48px rgb(14 44 50 / 0.16));
+  }
+
+  .weather-map__popup .leaflet-popup-content {
+    margin: 0;
   }
 
   .weather-map__popup-content {
-    padding-top: 2.75rem;
+    width: min(10rem, calc(100vw - 4rem));
+    min-width: 0;
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  .weather-map__popup-content h4 {
+    margin: 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .weather-map__popup-plate {
+    color: var(--color-atlas-muted, #5c6c6a);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  .weather-map__popup-temp {
+    margin: 0;
+    color: var(--color-aegean, #146b73);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .weather-map__popup-desc,
+  .weather-map__popup-region {
+    margin: 0.25rem 0 0;
+    color: var(--color-atlas-muted, #5c6c6a);
+    font-size: 0.875rem;
+  }
+
+  .weather-map__popup-btn {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    color: var(--color-atlas-paper, #fff);
+    cursor: pointer;
+    background: var(--color-aegean, #146b73);
+    border: 1px solid var(--color-aegean, #146b73);
+    border-radius: var(--radius-md, 8px);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .weather-map__popup-btn:hover {
+    background: var(--color-aegean-deep, #0f555c);
+    border-color: var(--color-aegean-deep, #0f555c);
+  }
+
+  .weather-map__popup-btn:focus-visible {
+    outline: 2px solid var(--color-focus, #146b73);
+    outline-offset: 2px;
+  }
+
+  .weather-map__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid var(--color-atlas-line, #c8d6d2);
+  }
+
+  .weather-map__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-atlas-muted, #5c6c6a);
+    font-size: 0.8125rem;
+  }
+
+  .weather-map__legend-item::before {
+    width: 0.75rem;
+    height: 0.75rem;
+    content: '';
+    background: var(--legend-color);
+    border: 1px solid rgb(20 37 36 / 0.16);
+    border-radius: 50%;
+  }
+
+  .weather-map__legend-item--cold {
+    --legend-color: #0e2c32;
+  }
+
+  .weather-map__legend-item--cool {
+    --legend-color: #146b73;
+  }
+
+  .weather-map__legend-item--mild {
+    --legend-color: #a8c9c5;
+  }
+
+  .weather-map__legend-item--warm {
+    --legend-color: #e7a531;
+  }
+
+  .weather-map__legend-item--hot {
+    --legend-color: #d6543d;
+  }
+
+  .weather-map .leaflet-control-zoom a {
+    color: var(--color-atlas-ink, #142524);
+    background: var(--color-atlas-paper, #fff);
+    border-color: var(--color-atlas-line, #c8d6d2);
+  }
+
+  .weather-map .leaflet-control-zoom a:hover {
+    color: var(--color-aegean, #146b73);
+    background: var(--color-atlas-field, #f3f6f4);
+  }
+
+  .weather-map__attribution {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.3rem;
+    min-height: 1.5rem;
+    margin: 0.25rem 0 0;
+    color: var(--color-atlas-muted, #5c6c6a);
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+
+  .weather-map__attribution a {
+    color: var(--color-aegean, #146b73);
+  }
+
+  @media (max-width: 48rem) {
+    .weather-map__container {
+      height: min(27rem, calc(62vh - 2.75rem));
+      border-right: 0;
+      border-left: 0;
+      border-radius: 0;
+    }
+
+    .weather-map__legend {
+      padding-inline: 0;
+    }
+
+    .weather-map .leaflet-control-zoom a {
+      width: 44px;
+      height: 44px;
+      line-height: 44px;
+    }
+
+    .weather-map__attribution {
+      justify-content: flex-start;
+      min-height: 44px;
+      margin-top: 0;
+    }
+
+    .weather-map__attribution a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .weather-map a.leaflet-popup-close-button {
+      width: 44px;
+      height: 44px;
+      line-height: 44px;
+    }
+
+    .weather-map__popup-content {
+      padding-top: 2.75rem;
+    }
+  }
+
+  /* ── Harita boş durum atmosferi ──
+   Map empty-state visual refinement.
+   Abstract navigation-chart grid / contours are decorative ONLY. They never
+   represent loaded geographic tiles or meteorological observations.
+   
+   Drawn behind the actual Leaflet tiles, so an available tile has full
+   priority. Keep the marker controls and tile retry functionality intact. */
+
+  .app .atlas-map-panel .weather-map__container {
+    isolation: isolate;
+    background:
+      radial-gradient(ellipse at 83% 4%, rgba(107, 210, 242, 0.58), transparent 49%),
+      linear-gradient(131deg, #e7f4fd 0%, #d2e9f5 49%, #b9dceb 100%);
+  }
+
+  .app .atlas-map-panel .weather-map__container::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background:
+      repeating-radial-gradient(
+        ellipse at 80% 36%,
+        transparent 0 38px,
+        rgba(23, 106, 151, 0.18) 39px 40px,
+        transparent 41px 85px
+      ),
+      linear-gradient(90deg, rgba(30, 108, 149, 0.07) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(30, 108, 149, 0.07) 1px, transparent 1px);
+    background-size:
+      auto,
+      64px 64px,
+      64px 64px;
+  }
+
+  .app .atlas-map-panel .weather-map__container::after {
+    position: absolute;
+    z-index: 0;
+    top: 10%;
+    right: 12%;
+    width: 7.5rem;
+    height: 7.5rem;
+    border-radius: 50%;
+    border: 1px solid rgba(35, 132, 175, 0.22);
+    box-shadow:
+      0 0 0 32px rgba(86, 177, 206, 0.08),
+      0 0 0 72px rgba(86, 177, 206, 0.055);
+    content: '';
+    pointer-events: none;
+  }
+
+  /* Leaflet's default opaque gray fills an unloaded tile canvas. Only its
+ * background becomes transparent; actual raster tile images stay opaque. */
+
+  .app .atlas-map-panel .weather-map__leaflet.leaflet-container {
+    position: relative;
+    z-index: 1;
+    background: transparent;
+  }
+
+  /* Give the actual localized map state a deliberate, readable status panel.
+ * It is an informational overlay and must not consume map pointer events. */
+
+  .app .atlas-map-panel .weather-map__tile-status {
+    z-index: 550;
+    bottom: clamp(0.7rem, 2vw, 1.25rem);
+    left: clamp(0.7rem, 2vw, 1.25rem);
+    max-width: calc(100% - 1.4rem);
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    min-height: 3.1rem;
+    color: #103c62;
+    border: 1px solid #9fc9e1;
+    border-left: 4px solid #1c8bb5;
+    border-radius: 14px;
+    background: rgba(246, 252, 255, 0.95);
+    box-shadow: 0 12px 36px rgba(20, 70, 114, 0.22);
+    backdrop-filter: blur(10px);
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    pointer-events: none;
+  }
+
+  .app .atlas-map-panel .weather-map__tile-spinner {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-width: 2.5px;
+    border-color: #1a81bd;
+    border-right-color: transparent;
+  }
+
+  .app .atlas-map-panel .weather-map__tile-status--failed {
+    border-color: #d6a8a8;
+    border-left-color: #bb543b;
+    color: #643425;
+    background: rgba(255, 246, 243, 0.97);
+    pointer-events: auto;
+  }
+
+  .app .atlas-map-panel .weather-map__tile-status--failed button {
+    color: #5a2c1f;
+    background: #fff;
+    border: 1px solid #ce9a89;
+    border-radius: 11px;
+    box-shadow: 0 3px 12px rgba(113, 60, 41, 0.1);
+  }
+
+  .app .atlas-map-panel .weather-map__tile-status--failed button:hover {
+    background: #fff1ec;
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel .weather-map__container {
+    background:
+      radial-gradient(ellipse at 84% 5%, rgba(30, 110, 143, 0.5), transparent 52%),
+      linear-gradient(125deg, #193c53, #1b5168 55%, #206d7d);
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel .weather-map__container::before {
+    background:
+      repeating-radial-gradient(
+        ellipse at 80% 36%,
+        transparent 0 38px,
+        rgba(161, 221, 236, 0.15) 39px 40px,
+        transparent 41px 85px
+      ),
+      linear-gradient(90deg, rgba(184, 235, 245, 0.075) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(184, 235, 245, 0.075) 1px, transparent 1px);
+    background-size:
+      auto,
+      64px 64px,
+      64px 64px;
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel .weather-map__tile-status {
+    color: #d9f3ff;
+    background: rgba(13, 42, 62, 0.94);
+    border-color: #397b9c;
+    border-left-color: #68bce0;
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel .weather-map__tile-status--failed {
+    color: #ffe4d8;
+    background: rgba(64, 40, 39, 0.95);
+    border-color: #975f53;
+    border-left-color: #f3aa84;
+  }
+
+  .app[data-color-mode='dark'] .atlas-map-panel .weather-map__tile-status--failed button {
+    color: #ffebdf;
+    background: #493634;
+    border-color: #ca8d7a;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-map-panel .weather-map__tile-status {
+      bottom: 0.65rem;
+      left: 0.65rem;
+      padding: 0.68rem 0.78rem;
+      max-width: calc(100% - 1.3rem);
+      font-size: 0.8rem;
+    }
+    .app .atlas-map-panel .weather-map__container::after {
+      right: -2rem;
+      width: 5.5rem;
+      height: 5.5rem;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .app .atlas-map-panel .weather-map__container {
+      background: Canvas;
+    }
+    .app .atlas-map-panel .weather-map__container::before,
+    .app .atlas-map-panel .weather-map__container::after {
+      display: none;
+    }
+    .app .atlas-map-panel .weather-map__tile-status {
+      background: Canvas;
+      color: CanvasText;
+      border: 2px solid CanvasText;
+    }
+    .app .atlas-map-panel .weather-map__tile-status--failed button {
+      background: ButtonFace;
+      color: ButtonText;
+      border: 2px solid ButtonText;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .atlas-map-panel .weather-map__tile-spinner {
+      animation: none;
+    }
   }
 }
