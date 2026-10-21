@@ -933,7 +933,9 @@ export const weatherService = {
           marine: options.marine ? 'true' : 'false',
           include: parts.join(','),
         },
-        ...requestOptions(options)
+        // Yeniden deneme yok: bundle başarısızsa (ör. 5xx, erişilemeyen proxy) geri
+        // çekilme beklemeden tekil isteklere düşülür; onların kendi yeniden denemesi var.
+        { ...(options.signal ? { signal: options.signal } : {}), retries: 0 }
       );
     } catch (error) {
       if (isAbortError(error)) throw error;

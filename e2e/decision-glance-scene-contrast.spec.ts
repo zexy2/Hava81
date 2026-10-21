@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 
 // Deterministic weather responses keep CSS contrast checks independent of
 // external network latency. Screenshot evidence separately uses the real API.
@@ -22,6 +23,7 @@ const forecast = {daily, hourly, meta: {
   intervalHours: 1, cacheStatus: 'MISS', freshForSeconds: 300,
 }};
 test.beforeEach(async ({page}) => {
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({json: observation}));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({json: forecast}));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({json: forecast}));

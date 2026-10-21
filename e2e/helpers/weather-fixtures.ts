@@ -200,6 +200,15 @@ export async function mockWeatherApi(page: Page, data: WeatherFixtures = fixture
   // Faz 3.2: varsayılan olarak bundle ve 81 il uç noktası yokmuş gibi (eski API) davran;
   // istemci tekil isteklere düşer ve mevcut uç nokta bazlı override'lar çalışmaya devam eder.
   // Yeni yolu test etmek için `mockBundleApi` / `mockProvincesApi` kullan.
+  await mockNewEndpointsMissing(page);
+}
+
+/**
+ * Faz 3.2: `/weather/bundle` ve `/weather/provinces` için bugünkü canlı API gibi 404 döner.
+ * Kendi `page.route` mock'larını kuran spec'ler bunu çağırmalı; aksi halde bu istekler
+ * mock'lanmadan preview sunucusunun `/api` proxy'sine (127.0.0.1:4000) gider.
+ */
+export async function mockNewEndpointsMissing(page: Page) {
   await page.route(API.bundle, route => route.fulfill({ status: 404, json: ROUTE_NOT_FOUND }));
   await page.route(API.provinces, route => route.fulfill({ status: 404, json: ROUTE_NOT_FOUND }));
 }

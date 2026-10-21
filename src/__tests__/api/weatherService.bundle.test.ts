@@ -101,7 +101,7 @@ describe('weatherService.getForecastBundle', () => {
         marine: 'true',
         include: 'forecast,hourly,airQuality,context',
       },
-      { signal: controller.signal }
+      { signal: controller.signal, retries: 0 }
     );
     expect(bundle.forecast?.ok && bundle.forecast.value.daily[0].date).toBeInstanceOf(Date);
     expect(bundle.forecast?.ok && bundle.forecast.value.daily[0].pop).toBe(0.05);
@@ -128,7 +128,7 @@ describe('weatherService.getForecastBundle', () => {
     });
 
     expect(mockGet.mock.calls[0][1].include).toBe('forecast,hourly');
-    expect(mockGet.mock.calls[0]).toHaveLength(2);
+    expect(mockGet.mock.calls[0][2]).toEqual({ retries: 0 });
     expect(bundle.forecast?.ok).toBe(false);
     expect(bundle.hourly?.ok).toBe(true);
     expect(bundle.airQuality).toBeUndefined();

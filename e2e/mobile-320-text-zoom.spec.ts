@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 
 const now = Date.now();
 const iso = (hours = 0) => new Date(now + hours * 60 * 60_000).toISOString();
@@ -31,6 +32,7 @@ const forecast = {
 test('320px navigation remains operable with 200% text in both languages', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'Run once on the mobile Chromium project');
   await page.setViewportSize({ width: 320, height: 720 });
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));
@@ -87,6 +89,7 @@ test('mobile dock uses an opaque surface when transparency is reduced', async ({
   test.skip(testInfo.project.name !== 'mobile-390');
   await page.setViewportSize({ width: 320, height: 720 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));

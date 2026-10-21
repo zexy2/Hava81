@@ -80,6 +80,9 @@ for (const [phase, rootUrl] of [['before', beforeUrl], ['after', afterUrl]]) {
         meta: { provider: 'OpenWeather', fetchedAt: now, timezoneOffsetSeconds: 10800,
           intervalHours: 3, cacheStatus: 'MISS', freshForSeconds: 300 },
       };
+      // Faz 3.2: yeni uç noktalar yokmuş gibi (canlı API'deki gibi 404) → tekil isteklere düşülür.
+      await page.route('**/api/v1/weather/bundle**', route => route.fulfill({ status: 404, json: {} }));
+      await page.route('**/api/v1/weather/provinces**', route => route.fulfill({ status: 404, json: {} }));
       await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: weather }));
       await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
       await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: forecast }));

@@ -123,4 +123,18 @@ describe('httpClient request cancellation', () => {
     });
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
+
+  it('honours a per-request retry override so bundle failures fall back immediately', async () => {
+    (global.fetch as Mock).mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: new Headers(),
+      json: vi.fn().mockResolvedValue({}),
+    } as unknown as Response);
+
+    await expect(
+      httpClient.get('/weather/bundle', { lat: 41 }, { retries: 0 })
+    ).rejects.toMatchObject({ statusCode: 500 });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
 });

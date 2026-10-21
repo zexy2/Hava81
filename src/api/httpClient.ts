@@ -19,6 +19,11 @@ interface RequestConfig extends RequestInit {
 /** Faz 3.2: çağıranın isteği iptal edebilmesi için (şehir/görünüm değişimi, unmount). */
 export interface HttpRequestOptions {
   signal?: AbortSignal;
+  /**
+   * Yeniden deneme sayısını geçersiz kılar. Bundle gibi kendi geri dönüş yolu olan
+   * istekler 0 verir: başarısızlıkta beklemeden tekil isteklere düşülür.
+   */
+  retries?: number;
 }
 
 
@@ -395,7 +400,10 @@ export const httpClient = {
       subscribers: 0,
       pinned: false,
     };
-    const request = fetchWithRetry<T>(url, { signal: controller.signal }).finally(() => {
+    const request = fetchWithRetry<T>(url, {
+      signal: controller.signal,
+      ...(options.retries === undefined ? {} : { retries: options.retries }),
+    }).finally(() => {
       if (inFlightGetRequests.get(cacheKey) === entry) {
         inFlightGetRequests.delete(cacheKey);
       }

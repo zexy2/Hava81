@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 
 /**
  * The unloaded Leaflet tile region should never look like a broken gray box.
@@ -27,6 +28,7 @@ const forecast = {
     intervalHours: 3, cacheStatus: 'MISS', freshForSeconds: 300 },
 };
 test.beforeEach(async ({ page }) => {
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: forecast }));

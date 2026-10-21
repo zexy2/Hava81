@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 
 const now = Date.now();
 const iso = (hours = 0) => new Date(now + hours * 60 * 60_000).toISOString();
@@ -29,6 +30,7 @@ const forecast = {
 test('landscape phone dock stays compact and in viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390');
   await page.setViewportSize({ width: 640, height: 360 });
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));
@@ -55,6 +57,7 @@ test('landscape phone dock stays compact and in viewport', async ({ page }, test
 test('landscape phone navigation remains usable at 200% text in both languages', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390');
   await page.setViewportSize({ width: 640, height: 360 });
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));
