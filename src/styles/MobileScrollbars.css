@@ -1,0 +1,36 @@
+/* Faz 0.5: mobilde native scrollbar'lar görünmez; kaydırma (dokunma, klavye) korunur.
+   Aralık seçici dar ekranda eşit sütunlu bir ızgaraya dönüşür, böylece taşma ve
+   kesik "12s" olmaz. */
+@media (max-width: 47.99rem) {
+  .app .hava81-forecast-atlas__range,
+  .app .hava81-forecast-atlas__hourly-viewport,
+  .app .hava81-forecast-atlas__days,
+  .app .city-tabs__scroll,
+  .app .daily-plan__slots,
+  .app .activity-planner__chips,
+  .app .route-weather__segments {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .app .hava81-forecast-atlas__range::-webkit-scrollbar,
+  .app .hava81-forecast-atlas__hourly-viewport::-webkit-scrollbar,
+  .app .hava81-forecast-atlas__days::-webkit-scrollbar,
+  .app .city-tabs__scroll::-webkit-scrollbar,
+  .app .daily-plan__slots::-webkit-scrollbar,
+  .app .activity-planner__chips::-webkit-scrollbar,
+  .app .route-weather__segments::-webkit-scrollbar {
+    display: none;
+  }
+  .app .hava81-forecast-atlas__range {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    padding-inline-end: 0;
+    overflow-x: visible;
+  }
+  .app .hava81-forecast-atlas__range-button {
+    min-width: 0;
+    padding-inline: 0.25rem;
+    text-align: center;
+  }
+}

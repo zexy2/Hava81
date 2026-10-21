@@ -36,6 +36,7 @@ import './components/hava81/EnvironmentRailVisualPolish.css';
 import './styles/WeatherSceneContrast.css';
 import './styles/ActivityEditorialVisual.css';
 import './styles/DailyTimelineEditorial.css';
+import './styles/MobileScrollbars.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
@@ -121,7 +122,11 @@ const AtlasLoadingState = ({ label, slowMessage }: { label: string; slowMessage?
 // Keep the forecast column visible both while the API responds and while
 // the split ForecastAtlas bundle is being downloaded on a cold connection.
 const ForecastLoadingCard = ({ title, label }: { title: string; label: string }) => (
-  <section className="atlas-forecast-loading atlas-forecast-loading--card" role="status" aria-live="polite">
+  <section
+    className="atlas-forecast-loading atlas-forecast-loading--card"
+    role="status"
+    aria-live="polite"
+  >
     <h2 className="atlas-forecast-loading__title">{title}</h2>
     <span className="sr-only">{label}</span>
     <div className="atlas-loading__line atlas-loading__line--short" aria-hidden="true" />
@@ -760,14 +765,21 @@ const App: React.FC = () => {
                       />
                     </Suspense>
                   ) : forecast.error ? (
-                    <section className="atlas-forecast-error-card" aria-labelledby="forecast-error-title">
+                    <section
+                      className="atlas-forecast-error-card"
+                      aria-labelledby="forecast-error-title"
+                    >
                       <h2 id="forecast-error-title" className="atlas-forecast-loading__title">
                         {t('hava81.forecastAtlas.title')}
                       </h2>
                       <div className="atlas-message atlas-message--inline" role="status">
                         <p>{t('errors.forecastUnavailable')}</p>
                         {canRetryForecast && (
-                          <button type="button" className="atlas-text-button" onClick={retryForecast}>
+                          <button
+                            type="button"
+                            className="atlas-text-button"
+                            onClick={retryForecast}
+                          >
                             {t('common.retry')}
                           </button>
                         )}
