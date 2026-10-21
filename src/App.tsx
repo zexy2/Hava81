@@ -40,6 +40,7 @@ import './styles/ActivityEditorialVisual.css';
 import './styles/DailyTimelineEditorial.css';
 import './styles/MobileScrollbars.css';
 import './styles/FocusRing.css';
+import './styles/FirstScreenComposition.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
@@ -773,18 +774,18 @@ const App: React.FC = () => {
             {activeNav !== 'compare' && weather && (
               <div key={weather.cityName} className="atlas-dashboard">
                 <div className="atlas-dashboard__primary">
-                  <DecisionGlance
-                    weather={weather}
-                    hourly={forecast.hourly}
-                    airQuality={freshAirQuality}
-                    forecastMeta={forecast.displayMeta ?? forecast.meta}
-                  />
                   <WeatherDecisionField
                     weather={weather}
                     hourly={forecast.hourly}
                     daily={forecast.daily}
                     airQuality={freshAirQuality}
                     uvIndexMax={freshUvIndexMax}
+                    forecastMeta={forecast.displayMeta ?? forecast.meta}
+                  />
+                  <DecisionGlance
+                    weather={weather}
+                    hourly={forecast.hourly}
+                    airQuality={freshAirQuality}
                     forecastMeta={forecast.displayMeta ?? forecast.meta}
                   />
 
