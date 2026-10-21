@@ -1,4 +1,4 @@
-import { cityFromPathname, cityPath } from './cityRoute';
+import { cityFromPathname, cityPath, isHomePathname } from './cityRoute';
 
 // A district URL uses a query parameter rather than pretending to be a province.
 // Keep the original, accented place name so the provider lookup survives refresh/share.
@@ -15,7 +15,7 @@ export const districtFromQuery = (search: string): string | null => {
 export const resolveInitialCity = (location: Pick<Location, 'pathname' | 'search'>): string => {
   const routeCity = cityFromPathname(location.pathname);
   if (routeCity) return routeCity.name;
-  if (location.pathname !== '/') return '';
+  if (!isHomePathname(location.pathname)) return '';
   const queriedDistrict = districtFromQuery(location.search);
   if (queriedDistrict) return `${queriedDistrict},TR`;
   try {

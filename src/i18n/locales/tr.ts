@@ -95,6 +95,15 @@ export const tr = {
     slowLoading:
       'Hava verileri normalden uzun sürüyor; bağlantı veya veri sağlayıcı gecikmiş olabilir.',
     mapEyebrow: 'Türkiye · İl haritası',
+    notFound: {
+      eyebrow: '404 · Sayfa bulunamadı',
+      documentTitle: 'Sayfa bulunamadı — Hava81',
+      title: 'Bu adreste bir il yok',
+      body: '“{{path}}” adresi Hava81’deki 81 ilden biriyle eşleşmiyor.',
+      suggestions: 'Şunu mu arıyordun?',
+      search: 'İl ara',
+      home: 'Ana sayfaya dön',
+    },
     emptyEyebrow: 'Hava81 · 81 il',
     locationGate: {
       eyebrow: 'Hava81 · Yakınındaki hava',

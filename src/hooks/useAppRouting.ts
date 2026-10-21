@@ -5,8 +5,8 @@ import type { NormalizedWeatherData } from '../types/weather.types';
 import { districtFromQuery } from '../utils/appRoute';
 import type { AtlasView } from '../utils/atlasView';
 import { withAtlasView } from '../utils/atlasView';
-import { cityFromPathname, cityPath } from '../utils/cityRoute';
-import { ROOT_DOCUMENT_METADATA } from '../utils/rootDocumentMetadata';
+import { cityFromPathname, cityPath, homePath, isHomePathname } from '../utils/cityRoute';
+import { ROOT_DOCUMENT_METADATA, ROOT_DOCUMENT_METADATA_EN } from '../utils/rootDocumentMetadata';
 
 interface AppRoutingOptions {
   weather: NormalizedWeatherData | null;
@@ -53,13 +53,14 @@ export function useAppRouting({
         void fetchWeather(routeCity.name);
         return;
       }
-      const district =
-        window.location.pathname === '/' ? districtFromQuery(window.location.search) : null;
+      const district = isHomePathname(window.location.pathname)
+        ? districtFromQuery(window.location.search)
+        : null;
       if (district) {
         void fetchWeather(`${district},TR`);
         return;
       }
-      if (window.location.pathname === '/') {
+      if (isHomePathname(window.location.pathname)) {
         clearWeather();
         setShowMap(false);
         setActiveNav('today');
@@ -74,11 +75,51 @@ export function useAppRouting({
       const meta = document.querySelector<HTMLMetaElement>(selector);
       if (meta) meta.content = content;
     };
+    // Faz 4: hreflang alternates follow the shown page (TR `/…`, EN `/en/…`).
+    const setAlternates = (trPath: string | null, enPath: string | null) => {
+      for (const [hreflang, path] of [
+        ['tr', trPath],
+        ['en', enPath],
+        ['x-default', trPath],
+      ] as const) {
+        let link = document.querySelector<HTMLLinkElement>(
+          `link[rel="alternate"][hreflang="${hreflang}"]`
+        );
+        if (!path) {
+          link?.remove();
+          continue;
+        }
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'alternate';
+          link.hreflang = hreflang;
+          document.head.appendChild(link);
+        }
+        link.href = new URL(path, window.location.origin).toString();
+      }
+    };
 
     if (!weather) {
-      if (window.location.pathname !== '/') return;
-      const rootMetadata = rootDocumentMetadataRef.current;
-      const canonicalUrl = new URL('/', window.location.origin).toString();
+      if (!isHomePathname(window.location.pathname)) return;
+      const rootMetadata =
+        language === 'en'
+          ? {
+              title: ROOT_DOCUMENT_METADATA_EN.title,
+              description: ROOT_DOCUMENT_METADATA_EN.description,
+              ogTitle: ROOT_DOCUMENT_METADATA_EN.title,
+              ogDescription: ROOT_DOCUMENT_METADATA_EN.socialDescription,
+              ogImageAlt: ROOT_DOCUMENT_METADATA_EN.title,
+              twitterTitle: ROOT_DOCUMENT_METADATA_EN.title,
+              twitterDescription: ROOT_DOCUMENT_METADATA_EN.socialDescription,
+              twitterImageAlt: ROOT_DOCUMENT_METADATA_EN.title,
+            }
+          : rootDocumentMetadataRef.current;
+      const home = homePath(language);
+      if (window.location.pathname !== home) {
+        window.history.replaceState(window.history.state, '', `${home}${window.location.search}`);
+      }
+      setAlternates('/', '/en/');
+      const canonicalUrl = new URL(home, window.location.origin).toString();
       document.title = rootMetadata.title;
       let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
       if (!canonical) {
@@ -100,10 +141,11 @@ export function useAppRouting({
       return;
     }
     const path =
-      cityPath(weather.cityName) ??
+      cityPath(weather.cityName, language) ??
       (weather.country.toUpperCase() === 'TR'
-        ? `/?yer=${encodeURIComponent(weather.cityName)}`
+        ? `${homePath(language)}?yer=${encodeURIComponent(weather.cityName)}`
         : null);
+    setAlternates(cityPath(weather.cityName, 'tr'), cityPath(weather.cityName, 'en'));
     const searchWithoutView = new URLSearchParams(window.location.search);
     searchWithoutView.delete('view');
     const currentSearch = searchWithoutView.toString();

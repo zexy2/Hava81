@@ -84,4 +84,22 @@ describe('SettingsProvider persisted settings', () => {
       language: 'en',
     });
   });
+
+  it('adopts English when the app opens on an /en/ URL (Faz 4)', () => {
+    localStorage.setItem('user-settings', JSON.stringify({ language: 'tr' }));
+    window.history.replaceState(null, '', '/en/izmir/');
+    try {
+      const { result } = renderHook(() => useSettings(), { wrapper });
+      expect(result.current.settings.language).toBe('en');
+      expect(JSON.parse(localStorage.getItem('user-settings') ?? '{}').language).toBe('en');
+    } finally {
+      window.history.replaceState(null, '', '/');
+    }
+  });
+
+  it('keeps the stored language on Turkish URLs', () => {
+    localStorage.setItem('user-settings', JSON.stringify({ language: 'en' }));
+    const { result } = renderHook(() => useSettings(), { wrapper });
+    expect(result.current.settings.language).toBe('en');
+  });
 });

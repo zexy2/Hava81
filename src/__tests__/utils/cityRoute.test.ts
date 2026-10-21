@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { cityFromPathname, cityPath, citySlug, nearestTurkishProvince } from '../../utils/cityRoute';
+import {
+  cityFromPathname,
+  cityPath,
+  citySlug,
+  homePath,
+  isHomePathname,
+  isUnknownPathname,
+  languageFromPathname,
+  nearestTurkishProvince,
+  suggestProvincesForPath,
+} from '../../utils/cityRoute';
 
 describe('city routes', () => {
   it('creates stable ASCII slugs for Turkish city names', () => {
@@ -40,5 +50,47 @@ describe('city routes', () => {
   it('rejects invalid coordinates instead of inventing a province', () => {
     expect(nearestTurkishProvince(Number.NaN, 32)).toBeUndefined();
     expect(nearestTurkishProvince(95, 32)).toBeUndefined();
+  });
+
+  describe('English edition and 404 (Faz 4)', () => {
+    it('resolves /en/<il>/ to the same province and builds locale-aware paths', () => {
+      expect(cityFromPathname('/en/istanbul/')?.name).toBe('İstanbul');
+      expect(cityFromPathname('/en/')).toBeUndefined();
+      expect(cityFromPathname('/en/istanbul/extra')).toBeUndefined();
+      expect(cityPath('Şanlıurfa', 'en')).toBe('/en/sanliurfa/');
+      expect(cityPath('Şanlıurfa')).toBe('/sanliurfa/');
+      expect(homePath('en')).toBe('/en/');
+      expect(homePath('tr')).toBe('/');
+    });
+
+    it('reads the language and the home pages from the URL', () => {
+      expect(languageFromPathname('/en/ankara/')).toBe('en');
+      expect(languageFromPathname('/en')).toBe('en');
+      expect(languageFromPathname('/ankara/')).toBeNull();
+      expect(isHomePathname('/')).toBe(true);
+      expect(isHomePathname('/en/')).toBe(true);
+      expect(isHomePathname('/en')).toBe(true);
+      expect(isHomePathname('/ankara/')).toBe(false);
+    });
+
+    it('flags only paths the app does not serve as unknown', () => {
+      expect(isUnknownPathname('/istanbl/')).toBe(true);
+      expect(isUnknownPathname('/en/nowhere/')).toBe(true);
+      expect(isUnknownPathname('/istanbul/kadikoy')).toBe(true);
+      expect(isUnknownPathname('/')).toBe(false);
+      expect(isUnknownPathname('/en/')).toBe(false);
+      expect(isUnknownPathname('/izmir/')).toBe(false);
+      expect(isUnknownPathname('/en/izmir/')).toBe(false);
+      expect(isUnknownPathname('/index.html')).toBe(false);
+    });
+
+    it('suggests the closest provinces for a mistyped address', () => {
+      expect(suggestProvincesForPath('/istanbl/')[0]?.name).toBe('İstanbul');
+      expect(suggestProvincesForPath('/en/ankra/')[0]?.name).toBe('Ankara');
+      expect(suggestProvincesForPath('/%C5%9Fanl%C4%B1urfa-x/')[0]?.name).toBe('Şanlıurfa');
+      expect(suggestProvincesForPath('/izmr/', 2)).toHaveLength(2);
+      expect(suggestProvincesForPath('/%E0%A4%A/')).toHaveLength(3);
+      expect(suggestProvincesForPath('/')).toEqual([]);
+    });
   });
 });

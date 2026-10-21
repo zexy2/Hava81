@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import i18n from '../i18n';
 
@@ -94,6 +94,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
     [setSettings]
   );
+
+  // Faz 4: an /en/ URL is the English edition; adopt it as the language choice.
+  useLayoutEffect(() => {
+    if (/^\/en(\/|$)/.test(window.location.pathname) && settings.language !== 'en') {
+      updateSetting('language', 'en');
+    }
+    // Only on mount: switching language later rewrites the URL instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const resetSettings = useCallback(() => {
     setSettings(defaultSettings);

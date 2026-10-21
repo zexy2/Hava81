@@ -20,25 +20,34 @@ async function runFixture({ wrongCanonical = false, badSitemap = false, temporar
       res.end('try again');
       return;
     }
-    const title = name => name + ' hava durumu ve gün planı — Hava81';
-    const document = (name, url) =>
-      '<!doctype html><html><head><title>' + title(name) + '</title>' +
+    const title = (name, lang = 'tr') =>
+      lang === 'en' ? name + ' weather and day plan — Hava81' : name + ' hava durumu ve gün planı — Hava81';
+    const document = (name, url, lang = 'tr') =>
+      '<!doctype html><html><head><title>' + title(name, lang) + '</title>' +
       '<link rel="canonical" href="' + url + '">' +
       '<script type="application/ld+json">' + JSON.stringify({
-        url, name: title(name), about: { name },
+        url, name: title(name, lang), about: { name },
       }) + '</script></head><body>Weather</body></html>';
     res.setHeader('Content-Type', path.endsWith('.xml') ? 'application/xml' : 'text/html; charset=utf-8');
     if (path === '/') { res.end(document('Hava81', base + '/')); return; }
     if (path === '/sitemap.xml') {
-      const urls = [base + '/', ...[...provinceNamesBySlug.keys()].map(slug => base + '/' + slug + '/')];
+      const slugs = [...provinceNamesBySlug.keys()];
+      const urls = [
+        base + '/',
+        base + '/en/',
+        ...slugs.map(slug => base + '/' + slug + '/'),
+        ...slugs.map(slug => base + '/en/' + slug + '/'),
+      ];
       if (badSitemap) urls.pop();
       res.end('<urlset>' + urls.map(url => '<url><loc>' + url + '</loc></url>').join('') + '</urlset>');
       return;
     }
-    const slug = path.slice(1, -1);
+    const lang = path.startsWith('/en/') ? 'en' : 'tr';
+    const prefix = lang === 'en' ? '/en/' : '/';
+    const slug = path.slice(prefix.length, -1);
     const name = provinceNamesBySlug.get(slug);
     if (!name) { res.writeHead(404); res.end('missing'); return; }
-    res.end(document(name, base + '/' + (wrongCanonical && slug === 'izmir' ? 'wrong' : slug) + '/'));
+    res.end(document(name, base + prefix + (wrongCanonical && slug === 'izmir' ? 'wrong' : slug) + '/', lang));
   });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -66,12 +75,13 @@ test('validates 81 published provinces, homepage and sitemap', async () => {
   const result = await runFixture();
   assert.equal(result.exitCode, 0, result.output);
   assert.match(result.output, /81 province pages/);
-  assert.equal(result.attempts.size, 83);
+  assert.equal(result.attempts.size, 164);
 });
 test('rejects a wrong published city canonical URL', async () => {
   const result = await runFixture({ wrongCanonical: true });
   assert.notEqual(result.exitCode, 0);
-  assert.match(result.output, /izmir: Canonical URL mismatch/);
+  assert.match(result.output, /\/izmir\/: Canonical URL mismatch/);
+  assert.match(result.output, /\/en\/izmir\/: Canonical URL mismatch/);
 });
 test('rejects a missing published sitemap entry', async () => {
   const result = await runFixture({ badSitemap: true });

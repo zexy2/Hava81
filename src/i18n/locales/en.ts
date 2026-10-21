@@ -95,6 +95,15 @@ export const en = {
     slowLoading:
       'Weather data is taking longer than usual; the connection or data provider may be delayed.',
     mapEyebrow: 'Türkiye · Province map',
+    notFound: {
+      eyebrow: '404 · Page not found',
+      documentTitle: 'Page not found — Hava81',
+      title: 'There is no province at this address',
+      body: '“{{path}}” does not match any of the 81 provinces on Hava81.',
+      suggestions: 'Did you mean',
+      search: 'Search provinces',
+      home: 'Go to the home page',
+    },
     emptyEyebrow: 'Hava81 · 81 provinces',
     locationGate: {
       eyebrow: 'Hava81 · Weather near you',
