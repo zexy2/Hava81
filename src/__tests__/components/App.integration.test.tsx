@@ -6,6 +6,7 @@ import { SettingsProvider } from '../../context';
 import i18n from '../../i18n';
 import { ApiError } from '../../api/errors/ApiError';
 import { ErrorCode } from '../../types';
+import { BundleUnavailableError } from '../../api/weatherBundle';
 
 const service = vi.hoisted(() => ({
   getCurrentWeather: vi.fn(),
@@ -14,6 +15,10 @@ const service = vi.hoisted(() => ({
   getHourlyForecast: vi.fn(),
   getAirQuality: vi.fn(),
   getContextSignals: vi.fn(),
+  // Faz 3.2: bundle uç noktası yokmuş gibi davran (eski API) → tekil isteklere düşülür.
+  getForecastBundle: vi.fn(),
+  hasBootstrapHourly: vi.fn(() => false),
+  getProvinceTemperatures: vi.fn(async () => null),
 }));
 
 vi.mock('../../api/weatherService', () => ({ weatherService: service }));
@@ -138,6 +143,9 @@ describe('Hava81 app integration', () => {
     service.getCurrentWeather.mockReset().mockResolvedValue(current);
     service.getCurrentLocationWeather.mockReset().mockResolvedValue(current);
     service.getForecast.mockReset().mockResolvedValue(forecast);
+    service.getForecastBundle
+      .mockReset()
+      .mockRejectedValue(new BundleUnavailableError('unsupported'));
     service.getHourlyForecast.mockReset().mockResolvedValue(hourlyForecast);
     service.getAirQuality.mockReset().mockResolvedValue(air);
     service.getContextSignals.mockReset().mockResolvedValue(null);
@@ -178,7 +186,7 @@ describe('Hava81 app integration', () => {
 
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(window.location.pathname).toBe('/istanbul/');
   });
   it('keeps province URLs canonical when an English weather provider adds Province', async () => {
@@ -210,7 +218,7 @@ describe('Hava81 app integration', () => {
     renderApp();
 
     expect(await screen.findByRole('heading', { name: 'Urla', level: 1 })).toBeInTheDocument();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'Urla,TR', lang: 'tr' });
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'Urla,TR', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(window.location.pathname + window.location.search).toBe('/?yer=Urla');
     await waitFor(() => {
@@ -246,7 +254,7 @@ describe('Hava81 app integration', () => {
     renderApp();
 
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' });
+    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(screen.queryByText('Havayı bulunduğun yere göre gösterelim')).not.toBeInTheDocument();
   });
@@ -285,7 +293,7 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
     expect(screen.getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
-    expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
+    expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr', expect.objectContaining({ signal: expect.any(AbortSignal) }));
 
     // Faz 2.3: the day plan lives in the secondary Planla view, not in the main flow.
     expect(screen.queryByRole('heading', { name: /gün planı/i })).not.toBeInTheDocument();
@@ -785,7 +793,8 @@ describe('Hava81 app integration', () => {
       expect(document.documentElement.lang).toBe('en');
       expect(document.title).toBe('İstanbul weather — Hava81');
       expect(service.getCurrentWeather).toHaveBeenLastCalledWith(
-        expect.objectContaining({ lang: 'en' })
+        expect.objectContaining({ lang: 'en' }),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
     expect(await screen.findByRole('heading', { name: 'Planning signals' })).toBeInTheDocument();

@@ -149,3 +149,38 @@ export interface AirQualityDto {
   o3: number;
   meta: DataMetaDto;
 }
+
+export const BUNDLE_PARTS = ['current', 'forecast', 'hourly', 'airQuality', 'context'] as const;
+export type BundlePart = (typeof BUNDLE_PARTS)[number];
+
+export const bundleQuerySchema = z.object({
+  lat: latitudeSchema,
+  lon: longitudeSchema,
+  units: unitsSchema,
+  lang: languageSchema,
+  marine: z
+    .enum(['true', 'false'])
+    .optional()
+    .default('false')
+    .transform(value => value === 'true'),
+  include: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .transform((value, context): BundlePart[] => {
+      if (!value) return [...BUNDLE_PARTS];
+      const parts = Array.from(new Set(value.split(',').map(part => part.trim()).filter(Boolean)));
+      const unknown = parts.filter(part => !(BUNDLE_PARTS as readonly string[]).includes(part));
+      if (unknown.length > 0 || parts.length === 0) {
+        context.addIssue({
+          code: 'custom',
+          message: `include yalnızca şunları içerebilir: ${BUNDLE_PARTS.join(', ')}`,
+        });
+        return z.NEVER;
+      }
+      return parts as BundlePart[];
+    }),
+});
+
+export type BundleQueryInput = z.infer<typeof bundleQuerySchema>;

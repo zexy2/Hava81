@@ -249,7 +249,7 @@ describe('useWeather', () => {
     });
     rerender({ language: 'en' });
     await waitFor(() =>
-      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'Ankara', lang: 'en' })
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'Ankara', lang: 'en' }, expect.objectContaining({ signal: expect.any(AbortSignal) }))
     );
     // The provider call beginning is not the same as the localized refresh settling.
     // Wait until the refresh completes before advancing time and simulating a later resume.
@@ -350,7 +350,7 @@ describe('useWeather', () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
 
     await waitFor(() =>
-      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' })
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }))
     );
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
     expect(result.current.weather?.description).not.toBe('stale cache');
@@ -394,7 +394,7 @@ describe('useWeather', () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
 
     await waitFor(() =>
-      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' })
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }))
     );
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
     expect(result.current.weather?.description).not.toBe('   ');
@@ -432,10 +432,13 @@ describe('useWeather', () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
 
     await waitFor(() =>
-      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({
-        city: 'İstanbul',
-        lang: 'tr',
-      })
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith(
+        {
+          city: 'İstanbul',
+          lang: 'tr',
+        },
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      )
     );
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
     expect(result.current.weather?.description).not.toBe('cache injection');

@@ -58,6 +58,7 @@ export const tr = {
     mapTitle: 'Türkiye hava atlası',
     mapTilesLoading: 'Harita hazırlanıyor',
     mapTilesUnavailable: 'Harita yüklenemedi. Şehir işaretleri kullanılabilir.',
+    mapLiveProvinces: '81 ilin anlık sıcaklığı: {{provider}}',
     mapTilesRetry: 'Tekrar dene',
     viewCityWeather: 'Şehrin havasını gör',
     temperatureLegend: 'Harita sıcaklık renkleri',

@@ -58,6 +58,7 @@ export const en = {
     mapTitle: 'Turkey weather atlas',
     mapTilesLoading: 'Loading map tiles',
     mapTilesUnavailable: 'Map tiles unavailable. City markers still work.',
+    mapLiveProvinces: 'Live temperatures for 81 provinces: {{provider}}',
     mapTilesRetry: 'Try again',
     viewCityWeather: 'View city weather',
     temperatureLegend: 'Map temperature colors',

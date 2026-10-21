@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
     airQuality: '/weather/air-quality',
     context: '/weather/context',
     route: '/weather/route',
+    bundle: '/weather/bundle',
+    provinces: '/weather/provinces',
   },
 } as const;
 

@@ -48,7 +48,7 @@ const hourlySchema = z.object({
   }),
 });
 
-const descriptionForCode = (code: number, lang: WeatherLanguage): string => {
+export const descriptionForCode = (code: number, lang: WeatherLanguage): string => {
   const tr = lang === "tr";
   if (code === 0) return tr ? "açık" : "clear sky";
   if (code === 1) return tr ? "çoğunlukla açık" : "mainly clear";
@@ -71,7 +71,7 @@ const descriptionForCode = (code: number, lang: WeatherLanguage): string => {
   return tr ? "değişken hava" : "variable weather";
 };
 
-const iconForCode = (code: number, isDay: boolean): string => {
+export const iconForCode = (code: number, isDay: boolean): string => {
   const suffix = isDay ? "d" : "n";
   if (code === 0) return `01${suffix}`;
   if (code === 1) return `02${suffix}`;

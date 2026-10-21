@@ -160,3 +160,79 @@ export const airQualityResponseJsonSchema = {
     aqi: { type: 'number' }, aqiLabel: { type: 'string' }, pm25: { type: 'number' }, pm10: { type: 'number' }, o3: { type: 'number' }, meta: metaSchema,
   },
 } as const;
+
+export const bundleQueryJsonSchema = {
+  type: 'object',
+  required: ['lat', 'lon'],
+  additionalProperties: false,
+  properties: {
+    lat: turkeyLatJsonSchema,
+    lon: turkeyLonJsonSchema,
+    units: { type: 'string', enum: ['metric', 'imperial', 'standard'], default: 'metric' },
+    lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
+    marine: {
+      type: 'string',
+      enum: ['true', 'false'],
+      description: 'Bağlama deniz verisini (dalga, su sıcaklığı) ekler.',
+    },
+    include: {
+      type: 'string',
+      maxLength: 80,
+      description:
+        'Virgülle ayrılmış parça listesi: current, forecast, hourly, airQuality, context. Boşsa hepsi döner.',
+    },
+  },
+} as const;
+
+const contextBundleJsonSchema = {
+  type: 'object',
+  nullable: true,
+  additionalProperties: true,
+  required: ['provider', 'fetchedAt'],
+  properties: {
+    provider: { type: 'string' },
+    fetchedAt: { type: 'string', format: 'date-time' },
+  },
+} as const;
+
+const bundlePartErrorJsonSchema = {
+  type: 'object',
+  required: ['code', 'message', 'statusCode'],
+  properties: {
+    code: { type: 'string' },
+    message: { type: 'string' },
+    statusCode: { type: 'integer' },
+  },
+} as const;
+
+export const bundleResponseJsonSchema = {
+  type: 'object',
+  required: ['errors', 'meta'],
+  description:
+    'İstenen her parça ya dolu ya da null döner; null ise nedeni `errors` içindedir. İstenmeyen parça hiç yer almaz. Tüm parçalar başarısız olursa ilk hata HTTP durum koduyla döner.',
+  properties: {
+    current: { ...currentResponseJsonSchema, nullable: true },
+    forecast: { ...forecastResponseJsonSchema, nullable: true },
+    hourly: { ...hourlyForecastResponseJsonSchema, nullable: true },
+    airQuality: { ...airQualityResponseJsonSchema, nullable: true },
+    context: contextBundleJsonSchema,
+    errors: {
+      type: 'object',
+      properties: {
+        current: bundlePartErrorJsonSchema,
+        forecast: bundlePartErrorJsonSchema,
+        hourly: bundlePartErrorJsonSchema,
+        airQuality: bundlePartErrorJsonSchema,
+        context: bundlePartErrorJsonSchema,
+      },
+    },
+    meta: {
+      type: 'object',
+      required: ['fetchedAt', 'parts'],
+      properties: {
+        fetchedAt: { type: 'string', format: 'date-time' },
+        parts: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  },
+} as const;
