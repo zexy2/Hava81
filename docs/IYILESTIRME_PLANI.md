@@ -82,6 +82,9 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava8
 - [ ] **3.7** Repoyu temizle: `docs/` içindeki 96 `AUTONOMOUS_*` logunu (yaklaşık 800 KB metin ve 11 MB PNG) dışarı taşı, 652 eski branch'i sil, README ve `.env.example` dosyalarını güncelle — _S_
 - [ ] **3.8** Pages için CSP ve `immutable` cache başlıkları ekle (ya da web'i Oracle nginx'ten sun), API JSON yanıtlarına sıkıştırma aç — _S–M_
 
+- [ ] **3.x e2e sadeleştirme:** piksel testleri yerine davranış testleri + birkaç ekran görüntüsü karşılaştırması. Faz 2'de `test.fixme` yapılanlar:
+  - `mid-width desktop decision reading reflows at 200 percent text size` (e2e/smoke.spec.ts)
+
 ## Faz 4: Büyüme ve SEO (sonra)
 
 - [ ] İngilizce sürüm için `/en/<il>/` sayfaları ve `hreflang` etiketleri. Şu an İngilizce içerik indekslenemiyor.
