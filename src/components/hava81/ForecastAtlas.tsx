@@ -1,5 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
@@ -34,7 +34,6 @@ const CHART_BOTTOM = 76;
 const AREA_BASELINE = 118;
 const RAIN_TOP = 140;
 const RAIN_BASELINE = 180;
-const RAIN_BAR_UNITS = 30;
 // A fixed gutter keeps the sticky temperature axis clear of the first column.
 const TRACK_GUTTER = 44;
 const PRECIPITATION_THRESHOLD = 0.35;
@@ -67,12 +66,94 @@ const buildSmoothPath = (points: readonly ChartCoordinate[]): string => {
   return path;
 };
 
+// Temperature colour scale (°C). The curve and its fill use the colour of the
+// temperature they sit at: cold blues, a mild teal, warm saffron, hot orange.
+// Light stops keep >=3:1 against white paper; dark stops against the night card.
+// Stops are blended in OKLCH so the cold-to-warm turn stays vivid, not muddy.
+type Rgb = readonly [number, number, number];
+type ColorStop = readonly [celsius: number, rgb: Rgb];
+const TEMPERATURE_SCALE_LIGHT: readonly ColorStop[] = [
+  [-5, [72, 82, 212]],
+  [6, [37, 99, 214]],
+  [13, [8, 124, 166]],
+  [21, [186, 122, 8]],
+  [27, [204, 90, 14]],
+  [34, [196, 52, 40]],
+];
+const TEMPERATURE_SCALE_DARK: readonly ColorStop[] = [
+  [-5, [150, 165, 255]],
+  [6, [120, 178, 255]],
+  [13, [90, 210, 220]],
+  [21, [240, 192, 80]],
+  [27, [255, 150, 80]],
+  [34, [255, 120, 100]],
+];
+
+const toLinear = (channel: number) => {
+  const value = channel / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+};
+const fromLinear = (value: number) => {
+  const clamped = Math.min(1, Math.max(0, value));
+  const encoded = clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * clamped ** (1 / 2.4) - 0.055;
+  return Math.round(encoded * 255);
+};
+const rgbToOklch = ([r, g, b]: Rgb): [number, number, number] => {
+  const [lr, lg, lb] = [toLinear(r), toLinear(g), toLinear(b)];
+  const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+  const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+  const s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+  return [L, Math.hypot(A, B), Math.atan2(B, A)];
+};
+const oklchToRgb = ([L, C, h]: [number, number, number]): Rgb => {
+  const A = C * Math.cos(h);
+  const B = C * Math.sin(h);
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
+  const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3;
+  const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
+  return [
+    fromLinear(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    fromLinear(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    fromLinear(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+  ];
+};
+
+const temperatureColor = (celsius: number, scale: readonly ColorStop[]): string => {
+  const first = scale[0];
+  const last = scale[scale.length - 1];
+  if (celsius <= first[0]) return `rgb(${first[1].join(' ')})`;
+  if (celsius >= last[0]) return `rgb(${last[1].join(' ')})`;
+  const upperIndex = scale.findIndex(stop => stop[0] >= celsius);
+  const [lowC, low] = scale[upperIndex - 1];
+  const [highC, high] = scale[upperIndex];
+  const ratio = (celsius - lowC) / (highC - lowC);
+  const from = rgbToOklch(low);
+  const to = rgbToOklch(high);
+  let hueDelta = to[2] - from[2];
+  if (hueDelta > Math.PI) hueDelta -= 2 * Math.PI;
+  if (hueDelta < -Math.PI) hueDelta += 2 * Math.PI;
+  const mixed = oklchToRgb([
+    from[0] + (to[0] - from[0]) * ratio,
+    from[1] + (to[1] - from[1]) * ratio,
+    from[2] + hueDelta * ratio,
+  ]);
+  return `rgb(${mixed.join(' ')})`;
+};
+
+const RAIN_GAUGE_CELLS = 5;
+
 export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const [displayIntervalHours, setDisplayIntervalHours] = useState(1);
   const hourlyViewportRef = useRef<HTMLDivElement>(null);
   const hoursRef = useRef<HTMLOListElement>(null);
+  const plotRef = useRef<HTMLDivElement>(null);
+  const curveRef = useRef<SVGPathElement>(null);
+  const [plotWidth, setPlotWidth] = useState(0);
   const [hourlyScroll, setHourlyScroll] = useState({
     scrollable: false,
     canGoBack: false,
@@ -93,13 +174,15 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     size: number;
   } | null>(null);
   const [activeHourIndex, setActiveHourIndex] = useState<number | null>(null);
+  const [tooltipSide, setTooltipSide] = useState<'left' | 'right'>('right');
   const id = useId();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const temperatureSymbol = getTemperatureSymbol();
+  const isFahrenheit = temperatureSymbol.includes('F');
   const headingId = `${id}-title`;
   const chartTitleId = `${id}-chart-title`;
   const chartDescriptionId = `${id}-chart-description`;
-  const gradientId = `${id.replace(/:/g, '')}-temperature-area`;
+  const gradientId = `rhythm-${id.replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const timeFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
@@ -234,8 +317,10 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     const min = Math.min(...horizonTemperatures);
     const max = Math.max(...horizonTemperatures);
     const range = max - min;
-    const columnWidth = CHART_COLUMN_UNITS;
     const count = hourlyData.length;
+    // Real pixel columns once the plot is measured, so the SVG scales 1:1 and
+    // the curve can draw itself with stroke-dashoffset (no stretched strokes).
+    const columnWidth = plotWidth > 0 ? plotWidth / count : CHART_COLUMN_UNITS;
     const width = columnWidth * count;
     const drawableHeight = CHART_HEIGHT - CHART_TOP - CHART_BOTTOM;
 
@@ -265,17 +350,43 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       y: CHART_TOP + ((max - value) / Math.max(range, 1)) * drawableHeight,
     }));
 
-    // Rain chance is drawn as one bar per displayed hour. Measurable rain with
-    // a rounded 0% chance keeps a visible stub instead of disappearing.
-    const rainDepth = RAIN_BASELINE - RAIN_TOP;
+    // Rain chance reads as a five-cell gauge per hour: any chance lights at
+    // least one cell, so 2-8% stays legible, and colour deepens with each
+    // level. Measurable rain with a rounded 0% chance still lights one cell.
     const rainBars = points
       .filter(point => point.precipitation > 0 || (point.precipitationMm ?? 0) > 0)
       .map(point => ({
         key: point.timestamp,
-        x: point.x - RAIN_BAR_UNITS / 2,
-        height: Math.max(3, Math.min(1, point.precipitation) * rainDepth),
+        index: point.index,
+        level: Math.max(
+          1,
+          Math.min(RAIN_GAUGE_CELLS, Math.ceil(Math.min(1, point.precipitation) * RAIN_GAUGE_CELLS))
+        ),
         signal: point.isRainSignal,
       }));
+
+    // Gradient stops sample the temperature at evenly spaced heights, from the
+    // top of the curve band (max) to the area baseline (below min = min).
+    const toCelsius = (value: number) => (isFahrenheit ? ((value - 32) * 5) / 9 : value);
+    const temperatureAtY = (y: number) => {
+      if (range === 0) return toCelsius(max);
+      const clamped = Math.min(CHART_TOP + drawableHeight, Math.max(CHART_TOP, y));
+      return toCelsius(max - ((clamped - CHART_TOP) / drawableHeight) * range);
+    };
+    const gradientStops = Array.from({ length: 7 }, (_, index) => {
+      const offset = index / 6;
+      const y = CHART_TOP + offset * (AREA_BASELINE - CHART_TOP);
+      const celsius = temperatureAtY(y);
+      return {
+        offset,
+        light: temperatureColor(celsius, TEMPERATURE_SCALE_LIGHT),
+        dark: temperatureColor(celsius, TEMPERATURE_SCALE_DARK),
+      };
+    });
+    const pointColors = points.map(point => ({
+      light: temperatureColor(toCelsius(point.convertedTemp), TEMPERATURE_SCALE_LIGHT),
+      dark: temperatureColor(toCelsius(point.convertedTemp), TEMPERATURE_SCALE_DARK),
+    }));
 
     // Night is provider evidence (Open-Meteo is_day -> "n" icon suffix), so
     // the shaded bands follow the real local day/night split of each hour.
@@ -297,11 +408,13 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       nightRuns,
       path,
       points,
+      gradientStops,
+      pointColors,
       rainBars,
       width,
       yTicks,
     };
-  }, [hourlyData, hourlyHorizonData]);
+  }, [hourlyData, hourlyHorizonData, isFahrenheit, plotWidth]);
 
   const formatDay = (date: Date): string => {
     const nowAtLocation = atLocationTime(new Date());
@@ -342,6 +455,56 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
   const currentLocationTime = atLocationTime(new Date(currentTimeMs));
   const currentLocationDateKey = currentLocationTime.toISOString().slice(0, 10);
   const currentLocationHourKey = currentLocationTime.toISOString().slice(0, 13);
+  // Full-height column boxes (night, twilight, now, hover) live in the track,
+  // which reserves TRACK_GUTTER on the left for the sticky axis.
+  const columnBox = (start: number, span: number, count: number): CSSProperties => ({
+    left: `calc(${TRACK_GUTTER}px + (100% - ${TRACK_GUTTER}px) * ${start / count})`,
+    width: `calc((100% - ${TRACK_GUTTER}px) * ${span / count})`,
+  });
+  const renderTooltip = (point: {
+    time: Date;
+    convertedTemp: number;
+    precipitation: number;
+    precipitationMm?: number;
+    description?: string;
+    xPercent: number;
+    y: number;
+  }) => {
+    const localTime = atLocationTime(point.time);
+    const dayLabel =
+      localTime.toISOString().slice(0, 10) === currentLocationDateKey ? null : formatDay(localTime);
+    const percent = Math.round(point.precipitation * 100);
+    const amount = formatPrecipitationAmount(point.precipitationMm, locale);
+    const rain =
+      percent > 0 && amount ? `${percent}% · ${amount}` : percent > 0 ? `${percent}%` : amount;
+    // Beside the point (never above it), so the reading is never clipped by
+    // the plot's top edge and never covers the curve it describes.
+    const placement = tooltipSide === 'left' ? 'is-left' : 'is-right';
+    const top = Math.min(CHART_HEIGHT - 100, Math.max(4, point.y - 44));
+    return (
+      <span
+        className={`hava81-forecast-atlas__tooltip ${placement}`}
+        style={{ left: `${point.xPercent}%`, top: `${top}px` }}
+      >
+        <span className="hava81-forecast-atlas__tooltip-time">
+          {dayLabel ? `${dayLabel} · ` : ''}
+          {hourTileFormatter.format(localTime)}
+        </span>
+        <span className="hava81-forecast-atlas__tooltip-temp">
+          {point.convertedTemp}
+          {temperatureSymbol}
+        </span>
+        {point.description ? (
+          <span className="hava81-forecast-atlas__tooltip-detail">{point.description}</span>
+        ) : null}
+        {rain ? (
+          <span className="hava81-forecast-atlas__tooltip-rain">
+            {t('hava81.forecastAtlas.rainBandLabel')} {rain}
+          </span>
+        ) : null}
+      </span>
+    );
+  };
   const renderSummaryWhen = (hour: { time: Date } | null) => {
     if (!hour) return null;
     const localTime = atLocationTime(hour.time);
@@ -428,6 +591,30 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
     };
   }, [hourlyData.length, displayIntervalHours, forecastFreshness.fresh]);
 
+  const hasChart = hourlyData.length >= 2 && forecastFreshness.fresh;
+  useLayoutEffect(() => {
+    const plot = plotRef.current;
+    if (!plot) return;
+    const measure = () => {
+      const width = Math.round(plot.getBoundingClientRect().width);
+      setPlotWidth(previous => (previous === width ? previous : width));
+    };
+    measure();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    observer?.observe(plot);
+    return () => observer?.disconnect();
+  }, [hasChart]);
+
+  // The draw-in animation needs the curve's real length (stroke-dashoffset
+  // runs from the full length to zero); it is re-measured whenever the path
+  // changes so a new interval or width draws itself again.
+  useLayoutEffect(() => {
+    const curve = curveRef.current;
+    if (!curve || typeof curve.getTotalLength !== 'function') return;
+    const length = Math.ceil(curve.getTotalLength());
+    if (length > 0) curve.style.setProperty('--rhythm-curve-length', `${length}`);
+  });
+
   // The interval control's selection slides between options. Measuring the
   // pressed button keeps it correct when the control wraps on tiny phones or
   // when text is enlarged; without layout (tests, no CSS) nothing is drawn.
@@ -494,6 +681,13 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
       count - 1,
       Math.max(0, Math.floor(((event.clientX - rect.left) / rect.width) * count))
     );
+    // Flip the tooltip by where the pointer sits in the visible viewport, so
+    // it never opens past the scroll edge on phones.
+    const viewportRect = hourlyViewportRef.current?.getBoundingClientRect();
+    if (viewportRect && viewportRect.width > 0) {
+      const side = event.clientX > viewportRect.left + viewportRect.width * 0.55 ? 'left' : 'right';
+      setTooltipSide(previous => (previous === side ? previous : side));
+    }
     setActiveHourIndex(previous => (previous === index ? previous : index));
   };
 
@@ -698,52 +892,69 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
               className="hava81-forecast-atlas__hourly-track"
               style={{ width: trackWidth, paddingInlineStart: `${TRACK_GUTTER}px` }}
               onPointerMove={trackPointer}
+              onPointerDown={trackPointer}
               onPointerLeave={() => setActiveHourIndex(null)}
             >
               {chart ? (
+                <div className="hava81-forecast-atlas__bands" aria-hidden="true">
+                  {chart.nightRuns.map(run => {
+                    const hasDusk = run.start > 0;
+                    const hasDawn = run.end < chart.count - 1;
+                    return (
+                      <span key={`night-${run.start}`}>
+                        {hasDusk ? (
+                          <span
+                            className="hava81-forecast-atlas__twilight is-dusk"
+                            style={columnBox(run.start - 1, 1, chart.count)}
+                          />
+                        ) : null}
+                        <span
+                          className={`hava81-forecast-atlas__night-band${
+                            hasDusk ? ' is-dusk' : ''
+                          }${hasDawn ? ' is-dawn' : ''}`}
+                          style={columnBox(run.start, run.end - run.start + 1, chart.count)}
+                        >
+                          <span className="hava81-forecast-atlas__night-label">
+                            <svg viewBox="0 0 16 16" width="13" height="13" focusable="false">
+                              <path d="M10.6 1.8a6.4 6.4 0 1 0 3.6 10.9A5.6 5.6 0 0 1 10.6 1.8Z" />
+                            </svg>
+                            {t('hava81.forecastAtlas.nightLabel')}
+                          </span>
+                        </span>
+                        {hasDawn ? (
+                          <span
+                            className="hava81-forecast-atlas__twilight is-dawn"
+                            style={columnBox(run.end + 1, 1, chart.count)}
+                          />
+                        ) : null}
+                      </span>
+                    );
+                  })}
+                  {chart.points.map(point => {
+                    const isCurrentPoint =
+                      atLocationTime(point.time).toISOString().slice(0, 13) ===
+                      currentLocationHourKey;
+                    const isActive = activeHourIndex === point.index;
+                    if (!isCurrentPoint && !isActive) return null;
+                    return (
+                      <span
+                        key={`column-${point.timestamp}`}
+                        className={`hava81-forecast-atlas__column${
+                          isCurrentPoint ? ' is-current' : ''
+                        }${isActive ? ' is-active' : ''}`}
+                        style={columnBox(point.index, 1, chart.count)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : null}
+              {chart ? (
                 <div
+                  ref={plotRef}
                   className="hava81-forecast-atlas__plot"
                   style={{ height: `${CHART_HEIGHT}px` }}
                   data-has-rain={chart.rainBars.length > 0 ? 'true' : undefined}
                 >
-                  <div className="hava81-forecast-atlas__bands" aria-hidden="true">
-                    {chart.nightRuns.map(run => (
-                      <span
-                        key={`night-${run.start}`}
-                        className="hava81-forecast-atlas__night-band"
-                        style={{
-                          left: `${(run.start / chart.count) * 100}%`,
-                          width: `${((run.end - run.start + 1) / chart.count) * 100}%`,
-                        }}
-                      >
-                        <span className="hava81-forecast-atlas__night-label">
-                          <svg viewBox="0 0 16 16" width="13" height="13" focusable="false">
-                            <path d="M10.6 1.8a6.4 6.4 0 1 0 3.6 10.9A5.6 5.6 0 0 1 10.6 1.8Z" />
-                          </svg>
-                          {t('hava81.forecastAtlas.nightLabel')}
-                        </span>
-                      </span>
-                    ))}
-                    {chart.points.map(point => {
-                      const isCurrentPoint =
-                        atLocationTime(point.time).toISOString().slice(0, 13) ===
-                        currentLocationHourKey;
-                      const isActive = activeHourIndex === point.index;
-                      if (!isCurrentPoint && !isActive) return null;
-                      return (
-                        <span
-                          key={`column-${point.timestamp}`}
-                          className={`hava81-forecast-atlas__column${
-                            isCurrentPoint ? ' is-current' : ''
-                          }${isActive ? ' is-active' : ''}`}
-                          style={{
-                            left: `${(point.index / chart.count) * 100}%`,
-                            width: `${100 / chart.count}%`,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
                   <svg
                     className="hava81-forecast-atlas__chart"
                     viewBox={`0 0 ${chart.width} ${CHART_HEIGHT}`}
@@ -752,6 +963,14 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     height={CHART_HEIGHT}
                     role="img"
                     aria-labelledby={`${chartTitleId} ${chartDescriptionId}`}
+                    style={
+                      {
+                        '--rhythm-curve-light': `url(#${gradientId}-curve-light)`,
+                        '--rhythm-curve-dark': `url(#${gradientId}-curve-dark)`,
+                        '--rhythm-area-light': `url(#${gradientId}-area-light)`,
+                        '--rhythm-area-dark': `url(#${gradientId}-area-dark)`,
+                      } as CSSProperties
+                    }
                   >
                     <title id={chartTitleId}>{hourlyHeading}</title>
                     <desc id={chartDescriptionId}>
@@ -762,10 +981,42 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       })}
                     </desc>
                     <defs>
-                      <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" className="hava81-forecast-atlas__area-stop is-start" />
-                        <stop offset="100%" className="hava81-forecast-atlas__area-stop is-end" />
-                      </linearGradient>
+                      {(['light', 'dark'] as const).map(theme => (
+                        <linearGradient
+                          key={`curve-${theme}`}
+                          id={`${gradientId}-curve-${theme}`}
+                          gradientUnits="userSpaceOnUse"
+                          x1="0"
+                          x2="0"
+                          y1={CHART_TOP}
+                          y2={AREA_BASELINE}
+                        >
+                          {chart.gradientStops.map(stop => (
+                            <stop key={stop.offset} offset={stop.offset} stopColor={stop[theme]} />
+                          ))}
+                        </linearGradient>
+                      ))}
+                      {(['light', 'dark'] as const).map(theme => (
+                        <linearGradient
+                          key={`area-${theme}`}
+                          id={`${gradientId}-area-${theme}`}
+                          gradientUnits="userSpaceOnUse"
+                          x1="0"
+                          x2="0"
+                          y1={CHART_TOP}
+                          y2={AREA_BASELINE}
+                        >
+                          {chart.gradientStops.map(stop => (
+                            <stop
+                              key={stop.offset}
+                              offset={stop.offset}
+                              stopColor={stop[theme]}
+                              stopOpacity={0.32 - stop.offset * 0.3}
+                              className="hava81-forecast-atlas__area-stop"
+                            />
+                          ))}
+                        </linearGradient>
+                      ))}
                     </defs>
                     {chart.yTicks.map(tick => (
                       <line
@@ -803,42 +1054,22 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                       key={`trace-${displayIntervalHours}`}
                       aria-hidden="true"
                     >
+                      <path className="hava81-forecast-atlas__area" d={chart.areaPath} />
                       <path
-                        className="hava81-forecast-atlas__area"
-                        d={chart.areaPath}
-                        fill={`url(#${gradientId})`}
+                        ref={curveRef}
+                        className="hava81-forecast-atlas__curve"
+                        d={chart.path}
                       />
-                      <path className="hava81-forecast-atlas__curve" d={chart.path} />
                     </g>
                     {chart.rainBars.length > 0 ? (
-                      <g className="hava81-forecast-atlas__rain" aria-hidden="true">
-                        <line
-                          className="hava81-forecast-atlas__rain-ceiling"
-                          x1="0"
-                          x2={chart.width}
-                          y1={RAIN_TOP}
-                          y2={RAIN_TOP}
-                        />
-                        <line
-                          className="hava81-forecast-atlas__rain-baseline"
-                          x1="0"
-                          x2={chart.width}
-                          y1={RAIN_BASELINE}
-                          y2={RAIN_BASELINE}
-                        />
-                        {chart.rainBars.map(bar => (
-                          <rect
-                            key={`rain-${bar.key}`}
-                            className={`hava81-forecast-atlas__rain-bar${
-                              bar.signal ? ' is-signal' : ''
-                            }`}
-                            x={bar.x}
-                            y={RAIN_BASELINE - bar.height}
-                            width={RAIN_BAR_UNITS}
-                            height={bar.height}
-                          />
-                        ))}
-                      </g>
+                      <line
+                        className="hava81-forecast-atlas__rain-baseline"
+                        x1="0"
+                        x2={chart.width}
+                        y1={RAIN_BASELINE}
+                        y2={RAIN_BASELINE}
+                        aria-hidden="true"
+                      />
                     ) : null}
                     {chart.points.map(point => {
                       const isCurrentPoint =
@@ -863,13 +1094,50 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                           x1={chart.firstPrecipitation.x}
                           x2={chart.firstPrecipitation.x}
                           y1="22"
-                          y2={RAIN_BASELINE}
+                          y2={RAIN_TOP - 4}
                         />
                       </g>
                     ) : null}
                   </svg>
+                  {chart.rainBars.length > 0 ? (
+                    <div
+                      className="hava81-forecast-atlas__rain"
+                      key={`rain-${displayIntervalHours}`}
+                      aria-hidden="true"
+                      style={{ top: `${RAIN_TOP}px`, height: `${RAIN_BASELINE - RAIN_TOP}px` }}
+                    >
+                      {chart.points.map(point => {
+                        const bar = chart.rainBars.find(item => item.index === point.index);
+                        const level = bar?.level ?? 0;
+                        return (
+                          <span
+                            key={`gauge-${point.timestamp}`}
+                            className={`hava81-forecast-atlas__rain-gauge${
+                              bar?.signal ? ' is-signal' : ''
+                            }${level === 0 ? ' is-dry' : ''}`}
+                            data-level={level}
+                            style={
+                              {
+                                left: `${point.xPercent}%`,
+                                '--rhythm-i': point.index,
+                              } as CSSProperties
+                            }
+                          >
+                            {Array.from({ length: RAIN_GAUGE_CELLS }, (_, cell) => (
+                              <span
+                                key={cell}
+                                className={`hava81-forecast-atlas__rain-bar${
+                                  cell < level ? ' is-lit' : ''
+                                }${cell < level && bar?.signal ? ' is-signal' : ''}`}
+                              />
+                            ))}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                   <div className="hava81-forecast-atlas__marks" aria-hidden="true">
-                    {chart.points.map(point => {
+                    {chart.points.map((point, index) => {
                       const isCurrentPoint =
                         atLocationTime(point.time).toISOString().slice(0, 13) ===
                         currentLocationHourKey;
@@ -888,21 +1156,25 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                         <span
                           key={`point-${point.timestamp}`}
                           className={classes}
-                          style={{ left: `${point.xPercent}%`, top: `${point.y}px` }}
-                        />
+                          style={
+                            {
+                              left: `${point.xPercent}%`,
+                              top: `${point.y}px`,
+                              '--rhythm-point-light': chart.pointColors[index].light,
+                              '--rhythm-point-dark': chart.pointColors[index].dark,
+                              '--rhythm-i': point.index,
+                            } as CSSProperties
+                          }
+                        >
+                          {isCurrentPoint ? (
+                            <span className="hava81-forecast-atlas__pulse" />
+                          ) : null}
+                        </span>
                       );
                     })}
-                    {activeHourIndex !== null && chart.points[activeHourIndex] ? (
-                      <span
-                        className="hava81-forecast-atlas__readout"
-                        style={{
-                          left: `${chart.points[activeHourIndex].xPercent}%`,
-                          top: `${chart.points[activeHourIndex].y}px`,
-                        }}
-                      >
-                        {chart.points[activeHourIndex].convertedTemp}°
-                      </span>
-                    ) : null}
+                    {activeHourIndex !== null && chart.points[activeHourIndex]
+                      ? renderTooltip(chart.points[activeHourIndex])
+                      : null}
                     {chart.firstPrecipitation ? (
                       <span
                         className={`hava81-forecast-atlas__precipitation-flag${
@@ -951,6 +1223,7 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
 
               <ol
                 ref={hoursRef}
+                key={`hours-${displayIntervalHours}`}
                 className="hava81-forecast-atlas__hours"
                 style={{
                   gridTemplateColumns: `repeat(${hourlyData.length}, minmax(0, 1fr))`,
@@ -982,7 +1255,11 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                     .filter(Boolean)
                     .join(' ');
                   return (
-                    <li className={hourClasses} key={`hour-${hour.timestamp}`}>
+                    <li
+                      className={hourClasses}
+                      key={`hour-${hour.timestamp}`}
+                      style={{ '--rhythm-i': index } as CSSProperties}
+                    >
                       <time
                         dateTime={hour.time.toISOString()}
                         aria-current={isCurrentHour ? 'time' : undefined}

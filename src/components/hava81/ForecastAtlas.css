@@ -807,7 +807,12 @@
   --rhythm-signal: var(--color-saffron, #e7a531);
   --rhythm-signal-ink: var(--color-saffron-ink, #805500);
   --rhythm-signal-text: #142524;
-  --rhythm-night: color-mix(in srgb, var(--rhythm-ink) 5%, transparent);
+  --rhythm-night: color-mix(in srgb, #1d2f66 7%, transparent);
+  --rhythm-dusk: rgb(231 165 49 / 0.12);
+  --rhythm-dawn: rgb(236 150 120 / 0.12);
+  --rhythm-rain: var(--rhythm-accent);
+  --rhythm-tooltip-rain: #f2c46b;
+  --rhythm-gauge-empty: color-mix(in srgb, var(--rhythm-line) 80%, transparent);
   --rhythm-hover: color-mix(in srgb, var(--rhythm-ink) 5%, transparent);
   --rhythm-now: color-mix(in srgb, var(--rhythm-accent) 9%, transparent);
   --rhythm-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -815,7 +820,11 @@
 
 .app[data-color-mode='dark'] .hava81-forecast-atlas {
   --rhythm-on-accent: #0b1f2c;
-  --rhythm-night: rgb(0 0 0 / 0.2);
+  --rhythm-night: rgb(2 10 26 / 0.28);
+  --rhythm-dusk: rgb(231 165 49 / 0.13);
+  --rhythm-dawn: rgb(236 150 120 / 0.11);
+  --rhythm-tooltip-rain: #7a5200;
+  --rhythm-gauge-empty: color-mix(in srgb, var(--rhythm-line) 55%, transparent);
   --rhythm-hover: rgb(255 255 255 / 0.06);
   --rhythm-now: color-mix(in srgb, var(--rhythm-accent) 14%, transparent);
 }
@@ -1068,8 +1077,19 @@
   padding: 0;
 }
 
+/* Track = one stage: atmosphere bands behind, plot and hour values above. */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hourly-track {
+  position: relative;
+}
+
 .hava81-forecast-atlas__plot {
   position: relative;
+  z-index: 1;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hours {
+  position: relative;
+  z-index: 1;
 }
 
 .hava81-forecast-atlas__bands,
@@ -1079,23 +1099,58 @@
   pointer-events: none;
 }
 
+.hava81-forecast-atlas__bands {
+  z-index: 0;
+}
+
 .hava81-forecast-atlas__marks {
-  z-index: 2;
+  z-index: 3;
 }
 
 .hava81-forecast-atlas__night-band,
+.hava81-forecast-atlas__twilight,
 .hava81-forecast-atlas__column {
   position: absolute;
   top: 0;
   bottom: 0;
 }
 
+/* Night is a cool wash; the provider's day/night flip is softened by a warm
+ * dusk glow before it and a dawn glow after it, so the band reads as sky. */
 .hava81-forecast-atlas__night-band {
   background: var(--rhythm-night);
 }
 
+.hava81-forecast-atlas__night-band.is-dusk::before,
+.hava81-forecast-atlas__night-band.is-dawn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: min(72px, 45%);
+}
+
+.hava81-forecast-atlas__night-band.is-dusk::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--rhythm-dusk), transparent);
+}
+
+.hava81-forecast-atlas__night-band.is-dawn::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--rhythm-dawn), transparent);
+}
+
+.hava81-forecast-atlas__twilight.is-dusk {
+  background: linear-gradient(90deg, transparent, var(--rhythm-dusk));
+}
+
+.hava81-forecast-atlas__twilight.is-dawn {
+  background: linear-gradient(90deg, var(--rhythm-dawn), transparent);
+}
+
 .hava81-forecast-atlas__night-label {
   position: absolute;
+  z-index: 1;
   top: 8px;
   left: 10px;
   display: inline-flex;
@@ -1106,6 +1161,10 @@
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
+}
+
+.hava81-forecast-atlas__night-band.is-dusk .hava81-forecast-atlas__night-label {
+  left: 18px;
 }
 
 .hava81-forecast-atlas__night-label svg {
@@ -1138,61 +1197,168 @@
   vector-effect: non-scaling-stroke;
 }
 
-.app
-  .hava81-forecast-atlas
-  .hava81-forecast-atlas__rhythm
-  .hava81-forecast-atlas__area-stop.is-start {
-  stop-color: var(--rhythm-accent);
-  stop-opacity: 0.18;
+/* Temperature-coloured trace: stroke and fill reference per-theme gradients
+ * whose stops are computed from the temperature at each height. */
+/* Custom properties that reference inline per-element values must be declared
+ * on that element (var() resolves where it is declared, not where used). */
+.hava81-forecast-atlas__point {
+  --rhythm-point: var(--rhythm-point-light);
 }
 
-.app
-  .hava81-forecast-atlas
-  .hava81-forecast-atlas__rhythm
-  .hava81-forecast-atlas__area-stop.is-end {
-  stop-color: var(--rhythm-accent);
-  stop-opacity: 0;
+.app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__point {
+  --rhythm-point: var(--rhythm-point-dark);
+}
+
+.hava81-forecast-atlas__chart {
+  --rhythm-curve: var(--rhythm-curve-light);
+  --rhythm-area: var(--rhythm-area-light);
+}
+
+.app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__chart {
+  --rhythm-curve: var(--rhythm-curve-dark);
+  --rhythm-area: var(--rhythm-area-dark);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__area {
+  fill: var(--rhythm-area);
+  animation: hava81-rhythm-fade 700ms var(--rhythm-ease) 450ms both;
 }
 
 .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__curve {
-  stroke: var(--rhythm-accent);
-  stroke-width: 2.5;
+  stroke: var(--rhythm-curve);
+  stroke-width: 3;
+  vector-effect: none;
+  stroke-dasharray: var(--rhythm-curve-length, none);
+  stroke-dashoffset: 0;
   filter: none;
+  animation: hava81-rhythm-draw 1500ms cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
-.hava81-forecast-atlas__trace {
-  animation: hava81-rhythm-trace 900ms var(--rhythm-ease) both;
-}
-
-@keyframes hava81-rhythm-trace {
+@keyframes hava81-rhythm-draw {
   from {
-    clip-path: inset(0 100% 0 0);
+    stroke-dashoffset: var(--rhythm-curve-length, 0);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes hava81-rhythm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Text never fades through low contrast: hour values rise and unmask
+ * instead of animating opacity. */
+@keyframes hava81-rhythm-rise {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(10px);
   }
   to {
     clip-path: inset(0 0 0 0);
+    transform: none;
   }
 }
 
-/* 100% rain-chance reference: bars grow from the baseline up to this line. */
-.hava81-forecast-atlas__rain-ceiling {
-  stroke: var(--rhythm-line);
-  stroke-width: 1;
-  stroke-dasharray: 2 6;
-  vector-effect: non-scaling-stroke;
+@keyframes hava81-rhythm-grow {
+  from {
+    transform: translateX(-50%) scaleY(0);
+  }
+  to {
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+@keyframes hava81-rhythm-pop {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes hava81-rhythm-pulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+/* Rain gauge: five cells per hour, lit from the baseline up. Any chance lights
+ * one cell, and the colour deepens with each level. */
+.hava81-forecast-atlas__rain {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.hava81-forecast-atlas__rain-gauge {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  width: 18px;
+  height: 100%;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  animation: hava81-rhythm-grow 520ms var(--rhythm-ease) calc(380ms + var(--rhythm-i, 0) * 22ms)
+    both;
+}
+
+.hava81-forecast-atlas__rain-bar {
+  flex: 1 1 0;
+  border-radius: 2px;
+  background: var(--rhythm-gauge-empty);
+}
+
+.hava81-forecast-atlas__rain-gauge.is-dry .hava81-forecast-atlas__rain-bar {
+  opacity: 0.6;
+}
+
+.hava81-forecast-atlas__rain-gauge[data-level='1'] .hava81-forecast-atlas__rain-bar.is-lit {
+  background: color-mix(in srgb, var(--rhythm-rain) 58%, transparent);
+}
+
+.hava81-forecast-atlas__rain-gauge[data-level='2'] .hava81-forecast-atlas__rain-bar.is-lit {
+  background: color-mix(in srgb, var(--rhythm-rain) 70%, transparent);
+}
+
+.hava81-forecast-atlas__rain-gauge[data-level='3'] .hava81-forecast-atlas__rain-bar.is-lit {
+  background: color-mix(in srgb, var(--rhythm-rain) 82%, transparent);
+}
+
+.hava81-forecast-atlas__rain-gauge[data-level='4'] .hava81-forecast-atlas__rain-bar.is-lit {
+  background: color-mix(in srgb, var(--rhythm-rain) 92%, transparent);
+}
+
+.hava81-forecast-atlas__rain-gauge[data-level='5'] .hava81-forecast-atlas__rain-bar.is-lit {
+  background: var(--rhythm-rain);
+}
+
+.hava81-forecast-atlas__rain-gauge.is-signal .hava81-forecast-atlas__rain-bar.is-lit {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rhythm-rain) 60%, var(--rhythm-ink));
 }
 
 .hava81-forecast-atlas__rain-baseline {
   stroke: var(--rhythm-line);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
-}
-
-.hava81-forecast-atlas__rain-bar {
-  fill: color-mix(in srgb, var(--rhythm-accent) 30%, transparent);
-}
-
-.hava81-forecast-atlas__rain-bar.is-signal {
-  fill: color-mix(in srgb, var(--rhythm-accent) 72%, transparent);
 }
 
 .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__current-guide {
@@ -1212,49 +1378,104 @@
   stroke-dasharray: 3 3;
 }
 
-/* Points are HTML so they stay round at every plot width. */
+/* Points are HTML so they stay round at every plot width; each ring takes
+ * the colour of its own temperature. */
 .hava81-forecast-atlas__point {
   position: absolute;
-  width: 7px;
-  height: 7px;
-  margin: -3.5px 0 0 -3.5px;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
   border-radius: 50%;
   background: var(--rhythm-paper, #fff);
-  box-shadow: inset 0 0 0 1.5px var(--rhythm-accent, #146b73);
+  box-shadow: inset 0 0 0 2px var(--rhythm-point, var(--rhythm-accent, #146b73));
   transition: transform 180ms var(--rhythm-ease);
+  animation: hava81-rhythm-pop 360ms var(--rhythm-ease) calc(520ms + var(--rhythm-i, 0) * 30ms) both;
 }
 
 .hava81-forecast-atlas__point.is-extreme {
-  background: var(--rhythm-accent, #146b73);
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: var(--rhythm-point, var(--rhythm-accent, #146b73));
   box-shadow: 0 0 0 2px var(--rhythm-paper, #fff);
 }
 
 .hava81-forecast-atlas__point.is-current {
-  width: 11px;
-  height: 11px;
-  margin: -5.5px 0 0 -5.5px;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
   background: var(--rhythm-accent, #146b73);
   box-shadow:
     0 0 0 2.5px var(--rhythm-paper, #fff),
-    0 0 0 8px color-mix(in srgb, var(--rhythm-accent, #146b73) 20%, transparent);
+    0 0 0 6px color-mix(in srgb, var(--rhythm-accent, #146b73) 18%, transparent);
+}
+
+/* "Now" breathes: a thin ring expands and fades every few seconds. */
+.hava81-forecast-atlas__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--rhythm-accent, #146b73);
+  animation: hava81-rhythm-pulse 2.6s cubic-bezier(0.2, 0.6, 0.3, 1) 1.2s infinite;
+  opacity: 0;
 }
 
 .hava81-forecast-atlas__point.is-active {
-  transform: scale(1.6);
+  transform: scale(1.45);
 }
 
-.hava81-forecast-atlas__readout {
+/* Scrub tooltip: one compact reading of the hour under the pointer. */
+.hava81-forecast-atlas__tooltip {
   position: absolute;
-  padding: 3px 6px;
-  border-radius: 4px;
+  z-index: 5;
+  display: grid;
+  gap: 2px;
+  min-width: 7.5rem;
+  padding: 8px 10px 9px;
+  border-radius: 8px;
   background: var(--rhythm-ink);
   color: var(--rhythm-paper);
+  box-shadow:
+    0 16px 48px rgb(14 44 50 / 0.16),
+    0 2px 6px rgb(14 44 50 / 0.12);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hava81-rhythm-fade 140ms ease-out both;
+}
+
+.hava81-forecast-atlas__tooltip.is-right {
+  transform: translateX(18px);
+}
+
+.hava81-forecast-atlas__tooltip.is-left {
+  transform: translateX(calc(-100% - 18px));
+}
+
+.hava81-forecast-atlas__tooltip-time,
+.hava81-forecast-atlas__tooltip-detail {
+  color: color-mix(in srgb, var(--rhythm-paper) 78%, var(--rhythm-ink));
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.hava81-forecast-atlas__tooltip-detail::first-letter {
+  text-transform: uppercase;
+}
+
+.hava81-forecast-atlas__tooltip-temp {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.hava81-forecast-atlas__tooltip-rain {
+  color: var(--rhythm-tooltip-rain);
   font-size: 0.8125rem;
   font-weight: 600;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums lining-nums;
-  transform: translate(-50%, calc(-100% - 12px));
-  white-space: nowrap;
+  line-height: 1.3;
 }
 
 .app
@@ -1358,18 +1579,17 @@
   transition: background-color 180ms var(--rhythm-ease);
 }
 
-.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-night {
-  background-color: var(--rhythm-night);
-}
-
-.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-current {
-  background-color: var(--rhythm-now);
+/* Night, now and hover tints come from the full-height bands behind the
+ * track, so the hour cells stay transparent and the columns read unbroken. */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-night,
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-current,
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour:hover {
+  background: transparent;
   box-shadow: none;
 }
 
-.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-active,
-.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour:hover {
-  background-image: linear-gradient(var(--rhythm-hover), var(--rhythm-hover));
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour {
+  animation: hava81-rhythm-rise 460ms var(--rhythm-ease) calc(var(--rhythm-i, 0) * 22ms) both;
 }
 
 .app
@@ -1631,8 +1851,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hava81-forecast-atlas__trace {
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__curve,
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__area,
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour,
+  .hava81-forecast-atlas__rain-gauge,
+  .hava81-forecast-atlas__point,
+  .hava81-forecast-atlas__tooltip {
     animation: none;
+  }
+
+  .hava81-forecast-atlas__pulse {
+    display: none;
   }
 
   .hava81-forecast-atlas__range-indicator.is-animated,
@@ -1652,8 +1881,14 @@
 @media (forced-colors: active) {
   .hava81-forecast-atlas__range-indicator,
   .hava81-forecast-atlas__night-band,
-  .hava81-forecast-atlas__column {
+  .hava81-forecast-atlas__twilight,
+  .hava81-forecast-atlas__column,
+  .hava81-forecast-atlas__pulse {
     display: none;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__curve {
+    stroke: CanvasText;
   }
 
   .hava81-forecast-atlas__point,
@@ -1664,13 +1899,18 @@
     box-shadow: none;
   }
 
-  .hava81-forecast-atlas__rain-bar,
-  .hava81-forecast-atlas__rain-bar.is-signal {
-    fill: CanvasText;
+  .hava81-forecast-atlas__rain-bar {
+    forced-color-adjust: none;
+    background: Canvas;
+    box-shadow: inset 0 0 0 1px CanvasText;
+  }
+
+  .hava81-forecast-atlas__rain-bar.is-lit {
+    background: CanvasText;
   }
 
   .hava81-forecast-atlas__precipitation-flag,
-  .hava81-forecast-atlas__readout {
+  .hava81-forecast-atlas__tooltip {
     border: 1px solid CanvasText;
   }
 

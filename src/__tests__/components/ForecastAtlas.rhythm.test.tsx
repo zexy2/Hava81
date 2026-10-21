@@ -45,9 +45,9 @@ describe('ForecastAtlas hourly rhythm', () => {
 
     const bands = container.querySelectorAll('.hava81-forecast-atlas__night-band');
     expect(bands).toHaveLength(1);
-    // Night spans indexes 3..13 of 24 columns.
-    expect((bands[0] as HTMLElement).style.left).toBe(`${(3 / 24) * 100}%`);
-    expect((bands[0] as HTMLElement).style.width).toBe(`${(11 / 24) * 100}%`);
+    // Night spans indexes 3..13 of 24 columns, offset by the axis gutter.
+    expect((bands[0] as HTMLElement).style.left).toContain(String(3 / 24));
+    expect((bands[0] as HTMLElement).style.width).toContain(String(11 / 24));
     expect(bands[0]).toHaveTextContent('Gece');
 
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
@@ -57,12 +57,18 @@ describe('ForecastAtlas hourly rhythm', () => {
     expect(hours[3]).toHaveClass('is-night');
   });
 
-  it('draws one rain-chance bar per wet hour and keeps saffron for the first signal only', () => {
+  it('reads rain chance as a five-cell gauge that lights at least one cell for any chance', () => {
     const { container } = renderRhythm();
 
-    const bars = container.querySelectorAll('.hava81-forecast-atlas__rain-bar');
-    expect(bars).toHaveLength(2);
-    expect(container.querySelectorAll('.hava81-forecast-atlas__rain-bar.is-signal')).toHaveLength(
+    const gauges = container.querySelectorAll('.hava81-forecast-atlas__rain-gauge');
+    expect(gauges).toHaveLength(24);
+    // 60% lights three of five cells; 10% still lights one; dry hours stay empty.
+    expect(gauges[13]).toHaveAttribute('data-level', '3');
+    expect(gauges[14]).toHaveAttribute('data-level', '1');
+    expect(gauges[0]).toHaveClass('is-dry');
+    expect(gauges[13].querySelectorAll('.is-lit')).toHaveLength(3);
+    expect(gauges[14].querySelectorAll('.is-lit')).toHaveLength(1);
+    expect(container.querySelectorAll('.hava81-forecast-atlas__rain-gauge.is-signal')).toHaveLength(
       1
     );
     const flag = container.querySelector('.hava81-forecast-atlas__precipitation-flag');
@@ -76,7 +82,7 @@ describe('ForecastAtlas hourly rhythm', () => {
     const dry = rhythmHours().map(hour => ({ ...hour, pop: 0, precipitationMm: 0 }));
     const { container } = renderRhythm(dry);
 
-    expect(container.querySelectorAll('.hava81-forecast-atlas__rain-bar')).toHaveLength(0);
+    expect(container.querySelectorAll('.hava81-forecast-atlas__rain-gauge')).toHaveLength(0);
     expect(container.querySelector('.hava81-forecast-atlas__axis-caption')).toBeNull();
     expect(container.querySelector('.hava81-forecast-atlas__precipitation-flag')).toBeNull();
   });
@@ -120,11 +126,47 @@ describe('ForecastAtlas hourly rhythm', () => {
     expect(items[5]).toHaveClass('is-active');
     expect(container.querySelector('.hava81-forecast-atlas__point.is-active')).not.toBeNull();
     expect(container.querySelector('.hava81-forecast-atlas__column.is-active')).not.toBeNull();
-    expect(container.querySelector('.hava81-forecast-atlas__readout')).toHaveTextContent('15°');
+    const tooltip = container.querySelector('.hava81-forecast-atlas__tooltip');
+    expect(tooltip).toHaveTextContent('20:00');
+    expect(tooltip).toHaveTextContent('15°C');
+    expect(tooltip).toHaveTextContent('az bulutlu');
 
     fireEvent.pointerLeave(track as HTMLElement);
     expect(items[5]).not.toHaveClass('is-active');
-    expect(container.querySelector('.hava81-forecast-atlas__readout')).toBeNull();
+    expect(container.querySelector('.hava81-forecast-atlas__tooltip')).toBeNull();
+  });
+
+  it('colours the curve by temperature, warm at the top and cold at the bottom', () => {
+    const { container } = renderRhythm();
+    const stops = Array.from(
+      container.querySelectorAll<SVGStopElement>('linearGradient[id$="-curve-light"] stop')
+    ).map(stop => stop.getAttribute('stop-color'));
+    expect(stops.length).toBeGreaterThanOrEqual(5);
+    // 21°C (top) sits in the saffron range, 9°C (bottom) in the blue range.
+    const channels = (value: string | null) => value?.match(/\d+/g)?.map(Number) ?? [];
+    const [topRed, , topBlue] = channels(stops[0]);
+    const [bottomRed, , bottomBlue] = channels(stops[stops.length - 1]);
+    expect(topRed).toBeGreaterThan(topBlue);
+    expect(bottomBlue).toBeGreaterThan(bottomRed);
+    expect(container.querySelector('linearGradient[id$="-curve-dark"]')).not.toBeNull();
+  });
+
+  it('pulses only the current-hour point and softens night edges with twilight', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-21T15:10:00Z'));
+      const { container } = renderRhythm();
+      expect(container.querySelectorAll('.hava81-forecast-atlas__pulse')).toHaveLength(1);
+      expect(
+        container.querySelector(
+          '.hava81-forecast-atlas__point.is-current .hava81-forecast-atlas__pulse'
+        )
+      ).not.toBeNull();
+      expect(container.querySelector('.hava81-forecast-atlas__twilight.is-dusk')).not.toBeNull();
+      expect(container.querySelector('.hava81-forecast-atlas__twilight.is-dawn')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps chart annotations out of the accessibility tree', () => {
