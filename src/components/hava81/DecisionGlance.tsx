@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
+import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
@@ -45,17 +45,18 @@ export function DecisionGlance({ weather, hourly, airQuality, forecastMeta }: Pr
   const evidenceFresh =
     getCurrentWeatherFreshness(weather.meta, now).fresh &&
     getForecastFreshness(forecastMeta, now).fresh;
-  const plan = useMemo(
-    () => (evidenceFresh && hourly.length ? buildDailyPlan({ weather, hourly, airQuality }) : null),
+  const snapshot = useMemo(
+    () => (evidenceFresh && hourly.length ? getDecisionSnapshot({ weather, hourly, airQuality }) : null),
     [evidenceFresh, weather, hourly, airQuality]
   );
+  const plan = snapshot?.plan ?? null;
   const dateLabel = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'tr-TR', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(now + weather.meta.timezoneOffsetSeconds * 1000));
-  const bestRange = plan?.bestWindowRange;
+  const bestRange = snapshot?.bestWindow;
   const bestHours = bestRange
     ? formatBestWindowTime({
         start: bestRange.start.time,

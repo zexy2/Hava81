@@ -1,3 +1,4 @@
+import { formatCityTime, formatNumber } from '../../utils/format';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
@@ -151,14 +152,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
     };
   }, [forecastMeta, freshness.expiresInMs]);
   const offset = weather.meta.timezoneOffsetSeconds * 1000;
-  const formatTime = (date?: Date) =>
-    date
-      ? new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'UTC',
-        })
-      : '—';
+  const formatTime = (date?: Date) => formatCityTime(date, offset / 1000, i18n.language);
   const hasWindow = Boolean(profile.activityStart && profile.activityEnd);
   const hasPartialWindow = Boolean(profile.activityStart) !== Boolean(profile.activityEnd);
   const activityWindowStatusId = hasPartialWindow ? 'activity-window-incomplete' : undefined;
@@ -371,7 +365,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
                       <span>{rainText}</span>
                       <span>
                         {t('hava81.activities.conditions.wind', {
-                          value: convertWindSpeed(best.windSpeed),
+                          value: formatNumber(convertWindSpeed(best.windSpeed), i18n.language),
                           unit: getWindSpeedSymbol(),
                         })}
                       </span>

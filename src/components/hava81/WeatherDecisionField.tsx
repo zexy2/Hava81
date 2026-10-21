@@ -13,6 +13,7 @@ import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
+import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherIllustration } from './WeatherIllustration';
 import './WeatherDecisionField.css';
@@ -351,7 +352,16 @@ export function WeatherDecisionField({
   const decisions = useMemo(
     () =>
       decisionEvidenceFresh
-        ? getWeatherDecisions({ weather, hourly, airQuality: freshAirQuality, uvIndexMax })
+        ? getWeatherDecisions({
+            weather,
+            hourly,
+            airQuality: freshAirQuality,
+            uvIndexMax,
+            bestWindowTime: hourly.length
+              ? (getDecisionSnapshot({ weather, hourly, airQuality: freshAirQuality }).bestWindow
+                  ?.peak.time ?? null)
+              : undefined,
+          })
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
     [decisionEvidenceFresh, freshAirQuality, hourly, uvIndexMax, weather]
   );
@@ -503,7 +513,7 @@ export function WeatherDecisionField({
       <dl className="hava81-decision-field__rail">
         <div className="hava81-decision-field__metric">
           <dt>
-            {t('hava81.decision.forecastHighLow', { defaultValue: 'Tahmini yüksek / düşük' })}
+            {t('hava81.decision.forecastHighLow', { defaultValue: 'Bugün (takvim günü) yüksek / düşük' })}
           </dt>
           <dd>
             {forecastFreshness?.fresh !== false && todayDaily

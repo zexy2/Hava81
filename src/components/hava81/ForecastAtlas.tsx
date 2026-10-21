@@ -18,6 +18,11 @@ export interface ForecastAtlasProps {
   hourly: HourlyForecast[];
   meta: ForecastMeta;
   className?: string;
+  /**
+   * Faz 1.2: the "Now" tile shows the same "now" provider as the main card (current
+   * observation, °C) instead of the model's hourly value, so the screen has one "now".
+   */
+  current?: { temperature: number; icon: string; description: string };
 }
 
 const LEGACY_HOUR_LIMIT = 12;
@@ -145,7 +150,7 @@ const temperatureColor = (celsius: number, scale: readonly ColorStop[]): string 
 
 const RAIN_GAUGE_CELLS = 5;
 
-export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastAtlasProps) {
+export function ForecastAtlas({ daily, hourly, meta, className = '', current }: ForecastAtlasProps) {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const [displayIntervalHours, setDisplayIntervalHours] = useState(1);
@@ -1275,12 +1280,17 @@ export function ForecastAtlas({ daily, hourly, meta, className = '' }: ForecastA
                         <span>{hourTileFormatter.format(localTime)}</span>
                       </time>
                       <WeatherSymbol
-                        code={hour.icon}
+                        code={isCurrentHour && current ? current.icon : hour.icon}
                         size={28}
-                        label={hour.description}
+                        label={isCurrentHour && current ? current.description : hour.description}
                         className="hava81-forecast-atlas__hour-symbol"
                       />
-                      <strong>{hour.convertedTemp}°</strong>
+                      <strong>
+                        {isCurrentHour && current
+                          ? Math.round(convertTemperature(current.temperature))
+                          : hour.convertedTemp}
+                        °
+                      </strong>
                       {precipitation > 0 || precipitationAmount ? (
                         <span
                           className={

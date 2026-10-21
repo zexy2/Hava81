@@ -234,7 +234,7 @@ describe('RouteWeatherPanel', () => {
     await screen.findByRole('status');
     const result = document.querySelector('.route-weather__result');
     expect(result).toHaveTextContent('77°F');
-    expect(result).toHaveTextContent('Rüzgar 14 km/h');
+    expect(result).toHaveTextContent('Rüzgâr 14 km/h');
     expect(result).not.toHaveTextContent('25° ·');
     expect(result).not.toHaveTextContent('4.0 m/s');
   });

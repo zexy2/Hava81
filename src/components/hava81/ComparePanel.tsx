@@ -1,3 +1,4 @@
+import { formatCityTime, formatWithUnit } from '../../utils/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { weatherService } from '../../api/weatherService';
@@ -185,12 +186,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
   const isLeader = (row: (typeof freshRows)[number]) => leaders.includes(row);
   const offsetTime = (row: CompareRow, date?: Date) => {
     if (!date) return '—';
-    const offset = row.weather.meta.timezoneOffsetSeconds * 1000;
-    return new Date(date.getTime() + offset).toLocaleTimeString(i18n.language, {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'UTC',
-    });
+    return formatCityTime(date, row.weather.meta.timezoneOffsetSeconds, i18n.language);
   };
 
   return (
@@ -316,7 +312,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                     <span>
                       <span className="hava81-compare__metric-label">{t('weather.wind')}</span>
                       <b>
-                        {convertWindSpeed(row.weather.windSpeed)} {getWindSpeedSymbol()}
+                        {formatWithUnit(convertWindSpeed(row.weather.windSpeed), getWindSpeedSymbol(), i18n.language)}
                       </b>
                     </span>
                     <span>

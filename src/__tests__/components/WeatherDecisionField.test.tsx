@@ -113,7 +113,7 @@ describe('WeatherDecisionField daily range', () => {
         />
       </SettingsProvider>
     );
-    expect(screen.getByText('Tahmini yüksek / düşük')).toBeInTheDocument();
+    expect(screen.getByText('Bugün (takvim günü) yüksek / düşük')).toBeInTheDocument();
     expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
@@ -537,7 +537,7 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    const label = screen.getByText('Tahmini yüksek / düşük');
+    const label = screen.getByText('Bugün (takvim günü) yüksek / düşük');
     expect(label.parentElement).toHaveTextContent('—');
     expect(screen.queryByText('34°C / 21°C')).not.toBeInTheDocument();
   });

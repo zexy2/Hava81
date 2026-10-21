@@ -48,6 +48,7 @@ interface UseWeatherReturn {
   // Metadata
   lastUpdated: Date | null;
   isStale: boolean;
+  lastKnownAt: Date | null;
 }
 
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
@@ -280,6 +281,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   });
   const previousLanguageRef = useRef(language);
   const activeSourceRef = useRef<'city' | 'location'>('city');
+  const searchTokenRef = useRef(0);
 
   // Async weather fetching
   const weatherAsync = useAsync(
@@ -324,6 +326,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     {
       onSuccess: data => {
         activeSourceRef.current = 'location';
+        searchTokenRef.current += 1;
         // Keep the existing city visible while location is pending, then invalidate
         // any older city request only when a real location result is ready to replace it.
         weatherAsync.reset();
@@ -346,15 +349,16 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       activeSourceRef.current = 'city';
       // City search is a handoff from location mode. Clear and invalidate any
       // existing/in-flight location result so it cannot remain visible or win a late race.
-      locationAsync.reset();
+      // A failed search (typo, unknown place) must not wipe the city on screen (Faz 1.3).
+      // Keep the last successful payload visible; only an in-flight location request is
+      // invalidated up front, settled location data is replaced on success.
+      if (locationAsync.isLoading) locationAsync.reset();
       const normalizedTarget = targetCity.trim();
-      if (
-        weatherAsync.data &&
-        cityIdentity(weatherAsync.data.cityName) !== cityIdentity(normalizedTarget)
-      ) {
-        weatherAsync.reset();
-      }
-      return weatherAsync.execute(normalizedTarget);
+      const token = ++searchTokenRef.current;
+      const result = await weatherAsync.execute(normalizedTarget);
+      // A location result that landed meanwhile stays authoritative.
+      if (result && token === searchTokenRef.current) locationAsync.reset();
+      return result;
     },
     [city, locationAsync, weatherAsync]
   );
@@ -481,7 +485,13 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     ? (() => {
         switch (rawError.code) {
           case ErrorCode.NETWORK_ERROR:
-            return translateError('errors.networkError');
+            // Faz 1.5: only blame the user's connection when the browser is actually offline.
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+              return translateError('errors.offline');
+            }
+            return translateError('errors.serverUnreachable');
+          case ErrorCode.API_ERROR:
+            return translateError('errors.serverError');
           case ErrorCode.NOT_FOUND:
             return translateError('weather.cityNotFound');
           case ErrorCode.RATE_LIMIT:
@@ -493,17 +503,35 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
           case ErrorCode.LOCATION_TIMEOUT:
             return translateError('errors.locationTimeout');
           default:
+            if (rawError.statusCode === 502 || rawError.statusCode === 503 || rawError.statusCode === 504) {
+              return translateError('errors.providerUnavailable');
+            }
+            if (rawError.statusCode !== undefined && rawError.statusCode >= 500) {
+              return translateError('errors.serverError');
+            }
             return translateError('errors.genericError');
         }
       })()
     : null;
   const error = rawError ? { ...rawError, message: localizedErrorMessage! } : null;
   const isLoading = weatherAsync.isLoading || locationAsync.isLoading;
+  // Faz 1.5: on an infrastructure failure with nothing on screen, fall back to the last
+  // cached payload (even if stale) instead of an empty page. Not for typos/location errors.
+  const infrastructureFailure =
+    rawError?.code === ErrorCode.NETWORK_ERROR ||
+    rawError?.code === ErrorCode.API_ERROR ||
+    rawError?.code === ErrorCode.RATE_LIMIT ||
+    (rawError?.statusCode !== undefined && rawError.statusCode >= 500);
+  const lastKnownWeather =
+    !activeWeather && infrastructureFailure && enableCache && cachedWeather ? cachedWeather.data : null;
+  const lastKnownAt = lastKnownWeather && cachedWeather ? new Date(cachedWeather.timestamp) : null;
 
   return {
     // State
     city,
-    weather: activeWeather,
+    weather: activeWeather ?? lastKnownWeather,
+    /** Set when `weather` is the cached last-known payload shown because of a failure. */
+    lastKnownAt,
     error,
     isLoading,
 

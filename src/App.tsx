@@ -2,6 +2,8 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
+import { suggestCity } from './utils/citySuggestion';
+import { formatCityTime } from './utils/format';
 import { CityTabs } from './components/CityTabs';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { DecisionGlance } from './components/hava81/DecisionGlance';
@@ -203,6 +205,7 @@ const App: React.FC = () => {
     fetchCurrentLocation,
     clearWeather,
     clearError,
+    lastKnownAt,
     recentSearches,
   } = useWeather({ initialCity, language: settings.language });
 
@@ -492,6 +495,13 @@ const App: React.FC = () => {
     error?.code === ErrorCode.LOCATION_DENIED ||
     error?.code === ErrorCode.LOCATION_UNAVAILABLE ||
     error?.code === ErrorCode.LOCATION_TIMEOUT;
+  // A typo is not a system error: show it inline under the search box (Faz 1.3).
+  const searchNotFound = error?.code === ErrorCode.NOT_FOUND;
+  const failedQuery = city;
+  const searchSuggestion = useMemo(
+    () => (searchNotFound ? suggestCity(failedQuery) : null),
+    [failedQuery, searchNotFound]
+  );
   const canRetryCurrentWeather = Boolean(error && (isLocationError || error.retryable));
 
   const retryCurrentWeather = useCallback(() => {
@@ -575,6 +585,27 @@ const App: React.FC = () => {
                   suggestionsLabel={t('weather.citySuggestions')}
                   onDismiss={isMobileSearchOpen ? closeSearch : undefined}
                 />
+                {searchNotFound && (
+                  <p className="atlas-search-inline-error" role="alert">
+                    {t('weather.searchNotFound', { query: failedQuery })}{' '}
+                    {searchSuggestion && (
+                      <>
+                        {t('weather.didYouMean')}{' '}
+                        <button
+                          type="button"
+                          className="atlas-text-button"
+                          onClick={() => {
+                            setCity(searchSuggestion.name);
+                            handleSubmit(searchSuggestion.name);
+                          }}
+                        >
+                          {searchSuggestion.name}
+                        </button>
+                        ?
+                      </>
+                    )}
+                  </p>
+                )}
               </div>
 
               <div
@@ -700,11 +731,22 @@ const App: React.FC = () => {
                 />
               </Suspense>
             ) : null}
-            {activeNav !== 'compare' && error && (
+            {activeNav !== 'compare' && error && !searchNotFound && (
               <section className="atlas-message atlas-message--error" role="alert">
                 <div>
                   <span className="atlas-kicker">{t('common.error')}</span>
                   <p>{error.message}</p>
+                  {lastKnownAt && (
+                    <p className="atlas-message__last-known">
+                      {t('errors.showingLastKnown', {
+                        time: formatCityTime(
+                          lastKnownAt,
+                          weather?.meta.timezoneOffsetSeconds ?? 10800,
+                          settings.language
+                        ),
+                      })}
+                    </p>
+                  )}
                 </div>
                 <div className="atlas-message__actions">
                   {canRetryCurrentWeather && (
@@ -763,6 +805,11 @@ const App: React.FC = () => {
                         daily={forecast.daily}
                         hourly={forecast.displayHourly}
                         meta={forecast.displayMeta}
+                        current={{
+                          temperature: weather.temperature,
+                          icon: weather.icon,
+                          description: weather.description,
+                        }}
                       />
                     </Suspense>
                   ) : forecast.error ? (

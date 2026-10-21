@@ -50,6 +50,8 @@ export const en = {
     selectCityWithTemperature: 'Show weather for {{city}}, {{temperature}}{{unit}}',
     removeCity: 'Remove {{city}} from favorites',
     addCurrentCity: 'Add current city to favorites',
+    searchNotFound: 'No province or district found for "{{query}}".',
+    didYouMean: 'Did you mean:',
     cityNotFound: 'City not found',
     noData: 'No data',
     staleCurrentData: 'Current observation is not fresh',
@@ -114,7 +116,7 @@ export const en = {
       longitude: 'Longitude',
       feelsLike: 'Feels like {{temperature}}',
       nextChange: 'Planning signals',
-      forecastHighLow: 'Forecast high / low',
+      forecastHighLow: 'Today (calendar day) high / low',
       sourceDifference:
         'The live observation ({{currentProvider}}) and daily forecast ({{forecastProvider}}) may use different sources or times.',
       actions: {
@@ -165,9 +167,9 @@ export const en = {
       intervalControlHelp:
         'The 24-hour forecast stays fixed; this only changes which hours are shown on the chart.',
       summaryLabel: 'Hourly forecast summary',
-      summaryLow: 'Low',
+      summaryLow: 'Next 24h low',
       summaryTemperature: 'Temperature',
-      summaryHigh: 'High',
+      summaryHigh: 'Next 24h high',
       summaryRain: 'Rain peak',
       precipitationNone: 'None',
       nightLabel: 'Night',
@@ -616,6 +618,11 @@ export const en = {
     tomorrow: 'Tomorrow',
   },
   errors: {
+    offline: 'You are offline. Data will refresh when the connection is back.',
+    serverUnreachable: 'The Hava81 server cannot be reached right now. It is not your connection; try again shortly.',
+    serverError: 'Something went wrong on the Hava81 server. Try again shortly.',
+    providerUnavailable: 'The weather provider is not responding right now. Try again shortly.',
+    showingLastKnown: 'Showing last known data ({{time}}).',
     networkError: 'Connection error. Check your internet connection.',
     rateLimit: 'Too many requests. Try again in a moment.',
     apiKeyMissing: 'API key not configured.',

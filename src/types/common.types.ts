@@ -16,6 +16,8 @@ export interface AppError {
   details?: Record<string, unknown>;
   timestamp: Date;
   retryable: boolean;
+  /** HTTP status when the failure came from the API (Faz 1.5 cause split). */
+  statusCode?: number;
 }
 
 export enum ErrorCode {
