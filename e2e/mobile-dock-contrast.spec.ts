@@ -98,7 +98,7 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
     expect(result).not.toBeNull();
     expect(result!.width).toBeLessThanOrEqual(321);
     expect(result!.gradient).toContain('gradient');
-    expect(result!.labels).toHaveLength(3);
+    expect(result!.labels).toHaveLength(4);
     for (const label of result!.labels) {
       expect(label.stopCount).toBeGreaterThanOrEqual(2);
       if (degraded && !label.active) {

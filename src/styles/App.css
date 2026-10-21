@@ -444,7 +444,8 @@ textarea:focus-visible {
   display: none;
 }
 
-.atlas-compare-button {
+.atlas-compare-button,
+.atlas-plan-button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
@@ -477,7 +478,9 @@ textarea:focus-visible {
 }
 
 .atlas-compare-button:hover,
-.atlas-compare-button[aria-current='page'] {
+.atlas-compare-button[aria-current='page'],
+.atlas-plan-button:hover,
+.atlas-plan-button[aria-current='page'] {
   color: var(--color-aegean);
   background: var(--color-atlas-paper);
 }
@@ -1065,7 +1068,8 @@ kbd {
   }
 
   .atlas-icon-button--map,
-  .atlas-compare-button {
+  .atlas-compare-button,
+  .atlas-plan-button {
     display: none;
   }
 
@@ -1234,7 +1238,8 @@ kbd {
 @media (forced-colors: active) {
   .atlas-icon-button[aria-pressed='true'],
   .atlas-icon-button--map[aria-expanded='true'],
-  .atlas-compare-button[aria-current='page'] {
+  .atlas-compare-button[aria-current='page'],
+  .atlas-plan-button[aria-current='page'] {
     color: HighlightText;
     background: Highlight;
     border-color: Highlight;

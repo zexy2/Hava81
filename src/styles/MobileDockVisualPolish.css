@@ -79,6 +79,7 @@
   }
   .app[data-color-mode='dark'] .atlas-bottom-nav__button--active:hover:not(:disabled) {
     background: linear-gradient(140deg, #256a88, #1a748a);
+    color: #f5fbff;
   }
 
   /* Reserve room for a floating bottom dock, including keyboard-safe areas.
@@ -127,9 +128,9 @@
 @media (prefers-reduced-motion: reduce) {
   .app .atlas-bottom-nav__button { transition: none; }
 }
-/* English "Map" must stay on a single line at 200% enlarged text.
+/* English labels must stay on a single line at 200% enlarged text.
    Reclaim horizontal room from decorative padding, never from the
-   44px target itself. The existing 0.94 / 0.69 / 1.37 grid is preserved. */
+   44px target itself; the dock wraps to 2×2 when text is enlarged. */
 @media (max-width: 47.99rem) {
   .app .atlas-bottom-nav:lang(en) .atlas-bottom-nav__button {
     padding-inline: 2px;

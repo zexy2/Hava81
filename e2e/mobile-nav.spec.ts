@@ -45,7 +45,7 @@ test.describe('mobile bottom navigation', () => {
             (await nav.locator('.atlas-bottom-nav__label').allTextContents()).map(text =>
               text.trim()
             )
-          ).toEqual(['Today', 'Map', 'Compare']);
+          ).toEqual(['Today', 'Plan', 'Map', 'Compare']);
         }
 
         for (const width of [280, 320, 390]) {

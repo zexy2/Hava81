@@ -576,6 +576,7 @@
       'header header'
       'decision explain'
       'quick quick'
+      'caption caption'
       'slots slots'
       'note note';
     gap: var(--space-md);
@@ -615,5 +616,20 @@
 
   .daily-plan__share:active {
     transform: none;
+  }
+}
+
+/* Faz 2.3: hourly slot numbers are an hourly suitability, not a second day score. */
+.daily-plan__slots-caption {
+  margin: 0 0 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  opacity: 0.82;
+}
+@media (min-width: 64rem) {
+  .daily-plan__slots-caption {
+    grid-area: caption;
+    margin-bottom: calc(var(--space-md) * -0.5);
   }
 }

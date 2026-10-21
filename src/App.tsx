@@ -21,6 +21,7 @@ import { ApiError } from './api/errors/ApiError';
 import { cityFromPathname, cityPath } from './utils/cityRoute';
 import { ROOT_DOCUMENT_METADATA } from './utils/rootDocumentMetadata';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
+import { parseAtlasView, resolveAtlasView, withAtlasView, type AtlasView } from './utils/atlasView';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
@@ -54,7 +55,7 @@ const ContextSignalsPanel = lazy(() => import('./components/hava81/ContextSignal
 const DecisionAlertsPanel = lazy(() => import('./components/hava81/DecisionAlertsPanel'));
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
-type AtlasNavItem = 'today' | 'map' | 'compare';
+type AtlasNavItem = AtlasView;
 
 // A district URL uses a query parameter rather than pretending to be a province.
 // Keep the original, accented place name so the provider lookup survives refresh/share.
@@ -147,12 +148,12 @@ const App: React.FC = () => {
   }, [settings.language]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  // Faz 2.5: `?view=map` and `?view=compare` open those views directly.
-  const [initialView] = useState(() => new URLSearchParams(window.location.search).get('view'));
+  // Faz 2.5 + 2.3: `?view=map`, `?view=compare` and `?view=plan` open those views directly.
+  const [initialView] = useState(() => parseAtlasView(window.location.search));
   const [showMap, setShowMap] = useState(initialView === 'map');
-  const [activeNav, setActiveNav] = useState<AtlasNavItem>(
-    initialView === 'map' ? 'map' : initialView === 'compare' ? 'compare' : 'today'
-  );
+  const [activeNav, setActiveNav] = useState<AtlasNavItem>(initialView);
+  const currentView = resolveAtlasView(activeNav, showMap);
+  const isPlanView = currentView === 'plan';
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchToggleRef = useRef<HTMLButtonElement>(null);
@@ -377,14 +378,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!weather) return;
-    const url = new URL(window.location.href);
-    const view =
-      activeNav === 'map' && showMap ? 'map' : activeNav === 'compare' ? 'compare' : null;
-    if (url.searchParams.get('view') === view) return;
-    if (view) url.searchParams.set('view', view);
-    else url.searchParams.delete('view');
-    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}`);
-  }, [activeNav, showMap, weather]);
+    const current = `${window.location.pathname}${window.location.search}`;
+    const next = withAtlasView(current, currentView);
+    if (next === current) return;
+    window.history.replaceState(window.history.state, '', next);
+  }, [currentView, weather]);
 
   const shortcuts = useMemo(
     () =>
@@ -479,6 +477,17 @@ const App: React.FC = () => {
         return;
       }
 
+      if (item === 'plan') {
+        setShowMap(false);
+        setActiveNav('plan');
+        requestAnimationFrame(() => {
+          if (overviewRef.current) {
+            scrollIntoViewRespectingMotion(overviewRef.current, { block: 'start' });
+          }
+        });
+        return;
+      }
+
       if (item === 'compare') {
         trackProductEvent('compare_opened', { favorites: favorites.length });
         setShowMap(false);
@@ -501,6 +510,26 @@ const App: React.FC = () => {
     },
     [favorites.length, openMap]
   );
+
+  // "Skorun nedenini gör" in the decision summary: the explanation lives in Planla now.
+  const openScoreDetails = useCallback(() => {
+    setShowMap(false);
+    setActiveNav('plan');
+    let attempts = 0;
+    const focusDayPlan = () => {
+      const heading = document.getElementById('daily-plan-title');
+      if (heading) {
+        scrollIntoViewRespectingMotion(heading, { block: 'start' });
+        if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+        return;
+      }
+      // The day plan is lazy; give Suspense a few frames before giving up.
+      attempts += 1;
+      if (attempts < 60) requestAnimationFrame(focusDayPlan);
+    };
+    requestAnimationFrame(focusDayPlan);
+  }, []);
 
   const handleInitialLocation = useCallback(async () => {
     clearError();
@@ -673,6 +702,16 @@ const App: React.FC = () => {
                 >
                   <StarIcon filled={isFavorite} />
                 </button>
+                {weather && (
+                  <button
+                    type="button"
+                    className="atlas-plan-button"
+                    onClick={() => handleBottomNav('plan')}
+                    aria-current={isPlanView ? 'page' : undefined}
+                  >
+                    {t('navigation.plan')}
+                  </button>
+                )}
                 {favorites.length >= 2 && (
                   <button
                     type="button"
@@ -729,7 +768,7 @@ const App: React.FC = () => {
 
           {weather || favorites.length > 0 ? (
             <AtlasBottomNav
-              active={showMap ? 'map' : activeNav === 'compare' ? 'compare' : 'today'}
+              active={currentView}
               onSelect={handleBottomNav}
               hasSaved={favorites.length > 0}
               canMap={Boolean(weather)}
@@ -790,58 +829,81 @@ const App: React.FC = () => {
             )}
 
             {activeNav !== 'compare' && weather && (
-              <div key={weather.cityName} className="atlas-dashboard">
-                <div className="atlas-dashboard__primary">
-                  <WeatherDecisionField
-                    weather={weather}
-                    hourly={forecast.hourly}
-                    daily={forecast.daily}
-                    airQuality={freshAirQuality}
-                    uvIndexMax={freshUvIndexMax}
-                    forecastMeta={forecast.displayMeta ?? forecast.meta}
-                  />
-                  <DecisionGlance
-                    weather={weather}
-                    hourly={forecast.hourly}
-                    airQuality={freshAirQuality}
-                    forecastMeta={forecast.displayMeta ?? forecast.meta}
-                  />
+              <div
+                key={weather.cityName}
+                className={`atlas-dashboard${isPlanView ? ' atlas-dashboard--plan' : ''}`}
+              >
+                {!isPlanView && (
+                  <>
+                    <div className="atlas-dashboard__primary">
+                      <WeatherDecisionField
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        daily={forecast.daily}
+                        airQuality={freshAirQuality}
+                        uvIndexMax={freshUvIndexMax}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                      <DecisionGlance
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                        onOpenDetails={openScoreDetails}
+                      />
 
-                  {!forecast.displayMeta && !forecast.error ? (
-                    <ForecastLoadingCard
-                      title={t('hava81.forecastAtlas.title')}
-                      label={t('common.loading')}
-                    />
-                  ) : forecast.displayMeta &&
-                    (forecast.daily.length > 0 || forecast.displayHourly.length > 0) ? (
-                    <Suspense
-                      fallback={
+                      {!forecast.displayMeta && !forecast.error ? (
                         <ForecastLoadingCard
                           title={t('hava81.forecastAtlas.title')}
                           label={t('common.loading')}
                         />
-                      }
-                    >
-                      <ForecastAtlas
-                        daily={forecast.daily}
-                        hourly={forecast.displayHourly}
-                        meta={forecast.displayMeta}
-                        current={{
-                          temperature: weather.temperature,
-                          icon: weather.icon,
-                          description: weather.description,
-                        }}
-                      />
-                    </Suspense>
-                  ) : forecast.error ? (
-                    <section
-                      className="atlas-forecast-error-card"
-                      aria-labelledby="forecast-error-title"
-                    >
-                      <h2 id="forecast-error-title" className="atlas-forecast-loading__title">
-                        {t('hava81.forecastAtlas.title')}
-                      </h2>
-                      <div className="atlas-message atlas-message--inline" role="status">
+                      ) : forecast.displayMeta &&
+                        (forecast.daily.length > 0 || forecast.displayHourly.length > 0) ? (
+                        <Suspense
+                          fallback={
+                            <ForecastLoadingCard
+                              title={t('hava81.forecastAtlas.title')}
+                              label={t('common.loading')}
+                            />
+                          }
+                        >
+                          <ForecastAtlas
+                            daily={forecast.daily}
+                            hourly={forecast.displayHourly}
+                            meta={forecast.displayMeta}
+                            current={{
+                              temperature: weather.temperature,
+                              icon: weather.icon,
+                              description: weather.description,
+                            }}
+                          />
+                        </Suspense>
+                      ) : forecast.error ? (
+                        <section
+                          className="atlas-forecast-error-card"
+                          aria-labelledby="forecast-error-title"
+                        >
+                          <h2 id="forecast-error-title" className="atlas-forecast-loading__title">
+                            {t('hava81.forecastAtlas.title')}
+                          </h2>
+                          <div className="atlas-message atlas-message--inline" role="status">
+                            <p>{t('errors.forecastUnavailable')}</p>
+                            {canRetryForecast && (
+                              <button
+                                type="button"
+                                className="atlas-text-button"
+                                onClick={retryForecast}
+                              >
+                                {t('common.retry')}
+                              </button>
+                            )}
+                          </div>
+                        </section>
+                      ) : null}
+                    </div>
+
+                    {forecast.error && forecast.displayMeta && (
+                      <section className="atlas-message atlas-message--inline" role="status">
                         <p>{t('errors.forecastUnavailable')}</p>
                         {canRetryForecast && (
                           <button
@@ -852,65 +914,104 @@ const App: React.FC = () => {
                             {t('common.retry')}
                           </button>
                         )}
-                      </div>
-                    </section>
-                  ) : null}
-                </div>
-
-                {forecast.error && forecast.displayMeta && (
-                  <section className="atlas-message atlas-message--inline" role="status">
-                    <p>{t('errors.forecastUnavailable')}</p>
-                    {canRetryForecast && (
-                      <button type="button" className="atlas-text-button" onClick={retryForecast}>
-                        {t('common.retry')}
-                      </button>
+                      </section>
                     )}
-                  </section>
-                )}
 
-                <Suspense fallback={null}>
-                  <EnvironmentRail
-                    weather={weather}
-                    airQuality={freshAirQuality}
-                    onOpenMap={showMap ? closeMap : openMap}
-                    mapExpanded={showMap}
-                  />
-                </Suspense>
-
-                {showMap && (
-                  <section
-                    className="atlas-map-panel"
-                    id="weather-map-region"
-                    ref={mapRegionRef}
-                    tabIndex={-1}
-                    aria-labelledby="weather-map-heading"
-                  >
-                    <div className="atlas-map-panel__header">
-                      <div>
-                        <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
-                        <h2 id="weather-map-heading">{t('common.map')}</h2>
-                      </div>
-                      <button type="button" className="atlas-text-button" onClick={closeMap}>
-                        {t('common.close')}
-                      </button>
-                    </div>
-                    <Suspense
-                      fallback={
-                        <div className="atlas-map-loading" role="status">
-                          {t('common.loading')}
-                        </div>
-                      }
-                    >
-                      <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
+                    <Suspense fallback={null}>
+                      <EnvironmentRail
+                        weather={weather}
+                        airQuality={freshAirQuality}
+                        onOpenMap={showMap ? closeMap : openMap}
+                        mapExpanded={showMap}
+                      />
                     </Suspense>
-                  </section>
+
+                    {showMap && (
+                      <section
+                        className="atlas-map-panel"
+                        id="weather-map-region"
+                        ref={mapRegionRef}
+                        tabIndex={-1}
+                        aria-labelledby="weather-map-heading"
+                      >
+                        <div className="atlas-map-panel__header">
+                          <div>
+                            <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
+                            <h2 id="weather-map-heading">{t('common.map')}</h2>
+                          </div>
+                          <button type="button" className="atlas-text-button" onClick={closeMap}>
+                            {t('common.close')}
+                          </button>
+                        </div>
+                        <Suspense
+                          fallback={
+                            <div className="atlas-map-loading" role="status">
+                              {t('common.loading')}
+                            </div>
+                          }
+                        >
+                          <WeatherMap weather={weather} onCitySelect={handleMapCitySelect} />
+                        </Suspense>
+                      </section>
+                    )}
+
+                    <section className="atlas-plan-entry" aria-labelledby="atlas-plan-entry-title">
+                      <div>
+                        <span className="atlas-kicker">{t('hava81.planView.entryEyebrow')}</span>
+                        <h2 id="atlas-plan-entry-title">{t('hava81.planView.title')}</h2>
+                        <p>{t('hava81.planView.entryBody')}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="atlas-button atlas-button--primary"
+                        onClick={() => handleBottomNav('plan')}
+                      >
+                        {t('hava81.planView.open')} <span aria-hidden="true">→</span>
+                      </button>
+                    </section>
+                  </>
                 )}
 
-                <section className="atlas-plan-view" aria-labelledby="atlas-plan-view-title">
+                {/* Planla stays mounted (hidden) on Today so alert notifications, activity
+                    choices and the route form keep working and keep their state. */}
+                <section
+                  className="atlas-plan-view"
+                  id="atlas-plan-view"
+                  aria-labelledby="atlas-plan-view-title"
+                  hidden={!isPlanView}
+                >
                   <header className="atlas-plan-view__header">
-                    <span className="atlas-kicker">{t('hava81.planView.eyebrow')}</span>
-                    <h2 id="atlas-plan-view-title">{t('hava81.planView.title')}</h2>
+                    <div>
+                      <span className="atlas-kicker">{t('hava81.planView.eyebrow')}</span>
+                      <h1 id="atlas-plan-view-title">
+                        {t('hava81.planView.titleWithCity', { city: weather.cityName })}
+                      </h1>
+                      <p>{t('hava81.planView.intro')}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="atlas-text-button atlas-plan-view__back"
+                      onClick={() => handleBottomNav('today')}
+                    >
+                      <span aria-hidden="true">←</span> {t('hava81.planView.back')}
+                    </button>
                   </header>
+                  {isPlanView && forecast.hourly.length === 0 && !forecast.error && (
+                    <ForecastLoadingCard
+                      title={t('hava81.planView.title')}
+                      label={t('common.loading')}
+                    />
+                  )}
+                  {isPlanView && forecast.hourly.length === 0 && forecast.error && (
+                    <div className="atlas-message atlas-message--inline" role="status">
+                      <p>{t('errors.forecastUnavailable')}</p>
+                      {canRetryForecast && (
+                        <button type="button" className="atlas-text-button" onClick={retryForecast}>
+                          {t('common.retry')}
+                        </button>
+                      )}
+                    </div>
+                  )}
                   {forecast.hourly.length > 0 && (
                     <Suspense fallback={null}>
                       <DailyPlanPanel

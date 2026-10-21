@@ -277,23 +277,78 @@ describe('Hava81 app integration', () => {
     expect(screen.getByRole('link', { name: 'CC BY 4.0' }).closest('p')).toHaveTextContent(
       'Hava81 tarafından biçimlendirildi'
     );
-    expect(
-      await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
-    ).toBeInTheDocument();
-    expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
     expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hava81' })).toHaveAttribute('href', '/');
-    const timeline = screen.getByRole('list', { name: /uygunluk zaman çizelgesi/i });
-    expect(
-      [...timeline.querySelectorAll('[role="listitem"]')].every(item => item.tagName === 'DIV')
-    ).toBe(true);
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
     ).toBeInTheDocument();
     expect(screen.getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
     expect(screen.getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr');
+
+    // Faz 2.3: the day plan lives in the secondary Planla view, not in the main flow.
+    expect(screen.queryByRole('heading', { name: /gün planı/i })).not.toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /planla’yı aç/i }));
+    expect(
+      await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
+    const timeline = screen.getByRole('list', { name: /uygunluk zaman çizelgesi/i });
+    expect(
+      [...timeline.querySelectorAll('[role="listitem"]')].every(item => item.tagName === 'DIV')
+    ).toBe(true);
+    expect(screen.getByText('Saatlik uygunluk · 0–100 · yüksek daha uygun')).toBeInTheDocument();
+  }, 12_000);
+
+  it('opens Planla from ?view=plan and keeps the view in the URL while switching', async () => {
+    window.history.replaceState({}, '', '/istanbul/?view=plan');
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Planla · İstanbul', level: 1 })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
+    ).toBeInTheDocument();
+    // The main flow (decision field + summary) is not rendered behind Planla.
+    expect(screen.queryByRole('heading', { name: 'İstanbul', level: 1 })).not.toBeInTheDocument();
+    await waitFor(() => expect(window.location.search).toBe('?view=plan'));
+    expect(window.location.pathname).toBe('/istanbul/');
+    const nav = screen.getByRole('navigation', { name: 'Ana gezinme' });
+    expect(within(nav).getByRole('button', { name: 'Planla' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+
+    await user.click(screen.getByRole('button', { name: /bugüne dön/i }));
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /gün planı/i })).not.toBeInTheDocument();
+    await waitFor(() => expect(window.location.search).toBe(''));
+    expect(within(nav).getByRole('button', { name: 'Bugün' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+
+    await user.click(within(nav).getByRole('button', { name: 'Planla' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Planla · İstanbul', level: 1 })
+    ).toBeInTheDocument();
+    await waitFor(() => expect(window.location.search).toBe('?view=plan'));
+  }, 12_000);
+
+  it('opens the score explanation in Planla from the decision summary', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+    const details = await screen.findByRole('link', { name: /skorun nedenini gör/i });
+    expect(details).toHaveAttribute('href', '/istanbul/?view=plan#daily-plan-title');
+    await user.click(details);
+    const dayPlan = await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 });
+    await waitFor(() => expect(dayPlan).toHaveFocus());
+    expect(window.location.search).toBe('?view=plan');
   }, 12_000);
 
   it('does not hand materially future modeled UV into first-viewport guidance', async () => {

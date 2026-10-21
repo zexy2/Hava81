@@ -38,7 +38,7 @@ test('320px bottom navigation supports visible keyboard focus at 200% text', asy
   await page.goto('/istanbul');
   await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
   const buttons = page.locator('.atlas-bottom-nav button');
-  await expect(buttons).toHaveCount(3);
+  await expect(buttons).toHaveCount(4);
   await buttons.nth(0).focus();
   await expect(buttons.nth(0)).toBeFocused();
   await page.keyboard.press('Tab');

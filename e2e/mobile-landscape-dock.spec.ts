@@ -42,7 +42,7 @@ test('landscape phone dock stays compact and in viewport', async ({ page }, test
   expect(rect!.height).toBeLessThanOrEqual(65);
   expect(rect!.y + rect!.height).toBeLessThanOrEqual(360);
   const buttons = dock.locator('button');
-  await expect(buttons).toHaveCount(3);
+  await expect(buttons).toHaveCount(4);
   for (const button of await buttons.all()) {
     const box = await button.boundingBox();
     expect(box!.height).toBeGreaterThanOrEqual(44);

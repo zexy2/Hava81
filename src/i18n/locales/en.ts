@@ -106,6 +106,20 @@ export const en = {
     planView: {
       eyebrow: 'Next step',
       title: 'Plan',
+      titleWithCity: 'Plan · {{city}}',
+      intro:
+        'Day plan, commute times, activities, alerts and route weather. Scores here are hourly or activity-specific; the one score for the day is the Hava81 Score on Today.',
+      back: 'Back to Today',
+      entryEyebrow: 'Next step',
+      entryBody: 'Day plan, commute times, activities, alerts and route weather.',
+      open: 'Open Plan',
+    },
+    scoreScope: {
+      day: 'Hava81 Score',
+      activity: 'For this activity',
+      hourly: 'Hourly suitability',
+      route: 'Route suitability',
+      scale: '0–100 · higher is better',
     },
     decision: {
       upcoming: {
@@ -544,6 +558,7 @@ export const en = {
     label: 'Primary navigation',
     today: 'Today',
     map: 'Map',
+    plan: 'Plan',
     saved: 'Saved',
   },
   settings: {

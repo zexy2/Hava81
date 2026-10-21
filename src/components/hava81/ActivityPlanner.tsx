@@ -336,7 +336,10 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
                     </div>
                     <div className="activity-card__score">
                       <small>
-                        {scoreLabel} · {scoreBandLabel}
+                        <span className="activity-card__score-scope">
+                          {t('hava81.scoreScope.activity')}
+                        </span>{' '}
+                        · {scoreLabel} · {scoreBandLabel}
                       </small>
                       <strong>
                         {plan.windowUnavailable ? '—' : plan.score}

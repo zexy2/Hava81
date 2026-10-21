@@ -30,16 +30,25 @@ test.describe('first screen composition (Faz 2)', () => {
       await expectNoOverlap(decision, rhythm, 'decision field vs rhythm chart');
       await expect(decision.locator('.hava81-decision-field__next-change')).toBeVisible();
 
-      // Reading order: Karar → Ritim → one environmental surface → Planla.
+      // Reading order: Karar → Ritim → one environmental surface → a single Planla entry.
       const environment = page.locator('.environment-rail');
-      const plan = page.locator('.atlas-plan-view');
+      const entry = page.locator('.atlas-plan-entry');
       await expectBeforeInDom(decision, environment, 'decision before environment');
-      await expectBeforeInDom(environment, plan, 'environment before Planla');
-      await expect(plan.getByRole('heading', { level: 2 }).first()).toBeAttached();
+      await expectBeforeInDom(environment, entry, 'environment before the Planla entry');
+      await expect(entry).toBeVisible();
+      // Plan panels are not part of the main flow; they live in the hidden Planla view.
+      const plan = page.locator('.atlas-plan-view');
+      await expect(plan).toBeHidden();
       for (const panel of ['.daily-plan', '.commute-plan', '.activity-planner']) {
-        await expect(plan.locator(panel), `${panel} lives in Planla`).toHaveCount(1);
+        await expect(page.locator(panel), `${panel} is not in the main flow`).toBeHidden();
       }
-      await expect(page.locator('.activity-card')).toHaveCount(2);
+      // Only one headline score on Today: the decision summary's 0–100.
+      await expect(page.locator('.decision-glance__score')).toBeVisible();
+      await expect(
+        page.locator(
+          '.daily-plan__score:visible, .activity-card__score:visible, .route-weather__score:visible'
+        )
+      ).toHaveCount(0);
       await expectNoHorizontalScroll(page);
     }
   );

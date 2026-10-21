@@ -106,6 +106,20 @@ export const tr = {
     planView: {
       eyebrow: 'İkinci adım',
       title: 'Planla',
+      titleWithCity: 'Planla · {{city}}',
+      intro:
+        'Gün planı, çıkış saatleri, aktiviteler, uyarılar ve rota havası. Buradaki puanlar saatlik ya da aktiviteye özeldir; günün tek skoru Bugün’deki Hava81 Skoru’dur.',
+      back: 'Bugüne dön',
+      entryEyebrow: 'Sıradaki adım',
+      entryBody: 'Gün planı, çıkış saatleri, aktiviteler, uyarılar ve rota havası.',
+      open: 'Planla’yı aç',
+    },
+    scoreScope: {
+      day: 'Hava81 Skoru',
+      activity: 'Bu aktivite için',
+      hourly: 'Saatlik uygunluk',
+      route: 'Rota uygunluğu',
+      scale: '0–100 · yüksek daha uygun',
     },
     decision: {
       upcoming: {
@@ -548,6 +562,7 @@ export const tr = {
     label: 'Ana gezinme',
     today: 'Bugün',
     map: 'Harita',
+    plan: 'Planla',
     saved: 'Kayıtlı',
   },
   settings: {

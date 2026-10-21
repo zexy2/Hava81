@@ -258,7 +258,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                       </dd>
                     </div>
                     <div>
-                      <dt>Hava81</dt>
+                      <dt>{t('hava81.scoreScope.hourly')}</dt>
                       <dd>
                         {window.score}/100 · {t(`hava81.dailyPlan.bands.${window.band}`)}
                       </dd>

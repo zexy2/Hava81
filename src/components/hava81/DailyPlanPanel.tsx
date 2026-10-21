@@ -238,6 +238,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
             <strong>{plan.score}</strong>
             <span>/100</span>
             <small>
+              {t('hava81.scoreScope.day')} ·{' '}
               {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)} · {bandRange[plan.band]}
             </small>
           </div>
@@ -301,6 +302,9 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
         </div>
       </div>
 
+      <p className="daily-plan__slots-caption">
+        {t('hava81.scoreScope.hourly')} · {t('hava81.scoreScope.scale')}
+      </p>
       <div
         className="daily-plan__slots"
         role="list"
@@ -328,7 +332,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
           );
           const slotAriaLabel = [
             formatTime(slot.time),
-            `${slot.score}/100`,
+            `${t('hava81.scoreScope.hourly')} ${slot.score}/100`,
             t(`hava81.dailyPlan.bands.${bandKey[slot.band]}`),
             formatTemperature(slot.temperature),
             precipitationDetail || undefined,

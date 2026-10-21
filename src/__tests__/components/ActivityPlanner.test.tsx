@@ -81,6 +81,10 @@ describe('ActivityPlanner time range', () => {
     );
 
     expect(screen.getAllByText(/12 saatlik uygunluk · /i).length).toBeGreaterThan(0);
+    // Faz 2.3: activity numbers are scoped to the activity, not a second headline score.
+    expect(screen.getAllByText('Bu aktivite için').length).toBe(
+      document.querySelectorAll('.activity-card').length
+    );
     const scoreExplanation = screen.getByText('Skorlar neden farklı?');
     expect(scoreExplanation).toBeInTheDocument();
     fireEvent.click(scoreExplanation);

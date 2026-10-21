@@ -37,7 +37,9 @@ async function openCity(page: Page, path = '/istanbul/') {
   await mockWeatherApi(page, data);
   await mockMapTiles(page);
   await page.goto(path);
-  if (!path.includes('view=map')) {
+  if (path.includes('view=plan')) {
+    await expect(page.locator('.atlas-plan-view__header h1')).toBeVisible();
+  } else if (!path.includes('view=map')) {
     await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
     await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
   }
@@ -72,9 +74,9 @@ test.describe('visual comparisons', VISUAL, () => {
     });
   });
 
-  test('Planla section, desktop 1280', async ({ page }) => {
+  test('Planla view, desktop 1280', async ({ page }) => {
     await setWidth(page, 1280, 900);
-    await openCity(page);
+    await openCity(page, '/istanbul/?view=plan');
     const plan = page.locator('.atlas-plan-view');
     // Planla panels are lazy (Suspense); wait until every one has rendered so the height is stable.
     for (const panel of [

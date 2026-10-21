@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import type { AtlasView } from '../../utils/atlasView';
 import './AtlasBottomNav.css';
 
-export type AtlasNavValue = 'today' | 'map' | 'compare';
+export type AtlasNavValue = AtlasView;
 
 export interface AtlasBottomNavProps {
   active: AtlasNavValue;
@@ -15,6 +16,15 @@ function TodayIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <circle cx="12" cy="12" r="3.5" />
       <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />
+    </svg>
+  );
+}
+
+function PlanIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M8 3v4M16 3v4M4 10h16M8 14l2 2 4-4" />
     </svg>
   );
 }
@@ -48,6 +58,11 @@ export function AtlasBottomNav({ active, onSelect, hasSaved, canMap }: AtlasBott
       value: 'today',
       label: t('navigation.today', { defaultValue: t('days.today') }),
       icon: <TodayIcon />,
+    },
+    {
+      value: 'plan',
+      label: t('navigation.plan'),
+      icon: <PlanIcon />,
     },
     {
       value: 'map',

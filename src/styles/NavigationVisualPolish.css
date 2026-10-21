@@ -146,7 +146,8 @@
 .app .atlas-settings-button__language {
   color: #e4f5ff;
 }
-.app .atlas-compare-button {
+.app .atlas-compare-button,
+.app .atlas-plan-button {
   color: #fff;
   background: rgb(230 248 255 / 0.1);
   border-color: rgb(185 229 255 / 0.4);

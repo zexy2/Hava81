@@ -129,6 +129,21 @@ describe('DailyPlanPanel sharing', () => {
     expect(within(timeline).getAllByText('hava81.dailyPlan.tomorrow')).toHaveLength(1);
   });
 
+  it('labels the hourly slots as hourly suitability and the headline number as the Hava81 score', () => {
+    render(<DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />);
+
+    expect(
+      screen.getByText('hava81.scoreScope.hourly · hava81.scoreScope.scale')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/^hava81\.scoreScope\.day · hava81\.dailyPlan\.bands\./)
+    ).toBeInTheDocument();
+    const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    for (const slot of within(timeline).getAllByRole('listitem')) {
+      expect(slot.getAttribute('aria-label')).toMatch(/hava81\.scoreScope\.hourly \d+\/100/);
+    }
+  });
+
   it('shows precipitation probability and measurable amount together when both explain the risk', () => {
     const rainyHourly: HourlyForecast[] = [
       {
