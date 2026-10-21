@@ -18,10 +18,18 @@ import type { TurkishCity } from './constants/cities';
 import type { FavoriteCity } from './types/weather.types';
 import { ErrorCode } from './types';
 import { ApiError } from './api/errors/ApiError';
-import { cityFromPathname, cityPath } from './utils/cityRoute';
-import { ROOT_DOCUMENT_METADATA } from './utils/rootDocumentMetadata';
+import { resolveInitialCity } from './utils/appRoute';
+import { useAppRouting } from './hooks/useAppRouting';
+import {
+  LocationIcon,
+  MapIcon,
+  SearchIcon,
+  SettingsIcon,
+  StarIcon,
+} from './components/app/AppIcons';
+import { AtlasLoadingState, ForecastLoadingCard } from './components/app/AppSkeletons';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
-import { parseAtlasView, resolveAtlasView, withAtlasView, type AtlasView } from './utils/atlasView';
+import { parseAtlasView, resolveAtlasView, type AtlasView } from './utils/atlasView';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
@@ -39,89 +47,6 @@ const DecisionAlertsPanel = lazy(() => import('./components/hava81/DecisionAlert
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
 type AtlasNavItem = AtlasView;
-
-// A district URL uses a query parameter rather than pretending to be a province.
-// Keep the original, accented place name so the provider lookup survives refresh/share.
-const districtFromQuery = (search: string): string | null => {
-  const district = new URLSearchParams(search).get('yer')?.trim();
-  return district && /^[\p{L}][\p{L}\s'-]{1,79}$/u.test(district) ? district : null;
-};
-
-const SearchIcon = () => (
-  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-    <circle cx="11" cy="11" r="6.5" />
-    <path d="m16 16 4.25 4.25" />
-  </svg>
-);
-
-const LocationIcon = () => (
-  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-  </svg>
-);
-
-const MapIcon = () => (
-  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-    <path d="m3 5 5-2 8 3 5-2v15l-5 2-8-3-5 2Z" />
-    <path d="M8 3v15M16 6v15" />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" />
-  </svg>
-);
-
-const StarIcon = ({ filled = false }: { filled?: boolean }) => (
-  <svg
-    aria-hidden="true"
-    focusable="false"
-    viewBox="0 0 24 24"
-    className={filled ? 'is-filled' : undefined}
-  >
-    <path d="m12 3 2.7 5.47 6.04.88-4.37 4.26 1.03 6.02L12 16.8l-5.4 2.83 1.03-6.02-4.37-4.26 6.04-.88Z" />
-  </svg>
-);
-
-const AtlasLoadingState = ({ label, slowMessage }: { label: string; slowMessage?: string }) => (
-  <div className="atlas-loading" role="status" aria-live="polite" aria-atomic="true">
-    <div className="atlas-loading__copy">
-      <p className="atlas-loading__status">{label}</p>
-      {slowMessage ? <p className="atlas-loading__notice">{slowMessage}</p> : null}
-    </div>
-    <section className="atlas-loading__decision" aria-hidden="true">
-      <div className="atlas-loading__line atlas-loading__line--short" />
-      <div className="atlas-loading__temperature" />
-      <div className="atlas-loading__line" />
-      <div className="atlas-loading__signal" />
-      <div className="atlas-loading__rail" />
-    </section>
-    <section className="atlas-loading__forecast" aria-hidden="true">
-      <div className="atlas-loading__line atlas-loading__line--short" />
-      <div className="atlas-loading__chart" />
-      <div className="atlas-loading__rows" />
-    </section>
-  </div>
-);
-
-// Keep the forecast column visible both while the API responds and while
-// the split ForecastAtlas bundle is being downloaded on a cold connection.
-const ForecastLoadingCard = ({ title, label }: { title: string; label: string }) => (
-  <section
-    className="atlas-forecast-loading atlas-forecast-loading--card"
-    role="status"
-    aria-live="polite"
-  >
-    <h2 className="atlas-forecast-loading__title">{title}</h2>
-    <span className="sr-only">{label}</span>
-    <div className="atlas-loading__line atlas-loading__line--short" aria-hidden="true" />
-    <div className="atlas-loading__chart" aria-hidden="true" />
-    <div className="atlas-loading__rows" aria-hidden="true" />
-  </section>
-);
 
 const App: React.FC = () => {
   const { t } = useTranslation();
@@ -145,45 +70,7 @@ const App: React.FC = () => {
   const mapRegionRef = useRef<HTMLElement>(null);
   const mapReturnFocusRef = useRef<HTMLElement | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
-  const rootDocumentMetadataRef = useRef({
-    title: ROOT_DOCUMENT_METADATA.title,
-    description: ROOT_DOCUMENT_METADATA.description,
-    ogTitle: ROOT_DOCUMENT_METADATA.title,
-    ogDescription: ROOT_DOCUMENT_METADATA.socialDescription,
-    ogImageAlt: ROOT_DOCUMENT_METADATA.title,
-    twitterTitle: ROOT_DOCUMENT_METADATA.title,
-    twitterDescription: ROOT_DOCUMENT_METADATA.socialDescription,
-    twitterImageAlt: ROOT_DOCUMENT_METADATA.title,
-  });
-
-  // Returning visitors should not have to grant geolocation again just to see
-  // weather for a province they previously chose. Never request location silently.
-  const [initialCity] = useState(() => {
-    const routeCity = cityFromPathname(window.location.pathname);
-    if (routeCity) return routeCity.name;
-    if (window.location.pathname !== '/') return '';
-    const queriedDistrict = districtFromQuery(window.location.search);
-    if (queriedDistrict) return `${queriedDistrict},TR`;
-    try {
-      const entries: unknown = JSON.parse(
-        window.localStorage.getItem('recent_weather_searches') ?? '[]'
-      );
-      if (!Array.isArray(entries)) return 'İstanbul';
-      for (const entry of entries) {
-        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-        const item = entry as { city?: unknown; timestamp?: unknown };
-        if (typeof item.city !== 'string' || typeof item.timestamp !== 'number') continue;
-        if (item.timestamp > Date.now() || Date.now() - item.timestamp > 30 * 86_400_000) continue;
-        const path = cityPath(item.city);
-        if (path) return cityFromPathname(path)?.name ?? '';
-      }
-    } catch {
-      // Storage can be blocked or contain invalid JSON; fall back to İstanbul.
-    }
-    // Faz 2.4: first visit shows İstanbul immediately; location stays an explicit
-    // choice in the header instead of a blocking gate.
-    return 'İstanbul';
-  });
+  const [initialCity] = useState(() => resolveInitialCity(window.location));
   const isRootRoute = window.location.pathname === '/';
 
   const {
@@ -258,114 +145,16 @@ const App: React.FC = () => {
     openSearch();
   }, [closeSearch, isMobileSearchOpen, openSearch]);
 
-  useEffect(() => {
-    const handlePopState = () => {
-      const routeCity = cityFromPathname(window.location.pathname);
-      if (routeCity) {
-        void fetchWeather(routeCity.name);
-        return;
-      }
-      const district =
-        window.location.pathname === '/' ? districtFromQuery(window.location.search) : null;
-      if (district) {
-        void fetchWeather(`${district},TR`);
-        return;
-      }
-      if (window.location.pathname === '/') {
-        clearWeather();
-        setShowMap(false);
-        setActiveNav('today');
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [clearWeather, fetchWeather]);
-
-  useEffect(() => {
-    const setMetaContent = (selector: string, content: string) => {
-      const meta = document.querySelector<HTMLMetaElement>(selector);
-      if (meta) meta.content = content;
-    };
-
-    if (!weather) {
-      if (window.location.pathname !== '/') return;
-      const rootMetadata = rootDocumentMetadataRef.current;
-      const canonicalUrl = new URL('/', window.location.origin).toString();
-      document.title = rootMetadata.title;
-      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-      if (!canonical) {
-        canonical = document.createElement('link');
-        canonical.rel = 'canonical';
-        document.head.appendChild(canonical);
-      }
-      canonical.href = canonicalUrl;
-      setMetaContent('meta[name="description"]', rootMetadata.description);
-      setMetaContent('meta[property="og:url"]', canonicalUrl);
-      setMetaContent('meta[property="og:title"]', rootMetadata.ogTitle);
-      setMetaContent('meta[property="og:description"]', rootMetadata.ogDescription);
-      setMetaContent('meta[property="og:image:alt"]', rootMetadata.ogImageAlt);
-      setMetaContent('meta[name="twitter:title"]', rootMetadata.twitterTitle);
-      setMetaContent('meta[name="twitter:description"]', rootMetadata.twitterDescription);
-      setMetaContent('meta[name="twitter:image:alt"]', rootMetadata.twitterImageAlt);
-      setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
-      setMetaContent(
-        'meta[property="og:locale:alternate"]',
-        settings.language === 'en' ? 'tr_TR' : 'en_US'
-      );
-      return;
-    }
-    const path =
-      cityPath(weather.cityName) ??
-      (weather.country.toUpperCase() === 'TR'
-        ? `/?yer=${encodeURIComponent(weather.cityName)}`
-        : null);
-    const searchWithoutView = new URLSearchParams(window.location.search);
-    searchWithoutView.delete('view');
-    const currentSearch = searchWithoutView.toString();
-    if (path && `${window.location.pathname}${currentSearch ? `?${currentSearch}` : ''}` !== path) {
-      const previousCity =
-        cityFromPathname(window.location.pathname)?.name ??
-        districtFromQuery(window.location.search);
-      const historyMethod =
-        previousCity && previousCity !== weather.cityName ? 'pushState' : 'replaceState';
-      window.history[historyMethod]({ city: weather.cityName }, '', path);
-    }
-    const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
-    const cityDescription = t('hava81.cityDocumentDescription', { city: weather.cityName });
-    document.title = cityTitle;
-    if (path) {
-      const canonicalUrl = new URL(path, window.location.origin).toString();
-      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-      if (!canonical) {
-        canonical = document.createElement('link');
-        canonical.rel = 'canonical';
-        document.head.appendChild(canonical);
-      }
-      canonical.href = canonicalUrl;
-
-      setMetaContent('meta[name="description"]', cityDescription);
-      setMetaContent('meta[property="og:url"]', canonicalUrl);
-      setMetaContent('meta[property="og:title"]', cityTitle);
-      setMetaContent('meta[property="og:description"]', cityDescription);
-      setMetaContent('meta[property="og:image:alt"]', cityTitle);
-      setMetaContent('meta[name="twitter:title"]', cityTitle);
-      setMetaContent('meta[name="twitter:description"]', cityDescription);
-      setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
-      setMetaContent('meta[property="og:locale"]', settings.language === 'en' ? 'en_US' : 'tr_TR');
-      setMetaContent(
-        'meta[property="og:locale:alternate"]',
-        settings.language === 'en' ? 'tr_TR' : 'en_US'
-      );
-    }
-  }, [settings.language, t, weather]);
-
-  useEffect(() => {
-    if (!weather) return;
-    const current = `${window.location.pathname}${window.location.search}`;
-    const next = withAtlasView(current, currentView);
-    if (next === current) return;
-    window.history.replaceState(window.history.state, '', next);
-  }, [currentView, weather]);
+  useAppRouting({
+    weather,
+    currentView,
+    language: settings.language,
+    t,
+    fetchWeather,
+    clearWeather,
+    setShowMap,
+    setActiveNav,
+  });
 
   const shortcuts = useMemo(
     () =>
