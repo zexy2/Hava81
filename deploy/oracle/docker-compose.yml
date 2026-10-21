@@ -3,6 +3,9 @@ services:
     build:
       context: ../../apps/api
       dockerfile: Dockerfile
+      args:
+        # Commit SHA reported by /api/v1/health; deploy-api-blue-green.sh exports it.
+        HAVA81_API_REVISION: ${HAVA81_API_REVISION:-unknown}
     env_file:
       - .env
     ports:

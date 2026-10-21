@@ -16,21 +16,21 @@ spec.loader.exec_module(validator)
 
 
 class ValidateApiReadinessTests(unittest.TestCase):
-    def validate(self, *, status='ready', age_seconds=0, cache_control='no-store', cors=None, expected_origin=None):  # noqa: ANN001, ANN201, E501
+    def validate(self, *, status='ready', age_seconds=0, cache_control='no-store', cors=None, expected_origin=None, revision=None, expected_revision=None):  # noqa: ANN001, ANN201, E501
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             body = root / 'body.json'
             headers = root / 'headers.txt'
             timestamp = datetime.now(timezone.utc) - timedelta(seconds=age_seconds)
-            body.write_text(
-                json.dumps({'status': status, 'timestamp': timestamp.isoformat().replace('+00:00', 'Z')}),
-                encoding='utf-8',
-            )
+            payload = {'status': status, 'timestamp': timestamp.isoformat().replace('+00:00', 'Z')}
+            if revision is not None:
+                payload['revision'] = revision
+            body.write_text(json.dumps(payload), encoding='utf-8')
             header_lines = ['HTTP/1.1 200 OK', f'Cache-Control: {cache_control}']
             if cors is not None:
                 header_lines.append(f'Access-Control-Allow-Origin: {cors}')
             headers.write_text('\n'.join(header_lines) + '\n', encoding='utf-8')
-            validator.validate(body, headers, expected_origin)
+            validator.validate(body, headers, expected_origin, expected_revision)
 
     def test_accepts_fresh_no_store_readiness(self) -> None:
         self.validate()
@@ -53,6 +53,19 @@ class ValidateApiReadinessTests(unittest.TestCase):
     def test_rejects_cacheable_health_response(self) -> None:
         with self.assertRaisesRegex(ValueError, 'no-store'):
             self.validate(cache_control='public, max-age=60')
+
+    def test_accepts_matching_revision(self) -> None:
+        self.validate(revision='abc123', expected_revision='abc123')
+
+    def test_ignores_revision_when_not_expected(self) -> None:
+        self.validate(revision='old')
+        self.validate()
+
+    def test_rejects_wrong_or_missing_revision(self) -> None:
+        with self.assertRaisesRegex(ValueError, 'revision mismatch'):
+            self.validate(revision='old', expected_revision='new')
+        with self.assertRaisesRegex(ValueError, 'revision mismatch'):
+            self.validate(expected_revision='new')
 
     def test_rejects_missing_or_wrong_public_cors(self) -> None:
         with self.assertRaisesRegex(ValueError, 'CORS mismatch'):

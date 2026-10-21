@@ -33,6 +33,13 @@ export const envSchema = z.object({
   CACHE_CURRENT_TTL_MS: integerFromEnv(300_000, 1_000, 3_600_000),
   CACHE_FORECAST_TTL_MS: integerFromEnv(1_800_000, 1_000, 21_600_000),
   CACHE_AIR_QUALITY_TTL_MS: integerFromEnv(900_000, 1_000, 3_600_000),
+  // Build revision (git commit SHA) baked into the image via the Dockerfile
+  // build-arg. Surfaced on /api/v1/health so CI can verify which build serves
+  // production traffic. Local/dev runs report "unknown".
+  HAVA81_API_REVISION: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() !== '' ? value.trim() : 'unknown'),
+    z.string().regex(/^[0-9A-Za-z._-]{1,64}$/, 'HAVA81_API_REVISION must be a short revision id'),
+  ),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
