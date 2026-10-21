@@ -34,7 +34,7 @@ Asıl sorunlar başka yerde:
 
 ## Faz 1: Güven, tek bir doğruluk kaynağı (~3–5 gün)
 
-Durum: devam ediyor — dal fix/faz1-veri-tutarliligi, PR (açılıyor)
+Durum: devam ediyor — dal fix/faz1-veri-tutarliligi, PR https://github.com/zexy2/Hava81/pull/1325
 
 - [ ] **1.1** Tek bir "decision snapshot" seçici yaz: en iyi pencere, koşul, min/max ve rüzgâr tek yerden hesaplansın — _Aynı ekranda çelişen veriler var. Ürünün "5 saniyede karar" vaadini doğrudan bozuyor — M_
 - [ ] **1.2** "Şu an" için tek sağlayıcı kullan. Min/max değerlerinde "önümüzdeki 24 saat" ile "takvim günü" ayrımını etiketle — _OpenWeather ve Open-Meteo verisi uzlaştırılmadan yan yana basılıyor — M_
