@@ -1,0 +1,151 @@
+import { useEffect, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { TFunction } from 'i18next';
+import type { NormalizedWeatherData } from '../types/weather.types';
+import { districtFromQuery } from '../utils/appRoute';
+import type { AtlasView } from '../utils/atlasView';
+import { withAtlasView } from '../utils/atlasView';
+import { cityFromPathname, cityPath } from '../utils/cityRoute';
+import { ROOT_DOCUMENT_METADATA } from '../utils/rootDocumentMetadata';
+
+interface AppRoutingOptions {
+  weather: NormalizedWeatherData | null;
+  currentView: AtlasView;
+  language: string;
+  t: TFunction;
+  fetchWeather: (city?: string) => unknown;
+  clearWeather: () => void;
+  setShowMap: Dispatch<SetStateAction<boolean>>;
+  setActiveNav: Dispatch<SetStateAction<AtlasView>>;
+}
+
+/**
+ * Keeps the URL and the document head in step with the app:
+ * back/forward loads the city in the URL (`/<il>/` or `/?yer=<ilçe>`), the shown
+ * city is written to the URL with its title, canonical and social metadata,
+ * and `?view=` mirrors the open view (Faz 2.5 + 2.3).
+ */
+export function useAppRouting({
+  weather,
+  currentView,
+  language,
+  t,
+  fetchWeather,
+  clearWeather,
+  setShowMap,
+  setActiveNav,
+}: AppRoutingOptions) {
+  const rootDocumentMetadataRef = useRef({
+    title: ROOT_DOCUMENT_METADATA.title,
+    description: ROOT_DOCUMENT_METADATA.description,
+    ogTitle: ROOT_DOCUMENT_METADATA.title,
+    ogDescription: ROOT_DOCUMENT_METADATA.socialDescription,
+    ogImageAlt: ROOT_DOCUMENT_METADATA.title,
+    twitterTitle: ROOT_DOCUMENT_METADATA.title,
+    twitterDescription: ROOT_DOCUMENT_METADATA.socialDescription,
+    twitterImageAlt: ROOT_DOCUMENT_METADATA.title,
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const routeCity = cityFromPathname(window.location.pathname);
+      if (routeCity) {
+        void fetchWeather(routeCity.name);
+        return;
+      }
+      const district =
+        window.location.pathname === '/' ? districtFromQuery(window.location.search) : null;
+      if (district) {
+        void fetchWeather(`${district},TR`);
+        return;
+      }
+      if (window.location.pathname === '/') {
+        clearWeather();
+        setShowMap(false);
+        setActiveNav('today');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [clearWeather, fetchWeather, setActiveNav, setShowMap]);
+
+  useEffect(() => {
+    const setMetaContent = (selector: string, content: string) => {
+      const meta = document.querySelector<HTMLMetaElement>(selector);
+      if (meta) meta.content = content;
+    };
+
+    if (!weather) {
+      if (window.location.pathname !== '/') return;
+      const rootMetadata = rootDocumentMetadataRef.current;
+      const canonicalUrl = new URL('/', window.location.origin).toString();
+      document.title = rootMetadata.title;
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+      }
+      canonical.href = canonicalUrl;
+      setMetaContent('meta[name="description"]', rootMetadata.description);
+      setMetaContent('meta[property="og:url"]', canonicalUrl);
+      setMetaContent('meta[property="og:title"]', rootMetadata.ogTitle);
+      setMetaContent('meta[property="og:description"]', rootMetadata.ogDescription);
+      setMetaContent('meta[property="og:image:alt"]', rootMetadata.ogImageAlt);
+      setMetaContent('meta[name="twitter:title"]', rootMetadata.twitterTitle);
+      setMetaContent('meta[name="twitter:description"]', rootMetadata.twitterDescription);
+      setMetaContent('meta[name="twitter:image:alt"]', rootMetadata.twitterImageAlt);
+      setMetaContent('meta[property="og:locale"]', language === 'en' ? 'en_US' : 'tr_TR');
+      setMetaContent('meta[property="og:locale:alternate"]', language === 'en' ? 'tr_TR' : 'en_US');
+      return;
+    }
+    const path =
+      cityPath(weather.cityName) ??
+      (weather.country.toUpperCase() === 'TR'
+        ? `/?yer=${encodeURIComponent(weather.cityName)}`
+        : null);
+    const searchWithoutView = new URLSearchParams(window.location.search);
+    searchWithoutView.delete('view');
+    const currentSearch = searchWithoutView.toString();
+    if (path && `${window.location.pathname}${currentSearch ? `?${currentSearch}` : ''}` !== path) {
+      const previousCity =
+        cityFromPathname(window.location.pathname)?.name ??
+        districtFromQuery(window.location.search);
+      const historyMethod =
+        previousCity && previousCity !== weather.cityName ? 'pushState' : 'replaceState';
+      window.history[historyMethod]({ city: weather.cityName }, '', path);
+    }
+    const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
+    const cityDescription = t('hava81.cityDocumentDescription', { city: weather.cityName });
+    document.title = cityTitle;
+    if (path) {
+      const canonicalUrl = new URL(path, window.location.origin).toString();
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+      }
+      canonical.href = canonicalUrl;
+
+      setMetaContent('meta[name="description"]', cityDescription);
+      setMetaContent('meta[property="og:url"]', canonicalUrl);
+      setMetaContent('meta[property="og:title"]', cityTitle);
+      setMetaContent('meta[property="og:description"]', cityDescription);
+      setMetaContent('meta[property="og:image:alt"]', cityTitle);
+      setMetaContent('meta[name="twitter:title"]', cityTitle);
+      setMetaContent('meta[name="twitter:description"]', cityDescription);
+      setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
+      setMetaContent('meta[property="og:locale"]', language === 'en' ? 'en_US' : 'tr_TR');
+      setMetaContent('meta[property="og:locale:alternate"]', language === 'en' ? 'tr_TR' : 'en_US');
+    }
+  }, [language, t, weather]);
+
+  useEffect(() => {
+    if (!weather) return;
+    const current = `${window.location.pathname}${window.location.search}`;
+    const next = withAtlasView(current, currentView);
+    if (next === current) return;
+    window.history.replaceState(window.history.state, '', next);
+  }, [currentView, weather]);
+}
