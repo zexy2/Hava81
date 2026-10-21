@@ -61,7 +61,8 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava8
 - [ ] **2.3** Bilgi mimarisini sadeleştir. Sayfada 10 modül ve 4 skor türü var. Ana akış Karar + Ritim + tek bir çevresel yüzey olsun. Çıkış planı, aktiviteler, bildirimler ve rota ikinci seviye bir "Planla" görünümüne taşınsın. Tek skor gösterilsin, saatlik skorlara etiket konsun — _L_
 - [ ] **2.4** İlk ziyarette konum izni beklemeden İstanbul'u (ya da tahmini ili) hemen göster — _M_
 - [ ] **2.5** Haritayı 81 ilin gerçek verisiyle bir "atlas" ekranına dönüştür. Bu, ürünün imza ekranı olabilir. Plaka işaretçisi sıcaklıkla karışmasın. Harita ve Karşılaştır için URL desteği ekle (`?view=map`) — _M_
-- [ ] **2.6** 5 günlük tahmini 5 sütun ya da DESIGN.md'deki gibi günlük satırlar olarak göster. Şu an 4+1 düzeninde — _S_
+- [x] **2.6** 5 günlük tahmini 5 sütun ya da DESIGN.md'deki gibi günlük satırlar olarak göster. Şu an 4+1 düzeninde — _S_
+  - Kaldığı yer: `src/styles/ForecastCalendarVisualPolish.css` — 48rem ve üstünde sabit 5 sütun, altında günlük satırlar; tek kalan günü yayan kural kaldırıldı.
 - [x] **2.7** Bütün yazıları en az 12 px, eylem ve uyarı metinlerini en az 14 px yap. Şu an 9,6 px metinler var — _S_
   - Kaldığı yer: CSS'teki tüm 12 px altı `font-size` değerleri 0.75rem/12px'e, buton/eylem/uyarı seçicilerindeki 14 px altı değerler 0.875rem'e yükseltildi (14 dosya).
 
