@@ -26,7 +26,7 @@ Asıl sorunlar başka yerde:
 
 - [x] **0.1** API'de lat/lon değerlerini Türkiye sınırlarıyla kısıtla, cache anahtarını 2 ondalık haneye yuvarla, upstream çağrıları için global limit koy — _Canlıda `lat=40.71&lon=-74` sorgusu New York verisi döndürüyor. Bir döngü kotayı bitirip bütün kullanıcıları veri alamaz hale getirebilir — S_
 - [ ] **0.2** fast-uri güvenlik PR'ını hazır yap, merge et, ardından API'yi deploy et — _CI'ı yeşil, çakışmasız ama draft halinde bekliyor — S_
-- [ ] **0.3** Açık temada favori şehir sekmelerinin kontrastını düzelt — _Kontrast 1,04–2,33:1, sekmeler okunmuyor — S_
+- [x] **0.3** Açık temada favori şehir sekmelerinin kontrastını düzelt — _Kontrast 1,04–2,33:1, sekmeler okunmuyor — S_
 - [ ] **0.4** Açık temada "Bildirim engelli" butonunu görünür yap — _Beyaz zemin üstünde beyaz metin — S_
 - [ ] **0.5** Mobilde native scrollbar'ları kaldır — _Aralık seçicide yalnızca 13 px taşma için scrollbar çıkıyor ve "12s" kesiliyor — S_
 - [ ] **0.6** Odak halkası için tek bir token tanımla, koyu zeminde açık renk halka kullan — _Kontrast 1,8–2,1:1, WCAG eşiği 3:1 — S_
