@@ -1,0 +1,6 @@
+/* Applied only while taking @visual screenshots (playwright stylePath). */
+/* The sticky header and skip link would otherwise float over full-page captures. */
+.atlas-header,
+.skip-link {
+  visibility: hidden !important;
+}
