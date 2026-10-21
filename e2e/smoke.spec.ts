@@ -3898,7 +3898,7 @@ test('hourly interval controls resample the same 24-hour forecast', async ({ pag
   await expect(interval.getByRole('button', { name: '1sa Her 1 saatte bir göster' })).toHaveAttribute('aria-pressed', 'true');
   await expect(interval.getByRole('button')).toHaveCount(7);
   for (const hours of [2, 3, 4, 6, 8, 12]) {
-    await expect(interval.getByRole('button', { name: `${hours}s Her ${hours} saatte bir göster`, exact: true })).toBeVisible();
+    await expect(interval.getByRole('button', { name: `${hours}sa Her ${hours} saatte bir göster`, exact: true })).toBeVisible();
   }
   await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
 
