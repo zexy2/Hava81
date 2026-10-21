@@ -146,7 +146,7 @@ describe('useWeather', () => {
     expect(result.current.weather?.cityName).toBe('İzmir');
   });
 
-  it('does not retain another city weather when a different-city request fails', async () => {
+  it('keeps the current city visible when a different-city request fails (Faz 1.3)', async () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
 
@@ -157,7 +157,7 @@ describe('useWeather', () => {
       await result.current.fetchWeather('Ankara');
     });
 
-    expect(result.current.weather).toBeNull();
+    expect(result.current.weather?.cityName).toBe('İzmir');
     expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR);
   });
 

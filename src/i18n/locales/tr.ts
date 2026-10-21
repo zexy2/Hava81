@@ -50,6 +50,8 @@ export const tr = {
     selectCityWithTemperature: '{{city}} hava durumunu göster, {{temperature}}{{unit}}',
     removeCity: '{{city}} şehrini favorilerden kaldır',
     addCurrentCity: 'Geçerli şehri favorilere ekle',
+    searchNotFound: '"{{query}}" için il ya da ilçe bulunamadı.',
+    didYouMean: 'Şunu mu demek istediniz:',
     cityNotFound: 'Şehir bulunamadı',
     noData: 'Veri yok',
     staleCurrentData: 'Anlık veri güncel değil',

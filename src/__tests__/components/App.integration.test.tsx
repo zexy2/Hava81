@@ -606,10 +606,11 @@ describe('Hava81 app integration', () => {
 
     renderApp();
 
+    // Faz 1.3: a miss is shown inline under the search box, not as a system error.
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/şehir bulunamadı/i);
+    expect(alert).toHaveTextContent(/bulunamadı/i);
+    expect(alert).toHaveClass('atlas-search-inline-error');
     expect(screen.queryByRole('button', { name: /tekrar dene/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /kapat/i })).toBeInTheDocument();
   });
 
   it('honors explicit non-retryable unknown current-weather failures', async () => {

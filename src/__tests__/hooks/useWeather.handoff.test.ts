@@ -32,7 +32,7 @@ describe('useWeather city/location handoff', () => {
     localStorage.clear();
   });
 
-  it('clears previously shown location weather while a city replacement is loading', async () => {
+  it('keeps location weather visible while a city replacement is loading (Faz 1.3)', async () => {
     (weatherService.getCurrentLocationWeather as Mock).mockResolvedValueOnce(locationWeather);
     let resolveCity: ((value: typeof cityWeather) => void) | undefined;
     (weatherService.getCurrentWeather as Mock).mockImplementationOnce(
@@ -52,7 +52,7 @@ describe('useWeather city/location handoff', () => {
     act(() => {
       cityRequest = result.current.fetchWeather('İzmir');
     });
-    expect(result.current.weather).toBeNull();
+    expect(result.current.weather?.cityName).toBe('Ankara');
     expect(result.current.isLoading).toBe(true);
 
     await act(async () => {

@@ -280,6 +280,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   });
   const previousLanguageRef = useRef(language);
   const activeSourceRef = useRef<'city' | 'location'>('city');
+  const searchTokenRef = useRef(0);
 
   // Async weather fetching
   const weatherAsync = useAsync(
@@ -324,6 +325,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     {
       onSuccess: data => {
         activeSourceRef.current = 'location';
+        searchTokenRef.current += 1;
         // Keep the existing city visible while location is pending, then invalidate
         // any older city request only when a real location result is ready to replace it.
         weatherAsync.reset();
@@ -346,15 +348,16 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       activeSourceRef.current = 'city';
       // City search is a handoff from location mode. Clear and invalidate any
       // existing/in-flight location result so it cannot remain visible or win a late race.
-      locationAsync.reset();
+      // A failed search (typo, unknown place) must not wipe the city on screen (Faz 1.3).
+      // Keep the last successful payload visible; only an in-flight location request is
+      // invalidated up front, settled location data is replaced on success.
+      if (locationAsync.isLoading) locationAsync.reset();
       const normalizedTarget = targetCity.trim();
-      if (
-        weatherAsync.data &&
-        cityIdentity(weatherAsync.data.cityName) !== cityIdentity(normalizedTarget)
-      ) {
-        weatherAsync.reset();
-      }
-      return weatherAsync.execute(normalizedTarget);
+      const token = ++searchTokenRef.current;
+      const result = await weatherAsync.execute(normalizedTarget);
+      // A location result that landed meanwhile stays authoritative.
+      if (result && token === searchTokenRef.current) locationAsync.reset();
+      return result;
     },
     [city, locationAsync, weatherAsync]
   );

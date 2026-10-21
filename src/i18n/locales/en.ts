@@ -50,6 +50,8 @@ export const en = {
     selectCityWithTemperature: 'Show weather for {{city}}, {{temperature}}{{unit}}',
     removeCity: 'Remove {{city}} from favorites',
     addCurrentCity: 'Add current city to favorites',
+    searchNotFound: 'No province or district found for "{{query}}".',
+    didYouMean: 'Did you mean:',
     cityNotFound: 'City not found',
     noData: 'No data',
     staleCurrentData: 'Current observation is not fresh',
