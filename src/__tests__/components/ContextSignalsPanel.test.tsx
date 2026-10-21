@@ -58,8 +58,8 @@ describe('ContextSignalsPanel', () => {
     expect(
       screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)
     ).toBeInTheDocument();
-    expect(screen.getByText('25.1°C')).toBeInTheDocument();
-    expect(screen.getByText(/0.40 m.*4.8 s.*315°/)).toBeInTheDocument();
+    expect(screen.getByText('25,1°C')).toBeInTheDocument();
+    expect(screen.getByText(/0,40 m.*4,8 s.*315°/)).toBeInTheDocument();
   });
 
   it('renders provider fetch time in the weather location timezone', () => {
@@ -99,7 +99,7 @@ describe('ContextSignalsPanel', () => {
     });
 
     expect(screen.getByText('77°F')).toBeInTheDocument();
-    expect(screen.queryByText('25.1°C')).not.toBeInTheDocument();
+    expect(screen.queryByText('25,1°C')).not.toBeInTheDocument();
   });
 
   it('does not render materially future provider evidence', () => {
@@ -154,7 +154,7 @@ describe('ContextSignalsPanel', () => {
       units: { grassPollen: 'grass-unit', olivePollen: 'olive-unit' },
     });
 
-    expect(screen.getByText('7.4')).toBeInTheDocument();
+    expect(screen.getByText('7,4')).toBeInTheDocument();
     expect(screen.getByText('olive-unit')).toBeInTheDocument();
     expect(screen.queryByText('grass-unit')).not.toBeInTheDocument();
   });

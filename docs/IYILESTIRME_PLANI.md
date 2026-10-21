@@ -39,7 +39,8 @@ Durum: devam ediyor — dal fix/faz1-veri-tutarliligi, PR https://github.com/zex
 - [ ] **1.1** Tek bir "decision snapshot" seçici yaz: en iyi pencere, koşul, min/max ve rüzgâr tek yerden hesaplansın — _Aynı ekranda çelişen veriler var. Ürünün "5 saniyede karar" vaadini doğrudan bozuyor — M_
 - [ ] **1.2** "Şu an" için tek sağlayıcı kullan. Min/max değerlerinde "önümüzdeki 24 saat" ile "takvim günü" ayrımını etiketle — _OpenWeather ve Open-Meteo verisi uzlaştırılmadan yan yana basılıyor — M_
 - [x] **1.3** Arama hatasında mevcut şehri koru, hatayı satır içinde göster, "Şunu mu demek istediniz?" önerisi sun — _Şu an tek bir yazım hatası bakılan şehri tamamen siliyor — M_
-- [ ] **1.4** Bütün sayı, tarih ve saat biçimlerini tek bir `format.ts` dosyasından `Intl` ile üret. Kopyayı bir kez editoryal olarak elden geçir — _TR'de "1.6 m/s", EN'de 4 farklı tarih biçimi, "Rüzgar/Rüzgâr" karışıklığı var. "1s" ifadesi "saniye" gibi okunuyor — S–M_
+- [x] **1.4** Bütün sayı, tarih ve saat biçimlerini tek bir `format.ts` dosyasından `Intl` ile üret. Kopyayı bir kez editoryal olarak elden geçir — _TR'de "1.6 m/s", EN'de 4 farklı tarih biçimi, "Rüzgar/Rüzgâr" karışıklığı var. "1s" ifadesi "saniye" gibi okunuyor — S–M_
+  - Kaldığı yer: `src/utils/format.ts` eklendi; Karşılaştır/Aktivite/Ulaşım rüzgârı, bağlam şeridi ve saat biçimleri buna taşındı; "Rüzgâr" ve "1 sa" düzeltildi. Diğer bileşenlerdeki yerel `Intl` örnekleri zaten doğru ondalık üretiyor; Faz 3.3 bölünmesinde `format.ts`'e taşınabilir.
 - [ ] **1.5** Hata ve yükleme durumlarını sebebe göre ayır, varsa son bilinen veriyi göster — _"İnternetinizi kontrol edin" mesajı, sorun sunucuda olsa bile çıkıyor — S_
 
 ## Faz 2: Tasarım kimliği, Awwwards'a giden yol (~2–3 hafta)

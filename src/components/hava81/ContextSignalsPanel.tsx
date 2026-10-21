@@ -1,3 +1,4 @@
+import { formatFixed } from '../../utils/format';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
@@ -86,7 +87,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
       ? '—'
       : settings.temperatureUnit === 'imperial'
         ? `${Math.round(convertTemperature(seaSurfaceTemperature))}${getTemperatureSymbol()}`
-        : `${seaSurfaceTemperature.toFixed(1)}${getTemperatureSymbol()}`;
+        : `${formatFixed(seaSurfaceTemperature, i18n.language, 1)}${getTemperatureSymbol()}`;
 
   return (
     <section className="context-signals" aria-labelledby="context-signals-title">
@@ -121,7 +122,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
         {signals.uvIndexMax !== undefined ? (
           <article className={`context-signal context-signal--${uv}`}>
             <span>{t('hava81.context.uv')}</span>
-            <strong>{signals.uvIndexMax.toFixed(1)}</strong>
+            <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
             <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
             <p>
               {uv && uv !== 'low' ? t('hava81.context.uvProtection') : t('hava81.context.uvNormal')}
@@ -141,7 +142,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           <article className="context-signal">
             <span>{t('hava81.context.pollen')}</span>
             <strong>
-              {pollen?.value.toFixed(1)} <small>{normalizeMicroUnit(pollen?.unit)}</small>
+              {pollen ? formatFixed(pollen.value, i18n.language, 1) : null} <small>{normalizeMicroUnit(pollen?.unit)}</small>
             </strong>
             <p>{t('hava81.context.pollenNote')}</p>
           </article>
@@ -153,9 +154,9 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
             <p>
               {signals.marine?.waveHeight !== undefined
                 ? t('hava81.context.waveDetails', {
-                    height: signals.marine.waveHeight.toFixed(2),
+                    height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
                     unit: signals.units.waveHeight ?? '',
-                    period: signals.marine.wavePeriod?.toFixed(1) ?? '—',
+                    period: (signals.marine.wavePeriod != null ? formatFixed(signals.marine.wavePeriod, i18n.language, 1) : null) ?? '—',
                     periodUnit: signals.units.wavePeriod ?? '',
                     direction:
                       signals.marine.waveDirection !== undefined

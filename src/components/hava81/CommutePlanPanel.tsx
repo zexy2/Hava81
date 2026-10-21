@@ -1,3 +1,4 @@
+import { formatNumber, formatWithUnit } from '../../utils/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
@@ -139,7 +140,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
       temperature: Math.round(convertTemperature(plan.summary.maxApparentTemperature)),
       coldTemperature: Math.round(convertTemperature(plan.summary.minApparentTemperature)),
       temperatureUnit: getTemperatureSymbol(),
-      wind: convertWindSpeed(plan.summary.maxEffectiveWind),
+      wind: formatNumber(convertWindSpeed(plan.summary.maxEffectiveWind), i18n.language),
       windUnit: getWindSpeedSymbol(),
     });
   };
@@ -253,7 +254,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                     <div>
                       <dt>{t('hava81.commute.wind')}</dt>
                       <dd>
-                        {convertWindSpeed(window.windSpeed)} {getWindSpeedSymbol()}
+                        {formatWithUnit(convertWindSpeed(window.windSpeed), getWindSpeedSymbol(), i18n.language)}
                       </dd>
                     </div>
                     <div>
