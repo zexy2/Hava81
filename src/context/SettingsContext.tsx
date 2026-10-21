@@ -17,7 +17,7 @@ export interface UserSettings {
 const defaultSettings: UserSettings = {
   temperatureUnit: 'metric',
   windSpeedUnit: 'ms',
-  themeMode: 'light',
+  themeMode: 'auto',
   language: 'tr',
 };
 

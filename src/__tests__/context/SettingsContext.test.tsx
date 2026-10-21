@@ -27,7 +27,7 @@ describe('SettingsProvider persisted settings', () => {
     expect(result.current.settings).toEqual({
       temperatureUnit: 'imperial',
       windSpeedUnit: 'ms',
-      themeMode: 'light',
+      themeMode: 'auto',
       language: 'tr',
     });
   });
@@ -49,7 +49,7 @@ describe('SettingsProvider persisted settings', () => {
     expect(result.current.settings).toEqual({
       temperatureUnit: 'metric',
       windSpeedUnit: 'ms',
-      themeMode: 'light',
+      themeMode: 'auto',
       language: 'tr',
     });
     expect(localStorage.getItem('user-settings')).toBeNull();
