@@ -2107,7 +2107,8 @@ test('mobile environment rail keeps labels readable at 200 percent text size', a
       activity: top('.activity-planner'),
     };
   });
-  expect(contentOrder.daily).toBeLessThan(contentOrder.environment);
+  // Faz 2.3: the environmental surface stays in the main flow; Planla follows it.
+  expect(contentOrder.environment).toBeLessThan(contentOrder.daily);
   expect(contentOrder.environment).toBeLessThan(contentOrder.commute);
   expect(contentOrder.environment).toBeLessThan(contentOrder.activity);
 
@@ -3005,9 +3006,10 @@ test('desktop forecast sky cards keep all details visible across widths', async 
       };
     });
 
+  // Faz 2.6: a half-width forecast panel shows daily rows (never a 4+1 grid).
   const wide = await geometry();
   expect(wide.description.top).toBeGreaterThan(wide.day.top);
-  expect(wide.temperatures.top).toBeGreaterThan(wide.description.top);
+  expect(wide.row.scrollWidth).toBeLessThanOrEqual(wide.row.clientWidth + 1);
 
   await page.setViewportSize({ width: 1024, height: 900 });
   const compact = await geometry();
@@ -3024,11 +3026,10 @@ test('desktop forecast sky cards keep all details visible across widths', async 
   expect(enlarged.description.scrollWidth).toBeLessThanOrEqual(enlarged.description.clientWidth + 1);
   expect(enlarged.temperatures.scrollWidth).toBeLessThanOrEqual(enlarged.temperatures.clientWidth + 1);
   expect(enlarged.row.scrollWidth).toBeLessThanOrEqual(enlarged.row.clientWidth + 1);
-  expect(enlarged.row.height).toBeGreaterThan(180);
   expect(enlarged.pageWidth).toBeLessThanOrEqual(enlarged.viewportWidth);
 });
 
-test('mobile five-day forecast uses two-column bento with last card expanded', async ({ page }, testInfo) => {
+test('mobile five-day forecast uses full-width daily rows', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'mobile five-day forecast hierarchy regression');
   await page.setViewportSize({ width: 390, height: 844 });
   const stripDaily = Array.from({ length: 5 }, (_, index) => ({
@@ -3076,10 +3077,9 @@ test('mobile five-day forecast uses two-column bento with last card expanded', a
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
   expect(layout.overflowX).toBe('visible');
   expect(Math.max(...layout.rowTops) - Math.min(...layout.rowTops)).toBeGreaterThan(80);
-  expect(layout.rowWidths.slice(0, 4).every(width => width >= 120)).toBe(true);
-  expect(layout.rowTops[0]).toBe(layout.rowTops[1]);
-  expect(layout.rowTops[2]).toBe(layout.rowTops[3]);
-  expect(layout.rowWidths[4]).toBeGreaterThan(layout.rowWidths[0] * 1.8);
+  // Faz 2.6: one row per day, all the same width (no 2+2+1 bento).
+  expect(layout.rowTops.every((top, index) => index === 0 || top > layout.rowTops[index - 1])).toBe(true);
+  expect(Math.max(...layout.rowWidths) - Math.min(...layout.rowWidths)).toBeLessThan(1);
   expect(layout.rowsFit).toBe(true);
   expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
@@ -4259,16 +4259,17 @@ test('desktop dashboard uses the decision column instead of leaving dead space',
     };
   });
 
-  expect(Math.abs(layout.commute.left - layout.decision.left)).toBeLessThan(2);
-  expect(layout.commute.top).toBeGreaterThanOrEqual(layout.decision.bottom + 8);
+  // Faz 2.2/2.3: first view = decision field beside the rhythm chart; environment, then Planla.
   expect(layout.forecast.left).toBeGreaterThanOrEqual(layout.decision.right + 8);
-  expect(layout.daily.top).toBeGreaterThanOrEqual(
-    Math.max(layout.commute.bottom, layout.forecast.bottom) + 8
+  expect(Math.abs(layout.forecast.top - layout.decision.top)).toBeLessThan(2);
+  expect(layout.environment.top).toBeGreaterThanOrEqual(
+    Math.max(layout.decision.bottom, layout.forecast.bottom) + 8
   );
-  expect(layout.environment.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
+  expect(layout.daily.top).toBeGreaterThanOrEqual(layout.environment.bottom + 8);
   expect(Math.abs(layout.environment.left - layout.daily.left)).toBeLessThan(2);
   expect(Math.abs(layout.environment.right - layout.daily.right)).toBeLessThan(2);
-  expect(layout.activity.top).toBeGreaterThanOrEqual(layout.environment.bottom + 8);
+  expect(layout.commute.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
+  expect(layout.activity.top).toBeGreaterThanOrEqual(layout.daily.bottom + 8);
   expect(Math.min(...layout.cards.map(card => card.width))).toBeGreaterThan(layout.activity.width * 0.45);
 });
 

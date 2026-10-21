@@ -189,8 +189,8 @@
     padding: 13px 12px 12px;
   }
 }
-/* 2.6: below tablet the five days become daily rows (no 4+1 / 2+2+1 grid). */
-@media (max-width: 47.99rem) {
+/* 2.6: when the forecast panel is narrower than 40rem the five days become daily rows (no 4+1). */
+@container (max-width: 39.99rem) {
   .app .hava81-forecast-atlas__days {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -128,7 +128,6 @@
   /* Faz 2.5: a licence-plate chip (white plate, blue TR strip), never read as a temperature. */
   display: inline-flex;
   align-items: stretch;
-  height: 1.5rem;
   overflow: hidden;
   color: #0b1b2e;
   background: #fff;
@@ -142,6 +141,8 @@
   line-height: 1.5rem;
   padding-right: 0.3rem;
   white-space: nowrap;
+  width: max-content;
+  flex-shrink: 0;
 }
 .weather-map__plate-marker span i {
   display: inline-block;

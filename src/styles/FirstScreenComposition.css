@@ -1,10 +1,12 @@
 /* Faz 2.2 — first screen as one composition (blue premium look kept).
    City + plate + big temperature + "what changes next" + 24h curve read as one block. */
-.app .atlas-dashboard__primary .hava81-decision-field__temperature-value {
-  font-size: clamp(6rem, 21vw, 9.5rem);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.075em;
+@media (min-width: 64rem) {
+  .app .atlas-dashboard__primary .hava81-decision-field__temperature-value {
+    font-size: clamp(6rem, 8.5vw, 9rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.075em;
+  }
 }
 .app .hava81-decision-field__next-change {
   margin: 0.75rem 0 0;
