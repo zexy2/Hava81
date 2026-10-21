@@ -32,4 +32,15 @@ describe('AtlasBottomNav', () => {
     expect(screen.getByRole('button', { name: 'Plan' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Map' })).toBeDisabled();
   });
+
+  it('opens the saved-city comparison and never selects an unusable map (Faz 3.4)', () => {
+    const onSelect = vi.fn();
+    render(<AtlasBottomNav active="compare" onSelect={onSelect} hasSaved canMap={false} />);
+    const compare = screen.getByRole('button', { name: 'Karşılaştır' });
+    expect(compare).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(compare);
+    expect(onSelect).toHaveBeenCalledWith('compare');
+    fireEvent.click(screen.getByRole('button', { name: 'Harita' }));
+    expect(onSelect).not.toHaveBeenCalledWith('map');
+  });
 });

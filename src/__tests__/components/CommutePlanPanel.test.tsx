@@ -90,7 +90,11 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={twoDayHourly} forecastMeta={freshForecastMeta()} />
+        <CommutePlanPanel
+          weather={weather}
+          hourly={twoDayHourly}
+          forecastMeta={freshForecastMeta()}
+        />
       </SettingsProvider>
     );
     fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
@@ -132,14 +136,20 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={mildHourly} forecastMeta={freshForecastMeta()} />
+        <CommutePlanPanel
+          weather={weather}
+          hourly={mildHourly}
+          forecastMeta={freshForecastMeta()}
+        />
       </SettingsProvider>
     );
 
     fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '09:00' } });
     fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '12:00' } });
 
-    expect(screen.getByText('Yağış, sıcaklık ve rüzgâr için ek hazırlık sinyali yok')).toBeVisible();
+    expect(
+      screen.getByText('Yağış, sıcaklık ve rüzgâr için ek hazırlık sinyali yok')
+    ).toBeVisible();
     expect(screen.queryByText('Ekstra hava hazırlığı gerekmiyor')).not.toBeInTheDocument();
   });
 
@@ -165,7 +175,11 @@ describe('CommutePlanPanel', () => {
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={measurableRain} forecastMeta={freshForecastMeta()} />
+        <CommutePlanPanel
+          weather={weather}
+          hourly={measurableRain}
+          forecastMeta={freshForecastMeta()}
+        />
       </SettingsProvider>
     );
 
@@ -314,5 +328,24 @@ describe('CommutePlanPanel', () => {
       /Dönüşün Hava81 puanı çıkıştan yaklaşık \d+ puan daha yüksek/i
     );
     expect(screen.getByRole('status')).toHaveTextContent(/hava açısından daha rahat görünüyor/i);
+  });
+
+  it('exposes each resolved commute target as machine-readable time (Faz 3.4)', () => {
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
+      </SettingsProvider>
+    );
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '08:30' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '18:00' } });
+
+    const windows = screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' });
+    const times = windows.querySelectorAll('time');
+    expect(times.length).toBeGreaterThanOrEqual(2);
+    for (const time of times) {
+      const instant = time.getAttribute('datetime') ?? '';
+      expect(new Date(instant).toISOString()).toBe(instant);
+      expect(time).toHaveTextContent(/\d{2}:\d{2}/);
+    }
   });
 });

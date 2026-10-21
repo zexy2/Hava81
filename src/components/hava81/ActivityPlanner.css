@@ -499,7 +499,7 @@
   }
   .app .activity-card__score small {
     color: #d0eaff;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     line-height: 1.35;
   }
   .app .activity-card__score strong {
@@ -708,7 +708,7 @@
     }
     .app .activity-card__score small {
       overflow-wrap: break-word;
-      font-size: clamp(12px, 0.7rem, 17px);
+      font-size: 0.8125rem;
     }
     .app .activity-planner__window-copy,
     .app .activity-card__score,

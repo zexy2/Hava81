@@ -173,7 +173,7 @@
       font-weight: 750;
     }
     .app .hava81-forecast-atlas__day-pop {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
     }
   }
 
@@ -2670,7 +2670,7 @@
     align-self: end;
     min-height: 1.25rem;
     color: #4a718f;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 650;
     overflow-wrap: anywhere;
   }

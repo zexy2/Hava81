@@ -86,16 +86,14 @@ describe('ComparePanel', () => {
       })),
       meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
     });
-    api.getAirQuality
-      .mockReset()
-      .mockResolvedValue({
-        aqi: 2,
-        aqiLabel: 'Orta',
-        pm25: 8,
-        pm10: 12,
-        o3: 30,
-        meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
-      });
+    api.getAirQuality.mockReset().mockResolvedValue({
+      aqi: 2,
+      aqiLabel: 'Orta',
+      pm25: 8,
+      pm10: 12,
+      o3: 30,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+    });
   });
 
   it('explains that two favorites are required', () => {
@@ -135,14 +133,16 @@ describe('ComparePanel', () => {
 
   it('shows measurable near-term precipitation even when probability is 0%', async () => {
     api.getHourlyForecast.mockResolvedValue({
-      hourly: [{
-        time: new Date('2026-08-28T09:00:00Z'),
-        temp: 24,
-        icon: '10d',
-        pop: 0,
-        windSpeed: 3,
-        precipitationMm: 0.4,
-      }],
+      hourly: [
+        {
+          time: new Date('2026-08-28T09:00:00Z'),
+          temp: 24,
+          icon: '10d',
+          pop: 0,
+          windSpeed: 3,
+          precipitationMm: 0.4,
+        },
+      ],
       meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
     });
 
@@ -164,17 +164,18 @@ describe('ComparePanel', () => {
     expect(screen.getAllByText('Yağış')).toHaveLength(2);
   });
 
-
   it('shows a dry label instead of 0% when no precipitation amount is modeled', async () => {
     api.getHourlyForecast.mockResolvedValue({
-      hourly: [{
-        time: new Date('2026-08-28T09:00:00Z'),
-        temp: 24,
-        icon: '01d',
-        pop: 0,
-        windSpeed: 3,
-        precipitationMm: 0,
-      }],
+      hourly: [
+        {
+          time: new Date('2026-08-28T09:00:00Z'),
+          temp: 24,
+          icon: '01d',
+          pop: 0,
+          windSpeed: 3,
+          precipitationMm: 0,
+        },
+      ],
       meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
     });
 
@@ -326,12 +327,13 @@ describe('ComparePanel', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(await screen.findByText(/bu hava kriterlerinde öne çıkan/i)).toBeVisible();
     expect(screen.getByText(/Hava81 \d+\/100 · (Çok uygun|Uygun|Dikkat|Zorlayıcı)/)).toBeVisible();
-    expect(screen.getAllByText(/^(Çok uygun|Uygun|Dikkat|Zorlayıcı)$/).length).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.getAllByText(/^(Çok uygun|Uygun|Dikkat|Zorlayıcı)$/).length
+    ).toBeGreaterThanOrEqual(2);
     expect(api.getForecast).not.toHaveBeenCalled();
     expect(api.getHourlyForecast).toHaveBeenCalledTimes(2);
     expect(api.getAirQuality).toHaveBeenCalledTimes(2);
   });
-
 
   it('reports an explicit tie instead of inventing a single winner for equal scores', async () => {
     api.getCurrentWeather.mockImplementation(({ city }: { city: string }) =>
@@ -396,7 +398,6 @@ describe('ComparePanel', () => {
       'aria-busy',
       'true'
     );
-
   });
 
   it('drops expired optional AQI without hiding otherwise fresh comparison rows', async () => {
@@ -633,5 +634,28 @@ describe('ComparePanel', () => {
 
     expect(await screen.findByText('Şehir karşılaştırması şu anda güncellenemedi.')).toBeVisible();
     expect(screen.queryByText(/SECRET_TOTAL_FAILURE/)).not.toBeInTheDocument();
+  });
+
+  it('exposes best-window instants through machine-readable time elements (Faz 3.4)', async () => {
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+    await screen.findByRole('heading', { name: 'İstanbul' });
+    const card = screen.getAllByRole('listitem')[0];
+    const times = card.querySelectorAll('time');
+    expect(times.length).toBeGreaterThan(0);
+    for (const time of times) {
+      const instant = time.getAttribute('datetime') ?? '';
+      expect(new Date(instant).toISOString()).toBe(instant);
+      expect(time.textContent).toMatch(/\d{2}[:.]\d{2}/);
+    }
   });
 });

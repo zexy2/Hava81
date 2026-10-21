@@ -55,7 +55,7 @@
   }
 
   .app .daily-plan__score small {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     letter-spacing: 0.025em;
     text-align: end;
   }
@@ -173,7 +173,7 @@
       font-size: 1.85rem;
     }
     .app .daily-plan__score small {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
     }
     .app .daily-plan__quick {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -454,7 +454,7 @@
   }
 
   .app .daily-plan__quick span {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     letter-spacing: 0.1em;
   }
 
@@ -859,7 +859,7 @@
   }
 
   .app .daily-plan__slot-day {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--slot-accent);
     letter-spacing: 0.07em;
   }

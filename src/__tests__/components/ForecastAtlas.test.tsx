@@ -229,17 +229,20 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     ).toBeInTheDocument();
     const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
     expect(screen.getByText(/24 saatlik tahmin sabit kalır/i)).toBeInTheDocument();
-    expect(within(interval).getByRole('button', { name: '1sa Her 1 saatte bir göster' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    expect(
+      within(interval).getByRole('button', { name: '1sa Her 1 saatte bir göster' })
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(
       within(interval)
         .getAllByRole('button')
         .map(button => button.textContent)
     ).toEqual(['1sa', '2sa', '3sa', '4sa', '6sa']);
-    expect(within(interval).getByRole('button', { name: '2sa Her 2 saatte bir göster' })).toBeInTheDocument();
-    expect(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' })).toBeInTheDocument();
+    expect(
+      within(interval).getByRole('button', { name: '2sa Her 2 saatte bir göster' })
+    ).toBeInTheDocument();
+    expect(
+      within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' })
+    ).toBeInTheDocument();
     expect(
       within(interval).queryByRole('button', { name: '8sa Her 8 saatte bir göster' })
     ).not.toBeInTheDocument();
@@ -328,10 +331,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
 
     const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
-    expect(within(interval).getByRole('button', { name: '1sa Her 1 saatte bir göster' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    expect(
+      within(interval).getByRole('button', { name: '1sa Her 1 saatte bir göster' })
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(within(interval).getAllByRole('button')).toHaveLength(7);
     expect(within(region).getAllByRole('listitem')).toHaveLength(24);
 
@@ -339,10 +341,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(region).getAllByRole('listitem')).toHaveLength(12);
 
     await user.click(within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' }));
-    expect(within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    expect(
+      within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' })
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(
       screen.getByRole('heading', { name: /saatlik tahmin · sonraki 24 saat/i })
     ).toBeInTheDocument();
@@ -354,10 +355,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     ).toEqual(['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00']);
 
     await user.click(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' }));
-    expect(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    expect(
+      within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' })
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(within(region).getAllByRole('listitem')).toHaveLength(4);
     expect(
       within(region)
@@ -365,7 +365,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
     ).toEqual(['00:00', '06:00', '12:00', '18:00']);
 
-    await user.click(within(interval).getByRole('button', { name: '12sa Her 12 saatte bir göster' }));
+    await user.click(
+      within(interval).getByRole('button', { name: '12sa Her 12 saatte bir göster' })
+    );
     expect(within(region).getAllByRole('listitem')).toHaveLength(2);
   });
   it('keeps the 24-hour summary and chart scale stable when display sampling changes', async () => {
@@ -419,7 +421,9 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     await user.click(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' }));
     assertFullHorizonSummary();
     assertFullHorizonScale();
-    await user.click(within(interval).getByRole('button', { name: '12sa Her 12 saatte bir göster' }));
+    await user.click(
+      within(interval).getByRole('button', { name: '12sa Her 12 saatte bir göster' })
+    );
     assertFullHorizonSummary();
     assertFullHorizonScale();
   });
@@ -658,5 +662,19 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     await user.click(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' }));
     expect(boundaryFor()).toHaveLength(1);
     expect(boundaryFor()[0].closest('li')).toHaveTextContent('02:00');
+  });
+});
+
+describe('ForecastAtlas interval control semantics (Faz 3.4)', () => {
+  it('links the interval button group to its visible label and help text', () => {
+    renderRangeAtlas(24);
+    const group = screen.getByRole('group', { name: 'Gösterim aralığı' });
+    const label = document.getElementById(group.getAttribute('aria-labelledby') ?? '');
+    const help = document.getElementById(group.getAttribute('aria-describedby') ?? '');
+    expect(group).not.toHaveAttribute('aria-label');
+    expect(label).toBeVisible();
+    expect(group).toHaveAccessibleName(label?.textContent?.trim() ?? '');
+    expect(group).toHaveAccessibleDescription(help?.textContent?.trim() ?? '');
+    expect(within(group).getAllByRole('button').length).toBeGreaterThan(1);
   });
 });

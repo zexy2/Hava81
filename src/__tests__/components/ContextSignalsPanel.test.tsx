@@ -25,23 +25,23 @@ describe('ContextSignalsPanel', () => {
 
   it('keeps modeled context attributed and renders marine values without inventing missing data', () => {
     renderPanel({
-          provider: 'Open-Meteo',
-          fetchedAt: new Date('2026-08-28T06:00:00Z'),
-          attribution: 'Open-Meteo · CC BY 4.0',
-          uvIndexMax: 7,
-          units: {
-            waveHeight: 'm',
-            waveDirection: '°',
-            wavePeriod: 's',
-            seaSurfaceTemperature: '°C',
-          },
-          marine: {
-            observedAt: '2026-08-28T09:00',
-            waveHeight: 0.4,
-            waveDirection: 315,
-            wavePeriod: 4.8,
-            seaSurfaceTemperature: 25.1,
-          },
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 7,
+      units: {
+        waveHeight: 'm',
+        waveDirection: '°',
+        wavePeriod: 's',
+        seaSurfaceTemperature: '°C',
+      },
+      marine: {
+        observedAt: '2026-08-28T09:00',
+        waveHeight: 0.4,
+        waveDirection: 315,
+        wavePeriod: 4.8,
+        seaSurfaceTemperature: 25.1,
+      },
     });
     expect(screen.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
       'href',
@@ -55,9 +55,7 @@ describe('ContextSignalsPanel', () => {
     expect(screen.getByText(/veri alındı/i)).toBeInTheDocument();
     expect(screen.queryByText(/model \d{2}:\d{2}/i)).not.toBeInTheDocument();
     expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
-    expect(
-      screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)).toBeInTheDocument();
     expect(screen.getByText('25,1°C')).toBeInTheDocument();
     expect(screen.getByText(/0,40 m.*4,8 s.*315°/)).toBeInTheDocument();
   });
@@ -118,11 +116,11 @@ describe('ContextSignalsPanel', () => {
 
   it('recommends protection from the WHO moderate UV band upward', () => {
     renderPanel({
-          provider: 'Open-Meteo',
-          fetchedAt: new Date('2026-08-28T06:00:00Z'),
-          attribution: 'Open-Meteo · CC BY 4.0',
-          uvIndexMax: 4,
-          units: {},
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 4,
+      units: {},
     });
 
     expect(screen.getByText('Orta')).toBeInTheDocument();
@@ -131,17 +129,15 @@ describe('ContextSignalsPanel', () => {
 
   it('keeps the WHO extreme UV category distinct at 11 and above', () => {
     renderPanel({
-          provider: 'Open-Meteo',
-          fetchedAt: new Date('2026-08-28T06:00:00Z'),
-          attribution: 'Open-Meteo · CC BY 4.0',
-          uvIndexMax: 11.2,
-          units: {},
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      uvIndexMax: 11.2,
+      units: {},
     });
 
     expect(screen.getByText('Aşırı')).toBeInTheDocument();
-    expect(
-      screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)).toBeInTheDocument();
   });
 
   it('keeps the displayed pollen maximum paired with the unit from the same source series', () => {
@@ -161,12 +157,12 @@ describe('ContextSignalsPanel', () => {
 
   it('normalizes modeled micro units without requiring a Greek font glyph', () => {
     renderPanel({
-          provider: 'Open-Meteo',
-          fetchedAt: new Date('2026-08-28T06:00:00Z'),
-          attribution: 'Open-Meteo · CC BY 4.0',
-          dustMax: 12.4,
-          grassPollenMax: 3.2,
-          units: { dust: 'μg/m³', grassPollen: 'μg/m³' },
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      dustMax: 12.4,
+      grassPollenMax: 3.2,
+      units: { dust: 'μg/m³', grassPollen: 'μg/m³' },
     });
 
     expect(screen.getAllByText('µg/m³')).toHaveLength(2);
@@ -194,5 +190,17 @@ describe('ContextSignalsPanel', () => {
     expect(screen.queryByText('UV · 24s model maksimumu')).not.toBeInTheDocument();
     expect(screen.queryByText('18')).not.toBeInTheDocument();
     expect(screen.queryByText(/Hava81 tarafından özetlendi/)).not.toBeInTheDocument();
+  });
+
+  it('exposes the provider fetch instant through a time element (Faz 3.4)', () => {
+    renderPanel({
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'Open-Meteo · CC BY 4.0',
+      units: {},
+    });
+    const time = document.querySelector('time[datetime="2026-08-28T06:00:00.000Z"]');
+    expect(time).not.toBeNull();
+    expect(time).toHaveTextContent(/veri alındı 09:00/i);
   });
 });

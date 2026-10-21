@@ -116,14 +116,18 @@ describe('ActivityPlanner time range', () => {
     fireEvent.change(start, { target: { value: '18:00' } });
 
     const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç.');
+    expect(status).toHaveTextContent(
+      'Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç.'
+    );
     expect(start).toHaveAttribute('aria-describedby', 'activity-window-incomplete');
     expect(end).toHaveAttribute('aria-describedby', 'activity-window-incomplete');
     expect(screen.getAllByText(/12 saatlik uygunluk · /i).length).toBeGreaterThan(0);
 
     fireEvent.change(end, { target: { value: '20:00' } });
 
-    expect(screen.queryByText(/Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Filtreyi uygulamak için başlangıç ve bitiş saatini birlikte seç/i)
+    ).not.toBeInTheDocument();
     expect(start).not.toHaveAttribute('aria-describedby');
     expect(end).not.toHaveAttribute('aria-describedby');
     expect(screen.getAllByText(/18:00–20:00 uygunluğu · /i).length).toBeGreaterThan(0);
@@ -148,7 +152,9 @@ describe('ActivityPlanner time range', () => {
 
     expect(screen.getByText(/Koşuda 50–72°F/i)).toBeInTheDocument();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
-    expect(screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 5°F daha erken başlar.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 5°F daha erken başlar.')
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Koşuda 10–22°C/i)).not.toBeInTheDocument();
   });
 
@@ -251,7 +257,11 @@ describe('ActivityPlanner time range', () => {
 
     render(
       <SettingsProvider>
-        <ActivityPlanner weather={weather} hourly={measurableRain} forecastMeta={freshForecastMeta()} />
+        <ActivityPlanner
+          weather={weather}
+          hourly={measurableRain}
+          forecastMeta={freshForecastMeta()}
+        />
       </SettingsProvider>
     );
 
@@ -295,9 +305,30 @@ describe('ActivityPlanner time range', () => {
     );
 
     expect(screen.getByText('Standart konfor aralıkları kullanılır.')).toBeInTheDocument();
-    expect(screen.getAllByText('Hava açısından en uygun aralık: 18:00–20:00').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('Hava açısından en uygun aralık: 18:00–20:00').length
+    ).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
-    expect(screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 3°C daha erken başlar.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 3°C daha erken başlar.')
+    ).toBeInTheDocument();
+  });
+
+  it('names the sensitivity select from its visible label and describes it with the help text (Faz 3.4)', () => {
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
+      </SettingsProvider>
+    );
+
+    const select = screen.getByRole('combobox');
+    const label = document.getElementById(select.getAttribute('aria-labelledby') ?? '');
+    const help = document.getElementById(select.getAttribute('aria-describedby') ?? '');
+    expect(label).toBeVisible();
+    expect(label?.textContent?.trim()).not.toBe('');
+    expect(select).toHaveAccessibleName(label?.textContent?.trim() ?? '');
+    expect(help?.tagName).toBe('SMALL');
+    expect(select).toHaveAccessibleDescription(help?.textContent?.trim() ?? '');
   });
 });
