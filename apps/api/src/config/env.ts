@@ -28,6 +28,7 @@ export const envSchema = z.object({
     .default('http://localhost:3000')
     .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean)),
   RATE_LIMIT_MAX: integerFromEnv(60, 1, 10_000),
+  UPSTREAM_MAX_PER_MINUTE: integerFromEnv(300, 1, 100_000),
   CACHE_MAX_ENTRIES: integerFromEnv(500, 10, 10_000),
   CACHE_CURRENT_TTL_MS: integerFromEnv(300_000, 1_000, 3_600_000),
   CACHE_FORECAST_TTL_MS: integerFromEnv(1_800_000, 1_000, 21_600_000),

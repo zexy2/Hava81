@@ -1,11 +1,18 @@
+import {
+  coordinateCacheKey,
+  turkeyLatJsonSchema,
+  turkeyLatitudeSchema,
+  turkeyLonJsonSchema,
+  turkeyLongitudeSchema,
+} from '../../core/geo';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AsyncCache } from '../../core/cache';
 import type { ContextSignalsService } from './context.service';
 
 const querySchema = z.object({
-  lat: z.coerce.number().min(-90).max(90),
-  lon: z.coerce.number().min(-180).max(180),
+  lat: turkeyLatitudeSchema,
+  lon: turkeyLongitudeSchema,
   marine: z
     .enum(['true', 'false'])
     .optional()
@@ -29,8 +36,8 @@ export const registerContextRoutes = async (
           required: ['lat', 'lon'],
           additionalProperties: false,
           properties: {
-            lat: { type: 'number', minimum: -90, maximum: 90 },
-            lon: { type: 'number', minimum: -180, maximum: 180 },
+            lat: turkeyLatJsonSchema,
+            lon: turkeyLonJsonSchema,
             marine: { type: 'string', enum: ['true', 'false'] },
           },
         },
@@ -38,7 +45,7 @@ export const registerContextRoutes = async (
     },
     async (request, reply) => {
       const query = querySchema.parse(request.query);
-      const key = `context:${query.lat.toFixed(3)}:${query.lon.toFixed(3)}:${query.marine ? 1 : 0}`;
+      const key = `context:${coordinateCacheKey(query.lat, query.lon)}:${query.marine ? 1 : 0}`;
       const result = await cache.getOrLoad(key, 30 * 60 * 1000, () =>
         service.get(query.lat, query.lon, query.marine)
       );

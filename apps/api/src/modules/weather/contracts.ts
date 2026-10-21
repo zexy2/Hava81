@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import type { CacheStatus } from '../../core/cache';
+import { turkeyLatitudeSchema, turkeyLongitudeSchema } from '../../core/geo';
 
-const latitudeSchema = z.coerce.number().min(-90).max(90);
-const longitudeSchema = z.coerce.number().min(-180).max(180);
+const latitudeSchema = turkeyLatitudeSchema;
+const longitudeSchema = turkeyLongitudeSchema;
 const unitsSchema = z.enum(['metric', 'imperial', 'standard']).default('metric');
 const languageSchema = z.enum(['tr', 'en']).default('tr');
 

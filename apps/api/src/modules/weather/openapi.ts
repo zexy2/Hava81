@@ -1,3 +1,4 @@
+import { turkeyLatJsonSchema, turkeyLonJsonSchema } from '../../core/geo';
 const coordinatesSchema = {
   type: 'object',
   required: ['lat', 'lon'],
@@ -26,8 +27,8 @@ export const currentQueryJsonSchema = {
   type: 'object',
   properties: {
     city: { type: 'string', minLength: 1, maxLength: 80 },
-    lat: { type: 'number', minimum: -90, maximum: 90 },
-    lon: { type: 'number', minimum: -180, maximum: 180 },
+    lat: turkeyLatJsonSchema,
+    lon: turkeyLonJsonSchema,
     units: { type: 'string', enum: ['metric', 'imperial', 'standard'], default: 'metric' },
     lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
   },
@@ -37,8 +38,8 @@ export const forecastQueryJsonSchema = {
   type: 'object',
   required: ['lat', 'lon'],
   properties: {
-    lat: { type: 'number', minimum: -90, maximum: 90 },
-    lon: { type: 'number', minimum: -180, maximum: 180 },
+    lat: turkeyLatJsonSchema,
+    lon: turkeyLonJsonSchema,
     units: { type: 'string', enum: ['metric', 'imperial', 'standard'], default: 'metric' },
     lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
   },
@@ -48,8 +49,8 @@ export const hourlyForecastQueryJsonSchema = {
   type: 'object',
   required: ['lat', 'lon'],
   properties: {
-    lat: { type: 'number', minimum: -90, maximum: 90 },
-    lon: { type: 'number', minimum: -180, maximum: 180 },
+    lat: turkeyLatJsonSchema,
+    lon: turkeyLonJsonSchema,
     lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
   },
 } as const;
@@ -58,8 +59,8 @@ export const airQualityQueryJsonSchema = {
   type: 'object',
   required: ['lat', 'lon'],
   properties: {
-    lat: { type: 'number', minimum: -90, maximum: 90 },
-    lon: { type: 'number', minimum: -180, maximum: 180 },
+    lat: turkeyLatJsonSchema,
+    lon: turkeyLonJsonSchema,
     lang: { type: 'string', enum: ['tr', 'en'], default: 'tr' },
   },
 } as const;

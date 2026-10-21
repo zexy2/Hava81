@@ -1,0 +1,33 @@
+/* Faz 0.5: mobilde native scrollbar'lar görünmez; kaydırma (dokunma, klavye) korunur.
+   Aralık seçici dar ekranda satıra sarar (44px dokunma hedefi), böylece taşma ve
+   kesik "12s" olmaz. Rota koridoru bilinçli olarak görünür kaydırma ipucunu korur. */
+@media (max-width: 47.99rem) {
+  .app .hava81-forecast-atlas__range,
+  .app .hava81-forecast-atlas__hourly-viewport,
+  .app .hava81-forecast-atlas__days,
+  .app .city-tabs__scroll,
+  .app .daily-plan__slots,
+  .app .activity-planner__chips {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .app .hava81-forecast-atlas__range::-webkit-scrollbar,
+  .app .hava81-forecast-atlas__hourly-viewport::-webkit-scrollbar,
+  .app .hava81-forecast-atlas__days::-webkit-scrollbar,
+  .app .city-tabs__scroll::-webkit-scrollbar,
+  .app .daily-plan__slots::-webkit-scrollbar,
+  .app .activity-planner__chips::-webkit-scrollbar {
+    display: none;
+  }
+  .app .hava81-forecast-atlas__range {
+    flex-wrap: wrap;
+    padding-inline-end: 0;
+    overflow-x: visible;
+  }
+  .app .hava81-forecast-atlas__range-button {
+    flex: 1 0 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    text-align: center;
+  }
+}

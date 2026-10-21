@@ -2,8 +2,9 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { tr } from './locales/tr';
 import { en } from './locales/en';
+import { detectBrowserLanguage } from './detectLanguage';
 
-// Get stored language or default to Turkish
+// Stored language first, then the browser's preferred language, then Turkish
 const getStoredLanguage = (): string => {
   try {
     const userSettings = localStorage.getItem('user-settings');
@@ -13,9 +14,10 @@ const getStoredLanguage = (): string => {
     }
 
     const legacyLanguage = localStorage.getItem('app-language');
-    return legacyLanguage === 'en' ? 'en' : 'tr';
+    if (legacyLanguage === 'en' || legacyLanguage === 'tr') return legacyLanguage;
+    return detectBrowserLanguage();
   } catch {
-    return 'tr';
+    return detectBrowserLanguage();
   }
 };
 

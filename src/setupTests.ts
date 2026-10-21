@@ -5,6 +5,13 @@
 import '@testing-library/jest-dom';
 import { afterAll, beforeAll, vi } from 'vitest';
 
+// The product's primary locale is Turkish; jsdom defaults to en-US.
+Object.defineProperty(window.navigator, 'languages', {
+  configurable: true,
+  value: ['tr-TR', 'tr'],
+});
+Object.defineProperty(window.navigator, 'language', { configurable: true, value: 'tr-TR' });
+
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
 
