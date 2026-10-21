@@ -133,22 +133,26 @@ Kaynak: `deploy/oracle/README.md`. _Not (3.1): secret'lar tanımlandıktan sonra
 
 ## Kaldığın yerden devam etme (yapay zekâ ajanı veya geliştirici için)
 
-- **Dal:** `fix/faz0-hizli-duzeltmeler` — **PR:** "Faz 0: hızlı düzeltmeler" (draft, hedef `main`). Önce `git fetch && git checkout fix/faz0-hizli-duzeltmeler && git pull`.
-- **Durum:** Bu dosyadaki işaretli kutular (`[x]`) tamamlanmış ve push'lanmış işlerdir. İlk boş kutudan devam et. Faz 0 sırası: 0.1, 0.3, 0.4, 0.5, 0.6, 0.7 (0.2 sahibin elle yapacağı iştir).
-- **Kurulum ve testler (repo kökünden):**
-  - `npm ci && npm --prefix apps/api ci`
-  - Web birim testleri: `npm test` (tek dosya: `npx vitest run src/__tests__/...`)
-  - Tip/lint: `npx tsc --noEmit` ve `npm run lint`
-  - API testleri: `npm run api:test` ; API build: `npm run api:build`
-  - Build: `npm run build`
-- **Kural:** bir madde = bir commit. Maddenin kutusunu **aynı commit'te** `[x]` yap. Her commit'ten hemen sonra push'la; push'lanmamış iş bırakma.
-- **Tasarım:** canlıdaki mavi premium görünüm esastır; teal'e dönme.
-- **Merge ve deploy sahibin (Zeki/meryem) onayını gerektirir.** `main`'e doğrudan push yapma, PR'ı draft'tan çıkarma, deploy etme.
-- Bir madde yapılamazsa kutuyu boş bırak ve altına nedenini not et.
-
+Güncel durum (2026-10-21 21:20 UTC):
+- **main'de bitenler:** Faz 0, 1, 2 (2.1 tokens.css, 2.3 Planla dahil), 3.x e2e sadeleştirme, 3.1 API deploy CI, 3.2 veri katmanı (#1327–#1331). Canlı API revision'ı `25247a7`.
+- **Sıradaki iş, plan sırasıyla:** 3.3 → 3.5 → 3.4 → 3.6 → 3.7 → 3.8 → Faz 4. Sonra en sonda bir kez tam test paketi (`npx vitest run`) ve CI tarayıcı testleri.
+  - 3.3 ve 3.5 için bir ajan çalışmaya başlamıştı ama push'lanmış iş yoksa sıfırdan başla. `origin` üzerinde `refactor/split-atlas-app` ya da `chore/dependabot` dalı varsa önce onlara bak.
+  - Ek açık işler: (1) görsel test taban görüntüleri CI Linux'ta üretilip commit'lenmeli (bkz. 3.x notu); (2) %200 metinde 3 küçük taşma (`overflow-wrap: anywhere` ile çözülür): 320 px'de "Önümüzdeki", 320–360 px'de 1sa…12sa aralık düğmeleri, 768 px'de Karşılaştır'daki "FAVORITE CITIES"; (3) 3.1 otomatik deploy'un etkinleşmesi için sahibin tek seferlik kurulumu: `deploy/oracle/README.md` → "One-time host setup".
+- **Çalışma kuralları (sahip Zeki):**
+  - Her madde ayrı dal + PR (hedef `main`). `main`'e doğrudan push yok.
+  - CI tamamen yeşilse uygun PR'ı squash-merge edebilirsin (izin 2026-10-21). Branch protection var; tüm check'ler bitmeden merge reddedilir.
+  - Squash-merge'den sonra üstüne kurulmuş bir dal varsa `git rebase --onto origin/main <eski taban> <dal>` ile taşı.
+  - Madde bitince sadece hızlı kontroller: `npm run type-check`, `npm run lint` (CSS lint dahil; `scripts/css-lint-baseline.json` yalnız küçülebilir), ilgili `npx vitest run <dosyalar>`, gerekiyorsa `npm run e2e -- <dosyalar>`. Tam paket yalnız en sonda.
+  - Madde bitince kutuyu `[x]` yap ve aynı PR'da "Kaldığı yer" notu yaz. Yarım iş için de not bırak.
+  - **Tasarım:** canlıdaki mavi premium görünüm esastır; DESIGN.md'deki teal/kağıt/serif yön kullanılmaz.
+  - **API deploy:** yalnız `apps/api` değiştiyse gerekir; sahip elle çalıştırır (komut aşağıda). `/home/ubuntu/Hava81` kullanılmaz. Doğrulama: `curl -s https://api.hava81.zekiakgul.dev/api/v1/health` yanıtındaki `revision` main'in SHA'sı olmalı.
+    `cd ~/hava81-prod-20261021 && git pull && sudo HAVA81_API_OPERATION_LOCK=/var/lib/hava81/api-operation.lock deploy/oracle/deploy-api-blue-green.sh`
+- **Kurulum ve testler (repo kökünden):** `npm ci && npm --prefix apps/api ci`; API `npm run api:test` / `npm run api:build`; web build `npm run build`.
+- Stylelint kullanma: bağımlılık zincirindeki yüksek önemli açık CI'daki `npm audit` adımını kırıyor. CSS lint `scripts/lint-css.mjs` (postcss) ile yapılıyor.
 
 ## Deploy günlüğü
 
+- **2026-10-21 21:14:** 3.1 + 3.2 API'ye elle deploy edildi; `/api/v1/health` revision `25247a7`, `/weather/bundle` ve `/weather/provinces` 200. Sunucu kopyasında deploy script'inde kalan eski yerel yama `git stash` ile kenara alındı (yeni script'te kilit varsayılanı zaten `/var/lib/hava81/api-operation.lock`).
 - **2026-10-21:** Faz 0 ve fast-uri API'ye deploy edildi; canlı API sürümü `9692181`. Kontrol: New York koordinatı 400, İstanbul 200.
   - Kullanılan temiz kopya: `/home/ubuntu/hava81-prod-20261021`. Eski `/home/ubuntu/Hava81` klasöründe commit'lenmemiş değişiklikler var ve `.git` izinleri bozuk, o klasörü kullanma.
   - `deploy/oracle/.env` repoda yok, sunucudaki kopyalardan alınıyor. Üç kopyası da aynı.
