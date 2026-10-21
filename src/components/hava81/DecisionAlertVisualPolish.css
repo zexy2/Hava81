@@ -39,7 +39,6 @@
   background: color-mix(in srgb, var(--color-atlas-paper) 80%, var(--color-atlas-line));
   border-style: dashed;
   border-color: var(--color-atlas-muted);
-  box-shadow: none;
   opacity: 1;
   cursor: not-allowed;
 }

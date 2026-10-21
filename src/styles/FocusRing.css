@@ -1,5 +1,6 @@
 /* Faz 0.6: tek odak halkası token'ı. İki tonlu halka (renkli halka + zıt "hale"),
    hem açık kartlarda hem lacivert header/hero üzerinde ≥3:1 kontrast sağlar.
+   outline-offset bileşene bırakılır (kaydırma raylarında içe dönük halka kırpılmasın diye).
    Bileşenlerdeki farklı odak stillerinin (teal, amber, beyaz, outline:none) yerine geçer. */
 .app {
   --focus-ring-color: #0b4fb3;
@@ -25,7 +26,6 @@
     [role='button']
   ):focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
-  outline-offset: var(--focus-ring-offset) !important;
   box-shadow: 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width) + 2px)
     var(--focus-ring-halo) !important;
 }

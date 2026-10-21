@@ -19,6 +19,9 @@ export default defineConfig({
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
     baseURL: previewUrl,
+    // The app now follows the device (Faz 0.7); pin the primary audience's defaults.
+    locale: 'tr-TR',
+    colorScheme: 'light',
     trace: 'on-first-retry',
     // Use an already-installed system browser on remote QA hosts when supplied.
     // CI keeps Playwright's managed browser by default.

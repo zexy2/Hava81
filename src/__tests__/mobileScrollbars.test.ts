@@ -22,9 +22,10 @@ describe('mobile native scrollbars (Faz 0.5)', () => {
     expect(css).toMatch(/scrollbar-width:\s*none/);
   });
 
-  it('lays the range picker out as an equal-column grid without overflow', () => {
+  it('wraps the range picker instead of overflowing it', () => {
     expect(css).toMatch(
-      /\.app \.hava81-forecast-atlas__range \{[\s\S]*?display:\s*grid;[\s\S]*?grid-auto-columns:\s*minmax\(0, 1fr\);[\s\S]*?overflow-x:\s*visible;/
+      /\.app \.hava81-forecast-atlas__range \{[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?overflow-x:\s*visible;/
     );
+    expect(css).not.toContain('route-weather__segments');
   });
 });
