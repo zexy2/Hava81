@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lock/hava81-api-operation.lock}"
+# Must match deploy-api-blue-green.sh (see the note there on /var/lock).
+OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lib/hava81/api-operation.lock}"
 INHERITED_LOCK_FD="${HAVA81_API_OPERATION_LOCK_FD:-}"
 if [[ -n "$INHERITED_LOCK_FD" ]]; then
   if [[ ! "$INHERITED_LOCK_FD" =~ ^[0-9]+$ ]] || ! flock -n "$INHERITED_LOCK_FD"; then
@@ -11,6 +12,7 @@ if [[ -n "$INHERITED_LOCK_FD" ]]; then
     exit 1
   fi
 else
+  mkdir -p "$(dirname "$OPERATION_LOCK")" 2>/dev/null || true
   exec 9>"$OPERATION_LOCK"
   if ! flock -n 9; then
     echo "another Hava81 API deploy/rollback operation is already running; refusing concurrent traffic switch" >&2

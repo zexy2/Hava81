@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,10 +31,22 @@ def parse_timestamp(value: object) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
-def validate(body_path: Path, headers_path: Path, expected_origin: str | None = None) -> None:
+def validate(
+    body_path: Path,
+    headers_path: Path,
+    expected_origin: str | None = None,
+    expected_revision: str | None = None,
+) -> None:
     payload = json.loads(body_path.read_text(encoding='utf-8'))
     if not isinstance(payload, dict) or payload.get('status') != 'ready':
         raise ValueError('readiness payload did not report status=ready')
+
+    if expected_revision:
+        actual_revision = payload.get('revision')
+        if actual_revision != expected_revision:
+            raise ValueError(
+                f'readiness revision mismatch: expected {expected_revision!r}, got {actual_revision!r}'
+            )
 
     observed_at = parse_timestamp(payload.get('timestamp'))
     age_seconds = (datetime.now(timezone.utc) - observed_at).total_seconds()
@@ -61,7 +74,15 @@ def main() -> int:
         print(f'usage: {sys.argv[0]} BODY_FILE HEADERS_FILE [EXPECTED_ORIGIN]', file=sys.stderr)
         return 2
     try:
-        validate(Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3] if len(sys.argv) == 4 else None)
+        validate(
+            Path(sys.argv[1]),
+            Path(sys.argv[2]),
+            sys.argv[3] if len(sys.argv) == 4 else None,
+            # Optional: set only for the freshly deployed candidate so a slot
+            # running an older image (e.g. the restored rollback slot) is not
+            # held to the new revision.
+            os.environ.get('HAVA81_EXPECTED_API_REVISION') or None,
+        )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f'API readiness validation failed: {exc}', file=sys.stderr)
         return 1

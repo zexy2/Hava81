@@ -224,14 +224,40 @@ test('health endpoints and OpenAPI docs are available', async (context) => {
   const docs = await app.inject({ method: 'GET', url: '/docs/json' });
 
   assert.equal(live.statusCode, 200);
-  assert.deepEqual(live.json(), { status: 'ok' });
+  assert.deepEqual(live.json(), { status: 'ok', revision: 'unknown' });
   assert.equal(live.headers['x-content-type-options'], 'nosniff');
   assert.equal(live.headers['cache-control'], 'no-store');
   assert.equal(ready.statusCode, 200);
   assert.equal(ready.headers['cache-control'], 'no-store');
   assert.equal(ready.json().status, 'ready');
+  assert.equal(ready.json().revision, 'unknown');
   assert.equal(docs.statusCode, 200);
   assert.ok(docs.json().paths['/api/v1/weather/current']);
+});
+
+test('health reports the build revision baked into the image', async (context) => {
+  const revision = '0123456789abcdef0123456789abcdef01234567';
+  const app = await buildApp({
+    env: createEnv({ HAVA81_API_REVISION: revision }),
+    provider: new FakeWeatherProvider(),
+    logger: false,
+  });
+  context.after(() => app.close());
+
+  const health = await app.inject({ method: 'GET', url: '/api/v1/health' });
+  const ready = await app.inject({ method: 'GET', url: '/api/v1/health/ready' });
+
+  assert.equal(health.statusCode, 200);
+  assert.equal(health.headers['cache-control'], 'no-store');
+  assert.equal(health.json().status, 'ok');
+  assert.equal(health.json().revision, revision);
+  assert.equal(typeof health.json().timestamp, 'string');
+  assert.equal(ready.json().revision, revision);
+});
+
+test('invalid build revision is rejected at startup', () => {
+  assert.throws(() => createEnv({ HAVA81_API_REVISION: 'abc; rm -rf /' }));
+  assert.equal(createEnv({ HAVA81_API_REVISION: '  ' }).HAVA81_API_REVISION, 'unknown');
 });
 
 test('current endpoint validates input and returns a normalized response', async (context) => {

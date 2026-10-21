@@ -3,7 +3,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lock/hava81-api-operation.lock}"
+# Default lives under /var/lib/hava81 (root-owned state dir). The former
+# /var/lock default sits in a sticky world-writable directory where a lock file
+# created by another user cannot be reopened even by root (fs.protected_regular).
+OPERATION_LOCK="${HAVA81_API_OPERATION_LOCK:-/var/lib/hava81/api-operation.lock}"
+mkdir -p "$(dirname "$OPERATION_LOCK")" 2>/dev/null || true
 exec 9>"$OPERATION_LOCK"
 if ! flock -n 9; then
   echo "another Hava81 API deploy/rollback operation is already running; refusing concurrent deploy" >&2
@@ -58,14 +62,50 @@ git_repo() {
   git -c "safe.directory=$REPO_ROOT" -C "$REPO_ROOT" "$@"
 }
 
+HAVE_GIT=0
 if git_repo rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  HAVE_GIT=1
   if [[ -n "$(git_repo status --porcelain -- apps/api)" ]]; then
     echo "apps/api has uncommitted changes; refusing production deploy" >&2
     exit 1
   fi
 fi
 
+# Image source. Default (manual operator flow): build apps/api from this
+# checkout. With HAVA81_API_IMAGE set (CI flow): pull that prebuilt image, e.g.
+# ghcr.io/zexy2/hava81-api:<sha>, instead of building on the host.
+API_IMAGE="${HAVA81_API_IMAGE:-}"
+if [[ -n "$API_IMAGE" ]]; then
+  if [[ ! "$API_IMAGE" =~ ^[a-z0-9.-]+(:[0-9]+)?/[a-z0-9._/-]+(:[A-Za-z0-9._-]+|@sha256:[0-9a-f]{64})$ ]]; then
+    echo "invalid HAVA81_API_IMAGE: $API_IMAGE" >&2
+    exit 1
+  fi
+  IMAGE_SOURCE="pull"
+else
+  IMAGE_SOURCE="build"
+fi
+
+# Revision the candidate must report on /api/v1/health/ready before traffic
+# moves. Pull mode: HAVA81_API_REVISION (CI passes the commit SHA). Build mode:
+# the checkout HEAD, which is also passed to the image as a build-arg.
+EXPECTED_REVISION="${HAVA81_API_REVISION:-}"
+if [[ -z "$EXPECTED_REVISION" && "$IMAGE_SOURCE" == "build" && "$HAVE_GIT" == "1" ]]; then
+  EXPECTED_REVISION="$(git_repo rev-parse HEAD)"
+fi
+if [[ -n "$EXPECTED_REVISION" && ! "$EXPECTED_REVISION" =~ ^[0-9A-Za-z._-]{1,64}$ ]]; then
+  echo "invalid HAVA81_API_REVISION: $EXPECTED_REVISION" >&2
+  exit 1
+fi
+export HAVA81_API_REVISION="${EXPECTED_REVISION:-unknown}"
+# Escape hatch for redeploying an old commit whose API predates the revision
+# field: HAVA81_API_VERIFY_REVISION=0 keeps the build-arg but skips the check.
+VERIFY_REVISION="$EXPECTED_REVISION"
+if [[ "${HAVA81_API_VERIFY_REVISION:-1}" == "0" ]]; then
+  VERIFY_REVISION=""
+fi
+
 echo "[api] current=$CURRENT_PORT candidate=$TARGET_PORT final=$PREFERRED_PORT rollback=$ROLLBACK_PORT project=$PROJECT_NAME promote_to_preferred=$PROMOTE_TO_PREFERRED"
+echo "[api] source=$IMAGE_SOURCE image=${API_IMAGE:-<local build>} revision=${EXPECTED_REVISION:-unknown} verify_revision=${VERIFY_REVISION:+yes}"
 if [[ "${PLAN_ONLY:-0}" == "1" ]]; then
   exit 0
 fi
@@ -120,11 +160,22 @@ if [[ ! "$BUILD_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
   echo "invalid HAVA81_API_BUILD_TIMEOUT_SECONDS: $BUILD_TIMEOUT_SECONDS" >&2
   exit 1
 fi
-if ! timeout --signal=TERM --kill-after=30s "$BUILD_TIMEOUT_SECONDS" docker compose -p "$PROJECT_NAME" build weather-api; then
-  echo "API image build failed or exceeded ${BUILD_TIMEOUT_SECONDS}s; traffic unchanged" >&2
-  exit 1
+if [[ "$IMAGE_SOURCE" == "pull" ]]; then
+  # DOCKER_CONFIG may point at a short-lived registry credential (CI passes the
+  # job's GITHUB_TOKEN); a public GHCR package needs no login at all.
+  if ! timeout --signal=TERM --kill-after=30s "$BUILD_TIMEOUT_SECONDS" docker pull "$API_IMAGE"; then
+    echo "API image pull failed or exceeded ${BUILD_TIMEOUT_SECONDS}s: $API_IMAGE; traffic unchanged" >&2
+    exit 1
+  fi
+  docker tag "$API_IMAGE" "${PROJECT_NAME}-weather-api:latest"
+  docker compose -p "$PROJECT_NAME" up -d --no-build --force-recreate weather-api
+else
+  if ! timeout --signal=TERM --kill-after=30s "$BUILD_TIMEOUT_SECONDS" docker compose -p "$PROJECT_NAME" build weather-api; then
+    echo "API image build failed or exceeded ${BUILD_TIMEOUT_SECONDS}s; traffic unchanged" >&2
+    exit 1
+  fi
+  docker compose -p "$PROJECT_NAME" up -d weather-api
 fi
-docker compose -p "$PROJECT_NAME" up -d weather-api
 
 READY_FILE="$(mktemp "/tmp/hava81-api-ready.XXXXXX.json")"
 READY_HEADERS="$(mktemp "/tmp/hava81-api-ready.XXXXXX.headers")"
@@ -136,12 +187,14 @@ trap cleanup EXIT
 
 validate_ready_port() {
   local port="$1"
+  local expected_revision="${2:-}"
   local ready=0
-  echo "[api] waiting for readiness on $port"
+  echo "[api] waiting for readiness on $port${expected_revision:+ (revision $expected_revision)}"
   for _attempt in $(seq 1 30); do
     if curl -fsS --max-time 5 -D "$READY_HEADERS" \
       "http://127.0.0.1:${port}/api/v1/health/ready" >"$READY_FILE" && \
-      python3 "$PWD/validate-api-readiness.py" "$READY_FILE" "$READY_HEADERS"; then
+      HAVA81_EXPECTED_API_REVISION="$expected_revision" \
+        python3 "$PWD/validate-api-readiness.py" "$READY_FILE" "$READY_HEADERS"; then
       ready=1
       break
     fi
@@ -177,7 +230,8 @@ PY
 validate_slot() {
   local port="$1"
   local project="$2"
-  if ! validate_ready_port "$port"; then
+  local expected_revision="${3:-}"
+  if ! validate_ready_port "$port" "$expected_revision"; then
     docker compose -p "$project" ps >&2 || true
     docker compose -p "$project" logs --tail=100 weather-api >&2 || true
     return 1
@@ -203,7 +257,7 @@ validate_slot() {
   fi
 }
 
-if ! validate_slot "$TARGET_PORT" "$PROJECT_NAME"; then
+if ! validate_slot "$TARGET_PORT" "$PROJECT_NAME" "$VERIFY_REVISION"; then
   echo "candidate API on $TARGET_PORT failed validation; traffic unchanged" >&2
   exit 1
 fi
@@ -226,7 +280,7 @@ if [[ "$PROMOTE_TO_PREFERRED" == "1" ]]; then
   echo "[api] promoting exact validated image to preferred production slot 4002"
   docker tag "$CANDIDATE_IMAGE" "${SLOT_4002_PROJECT}-weather-api:latest"
   HOST_PORT=4002 docker compose -p "$SLOT_4002_PROJECT" up -d --no-build --force-recreate weather-api
-  if ! validate_slot 4002 "$SLOT_4002_PROJECT"; then
+  if ! validate_slot 4002 "$SLOT_4002_PROJECT" "$VERIFY_REVISION"; then
     echo "preferred 4002 promotion failed; validated canary remains active on 4001" >&2
     exit 1
   fi
@@ -244,10 +298,20 @@ else
   ./switch-api-traffic.sh 4002
 fi
 
-if git_repo rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  mkdir -p /var/lib/hava81
-  git_repo rev-parse HEAD > /var/lib/hava81/current-api-revision
-  git_repo rev-parse HEAD:apps/api > /var/lib/hava81/current-api-tree
+# Record what now serves traffic. Prefer the verified image revision (pull
+# mode may run from a checkout that differs from the image); fall back to HEAD.
+mkdir -p /var/lib/hava81
+DEPLOYED_REVISION="$EXPECTED_REVISION"
+if [[ -z "$DEPLOYED_REVISION" && "$HAVE_GIT" == "1" ]]; then
+  DEPLOYED_REVISION="$(git_repo rev-parse HEAD)"
+fi
+if [[ -n "$DEPLOYED_REVISION" ]]; then
+  printf '%s\n' "$DEPLOYED_REVISION" > /var/lib/hava81/current-api-revision
+fi
+if [[ "$HAVE_GIT" == "1" ]]; then
+  if ! git_repo rev-parse "${DEPLOYED_REVISION:-HEAD}:apps/api" > /var/lib/hava81/current-api-tree 2>/dev/null; then
+    git_repo rev-parse HEAD:apps/api > /var/lib/hava81/current-api-tree
+  fi
 fi
 
-echo "[api] deployment complete active=4002 rollback=4001 candidate_image=$CANDIDATE_IMAGE"
+echo "[api] deployment complete active=4002 rollback=4001 revision=${DEPLOYED_REVISION:-unknown} candidate_image=$CANDIDATE_IMAGE"

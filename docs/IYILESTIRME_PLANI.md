@@ -73,7 +73,8 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava8
 
 ## Faz 3: Mühendislik temizliği (~1–2 hafta, Faz 2 ile paralel yürüyebilir)
 
-- [ ] **3.1** API deploy'unu CI'a bağla: imajı GHCR'a pushla, Oracle'da blue/green script'ini otomatik tetikle, `/health` endpoint'inde revision doğrula — _M_
+- [x] **3.1** API deploy'unu CI'a bağla: imajı GHCR'a pushla, Oracle'da blue/green script'ini otomatik tetikle, `/health` endpoint'inde revision doğrula — _M_
+  - Kaldığı yer: Yeni workflow `.github/workflows/deploy-api.yml` (yalnız `main` push'unda ve `apps/api/**`, `deploy/oracle/**` ya da workflow'un kendisi değiştiyse; elle "Run workflow" de var): API testleri → `ghcr.io/zexy2/hava81-api:<sha>` + `:main` imajı (GITHUB_TOKEN, `packages: write`, build-arg `HAVA81_API_REVISION=<sha>`) → `environment: production` altında SSH ile `deploy/oracle/ci-deploy-api.sh <sha>` → herkese açık `https://api.hava81.zekiakgul.dev/api/v1/health` yanıtındaki `revision` commit SHA'sına eşit olmalı. `ORACLE_SSH_HOST/USER/KEY/KNOWN_HOSTS` secret'larından biri yoksa deploy işi uyarı verip atlanıyor (CI yeşil kalıyor). API: `GET /api/v1/health` (`status`, `revision`, `timestamp`) eklendi, `health/live` ve `health/ready` de `revision` döndürüyor. `deploy-api-blue-green.sh` geri uyumlu: `HAVA81_API_IMAGE` verilirse sunucuda build yerine imajı çekiyor; her iki modda da aday slot beklenen revision'ı raporlamadan trafik değişmiyor. Kilit varsayılanı `/var/lib/hava81/api-operation.lock` oldu (Deploy günlüğündeki `/var/lock` sorunu). **Etkinleşmesi için Zeki'nin adımları gerekiyor** (secret'lar, sunucuda deploy anahtarı, eski kilidi silme): `deploy/oracle/README.md` → "One-time host setup" ve rapor `reports/deploy.md`.
 - [ ] **3.2** Veri katmanı: istek iptali (AbortController), `isLoading` yalnızca çekirdek veriye bağlansın, tek bir `/weather/bundle` uç noktası olsun. Şu an şehir başına 5 istek atılıyor, rate limit dakikada 60. TanStack Query değerlendirilebilir — _M–L_
 - [ ] **3.3** `ForecastAtlas.tsx` tek fonksiyonda 1.373 satır; grafik, saatler, günler ve seçici olarak böl. `App.tsx` (960 satır) içinden routing, ikonlar ve iskelet bileşenlerini ayır — _M_
 - [ ] **3.4** Kaynak dosyayı regex'le okuyan 32 test dosyasını gerçek DOM, `getComputedStyle` ya da görsel snapshot testine taşı. 6.615 satırlık smoke dosyasını böl. Coverage eşiğini %55'ten %85'e çek — _M_
@@ -119,7 +120,7 @@ Ajan bu PR'ı merge etmez. Yapılacaklar:
 4. Ardından aşağıdaki **API deploy adımlarını** uygula (fast-uri API bağımlılığıdır; canlıya ancak elle deploy ile çıkar).
 
 ### API'yi Oracle'a elle deploy etme (0.1 ve 0.2 için)
-Kaynak: `deploy/oracle/README.md`. CI web sitesini yayınlar ama **API'yi deploy etmez**.
+Kaynak: `deploy/oracle/README.md`. _Not (3.1): secret'lar tanımlandıktan sonra API `deploy-api.yml` ile otomatik deploy edilir; aşağıdaki elle yol yedek olarak geçerli. Sunucu klasörü: `/home/ubuntu/hava81-prod-20261021`._ CI web sitesini yayınlar; API'yi ayrı `deploy-api.yml` workflow'u deploy eder.
 1. Oracle sunucusuna SSH ile bağlan, repo klasörüne geç (klasör yolu repoda yazılı değil; sunucudaki Hava81 checkout'u).
 2. `git checkout main && git pull origin main` (merge edilmiş revizyon). `apps/api` altında commit'lenmemiş değişiklik olmamalı.
 3. Önce plan: `sudo PLAN_ONLY=1 deploy/oracle/deploy-api-blue-green.sh`

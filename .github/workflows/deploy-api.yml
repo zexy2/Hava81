@@ -1,0 +1,212 @@
+name: API deploy (Oracle)
+
+# Builds the API image, publishes it to GHCR and runs the Oracle blue/green
+# deploy (deploy/oracle/ci-deploy-api.sh -> deploy-api-blue-green.sh) only for
+# main pushes that touch the API or its deployment files. The public
+# /api/v1/health revision must equal the pushed commit afterwards.
+#
+# Without the ORACLE_SSH_* secrets the image is still published, the deploy job
+# is skipped with a warning and the run stays green.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'deploy/oracle/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+  API_PUBLIC_URL: https://api.hava81.zekiakgul.dev
+  DEFAULT_DEPLOY_DIR: /home/ubuntu/hava81-prod-20261021
+
+permissions:
+  contents: read
+
+# Never cancel a running blue/green switch; GitHub keeps only the newest
+# pending run, so bursts of pushes collapse into one deploy of the latest SHA.
+concurrency:
+  group: hava81-api-deploy
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: API test & build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+      - run: npm ci --prefix apps/api --no-audit
+      - run: npm run api:type-check
+      - run: npm run api:test
+      - run: npm run api:build
+      - name: Verify deployment scripts
+        run: |
+          bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh deploy/oracle/ci-deploy-api.sh
+          bash scripts/test-api-operation-lock.sh
+          bash scripts/test-api-stable-slot-plan.sh
+          bash scripts/test-api-image-source-plan.sh
+          bash scripts/test-api-ci-deploy-entry.sh
+          python3 deploy/oracle/test_validate_api_readiness.py
+
+  image:
+    name: Publish API image to GHCR
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Resolve image name
+        id: name
+        run: |
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/hava81-api"
+          echo "repo=$repo" >>"$GITHUB_OUTPUT"
+          echo "image=$repo:$GITHUB_SHA" >>"$GITHUB_OUTPUT"
+      # Buildx setup pulls moby/buildkit from Docker Hub; retry once on timeouts.
+      - name: Set up Docker Buildx (first attempt)
+        id: buildx_setup_first
+        uses: docker/setup-buildx-action@v4
+        continue-on-error: true
+      - name: Retry Docker Buildx setup after registry timeout
+        if: steps.buildx_setup_first.outcome == 'failure'
+        uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.name.outputs.repo }}
+          tags: |
+            type=raw,value=${{ github.sha }}
+            type=raw,value=main
+          labels: |
+            org.opencontainers.image.title=hava81-api
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Build and push API image
+        uses: docker/build-push-action@v7
+        with:
+          context: apps/api
+          file: apps/api/Dockerfile
+          push: true
+          build-args: |
+            HAVA81_API_REVISION=${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=hava81-api
+          cache-to: type=gha,scope=hava81-api,mode=max
+
+  deploy:
+    name: Blue/green deploy to Oracle
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: ${{ env.API_PUBLIC_URL }}/api/v1/health
+    permissions:
+      contents: read
+      # The job token is piped to the host for this one pull (private package).
+      packages: read
+    env:
+      ORACLE_SSH_HOST: ${{ secrets.ORACLE_SSH_HOST }}
+      ORACLE_SSH_USER: ${{ secrets.ORACLE_SSH_USER }}
+      ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+      ORACLE_SSH_KNOWN_HOSTS: ${{ secrets.ORACLE_SSH_KNOWN_HOSTS }}
+      ORACLE_SSH_PORT: ${{ secrets.ORACLE_SSH_PORT }}
+      ORACLE_DEPLOY_DIR: ${{ vars.ORACLE_DEPLOY_DIR }}
+    steps:
+      - name: Check deploy secrets
+        id: secrets
+        run: |
+          missing=()
+          for name in ORACLE_SSH_HOST ORACLE_SSH_USER ORACLE_SSH_KEY ORACLE_SSH_KNOWN_HOSTS; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if (( ${#missing[@]} )); then
+            msg="Oracle API deploy skipped: missing secrets ${missing[*]}. Image ${{ needs.image.outputs.image }} was published; deploy it by hand (deploy/oracle/README.md)."
+            echo "::warning title=API deploy skipped::$msg"
+            echo "### API deploy skipped" >>"$GITHUB_STEP_SUMMARY"
+            echo "$msg" >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure SSH
+        if: steps.secrets.outputs.enabled == 'true'
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$ORACLE_SSH_KEY" >~/.ssh/hava81_deploy
+          chmod 600 ~/.ssh/hava81_deploy
+          printf '%s\n' "$ORACLE_SSH_KNOWN_HOSTS" >~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Run blue/green deploy on Oracle
+        id: remote
+        if: steps.secrets.outputs.enabled == 'true'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          deploy_dir="${ORACLE_DEPLOY_DIR:-$DEFAULT_DEPLOY_DIR}"
+          set -o pipefail
+          printf '%s\n' "$GHCR_TOKEN" | ssh \
+            -i ~/.ssh/hava81_deploy \
+            -p "${ORACLE_SSH_PORT:-22}" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -o ConnectTimeout=20 \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=6 \
+            "$ORACLE_SSH_USER@$ORACLE_SSH_HOST" \
+            "$deploy_dir/deploy/oracle/ci-deploy-api.sh $GITHUB_SHA" | tee "$RUNNER_TEMP/remote-deploy.log"
+          if grep -qx 'HAVA81_DEPLOY_RESULT=superseded' "$RUNNER_TEMP/remote-deploy.log"; then
+            echo "::warning title=API deploy superseded::Oracle checkout already has a newer main revision; $GITHUB_SHA was not deployed."
+            echo "result=superseded" >>"$GITHUB_OUTPUT"
+          elif grep -qx 'HAVA81_DEPLOY_RESULT=deployed' "$RUNNER_TEMP/remote-deploy.log"; then
+            echo "result=deployed" >>"$GITHUB_OUTPUT"
+          else
+            echo "::error::remote deploy finished without a result marker"
+            exit 1
+          fi
+
+      - name: Verify public /health revision
+        if: steps.remote.outputs.result == 'deployed'
+        run: |
+          url="$API_PUBLIC_URL/api/v1/health"
+          revision=""
+          for attempt in $(seq 1 12); do
+            if body="$(curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "$url")"; then
+              revision="$(jq -r '.revision // empty' <<<"$body")"
+              if [[ "$revision" == "$GITHUB_SHA" ]]; then
+                echo "Public API serves revision $revision"
+                echo "### API deployed: \`$revision\`" >>"$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+            fi
+            echo "attempt $attempt: revision=${revision:-<none>} expected=$GITHUB_SHA"
+            sleep 10
+          done
+          echo "::error::$url does not report revision $GITHUB_SHA (last: ${revision:-<none>})"
+          exit 1
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/hava81_deploy

@@ -185,7 +185,8 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
         cache,
         provider instanceof ResilientWeatherProvider
           ? () => provider.getHealth()
-          : () => ({ name: provider.name ?? 'custom-provider' })
+          : () => ({ name: provider.name ?? 'custom-provider' }),
+        env.HAVA81_API_REVISION
       );
       await registerWeatherRoutes(api, weatherService);
       await registerContextRoutes(api, contextService, cache);

@@ -17,6 +17,12 @@ COPY package*.json ./
 RUN npm ci --omit=dev --no-audit && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 
+# Build revision (commit SHA) reported by /api/v1/health. Declared after the
+# dependency layers so a new SHA does not invalidate the npm ci cache.
+ARG HAVA81_API_REVISION=unknown
+ENV HAVA81_API_REVISION=${HAVA81_API_REVISION}
+LABEL org.opencontainers.image.revision=${HAVA81_API_REVISION}
+
 USER node
 EXPOSE 4000
 

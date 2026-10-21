@@ -107,13 +107,17 @@ jobs:
       - run: npm run api:test
       - run: npm run api:build
       - name: Verify API deployment shell syntax
-        run: bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh
+        run: bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh deploy/oracle/ci-deploy-api.sh
       - name: Verify API Docker install policy
         run: bash scripts/test-api-dockerfile-install-policy.sh
       - name: Verify API deploy operation locking
         run: bash scripts/test-api-operation-lock.sh
       - name: Verify API stable-slot deployment plan
         run: bash scripts/test-api-stable-slot-plan.sh
+      - name: Verify API image-source (build vs GHCR pull) deployment plan
+        run: bash scripts/test-api-image-source-plan.sh
+      - name: Verify API CI deploy entry point
+        run: bash scripts/test-api-ci-deploy-entry.sh
       - name: Verify Nginx preferred-port install template
         run: bash scripts/test-nginx-primary-template.sh
       - name: Verify API build timeout policy
