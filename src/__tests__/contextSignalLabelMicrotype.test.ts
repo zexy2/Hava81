@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
 const cssRule = (source: string, selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -13,7 +13,7 @@ const remFontSize = (rule: string) => {
 
 describe('Context Signals evidence-label microtype', () => {
   it('keeps evidence labels at or above the 13px-equivalent floor', () => {
-    const css = readFileSync('src/components/hava81/ContextSignalsPanel.css', 'utf8');
+    const css = readCss('src/components/hava81/ContextSignalsPanel.css');
     expect(remFontSize(cssRule(css, '.context-signal > span'))).toBeGreaterThanOrEqual(0.8125);
   });
 });

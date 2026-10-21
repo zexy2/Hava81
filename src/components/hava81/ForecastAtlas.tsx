@@ -11,7 +11,6 @@ import {
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { WeatherSymbol } from './WeatherSymbol';
 import './ForecastAtlas.css';
-import '../../styles/ForecastCalendarVisualPolish.css';
 
 export interface ForecastAtlasProps {
   daily: DailyForecast[];

@@ -1,9 +1,9 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
 describe('offscreen decision panel containment', () => {
   it('keeps commute and route tools mounted while allowing offscreen rendering work to be skipped', () => {
-    const css = readFileSync('src/styles/offscreen-panels.css', 'utf8');
+    const css = readCss('src/styles/offscreen-panels.css');
 
     expect(css).toMatch(
       /\.atlas-dashboard \.commute-plan\s*\{[\s\S]*?content-visibility:\s*auto;[\s\S]*?contain-intrinsic-size:\s*auto 28rem;/

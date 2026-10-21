@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
-const css = readFileSync('src/styles/NavigationVisualPolish.css', 'utf8');
+// Faz 2.1: the header navigation pass now lives in the shell and city-tab stylesheets.
+const css = [readCss('src/styles/App.css'), readCss('src/components/CityTabs.css')].join('\n');
 const rule = (selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? '';

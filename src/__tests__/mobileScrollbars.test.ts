@@ -1,14 +1,17 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
-const css = readFileSync('src/styles/MobileScrollbars.css', 'utf8');
-const app = readFileSync('src/App.tsx', 'utf8');
+// Faz 2.1: each rail's rule lives in its component stylesheet.
+const css = [
+  'src/components/hava81/ForecastAtlas.css',
+  'src/components/CityTabs.css',
+  'src/components/hava81/DailyPlanPanel.css',
+  'src/components/hava81/ActivityPlanner.css',
+]
+  .map(readCss)
+  .join('\n');
 
 describe('mobile native scrollbars (Faz 0.5)', () => {
-  it('is imported by the app shell', () => {
-    expect(app).toMatch(/import '\.\/styles\/MobileScrollbars\.css';/);
-  });
-
   it('hides native scrollbars on mobile horizontal rails', () => {
     expect(css).toMatch(/@media \(max-width: 47\.99rem\)/);
     for (const rail of [

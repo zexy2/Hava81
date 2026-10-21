@@ -1,398 +1,599 @@
-.hava81-compare {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-xl);
-  margin-bottom: 1.5rem;
-  padding: var(--space-xl) 0;
-  color: var(--color-atlas-ink);
-  background: transparent;
-  border-block: 1px solid var(--color-atlas-line);
-  border-inline: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
+@layer components {
+  /* Aşağıdaki görünüm bölümleri bileşenin temel kurallarından ÖNCE gelir (eski yükleme sırası korunur;
+   aynı özgüllükteki temel kurallar bunları ezer). Sırayı değiştirmeden önce ekran görüntüsüyle doğrula. */
 
-.hava81-compare__header {
-  display: flex;
-  min-width: 0;
-  align-items: start;
-  justify-content: space-between;
-  gap: var(--space-lg);
-}
+  /* ── Yüzey ve boşluk dili (v2 inceltme) ── */
 
-.hava81-compare__header > div,
-.hava81-compare__header h2 {
-  min-width: 0;
-}
+  .app .hava81-compare {
+    min-width: 0;
+    margin: 0;
+    padding: clamp(1.1rem, 2.3vw, 1.8rem);
+    color: var(--color-atlas-ink);
+    background: var(--color-atlas-paper);
+    border: 1px solid var(--refine-panel-line);
+    border-radius: var(--refine-radius);
+    box-shadow: var(--refine-card-shadow);
+  }
 
-.hava81-compare__header h2 {
-  margin: 0.2rem 0 0;
-  overflow-wrap: anywhere;
-  font-size: 1.5rem;
-}
+  .app .hava81-compare__header h2 {
+    color: var(--premium-ink);
+    font-weight: 760;
+    letter-spacing: -0.035em;
+    line-height: 1.25;
+  }
 
-.hava81-compare__limit-note {
-  margin: 0;
-  padding: var(--space-sm) var(--space-md);
-  color: var(--color-atlas-muted);
-  background: var(--color-atlas-field);
-  border-inline-start: 3px solid var(--color-aegean);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
+  .app .hava81-compare {
+    padding: clamp(1rem, 3vw, 2rem);
+  }
 
-.hava81-compare__table {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0;
-  border-block: 1px solid var(--color-atlas-line);
-}
+  .app .hava81-compare__table {
+    gap: 1rem;
+    border: none;
+  }
 
-.hava81-compare__city {
-  display: grid;
-  min-width: 0;
-  gap: var(--space-xs);
-  padding: var(--space-lg);
-  background: transparent;
-  border: 0;
-  border-inline-start: 1px solid var(--color-atlas-line);
-  border-radius: 0;
-}
+  .app .hava81-compare__city,
+  .app .hava81-compare__city:first-child {
+    border: 1px solid var(--refine-panel-line);
+    border-radius: 16px;
+    background: var(--refine-highlight);
+  }
 
-.hava81-compare__city:first-child {
-  border-inline-start: 0;
-}
+  .app .hava81-compare__city.is-winner {
+    border-color: var(--color-aegean);
+    box-shadow: inset 0 3px var(--color-aegean);
+  }
 
-.hava81-compare__city.is-winner {
-  border-inline-start: 3px solid var(--color-aegean);
-}
+  @media (max-width: 63.99rem) {
+    .app .hava81-compare {
+      padding: clamp(1rem, 2.8vw, 1.5rem);
+      border-radius: 18px;
+    }
+  }
 
-.hava81-compare__city.is-winner .hava81-compare__score {
-  color: var(--color-aegean-deep);
-}
+  @media (max-width: 47.99rem) {
+    .app .hava81-compare__header {
+      flex-wrap: wrap;
+    }
+  }
 
-.hava81-compare__city header {
-  display: flex;
-  min-width: 0;
-  align-items: start;
-  justify-content: space-between;
-  gap: var(--space-xs);
-}
+  .app .hava81-compare__empty {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    max-width: 42rem;
+    width: 100%;
+    margin: 0.4rem auto 0.8rem;
+    padding: clamp(1.25rem, 3.5vw, 2.6rem);
+    border: 1px dashed color-mix(in srgb, var(--color-aegean) 30%, var(--refine-panel-line));
+    border-radius: 20px;
+    background: var(--refine-highlight);
+    gap: 0.7rem;
+  }
 
-.hava81-compare__city h3 {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-size: 1.05rem;
-}
+  .app .hava81-compare__empty h3 {
+    margin: 0.1rem 0;
+    color: var(--premium-ink);
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    letter-spacing: -0.03em;
+  }
 
-.hava81-compare__winner {
-  min-width: 0;
-  max-width: 34rem;
-  padding: 0 0 0 var(--space-md);
-  background: transparent;
-  border: 0;
-  border-inline-start: 2px solid var(--color-aegean);
-  border-radius: 0;
-}
+  .app .hava81-compare__empty p {
+    max-width: 40ch;
+    margin: 0;
+    color: var(--color-atlas-muted);
+    line-height: 1.55;
+  }
 
-.hava81-compare__winner span,
-.hava81-compare__winner small {
-  display: block;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--color-atlas-muted);
-  font-size: 0.8125rem;
-}
+  .app .hava81-compare__empty-tip {
+    font-size: 0.9rem;
+  }
 
-.hava81-compare__winner strong {
-  display: block;
-  min-width: 0;
-  margin: 0.2rem 0;
-  overflow-wrap: anywhere;
-}
+  .app .hava81-compare__empty-illustration {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 6.2rem;
+    height: 5.3rem;
+    padding: 0.65rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--color-aegean-pale) 68%, var(--color-atlas-paper));
+  }
 
-.hava81-compare__score-wrap {
-  display: grid;
-  min-width: 0;
-  justify-items: end;
-  gap: 0.15rem;
-}
+  .app .hava81-compare__empty-bar {
+    width: 1.2rem;
+    height: 45%;
+    border-radius: 6px 6px 3px 3px;
+    background: #83b6f7;
+  }
 
-.hava81-compare__score-wrap small {
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  color: var(--color-atlas-muted);
-  font-size: 0.8125rem;
-  font-weight: 650;
-  line-height: 1.2;
-  text-align: end;
-}
+  .app .hava81-compare__empty-bar:nth-child(2) {
+    height: 78%;
+    background: #276cdc;
+  }
 
-.hava81-compare__score {
-  display: flex;
-  min-width: 0;
-  max-width: 100%;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: flex-end;
-  font-size: 1.7rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
+  .app .hava81-compare__empty-bar:nth-child(3) {
+    height: 61%;
+    background: #30ba94;
+  }
 
-.hava81-compare__score span {
-  color: var(--color-atlas-muted);
-  font-size: 0.8125rem;
-}
+  .app .hava81-compare__empty-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+    padding: 0.65rem 1.3rem;
+    color: #fff;
+    background: #216bdc;
+    border: 1px solid #216bdc;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 740;
+    cursor: pointer;
+  }
 
-.hava81-compare__metrics {
-  display: grid;
-  gap: 0;
-  margin: var(--space-xs) 0;
-  border-top: 1px solid var(--color-atlas-line);
-}
+  .app .hava81-compare__empty-action:hover {
+    background: #154da7;
+  }
 
-.hava81-compare__metrics > span {
-  display: flex;
-  min-width: 0;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-block: 0.42rem;
-  color: var(--color-atlas-muted);
-  border-bottom: 1px solid var(--color-atlas-line);
-  font-size: 0.85rem;
-}
+  .app .hava81-compare__empty-action:focus-visible {
+    outline: 3px solid var(--color-atlas-ink);
+    outline-offset: 3px;
+  }
 
-.hava81-compare__metric-label {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
+  @media (max-width: 47.99rem) {
+    .app .hava81-compare__empty {
+      margin-top: 0.75rem;
+    }
+  }
 
-.hava81-compare__metrics b {
-  min-width: 0;
-  margin-inline-start: auto;
-  overflow-wrap: anywhere;
-  color: var(--color-atlas-ink);
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
+  /* Programmatic heading focus announces the new comparison view to screen readers.
+ * It is not a tab stop; remove the browser's accidental black rectangle. */
 
-@media (max-width: 47.99rem) {
+  .app .hava81-compare__header h2:focus {
+    outline: none;
+  }
+
+  /* ── Bileşenin temel stilleri ── */
+
   .hava81-compare {
-    gap: var(--space-lg);
-    padding: var(--space-lg) 0;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-xl);
+    margin-bottom: 1.5rem;
+    padding: var(--space-xl) 0;
+    color: var(--color-atlas-ink);
+    background: transparent;
+    border-block: 1px solid var(--color-atlas-line);
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .hava81-compare__header {
-    flex-direction: column;
+    display: flex;
+    min-width: 0;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--space-lg);
   }
 
-  .hava81-compare__winner {
-    width: 100%;
-    max-width: none;
+  .hava81-compare__header > div,
+  .hava81-compare__header h2 {
+    min-width: 0;
+  }
+
+  .hava81-compare__header h2 {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+    font-size: 1.5rem;
+  }
+
+  .hava81-compare__limit-note {
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    color: var(--color-atlas-muted);
+    background: var(--color-atlas-field);
+    border-inline-start: 3px solid var(--color-aegean);
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
 
   .hava81-compare__table {
-    grid-template-columns: minmax(0, 1fr);
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0;
+    border-block: 1px solid var(--color-atlas-line);
   }
 
   .hava81-compare__city {
-    /* The refined cards have their own borders: preserve breathing room for
-       city names, metrics and scores even on 320px phones. */
-    padding-inline: clamp(0.75rem, 3vw, 1rem);
+    display: grid;
+    min-width: 0;
+    gap: var(--space-xs);
+    padding: var(--space-lg);
+    background: transparent;
+    border: 0;
+    border-inline-start: 1px solid var(--color-atlas-line);
+    border-radius: 0;
+  }
+
+  .hava81-compare__city:first-child {
     border-inline-start: 0;
   }
 
-  .hava81-compare__city:nth-child(n + 2) {
-    border-block-start: 1px solid var(--color-atlas-line);
+  .hava81-compare__city.is-winner {
+    border-inline-start: 3px solid var(--color-aegean);
+  }
+
+  .hava81-compare__city.is-winner .hava81-compare__score {
+    color: var(--color-aegean-deep);
   }
 
   .hava81-compare__city header {
-    flex-wrap: wrap;
+    display: flex;
+    min-width: 0;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--space-xs);
   }
 
   .hava81-compare__city h3 {
-    flex: 1 1 8rem;
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 1.05rem;
+  }
+
+  .hava81-compare__winner {
+    min-width: 0;
+    max-width: 34rem;
+    padding: 0 0 0 var(--space-md);
+    background: transparent;
+    border: 0;
+    border-inline-start: 2px solid var(--color-aegean);
+    border-radius: 0;
+  }
+
+  .hava81-compare__winner span,
+  .hava81-compare__winner small {
+    display: block;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hava81-compare__winner strong {
+    display: block;
+    min-width: 0;
+    margin: 0.2rem 0;
+    overflow-wrap: anywhere;
+  }
+
+  .hava81-compare__score-wrap {
+    display: grid;
+    min-width: 0;
+    justify-items: end;
+    gap: 0.15rem;
+  }
+
+  .hava81-compare__score-wrap small {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+    font-weight: 650;
+    line-height: 1.2;
+    text-align: end;
+  }
+
+  .hava81-compare__score {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    font-size: 1.7rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .hava81-compare__score span {
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hava81-compare__metrics {
+    display: grid;
+    gap: 0;
+    margin: var(--space-xs) 0;
+    border-top: 1px solid var(--color-atlas-line);
   }
 
   .hava81-compare__metrics > span {
-    flex-wrap: wrap;
-    row-gap: 0.25rem;
+    display: flex;
+    min-width: 0;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.42rem;
+    color: var(--color-atlas-muted);
+    border-bottom: 1px solid var(--color-atlas-line);
+    font-size: 0.85rem;
   }
-}
 
+  .hava81-compare__metric-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 
-/* Visual QA 2026-10-09 — editorial comparison surface.
+  .hava81-compare__metrics b {
+    min-width: 0;
+    margin-inline-start: auto;
+    overflow-wrap: anywhere;
+    color: var(--color-atlas-ink);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+
+  @media (max-width: 47.99rem) {
+    .hava81-compare {
+      gap: var(--space-lg);
+      padding: var(--space-lg) 0;
+    }
+
+    .hava81-compare__header {
+      flex-direction: column;
+    }
+
+    .hava81-compare__winner {
+      width: 100%;
+      max-width: none;
+    }
+
+    .hava81-compare__table {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hava81-compare__city {
+      /* The refined cards have their own borders: preserve breathing room for
+       city names, metrics and scores even on 320px phones. */
+      padding-inline: clamp(0.75rem, 3vw, 1rem);
+      border-inline-start: 0;
+    }
+
+    .hava81-compare__city:nth-child(n + 2) {
+      border-block-start: 1px solid var(--color-atlas-line);
+    }
+
+    .hava81-compare__city header {
+      flex-wrap: wrap;
+    }
+
+    .hava81-compare__city h3 {
+      flex: 1 1 8rem;
+    }
+
+    .hava81-compare__metrics > span {
+      flex-wrap: wrap;
+      row-gap: 0.25rem;
+    }
+  }
+
+  /* Visual QA 2026-10-09 — editorial comparison surface.
    This affects the compare view only; no changes to shared dashboard cards. */
-.app .hava81-compare {
-  gap: clamp(1.15rem, 2.4vw, 2rem);
-  padding: clamp(1rem, 2vw, 1.7rem) clamp(1rem, 2.2vw, 1.75rem);
-}
-.app .hava81-compare__header h2 {
-  font-size: clamp(1.65rem, 2.7vw, 2.35rem);
-  letter-spacing: -0.045em;
-  line-height: 1.12;
-}
-.app .hava81-compare__empty {
-  width: 100%;
-  max-width: none;
-  min-height: 20rem;
-  margin: 0;
-  display: grid;
-  grid-template-columns: minmax(12rem, 0.9fr) minmax(0, 1.35fr);
-  grid-template-areas:
-    "illustration heading"
-    "illustration summary"
-    "illustration hint"
-    "illustration action";
-  justify-items: start;
-  align-content: center;
-  align-items: center;
-  column-gap: clamp(1.5rem, 5vw, 4.5rem);
-  row-gap: 0.7rem;
-  padding: clamp(1.4rem, 3.5vw, 3.1rem);
-  text-align: left;
-  border: 1px solid color-mix(in srgb, var(--color-aegean) 23%, var(--color-atlas-line));
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at 15% 22%, color-mix(in srgb, var(--color-aegean-pale) 82%, transparent), transparent 44%),
-    linear-gradient(119deg, color-mix(in srgb, var(--color-aegean-pale) 44%, var(--color-atlas-paper)), var(--color-atlas-paper));
-  box-shadow: 0 23px 45px rgb(21 67 122 / 0.09), 0 3px 9px rgb(21 67 122 / 0.04);
-}
-.app .hava81-compare__empty-illustration {
-  grid-area: illustration;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  justify-self: stretch;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: clamp(.6rem, 2.5vw, 1.1rem);
-  width: 100%;
-  height: clamp(12.5rem, 23vw, 17rem);
-  padding: 2.4rem clamp(1.3rem, 2.5vw, 2rem) 1.8rem;
-  border: 1px solid color-mix(in srgb, var(--color-aegean) 18%, transparent);
-  border-radius: 25px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 2.65rem, color-mix(in srgb, var(--color-aegean) 7%, transparent) 2.65rem calc(2.65rem + 1px)),
-    radial-gradient(circle at 48% 10%, rgb(159 207 255 / .7), transparent 55%),
-    color-mix(in srgb, var(--color-aegean-pale) 79%, var(--color-atlas-paper));
-}
-.app .hava81-compare__empty-illustration::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  width: 13.5rem;
-  height: 13.5rem;
-  bottom: -7.5rem;
-  border-radius: 50%;
-  background: rgb(26 109 216 / .17);
-  filter: blur(12px);
-}
-.app .hava81-compare__empty-bar {
-  width: clamp(2.6rem, 5vw, 3.8rem);
-  height: 52%;
-  border-radius: 14px 14px 7px 7px;
-  background: linear-gradient(180deg, #a5d0ff, #509fe5);
-  box-shadow: inset 0 2px 2px rgb(255 255 255 / .45), 0 12px 28px rgb(30 99 176 / .17);
-}
-.app .hava81-compare__empty-bar:nth-child(2) {
-  height: 90%;
-  background: linear-gradient(180deg, #4b95f1, #1d58c5);
-}
-.app .hava81-compare__empty-bar:nth-child(3) {
-  height: 68%;
-  background: linear-gradient(180deg, #5bd6b7, #13977c);
-}
-.app .hava81-compare__empty h3 {
-  grid-area: heading;
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  line-height: 1.1;
-  letter-spacing: -0.05em;
-}
-.app .hava81-compare__empty > p:not(.hava81-compare__empty-tip) {
-  grid-area: summary;
-  font-size: clamp(1rem, 1.35vw, 1.13rem);
-  font-weight: 650;
-  color: var(--color-atlas-ink);
-}
-.app .hava81-compare__empty-tip {
-  grid-area: hint;
-  max-width: 46ch;
-}
-.app .hava81-compare__empty-action {
-  grid-area: action;
-  min-height: 48px;
-  padding: .75rem 1.4rem;
-  border-radius: 14px;
-  background: linear-gradient(115deg, #1759bd, #267bea);
-  border: 1px solid rgb(21 94 203 / .5);
-  box-shadow: 0 10px 21px rgb(32 102 201 / .17);
-}
-.app .hava81-compare__table {
-  gap: clamp(.7rem, 2vw, 1.25rem);
-  border: 0;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-}
-.app .hava81-compare__city,
-.app .hava81-compare__city:nth-child(n + 2) {
-  gap: .7rem;
-  padding: clamp(1rem, 2.2vw, 1.55rem);
-  border: 1px solid var(--color-atlas-line);
-  border-radius: 22px;
-  background: var(--color-atlas-paper);
-  box-shadow: 0 12px 30px rgb(21 67 122 / .07);
-}
-.app .hava81-compare__city.is-winner {
-  border: 2px solid color-mix(in srgb, var(--color-aegean) 70%, transparent);
-  background-color: var(--color-atlas-paper);
-  background-image: linear-gradient(145deg, color-mix(in srgb, var(--color-aegean-pale) 53%, var(--color-atlas-paper)), var(--color-atlas-paper) 65%);
-}
-.app .hava81-compare__score { font-size: clamp(1.8rem, 2.5vw, 2.35rem); letter-spacing: -.045em; }
-.app .hava81-compare__winner {
-  padding: .75rem 1.2rem;
-  max-width: 28rem;
-  border: 1px solid color-mix(in srgb, var(--color-aegean) 28%, transparent);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--color-aegean-pale) 60%, var(--color-atlas-paper));
-}
-.app[data-color-mode="dark"] .hava81-compare__empty {
-  background: radial-gradient(circle at 19% 16%, rgb(41 90 145 / .5), transparent 55%), var(--color-atlas-paper);
-  box-shadow: 0 22px 44px rgb(0 0 0 / .18);
-}
-.app[data-color-mode="dark"] .hava81-compare__empty-illustration {
-  background: radial-gradient(circle at 50% 20%, rgb(24 91 147 / .65), transparent 67%), #16354f;
-}
-.app[data-color-mode="dark"] .hava81-compare__empty-bar:nth-child(1) { background: linear-gradient(#86c2fa, #2b78c4); }
-.app[data-color-mode="dark"] .hava81-compare__empty-bar:nth-child(2) { background: linear-gradient(#468ef5, #2154ae); }
-.app[data-color-mode="dark"] .hava81-compare__empty-bar:nth-child(3) { background: linear-gradient(#5ad3b1, #198875); }
-@media (max-width: 47.99rem) {
-  .app .hava81-compare { padding-block: .7rem; }
+  .app .hava81-compare {
+    gap: clamp(1.15rem, 2.4vw, 2rem);
+    padding: clamp(1rem, 2vw, 1.7rem) clamp(1rem, 2.2vw, 1.75rem);
+  }
+  .app .hava81-compare__header h2 {
+    font-size: clamp(1.65rem, 2.7vw, 2.35rem);
+    letter-spacing: -0.045em;
+    line-height: 1.12;
+  }
   .app .hava81-compare__empty {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "illustration" "heading" "summary" "hint" "action";
-    justify-items: center;
-    min-height: 0;
-    gap: .75rem;
-    padding: 1.15rem 1.1rem 1.45rem;
-    text-align: center;
-    border-radius: 22px;
+    width: 100%;
+    max-width: none;
+    min-height: 20rem;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(12rem, 0.9fr) minmax(0, 1.35fr);
+    grid-template-areas:
+      'illustration heading'
+      'illustration summary'
+      'illustration hint'
+      'illustration action';
+    justify-items: start;
+    align-content: center;
+    align-items: center;
+    column-gap: clamp(1.5rem, 5vw, 4.5rem);
+    row-gap: 0.7rem;
+    padding: clamp(1.4rem, 3.5vw, 3.1rem);
+    text-align: left;
+    border: 1px solid color-mix(in srgb, var(--color-aegean) 23%, var(--color-atlas-line));
+    border-radius: 26px;
+    background:
+      radial-gradient(
+        circle at 15% 22%,
+        color-mix(in srgb, var(--color-aegean-pale) 82%, transparent),
+        transparent 44%
+      ),
+      linear-gradient(
+        119deg,
+        color-mix(in srgb, var(--color-aegean-pale) 44%, var(--color-atlas-paper)),
+        var(--color-atlas-paper)
+      );
+    box-shadow:
+      0 23px 45px rgb(21 67 122 / 0.09),
+      0 3px 9px rgb(21 67 122 / 0.04);
   }
   .app .hava81-compare__empty-illustration {
+    grid-area: illustration;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    justify-self: stretch;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(0.6rem, 2.5vw, 1.1rem);
     width: 100%;
-    height: 11.5rem;
-    gap: .75rem;
-    border-radius: 17px;
-    padding-top: 1.5rem;
-    padding-bottom: 1.25rem;
+    height: clamp(12.5rem, 23vw, 17rem);
+    padding: 2.4rem clamp(1.3rem, 2.5vw, 2rem) 1.8rem;
+    border: 1px solid color-mix(in srgb, var(--color-aegean) 18%, transparent);
+    border-radius: 25px;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0 2.65rem,
+        color-mix(in srgb, var(--color-aegean) 7%, transparent) 2.65rem calc(2.65rem + 1px)
+      ),
+      radial-gradient(circle at 48% 10%, rgb(159 207 255 / 0.7), transparent 55%),
+      color-mix(in srgb, var(--color-aegean-pale) 79%, var(--color-atlas-paper));
   }
-  .app .hava81-compare__empty-bar { width: 2.85rem; }
-  .app .hava81-compare__empty h3 { font-size: clamp(1.5rem, 5.7vw, 2rem); }
-  .app .hava81-compare__empty-action { width: 100%; justify-content: center; }
-  .app .hava81-compare__winner { width: 100%; }
+  .app .hava81-compare__empty-illustration::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    width: 13.5rem;
+    height: 13.5rem;
+    bottom: -7.5rem;
+    border-radius: 50%;
+    background: rgb(26 109 216 / 0.17);
+    filter: blur(12px);
+  }
+  .app .hava81-compare__empty-bar {
+    width: clamp(2.6rem, 5vw, 3.8rem);
+    height: 52%;
+    border-radius: 14px 14px 7px 7px;
+    background: linear-gradient(180deg, #a5d0ff, #509fe5);
+    box-shadow:
+      inset 0 2px 2px rgb(255 255 255 / 0.45),
+      0 12px 28px rgb(30 99 176 / 0.17);
+  }
+  .app .hava81-compare__empty-bar:nth-child(2) {
+    height: 90%;
+    background: linear-gradient(180deg, #4b95f1, #1d58c5);
+  }
+  .app .hava81-compare__empty-bar:nth-child(3) {
+    height: 68%;
+    background: linear-gradient(180deg, #5bd6b7, #13977c);
+  }
+  .app .hava81-compare__empty h3 {
+    grid-area: heading;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.1;
+    letter-spacing: -0.05em;
+  }
+  .app .hava81-compare__empty > p:not(.hava81-compare__empty-tip) {
+    grid-area: summary;
+    font-size: clamp(1rem, 1.35vw, 1.13rem);
+    font-weight: 650;
+    color: var(--color-atlas-ink);
+  }
+  .app .hava81-compare__empty-tip {
+    grid-area: hint;
+    max-width: 46ch;
+  }
+  .app .hava81-compare__empty-action {
+    grid-area: action;
+    min-height: 48px;
+    padding: 0.75rem 1.4rem;
+    border-radius: 14px;
+    background: linear-gradient(115deg, #1759bd, #267bea);
+    border: 1px solid rgb(21 94 203 / 0.5);
+    box-shadow: 0 10px 21px rgb(32 102 201 / 0.17);
+  }
+  .app .hava81-compare__table {
+    gap: clamp(0.7rem, 2vw, 1.25rem);
+    border: 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+  .app .hava81-compare__city,
+  .app .hava81-compare__city:nth-child(n + 2) {
+    gap: 0.7rem;
+    padding: clamp(1rem, 2.2vw, 1.55rem);
+    border: 1px solid var(--color-atlas-line);
+    border-radius: 22px;
+    background: var(--color-atlas-paper);
+    box-shadow: 0 12px 30px rgb(21 67 122 / 0.07);
+  }
+  .app .hava81-compare__city.is-winner {
+    border: 2px solid color-mix(in srgb, var(--color-aegean) 70%, transparent);
+    background-color: var(--color-atlas-paper);
+    background-image: linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-aegean-pale) 53%, var(--color-atlas-paper)),
+      var(--color-atlas-paper) 65%
+    );
+  }
+  .app .hava81-compare__score {
+    font-size: clamp(1.8rem, 2.5vw, 2.35rem);
+    letter-spacing: -0.045em;
+  }
+  .app .hava81-compare__winner {
+    padding: 0.75rem 1.2rem;
+    max-width: 28rem;
+    border: 1px solid color-mix(in srgb, var(--color-aegean) 28%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-aegean-pale) 60%, var(--color-atlas-paper));
+  }
+  .app[data-color-mode='dark'] .hava81-compare__empty {
+    background:
+      radial-gradient(circle at 19% 16%, rgb(41 90 145 / 0.5), transparent 55%),
+      var(--color-atlas-paper);
+    box-shadow: 0 22px 44px rgb(0 0 0 / 0.18);
+  }
+  .app[data-color-mode='dark'] .hava81-compare__empty-illustration {
+    background: radial-gradient(circle at 50% 20%, rgb(24 91 147 / 0.65), transparent 67%), #16354f;
+  }
+  .app[data-color-mode='dark'] .hava81-compare__empty-bar:nth-child(1) {
+    background: linear-gradient(#86c2fa, #2b78c4);
+  }
+  .app[data-color-mode='dark'] .hava81-compare__empty-bar:nth-child(2) {
+    background: linear-gradient(#468ef5, #2154ae);
+  }
+  .app[data-color-mode='dark'] .hava81-compare__empty-bar:nth-child(3) {
+    background: linear-gradient(#5ad3b1, #198875);
+  }
+  @media (max-width: 47.99rem) {
+    .app .hava81-compare {
+      padding-block: 0.7rem;
+    }
+    .app .hava81-compare__empty {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'illustration' 'heading' 'summary' 'hint' 'action';
+      justify-items: center;
+      min-height: 0;
+      gap: 0.75rem;
+      padding: 1.15rem 1.1rem 1.45rem;
+      text-align: center;
+      border-radius: 22px;
+    }
+    .app .hava81-compare__empty-illustration {
+      width: 100%;
+      height: 11.5rem;
+      gap: 0.75rem;
+      border-radius: 17px;
+      padding-top: 1.5rem;
+      padding-bottom: 1.25rem;
+    }
+    .app .hava81-compare__empty-bar {
+      width: 2.85rem;
+    }
+    .app .hava81-compare__empty h3 {
+      font-size: clamp(1.5rem, 5.7vw, 2rem);
+    }
+    .app .hava81-compare__empty-action {
+      width: 100%;
+      justify-content: center;
+    }
+    .app .hava81-compare__winner {
+      width: 100%;
+    }
+  }
 }

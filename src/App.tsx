@@ -25,23 +25,6 @@ import { parseAtlasView, resolveAtlasView, withAtlasView, type AtlasView } from 
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
-import './styles/PremiumDashboard.css';
-import './styles/DesignRefinement.css';
-import './styles/WeatherPolish.css';
-import './styles/ForecastVisualPolish.css';
-import './styles/VisualOverhaul.css';
-import './styles/SecondarySurfacePolish.css';
-import './styles/PlanningVisualPolish.css';
-import './styles/HomeEditorialRefresh.css';
-import './styles/NavigationVisualPolish.css';
-import './styles/MobileDockVisualPolish.css';
-import './components/hava81/EnvironmentRailVisualPolish.css';
-import './styles/WeatherSceneContrast.css';
-import './styles/ActivityEditorialVisual.css';
-import './styles/DailyTimelineEditorial.css';
-import './styles/MobileScrollbars.css';
-import './styles/FocusRing.css';
-import './styles/FirstScreenComposition.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));

@@ -1,10 +1,12 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
-const css = readFileSync('src/components/hava81/DecisionAlertVisualPolish.css', 'utf8');
+const css = readCss('src/components/hava81/DecisionAlertsPanel.css');
 const rule = (selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+  // Last match: the alerts visual pass is the final section of the stylesheet (Faz 2.1).
+  const matches = [...css.matchAll(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`, 'g'))];
+  return matches[matches.length - 1]?.[1] ?? '';
 };
 
 describe('decision alerts button (Faz 0.4)', () => {

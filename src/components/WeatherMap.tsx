@@ -1,14 +1,12 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { useTranslation } from 'react-i18next';
 import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import './WeatherMap.css';
-import './WeatherMapAtmosphere.css';
 
 interface WeatherMapProps {
   weather: NormalizedWeatherData | null;

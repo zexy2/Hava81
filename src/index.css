@@ -1,70 +1,97 @@
-:root {
-  font-family: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Helvetica Neue', sans-serif;
-  font-weight: 400;
-  font-synthesis: none;
-  line-height: 1.5;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+  /* Öğe düzeyi kontrol sıfırlamaları (eskiden App.css başındaydı). */
+  button,
+  input {
+    font: inherit;
+  }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+  button,
+  a,
+  input {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-html {
-  min-height: 100%;
-  scroll-behavior: smooth;
-  background: var(--color-atlas-field, #f3f6f4);
-}
+  button {
+    color: inherit;
+  }
 
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  color: var(--color-atlas-ink, #142524);
-  background: inherit;
-}
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
 
-body,
-button,
-input,
-textarea,
-select {
-  font-family: inherit;
-}
+  :root {
+    font-family: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-synthesis: none;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-button,
-input,
-textarea,
-select {
-  font-size: inherit;
-}
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-button {
-  touch-action: manipulation;
-}
-
-img,
-svg {
-  display: block;
-  max-width: 100%;
-}
-
-::selection {
-  color: #142524;
-  background: #a8c9c5;
-}
-
-#root {
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-@media (prefers-reduced-motion: reduce) {
   html {
-    scroll-behavior: auto;
+    min-height: 100%;
+    scroll-behavior: smooth;
+    background: var(--color-atlas-field, #f3f6f4);
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--color-atlas-ink, #142524);
+    background: inherit;
+  }
+
+  body,
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-size: inherit;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+
+  img,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  ::selection {
+    color: var(--selection-ink);
+    background: var(--selection-paper);
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }

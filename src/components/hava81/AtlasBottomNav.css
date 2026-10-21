@@ -1,183 +1,368 @@
-.atlas-bottom-nav {
-  --bottom-nav-paper: var(--atlas-paper, #ffffff);
-  --bottom-nav-ink: var(--atlas-ink, #142524);
-  --bottom-nav-muted: var(--atlas-muted, #5c6c6a);
-  --bottom-nav-line: var(--atlas-line, #c8d6d2);
-  --bottom-nav-accent: var(--aegean-main, #146b73);
-
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 40;
-  /* Four destinations (Faz 2.3). Flex-wrap with an em basis keeps one row at 100%
-   * text and falls back to a 2×2 dock when text is enlarged, so labels never clip. */
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  gap: 4px;
-  min-height: 64px;
-  padding: 4px 12px max(4px, env(safe-area-inset-bottom));
-  color: var(--bottom-nav-muted);
-  background: var(--bottom-nav-paper);
-  border-block-start: 1px solid var(--bottom-nav-line);
-  font-family: var(
-    --font-ui,
-    'IBM Plex Sans Variable',
-    'IBM Plex Sans',
-    'Helvetica Neue',
-    sans-serif
-  );
-}
-
-.atlas-bottom-nav__button {
-  position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 3.5em;
-  min-width: 44px;
-  min-height: 56px;
-  padding: 6px 8px 9px;
-  color: inherit;
-  appearance: none;
-  background: transparent;
-  border: 0;
-  border-radius: 4px;
-  cursor: pointer;
-  font: inherit;
-  touch-action: manipulation;
-  transition:
-    color 150ms ease-out,
-    background-color 150ms ease-out;
-}
-
-.atlas-bottom-nav__button::after {
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  width: 24px;
-  height: 2px;
-  background: var(--bottom-nav-accent);
-  content: '';
-  opacity: 0;
-  transform: translateX(-50%) scaleX(0.5);
-  transform-origin: center;
-  transition:
-    opacity 150ms ease-out,
-    transform 150ms ease-out;
-}
-
-.atlas-bottom-nav__icon {
-  position: relative;
-  display: block;
-  width: 22px;
-  height: 22px;
-  transition: transform 150ms ease-out;
-}
-
-.atlas-bottom-nav__icon svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.atlas-bottom-nav__label {
-  max-width: 100%;
-  margin-block-start: 3px;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.atlas-bottom-nav__saved-mark {
-  position: absolute;
-  top: -1px;
-  right: -3px;
-  width: 5px;
-  height: 5px;
-  background: var(--bottom-nav-accent);
-  border-radius: 50%;
-}
-
-.atlas-bottom-nav__button:hover:not(:disabled) {
-  color: var(--bottom-nav-ink);
-}
-
-.atlas-bottom-nav__button:disabled {
-  cursor: default;
-  opacity: 0.42;
-}
-
-.atlas-bottom-nav__button--active {
-  color: var(--bottom-nav-accent);
-  background: transparent;
-}
-
-.atlas-bottom-nav__button--active::after {
-  opacity: 1;
-  transform: translateX(-50%) scaleX(1);
-}
-
-.atlas-bottom-nav__button--active .atlas-bottom-nav__label {
-  font-weight: 600;
-}
-
-.atlas-bottom-nav__button:focus-visible {
-  outline: 2px solid var(--bottom-nav-accent);
-  outline-offset: 2px;
-}
-
-.atlas-bottom-nav__button:active .atlas-bottom-nav__icon {
-  transform: translateY(1px);
-}
-
-@media (max-width: 47.99rem) {
-  .app[data-active-nav='map'] .atlas-bottom-nav {
-    display: none;
-  }
-}
-
-@media (min-width: 768px) {
+@layer components {
   .atlas-bottom-nav {
-    display: none;
-  }
-}
+    --bottom-nav-paper: var(--atlas-paper, #ffffff);
+    --bottom-nav-ink: var(--atlas-ink, #142524);
+    --bottom-nav-muted: var(--atlas-muted, #5c6c6a);
+    --bottom-nav-line: var(--atlas-line, #c8d6d2);
+    --bottom-nav-accent: var(--aegean-main, #146b73);
 
-@media (prefers-reduced-motion: reduce) {
-  .atlas-bottom-nav__button,
-  .atlas-bottom-nav__button::after,
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    /* Four destinations (Faz 2.3). Flex-wrap with an em basis keeps one row at 100%
+   * text and falls back to a 2×2 dock when text is enlarged, so labels never clip. */
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 4px 12px max(4px, env(safe-area-inset-bottom));
+    color: var(--bottom-nav-muted);
+    background: var(--bottom-nav-paper);
+    border-block-start: 1px solid var(--bottom-nav-line);
+    font-family: var(
+      --font-ui,
+      'IBM Plex Sans Variable',
+      'IBM Plex Sans',
+      'Helvetica Neue',
+      sans-serif
+    );
+  }
+
+  .atlas-bottom-nav__button {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 3.5em;
+    min-width: 44px;
+    min-height: 56px;
+    padding: 6px 8px 9px;
+    color: inherit;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+    touch-action: manipulation;
+    transition:
+      color 150ms ease-out,
+      background-color 150ms ease-out;
+  }
+
+  .atlas-bottom-nav__button::after {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    width: 24px;
+    height: 2px;
+    background: var(--bottom-nav-accent);
+    content: '';
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.5);
+    transform-origin: center;
+    transition:
+      opacity 150ms ease-out,
+      transform 150ms ease-out;
+  }
+
   .atlas-bottom-nav__icon {
-    transition: none;
+    position: relative;
+    display: block;
+    width: 22px;
+    height: 22px;
+    transition: transform 150ms ease-out;
+  }
+
+  .atlas-bottom-nav__icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .atlas-bottom-nav__label {
+    max-width: 100%;
+    margin-block-start: 3px;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .atlas-bottom-nav__saved-mark {
+    position: absolute;
+    top: -1px;
+    right: -3px;
+    width: 5px;
+    height: 5px;
+    background: var(--bottom-nav-accent);
+    border-radius: 50%;
+  }
+
+  .atlas-bottom-nav__button:hover:not(:disabled) {
+    color: var(--bottom-nav-ink);
+  }
+
+  .atlas-bottom-nav__button:disabled {
+    cursor: default;
+    opacity: 0.42;
+  }
+
+  .atlas-bottom-nav__button--active {
+    color: var(--bottom-nav-accent);
+    background: transparent;
+  }
+
+  .atlas-bottom-nav__button--active::after {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  .atlas-bottom-nav__button--active .atlas-bottom-nav__label {
+    font-weight: 600;
+  }
+
+  .atlas-bottom-nav__button:focus-visible {
+    outline: 2px solid var(--bottom-nav-accent);
+    outline-offset: 2px;
   }
 
   .atlas-bottom-nav__button:active .atlas-bottom-nav__icon {
-    transform: none;
+    transform: translateY(1px);
   }
-}
 
-
-@media (forced-colors: active) {
-  .atlas-bottom-nav__button[aria-current='page'] {
-    color: Highlight;
-    text-decoration: underline 2px;
-    text-underline-offset: 4px;
+  @media (max-width: 47.99rem) {
+    .app[data-active-nav='map'] .atlas-bottom-nav {
+      display: none;
+    }
   }
-}
 
-/* Narrowest supported phones need the full label width when text is zoomed.
+  @media (min-width: 768px) {
+    .atlas-bottom-nav {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .atlas-bottom-nav__button,
+    .atlas-bottom-nav__button::after,
+    .atlas-bottom-nav__icon {
+      transition: none;
+    }
+
+    .atlas-bottom-nav__button:active .atlas-bottom-nav__icon {
+      transform: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .atlas-bottom-nav__button[aria-current='page'] {
+      color: Highlight;
+      text-decoration: underline 2px;
+      text-underline-offset: 4px;
+    }
+  }
+
+  /* Narrowest supported phones need the full label width when text is zoomed.
  * Keep buttons large while avoiding unnecessary single-letter wrapping. */
-@media (max-width: 24rem) {
-  .atlas-bottom-nav__button {
-    padding-inline: 2px;
+  @media (max-width: 24rem) {
+    .atlas-bottom-nav__button {
+      padding-inline: 2px;
+    }
+  }
+
+  /* ── Mobil alt gezinme görünümü ── */
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-bottom-nav {
+      left: 12px;
+      right: 12px;
+      bottom: max(9px, env(safe-area-inset-bottom));
+      min-height: 71px;
+      padding: 6px;
+      gap: 7px;
+      border: 1px solid rgb(137 217 242 / 0.45);
+      border-radius: 23px;
+      background:
+        radial-gradient(ellipse at 90% -30%, rgb(63 207 232 / 0.3), transparent 55%),
+        linear-gradient(108deg, #0b264b, #10476c 66%, #116c81);
+      box-shadow:
+        0 13px 36px rgb(6 34 72 / 0.26),
+        inset 0 1px 0 rgb(255 255 255 / 0.14);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #d5ebf6;
+    }
+
+    .app .atlas-bottom-nav__button {
+      min-height: 57px;
+      border-radius: 17px;
+      padding: 0.4rem 0.4rem 0.45rem;
+      color: #dbedf8;
+    }
+    .app .atlas-bottom-nav__label {
+      font-size: 0.8rem;
+      line-height: 1.25;
+      font-weight: 600;
+      letter-spacing: 0.005em;
+    }
+    .app .atlas-bottom-nav__icon {
+      width: 23px;
+      height: 23px;
+    }
+    .app .atlas-bottom-nav__button:hover:not(:disabled) {
+      color: #fff;
+      background: rgb(227 246 255 / 0.13);
+    }
+    .app .atlas-bottom-nav__button--active {
+      color: #123c66;
+      background: linear-gradient(140deg, #f9fdff, #d5efff);
+      border: 1px solid rgb(255 255 255 / 0.67);
+      box-shadow:
+        0 5px 16px rgb(4 29 55 / 0.2),
+        inset 0 1px 0 #fff;
+    }
+    .app .atlas-bottom-nav__button--active:hover:not(:disabled) {
+      color: #0b3970;
+      background: #f1fbff;
+    }
+    .app .atlas-bottom-nav__button--active::after {
+      bottom: 3px;
+      height: 3px;
+      width: 28px;
+      border-radius: 4px;
+      background: #217acc;
+    }
+    .app .atlas-bottom-nav__button--active .atlas-bottom-nav__label {
+      font-weight: 800;
+    }
+    .app .atlas-bottom-nav__button:focus-visible {
+      outline: 3px solid #9ce6ff;
+      outline-offset: -3px;
+    }
+    .app[data-color-mode='dark'] .atlas-bottom-nav {
+      border-color: rgb(86 177 199 / 0.45);
+      background: linear-gradient(115deg, #0b253a, #123f56 69%, #175967);
+      box-shadow: 0 12px 34px rgb(0 12 27 / 0.42);
+    }
+    .app[data-color-mode='dark'] .atlas-bottom-nav__button--active {
+      color: #f5fbff;
+      border-color: #6dbbcc;
+      background: linear-gradient(140deg, #205976, #176b81);
+      box-shadow: 0 5px 16px rgb(0 0 0 / 0.18);
+    }
+    .app[data-color-mode='dark'] .atlas-bottom-nav__button--active::after {
+      background: #97eaf0;
+    }
+    .app[data-color-mode='dark'] .atlas-bottom-nav__button--active:hover:not(:disabled) {
+      background: linear-gradient(140deg, #256a88, #1a748a);
+      color: #f5fbff;
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .app .atlas-bottom-nav {
+      left: 6px;
+      right: 6px;
+      bottom: max(5px, env(safe-area-inset-bottom));
+      padding: 4px;
+      gap: 3px;
+      border-radius: 18px;
+    }
+    .app .atlas-bottom-nav__button {
+      padding-inline: 2px;
+      min-width: 44px;
+      border-radius: 12px;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .app .atlas-bottom-nav {
+      border: 1px solid CanvasText;
+      background: Canvas;
+      box-shadow: none;
+    }
+    .app .atlas-bottom-nav__button--active {
+      background: Canvas;
+      color: Highlight;
+      border: 2px solid Highlight;
+      box-shadow: none;
+      text-decoration: underline 2px;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
+    }
+    .app .atlas-bottom-nav__button:not(.atlas-bottom-nav__button--active) {
+      color: CanvasText;
+    }
+    .app .atlas-bottom-nav__button:focus-visible {
+      outline: 3px solid Highlight;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .atlas-bottom-nav__button {
+      transition: none;
+    }
+  }
+
+  /* English labels must stay on a single line at 200% enlarged text.
+   Reclaim horizontal room from decorative padding, never from the
+   44px target itself; the dock wraps to 2×2 when text is enlarged. */
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-bottom-nav:lang(en) .atlas-bottom-nav__button {
+      padding-inline: 2px;
+    }
+  }
+
+  /* Readable, stable dock surface for users who disable transparency. */
+
+  @media (prefers-reduced-transparency: reduce) and (max-width: 47.99rem) {
+    .app .atlas-bottom-nav {
+      background: #103c60;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .app[data-color-mode='dark'] .atlas-bottom-nav {
+      background: #102f45;
+    }
+  }
+
+  /* Landscape phones: keep weather content visible above the floating dock. */
+
+  @media (max-width: 47.99rem) and (max-height: 31.25rem) and (orientation: landscape) {
+    .app .atlas-bottom-nav {
+      min-height: 55px;
+      padding: 3px 6px;
+      gap: 4px;
+      border-radius: 17px;
+    }
+    .app .atlas-bottom-nav__button {
+      min-height: 48px;
+      padding-block: 2px;
+      flex-direction: row;
+      gap: 5px;
+      border-radius: 12px;
+    }
+    .app .atlas-bottom-nav__icon {
+      width: 20px;
+      height: 20px;
+      flex: none;
+    }
+    .app .atlas-bottom-nav__label {
+      margin-block-start: 0;
+      font-size: 0.75rem;
+    }
   }
 }

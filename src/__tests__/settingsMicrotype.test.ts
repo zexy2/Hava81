@@ -1,11 +1,12 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss } from './readCss';
 
-const css = readFileSync('src/components/SettingsPanel.css', 'utf8');
+const css = readCss('src/components/SettingsPanel.css');
 
 const rule = (selector: string) => {
+  // Anchored to a line start: the component's own rule, not an `.app …` override (Faz 2.1).
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+  return css.match(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
 };
 
 describe('Settings functional microtype', () => {

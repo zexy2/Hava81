@@ -1,3 +1,5 @@
+// İlk import: CSS katman sırasını (@layer) tanımlar, bu yüzden her stilden önce yüklenmeli.
+import './styles/tokens.css';
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
