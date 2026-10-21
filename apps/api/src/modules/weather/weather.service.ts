@@ -1,3 +1,4 @@
+import { coordinateCacheKey } from '../../core/geo';
 import type { AppConfig } from '../../config/env';
 import type { AsyncCache, CacheResult } from '../../core/cache';
 import type {
@@ -17,7 +18,7 @@ import type {
   HourlyForecastQueryInput,
 } from './contracts';
 
-const coordinateKey = (lat: number, lon: number): string => `${lat.toFixed(3)}:${lon.toFixed(3)}`;
+const coordinateKey = coordinateCacheKey;
 
 const normalizeCity = (city: string): string => city.toLocaleLowerCase('tr-TR').trim();
 

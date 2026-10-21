@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError } from '../../core/errors';
+import { turkeyLatitudeSchema, turkeyLongitudeSchema } from '../../core/geo';
 import { haversine, type RouteWeatherService } from './route-weather.service';
 
 export const validateRouteDistance = (distanceKm: number) => {
@@ -19,10 +20,10 @@ export const validateRouteDistance = (distanceKm: number) => {
 };
 
 const querySchema = z.object({
-  originLat: z.coerce.number().min(-90).max(90),
-  originLon: z.coerce.number().min(-180).max(180),
-  destinationLat: z.coerce.number().min(-90).max(90),
-  destinationLon: z.coerce.number().min(-180).max(180),
+  originLat: turkeyLatitudeSchema,
+  originLon: turkeyLongitudeSchema,
+  destinationLat: turkeyLatitudeSchema,
+  destinationLon: turkeyLongitudeSchema,
   departure: z.string().datetime(),
   lang: z.enum(['tr', 'en']).default('tr'),
 });

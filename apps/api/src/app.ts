@@ -8,6 +8,7 @@ import { ZodError } from 'zod';
 import { parseEnv, type AppConfig } from './config/env';
 import { MemoryTtlCache, type AsyncCache } from './core/cache';
 import { AppError, toErrorEnvelope } from './core/errors';
+import { UpstreamBudget, withUpstreamBudget } from './core/upstream-budget';
 import { ResilientWeatherProvider } from './core/resilient-provider';
 import { registerHealthRoutes } from './modules/health/health.routes';
 import { registerContextRoutes } from './modules/context/context.routes';
@@ -25,6 +26,7 @@ export interface BuildAppOptions {
   provider?: WeatherProvider;
   hourlyProvider?: HourlyForecastProvider;
   cache?: AsyncCache;
+  upstreamBudget?: UpstreamBudget;
   logger?: boolean;
 }
 
@@ -135,7 +137,10 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
     reply.status(statusCode).send(toErrorEnvelope(normalizedError, request.id));
   });
 
-  const cache = options.cache ?? new MemoryTtlCache(env.CACHE_MAX_ENTRIES);
+  const cache = withUpstreamBudget(
+    options.cache ?? new MemoryTtlCache(env.CACHE_MAX_ENTRIES),
+    options.upstreamBudget ?? new UpstreamBudget(env.UPSTREAM_MAX_PER_MINUTE)
+  );
   const provider =
     options.provider ??
     (() => {

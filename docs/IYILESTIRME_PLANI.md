@@ -24,7 +24,7 @@ Asıl sorunlar başka yerde:
 
 ## Faz 0: Bu hafta, küçük ve acil işler (toplam ~1–2 gün)
 
-- [ ] **0.1** API'de lat/lon değerlerini Türkiye sınırlarıyla kısıtla, cache anahtarını 2 ondalık haneye yuvarla, upstream çağrıları için global limit koy — _Canlıda `lat=40.71&lon=-74` sorgusu New York verisi döndürüyor. Bir döngü kotayı bitirip bütün kullanıcıları veri alamaz hale getirebilir — S_
+- [x] **0.1** API'de lat/lon değerlerini Türkiye sınırlarıyla kısıtla, cache anahtarını 2 ondalık haneye yuvarla, upstream çağrıları için global limit koy — _Canlıda `lat=40.71&lon=-74` sorgusu New York verisi döndürüyor. Bir döngü kotayı bitirip bütün kullanıcıları veri alamaz hale getirebilir — S_
 - [ ] **0.2** fast-uri güvenlik PR'ını hazır yap, merge et, ardından API'yi deploy et — _CI'ı yeşil, çakışmasız ama draft halinde bekliyor — S_
 - [ ] **0.3** Açık temada favori şehir sekmelerinin kontrastını düzelt — _Kontrast 1,04–2,33:1, sekmeler okunmuyor — S_
 - [ ] **0.4** Açık temada "Bildirim engelli" butonunu görünür yap — _Beyaz zemin üstünde beyaz metin — S_
@@ -83,6 +83,9 @@ Kanıtlar ve ayrıntılar (dosya:satır, ölçümler, 64 ekran görüntüsü) UX
 ---
 
 ## Faz 0 notları (sahibin elle yapacağı adımlar)
+
+### 0.1: uygulama notu
+Yeni dosyalar: `apps/api/src/core/geo.ts` (Türkiye sınır kutusu: enlem 35.5–42.5, boylam 25.5–45; cache anahtarı 2 hane) ve `apps/api/src/core/upstream-budget.ts` (cache kaçıran tüm yüklemeler için süreç genelinde dakikalık limit, aşılırsa 503 `UPSTREAM_BUDGET_EXHAUSTED`). Limit `UPSTREAM_MAX_PER_MINUTE` ile ayarlanır (varsayılan 300). Testler: `apps/api/test/turkey-bounds.test.ts`. **Canlıya çıkması için aşağıdaki elle API deploy gerekir.**
 
 ### 0.2: fast-uri güvenlik PR'ı (#1320) — sahibin onayı gerekir
 Ajan bu PR'ı merge etmez. Yapılacaklar:
