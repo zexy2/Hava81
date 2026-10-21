@@ -385,8 +385,7 @@ test.describe('compare view', () => {
         await setWidth(page, width, 1024);
         await setTextScale(page, scale);
         const at = `${width}px/${scale}%`;
-        // Known gap: at 768px/200% the uppercase "FAVORITE CITIES" kicker is wider than its column.
-        await expectReadable(page, compare, at, width === 768 ? '.atlas-kicker' : '');
+        await expectReadable(page, compare, at);
         for (const city of await compare.locator('.hava81-compare__city').all()) {
           await expectContainedIn(city.locator('h3'), city, `city name ${at}`);
           await expectContainedIn(city.locator('.hava81-compare__metrics'), city, `metrics ${at}`);

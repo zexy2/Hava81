@@ -181,9 +181,9 @@ test.describe('hourly atlas', () => {
           `no hidden intervals ${at}`
         ).toBe(true);
         await expectNoHorizontalScroll(page, at);
+        // The Turkish "1sa"…"12sa" labels stay inside their buttons (overflow-wrap: anywhere).
+        await expectTextNotClipped(interval, `interval labels ${at}`);
       }
-      // Labels are readable at 390px/200%. Known gap (not asserted): at 320–360px/200% the
-      // Turkish "1sa"…"12sa" labels overflow their button box by a few px.
       await setWidth(page, 390, 844);
       await expectTextNotClipped(interval, 'interval labels at 390px/200%');
       await setWidth(page, 320, 720);

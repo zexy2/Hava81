@@ -596,4 +596,9 @@
       width: 100%;
     }
   }
+
+  /* %200 metinde 768 px'de büyük harfli "FAVORITE CITIES" başlığı sütundan taşmasın. */
+  .app .hava81-compare .atlas-kicker {
+    overflow-wrap: anywhere;
+  }
 }

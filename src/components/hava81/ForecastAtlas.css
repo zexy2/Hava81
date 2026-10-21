@@ -1476,6 +1476,13 @@
       background-color 180ms var(--rhythm-ease);
   }
 
+  /* %200 metinde 320–360 px'de "1sa…12sa" etiketleri düğme kutusundan taşmasın: etiket
+   * gerekirse kırılır (normal metin boyutunda tek sözcük olduğu için görünüm değişmez). */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range-button {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   .app
     .hava81-forecast-atlas
     .hava81-forecast-atlas__rhythm
