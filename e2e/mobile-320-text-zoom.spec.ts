@@ -46,7 +46,9 @@ test('320px navigation remains operable with 200% text in both languages', async
       const currentSettings = JSON.parse(localStorage.getItem('user-settings') || '{}');
       localStorage.setItem('user-settings', JSON.stringify({ ...currentSettings, language, themeMode }));
     }, { language: lang, themeMode });
-    await page.reload();
+    // Faz 4: an /en/ URL decides the language, so open the Turkish URL instead of reloading
+    // the /en/ address the English pass was rewritten to.
+    await page.goto('/istanbul');
     await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
     await expect(page.locator('html')).toHaveAttribute('lang', lang);
     await expect(page.locator('.app')).toHaveAttribute('data-color-mode', themeMode);
