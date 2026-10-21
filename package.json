@@ -65,7 +65,7 @@
     "api:build": "npm --prefix apps/api run build",
     "api:test": "npm --prefix apps/api test",
     "api:type-check": "npm --prefix apps/api run type-check",
-    "lint": "eslint src vite.config.ts playwright.config.ts e2e/**/*.ts",
+    "lint": "eslint src vite.config.ts playwright.config.ts \"e2e/**/*.ts\"",
     "lint:fix": "eslint . --fix",
     "analyze": "ANALYZE=true npm run build && npx source-map-explorer \\\"dist/assets/*.js\\\"",
     "docker:build": "docker compose build",

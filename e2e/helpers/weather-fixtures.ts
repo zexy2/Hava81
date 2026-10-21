@@ -1,0 +1,277 @@
+import type { Page, Route } from '@playwright/test';
+
+/**
+ * Deterministic API fixtures shared by every Hava81 e2e spec.
+ *
+ * `createWeatherFixtures(now)` builds the same payloads the former
+ * smoke.spec.ts used, anchored to `now`. The default export (`fixtures`) is
+ * anchored to the real clock like before; visual tests pass a fixed instant
+ * and also freeze the browser clock (see `VISUAL_FIXED_NOW`).
+ */
+export function createWeatherFixtures(now = Date.now()) {
+  const isoAtHour = (offsetHours: number) =>
+    new Date(now + offsetHours * 60 * 60_000).toISOString();
+  const localDate = (offsetDays = 0) =>
+    new Date(now + 3 * 60 * 60_000 + offsetDays * 24 * 60 * 60_000).toISOString().slice(0, 10);
+  const nowIso = new Date(now).toISOString();
+
+  const current = {
+    cityName: 'İstanbul',
+    country: 'TR',
+    temperature: 23,
+    feelsLike: 23,
+    tempMin: 19,
+    tempMax: 27,
+    humidity: 58,
+    pressure: 1012,
+    visibility: 10000,
+    windSpeed: 4.2,
+    windDirection: 180,
+    description: 'açık',
+    icon: '01d',
+    sunrise: isoAtHour(-6),
+    sunset: isoAtHour(6),
+    timestamp: isoAtHour(0),
+    coordinates: { lat: 41.01, lon: 28.97 },
+    clouds: 5,
+    meta: {
+      provider: 'OpenWeather',
+      fetchedAt: nowIso,
+      timezoneOffsetSeconds: 10800,
+      cacheStatus: 'MISS',
+      freshForSeconds: 60,
+    },
+  };
+
+  const forecast = {
+    daily: [
+      { date: localDate(), tempMin: 19, tempMax: 27, icon: '01d', description: 'açık', pop: 10 },
+    ],
+    hourly: [
+      { time: isoAtHour(1), temp: 23, icon: '01d', description: 'açık', pop: 10, windSpeed: 4 },
+      { time: isoAtHour(4), temp: 26, icon: '01d', description: 'açık', pop: 5, windSpeed: 5 },
+    ],
+    meta: {
+      provider: 'OpenWeather',
+      fetchedAt: nowIso,
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 3,
+      cacheStatus: 'MISS',
+      freshForSeconds: 300,
+    },
+  };
+
+  const hourlyForecast = {
+    // Normal Open-Meteo hourly success carries the same-provider daily series too.
+    // Tests that customize daily evidence should override both endpoints together.
+    daily: forecast.daily,
+    hourly: Array.from({ length: 24 }, (_, index) => ({
+      time: new Date(Date.parse('2026-08-28T09:00:00.000Z') + index * 60 * 60_000).toISOString(),
+      temp: 22 - Math.floor(index / 6),
+      icon: index < 3 ? '01d' : '02n',
+      description: index < 3 ? 'açık' : 'çoğunlukla açık',
+      pop: index === 4 ? 45 : 10,
+      precipitationMm: index === 4 ? 0.2 : 0,
+      windSpeed: 3 + index * 0.05,
+    })),
+    meta: {
+      provider: 'Open-Meteo',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      sourceUrl: 'https://open-meteo.com/',
+      fetchedAt: nowIso,
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 1,
+      cacheStatus: 'MISS',
+      freshForSeconds: 300,
+    },
+  };
+
+  const air = {
+    aqi: 2,
+    aqiLabel: 'Orta',
+    pm25: 9,
+    pm10: 14,
+    o3: 42,
+    meta: { provider: 'OpenWeather', fetchedAt: nowIso, cacheStatus: 'MISS', freshForSeconds: 120 },
+  };
+
+  const context = {
+    provider: 'Open-Meteo',
+    fetchedAt: nowIso,
+    attribution: 'Open-Meteo · CC BY 4.0',
+    uvIndexMax: 7.1,
+    dustMax: 12,
+    grassPollenMax: 4,
+    olivePollenMax: 1,
+    units: {
+      dust: 'μg/m³',
+      grassPollen: 'grains/m³',
+      olivePollen: 'grains/m³',
+      waveHeight: 'm',
+      seaSurfaceTemperature: '°C',
+    },
+    marine: { observedAt: nowIso, waveHeight: 0.3, seaSurfaceTemperature: 24.8 },
+  };
+
+  const routeDurationMinutes = 331;
+  const routeResult = {
+    kind: 'corridor-estimate',
+    estimatedDistanceKm: 413,
+    estimatedDurationMinutes: routeDurationMinutes,
+    requestedDeparture: nowIso,
+    score: 84,
+    segments: [0, 0.25, 0.5, 0.75, 1].map((fraction, index) => ({
+      fraction,
+      lat: 41 - index * 0.25,
+      lon: 29 + index * 0.9,
+      eta: new Date(now + routeDurationMinutes * 60_000 * fraction).toISOString(),
+      temperature: 22 + index,
+      precipitationProbability: index === 2 ? 30 : 5,
+      windSpeed: 4 + index,
+      description: index === 2 ? 'hafif yağmur' : 'açık',
+      score: index === 2 ? 70 : 88,
+      risk: index === 2 ? 'caution' : 'low',
+    })),
+    disclaimer: 'Bu sonuç gerçek yol/navigasyon rotası değildir.',
+  };
+
+  /** Hourly series whose hours start one hour after `now` (needed by commute/routine tests). */
+  const hourlyFromNow = () => ({
+    ...hourlyForecast,
+    hourly: Array.from({ length: 24 }, (_, index) => ({
+      ...hourlyForecast.hourly[index],
+      time: isoAtHour(index + 1),
+    })),
+  });
+
+  /** Local HH:MM in İstanbul `offsetHours` after `now`. */
+  const localClockAt = (offsetHours: number) =>
+    new Date(now + current.meta.timezoneOffsetSeconds * 1000 + offsetHours * 60 * 60_000)
+      .toISOString()
+      .slice(11, 16);
+
+  return {
+    now,
+    isoAtHour,
+    localDate,
+    current,
+    forecast,
+    hourlyForecast,
+    air,
+    context,
+    routeResult,
+    hourlyFromNow,
+    localClockAt,
+  };
+}
+
+export type WeatherFixtures = ReturnType<typeof createWeatherFixtures>;
+
+/** Default fixtures, anchored to the real clock (same semantics as the old smoke file). */
+export const fixtures = createWeatherFixtures();
+
+/** Fixed instant for screenshot tests: 2026-08-28 11:30 in İstanbul, aligned with the hourly fixture. */
+export const VISUAL_FIXED_NOW = Date.parse('2026-08-28T08:30:00.000Z');
+
+export const API = {
+  current: '**/api/v1/weather/current**',
+  forecast: '**/api/v1/weather/forecast**',
+  hourly: '**/api/v1/weather/hourly**',
+  air: '**/api/v1/weather/air-quality**',
+  context: '**/api/v1/weather/context**',
+  route: '**/api/v1/weather/route**',
+} as const;
+
+/** Mocks every weather endpoint with the given fixtures. */
+export async function mockWeatherApi(page: Page, data: WeatherFixtures = fixtures) {
+  await page.route(API.current, route => route.fulfill({ json: data.current }));
+  await page.route(API.forecast, route => route.fulfill({ json: data.forecast }));
+  await page.route(API.hourly, route => route.fulfill({ json: data.hourlyForecast }));
+  await page.route(API.air, route => route.fulfill({ json: data.air }));
+  await page.route(API.context, route => route.fulfill({ json: data.context }));
+  await page.route(API.route, route => route.fulfill({ json: data.routeResult }));
+}
+
+/** Replaces one endpoint mock (unroute + route). */
+export async function overrideApi(
+  page: Page,
+  endpoint: keyof typeof API,
+  handler: (route: Route) => Promise<void> | void
+) {
+  await page.unroute(API[endpoint]);
+  await page.route(API[endpoint], handler);
+}
+
+/** Replaces one endpoint with a static JSON body (optionally with an HTTP status). */
+export async function overrideApiJson(
+  page: Page,
+  endpoint: keyof typeof API,
+  json: unknown,
+  status = 200
+) {
+  await overrideApi(page, endpoint, route => route.fulfill({ status, json }));
+}
+
+/** Uses the given daily series for both the OpenWeather forecast and the Open-Meteo hourly payload. */
+export async function overrideDaily(
+  page: Page,
+  daily: unknown[],
+  data: WeatherFixtures = fixtures
+) {
+  await overrideApiJson(page, 'forecast', { ...data.forecast, daily });
+  await overrideApiJson(page, 'hourly', { ...data.hourlyForecast, daily });
+}
+
+type UserSettings = {
+  temperatureUnit?: 'metric' | 'imperial';
+  windSpeedUnit?: string;
+  themeMode?: 'light' | 'dark' | 'system';
+  language?: 'tr' | 'en';
+  notificationsEnabled?: boolean;
+};
+
+/** Seeds `user-settings` before the app boots. */
+export async function seedSettings(page: Page, settings: UserSettings) {
+  await page.addInitScript(
+    value => {
+      localStorage.setItem('user-settings', JSON.stringify(value));
+    },
+    {
+      temperatureUnit: 'metric',
+      windSpeedUnit: 'ms',
+      themeMode: 'light',
+      language: 'tr',
+      ...settings,
+    }
+  );
+}
+
+export type Favorite = { name: string; lat?: number; lon?: number };
+
+export const TWO_FAVORITES: Favorite[] = [
+  { name: 'İstanbul', lat: 41.01, lon: 28.97 },
+  { name: 'İzmir', lat: 38.42, lon: 27.14 },
+];
+
+/** Seeds saved cities before the app boots. */
+export async function seedFavorites(page: Page, favorites: Favorite[]) {
+  await page.addInitScript(value => {
+    localStorage.setItem('favorites', JSON.stringify(value));
+  }, favorites);
+}
+
+/** Valid 1x1 PNG used to answer map tile requests without any external host. */
+export const TILE_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==',
+  'base64'
+);
+
+/** Answers both OSM tile hosts (primary `hot`, backup `osmde`) with a local PNG. */
+export async function mockMapTiles(page: Page) {
+  await page.route('**/hot/**', route =>
+    route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG })
+  );
+  await page.route('**/tiles/osmde/**', route =>
+    route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG })
+  );
+}

@@ -1,0 +1,496 @@
+import { DESKTOP, MOBILE, expect, test } from './helpers/test';
+import {
+  expectContainedIn,
+  expectNoHorizontalScroll,
+  expectNoOverlap,
+  expectReadable,
+  expectTouchTarget,
+  expectVisibleFocusRing,
+  expectWithinViewportWidth,
+  setTextScale,
+  setWidth,
+} from './helpers/layout';
+import { fixtures, overrideApi, overrideApiJson, seedSettings } from './helpers/weather-fixtures';
+
+const { current, hourlyForecast, now: fixtureNow } = fixtures;
+
+// Planla: Gün planı, Çıkış planı, aktiviteler, uyarılar, bağlam sinyalleri ve rota
+// (all grouped under `.atlas-plan-view` since Faz 2.3).
+
+test.describe('daily plan', () => {
+  test(
+    'daily plan timeline matches its 12-hour score horizon and shows risk-first slot copy',
+    DESKTOP,
+    async ({ page }) => {
+      await overrideApi(page, 'hourly', route =>
+        route.fulfill({
+          json: {
+            ...hourlyForecast,
+            hourly: Array.from({ length: 24 }, (_, index) => ({
+              ...hourlyForecast.hourly[index],
+              time: new Date(
+                Date.parse('2026-08-28T18:00:00.000Z') + index * 60 * 60_000
+              ).toISOString(),
+              pop: index === 4 ? 45 : 10,
+              precipitationMm: 0,
+              windGust: 5,
+              apparentTemperature: 24,
+              humidity: 50,
+              uvIndex: 0,
+              visibility: 20000,
+              weatherCode: 2,
+            })),
+          },
+        })
+      );
+
+      await page.goto('/istanbul');
+      const timeline = page.getByRole('list', { name: 'Günün hava uygunluk zaman çizelgesi' });
+      await expect(timeline.locator('.daily-plan__slot')).toHaveCount(12);
+      await expect(timeline).not.toContainText('Çok uygun');
+      await expect(timeline.getByText('Yağış ihtimali var')).toBeVisible();
+      await expect(timeline.getByText('Yarın')).toHaveCount(1);
+    }
+  );
+
+  test(
+    'daily plan avoids repeated perfect scores for pleasant humid night hours',
+    DESKTOP,
+    async ({ page }) => {
+      const currentHour = new Date(current.timestamp);
+      currentHour.setUTCMinutes(0, 0, 0);
+      const profile = [
+        {
+          temp: 22.6,
+          apparentTemperature: 25.4,
+          humidity: 81,
+          windSpeed: 1.25,
+          windGust: 3.9,
+          visibility: 31560,
+        },
+        {
+          temp: 22.4,
+          apparentTemperature: 25.1,
+          humidity: 81,
+          windSpeed: 1.12,
+          windGust: 2.9,
+          visibility: 31340,
+        },
+        {
+          temp: 22.1,
+          apparentTemperature: 24.8,
+          humidity: 82,
+          windSpeed: 1.17,
+          windGust: 2.7,
+          visibility: 31080,
+        },
+        {
+          temp: 21.7,
+          apparentTemperature: 24.4,
+          humidity: 83,
+          windSpeed: 1.14,
+          windGust: 2.6,
+          visibility: 29500,
+        },
+        {
+          temp: 21.5,
+          apparentTemperature: 24.2,
+          humidity: 85,
+          windSpeed: 1.26,
+          windGust: 2.7,
+          visibility: 28280,
+        },
+        {
+          temp: 21.4,
+          apparentTemperature: 23.9,
+          humidity: 85,
+          windSpeed: 1.34,
+          windGust: 2.8,
+          visibility: 27700,
+        },
+        {
+          temp: 21.4,
+          apparentTemperature: 24,
+          humidity: 84,
+          windSpeed: 1.12,
+          windGust: 2.9,
+          visibility: 29000,
+        },
+      ];
+      await overrideApi(page, 'hourly', route =>
+        route.fulfill({
+          json: {
+            ...hourlyForecast,
+            hourly: profile.map((point, index) => ({
+              ...point,
+              time: new Date(currentHour.getTime() + index * 60 * 60_000).toISOString(),
+              icon: '01n',
+              description: 'açık',
+              pop: 0,
+              precipitationMm: 0,
+              uvIndex: 0,
+              weatherCode: 0,
+            })),
+          },
+        })
+      );
+
+      await page.goto('/istanbul');
+      const timeline = page.getByRole('list', { name: 'Günün hava uygunluk zaman çizelgesi' });
+      await expect(timeline.locator('.daily-plan__slot')).toHaveCount(profile.length);
+      const scores = (await timeline.locator('.daily-plan__slot > strong').allTextContents()).map(
+        Number
+      );
+
+      expect(scores).toHaveLength(profile.length);
+      expect(scores.every(score => Number.isFinite(score) && score < 100)).toBe(true);
+      expect(Math.min(...scores)).toBeGreaterThanOrEqual(94);
+      expect(Math.max(...scores)).toBeLessThanOrEqual(98);
+      expect(new Set(scores).size).toBeGreaterThanOrEqual(3);
+      expect(scores[0]).toBeLessThan(scores[scores.length - 1]);
+    }
+  );
+
+  test(
+    'timeline marks the best hour and its score meters match the scores',
+    DESKTOP,
+    async ({ page }) => {
+      const hour = new Date(fixtureNow);
+      hour.setUTCMinutes(0, 0, 0);
+      await overrideApiJson(page, 'hourly', {
+        ...hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          ...hourlyForecast.hourly[index],
+          time: new Date(hour.getTime() + index * 60 * 60_000).toISOString(),
+          temp: 21 - Math.floor(index / 6),
+          apparentTemperature: 20,
+          humidity: 55,
+          windGust: 5,
+          uvIndex: 0,
+          weatherCode: 1,
+          visibility: 20000,
+        })),
+      });
+      await page.goto('/istanbul');
+      const timeline = page.locator('.daily-plan .daily-plan__slots');
+      const slots = timeline.locator('.daily-plan__slot');
+      await expect(slots).toHaveCount(12);
+      const state = await timeline.evaluate(element => {
+        const cards = Array.from(element.querySelectorAll<HTMLElement>('.daily-plan__slot'));
+        return {
+          best: cards.filter(card => card.classList.contains('is-best-window')).length,
+          metersMatch: cards.every(card => {
+            const score = Number(card.querySelector('strong')?.textContent);
+            return (
+              Number.isFinite(score) &&
+              score >= 0 &&
+              score <= 100 &&
+              card.style.getPropertyValue('--hour-score').trim() === `${score}%`
+            );
+          }),
+        };
+      });
+      expect(state.metersMatch).toBe(true);
+      expect(state.best).toBeGreaterThan(0);
+      // Twelve hours do not fit: the timeline scrolls on its own, the page does not.
+      await timeline.evaluate(element => {
+        element.scrollLeft = 200;
+      });
+      expect(await timeline.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+      await expectNoHorizontalScroll(page);
+    }
+  );
+
+  test(
+    'mobile Daily Plan keeps its safety boundary visible and tucks method detail behind a disclosure',
+    MOBILE,
+    async ({ page }) => {
+      await page.goto('/istanbul');
+      await expect(page.getByRole('heading', { name: 'Gün planı' })).toBeVisible();
+      const safety = page.locator('.daily-plan__safety');
+      const method = page.locator('.daily-plan__method');
+      const summary = method.locator('summary');
+      await expect(safety).toBeVisible();
+      await expect(summary).toBeVisible();
+      await expect(method).not.toHaveAttribute('open', '');
+
+      await summary.click();
+      await expect(method).toHaveAttribute('open', '');
+      await summary.click();
+      await expect(method).not.toHaveAttribute('open', '');
+
+      await setWidth(page, 320, 844);
+      await setTextScale(page, 200);
+      await expectReadable(page, page.locator('.daily-plan__notes'), 'notes at 320px/200%');
+    }
+  );
+
+  test(
+    'mobile score explanation opens on demand and every activity choice stays visible',
+    MOBILE,
+    async ({ page }) => {
+      await page.goto('/istanbul');
+      const breakdown = page.locator('.daily-plan__explain');
+      await expect(breakdown).toBeVisible();
+      await breakdown.locator('summary').click();
+      await expect(breakdown).toHaveAttribute('open', '');
+      await expect(breakdown.locator('.daily-plan__impacts, .daily-plan__stable')).toBeVisible();
+      await breakdown.locator('summary').click();
+      await expect(breakdown).not.toHaveAttribute('open');
+
+      const chips = page.locator('.activity-planner__chips');
+      await expect(chips.locator('button')).toHaveCount(6);
+      for (const [width, scale] of [
+        [390, 100],
+        [320, 200],
+      ] as const) {
+        await setWidth(page, width, 844);
+        await setTextScale(page, scale);
+        for (const chip of await chips.locator('button').all())
+          await expectContainedIn(chip, chips, `chip ${width}px/${scale}%`);
+        expect(
+          await chips.evaluate(element => element.scrollWidth <= element.clientWidth + 1)
+        ).toBe(true);
+        await expectNoHorizontalScroll(page, `${width}px/${scale}%`);
+      }
+    }
+  );
+
+  test(
+    'English Daily Plan header keeps title and actions apart at 390px',
+    MOBILE,
+    async ({ page }) => {
+      await seedSettings(page, { language: 'en', themeMode: 'dark' });
+      await page.goto('/istanbul');
+      await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
+      const header = page.locator('.daily-plan__header');
+      for (const scale of [100, 200] as const) {
+        await setTextScale(page, scale);
+        await expectNoOverlap(
+          header.locator('h2'),
+          header.locator('.daily-plan__header-actions'),
+          `title vs actions ${scale}%`
+        );
+        await expectReadable(page, header, `header ${scale}%`);
+      }
+      await expectTouchTarget(header.locator('.daily-plan__share'), 'share action');
+    }
+  );
+});
+
+test.describe('activities', () => {
+  test(
+    'activity preference and time range change the personalized plan',
+    DESKTOP,
+    async ({ page }) => {
+      await page.goto('/istanbul');
+      const picnic = page.getByRole('button', { name: 'Piknik' });
+      await expect(picnic).toHaveAttribute('aria-pressed', 'false');
+      await picnic.click();
+      await expect(picnic).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
+      await expect(page.getByText(/Üç aktivite seçtin/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
+
+      await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
+      await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
+      await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
+      const runCard = page
+        .locator('.activity-card')
+        .filter({ has: page.getByRole('heading', { name: 'Koşu', exact: true }) });
+      await runCard.locator('summary').click();
+      await expect(runCard.getByText(/Koşuda 10–22°C/)).toBeVisible();
+    }
+  );
+
+  test(
+    'narrow English planner keeps disclosures working and content readable at 320px',
+    MOBILE,
+    async ({ page }) => {
+      await seedSettings(page, { language: 'en' });
+      await setWidth(page, 320, 720);
+      await page.goto('/istanbul');
+      await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'What are you doing today?' })).toBeAttached();
+      await expect(page.locator('.daily-plan__quick > *')).toHaveCount(3);
+
+      const windowHelp = page.locator('.activity-planner__window-help');
+      await expect(windowHelp.locator('summary')).toHaveText('How it works');
+      await expect(windowHelp.locator('p')).toBeHidden();
+      await windowHelp.locator('summary').click();
+      await expect(windowHelp.locator('p')).toContainText('wraps past midnight');
+      await expectReadable(page, windowHelp, 'window help');
+      await windowHelp.locator('summary').click();
+      await expect(windowHelp.locator('p')).toBeHidden();
+
+      const details = page.locator('.activity-card__details');
+      await expect(details).toHaveCount(2);
+      for (const detail of await details.all())
+        await expect(detail).not.toHaveAttribute('open', '');
+      await expect(page.locator('.activity-card__risk').first()).toBeVisible();
+      await expect(page.locator('.activity-card__impact').first()).toBeHidden();
+      await details.locator('summary').first().click();
+      await expect(page.locator('.activity-card__impact').first()).toBeVisible();
+      await expect(page.locator('.activity-card__criteria').first()).toBeVisible();
+
+      for (const region of ['.daily-plan', '.activity-planner']) {
+        await expectReadable(page, page.locator(region), `${region} at 320px`);
+      }
+    }
+  );
+
+  test(
+    'expanded activity cards stay readable at 320px with 200% text',
+    MOBILE,
+    async ({ page }) => {
+      await page.goto('/istanbul/');
+      const planner = page.locator('section.activity-planner');
+      const chips = planner.locator('.activity-planner__chips button');
+      for (let index = 0; index < 2; index += 1) {
+        if ((await chips.nth(index).getAttribute('aria-pressed')) !== 'true')
+          await chips.nth(index).click();
+      }
+      await expect(planner.locator('.activity-card')).toHaveCount(2);
+      await expect(planner.locator('.activity-card__identity .activity-glyph svg')).toHaveCount(2);
+      await setWidth(page, 320, 760);
+      await setTextScale(page, 200);
+      await planner.locator('.activity-planner__score-explanation').evaluate(element => {
+        (element as HTMLDetailsElement).open = true;
+      });
+      await planner.locator('.activity-card__details').evaluateAll(elements => {
+        elements.forEach(element => {
+          (element as HTMLDetailsElement).open = true;
+        });
+      });
+      for (const card of await planner.locator('.activity-card').all()) {
+        await expectContainedIn(card.locator('.activity-card__score'), card, 'activity score');
+      }
+      await expectReadable(page, planner, 'planner at 320px/200%');
+    }
+  );
+
+  test('activity disclosures keep a visible keyboard focus ring', DESKTOP, async ({ page }) => {
+    await page.goto('/istanbul');
+    for (const summary of [
+      page.locator('.activity-planner__window-help summary'),
+      page.locator('.activity-planner__score-explanation summary'),
+      page.locator('.activity-card__details summary').first(),
+    ]) {
+      await expect(summary).toBeVisible();
+      await expectVisibleFocusRing(summary, { insideClippingRail: true });
+    }
+  });
+});
+
+test.describe('commute (Çıkış planı)', () => {
+  test(
+    'out-and-back plan persists routine times and produces a preparation decision',
+    DESKTOP,
+    async ({ page }) => {
+      await overrideApiJson(page, 'hourly', fixtures.hourlyFromNow());
+      await page.clock.setFixedTime(new Date(fixtureNow));
+      const outboundClock = fixtures.localClockAt(2);
+      const returnClock = fixtures.localClockAt(5);
+
+      await page.goto('/istanbul/');
+      await expect(page.getByRole('heading', { name: 'Çıkış planı' })).toBeVisible();
+      await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(outboundClock);
+      await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(returnClock);
+      const verdict = page.locator('.commute-plan__verdict');
+      await expect(verdict).toBeVisible();
+      await expect(verdict.locator('strong')).not.toHaveText('');
+      await expect(verdict).toHaveAttribute(
+        'data-advice',
+        /^(umbrella-take|umbrella-consider|heat|cold|strong-wind|wind-caution|poor-air|stable)$/
+      );
+      await expect(
+        page.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' })
+      ).toBeVisible();
+
+      await page.reload();
+      await expect(page.getByRole('textbox', { name: 'Çıkış', exact: true })).toHaveValue(
+        outboundClock
+      );
+      await expect(page.getByRole('textbox', { name: 'Dönüş', exact: true })).toHaveValue(
+        returnClock
+      );
+    }
+  );
+
+  test('commute windows reflow at 200% text on phones', MOBILE, async ({ page }) => {
+    await overrideApiJson(page, 'hourly', fixtures.hourlyFromNow());
+    await page.clock.setFixedTime(new Date(fixtureNow));
+    await page.goto('/istanbul');
+    await setTextScale(page, 200);
+    await page.getByRole('textbox', { name: 'Çıkış', exact: true }).fill(fixtures.localClockAt(2));
+    await page.getByRole('textbox', { name: 'Dönüş', exact: true }).fill(fixtures.localClockAt(5));
+    await expect(page.locator('.commute-plan__verdict')).toBeVisible();
+    await expect(page.locator('.commute-window')).toHaveCount(2);
+    for (const width of [320, 390]) {
+      await setWidth(page, width, 844);
+      await expectReadable(page, page.locator('.commute-plan'), `commute at ${width}px/200%`);
+    }
+  });
+});
+
+test.describe('route weather', () => {
+  test('route weather renders a transparent corridor result', DESKTOP, async ({ page }) => {
+    await page.goto('/istanbul');
+    await page.getByText('Rota havası', { exact: true }).click();
+    await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+    await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
+    await expect(page.getByText(/gerçek yol\/navigasyon rotası değildir/i)).toBeVisible();
+    await expect(
+      page.getByRole('list', { name: /rota boyunca hava örnekleri/i }).getByRole('listitem')
+    ).toHaveCount(5);
+  });
+
+  test('route disclosure keeps a visible keyboard focus ring', DESKTOP, async ({ page }) => {
+    await page.goto('/istanbul');
+    await expectVisibleFocusRing(page.locator('.route-weather > summary'), {
+      insideClippingRail: true,
+    });
+  });
+
+  test('narrow route form keeps endpoints usable and swaps direction', MOBILE, async ({ page }) => {
+    await setWidth(page, 320, 720);
+    await page.goto('/istanbul');
+    await page.getByText('Rota havası', { exact: true }).click();
+    const form = page.locator('.route-weather__form');
+    const origin = form.getByLabel('Başlangıç');
+    const destination = form.getByLabel('Varış');
+    const swap = form.getByRole('button', { name: 'Yönü değiştir' });
+    await expect(origin).toHaveValue('İstanbul');
+    await expect(destination).toHaveValue('Ankara');
+    for (const control of [origin, destination, swap]) {
+      await expectWithinViewportWidth(control, 'route control');
+      await expectTouchTarget(control, 'route control');
+    }
+    await expectNoHorizontalScroll(page);
+
+    await swap.click();
+    await expect(origin).toHaveValue('Ankara');
+    await expect(destination).toHaveValue('İstanbul');
+  });
+
+  test(
+    'mobile route corridor scrolls horizontally inside its own rail',
+    MOBILE,
+    async ({ page }) => {
+      await page.goto('/istanbul');
+      await page.getByText('Rota havası', { exact: true }).click();
+      await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+      await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
+      const segments = page.locator('.route-weather__segments');
+      expect(await segments.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(
+        true
+      );
+      await segments.evaluate(element => {
+        element.scrollLeft = 120;
+      });
+      expect(await segments.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+      await expectNoHorizontalScroll(page);
+    }
+  );
+});
