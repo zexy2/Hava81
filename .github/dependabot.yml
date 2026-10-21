@@ -1,3 +1,7 @@
+# Politika (plan 3.5): minor+patch haftalık gruplanır ve CI yeşilse otomatik merge edilir
+# (.github/workflows/dependabot-automerge.yml). Major'lar ayrı tek PR'da toplanır ve
+# cooldown ile en fazla ~ayda bir açılır; elle incelenip ayın ilk pazartesi slotunda merge edilir.
+# Not: aynı ekosistem+dizin için iki ayrı entry tanımlanamadığından aylık slot cooldown ile sağlanıyor.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -5,102 +9,115 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: 07:00
+      time: "07:00"
       timezone: Europe/Istanbul
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 3
+      semver-patch-days: 3
     groups:
-      minor-and-patch:
+      dev-minor-patch:
         applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
+        dependency-type: development
+        update-types: [minor, patch]
+      prod-minor-patch:
+        applies-to: version-updates
+        dependency-type: production
+        update-types: [minor, patch]
+      majors:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: [major]
 
   - package-ecosystem: npm
     directory: /apps/api
     schedule:
       interval: weekly
       day: monday
-      time: 07:15
+      time: "07:15"
       timezone: Europe/Istanbul
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 3
+      semver-patch-days: 3
     groups:
-      minor-and-patch:
+      dev-minor-patch:
         applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
+        dependency-type: development
+        update-types: [minor, patch]
+      prod-minor-patch:
+        applies-to: version-updates
+        dependency-type: production
+        update-types: [minor, patch]
+      majors:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: [major]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
-      time: 07:30
+      time: "07:30"
       timezone: Europe/Istanbul
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 3
+      semver-patch-days: 3
     groups:
-      minor-and-patch:
+      minor-patch:
         applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
+        patterns: ['*']
+        update-types: [minor, patch]
+      majors:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: [major]
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
       day: monday
-      time: 07:45
+      time: "07:45"
       timezone: Europe/Istanbul
     open-pull-requests-limit: 2
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 3
+      semver-patch-days: 3
     groups:
-      minor-and-patch:
+      minor-patch:
         applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
+        patterns: ['*']
+        update-types: [minor, patch]
+      majors:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: [major]
 
   - package-ecosystem: docker
     directory: /apps/api
     schedule:
       interval: weekly
       day: monday
-      time: 08:00
+      time: "08:00"
       timezone: Europe/Istanbul
     open-pull-requests-limit: 2
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 3
+      semver-patch-days: 3
     groups:
-      minor-and-patch:
+      minor-patch:
         applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
+        patterns: ['*']
+        update-types: [minor, patch]
+      majors:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: [major]
