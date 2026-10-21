@@ -820,10 +820,36 @@ describe('useWeather', () => {
       await result.current.fetchWeather('İstanbul');
     });
 
-    expect(result.current.error?.message).toBe(
-      'Bağlantı hatası. İnternet bağlantınızı kontrol edin.'
-    );
+    // Faz 1.5: online browser + network failure = server unreachable, not "check your internet".
+    expect(result.current.error?.message).toMatch(/sunucusuna şu an ulaşılamıyor/);
     expect(result.current.error?.message).not.toContain('provider detail');
+  });
+
+  it('says offline only when the browser is offline (Faz 1.5)', async () => {
+    const spy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('x', ErrorCode.NETWORK_ERROR)
+    );
+    const { result } = renderHook(() => useWeather({ language: 'tr' }));
+    await act(async () => {
+      await result.current.fetchWeather('İstanbul');
+    });
+    expect(result.current.error?.message).toMatch(/İnternet bağlantın yok/);
+    spy.mockRestore();
+  });
+
+  it.each([
+    [503, /sağlayıcısı şu an yanıt vermiyor/],
+    [500, /sunucusunda bir sorun/],
+  ])('splits HTTP %s by cause (Faz 1.5)', async (status, pattern) => {
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      ApiError.fromHttpStatus(status)
+    );
+    const { result } = renderHook(() => useWeather({ language: 'tr' }));
+    await act(async () => {
+      await result.current.fetchWeather('İstanbul');
+    });
+    expect(result.current.error?.message).toMatch(pattern);
   });
 
   it.each([

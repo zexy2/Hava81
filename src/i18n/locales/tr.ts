@@ -623,6 +623,11 @@ export const tr = {
   },
   errors: {
     networkError: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.',
+    offline: 'İnternet bağlantın yok. Bağlantı gelince otomatik yenilenecek.',
+    serverUnreachable: 'Hava81 sunucusuna şu an ulaşılamıyor. Sorun sende değil; biraz sonra tekrar dene.',
+    serverError: 'Hava81 sunucusunda bir sorun oluştu. Biraz sonra tekrar dene.',
+    providerUnavailable: 'Hava durumu sağlayıcısı şu an yanıt vermiyor. Biraz sonra tekrar dene.',
+    showingLastKnown: 'Son bilinen veri gösteriliyor ({{time}}).',
     rateLimit: 'Çok fazla istek gönderildi. Kısa bir süre sonra tekrar deneyin.',
     apiKeyMissing: 'API anahtarı yapılandırılmamış.',
     locationDenied: 'Konum izni reddedildi',

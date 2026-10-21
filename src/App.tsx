@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SearchBar } from './components/SearchBar';
 import { suggestCity } from './utils/citySuggestion';
+import { formatCityTime } from './utils/format';
 import { CityTabs } from './components/CityTabs';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { DecisionGlance } from './components/hava81/DecisionGlance';
@@ -204,6 +205,7 @@ const App: React.FC = () => {
     fetchCurrentLocation,
     clearWeather,
     clearError,
+    lastKnownAt,
     recentSearches,
   } = useWeather({ initialCity, language: settings.language });
 
@@ -734,6 +736,17 @@ const App: React.FC = () => {
                 <div>
                   <span className="atlas-kicker">{t('common.error')}</span>
                   <p>{error.message}</p>
+                  {lastKnownAt && (
+                    <p className="atlas-message__last-known">
+                      {t('errors.showingLastKnown', {
+                        time: formatCityTime(
+                          lastKnownAt,
+                          weather?.meta.timezoneOffsetSeconds ?? 10800,
+                          settings.language
+                        ),
+                      })}
+                    </p>
+                  )}
                 </div>
                 <div className="atlas-message__actions">
                   {canRetryCurrentWeather && (

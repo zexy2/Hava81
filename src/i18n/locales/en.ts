@@ -618,6 +618,11 @@ export const en = {
     tomorrow: 'Tomorrow',
   },
   errors: {
+    offline: 'You are offline. Data will refresh when the connection is back.',
+    serverUnreachable: 'The Hava81 server cannot be reached right now. It is not your connection; try again shortly.',
+    serverError: 'Something went wrong on the Hava81 server. Try again shortly.',
+    providerUnavailable: 'The weather provider is not responding right now. Try again shortly.',
+    showingLastKnown: 'Showing last known data ({{time}}).',
     networkError: 'Connection error. Check your internet connection.',
     rateLimit: 'Too many requests. Try again in a moment.',
     apiKeyMissing: 'API key not configured.',

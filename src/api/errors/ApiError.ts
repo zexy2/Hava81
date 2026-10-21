@@ -58,6 +58,7 @@ export class ApiError extends Error implements AppError {
       details: this.details,
       timestamp: this.timestamp,
       retryable: this.retryable,
+      ...(this.statusCode !== undefined ? { statusCode: this.statusCode } : {}),
     };
   }
 
