@@ -37,6 +37,7 @@ import './styles/WeatherSceneContrast.css';
 import './styles/ActivityEditorialVisual.css';
 import './styles/DailyTimelineEditorial.css';
 import './styles/MobileScrollbars.css';
+import './styles/FocusRing.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));

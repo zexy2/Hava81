@@ -29,7 +29,7 @@ Asıl sorunlar başka yerde:
 - [x] **0.3** Açık temada favori şehir sekmelerinin kontrastını düzelt — _Kontrast 1,04–2,33:1, sekmeler okunmuyor — S_
 - [x] **0.4** Açık temada "Bildirim engelli" butonunu görünür yap — _Beyaz zemin üstünde beyaz metin — S_
 - [x] **0.5** Mobilde native scrollbar'ları kaldır — _Aralık seçicide yalnızca 13 px taşma için scrollbar çıkıyor ve "12s" kesiliyor — S_
-- [ ] **0.6** Odak halkası için tek bir token tanımla, koyu zeminde açık renk halka kullan — _Kontrast 1,8–2,1:1, WCAG eşiği 3:1 — S_
+- [x] **0.6** Odak halkası için tek bir token tanımla, koyu zeminde açık renk halka kullan — _Kontrast 1,8–2,1:1, WCAG eşiği 3:1 — S_
 - [ ] **0.7** Varsayılan temayı `auto` yap, dili `navigator.language` ile seç — _Koyu temalı telefonda uygulama açık temada açılıyor — S_
 
 ## Faz 1: Güven, tek bir doğruluk kaynağı (~3–5 gün)
