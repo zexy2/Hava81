@@ -170,6 +170,9 @@ export const en = {
       summaryHigh: 'High',
       summaryRain: 'Rain peak',
       precipitationNone: 'None',
+      nightLabel: 'Night',
+      rainBandLabel: 'Rain',
+      visibleWindow: 'Showing {{from}} – {{to}}',
       nowLabel: 'Now',
       hourlyForecastNext: 'Hourly forecast · next {{hours}} {{unit}}',
       hourUnitSingular: 'hour',
@@ -237,7 +240,8 @@ export const en = {
       },
       nowOrLater: {
         label: 'Now or later?',
-        later: 'Weather conditions in the next 6 hours look more comfortable around {{time}} than now.',
+        later:
+          'Weather conditions in the next 6 hours look more comfortable around {{time}} than now.',
         now: 'Weather conditions look better for going out now than in the next few hours.',
         similar: 'There is no meaningful weather advantage between the next few hours.',
       },
@@ -249,7 +253,7 @@ export const en = {
           label: 'Umbrella',
           yes: 'Yes',
           maybe: 'Take one',
-          no: "Forecast suggests no need",
+          no: 'Forecast suggests no need',
           unknown: 'No data',
         },
         wind: { label: 'Wind', strong: 'Strong', caution: 'Caution', normal: 'Normal' },
@@ -333,7 +337,7 @@ export const en = {
       umbrella: {
         take: 'Take an umbrella',
         consider: 'Keep an umbrella with you',
-        no: "Forecast suggests no need",
+        no: 'Forecast suggests no need',
       },
       change: {
         'rain-increase': 'Rain risk is about {{value}} points higher when you return.',

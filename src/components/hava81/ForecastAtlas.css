@@ -252,8 +252,10 @@
 }
 
 .hava81-forecast-atlas__chart {
+  position: relative;
+  z-index: 1;
   display: block;
-  height: 132px;
+  height: 184px;
   overflow: visible;
 }
 
@@ -314,19 +316,6 @@
   vector-effect: non-scaling-stroke;
 }
 
-.hava81-forecast-atlas__point {
-  fill: color-mix(in srgb, var(--forecast-teal) 82%, var(--forecast-paper));
-  stroke: var(--forecast-paper);
-  stroke-width: 1.75;
-  opacity: 0.86;
-  vector-effect: non-scaling-stroke;
-}
-
-.hava81-forecast-atlas__point.is-current {
-  fill: var(--forecast-teal);
-  opacity: 1;
-}
-
 .hava81-forecast-atlas__precipitation-marker {
   color: var(--forecast-saffron);
 }
@@ -345,6 +334,10 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* The first-rain flag is HTML laid over the plot (the SVG stretches with the
+ * column grid, so text inside it would distort). The legacy SVG text selector
+ * stays grouped here so any SVG annotation keeps the same readable floor. */
+.hava81-forecast-atlas__precipitation-flag,
 .hava81-forecast-atlas__precipitation-marker text {
   fill: var(--forecast-ink);
   font-family: var(--font-ui, 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif);
@@ -736,8 +729,7 @@
     border-color: CanvasText;
   }
 
-  .hava81-forecast-atlas__curve,
-  .hava81-forecast-atlas__point {
+  .hava81-forecast-atlas__curve {
     stroke: CanvasText;
   }
 
@@ -760,7 +752,7 @@
 
 .hava81-forecast-atlas__scroll-hint {
   color: var(--forecast-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   line-height: 1.4;
 }
 
@@ -791,4 +783,915 @@
 .hava81-forecast-atlas__scroll-actions button:focus-visible {
   outline: 2px solid var(--forecast-teal);
   outline-offset: 2px;
+}
+
+/* ==========================================================================
+ * Bugünün ritmi — hourly rhythm instrument
+ *
+ * One surface, not cards inside a card (DESIGN.md › Forecast Atlas): the
+ * temperature curve, rain-chance bars, day/night bands and the hour values
+ * share a single column grid, layered with hairlines, tone and type.
+ * Colours come from the live app tokens so light and dark stay coherent;
+ * saffron marks only the first meaningful rain. Selectors are scoped to the
+ * hourly section inside `.app` so they outrank the older global polish layers
+ * without touching the five-day section.
+ * ========================================================================== */
+.hava81-forecast-atlas {
+  --rhythm-ink: var(--premium-ink, var(--color-atlas-ink, #142524));
+  --rhythm-muted: var(--color-atlas-muted, #5c6c6a);
+  --rhythm-line: var(--color-atlas-line, #c8d6d2);
+  --rhythm-paper: var(--color-atlas-paper, #ffffff);
+  --rhythm-field: var(--color-atlas-field, #f3f6f4);
+  --rhythm-accent: var(--color-aegean, #146b73);
+  --rhythm-on-accent: #ffffff;
+  --rhythm-signal: var(--color-saffron, #e7a531);
+  --rhythm-signal-ink: var(--color-saffron-ink, #805500);
+  --rhythm-signal-text: #142524;
+  --rhythm-night: color-mix(in srgb, var(--rhythm-ink) 5%, transparent);
+  --rhythm-hover: color-mix(in srgb, var(--rhythm-ink) 5%, transparent);
+  --rhythm-now: color-mix(in srgb, var(--rhythm-accent) 9%, transparent);
+  --rhythm-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.app[data-color-mode='dark'] .hava81-forecast-atlas {
+  --rhythm-on-accent: #0b1f2c;
+  --rhythm-night: rgb(0 0 0 / 0.2);
+  --rhythm-hover: rgb(255 255 255 / 0.06);
+  --rhythm-now: color-mix(in srgb, var(--rhythm-accent) 14%, transparent);
+}
+
+.app .hava81-forecast-atlas > .hava81-forecast-atlas__header .hava81-forecast-atlas__unit {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--rhythm-field);
+  color: var(--rhythm-muted);
+  letter-spacing: 0.04em;
+}
+
+/* --- Toolbar: section label + interval control ------------------------- */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hourly-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__section-title {
+  color: var(--rhythm-ink);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__interval-control {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  min-width: 0;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range-label {
+  color: var(--rhythm-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range {
+  position: relative;
+  isolation: isolate;
+  gap: 2px;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid var(--rhythm-line);
+  border-radius: 12px;
+  background: var(--rhythm-field);
+  box-shadow: none;
+  scrollbar-width: thin;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range-button {
+  position: relative;
+  z-index: 1;
+  flex: 1 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--rhythm-muted);
+  box-shadow: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums lining-nums;
+  transition:
+    color 180ms var(--rhythm-ease),
+    background-color 180ms var(--rhythm-ease);
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__range-button
+  + .hava81-forecast-atlas__range-button {
+  border-inline-start: 0;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__range-button[aria-pressed='false']:hover {
+  background: var(--rhythm-hover);
+  color: var(--rhythm-ink);
+}
+
+/* Without a measured indicator (first paint, no layout) the pressed option
+ * paints itself; once measured, the sliding indicator carries the fill. */
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__range-button[aria-pressed='true'] {
+  background: var(--rhythm-accent);
+  color: var(--rhythm-on-accent);
+  box-shadow: 0 1px 2px rgb(10 30 60 / 0.18);
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__range[data-indicator='ready']
+  .hava81-forecast-atlas__range-button[aria-pressed='true'] {
+  background: transparent;
+  /* The elevation lives on the indicator below; an empty ring keeps the
+   * pressed option's own shadow channel for forced-colors and tooling. */
+  box-shadow: 0 0 0 1px transparent;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__range-button:focus-visible {
+  outline: 2px solid var(--rhythm-accent);
+  outline-offset: -2px;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__range-button[aria-pressed='true']:focus-visible {
+  outline-color: var(--rhythm-on-accent);
+  outline-offset: -4px;
+}
+
+.hava81-forecast-atlas__range-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 9px;
+  background: var(--rhythm-accent);
+  box-shadow:
+    0 1px 2px rgb(10 30 60 / 0.16),
+    0 6px 14px -6px color-mix(in srgb, var(--rhythm-accent) 70%, transparent);
+  pointer-events: none;
+}
+
+.hava81-forecast-atlas__range-indicator.is-animated {
+  transition:
+    transform 320ms var(--rhythm-ease),
+    width 320ms var(--rhythm-ease),
+    height 320ms var(--rhythm-ease);
+}
+
+/* --- Stat rail ---------------------------------------------------------- */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__summary {
+  margin: 0 0 20px;
+  border-block: 1px solid var(--rhythm-line);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__summary-item {
+  align-content: start;
+  gap: 4px;
+  padding: 14px 16px 16px 0;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__summary-item
+  + .hava81-forecast-atlas__summary-item {
+  padding-inline-start: 16px;
+  border-inline-start: 1px solid var(--rhythm-line);
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__summary-item
+  span {
+  color: var(--rhythm-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__summary-item
+  strong {
+  color: var(--rhythm-ink);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__summary-item.is-precipitation.has-signal
+  strong {
+  color: var(--rhythm-signal-ink);
+}
+
+.hava81-forecast-atlas__summary-when {
+  color: var(--rhythm-muted, var(--forecast-muted));
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: normal;
+}
+
+@media (min-width: 64.01rem) {
+  /* The rain value carries chance and amount, so its column gets more room. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__summary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+}
+
+/* --- Plot ---------------------------------------------------------------- */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hourly-viewport {
+  border: 1px solid var(--rhythm-line);
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  /* Snap hour columns just right of the sticky axis gutter (TRACK_GUTTER). */
+  scroll-padding-inline-start: 44px;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__hourly-viewport:focus-visible {
+  outline: 2px solid var(--rhythm-accent);
+  outline-offset: -2px;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hourly-track {
+  min-width: 100%;
+  padding: 0;
+}
+
+.hava81-forecast-atlas__plot {
+  position: relative;
+}
+
+.hava81-forecast-atlas__bands,
+.hava81-forecast-atlas__marks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hava81-forecast-atlas__marks {
+  z-index: 2;
+}
+
+.hava81-forecast-atlas__night-band,
+.hava81-forecast-atlas__column {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.hava81-forecast-atlas__night-band {
+  background: var(--rhythm-night);
+}
+
+.hava81-forecast-atlas__night-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rhythm-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hava81-forecast-atlas__night-label svg {
+  fill: currentColor;
+}
+
+.hava81-forecast-atlas__column.is-current {
+  background: var(--rhythm-now);
+}
+
+.hava81-forecast-atlas__column.is-active {
+  background-image: linear-gradient(var(--rhythm-hover), var(--rhythm-hover));
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__chart {
+  margin: 0;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__guide {
+  stroke: var(--rhythm-line);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__day-boundary {
+  stroke: color-mix(in srgb, var(--rhythm-accent) 55%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__area-stop.is-start {
+  stop-color: var(--rhythm-accent);
+  stop-opacity: 0.18;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__area-stop.is-end {
+  stop-color: var(--rhythm-accent);
+  stop-opacity: 0;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__curve {
+  stroke: var(--rhythm-accent);
+  stroke-width: 2.5;
+  filter: none;
+}
+
+.hava81-forecast-atlas__trace {
+  animation: hava81-rhythm-trace 900ms var(--rhythm-ease) both;
+}
+
+@keyframes hava81-rhythm-trace {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* 100% rain-chance reference: bars grow from the baseline up to this line. */
+.hava81-forecast-atlas__rain-ceiling {
+  stroke: var(--rhythm-line);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__rain-baseline {
+  stroke: var(--rhythm-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hava81-forecast-atlas__rain-bar {
+  fill: color-mix(in srgb, var(--rhythm-accent) 30%, transparent);
+}
+
+.hava81-forecast-atlas__rain-bar.is-signal {
+  fill: color-mix(in srgb, var(--rhythm-accent) 72%, transparent);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__current-guide {
+  stroke: color-mix(in srgb, var(--rhythm-accent) 65%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__precipitation-marker
+  line {
+  stroke: var(--rhythm-signal);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 3;
+}
+
+/* Points are HTML so they stay round at every plot width. */
+.hava81-forecast-atlas__point {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--rhythm-paper, #fff);
+  box-shadow: inset 0 0 0 1.5px var(--rhythm-accent, #146b73);
+  transition: transform 180ms var(--rhythm-ease);
+}
+
+.hava81-forecast-atlas__point.is-extreme {
+  background: var(--rhythm-accent, #146b73);
+  box-shadow: 0 0 0 2px var(--rhythm-paper, #fff);
+}
+
+.hava81-forecast-atlas__point.is-current {
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  background: var(--rhythm-accent, #146b73);
+  box-shadow:
+    0 0 0 2.5px var(--rhythm-paper, #fff),
+    0 0 0 8px color-mix(in srgb, var(--rhythm-accent, #146b73) 20%, transparent);
+}
+
+.hava81-forecast-atlas__point.is-active {
+  transform: scale(1.6);
+}
+
+.hava81-forecast-atlas__readout {
+  position: absolute;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--rhythm-ink);
+  color: var(--rhythm-paper);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums lining-nums;
+  transform: translate(-50%, calc(-100% - 12px));
+  white-space: nowrap;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__precipitation-flag {
+  position: absolute;
+  top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px 3px 6px;
+  border-radius: 4px;
+  background: var(--rhythm-signal);
+  color: var(--rhythm-signal-text);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.1;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.hava81-forecast-atlas__precipitation-flag svg {
+  fill: currentColor;
+}
+
+.hava81-forecast-atlas__precipitation-flag.is-start {
+  transform: translateX(-10px);
+}
+
+.hava81-forecast-atlas__precipitation-flag.is-end {
+  transform: translateX(calc(-100% + 10px));
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__axis-label {
+  left: 6px;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--rhythm-paper) 88%, transparent);
+  color: var(--rhythm-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.hava81-forecast-atlas__axis-caption {
+  position: absolute;
+  left: 4px;
+  padding: 2px 2px;
+  border-radius: 4px;
+  background: var(--rhythm-paper);
+  color: var(--rhythm-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+/* The sticky axis owns the gutter: scrolled hours fade out beneath it
+ * instead of colliding with the temperature labels. */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__axis {
+  z-index: 3;
+  width: 44px;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__axis::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 52px;
+  height: 184px;
+  background: linear-gradient(90deg, var(--rhythm-paper) 78%, transparent);
+}
+
+/* --- Hour values: one aligned row under the plot, no boxed tiles --------- */
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hours {
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--rhythm-line);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour,
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__hour:first-child {
+  align-content: start;
+  gap: 6px;
+  min-height: 0;
+  margin: 0;
+  padding: 12px 4px 16px;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+  transition: background-color 180ms var(--rhythm-ease);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-night {
+  background-color: var(--rhythm-night);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-current {
+  background-color: var(--rhythm-now);
+  box-shadow: none;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour.is-active,
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour:hover {
+  background-image: linear-gradient(var(--rhythm-hover), var(--rhythm-hover));
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__hour.is-day-boundary {
+  border: 0;
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--rhythm-accent) 55%, transparent);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour time {
+  color: var(--rhythm-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour-now,
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour-day {
+  color: var(--rhythm-accent);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour-symbol {
+  color: color-mix(in srgb, var(--rhythm-accent) 55%, var(--rhythm-muted));
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour strong {
+  color: var(--rhythm-ink);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour-pop {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: var(--rhythm-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+/* Chance and amount stack as two quiet lines instead of wrapping mid-value;
+ * the visual separator is decorative (aria-hidden) and the group label keeps
+ * the full spoken sentence. */
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__hour-pop
+  > [aria-hidden='true'] {
+  display: none;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__hour-pop.is-signal {
+  color: var(--rhythm-signal-ink);
+  font-weight: 650;
+}
+
+/* --- Pager + attribution ------------------------------------------------- */
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__scroll-navigation {
+  gap: 16px;
+  padding-top: 12px;
+}
+
+.hava81-forecast-atlas__scroll-status {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 8px;
+  min-width: 0;
+  max-width: 22rem;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__scroll-hint {
+  color: var(--rhythm-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.hava81-forecast-atlas__scroll-progress {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--rhythm-line);
+}
+
+.hava81-forecast-atlas__scroll-progress span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: var(--rhythm-accent);
+  transition: left 120ms linear;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__scroll-actions {
+  gap: 8px;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__scroll-actions
+  button {
+  border: 1px solid var(--rhythm-line);
+  border-radius: 10px;
+  background: var(--rhythm-paper);
+  color: var(--rhythm-ink);
+  transition:
+    color 160ms var(--rhythm-ease),
+    border-color 160ms var(--rhythm-ease);
+}
+
+.hava81-forecast-atlas__scroll-actions svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__scroll-actions
+  button:not(:disabled):hover {
+  border-color: var(--rhythm-accent);
+  color: var(--rhythm-accent);
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__scroll-actions
+  button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.app
+  .hava81-forecast-atlas
+  .hava81-forecast-atlas__rhythm
+  .hava81-forecast-atlas__scroll-actions
+  button:disabled {
+  opacity: 0.4;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__source {
+  margin-top: 12px;
+  color: var(--rhythm-muted);
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__source a {
+  color: var(--rhythm-ink);
+  text-decoration-color: color-mix(in srgb, var(--rhythm-ink) 35%, transparent);
+  text-underline-offset: 3px;
+}
+
+.app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__source a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* --- Narrow cards (phones, split layouts) -------------------------------- */
+/* px, not rem: enlarged text must not flip a wide desktop card into the phone layout. */
+@container (max-width: 544px) {
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__interval-control {
+    display: grid;
+    flex: 1 1 100%;
+    gap: 8px;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range {
+    display: flex;
+    width: 100%;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range-button {
+    flex: 1 0 auto;
+    padding-inline: 6px;
+  }
+}
+
+/* Phones only (viewport, so enlarged text on a desktop card keeps one row):
+ * low and high side by side, the rain peak as a full-width line. */
+@media (max-width: 47.99rem) {
+  /* rem-based track: two columns at normal text, one column at 200%. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__summary-item {
+    padding: 12px 12px 14px 0;
+  }
+
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__summary-item
+    + .hava81-forecast-atlas__summary-item {
+    padding-inline-start: 12px;
+  }
+
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__summary-item.is-precipitation {
+    display: flex;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding: 12px 0;
+    border-inline-start: 0;
+    border-top: 1px solid var(--rhythm-line);
+  }
+
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__summary-item.is-precipitation
+    strong {
+    font-size: 1.125rem;
+  }
+
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__summary-item
+    strong {
+    font-size: 1.5rem;
+  }
+}
+
+/* All seven sampling choices wrap on 320–360px phones (no hidden options). */
+@media (max-width: 22.5rem) {
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: minmax(44px, auto);
+    gap: 2px;
+    overflow: visible;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range-button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hava81-forecast-atlas__trace {
+    animation: none;
+  }
+
+  .hava81-forecast-atlas__range-indicator.is-animated,
+  .hava81-forecast-atlas__point,
+  .hava81-forecast-atlas__scroll-progress span,
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour,
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range-button,
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__scroll-actions
+    button {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .hava81-forecast-atlas__range-indicator,
+  .hava81-forecast-atlas__night-band,
+  .hava81-forecast-atlas__column {
+    display: none;
+  }
+
+  .hava81-forecast-atlas__point,
+  .hava81-forecast-atlas__point.is-extreme,
+  .hava81-forecast-atlas__point.is-current {
+    forced-color-adjust: none;
+    background: CanvasText;
+    box-shadow: none;
+  }
+
+  .hava81-forecast-atlas__rain-bar,
+  .hava81-forecast-atlas__rain-bar.is-signal {
+    fill: CanvasText;
+  }
+
+  .hava81-forecast-atlas__precipitation-flag,
+  .hava81-forecast-atlas__readout {
+    border: 1px solid CanvasText;
+  }
+
+  .hava81-forecast-atlas__scroll-progress span {
+    background: Highlight;
+  }
+}
+
+@media (forced-colors: active) {
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__range-button[aria-pressed='true'],
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__rhythm
+    .hava81-forecast-atlas__range[data-indicator='ready']
+    .hava81-forecast-atlas__range-button[aria-pressed='true'] {
+    border: 2px solid Highlight;
+    color: Highlight;
+    text-decoration: underline 2px;
+    text-underline-offset: 4px;
+  }
 }

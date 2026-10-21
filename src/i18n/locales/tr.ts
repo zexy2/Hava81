@@ -171,6 +171,9 @@ export const tr = {
       summaryHigh: 'En yüksek',
       summaryRain: 'Yağış piki',
       precipitationNone: 'Yok',
+      nightLabel: 'Gece',
+      rainBandLabel: 'Yağış',
+      visibleWindow: '{{from}} – {{to}} görünüyor',
       nowLabel: 'Şimdi',
       hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} saat',
       hourUnitSingular: 'saat',
@@ -240,7 +243,8 @@ export const tr = {
       },
       nowOrLater: {
         label: 'Şimdi mi, sonra mı?',
-        later: 'Önümüzdeki 6 saatte {{time}} civarı hava koşulları şu ana göre daha elverişli görünüyor.',
+        later:
+          'Önümüzdeki 6 saatte {{time}} civarı hava koşulları şu ana göre daha elverişli görünüyor.',
         now: 'Hava koşulları şimdi çıkmak için yakın saatlere göre daha avantajlı görünüyor.',
         similar: 'Yakın saatler arasında hava açısından belirgin bir avantaj görünmüyor.',
       },
