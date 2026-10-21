@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 
 const now = Date.now();
 const iso = (hours = 0) => new Date(now + hours * 60 * 60_000).toISOString();
@@ -36,6 +37,7 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
         language: 'en', themeMode: theme, temperatureUnit: 'metric', windSpeedUnit: 'ms',
       }));
     }, themeMode);
+    await mockNewEndpointsMissing(page);
     await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
     await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
     await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));

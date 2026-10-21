@@ -1,7 +1,17 @@
 /** Weather API service: browser -> Hava81 BFF only. */
-import { httpClient } from './httpClient';
+import { httpClient, type HttpRequestOptions } from './httpClient';
+import { isAbortError } from './abort';
 import { ApiError } from './errors/ApiError';
 import { API_ENDPOINTS, DEFAULT_WEATHER_PARAMS } from '../config';
+import {
+  BundleUnavailableError,
+  FORECAST_BUNDLE_PARTS,
+  type BundlePartResult,
+  type ForecastBundle,
+  type ForecastBundlePart,
+  type ParsedForecast,
+  type ParsedHourlyForecast,
+} from './weatherBundle';
 import { normalizePrecipitationProbability } from '../utils/precipitation';
 import { nearestTurkishProvince } from '../utils/cityRoute';
 import { ErrorCode } from '../types';
@@ -616,8 +626,149 @@ const reviveWeatherDates = (
   };
 };
 
+
+const parseForecastResponse = (rawResponse: unknown): ParsedForecast => {
+  const response = validateForecastEnvelope(rawResponse, 'forecast') as SerializedForecast;
+
+  const meta = reviveForecastMeta(response.meta, 'forecast.meta');
+  response.daily.forEach((item, index) =>
+    validateDailyForecastItem(item, `forecast.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
+  );
+  response.hourly.slice(0, 8).forEach((item, index) =>
+    validateHourlyForecastItem(item, `forecast.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
+  );
+
+  return {
+    daily: response.daily.map(item => ({
+      ...item,
+      // Noon UTC prevents a date-only forecast from shifting a calendar day in western/eastern clients.
+      date: reviveForecastDate(item.date, 'forecast.daily.date', true),
+      pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.daily.pop'),
+    })),
+    hourly: response.hourly.slice(0, 8).map(item => ({
+      ...item,
+      time: reviveForecastDate(item.time, 'forecast.hourly.time'),
+      pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.hourly.pop'),
+    })),
+    meta,
+  };
+};
+
+const parseHourlyResponse = (rawResponse: unknown): ParsedHourlyForecast => {
+  const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
+  const meta = reviveForecastMeta(response.meta, 'hourly.meta');
+  response.daily?.slice(0, 5).forEach((item, index) =>
+    validateDailyForecastItem(item, `hourly.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
+  );
+  response.hourly.slice(0, 48).forEach((item, index) =>
+    validateHourlyForecastItem(item, `hourly.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
+  );
+
+  return {
+    ...(response.daily?.length
+      ? {
+          daily: response.daily.slice(0, 5).map(item => ({
+            ...item,
+            date: reviveForecastDate(item.date, 'hourly.daily.date', true),
+            pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.daily.pop'),
+          })),
+        }
+      : {}),
+    hourly: response.hourly.slice(0, 48).map(item => ({
+      ...item,
+      time: reviveForecastDate(item.time, 'hourly.hourly.time'),
+      pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
+    })),
+    meta,
+  };
+};
+
+export type WeatherRequestOptions = HttpRequestOptions;
+
+/** Yalnız signal varken 3. argüman geçir (eski çağrı imzaları birebir kalsın). */
+const requestOptions = (options: WeatherRequestOptions): [] | [HttpRequestOptions] =>
+  options.signal ? [{ signal: options.signal }] : [];
+
+let bundleUnsupported = false;
+let provincesUnsupported = false;
+
+/** Testler için: oturum içi "uç nokta yok" hafızasını sıfırlar. */
+export const resetEndpointSupportForTests = (): void => {
+  bundleUnsupported = false;
+  provincesUnsupported = false;
+};
+
+const bundlePartError = (value: unknown): ApiError => {
+  const record = isRecord(value) ? value : {};
+  const statusCode = isFiniteNumber(record.statusCode) ? record.statusCode : 502;
+  const message = typeof record.message === 'string' ? record.message : undefined;
+  return ApiError.fromHttpStatus(statusCode, message);
+};
+
+export interface ProvinceTemperature {
+  plate: number;
+  name: string;
+  lat: number;
+  lon: number;
+  /** °C */
+  temperature: number;
+  icon: string;
+  description: string;
+  observedAt: Date;
+}
+
+export interface ProvinceTemperatures {
+  byPlate: ReadonlyMap<number, ProvinceTemperature>;
+  provider: string;
+  attribution?: string;
+  fetchedAt: Date;
+}
+
+const MAX_PROVINCE_OBSERVATION_AGE_MS = 3 * 60 * 60_000;
+
+const parseProvinceTemperatures = (raw: unknown): ProvinceTemperatures | null => {
+  if (!isRecord(raw) || !Array.isArray(raw.provinces) || !isRecord(raw.meta)) return null;
+  const fetchedAt = new Date(String(raw.meta.fetchedAt));
+  if (Number.isNaN(fetchedAt.getTime()) || typeof raw.meta.provider !== 'string') return null;
+  const now = Date.now();
+  const byPlate = new Map<number, ProvinceTemperature>();
+  for (const item of raw.provinces) {
+    if (!isRecord(item)) continue;
+    const { plate, name, lat, lon, temperature, icon, description } = item;
+    const observedAt = new Date(String(item.observedAt));
+    if (
+      !isFiniteNumber(plate) ||
+      plate < 1 ||
+      plate > 81 ||
+      typeof name !== 'string' ||
+      !isFiniteNumber(lat) ||
+      !isFiniteNumber(lon) ||
+      !isPlausibleTemperature(temperature, 'metric') ||
+      typeof icon !== 'string' ||
+      !WEATHER_ICON_CODE_PATTERN.test(icon) ||
+      typeof description !== 'string' ||
+      Number.isNaN(observedAt.getTime()) ||
+      // Bayat (3 saatten eski) ya da gelecekten gelen gözlemi gösterme.
+      now - observedAt.getTime() > MAX_PROVINCE_OBSERVATION_AGE_MS ||
+      observedAt.getTime() - now > MAX_FORECAST_FUTURE_SKEW_MS
+    ) {
+      continue;
+    }
+    byPlate.set(plate, { plate, name, lat, lon, temperature, icon, description, observedAt });
+  }
+  return {
+    byPlate,
+    provider: raw.meta.provider,
+    ...(typeof raw.meta.attribution === 'string' ? { attribution: raw.meta.attribution } : {}),
+    fetchedAt,
+  };
+};
+
 export const weatherService = {
-  getCurrentWeather: async (params: WeatherQueryParams): Promise<NormalizedWeatherData> => {
+  getCurrentWeather: async (
+    params: WeatherQueryParams,
+    options: WeatherRequestOptions = {}
+  ): Promise<NormalizedWeatherData> => {
     const {
       city,
       units = DEFAULT_WEATHER_PARAMS.units,
@@ -634,11 +785,15 @@ export const weatherService = {
       const bootstrapResponse = bootstrapPromise ? await bootstrapPromise : null;
       const response =
         bootstrapResponse ??
-        (await httpClient.get<SerializedWeatherData>(API_ENDPOINTS.weather.current, {
-          city: normalizedCity,
-          units,
-          lang,
-        }));
+        (await httpClient.get<SerializedWeatherData>(
+          API_ENDPOINTS.weather.current,
+          {
+            city: normalizedCity,
+            units,
+            lang,
+          },
+          ...requestOptions(options)
+        ));
       return reviveWeatherDates(response, units);
     } catch (error) {
       if (error instanceof ApiError && error.statusCode === 404) {
@@ -709,86 +864,158 @@ export const weatherService = {
   getForecast: async (
     lat: number,
     lon: number,
-    lang = DEFAULT_WEATHER_PARAMS.lang
-  ): Promise<{ daily: DailyForecast[]; hourly: HourlyForecast[]; meta: ForecastMeta }> => {
-    const rawResponse = await httpClient.get<unknown>(API_ENDPOINTS.weather.forecast, {
-      lat,
-      lon,
-      units: DEFAULT_WEATHER_PARAMS.units,
-      lang,
-    });
-    const response = validateForecastEnvelope(rawResponse, 'forecast') as SerializedForecast;
-
-    const meta = reviveForecastMeta(response.meta, 'forecast.meta');
-    response.daily.forEach((item, index) =>
-      validateDailyForecastItem(item, `forecast.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    lang = DEFAULT_WEATHER_PARAMS.lang,
+    options: WeatherRequestOptions = {}
+  ): Promise<ParsedForecast> => {
+    const rawResponse = await httpClient.get<unknown>(
+      API_ENDPOINTS.weather.forecast,
+      {
+        lat,
+        lon,
+        units: DEFAULT_WEATHER_PARAMS.units,
+        lang,
+      },
+      ...requestOptions(options)
     );
-    response.hourly.slice(0, 8).forEach((item, index) =>
-      validateHourlyForecastItem(item, `forecast.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
-    );
-
-    return {
-      daily: response.daily.map(item => ({
-        ...item,
-        // Noon UTC prevents a date-only forecast from shifting a calendar day in western/eastern clients.
-        date: reviveForecastDate(item.date, 'forecast.daily.date', true),
-        pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.daily.pop'),
-      })),
-      hourly: response.hourly.slice(0, 8).map(item => ({
-        ...item,
-        time: reviveForecastDate(item.time, 'forecast.hourly.time'),
-        pop: normalizeBffPrecipitationProbability(item.pop, 'forecast.hourly.pop'),
-      })),
-      meta,
-    };
+    return parseForecastResponse(rawResponse);
   },
 
   getHourlyForecast: async (
     lat: number,
     lon: number,
-    lang = DEFAULT_WEATHER_PARAMS.lang
-  ): Promise<{ daily?: DailyForecast[]; hourly: HourlyForecast[]; meta: ForecastMeta }> => {
+    lang = DEFAULT_WEATHER_PARAMS.lang,
+    options: WeatherRequestOptions = {}
+  ): Promise<ParsedHourlyForecast> => {
     const bootstrapPromise = takeBootstrapHourly(lat, lon, lang);
     const bootstrapResponse = bootstrapPromise ? await bootstrapPromise : null;
     const rawResponse =
       bootstrapResponse ??
-      (await httpClient.get<unknown>(API_ENDPOINTS.weather.hourly, {
-        lat,
-        lon,
-        lang,
-      }));
-    const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
-    const meta = reviveForecastMeta(response.meta, 'hourly.meta');
-    response.daily?.slice(0, 5).forEach((item, index) =>
-      validateDailyForecastItem(item, `hourly.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
-    );
-    response.hourly.slice(0, 48).forEach((item, index) =>
-      validateHourlyForecastItem(item, `hourly.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
-    );
+      (await httpClient.get<unknown>(
+        API_ENDPOINTS.weather.hourly,
+        {
+          lat,
+          lon,
+          lang,
+        },
+        ...requestOptions(options)
+      ));
+    return parseHourlyResponse(rawResponse);
+  },
+
+  /** Şehir sayfası açılışta saatlik tahmini önceden istediyse (bootstrap) true. */
+  hasBootstrapHourly: (lang = DEFAULT_WEATHER_PARAMS.lang): boolean =>
+    typeof window !== 'undefined' && window.__HAVA81_BOOTSTRAP_HOURLY__?.lang === lang,
+
+  /**
+   * Faz 3.2: forecast + hourly + air-quality + context tek `/weather/bundle` isteğiyle.
+   * Her parça tekil uç noktalarla aynı doğrulamadan geçer; başarısız parça `ok: false`
+   * döner. API bundle'ı bilmiyorsa (404, web API'den önce deploy edildiyse) ya da istek
+   * başarısız olursa `BundleUnavailableError` fırlatılır; çağıran eski tekil isteklere
+   * düşer. 404 görüldüğünde oturum boyunca bundle bir daha denenmez.
+   */
+  getForecastBundle: async (
+    lat: number,
+    lon: number,
+    lang = DEFAULT_WEATHER_PARAMS.lang,
+    options: WeatherRequestOptions & { marine?: boolean; parts?: readonly ForecastBundlePart[] } = {}
+  ): Promise<ForecastBundle> => {
+    if (bundleUnsupported) throw new BundleUnavailableError('unsupported');
+    const parts = options.parts ?? FORECAST_BUNDLE_PARTS;
+    let raw: unknown;
+    try {
+      raw = await httpClient.get<unknown>(
+        API_ENDPOINTS.weather.bundle,
+        {
+          lat,
+          lon,
+          units: DEFAULT_WEATHER_PARAMS.units,
+          lang,
+          marine: options.marine ? 'true' : 'false',
+          include: parts.join(','),
+        },
+        // Yeniden deneme yok: bundle başarısızsa (ör. 5xx, erişilemeyen proxy) geri
+        // çekilme beklemeden tekil isteklere düşülür; onların kendi yeniden denemesi var.
+        { ...(options.signal ? { signal: options.signal } : {}), retries: 0 }
+      );
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      if (error instanceof ApiError && error.statusCode === 404) {
+        bundleUnsupported = true;
+        throw new BundleUnavailableError('unsupported', error);
+      }
+      // 429'da tekil isteklere düşmek yükü artırır; hatayı olduğu gibi ilet.
+      if (error instanceof ApiError && error.code === ErrorCode.RATE_LIMIT) throw error;
+      throw new BundleUnavailableError('failed', error);
+    }
+    // Bundle zarfı değilse (ör. SPA'nın 200 HTML/JSON geri dönüşü, eski proxy) tekil isteklere düş.
+    if (!isRecord(raw) || !isRecord(raw.meta) || !Array.isArray(raw.meta.parts)) {
+      throw new BundleUnavailableError('failed');
+    }
+
+    const errors = isRecord(raw.errors) ? raw.errors : {};
+    const settle = <T,>(part: ForecastBundlePart, parse: (value: unknown) => T): BundlePartResult<T> | undefined => {
+      if (!parts.includes(part)) return undefined;
+      const value = raw[part];
+      if (value === null || value === undefined) {
+        return { ok: false, error: bundlePartError(errors[part]) };
+      }
+      try {
+        return { ok: true, value: parse(value) };
+      } catch (error) {
+        return { ok: false, error };
+      }
+    };
 
     return {
-      ...(response.daily?.length
-        ? {
-            daily: response.daily.slice(0, 5).map(item => ({
-              ...item,
-              date: reviveForecastDate(item.date, 'hourly.daily.date', true),
-              pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.daily.pop'),
-            })),
-          }
-        : {}),
-      hourly: response.hourly.slice(0, 48).map(item => ({
-        ...item,
-        time: reviveForecastDate(item.time, 'hourly.hourly.time'),
-        pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
-      })),
-      meta,
+      forecast: settle('forecast', parseForecastResponse),
+      hourly: settle('hourly', parseHourlyResponse),
+      airQuality: settle('airQuality', value =>
+        validateAirQualityPayload(value as SerializedAirQuality)
+      ),
+      context: settle('context', value =>
+        validateContextSignalsPayload(
+          value as Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
+        )
+      ),
     };
   },
 
-  getContextSignals: async (lat: number, lon: number, marine = false): Promise<ContextSignals> => {
+  /**
+   * 81 ilin güncel sıcaklığı (harita). Uç nokta yoksa/başarısızsa `null` döner;
+   * harita bu durumda canlı sıcaklık olmadan bugünkü gibi çalışır.
+   */
+  getProvinceTemperatures: async (
+    lang = DEFAULT_WEATHER_PARAMS.lang,
+    options: WeatherRequestOptions = {}
+  ): Promise<ProvinceTemperatures | null> => {
+    if (provincesUnsupported) return null;
+    try {
+      const raw = await httpClient.get<unknown>(
+        API_ENDPOINTS.weather.provinces,
+        { lang },
+        ...requestOptions(options)
+      );
+      return parseProvinceTemperatures(raw);
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      if (error instanceof ApiError && error.statusCode === 404) provincesUnsupported = true;
+      return null;
+    }
+  },
+
+  getContextSignals: async (
+    lat: number,
+    lon: number,
+    marine = false,
+    options: WeatherRequestOptions = {}
+  ): Promise<ContextSignals> => {
     const response = await httpClient.get<
       Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
-    >(API_ENDPOINTS.weather.context, { lat, lon, marine: marine ? 'true' : 'false' });
+    >(
+      API_ENDPOINTS.weather.context,
+      { lat, lon, marine: marine ? 'true' : 'false' },
+      ...requestOptions(options)
+    );
     return validateContextSignalsPayload(response);
   },
 
@@ -812,13 +1039,18 @@ export const weatherService = {
   getAirQuality: async (
     lat: number,
     lon: number,
-    lang = DEFAULT_WEATHER_PARAMS.lang
+    lang = DEFAULT_WEATHER_PARAMS.lang,
+    options: WeatherRequestOptions = {}
   ): Promise<AirQuality> => {
-    const response = await httpClient.get<SerializedAirQuality>(API_ENDPOINTS.weather.airQuality, {
-      lat,
-      lon,
-      lang,
-    });
+    const response = await httpClient.get<SerializedAirQuality>(
+      API_ENDPOINTS.weather.airQuality,
+      {
+        lat,
+        lon,
+        lang,
+      },
+      ...requestOptions(options)
+    );
     return validateAirQualityPayload(response);
   },
 };

@@ -1,6 +1,7 @@
 import { vi, type Mock } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { weatherService } from '../../api/weatherService';
+import { BundleUnavailableError } from '../../api/weatherBundle';
 import { useForecast } from '../../hooks/useForecast';
 
 vi.mock('../../api/weatherService', () => ({
@@ -9,12 +10,19 @@ vi.mock('../../api/weatherService', () => ({
     getHourlyForecast: vi.fn(),
     getAirQuality: vi.fn(),
     getContextSignals: vi.fn(),
+    // Faz 3.2: bu dosya tekil istek (eski API) yolunu doğrular; bundle desteklenmiyor.
+    getForecastBundle: vi.fn(),
+    hasBootstrapHourly: vi.fn(),
   },
 }));
 
 describe('useForecast', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (weatherService.getForecastBundle as Mock).mockRejectedValue(
+      new BundleUnavailableError('unsupported')
+    );
+    (weatherService.hasBootstrapHourly as Mock).mockReturnValue(false);
     (weatherService.getForecast as Mock).mockResolvedValue({
       daily: [],
       hourly: [{ time: new Date('2026-07-14T12:00:00.000Z'), temp: 24, icon: '01d', pop: 0.1 }],
@@ -64,10 +72,10 @@ describe('useForecast', () => {
       await result.current.fetch({ lat: 41.01, lon: 28.97 });
     });
 
-    expect(weatherService.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'en');
-    expect(weatherService.getHourlyForecast).toHaveBeenCalledWith(41.01, 28.97, 'en');
-    expect(weatherService.getAirQuality).toHaveBeenCalledWith(41.01, 28.97, 'en');
-    expect(weatherService.getContextSignals).toHaveBeenCalledWith(41.01, 28.97, false);
+    expect(weatherService.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'en', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(weatherService.getHourlyForecast).toHaveBeenCalledWith(41.01, 28.97, 'en', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(weatherService.getAirQuality).toHaveBeenCalledWith(41.01, 28.97, 'en', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(weatherService.getContextSignals).toHaveBeenCalledWith(41.01, 28.97, false, expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(result.current.daily).toHaveLength(1);
     expect(result.current.daily[0]).toMatchObject({ tempMin: 18.4, tempMax: 27.6 });
     expect(result.current.hourly).toHaveLength(1);
@@ -229,7 +237,8 @@ describe('useForecast', () => {
 
     await waitFor(() => expect(result.current.displayMeta?.intervalHours).toBe(1));
     expect(result.current.hourly[0]?.temp).toBe(25);
-    expect(result.current.isLoading).toBe(true);
+    // Faz 3.2: yükleme durumu yalnız çekirdek tahmine bağlı; isteğe bağlı kanıtlar beklenmez.
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.airQuality).toBeNull();
     expect(result.current.contextSignals).toBeNull();
 

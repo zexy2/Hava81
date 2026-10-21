@@ -20,6 +20,20 @@ const querySchema = z.object({
     .transform(value => value === 'true'),
 });
 
+export const CONTEXT_CACHE_TTL_MS = 30 * 60 * 1000;
+
+/** Bağlam sinyallerini cache + upstream bütçesi üzerinden yükler (tekil uç nokta ve bundle ortak). */
+export const loadContextSignals = (
+  cache: AsyncCache,
+  service: ContextSignalsService,
+  lat: number,
+  lon: number,
+  marine: boolean
+) =>
+  cache.getOrLoad(`context:${coordinateCacheKey(lat, lon)}:${marine ? 1 : 0}`, CONTEXT_CACHE_TTL_MS, () =>
+    service.get(lat, lon, marine)
+  );
+
 export const registerContextRoutes = async (
   app: FastifyInstance,
   service: ContextSignalsService,
@@ -45,10 +59,7 @@ export const registerContextRoutes = async (
     },
     async (request, reply) => {
       const query = querySchema.parse(request.query);
-      const key = `context:${coordinateCacheKey(query.lat, query.lon)}:${query.marine ? 1 : 0}`;
-      const result = await cache.getOrLoad(key, 30 * 60 * 1000, () =>
-        service.get(query.lat, query.lon, query.marine)
-      );
+      const result = await loadContextSignals(cache, service, query.lat, query.lon, query.marine);
       reply.header('x-cache', result.status);
       reply.header(
         'cache-control',

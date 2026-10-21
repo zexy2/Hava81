@@ -40,6 +40,9 @@ export const envSchema = z.object({
     (value) => (typeof value === 'string' && value.trim() !== '' ? value.trim() : 'unknown'),
     z.string().regex(/^[0-9A-Za-z._-]{1,64}$/, 'HAVA81_API_REVISION must be a short revision id'),
   ),
+  // 81 il tek Open-Meteo isteğiyle alınır ama Open-Meteo bunu 81 çağrı sayar; 30 dk
+  // varsayılanı günde ~3.900 çağrı demektir (ücretsiz katman 10.000/gün).
+  CACHE_PROVINCES_TTL_MS: integerFromEnv(1_800_000, 60_000, 21_600_000),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

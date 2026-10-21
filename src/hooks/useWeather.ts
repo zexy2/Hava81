@@ -282,12 +282,28 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   const previousLanguageRef = useRef(language);
   const activeSourceRef = useRef<'city' | 'location'>('city');
   const searchTokenRef = useRef(0);
+  // Faz 3.2: yeni şehir isteği (ya da konum devralması/unmount) bir öncekini iptal eder.
+  const cityRequestRef = useRef<AbortController | null>(null);
+  const abortCityRequest = useCallback(() => {
+    cityRequestRef.current?.abort();
+    cityRequestRef.current = null;
+  }, []);
+  useEffect(() => abortCityRequest, [abortCityRequest]);
 
   // Async weather fetching
   const weatherAsync = useAsync(
     async (cityName: string) => {
-      const data = await weatherService.getCurrentWeather({ city: cityName, lang: language });
-      return data;
+      cityRequestRef.current?.abort();
+      const controller = new AbortController();
+      cityRequestRef.current = controller;
+      try {
+        return await weatherService.getCurrentWeather(
+          { city: cityName, lang: language },
+          { signal: controller.signal }
+        );
+      } finally {
+        if (cityRequestRef.current === controller) cityRequestRef.current = null;
+      }
     },
     {
       onSuccess: data => {
@@ -329,6 +345,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
         searchTokenRef.current += 1;
         // Keep the existing city visible while location is pending, then invalidate
         // any older city request only when a real location result is ready to replace it.
+        abortCityRequest();
         weatherAsync.reset();
         setCity(data.cityName);
         setLastUpdated(new Date());

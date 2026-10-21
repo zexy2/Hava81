@@ -65,16 +65,26 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
     setRows([]);
     setLoading(true);
     setFailedCount(0);
+    // Faz 3.2: görünümden çıkınca (unmount) ya da şehir listesi değişince uçuştaki
+    // karşılaştırma isteklerini iptal et.
+    const controller = new AbortController();
+    const { signal } = controller;
     Promise.allSettled(
       selected.map(async city => {
-        const weather = await weatherService.getCurrentWeather({ city: city.name, lang: language });
+        const weather = await weatherService.getCurrentWeather(
+          { city: city.name, lang: language },
+          { signal }
+        );
         const [hourlyResult, airResult] = await Promise.allSettled([
           weatherService.getHourlyForecast(
             weather.coordinates.lat,
             weather.coordinates.lon,
-            language
+            language,
+            { signal }
           ),
-          weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language),
+          weatherService.getAirQuality(weather.coordinates.lat, weather.coordinates.lon, language, {
+            signal,
+          }),
         ]);
         const airQuality = airResult.status === 'fulfilled' ? airResult.value : undefined;
         let hourlySource =
@@ -85,7 +95,8 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
           const fallbackForecast = await weatherService.getForecast(
             weather.coordinates.lat,
             weather.coordinates.lon,
-            language
+            language,
+            { signal }
           );
           hourlySource = fallbackForecast.hourly.length ? fallbackForecast : undefined;
         }
@@ -115,6 +126,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [language, selected]);
 

@@ -158,6 +158,8 @@ CI additionally validates browser flows across representative viewport sizes, Li
 | `GET /api/v1/weather/forecast?lat=38.42&lon=27.13` | Forecast data |
 | `GET /api/v1/weather/air-quality?lat=38.42&lon=27.13` | Air-quality snapshot |
 | `GET /api/v1/weather/context?lat=38.42&lon=27.13` | UV, dust, pollen and optional marine context |
+| `GET /api/v1/weather/bundle?lat=38.42&lon=27.13&include=forecast,hourly,airQuality,context` | Current/forecast/hourly/air quality/context for one location in a single response (failed part is `null` + `errors`) |
+| `GET /api/v1/weather/provinces?lang=en` | Live temperature for all 81 provinces (map; one Open-Meteo call, 30 min cache) |
 | `GET /api/v1/weather/route?...` | Approximate route-weather corridor |
 | `GET /api/v1/health/live` | Liveness probe |
 | `GET /api/v1/health/ready` | Readiness probe |

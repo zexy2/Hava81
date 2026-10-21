@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -36,6 +37,7 @@ const forecast = {
 
 test('dashboard hero and current weather fit mobile and desktop viewports', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390');
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', route => route.fulfill({ json: forecast }));
   await page.route('**/api/v1/weather/hourly**', route => route.fulfill({ json: hourly }));
@@ -69,6 +71,7 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
   await page.setViewportSize({ width: 390, height: 844 });
   let releaseForecast!: () => void;
   const pendingForecast = new Promise<void>(resolve => { releaseForecast = resolve; });
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', async route => {
     await pendingForecast;
@@ -107,6 +110,7 @@ test('mobile forecast failure retains the loading card footprint', async ({ page
   await page.setViewportSize({ width: 390, height: 844 });
   let releaseFailure!: () => void;
   const pendingFailure = new Promise<void>(resolve => { releaseFailure = resolve; });
+  await mockNewEndpointsMissing(page);
   await page.route('**/api/v1/weather/current**', route => route.fulfill({ json: current }));
   await page.route('**/api/v1/weather/forecast**', async route => {
     await pendingFailure;

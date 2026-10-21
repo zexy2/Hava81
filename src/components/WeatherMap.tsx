@@ -6,6 +6,7 @@ import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
+import { weatherService, type ProvinceTemperatures } from '../api/weatherService';
 import './WeatherMap.css';
 
 interface WeatherMapProps {
@@ -77,13 +78,52 @@ const createUnavailableObservationIcon = (): L.DivIcon =>
     iconAnchor: [22, 22],
   });
 
-const createPlateIcon = (plateCode: number): L.DivIcon =>
-  L.divIcon({
-    className: 'weather-map__plate-marker',
-    html: `<span><i aria-hidden="true">TR</i>${String(plateCode).padStart(2, '0')}</span>`,
-    iconSize: [60, 44],
+const createPlateIcon = (
+  plateCode: number,
+  liveTemperature?: { celsius: number; display: number }
+): L.DivIcon => {
+  const plate = `<span><i aria-hidden="true">TR</i>${String(plateCode).padStart(2, '0')}</span>`;
+  if (!liveTemperature) {
+    return L.divIcon({
+      className: 'weather-map__plate-marker',
+      html: plate,
+      iconSize: [60, 44],
+      iconAnchor: [30, 22],
+    });
+  }
+  // Faz 3.2 / 2.5: canlı il sıcaklığı plakanın yanında ayrı, yuvarlak bir rozet; plaka
+  // numarasıyla karışmasın diye kendi renk ölçeğini (lejant) kullanır.
+  const colors = getTemperatureMarkerColors(liveTemperature.celsius);
+  return L.divIcon({
+    className: 'weather-map__plate-marker weather-map__plate-marker--live',
+    html: `${plate}<b class="weather-map__plate-temp" style="--marker-bg:${colors.background};--marker-fg:${colors.foreground}">${Math.round(liveTemperature.display)}°</b>`,
+    iconSize: [92, 44],
     iconAnchor: [30, 22],
   });
+};
+
+/**
+ * 81 ilin canlı sıcaklığı yalnız atlas yakınlaştırmasında (tüm iller görünürken) ve
+ * ilk kez gerektiğinde istenir. API'de uç nokta yoksa/başarısızsa `null` kalır ve
+ * harita bugünkü gibi yalnız plakaları gösterir. Unmount'ta istek iptal edilir.
+ */
+const useProvinceTemperatures = (enabled: boolean, language: string) => {
+  const [data, setData] = useState<ProvinceTemperatures | null>(null);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const controller = new AbortController();
+    Promise.resolve()
+      .then(() => weatherService.getProvinceTemperatures(language, { signal: controller.signal }))
+      .then(result => {
+        if (!controller.signal.aborted) setData(result ?? null);
+      })
+      .catch(() => {
+        // İsteğe bağlı katman: hata (ya da iptal) haritayı etkilemez.
+      });
+    return () => controller.abort();
+  }, [enabled, language]);
+  return data;
+};
 
 const labelMarker = (marker: L.Marker | null, accessibleName: string) => {
   marker?.getElement()?.setAttribute('aria-label', accessibleName);
@@ -95,7 +135,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
-  const { convertTemperature, getTemperatureSymbol } = useSettings();
+  const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
   const mapTitleId = useId();
   const [fallbackTiles, setFallbackTiles] = useState(false);
   // Leaflet can display markers before the raster map loads. Keep an honest
@@ -139,6 +179,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
 
   const [zoom, setZoom] = useState(6);
   const showAllProvinces = zoom >= ATLAS_ZOOM;
+  const [atlasRequested, setAtlasRequested] = useState(false);
+  useEffect(() => {
+    if (showAllProvinces) setAtlasRequested(true);
+  }, [showAllProvinces]);
+  const provinceTemperatures = useProvinceTemperatures(atlasRequested, settings.language);
   const featuredCities = useMemo(
     () =>
       TURKISH_CITIES.filter(
@@ -248,9 +293,13 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           )}
 
           {featuredCities.map(featuredCity => {
+            const live = showAllProvinces
+              ? provinceTemperatures?.byPlate.get(featuredCity.plateCode)
+              : undefined;
+            const liveDisplay = live ? Math.round(convertTemperature(live.temperature)) : null;
             const markerName = `${featuredCity.name}: ${t('hava81.decision.plateCodeLabel', {
               code: String(featuredCity.plateCode).padStart(2, '0'),
-            })}`;
+            })}${live ? `, ${liveDisplay}${temperatureSymbol}` : ''}`;
 
             return (
               <Marker
@@ -258,7 +307,12 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                 ref={marker => labelMarker(marker, markerName)}
                 position={[featuredCity.coordinates.lat, featuredCity.coordinates.lon]}
                 title={markerName}
-                icon={createPlateIcon(featuredCity.plateCode)}
+                icon={createPlateIcon(
+                  featuredCity.plateCode,
+                  live && liveDisplay !== null
+                    ? { celsius: live.temperature, display: liveDisplay }
+                    : undefined
+                )}
                 eventHandlers={{
                   add: event => labelMarker(event.target as L.Marker, markerName),
                 }}
@@ -269,6 +323,14 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                       {String(featuredCity.plateCode).padStart(2, '0')}
                     </span>
                     <h4>{featuredCity.name}</h4>
+                    {live && (
+                      <>
+                        <p className="weather-map__popup-temp">
+                          {liveDisplay} {temperatureSymbol}
+                        </p>
+                        <p className="weather-map__popup-desc">{live.description}</p>
+                      </>
+                    )}
                     <p className="weather-map__popup-region">{featuredCity.region}</p>
                     <button
                       type="button"
@@ -307,6 +369,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       </div>
 
       <p className="weather-map__attribution">
+        {showAllProvinces && provinceTemperatures && (
+          <>
+            <span>
+              {t('weather.mapLiveProvinces', {
+                provider: provinceTemperatures.attribution ?? provinceTemperatures.provider,
+              })}
+            </span>
+            <span>·</span>
+          </>
+        )}
         <span>©</span>
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           OpenStreetMap contributors

@@ -6,11 +6,34 @@
 import { config, RETRY_CONFIG } from '../config';
 import { ApiError } from './errors/ApiError';
 import { ErrorCode } from '../types';
+import { createAbortError } from './abort';
+
+export { createAbortError, isAbortError } from './abort';
 
 interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean>;
   timeout?: number;
   retries?: number;
+}
+
+/** Faz 3.2: çağıranın isteği iptal edebilmesi için (şehir/görünüm değişimi, unmount). */
+export interface HttpRequestOptions {
+  signal?: AbortSignal;
+  /**
+   * Yeniden deneme sayısını geçersiz kılar. Bundle gibi kendi geri dönüş yolu olan
+   * istekler 0 verir: başarısızlıkta beklemeden tekil isteklere düşülür.
+   */
+  retries?: number;
+}
+
+
+interface InFlightGet {
+  promise: Promise<unknown>;
+  controller: AbortController;
+  /** İptal edilebilir (signal'li) ve henüz iptal etmemiş abone sayısı. */
+  subscribers: number;
+  /** Signal'siz bir abone varsa paylaşılan istek asla iptal edilmez. */
+  pinned: boolean;
 }
 
 interface RetryState {
@@ -21,12 +44,27 @@ interface RetryState {
 // Simple in-memory response cache plus single-flight GET deduplication.
 const requestCache = new Map<string, { data: unknown; timestamp: number; expiresAt: number }>();
 const MAX_CACHE_ENTRIES = 128;
-const inFlightGetRequests = new Map<string, Promise<unknown>>();
+const inFlightGetRequests = new Map<string, InFlightGet>();
 
 /**
  * Sleep utility for retry delays
  */
-const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number, signal?: AbortSignal | null): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(createAbortError());
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timerId);
+      reject(createAbortError());
+    };
+    const timerId = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 
 /**
  * Calculate exponential backoff delay
@@ -188,8 +226,11 @@ const fetchWithRetry = async <T>(
   const {
     timeout = config.api.timeout,
     retries = RETRY_CONFIG.maxRetries,
+    signal: externalSignal,
     ...fetchOptions
   } = options;
+
+  if (externalSignal?.aborted) throw createAbortError();
 
   // Check cache first for GET requests
   const cacheKey = getCacheKey(url, options);
@@ -204,6 +245,8 @@ const fetchWithRetry = async <T>(
   // Create abort controller for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const abortFromCaller = () => controller.abort();
+  externalSignal?.addEventListener('abort', abortFromCaller, { once: true });
 
   // Only add Content-Type for non-GET requests (POST, PUT, etc.)
   const isGetRequest = !fetchOptions.method || fetchOptions.method === 'GET';
@@ -239,7 +282,7 @@ const fetchWithRetry = async <T>(
         console.warn(
           `[HTTP] Retrying request (${retryState.count + 1}/${retries}) after ${delay}ms`
         );
-        await sleep(delay);
+        await sleep(delay, externalSignal);
 
         return fetchWithRetry<T>(url, options, {
           count: retryState.count + 1,
@@ -262,6 +305,9 @@ const fetchWithRetry = async <T>(
   } catch (error) {
     clearTimeout(timeoutId);
 
+    // Caller cancellation (city/view change) is not a timeout and must not be retried.
+    if (externalSignal?.aborted) throw createAbortError();
+
     // Handle abort (timeout)
     if (error instanceof Error && error.name === 'AbortError') {
       throw new ApiError('İstek zaman aşımına uğradı', ErrorCode.NETWORK_ERROR, {
@@ -275,7 +321,7 @@ const fetchWithRetry = async <T>(
       console.warn(
         `[HTTP] Network error, retrying (${retryState.count + 1}/${retries}) after ${delay}ms`
       );
-      await sleep(delay);
+      await sleep(delay, externalSignal);
 
       return fetchWithRetry<T>(url, options, {
         count: retryState.count + 1,
@@ -292,26 +338,79 @@ const fetchWithRetry = async <T>(
 
     // Wrap unknown errors
     throw ApiError.networkError(error instanceof Error ? error : undefined);
+  } finally {
+    externalSignal?.removeEventListener('abort', abortFromCaller);
   }
+};
+
+/**
+ * Paylaşılan (single-flight) isteğe bir abone bağlar. Abone kendi signal'ini iptal
+ * ederse yalnız onun promise'i AbortError ile reddedilir; paylaşılan fetch ancak tüm
+ * iptal edilebilir aboneler vazgeçtiyse ve signal'siz abone yoksa iptal edilir.
+ */
+const subscribe = <T>(cacheKey: string, entry: InFlightGet, signal?: AbortSignal): Promise<T> => {
+  if (!signal) {
+    entry.pinned = true;
+    return entry.promise as Promise<T>;
+  }
+  if (signal.aborted) return Promise.reject(createAbortError());
+  entry.subscribers += 1;
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      entry.subscribers -= 1;
+      if (entry.subscribers <= 0 && !entry.pinned) {
+        entry.controller.abort();
+        if (inFlightGetRequests.get(cacheKey) === entry) inFlightGetRequests.delete(cacheKey);
+      }
+      reject(createAbortError());
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    entry.promise.then(
+      value => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value as T);
+      },
+      error => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      }
+    );
+  });
 };
 
 /**
  * HTTP Client API
  */
 export const httpClient = {
-  get: <T>(endpoint: string, params?: Record<string, string | number | boolean>): Promise<T> => {
+  get: <T>(
+    endpoint: string,
+    params?: Record<string, string | number | boolean>,
+    options: HttpRequestOptions = {}
+  ): Promise<T> => {
     const url = buildUrl(endpoint, params);
     const cacheKey = getCacheKey(url);
     const inFlight = inFlightGetRequests.get(cacheKey);
-    if (inFlight) return inFlight as Promise<T>;
+    if (inFlight) return subscribe<T>(cacheKey, inFlight, options.signal);
+    if (options.signal?.aborted) return Promise.reject(createAbortError());
 
-    const request = fetchWithRetry<T>(url).finally(() => {
-      if (inFlightGetRequests.get(cacheKey) === request) {
+    const controller = new AbortController();
+    const entry: InFlightGet = {
+      promise: Promise.resolve(),
+      controller,
+      subscribers: 0,
+      pinned: false,
+    };
+    const request = fetchWithRetry<T>(url, {
+      signal: controller.signal,
+      ...(options.retries === undefined ? {} : { retries: options.retries }),
+    }).finally(() => {
+      if (inFlightGetRequests.get(cacheKey) === entry) {
         inFlightGetRequests.delete(cacheKey);
       }
     });
-    inFlightGetRequests.set(cacheKey, request);
-    return request;
+    entry.promise = request;
+    inFlightGetRequests.set(cacheKey, entry);
+    return subscribe<T>(cacheKey, entry, options.signal);
   },
 
   post: <T>(endpoint: string, data?: unknown): Promise<T> => {

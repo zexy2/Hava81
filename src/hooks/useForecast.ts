@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { weatherService } from '../api/weatherService';
+import {
+  BundleUnavailableError,
+  FORECAST_BUNDLE_PARTS,
+  type BundlePartResult,
+  type ForecastBundle,
+  type ForecastBundlePart,
+} from '../api/weatherBundle';
 import { supportsMarineContext } from '../utils/marineCities';
 import { getOptionalEvidenceFreshness } from '../utils/optionalEvidenceFreshness';
 import type {
@@ -10,6 +17,19 @@ import type {
   ForecastMeta,
   ContextSignals,
 } from '../types';
+
+type Settled<T> = BundlePartResult<T>;
+
+const settle = <T>(promise: Promise<T>): Promise<Settled<T>> =>
+  promise.then(
+    value => ({ ok: true as const, value }),
+    error => ({ ok: false as const, error: error as unknown })
+  );
+
+type BundleOutcome =
+  | { kind: 'bundle'; bundle: ForecastBundle }
+  | { kind: 'legacy' }
+  | { kind: 'error'; error: unknown };
 
 interface UseForecastReturn {
   daily: DailyForecast[];
@@ -35,6 +55,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const requestIdRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const airQualityRef = useRef<AirQuality | null>(null);
   const contextSignalsRef = useRef<ContextSignals | null>(null);
   const lastSuccessfulRequestRef = useRef<{
@@ -46,6 +67,9 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   useEffect(
     () => () => {
       requestIdRef.current += 1;
+      // Faz 3.2: unmount sırasında uçuştaki tahmin isteklerini gerçekten iptal et.
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
     },
     []
   );
@@ -105,6 +129,11 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const fetch = useCallback(
     async (coords: Coordinates, cityName?: string) => {
       const requestId = ++requestIdRef.current;
+      // Faz 3.2: şehir/dil değişince bir önceki şehrin isteklerini iptal et.
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      const { signal } = controller;
       setIsLoading(true);
       setError(null);
       const previousRequest = lastSuccessfulRequestRef.current;
@@ -125,22 +154,57 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       }
 
       try {
-        const forecastRequest = weatherService
-          .getForecast(coords.lat, coords.lon, language)
-          .then(value => ({ source: 'baseline' as const, ok: true as const, value }))
-          .catch(error => ({ source: 'baseline' as const, ok: false as const, error }));
-        const hourlyRequest = weatherService
-          .getHourlyForecast(coords.lat, coords.lon, language)
-          .then(value => ({ source: 'hourly' as const, ok: true as const, value }))
-          .catch(error => ({ source: 'hourly' as const, ok: false as const, error }));
-        const airQualityRequest = weatherService
-          .getAirQuality(coords.lat, coords.lon, language)
-          .then(value => ({ ok: true as const, value }))
-          .catch(() => ({ ok: false as const }));
-        const contextRequest = weatherService
-          .getContextSignals(coords.lat, coords.lon, supportsMarineContext(cityName))
-          .then(value => ({ ok: true as const, value }))
-          .catch(() => ({ ok: false as const }));
+        const { lat, lon } = coords;
+        const marine = supportsMarineContext(cityName);
+        // Faz 3.2: tek `/weather/bundle` isteği. Şehir sayfası saatlik tahmini önceden
+        // istediyse (bootstrap) o parça bundle'dan çıkarılır ve hazır yanıt kullanılır.
+        const useBootstrapHourly = weatherService.hasBootstrapHourly(language);
+        const bundleParts: readonly ForecastBundlePart[] = useBootstrapHourly
+          ? FORECAST_BUNDLE_PARTS.filter(part => part !== 'hourly')
+          : FORECAST_BUNDLE_PARTS;
+        const bootstrapHourlyRequest = useBootstrapHourly
+          ? settle(weatherService.getHourlyForecast(lat, lon, language, { signal }))
+          : null;
+        const bundleOutcome: Promise<BundleOutcome> = weatherService
+          .getForecastBundle(lat, lon, language, { marine, signal, parts: bundleParts })
+          .then(
+            bundle => ({ kind: 'bundle' as const, bundle }),
+            error =>
+              // API bundle'ı bilmiyorsa (web API'den önce deploy edildi) ya da bundle
+              // başarısızsa eski tekil isteklere düş. İptal ve 429 olduğu gibi kalır.
+              error instanceof BundleUnavailableError
+                ? { kind: 'legacy' as const }
+                : { kind: 'error' as const, error: error as unknown }
+          );
+        const fromBundle = <T,>(
+          pick: (bundle: ForecastBundle) => Settled<T> | undefined,
+          legacy: () => Promise<T>
+        ): Promise<Settled<T>> =>
+          bundleOutcome.then(outcome => {
+            if (outcome.kind === 'error') return { ok: false as const, error: outcome.error };
+            const fromServer = outcome.kind === 'bundle' ? pick(outcome.bundle) : undefined;
+            return fromServer ?? settle(legacy());
+          });
+
+        const forecastRequest = fromBundle(
+          bundle => bundle.forecast,
+          () => weatherService.getForecast(lat, lon, language, { signal })
+        ).then(result => ({ ...result, source: 'baseline' as const }));
+        const hourlyRequest = (
+          bootstrapHourlyRequest ??
+          fromBundle(
+            bundle => bundle.hourly,
+            () => weatherService.getHourlyForecast(lat, lon, language, { signal })
+          )
+        ).then(result => ({ ...result, source: 'hourly' as const }));
+        const airQualityRequest = fromBundle(
+          bundle => bundle.airQuality,
+          () => weatherService.getAirQuality(lat, lon, language, { signal })
+        );
+        const contextRequest = fromBundle(
+          bundle => bundle.context,
+          () => weatherService.getContextSignals(lat, lon, marine, { signal })
+        );
 
         const applyBaseline = (data: Awaited<ReturnType<typeof weatherService.getForecast>>) => {
           setDaily(data.daily);
@@ -198,6 +262,10 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           applyBaseline(forecastData);
         }
 
+        // Faz 3.2: yükleme durumu yalnız çekirdek veriye (tahmin) bağlı; hava kalitesi ve
+        // bağlam sinyalleri arka planda tamamlanır, iskelet onları beklemez.
+        setIsLoading(false);
+
         const [aqResult, contextResult] = await Promise.all([airQualityRequest, contextRequest]);
         if (requestId !== requestIdRef.current) return;
         if (aqResult.ok) {
@@ -225,7 +293,10 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         if (requestId !== requestIdRef.current) return;
         setError(err instanceof Error ? err : new Error('Tahmin alınamadı'));
       } finally {
-        if (requestId === requestIdRef.current) setIsLoading(false);
+        if (requestId === requestIdRef.current) {
+          setIsLoading(false);
+          if (abortControllerRef.current === controller) abortControllerRef.current = null;
+        }
       }
     },
     [language]

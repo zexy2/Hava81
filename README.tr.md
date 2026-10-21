@@ -158,6 +158,8 @@ CI ayrıca farklı ekran boyutlarında browser akışlarını, Lighthouse bütç
 | `GET /api/v1/weather/forecast?lat=38.42&lon=27.13` | Tahmin verisi |
 | `GET /api/v1/weather/air-quality?lat=38.42&lon=27.13` | Hava kalitesi |
 | `GET /api/v1/weather/context?lat=38.42&lon=27.13` | UV, toz, polen ve uygun yerde deniz bağlamı |
+| `GET /api/v1/weather/bundle?lat=38.42&lon=27.13&include=forecast,hourly,airQuality,context` | Bir konum için güncel/tahmin/saatlik/hava kalitesi/bağlam tek yanıtta (parça başarısızsa `null` + `errors`) |
+| `GET /api/v1/weather/provinces?lang=tr` | 81 ilin anlık sıcaklığı (harita; tek Open-Meteo çağrısı, 30 dk cache) |
 | `GET /api/v1/weather/route?...` | Yaklaşık rota-hava koridoru |
 | `GET /api/v1/health/live` | Liveness kontrolü |
 | `GET /api/v1/health/ready` | Readiness kontrolü |

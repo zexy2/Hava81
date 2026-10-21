@@ -180,7 +180,14 @@ export const API = {
   air: '**/api/v1/weather/air-quality**',
   context: '**/api/v1/weather/context**',
   route: '**/api/v1/weather/route**',
+  bundle: '**/api/v1/weather/bundle**',
+  provinces: '**/api/v1/weather/provinces**',
 } as const;
+
+/** Bugünkü canlı API'deki gibi "rota yok" yanıtı (bundle/provinces henüz deploy edilmemiş). */
+const ROUTE_NOT_FOUND = {
+  error: { code: 'ROUTE_NOT_FOUND', message: 'İstenen API rotası bulunamadı.', requestId: 'e2e' },
+};
 
 /** Mocks every weather endpoint with the given fixtures. */
 export async function mockWeatherApi(page: Page, data: WeatherFixtures = fixtures) {
@@ -190,6 +197,66 @@ export async function mockWeatherApi(page: Page, data: WeatherFixtures = fixture
   await page.route(API.air, route => route.fulfill({ json: data.air }));
   await page.route(API.context, route => route.fulfill({ json: data.context }));
   await page.route(API.route, route => route.fulfill({ json: data.routeResult }));
+  // Faz 3.2: varsayılan olarak bundle ve 81 il uç noktası yokmuş gibi (eski API) davran;
+  // istemci tekil isteklere düşer ve mevcut uç nokta bazlı override'lar çalışmaya devam eder.
+  // Yeni yolu test etmek için `mockBundleApi` / `mockProvincesApi` kullan.
+  await mockNewEndpointsMissing(page);
+}
+
+/**
+ * Faz 3.2: `/weather/bundle` ve `/weather/provinces` için bugünkü canlı API gibi 404 döner.
+ * Kendi `page.route` mock'larını kuran spec'ler bunu çağırmalı; aksi halde bu istekler
+ * mock'lanmadan preview sunucusunun `/api` proxy'sine (127.0.0.1:4000) gider.
+ */
+export async function mockNewEndpointsMissing(page: Page) {
+  await page.route(API.bundle, route => route.fulfill({ status: 404, json: ROUTE_NOT_FOUND }));
+  await page.route(API.provinces, route => route.fulfill({ status: 404, json: ROUTE_NOT_FOUND }));
+}
+
+/** `/weather/bundle`'ı fixture'lardan, istenen parçalarla (include) sunar. */
+export async function mockBundleApi(page: Page, data: WeatherFixtures = fixtures) {
+  const parts: Record<string, unknown> = {
+    current: data.current,
+    forecast: data.forecast,
+    hourly: data.hourlyForecast,
+    airQuality: data.air,
+    context: data.context,
+  };
+  await overrideApi(page, 'bundle', route => {
+    const include = new URL(route.request().url()).searchParams.get('include');
+    const requested = include ? include.split(',') : Object.keys(parts);
+    const body: Record<string, unknown> = Object.fromEntries(
+      requested.map(part => [part, parts[part] ?? null])
+    );
+    return route.fulfill({
+      json: { ...body, errors: {}, meta: { fetchedAt: new Date().toISOString(), parts: requested } },
+    });
+  });
+}
+
+/** `/weather/provinces`'i 81 ilin canlı sıcaklığı için verilen değerlerle sunar. */
+export async function mockProvincesApi(
+  page: Page,
+  provinces: Array<{ plate: number; name: string; lat: number; lon: number; temperature: number }>
+) {
+  const observedAt = new Date(Date.now() - 10 * 60_000).toISOString();
+  await overrideApiJson(page, 'provinces', {
+    provinces: provinces.map(province => ({
+      ...province,
+      weatherCode: 0,
+      icon: '01d',
+      description: 'açık',
+      windSpeed: 2,
+      observedAt,
+    })),
+    meta: {
+      provider: 'Open-Meteo',
+      attribution: 'Open-Meteo · CC BY 4.0',
+      fetchedAt: new Date().toISOString(),
+      units: 'metric',
+      total: 81,
+    },
+  });
 }
 
 /** Replaces one endpoint mock (unroute + route). */

@@ -17,6 +17,13 @@ import { registerWeatherRoutes } from './modules/weather/weather.routes';
 import { registerRouteWeatherRoutes } from './modules/route/route-weather.routes';
 import { RouteWeatherService } from './modules/route/route-weather.service';
 import { WeatherService } from './modules/weather/weather.service';
+import { registerBundleRoutes } from './modules/weather/bundle.routes';
+import { registerProvinceRoutes } from './modules/provinces/provinces.routes';
+import { ProvincesService } from './modules/provinces/provinces.service';
+import {
+  OpenMeteoProvincesProvider,
+  type ProvinceCurrentProvider,
+} from './providers/openmeteo/openmeteo-provinces.provider';
 import { OpenMeteoHourlyProvider } from './providers/openmeteo/openmeteo-hourly.provider';
 import { OpenWeatherProvider } from './providers/openweather/openweather.provider';
 import type { HourlyForecastProvider, WeatherProvider } from './providers/weather-provider';
@@ -25,6 +32,8 @@ export interface BuildAppOptions {
   env?: AppConfig;
   provider?: WeatherProvider;
   hourlyProvider?: HourlyForecastProvider;
+  provincesProvider?: ProvinceCurrentProvider;
+  contextService?: ContextSignalsService;
   cache?: AsyncCache;
   upstreamBudget?: UpstreamBudget;
   logger?: boolean;
@@ -171,11 +180,24 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
       env.OPEN_METEO_API_KEY
     );
   const weatherService = new WeatherService(provider, cache, env, hourlyProvider);
-  const contextService = new ContextSignalsService(fetch, {
-    airQualityBaseUrl: env.OPEN_METEO_AIR_QUALITY_BASE_URL,
-    marineBaseUrl: env.OPEN_METEO_MARINE_BASE_URL,
-    apiKey: env.OPEN_METEO_API_KEY,
-  });
+  const contextService =
+    options.contextService ??
+    new ContextSignalsService(fetch, {
+      airQualityBaseUrl: env.OPEN_METEO_AIR_QUALITY_BASE_URL,
+      marineBaseUrl: env.OPEN_METEO_MARINE_BASE_URL,
+      apiKey: env.OPEN_METEO_API_KEY,
+    });
+  const provincesService = new ProvincesService(
+    options.provincesProvider ??
+      new OpenMeteoProvincesProvider(
+        fetch,
+        env.OPENWEATHER_TIMEOUT_MS,
+        env.OPEN_METEO_FORECAST_BASE_URL,
+        env.OPEN_METEO_API_KEY
+      ),
+    cache,
+    env.CACHE_PROVINCES_TTL_MS
+  );
   const routeWeatherService = new RouteWeatherService(weatherService);
 
   await app.register(
@@ -190,6 +212,8 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
       );
       await registerWeatherRoutes(api, weatherService);
       await registerContextRoutes(api, contextService, cache);
+      await registerBundleRoutes(api, { weather: weatherService, context: contextService, cache });
+      await registerProvinceRoutes(api, provincesService);
       await registerRouteWeatherRoutes(api, routeWeatherService);
     },
     { prefix: '/api/v1' }
