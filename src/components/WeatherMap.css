@@ -83,11 +83,15 @@
 }
 
 @keyframes weather-map-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weather-map__tile-spinner { animation: none; }
+  .weather-map__tile-spinner {
+    animation: none;
+  }
 }
 
 .weather-map__leaflet {
@@ -121,18 +125,33 @@
 }
 
 .weather-map__plate-marker span {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  color: #fff;
-  background: #0e2c32;
-  border: 1px solid #fff;
-  border-radius: 2px;
-  box-shadow: 0 3px 12px rgb(14 44 50 / 0.18);
+  /* Faz 2.5: a licence-plate chip (white plate, blue TR strip), never read as a temperature. */
+  display: inline-flex;
+  align-items: stretch;
+  height: 1.5rem;
+  overflow: hidden;
+  color: #0b1b2e;
+  background: #fff;
+  border: 1px solid #0b1b2e;
+  border-radius: 3px;
+  box-shadow: 0 3px 10px rgb(11 27 46 / 0.22);
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
+  line-height: 1.5rem;
+  padding-right: 0.3rem;
+  white-space: nowrap;
+}
+.weather-map__plate-marker span i {
+  display: inline-block;
+  margin-right: 0.25rem;
+  padding: 0 0.2rem;
+  color: #fff;
+  background: #1f5fbf;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
 }
 
 .weather-map__popup .leaflet-popup-content-wrapper,

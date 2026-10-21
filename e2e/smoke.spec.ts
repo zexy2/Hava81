@@ -4591,7 +4591,7 @@ test('mobile map province marker previews the city before switching views', asyn
   expect(markerBounds!.y + markerBounds!.height).toBeLessThanOrEqual(mapBounds!.y + mapBounds!.height);
   await bursaMarker.click();
 
-  await expect(page).toHaveURL(/\/istanbul\/?$/);
+  await expect(page).toHaveURL(/\/istanbul\/?\?view=map$/);
   await expect(page.locator('#weather-map-region')).toBeVisible();
   await expect(page.locator('.atlas-icon-button--map')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('.atlas-icon-button--map')).not.toHaveAttribute('aria-pressed');

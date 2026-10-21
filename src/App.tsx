@@ -147,8 +147,12 @@ const App: React.FC = () => {
   }, [settings.language]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [activeNav, setActiveNav] = useState<AtlasNavItem>('today');
+  // Faz 2.5: `?view=map` and `?view=compare` open those views directly.
+  const [initialView] = useState(() => new URLSearchParams(window.location.search).get('view'));
+  const [showMap, setShowMap] = useState(initialView === 'map');
+  const [activeNav, setActiveNav] = useState<AtlasNavItem>(
+    initialView === 'map' ? 'map' : initialView === 'compare' ? 'compare' : 'today'
+  );
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchToggleRef = useRef<HTMLButtonElement>(null);
@@ -331,7 +335,10 @@ const App: React.FC = () => {
       (weather.country.toUpperCase() === 'TR'
         ? `/?yer=${encodeURIComponent(weather.cityName)}`
         : null);
-    if (path && `${window.location.pathname}${window.location.search}` !== path) {
+    const searchWithoutView = new URLSearchParams(window.location.search);
+    searchWithoutView.delete('view');
+    const currentSearch = searchWithoutView.toString();
+    if (path && `${window.location.pathname}${currentSearch ? `?${currentSearch}` : ''}` !== path) {
       const previousCity =
         cityFromPathname(window.location.pathname)?.name ??
         districtFromQuery(window.location.search);
@@ -367,6 +374,17 @@ const App: React.FC = () => {
       );
     }
   }, [settings.language, t, weather]);
+
+  useEffect(() => {
+    if (!weather) return;
+    const url = new URL(window.location.href);
+    const view =
+      activeNav === 'map' && showMap ? 'map' : activeNav === 'compare' ? 'compare' : null;
+    if (url.searchParams.get('view') === view) return;
+    if (view) url.searchParams.set('view', view);
+    else url.searchParams.delete('view');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}`);
+  }, [activeNav, showMap, weather]);
 
   const shortcuts = useMemo(
     () =>
