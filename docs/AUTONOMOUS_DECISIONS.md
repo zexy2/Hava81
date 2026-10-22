@@ -1541,3 +1541,9 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+## 2026-10-22 — confidence labels require temporal coverage as well as rich fields
+
+**Decision:** Hava81's daily-plan confidence must describe the evidence supporting the scored time horizon, not merely the share of rows containing many populated fields. Within the 12-hour scoring horizon, fewer than three observations is basic; high requires at least four observations, at least nine hours of temporal coverage, and rich fields on at least 70% of rows; medium requires at least six hours of coverage and useful fields on at least half the rows.
+
+**Why:** A single richly populated forecast row cannot support a confident 12-hour plan. Sparse data must not receive a high-confidence label just because each available row is complete. Keep the existing score calculations, provider attribution, and weather semantics unchanged; this is evidence-quality labeling only. Validate the thresholds against hourly and three-hour cadence fixtures before merge.

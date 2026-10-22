@@ -92,8 +92,12 @@ const aggregateImpacts = (entries: WeightedSlot[]): ScoreFactorImpact[] => {
 };
 
 const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
-  if (!slots.length) return 'basic';
-  const richness = slots.map(
+  const evidence = withinHours(slots, SCORE_HORIZON_HOURS);
+  if (evidence.length < 3) return 'basic';
+
+  const coverageHours =
+    (evidence[evidence.length - 1]!.time.getTime() - evidence[0]!.time.getTime()) / HOUR_MS;
+  const richness = evidence.map(
     slot =>
       [
         slot.apparentTemperature,
@@ -105,10 +109,19 @@ const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
         slot.weatherCode,
       ].filter(value => Number.isFinite(value)).length
   );
-  const richShare = richness.filter(count => count >= 6).length / slots.length;
-  const usefulShare = richness.filter(count => count >= 4).length / slots.length;
-  if (richShare >= 0.7) return 'high';
-  if (usefulShare >= 0.5) return 'medium';
+  const richShare = richness.filter(count => count >= 6).length / evidence.length;
+  const usefulShare = richness.filter(count => count >= 4).length / evidence.length;
+
+  // Confidence reflects both field completeness and temporal coverage. One rich
+  // observation cannot support a 12-hour plan on its own.
+  if (
+    evidence.length >= 4 &&
+    coverageHours >= SCORE_HORIZON_HOURS * 0.75 &&
+    richShare >= 0.7
+  ) {
+    return 'high';
+  }
+  if (coverageHours >= SCORE_HORIZON_HOURS * 0.5 && usefulShare >= 0.5) return 'medium';
   return 'basic';
 };
 

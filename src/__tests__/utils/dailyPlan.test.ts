@@ -320,6 +320,19 @@ describe('Hava81 daily decision engine v2', () => {
     expect(Math.abs(oneHourPlan.score - threeHourPlan.score)).toBeLessThanOrEqual(1);
   });
 
+  it('keeps confidence basic when only one rich forecast observation exists', () => {
+    const plan = buildDailyPlan({ weather, hourly: [rich(6, 24)] });
+    expect(plan.confidence).toBe('basic');
+  });
+
+  it('reports medium confidence for rich evidence spanning only half the scoring horizon', () => {
+    const plan = buildDailyPlan({
+      weather,
+      hourly: [rich(6, 24), rich(9, 24), rich(12, 24)],
+    });
+    expect(plan.confidence).toBe('medium');
+  });
+
   it('marks rich one-hour input as high-confidence and exposes the dominant score factors', () => {
     const plan = buildDailyPlan({
       weather,
