@@ -17,9 +17,11 @@ describe('daily plan timing weather scope', () => {
     expect(buildDecisionShare({ ...common, language: 'en' }).text).toContain('Best weather window in the next 12 hours: 18:00–20:00');
     expect(buildDecisionShare({ ...common, language: 'tr' }).text).toContain('Önümüzdeki 12 saatte en uygun hava penceresi: 18:00–20:00');
   });
-  it('explains the 6-hour now-or-later recommendation versus the 12-hour peak', () => {
+  // Plan v3 Faz 0.5: now-or-later uses the same 12-hour horizon as the best window.
+  it('explains the now-or-later recommendation on the same 12-hour horizon as the peak', () => {
     for (const locale of [tr, en]) {
-      expect(locale.hava81.dailyPlan.nowOrLater.later).toContain('6');
+      expect(locale.hava81.dailyPlan.nowOrLater.later).toContain('12');
+      expect(locale.hava81.dailyPlan.nowOrLater.now).toContain('12');
       expect(locale.hava81.dailyPlan.bestWindow).toContain('12');
       expect(locale.hava81.dailyPlan.bestRange).toContain('12');
       expect(locale.hava81.glance.bestHours).toContain('12');

@@ -329,9 +329,10 @@ test.describe('decision hero (Karar özeti)', () => {
     }
   });
 
-  // Plan v3 Faz 0.3: after 23:00 the near hours are night and cannot be recommended for the
-  // general (walking) plan, so the hero must not offer "Yarın 00:00–03:00" any more.
-  test('hero does not recommend a night window after 23:00', MOBILE, async ({ page }) => {
+  // Plan v3 Faz 0.3 + 0.5: after 23:00 the night hours cannot be recommended for the general
+  // (walking) plan, so the hero points at tomorrow morning ("Yarın 07:00…"), labelled in the
+  // city timezone, instead of "Yarın 00:00–03:00".
+  test('hero labels a next-morning window in the city timezone after 23:00', MOBILE, async ({ page }) => {
     const fixed = new Date('2026-10-08T20:15:00.000Z'); // 23:15 in İstanbul
     await page.clock.install({ time: fixed });
     await overrideApiJson(page, 'current', {
@@ -354,12 +355,50 @@ test.describe('decision hero (Karar özeti)', () => {
 
     await page.goto('/istanbul/');
     const hero = page.locator('.decision-glance');
-    await expect(hero.locator('.decision-glance__message')).not.toBeEmpty();
-    await expect(hero.locator('.decision-glance__window')).toHaveCount(0);
-    await expect(hero.locator('.decision-glance__quick').first().locator('strong')).toHaveText('—');
+    const windowCopy = hero.locator('.decision-glance__window');
+    await expect(windowCopy).toContainText('Yarın');
+    await expect(windowCopy).not.toContainText(/Yarın 0[0-6]:/);
+    await expect(hero.locator('.decision-glance__quick').first()).toContainText('Yarın');
     await setWidth(page, 320, 844);
     await expectNoHorizontalScroll(page, '320px');
   });
+
+  test(
+    'hero says "now" only together with a window that contains the current hour',
+    MOBILE,
+    async ({ page }) => {
+      // Plan v3 Faz 0.5: a steady, pleasant morning. The window must start at the current
+      // hour; "Şu an uygun" next to a later window (e.g. 22:00–02:00) is the old contradiction.
+      const morning = createWeatherFixtures(Date.parse('2026-10-22T06:00:00.000Z'));
+      await page.clock.setFixedTime(new Date(morning.now));
+      await overrideApiJson(page, 'current', morning.current);
+      await overrideApiJson(page, 'hourly', {
+        ...morning.hourlyForecast,
+        hourly: Array.from({ length: 24 }, (_, index) => ({
+          time: morning.isoAtHour(index),
+          temp: 20,
+          apparentTemperature: 20,
+          humidity: 50,
+          icon: '01d',
+          description: 'açık',
+          pop: 0,
+          precipitationMm: 0,
+          windSpeed: 2,
+          windGust: 4,
+          uvIndex: 1,
+          visibility: 20000,
+          weatherCode: 0,
+        })),
+      });
+
+      await page.goto('/istanbul/');
+      const hero = page.locator('.decision-glance');
+      await expect(hero.locator('.decision-glance__message')).toHaveText(
+        'Şu an dışarı çıkmak için hava uygun.'
+      );
+      await expect(hero.locator('.decision-glance__window')).toContainText(': 09:00–');
+    }
+  );
 
   test(
     'English recommended window uses an AM/PM clock and stays clear of the score',

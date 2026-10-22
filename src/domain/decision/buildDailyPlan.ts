@@ -5,6 +5,7 @@ import { airLevel, rainLevel, windLevel } from './thresholds';
 import { getScoreBand, scoreWeatherWindow } from './scoreWeatherWindow';
 import type {
   AirQualityAdvice,
+  BestWindowRange,
   DailyPlan,
   Hava81ScoreFactor,
   NowOrLaterAdvice,
@@ -22,8 +23,9 @@ export interface BuildDailyPlanInput {
 }
 
 const HOUR_MS = 60 * 60 * 1000;
+// One horizon for every Gün planı verdict (score, best window, now/later, umbrella, wind),
+// plan v3 Faz 0.5 (L6).
 const SCORE_HORIZON_HOURS = 12;
-const NEAR_TERM_HOURS = 6;
 
 interface WeightedSlot {
   slot: ScoredWeatherWindow;
@@ -115,7 +117,7 @@ const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
 };
 
 const pickUmbrellaAdvice = (slots: ScoredWeatherWindow[]): UmbrellaAdvice => {
-  const near = withinHours(slots, NEAR_TERM_HOURS);
+  const near = withinHours(slots, SCORE_HORIZON_HOURS);
   const probabilities = near
     .map(slot => slot.precipitationProbability)
     .filter((value): value is number => Number.isFinite(value));
@@ -131,7 +133,7 @@ const pickUmbrellaAdvice = (slots: ScoredWeatherWindow[]): UmbrellaAdvice => {
 };
 
 const pickWindAdvice = (slots: ScoredWeatherWindow[]): WindAdvice => {
-  const near = withinHours(slots, NEAR_TERM_HOURS);
+  const near = withinHours(slots, SCORE_HORIZON_HOURS);
   const level = windLevel(
     Math.max(0, ...near.map(slot => slot.windSpeed)),
     Math.max(0, ...near.map(slot => slot.windGust ?? 0))
@@ -147,24 +149,26 @@ const pickAirQualityAdvice = (airQuality?: AirQuality): AirQualityAdvice => {
   return (airQuality?.aqi ?? 0) >= 2 ? 'fair' : 'good';
 };
 
+const LATER_MIN_IMPROVEMENT = 10;
+
+/**
+ * Plan v3 Faz 0.5: "now or later" is derived from the same 12-hour best window the UI shows,
+ * so "Şu an uygun" and "en uygun 22:00–02:00" can never appear together (L6).
+ * - now: the best window contains the current slot and the current slot is in a good band;
+ * - later: the best window is ahead and either clearly better (≥ 10) or the current hour is
+ *   not recommendable at all (e.g. 01:00 for the walking rule), targeting the window start;
+ * - similar: otherwise (no window is promoted).
+ */
 const buildNowOrLater = (
   slots: ScoredWeatherWindow[],
+  bestWindowRange: BestWindowRange | undefined,
   isEligible: (slot: ScoredWeatherWindow) => boolean = () => true
 ): NowOrLaterAdvice => {
-  const near = withinHours(slots, NEAR_TERM_HOURS);
-  const current = near[0];
+  const current = slots[0];
   if (!current) {
     return { kind: 'similar', currentScore: 0, targetScore: 0, reasons: [] };
   }
-  // "Wait until 02:00" is never advice: only recommendable hours can be the later target.
-  const bestLater = near
-    .slice(1)
-    .filter(slot => isEligible(slot))
-    .reduce<ScoredWeatherWindow | undefined>(
-      (best, slot) => (!best || slot.score > best.score ? slot : best),
-      undefined
-    );
-  if (!bestLater) {
+  if (!bestWindowRange) {
     return {
       kind: 'similar',
       currentScore: current.score,
@@ -173,35 +177,40 @@ const buildNowOrLater = (
     };
   }
 
-  const improvement = bestLater.score - current.score;
-  if (improvement >= 10) {
+  const { start, end, peak } = bestWindowRange;
+  const currentMs = current.time.getTime();
+  const containsCurrent = start.time.getTime() <= currentMs && currentMs <= end.time.getTime();
+  const improvement = peak.score - current.score;
+  const goodNow = current.band === 'excellent' || current.band === 'good';
+
+  if (containsCurrent && goodNow) {
     return {
-      kind: 'later',
-      targetTime: bestLater.time,
-      improvement,
+      kind: 'now',
+      targetTime: current.time,
+      improvement: 0,
       currentScore: current.score,
-      targetScore: bestLater.score,
+      targetScore: peak.score,
       reasons: current.reasons,
     };
   }
 
-  if (current.score - bestLater.score >= 8 || (current.score >= 88 && improvement <= 3)) {
+  if (!containsCurrent && (improvement >= LATER_MIN_IMPROVEMENT || !isEligible(current))) {
     return {
-      kind: 'now',
-      targetTime: current.time,
-      improvement: current.score - bestLater.score,
+      kind: 'later',
+      targetTime: start.time,
+      improvement: Math.max(0, improvement),
       currentScore: current.score,
-      targetScore: bestLater.score,
-      reasons: bestLater.reasons,
+      targetScore: peak.score,
+      reasons: current.reasons,
     };
   }
 
   return {
     kind: 'similar',
-    targetTime: bestLater.time,
+    targetTime: peak.time,
     improvement: Math.max(0, improvement),
     currentScore: current.score,
-    targetScore: bestLater.score,
+    targetScore: peak.score,
     reasons: current.reasons,
   };
 };
@@ -278,7 +287,7 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
     airQuality: pickAirQualityAdvice(airQuality),
-    nowOrLater: buildNowOrLater(slots, isEligible),
+    nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible),
     impacts: aggregateImpacts(weighted),
     confidence: confidenceFor(slots),
   };

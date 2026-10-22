@@ -77,7 +77,7 @@ export const tr = {
       loading: 'Günün önerisi güncel verilerle hazırlanıyor.',
       pending: 'Güncel tahmin bekleniyor',
       now: 'Şu an dışarı çıkmak için hava uygun.',
-      later: 'Dışarı çıkmak için biraz beklemek daha iyi olabilir.',
+      later: 'Dışarı çıkmak için en uygun saatleri beklemek daha iyi olabilir.',
       similar: 'Yakın saatlerde hava koşulları benzer görünüyor.',
       bestHours: 'Önümüzdeki 12 saatte hava açısından en yüksek puanlı saatler: {{hours}}',
       score: 'Hava81 Skoru',
@@ -282,8 +282,8 @@ export const tr = {
       nowOrLater: {
         label: 'Şimdi mi, sonra mı?',
         later:
-          'Önümüzdeki 6 saatte {{time}} civarı hava koşulları şu ana göre daha elverişli görünüyor.',
-        now: 'Hava koşulları şimdi çıkmak için yakın saatlere göre daha avantajlı görünüyor.',
+          'Önümüzdeki 12 saatin hava açısından en uygun aralığı {{time}} civarı başlıyor; hava koşulları şu ana göre daha elverişli görünüyor.',
+        now: 'Hava koşulları açısından şu an, önümüzdeki 12 saatin en uygun aralığının içinde.',
         similar: 'Yakın saatler arasında hava açısından belirgin bir avantaj görünmüyor.',
       },
       bestWindow: 'Hava açısından önümüzdeki 12 saatte en iyi görünen saat: {{time}}',
