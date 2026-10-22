@@ -203,8 +203,9 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
   const source = [...hourly].sort(byTime).slice(0, 24);
   const slots = source.length
     ? source.map(point => {
-        const slotAgeMs = weather.timestamp.getTime() - point.time.getTime();
-        const usesCurrentAirQuality = slotAgeMs >= 0 && slotAgeMs < 60 * 60 * 1000;
+        // There is no hourly AQI forecast yet: the current reading is applied to every slot.
+        // Applying it only to the current hour made "now" systematically worse than later
+        // hours and inflated "wait" advice (plan v3 Faz 0.2, L2).
         return scoreWeatherWindow({
           time: point.time,
           temperature: point.temp,
@@ -214,7 +215,7 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
           precipitationMm: point.precipitationMm,
           windSpeed: point.windSpeed,
           windGust: point.windGust,
-          airQualityIndex: usesCurrentAirQuality ? airQuality?.aqi : undefined,
+          airQualityIndex: airQuality?.aqi,
           uvIndex: point.uvIndex,
           visibility: point.visibility,
           weatherCode: point.weatherCode,

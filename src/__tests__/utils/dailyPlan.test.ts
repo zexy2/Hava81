@@ -385,7 +385,7 @@ describe('Hava81 daily decision engine v2', () => {
     expect(good.airQuality).toBe('good');
   });
 
-  it('uses current AQI only for the matching current hourly slot without projecting it forward', () => {
+  it('applies the current AQI to every hourly slot so it never biases now versus later', () => {
     const hourly = [point(6, 24), point(9, 25), point(12, 26)];
     const poor = buildDailyPlan({
       weather,
@@ -396,12 +396,25 @@ describe('Hava81 daily decision engine v2', () => {
 
     expect(poor.airQuality).toBe('poor');
     expect(poor.score).toBeLessThan(noCurrentAir.score);
-    expect(poor.slots[0].impacts.map(impact => impact.factor)).toContain('air-quality');
     expect(
-      poor.slots
-        .slice(1)
-        .every(slot => slot.impacts.every(impact => impact.factor !== 'air-quality'))
+      poor.slots.every(slot => slot.impacts.some(impact => impact.factor === 'air-quality'))
     ).toBe(true);
+  });
+
+  it('does not advise waiting because of the current AQI alone (steady weather, AQI 3)', () => {
+    // Antalya-like evening: identical hours, moderate AQI. Before Faz 0.2 the current hour
+    // alone carried the AQI penalty (21:00 → 86, 22:00 → 95) and "later" nearly won.
+    const steady = Array.from({ length: 12 }, (_, index) => rich(6 + index, 22));
+    const plan = buildDailyPlan({
+      weather,
+      hourly: steady,
+      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70, meta: weather.meta },
+    });
+
+    expect(plan.nowOrLater.kind).not.toBe('later');
+    expect(plan.slots[0].score).toBe(plan.slots[1].score);
+    expect(new Set(plan.slots.map(slot => slot.score)).size).toBe(1);
+    expect(plan.bestWindowRange?.start.time.getTime()).toBe(plan.slots[0].time.getTime());
   });
 
   it('uses current AQI when hourly forecast data is unavailable and scoring falls back to now', () => {
