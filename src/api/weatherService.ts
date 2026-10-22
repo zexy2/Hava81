@@ -682,15 +682,43 @@ const parseForecastResponse = (rawResponse: unknown): ParsedForecast => {
   };
 };
 
+/**
+ * Hours shown by today's surfaces. The API may send up to five days (plan v3 P1.1); the extra
+ * hours only feed the plan engine via `planHourly`, so existing surfaces keep their horizon.
+ */
+const DISPLAY_HOURLY_HOURS = 48;
+/** Plan v3 horizon: five days of hourly guidance. */
+export const PLAN_HOURLY_HOURS = 120;
+
+/** Optional enrichments are dropped (never rejected) when out of range. */
+const optionalNumberInRange = (value: unknown, min: number, max: number): number | undefined =>
+  isFiniteNumber(value) && value >= min && value <= max ? value : undefined;
+
+const reviveHourlyItem = (item: SerializedHourlyForecast['hourly'][number]): HourlyForecast => {
+  const { dewPoint, sunshineDuration, ...rest } = item;
+  const revived: HourlyForecast = {
+    ...rest,
+    time: reviveForecastDate(item.time, 'hourly.hourly.time'),
+    pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
+    isDay: resolveIsDay(item),
+  };
+  const dew = optionalNumberInRange(dewPoint, -100, 100);
+  const sunshine = optionalNumberInRange(sunshineDuration, 0, 3_600);
+  if (dew !== undefined) revived.dewPoint = dew;
+  if (sunshine !== undefined) revived.sunshineDuration = sunshine;
+  return revived;
+};
+
 const parseHourlyResponse = (rawResponse: unknown): ParsedHourlyForecast => {
   const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
   const meta = reviveForecastMeta(response.meta, 'hourly.meta');
   response.daily?.slice(0, 5).forEach((item, index) =>
     validateDailyForecastItem(item, `hourly.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
   );
-  response.hourly.slice(0, 48).forEach((item, index) =>
+  response.hourly.slice(0, PLAN_HOURLY_HOURS).forEach((item, index) =>
     validateHourlyForecastItem(item, `hourly.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
   );
+  const planHourly = response.hourly.slice(0, PLAN_HOURLY_HOURS).map(reviveHourlyItem);
 
   return {
     ...(response.daily?.length
@@ -703,12 +731,8 @@ const parseHourlyResponse = (rawResponse: unknown): ParsedHourlyForecast => {
           })),
         }
       : {}),
-    hourly: response.hourly.slice(0, 48).map(item => ({
-      ...item,
-      time: reviveForecastDate(item.time, 'hourly.hourly.time'),
-      pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
-      isDay: resolveIsDay(item),
-    })),
+    hourly: planHourly.slice(0, DISPLAY_HOURLY_HOURS),
+    ...(planHourly.length > DISPLAY_HOURLY_HOURS ? { planHourly } : {}),
     meta,
   };
 };

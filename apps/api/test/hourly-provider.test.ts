@@ -31,6 +31,8 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
           wind_gusts_10m: [6.4, 12.8],
           visibility: [24000, 4200],
           uv_index: [5.7, 0],
+          dew_point_2m: [15.6, 17.9],
+          sunshine_duration: [3600, 0],
           is_day: [1, 0],
         },
       }),
@@ -42,7 +44,7 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
   const result = await provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' });
 
   assert.equal(requested?.hostname, 'api.open-meteo.com');
-  assert.equal(requested?.searchParams.get('forecast_hours'), '48');
+  assert.equal(requested?.searchParams.get('forecast_hours'), '120');
   assert.equal(requested?.searchParams.get('forecast_days'), '5');
   const dailyFields = new Set(requested?.searchParams.get('daily')?.split(','));
   for (const field of [
@@ -67,6 +69,8 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     'wind_gusts_10m',
     'visibility',
     'uv_index',
+    'dew_point_2m',
+    'sunshine_duration',
     'is_day',
   ]) {
     assert.equal(fields.has(field), true, `missing ${field}`);
@@ -101,9 +105,13 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     windGust: 6.4,
     uvIndex: 5.7,
     visibility: 24000,
+    dewPoint: 15.6,
+    sunshineDuration: 3600,
     weatherCode: 0,
   });
   assert.equal(result.hourly[1].icon, '11n');
+  assert.equal(result.hourly[1].dewPoint, 17.9);
+  assert.equal(result.hourly[1].sunshineDuration, 0);
   assert.equal(result.hourly[1].isDay, false);
   assert.equal(result.hourly[1].description, 'gök gürültülü fırtına');
   assert.equal(result.hourly[1].precipitationMm, 4.2);
@@ -422,6 +430,8 @@ test('Open-Meteo hourly adapter omits impossible optional decision fields instea
     windGust: undefined,
     uvIndex: undefined,
     visibility: undefined,
+    dewPoint: undefined,
+    sunshineDuration: undefined,
     weatherCode: 0,
   });
 });
@@ -463,5 +473,35 @@ test('Open-Meteo hourly adapter supports the paid customer host and API key with
   assert.equal(requested?.hostname, 'customer-api.open-meteo.com');
   assert.equal(requested?.pathname, '/v1/forecast');
   assert.equal(requested?.searchParams.get('apikey'), 'paid-test-key');
-  assert.equal(requested?.searchParams.get('forecast_hours'), '48');
+  assert.equal(requested?.searchParams.get('forecast_hours'), '120');
+});
+
+test('Open-Meteo hourly adapter keeps a full five-day (120 h) series and drops impossible sunshine values', async () => {
+  const start = 1787936400;
+  const hours = 120;
+  const series = <T,>(value: (index: number) => T) => Array.from({ length: hours }, (_, index) => value(index));
+  const fakeFetch = (async () =>
+    new Response(
+      JSON.stringify({
+        utc_offset_seconds: 10800,
+        hourly: {
+          time: series(index => start + index * 3600),
+          temperature_2m: series(() => 20),
+          precipitation_probability: series(() => 10),
+          weather_code: series(() => 1),
+          wind_speed_10m: series(() => 3),
+          dew_point_2m: series(index => (index === 5 ? null : 12)),
+          sunshine_duration: series(index => (index === 7 ? 5000 : 1800)),
+          is_day: series(index => ((index + 9) % 24 >= 7 && (index + 9) % 24 < 19 ? 1 : 0)),
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )) as typeof fetch;
+
+  const result = await new OpenMeteoHourlyProvider(fakeFetch, 1_000).getHourly({ lat: 41, lon: 29, lang: 'tr' });
+  assert.equal(result.hourly.length, 120);
+  assert.equal(result.hourly[0].dewPoint, 12);
+  assert.equal(result.hourly[5].dewPoint, undefined);
+  assert.equal(result.hourly[7].sunshineDuration, undefined);
+  assert.equal(result.hourly[8].sunshineDuration, 1800);
 });

@@ -1,6 +1,7 @@
 import { coordinateCacheKey } from '../../core/geo';
 import type { AppConfig } from '../../config/env';
 import type { AsyncCache, CacheResult } from '../../core/cache';
+import { HOURLY_FORECAST_HOURS } from './contracts';
 import type {
   CurrentWeatherQuery,
   HourlyForecastProvider,
@@ -98,7 +99,7 @@ export class WeatherService {
       const result = await this.hourlyProvider.getHourly(query);
       return {
         ...(result.daily?.length ? { daily: result.daily.slice(0, 5) } : {}),
-        hourly: result.hourly.slice(0, 48),
+        hourly: result.hourly.slice(0, HOURLY_FORECAST_HOURS),
         meta: {
           provider: this.hourlyProvider.name,
           attribution: this.hourlyProvider.attribution,

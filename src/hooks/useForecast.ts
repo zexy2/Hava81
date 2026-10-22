@@ -34,6 +34,8 @@ type BundleOutcome =
 interface UseForecastReturn {
   daily: DailyForecast[];
   hourly: HourlyForecast[];
+  /** Plan v3 horizon (up to 120 h when the API provides it; otherwise same as `hourly`). */
+  planHourly: HourlyForecast[];
   displayHourly: HourlyForecast[];
   displayMeta: ForecastMeta | null;
   airQuality: AirQuality | null;
@@ -47,6 +49,7 @@ interface UseForecastReturn {
 export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [daily, setDaily] = useState<DailyForecast[]>([]);
   const [hourly, setHourly] = useState<HourlyForecast[]>([]);
+  const [planHourly, setPlanHourly] = useState<HourlyForecast[]>([]);
   const [displayHourly, setDisplayHourly] = useState<HourlyForecast[]>([]);
   const [displayMeta, setDisplayMeta] = useState<ForecastMeta | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
@@ -144,6 +147,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       if (!isSameSuccessfulRequest) {
         setDaily([]);
         setHourly([]);
+        setPlanHourly([]);
         setDisplayHourly([]);
         setDisplayMeta(null);
         setAirQuality(null);
@@ -209,6 +213,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         const applyBaseline = (data: Awaited<ReturnType<typeof weatherService.getForecast>>) => {
           setDaily(data.daily);
           setHourly(data.hourly);
+          setPlanHourly(data.hourly);
           setDisplayHourly(data.hourly);
           setDisplayMeta(data.meta);
           setMeta(data.meta);
@@ -219,6 +224,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           becomesPrimaryMeta: boolean
         ) => {
           setHourly(data.hourly);
+          setPlanHourly(data.planHourly ?? data.hourly);
           setDisplayHourly(data.hourly.slice(0, 24));
           setDisplayMeta(data.meta);
           if (becomesPrimaryMeta) setMeta(data.meta);
@@ -305,6 +311,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   return {
     daily,
     hourly,
+    planHourly,
     displayHourly,
     displayMeta,
     airQuality,

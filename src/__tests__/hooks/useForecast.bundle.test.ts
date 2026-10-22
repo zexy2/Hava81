@@ -114,6 +114,42 @@ describe('useForecast with /weather/bundle', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('exposes the five-day planHourly horizon without widening hourly (plan v3 P1.1)', async () => {
+    const start = Date.parse('2026-07-14T13:00:00.000Z');
+    const planHourly = Array.from({ length: 120 }, (_, index) => ({
+      time: new Date(start + index * 3_600_000),
+      temp: 25,
+      icon: '01d',
+      pop: 0.2,
+    }));
+    const bundle = fullBundle();
+    bundle.hourly = {
+      ok: true,
+      value: { ...hourly(), hourly: planHourly.slice(0, 48), planHourly } as never,
+    };
+    service.getForecastBundle.mockResolvedValue(bundle);
+    const { result } = renderHook(() => useForecast('tr'));
+
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 }, 'İstanbul');
+    });
+
+    expect(result.current.hourly).toHaveLength(48);
+    expect(result.current.planHourly).toHaveLength(120);
+    expect(result.current.displayHourly).toHaveLength(24);
+  });
+
+  it('falls back to hourly for planHourly when an older API sends no extended horizon', async () => {
+    service.getForecastBundle.mockResolvedValue(fullBundle());
+    const { result } = renderHook(() => useForecast('tr'));
+
+    await act(async () => {
+      await result.current.fetch({ lat: 41.01, lon: 28.97 }, 'İstanbul');
+    });
+
+    expect(result.current.planHourly).toEqual(result.current.hourly);
+  });
+
   it('falls back to the single endpoints when the API has no bundle (web deployed first)', async () => {
     service.getForecastBundle.mockRejectedValue(new BundleUnavailableError('unsupported'));
     const { result } = renderHook(() => useForecast('tr'));

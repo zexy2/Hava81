@@ -21,7 +21,13 @@ export type ParsedForecast = {
 };
 export type ParsedHourlyForecast = {
   daily?: DailyForecast[];
+  /** Hours for today's surfaces (at most 48, unchanged by plan v3). */
   hourly: HourlyForecast[];
+  /**
+   * Full plan-engine horizon (up to 120 hours, plan v3 P1.1). Present only when the API sent
+   * more than `hourly` holds; consumers fall back to `hourly` otherwise.
+   */
+  planHourly?: HourlyForecast[];
   meta: ForecastMeta;
 };
 

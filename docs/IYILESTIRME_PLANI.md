@@ -128,6 +128,20 @@ Ayrıntılı plan: "Planla ve Skor yeniden tasarım planı" (22 Ekim 2026). Faz 
 
 **Faz 0 kaldığı yer:** 0.1–0.6 bitti. Sıradaki: Faz 1 (plan motoru v3: `planEngine`, saatlik AQI, 5 günlük ufuk, profil tablosu) — ayrıntı plan belgesinde. Sahip kararları: konsept "niyet önce"; ana ekrandaki Hava81 Skoru birincil niyetin skoru olacak (Faz 1–2).
 
+
+### Faz 1: Plan motoru v3 (arayüzden bağımsız; arayüz görünür biçimde değişmez)
+
+Sahip kararları (2026-10-22, kesin): konsept A "niyet önce"; ana ekrandaki Hava81 Skoru birincil niyetin skoru olur (varsayılan Yürüyüş, "Yürüyüş için"), genel gün skoru kavramı kalkar — Faz 1'de yalnız motor düzeyinde, arayüz Faz 2'de. Gece: piknik, çocukla park, çamaşır (ve sahil) kapı; yürüyüş ve koşu yalnız ceza, varsayılan müsait saat 07–23. Kapsam 5 gün; 72 saatten sonrası "düşük güven". Niyetler: Yürüyüş, Koşu, Bisiklet, Piknik, Çocukla park, Çamaşır, Motosiklet. Saatlik AQI Open-Meteo `european_aqi`, OpenWeather anlık AQI yedek. Önce kelime, sonra sayı.
+
+- [x] **P1.1 API: 5 günlük saatlik veri** — `forecast_hours` 48 → 120; `dew_point_2m`, `sunshine_duration`. Cache TTL aynı. **API deploy gerekir.**
+  - Kaldığı yer: API `hourly` artık 120 saat (`HOURLY_FORECAST_HOURS`, `contracts.ts`), her saatte isteğe bağlı `dewPoint` (°C) ve `sunshineDuration` (saat içindeki güneşli saniye, 0–3600; aralık dışı değer atılır). `openapi.ts` yanıt şeması güncellendi. Web: `parseHourlyResponse` 120 saati doğrular; bugünkü yüzeyler değişmesin diye `hourly` yine ilk 48 saat, tam ufuk ayrı `planHourly` alanında (yalnız API 48'den fazla saat gönderirse; eski API'de alan yok). `useForecast` `planHourly` döndürüyor (yoksa `hourly`); henüz okuyan yok, P1.5'te motor okuyacak. `dewPoint`/`sunshineDuration` bozuksa atılıyor, tahmin reddedilmiyor. Testler: `apps/api/test/hourly-provider.test.ts` (120 saat, yeni alanlar), `apps/api/test/app.test.ts` (uç nokta 130 saatten 120'yi sunar), `src/__tests__/api/weatherService.bundle.test.ts`, `src/__tests__/hooks/useForecast.bundle.test.ts`, `e2e/bundle.spec.ts` (120 saatlik fixture `hourlyForecast120` ile Bugün ve Planla açılıyor).
+- [ ] **P1.2 API: saatlik hava kalitesi** — bundle parçası `airQualityHourly` (Open-Meteo `european_aqi`, `pm2_5`, 120 sa); Türkiye sınır kontrolü ve upstream bütçesi geçerli. **API deploy gerekir.**
+- [ ] **P1.3 `src/domain/plan/`** — `profiles.ts`, `scoreHour.ts` (kapı + konfor, toplamı tutan kırılım), `findWindows.ts` (süre, top-3, örtüşmeme, müsaitlik), `confidence.ts`, `planEngine.ts` (`getPlanSnapshot`).
+- [ ] **P1.4 Profil v2** — `useDecisionProfile`: birincil niyet, yağmur toleransı, müsait saatler (hafta içi / hafta sonu), süreler, hassasiyet; eski kayıttan geçiş.
+- [ ] **P1.5 Snapshot'ı motora bağla** — `getDecisionSnapshot` → `getPlanSnapshot`; `weatherDecisions`, `buildCommutePlan`, `buildAlertCandidate` motor ve eşikleri kullanır; eski `buildDailyPlan`/`buildActivityPlan` ince adaptör.
+- [ ] **P1.6 Kalibrasyon seti** — 81 il × 4 mevsim tarihî Open-Meteo örnekleri (`scripts/calibrate-plan.mjs`); bulgular `docs/SCORE_MODEL.md` v3 bölümüne.
+- [ ] **P1.7 Rota skoru web'e** — API `route-weather` segment ham verisi (geriye uyumlu: `score` bir sürüm daha); web `scoreHour` kullanır. **API deploy gerekir.**
+
 ---
 
 ## Önerilen sıra

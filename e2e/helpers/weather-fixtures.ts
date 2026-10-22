@@ -144,6 +144,37 @@ export function createWeatherFixtures(now = Date.now()) {
     })),
   });
 
+  /**
+   * Plan v3 (P1.1): the API now serves five days (120 h) of hourly data with dew point and
+   * sunshine. Same first 24 hours as `hourlyForecast`, extended with a mild diurnal cycle.
+   */
+  const hourlyForecast120 = () => ({
+    ...hourlyForecast,
+    hourly: Array.from({ length: 120 }, (_, index) => {
+      const time = new Date(Date.parse('2026-08-28T09:00:00.000Z') + index * 60 * 60_000);
+      const localHour = (time.getUTCHours() + 3) % 24;
+      const isDay = localHour >= 7 && localHour < 20;
+      const base =
+        index < 24
+          ? hourlyForecast.hourly[index]
+          : {
+              temp: 20 + Math.round(5 * Math.sin(((localHour - 9) / 24) * 2 * Math.PI)),
+              icon: isDay ? '01d' : '01n',
+              description: 'açık',
+              pop: 10,
+              precipitationMm: 0,
+              windSpeed: 3,
+            };
+      return {
+        ...base,
+        time: time.toISOString(),
+        isDay,
+        dewPoint: 12,
+        sunshineDuration: isDay ? 3000 : 0,
+      };
+    }),
+  });
+
   /** Local HH:MM in İstanbul `offsetHours` after `now`. */
   const localClockAt = (offsetHours: number) =>
     new Date(now + current.meta.timezoneOffsetSeconds * 1000 + offsetHours * 60 * 60_000)
@@ -161,6 +192,7 @@ export function createWeatherFixtures(now = Date.now()) {
     context,
     routeResult,
     hourlyFromNow,
+    hourlyForecast120,
     localClockAt,
   };
 }
