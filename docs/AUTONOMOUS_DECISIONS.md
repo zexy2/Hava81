@@ -1541,3 +1541,9 @@ OpenWeather `weather[].icon` is a domain identifier, not arbitrary presentation 
 **Decision:** If GitHub's deployed-revision → main history compare fails, the read-only observer may recover API deployment state by comparing exact blob SHAs for the established API-runtime path set from both revisions' non-truncated Git trees. Any commit/tree lookup failure or truncated tree remains fail-closed as unknown.
 
 **Why:** A long-lived deployed API revision can make a bounded history comparison transiently time out even while production is healthy. Exact runtime-content equality answers the safety question directly without increasing the compare timeout indefinitely, weakening runtime-path scope, or treating the `apps/api` subtree marker as sufficient when Oracle compose configuration also affects deployment.
+
+## 2026-10-22 — last-known weather fallback is scoped to its observation context
+
+**Decision:** When a weather request fails, cached last-known weather may be shown only if the active source is a city search and the cached normalized province identity and language match the active city context. Its displayed “observed at” timestamp must use the provider observation time (`meta.fetchedAt`), not the browser cache-write time.
+
+**Why:** A stale forecast for a different province or language is misleading even if it is technically valid cached JSON. Cache receipt time measures persistence, not when the provider observed weather. Preserve the existing stale fallback only for matching context, and keep failures localized rather than fabricating current conditions.

@@ -539,9 +539,28 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     rawError?.code === ErrorCode.API_ERROR ||
     rawError?.code === ErrorCode.RATE_LIMIT ||
     (rawError?.statusCode !== undefined && rawError.statusCode >= 500);
+  const cachedWeatherMatchesActiveContext =
+    activeSourceRef.current === 'city' &&
+    cachedWeather !== null &&
+    cityIdentity(cachedWeather.data.cityName) === cityIdentity(city || initialCity) &&
+    (cachedWeather.language ?? 'tr') === language;
   const lastKnownWeather =
-    !activeWeather && infrastructureFailure && enableCache && cachedWeather ? cachedWeather.data : null;
-  const lastKnownAt = lastKnownWeather && cachedWeather ? new Date(cachedWeather.timestamp) : null;
+    !activeWeather && infrastructureFailure && enableCache && cachedWeatherMatchesActiveContext
+      ? cachedWeather?.data ?? null
+      : null;
+  const cachedObservationTime = cachedWeather?.data.meta?.fetchedAt;
+  const cachedObservationTimestamp =
+    cachedObservationTime instanceof Date
+      ? cachedObservationTime.getTime()
+      : cachedObservationTime
+        ? new Date(cachedObservationTime).getTime()
+        : null;
+  const lastKnownAt =
+    lastKnownWeather &&
+    cachedObservationTimestamp !== null &&
+    Number.isFinite(cachedObservationTimestamp)
+      ? new Date(cachedObservationTimestamp)
+      : null;
 
   return {
     // State

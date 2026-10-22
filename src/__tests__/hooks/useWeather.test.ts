@@ -1022,4 +1022,81 @@ describe('useWeather', () => {
     expect(result.current.recentSearches).toHaveLength(1);
     expect(result.current.recentSearches[0].city).toBe('İstanbul');
   });
+
+  const createStaleWeatherCache = (cityName: string, language: 'tr' | 'en' = 'tr') => {
+    const now = Date.now();
+    const observedAt = new Date(now - 6 * 60_000).toISOString();
+    const sunrise = new Date(now - 6 * 60 * 60_000).toISOString();
+    const sunset = new Date(now + 6 * 60 * 60_000).toISOString();
+    const coordinates =
+      cityName === 'İzmir' ? { lat: 38.42, lon: 27.14 } : { lat: 41.01, lon: 28.97 };
+
+    return {
+      observedAt,
+      value: JSON.stringify({
+        data: {
+          cityName,
+          country: 'TR',
+          temperature: 24,
+          feelsLike: 24,
+          tempMin: 20,
+          tempMax: 27,
+          humidity: 55,
+          pressure: 1014,
+          visibility: 10000,
+          windSpeed: 3,
+          windDirection: 180,
+          description: 'açık hava',
+          icon: '01d',
+          sunrise,
+          sunset,
+          timestamp: observedAt,
+          coordinates,
+          clouds: 0,
+          meta: {
+            provider: 'OpenWeather',
+            fetchedAt: observedAt,
+            timezoneOffsetSeconds: 10800,
+            intervalHours: 1,
+            freshForSeconds: 300,
+            cacheStatus: 'MISS',
+          },
+        },
+        // Deliberately newer than the provider observation to distinguish cache-write
+        // time from the actual time represented by the weather values.
+        timestamp: now - 2 * 60_000,
+        language,
+      }),
+    };
+  };
+
+  it.each([
+    ['matching city and language', 'İstanbul', 'tr', true],
+    ['different city', 'İzmir', 'tr', false],
+    ['different language', 'İstanbul', 'en', false],
+  ] as const)(
+    'uses last-known weather only for matching active context (%s)',
+    async (_label, cachedCity, cachedLanguage, shouldUseFallback) => {
+      const cached = createStaleWeatherCache(cachedCity, cachedLanguage);
+      localStorage.setItem('weather_cache', cached.value);
+      (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+        new ApiError('provider unavailable', ErrorCode.NETWORK_ERROR)
+      );
+
+      const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+      await waitFor(() => expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR));
+
+      if (shouldUseFallback) {
+        expect(result.current.weather?.cityName).toBe('İstanbul');
+        expect(result.current.lastKnownAt?.getTime()).toBe(Date.parse(cached.observedAt));
+        expect(result.current.lastKnownAt?.getTime()).not.toBe(
+          JSON.parse(cached.value).timestamp
+        );
+      } else {
+        expect(result.current.weather).toBeNull();
+        expect(result.current.lastKnownAt).toBeNull();
+      }
+    }
+  );
+
 });
