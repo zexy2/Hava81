@@ -21,4 +21,4 @@ A queued workflow, pending review, external propagation delay, or canary observa
 
 ## Evidence to record
 
-Each autonomous run should record the current main SHA, production revisions, active API port, host gate result, pending PR/run identifiers, exact next action, and the prioritized follow-up queue in `docs/AUTONOMOUS_PROGRESS.md` before the execution window ends.
+Each autonomous run should record the current main SHA, production revisions, active API port, host gate result, pending PR/run identifiers, exact next action, and the prioritized follow-up queue in the pull request description and, for production deploys, the "Deploy günlüğü" section of `docs/IYILESTIRME_PLANI.md` before the execution window ends. The old append-only `docs/AUTONOMOUS_*` logs were removed from the repository (plan 3.7) and are archived in the [`archive-autonomous-logs`](https://github.com/zexy2/Hava81/releases/tag/archive-autonomous-logs) release.

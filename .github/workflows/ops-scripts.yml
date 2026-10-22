@@ -38,8 +38,6 @@ jobs:
         run: bash scripts/test-run-npm-audit-with-retry.sh
       - name: Verify parallel build and strict deploy gates
         run: python3 scripts/test-ci-parallel-build-gates.py
-      - name: Verify autonomous append-only log merge contract
-        run: bash scripts/test-autonomous-log-union-merge.sh
       - name: Verify safe worktree cleanup contract
         run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
       - name: Verify Git metadata writability contract

@@ -39,7 +39,7 @@ It combines current conditions, hourly and daily forecasts, air quality and envi
 | **Compare** | Decision-oriented comparison for up to three favorite cities |
 | **Route weather** | Transparent inter-city weather-corridor estimates with a non-navigation disclaimer |
 | **Personalization** | Favorites, recent cities, TR/EN, units, theme and persistent preferences |
-| **Distribution** | Installable PWA, shareable summaries, city deep links, sitemap and optional browser alerts |
+| **Distribution** | Installable PWA, shareable summaries, crawlable TR and EN (`/en/<province>/`) pages for all 81 provinces with `hreflang`, per-province OG cards, sitemap and optional browser alerts |
 
 ### Mobile
 
@@ -113,6 +113,8 @@ PORT=4000
 VITE_API_BASE_URL=/api/v1
 ```
 
+`.env.example` also lists every optional API setting (rate limit, upstream budget, cache TTLs, provider URLs/fallback key) with its default; the API validates them on start-up (`apps/api/src/config/env.ts`).
+
 > [!IMPORTANT]
 > `OPENWEATHER_API_KEY` must remain server-side. Never expose provider secrets through a `VITE_` variable or commit a populated `.env` file.
 
@@ -147,7 +149,7 @@ npm run build
 npm run e2e
 ```
 
-CI additionally validates browser flows across representative viewport sizes, Lighthouse budgets, Docker builds, deployment invariants and the production static shell.
+CI (`ci.yml`) additionally validates browser flows across representative viewport sizes, Lighthouse budgets, generated SEO pages and, after deploy, the published static shell. Ops and deployment script contracts run in a separate workflow (`ops-scripts.yml`); visual screenshot baselines can be generated on CI Linux with the manual `visual-baseline.yml` workflow.
 
 ## API Snapshot
 
@@ -161,6 +163,7 @@ CI additionally validates browser flows across representative viewport sizes, Li
 | `GET /api/v1/weather/bundle?lat=38.42&lon=27.13&include=forecast,hourly,airQuality,context` | Current/forecast/hourly/air quality/context for one location in a single response (failed part is `null` + `errors`) |
 | `GET /api/v1/weather/provinces?lang=en` | Live temperature for all 81 provinces (map; one Open-Meteo call, 30 min cache) |
 | `GET /api/v1/weather/route?...` | Approximate route-weather corridor |
+| `GET /api/v1/health` | Health with the deployed build `revision` (git SHA) |
 | `GET /api/v1/health/live` | Liveness probe |
 | `GET /api/v1/health/ready` | Readiness probe |
 
@@ -195,8 +198,8 @@ e2e/                 Playwright browser flows
 
 | Component | Production |
 | --- | --- |
-| Web | GitHub Pages at `hava81.zekiakgul.dev` |
-| API | Oracle Cloud VPS at `api.hava81.zekiakgul.dev` |
+| Web | GitHub Pages at `hava81.zekiakgul.dev`, published by `ci.yml` on `main` after all gates pass |
+| API | Oracle Cloud VPS at `api.hava81.zekiakgul.dev`, deployed by `deploy-api.yml` (GHCR image + blue/green switch, `/api/v1/health` revision check); see [deploy/oracle/README.md](deploy/oracle/README.md) |
 | CI/CD | GitHub Actions |
 
 The browser uses the public BFF URL in production. Provider credentials remain on the API host, and CORS limits browser access to approved web origins.
@@ -208,6 +211,8 @@ cp .env.example .env
 # Set OPENWEATHER_API_KEY, then:
 docker compose up --build
 ```
+
+The web container serves on `http://localhost:3000` and proxies `/api/` to the API; the API port is published on `127.0.0.1:4000` only.
 
 ## Contributing
 

@@ -35,4 +35,4 @@ Rollback means restoring nginx to the last known-good port and re-running the sa
 
 ## Evidence to record
 
-Record the release SHA, image tag, canary port, stable port, readiness timestamps, smoke-test results, and rollback decision in `docs/AUTONOMOUS_PROGRESS.md`. Preserve prior checkpoints; append new evidence instead of rewriting history.
+Record the release SHA, image tag, canary port, stable port, readiness timestamps, smoke-test results, and rollback decision in the "Deploy günlüğü" section of `docs/IYILESTIRME_PLANI.md`. Preserve prior entries; add new evidence instead of rewriting history. (The old `docs/AUTONOMOUS_PROGRESS.md` log is archived in the [`archive-autonomous-logs`](https://github.com/zexy2/Hava81/releases/tag/archive-autonomous-logs) release.)
