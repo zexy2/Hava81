@@ -143,13 +143,13 @@ Kaynak: `deploy/oracle/README.md`. _Not (3.1): secret'lar tanımlandıktan sonra
 
 ## Kaldığın yerden devam etme (yapay zekâ ajanı veya geliştirici için)
 
-Güncel durum (2026-10-22 18:00 UTC):
+Güncel durum (2026-10-22 18:30 UTC):
 - **main'de bitenler:** Planın tamamı — Faz 0, 1, 2, 3 (3.1–3.8 ve 3.x e2e sadeleştirme) ve Faz 4 (#1325–#1343). Canlı API revision'ı `f893e20` (3.8 sıkıştırması dahil, elle deploy; `content-encoding: br` doğrulandı). Görsel test tabanları `e2e/visual.spec.ts-snapshots/` altında commit'li (#1343, ubuntu-latest Visual baselines koşusundan; CI'da aynı koşu tabanlarla birebir eşleşti).
 - **En sondaki tam test paketi (2026-10-22, main `f893e20`, temiz `npm ci && npm --prefix apps/api ci`):** `npm run type-check` temiz; `npm run lint` 0 hata (1 uyarı: `useForecast.bundle.test.ts` kullanılmayan `_omit`), CSS lint temiz; `npx vitest run` 97 dosya / 886 test geçti; `npm run api:test` 87/87; `npm run build` başarılı (165 HTML'e CSP); `npm run e2e` 153 geçti / 22 atlandı (projeye özel testler); `HAVA81_VISUAL=1 … --project=visual` commit'li tabanlara karşı 4/4. main'deki son CI (CI/CD Pipeline: Frontend quality, API test & build, Production build, Browser flows, Lighthouse, Pages deploy; Ops script contracts; CodeQL) yeşil. Düzeltme gerektiren hata çıkmadı.
-- **Sıradaki iş:** plan maddesi kalmadı. Yalnız sahibin elle yapacakları:
-  - (1) 3.1 otomatik API deploy'u için tek seferlik Oracle host kurulumu (`deploy/oracle/README.md` → "One-time host setup") ve repo secret'ları `ORACLE_SSH_HOST`, `ORACLE_SSH_USER`, `ORACLE_SSH_KEY`, `ORACLE_SSH_KNOWN_HOSTS` (isteğe bağlı `ORACLE_SSH_PORT`, `ORACLE_DEPLOY_DIR`). Şu an `deploy-api.yml` GHCR imajını yayınlıyor ama secret'lar olmadığı için Oracle adımını uyarıyla atlıyor; o zamana kadar API deploy'u aşağıdaki elle komutla.
-  - (2) Eski kilit dosyasını kaldır (çalışan deploy yokken): `sudo rm /var/lock/hava81-api-operation.lock` (sahibi `chatgpt`; bkz. Deploy günlüğü).
-  - (3) Sunucudaki eski Hava81 kopyalarını temizle (`/home/ubuntu/Hava81`, `/home/chatgpt`, `/tmp` altındakiler); yalnız `/home/ubuntu/hava81-prod-20261021` ve `deploy/oracle/.env` kalmalı.
+- **Sahibin elle adımları tamamlandı (2026-10-22):** tek seferlik Oracle host kurulumu yapıldı; repo secret'ları `ORACLE_SSH_HOST`, `ORACLE_SSH_USER`, `ORACLE_SSH_KEY`, `ORACLE_SSH_KNOWN_HOSTS` ve repo değişkeni `ORACLE_DEPLOY_DIR=/home/ubuntu/hava81-prod-20261021` tanımlandı; eski `/var/lock/hava81-api-operation.lock` silindi; sunucu temizlendi (yalnız `~/hava81-prod-20261021` kaldı); `DOCKER_*` secret'ları silindi; birleşmiş 298 dal silindi (birleşmemiş 296 dal duruyor).
+  - Dikkat: secret'lar eklendikten sonra `deploy-api.yml` henüz Oracle'a karşı hiç koşmadı. `apps/api`'ye dokunan ilk merge'de iş akışının Oracle adımını izle ve `/api/v1/health` revision'ını doğrula; sorun olursa aşağıdaki elle komut yedek olarak geçerli.
+- **Plan sonrası ek işler (2026-10-22):** (a) ana sayfa OG görseli il kartlarıyla aynı mavi premium şablondan yeniden üretildi (`scripts/generate-og-images.mjs --home-only`, `?v=20261022`; #1347); (b) `useForecast.bundle.test.ts` kullanılmayan `_omit` uyarısı giderildi, lint 0 uyarı (#1345); (c) Docker nginx bilinmeyen yollarda artık `404.html` ile gerçek HTTP 404 döndürüyor, tüm gerçek rotalar önceden üretildiği için SPA fallback kaldırıldı (`scripts/test-nginx-static-routes.sh`; #1346). `apps/api` değişmedi.
+- **Sıradaki iş:** plan maddesi kalmadı.
   - Görsel değişiklik yapan PR'larda tabanlar "Visual baselines" artifact'ından yenilenip aynı PR'da commit'lenir (bkz. `e2e/visual.spec.ts` başındaki not).
 - **Çalışma kuralları (sahip Zeki):**
   - Her madde ayrı dal + PR (hedef `main`). `main`'e doğrudan push yok.
