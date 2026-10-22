@@ -22,5 +22,6 @@ Hava81 is decision-first weather guidance, not a replacement for official warnin
 3. Preserve the distinction between an official hazard warning and Hava81's own action recommendation.
 4. When a provider is degraded, fail closed on claims: show the limitation rather than inventing a value.
 5. Any future warning integration must document source stability, freshness semantics and fallback behavior before release.
+6. Show cached weather only when its city, language and request source match the active request; label its last-known time with the provider observation time rather than the browser cache-write time.
 
 This document is intentionally short and normative so product copy, tests and deployment reviews can reference one source of truth.
