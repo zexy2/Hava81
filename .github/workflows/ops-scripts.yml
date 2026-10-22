@@ -2,8 +2,8 @@ name: Ops script contracts
 
 # Agent/ops helper scripts (worktree cleanup, observer, live audit, deploy and
 # blue/green shell scripts, Pages asset retention, CI gate contracts) are tested
-# here, separately from the product pipeline in ci.yml. None of these steps
-# need npm dependencies.
+# here, separately from the product pipeline in ci.yml. Only the live audit
+# scripts need the root npm dependencies (they import @playwright/test).
 
 on:
   push:
@@ -32,6 +32,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --no-audit
       - name: Verify npm audit retry contract
         run: bash scripts/test-run-npm-audit-with-retry.sh
       - name: Verify parallel build and strict deploy gates
