@@ -60,7 +60,8 @@ jobs:
   image:
     name: Publish API image to GHCR
     needs: verify
-    runs-on: ubuntu-latest
+    # The Oracle host is ARM64 (Ampere); build natively on GitHub's free arm runner.
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     permissions:
       contents: read
@@ -104,12 +105,13 @@ jobs:
           context: apps/api
           file: apps/api/Dockerfile
           push: true
+          platforms: linux/arm64
           build-args: |
             HAVA81_API_REVISION=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=hava81-api
-          cache-to: type=gha,scope=hava81-api,mode=max
+          cache-from: type=gha,scope=hava81-api-arm64
+          cache-to: type=gha,scope=hava81-api-arm64,mode=max
 
   deploy:
     name: Blue/green deploy to Oracle
