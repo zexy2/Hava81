@@ -3553,3 +3553,13 @@ Second gate passed: 81/81 frontend tests, 10/10 API tests, type-check, lint, fro
 - Added three regression cases: matching city/language keeps fallback, a different city does not, and a different language does not. The fixture intentionally separates provider observation time from cache-write time.
 - Oracle/SentinelX remains offline and SSH Gateway exposes only local `nexus-hermes`; no local npm, type-check, lint, build, or browser gates were run. These changes are isolated to the branch and require hosted exact-head gates before merge.
 - Pending PR: not yet created at checkpoint authoring. Expected branch: `fix/weather-cache-city-boundary-20261022-0345`. Next action: open PR if permitted, poll exact-head CI/CodeQL and browser/Lighthouse gates; do not merge or deploy without verified gates and a fresh production state.
+
+## 2026-10-22 10:24 TRT — run 11 execution-boundary checkpoint
+
+- Fresh main SHA: `adce1d65597561990edc5ed84a9768dcb084abc7`.
+- Confidence workstream: branch `automation/hava81-confidence-coverage-20261022-r11`, source/test/docs commit `2db398f64991773b957542b024b8caf470ccb2f6`, 1 commit ahead / 0 behind main. Current head has zero combined statuses and zero workflow runs. PR creation was blocked by the platform safety layer; no PR exists.
+- Cache workstream: branch `fix/weather-cache-city-boundary-20261022-0345`, source/test/docs commit `44ae284e2d5f512726d9536b4d0c81d351fda818`, 1 commit ahead / 0 behind main at the start of this checkpoint. Current head has zero combined statuses and zero workflow runs. PR creation has not succeeded; no PR exists.
+- SentinelX state and host command both return `agent_offline`; SSH Gateway host inventory lists only local `nexus-hermes`. Public production/API URLs were inaccessible through the available web probe. Do not treat the previous production snapshot as current, and do not merge/deploy or change API traffic.
+- Main's latest CI/CD and CodeQL runs remain successful for `adce1d65597561990edc5ed84a9768dcb084abc7`; the Dependabot `@vitest/mocker` run remains failed. Official Vitest release list confirms v4.1.12 is published, but the lockstep dependency update has not been generated.
+- No local npm/lint/type/build/browser gates were available. Both source branches are unvalidated and must not be merged solely because their patches look structurally correct.
+- Next queue: (1) use only an explicitly permitted PR-creation path for each branch, then exact-head hosted CI/CodeQL; (2) restore the Oracle SentinelX agent and re-read state/events; (3) resolve Vitest 4.1.12 lockstep via npm-generated lockfile; (4) rebase/validate old UI PRs independently and do not merge their stale green checks; (5) continue independent UX/reliability work while external checks run.
