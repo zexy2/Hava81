@@ -77,19 +77,34 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
           // Negative fixture mutates only the contrast input; it must not alter production DOM/CSS.
           const foreground = degraded && !isActive ? [100, 123, 139] : rgb(getComputedStyle(button).color);
           const background = getComputedStyle(button).backgroundImage;
-          // Read current rendered gradients rather than stale theme-specific hardcoded colors.
-          // Only fully opaque color stops are comparable; radial/translucent overlays remain unmodeled.
+          // The last linear gradient is the opaque base beneath any radial glow.
+          // Do not let unrelated radial RGB stops satisfy the contrast gate.
           const gradient = isActive ? background : dockGradient;
-          const stops = [...gradient.matchAll(/rgb\((\d+), (\d+), (\d+)\)/g)]
+          const linearIndex = gradient.toLowerCase().lastIndexOf('linear-gradient(');
+          const opaqueBaseGradient = linearIndex < 0 ? '' : gradient.slice(linearIndex);
+          const stops = [...opaqueBaseGradient.matchAll(/rgb\(\s*(\d+)(?:,\s*|\s+)(\d+)(?:,\s*|\s+)(\d+)(?:\s*\/\s*[\d.]+%?)?\s*\)/g)]
             .map(match => match.slice(1, 4).map(Number));
-          // An rgba() stop must not be silently treated as an opaque rgb() stop.
-          const hasTranslucentStops = /rgba\(/.test(gradient);
+          // Fail closed when a base stop uses alpha syntax below full opacity, including
+          // modern rgb(... / alpha) notation as well as legacy rgba(..., alpha).
+          const hasTranslucentStops = [...opaqueBaseGradient.matchAll(/rgba?\(([^)]*)\)/gi)].some(match => {
+            const body = match[1] ?? '';
+            const slashAlpha = body.includes('/') ? body.slice(body.lastIndexOf('/') + 1).trim() : null;
+            const commaParts = body.split(',');
+            const commaAlpha = match[0].toLowerCase().startsWith('rgba(') && commaParts.length === 4
+              ? commaParts[3].trim()
+              : null;
+            const alpha = slashAlpha ?? commaAlpha;
+            if (!alpha) return false;
+            const numericAlpha = Number.parseFloat(alpha);
+            if (!Number.isFinite(numericAlpha)) return true;
+            return numericAlpha < (alpha.endsWith('%') ? 100 : 1);
+          });
           const rect = button.getBoundingClientRect();
           const labelRect = button.querySelector('.atlas-bottom-nav__label')?.getBoundingClientRect();
           return {
             text: button.textContent?.trim(), active: isActive, background, foregroundCss: getComputedStyle(button).color,
             minBaseStopContrast: foreground && stops.length >= 2 ? Math.min(...stops.map(stop => ratio(foreground, stop))) : 0,
-            stopCount: stops.length, hasTranslucentStops,
+            stopCount: stops.length, hasTranslucentStops, hasLinearBase: linearIndex >= 0,
             targetWidth: rect.width, targetHeight: rect.height,
             labelInside: !!labelRect && labelRect.left >= rect.left - 1 && labelRect.right <= rect.right + 1 &&
               labelRect.top >= rect.top - 1 && labelRect.bottom <= rect.bottom + 1,
@@ -102,7 +117,9 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
     expect(result!.gradient).toContain('gradient');
     expect(result!.labels).toHaveLength(4);
     for (const label of result!.labels) {
+      expect(label.hasLinearBase, `${themeMode} ${label.text} must have a linear base`).toBe(true);
       expect(label.stopCount).toBeGreaterThanOrEqual(2);
+      expect(label.hasTranslucentStops, `${themeMode} ${label.text} base gradient must be opaque`).toBe(false);
       if (degraded && !label.active) {
         expect(label.minBaseStopContrast, `${themeMode} ${label.text} should detect bad contrast`).toBeLessThan(4.5);
       } else {
