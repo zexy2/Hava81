@@ -45,6 +45,10 @@ test.describe('target size', () => {
 });
 
 test.describe('contrast', () => {
+  // axe-core is injected as an inline script (addScriptTag), which the page CSP
+  // (scripts/apply-csp.mjs) blocks; bypass CSP only for this audit.
+  test.use({ bypassCSP: true });
+
   test(
     'dashboard text contrast meets WCAG AA in light and dark themes',
     DESKTOP,
