@@ -312,7 +312,7 @@ export const en = {
         title: 'What is moving this score?',
         stable: 'No material weather risk stands out in this score.',
         method:
-          'This score summarizes general outdoor suitability, time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap. The ≈− values in the breakdown are 12-hour weighted-average impacts; the final score also emphasizes the most difficult hours, so they are not items subtracted one-for-one from 100.',
+          'This score summarizes general outdoor suitability, time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap. The ≈− values in the breakdown are 12-hour weighted-average impacts; the final score also emphasizes the most difficult hours, so they are not items subtracted one-for-one from 100. Air quality is the current reading; with no hourly forecast it is applied equally to every hour.',
       },
       confidence: {
         high: 'Rich hourly data',

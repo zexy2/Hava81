@@ -10,6 +10,11 @@ describe('Hava81 score explanation copy', () => {
     expect(en.hava81.dailyPlan.explain.method).toContain('subtracted one-for-one from 100');
   });
 
+  it('says the air-quality reading is current and applied to every hour (plan v3 Faz 0.2)', () => {
+    expect(tr.hava81.dailyPlan.explain.method).toContain('Hava kalitesi anlık ölçümdür');
+    expect(en.hava81.dailyPlan.explain.method).toContain('Air quality is the current reading');
+  });
+
   it('scopes favorable risk language to weather rather than general safety', () => {
     expect(tr.hava81.dailyPlan.reasons.clear).toContain('hava riski');
     expect(en.hava81.dailyPlan.reasons.clear).toContain('weather risk');

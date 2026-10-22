@@ -75,7 +75,7 @@ describe('activity plans', () => {
     expect(plan.reasons).toContain('heavy-rain');
   });
 
-  it('does not project current AQI unchanged across future activity hours', () => {
+  it('applies the current AQI to every activity hour so the children air weight is live', () => {
     const points = hourly([22, 23, 24]);
     const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };
     const withCurrentAir = buildActivityPlan({
@@ -84,13 +84,30 @@ describe('activity plans', () => {
       hourly: points,
       airQuality: air,
     });
-    const withoutAirProjection = buildActivityPlan({
+    const withoutAir = buildActivityPlan({
       activity: 'children',
       weather,
       hourly: points,
     });
-    expect(withCurrentAir.score).toBe(withoutAirProjection.score);
-    expect(withCurrentAir.reasons).not.toContain('poor-air-quality');
+    expect(withCurrentAir.score).toBeLessThan(withoutAir.score);
+    expect(withCurrentAir.reasons).toContain('poor-air-quality');
+    expect(
+      withCurrentAir.slots.every(slot => slot.impacts.some(impact => impact.factor === 'air-quality'))
+    ).toBe(true);
+  });
+
+  it('lowers the running score when the current AQI is poor (AQI 4)', () => {
+    const points = hourly([14, 14, 14]);
+    const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };
+    const clean = { ...air, aqi: 1, aqiLabel: 'İyi' };
+    const poorRun = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: air });
+    const cleanRun = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: clean });
+    const poorWalk = buildActivityPlan({ activity: 'walk', weather, hourly: points, airQuality: air });
+    const cleanWalk = buildActivityPlan({ activity: 'walk', weather, hourly: points, airQuality: clean });
+
+    expect(poorRun.score).toBeLessThan(cleanRun.score);
+    // Running carries an extra air weight on top of the shared AQI penalty.
+    expect(cleanRun.score - poorRun.score).toBeGreaterThan(cleanWalk.score - poorWalk.score);
   });
 
   it('still uses current AQI when the activity plan falls back to current weather', () => {

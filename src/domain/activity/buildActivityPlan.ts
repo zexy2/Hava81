@@ -312,10 +312,12 @@ export const buildActivityPlan = ({
         },
       ];
 
-  const hasHourlySource = source.length > 0;
+  // Same rule as the daily plan: the current AQI reading applies to every slot (no hourly
+  // AQI forecast yet), so run/children air weights are live and no hour is favoured by it.
+  // Laundry drying does not depend on air quality, so it keeps ignoring AQI.
+  const airQualityIndex = activity === 'laundry' ? undefined : airQuality?.aqi;
   const slots: ActivityWindowScore[] = points.map(point => {
     const precipitationProbability = 'pop' in point ? point.pop : undefined;
-    const airQualityIndex = hasHourlySource ? undefined : airQuality?.aqi;
     const base = scoreWeatherWindow({
       time: point.time,
       temperature: point.temp,
