@@ -74,7 +74,7 @@ test('applies to every HTML file in dist', async t => {
   const dist = await mkdtemp(join(tmpdir(), 'hava81-csp-'));
   t.after(() => rm(dist, { recursive: true, force: true }));
   await mkdir(join(dist, 'istanbul'), { recursive: true });
-  await writeFile(join(dist, 'index.html'), page.replace(/<script>[\s\S]*?<\/script>/, ''));
+  await writeFile(join(dist, 'index.html'), page.replace(/<script>[\s\S]*?<\/script[^>]*>/i, ''));
   await writeFile(join(dist, 'istanbul', 'index.html'), page);
   await writeFile(join(dist, 'app.js'), 'console.log(1)');
 

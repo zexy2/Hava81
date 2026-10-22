@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 export const DEFAULT_API_ORIGIN = 'https://api.hava81.zekiakgul.dev';
 export const MAP_TILE_ORIGINS = ['https://a.tile.openstreetmap.fr', 'https://a.tile.openstreetmap.de'];
 const CSP_META_PATTERN = /\s*<meta\s+http-equiv=["']Content-Security-Policy["'][^>]*>/gi;
-const SCRIPT_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+const SCRIPT_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script[^>]*>/gi;
 const NON_EXECUTABLE_TYPE = /\btype\s*=\s*["']?(?!module\b|text\/javascript\b|application\/javascript\b)[^"'\s>]+/i;
 
 /** Returns the absolute API origin, or null for relative (same-origin) bases. */
