@@ -21,6 +21,12 @@ import {
  *   HAVA81_VISUAL=1 npm run e2e -- --project=visual --update-snapshots   # create/refresh baselines
  *   HAVA81_VISUAL=1 npm run e2e -- --project=visual                      # compare
  *
+ * The Linux baselines are committed under e2e/visual.spec.ts-snapshots/
+ * (`*-visual-linux.png`). To refresh them after an intended visual change, take
+ * the `visual-baselines-linux` artifact of the "Visual baselines" workflow
+ * (.github/workflows/visual-baseline.yml; it also runs on PRs touching this
+ * file), review every PNG and commit it in the same PR.
+ *
  * Determinism: fixed browser clock + fixtures anchored to the same instant,
  * local map tiles, animations disabled (playwright.config.ts), web fonts
  * awaited, and freshness metadata masked.
