@@ -1,5 +1,6 @@
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { findBestWindowRange } from './bestWindowRange';
+import { isRecommendableHour } from './eligibility';
 import { getScoreBand, scoreWeatherWindow } from './scoreWeatherWindow';
 import type {
   AirQualityAdvice,
@@ -145,14 +146,19 @@ const pickAirQualityAdvice = (airQuality?: AirQuality): AirQualityAdvice => {
   return 'good';
 };
 
-const buildNowOrLater = (slots: ScoredWeatherWindow[]): NowOrLaterAdvice => {
+const buildNowOrLater = (
+  slots: ScoredWeatherWindow[],
+  isEligible: (slot: ScoredWeatherWindow) => boolean = () => true
+): NowOrLaterAdvice => {
   const near = withinHours(slots, NEAR_TERM_HOURS);
   const current = near[0];
   if (!current) {
     return { kind: 'similar', currentScore: 0, targetScore: 0, reasons: [] };
   }
+  // "Wait until 02:00" is never advice: only recommendable hours can be the later target.
   const bestLater = near
     .slice(1)
+    .filter(slot => isEligible(slot))
     .reduce<ScoredWeatherWindow | undefined>(
       (best, slot) => (!best || slot.score > best.score ? slot : best),
       undefined
@@ -241,7 +247,25 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
   if (minimumScore <= 25) score = Math.min(score, 55);
   else if (minimumScore <= 40) score = Math.min(score, 65);
 
-  const bestWindowRange = findBestWindowRange(withinHours(slots, SCORE_HORIZON_HOURS));
+  // Plan v3 Faz 0.3: the general plan follows the walking rule (07–23 local). The fallback
+  // single "now" slot (no hourly data) is not filtered.
+  const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
+  const eligibleSlots = new WeakSet<ScoredWeatherWindow>(
+    source.length
+      ? slots.filter((slot, index) =>
+          isRecommendableHour(
+            { time: slot.time, isDay: source[index]?.isDay, icon: source[index]?.icon },
+            timezoneOffsetSeconds
+          )
+        )
+      : slots
+  );
+  const isEligible = (slot: ScoredWeatherWindow) => eligibleSlots.has(slot);
+  const bestWindowRange = findBestWindowRange(
+    withinHours(slots, SCORE_HORIZON_HOURS),
+    undefined,
+    isEligible
+  );
   const bestWindow = bestWindowRange?.peak;
 
   return {
@@ -253,7 +277,7 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
     airQuality: pickAirQualityAdvice(airQuality),
-    nowOrLater: buildNowOrLater(slots),
+    nowOrLater: buildNowOrLater(slots, isEligible),
     impacts: aggregateImpacts(weighted),
     confidence: confidenceFor(slots),
   };

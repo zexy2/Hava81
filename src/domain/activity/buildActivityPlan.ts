@@ -1,4 +1,5 @@
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { isRecommendableHour } from '../decision/eligibility';
 import { findBestWindowRange } from '../decision/bestWindowRange';
 import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
 import type { DecisionReasonCode } from '../decision/types';
@@ -393,7 +394,30 @@ export const buildActivityPlan = ({
       : defaultSlots;
   const evaluatedSlots = windowApplied ? filteredSlots : defaultSlots;
 
-  const bestWindowRange = findBestWindowRange(evaluatedSlots);
+  // Plan v3 Faz 0.3: dark hours never become the best time for picnic/children/laundry, and
+  // walk/run only consider 07–23 local. Scores and the timeline still include every hour.
+  const eligibleSlots = new WeakSet<ActivityWindowScore>(
+    slots.filter((slot, index) =>
+      isRecommendableHour(
+        {
+          time: slot.time,
+          isDay: 'isDay' in points[index] ? points[index].isDay : undefined,
+          icon: 'icon' in points[index] ? points[index].icon : undefined,
+        },
+        timezoneOffsetSeconds,
+        activity
+      )
+    )
+  );
+  const isEligible = (slot: ActivityWindowScore) => eligibleSlots.has(slot);
+  // Without a user-selected clock range, an evening search whose next 12 hours are all
+  // ineligible (e.g. a winter picnic after sunset) looks at the next 24 hours instead of
+  // showing no window at all.
+  const candidateSlots =
+    !windowApplied && !evaluatedSlots.some(isEligible) && nextDayEnd
+      ? slots.filter(slot => slot.time.getTime() < nextDayEnd)
+      : evaluatedSlots;
+  const bestWindowRange = findBestWindowRange(candidateSlots, undefined, isEligible);
   const bestWindow = bestWindowRange?.peak;
   const scoringHorizon = windowApplied ? 24 : HORIZON_HOURS;
   const rawScore = weightedActivityScore(evaluatedSlots, scoringHorizon);
