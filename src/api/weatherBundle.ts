@@ -4,6 +4,7 @@
  */
 import type {
   AirQuality,
+  AirQualityHourly,
   ContextSignals,
   DailyForecast,
   ForecastMeta,
@@ -11,7 +12,11 @@ import type {
 } from '../types';
 
 export const FORECAST_BUNDLE_PARTS = ['forecast', 'hourly', 'airQuality', 'context'] as const;
-export type ForecastBundlePart = (typeof FORECAST_BUNDLE_PARTS)[number];
+/**
+ * Plan v3 (P1.2): optional part, requested explicitly. An API without it rejects the
+ * `include` list, so it is not part of the default request until the engine needs it.
+ */
+export type ForecastBundlePart = (typeof FORECAST_BUNDLE_PARTS)[number] | 'airQualityHourly';
 export type BundlePartResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
 
 export type ParsedForecast = {
@@ -36,6 +41,7 @@ export interface ForecastBundle {
   hourly?: BundlePartResult<ParsedHourlyForecast>;
   airQuality?: BundlePartResult<AirQuality>;
   context?: BundlePartResult<ContextSignals>;
+  airQualityHourly?: BundlePartResult<AirQualityHourly>;
 }
 
 /** Bundle kullanılamadı (API'de yok ya da başarısız); çağıran eski tekil isteklere düşmeli. */

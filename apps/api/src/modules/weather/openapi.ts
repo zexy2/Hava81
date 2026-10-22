@@ -166,6 +166,26 @@ export const airQualityResponseJsonSchema = {
   },
 } as const;
 
+export const airQualityHourlyResponseJsonSchema = {
+  type: 'object',
+  required: ['hourly', 'meta'],
+  properties: {
+    hourly: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['time', 'europeanAqi'],
+        properties: {
+          time: { type: 'string', format: 'date-time' },
+          europeanAqi: { type: 'number', minimum: 0 },
+          pm25: { type: 'number', minimum: 0 },
+        },
+      },
+    },
+    meta: metaSchema,
+  },
+} as const;
+
 export const bundleQueryJsonSchema = {
   type: 'object',
   required: ['lat', 'lon'],
@@ -184,7 +204,7 @@ export const bundleQueryJsonSchema = {
       type: 'string',
       maxLength: 80,
       description:
-        'Virgülle ayrılmış parça listesi: current, forecast, hourly, airQuality, context. Boşsa hepsi döner.',
+        'Virgülle ayrılmış parça listesi: current, forecast, hourly, airQuality, context, airQualityHourly. Boşsa airQualityHourly dışındaki parçalar döner.',
     },
   },
 } as const;
@@ -221,6 +241,7 @@ export const bundleResponseJsonSchema = {
     hourly: { ...hourlyForecastResponseJsonSchema, nullable: true },
     airQuality: { ...airQualityResponseJsonSchema, nullable: true },
     context: contextBundleJsonSchema,
+    airQualityHourly: { ...airQualityHourlyResponseJsonSchema, nullable: true },
     errors: {
       type: 'object',
       properties: {
@@ -229,6 +250,7 @@ export const bundleResponseJsonSchema = {
         hourly: bundlePartErrorJsonSchema,
         airQuality: bundlePartErrorJsonSchema,
         context: bundlePartErrorJsonSchema,
+        airQualityHourly: bundlePartErrorJsonSchema,
       },
     },
     meta: {

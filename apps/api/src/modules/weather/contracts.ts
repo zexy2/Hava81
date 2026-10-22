@@ -163,8 +163,38 @@ export interface AirQualityDto {
   meta: DataMetaDto;
 }
 
-export const BUNDLE_PARTS = ['current', 'forecast', 'hourly', 'airQuality', 'context'] as const;
+/** Plan v3 (P1.2): hourly European AQI (Open-Meteo `european_aqi`, 0–100+) and PM2.5. */
+export interface AirQualityHourlyDto {
+  hourly: Array<{
+    time: string;
+    /** European AQI: 0–20 good, 20–40 fair, 40–60 moderate, 60–80 poor, 80–100 very poor, 100+ extremely poor. */
+    europeanAqi: number;
+    /** μg/m³ */
+    pm25?: number;
+  }>;
+  meta: DataMetaDto;
+}
+
+export const BUNDLE_PARTS = [
+  'current',
+  'forecast',
+  'hourly',
+  'airQuality',
+  'context',
+  'airQualityHourly',
+] as const;
 export type BundlePart = (typeof BUNDLE_PARTS)[number];
+/**
+ * Parts returned when `include` is omitted. `airQualityHourly` (plan v3) costs an extra upstream
+ * call, so it is only returned when explicitly requested; older clients see the same bundle.
+ */
+export const DEFAULT_BUNDLE_PARTS: readonly BundlePart[] = [
+  'current',
+  'forecast',
+  'hourly',
+  'airQuality',
+  'context',
+];
 
 export const bundleQuerySchema = z.object({
   lat: latitudeSchema,
@@ -182,7 +212,7 @@ export const bundleQuerySchema = z.object({
     .max(80)
     .optional()
     .transform((value, context): BundlePart[] => {
-      if (!value) return [...BUNDLE_PARTS];
+      if (!value) return [...DEFAULT_BUNDLE_PARTS];
       const parts = Array.from(new Set(value.split(',').map(part => part.trim()).filter(Boolean)));
       const unknown = parts.filter(part => !(BUNDLE_PARTS as readonly string[]).includes(part));
       if (unknown.length > 0 || parts.length === 0) {

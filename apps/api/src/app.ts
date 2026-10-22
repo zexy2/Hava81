@@ -27,13 +27,19 @@ import {
   type ProvinceCurrentProvider,
 } from './providers/openmeteo/openmeteo-provinces.provider';
 import { OpenMeteoHourlyProvider } from './providers/openmeteo/openmeteo-hourly.provider';
+import { OpenMeteoAirQualityHourlyProvider } from './providers/openmeteo/openmeteo-air-quality-hourly.provider';
 import { OpenWeatherProvider } from './providers/openweather/openweather.provider';
-import type { HourlyForecastProvider, WeatherProvider } from './providers/weather-provider';
+import type {
+  AirQualityHourlyProvider,
+  HourlyForecastProvider,
+  WeatherProvider,
+} from './providers/weather-provider';
 
 export interface BuildAppOptions {
   env?: AppConfig;
   provider?: WeatherProvider;
   hourlyProvider?: HourlyForecastProvider;
+  airQualityHourlyProvider?: AirQualityHourlyProvider;
   provincesProvider?: ProvinceCurrentProvider;
   contextService?: ContextSignalsService;
   cache?: AsyncCache;
@@ -191,7 +197,21 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
       env.OPEN_METEO_FORECAST_BASE_URL,
       env.OPEN_METEO_API_KEY
     );
-  const weatherService = new WeatherService(provider, cache, env, hourlyProvider);
+  const airQualityHourlyProvider =
+    options.airQualityHourlyProvider ??
+    new OpenMeteoAirQualityHourlyProvider(
+      fetch,
+      env.OPENWEATHER_TIMEOUT_MS,
+      env.OPEN_METEO_AIR_QUALITY_BASE_URL,
+      env.OPEN_METEO_API_KEY
+    );
+  const weatherService = new WeatherService(
+    provider,
+    cache,
+    env,
+    hourlyProvider,
+    airQualityHourlyProvider
+  );
   const contextService =
     options.contextService ??
     new ContextSignalsService(fetch, {

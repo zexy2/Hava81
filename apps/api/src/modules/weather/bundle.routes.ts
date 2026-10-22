@@ -14,6 +14,7 @@ const DESIRED_MAX_AGE: Record<BundlePart, number> = {
   hourly: 300,
   airQuality: 120,
   context: 900,
+  airQualityHourly: 900,
 };
 
 interface PartError {
@@ -65,6 +66,7 @@ export const registerBundleRoutes = async (
         hourly: () => deps.weather.getHourlyForecast({ lat, lon, lang }),
         airQuality: () => deps.weather.getAirQuality({ lat, lon, lang }),
         context: () => loadContextSignals(deps.cache, deps.context, lat, lon, marine),
+        airQualityHourly: () => deps.weather.getAirQualityHourly({ lat, lon, lang }),
       };
 
       const settled = await Promise.allSettled(query.include.map(part => loaders[part]()));

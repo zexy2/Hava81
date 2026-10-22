@@ -21,6 +21,8 @@ import type {
   DailyForecast,
   HourlyForecast,
   AirQuality,
+  AirQualityHour,
+  AirQualityHourly,
   ForecastMeta,
   WeatherDataMeta,
   CurrentWeatherMeta,
@@ -450,6 +452,52 @@ const validateContextSignalsPayload = (
   }
 
   return { ...data, fetchedAt };
+};
+
+/**
+ * Plan v3 (P1.2): hourly European AQI. Malformed hours are dropped; an envelope without any
+ * usable hour is rejected so the engine falls back to the current OpenWeather AQI.
+ */
+const parseAirQualityHourlyPayload = (value: unknown): AirQualityHourly => {
+  if (!isRecord(value) || !Array.isArray(value.hourly) || !isRecord(value.meta)) {
+    return invalidWeatherPayload('airQualityHourly');
+  }
+  const meta = value.meta;
+  if (typeof meta.provider !== 'string' || !meta.provider.trim()) {
+    invalidWeatherPayload('airQualityHourly.meta.provider');
+  }
+  const fetchedAt = typeof meta.fetchedAt === 'string' ? new Date(meta.fetchedAt) : new Date(NaN);
+  if (!Number.isFinite(fetchedAt.getTime()) || fetchedAt.getTime() > Date.now() + MAX_AIR_QUALITY_FUTURE_SKEW_MS) {
+    invalidWeatherPayload('airQualityHourly.meta.fetchedAt');
+  }
+  const hours: AirQualityHour[] = [];
+  for (const item of value.hourly as unknown[]) {
+    if (!isRecord(item) || typeof item.time !== 'string') continue;
+    const time = new Date(item.time);
+    if (!Number.isFinite(time.getTime())) continue;
+    if (!isFiniteNumber(item.europeanAqi) || item.europeanAqi < 0 || item.europeanAqi > 1_000) continue;
+    const hour: AirQualityHour = { time, europeanAqi: item.europeanAqi };
+    if (isFiniteNumber(item.pm25) && item.pm25 >= 0) hour.pm25 = item.pm25;
+    hours.push(hour);
+  }
+  if (!hours.length) invalidWeatherPayload('airQualityHourly.hourly');
+  hours.sort((a, b) => a.time.getTime() - b.time.getTime());
+  return {
+    hours,
+    meta: {
+      provider: (meta.provider as string).trim(),
+      fetchedAt,
+      ...(typeof meta.attribution === 'string' ? { attribution: meta.attribution } : {}),
+      ...(typeof meta.sourceUrl === 'string' ? { sourceUrl: meta.sourceUrl } : {}),
+      ...(isFiniteNumber(meta.intervalHours) ? { intervalHours: meta.intervalHours } : {}),
+      ...(meta.cacheStatus === 'HIT' || meta.cacheStatus === 'MISS' || meta.cacheStatus === 'COALESCED'
+        ? { cacheStatus: meta.cacheStatus }
+        : {}),
+      ...(isFiniteNumber(meta.freshForSeconds) && meta.freshForSeconds > 0
+        ? { freshForSeconds: meta.freshForSeconds }
+        : {}),
+    },
+  };
 };
 
 const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
@@ -1031,6 +1079,9 @@ export const weatherService = {
           value as Omit<ContextSignals, 'fetchedAt'> & { fetchedAt: string }
         )
       ),
+      ...(parts.includes('airQualityHourly')
+        ? { airQualityHourly: settle('airQualityHourly', parseAirQualityHourlyPayload) }
+        : {}),
     };
   },
 
