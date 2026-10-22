@@ -167,6 +167,7 @@ describe('useForecast with /weather/bundle', () => {
   it('keeps the prefetched (bootstrap) hourly response out of the bundle', async () => {
     service.hasBootstrapHourly.mockReturnValue(true);
     const { hourly: _omit, ...rest } = fullBundle();
+    void _omit;
     service.getForecastBundle.mockResolvedValue(rest);
     const { result } = renderHook(() => useForecast('tr'));
 
