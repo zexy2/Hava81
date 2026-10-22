@@ -16,6 +16,8 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
           weather_code: [3, 3],
           precipitation_probability_max: [23, 0],
           precipitation_sum: [1.7, 0],
+          sunrise: [1787974260, null],
+          sunset: [1788020400, null],
         },
         hourly: {
           time: [1787936400, 1787940000],
@@ -49,6 +51,8 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     'weather_code',
     'precipitation_probability_max',
     'precipitation_sum',
+    'sunrise',
+    'sunset',
   ]) {
     assert.equal(dailyFields.has(field), true, `missing daily ${field}`);
   }
@@ -63,6 +67,7 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     'wind_gusts_10m',
     'visibility',
     'uv_index',
+    'is_day',
   ]) {
     assert.equal(fields.has(field), true, `missing ${field}`);
   }
@@ -76,11 +81,17 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     description: 'kapalı',
     pop: 23,
     precipitationMm: 1.7,
+    sunrise: new Date(1787974260 * 1000).toISOString(),
+    sunset: new Date(1788020400 * 1000).toISOString(),
   });
+  // Polar day/night (no sunrise/sunset) keeps the day but omits the pair.
+  assert.equal(result.daily?.[1].sunrise, undefined);
+  assert.equal(result.daily?.[1].sunset, undefined);
   assert.deepEqual(result.hourly[0], {
     time: new Date(1787936400 * 1000).toISOString(),
     temp: 24.4,
     icon: '01d',
+    isDay: true,
     description: 'açık',
     pop: 5,
     windSpeed: 3.2,
@@ -93,6 +104,7 @@ test('Open-Meteo hourly adapter requests rich one-hour decision data and maps WM
     weatherCode: 0,
   });
   assert.equal(result.hourly[1].icon, '11n');
+  assert.equal(result.hourly[1].isDay, false);
   assert.equal(result.hourly[1].description, 'gök gürültülü fırtına');
   assert.equal(result.hourly[1].precipitationMm, 4.2);
   assert.equal(result.hourly[1].weatherCode, 95);
@@ -400,6 +412,7 @@ test('Open-Meteo hourly adapter omits impossible optional decision fields instea
     time: new Date(1787936400 * 1000).toISOString(),
     temp: 24,
     icon: '01d',
+    isDay: true,
     description: 'açık',
     pop: 10,
     windSpeed: 3,

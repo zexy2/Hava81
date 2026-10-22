@@ -40,14 +40,20 @@ type SerializedWeatherData = Omit<
   meta: SerializedCurrentMeta;
 };
 
+type SerializedDailyForecast = Omit<DailyForecast, 'date' | 'sunrise' | 'sunset'> & {
+  date: string;
+  sunrise?: string;
+  sunset?: string;
+};
+
 type SerializedForecast = {
-  daily: Array<Omit<DailyForecast, 'date'> & { date: string }>;
+  daily: SerializedDailyForecast[];
   hourly: Array<Omit<HourlyForecast, 'time'> & { time: string }>;
   meta: Omit<ForecastMeta, 'fetchedAt'> & { fetchedAt: string };
 };
 
 type SerializedHourlyForecast = {
-  daily?: Array<Omit<DailyForecast, 'date'> & { date: string }>;
+  daily?: SerializedDailyForecast[];
   hourly: Array<Omit<HourlyForecast, 'time'> & { time: string }>;
   meta: Omit<ForecastMeta, 'fetchedAt'> & { fetchedAt: string };
 };
@@ -324,6 +330,27 @@ const validateHourlyForecastItem = (
   invalid(item.uvIndex !== undefined && (!isFiniteNumber(item.uvIndex) || item.uvIndex < 0), 'uvIndex');
   invalid(item.visibility !== undefined && (!isFiniteNumber(item.visibility) || item.visibility < 0), 'visibility');
   invalid(item.weatherCode !== undefined && (!Number.isInteger(item.weatherCode) || item.weatherCode < 0 || item.weatherCode > 99), 'weatherCode');
+  invalid(item.isDay !== undefined && typeof item.isDay !== 'boolean', 'isDay');
+};
+
+/** API `isDay` first; older API revisions only encode daylight in the icon suffix. */
+const resolveIsDay = (item: { isDay?: unknown; icon: string }): boolean =>
+  typeof item.isDay === 'boolean' ? item.isDay : !item.icon.endsWith('n');
+
+/**
+ * Sunrise/sunset are optional enrichments: a malformed or incoherent pair is dropped
+ * instead of rejecting the whole forecast.
+ */
+const reviveDaylightBounds = (item: {
+  sunrise?: unknown;
+  sunset?: unknown;
+}): { sunrise?: Date; sunset?: Date } => {
+  if (typeof item.sunrise !== 'string' || typeof item.sunset !== 'string') return {};
+  const sunrise = new Date(item.sunrise);
+  const sunset = new Date(item.sunset);
+  if (!Number.isFinite(sunrise.getTime()) || !Number.isFinite(sunset.getTime())) return {};
+  if (sunset.getTime() <= sunrise.getTime()) return {};
+  return { sunrise, sunset };
 };
 
 const validateContextSignalsPayload = (
@@ -639,7 +666,8 @@ const parseForecastResponse = (rawResponse: unknown): ParsedForecast => {
   );
 
   return {
-    daily: response.daily.map(item => ({
+    // The 3-hour forecast has no daylight bounds; only the hourly part carries them.
+    daily: response.daily.map(({ sunrise: _sunrise, sunset: _sunset, ...item }) => ({
       ...item,
       // Noon UTC prevents a date-only forecast from shifting a calendar day in western/eastern clients.
       date: reviveForecastDate(item.date, 'forecast.daily.date', true),
@@ -667,10 +695,11 @@ const parseHourlyResponse = (rawResponse: unknown): ParsedHourlyForecast => {
   return {
     ...(response.daily?.length
       ? {
-          daily: response.daily.slice(0, 5).map(item => ({
+          daily: response.daily.slice(0, 5).map(({ sunrise, sunset, ...item }) => ({
             ...item,
             date: reviveForecastDate(item.date, 'hourly.daily.date', true),
             pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.daily.pop'),
+            ...reviveDaylightBounds({ sunrise, sunset }),
           })),
         }
       : {}),
@@ -678,6 +707,7 @@ const parseHourlyResponse = (rawResponse: unknown): ParsedHourlyForecast => {
       ...item,
       time: reviveForecastDate(item.time, 'hourly.hourly.time'),
       pop: normalizeBffPrecipitationProbability(item.pop, 'hourly.hourly.pop'),
+      isDay: resolveIsDay(item),
     })),
     meta,
   };

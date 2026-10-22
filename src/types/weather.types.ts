@@ -156,6 +156,10 @@ export interface DailyForecast {
   description: string;
   pop: number; // Frontend-domain ratio from 0 to 1
   precipitationMm?: number;
+  /** Local sunrise instant (hourly bundle only; absent on polar days/nights or older APIs). */
+  sunrise?: Date;
+  /** Local sunset instant (hourly bundle only; absent on polar days/nights or older APIs). */
+  sunset?: Date;
 }
 
 export interface HourlyForecast {
@@ -172,6 +176,11 @@ export interface HourlyForecast {
   uvIndex?: number;
   visibility?: number;
   weatherCode?: number;
+  /**
+   * Daylight flag. Hourly parsing always fills it: from the API's `isDay` when present,
+   * otherwise from the icon's `d`/`n` suffix (older API revisions).
+   */
+  isDay?: boolean;
 }
 
 // Air Quality types
