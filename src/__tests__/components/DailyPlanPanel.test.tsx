@@ -76,11 +76,10 @@ describe('DailyPlanPanel sharing', () => {
     const summary = screen.getByText('hava81.dailyPlan.explain.title').closest('summary');
     expect(summary).not.toBeNull();
     expect(summary?.closest('details')).not.toHaveAttribute('open');
-    expect(
-      screen.getByText(
-        /hava81\.dailyPlan\.bands\.(excellent|good|caution|difficult) · (97–100|75–96|55–74|0–54)/
-      )
-    ).toBeInTheDocument();
+    // Plan v3 Faz 0.6: the band word stays, the meaningless "· 75–96" range is gone.
+    const band = screen.getByText(/hava81\.dailyPlan\.bands\.(excellent|good|caution|difficult)/);
+    expect(band).toBeInTheDocument();
+    expect(band.textContent).not.toMatch(/\d+–\d+/);
   });
 
   it('keeps the safety boundary visible while detailed score methodology is collapsed by default', () => {
