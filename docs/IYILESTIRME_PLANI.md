@@ -143,11 +143,14 @@ Kaynak: `deploy/oracle/README.md`. _Not (3.1): secret'lar tanımlandıktan sonra
 
 ## Kaldığın yerden devam etme (yapay zekâ ajanı veya geliştirici için)
 
-Güncel durum (2026-10-21 21:20 UTC):
-- **main'de bitenler:** Faz 0, 1, 2 (2.1 tokens.css, 2.3 Planla dahil), 3.x e2e sadeleştirme, 3.1 API deploy CI, 3.2 veri katmanı (#1327–#1331). Canlı API revision'ı `25247a7`.
-- **Sıradaki iş, plan sırasıyla:** 3.3 → 3.5 → 3.4 → 3.6 → 3.7 → 3.8 → Faz 4. Sonra en sonda bir kez tam test paketi (`npx vitest run`) ve CI tarayıcı testleri.
-  - 3.3 ve 3.5 için bir ajan çalışmaya başlamıştı ama push'lanmış iş yoksa sıfırdan başla. `origin` üzerinde `refactor/split-atlas-app` ya da `chore/dependabot` dalı varsa önce onlara bak.
-  - Ek açık işler: (1) görsel test taban görüntüleri CI Linux'ta üretilip commit'lenmeli (bkz. 3.x notu); (2) %200 metinde 3 küçük taşma (`overflow-wrap: anywhere` ile çözülür): 320 px'de "Önümüzdeki", 320–360 px'de 1sa…12sa aralık düğmeleri, 768 px'de Karşılaştır'daki "FAVORITE CITIES"; (3) 3.1 otomatik deploy'un etkinleşmesi için sahibin tek seferlik kurulumu: `deploy/oracle/README.md` → "One-time host setup".
+Güncel durum (2026-10-22 18:00 UTC):
+- **main'de bitenler:** Planın tamamı — Faz 0, 1, 2, 3 (3.1–3.8 ve 3.x e2e sadeleştirme) ve Faz 4 (#1325–#1343). Canlı API revision'ı `f893e20` (3.8 sıkıştırması dahil, elle deploy; `content-encoding: br` doğrulandı). Görsel test tabanları `e2e/visual.spec.ts-snapshots/` altında commit'li (#1343, ubuntu-latest Visual baselines koşusundan; CI'da aynı koşu tabanlarla birebir eşleşti).
+- **En sondaki tam test paketi (2026-10-22, main `f893e20`, temiz `npm ci && npm --prefix apps/api ci`):** `npm run type-check` temiz; `npm run lint` 0 hata (1 uyarı: `useForecast.bundle.test.ts` kullanılmayan `_omit`), CSS lint temiz; `npx vitest run` 97 dosya / 886 test geçti; `npm run api:test` 87/87; `npm run build` başarılı (165 HTML'e CSP); `npm run e2e` 153 geçti / 22 atlandı (projeye özel testler); `HAVA81_VISUAL=1 … --project=visual` commit'li tabanlara karşı 4/4. main'deki son CI (CI/CD Pipeline: Frontend quality, API test & build, Production build, Browser flows, Lighthouse, Pages deploy; Ops script contracts; CodeQL) yeşil. Düzeltme gerektiren hata çıkmadı.
+- **Sıradaki iş:** plan maddesi kalmadı. Yalnız sahibin elle yapacakları:
+  - (1) 3.1 otomatik API deploy'u için tek seferlik Oracle host kurulumu (`deploy/oracle/README.md` → "One-time host setup") ve repo secret'ları `ORACLE_SSH_HOST`, `ORACLE_SSH_USER`, `ORACLE_SSH_KEY`, `ORACLE_SSH_KNOWN_HOSTS` (isteğe bağlı `ORACLE_SSH_PORT`, `ORACLE_DEPLOY_DIR`). Şu an `deploy-api.yml` GHCR imajını yayınlıyor ama secret'lar olmadığı için Oracle adımını uyarıyla atlıyor; o zamana kadar API deploy'u aşağıdaki elle komutla.
+  - (2) Eski kilit dosyasını kaldır (çalışan deploy yokken): `sudo rm /var/lock/hava81-api-operation.lock` (sahibi `chatgpt`; bkz. Deploy günlüğü).
+  - (3) Sunucudaki eski Hava81 kopyalarını temizle (`/home/ubuntu/Hava81`, `/home/chatgpt`, `/tmp` altındakiler); yalnız `/home/ubuntu/hava81-prod-20261021` ve `deploy/oracle/.env` kalmalı.
+  - Görsel değişiklik yapan PR'larda tabanlar "Visual baselines" artifact'ından yenilenip aynı PR'da commit'lenir (bkz. `e2e/visual.spec.ts` başındaki not).
 - **Çalışma kuralları (sahip Zeki):**
   - Her madde ayrı dal + PR (hedef `main`). `main`'e doğrudan push yok.
   - CI tamamen yeşilse uygun PR'ı squash-merge edebilirsin (izin 2026-10-21). Branch protection var; tüm check'ler bitmeden merge reddedilir.
