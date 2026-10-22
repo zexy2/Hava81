@@ -27,6 +27,9 @@ import {
  * (.github/workflows/visual-baseline.yml; it also runs on PRs touching this
  * file), review every PNG and commit it in the same PR.
  *
+ * Last refresh: plan v3 Faz 0 (AQI on every hour, daylight-only recommendations,
+ * shared thresholds, now/later from the shown window, no "75–96" band range).
+ *
  * Determinism: fixed browser clock + fixtures anchored to the same instant,
  * local map tiles, animations disabled (playwright.config.ts), web fonts
  * awaited, and freshness metadata masked.

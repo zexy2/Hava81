@@ -30,13 +30,6 @@ const bandKey: Record<Hava81ScoreBand, string> = {
   difficult: 'difficult',
 };
 
-const bandRange: Record<Hava81ScoreBand, string> = {
-  excellent: '97–100',
-  good: '75–96',
-  caution: '55–74',
-  difficult: '0–54',
-};
-
 const reasonKey: Record<DecisionReasonCode, string> = {
   'extreme-heat': 'extremeHeat',
   heat: 'heat',
@@ -239,7 +232,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
             <span>/100</span>
             <small>
               {t('hava81.scoreScope.day')} ·{' '}
-              {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)} · {bandRange[plan.band]}
+              {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
             </small>
           </div>
         </div>

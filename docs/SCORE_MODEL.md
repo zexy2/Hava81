@@ -52,12 +52,39 @@ Weather discomfort is not purely additive in real plans. When two or more materi
 
 The headline score covers the next 12 hours and is **time weighted**, so the same weather does not score differently merely because data arrives every one hour instead of every three hours. The most difficult quarter of the window receives additional weight, preventing a meaningful bad period from disappearing inside a simple average without letting one isolated point dominate the entire day.
 
-Current bands:
+Current bands (`getScoreBand` in `src/domain/decision/scoreWeatherWindow.ts`; this list is checked against the code by `src/__tests__/docs.scoreModel.test.ts`):
 
-- 90–100: Very good / Excellent
-- 75–89: Good
-- 55–74: Caution
-- 0–54: Difficult
+- 97–100: Very good / Excellent (Çok uygun). Any named risk caps an hour at 96, so this band means "no warning at all".
+- 75–96: Good (Uygun)
+- 55–74: Caution (Dikkat)
+- 0–54: Difficult (Zorlayıcı)
+
+The UI shows the band word next to the score, not the numeric range.
+
+## Air quality
+
+There is no hourly air-quality forecast yet. The current OpenWeather AQI reading is applied equally to **every** hour (day plan and activities), so it lowers the level of the whole day but never makes "now" look worse than "later". Running and children activities add their own air-quality weight; laundry ignores air quality.
+
+## Which hours can be recommended
+
+Every hour is scored and shown on the timeline, but only "recommendable" hours can become the best window (`src/domain/decision/eligibility.ts`):
+
+- picnic, children/park, laundry: daylight hours only (`isDay` from Open-Meteo; older data falls back to the icon's `d`/`n` suffix);
+- walking, running and the general day plan: 07:00–23:00 local (the 22:00 slot is the last);
+- motorcycle: no restriction.
+
+## Now or later
+
+"Now or later" is derived from the same 12-hour best window the UI shows: **now** only when the window contains the current hour (and that hour is in a good band), **later** when the window is ahead and clearly better (≥ 10 points) or the current hour is not recommendable (e.g. 01:00), otherwise **similar** and no window is promoted. Every day-plan verdict (score, best window, now/later, umbrella, wind) uses the same 12-hour horizon.
+
+## Decision thresholds
+
+Umbrella, wind, heat/cold and air-quality verdicts come from one file, `src/domain/decision/thresholds.ts`, read by the day plan, the Today headline, the commute plan and the score's reason codes:
+
+- umbrella "yes": precipitation probability ≥ 50 % or ≥ 1 mm/h ("maybe": ≥ 25 % or ≥ 0.2 mm);
+- strong wind: ≥ 13 m/s or gusts ≥ 20 m/s (caution: ≥ 8 m/s or gusts ≥ 13 m/s);
+- heat: feels-like ≥ 30 °C (extreme ≥ 38 °C); cold: feels-like ≤ 7 °C (freezing ≤ 0 °C); personal sensitivity shifts heat/cold by 3 °C in the commute plan;
+- air quality (OpenWeather 1–5): sensitive ≥ 3, poor ≥ 4, very poor 5.
 
 ## Activity, commute, comparison, and route
 
