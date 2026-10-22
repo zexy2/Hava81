@@ -10,7 +10,13 @@ import {
   setTextScale,
   setWidth,
 } from './helpers/layout';
-import { fixtures, overrideApi, overrideApiJson, seedSettings } from './helpers/weather-fixtures';
+import {
+  createWeatherFixtures,
+  fixtures,
+  overrideApi,
+  overrideApiJson,
+  seedSettings,
+} from './helpers/weather-fixtures';
 
 const { current, hourlyForecast, now: fixtureNow } = fixtures;
 
@@ -266,12 +272,16 @@ test.describe('daily plan', () => {
     'timeline marks the best hour and its score meters match the scores',
     DESKTOP,
     async ({ page }) => {
-      const hour = new Date(fixtureNow);
-      hour.setUTCMinutes(0, 0, 0);
+      // Fixed 09:00 İstanbul: the marked best hour must be a recommendable (07–23) hour,
+      // so the test must not depend on when CI runs (plan v3 Faz 0.3).
+      const morning = createWeatherFixtures(Date.parse('2026-08-28T06:00:00.000Z'));
+      await page.clock.setFixedTime(new Date(morning.now));
+      await overrideApiJson(page, 'current', morning.current);
+      const hour = new Date(morning.now);
       await overrideApiJson(page, 'hourly', {
-        ...hourlyForecast,
+        ...morning.hourlyForecast,
         hourly: Array.from({ length: 24 }, (_, index) => ({
-          ...hourlyForecast.hourly[index],
+          ...morning.hourlyForecast.hourly[index],
           time: new Date(hour.getTime() + index * 60 * 60_000).toISOString(),
           temp: 21 - Math.floor(index / 6),
           apparentTemperature: 20,
@@ -492,6 +502,74 @@ test.describe('activities', () => {
       await expectVisibleFocusRing(summary, { insideClippingRail: true });
     }
   });
+});
+
+test.describe('daylight (plan v3 Faz 0.3)', () => {
+  // 22 Ekim 2026 21:00 İstanbul: calm, dry, comfortable night hours used to win
+  // ("Koşu 100, piknik 100, en uygun aralık 21:00–01:00"; çamaşır 01:00–05:00).
+  const EVENING = Date.parse('2026-10-22T18:00:00.000Z');
+  const HOUR = 60 * 60_000;
+  const localHour = (offsetHours: number) => (21 + offsetHours) % 24;
+  const isDayHour = (hour: number) => hour >= 8 && hour < 18;
+
+  test(
+    'at 21:00 Planla never recommends night hours for the day plan or activities',
+    DESKTOP,
+    async ({ page }) => {
+      const evening = createWeatherFixtures(EVENING);
+      const hourly = Array.from({ length: 36 }, (_, index) => {
+        const isDay = isDayHour(localHour(index));
+        return {
+          time: new Date(EVENING + index * HOUR).toISOString(),
+          temp: isDay ? 24 : 18,
+          apparentTemperature: isDay ? 25 : 18,
+          humidity: isDay ? 45 : 60,
+          pop: isDay ? 15 : 0,
+          precipitationMm: 0,
+          windSpeed: isDay ? 7 : 2,
+          windGust: isDay ? 12 : 4,
+          uvIndex: isDay ? 4 : 0,
+          visibility: 20000,
+          weatherCode: 0,
+          icon: isDay ? '01d' : '01n',
+          isDay,
+          description: 'açık',
+        };
+      });
+      await overrideApiJson(page, 'current', { ...evening.current, icon: '01n', temperature: 18, feelsLike: 18 });
+      await overrideApiJson(page, 'forecast', evening.forecast);
+      await overrideApiJson(page, 'hourly', { ...evening.hourlyForecast, hourly });
+      await overrideApiJson(page, 'air', evening.air);
+      await overrideApiJson(page, 'context', evening.context);
+      await page.clock.setFixedTime(new Date(EVENING));
+
+      await page.goto(PLAN);
+      await page.getByRole('button', { name: 'Piknik' }).click();
+      const cards = page.locator('.activity-card');
+      await expect(cards).toHaveCount(3);
+
+      const rangeHours = (text: string) =>
+        [...text.matchAll(/(\d{2}):00/g)].map(match => Number(match[1]));
+      const dayPlanText = (await page.locator('.daily-plan__decision').innerText()) ?? '';
+      expect(dayPlanText).not.toContain('21:00–01:00');
+      for (const hour of rangeHours(dayPlanText)) {
+        expect(hour >= 7 && hour < 23, `day plan hour ${hour}`).toBe(true);
+      }
+
+      for (const [name, allowed] of [
+        ['Yürüyüş', (hour: number) => hour >= 7 && hour < 23],
+        ['Koşu', (hour: number) => hour >= 7 && hour < 23],
+        ['Piknik', isDayHour],
+      ] as const) {
+        const card = cards.filter({ has: page.getByRole('heading', { name, exact: true }) });
+        const best = card.locator(':scope > p').first();
+        await expect(best).toContainText(/\d{2}:00/);
+        const hours = rangeHours(await best.innerText());
+        expect(hours.length, name).toBeGreaterThan(0);
+        for (const hour of hours) expect(allowed(hour), `${name} hour ${hour}`).toBe(true);
+      }
+    }
+  );
 });
 
 test.describe('commute (Çıkış planı)', () => {

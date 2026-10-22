@@ -17,11 +17,19 @@ const median = (values: number[]) => {
  */
 export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   slots: T[],
-  tolerance = DEFAULT_TOLERANCE
+  tolerance = DEFAULT_TOLERANCE,
+  isEligible: (slot: T) => boolean = () => true
 ): BestWindowRange<T> | undefined => {
   if (!slots.length) return undefined;
   const ordered = [...slots].sort((a, b) => a.time.getTime() - b.time.getTime());
-  const peak = ordered.reduce((best, slot) => (slot.score > best.score ? slot : best), ordered[0]);
+  // Ineligible hours (e.g. dark hours for a picnic, plan v3 Faz 0.3) can never be the peak
+  // and also stop the range from growing across them.
+  const candidates = ordered.filter(slot => isEligible(slot));
+  if (!candidates.length) return undefined;
+  const peak = candidates.reduce(
+    (best, slot) => (slot.score > best.score ? slot : best),
+    candidates[0]
+  );
   const peakIndex = ordered.indexOf(peak);
   const positiveGaps = ordered
     .slice(1)
@@ -32,7 +40,7 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   const floor = peak.score - Math.max(0, tolerance);
   const peakReasons = new Set(peak.reasons);
   const isRiskCompatible = (candidate: T) =>
-    candidate.reasons.every(reason => peakReasons.has(reason));
+    isEligible(candidate) && candidate.reasons.every(reason => peakReasons.has(reason));
 
   const maxRangeMs = DEFAULT_MAX_RANGE_HOURS * HOUR_MS;
   let startIndex = peakIndex;

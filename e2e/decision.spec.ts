@@ -9,9 +9,14 @@ import {
   setTextScale,
   setWidth,
 } from './helpers/layout';
-import { fixtures, overrideApiJson, seedSettings } from './helpers/weather-fixtures';
+import {
+  createWeatherFixtures,
+  fixtures,
+  overrideApiJson,
+  seedSettings,
+} from './helpers/weather-fixtures';
 
-const { current, hourlyForecast, isoAtHour } = fixtures;
+const { current, hourlyForecast } = fixtures;
 
 // Karar: the first screen (WeatherDecisionField + Ritim) and the Karar özeti hero (DecisionGlance).
 
@@ -324,7 +329,9 @@ test.describe('decision hero (Karar özeti)', () => {
     }
   });
 
-  test('hero labels a next-day forecast window in the city timezone', MOBILE, async ({ page }) => {
+  // Plan v3 Faz 0.3: after 23:00 the near hours are night and cannot be recommended for the
+  // general (walking) plan, so the hero must not offer "Yarın 00:00–03:00" any more.
+  test('hero does not recommend a night window after 23:00', MOBILE, async ({ page }) => {
     const fixed = new Date('2026-10-08T20:15:00.000Z'); // 23:15 in İstanbul
     await page.clock.install({ time: fixed });
     await overrideApiJson(page, 'current', {
@@ -347,8 +354,9 @@ test.describe('decision hero (Karar özeti)', () => {
 
     await page.goto('/istanbul/');
     const hero = page.locator('.decision-glance');
-    await expect(hero.locator('.decision-glance__window')).toContainText('Yarın');
-    await expect(hero.locator('.decision-glance__quick').first()).toContainText('Yarın');
+    await expect(hero.locator('.decision-glance__message')).not.toBeEmpty();
+    await expect(hero.locator('.decision-glance__window')).toHaveCount(0);
+    await expect(hero.locator('.decision-glance__quick').first().locator('strong')).toHaveText('—');
     await setWidth(page, 320, 844);
     await expectNoHorizontalScroll(page, '320px');
   });
@@ -357,11 +365,16 @@ test.describe('decision hero (Karar özeti)', () => {
     'English recommended window uses an AM/PM clock and stays clear of the score',
     MOBILE,
     async ({ page }) => {
+      // Fixed 09:00 İstanbul so the recommendable 07–23 hours (plan v3 Faz 0.3) do not
+      // depend on when CI runs.
+      const morning = createWeatherFixtures(Date.parse('2026-08-28T06:00:00.000Z'));
+      await page.clock.setFixedTime(new Date(morning.now));
       await seedSettings(page, { language: 'en' });
+      await overrideApiJson(page, 'current', morning.current);
       await overrideApiJson(page, 'hourly', {
-        ...hourlyForecast,
+        ...morning.hourlyForecast,
         hourly: Array.from({ length: 24 }, (_, index) => ({
-          time: isoAtHour(index + 1),
+          time: morning.isoAtHour(index + 1),
           temp: 20 + Math.round(5 * Math.sin(index / 5)),
           icon: '01d',
           description: 'clear',
