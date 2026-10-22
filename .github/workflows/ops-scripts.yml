@@ -1,0 +1,104 @@
+name: Ops script contracts
+
+# Agent/ops helper scripts (worktree cleanup, observer, live audit, deploy and
+# blue/green shell scripts, Pages asset retention, CI gate contracts) are tested
+# here, separately from the product pipeline in ci.yml. None of these steps
+# need npm dependencies.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hava81-ops-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-and-agent-scripts:
+    name: CI & agent script contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Verify npm audit retry contract
+        run: bash scripts/test-run-npm-audit-with-retry.sh
+      - name: Verify parallel build and strict deploy gates
+        run: python3 scripts/test-ci-parallel-build-gates.py
+      - name: Verify autonomous append-only log merge contract
+        run: bash scripts/test-autonomous-log-union-merge.sh
+      - name: Verify safe worktree cleanup contract
+        run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
+      - name: Verify Git metadata writability contract
+        run: bash scripts/test-git-metadata-writability.sh
+      - name: Verify Hava81 browser temp cleanup contract
+        run: bash scripts/test-cleanup-hava81-browser-temp.sh
+      - name: Verify standalone checkout audit contract
+        run: bash scripts/test-audit-hava81-standalone-checkouts.sh
+      - name: Verify live audit rejects invalid city input
+        run: node --test scripts/test-live-audit-options.mjs
+      - name: Verify live audit API replay avoids rate-limit storms
+        run: node --test scripts/test-live-audit-response-cache.mjs
+      - name: Verify published SEO smoke contract
+        run: node --test scripts/test-verify-public-seo.mjs
+      - name: Verify observer logrotate contract
+        run: bash scripts/test-observer-logrotate.sh
+      - name: Verify Hava81 Git compaction contract
+        run: bash scripts/test-compact-hava81-git-objects.sh
+      - name: Verify production observer contract
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/oracle/observer -p 'test_*.py'
+          python3 - <<'PY'
+          from pathlib import Path
+          for filename in [
+              'deploy/oracle/observer/observer.py',
+              'deploy/oracle/observer/hava81-worker-status.py',
+          ]:
+              compile(Path(filename).read_text(encoding='utf-8'), filename, 'exec')
+          PY
+      - name: Verify observer installer shell syntax
+        run: bash -n deploy/oracle/install-observer.sh
+
+  deploy-scripts:
+    name: Deploy script contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify API deployment shell syntax
+        run: bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh deploy/oracle/ci-deploy-api.sh
+      - name: Verify API Docker install policy
+        run: bash scripts/test-api-dockerfile-install-policy.sh
+      - name: Verify API deploy operation locking
+        run: bash scripts/test-api-operation-lock.sh
+      - name: Verify API stable-slot deployment plan
+        run: bash scripts/test-api-stable-slot-plan.sh
+      - name: Verify API image-source (build vs GHCR pull) deployment plan
+        run: bash scripts/test-api-image-source-plan.sh
+      - name: Verify API CI deploy entry point
+        run: bash scripts/test-api-ci-deploy-entry.sh
+      - name: Verify Nginx preferred-port install template
+        run: bash scripts/test-nginx-primary-template.sh
+      - name: Verify API build timeout policy
+        run: bash scripts/test-api-build-timeout-policy.sh
+      - name: Verify API rollback target state
+        run: bash scripts/test-api-rollback-target.sh
+      - name: Verify API traffic-switch readiness contract
+        run: python3 deploy/oracle/test_validate_api_readiness.py
+      - name: Verify Pages asset-retention logic
+        run: python3 scripts/test_prepare_pages_asset_retention.py
+      - name: Verify generated-shell asset discovery
+        run: python3 scripts/test_list_html_assets.py
+      - name: Verify public-shell smoke syntax
+        run: bash -n scripts/verify-public-shell.sh

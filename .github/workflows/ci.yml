@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop, 'feat/**']
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -40,43 +40,6 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test:ci
-      - name: Verify npm audit retry contract
-        run: bash scripts/test-run-npm-audit-with-retry.sh
-      - name: Verify parallel build and strict deploy gates
-        run: python3 scripts/test-ci-parallel-build-gates.py
-      - name: Verify autonomous append-only log merge contract
-        run: bash scripts/test-autonomous-log-union-merge.sh
-      - name: Verify safe worktree cleanup contract
-        run: bash scripts/test-cleanup-merged-worktree-artifacts.sh
-      - name: Verify Git metadata writability contract
-        run: bash scripts/test-git-metadata-writability.sh
-      - name: Verify Hava81 browser temp cleanup contract
-        run: bash scripts/test-cleanup-hava81-browser-temp.sh
-      - name: Verify standalone checkout audit contract
-        run: bash scripts/test-audit-hava81-standalone-checkouts.sh
-      - name: Verify live audit rejects invalid city input
-        run: node --test scripts/test-live-audit-options.mjs
-      - name: Verify live audit API replay avoids rate-limit storms
-        run: node --test scripts/test-live-audit-response-cache.mjs
-      - name: Verify published SEO smoke contract
-        run: node --test scripts/test-verify-public-seo.mjs
-      - name: Verify observer logrotate contract
-        run: bash scripts/test-observer-logrotate.sh
-      - name: Verify Hava81 Git compaction contract
-        run: bash scripts/test-compact-hava81-git-objects.sh
-      - name: Verify production observer contract
-        run: |
-          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/oracle/observer -p 'test_*.py'
-          python3 - <<'PY'
-          from pathlib import Path
-          for filename in [
-              'deploy/oracle/observer/observer.py',
-              'deploy/oracle/observer/hava81-worker-status.py',
-          ]:
-              compile(Path(filename).read_text(encoding='utf-8'), filename, 'exec')
-          PY
-      - name: Verify observer installer shell syntax
-        run: bash -n deploy/oracle/install-observer.sh
       - name: Preserve frontend coverage report
         uses: actions/upload-artifact@v7
         with:
@@ -106,26 +69,6 @@ jobs:
       - run: npm run api:type-check
       - run: npm run api:test
       - run: npm run api:build
-      - name: Verify API deployment shell syntax
-        run: bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh deploy/oracle/ci-deploy-api.sh
-      - name: Verify API Docker install policy
-        run: bash scripts/test-api-dockerfile-install-policy.sh
-      - name: Verify API deploy operation locking
-        run: bash scripts/test-api-operation-lock.sh
-      - name: Verify API stable-slot deployment plan
-        run: bash scripts/test-api-stable-slot-plan.sh
-      - name: Verify API image-source (build vs GHCR pull) deployment plan
-        run: bash scripts/test-api-image-source-plan.sh
-      - name: Verify API CI deploy entry point
-        run: bash scripts/test-api-ci-deploy-entry.sh
-      - name: Verify Nginx preferred-port install template
-        run: bash scripts/test-nginx-primary-template.sh
-      - name: Verify API build timeout policy
-        run: bash scripts/test-api-build-timeout-policy.sh
-      - name: Verify API rollback target state
-        run: bash scripts/test-api-rollback-target.sh
-      - name: Verify API traffic-switch readiness contract
-        run: python3 deploy/oracle/test_validate_api_readiness.py
 
   build:
     name: Production build
@@ -146,12 +89,6 @@ jobs:
         run: node scripts/verify-generated-seo.mjs
       - name: Reject public source maps
         run: test -z "$(find dist -type f -name *.map -print -quit)"
-      - name: Verify Pages asset-retention logic
-        run: python3 scripts/test_prepare_pages_asset_retention.py
-      - name: Verify generated-shell asset discovery
-        run: python3 scripts/test_list_html_assets.py
-      - name: Verify public-shell smoke syntax
-        run: bash -n scripts/verify-public-shell.sh
       - uses: actions/upload-artifact@v7
         with:
           name: dist
@@ -200,61 +137,6 @@ jobs:
           name: dist
           path: dist
       - run: npm run lighthouse
-
-  docker:
-    name: Build Docker image
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # Publishing must wait for security, API, production build and browser tests.
-    needs: [quality, api, build, browser]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v6
-      # Buildx setup pulls moby/buildkit from Docker Hub; token timeouts can
-      # occur before build-push-action's own retry steps are ever reached.
-      - name: Set up Docker Buildx (first attempt)
-        id: buildx_setup_first
-        uses: docker/setup-buildx-action@v4
-        continue-on-error: true
-      - name: Retry Docker Buildx setup after registry timeout
-        if: steps.buildx_setup_first.outcome == 'failure'
-        uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v4
-        if: github.event_name != 'pull_request'
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/weather-dashboard
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
-      # Docker Hub may transiently return 5xx while exchanging OAuth tokens.
-      # The primary attempt is non-blocking ONLY because a mandatory retry follows.
-      - name: Build and publish Docker image (first attempt)
-        id: docker_build_first
-        uses: docker/build-push-action@v7
-        continue-on-error: true
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: Retry Docker image build after registry error
-        if: steps.docker_build_first.outcome == 'failure'
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to GitHub Pages
