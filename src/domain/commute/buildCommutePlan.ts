@@ -1,6 +1,13 @@
 import type { HourlyForecast } from '../../types';
 import type { TemperatureSensitivity } from '../activity/types';
 import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
+import {
+  COLD_APPARENT_C,
+  HEAT_APPARENT_C,
+  rainLevel,
+  windLevel,
+  worseWind,
+} from '../decision/thresholds';
 import type { Hava81ScoreBand } from '../decision/types';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -204,12 +211,14 @@ export const buildCommutePlan = ({
     returnWindow.precipitationProbability
   );
   const maxRainAmount = Math.max(outbound.precipitationMm ?? 0, returnWindow.precipitationMm ?? 0);
+  const rain = rainLevel(maxRain, maxRainAmount);
   const umbrella: CommuteUmbrellaAdvice =
-    maxRainAmount >= 1 || maxRain >= 0.5
-      ? 'take'
-      : maxRainAmount >= 0.2 || maxRain >= 0.25
-        ? 'consider'
-        : 'no';
+    rain === 'likely' ? 'take' : rain === 'possible' ? 'consider' : 'no';
+  // Shared thresholds (plan v3 Faz 0.4); `maxEffectiveWind` stays as the displayed summary.
+  const wind = worseWind(
+    windLevel(outbound.windSpeed, outbound.windGust),
+    windLevel(returnWindow.windSpeed, returnWindow.windGust)
+  );
 
   const maxEffectiveWind = Math.max(effectiveWind(outbound), effectiveWind(returnWindow));
   const maxApparentTemperature = Math.max(
@@ -237,9 +246,9 @@ export const buildCommutePlan = ({
   } else if (rainAmountIncrease !== undefined && rainAmountIncrease >= 0.2) {
     change = 'rain-amount-increase';
     changeValue = Math.round(rainAmountIncrease * 10) / 10;
-  } else if (maxEffectiveWind >= 17.2) {
+  } else if (wind === 'strong') {
     change = 'strong-wind';
-  } else if (maxEffectiveWind >= 10.8) {
+  } else if (wind === 'caution') {
     change = 'wind-caution';
   } else if (temperatureDelta <= -6) {
     change = 'temperature-drop';
@@ -255,15 +264,18 @@ export const buildCommutePlan = ({
     changeValue = Math.round(scoreDelta);
   }
 
+  // Personal sensitivity shifts the shared base values by 3 °C.
   const heatThreshold =
-    temperatureSensitivity === 'heat' ? 27 : temperatureSensitivity === 'cold' ? 33 : 30;
+    HEAT_APPARENT_C +
+    (temperatureSensitivity === 'heat' ? -3 : temperatureSensitivity === 'cold' ? 3 : 0);
   const coldThreshold =
-    temperatureSensitivity === 'cold' ? 10 : temperatureSensitivity === 'heat' ? 4 : 7;
+    COLD_APPARENT_C +
+    (temperatureSensitivity === 'cold' ? 3 : temperatureSensitivity === 'heat' ? -3 : 0);
   const advice: CommuteAdviceCode[] = [];
   if (umbrella === 'take') advice.push('umbrella-take');
   else if (umbrella === 'consider') advice.push('umbrella-consider');
-  if (maxEffectiveWind >= 17.2) advice.push('strong-wind');
-  else if (maxEffectiveWind >= 10.8) advice.push('wind-caution');
+  if (wind === 'strong') advice.push('strong-wind');
+  else if (wind === 'caution') advice.push('wind-caution');
   if (maxApparentTemperature >= heatThreshold) advice.push('heat');
   if (minApparentTemperature <= coldThreshold) advice.push('cold');
   if (advice.length === 0) advice.push('stable');

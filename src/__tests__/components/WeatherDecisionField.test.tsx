@@ -306,7 +306,7 @@ describe('WeatherDecisionField daily range', () => {
               time: new Date('2026-08-29T14:00:00Z'),
               temp: 24,
               pop: 0,
-              precipitationMm: 0.8,
+              precipitationMm: 1.2, // ≥ RAIN_LIKELY_MM (plan v3 Faz 0.4)
               windSpeed: 3,
               icon: '10d',
             },
@@ -316,7 +316,7 @@ describe('WeatherDecisionField daily range', () => {
     );
 
     expect(
-      screen.getByText(/saatlik yaklaşık 0,8 mm yağış bekleniyor; şemsiye iyi fikir/i)
+      screen.getByText(/saatlik yaklaşık 1,2 mm yağış bekleniyor; şemsiye iyi fikir/i)
     ).toBeInTheDocument();
     expect(screen.queryByText(/yağış olasılığı %0/i)).not.toBeInTheDocument();
   });

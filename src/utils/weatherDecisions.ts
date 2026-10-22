@@ -1,4 +1,15 @@
 import { scoreWeatherWindow } from '../domain/decision/scoreWeatherWindow';
+import {
+  airLevel,
+  COLD_APPARENT_C,
+  EXTREME_HEAT_APPARENT_C,
+  FREEZING_APPARENT_C,
+  HEAT_APPARENT_C,
+  rainLevel,
+  windLevel,
+  worseWind,
+  type WindLevel,
+} from '../domain/decision/thresholds';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../types';
 import { pickMostSignificantPrecipitation } from './precipitation';
 
@@ -70,7 +81,7 @@ export const getWeatherDecisions = ({
   const decisions: WeatherDecision[] = [];
 
   const rainiest = pickMostSignificantPrecipitation(next);
-  if (rainiest && (rainiest.pop >= 0.5 || (rainiest.precipitationMm ?? 0) >= 0.8)) {
+  if (rainiest && rainLevel(rainiest.pop, rainiest.precipitationMm) === 'likely') {
     const amount = rainiest.precipitationMm ?? 0;
     decisions.push({
       kind: 'rain',
@@ -85,15 +96,20 @@ export const getWeatherDecisions = ({
     (best, point) => (!best || effectiveWind(point) > effectiveWind(best) ? point : best),
     undefined
   );
-  const maxWind = Math.max(weather.windSpeed, strongestWind ? effectiveWind(strongestWind) : 0);
-  if (maxWind >= 9) {
+  // Shared thresholds (plan v3 Faz 0.4): the same hour gets the same wind verdict here as in
+  // the day plan and the commute plan. `effectiveWind` only decides which value to display.
+  const windVerdict = next.reduce<WindLevel>(
+    (level, point) => worseWind(level, windLevel(point.windSpeed, point.windGust)),
+    windLevel(weather.windSpeed)
+  );
+  if (windVerdict !== 'normal') {
     const forecastDominates = strongestWind && effectiveWind(strongestWind) >= weather.windSpeed;
     const displayedWind = forecastDominates
       ? Math.max(strongestWind.windSpeed, strongestWind.windGust ?? 0)
       : weather.windSpeed;
     decisions.push({
       kind: 'wind',
-      severity: maxWind >= 16 ? 'high' : 'moderate',
+      severity: windVerdict === 'strong' ? 'high' : 'moderate',
       time: forecastDominates ? strongestWind.time : undefined,
       value: displayedWind,
     });
@@ -108,10 +124,10 @@ export const getWeatherDecisions = ({
     ? (hottest.apparentTemperature ?? hottest.temp)
     : -Infinity;
   const maxTemperature = Math.max(weather.feelsLike, hottestForecastTemperature);
-  if (maxTemperature >= 32) {
+  if (maxTemperature >= HEAT_APPARENT_C) {
     decisions.push({
       kind: 'heat',
-      severity: maxTemperature >= 40 ? 'high' : 'moderate',
+      severity: maxTemperature >= EXTREME_HEAT_APPARENT_C ? 'high' : 'moderate',
       time: hottestForecastTemperature >= weather.feelsLike ? hottest?.time : undefined,
       value: maxTemperature,
     });
@@ -126,19 +142,20 @@ export const getWeatherDecisions = ({
     ? (coldest.apparentTemperature ?? coldest.temp)
     : Infinity;
   const minTemperature = Math.min(weather.feelsLike, coldestForecastTemperature);
-  if (minTemperature <= 0) {
+  if (minTemperature <= COLD_APPARENT_C) {
     decisions.push({
       kind: 'cold',
-      severity: minTemperature <= -10 ? 'high' : 'moderate',
+      severity: minTemperature <= FREEZING_APPARENT_C ? 'high' : 'moderate',
       time: coldestForecastTemperature <= weather.feelsLike ? coldest?.time : undefined,
       value: minTemperature,
     });
   }
 
-  if (airQuality && airQuality.aqi >= 4) {
+  const air = airLevel(airQuality?.aqi);
+  if (airQuality && (air === 'poor' || air === 'very-poor')) {
     decisions.push({
       kind: 'air-quality',
-      severity: airQuality.aqi >= 5 ? 'high' : 'moderate',
+      severity: air === 'very-poor' ? 'high' : 'moderate',
       value: airQuality.aqi,
     });
   }
