@@ -56,6 +56,10 @@ export interface HourlyForecastProviderResult {
     weatherCode?: number;
     /** True when the hour is in daylight (Open-Meteo `is_day`). */
     isDay?: boolean;
+    /** Dew point at 2 m in °C (Open-Meteo `dew_point_2m`). */
+    dewPoint?: number;
+    /** Seconds of sunshine within the preceding hour, 0–3600 (Open-Meteo `sunshine_duration`). */
+    sunshineDuration?: number;
   }>;
 }
 

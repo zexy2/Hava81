@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AppError } from "../../core/errors";
+import { HOURLY_FORECAST_HOURS } from "../../modules/weather/contracts";
 import type {
   HourlyForecastProvider,
   HourlyForecastProviderResult,
@@ -19,6 +20,7 @@ const providerWeatherCodeSchema = z
   .int()
   .refine(code => supportedWeatherCodes.has(code), { message: "unsupported WMO weather code" });
 const ONE_HOUR_MS = 60 * 60 * 1_000;
+
 
 const hourlySchema = z.object({
   utc_offset_seconds: providerTimezoneOffsetSchema,
@@ -46,6 +48,8 @@ const hourlySchema = z.object({
     wind_gusts_10m: optionalHourlySeries,
     visibility: optionalHourlySeries,
     uv_index: optionalHourlySeries,
+    dew_point_2m: optionalHourlySeries,
+    sunshine_duration: optionalHourlySeries,
     is_day: z.array(z.number().int().min(0).max(1).nullable()),
   }),
 });
@@ -146,6 +150,8 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         "wind_gusts_10m",
         "visibility",
         "uv_index",
+        "dew_point_2m",
+        "sunshine_duration",
         "is_day",
       ].join(","),
     );
@@ -161,7 +167,7 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         "sunset",
       ].join(","),
     );
-    url.searchParams.set("forecast_hours", "48");
+    url.searchParams.set("forecast_hours", String(HOURLY_FORECAST_HOURS));
     url.searchParams.set("forecast_days", "5");
     url.searchParams.set("timeformat", "unixtime");
     url.searchParams.set("timezone", "auto");
@@ -203,6 +209,8 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         raw.wind_gusts_10m,
         raw.visibility,
         raw.uv_index,
+        raw.dew_point_2m,
+        raw.sunshine_duration,
       ].filter((series): series is Array<number | null> => series !== undefined);
       if (hourlySeries.some(series => series.length !== length)) {
         throw new AppError(
@@ -256,6 +264,8 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           windGust: finiteInRangeAt(raw.wind_gusts_10m, index, 0),
           uvIndex: finiteInRangeAt(raw.uv_index, index, 0),
           visibility: finiteInRangeAt(raw.visibility, index, 0),
+          dewPoint: finiteInRangeAt(raw.dew_point_2m, index, -100, 100),
+          sunshineDuration: finiteInRangeAt(raw.sunshine_duration, index, 0, 3_600),
           weatherCode: code,
         });
       }

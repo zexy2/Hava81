@@ -164,6 +164,57 @@ describe('weatherService.getForecastBundle', () => {
     expect(value?.daily?.[1].sunset).toBeUndefined();
   });
 
+  it('keeps today surfaces at 48 h and exposes the five-day horizon as planHourly (plan v3 P1.1)', async () => {
+    const base = hourlyPart();
+    const start = Date.parse('2026-08-28T09:00:00.000Z');
+    const hourly = {
+      ...base,
+      hourly: Array.from({ length: 120 }, (_, index) => ({
+        time: new Date(start + index * 3_600_000).toISOString(),
+        temp: 20,
+        icon: '01d',
+        description: 'açık',
+        pop: 10,
+        windSpeed: 3,
+        isDay: true,
+        // Optional enrichments: an impossible value is dropped, not fatal.
+        dewPoint: index === 3 ? 400 : 12.5,
+        sunshineDuration: index === 4 ? -1 : 1800,
+      })),
+    };
+    mockGet.mockResolvedValue({
+      hourly,
+      errors: {},
+      meta: { fetchedAt: nowIso(), parts: ['hourly'] },
+    });
+
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+
+    const value = bundle.hourly?.ok ? bundle.hourly.value : null;
+    expect(value?.hourly).toHaveLength(48);
+    expect(value?.planHourly).toHaveLength(120);
+    expect(value?.planHourly?.[119].time).toEqual(new Date(start + 119 * 3_600_000));
+    expect(value?.planHourly?.[0].dewPoint).toBe(12.5);
+    expect(value?.planHourly?.[0].sunshineDuration).toBe(1800);
+    expect(value?.planHourly?.[3].dewPoint).toBeUndefined();
+    expect(value?.planHourly?.[4].sunshineDuration).toBeUndefined();
+    expect(value?.hourly[0]).toEqual(value?.planHourly?.[0]);
+  });
+
+  it('omits planHourly when an older API sends at most 48 hours', async () => {
+    mockGet.mockResolvedValue({
+      hourly: hourlyPart(),
+      errors: {},
+      meta: { fetchedAt: nowIso(), parts: ['hourly'] },
+    });
+
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+
+    const value = bundle.hourly?.ok ? bundle.hourly.value : null;
+    expect(value?.hourly.length).toBeGreaterThan(0);
+    expect(value && 'planHourly' in value).toBe(false);
+  });
+
   it('rejects a non-boolean isDay as a malformed hourly part', async () => {
     const hourly = hourlyPart();
     mockGet.mockResolvedValue({

@@ -442,6 +442,45 @@ test('hourly forecast endpoint exposes real one-hour cadence metadata and caches
   assert.equal(hourlyProvider.calls, 1);
 });
 
+test('hourly forecast endpoint serves five days (120 h) with dew point and sunshine (plan v3 P1.1)', async (context) => {
+  const start = Date.parse('2026-08-28T18:00:00.000Z');
+  const hourlyProvider: HourlyForecastProvider = {
+    name: 'FakeHourly',
+    attribution: 'FakeHourly · test',
+    sourceUrl: 'https://example.test/hourly',
+    async getHourly() {
+      return {
+        timezoneOffsetSeconds: 10_800,
+        hourly: Array.from({ length: 130 }, (_, index) => ({
+          time: new Date(start + index * 3_600_000).toISOString(),
+          temp: 20,
+          icon: '01d',
+          description: 'açık',
+          pop: 10,
+          windSpeed: 3,
+          isDay: true,
+          dewPoint: 12.4,
+          sunshineDuration: 1800,
+        })),
+      };
+    },
+  };
+  const app = await buildApp({
+    env: createEnv(),
+    provider: new FakeWeatherProvider(),
+    hourlyProvider,
+    logger: false,
+  });
+  context.after(() => app.close());
+
+  const response = await app.inject({ method: 'GET', url: '/api/v1/weather/hourly?lat=41.01&lon=28.97&lang=tr' });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().hourly.length, 120);
+  assert.equal(response.json().hourly[0].dewPoint, 12.4);
+  assert.equal(response.json().hourly[0].sunshineDuration, 1800);
+});
+
 test('rate limiter returns the structured error envelope', async (context) => {
   const app = await buildApp({
     env: createEnv({ RATE_LIMIT_MAX: 2 }),

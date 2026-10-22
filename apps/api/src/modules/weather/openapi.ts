@@ -149,6 +149,8 @@ export const hourlyForecastResponseJsonSchema = {
           visibility: { type: 'number', minimum: 0 },
           weatherCode: { type: 'number' },
           isDay: { type: 'boolean' },
+          dewPoint: { type: 'number' },
+          sunshineDuration: { type: 'number', minimum: 0, maximum: 3600 },
         },
       },
     },

@@ -181,6 +181,10 @@ export interface HourlyForecast {
    * otherwise from the icon's `d`/`n` suffix (older API revisions).
    */
   isDay?: boolean;
+  /** Dew point in °C (plan v3; absent on older APIs). */
+  dewPoint?: number;
+  /** Seconds of sunshine within the hour, 0–3600 (plan v3; absent on older APIs). */
+  sunshineDuration?: number;
 }
 
 // Air Quality types

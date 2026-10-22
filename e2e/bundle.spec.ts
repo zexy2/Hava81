@@ -1,6 +1,7 @@
 import { MOBILE, DESKTOP, expect, test } from './helpers/test';
 import { setWidth } from './helpers/layout';
 import {
+  fixtures,
   mockBundleApi,
   mockMapTiles,
   mockProvincesApi,
@@ -37,6 +38,22 @@ test.describe('weather bundle', () => {
       await expect(page.locator('.atlas-forecast-error-card')).toHaveCount(0);
       expect(bundleRequests).toHaveLength(1);
       expect(singleRequests).toEqual([]);
+    }
+  );
+
+  test(
+    'keeps today and plan working with the five-day (120 h) hourly payload (plan v3 P1.1)',
+    DESKTOP,
+    async ({ page }) => {
+      await mockBundleApi(page, { ...fixtures, hourlyForecast: fixtures.hourlyForecast120() });
+
+      await page.goto('/istanbul/');
+      await expect(page.locator('.hava81-forecast-atlas').first()).toBeVisible();
+      await expect(page.locator('.atlas-forecast-error-card')).toHaveCount(0);
+
+      await page.goto('/istanbul/?view=plan');
+      await expect(page.locator('.atlas-plan-view')).toBeVisible();
+      await expect(page.locator('.atlas-forecast-error-card')).toHaveCount(0);
     }
   );
 

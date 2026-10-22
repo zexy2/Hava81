@@ -93,6 +93,9 @@ export interface CurrentWeatherDto {
   meta: DataMetaDto;
 }
 
+/** Plan v3 (P1.1): five days of hourly guidance; the daily series stays at five days. */
+export const HOURLY_FORECAST_HOURS = 120;
+
 export interface HourlyForecastDto {
   daily?: Array<{
     date: string;
@@ -123,6 +126,10 @@ export interface HourlyForecastDto {
     weatherCode?: number;
     /** True when the hour is in daylight (Open-Meteo `is_day`). */
     isDay?: boolean;
+    /** Dew point at 2 m in °C (Open-Meteo `dew_point_2m`). */
+    dewPoint?: number;
+    /** Seconds of sunshine within the preceding hour, 0–3600 (Open-Meteo `sunshine_duration`). */
+    sunshineDuration?: number;
   }>;
   meta: DataMetaDto;
 }
