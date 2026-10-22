@@ -25,7 +25,7 @@ test.describe('PWA and branding', () => {
     );
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
       'content',
-      'https://hava81.zekiakgul.dev/hava81-social-card.png?v=20260828'
+      'https://hava81.zekiakgul.dev/hava81-social-card.png?v=20261022'
     );
     await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
       'content',
@@ -94,7 +94,7 @@ test.describe('PWA and branding', () => {
         readImage('/hava81-maskable-512.png'),
         readImage('/apple-touch-icon.png?v=20260828'),
         readImage('/hava81-favicon.ico?v=20260828'),
-        readImage('/hava81-social-card.png?v=20260828'),
+        readImage('/hava81-social-card.png?v=20261022'),
       ]);
     });
 

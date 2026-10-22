@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Faz 4: renders one 1200×630 Open Graph card per province into public/og/<slug>.jpg.
-// The cards are committed (the Pages build only checks they exist), so re-run this only
+// Faz 4: renders one 1200×630 Open Graph card per province into public/og/<slug>.jpg,
+// plus the home page card (public/hava81-social-card.png) from the same template.
+// `--home-only` renders just the home card. The cards are committed (the Pages build only checks they exist), so re-run this only
 // when the card design or the province list changes:
 //   npx playwright install chromium && node scripts/generate-og-images.mjs
 import { mkdir, readFile } from 'node:fs/promises';
@@ -34,7 +35,7 @@ const regionLabel = region =>
   REGION_EN[region] && REGION_EN[region] !== region ? `${region} · ${REGION_EN[region]}` : region;
 
 // Blue premium palette of the live app (navy → ocean gradient, light ink).
-const card = province => `<!doctype html><html><head><meta charset="utf-8"><style>
+const card = (province, home = false) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face { font-family: Plex; src: url('file://${fontLatin}') format('woff2'); font-weight: 100 700; unicode-range: U+0000-00FF; }
 @font-face { font-family: Plex; src: url('file://${font}') format('woff2'); font-weight: 100 700; }
 * { box-sizing: border-box; margin: 0; }
@@ -57,18 +58,24 @@ h1 { font-size: ${province.name.length > 12 ? 104 : 128}px; line-height: 1; font
 .plate span { background: #f9fdff; color: #0b264b; padding: 4px 22px; }
 </style></head><body><div class="grid"></div><div class="wrap">
 <div class="brand"><b>81</b>Hava81</div>
-<div><p class="kicker">${escapeHtml(regionLabel(province.region))}</p>
+${home ? `<div><p class="kicker">81 İL · 81 PROVINCES</p>
+<h1 style="font-size:92px;line-height:1.04">Havayı değil,<br>gününü planla</h1>
+<p class="sub">Hava durumu ve gün planı · Plan your day, not just the weather</p></div>` : `<div><p class="kicker">${escapeHtml(regionLabel(province.region))}</p>
 <h1>${escapeHtml(province.name)}</h1>
-<p class="sub">Hava durumu ve gün planı · Weather &amp; day plan</p></div>
+<p class="sub">Hava durumu ve gün planı · Weather &amp; day plan</p></div>`}
 <div class="foot"><span>hava81.zekiakgul.dev</span>
 <span class="plate"><i>TR</i><span>${String(province.plateCode).padStart(2, '0')}</span></span></div>
 </div></body></html>`;
 
+const homeOnly = process.argv.includes('--home-only');
 await mkdir(outDir, { recursive: true });
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
-  for (const province of provinces) {
+  await page.setContent(card({ name: 'Hava81', plateCode: 81 }, true), { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: join(root, 'public', 'hava81-social-card.png'), type: 'png' });
+  for (const province of homeOnly ? [] : provinces) {
     await page.setContent(card(province), { waitUntil: 'load' });
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({
@@ -80,4 +87,8 @@ try {
 } finally {
   await browser.close();
 }
-console.log(`Rendered ${provinces.length} province OG cards into public/og/.`);
+console.log(
+  homeOnly
+    ? 'Rendered the home OG card into public/hava81-social-card.png.'
+    : `Rendered the home card and ${provinces.length} province OG cards into public/og/.`
+);
