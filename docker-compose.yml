@@ -9,7 +9,7 @@ services:
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:?OPENWEATHER_API_KEY is required}
       - CORS_ORIGINS=http://localhost:3000
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/v1/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
