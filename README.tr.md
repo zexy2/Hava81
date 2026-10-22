@@ -39,7 +39,7 @@ Anlık koşulları, saatlik ve günlük tahmini, hava kalitesini ve çevresel si
 | **Karşılaştırma** | En fazla üç favori şehri karar odaklı karşılaştırma |
 | **Rota havası** | Navigasyon olmadığını açıkça belirten şehirler arası hava koridoru tahmini |
 | **Kişiselleştirme** | Favoriler, son şehirler, TR/EN, birimler, tema ve kalıcı tercihler |
-| **Dağıtım** | Kurulabilir PWA, paylaşılabilir özetler, şehir deep-link'leri, sitemap ve isteğe bağlı tarayıcı uyarıları |
+| **Dağıtım** | Kurulabilir PWA, paylaşılabilir özetler, 81 il için taranabilir TR ve EN (`/en/<il>/`) sayfaları ve `hreflang`, il bazlı OG kartları, sitemap ve isteğe bağlı tarayıcı uyarıları |
 
 ### Mobil
 
@@ -113,6 +113,8 @@ PORT=4000
 VITE_API_BASE_URL=/api/v1
 ```
 
+`.env.example` isteğe bağlı tüm API ayarlarını da (rate limit, upstream bütçesi, cache süreleri, sağlayıcı adresleri/yedek anahtar) varsayılanlarıyla listeler; API bunları açılışta doğrular (`apps/api/src/config/env.ts`).
+
 > [!IMPORTANT]
 > `OPENWEATHER_API_KEY` yalnızca sunucuda kalmalıdır. Sağlayıcı anahtarlarını `VITE_` değişkeniyle tarayıcıya açma ve doldurulmuş `.env` dosyasını commit etme.
 
@@ -147,7 +149,7 @@ npm run build
 npm run e2e
 ```
 
-CI ayrıca farklı ekran boyutlarında browser akışlarını, Lighthouse bütçelerini, Docker build'ini, deployment invariants kontrollerini ve production statik yüzeyini doğrular.
+CI (`ci.yml`) ayrıca farklı ekran boyutlarında browser akışlarını, Lighthouse bütçelerini, üretilen SEO sayfalarını ve deploy sonrası yayındaki statik yüzeyi doğrular. Operasyon ve deploy script sözleşmeleri ayrı bir workflow'da (`ops-scripts.yml`) koşar; görsel test taban görüntüleri elle çalıştırılan `visual-baseline.yml` ile CI Linux'ta üretilir.
 
 ## API Özeti
 
@@ -161,6 +163,7 @@ CI ayrıca farklı ekran boyutlarında browser akışlarını, Lighthouse bütç
 | `GET /api/v1/weather/bundle?lat=38.42&lon=27.13&include=forecast,hourly,airQuality,context` | Bir konum için güncel/tahmin/saatlik/hava kalitesi/bağlam tek yanıtta (parça başarısızsa `null` + `errors`) |
 | `GET /api/v1/weather/provinces?lang=tr` | 81 ilin anlık sıcaklığı (harita; tek Open-Meteo çağrısı, 30 dk cache) |
 | `GET /api/v1/weather/route?...` | Yaklaşık rota-hava koridoru |
+| `GET /api/v1/health` | Sağlık + çalışan build'in `revision` (git SHA) bilgisi |
 | `GET /api/v1/health/live` | Liveness kontrolü |
 | `GET /api/v1/health/ready` | Readiness kontrolü |
 
@@ -195,8 +198,8 @@ e2e/                 Playwright browser akışları
 
 | Bileşen | Production |
 | --- | --- |
-| Web | GitHub Pages — `hava81.zekiakgul.dev` |
-| API | Oracle Cloud VPS — `api.hava81.zekiakgul.dev` |
+| Web | GitHub Pages — `hava81.zekiakgul.dev`; `main`'de tüm kapılar geçince `ci.yml` yayınlar |
+| API | Oracle Cloud VPS — `api.hava81.zekiakgul.dev`; `deploy-api.yml` deploy eder (GHCR imajı + blue/green geçiş, `/api/v1/health` revision kontrolü), bkz. [deploy/oracle/README.md](deploy/oracle/README.md) |
 | CI/CD | GitHub Actions |
 
 Tarayıcı production ortamında public BFF adresini kullanır. Sağlayıcı anahtarları API sunucusunda kalır; CORS yalnızca onaylı web origin'lerine izin verir.
@@ -208,6 +211,8 @@ cp .env.example .env
 # OPENWEATHER_API_KEY değerini gir, ardından:
 docker compose up --build
 ```
+
+Web konteyneri `http://localhost:3000` adresinde çalışır ve `/api/` isteklerini API'ye iletir; API portu yalnızca `127.0.0.1:4000` üzerinde açılır.
 
 ## Katkıda Bulunma
 
