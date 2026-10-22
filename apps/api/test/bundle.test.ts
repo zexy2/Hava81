@@ -93,8 +93,20 @@ class FakeHourly implements HourlyForecastProvider {
     if (this.fail) throw new AppError(502, 'HOURLY_PROVIDER_ERROR', 'down');
     return {
       timezoneOffsetSeconds: 10_800,
+      daily: [
+        {
+          date: '2026-08-28',
+          tempMin: 19,
+          tempMax: 27,
+          icon: '01d',
+          description: 'açık',
+          pop: 10,
+          sunrise: '2026-08-28T03:31:00.000Z',
+          sunset: '2026-08-28T16:40:00.000Z',
+        },
+      ],
       hourly: [
-        { time: '2026-08-28T18:00:00.000Z', temp: 24, icon: '01d', description: 'açık', pop: 10, windSpeed: 3.4 },
+        { time: '2026-08-28T18:00:00.000Z', temp: 24, icon: '01n', description: 'açık', pop: 10, windSpeed: 3.4, isDay: false },
       ],
     };
   }
@@ -152,6 +164,10 @@ test('bundle returns every part in one response with per-part cache metadata', a
   assert.equal(body.forecast.meta.intervalHours, 3);
   assert.equal(body.hourly.meta.intervalHours, 1);
   assert.equal(body.hourly.hourly[0].temp, 24);
+  // Daylight fields survive response serialization (Planla must not recommend night hours).
+  assert.equal(body.hourly.hourly[0].isDay, false);
+  assert.equal(body.hourly.daily[0].sunrise, '2026-08-28T03:31:00.000Z');
+  assert.equal(body.hourly.daily[0].sunset, '2026-08-28T16:40:00.000Z');
   assert.equal(body.airQuality.aqiLabel, 'Makul');
   assert.equal(body.context.uvIndexMax, 6);
   assert.equal(body.context.cacheStatus, 'MISS');

@@ -30,6 +30,8 @@ const hourlySchema = z.object({
       weather_code: z.array(providerWeatherCodeSchema.nullable()),
       precipitation_probability_max: z.array(z.number().nullable()),
       precipitation_sum: z.array(z.number().nullable()).optional(),
+      sunrise: z.array(providerTimestampSchema.nullable()).optional(),
+      sunset: z.array(providerTimestampSchema.nullable()).optional(),
     })
     .optional(),
   hourly: z.object({
@@ -97,6 +99,22 @@ const finiteInRangeAt = (
     : undefined;
 };
 
+const toIsoTimestamp = (seconds: number | null | undefined): string | undefined =>
+  typeof seconds === "number" && Number.isFinite(seconds) && seconds > 0
+    ? new Date(seconds * 1_000).toISOString()
+    : undefined;
+
+// Polar days/nights have no sunrise or sunset; only emit a coherent pair.
+const daylightBounds = (
+  sunriseSeconds: number | null | undefined,
+  sunsetSeconds: number | null | undefined,
+): { sunrise?: string; sunset?: string } => {
+  const sunrise = toIsoTimestamp(sunriseSeconds);
+  const sunset = toIsoTimestamp(sunsetSeconds);
+  if (!sunrise || !sunset || (sunsetSeconds as number) <= (sunriseSeconds as number)) return {};
+  return { sunrise, sunset };
+};
+
 const isPlausibleCelsius = (value: number): boolean => value >= -100 && value <= 100;
 
 export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
@@ -139,6 +157,8 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         "weather_code",
         "precipitation_probability_max",
         "precipitation_sum",
+        "sunrise",
+        "sunset",
       ].join(","),
     );
     url.searchParams.set("forecast_hours", "48");
@@ -226,6 +246,7 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           time: new Date(raw.time[index] * 1_000).toISOString(),
           temp: Math.round(temp * 10) / 10,
           icon: iconForCode(code, isDay === 1),
+          isDay: isDay === 1,
           description: descriptionForCode(code, query.lang),
           pop: Math.max(0, Math.min(100, Math.round(pop))),
           windSpeed,
@@ -263,6 +284,8 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           dailyRaw.weather_code,
           dailyRaw.precipitation_probability_max,
           dailyRaw.precipitation_sum,
+          dailyRaw.sunrise,
+          dailyRaw.sunset,
         ].filter((series): series is Array<number | null> => series !== undefined);
         if (dailySeries.some(series => series.length !== dailyLength)) {
           throw new AppError(
@@ -309,6 +332,7 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
             description: descriptionForCode(code, query.lang),
             pop: Math.max(0, Math.min(100, Math.round(pop))),
             precipitationMm: finiteInRangeAt(dailyRaw.precipitation_sum, index, 0),
+            ...daylightBounds(dailyRaw.sunrise?.[index], dailyRaw.sunset?.[index]),
           });
         }
       }

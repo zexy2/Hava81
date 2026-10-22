@@ -35,6 +35,10 @@ export interface HourlyForecastProviderResult {
     description: string;
     pop: number;
     precipitationMm?: number;
+    /** ISO-8601 UTC instant of local sunrise (Open-Meteo); absent on polar days/nights. */
+    sunrise?: string;
+    /** ISO-8601 UTC instant of local sunset (Open-Meteo); absent on polar days/nights. */
+    sunset?: string;
   }>;
   hourly: Array<{
     time: string;
@@ -50,6 +54,8 @@ export interface HourlyForecastProviderResult {
     uvIndex?: number;
     visibility?: number;
     weatherCode?: number;
+    /** True when the hour is in daylight (Open-Meteo `is_day`). */
+    isDay?: boolean;
   }>;
 }
 

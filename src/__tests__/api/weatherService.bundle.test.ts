@@ -113,6 +113,70 @@ describe('weatherService.getForecastBundle', () => {
     expect((aqError as ApiError).statusCode).toBe(502);
   });
 
+  it('maps daylight: API isDay first, icon suffix as fallback, sunrise/sunset as Dates', async () => {
+    const hourly = {
+      ...hourlyPart(),
+      daily: [
+        {
+          date: '2026-08-28',
+          tempMin: 19,
+          tempMax: 27,
+          icon: '01d',
+          description: 'açık',
+          pop: 10,
+          sunrise: '2026-08-28T03:31:00.000Z',
+          sunset: '2026-08-28T16:40:00.000Z',
+        },
+        // Incoherent pair (sunset before sunrise) is dropped, not fatal.
+        {
+          date: '2026-08-29',
+          tempMin: 19,
+          tempMax: 27,
+          icon: '01d',
+          description: 'açık',
+          pop: 10,
+          sunrise: '2026-08-29T16:40:00.000Z',
+          sunset: '2026-08-29T03:31:00.000Z',
+        },
+      ],
+      hourly: [
+        // The API says night even though an old icon cache could say day.
+        { time: '2026-08-28T18:00:00.000Z', temp: 24, icon: '01d', description: 'açık', pop: 10, windSpeed: 3, isDay: false },
+        // Older API revision: no isDay, icon suffix decides.
+        { time: '2026-08-28T19:00:00.000Z', temp: 23, icon: '01n', description: 'açık', pop: 10, windSpeed: 3 },
+        { time: '2026-08-28T20:00:00.000Z', temp: 23, icon: '02d', description: 'açık', pop: 10, windSpeed: 3 },
+      ],
+    };
+    mockGet.mockResolvedValue({
+      hourly,
+      errors: {},
+      meta: { fetchedAt: nowIso(), parts: ['hourly'] },
+    });
+
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+
+    expect(bundle.hourly?.ok).toBe(true);
+    const value = bundle.hourly?.ok ? bundle.hourly.value : null;
+    expect(value?.hourly.map(item => item.isDay)).toEqual([false, false, true]);
+    expect(value?.daily?.[0].sunrise).toEqual(new Date('2026-08-28T03:31:00.000Z'));
+    expect(value?.daily?.[0].sunset).toEqual(new Date('2026-08-28T16:40:00.000Z'));
+    expect(value?.daily?.[1].sunrise).toBeUndefined();
+    expect(value?.daily?.[1].sunset).toBeUndefined();
+  });
+
+  it('rejects a non-boolean isDay as a malformed hourly part', async () => {
+    const hourly = hourlyPart();
+    mockGet.mockResolvedValue({
+      hourly: { ...hourly, hourly: [{ ...hourly.hourly[0], isDay: 1 }] },
+      errors: {},
+      meta: { fetchedAt: nowIso(), parts: ['hourly'] },
+    });
+
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+
+    expect(bundle.hourly?.ok).toBe(false);
+  });
+
   it('marks a single malformed part as failed without discarding the others', async () => {
     const forecast = forecastPart();
     forecast.daily[0].pop = 140;

@@ -107,6 +107,20 @@ Durum: devam ediyor — dal feat/faz2-tasarim, PR https://github.com/zexy2/Hava8
 - [x] Gerçek bir 404 sayfası: "Bu adreste bir il yok" mesajı ve benzer il önerileri.
   - Kaldığı yer: `dist/404.html` artık index kopyası değil: `noindex`, canonical yok, başlık "Sayfa bulunamadı — Hava81", JS'siz durumda da "Bu adreste bir il yok" + ana sayfa linki (GitHub Pages bunu HTTP 404 ile sunar). Uygulama bilinmeyen yolda `NotFoundState` gösterir: mesaj, adrese en yakın 3 il (düzenleme mesafesi) gerçek link olarak, "İl ara" ve ana sayfa düğmeleri; EN'de `/en/` linkleri. Docker/nginx `try_files … /index.html` fallback'i dokunulmadı (SPA yine 404 görünümünü gösterir ama HTTP 200 döner).
 
+## Faz 5: Planla ve Skor v3
+
+Ayrıntılı plan: "Planla ve Skor yeniden tasarım planı" (22 Ekim 2026). Faz 0 arayüzü değiştirmeden mantık hatalarını kapatır. Sahip kararları (2026-10-22): piknik, çocukla park, çamaşır (ve sahil) gece (`isDay=false`) saatlerini hiç önermez; yürüyüş ve koşuda 07–23 dışı saatler aday değildir. Sonraki fazlar: niyet önce Planla, ana ekrandaki Hava81 Skoru birincil niyetin skoru olacak.
+
+### Faz 0: Hemen düzeltilecek mantık hataları (arayüz aynı kalır)
+
+- [x] **0.1 Gün ışığı verisi** — API `hourly[].isDay`, `daily[].sunrise/sunset` (Open-Meteo `is_day`, `daily=sunrise,sunset`); web `HourlyForecast.isDay` (ikon son eki yedek). **API deploy gerekir.**
+  - Kaldığı yer: API sağlayıcı `is_day` değerini artık atmıyor (`isDay: boolean`), günlük `sunrise`/`sunset` ISO olarak geliyor (kutup günü/gecesinde ya da tutarsız çiftte alan yok). `contracts.ts`, `weather-provider.ts`, `openapi.ts` (yanıt şeması; yoksa Fastify alanı silerdi) güncellendi; tüm yeni alanlar isteğe bağlı, eski istemci bozulmaz. Web: `parseHourlyResponse` her saate `isDay` yazar (API alanı yoksa ikonun `n` son eki → gece); `DailyForecast.sunrise/sunset` `Date` (bozuk çift atılır, tahmin reddedilmez). Testler: `apps/api/test/hourly-provider.test.ts`, `apps/api/test/bundle.test.ts` (serileştirmeden geçiyor), `src/__tests__/api/weatherService.bundle.test.ts`.
+- [ ] **0.2 AQI yanlılığını kaldır** — anlık AQI 12 saatin tümüne uygulanır ("anlık" notuyla), aktivite skorunda da aynı kural; koşu ve çocuk AQI cezaları etkin.
+- [ ] **0.3 Karanlıkta gündüz aktivitesi önerme** — `findBestWindowRange`'e `isEligible`; piknik/çocuk/çamaşır `isDay=false` aday değil, yürüyüş/koşu 07–23 dışı aday değil. İstanbul 21:00'de "21:00–01:00", Antalya'da çamaşır "01–05" çıkmamalı.
+- [ ] **0.4 Tek eşik dosyası** — `src/domain/decision/thresholds.ts` (şemsiye, rüzgâr, sıcak, soğuk, AQI); Gün planı, Bugün başlığı, Çıkış planı ve reason kodları aynı kararı verir.
+- [ ] **0.5 "Şimdi" ile "en iyi pencere" çelişkisi** — `kind:'now'` yalnız en iyi pencere şimdiki saati içeriyorsa; tek ufuk.
+- [ ] **0.6 Bant metni ve belge** — "UYGUN · 75–96" kaldırılır; `docs/SCORE_MODEL.md` bantları kodla eşitlenir; görsel tabanlar yenilenir (Planla 1280).
+
 ---
 
 ## Önerilen sıra
