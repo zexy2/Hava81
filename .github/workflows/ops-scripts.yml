@@ -50,6 +50,8 @@ jobs:
         run: node --test scripts/test-live-audit-options.mjs
       - name: Verify live audit API replay avoids rate-limit storms
         run: node --test scripts/test-live-audit-response-cache.mjs
+      - name: Verify Pages CSP meta generation
+        run: node --test scripts/test-apply-csp.mjs
       - name: Verify published SEO smoke contract
         run: node --test scripts/test-verify-public-seo.mjs
       - name: Verify observer logrotate contract

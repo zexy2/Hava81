@@ -1,8 +1,10 @@
+import compress from '@fastify/compress';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import { constants as zlibConstants } from 'node:zlib';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { parseEnv, type AppConfig } from './config/env';
@@ -63,6 +65,16 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
     requestIdHeader: 'x-request-id',
   });
 
+  // JSON responses (bundle, provinces, forecast) are several KB and compress
+  // ~5-10x. Brotli at a low quality keeps CPU cost near gzip; bodies below 1 KB
+  // and clients without Accept-Encoding get the plain response. Adds
+  // `Vary: Accept-Encoding` so caches keep encodings apart (plan 3.8).
+  await app.register(compress, {
+    global: true,
+    threshold: 1024,
+    encodings: ['br', 'gzip'],
+    brotliOptions: { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 4 } },
+  });
   await app.register(cors, {
     origin: env.CORS_ORIGINS.includes('*') ? true : env.CORS_ORIGINS,
     methods: ['GET', 'OPTIONS'],
