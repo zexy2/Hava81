@@ -48,7 +48,9 @@ jobs:
       - name: Generate baselines
         env:
           HAVA81_VISUAL: '1'
-        run: npm run e2e -- --project=visual --update-snapshots
+        # `all`: rewrite every baseline, also when the change is within maxDiffPixelRatio
+        # (the default `changed` mode keeps the old PNG for small copy edits).
+        run: npm run e2e -- --project=visual --update-snapshots=all
       - name: List generated baselines
         run: ls -l e2e/visual.spec.ts-snapshots/
       - name: Upload visual baselines
