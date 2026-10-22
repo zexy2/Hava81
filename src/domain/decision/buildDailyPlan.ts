@@ -1,6 +1,7 @@
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { findBestWindowRange } from './bestWindowRange';
 import { isRecommendableHour } from './eligibility';
+import { airLevel, rainLevel, windLevel } from './thresholds';
 import { getScoreBand, scoreWeatherWindow } from './scoreWeatherWindow';
 import type {
   AirQualityAdvice,
@@ -121,29 +122,29 @@ const pickUmbrellaAdvice = (slots: ScoredWeatherWindow[]): UmbrellaAdvice => {
   const amounts = near
     .map(slot => slot.precipitationMm)
     .filter((value): value is number => Number.isFinite(value));
-  if (!probabilities.length && !amounts.length) return 'unknown';
-  const maxPop = Math.max(0, ...probabilities);
-  const maxMm = Math.max(0, ...amounts);
-  if (maxMm >= 1 || maxPop >= 0.55) return 'yes';
-  if (maxMm >= 0.2 || maxPop >= 0.25) return 'maybe';
-  return 'no';
+  const level = rainLevel(
+    probabilities.length ? Math.max(...probabilities) : undefined,
+    amounts.length ? Math.max(...amounts) : undefined
+  );
+  if (!level) return 'unknown';
+  return level === 'likely' ? 'yes' : level === 'possible' ? 'maybe' : 'no';
 };
 
 const pickWindAdvice = (slots: ScoredWeatherWindow[]): WindAdvice => {
   const near = withinHours(slots, NEAR_TERM_HOURS);
-  const maxWind = Math.max(0, ...near.map(slot => slot.windSpeed));
-  const maxGust = Math.max(0, ...near.map(slot => slot.windGust ?? 0));
-  if (maxWind >= 13 || maxGust >= 20) return 'strong';
-  if (maxWind >= 8 || maxGust >= 13) return 'caution';
-  return 'normal';
+  const level = windLevel(
+    Math.max(0, ...near.map(slot => slot.windSpeed)),
+    Math.max(0, ...near.map(slot => slot.windGust ?? 0))
+  );
+  return level === 'strong' ? 'strong' : level === 'caution' ? 'caution' : 'normal';
 };
 
 const pickAirQualityAdvice = (airQuality?: AirQuality): AirQualityAdvice => {
-  if (!airQuality) return 'unknown';
-  if (airQuality.aqi >= 4) return 'poor';
-  if (airQuality.aqi >= 3) return 'sensitive';
-  if (airQuality.aqi >= 2) return 'fair';
-  return 'good';
+  const level = airLevel(airQuality?.aqi);
+  if (!level) return 'unknown';
+  if (level === 'poor' || level === 'very-poor') return 'poor';
+  if (level === 'sensitive') return 'sensitive';
+  return (airQuality?.aqi ?? 0) >= 2 ? 'fair' : 'good';
 };
 
 const buildNowOrLater = (

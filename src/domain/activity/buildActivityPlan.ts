@@ -1,6 +1,7 @@
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { isRecommendableHour } from '../decision/eligibility';
 import { findBestWindowRange } from '../decision/bestWindowRange';
+import { AQI_POOR, rainLevel } from '../decision/thresholds';
 import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
 import type { DecisionReasonCode } from '../decision/types';
 import type {
@@ -104,7 +105,7 @@ const activityAdjustment = ({
     const penaltyValue = maxPenalty * rain;
     penalty += penaltyValue;
     if (penaltyValue >= 7)
-      reasons.push((precipitationMm ?? 0) >= 2.5 || (pop ?? 0) >= 0.6 ? 'heavy-rain' : 'rain-risk');
+      reasons.push(rainLevel(pop, precipitationMm) === 'likely' ? 'heavy-rain' : 'rain-risk');
   };
   const addWind = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * windRisk;
@@ -115,7 +116,7 @@ const activityAdjustment = ({
     const penaltyValue = maxPenalty * air;
     penalty += penaltyValue;
     if (penaltyValue >= 7)
-      reasons.push((aqi ?? 0) >= 4 ? 'poor-air-quality' : 'sensitive-air-quality');
+      reasons.push((aqi ?? 0) >= AQI_POOR ? 'poor-air-quality' : 'sensitive-air-quality');
   };
   const addUv = (maxPenalty: number) => {
     const penaltyValue = maxPenalty * uv;

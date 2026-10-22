@@ -1,3 +1,13 @@
+import {
+  airLevel,
+  COLD_APPARENT_C,
+  EXTREME_HEAT_APPARENT_C,
+  FREEZING_APPARENT_C,
+  HEAT_APPARENT_C,
+  rainLevel,
+  WIND_CAUTION_GUST,
+  windLevel,
+} from './thresholds';
 import type {
   DecisionReasonCode,
   Hava81ScoreBand,
@@ -193,30 +203,23 @@ export const scoreWeatherWindow = ({
   addImpact(impacts, 'visibility', visibilityRisk);
   addImpact(impacts, 'severe-weather', severe);
 
-  if (apparent >= 36) reasons.push('extreme-heat');
-  else if (apparent >= 29) reasons.push('heat');
-  else if (apparent <= 0) reasons.push('freezing');
-  else if (apparent <= 8) reasons.push('cold');
+  if (apparent >= EXTREME_HEAT_APPARENT_C) reasons.push('extreme-heat');
+  else if (apparent >= HEAT_APPARENT_C) reasons.push('heat');
+  else if (apparent <= FREEZING_APPARENT_C) reasons.push('freezing');
+  else if (apparent <= COLD_APPARENT_C) reasons.push('cold');
 
-  const hasPrecipitationProbability = Number.isFinite(precipitationProbability);
-  const hasPrecipitationAmount = Number.isFinite(precipitationMm);
-  if (
-    (hasPrecipitationAmount && (precipitationMm as number) >= 2.5) ||
-    (hasPrecipitationProbability && (precipitationProbability as number) >= 0.6)
-  )
-    reasons.push('heavy-rain');
-  else if (
-    (hasPrecipitationAmount && (precipitationMm as number) >= 0.2) ||
-    (hasPrecipitationProbability && (precipitationProbability as number) >= 0.25)
-  )
-    reasons.push('rain-risk');
+  const rainRisk = rainLevel(precipitationProbability, precipitationMm);
+  if (rainRisk === 'likely') reasons.push('heavy-rain');
+  else if (rainRisk === 'possible') reasons.push('rain-risk');
 
-  if (windSpeed >= 13 || (windGust ?? 0) >= 20) reasons.push('strong-wind');
-  else if ((windGust ?? 0) >= 13) reasons.push('gusty-wind');
-  else if (windSpeed >= 8) reasons.push('windy');
+  const windRisk = windLevel(windSpeed, windGust);
+  if (windRisk === 'strong') reasons.push('strong-wind');
+  else if ((windGust ?? 0) >= WIND_CAUTION_GUST) reasons.push('gusty-wind');
+  else if (windRisk === 'caution') reasons.push('windy');
 
-  if ((airQualityIndex ?? 0) >= 4) reasons.push('poor-air-quality');
-  else if ((airQualityIndex ?? 0) >= 3) reasons.push('sensitive-air-quality');
+  const airRisk = airLevel(airQualityIndex);
+  if (airRisk === 'poor' || airRisk === 'very-poor') reasons.push('poor-air-quality');
+  else if (airRisk === 'sensitive') reasons.push('sensitive-air-quality');
   if ((uvIndex ?? 0) >= 6) reasons.push('high-uv');
   if ((visibility ?? Number.POSITIVE_INFINITY) < 2000) reasons.push('low-visibility');
   if (severe >= 20) reasons.push('severe-weather');
