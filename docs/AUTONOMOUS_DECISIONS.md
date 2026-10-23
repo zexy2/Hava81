@@ -137,3 +137,7 @@ If a workflow job invokes a script stored in the repository, that job must check
 ## 2026-10-24 — Patch the audited Puppeteer/BiDi dependency path through the lockfile
 
 When the root npm audit returned three high-severity findings, keep the fix narrow: refresh the existing lockfile transitive Lighthouse/Puppeteer dependency graph rather than adding a direct Zod override or changing application runtime code. The refreshed graph selects `puppeteer-core 25.16.0`, `chromium-bidi 157.0.8090-0`, and `zod 4.6.7`, which satisfy the declared dependency ranges and eliminate the reported advisory. Keep `package.json` unchanged, verify a clean `npm ci`, and require both root and API audits to pass. Because the development-image build also saw a registry connection reset, address bounded fetch retries separately in `Dockerfile.dev`; do not mix that CI reliability change into the security lockfile PR.
+
+## 2026-10-24 — Retry transient registry fetches in the development image
+
+A real dev-image CI attempt failed during `npm ci` with `ECONNRESET` from the package registry. Keep the image on Node 24 LTS and preserve the existing port-3000/`--strictPort` runtime contract, but make npm fetch retries explicit and bounded: five retries, factor 2, minimum 10 seconds, maximum 60 seconds. This changes only the development image; do not change production images or ports. Keep a static contract test in the Ops workflow so the retry flags cannot disappear silently, and require the hosted Docker build/runtime gate before merge.
