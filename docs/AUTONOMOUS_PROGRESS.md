@@ -141,3 +141,30 @@ Do not disable or pause the automation. Preserve all prior valid checkpoint entr
 6. Before the next runtime end, append the newest exact PR/run/SHA/worktree state and preserve all valid prior checkpoint entries.
 
 Do not disable or pause the automation. Never bypass platform write controls. Do not fabricate weather, UV, air-quality, or safety information.
+
+
+## 2026-10-23 13:22 TRT — stale current-AQI fallback guard in progress
+
+### Production and main pipeline (fresh observer + direct smoke)
+- Observer collected at `2026-10-23T10:20:46.964109Z`: production HEALTHY, no issues; API readiness HTTP 200, CORS OK, all seven boot assets healthy, Nginx API port 4002, disk 77.8% used / 21.4 GiB free.
+- Main/frontend SHA `9946e45fb928a0682cbd1df557db920be1bf26f0`; root and `/izmir/` both embed that revision. Main CI/CD #3360 (`39937344369`), Ops contracts (`39937344352`), CodeQL (`39937344343`) succeeded. Pages deployment (`39937782907`) succeeded. API revision `5f7b88abb55165023437f2b3f3ced70badbce0db` remains healthy on port 4002; the intervening changes are frontend/domain/docs only, so no API deploy is pending.
+- PR #1368 merged normally as `bfef75d1571f8e88a2cd80705dc43eaf27d527fe`; PR #1369 merged normally as main `9946e45fb928a0682cbd1df557db920be1bf26f0`.
+
+### PR #1370 — stale current AQI fallback guard
+- PR: https://github.com/zexy2/Hava81/pull/1370
+- Branch: `automation/hava81-activity-aqi-explanation-20261023-1310`; base `9946e45fb928a0682cbd1df557db920be1bf26f0`; head at checkpoint `114de645ae926114f7f9bfc8eacfb118380a4f8d`.
+- Changes: ActivityPlanner uses current OpenWeather AQI as a fallback only when its freshness metadata is valid and the value is an integer 1–5; the open planner rerenders when current AQI expires; Turkish/English disclosure explicitly says stale/missing current AQI produces no inferred AQI risk for unmatched hours.
+- Local gates: type-check, lint, 35 targeted activity tests, full `npm run test:ci` 102 files / 956 tests, statements 91.93%, branches 85.49%, production build, and `git diff --check` all passed.
+- Local Playwright E2E was attempted but the managed Chromium executable is absent; system Chromium is a Snap wrapper blocked by the host cgroup. Hosted browser flows must pass before merge.
+- Exact-head checks currently running: CI/CD `39938822049`, CodeQL `39938822021`, Ops script contracts `39938822277`; all target `114de645ae926114f7f9bfc8eacfb118380a4f8d`. PR is open, not draft, mergeable, with no review decision; do not merge until all required checks are green and the current head is reverified.
+
+### Current worktree and next action
+- Independent code worktree `/tmp/hava81-activity-aqi-explanation-20261023-1310` is clean after commit/push at the head above. This docs-only checkpoint is on `automation/hava81-autonomous-progress-20261023-1322`, based on main `9946e45...`; it must not mutate PR #1370's branch.
+- Next: poll the three exact-head checks for PR #1370; if green, directly re-read head SHA/mergeability and merge normally. Then watch main CI/Pages and verify root, `/izmir/`, boot assets, API readiness, CORS, API port 4002, and deployed revision.
+
+### Prioritized next queue
+1. Complete PR #1370 through hosted CI and normal merge only after exact-head checks pass.
+2. Inspect `DailyPlanPanel`/`buildDailyPlan` for stale current-AQI evidence paths and add a separate regression-tested fix only if current code still bypasses freshness.
+3. Integrate the evidence-aware `src/domain/plan` engine into activity UI only after auditing duration, confidence, exact-hour AQI, temperature sensitivity, and existing UI semantics; keep a separate branch and preserve current functionality.
+4. Continue measuring real production UX/performance; keep Lighthouse reports tied to exact SHAs and use hosted browser results when local Chromium cannot launch.
+5. Append new checkpoint entries without deleting prior valid history. Do not disable/pause automation or bypass platform write controls.
