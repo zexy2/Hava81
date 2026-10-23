@@ -41,3 +41,8 @@ If a workflow job invokes a script stored in the repository, that job must check
 - The activity planner may use a fresh, valid current OpenWeather AQI when a matching exact-hour European AQI sample is absent. It must not reuse stale or out-of-range current AQI for future slots.
 - If both hourly AQI and current AQI are stale/unavailable, leave AQI risk unknown for that hour; do not substitute zero or invent/interpolate an AQI value. The UI must disclose the fallback condition in Turkish and English.
 - When optional AQI freshness expires while the planner remains mounted, schedule a rerender at expiry so the stale fallback is removed without a manual refresh.
+
+
+## 2026-10-23 — Dependabot ecosystem compatibility
+- Dependabot cooldown fields (`semver-major-days`, `semver-minor-days`, `semver-patch-days`) are not valid for `github-actions` or `docker` entries in this repository's configuration. Keep cooldown only on supported npm entries; retain separate major groups for manual review where cooldown is unsupported.
+- Keep a repository-script contract test for the supported ecosystem/cooldown matrix so the GitHub Dependabot validation check cannot silently regress. Do not weaken required CI gates to work around the failing config check.
