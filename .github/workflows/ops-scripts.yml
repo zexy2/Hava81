@@ -54,6 +54,8 @@ jobs:
         run: node --test scripts/test-apply-csp.mjs
       - name: Verify published SEO smoke contract
         run: node --test scripts/test-verify-public-seo.mjs
+      - name: Verify Lighthouse report artifact retention contract
+        run: python3 scripts/test-lighthouse-artifact-contract.py
       - name: Verify observer logrotate contract
         run: bash scripts/test-observer-logrotate.sh
       - name: Verify Hava81 Git compaction contract
