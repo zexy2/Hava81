@@ -25,3 +25,6 @@
 - Hava81 tells users what to do about the weather; avoid generic dashboard bloat.
 - Improve visual hierarchy, first viewport, typography, state clarity, dark mode, and mobile ergonomics only with evidence.
 - Measure real production before performance changes and keep Lighthouse artifacts tied to exact SHAs.
+
+## 2026-10-23 — GitHub Actions repository-script prerequisites
+If a workflow job invokes a script stored in the repository, that job must check out the exact workflow SHA before running the script. Use `persist-credentials: false` when the job does not need authenticated Git operations, and keep a workflow contract test that asserts checkout precedes the script. A failed gate before SSH/deploy must leave the prior production revision serving and must not be described as a successful deploy.
