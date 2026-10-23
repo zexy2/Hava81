@@ -17,6 +17,15 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const validDate = value => typeof value === 'string' && !Number.isNaN(Date.parse(value));
 
+class HttpResponseError extends Error {
+  constructor(status, retryAfter) {
+    super(`HTTP ${status}`);
+    this.name = 'HttpResponseError';
+    this.status = status;
+    this.retryAfter = retryAfter;
+  }
+}
+
 async function getJson(url) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
@@ -27,7 +36,10 @@ async function getJson(url) {
     });
     let body;
     try { body = await response.json(); } catch { body = null; }
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      const retryAfter = response.headers.get('retry-after')?.trim() || undefined;
+      throw new HttpResponseError(response.status, retryAfter);
+    }
     return body;
   } catch (error) {
     if (controller.signal.aborted) {
@@ -40,6 +52,7 @@ async function getJson(url) {
 }
 
 const failures = [];
+let rateLimited = null;
 let currentOk = 0;
 let forecastOk = 0;
 const startedAt = Date.now();
@@ -76,6 +89,12 @@ for (const [index, [provinceSlug, city]] of cities.entries()) {
     console.log('OK');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (error instanceof HttpResponseError && error.status === 429) {
+      rateLimited = { city, retryAfter: error.retryAfter };
+      console.log(`BLOCKED (${message})`);
+      // Stop immediately: further cities would amplify a provider/API rate limit.
+      break;
+    }
     failures.push({ city, message });
     console.log(`FAIL (${message})`);
   }
@@ -90,10 +109,14 @@ console.log(`Current: ${currentOk}/81`);
 console.log(`Forecast: ${forecastOk}/81`);
 console.log(`Elapsed: ${elapsedSeconds}s`);
 
-if (failures.length) {
+if (rateLimited) {
+  console.log(`RESULT: BLOCKED (HTTP 429 rate limit at ${rateLimited.city})`);
+  if (rateLimited.retryAfter) console.log(`Retry-After: ${rateLimited.retryAfter}`);
+  process.exitCode = 2;
+} else if (failures.length) {
   console.log(`Failures: ${failures.length}`);
   for (const item of failures) console.log(`- ${item.city}: ${item.message}`);
-  process.exit(1);
+  process.exitCode = 1;
+} else {
+  console.log('RESULT: PASS 81/81');
 }
-
-console.log('RESULT: PASS 81/81');

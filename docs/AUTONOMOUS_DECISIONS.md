@@ -141,3 +141,11 @@ When the root npm audit returned three high-severity findings, keep the fix narr
 ## 2026-10-24 — Retry transient registry fetches in the development image
 
 A real dev-image CI attempt failed during `npm ci` with `ECONNRESET` from the package registry. Keep the image on Node 24 LTS and preserve the existing port-3000/`--strictPort` runtime contract, but make npm fetch retries explicit and bounded: five retries, factor 2, minimum 10 seconds, maximum 60 seconds. This changes only the development image; do not change production images or ports. Keep a static contract test in the Ops workflow so the retry flags cannot disappear silently, and require the hosted Docker build/runtime gate before merge.
+
+## 2026-10-24 — Preserve the HTTP 429 release-gate decision during PR #1398 rebase
+
+- Original decision timestamp: 2026-10-23 23:56 TRT; preserved from PR #1398 head `7ee5e9867df5246191b02e949bfe21cc157dc365` during rebase.
+- HTTP 429 means the API/provider is rate limiting. A sequential 81-city gate must not continue into more current/forecast requests after the first 429, because doing so amplifies pressure and can obscure the original failure.
+- Preserve the raw `Retry-After` response header for operator diagnostics, but do not retry or sleep inside this release gate. Exit with a distinct code 2 and explicit `BLOCKED` result; keep ordinary aggregated failures on exit code 1 and full 81/81 success on exit code 0.
+- Regression coverage injects a mocked first-response 429 and proves there is exactly one fetch, no second city request, and a visible Retry-After hint. No production weather values, scoring, provider fallback, or safety semantics change.
+- The live gate was unintentionally invoked twice during checkpoint shell expansion; both attempts stopped at the first 429. Readiness on both local slots remained healthy afterward. Do not repeat a live sweep until the provider rate-limit window has cleared and a deliberate release-gate run is justified.
