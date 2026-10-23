@@ -551,6 +551,32 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. While those checks run, continue the independent next-change evidence-integrity branch `automation/hava81-next-change-rain-baseline-20261023-2237` without modifying this pending branch.
 4. Before merge, re-read the PR's exact head/base/mergeability/checks and refresh observer state; after merge, verify current-main CI/Pages and direct production health. This is a workflow-only change; do not deploy the API or change port 4002.
 
+## 2026-10-23 22:46 TRT — next-change summary uses fresh current conditions and honest availability
+
+### Baseline and production safety
+- Clean worktree/branch: `/home/chatgpt/hava81-next-change-rain-baseline-20261023-2237`, `automation/hava81-next-change-rain-baseline-20261023-2237`, based on exact current main SHA `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`.
+- Observer sample `collected_at=2026-10-23T19:44:31.904997Z`: production HEALTHY, no issues, root/city frontend revision matches main, all seven boot assets healthy, API readiness HTTP 200 with `no-store`, CORS exact origin `https://hava81.zekiakgul.dev`, Nginx primary API port 4002. Disk 88.2% used / 11.4 GiB free (warning only; API build headroom remains OK).
+- Direct cache-busted smoke: root, `/izmir/`, manifest, service worker, API `/api/v1/health`, and `/api/v1/health/ready` all HTTP 200; CORS preflight HTTP 204. API runtime revision `4aa0ee1a40db773a11367b3ebc7d61271686d719`. This branch is frontend-only and must not trigger an API deployment or port switch.
+
+### Bounded product-correctness fix
+- `getNextChange` previously treated the first future forecast sample as the current rain state. If current conditions were dry but the first future hour had high precipitation probability, the summary could skip the first rain-start event; the old unit test called the forecast hour “wet now” without any current observation.
+- The selector now accepts an optional current wet/dry baseline. `WeatherDecisionField` derives it only from a fresh current OpenWeather icon (rain/showers/thunderstorm); when current evidence is stale, it does not infer the baseline from stale current data. Invalid or out-of-range precipitation probabilities are unknown, never silently converted to dry.
+- The selector returns a distinct `unavailable` state when no usable future samples survive filtering. The summary shows a localized unavailable state when hourly data is empty or the decision evidence has expired instead of claiming “no notable change” without usable evidence.
+- Added domain and component regressions for current-dry → first-hour rain, current-wet → first-hour dry, invalid probability, empty hourly data, and expiry while the panel remains mounted. Added Turkish and English copy for the unavailable state.
+
+### Local validation on final source/test diff
+- Focused suites: **38/38 passed** (`nextChange.test.ts` + `WeatherDecisionField.test.tsx`).
+- Full `npm run test:ci`: **999/999 tests across 103 files passed**.
+- `npm run type-check`, `npm run lint`, CSS lint, production `npm run build`, and `git diff --check`: passed.
+- Browser flows `e2e/decision.spec.ts` + `e2e/app-shell.spec.ts`: **24/24 passed** across mobile 390, tablet 768 and desktop 1280.
+- Host Node is 22.23.2; tests used the locked dependency tree from the already-validated Node 24 worktree. Hosted exact-head CI remains required. No source changes were made to the other worktrees.
+
+### Exact branch and next queue
+1. Review the final six-file diff, append-only docs, then commit and push via normal authenticated Git and open a bounded PR.
+2. Require exact-head CI/CD, CodeQL, Ops contracts, browser flows and Lighthouse. If a test fails, inspect the exact job/log and fix only this branch after re-reading its remote head.
+3. PR #1395 (`automation/hava81-dev-image-runtime-smoke-20261023-2234`, head `66090337f1f7c29f9befb8e89cad8a28852a7643`) is still running CI/CD #3411 (`40013601809`); CodeQL #2192 and Ops contracts #151 pass, but the `Development container build` runtime-smoke step failed after the image build passed. Wait for the run logs, confirm the port mismatch, then fix that same PR branch only after re-reading its current remote head. Do not merge it while any required gate is red.
+4. Before any merge, re-read exact head/base/mergeability/checks and refresh observer state immediately before the normal merge. After merge, watch main CI/Pages and verify public revisions/boot assets and API health/readiness/CORS/port 4002.
+5. Preserve the dirty UI worktree `/home/chatgpt/hava81-live-audit-20261023-2155`, the old P1.3 worktree, and the locale-lazy/PWA worktree unchanged. Resolve append-only documentation conflicts by keeping all valid entries.
 
 ## 2026-10-23 22:48 TRT — fix development container exposed-port mismatch found by runtime smoke
 

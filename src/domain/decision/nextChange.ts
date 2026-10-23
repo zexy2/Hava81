@@ -1,6 +1,6 @@
 import type { HourlyForecast } from '../../types';
 
-export type NextChangeKind = 'rainStarts' | 'rainStops' | 'warmer' | 'cooler' | 'steady';
+export type NextChangeKind = 'rainStarts' | 'rainStops' | 'warmer' | 'cooler' | 'steady' | 'unavailable';
 
 export interface NextChange {
   kind: NextChangeKind;
@@ -21,7 +21,8 @@ const TEMP_STEP = 3;
 export function getNextChange(
   hourly: HourlyForecast[],
   currentTemp: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  currentWet?: boolean
 ): NextChange {
   const nowMs = now.getTime();
   const horizonEnd = nowMs + 24 * 60 * 60 * 1000;
@@ -35,13 +36,18 @@ export function getNextChange(
     )
     .sort((a, b) => a.time.getTime() - b.time.getTime())
     .slice(0, 24);
-  if (upcoming.length === 0) return { kind: 'steady', time: null, temp: null };
-  const wetNow = upcoming[0].pop >= RAIN_POP;
+  if (upcoming.length === 0) return { kind: 'unavailable', time: null, temp: null };
+  // If a fresh current observation is available, compare the first forecast slot to it.
+  // Otherwise establish a baseline from the first valid forecast probability; never
+  // treat a missing/invalid probability as a dry hour.
+  let previousWet = currentWet;
   for (const hour of upcoming) {
-    const wet = hour.pop >= RAIN_POP;
-    if (wet !== wetNow) {
+    const hasValidProbability = Number.isFinite(hour.pop) && hour.pop >= 0 && hour.pop <= 1;
+    const wet = hasValidProbability ? hour.pop >= RAIN_POP : undefined;
+    if (wet !== undefined && previousWet !== undefined && wet !== previousWet) {
       return { kind: wet ? 'rainStarts' : 'rainStops', time: hour.time, temp: hour.temp };
     }
+    if (wet !== undefined) previousWet = wet;
     if (hour.temp - currentTemp >= TEMP_STEP)
       return { kind: 'warmer', time: hour.time, temp: hour.temp };
     if (currentTemp - hour.temp >= TEMP_STEP)

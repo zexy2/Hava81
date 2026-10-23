@@ -26,17 +26,24 @@ describe('getNextChange', () => {
     expect(change.kind).toBe('rainStarts');
     expect(change.time?.toISOString()).toBe('2026-10-21T15:00:00.000Z');
   });
-  it('reports rain stopping when it is wet now', () => {
-    expect(
-      getNextChange(
-        hours([
-          [15, 0.8],
-          [15, 0.2],
-        ]),
-        15,
-        now
-      ).kind
-    ).toBe('rainStops');
+  it('reports rain stopping from a fresh wet current observation', () => {
+    const change = getNextChange(hours([[15, 0.2], [15, 0.1]]), 15, now, true);
+    expect(change.kind).toBe('rainStops');
+    expect(change.time?.toISOString()).toBe('2026-10-21T13:00:00.000Z');
+  });
+
+  it('reports rain starting at the first forecast hour from a fresh dry observation', () => {
+    const change = getNextChange(hours([[15, 0.8], [15, 0.9]]), 15, now, false);
+    expect(change.kind).toBe('rainStarts');
+    expect(change.time?.toISOString()).toBe('2026-10-21T13:00:00.000Z');
+  });
+
+  it('does not infer a dry hour from an invalid precipitation probability', () => {
+    const forecast = hours([[15, 0.8], [15, 0.2]]);
+    forecast[0]!.pop = Number.NaN;
+    const change = getNextChange(forecast, 15, now, true);
+    expect(change.kind).toBe('rainStops');
+    expect(change.time?.toISOString()).toBe('2026-10-21T14:00:00.000Z');
   });
   it('reports a cooling swing of 3 degrees', () => {
     const change = getNextChange(
@@ -94,7 +101,7 @@ describe('getNextChange', () => {
     expect(getNextChange([invalid, valid], 20, now).kind).toBe('steady');
   });
 
-  it('is steady without change or data', () => {
+  it('is steady when valid future samples show no meaningful change', () => {
     expect(
       getNextChange(
         hours([
@@ -105,6 +112,15 @@ describe('getNextChange', () => {
         now
       ).kind
     ).toBe('steady');
-    expect(getNextChange([], 20, now).kind).toBe('steady');
+  });
+
+  it('is unavailable when no usable future samples remain', () => {
+    const past = hours([[20, 0]])[0]!;
+    past.time = new Date(now.getTime() - 60_000);
+    const invalidTime = { ...hours([[20, 0]])[0]!, time: new Date(Number.NaN) };
+
+    expect(getNextChange([], 20, now)).toEqual({ kind: 'unavailable', time: null, temp: null });
+    expect(getNextChange([past], 20, now).kind).toBe('unavailable');
+    expect(getNextChange([invalidTime], 20, now).kind).toBe('unavailable');
   });
 });

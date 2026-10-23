@@ -138,6 +138,7 @@ export const tr = {
         warmer: '{{time}} civarı {{temperature}} ile ısınıyor.',
         cooler: '{{time}} civarı {{temperature}} ile serinliyor.',
         steady: 'Önümüzdeki 24 saatte belirgin bir değişim yok.',
+        unavailable: 'Yakın saatler için değişim bilgisi henüz hazır değil.',
         chart: 'Önümüzdeki 24 saatin sıcaklık eğrisi: en düşük {{min}}, en yüksek {{max}}',
       },
       freshness: {

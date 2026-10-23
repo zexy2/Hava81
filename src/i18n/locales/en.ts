@@ -138,6 +138,7 @@ export const en = {
         warmer: 'Warming to {{temperature}} around {{time}}.',
         cooler: 'Cooling to {{temperature}} around {{time}}.',
         steady: 'No notable change in the next 24 hours.',
+        unavailable: 'Change guidance is not available for the upcoming hours yet.',
         chart: 'Temperature curve for the next 24 hours: low {{min}}, high {{max}}',
       },
       freshness: {
