@@ -54,17 +54,23 @@ export interface WeatherDecisionInput {
    * decision uses this time (or is omitted for `null`) instead of a separate local pick.
    */
   bestWindowTime?: Date | null;
+  /** Reference instant for the near-term window; supplied by the rendered freshness clock. */
+  now?: Date;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
 const severityRank: Record<WeatherDecisionSeverity, number> = { high: 3, moderate: 2, info: 1 };
 
-const nextHours = (hourly: HourlyForecast[], hours: number) => {
-  const sorted = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime());
-  const first = sorted[0];
-  if (!first) return [];
-  const end = first.time.getTime() + hours * HOUR_MS;
-  return sorted.filter(point => point.time.getTime() < end);
+const nextHours = (hourly: HourlyForecast[], hours: number, now: Date) => {
+  const start = now.getTime();
+  if (!Number.isFinite(start)) return [];
+  const end = start + hours * HOUR_MS;
+  return hourly
+    .filter(point => {
+      const time = point.time.getTime();
+      return Number.isFinite(time) && time > start && time < end;
+    })
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
 };
 
 const effectiveWind = (point: HourlyForecast) =>
@@ -76,8 +82,9 @@ export const getWeatherDecisions = ({
   airQuality,
   uvIndexMax,
   bestWindowTime,
+  now = new Date(),
 }: WeatherDecisionInput): WeatherDecision[] => {
-  const next = nextHours(hourly, 12);
+  const next = nextHours(hourly, 12, now);
   const decisions: WeatherDecision[] = [];
 
   const rainiest = pickMostSignificantPrecipitation(next);

@@ -363,9 +363,10 @@ export function WeatherDecisionField({
               ? (getDecisionSnapshot({ weather, hourly, airQuality: freshAirQuality }).bestWindow
                   ?.peak.time ?? null)
               : undefined,
+            now: new Date(now),
           })
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
-    [decisionEvidenceFresh, freshAirQuality, hourly, uvIndexMax, weather]
+    [decisionEvidenceFresh, freshAirQuality, hourly, now, uvIndexMax, weather]
   );
   const freshnessText =
     ageMinutes === null

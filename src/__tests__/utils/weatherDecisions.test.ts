@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getWeatherDecisions } from '../../utils/weatherDecisions';
 import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { WeatherDecisionInput } from '../../utils/weatherDecisions';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -33,17 +34,88 @@ const point = (overrides: Partial<HourlyForecast> = {}): HourlyForecast => ({
   ...overrides,
 });
 
+const decisionNow = new Date('2026-08-28T09:00:00Z');
+const decide = (input: Omit<WeatherDecisionInput, 'now'>) =>
+  getWeatherDecisions({ ...input, now: decisionNow });
+
 describe('getWeatherDecisions', () => {
   it('uses actual hourly amount to recognize material rain even below the old probability threshold', () => {
-    const result = getWeatherDecisions({
+    const result = decide({
       weather,
       hourly: [point({ pop: 0.55, precipitationMm: 5 })],
     });
     expect(result[0]).toMatchObject({ kind: 'rain', severity: 'high', amount: 5 });
   });
 
+  it('anchors the 12-hour decision window to now and ignores past or out-of-window risks', () => {
+    const past = point({
+      time: new Date('2026-08-28T08:00:00Z'),
+      pop: 0.98,
+      precipitationMm: 9,
+    });
+    const nearFuture = point({
+      time: new Date('2026-08-28T11:00:00Z'),
+      pop: 0.65,
+      precipitationMm: 2,
+    });
+    const beyondWindow = point({
+      time: new Date('2026-08-28T22:00:00Z'),
+      pop: 0.99,
+      precipitationMm: 12,
+    });
+
+    const result = decide({ weather, hourly: [past, beyondWindow, nearFuture] });
+
+    expect(result.find(item => item.kind === 'rain')).toMatchObject({
+      kind: 'rain',
+      severity: 'moderate',
+      time: nearFuture.time,
+      amount: 2,
+    });
+  });
+
+  it('excludes the current instant, the exact 12-hour boundary, and invalid timestamps', () => {
+    const atNow = point({
+      time: new Date(decisionNow),
+      temp: 48,
+      apparentTemperature: 52,
+      windSpeed: 28,
+      windGust: 32,
+      pop: 0.99,
+      precipitationMm: 12,
+    });
+    const inside = point({
+      time: new Date(decisionNow.getTime() + 6 * 60 * 60 * 1000),
+      temp: 20,
+      apparentTemperature: 20,
+      humidity: 45,
+      windSpeed: 2,
+      windGust: 3,
+      pop: 0.05,
+      precipitationMm: 0,
+      uvIndex: 1,
+      visibility: 10000,
+      weatherCode: 1,
+    });
+    const atEnd = point({
+      time: new Date(decisionNow.getTime() + 12 * 60 * 60 * 1000),
+      temp: -25,
+      apparentTemperature: -30,
+      windSpeed: 28,
+      windGust: 32,
+      pop: 0.99,
+      precipitationMm: 12,
+    });
+    const invalid = point({ time: new Date(Number.NaN), pop: 0.99, precipitationMm: 12 });
+
+    const result = decide({ weather, hourly: [atNow, atEnd, invalid, inside] });
+
+    expect(result.some(item => ['rain', 'wind', 'heat', 'cold'].includes(item.kind))).toBe(false);
+    expect(result.some(item => item.kind === 'unavailable')).toBe(false);
+  });
+
   it('uses gusts and apparent temperature for wind and heat decisions', () => {
-    const result = getWeatherDecisions({
+    const result = decide({
       weather,
       hourly: [point({ temp: 30, apparentTemperature: 41, windSpeed: 5, windGust: 20 })],
     });
@@ -53,7 +125,7 @@ describe('getWeatherDecisions', () => {
   });
 
   it('keeps poor current air quality separate from a future outdoor weather window', () => {
-    const result = getWeatherDecisions({
+    const result = decide({
       weather,
       hourly: [point({ temp: 20, pop: 0.05, windSpeed: 2 })],
       airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 30, pm10: 50, o3: 70, meta: weather.meta },
@@ -64,7 +136,7 @@ describe('getWeatherDecisions', () => {
 
   it('does not attach a future hour to heat that is only true right now', () => {
     const futureTime = new Date('2026-08-28T15:00:00Z');
-    const result = getWeatherDecisions({
+    const result = decide({
       weather: { ...weather, feelsLike: 38 },
       hourly: [point({ time: futureTime, temp: 30, apparentTemperature: 31 })],
     });
@@ -78,7 +150,7 @@ describe('getWeatherDecisions', () => {
 
   it('does not attach a future hour to cold that is only true right now', () => {
     const futureTime = new Date('2026-08-28T15:00:00Z');
-    const result = getWeatherDecisions({
+    const result = decide({
       weather: { ...weather, feelsLike: -4 },
       hourly: [point({ time: futureTime, temp: 4, apparentTemperature: 2 })],
     });
@@ -91,7 +163,7 @@ describe('getWeatherDecisions', () => {
   });
 
   it('treats UV input as a modeled next-24-hour maximum when richer hourly UV is absent', () => {
-    const result = getWeatherDecisions({
+    const result = decide({
       weather,
       hourly: [],
       uvIndexMax: 7.2,
@@ -100,7 +172,7 @@ describe('getWeatherDecisions', () => {
   });
 
   it('uses rich hourly UV when it is stronger than the context maximum', () => {
-    const result = getWeatherDecisions({
+    const result = decide({
       weather,
       hourly: [point({ uvIndex: 9 })],
       uvIndexMax: 6,
@@ -112,11 +184,11 @@ describe('getWeatherDecisions', () => {
     const hourly = [
       point({ temp: 20, apparentTemperature: undefined, humidity: undefined, windSpeed: undefined }),
     ];
-    const calmDryCurrent = getWeatherDecisions({
+    const calmDryCurrent = decide({
       weather: { ...weather, humidity: 20, windSpeed: 0 },
       hourly,
     });
-    const humidWindyCurrent = getWeatherDecisions({
+    const humidWindyCurrent = decide({
       weather: { ...weather, humidity: 95, windSpeed: 18 },
       hourly,
     });
@@ -127,7 +199,7 @@ describe('getWeatherDecisions', () => {
   });
 
   it('reports unavailable near-term guidance when no hourly forecast exists', () => {
-    const result = getWeatherDecisions({ weather, hourly: [] });
+    const result = decide({ weather, hourly: [] });
     expect(result).toEqual([{ kind: 'unavailable', severity: 'info' }]);
   });
 });

@@ -74,3 +74,9 @@ If a workflow job invokes a script stored in the repository, that job must check
 - Keep score caps and plan eligibility thresholds sourced from the same `HAVA81_ABSOLUTE_SAFETY_LIMITS` object: apparent temperature >=43°C or <=-20°C; hourly precipitation >=7.5 mm; sustained wind >=20 m/s or gust >=25 m/s; OpenWeather AQI 5 only when its evidence is fresh. Do not infer an AQI gate from stale/missing optional evidence.
 - Independently gate finite visibility below 1,000 m and high-impact WMO codes 65, 66, 67, 75, 82, 85, 86, 95, 96 and 99. Missing visibility remains unknown rather than being treated as zero.
 - Preserve the distinction between modeled decision guidance and official warnings; these gates are conservative product eligibility rules, not an MGM alert feed or a safety guarantee.
+
+
+## 2026-10-23 — near-term decision windows must use the visible evaluation clock
+- The “next 12 hours” decision window is anchored to the evaluation time supplied by the visible decision-field clock, not the first hourly sample. Include only finite forecast timestamps strictly after `now` and strictly before `now + 12 hours`; the current instant and exact end boundary are excluded.
+- Sort eligible samples chronologically after filtering. Invalid `Date` values are unavailable evidence and must not participate in risk selection. Current-condition risks are evaluated independently so filtering expired forecast points does not suppress a real current observation.
+- Keep tests deterministic by injecting `now` for domain assertions and generating App integration hourly samples relative to the test run rather than pinning them to a date that eventually becomes historical.
