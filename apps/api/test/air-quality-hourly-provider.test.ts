@@ -38,6 +38,7 @@ test('Open-Meteo air-quality adapter rejects inconsistent, empty and failed resp
   const cases: Array<[unknown, number, string]> = [
     [{ hourly: { time: [1, 2], european_aqi: [10] } }, 200, 'INVALID_AIR_QUALITY_HOURLY_PROVIDER_RESPONSE'],
     [{ hourly: { time: [2, 1], european_aqi: [10, 11] } }, 200, 'INVALID_AIR_QUALITY_HOURLY_PROVIDER_RESPONSE'],
+    [{ hourly: { time: [8_640_000_000_001], european_aqi: [10] } }, 200, 'INVALID_AIR_QUALITY_HOURLY_PROVIDER_RESPONSE'],
     [{ hourly: { time: [1, 2], european_aqi: [null, null] } }, 200, 'EMPTY_AIR_QUALITY_HOURLY_PROVIDER_RESPONSE'],
     [{ nope: true }, 200, 'INVALID_AIR_QUALITY_HOURLY_PROVIDER_RESPONSE'],
     [{}, 500, 'AIR_QUALITY_HOURLY_PROVIDER_ERROR'],
