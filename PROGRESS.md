@@ -176,3 +176,25 @@
 
 ### 🚀 Sıradaki Adım
 - PR'da self-hosted CI/CD ve CodeQL'ı doğrula, onay sonrası main'e al, main Docker publish sonucunda Buildx kurulumu ve publish'i teyit et.
+
+
+## [Hava81 #04] Linear gradyan taban kontrast koruması
+
+### 🎯 Tamamlanan Geliştirmeler
+- Güncel main `09205ff2` üzerinden izole `test/hava81-04-contrast-parser-20261009` worktree oluşturuldu.
+- `e2e/mobile-dock-contrast.spec.ts` yalnızca CSS `linear-gradient(...)` taban katmanının opak RGB duraklarını kontrast testine dahil edecek şekilde daraltıldı. Radyal overlay'deki renkler taban durak sayılamaz; taban linear gradient zorunlu ve onun içinde `rgba(...)` varsa test bilinçli olarak başarısız olur.
+- Üretim arayüzü CSS/DOM değiştirilmedi. Playwright 320px/%200 İngilizce light/dark negatif fixture + normal görüntü **1/1 PASS**, `npm run type-check`, `npm run lint`, `npm run build` başarılı.
+
+### 📸 Görsel Kanıtlar
+- `test-results/playwright-runs/` dizininde normal light/dark dock baseline ekran görüntüleri üretildi; screenshot öncesi forecast atlas görünür ve loading card sayısı sıfır.
+
+### 🚀 Sıradaki Adım
+- Bu dar kapsamlı test güçlendirmesini GitHub PR ile self-hosted CI/CD ve CodeQL doğrulamasına geçir. Son HEAD kontrollerinin tümü yeşil olmadan merge yapma.
+
+## 2026-10-23 — PR #1316 rebase onto current main
+
+- Rebased the original opaque-linear-gradient contrast test and its append-only progress entry onto `origin/main` `a569ff567999aacf17bbfd18e0e3141e30580f71`; preserved the intervening Docker Hub/Buildx progress records and appended this checkpoint.
+- Updated merge-base context naturally: the current main dock has four buttons, and the rebased test retains the four-button assertion while requiring a real linear base and rejecting translucent stops in that base.
+- Local gates on the rebased tree: `npm run type-check`, `npm run lint`, `npm run build`, and `git diff --check` all pass.
+- Local Playwright attempt is blocked before browser launch because Playwright Chromium headless shell is not installed at `/home/chatgpt/.cache/ms-playwright/chromium_headless_shell-1234/chrome-linux/headless_shell`. No system browser workaround was used; hosted Browser flows CI must validate this exact head.
+- Current rebased code commit: `d70726598`; append-only docs commit: `679f4be90`. Before pushing, read the remote PR branch head and update it only with an explicit force-with-lease against the exact old SHA.
