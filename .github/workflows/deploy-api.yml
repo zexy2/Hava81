@@ -5,8 +5,8 @@ name: API deploy (Oracle)
 # main pushes that touch the API or its deployment files. The public
 # /api/v1/health revision must equal the pushed commit afterwards.
 #
-# Without the ORACLE_SSH_* secrets the image is still published, the deploy job
-# is skipped with a warning and the run stays green.
+# Missing required ORACLE_SSH_* secrets fail the workflow explicitly. Publishing
+# an image without deploying it is not a successful production release.
 
 on:
   push:
@@ -15,6 +15,8 @@ on:
       - 'apps/api/**'
       - 'deploy/oracle/**'
       - '.github/workflows/deploy-api.yml'
+      - 'scripts/check-api-deploy-secrets.sh'
+      - 'scripts/test-api-deploy-secrets.sh'
   workflow_dispatch:
 
 env:
@@ -55,6 +57,7 @@ jobs:
           bash scripts/test-api-stable-slot-plan.sh
           bash scripts/test-api-image-source-plan.sh
           bash scripts/test-api-ci-deploy-entry.sh
+          bash scripts/test-api-deploy-secrets.sh
           python3 deploy/oracle/test_validate_api_readiness.py
 
   image:
@@ -133,22 +136,11 @@ jobs:
       ORACLE_SSH_PORT: ${{ secrets.ORACLE_SSH_PORT }}
       ORACLE_DEPLOY_DIR: ${{ vars.ORACLE_DEPLOY_DIR }}
     steps:
-      - name: Check deploy secrets
+      - name: Check deploy secrets (fail closed)
         id: secrets
-        run: |
-          missing=()
-          for name in ORACLE_SSH_HOST ORACLE_SSH_USER ORACLE_SSH_KEY ORACLE_SSH_KNOWN_HOSTS; do
-            [[ -n "${!name}" ]] || missing+=("$name")
-          done
-          if (( ${#missing[@]} )); then
-            msg="Oracle API deploy skipped: missing secrets ${missing[*]}. Image ${{ needs.image.outputs.image }} was published; deploy it by hand (deploy/oracle/README.md)."
-            echo "::warning title=API deploy skipped::$msg"
-            echo "### API deploy skipped" >>"$GITHUB_STEP_SUMMARY"
-            echo "$msg" >>"$GITHUB_STEP_SUMMARY"
-            echo "enabled=false" >>"$GITHUB_OUTPUT"
-          else
-            echo "enabled=true" >>"$GITHUB_OUTPUT"
-          fi
+        env:
+          HAVA81_API_IMAGE: ${{ needs.image.outputs.image }}
+        run: bash scripts/check-api-deploy-secrets.sh
 
       - name: Configure SSH
         if: steps.secrets.outputs.enabled == 'true'
