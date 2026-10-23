@@ -32,7 +32,7 @@ export const getPlanSnapshot = ({
   const profile = getPlanProfile(intent);
   const duration =
     Number.isFinite(durationMinutes) && (durationMinutes as number) > 0
-      ? Math.min(12 * 60, Math.round(durationMinutes as number))
+      ? Math.max(1, Math.min(12 * 60, Math.round(durationMinutes as number)))
       : profile.durationMinutes;
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
   const freshAirQuality =

@@ -392,6 +392,22 @@ describe('Plan v3 snapshot edge cases', () => {
     ).toBe(true);
   });
 
+  it('keeps a positive sub-minute duration from rounding down to an empty plan', () => {
+    const snapshot = getPlanSnapshot({
+      intent: 'walk',
+      weather,
+      hourly: [point(1), point(2)],
+      durationMinutes: 0.4,
+      now: NOW,
+    });
+
+    expect(snapshot.durationMinutes).toBe(1);
+    expect(snapshot.windows.length).toBeGreaterThan(0);
+    expect(
+      snapshot.windows.every(window => window.end.getTime() - window.start.getTime() === 60_000)
+    ).toBe(true);
+  });
+
   it('returns a low-confidence empty snapshot when no future hourly samples exist', () => {
     const snapshot = getPlanSnapshot({ intent: 'walk', weather, hourly: [], now: NOW });
 
