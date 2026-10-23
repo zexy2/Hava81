@@ -13,6 +13,7 @@ import type {
   DailyForecast,
   HourlyForecast,
   AirQuality,
+  AirQualityHourly,
   Coordinates,
   ForecastMeta,
   ContextSignals,
@@ -39,6 +40,7 @@ interface UseForecastReturn {
   displayHourly: HourlyForecast[];
   displayMeta: ForecastMeta | null;
   airQuality: AirQuality | null;
+  airQualityHourly: AirQualityHourly | null;
   contextSignals: ContextSignals | null;
   meta: ForecastMeta | null;
   isLoading: boolean;
@@ -53,6 +55,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [displayHourly, setDisplayHourly] = useState<HourlyForecast[]>([]);
   const [displayMeta, setDisplayMeta] = useState<ForecastMeta | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
+  const [airQualityHourly, setAirQualityHourly] = useState<AirQualityHourly | null>(null);
   const [contextSignals, setContextSignals] = useState<ContextSignals | null>(null);
   const [meta, setMeta] = useState<ForecastMeta | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +63,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const airQualityRef = useRef<AirQuality | null>(null);
+  const airQualityHourlyRef = useRef<AirQualityHourly | null>(null);
   const contextSignalsRef = useRef<ContextSignals | null>(null);
   const lastSuccessfulRequestRef = useRef<{
     lat: number;
@@ -78,7 +82,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   );
 
   useEffect(() => {
-    if (!airQuality && !contextSignals) return undefined;
+    if (!airQuality && !airQualityHourly && !contextSignals) return undefined;
 
     let timerId: number | undefined;
 
@@ -92,6 +96,17 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         if (!freshness.fresh || freshness.expiresInMs === null) {
           setAirQuality(current => (current === airQuality ? null : current));
           if (airQualityRef.current === airQuality) airQualityRef.current = null;
+          droppedInvalidEvidence = true;
+        } else {
+          deadlines.push(now + freshness.expiresInMs);
+        }
+      }
+
+      if (airQualityHourly) {
+        const freshness = getOptionalEvidenceFreshness(airQualityHourly.meta, now);
+        if (!freshness.fresh || freshness.expiresInMs === null) {
+          setAirQualityHourly(current => (current === airQualityHourly ? null : current));
+          if (airQualityHourlyRef.current === airQualityHourly) airQualityHourlyRef.current = null;
           droppedInvalidEvidence = true;
         } else {
           deadlines.push(now + freshness.expiresInMs);
@@ -127,7 +142,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [airQuality, contextSignals]);
+  }, [airQuality, airQualityHourly, contextSignals]);
 
   const fetch = useCallback(
     async (coords: Coordinates, cityName?: string) => {
@@ -152,6 +167,8 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         setDisplayMeta(null);
         setAirQuality(null);
         airQualityRef.current = null;
+        setAirQualityHourly(null);
+        airQualityHourlyRef.current = null;
         setContextSignals(null);
         contextSignalsRef.current = null;
         setMeta(null);
@@ -163,9 +180,12 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         // Faz 3.2: tek `/weather/bundle` isteği. Şehir sayfası saatlik tahmini önceden
         // istediyse (bootstrap) o parça bundle'dan çıkarılır ve hazır yanıt kullanılır.
         const useBootstrapHourly = weatherService.hasBootstrapHourly(language);
-        const bundleParts: readonly ForecastBundlePart[] = useBootstrapHourly
-          ? FORECAST_BUNDLE_PARTS.filter(part => part !== 'hourly')
-          : FORECAST_BUNDLE_PARTS;
+        const bundleParts: readonly ForecastBundlePart[] = [
+          ...(useBootstrapHourly
+            ? FORECAST_BUNDLE_PARTS.filter(part => part !== 'hourly')
+            : FORECAST_BUNDLE_PARTS),
+          'airQualityHourly',
+        ];
         const bootstrapHourlyRequest = useBootstrapHourly
           ? settle(weatherService.getHourlyForecast(lat, lon, language, { signal }))
           : null;
@@ -209,6 +229,18 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           bundle => bundle.context,
           () => weatherService.getContextSignals(lat, lon, marine, { signal })
         );
+        const airQualityHourlyRequest = bundleOutcome.then(outcome => {
+          if (outcome.kind === 'bundle') {
+            return outcome.bundle.airQualityHourly ?? {
+              ok: false as const,
+              error: new Error('Hourly air-quality part was not returned'),
+            };
+          }
+          return {
+            ok: false as const,
+            error: outcome.kind === 'error' ? outcome.error : new BundleUnavailableError('unsupported'),
+          };
+        });
 
         const applyBaseline = (data: Awaited<ReturnType<typeof weatherService.getForecast>>) => {
           setDaily(data.daily);
@@ -272,7 +304,11 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         // bağlam sinyalleri arka planda tamamlanır, iskelet onları beklemez.
         setIsLoading(false);
 
-        const [aqResult, contextResult] = await Promise.all([airQualityRequest, contextRequest]);
+        const [aqResult, contextResult, hourlyAqResult] = await Promise.all([
+          airQualityRequest,
+          contextRequest,
+          airQualityHourlyRequest,
+        ]);
         if (requestId !== requestIdRef.current) return;
         if (aqResult.ok) {
           setAirQuality(aqResult.value);
@@ -295,6 +331,17 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
           setContextSignals(null);
           contextSignalsRef.current = null;
         }
+        if (hourlyAqResult.ok) {
+          setAirQualityHourly(hourlyAqResult.value);
+          airQualityHourlyRef.current = hourlyAqResult.value;
+        } else if (
+          isSameSuccessfulRequest &&
+          (!airQualityHourlyRef.current ||
+            !getOptionalEvidenceFreshness(airQualityHourlyRef.current.meta).fresh)
+        ) {
+          setAirQualityHourly(null);
+          airQualityHourlyRef.current = null;
+        }
       } catch (err) {
         if (requestId !== requestIdRef.current) return;
         setError(err instanceof Error ? err : new Error('Tahmin alınamadı'));
@@ -315,6 +362,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
     displayHourly,
     displayMeta,
     airQuality,
+    airQualityHourly,
     contextSignals,
     meta,
     isLoading,

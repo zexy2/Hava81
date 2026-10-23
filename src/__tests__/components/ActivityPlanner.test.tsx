@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ActivityPlanner } from '../../components/hava81/ActivityPlanner';
 import { SettingsProvider } from '../../context';
-import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -313,6 +313,31 @@ describe('ActivityPlanner time range', () => {
     expect(
       screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 3°C daha erken başlar.')
     ).toBeInTheDocument();
+  });
+
+  it('discloses the modeled hourly AQI source when that optional evidence is fresh', () => {
+    const airQualityHourly: AirQualityHourly = {
+      hours: [{ time: hourly[0].time, europeanAqi: 82 }],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+        fetchedAt: new Date(),
+        freshForSeconds: 1800,
+      },
+    };
+    render(
+      <SettingsProvider>
+        <ActivityPlanner
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={freshForecastMeta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)).toBeInTheDocument();
+    expect(screen.getByText(/resmî uyarı değil model rehberliğidir/i)).toBeInTheDocument();
   });
 
   it('names the sensitivity select from its visible label and describes it with the help text (Faz 3.4)', () => {

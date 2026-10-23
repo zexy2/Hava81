@@ -345,6 +345,10 @@ const App: React.FC = () => {
     forecast.airQuality && getOptionalEvidenceFreshness(forecast.airQuality.meta).fresh
       ? forecast.airQuality
       : undefined;
+  const freshAirQualityHourly =
+    forecast.airQualityHourly && getOptionalEvidenceFreshness(forecast.airQualityHourly.meta).fresh
+      ? forecast.airQualityHourly
+      : undefined;
 
   return (
     <>
@@ -682,6 +686,7 @@ const App: React.FC = () => {
                         weather={weather}
                         hourly={forecast.hourly}
                         airQuality={freshAirQuality}
+                        airQualityHourly={freshAirQualityHourly}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
                       />
                     </Suspense>

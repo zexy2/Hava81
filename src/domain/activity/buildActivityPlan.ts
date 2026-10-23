@@ -1,4 +1,6 @@
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
+import { europeanAqiToOpenWeatherIndex } from '../../utils/airQuality';
 import { isRecommendableHour } from '../decision/eligibility';
 import { findBestWindowRange } from '../decision/bestWindowRange';
 import { AQI_POOR, rainLevel } from '../decision/thresholds';
@@ -226,6 +228,8 @@ export interface BuildActivityPlanInput {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  /** Fresh Open-Meteo European AQI samples; only exact matching hours are used. */
+  airQualityHourly?: AirQualityHourly;
   sensitivity?: TemperatureSensitivity;
   preferredStart?: string;
   preferredEnd?: string;
@@ -291,6 +295,7 @@ export const buildActivityPlan = ({
   weather,
   hourly,
   airQuality,
+  airQualityHourly,
   sensitivity = 'balanced',
   preferredStart,
   preferredEnd,
@@ -314,12 +319,23 @@ export const buildActivityPlan = ({
         },
       ];
 
-  // Same rule as the daily plan: the current AQI reading applies to every slot (no hourly
-  // AQI forecast yet), so run/children air weights are live and no hour is favoured by it.
+  // Prefer fresh, exact-hour European AQI. Never interpolate between AQI timestamps; when a
+  // matching hourly sample is unavailable, retain the existing fresh current-reading fallback.
   // Laundry drying does not depend on air quality, so it keeps ignoring AQI.
-  const airQualityIndex = activity === 'laundry' ? undefined : airQuality?.aqi;
+  const freshHourlyAirQuality =
+    airQualityHourly && getOptionalEvidenceFreshness(airQualityHourly.meta).fresh
+      ? airQualityHourly
+      : undefined;
+  const hourlyAqiByTime = new Map<number, number>();
+  for (const sample of freshHourlyAirQuality?.hours ?? []) {
+    if (!(sample.time instanceof Date) || !Number.isFinite(sample.time.getTime())) continue;
+    const riskIndex = europeanAqiToOpenWeatherIndex(sample.europeanAqi);
+    if (riskIndex !== undefined) hourlyAqiByTime.set(sample.time.getTime(), riskIndex);
+  }
   const slots: ActivityWindowScore[] = points.map(point => {
     const precipitationProbability = 'pop' in point ? point.pop : undefined;
+    const hourlyAqi = hourlyAqiByTime.get(point.time.getTime());
+    const airQualityIndex = activity === 'laundry' ? undefined : hourlyAqi ?? airQuality?.aqi;
     const base = scoreWeatherWindow({
       time: point.time,
       temperature: point.temp,

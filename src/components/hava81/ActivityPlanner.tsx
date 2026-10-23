@@ -9,7 +9,7 @@ import {
 import type { ActivityKind } from '../../domain/activity/types';
 import type { DecisionReasonCode } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
-import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './ActivityPlanner.css';
@@ -18,6 +18,7 @@ interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
 }
 
@@ -96,7 +97,7 @@ const reasonKey: Record<DecisionReasonCode, string> = {
   'severe-weather': 'severeWeather',
 };
 
-export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: Props) {
+export function ActivityPlanner({ weather, hourly, airQuality, airQualityHourly, forecastMeta }: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
@@ -118,6 +119,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
               weather,
               hourly,
               airQuality,
+              airQualityHourly,
               sensitivity: profile.temperatureSensitivity,
               preferredStart: profile.activityStart,
               preferredEnd: profile.activityEnd,
@@ -126,6 +128,7 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
         : [],
     [
       airQuality,
+      airQualityHourly,
       freshness.fresh,
       hourly,
       profile.activities,
@@ -403,6 +406,13 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
         <p className="activity-planner__empty">{t('hava81.activities.empty')}</p>
       )}
       <p className="activity-planner__note">{t('hava81.activities.note')}</p>
+      {airQualityHourly ? (
+        <p className="activity-planner__note">
+          {t('hava81.activities.hourlyAqiSource', {
+            source: airQualityHourly.meta.attribution ?? airQualityHourly.meta.provider,
+          })}
+        </p>
+      ) : null}
     </section>
   );
 }
