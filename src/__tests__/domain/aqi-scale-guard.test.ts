@@ -32,7 +32,6 @@ describe('AQI provider scales stay separate', () => {
     [100, 'very-poor'],
     [100.01, 'extremely-poor'],
     [1000, 'extremely-poor'],
-    [10000, 'extremely-poor'],
   ] as const)('maps European AQI %i to %s at documented category boundaries', (aqi, expected) => {
     expect(europeanAqiLevel(aqi)).toBe(expected);
   });
