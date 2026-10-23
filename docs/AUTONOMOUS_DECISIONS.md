@@ -28,3 +28,10 @@
 
 ## 2026-10-23 — GitHub Actions repository-script prerequisites
 If a workflow job invokes a script stored in the repository, that job must check out the exact workflow SHA before running the script. Use `persist-credentials: false` when the job does not need authenticated Git operations, and keep a workflow contract test that asserts checkout precedes the script. A failed gate before SSH/deploy must leave the prior production revision serving and must not be described as a successful deploy.
+
+
+## 2026-10-23 — optional hourly AQI attribution and plan-duration normalization
+- Show Open-Meteo/CAMS hourly AQI attribution only while the optional evidence is fresh and at least one valid sample has an exact timestamp match in the forecast slots the activity planner scores. Do not imply that a source influenced the plan when its samples are stale, invalid, or unmatched. Recompute visible guidance when evidence expires while the panel remains open.
+- Never interpolate European AQI timestamps. If no exact hourly match is available, use only the existing fresh current-reading fallback; keep laundry scoring independent of AQI.
+- A finite positive custom plan duration that rounds below one minute is clamped to one minute, not zero. Nonpositive/nonfinite durations retain the intent profile default; the upper bound remains 12 hours.
+- When a main commit contains only docs/dependency metadata, the API may correctly remain on an older API runtime SHA; verify the actual API health revision and confirm no API runtime files changed before treating that difference as drift.

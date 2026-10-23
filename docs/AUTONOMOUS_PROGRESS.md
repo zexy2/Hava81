@@ -1,6 +1,6 @@
 # Hava81 autonomous progress
 
-Updated: 2026-10-23 06:48 TRT (03:48 UTC)
+Updated: 2026-10-23 12:50 TRT (09:50 UTC)
 
 ## Production
 - Last observer snapshot: 2026-10-23T03:45:22.983756Z.
@@ -96,3 +96,48 @@ Do not disable the automation. Keep API primary on 4002 and 4001 as rollback/can
 6. After the AQI changes settle, integrate the evidence-aware plan engine into the activity UI in a separate branch with keyboard/mobile/browser tests and clear empty/low-confidence states.
 
 Do not disable or pause the automation. Preserve all prior valid checkpoint entries.
+
+
+## 2026-10-23 12:50 TRT — AQI activity guidance rebased; plan-duration guard added
+
+### Production and observer (directly re-verified)
+- SentinelX agent access returned `agent_offline`; used the authenticated Zeki SSH Gateway for read-only status, public smoke, and GitHub CLI queries. The observer remains read-only.
+- Observer snapshot `collected_at=2026-10-23T09:50:00.239833Z`: production `HEALTHY`, no issues; API readiness HTTP 200, CORS OK, seven boot assets healthy, Nginx API port 4002, disk 77.1% used / 22.1 GiB free. Frontend revision is consistent: root, `/izmir/`, and main all report `281e6efd6cd09c16af38d12948263fa3e6dbb59d`.
+- Main CI/CD run #3353 (`39933247877`), CodeQL (`39933247886`), and Ops script contracts (`39933247768`) all succeeded for SHA `281e6efd6cd09c16af38d12948263fa3e6dbb59d`. GitHub Pages is deployed to that SHA.
+- API `/api/v1/health` returns HTTP 200, revision `5f7b88abb55165023437f2b3f3ced70badbce0db`. This is expected: main's later commits were docs/dependency metadata and did not change API runtime code. Keep API primary on port 4002 and 4001 as rollback/canary.
+- Live AQI bundle smoke at `39.9334,32.8597`: HTTP 200, Open-Meteo / CAMS attribution, 100 hourly samples at 1-hour cadence, 1,800-second freshness, zero invalid/negative AQI samples and no part errors. CORS preflight returns 204 with `Access-Control-Allow-Origin: https://hava81.zekiakgul.dev`. Actual HTML-linked boot assets (`hava81-mark.svg`, `hava81-favicon.ico`, `apple-touch-icon.png`, `manifest.json`, robots, sitemap, current CSS) all return HTTP 200.
+
+### PR #1365 — fresh hourly European AQI activity guidance
+- PR: https://github.com/zexy2/Hava81/pull/1365
+- Current remote head after explicit-lease rebase: `7a822af1cd36f4eec22dd87403834829e045f4ec`; base `281e6efd6cd09c16af38d12948263fa3e6dbb59d`; mergeable at last direct query. Remote branch was checked as `d0b282bd791d23c9e39f8c0389719a0b7dda9703` immediately before `--force-with-lease`; push succeeded and branch is clean.
+- Added stale/missing/exact-hour AQI source-attribution checks, hides attribution when no matching valid forecast hour can use it, re-renders when optional AQI evidence expires, and removed an unnecessary `useMemo` dependency that produced a lint warning.
+- Local gates: type-check, lint, 43 targeted tests, full `npm run test:ci`, production build, and `git diff --check` all passed on the updated source. Full-suite run `3abba054e352a15f988ee203` exited 0 before rebase; post-rebase type-check/lint/targeted tests/build job `d5c68a5d0055cbd4972e2a77` exited 0.
+- Exact-head hosted runs: CI/CD #3355 (`39934612528`) is in progress; CodeQL #2136 (`39934612529`) succeeded; Ops script contracts #95 (`39934612581`) succeeded. Do not merge until #3355 is green and current head/mergeability are rechecked.
+
+### PR #1368 — positive plan-duration clamp
+- PR: https://github.com/zexy2/Hava81/pull/1368
+- Head `27abb59950abf01378dbf859897c60895e349d0a`, base `281e6efd6cd09c16af38d12948263fa3e6dbb59d`; mergeable at last direct query.
+- Fix: positive custom durations are clamped to a minimum of one minute after rounding, so a value such as `0.4` minutes cannot become zero and silently suppress all windows. Regression test verifies normalized duration and exact window length.
+- Local gates: type-check, lint, full `npm run test:ci`, build, and `git diff --check` passed; focused plan engine tests are 20/20. Full-suite run `347ab7a7463d6c58df027916` exited 0.
+- Exact-head hosted runs: CI/CD #3354 (`39934570261`) is in progress; CodeQL #2135 (`39934570232`) succeeded; Ops script contracts #94 (`39934570420`) succeeded. Recheck current head/mergeability before merge.
+
+### Current branches/worktrees to preserve
+- Pending PR #1365 worktree: `/tmp/hava81-hourly-aqi-activity-20261023-1100`, branch `automation/hava81-hourly-aqi-activity-20261023-1100`, clean at `7a822af1cd36f4eec22dd87403834829e045f4ec`.
+- Pending PR #1368 worktree: `/home/chatgpt/hava81-plan-ui-evidence-20261023-1238`, branch `automation/hava81-plan-ui-evidence-20261023-1238`, clean at `27abb59950abf01378dbf859897c60895e349d0a`.
+- This docs-only checkpoint worktree: `/home/chatgpt/hava81-run-checkpoint-20261023-1250`, branch `automation/hava81-run-checkpoint-20261023-1250`, based on main `281e6efd6cd09c16af38d12948263fa3e6dbb59d`.
+- Preserve the older dirty P1.3 worktree `/home/chatgpt/hava81-p1-3-plan-engine-20261023-0943` and unrelated dirty UI worktree `/home/chatgpt/hava81-rain-detail-2135`; do not reset, clean, or reuse them for another branch.
+
+### Exact pending runs / next action
+- PR #1365 head `7a822af1cd36f4eec22dd87403834829e045f4ec`: CI/CD run `39934612528` (#3355), currently in progress. Poll it; if green, verify exact head and mergeability, merge normally, then monitor main deploy and production revision.
+- PR #1368 head `27abb59950abf01378dbf859897c60895e349d0a`: CI/CD run `39934570261` (#3354), currently in progress. Poll it; if green, verify exact head and mergeability, merge normally, then monitor main deploy and production revision.
+- Main SHA `281e6efd6cd09c16af38d12948263fa3e6dbb59d`; main CI/CD run `39933247877` (#3353) completed successfully. No production change is pending from that run.
+
+### Prioritized next queue
+1. Poll both exact-head CI/CD runs; merge each PR only when every required check is green and the current SHA/mergeability are directly re-verified. Do not wait idle for one PR while the other can progress.
+2. After PR #1365 lands, use the shared European-AQI normalizer to add exact-timestamp, freshness-aware hourly AQI to the P1.3 plan engine in a separate worktree; never interpolate samples or attribute stale evidence.
+3. Integrate the evidence-aware plan engine into the activity UI with clear empty/low-confidence states, source disclosure, mobile and keyboard tests, and browser validation.
+4. Re-run public production smoke after every main deploy: root, `/izmir/`, actual HTML-linked boot assets, API `/api/v1/health`, CORS, live hourly AQI bundle, and deployed revision equality. Keep port 4002 primary.
+5. Review old open PRs #1319, #1316, and #1294 only after checking current base, conflicts, and exact-head CI; do not merge stale heads blindly.
+6. Before the next runtime end, append the newest exact PR/run/SHA/worktree state and preserve all valid prior checkpoint entries.
+
+Do not disable or pause the automation. Never bypass platform write controls. Do not fabricate weather, UV, air-quality, or safety information.
