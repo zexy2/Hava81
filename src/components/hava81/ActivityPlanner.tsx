@@ -125,6 +125,7 @@ export function ActivityPlanner({
   const [, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
   const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
+  const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
   const plannedHourTimes = new Set(
     (hourly.length
       ? [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 48)
@@ -161,9 +162,11 @@ export function ActivityPlanner({
 
   useEffect(() => {
     const resyncFreshness = () => setFreshnessRevision(value => value + 1);
-    const expiries = [freshness.expiresInMs, hourlyAqiFreshness.expiresInMs].filter(
-      (value): value is number => value !== null
-    );
+    const expiries = [
+      freshness.expiresInMs,
+      hourlyAqiFreshness.expiresInMs,
+      currentAqiFreshness.expiresInMs,
+    ].filter((value): value is number => value !== null);
     const nextExpiryMs = expiries.length ? Math.min(...expiries) : null;
     const timeout =
       nextExpiryMs === null ? undefined : window.setTimeout(resyncFreshness, nextExpiryMs);
@@ -176,8 +179,11 @@ export function ActivityPlanner({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [
+    airQuality?.meta?.fetchedAt,
+    airQuality?.meta?.freshForSeconds,
     airQualityHourly?.meta?.fetchedAt,
     airQualityHourly?.meta?.freshForSeconds,
+    currentAqiFreshness.expiresInMs,
     forecastMeta,
     freshness.expiresInMs,
     hourlyAqiFreshness.expiresInMs,

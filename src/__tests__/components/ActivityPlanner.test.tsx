@@ -449,6 +449,58 @@ describe('ActivityPlanner time range', () => {
     }
   });
 
+  it('stops using current AQI fallback when that evidence expires while the planner stays open', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-29T08:00:00Z'));
+    try {
+      const airQuality = {
+        aqi: 5,
+        aqiLabel: 'Çok sağlıksız',
+        pm25: 90,
+        pm10: 120,
+        o3: 100,
+        meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 30 },
+      };
+      const airQualityHourly: AirQualityHourly = {
+        hours: [{ time: hourly[0].time, europeanAqi: 10 }],
+        meta: {
+          provider: 'Open-Meteo',
+          attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+          fetchedAt: new Date(),
+          freshForSeconds: 1800,
+        },
+      };
+      render(
+        <SettingsProvider>
+          <ActivityPlanner
+            weather={weather}
+            hourly={hourly}
+            airQuality={airQuality}
+            airQualityHourly={airQualityHourly}
+            forecastMeta={freshForecastMeta(1800)}
+          />
+        </SettingsProvider>
+      );
+
+      const runCard = screen.getByRole('heading', { name: 'Koşu' }).closest('.activity-card');
+      const runScore = () => Number.parseInt(runCard?.querySelector('.activity-card__score strong')?.textContent ?? '', 10);
+      const scoreBeforeExpiry = runScore();
+      expect(Number.isFinite(scoreBeforeExpiry)).toBe(true);
+      expect(scoreBeforeExpiry).toBeLessThan(80);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_101);
+      });
+
+      expect(runScore()).toBeGreaterThan(scoreBeforeExpiry);
+      expect(
+        screen.getByText(/güncel AQI yalnızca tazeyse kullanılır/i)
+      ).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('names the sensitivity select from its visible label and describes it with the help text (Faz 3.4)', () => {
     render(
       <SettingsProvider>
