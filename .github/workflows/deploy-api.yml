@@ -42,8 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -74,7 +74,7 @@ jobs:
     outputs:
       image: ${{ steps.name.outputs.image }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Resolve image name
         id: name
         run: |
@@ -140,7 +140,7 @@ jobs:
     steps:
       # The secret gate is a repository script, so this job must check out the
       # exact workflow SHA before invoking it. Keep credentials unpersisted.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Check deploy secrets (fail closed)
