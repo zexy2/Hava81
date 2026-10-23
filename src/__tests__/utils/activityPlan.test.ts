@@ -150,6 +150,43 @@ describe('activity plans', () => {
     expect(withStale.reasons).toEqual(withoutHourly.reasons);
   });
 
+  it('ignores stale or out-of-range current AQI instead of reusing it for future hours', () => {
+    const points = hourly([20, 20, 20], [0, 0, 0], [2, 2, 2]);
+    const staleAir = {
+      aqi: 5,
+      aqiLabel: 'Bilinmiyor',
+      pm25: 40,
+      pm10: 60,
+      o3: 80,
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date(Date.now() - 60 * 60 * 1000),
+        freshForSeconds: 300,
+      },
+    };
+    const withoutAir = buildActivityPlan({ activity: 'run', weather, hourly: points });
+    const withStaleAir = buildActivityPlan({
+      activity: 'run',
+      weather,
+      hourly: points,
+      airQuality: staleAir,
+    });
+    const withInvalidAir = buildActivityPlan({
+      activity: 'run',
+      weather,
+      hourly: points,
+      airQuality: { ...staleAir, aqi: 99, meta: { ...weather.meta, freshForSeconds: 300 } },
+    });
+
+    expect(withStaleAir.score).toBe(withoutAir.score);
+    expect(withStaleAir.reasons).toEqual(withoutAir.reasons);
+    expect(withInvalidAir.score).toBe(withoutAir.score);
+    expect(withInvalidAir.reasons).toEqual(withoutAir.reasons);
+    expect(
+      withStaleAir.slots.every(slot => !slot.impacts.some(impact => impact.factor === 'air-quality'))
+    ).toBe(true);
+  });
+
   it('lowers the running score when the current AQI is poor (AQI 4)', () => {
     const points = hourly([14, 14, 14]);
     const air = { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 80, meta: weather.meta };

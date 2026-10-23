@@ -326,6 +326,14 @@ export const buildActivityPlan = ({
     airQualityHourly && getOptionalEvidenceFreshness(airQualityHourly.meta).fresh
       ? airQualityHourly
       : undefined;
+  const freshCurrentAirQuality =
+    airQuality &&
+    getOptionalEvidenceFreshness(airQuality.meta).fresh &&
+    Number.isInteger(airQuality.aqi) &&
+    airQuality.aqi >= 1 &&
+    airQuality.aqi <= 5
+      ? airQuality
+      : undefined;
   const hourlyAqiByTime = new Map<number, number>();
   for (const sample of freshHourlyAirQuality?.hours ?? []) {
     if (!(sample.time instanceof Date) || !Number.isFinite(sample.time.getTime())) continue;
@@ -335,7 +343,8 @@ export const buildActivityPlan = ({
   const slots: ActivityWindowScore[] = points.map(point => {
     const precipitationProbability = 'pop' in point ? point.pop : undefined;
     const hourlyAqi = hourlyAqiByTime.get(point.time.getTime());
-    const airQualityIndex = activity === 'laundry' ? undefined : hourlyAqi ?? airQuality?.aqi;
+    const airQualityIndex =
+      activity === 'laundry' ? undefined : hourlyAqi ?? freshCurrentAirQuality?.aqi;
     const base = scoreWeatherWindow({
       time: point.time,
       temperature: point.temp,
