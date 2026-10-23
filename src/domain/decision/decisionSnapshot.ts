@@ -1,5 +1,6 @@
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
 import { buildDailyPlan } from './buildDailyPlan';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import type { BestWindowRange, DailyPlan } from './types';
 
 /**
@@ -29,11 +30,29 @@ export interface DecisionSnapshotInput {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
 const NO_AIR = {};
-const cache = new WeakMap<NormalizedWeatherData, WeakMap<HourlyForecast[], WeakMap<object, DecisionSnapshot>>>();
+const NO_HOURLY_AIR = {};
+interface DecisionSnapshotCacheEntry {
+  snapshot: DecisionSnapshot;
+  /** Optional AQI evidence makes a snapshot time-dependent; expire it with that evidence. */
+  expiresAt: number | null;
+}
+const cache = new WeakMap<
+  NormalizedWeatherData,
+  WeakMap<HourlyForecast[], WeakMap<object, WeakMap<object, DecisionSnapshotCacheEntry>>>
+>();
+
+const nextOptionalEvidenceExpiry = (input: DecisionSnapshotInput, now: number): number | null => {
+  const expiries = [
+    getOptionalEvidenceFreshness(input.airQuality?.meta, now).expiresInMs,
+    getOptionalEvidenceFreshness(input.airQualityHourly?.meta, now).expiresInMs,
+  ].filter((value): value is number => value !== null);
+  return expiries.length ? now + Math.min(...expiries) : null;
+};
 
 export const next24hRange = (hourly: HourlyForecast[]): { min: number; max: number } | null => {
   if (!hourly.length) return null;
@@ -47,8 +66,9 @@ export const buildDecisionSnapshot = ({
   weather,
   hourly,
   airQuality,
+  airQualityHourly,
 }: DecisionSnapshotInput): DecisionSnapshot => {
-  const plan = buildDailyPlan({ weather, hourly, airQuality });
+  const plan = buildDailyPlan({ weather, hourly, airQuality, airQualityHourly });
   return {
     plan,
     bestWindow: plan.nowOrLater.kind === 'similar' ? undefined : plan.bestWindowRange,
@@ -64,11 +84,21 @@ export const buildDecisionSnapshot = ({
 
 export const getDecisionSnapshot = (input: DecisionSnapshotInput): DecisionSnapshot => {
   const airKey = (input.airQuality as object | undefined) ?? NO_AIR;
+  const hourlyAirKey = (input.airQualityHourly as object | undefined) ?? NO_HOURLY_AIR;
   let byHourly = cache.get(input.weather);
   if (!byHourly) cache.set(input.weather, (byHourly = new WeakMap()));
   let byAir = byHourly.get(input.hourly);
   if (!byAir) byHourly.set(input.hourly, (byAir = new WeakMap()));
-  let snapshot = byAir.get(airKey);
-  if (!snapshot) byAir.set(airKey, (snapshot = buildDecisionSnapshot(input)));
+  let byHourlyAir = byAir.get(airKey);
+  if (!byHourlyAir) byAir.set(airKey, (byHourlyAir = new WeakMap()));
+  const now = Date.now();
+  const cached = byHourlyAir.get(hourlyAirKey);
+  if (cached && (cached.expiresAt === null || now < cached.expiresAt)) return cached.snapshot;
+
+  const snapshot = buildDecisionSnapshot(input);
+  byHourlyAir.set(hourlyAirKey, {
+    snapshot,
+    expiresAt: nextOptionalEvidenceExpiry(input, now),
+  });
   return snapshot;
 };

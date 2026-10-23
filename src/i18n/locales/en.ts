@@ -312,7 +312,7 @@ export const en = {
         title: 'What is moving this score?',
         stable: 'No material weather risk stands out in this score.',
         method:
-          'This score summarizes general outdoor suitability, time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap. The ≈− values in the breakdown are 12-hour weighted-average impacts; the final score also emphasizes the most difficult hours, so they are not items subtracted one-for-one from 100. Air quality is the current reading; with no hourly forecast it is applied equally to every hour.',
+          'This score summarizes general outdoor suitability, time-weights the next 12 hours, gives extra weight to the most difficult periods, and adds compound risk when hazards overlap. The ≈− values in the breakdown are 12-hour weighted-average impacts; the final score also emphasizes the most difficult hours, so they are not items subtracted one-for-one from 100. Air quality uses a fresh exact-hour European AQI sample when available; otherwise only a fresh current reading is used. Missing or stale evidence is not projected into future hours.',
       },
       confidence: {
         high: 'Rich hourly data',
@@ -347,8 +347,9 @@ export const en = {
         clear: 'No material weather risk stands out',
       },
       safetyNote: 'Weather-based decision support only; it is not a safety guarantee.',
+      hourlyAqiSource: 'Hourly air quality uses the {{source}} model only for exact matching forecast hours. Unmatched hours use the current AQI only while fresh; otherwise no AQI risk is inferred. This is modeled guidance, not an official warning.',
       methodDetails: 'Data coverage and method',
-      note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Current air quality is used only for the matching current hour and is not copied into future hours. If a field is unavailable, it falls back to the remaining verified signals with lower data coverage.',
+      note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Fresh European AQI samples are used only for forecast hours with an exact timestamp match. A fresh current reading is a fallback for unmatched hours; if both are unavailable or stale, no AQI risk is inferred. Other missing fields reduce data coverage rather than being invented.',
     },
     commute: {
       eyebrow: 'Personal routine',

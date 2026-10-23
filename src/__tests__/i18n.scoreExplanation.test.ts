@@ -10,9 +10,11 @@ describe('Hava81 score explanation copy', () => {
     expect(en.hava81.dailyPlan.explain.method).toContain('subtracted one-for-one from 100');
   });
 
-  it('says the air-quality reading is current and applied to every hour (plan v3 Faz 0.2)', () => {
-    expect(tr.hava81.dailyPlan.explain.method).toContain('Hava kalitesi anlık ölçümdür');
-    expect(en.hava81.dailyPlan.explain.method).toContain('Air quality is the current reading');
+  it('uses exact-hour AQI when fresh and never projects stale air-quality evidence', () => {
+    expect(tr.hava81.dailyPlan.explain.method).toContain('taze Avrupa AQI tahmini');
+    expect(tr.hava81.dailyPlan.explain.method).toContain('Eksik veya eski veri gelecekteki saatlere taşınmaz');
+    expect(en.hava81.dailyPlan.explain.method).toContain('fresh exact-hour European AQI sample');
+    expect(en.hava81.dailyPlan.explain.method).toContain('Missing or stale evidence is not projected into future hours');
   });
 
   it('scopes favorable risk language to weather rather than general safety', () => {

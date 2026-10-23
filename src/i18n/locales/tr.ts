@@ -315,7 +315,7 @@ export const tr = {
         title: 'Bu puanı ne etkiliyor?',
         stable: 'Belirgin bir hava riski bu skorda öne çıkmıyor.',
         method:
-          'Bu puan genel dışarı uygunluğunu özetler; önümüzdeki 12 saati süreyle ağırlıklandırır, en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir. Kırılımdaki ≈− değerleri 12 saatlik ağırlıklı ortalama etkidir; final skor en zor saatleri ayrıca ağırlıklandırdığı için bunlar 100’den birebir çıkarılan kalemler değildir. Hava kalitesi anlık ölçümdür; saatlik tahmini olmadığı için tüm saatlere aynı uygulanır.',
+          'Bu puan genel dışarı uygunluğunu özetler; önümüzdeki 12 saati süreyle ağırlıklandırır, en zor zaman dilimlerine ayrıca ağırlık verir ve aynı anda oluşan riskleri birlikte değerlendirir. Kırılımdaki ≈− değerleri 12 saatlik ağırlıklı ortalama etkidir; final skor en zor saatleri ayrıca ağırlıklandırdığı için bunlar 100’den birebir çıkarılan kalemler değildir. Hava kalitesinde eşleşen saat için taze Avrupa AQI tahmini kullanılır; eşleşme yoksa yalnızca taze güncel ölçüm yedek olarak kullanılır. Eksik veya eski veri gelecekteki saatlere taşınmaz.',
       },
       confidence: {
         high: 'Zengin saatlik veri',
@@ -350,8 +350,9 @@ export const tr = {
         clear: 'Belirgin hava riski görünmüyor',
       },
       safetyNote: 'Yalnız hava koşullarına dayalı karar desteğidir; güvenlik garantisi değildir.',
+      hourlyAqiSource: 'Saatlik hava kalitesi {{source}} modelini yalnızca tahminle aynı zaman damgası eşleştiğinde kullanır. Eşleşmeyen saatlerde güncel AQI yalnızca tazeyse yedek olur; değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
       methodDetails: 'Veri kapsamı ve yöntem',
-      note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Güncel hava kalitesi yalnız geçerli saat diliminde hesaba katılır; gelecekteki saatlere kopyalanmaz. Bir veri alanı yoksa kalan doğrulanmış sinyallerle daha düşük veri kapsamıyla hesaplanır.',
+      note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Taze Avrupa AQI örnekleri yalnızca tahmin saatleriyle zaman damgası tam eşleştiğinde kullanılır. Eşleşmeyen saatlerde taze güncel ölçüm yedek olabilir; ikisi de eksik veya eskiyse AQI riski çıkarılmaz. Diğer eksik alanlar uydurulmaz, veri kapsamını düşürür.',
     },
     commute: {
       eyebrow: 'Kişisel rutin',
