@@ -409,3 +409,29 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Recheck exact-head CI/CD, Ops contracts, CodeQL, Browser flows and Lighthouse. While they run, continue independent work in a separate clean worktree.
 4. Before any merge, refresh observer status and directly re-read current PR head SHA, mergeability and exact-head checks. After merge, monitor main CI/Pages and verify root/city revisions, boot assets, API readiness/CORS/port 4002.
 5. Preserve all dirty worktrees listed by `git worktree list`; do not clean or mutate unrelated experiments. Do not disable/pause automation.
+
+## 2026-10-23 21:00 TRT — bound and order the first-screen next-change forecast
+
+### Merge and production baseline
+- PR #1390 (`fix(plan): align confidence with scored forecast horizon`) was merged normally as `9746e1cf4e8c5779b19cc1cc229cbb56d6da9b35` from exact head `4e67d2a2f68d9b6c31f6a6b007f01fbf22cf9df9`.
+- Main CI/CD run #3400 (`39997383598`), CodeQL #2181 (`39997383654`), and Ops script contracts #140 (`39997383699`) succeeded for that exact main SHA.
+- Fresh observer snapshot `collected_at=2026-10-23T17:51:33.235135Z`: production HEALTHY, frontend root/city revisions match main `9746e1c...`, seven boot assets healthy, API readiness HTTP 200, CORS exact origin `https://hava81.zekiakgul.dev`, API primary port 4002, no pending deployment. Disk 85.0% used / 14.5 GiB free; warning threshold reached but API build headroom remains OK.
+- Direct cache-busted smoke after merge: `/`, `/izmir/`, `/manifest.json`, `/sw.js`, API `/api/v1/health` and `/api/v1/health/ready` all HTTP 200; CORS preflight HTTP 204 with the expected allow-origin. Live `airQualityHourly` bundle returned 104 valid hourly samples at 60-minute cadence, European AQI 32–72, Open-Meteo/CAMS attribution, no part errors and no invalid AQI values.
+
+### Bounded code improvement (local only at checkpoint)
+- Worktree `/home/chatgpt/hava81-run11-next-20261023-2043`; branch `automation/hava81-run11-next-20261023-2043`; base/current `origin/main` SHA `9746e1cf4e8c5779b19cc1cc229cbb56d6da9b35`.
+- `getNextChange` claimed to inspect the next 24 forecast hours, but it sliced the first 24 records in caller order. Out-of-order samples could make the first-screen summary announce a later change before an earlier one; sparse samples could also push the inspected records beyond 24 elapsed hours.
+- The selector now ignores invalid timestamps, includes only `now < time < now + 24h`, sorts chronologically, and then limits the set to 24 records. Added regressions for unsorted samples, sparse data beyond the elapsed horizon, and invalid `Date` values.
+- Validation on the final source/test diff: focused `nextChange` suite **8/8 passed**; type-check passed; ESLint/CSS lint passed; full `npm run test:ci` **987 tests across 103 files passed** (statements 92.35%, branches 85.94%, functions 91.98%, lines 94.69%); production build passed; browser flows `e2e/decision.spec.ts` + `e2e/app-shell.spec.ts` **24/24 passed** across mobile 390, tablet 768 and desktop 1280; `git diff --check` passed.
+- One initial duplicate full-test attempt overlapped a second attempt and collided in Vitest's shared coverage temp directory (`ENOENT`). That run was discarded; the later single isolated full-suite run exited 0 with all 987 tests passing. No product failure was inferred from the concurrent coverage artifact error.
+- At checkpoint, only `src/domain/decision/nextChange.ts` and `src/__tests__/domain/nextChange.test.ts` contain source/test edits; append-only progress/decision updates are included in this branch's diff for the bounded PR. No commit, push, PR or hosted CI run exists yet for this change.
+
+### Independent runtime-safety review
+- Requested changes on PR #1375 at exact head `b8e2620c3ff6deba67ae3b17b029448cddd8657d` (review ID `5632451324`) and PR #1376 at exact head `9ac1778ee469644d5fb320a4bd83f7e4d1bf6b74` (review ID `5632451784`). Both proposed moving production images to Node 25, which is EOL since 2026-06-01; the official Node.js release page says production apps should use Active/Maintenance LTS. Recommend a supported LTS Alpine image instead, preferably Node 24, and rerun exact-head container/API/browser checks. Neither Dependabot branch was mutated or merged.
+
+### Exact next actions and prioritized queue
+1. Review the complete source/test/docs diff, commit only the intended two code/test paths plus these append-only docs, then push through normal authenticated Git and open a bounded PR. If a normal write is blocked, stop rather than trying an alternate ref/content API.
+2. Record exact head SHA and hosted CI/CD, CodeQL, Ops contracts, browser-flow and Lighthouse results. Continue independent work while hosted checks run.
+3. Before merge, re-read current PR head SHA, mergeability and exact-head checks, then refresh `/usr/local/bin/hava81-worker-status`. Merge only through the normal approved GitHub action when every gate is green.
+4. After merge, watch main CI/Pages and verify root/city revision parity, boot assets, API readiness/CORS/port 4002. Clean only this worktree's generated `node_modules`, `dist`, and coverage after validation to ease the 85% disk warning; preserve all other worktrees and the primary dirty UI worktree.
+5. Keep PRs #1375/#1376 blocked pending a supported LTS image and exact-head checks. Continue separate work during hosted CI; do not disable/pause automation.

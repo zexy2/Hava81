@@ -89,3 +89,10 @@ If a workflow job invokes a script stored in the repository, that job must check
 ## 2026-10-23 — plan confidence must match the scored horizon
 - Derive a plan's confidence only from the same time-window slots that contribute to its score. Richer weather fields outside the scored horizon must not upgrade the confidence label for near-term advice.
 - Keep the regression test deliberately asymmetric (sparse scored hours, richer later hours) so a future refactor cannot silently broaden the confidence sample again.
+
+
+## 2026-10-23 — next-change summaries use chronological, elapsed-time-bounded samples
+- `getNextChange` must validate `Date` timestamps, discard invalid/past points, sort chronologically, and inspect only timestamps strictly inside the next 24 elapsed hours (`now < time < now + 24h`) before limiting to 24 samples. A record-count slice alone is not a 24-hour horizon when data is sparse, and caller order must not change the earliest announced transition.
+
+## 2026-10-23 — production Node images must use a supported LTS line
+- Do not merge Node 25 image upgrades: Node 25 reached EOL on 2026-06-01 and is not an LTS line. Prefer Node 24 Alpine (maintenance LTS through 2028-04-30) for builder/runtime/dev images, or retain Node 22 where compatibility requires it (supported through 2027-04-30). Node 20 is also EOL and should not remain in the development image. Revalidate Docker builds, API tests, browser flows and exact-head CI after changing the base image.

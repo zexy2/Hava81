@@ -23,7 +23,18 @@ export function getNextChange(
   currentTemp: number,
   now: Date = new Date()
 ): NextChange {
-  const upcoming = hourly.filter(hour => hour.time.getTime() > now.getTime()).slice(0, 24);
+  const nowMs = now.getTime();
+  const horizonEnd = nowMs + 24 * 60 * 60 * 1000;
+  const upcoming = hourly
+    .filter(
+      hour =>
+        hour.time instanceof Date &&
+        Number.isFinite(hour.time.getTime()) &&
+        hour.time.getTime() > nowMs &&
+        hour.time.getTime() < horizonEnd
+    )
+    .sort((a, b) => a.time.getTime() - b.time.getTime())
+    .slice(0, 24);
   if (upcoming.length === 0) return { kind: 'steady', time: null, temp: null };
   const wetNow = upcoming[0].pop >= RAIN_POP;
   for (const hour of upcoming) {
