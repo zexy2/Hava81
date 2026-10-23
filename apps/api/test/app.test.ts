@@ -581,7 +581,8 @@ test('OpenWeather adapter rejects impossible finite current-weather domains', as
     ['maximum temperature', (payload) => { payload.main.temp_max = 999; }],
     ['humidity', (payload) => { payload.main.humidity = 101; }],
     ['pressure', (payload) => { payload.main.pressure = -1; }],
-    ['wind speed', (payload) => { payload.wind.speed = -1; }],
+    ['negative wind speed', (payload) => { payload.wind.speed = -1; }],
+    ['wind speed above physical range', (payload) => { payload.wind.speed = 151; }],
     ['wind direction', (payload) => { payload.wind.deg = 361; }],
     ['cloud cover', (payload) => { payload.clouds.all = 101; }],
     ['negative visibility', (payload) => { payload.visibility = -1; }],
@@ -606,6 +607,58 @@ test('OpenWeather adapter rejects impossible finite current-weather domains', as
       `expected invalid ${label} to be rejected`,
     );
   }
+});
+
+test('OpenWeather adapter applies unit-aware wind ceilings to current and forecast data', async () => {
+  const currentCases = [
+    { label: 'metric wind above limit', units: 'metric' as const, speed: 151, rejects: true },
+    { label: 'imperial wind at generous limit', units: 'imperial' as const, speed: 300, rejects: false },
+    { label: 'imperial wind above limit', units: 'imperial' as const, speed: 301, rejects: true },
+  ];
+
+  for (const item of currentCases) {
+    const payload = structuredClone(currentFixture);
+    payload.wind.speed = item.speed;
+    const fakeFetch = (async () =>
+      new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })) as typeof fetch;
+    const provider = new OpenWeatherProvider(createEnv(), fakeFetch);
+
+    if (item.rejects) {
+      await assert.rejects(
+        () => provider.getCurrent({ city: 'İzmir', units: item.units, lang: 'tr' }),
+        (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+        `expected ${item.label} to be rejected`,
+      );
+    } else {
+      const result = await provider.getCurrent({ city: 'İzmir', units: item.units, lang: 'tr' });
+      assert.equal(result.wind.speed, item.speed);
+    }
+  }
+
+  const gustPayload = structuredClone(currentFixture);
+  Object.assign(gustPayload.wind, { gust: 151 });
+  const gustProvider = new OpenWeatherProvider(
+    createEnv(),
+    (async () => new Response(JSON.stringify(gustPayload), { status: 200 })) as typeof fetch,
+  );
+  await assert.rejects(
+    () => gustProvider.getCurrent({ city: 'İzmir', units: 'metric', lang: 'tr' }),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+  );
+
+  const forecastPayload = structuredClone(forecastFixture);
+  forecastPayload.list[0].wind.speed = 151;
+  const forecastProvider = new OpenWeatherProvider(
+    createEnv(),
+    (async () => new Response(JSON.stringify(forecastPayload), { status: 200 })) as typeof fetch,
+  );
+  await assert.rejects(
+    () => forecastProvider.getForecast({ lat: 41.01, lon: 28.97, units: 'standard', lang: 'tr' }),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+  );
 });
 
 test('OpenWeather forecast rejects impossible finite temperatures across shared provider units', async () => {

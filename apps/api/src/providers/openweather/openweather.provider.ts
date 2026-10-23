@@ -6,6 +6,7 @@ import type {
   CurrentWeatherQuery,
   ForecastQuery,
   WeatherProvider,
+  WeatherUnits,
 } from '../weather-provider';
 import {
   airQualityUpstreamSchema,
@@ -17,6 +18,14 @@ import {
 } from './schemas';
 
 type FetchImplementation = typeof fetch;
+
+// OpenWeather uses m/s for metric/standard and mph for imperial. Keep room above
+// recorded terrestrial extremes while rejecting finite values that cannot be credible.
+const MAX_WIND_SPEED_BY_UNITS: Record<WeatherUnits, number> = {
+  metric: 150,
+  standard: 150,
+  imperial: 300,
+};
 
 export class OpenWeatherProvider implements WeatherProvider {
   readonly name: string;
@@ -48,7 +57,10 @@ export class OpenWeatherProvider implements WeatherProvider {
       params.lon = query.lon;
     }
 
-    return this.request('/weather', params, currentWeatherUpstreamSchema);
+    return this.request('/weather', params, currentWeatherUpstreamSchema).then((data) => {
+      this.assertPlausibleWind(data.wind.speed, data.wind.gust, query.units);
+      return data;
+    });
   }
 
   getForecast(query: ForecastQuery): Promise<ForecastUpstream> {
@@ -62,7 +74,12 @@ export class OpenWeatherProvider implements WeatherProvider {
         lang: query.lang,
       },
       forecastUpstreamSchema,
-    );
+    ).then((data) => {
+      for (const item of data.list) {
+        this.assertPlausibleWind(item.wind.speed, item.wind.gust, query.units);
+      }
+      return data;
+    });
   }
 
   getAirQuality(query: AirQualityQuery): Promise<AirQualityUpstream> {
@@ -75,6 +92,21 @@ export class OpenWeatherProvider implements WeatherProvider {
       },
       airQualityUpstreamSchema,
     );
+  }
+
+  private assertPlausibleWind(
+    speed: number,
+    gust: number | undefined,
+    units: WeatherUnits,
+  ): void {
+    const maximum = MAX_WIND_SPEED_BY_UNITS[units];
+    if (speed > maximum || (gust !== undefined && gust > maximum)) {
+      throw new AppError(
+        502,
+        'INVALID_PROVIDER_RESPONSE',
+        'Hava durumu sağlayıcısı fiziksel olarak geçersiz rüzgâr verisi döndürdü.',
+      );
+    }
   }
 
   private async request<T>(
