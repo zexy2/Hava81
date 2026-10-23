@@ -54,12 +54,38 @@ export const windLevel = (speed: number, gust?: number): WindLevel => {
   return 'normal';
 };
 
+/**
+ * OpenWeather AQI is an ordinal 1–5 category, not a pollutant concentration or a 0–100 score.
+ * Invalid/out-of-range values are unavailable; never clamp them into a plausible-looking label.
+ */
 export const airLevel = (aqi?: number): AirLevel | undefined => {
-  if (!finite(aqi)) return undefined;
+  if (!finite(aqi) || !Number.isInteger(aqi) || aqi < 1 || aqi > 5) return undefined;
   if (aqi >= AQI_VERY_POOR) return 'very-poor';
   if (aqi >= AQI_POOR) return 'poor';
   if (aqi >= AQI_SENSITIVE) return 'sensitive';
   return 'fine';
+};
+
+export type EuropeanAqiLevel =
+  | 'good'
+  | 'fair'
+  | 'moderate'
+  | 'poor'
+  | 'very-poor'
+  | 'extremely-poor';
+
+/**
+ * Open-Meteo European AQI uses a separate 0–100+ scale. Keep it separate from airLevel()
+ * so a European AQI value can never be mistaken for OpenWeather's 1–5 ordinal index.
+ */
+export const europeanAqiLevel = (aqi?: number): EuropeanAqiLevel | undefined => {
+  if (!finite(aqi) || aqi < 0 || aqi > 1_000) return undefined;
+  if (aqi <= 20) return 'good';
+  if (aqi <= 40) return 'fair';
+  if (aqi <= 60) return 'moderate';
+  if (aqi <= 80) return 'poor';
+  if (aqi <= 100) return 'very-poor';
+  return 'extremely-poor';
 };
 
 const windRank: Record<WindLevel, number> = { normal: 0, caution: 1, strong: 2 };
