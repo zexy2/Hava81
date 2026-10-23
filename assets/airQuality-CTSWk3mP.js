@@ -1,0 +1,1 @@
+var e=[`airQuality.good`,`airQuality.fair`,`airQuality.moderate`,`airQuality.poor`,`airQuality.veryPoor`];function t(e){if(!(!Number.isFinite(e)||e<0))return e<20?1:e<40?2:e<60?3:e<80?4:5}function n(t){if(!(!Number.isInteger(t)||t<1||t>e.length))return e[t-1]}export{n,t};
