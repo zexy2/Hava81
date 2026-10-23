@@ -53,3 +53,9 @@ If a workflow job invokes a script stored in the repository, that job must check
 - A merge/deploy readiness snapshot must require a CI/CD Pipeline run for the exact current main SHA. Missing/currently running CI is pending; a failed/cancelled current-main pipeline blocks readiness; an unavailable branch SHA fails closed. Keep the latest run for diagnostics but do not substitute it for the current branch ref.
 - Frontend parity and API runtime-file comparisons use the actual current main SHA. API deploy freshness metadata must come from a CI run on that same SHA; do not reuse an older run's success timestamp.
 - Observer code, its installer, and Oracle documentation are not API runtime changes. Exclude observer-only paths from the API deploy push trigger so observer PRs do not trigger needless production API rollouts. Validate the filter with the API deploy entry contract; keep `workflow_dispatch` available for an explicitly authorized, green-CI API deployment.
+
+
+## 2026-10-23 — first-viewport DecisionGlance code split
+- Use the exact main/PR Lighthouse artifact when measuring changes. Main's two recent reports differ materially (performance 0.67 / TBT 2.1 s versus 0.85 / TBT 424 ms), so runner contention/variance must be considered before inferring a regression.
+- `DecisionGlance` is below the primary weather hero and only rendered for non-Plan, non-Compare views. Splitting its JS and CSS reduces initial critical resources while a post-render prefetch overlaps the current-weather request. Keep the hero itself eager in this change; if it is split later, provide a layout-matched loading skeleton and validate cold mobile browser flows first.
+- If local Lighthouse cannot connect to the managed Chrome executable, use hosted exact-SHA Lighthouse/Browser-flow gates; don't substitute the host's Snap/system browser.
