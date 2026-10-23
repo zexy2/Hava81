@@ -349,7 +349,8 @@ test('Open-Meteo hourly adapter rejects impossible finite core forecast values',
   const cases = [
     { label: 'temperature', temperature: 999, pop: 10, windSpeed: 3 },
     { label: 'precipitation probability', temperature: 24, pop: 150, windSpeed: 3 },
-    { label: 'wind speed', temperature: 24, pop: 10, windSpeed: -1 },
+    { label: 'negative wind speed', temperature: 24, pop: 10, windSpeed: -1 },
+    { label: 'wind speed above physical range', temperature: 24, pop: 10, windSpeed: 151 },
   ];
 
   for (const item of cases) {
@@ -434,6 +435,50 @@ test('Open-Meteo hourly adapter omits impossible optional decision fields instea
     sunshineDuration: undefined,
     weatherCode: 0,
   });
+});
+
+test('Open-Meteo hourly adapter omits finite-but-impossible optional measurements', async () => {
+  const fakeFetch = (async () =>
+    new Response(
+      JSON.stringify({
+        utc_offset_seconds: 10800,
+        daily: {
+          time: [1787950800],
+          temperature_2m_max: [28],
+          temperature_2m_min: [20],
+          weather_code: [3],
+          precipitation_probability_max: [10],
+          precipitation_sum: [2_001],
+        },
+        hourly: {
+          time: [1787936400],
+          temperature_2m: [24],
+          apparent_temperature: [24],
+          relative_humidity_2m: [50],
+          precipitation_probability: [10],
+          precipitation: [501],
+          weather_code: [0],
+          wind_speed_10m: [3],
+          wind_gusts_10m: [151],
+          visibility: [100_001],
+          uv_index: [51],
+          is_day: [1],
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )) as typeof fetch;
+
+  const provider = new OpenMeteoHourlyProvider(fakeFetch, 1_000);
+  const result = await provider.getHourly({ lat: 41.01, lon: 28.97, lang: 'tr' });
+
+  assert.equal(result.hourly.length, 1);
+  assert.equal(result.hourly[0].temp, 24);
+  assert.equal(result.hourly[0].pop, 10);
+  assert.equal(result.hourly[0].precipitationMm, undefined);
+  assert.equal(result.hourly[0].windGust, undefined);
+  assert.equal(result.hourly[0].visibility, undefined);
+  assert.equal(result.hourly[0].uvIndex, undefined);
+  assert.equal(result.daily?.[0].precipitationMm, undefined);
 });
 
 test('Open-Meteo hourly adapter supports the paid customer host and API key without changing request semantics', async () => {

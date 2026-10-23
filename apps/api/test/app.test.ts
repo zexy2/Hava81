@@ -233,6 +233,18 @@ test('health endpoints and OpenAPI docs are available', async (context) => {
   assert.equal(ready.json().revision, 'unknown');
   assert.equal(docs.statusCode, 200);
   assert.ok(docs.json().paths['/api/v1/weather/current']);
+
+  const hourlyResponse =
+    docs.json().paths['/api/v1/weather/hourly'].get.responses['200'].content['application/json']
+      .schema;
+  const hourlyFields = hourlyResponse.properties.hourly.items.properties;
+  const dailyFields = hourlyResponse.properties.daily.items.properties;
+  assert.equal(hourlyFields.windSpeed.maximum, 150);
+  assert.equal(hourlyFields.precipitationMm.maximum, 500);
+  assert.equal(hourlyFields.windGust.maximum, 150);
+  assert.equal(hourlyFields.uvIndex.maximum, 50);
+  assert.equal(hourlyFields.visibility.maximum, 100_000);
+  assert.equal(dailyFields.precipitationMm.maximum, 2_000);
 });
 
 test('health reports the build revision baked into the image', async (context) => {
