@@ -137,6 +137,14 @@ jobs:
           name: dist
           path: dist
       - run: npm run lighthouse
+      - name: Preserve Lighthouse JSON reports (including failed budgets)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-reports
+          path: .lighthouse-results/*.json
+          if-no-files-found: warn
+          retention-days: 7
 
   deploy:
     name: Deploy to GitHub Pages
