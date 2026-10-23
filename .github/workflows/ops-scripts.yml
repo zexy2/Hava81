@@ -90,6 +90,8 @@ jobs:
         run: bash scripts/test-api-image-source-plan.sh
       - name: Verify API CI deploy entry point
         run: bash scripts/test-api-ci-deploy-entry.sh
+      - name: Verify API deploy secret gate fails closed
+        run: bash scripts/test-api-deploy-secrets.sh
       - name: Verify Nginx preferred-port install template
         run: bash scripts/test-nginx-primary-template.sh
       - name: Verify API build timeout policy
