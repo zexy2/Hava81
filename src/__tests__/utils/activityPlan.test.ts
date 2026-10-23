@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildActivityPlan } from '../../domain/activity/buildActivityPlan';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İzmir',
@@ -94,6 +94,60 @@ describe('activity plans', () => {
     expect(
       withCurrentAir.slots.every(slot => slot.impacts.some(impact => impact.factor === 'air-quality'))
     ).toBe(true);
+  });
+
+  it('uses exact-hour European AQI when fresh, normalizing it to the existing risk scale', () => {
+    const points = hourly([22, 23, 24]);
+    const currentAir = {
+      aqi: 1,
+      aqiLabel: 'İyi',
+      pm25: 4,
+      pm10: 8,
+      o3: 20,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+    };
+    const hourlyAqi = (values: number[]): AirQualityHourly => ({
+      hours: values.map((europeanAqi, index) => ({
+        time: points[index].time,
+        europeanAqi,
+      })),
+      meta: { provider: 'Open-Meteo', fetchedAt: new Date(), freshForSeconds: 1800 },
+    });
+    const clean = buildActivityPlan({
+      activity: 'run', weather, hourly: points, airQuality: currentAir, airQualityHourly: hourlyAqi([10, 15, 19]),
+    });
+    const poor = buildActivityPlan({
+      activity: 'run', weather, hourly: points, airQuality: currentAir, airQualityHourly: hourlyAqi([10, 80, 1001]),
+    });
+
+    expect(poor.score).toBeLessThan(clean.score);
+    expect(poor.reasons).toContain('poor-air-quality');
+    expect(poor.slots[0]?.impacts.some(impact => impact.factor === 'air-quality')).toBe(false);
+    expect(poor.slots[1]?.impacts.some(impact => impact.factor === 'air-quality')).toBe(true);
+    expect(poor.slots[2]?.impacts.some(impact => impact.factor === 'air-quality')).toBe(true);
+  });
+
+  it('ignores stale hourly AQI instead of using it to change activity recommendations', () => {
+    const points = hourly([22, 23, 24]);
+    const currentAir = {
+      aqi: 1,
+      aqiLabel: 'İyi',
+      pm25: 4,
+      pm10: 8,
+      o3: 20,
+      meta: { provider: 'OpenWeather', fetchedAt: new Date(), freshForSeconds: 300 },
+    };
+    const staleHourly: AirQualityHourly = {
+      hours: points.map(point => ({ time: point.time, europeanAqi: 100 })),
+      meta: { provider: 'Open-Meteo', fetchedAt: new Date(Date.now() - 10_000), freshForSeconds: 1 },
+    };
+    const withStale = buildActivityPlan({
+      activity: 'run', weather, hourly: points, airQuality: currentAir, airQualityHourly: staleHourly,
+    });
+    const withoutHourly = buildActivityPlan({ activity: 'run', weather, hourly: points, airQuality: currentAir });
+
+    expect(withStale.score).toBe(withoutHourly.score);
+    expect(withStale.reasons).toEqual(withoutHourly.reasons);
   });
 
   it('lowers the running score when the current AQI is poor (AQI 4)', () => {

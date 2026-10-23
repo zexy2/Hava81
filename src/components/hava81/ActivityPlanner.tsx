@@ -1,5 +1,7 @@
 import { formatCityTime, formatNumber } from '../../utils/format';
-import { useEffect, useMemo, useState } from 'react';
+import { europeanAqiToOpenWeatherIndex } from '../../utils/airQuality';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import {
@@ -9,7 +11,13 @@ import {
 import type { ActivityKind } from '../../domain/activity/types';
 import type { DecisionReasonCode } from '../../domain/decision/types';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
-import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import './ActivityPlanner.css';
@@ -18,6 +26,7 @@ interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
 }
 
@@ -96,7 +105,13 @@ const reasonKey: Record<DecisionReasonCode, string> = {
   'severe-weather': 'severeWeather',
 };
 
-export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: Props) {
+export function ActivityPlanner({
+  weather,
+  hourly,
+  airQuality,
+  airQualityHourly,
+  forecastMeta,
+}: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
@@ -107,41 +122,51 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
     setActivityWindow,
     clearActivityWindow,
   } = useDecisionProfile();
-  const [, setForecastFreshnessRevision] = useState(0);
+  const [, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
-  const plans = useMemo(
-    () =>
-      freshness.fresh
-        ? profile.activities.map(activity =>
-            buildActivityPlan({
-              activity,
-              weather,
-              hourly,
-              airQuality,
-              sensitivity: profile.temperatureSensitivity,
-              preferredStart: profile.activityStart,
-              preferredEnd: profile.activityEnd,
-            })
-          )
-        : [],
-    [
-      airQuality,
-      freshness.fresh,
-      hourly,
-      profile.activities,
-      profile.activityEnd,
-      profile.activityStart,
-      profile.temperatureSensitivity,
-      weather,
-    ]
+  const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
+  const plannedHourTimes = new Set(
+    (hourly.length
+      ? [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 48)
+      : [{ time: weather.timestamp }]
+    )
+      .map(point => point.time)
+      .filter(time => time instanceof Date && Number.isFinite(time.getTime()))
+      .map(time => time.getTime())
   );
+  const hasMatchingHourlyAqi = Boolean(
+    airQualityHourly?.hours.some(sample => {
+      if (!(sample.time instanceof Date) || !Number.isFinite(sample.time.getTime())) return false;
+      if (europeanAqiToOpenWeatherIndex(sample.europeanAqi) === undefined) return false;
+      return plannedHourTimes.has(sample.time.getTime());
+    })
+  );
+  const showHourlyAqiSource = Boolean(
+    airQualityHourly && hourlyAqiFreshness.fresh && hasMatchingHourlyAqi
+  );
+  const plans = freshness.fresh
+    ? profile.activities.map(activity =>
+        buildActivityPlan({
+          activity,
+          weather,
+          hourly,
+          airQuality,
+          airQualityHourly,
+          sensitivity: profile.temperatureSensitivity,
+          preferredStart: profile.activityStart,
+          preferredEnd: profile.activityEnd,
+        })
+      )
+    : [];
 
   useEffect(() => {
-    const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
+    const resyncFreshness = () => setFreshnessRevision(value => value + 1);
+    const expiries = [freshness.expiresInMs, hourlyAqiFreshness.expiresInMs].filter(
+      (value): value is number => value !== null
+    );
+    const nextExpiryMs = expiries.length ? Math.min(...expiries) : null;
     const timeout =
-      freshness.expiresInMs === null
-        ? undefined
-        : window.setTimeout(resyncFreshness, freshness.expiresInMs);
+      nextExpiryMs === null ? undefined : window.setTimeout(resyncFreshness, nextExpiryMs);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -150,7 +175,13 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
       if (timeout !== undefined) window.clearTimeout(timeout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [forecastMeta, freshness.expiresInMs]);
+  }, [
+    airQualityHourly?.meta?.fetchedAt,
+    airQualityHourly?.meta?.freshForSeconds,
+    forecastMeta,
+    freshness.expiresInMs,
+    hourlyAqiFreshness.expiresInMs,
+  ]);
   const offset = weather.meta.timezoneOffsetSeconds * 1000;
   const formatTime = (date?: Date) => formatCityTime(date, offset / 1000, i18n.language);
   const hasWindow = Boolean(profile.activityStart && profile.activityEnd);
@@ -403,6 +434,13 @@ export function ActivityPlanner({ weather, hourly, airQuality, forecastMeta }: P
         <p className="activity-planner__empty">{t('hava81.activities.empty')}</p>
       )}
       <p className="activity-planner__note">{t('hava81.activities.note')}</p>
+      {airQualityHourly && showHourlyAqiSource ? (
+        <p className="activity-planner__note">
+          {t('hava81.activities.hourlyAqiSource', {
+            source: airQualityHourly.meta.attribution ?? airQualityHourly.meta.provider,
+          })}
+        </p>
+      ) : null}
     </section>
   );
 }

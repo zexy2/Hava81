@@ -470,6 +470,7 @@ export const tr = {
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',
       empty: 'Kişisel skor görmek için en az bir aktivite seç.',
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
+      hourlyAqiSource: 'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eksik saatlerde güncel AQI değeri kullanılır. Bu, resmî uyarı değil model rehberliğidir.',
       sensitivity: {
         label: 'Sıcaklık hassasiyeti',
         cold: 'Soğuğa hassasım',

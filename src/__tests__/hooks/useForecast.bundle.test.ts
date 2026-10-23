@@ -67,12 +67,17 @@ const context = () => ({
   units: {},
   uvIndexMax: 6,
 });
+const hourlyAirQuality = () => ({
+  hours: [{ time: new Date('2026-07-14T13:00:00.000Z'), europeanAqi: 24, pm25: 8 }],
+  meta: { provider: 'Open-Meteo', fetchedAt: new Date(), freshForSeconds: 1800 },
+});
 
 const fullBundle = (): ForecastBundle => ({
   forecast: { ok: true, value: baseline() as never },
   hourly: { ok: true, value: hourly() as never },
   airQuality: { ok: true, value: airQuality() as never },
   context: { ok: true, value: context() as never },
+  airQualityHourly: { ok: true, value: hourlyAirQuality() as never },
 });
 
 describe('useForecast with /weather/bundle', () => {
@@ -97,7 +102,7 @@ describe('useForecast with /weather/bundle', () => {
     expect(service.getForecastBundle).toHaveBeenCalledWith(38.42, 27.14, 'en', {
       marine: true,
       signal: expect.any(AbortSignal),
-      parts: ['forecast', 'hourly', 'airQuality', 'context'],
+      parts: ['forecast', 'hourly', 'airQuality', 'context', 'airQualityHourly'],
     });
     for (const single of [
       'getForecast',
@@ -110,8 +115,24 @@ describe('useForecast with /weather/bundle', () => {
     expect(result.current.hourly[0]?.temp).toBe(25);
     expect(result.current.displayMeta?.intervalHours).toBe(1);
     expect(result.current.airQuality?.aqi).toBe(2);
+    expect(result.current.airQualityHourly?.hours[0]?.europeanAqi).toBe(24);
     expect(result.current.contextSignals?.uvIndexMax).toBe(6);
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('keeps a failed optional hourly-AQI part from failing the core forecast', async () => {
+    const bundle = fullBundle();
+    bundle.airQualityHourly = { ok: false, error: new Error('provider unavailable') };
+    service.getForecastBundle.mockResolvedValue(bundle);
+    const { result } = renderHook(() => useForecast('en'));
+
+    await act(async () => {
+      await result.current.fetch({ lat: 38.42, lon: 27.14 }, 'İzmir');
+    });
+
+    expect(result.current.hourly).toHaveLength(1);
+    expect(result.current.airQualityHourly).toBeNull();
+    expect(result.current.error).toBeNull();
   });
 
   it('exposes the five-day planHourly horizon without widening hourly (plan v3 P1.1)', async () => {
@@ -215,6 +236,7 @@ describe('useForecast with /weather/bundle', () => {
       'forecast',
       'airQuality',
       'context',
+      'airQualityHourly',
     ]);
     expect(service.getHourlyForecast).toHaveBeenCalledTimes(1);
     expect(result.current.displayMeta?.intervalHours).toBe(1);

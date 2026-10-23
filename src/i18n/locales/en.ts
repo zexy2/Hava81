@@ -466,6 +466,7 @@ export const en = {
       noWindow: 'No clearly good window in the near forecast.',
       empty: 'Select at least one activity to see personal scores.',
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
+      hourlyAqiSource: 'Hourly air-quality outlook uses the {{source}} model; missing hours fall back to the current AQI value. This is modeled guidance, not an official warning.',
       sensitivity: {
         label: 'Temperature sensitivity',
         cold: 'Sensitive to cold',

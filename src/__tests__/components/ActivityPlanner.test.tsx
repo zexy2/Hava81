@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ActivityPlanner } from '../../components/hava81/ActivityPlanner';
 import { SettingsProvider } from '../../context';
-import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -313,6 +318,135 @@ describe('ActivityPlanner time range', () => {
     expect(
       screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 3°C daha erken başlar.')
     ).toBeInTheDocument();
+  });
+
+  it('discloses the modeled hourly AQI source when that optional evidence is fresh', () => {
+    const airQualityHourly: AirQualityHourly = {
+      hours: [{ time: hourly[0].time, europeanAqi: 82 }],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+        fetchedAt: new Date(),
+        freshForSeconds: 1800,
+      },
+    };
+    render(
+      <SettingsProvider>
+        <ActivityPlanner
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={freshForecastMeta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.getByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/resmî uyarı değil model rehberliğidir/i)).toBeInTheDocument();
+  });
+
+  it('does not attribute the plan to stale hourly AQI that is ignored by the scorer', () => {
+    const airQualityHourly: AirQualityHourly = {
+      hours: [{ time: hourly[0].time, europeanAqi: 82 }],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+        fetchedAt: new Date(Date.now() - 60 * 60 * 1000),
+        freshForSeconds: 1800,
+      },
+    };
+    render(
+      <SettingsProvider>
+        <ActivityPlanner
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={freshForecastMeta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.queryByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not show hourly AQI attribution when no exact forecast hour can use the samples', () => {
+    const airQualityHourly: AirQualityHourly = {
+      hours: [{ time: new Date('2026-08-29T10:00:00Z'), europeanAqi: 82 }],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+        fetchedAt: new Date(),
+        freshForSeconds: 1800,
+      },
+    };
+    render(
+      <SettingsProvider>
+        <ActivityPlanner
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={freshForecastMeta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.queryByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('removes hourly AQI attribution when the optional evidence expires while the planner stays open', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-29T08:00:00Z'));
+    try {
+      const airQualityHourly: AirQualityHourly = {
+        hours: hourly.map(point => ({ time: point.time, europeanAqi: 82 })),
+        meta: {
+          provider: 'Open-Meteo',
+          attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+          fetchedAt: new Date(),
+          freshForSeconds: 30,
+        },
+      };
+      render(
+        <SettingsProvider>
+          <ActivityPlanner
+            weather={weather}
+            hourly={hourly}
+            airQualityHourly={airQualityHourly}
+            forecastMeta={freshForecastMeta(1800)}
+          />
+        </SettingsProvider>
+      );
+
+      expect(
+        screen.getByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
+      ).toBeInTheDocument();
+      const scoresBeforeExpiry = Array.from(
+        document.querySelectorAll('.activity-card__score strong')
+      ).map(element => Number.parseInt(element.textContent ?? '', 10));
+      expect(scoresBeforeExpiry.length).toBeGreaterThan(0);
+      expect(scoresBeforeExpiry.some(score => score < 60)).toBe(true);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_101);
+      });
+      expect(
+        screen.queryByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
+      ).not.toBeInTheDocument();
+      const scoresAfterExpiry = Array.from(
+        document.querySelectorAll('.activity-card__score strong')
+      ).map(element => Number.parseInt(element.textContent ?? '', 10));
+      expect(scoresAfterExpiry.some((score, index) => score > scoresBeforeExpiry[index])).toBe(
+        true
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('names the sensitivity select from its visible label and describes it with the help text (Faz 3.4)', () => {
