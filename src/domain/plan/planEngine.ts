@@ -1,5 +1,5 @@
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
-import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
+import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
 import { findWindows } from './findWindows';
 import { getPlanProfile } from './profiles';
 import { scoreHour } from './scoreHour';
@@ -11,6 +11,7 @@ export interface GetPlanSnapshotInput {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   durationMinutes?: number;
   availability?: PlanAvailability;
   now?: Date;
@@ -25,6 +26,7 @@ export const getPlanSnapshot = ({
   weather,
   hourly,
   airQuality,
+  airQualityHourly,
   durationMinutes,
   availability,
   now = new Date(),
@@ -35,10 +37,6 @@ export const getPlanSnapshot = ({
       ? Math.max(1, Math.min(12 * 60, Math.round(durationMinutes as number)))
       : profile.durationMinutes;
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
-  const freshAirQuality =
-    airQuality && getOptionalEvidenceFreshness(airQuality.meta, now.getTime()).fresh
-      ? airQuality
-      : undefined;
   const future = [...hourly]
     .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
     .filter(
@@ -47,6 +45,12 @@ export const getPlanSnapshot = ({
     )
     .filter(point => point.time.getTime() >= now.getTime())
     .sort((a, b) => a.time.getTime() - b.time.getTime());
+  const airQualityEvidence = getDailyPlanAirQualityEvidence({
+    forecastTimes: future.map(point => point.time),
+    airQuality,
+    airQualityHourly,
+    now: now.getTime(),
+  });
 
   const hours = future.map(point =>
     scoreHour({
@@ -54,7 +58,8 @@ export const getPlanSnapshot = ({
       point,
       timezoneOffsetSeconds,
       now,
-      airQuality: freshAirQuality,
+      airQuality: airQualityEvidence.currentAirQuality,
+      airQualityIndexOverride: airQualityEvidence.hourlyAqiByTime.get(point.time.getTime()),
     })
   );
   const windows = findWindows(hours, {

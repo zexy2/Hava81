@@ -435,3 +435,31 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Before merge, re-read current PR head SHA, mergeability and exact-head checks, then refresh `/usr/local/bin/hava81-worker-status`. Merge only through the normal approved GitHub action when every gate is green.
 4. After merge, watch main CI/Pages and verify root/city revision parity, boot assets, API readiness/CORS/port 4002. Clean only this worktree's generated `node_modules`, `dist`, and coverage after validation to ease the 85% disk warning; preserve all other worktrees and the primary dirty UI worktree.
 5. Keep PRs #1375/#1376 blocked pending a supported LTS image and exact-head checks. Continue separate work during hosted CI; do not disable/pause automation.
+
+## 2026-10-23 21:52 TRT — use fresh exact-hour European AQI in the Plan v3 engine
+
+### Baseline and live evidence
+- Clean branch `automation/hava81-plan-hourly-aqi-integration-20261023-2145` starts from exact current `origin/main` SHA `cd4198add72cabdaccf0475d5ebd1997659c8fd4`; no unrelated worktree was reused.
+- PR #1358 is already merged as `564d8445b388c98ebb5a01abf71d50d61f7f86bc`. Main CI/CD #3402 succeeds for current main `cd4198add72cabdaccf0475d5ebd1997659c8fd4`.
+- Fresh observer at `2026-10-23T18:48:06.585700Z`: production HEALTHY, seven boot assets green, frontend root/city revisions match main, API readiness HTTP 200, CORS correct, primary API port 4002. Root disk is 87.2% used / 12.3 GiB free (pressure warning; API build headroom remains OK). Observer timer is active and scheduled every five minutes.
+- Direct cache-busted smoke at approximately `2026-10-23T18:52Z`: `/`, `/izmir/`, `/manifest.json`, and `/sw.js` all HTTP 200; API health HTTP 200 on revision `4aa0ee1a40db773a11367b3ebc7d61271686d719`; CORS preflight HTTP 204. Live `airQualityHourly` bundle returned 103 valid Open-Meteo hourly European AQI samples at 60-minute cadence, no invalid values and no part errors.
+
+### Bounded change
+- `getPlanSnapshot` now accepts the existing `AirQualityHourly` contract and resolves hourly AQI through the shared `getDailyPlanAirQualityEvidence` helper at the same evaluation clock used for the plan.
+- Only fresh, exact-timestamp European AQI samples are normalized through the shared European-AQI-to-OpenWeather-1–5 mapping and applied to the matching slot. No interpolation is introduced. Missing exact-hour data remains unavailable unless the existing fresh current-reading fallback applies; stale hourly evidence is ignored.
+- `scoreHour` accepts an optional already-normalized hourly AQI override while retaining its existing validation of current OpenWeather AQI. No thresholds, forecast values, MGM warnings, or user-facing claims changed.
+
+### Validation
+- Focused plan-engine suite: 38/38 passed.
+- Full frontend CI test suite: 990 tests across 103 files passed; statements 92.36%, branches 85.87%, functions 91.99%, lines 94.70%.
+- Type-check and full ESLint/CSS lint passed; CSS lint reports 19 clean files.
+- Production build passed and generated 81 Turkish + 81 English province pages, two home pages, 404, sitemap and CSP.
+- Browser flows `e2e/decision.spec.ts` + `e2e/app-shell.spec.ts`: 24/24 passed across mobile 390, tablet 768 and desktop 1280.
+- `git diff --check` passed. Source/test/docs changes are not yet committed or pushed; no PR exists yet for this branch.
+
+### Exact next actions and prioritized queue
+1. Review the final diff, especially the override's 1–5 validation and exact timestamp mapping; keep only intended source/test/append-only docs changes.
+2. Commit and push through normal authenticated Git; if that path is blocked, do not use alternate ref/content APIs.
+3. Open a bounded PR and require exact-head CI/CD, CodeQL, Ops contracts, browser flows and Lighthouse gates. Continue independent work while they run.
+4. Before merge, directly re-read the PR head SHA, mergeability and all required checks, then refresh `/usr/local/bin/hava81-worker-status`. Merge only through the normal GitHub merge action when green.
+5. After merge, watch main CI/Pages and re-verify root/city revision parity, boot assets, API health/CORS/port 4002. Preserve all unrelated worktrees and do not disable/pause automation.
