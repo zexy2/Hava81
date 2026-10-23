@@ -90,10 +90,17 @@ const forecast = {
   },
 };
 
+const HOUR_MS = 60 * 60 * 1000;
+const firstFutureHourlyTime = (() => {
+  const now = Date.now();
+  const rounded = Math.ceil(now / HOUR_MS) * HOUR_MS;
+  return new Date(rounded > now ? rounded : rounded + HOUR_MS);
+})();
+
 const hourlyForecast = {
   hourly: [
     {
-      time: new Date('2026-08-28T18:00:00.000Z'),
+      time: firstFutureHourlyTime,
       temp: 23,
       icon: '01d' as const,
       description: 'açık',
@@ -101,7 +108,7 @@ const hourlyForecast = {
       windSpeed: 3.2,
     },
     {
-      time: new Date('2026-08-28T19:00:00.000Z'),
+      time: new Date(firstFutureHourlyTime.getTime() + HOUR_MS),
       temp: 22,
       icon: '02n' as const,
       description: 'çoğunlukla açık',

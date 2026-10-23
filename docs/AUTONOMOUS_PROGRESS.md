@@ -316,3 +316,37 @@ Do not mutate a pending branch from a second workstream, don't replace this hist
 5. Preserve the dirty legacy P1.3 worktree and the dirty near-term decision-window worktree unchanged; do not copy their uncommitted work without a fresh audit/rebase.
 
 Do not disable or pause automation, do not bypass a blocked write path, and do not present modeled guidance as official weather or safety warnings.
+
+
+## 2026-10-23 18:56 TRT — anchor near-term decision guidance to the visible clock
+
+### Completed bounded implementation (not yet published)
+- Exact base/main SHA: `1c21e3d0fdc525c4dac9508fb209fc406d985dd5` (`fix(plan): gate absolute weather hazards`, PR #1387).
+- Isolated worktree: `/home/chatgpt/hava81-decision-window-20261023-1845`.
+- Branch: `automation/hava81-decision-window-20261023-1845`.
+- `getWeatherDecisions` previously anchored its 12-hour horizon to the earliest hourly array item. Open-Meteo can include the current UTC hour even after that hour has elapsed, so the derived horizon could include an expired sample and end before the actual next 12 hours.
+- The decision function now accepts an optional evaluation `now`, includes only finite timestamps strictly after `now` and strictly before `now + 12h`, and sorts the selected samples chronologically. The visible `WeatherDecisionField` passes its current clock and recomputes when that clock advances. Current-condition warnings remain independent of forecast-window filtering.
+- Updated deterministic unit/consistency/snapshot coverage, added exact-boundary and invalid-timestamp regressions, and changed App integration hourly fixtures from hard-coded August dates to future-aligned hourly timestamps so they remain valid over time.
+
+### Local validation on the final code
+- Focused Vitest: 54/54 across the four affected suites after the integration-fixture correction; the additional boundary regression also passes in its focused suite.
+- Full `npm run test:ci`: **981 tests across 103 files passed**. Coverage: 92.34% statements, 85.83% branches, 91.97% functions, 94.69% lines.
+- `npm run type-check`: pass.
+- `npm run lint` and CSS lint: pass (19 CSS files clean).
+- Production `npm run build`: pass; 81 TR + 81 EN province pages, two home pages, 404 and sitemap generated; CSP applied to 165 HTML files.
+- Browser flows: `npm run e2e -- e2e/decision.spec.ts e2e/app-shell.spec.ts` **24/24 passed** across mobile 390, tablet 768 and desktop 1280.
+- Lighthouse using the Playwright-managed Chromium binary (not a system/Snap browser): performance **94**, accessibility **100**, best practices **100**, SEO **100**; FCP 2.2 s, LCP 2.6 s, TBT 90 ms, CLS 0. The first default Chrome discovery failed twice; the same managed Chromium worked when its executable path was explicitly supplied.
+- `npm audit --omit=dev`: 0 vulnerabilities. `git diff --check`: pass.
+
+### Fresh production and observer verification before publishing
+- Observer `collected_at=2026-10-23T15:53:03.773323Z` (18:53 TRT): production HEALTHY, no issues, frontend root/city revisions match main, seven boot assets healthy, API readiness HTTP 200 with `no-store`, CORS OK, API primary port 4002, disk 83.4% used / about 16.0 GiB free, current-main CI #3394 success for exact SHA `1c21e3d0fdc525c4dac9508fb209fc406d985dd5`.
+- Direct smoke at 18:56 TRT: `/`, `/izmir/`, `/manifest.json`, `/sw.js`, API `/api/v1/health` and `/api/v1/health/ready` all HTTP 200. CORS allow-origin exactly `https://hava81.zekiakgul.dev`. API runtime remains `4aa0ee1a40db773a11367b3ebc7d61271686d719`; this branch changes only frontend decision logic/tests/docs, so no API deployment is needed.
+- Production has not been modified by this branch. At checkpoint, source/tests and append-only docs remain uncommitted; no PR or hosted run exists yet.
+
+### Exact next action and prioritized queue
+1. Review the complete source/test/docs diff once more, commit only these eight intended paths, and push the branch through the normal authenticated Git path. If the normal write is blocked, stop rather than trying an alternate API/ref write.
+2. Open a bounded PR with the next-12-hour correctness rationale and the local gates above; record exact head SHA and hosted CI/CD, Ops contracts, CodeQL, browser and Lighthouse run IDs.
+3. While hosted checks run, independently audit stale open UI PRs #1319 (local rain peak) and #1294 (notification contrast) against current main without mutating their pending branches. Rebuild only still-valid work on a clean current-main branch after confirming current semantics.
+4. Keep major Dependabot PRs #1379, #1380, #1381, #1375, #1376 and #1165 out of auto-merge while any exact-head gate fails or the base is stale. In particular, do not adopt Node 25 images blindly; verify runtime/LTS and container compatibility first.
+5. Before any future merge, directly re-read current PR head, mergeability, exact-head checks and a fresh observer snapshot. After a green normal merge, watch main CI/Pages, verify root/city revisions and all boot assets, then smoke API readiness/CORS/4002 and the actual deployed API revision.
+6. Continue independent work during hosted CI; do not disable/pause automation or bypass a blocked normal write path.

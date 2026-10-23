@@ -70,7 +70,7 @@ const verdicts = (overrides: Overrides, current: Partial<NormalizedWeatherData> 
   const hourly = uniform(overrides);
   const now = { ...weather, ...current };
   const daily = buildDailyPlan({ weather: now, hourly });
-  const decisions = getWeatherDecisions({ weather: now, hourly });
+  const decisions = getWeatherDecisions({ weather: now, hourly, now: NOW });
   const commute = buildCommutePlan({
     hourly,
     commuteStart: '10:00',

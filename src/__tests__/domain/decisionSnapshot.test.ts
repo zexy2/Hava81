@@ -64,15 +64,25 @@ describe('decision snapshot (Faz 1.1)', () => {
     else expect(s.bestWindow).toBe(s.plan.bestWindowRange);
   });
   it('decision field outdoor window agrees with the snapshot', () => {
-    const s = getDecisionSnapshot({ weather, hourly });
-    const decisions = getWeatherDecisions({
-      weather,
-      hourly,
-      bestWindowTime: s.bestWindow?.peak.time ?? null,
-    });
-    const outdoor = decisions.find(d => d.kind === 'outdoor-window');
-    if (!s.bestWindow) expect(outdoor).toBeUndefined();
-    else if (outdoor) expect(outdoor.time?.getTime()).toBe(s.bestWindow.peak.time.getTime());
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(start - 3_600_000));
+    try {
+      const now = new Date(start - 3_600_000);
+      const testWeather = { ...weather };
+      const testHourly = [...hourly];
+      const s = getDecisionSnapshot({ weather: testWeather, hourly: testHourly });
+      const decisions = getWeatherDecisions({
+        weather: testWeather,
+        hourly: testHourly,
+        now,
+        bestWindowTime: s.bestWindow?.peak.time ?? null,
+      });
+      const outdoor = decisions.find(d => d.kind === 'outdoor-window');
+      if (!s.bestWindow) expect(outdoor).toBeUndefined();
+      else if (outdoor) expect(outdoor.time?.getTime()).toBe(s.bestWindow.peak.time.getTime());
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('next24h ignores hours beyond 24h', () => {
     const r = next24hRange(hourly)!;
