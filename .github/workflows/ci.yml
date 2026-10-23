@@ -48,6 +48,15 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  dev-image:
+    name: Development container build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build development image without publishing it
+        run: docker build --pull --file Dockerfile.dev --tag hava81-dev:ci .
+
   api:
     name: API test & build
     runs-on: ubuntu-latest

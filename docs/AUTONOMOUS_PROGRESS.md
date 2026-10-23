@@ -492,3 +492,27 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. If the PR is green, re-read exact head/base/mergeability and refresh `/usr/local/bin/hava81-worker-status`; merge only through normal GitHub merge.
 3. After merge, require successful current-main CI and Pages publish; verify public root/city revision parity and all boot assets, then API health/readiness, CORS and port 4002. Roll back only on a confirmed persistent production failure.
 4. Continue an independent workstream while CI is pending. Preserve all existing dirty worktrees; do not clean up the 87.3%-used disk until generated artifacts and other worktrees are audited.
+
+## 2026-10-23 22:24 TRT — move the development container off EOL Node 20
+
+### Bounded change
+- Branch/worktree: `automation/hava81-dev-image-node24-20261023-2220`, `/home/chatgpt/hava81-dev-image-node24-20261023-2220`.
+- Base is the merged visual/contrast fix, main SHA `bc55488a6139f730a9b9ae1a54b5edcb662b9bab` (PR #1393). Change is limited to `Dockerfile.dev`: `node:20-alpine` → `node:24-alpine`. Production Dockerfiles remain on Node 22 LTS; no API image, port, service or production deployment changes.
+- Reason: official Node.js release table currently marks Node 20 EOL and Node 24 LTS (https://nodejs.org/en/about/previous-releases). This removes an unsupported runtime from the development container without widening production scope.
+
+### Validation
+- Installed root dependencies with Node `v24.22.1` + npm `11.21.1` using the exact Dockerfile install command `npm ci --legacy-peer-deps`; 474 packages added, 0 vulnerabilities reported. No lockfile changes.
+- After rebasing on PR #1393, `npm run test:ci`: **993/993 tests across 103 files passed**, statements 92.41%, branches 86.07%, functions 91.99%, lines 94.76%.
+- `npm run type-check`, `npm run lint`, `npm run build`, `npm run e2e -- e2e/decision.spec.ts e2e/app-shell.spec.ts`, and `git diff --check`: all passed under Node 24/npm 11. Browser flows: 24/24; build generated 81 TR + 81 EN province pages, two home pages, 404 and sitemap/CSP.
+- The first full test attempt before rebasing failed only on the stale outdoor-window assertion in main #3404; the failure was confirmed from its exact job log and was fixed by merged PR #1393. The post-rebase full suite passed.
+- Docker CLI exists, but the host denies access to `/var/run/docker.sock` even through the gateway's root execution mode. Therefore the actual `docker build -f Dockerfile.dev` was not run; CI must validate image construction before merge. Do not claim a container image was built locally.
+
+### Exact next actions
+1. Commit/push the docs checkpoint with the one-line Dockerfile change and open a small PR.
+2. Require exact-head CI/CD, Ops contracts, CodeQL and browser checks. Because local Docker socket access is denied, inspect the CI workflow for a Dockerfile.dev build; if none exists, add a safe build-only validation job or document the remaining limitation before merging.
+3. Check current main CI/CD and Pages deploy after PR #1393 (`bc55488a6139f730a9b9ae1a54b5edcb662b9bab`); verify production revision parity and health. Production was healthy at the last direct smoke test, but frontend still served `cd4198add72cabdaccf0475d5ebd1997659c8fd4` before the latest merge.
+4. Keep the original dirty UI worktree and all unrelated worktrees intact. Disk pressure is warning-only; 11.4 GiB free at the latest observer sample. Do not remove generated data or other worktrees.
+
+### Follow-up — CI now verifies the dev image build
+- Added a read-only `dev-image` job to `.github/workflows/ci.yml` that builds `Dockerfile.dev` with `docker build --pull` on GitHub-hosted Ubuntu; it does not publish or push the image. YAML parses successfully and the job is present in the parsed workflow graph.
+- This closes the local Docker socket limitation for merge gating: the actual image build will be exercised by the PR's GitHub Actions run. Local Node 24 app validation remains 993/993 tests, type-check/lint/build and 24/24 browser flows passing.
