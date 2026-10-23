@@ -2,8 +2,9 @@
 // Writes the pre-rendered pages into dist/ (Faz 4): 81 Turkish + 81 English province pages,
 // the TR and /en/ home pages, the real 404 page, sitemap.xml and robots.txt.
 // The page builders live in ./lib/city-pages.mjs (unit-tested).
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { injectCriticalFontPreloads } from './lib/font-preloads.mjs';
 import {
   BASE_URL,
   buildCityPage,
@@ -22,7 +23,9 @@ const buildRevision = (process.env.HAVA81_BUILD_REVISION || process.env.GITHUB_S
 if (process.env.GITHUB_ACTIONS === 'true' && !/^[0-9a-f]{40}$/i.test(buildRevision)) {
   throw new Error('GitHub Actions production build is missing a full 40-character build revision');
 }
-const baseHtml = stampBuildRevision(await readFile(join(dist, 'index.html'), 'utf8'), buildRevision);
+const assetNames = await readdir(join(dist, 'assets'));
+const stampedHtml = stampBuildRevision(await readFile(join(dist, 'index.html'), 'utf8'), buildRevision);
+const baseHtml = injectCriticalFontPreloads(stampedHtml, assetNames);
 
 for (const province of provinces) {
   // Per-province OG images are committed under public/og/ (scripts/generate-og-images.mjs).
