@@ -118,3 +118,8 @@ If a workflow job invokes a script stored in the repository, that job must check
 ## 2026-10-23 22:42 TRT — development-image runtime smoke validation
 - The Node 24 development-image follow-up adds a loopback-only container port binding and a bounded HTTP readiness loop. Keep container names unique per GitHub run, print logs only on failure, and always remove the test container via an EXIT trap. Never publish the dev image.
 - Local YAML parse, extracted shell syntax, full frontend tests (993/993), type-check, lint, production build, focused browser flows (24/24), and whitespace checks passed. Local Docker is unavailable, so only the hosted exact-PR job can prove that the image starts and serves HTTP.
+
+
+## 2026-10-23 22:48 TRT — development-image port contract
+- `Dockerfile.dev` must keep the Vite listener, `EXPOSE` value, and CI runtime-smoke container port aligned. Vite defaults to 5173; if the image contract is port 3000, pass `--port 3000 --strictPort` to the start script rather than changing only the smoke mapping and leaving `EXPOSE 3000` inaccurate.
+- The CI runtime smoke's failed exact-head run is actionable evidence, not a flaky check: the image built, Vite started, but the port published to the host had no listener. Keep the test and fix the image contract.

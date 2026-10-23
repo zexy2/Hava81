@@ -550,3 +550,11 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Require exact-head CI/CD, CodeQL, Ops contracts, browser flows, and Lighthouse. Confirm the hosted development-image job both builds and serves HTTP, with guaranteed cleanup and no publish step.
 3. While those checks run, continue the independent next-change evidence-integrity branch `automation/hava81-next-change-rain-baseline-20261023-2237` without modifying this pending branch.
 4. Before merge, re-read the PR's exact head/base/mergeability/checks and refresh observer state; after merge, verify current-main CI/Pages and direct production health. This is a workflow-only change; do not deploy the API or change port 4002.
+
+
+## 2026-10-23 22:48 TRT — fix development container exposed-port mismatch found by runtime smoke
+
+- Re-read the PR #1395 remote head before editing: `66090337f1f7c29f9befb8e89cad8a28852a7643`; local and remote heads matched, and `origin/main` remained `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`. The failed CI/CD run #3411 (`40013601809`) is complete; its exact `Development container build` job log is now available.
+- The image built successfully. The runtime smoke failed for a real configuration mismatch: `Dockerfile.dev` declared `EXPOSE 3000`, the workflow published container port 3000, but `npm start` launched Vite on its default port 5173. The job log shows Vite listening on `0.0.0.0:5173` while curl repeatedly reset the connection to the published 3000 port.
+- Fix on the same PR branch: pass `--port 3000 --strictPort` to `npm start` in `Dockerfile.dev`, aligning the actual server with `EXPOSE 3000` and the smoke port mapping. This is dev-container-only; no production Dockerfile, API service, port 4002 or deployment configuration changes.
+- Next: run a host-level Vite port smoke if port 3000 is free, `git diff --check`, commit and push this same branch normally. Re-run exact-head CI/CD; do not merge until the development-image build+runtime smoke, browser flows, Lighthouse, CodeQL and Ops contracts all pass.
