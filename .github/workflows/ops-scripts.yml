@@ -38,6 +38,8 @@ jobs:
         run: bash scripts/test-run-npm-audit-with-retry.sh
       - name: Verify Dependabot ecosystem compatibility
         run: python3 scripts/test-dependabot-config.py
+      - name: Verify Dependabot merge dispatches main CI when needed
+        run: bash scripts/test-dependabot-main-ci-dispatch.sh
       - name: Verify parallel build and strict deploy gates
         run: python3 scripts/test-ci-parallel-build-gates.py
       - name: Verify safe worktree cleanup contract

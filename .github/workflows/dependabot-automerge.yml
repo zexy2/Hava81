@@ -2,7 +2,7 @@ name: Dependabot auto-merge
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
 
 permissions:
   contents: write
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   automerge:
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.event.action != 'closed' && github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Dependabot metadata
@@ -26,3 +26,30 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  dispatch-main-ci-after-merge:
+    # Dependabot auto-merge uses GITHUB_TOKEN, which suppresses the normal push-triggered
+    # CI workflow. Dispatch the same gated main pipeline only when no run appears for the
+    # current main SHA after the merge has propagated.
+    if: >-
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - name: Dispatch main CI if the merge push did not start it
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
+        run: bash scripts/dispatch-main-ci-after-dependabot-merge.sh

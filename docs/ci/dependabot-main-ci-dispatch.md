@@ -1,0 +1,5 @@
+# Dependabot merge → main CI/CD dispatch
+
+The Dependabot auto-merge workflow uses `GITHUB_TOKEN`. GitHub suppresses most follow-on workflow runs caused by that token, so a Dependabot merge can advance `main` without starting the normal `push`-triggered CI/CD pipeline. The read-only Hava81 observer correctly blocks further deployment while the deployed frontend revision lags `main`, but that state must not remain indefinitely.
+
+On a successful Dependabot merge into `main`, the workflow checks whether the merge has reached the current main ref and whether a CI/CD run already exists for that exact current-main SHA. It waits briefly for the normal push run to appear; only if no matching run exists does it dispatch the existing `ci.yml` workflow on `main`. That workflow retains all lint, type, unit, API, build, browser, Lighthouse, and deploy gates. The new job is limited to merged Dependabot PRs targeting `main`, has only `actions:write` and `contents:read`, and refuses to dispatch before the merge SHA is reachable from `main`. A mocked contract test covers the already-running, missing-run, and not-yet-propagated cases.
