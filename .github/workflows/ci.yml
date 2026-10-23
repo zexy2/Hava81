@@ -143,6 +143,8 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouse-results/*.json
+          # upload-artifact excludes dot-directories by default; keep the report files.
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 7
 
