@@ -58,3 +58,41 @@ Do not disable the automation. Keep API primary on 4002 and 4001 as rollback/can
 - PR #1362: after docs PR merge, rebase onto the resulting main, preserve the artifact step and contract test, rerun static/YAML/build checks, push with explicit lease, and wait for exact-head GitHub checks.
 - PR #1363: after docs PR merge, rebase onto the resulting main, rerun API type-check/test/build (include the >1,000 AQI regression), push with explicit lease, and wait for exact-head GitHub checks.
 - Then rebase local P1.3 commit `041ad9f...` onto the latest main, rerun all local gates, push/open PR, and keep the activity-plan UI integration as the next independent loop.
+
+## 2026-10-23 11:45 TRT — P1.3 merged; hourly AQI and parser branches rebased
+
+### Production and pipeline (directly re-verified)
+- Observer snapshot collected at `2026-10-23T08:43:16.972411Z`: production healthy, no issues; API readiness HTTP 200, CORS OK, seven boot assets healthy, Nginx API port 4002, disk 75.5% used / 23.7 GiB free.
+- Direct public smoke at `2026-10-23T08:41:41Z`: `/api/v1/health` HTTP 200 with API revision `967b280e0ef733b95782ebf47b4557145c255ad6`; frontend root HTTP 200 and HTML embedded SHA `32b77dd1b510582e07643859b5fdecc17a44ca4b`; CORS preflight/probe HTTP 200.
+- PR #1364 (evidence-aware hourly activity window engine) merged normally as main SHA `3685a1a2ec393366cdc46ac0a6cf662911ee1b2f`. Main CI/CD #3344 for this SHA was in progress at observer time. Frontend still serving `32b77...` then; wait for deploy and verify root + `/izmir/` revision and all boot assets before calling it deployed.
+- Do not merge/deploy additional API changes until exact-head CI is green and the blue/green API workflow/public revision gate completes. Keep API primary on 4002 and rollback/canary on 4001.
+
+### PR #1363 — high European AQI parser values
+- PR: https://github.com/zexy2/Hava81/pull/1363
+- Remote head before rebase: `3d98c5101f20d290a7818ce3af228741f202eb79`; the remote head was checked with `git ls-remote` immediately before updating.
+- Rebased the same PR branch onto current `origin/main` and pushed with explicit `--force-with-lease` matching the prior remote head. New head: `96040a043e8461624b21ed4b50433e87f9ba5a93`.
+- Local validation on the rebased tree: `npm run api:type-check` pass; `npm run api:test` 96/96 pass (including European AQI 1,001); `npm run api:build` pass; `git diff --check` pass.
+- Next: query exact-head CI/CD, Ops script contracts, CodeQL and mergeability. API deployment must use the normal blue/green workflow; no direct host mutation.
+
+### PR #1365 — fresh hourly European AQI activity guidance
+- PR: https://github.com/zexy2/Hava81/pull/1365
+- Remote head before rebase: `af379b1528abaf30a1f468b403c9c31fbca4c5da`; verified unchanged before rebase/push.
+- Rebased onto `origin/main` `3685a1a...`; pushed with explicit lease against `af379b...`. New head: `caf0a6cc636a9dc3a364abc3544b1775d99425f2`.
+- Local validation on the rebased tree: `npm run type-check` pass; `npm run lint` pass; `npm run test:ci` 102 test files / 950 tests pass, statement coverage 91.93%, branch coverage 85.46% (threshold 85%); `npm run build` pass; `git diff --check` pass.
+- Next: query exact-head CI/CD, Ops script contracts, CodeQL and mergeability. This is a frontend/UI change; wait for hosted browser/Lighthouse gates and do not touch the branch from another workstream.
+
+### Active worktrees and branch hygiene
+- Pending PR #1363 branch worktree: `/tmp/hava81-aqi-parser-bounds-20261023-1040` — clean after push, branch `automation/hava81-aqi-parser-bounds-20261023-1040`.
+- Pending PR #1365 branch worktree: `/tmp/hava81-hourly-aqi-activity-20261023-1100` — clean after push, branch `automation/hava81-hourly-aqi-activity-20261023-1100`.
+- This checkpoint branch: `automation/hava81-autonomous-progress-20261023-1145`, based on main `3685a1a...`; append-only docs update only. Do not modify the dirty UI worktree `/home/chatgpt/hava81-rain-detail-2135` (branch `automation/hava81-activity-header-density-1800`; modified docs, E2E test, and ActivityPlanner CSS are unrelated user/automation work and must be preserved).
+- The old helper-only worktree `/tmp/hava81-api-deploy-fail-closed-20261023-0342` has untracked `scripts/check-api-deploy-secrets.sh` and `scripts/test-api-deploy-secrets.sh`; current main already contains the integrated fail-closed workflow and contract test. Preserve that old worktree; do not duplicate its change.
+
+### Prioritized next queue
+1. Check exact-head CI and mergeability for PR #1363 (`96040a043...`) and PR #1365 (`caf0a6cc...`); merge only after green gates and fresh head verification.
+2. While main CI/deploy is pending, continue independent low-risk work in a separate branch; never wait idle for Pages propagation.
+3. After main CI #3344 succeeds, smoke-test production root, `/izmir/`, all seven boot assets, API `/api/v1/health`, CORS, and confirm frontend revision equals main. Confirm API remains on 4002.
+4. Finish this docs checkpoint PR with `git diff --check`, commit/push, then check CI and merge normally.
+5. Next product task: review ActivityPlanner's explanation of exact-hour AQI fallback and stale/missing evidence states; keep Open-Meteo/CAMS explicitly modeled, not an MGM official warning. Do not invent hourly AQI values or interpolate timestamps.
+6. After the AQI changes settle, integrate the evidence-aware plan engine into the activity UI in a separate branch with keyboard/mobile/browser tests and clear empty/low-confidence states.
+
+Do not disable or pause the automation. Preserve all prior valid checkpoint entries.
