@@ -57,8 +57,10 @@ test.describe('routing and location', () => {
       await expect(page).toHaveURL(/\/$/);
       await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toHaveCount(0);
       await expect(page).toHaveTitle('Hava81 — Havayı değil, gününü planla');
+      // The preview port is configurable for isolated/parallel local runs; the canonical
+      // origin should follow the actual app origin instead of assuming the default 4173.
       expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe(
-        'http://127.0.0.1:4173/'
+        new URL('/', page.url()).href
       );
     }
   );
