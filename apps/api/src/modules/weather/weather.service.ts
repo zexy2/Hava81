@@ -1,8 +1,10 @@
 import { coordinateCacheKey } from '../../core/geo';
+import { AppError } from '../../core/errors';
 import type { AppConfig } from '../../config/env';
 import type { AsyncCache, CacheResult } from '../../core/cache';
 import { HOURLY_FORECAST_HOURS } from './contracts';
 import type {
+  AirQualityHourlyProvider,
   CurrentWeatherQuery,
   HourlyForecastProvider,
   WeatherProvider,
@@ -10,6 +12,7 @@ import type {
 import type { ForecastUpstream } from '../../providers/openweather/schemas';
 import type {
   AirQualityDto,
+  AirQualityHourlyDto,
   AirQualityQueryInput,
   CurrentWeatherDto,
   CurrentWeatherQueryInput,
@@ -34,8 +37,37 @@ export class WeatherService {
       AppConfig,
       'CACHE_CURRENT_TTL_MS' | 'CACHE_FORECAST_TTL_MS' | 'CACHE_AIR_QUALITY_TTL_MS'
     >,
-    private readonly hourlyProvider: HourlyForecastProvider
+    private readonly hourlyProvider: HourlyForecastProvider,
+    private readonly airQualityHourlyProvider?: AirQualityHourlyProvider
   ) {}
+
+  /** Plan v3 (P1.2): hourly European AQI for the five-day plan horizon (bundle part only). */
+  getAirQualityHourly(query: AirQualityQueryInput): Promise<CacheResult<AirQualityHourlyDto>> {
+    const provider = this.airQualityHourlyProvider;
+    if (!provider) {
+      return Promise.reject(
+        new AppError(
+          503,
+          'AIR_QUALITY_HOURLY_UNAVAILABLE',
+          'Saatlik hava kalitesi şu anda kullanılamıyor.'
+        )
+      );
+    }
+    const key = `weather:air-quality-hourly:${coordinateKey(query.lat, query.lon)}`;
+    return this.cache.getOrLoad(key, this.config.CACHE_FORECAST_TTL_MS, async () => {
+      const result = await provider.getAirQualityHourly({ lat: query.lat, lon: query.lon });
+      return {
+        hourly: result.hourly.slice(0, HOURLY_FORECAST_HOURS),
+        meta: {
+          provider: provider.name,
+          attribution: provider.attribution,
+          sourceUrl: provider.sourceUrl,
+          fetchedAt: new Date().toISOString(),
+          intervalHours: 1,
+        },
+      };
+    });
+  }
 
   getCurrent(query: CurrentWeatherQueryInput): Promise<CacheResult<CurrentWeatherDto>> {
     const providerQuery: CurrentWeatherQuery = query.city

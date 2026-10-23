@@ -11,6 +11,8 @@ import type {
   ForecastUpstream,
 } from '../src/providers/openweather/schemas';
 import type {
+  AirQualityHourlyProvider,
+  AirQualityHourlyProviderResult,
   CurrentWeatherQuery,
   HourlyForecastProvider,
   HourlyForecastProviderResult,
@@ -112,6 +114,24 @@ class FakeHourly implements HourlyForecastProvider {
   }
 }
 
+class FakeAirHourly implements AirQualityHourlyProvider {
+  readonly name = 'Open-Meteo';
+  readonly attribution = 'Open-Meteo · CC BY 4.0 · CAMS';
+  calls = 0;
+  fail = false;
+  async getAirQualityHourly(): Promise<AirQualityHourlyProviderResult> {
+    this.calls += 1;
+    if (this.fail) throw new AppError(502, 'AIR_QUALITY_HOURLY_PROVIDER_ERROR', 'down');
+    return {
+      hourly: Array.from({ length: 130 }, (_, index) => ({
+        time: new Date(Date.parse('2026-08-28T18:00:00.000Z') + index * 3_600_000).toISOString(),
+        europeanAqi: 30 + (index % 10),
+        pm25: 8.5,
+      })),
+    };
+  }
+}
+
 class FakeContext extends ContextSignalsService {
   calls = 0;
   lastMarine: boolean | undefined;
@@ -137,15 +157,17 @@ const setup = async (options: { budget?: UpstreamBudget; overrides?: Record<stri
   const provider = new FakeProvider();
   const hourlyProvider = new FakeHourly();
   const contextService = new FakeContext();
+  const airQualityHourlyProvider = new FakeAirHourly();
   const app = await buildApp({
     env: env(options.overrides),
     provider,
     hourlyProvider,
+    airQualityHourlyProvider,
     contextService,
     upstreamBudget: options.budget,
     logger: false,
   });
-  return { app, provider, hourlyProvider, contextService };
+  return { app, provider, hourlyProvider, contextService, airQualityHourlyProvider };
 };
 
 const URL_BASE = '/api/v1/weather/bundle?lat=41.01&lon=28.97&lang=tr';
@@ -182,6 +204,79 @@ test('bundle returns every part in one response with per-part cache metadata', a
   assert.deepEqual(provider.lastCurrentQuery, { lat: 41.01, lon: 28.97, units: 'metric', lang: 'tr' });
   assert.deepEqual(provider.calls, { current: 1, forecast: 1, airQuality: 1 });
   assert.equal(hourlyProvider.calls, 1);
+});
+
+test('bundle omits airQualityHourly unless requested (plan v3 P1.2: older clients unchanged)', async t => {
+  const { app, airQualityHourlyProvider } = await setup();
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: 'GET', url: URL_BASE });
+  assert.equal(response.statusCode, 200);
+  assert.equal('airQualityHourly' in response.json(), false);
+  assert.equal(airQualityHourlyProvider.calls, 0);
+});
+
+test('bundle serves hourly European AQI for the five-day horizon and caches it (plan v3 P1.2)', async t => {
+  const { app, airQualityHourlyProvider } = await setup();
+  t.after(() => app.close());
+
+  const url = `${URL_BASE}&include=hourly,airQuality,airQualityHourly`;
+  const first = await app.inject({ method: 'GET', url });
+  assert.equal(first.statusCode, 200);
+  const body = first.json();
+  assert.deepEqual(body.errors, {});
+  assert.equal(body.airQualityHourly.hourly.length, 120);
+  assert.deepEqual(body.airQualityHourly.hourly[0], {
+    time: '2026-08-28T18:00:00.000Z',
+    europeanAqi: 30,
+    pm25: 8.5,
+  });
+  assert.equal(body.airQualityHourly.meta.provider, 'Open-Meteo');
+  assert.equal(body.airQualityHourly.meta.intervalHours, 1);
+  assert.equal(body.airQualityHourly.meta.cacheStatus, 'MISS');
+
+  const second = await app.inject({ method: 'GET', url });
+  assert.equal(second.json().airQualityHourly.meta.cacheStatus, 'HIT');
+  assert.equal(airQualityHourlyProvider.calls, 1);
+});
+
+test('bundle reports a failed airQualityHourly part as null with 200 and errors.airQualityHourly', async t => {
+  const { app, airQualityHourlyProvider } = await setup();
+  airQualityHourlyProvider.fail = true;
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: 'GET', url: `${URL_BASE}&include=hourly,airQualityHourly` });
+  assert.equal(response.statusCode, 200);
+  const body = response.json();
+  assert.equal(body.airQualityHourly, null);
+  assert.deepEqual(body.errors.airQualityHourly, {
+    code: 'AIR_QUALITY_HOURLY_PROVIDER_ERROR',
+    message: 'down',
+    statusCode: 502,
+  });
+  assert.equal(body.hourly.hourly.length, 1);
+  assert.equal(response.headers['cache-control'], 'no-store');
+});
+
+test('bundle airQualityHourly keeps Turkey bounds and the upstream budget', async t => {
+  const { app, airQualityHourlyProvider } = await setup({ budget: new UpstreamBudget(1) });
+  t.after(() => app.close());
+
+  const outside = await app.inject({
+    method: 'GET',
+    url: '/api/v1/weather/bundle?lat=40.71&lon=-74&include=airQualityHourly',
+  });
+  assert.equal(outside.statusCode, 400);
+  assert.equal(airQualityHourlyProvider.calls, 0);
+
+  const first = await app.inject({ method: 'GET', url: `${URL_BASE}&include=airQualityHourly` });
+  assert.equal(first.statusCode, 200);
+  const exhausted = await app.inject({
+    method: 'GET',
+    url: '/api/v1/weather/bundle?lat=39.93&lon=32.86&include=airQualityHourly',
+  });
+  assert.equal(exhausted.statusCode, 503);
+  assert.equal(exhausted.json().error.code, 'UPSTREAM_BUDGET_EXHAUSTED');
 });
 
 test('bundle shares cache keys with the single endpoints', async t => {

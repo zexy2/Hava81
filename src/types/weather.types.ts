@@ -215,6 +215,19 @@ export interface AirQuality {
   meta: WeatherDataMeta;
 }
 
+/** Plan v3 (P1.2): hourly European AQI (Open-Meteo `european_aqi`, 0–100+) and PM2.5. */
+export interface AirQualityHour {
+  time: Date;
+  europeanAqi: number;
+  /** μg/m³ */
+  pm25?: number;
+}
+
+export interface AirQualityHourly {
+  hours: AirQualityHour[];
+  meta: WeatherDataMeta;
+}
+
 export interface ForecastMeta extends WeatherDataMeta {
   timezoneOffsetSeconds: number;
   intervalHours: number;

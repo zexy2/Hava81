@@ -215,6 +215,63 @@ describe('weatherService.getForecastBundle', () => {
     expect(value && 'planHourly' in value).toBe(false);
   });
 
+  it('parses the optional airQualityHourly part only when requested (plan v3 P1.2)', async () => {
+    mockGet.mockResolvedValue({
+      hourly: hourlyPart(),
+      airQualityHourly: {
+        hourly: [
+          { time: '2026-08-28T19:00:00.000Z', europeanAqi: 61, pm25: 18.2 },
+          { time: '2026-08-28T18:00:00.000Z', europeanAqi: 42 },
+          // Malformed hours are dropped, not fatal.
+          { time: 'not-a-date', europeanAqi: 40 },
+          { time: '2026-08-28T20:00:00.000Z', europeanAqi: -1 },
+        ],
+        meta: { provider: 'Open-Meteo', fetchedAt: nowIso(), intervalHours: 1, cacheStatus: 'MISS' },
+      },
+      errors: {},
+      meta: { fetchedAt: nowIso(), parts: ['hourly', 'airQualityHourly'] },
+    });
+
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly', 'airQualityHourly'],
+    });
+
+    expect(mockGet.mock.calls[0][1]).toMatchObject({ include: 'hourly,airQualityHourly' });
+    expect(bundle.airQualityHourly?.ok).toBe(true);
+    const value = bundle.airQualityHourly?.ok ? bundle.airQualityHourly.value : null;
+    expect(value?.hours).toEqual([
+      { time: new Date('2026-08-28T18:00:00.000Z'), europeanAqi: 42 },
+      { time: new Date('2026-08-28T19:00:00.000Z'), europeanAqi: 61, pm25: 18.2 },
+    ]);
+    expect(value?.meta.provider).toBe('Open-Meteo');
+
+    mockGet.mockResolvedValue({
+      hourly: hourlyPart(),
+      errors: {},
+      meta: { fetchedAt: nowIso(), parts: ['hourly'] },
+    });
+    const withoutPart = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+    expect('airQualityHourly' in withoutPart).toBe(false);
+  });
+
+  it('reports a failed airQualityHourly part without failing the bundle', async () => {
+    mockGet.mockResolvedValue({
+      hourly: hourlyPart(),
+      airQualityHourly: null,
+      errors: {
+        airQualityHourly: { code: 'AIR_QUALITY_HOURLY_PROVIDER_ERROR', message: 'down', statusCode: 502 },
+      },
+      meta: { fetchedAt: nowIso(), parts: ['hourly', 'airQualityHourly'] },
+    });
+
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly', 'airQualityHourly'],
+    });
+
+    expect(bundle.hourly?.ok).toBe(true);
+    expect(bundle.airQualityHourly?.ok).toBe(false);
+  });
+
   it('rejects a non-boolean isDay as a malformed hourly part', async () => {
     const hourly = hourlyPart();
     mockGet.mockResolvedValue({

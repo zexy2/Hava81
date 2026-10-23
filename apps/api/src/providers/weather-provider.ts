@@ -72,6 +72,22 @@ export interface HourlyForecastProvider {
 
 export type AirQualityQuery = CoordinateQuery;
 
+/** Plan v3 (P1.2): hourly European AQI (0–100+) and PM2.5 for the plan horizon. */
+export interface AirQualityHourlyProviderResult {
+  hourly: Array<{
+    time: string;
+    europeanAqi: number;
+    pm25?: number;
+  }>;
+}
+
+export interface AirQualityHourlyProvider {
+  readonly name: string;
+  readonly attribution?: string;
+  readonly sourceUrl?: string;
+  getAirQualityHourly(query: CoordinateQuery): Promise<AirQualityHourlyProviderResult>;
+}
+
 export interface WeatherProvider {
   readonly name?: string;
   getCurrent(query: CurrentWeatherQuery): Promise<CurrentWeatherUpstream>;
