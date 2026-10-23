@@ -350,3 +350,33 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 4. Keep major Dependabot PRs #1379, #1380, #1381, #1375, #1376 and #1165 out of auto-merge while any exact-head gate fails or the base is stale. In particular, do not adopt Node 25 images blindly; verify runtime/LTS and container compatibility first.
 5. Before any future merge, directly re-read current PR head, mergeability, exact-head checks and a fresh observer snapshot. After a green normal merge, watch main CI/Pages, verify root/city revisions and all boot assets, then smoke API readiness/CORS/4002 and the actual deployed API revision.
 6. Continue independent work during hosted CI; do not disable/pause automation or bypass a blocked normal write path.
+
+## 2026-10-23 19:58 TRT — rank hourly rain summary by probability and amount
+
+### Fresh production / observer baseline
+- Clean worktree `/home/chatgpt/hava81-autonomous-20261023-1944`, branch `automation/hava81-run11-1944-forecast-integrity`, based on exact `origin/main` SHA `dee9adae90749baaa4b3d7282b126386a7946102` (`fix(decisions): anchor near-term risks to current time`). The dirty primary worktree `/home/chatgpt/hava81-rain-detail-2135` was left untouched; its unrelated UI/e2e edits remain preserved.
+- Fresh read-only observer snapshot `collected_at=2026-10-23T16:54:51.977874Z`: production HEALTHY, no blockers, frontend root/city revisions match main `dee9adae90749baaa4b3d7282b126386a7946102`, all seven boot assets healthy, API readiness HTTP 200 with `no-store`, CORS exact origin `https://hava81.zekiakgul.dev`, primary API port 4002, main CI/CD #3396 (`39983389828`) successful for the exact main SHA, API deployment not pending. Disk 83.5% used / 16.0 GiB free; API build headroom remains OK.
+- Direct smoke after the observer snapshot: `/`, `/izmir/`, `/manifest.json`, `/sw.js`, `/api/v1/health`, and `/api/v1/health/ready` all HTTP 200. API runtime revision remains `4aa0ee1a40db773a11367b3ebc7d61271686d719`; this branch changes only frontend decision-summary logic, tests and docs, so no API deployment is required.
+
+### Bounded product correctness change
+- Audit of the current `HourlySummary` found that the rain peak selected the largest precipitation probability first and only compared amount on an exact probability tie. Other Hava81 decision surfaces use `precipitationSignalSeverity(probability, amount)` so a lower-probability but materially heavier rain hour can outrank a high-probability drizzle.
+- `src/components/hava81/forecastAtlas/hourlySummaryData.ts` now uses the shared severity formula on the already-normalized probability ratio and hourly amount. The displayed probability and amount still come from the same actual hourly sample; no maxima are combined across different hours, no forecast values are fabricated, and ties retain the earliest sample.
+- Added a UI regression in `src/__tests__/components/ForecastAtlas.rhythm.test.tsx`: 80% probability / 0 mm must not outrank a separate 20% / 6 mm hour; the summary must display `20% · 6,0 mm` and anchor the time to that exact hour.
+- Read-only stale-PR audit: #1319 (`49912af788c775b550a2c69ab49c9aee6f4b6459`) and #1294 (`978367e39ebd45ca467207bd3fcd313fb04be025`) both report `mergeable=false`, `mergeable_state=dirty`, and old base SHAs. The current main already renders the rain peak time and already contains explicit disabled notification-button styling, so neither old branch was mutated or blindly merged.
+
+### Local validation on the final source/test diff
+- Focused Vitest (`ForecastAtlas.rhythm.test.tsx`, `utils/precipitation.test.ts`): **21/21 passed**.
+- Full `npm run test:ci`: **983 tests across 103 files passed**; statements 92.33%, branches 85.84%, functions 91.97%, lines 94.69%.
+- `npm run type-check`: pass.
+- `npm run lint` and CSS lint: pass (19 CSS files clean).
+- Production `npm run build`: pass; 81 TR + 81 EN province pages, home pages, 404, sitemap and CSP generation succeeded.
+- Browser flows `e2e/decision.spec.ts` + `e2e/app-shell.spec.ts`: **24/24 passed** across mobile 390, tablet 768 and desktop 1280.
+- `git diff --check`: pass. No production code has been deployed by this branch; no commit, push or PR existed at the time of this checkpoint.
+
+### Exact current branch and next queue
+1. Re-read the full diff, fetch origin and confirm `origin/main` has not moved. Commit only `hourlySummaryData.ts`, its focused regression test, and the append-only progress/decision entries.
+2. Push the isolated branch using the normal authenticated Git path and open a bounded PR explaining the rain-severity ranking and local gate results. If the normal write is blocked, stop rather than trying an alternate API/ref write.
+3. Record the exact PR head SHA and hosted CI/CD, Ops contracts, CodeQL, Browser flows and Lighthouse run IDs. Continue independent work while those runs execute.
+4. If the PR becomes green, re-read its current head SHA, mergeability and required checks, then refresh `/usr/local/bin/hava81-worker-status` immediately before normal merge. Merge only if the observer still reports no blockers and exact-head gates are green.
+5. After merge, watch the exact-main CI/CD and Pages publish, then directly verify root/city revision parity, all current boot assets, API readiness/CORS/port 4002 and the deployed API revision. API deployment should remain unnecessary unless an API runtime file changes.
+6. Keep PRs #1319, #1294 and the Dependabot branches untouched while their current mergeability/checks are stale or failed. Preserve the dirty P1.3 and primary UI worktrees. Continue independent work during hosted CI; never disable/pause automation or bypass a blocked normal write path.
