@@ -1,4 +1,9 @@
-import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getDailyPlanAirQualityEvidence } from './airQualityEvidence';
 import { findBestWindowRange } from './bestWindowRange';
 import { isRecommendableHour } from './eligibility';
@@ -302,6 +307,7 @@ export const buildDailyPlan = ({
     airQuality: pickAirQualityAdvice(airQualityEvidence.currentAirQuality),
     nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible),
     impacts: aggregateImpacts(weighted),
-    confidence: confidenceFor(slots),
+    // Confidence must describe the same forecast horizon that contributes to the score.
+    confidence: confidenceFor(weighted.map(entry => entry.slot)),
   };
 };

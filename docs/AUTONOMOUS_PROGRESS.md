@@ -380,3 +380,32 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 4. If the PR becomes green, re-read its current head SHA, mergeability and required checks, then refresh `/usr/local/bin/hava81-worker-status` immediately before normal merge. Merge only if the observer still reports no blockers and exact-head gates are green.
 5. After merge, watch the exact-main CI/CD and Pages publish, then directly verify root/city revision parity, all current boot assets, API readiness/CORS/port 4002 and the deployed API revision. API deployment should remain unnecessary unless an API runtime file changes.
 6. Keep PRs #1319, #1294 and the Dependabot branches untouched while their current mergeability/checks are stale or failed. Preserve the dirty P1.3 and primary UI worktrees. Continue independent work during hosted CI; never disable/pause automation or bypass a blocked normal write path.
+
+
+## 2026-10-23 20:18 TRT — daily-plan confidence aligned with the scored horizon
+
+### Production and main baseline
+- Read-only observer snapshot `collected_at=2026-10-23T17:10:22.718111Z`: production HEALTHY, no issues; main/frontend revision `7ba0f3540847c888c0cc010560d307a9a74ee9c0`, main CI/CD #3398 successful, seven boot assets healthy, API readiness HTTP 200, CORS exact origin `https://hava81.zekiakgul.dev`, primary API port 4002. Disk 83.9% used / 15.5 GiB free; API build headroom OK.
+- Direct public smoke at 17:13Z: root, `/izmir/`, `/manifest.json`, `/sw.js`, API `/api/v1/health` and `/api/v1/health/ready` all HTTP 200. API runtime revision `4aa0ee1a40db773a11367b3ebc7d61271686d719`; this frontend/domain-only change does not require an API deploy.
+
+### Bounded plan-quality fix
+- Worktree `/home/chatgpt/hava81-run11-next-20261023-2011`, branch `automation/hava81-run11-next-20261023-2011`, based on exact `origin/main` SHA `7ba0f3540847c888c0cc010560d307a9a74ee9c0`.
+- `buildDailyPlan` scored only the first 12-hour horizon via `buildWeightedSlots`, but computed `confidenceFor(slots)` across all returned forecast slots (up to 24 hours). Rich data in the later half could incorrectly label the near-term decision high-confidence even when the scored horizon was sparse.
+- Confidence now uses exactly the weighted slots that contribute to the score. Added a regression where six sparse near-term hours and eighteen richer later hours must not elevate the 12-hour plan above medium confidence. Updated the test point helper to support hours beyond 23 without producing invalid timestamps.
+
+### Validation on the final source/test diff
+- Focused daily-plan suite: **24/24 passed**.
+- Full `npm run test:ci`: **984 tests across 103 files passed**; statements 92.35%, branches 85.87%, functions 91.98%, lines 94.69%.
+- `npm run type-check`: pass.
+- `npm run lint` and CSS lint: pass (19 CSS files clean).
+- Production `npm run build`: pass; 81 TR + 81 EN province pages, 2 home pages, 404, sitemap and CSP generation succeeded.
+- Browser flows `e2e/decision.spec.ts` + `e2e/app-shell.spec.ts`: **24/24 passed** across mobile 390, tablet 768 and desktop 1280.
+- `npm audit --omit=dev --audit-level=high`: 0 vulnerabilities. `git diff --check`: pass.
+- At checkpoint, source/test changes were not yet committed or pushed; no PR exists for this fix yet.
+
+### Exact next actions and prioritized queue
+1. Review the complete diff, append this checkpoint and the decision rule, then commit only the two source/test files plus these append-only docs.
+2. Push this branch through normal authenticated Git and open a bounded PR. If normal push is blocked, do not use alternate ref/content APIs to bypass it.
+3. Recheck exact-head CI/CD, Ops contracts, CodeQL, Browser flows and Lighthouse. While they run, continue independent work in a separate clean worktree.
+4. Before any merge, refresh observer status and directly re-read current PR head SHA, mergeability and exact-head checks. After merge, monitor main CI/Pages and verify root/city revisions, boot assets, API readiness/CORS/port 4002.
+5. Preserve all dirty worktrees listed by `git worktree list`; do not clean or mutate unrelated experiments. Do not disable/pause automation.

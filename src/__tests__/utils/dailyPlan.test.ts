@@ -36,7 +36,7 @@ const point = (
   temp: number,
   overrides: Partial<Omit<HourlyForecast, 'time' | 'temp'>> = {}
 ): HourlyForecast => ({
-  time: new Date(`2026-08-28T${String(hour).padStart(2, '0')}:00:00.000Z`),
+  time: new Date(Date.parse('2026-08-28T00:00:00.000Z') + hour * 60 * 60 * 1000),
   temp,
   pop: 0,
   windSpeed: 4,
@@ -392,7 +392,14 @@ describe('Hava81 daily decision engine v2', () => {
     const poor = buildDailyPlan({
       weather,
       hourly,
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: freshAqiMeta() },
+      airQuality: {
+        aqi: 4,
+        aqiLabel: 'Sağlıksız',
+        pm25: 40,
+        pm10: 60,
+        o3: 90,
+        meta: freshAqiMeta(),
+      },
     });
     const noCurrentAir = buildDailyPlan({ weather, hourly });
 
@@ -452,8 +459,14 @@ describe('Hava81 daily decision engine v2', () => {
     });
     const withoutAir = buildDailyPlan({ weather, hourly });
 
-    expect(withStaleAir.slots.map(slot => slot.score)).toEqual(withoutAir.slots.map(slot => slot.score));
-    expect(withStaleAir.slots.every(slot => !slot.impacts.some(impact => impact.factor === 'air-quality'))).toBe(true);
+    expect(withStaleAir.slots.map(slot => slot.score)).toEqual(
+      withoutAir.slots.map(slot => slot.score)
+    );
+    expect(
+      withStaleAir.slots.every(
+        slot => !slot.impacts.some(impact => impact.factor === 'air-quality')
+      )
+    ).toBe(true);
     expect(withStaleAir.airQuality).toBe('unknown');
   });
 
@@ -477,7 +490,14 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly: [],
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: freshAqiMeta() },
+      airQuality: {
+        aqi: 4,
+        aqiLabel: 'Sağlıksız',
+        pm25: 40,
+        pm10: 60,
+        o3: 90,
+        meta: freshAqiMeta(),
+      },
     });
     expect(plan.airQuality).toBe('poor');
     expect(plan.impacts.map(impact => impact.factor)).toContain('air-quality');
@@ -508,6 +528,18 @@ describe('Hava81 daily decision engine v2', () => {
     expect(plan.score).toBeLessThan(simpleAverage);
     expect(plan.score).toBeLessThan(85);
   });
+  it('derives confidence from the same 12-hour horizon used for the score', () => {
+    const hourly = [
+      ...Array.from({ length: 6 }, (_, index) => point(6 + index, 24)),
+      ...Array.from({ length: 18 }, (_, index) => rich(12 + index, 24)),
+    ];
+    const plan = buildDailyPlan({ weather, hourly });
+
+    // The first six hours are sparse; the later eighteen are rich but mostly outside
+    // the twelve-hour score horizon. They must not inflate confidence for this plan.
+    expect(plan.confidence).toBe('medium');
+  });
+
   it('groups adjacent near-best hours into an honest best-looking range', () => {
     const plan = buildDailyPlan({
       weather,

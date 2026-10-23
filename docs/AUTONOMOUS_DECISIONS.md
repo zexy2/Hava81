@@ -84,3 +84,8 @@ If a workflow job invokes a script stored in the repository, that job must check
 ## 2026-10-23 — hourly rain peak uses the shared probability-plus-amount severity
 - Forecast Atlas must select one real hourly sample with `precipitationSignalSeverity(normalizedProbability, amountMm)`, matching the shared rain-decision policy. Do not let maximum probability always win before comparing amount: e.g. a 20% / 6 mm hour can be more actionable than an 80% / 0 mm drizzle.
 - Keep the displayed probability, amount and timestamp tied to that same sample; never combine maxima from different hours. Preserve stable first-sample tie behavior, provider values, forecast freshness, and the distinction between modeled precipitation and official warnings.
+
+
+## 2026-10-23 — plan confidence must match the scored horizon
+- Derive a plan's confidence only from the same time-window slots that contribute to its score. Richer weather fields outside the scored horizon must not upgrade the confidence label for near-term advice.
+- Keep the regression test deliberately asymmetric (sparse scored hours, richer later hours) so a future refactor cannot silently broaden the confidence sample again.
