@@ -119,6 +119,10 @@ If a workflow job invokes a script stored in the repository, that job must check
 - The Node 24 development-image follow-up adds a loopback-only container port binding and a bounded HTTP readiness loop. Keep container names unique per GitHub run, print logs only on failure, and always remove the test container via an EXIT trap. Never publish the dev image.
 - Local YAML parse, extracted shell syntax, full frontend tests (993/993), type-check, lint, production build, focused browser flows (24/24), and whitespace checks passed. Local Docker is unavailable, so only the hosted exact-PR job can prove that the image starts and serves HTTP.
 
+## 2026-10-23 22:46 TRT — next-change rain state and stale-evidence rules
+- A forecast hour is not a current observation. When current weather is fresh, compare the first future precipitation probability against the current observed wet/dry condition derived from the current condition icon. When the current observation is stale, do not infer its state from a future sample.
+- Treat non-finite/out-of-range precipitation probabilities as unknown; never convert missing rain evidence into a dry baseline. When no hourly samples exist or current/forecast evidence expires, do not claim “steady/no notable change”; show the localized unavailable state.
+- The first-screen next-change sentence must follow the same current/forecast freshness gate as the other decision guidance. This is modeled forecast guidance, not an official MGM warning.
 
 ## 2026-10-23 22:48 TRT — development-image port contract
 - `Dockerfile.dev` must keep the Vite listener, `EXPOSE` value, and CI runtime-smoke container port aligned. Vite defaults to 5173; if the image contract is port 3000, pass `--port 3000 --strictPort` to the start script rather than changing only the smoke mapping and leaving `EXPOSE 3000` inaccurate.
