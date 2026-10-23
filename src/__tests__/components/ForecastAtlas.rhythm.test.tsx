@@ -96,7 +96,7 @@ describe('ForecastAtlas hourly rhythm', () => {
       const [low, high, rain] = within(summary).getAllByRole('listitem');
       expect(low).toHaveTextContent('24 saatte en düşük9°CYarın 03:00');
       expect(high).toHaveTextContent('24 saatte en yüksek21°C18:00');
-      expect(rain).toHaveTextContent('Yarın 04:00');
+      expect(rain).toHaveTextContent('Yarın · 04:00');
       expect(low.querySelector('time')).toHaveAttribute('datetime', '2026-10-22T03:00:00.000Z');
     } finally {
       vi.useRealTimers();
