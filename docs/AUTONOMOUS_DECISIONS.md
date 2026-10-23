@@ -149,3 +149,11 @@ A real dev-image CI attempt failed during `npm ci` with `ECONNRESET` from the pa
 - Preserve the raw `Retry-After` response header for operator diagnostics, but do not retry or sleep inside this release gate. Exit with a distinct code 2 and explicit `BLOCKED` result; keep ordinary aggregated failures on exit code 1 and full 81/81 success on exit code 0.
 - Regression coverage injects a mocked first-response 429 and proves there is exactly one fetch, no second city request, and a visible Retry-After hint. No production weather values, scoring, provider fallback, or safety semantics change.
 - The live gate was unintentionally invoked twice during checkpoint shell expansion; both attempts stopped at the first 429. Readiness on both local slots remained healthy afterward. Do not repeat a live sweep until the provider rate-limit window has cleared and a deliberate release-gate run is justified.
+
+## 2026-10-24 00:59 TRT — Compare Lighthouse scores with runner benchmark index
+
+After the lockfile-only security PR, one hosted Lighthouse artifact scored performance 84 with benchmark index 1975; a subsequent main run scored 96 with benchmark index 4482. The script-only HTTP 429 PR scored 83 with benchmark index 1946. Chrome version and generated application bundle were unchanged, and Lighthouse budgets passed. Treat this pattern as runner variance unless repeated comparable runs or production measurements show a regression; retain the raw artifacts and compare benchmark index, LCP, TBT, and bundle hashes rather than using one score in isolation.
+
+## 2026-10-24 01:02 TRT — Defer stale UI and major dependency PRs until rebased and tested
+
+Reviewing an open PR is not a reason to merge it when its base is several commits old or GitHub reports it as non-mergeable. Keep Hava81 on Node 24 LTS; do not merge Node 25 container bumps as a routine Dependabot change. Major TypeScript/Vitest dependency groups require an isolated worktree, full type/unit/browser/build checks, and a clear compatibility result. Old UI PRs (rain-peak and notification contrast) should be compared with current main and rebased in dedicated worktrees before any decision; do not close them automatically.
