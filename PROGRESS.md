@@ -190,3 +190,11 @@
 
 ### 🚀 Sıradaki Adım
 - Bu dar kapsamlı test güçlendirmesini GitHub PR ile self-hosted CI/CD ve CodeQL doğrulamasına geçir. Son HEAD kontrollerinin tümü yeşil olmadan merge yapma.
+
+## 2026-10-23 — PR #1316 rebase onto current main
+
+- Rebased the original opaque-linear-gradient contrast test and its append-only progress entry onto `origin/main` `a569ff567999aacf17bbfd18e0e3141e30580f71`; preserved the intervening Docker Hub/Buildx progress records and appended this checkpoint.
+- Updated merge-base context naturally: the current main dock has four buttons, and the rebased test retains the four-button assertion while requiring a real linear base and rejecting translucent stops in that base.
+- Local gates on the rebased tree: `npm run type-check`, `npm run lint`, `npm run build`, and `git diff --check` all pass.
+- Local Playwright attempt is blocked before browser launch because Playwright Chromium headless shell is not installed at `/home/chatgpt/.cache/ms-playwright/chromium_headless_shell-1234/chrome-linux/headless_shell`. No system browser workaround was used; hosted Browser flows CI must validate this exact head.
+- Current rebased code commit: `d70726598`; append-only docs commit: `679f4be90`. Before pushing, read the remote PR branch head and update it only with an explicit force-with-lease against the exact old SHA.
