@@ -780,6 +780,21 @@ describe('Hava81 app integration', () => {
 
   it('opens settings and switches language without leaking provider credentials', async () => {
     const user = userEvent.setup();
+    // This integration exercises the real future-only decision horizon. Keep its
+    // OpenWeather samples relative to the test clock instead of aging out after
+    // the date the fixture was originally written.
+    service.getForecast.mockImplementation(async () => {
+      const firstFuture = new Date(Math.ceil(Date.now() / (3 * HOUR_MS)) * (3 * HOUR_MS));
+      return {
+        ...forecast,
+        daily: forecast.daily.map(day => ({ ...day, date: firstFuture })),
+        hourly: forecast.hourly.map((hour, index) => ({
+          ...hour,
+          time: new Date(firstFuture.getTime() + index * 3 * HOUR_MS),
+        })),
+        meta: { ...forecast.meta, fetchedAt: new Date() },
+      };
+    });
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
     expect(document.title).toBe('İstanbul hava durumu — Hava81');
@@ -805,8 +820,11 @@ describe('Hava81 app integration', () => {
       );
     });
     expect(await screen.findByRole('heading', { name: 'Planning signals' })).toBeInTheDocument();
+    // Identical low-risk hourly samples do not establish a distinct best window.
+    // The decision field should translate the honest stable-state copy, not invent
+    // an outdoor recommendation merely to satisfy this language-switch test.
     expect(
-      screen.getByText(/looks like a calmer weather window for being outdoors/i)
+      screen.getByText(/No material weather risk stands out in the near forecast/i)
     ).toBeInTheDocument();
   }, 12_000);
 

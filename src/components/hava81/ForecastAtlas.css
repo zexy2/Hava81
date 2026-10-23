@@ -2180,13 +2180,15 @@
   }
 
   .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour time {
-    color: var(--rhythm-muted);
+    /* Hour labels sit on tinted columns, not the card paper; use the ink token
+     * so small 13px time text clears WCAG AA on both current and day-boundary bands. */
+    color: var(--color-atlas-ink);
     font-variant-numeric: tabular-nums lining-nums;
   }
 
   .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour-now,
   .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__hour-day {
-    color: var(--rhythm-accent);
+    color: var(--color-aegean-deep);
     font-size: 0.8125rem;
     font-weight: 650;
     letter-spacing: 0;

@@ -94,6 +94,34 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByRole('group', { name: 'Plaka kodu 35' })).not.toBeInTheDocument();
   });
 
+  it('reserves the trend slot while the hourly forecast is still loading', () => {
+    const { container, rerender } = render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} />
+      </SettingsProvider>
+    );
+
+    const placeholder = container.querySelector('.hava81-decision-field__trend-placeholder');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('.hava81-decision-field__trend')).not.toBeInTheDocument();
+
+    rerender(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={[
+            { time: new Date('2026-08-29T14:00:00Z'), temp: 24, pop: 0.1, windSpeed: 3, icon: '01d' },
+            { time: new Date('2026-08-29T15:00:00Z'), temp: 25, pop: 0.1, windSpeed: 3, icon: '01d' },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(container.querySelector('.hava81-decision-field__trend-placeholder')).not.toBeInTheDocument();
+    expect(container.querySelector('.hava81-decision-field__trend')).toBeInTheDocument();
+  });
+
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {
     render(
       <SettingsProvider>

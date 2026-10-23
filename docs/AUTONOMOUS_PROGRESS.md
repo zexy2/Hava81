@@ -463,3 +463,32 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Open a bounded PR and require exact-head CI/CD, CodeQL, Ops contracts, browser flows and Lighthouse gates. Continue independent work while they run.
 4. Before merge, directly re-read the PR head SHA, mergeability and all required checks, then refresh `/usr/local/bin/hava81-worker-status`. Merge only through the normal GitHub merge action when green.
 5. After merge, watch main CI/Pages and re-verify root/city revision parity, boot assets, API health/CORS/port 4002. Preserve all unrelated worktrees and do not disable/pause automation.
+
+## 2026-10-23 22:15 TRT — hourly AQI merged; decision-field visual stability + contrast guard prepared
+
+### Parent merge and production verification
+- PR #1392 (`feat(plan): use exact-hour AQI in plan engine`) was merged normally by squash only after directly re-reading exact head `a9ca9c9c6b430b08c687a7e66cba3cc293ce842d`, current base `cd4198add72cabdaccf0475d5ebd1997659c8fd4`, `mergeable=true`, and successful exact-head CI/CD #3403 (`40007004391`), Ops contracts #143 (`40007005100`) and CodeQL #2184 (`40007004519`). Merge commit/current `origin/main`: `17cd4c5dc40b78d02df0af8d2f2ec6e48f876eca`.
+- Main CI/CD #3404 (`40008950733`) failed only in `Frontend quality -> npm run test:ci`: `App.integration.test.tsx` expected the English `outdoor-window` recommendation even though the current shared decision snapshot intentionally omits a best-window recommendation when near hours are similar. The exact failing assertion is at the old test lines 809–810; log: https://github.com/zexy2/Hava81/actions/runs/40008950733.
+- All other jobs in #3404 succeeded: production build, API test/build, Lighthouse budgets and browser flows. Pages deploy was skipped because the quality gate failed. Production still serves prior frontend revision `cd4198add72cabdaccf0475d5ebd1997659c8fd4`; root, `/izmir/`, manifest, service worker, API health and readiness returned HTTP 200, CORS preflight HTTP 204, API port remains 4002. Do not claim the AQI UI is deployed yet.
+- Fresh observer `collected_at=2026-10-23T19:13:57.014910Z`: production healthy, main pipeline failed, frontend deploy pending; disk 87.3% used / 12.3 GiB free (warning only; API build headroom OK). No service, port or production file was changed.
+
+### Independent visual/accessibility branch
+- Branch/worktree: `automation/hava81-decision-visual-guard-20261023-2207`, `/home/chatgpt/hava81-decision-visual-guard-20261023-2207`, based on exact merged main SHA `17cd4c5dc40b78d02df0af8d2f2ec6e48f876eca`. It is isolated from the original dirty worktree `/home/chatgpt/hava81-live-audit-20261023-2155` (five pre-existing UI edits preserved there).
+- `WeatherDecisionField` reserves the 3.25rem trend slot while forecast metadata is unavailable, avoiding first-screen vertical shift when the trend appears.
+- Forecast Atlas hour labels now use the ink/accent tokens that clear WCAG AA on both current-hour and day-boundary tinted columns. Added light/dark contrast contracts and a loading-to-loaded trend-slot regression.
+- The main CI failure exposed an obsolete integration assertion that required an outdoor-window claim for identical low-risk samples. The test now uses future-relative OpenWeather samples and verifies the stable-state English copy instead; this tests the actual language-switch flow without inventing a best window.
+
+### Final local validation (after all source/test edits)
+- `npm run test:ci`: **993/993 tests across 103 files passed**, statements 92.41%, branches 86.07%, functions 91.99%, lines 94.76%.
+- `npm run type-check`: passed.
+- `npm run lint` (ESLint + CSS lint): passed.
+- `npm run build`: passed; generated 81 Turkish + 81 English province pages, two home pages, 404 and sitemap/CSP.
+- `npm run e2e -- e2e/decision.spec.ts e2e/app-shell.spec.ts`: **24/24 passed** across mobile 390, tablet and desktop profiles.
+- `git diff --check`: passed.
+- Changes not yet committed/pushed at checkpoint. No PR exists for this visual guard yet. Next: review full diff, append this checkpoint/decision, commit only intended source/test/docs, push through normal authenticated Git and open PR. Do not use GitHub content/ref APIs to bypass a blocked normal push.
+
+### Exact next actions and prioritized queue
+1. Finish the bounded visual/contrast PR on `automation/hava81-decision-visual-guard-20261023-2207`; require exact-head CI/CD, CodeQL, Ops contracts, browser flows and Lighthouse gates.
+2. If the PR is green, re-read exact head/base/mergeability and refresh `/usr/local/bin/hava81-worker-status`; merge only through normal GitHub merge.
+3. After merge, require successful current-main CI and Pages publish; verify public root/city revision parity and all boot assets, then API health/readiness, CORS and port 4002. Roll back only on a confirmed persistent production failure.
+4. Continue an independent workstream while CI is pending. Preserve all existing dirty worktrees; do not clean up the 87.3%-used disk until generated artifacts and other worktrees are audited.

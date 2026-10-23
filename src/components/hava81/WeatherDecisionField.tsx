@@ -515,6 +515,8 @@ export function WeatherDecisionField({
                 <polygon className="hava81-decision-field__trend-area" points={trend.area} />
                 <polyline className="hava81-decision-field__trend-line" points={trend.line} />
               </svg>
+            ) : !forecastMeta ? (
+              <div className="hava81-decision-field__trend-placeholder" aria-hidden="true" />
             ) : null}
           </>
         ) : (
