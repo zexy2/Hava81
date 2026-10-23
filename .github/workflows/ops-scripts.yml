@@ -86,6 +86,8 @@ jobs:
         run: bash -n deploy/oracle/deploy-api-blue-green.sh deploy/oracle/switch-api-traffic.sh deploy/oracle/rollback-api.sh deploy/oracle/ci-deploy-api.sh
       - name: Verify API Docker install policy
         run: bash scripts/test-api-dockerfile-install-policy.sh
+      - name: Verify development Docker install retry policy
+        run: bash scripts/test-dev-dockerfile-install-policy.sh
       - name: Verify API deploy operation locking
         run: bash scripts/test-api-operation-lock.sh
       - name: Verify API stable-slot deployment plan
