@@ -208,6 +208,8 @@ export const en = {
       summaryTemperature: 'Temperature',
       summaryHigh: 'Next 24h high',
       summaryRain: 'Rain peak',
+      rainPeakToday: 'Today',
+      rainPeakTomorrow: 'Tomorrow',
       precipitationNone: 'None',
       nightLabel: 'Night',
       rainBandLabel: 'Rain',

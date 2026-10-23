@@ -31,6 +31,27 @@ export function HourlySummary({ summary: hourlySummary, clock }: HourlySummaryPr
       </small>
     );
   };
+  const tomorrowDate = new Date(`${currentLocationDateKey}T00:00:00.000Z`);
+  tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+  const tomorrowDateKey = tomorrowDate.toISOString().slice(0, 10);
+  const renderRainPeakWhen = (hour: { time: Date } | null) => {
+    if (!hour) return null;
+    const localTime = atLocationTime(hour.time);
+    const dayKey = localTime.toISOString().slice(0, 10);
+    const dayLabel =
+      dayKey === currentLocationDateKey
+        ? t('hava81.forecastAtlas.rainPeakToday')
+        : dayKey === tomorrowDateKey
+          ? t('hava81.forecastAtlas.rainPeakTomorrow')
+          : formatDay(localTime);
+    return (
+      <small className="hava81-forecast-atlas__summary-note">
+        <time dateTime={hour.time.toISOString()}>
+          {dayLabel} · {hourTileFormatter.format(localTime)}
+        </time>
+      </small>
+    );
+  };
 
   return (
     <div
@@ -81,7 +102,7 @@ export function HourlySummary({ summary: hourlySummary, clock }: HourlySummaryPr
             t('hava81.forecastAtlas.precipitationNone')
           )}
         </strong>
-        {hasHourlyPrecipitationSignal ? renderSummaryWhen(hourlySummary.peakPrecipitation) : null}
+        {hasHourlyPrecipitationSignal ? renderRainPeakWhen(hourlySummary.peakPrecipitation) : null}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ForecastAtlas } from '../../components/hava81/ForecastAtlas';
+import type { HourlyForecast } from '../../types';
 import { SettingsProvider } from '../../context';
 
 const renderAtlas = () =>
@@ -62,6 +63,40 @@ const renderRangeAtlas = (count = 24) =>
     </SettingsProvider>
   );
 
+const renderRainPeakAtlas = (nowIso: string, peakIso: string) => {
+  const now = new Date(nowIso);
+  const startMs = Math.floor(now.getTime() / 3_600_000) * 3_600_000;
+  const hourly: HourlyForecast[] = Array.from({ length: 24 }, (_, index) => {
+    const time = new Date(startMs + index * 3_600_000);
+    const isPeak = time.toISOString() === peakIso;
+    return {
+      time,
+      temp: 20,
+      icon: isPeak ? '10d' : '01d',
+      description: isPeak ? 'yağmurlu' : 'açık',
+      pop: isPeak ? 0.8 : 0,
+      precipitationMm: isPeak ? 2.4 : 0,
+      windSpeed: 2,
+    };
+  });
+
+  render(
+    <SettingsProvider>
+      <ForecastAtlas
+        daily={[]}
+        hourly={hourly}
+        meta={{
+          provider: 'Open-Meteo',
+          fetchedAt: now,
+          freshForSeconds: 2 * 60 * 60,
+          timezoneOffsetSeconds: 0,
+          intervalHours: 1,
+        }}
+      />
+    </SettingsProvider>
+  );
+};
+
 describe('ForecastAtlas freshness', () => {
   it('hides forecast values when provider evidence expires in a long-lived tab', async () => {
     vi.useFakeTimers();
@@ -101,6 +136,30 @@ describe('ForecastAtlas freshness', () => {
 
       expect(screen.getByText(/tahmin verisi güncelliğini yitirdi/i)).toBeInTheDocument();
       expect(screen.queryByText('24°')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('ForecastAtlas rain peak day labels', () => {
+  it('labels a same-day precipitation peak as today in the forecast location timezone', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-29T20:30:00Z'));
+      renderRainPeakAtlas('2026-08-29T20:30:00Z', '2026-08-29T21:00:00.000Z');
+      expect(screen.getByText('Bugün · 21:00')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('labels a next-day precipitation peak as tomorrow in the forecast location timezone', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-29T20:30:00Z'));
+      renderRainPeakAtlas('2026-08-29T20:30:00Z', '2026-08-30T02:00:00.000Z');
+      expect(screen.getByText('Yarın · 02:00')).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

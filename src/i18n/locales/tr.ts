@@ -209,6 +209,8 @@ export const tr = {
       summaryTemperature: 'Sıcaklık',
       summaryHigh: '24 saatte en yüksek',
       summaryRain: 'Yağış piki',
+      rainPeakToday: 'Bugün',
+      rainPeakTomorrow: 'Yarın',
       precipitationNone: 'Yok',
       nightLabel: 'Gece',
       rainBandLabel: 'Yağış',
