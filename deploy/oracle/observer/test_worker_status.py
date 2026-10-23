@@ -27,6 +27,14 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("disk.get('bytes_to_free_for_ok')", status_script)
         self.assertIn('recovery_mib=', status_script)
 
+    def test_status_script_distinguishes_current_main_head_from_latest_ci_run(self) -> None:
+        status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn("gh.get('main_branch')", status_script)
+        self.assertIn("gh.get('main_pipeline')", status_script)
+        self.assertIn('main_ci_current:', status_script)
+        self.assertIn('main_ci_latest:', status_script)
+        self.assertIn("sig.get('main_pipeline_pending')", status_script)
+
     def test_status_script_surfaces_codeql_gate_state(self) -> None:
         status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
         self.assertIn("pr.get('codeql')", status_script)

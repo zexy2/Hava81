@@ -14,7 +14,9 @@ on:
     paths:
       - 'apps/api/**'
       - 'deploy/oracle/**'
-      - '.github/workflows/deploy-api.yml'
+      - '!deploy/oracle/observer/**'
+      - '!deploy/oracle/install-observer.sh'
+      - '!deploy/oracle/README.md'
       - 'scripts/check-api-deploy-secrets.sh'
       - 'scripts/test-api-deploy-secrets.sh'
   workflow_dispatch:

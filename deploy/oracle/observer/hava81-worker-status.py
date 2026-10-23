@@ -44,7 +44,14 @@ for pr in gh.get('open_automation_prs', []):
     ci = pr.get('ci') or {}
     codeql = pr.get('codeql') or {}
     print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} failed_jobs={ci.get('failed_jobs', [])} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
+main_branch = gh.get('main_branch') or {}
+main_pipeline = gh.get('main_pipeline') or {}
+print(f"main_branch: known={main_branch.get('known')} sha={str(main_branch.get('sha') or '')[:12]} commit_date={main_branch.get('commit_date')}")
+if main_pipeline:
+    print(f"main_ci_current: run#{main_pipeline.get('run_number')} sha={str(main_pipeline.get('head_sha') or '')[:12]} {main_pipeline.get('status')}/{main_pipeline.get('conclusion')}")
+else:
+    print('main_ci_current: no CI/CD run found for the current main SHA')
 main = gh.get('latest_main_run') or {}
 if main:
-    print(f"main_ci: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:8]} {main.get('status')}/{main.get('conclusion')}")
-print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} host_incident={sig.get('host_incident')} production_incident={sig.get('production_incident')} api_primary_port_drift={sig.get('api_primary_port_drift')}")
+    print(f"main_ci_latest: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:12]} {main.get('status')}/{main.get('conclusion')}")
+print(f"signals: green={sig.get('ci_green_prs', [])} running={sig.get('ci_running_prs', [])} unknown={sig.get('ci_unknown_prs', [])} failed={sig.get('ci_failed_prs', [])} main_pipeline_pending={sig.get('main_pipeline_pending')} main_pipeline_failed={sig.get('main_pipeline_failed')} main_pipeline_unknown={sig.get('main_pipeline_unknown')} host_incident={sig.get('host_incident')} production_incident={sig.get('production_incident')} api_primary_port_drift={sig.get('api_primary_port_drift')}")
