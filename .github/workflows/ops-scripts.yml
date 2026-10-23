@@ -36,6 +36,8 @@ jobs:
       - run: npm ci --no-audit
       - name: Verify npm audit retry contract
         run: bash scripts/test-run-npm-audit-with-retry.sh
+      - name: Verify Dependabot ecosystem compatibility
+        run: python3 scripts/test-dependabot-config.py
       - name: Verify parallel build and strict deploy gates
         run: python3 scripts/test-ci-parallel-build-gates.py
       - name: Verify safe worktree cleanup contract

@@ -1,7 +1,6 @@
-# Politika (plan 3.5): minor+patch haftalık gruplanır ve CI yeşilse otomatik merge edilir
-# (.github/workflows/dependabot-automerge.yml). Major'lar ayrı tek PR'da toplanır ve
-# cooldown ile en fazla ~ayda bir açılır; elle incelenip ayın ilk pazartesi slotunda merge edilir.
-# Not: aynı ekosistem+dizin için iki ayrı entry tanımlanamadığından aylık slot cooldown ile sağlanıyor.
+# Policy: npm minor/patch updates are grouped weekly; npm majors use a 30-day cooldown.
+# GitHub Actions and Docker do not support Dependabot cooldown, so their major updates
+# remain in a separate group for manual review. The open-PR limit caps concurrent updates.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -64,10 +63,6 @@ updates:
       time: "07:30"
       timezone: Europe/Istanbul
     open-pull-requests-limit: 3
-    cooldown:
-      semver-major-days: 30
-      semver-minor-days: 3
-      semver-patch-days: 3
     groups:
       minor-patch:
         applies-to: version-updates
@@ -86,10 +81,6 @@ updates:
       time: "07:45"
       timezone: Europe/Istanbul
     open-pull-requests-limit: 2
-    cooldown:
-      semver-major-days: 30
-      semver-minor-days: 3
-      semver-patch-days: 3
     groups:
       minor-patch:
         applies-to: version-updates
@@ -108,10 +99,6 @@ updates:
       time: "08:00"
       timezone: Europe/Istanbul
     open-pull-requests-limit: 2
-    cooldown:
-      semver-major-days: 30
-      semver-minor-days: 3
-      semver-patch-days: 3
     groups:
       minor-patch:
         applies-to: version-updates

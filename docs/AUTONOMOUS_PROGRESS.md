@@ -168,3 +168,43 @@ Do not disable or pause the automation. Never bypass platform write controls. Do
 3. Integrate the evidence-aware `src/domain/plan` engine into activity UI only after auditing duration, confidence, exact-hour AQI, temperature sensitivity, and existing UI semantics; keep a separate branch and preserve current functionality.
 4. Continue measuring real production UX/performance; keep Lighthouse reports tied to exact SHAs and use hosted browser results when local Chromium cannot launch.
 5. Append new checkpoint entries without deleting prior valid history. Do not disable/pause automation or bypass platform write controls.
+
+
+## 2026-10-23 14:32 TRT — Dependabot config validation fix; exact-hour daily-plan AQI integration in test
+
+### Production/observer state (fresh direct verification before the next merge)
+- Observer `collected_at=2026-10-23T11:27:15.010737Z`: production HEALTHY, no issues; API readiness HTTP 200, provider circuit closed, CORS OK, all seven boot assets healthy, frontend root and `/izmir/` consistent with main `a569ff567999aacf17bbfd18e0e3141e30580f71`, no pending deploy, API port 4002, disk 78.0% / 21.3 GiB free. Direct public root, manifest and `/api/v1/health/ready` smoke returned HTTP 200 immediately before the PR #1316 merge decision. No production mutation performed.
+- Main CI/CD #3368 (`39943148230`) is successful and now provides `lighthouse-reports` artifact. Its local-preview Lighthouse JSON is materially weak on performance: performance 0.60, TBT 5,832 ms, Speed Index 5.7 s, script evaluation 4,653 ms, 53.9 KiB estimated unused JS and 13.0 KiB unused CSS. Accessibility, best practices and SEO are 1.0. Next performance work must profile the exact initial JS/render path before optimizing; do not infer an unmeasured fix.
+- `npm audit --json` against current `origin/main` lockfile reported zero vulnerabilities. GitHub's two open moderate alerts appear stale relative to locked `@vitest/mocker` and `vitest` 4.1.12; do not dismiss them manually without checking alert detail.
+
+### PR #1316 — rebased opaque linear-gradient dock contrast test
+- PR: https://github.com/zexy2/Hava81/pull/1316
+- Remote branch was read as `5ab382aaf3c153eca544ab49025af11c00df574b` immediately before updating. Rebased in isolated worktree `/home/chatgpt/hava81-pr1316-rebase-20261023`, preserving both main's intervening progress history and the old append-only test checkpoint; pushed with explicit `--force-with-lease`.
+- Current PR head: `1bce25be4f35232e3aa396d121dfd9b044e98d6f`; base `a569ff567999aacf17bbfd18e0e3141e30580f71`. Type-check, lint, production build, `git diff --check`, Frontend quality, API test/build, Production build, Browser flows, Lighthouse budgets, Ops script contracts and both CodeQL checks pass. Local Playwright launch could not run because this host lacks the managed Chromium headless shell; hosted Browser flows passed for this exact head.
+- GitHub's non-required `.github/dependabot.yml` check failed because `cooldown.semver-*-days` is unsupported for `github-actions` and `docker`. The branch protection requires the six main CI gates, all green, but do not merge #1316 until the repository config fix lands and the PR branch is rebased to remove the stale config failure.
+
+### Dependabot config repair in progress
+- Worktree `/home/chatgpt/hava81-dependabot-config-20261023`, branch `automation/hava81-dependabot-config-20261023`, based on `origin/main` `a569ff567999aacf17bbfd18e0e3141e30580f71`.
+- Root cause from exact GitHub check-run output: `semver-major-days`, `semver-minor-days`, and `semver-patch-days` cooldown keys are not supported for the `github-actions` entry or either Docker entry. Removed only those unsupported cooldown blocks, kept npm cooldowns and separate manual-review major groups, and corrected comments to avoid promising a monthly cadence for ecosystems that cannot enforce it.
+- Added `scripts/test-dependabot-config.py` and wired it into `.github/workflows/ops-scripts.yml`; it guards supported cooldown usage, unique ecosystem/directory entries and separate major groups. YAML parse + new contract pass. `npm run type-check`, `npm run lint`, `npm run build`, all Ops/deploy contract checks, 65 observer tests, 10 installer/source checks, live-audit option tests (16/16), live-audit cache tests (4/4), CSP tests (5/5), SEO smoke tests (4/4), Lighthouse artifact contract and `git diff --check` pass. Npm audit retry contract correctly tolerated registry 503/ETIMEDOUT; a separate `npm audit --json` against the current lockfile succeeded with 0 advisories.
+- Current changes are not committed or pushed yet. Next: inspect `git diff`, commit the config/test/workflow fix, push branch, create PR, and wait for GitHub's Dependabot check plus required CI/CodeQL. Do not merge before exact-head gates are green.
+
+### Daily plan AQI integration in progress
+- Worktree `/home/chatgpt/hava81-run11-20261023`, branch `automation/hava81-run11-20261023`, based on `origin/main` `a569ff567999aacf17bbfd18e0e3141e30580f71`.
+- `buildDailyPlan` now accepts fresh hourly European AQI evidence, normalizes it to the app's 1–5 scale, uses only exact timestamp matches, falls back to current OpenWeather AQI only while fresh, and treats missing/stale/conflicting evidence as unavailable. `DailyPlanPanel` and `DecisionAlertsPanel` receive the same freshness-filtered hourly AQI; asynchronous alert delivery rechecks any AQI sources that contributed to the plan. Turkish/English explanation copy and modeled-source disclosure were updated.
+- Added resolver tests (exact-hour normalization, no interpolation, stale/missing evidence, conflicting duplicate timestamps), plan regression tests and cache invalidation tests. Targeted 34/34 tests pass; type-check and lint pass. Full test run `0cb048355b86e5e1d6bd038b` is running with isolated coverage output `coverage-run11b`; a previous full-suite attempt found one obsolete i18n assertion, which was corrected and its targeted test now passes. Do not commit/push until the current full suite and production build pass.
+- The feature branch currently has uncommitted changes. Keep it isolated from PR #1316 and the Dependabot branch.
+
+### Exact pending heads/runs and next actions
+1. PR #1316 head `1bce25be4f35232e3aa396d121dfd9b044e98d6f`, CI/CD run `39945668968`, Ops run `39945669033`, CodeQL run `39945668979`, CodeQL app check `120387978511`; required checks are green, but wait for the Dependabot config PR to merge, rebase this branch onto the new main with explicit lease, then rerun all gates and merge normally.
+2. Dependabot config branch `automation/hava81-dependabot-config-20261023`, current base `a569ff567999aacf17bbfd18e0e3141e30580f71`; not pushed/PR-created yet. Next action: commit/push and open PR, then inspect the exact-head `.github/dependabot.yml` check and all required gates.
+3. AQI daily-plan branch `automation/hava81-run11-20261023`, current base `a569ff567999aacf17bbfd18e0e3141e30580f71`; full test run `0cb048355b86e5e1d6bd038b` in progress. Next action: poll run; if it passes, run build and inspect diff, update this checkpoint with final results, then commit/push/open PR. If it fails, fix the specific regression and rerun.
+
+### Prioritized next queue
+1. Complete the Dependabot config PR to remove a repository-wide failing check without weakening required gates.
+2. Rebase/refresh PR #1316 after the config merge, verify exact SHA and all required checks, then merge if green; watch main CI and production deployment.
+3. Finish the exact-hour AQI daily-plan branch with full tests/build and hosted browser/Lighthouse checks.
+4. Use the Lighthouse report's 0.60 performance / 5.8 s TBT evidence to profile initial JS and render work in a separate performance branch; measure before and after and preserve the accessibility/SEO 1.0 scores.
+5. After any main merge, directly re-check observer freshness, frontend revision, API readiness/CORS and port 4002 before making deployment claims.
+
+Do not disable or pause automation. Do not bypass platform write controls or use an alternate write path. Preserve all prior valid checkpoint entries.
