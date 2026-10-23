@@ -50,3 +50,22 @@ test('Open-Meteo air-quality adapter rejects inconsistent, empty and failed resp
     });
   }
 });
+
+test('Open-Meteo air-quality adapter preserves European AQI values above the undocumented 1,000 ceiling', async () => {
+  const fakeFetch = (async () =>
+    json({
+      hourly: {
+        time: [1787936400, 1787940000],
+        european_aqi: [1_001, 100],
+        pm2_5: [12, 12],
+      },
+    })) as typeof fetch;
+
+  const provider = new OpenMeteoAirQualityHourlyProvider(fakeFetch, 1_000);
+  const result = await provider.getAirQualityHourly({ lat: 41.01, lon: 28.97 });
+
+  assert.deepEqual(result.hourly, [
+    { time: new Date(1787936400 * 1000).toISOString(), europeanAqi: 1_001, pm25: 12 },
+    { time: new Date(1787940000 * 1000).toISOString(), europeanAqi: 100, pm25: 12 },
+  ]);
+});

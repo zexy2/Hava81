@@ -18,8 +18,16 @@ const airQualityHourlySchema = z.object({
   }),
 });
 
-const finiteNonNegative = (value: number | null | undefined, max: number): number | undefined =>
-  typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= max ? value : undefined;
+const finiteNonNegative = (value: number | null | undefined): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
+
+const finiteNonNegativeAtMost = (
+  value: number | null | undefined,
+  max: number,
+): number | undefined => {
+  const normalized = finiteNonNegative(value);
+  return normalized !== undefined && normalized <= max ? normalized : undefined;
+};
 
 /**
  * Plan v3 (P1.2): hourly European AQI and PM2.5 from the Open-Meteo air-quality API for the
@@ -81,8 +89,10 @@ export class OpenMeteoAirQualityHourlyProvider implements AirQualityHourlyProvid
 
       const hourly: AirQualityHourlyProviderResult["hourly"] = [];
       for (let index = 0; index < length; index += 1) {
-        const europeanAqi = finiteNonNegative(raw.european_aqi?.[index], 1_000);
-        const pm25 = finiteNonNegative(raw.pm2_5?.[index], 2_000);
+        // Open-Meteo defines European AQI as an open-ended scale (>100 is extremely poor) and
+        // publishes no upper bound. Do not silently drop a severe value at an arbitrary ceiling.
+        const europeanAqi = finiteNonNegative(raw.european_aqi?.[index]);
+        const pm25 = finiteNonNegativeAtMost(raw.pm2_5?.[index], 2_000);
         if (europeanAqi === undefined) continue;
         hourly.push({
           time: new Date(raw.time[index] * 1_000).toISOString(),
