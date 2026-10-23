@@ -35,3 +35,9 @@ If a workflow job invokes a script stored in the repository, that job must check
 - Never interpolate European AQI timestamps. If no exact hourly match is available, use only the existing fresh current-reading fallback; keep laundry scoring independent of AQI.
 - A finite positive custom plan duration that rounds below one minute is clamped to one minute, not zero. Nonpositive/nonfinite durations retain the intent profile default; the upper bound remains 12 hours.
 - When a main commit contains only docs/dependency metadata, the API may correctly remain on an older API runtime SHA; verify the actual API health revision and confirm no API runtime files changed before treating that difference as drift.
+
+
+## 2026-10-23 — optional current AQI fallback freshness
+- The activity planner may use a fresh, valid current OpenWeather AQI when a matching exact-hour European AQI sample is absent. It must not reuse stale or out-of-range current AQI for future slots.
+- If both hourly AQI and current AQI are stale/unavailable, leave AQI risk unknown for that hour; do not substitute zero or invent/interpolate an AQI value. The UI must disclose the fallback condition in Turkish and English.
+- When optional AQI freshness expires while the planner remains mounted, schedule a rerender at expiry so the stale fallback is removed without a manual refresh.
