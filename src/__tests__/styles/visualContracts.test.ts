@@ -34,6 +34,48 @@ afterEach(() => {
 
 const colors = (value: string) => value.match(/#[0-9a-f]{3,6}\b|rgba?\([^)]*\)/gi) ?? [];
 
+describe('hourly rhythm labels meet WCAG AA on tinted hour columns', () => {
+  const html = (mode: 'light' | 'dark') => `
+    <div class="app" data-color-mode="${mode}">
+      <section class="hava81-forecast-atlas">
+        <div class="hava81-forecast-atlas__rhythm">
+          <ol class="hava81-forecast-atlas__hours">
+            <li class="hava81-forecast-atlas__hour is-current"><time>
+              <span class="hava81-forecast-atlas__hour-now">Now</span><span>9 PM</span>
+            </time></li>
+            <li class="hava81-forecast-atlas__hour is-day-boundary"><time>
+              <span class="hava81-forecast-atlas__hour-day">Tomorrow</span><span>12 AM</span>
+            </time></li>
+          </ol>
+        </div>
+      </section>
+    </div>`;
+
+  it.each(['light', 'dark'] as const)('%s labels stay at 4.5:1 or better', mode => {
+    mountStyles([app, forecast]);
+    markup(html(mode));
+
+    const appElement = el('.app');
+    const timeLabel = el('.hava81-forecast-atlas__hour time > span:not(.hava81-forecast-atlas__hour-now):not(.hava81-forecast-atlas__hour-day)');
+    const nowLabel = el('.hava81-forecast-atlas__hour-now');
+    const dayLabel = el('.hava81-forecast-atlas__hour-day');
+    const timeColor = computed(timeLabel, 'color');
+    const accentColor = computed(nowLabel, 'color');
+    const dayAccentColor = computed(dayLabel, 'color');
+    const backgrounds = mode === 'light'
+      ? ['#dde4f2', '#eff0f4']
+      : ['#102733', '#173342'];
+
+    expect(timeColor).toBe(computed(appElement, '--color-atlas-ink'));
+    expect(accentColor).toBe(computed(appElement, '--color-aegean-deep'));
+    expect(dayAccentColor).toBe(accentColor);
+    for (const background of backgrounds) {
+      expect(contrast(timeColor, background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(accentColor, background)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
 describe('focus ring token (Faz 0.6)', () => {
   const html = (mode: 'light' | 'dark') =>
     `<div class="app" data-color-mode="${mode}"><button type="button">Ara</button></div>`;
