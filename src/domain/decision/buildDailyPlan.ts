@@ -1,4 +1,5 @@
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getDailyPlanAirQualityEvidence } from './airQualityEvidence';
 import { findBestWindowRange } from './bestWindowRange';
 import { isRecommendableHour } from './eligibility';
 import { airLevel, rainLevel, windLevel } from './thresholds';
@@ -20,6 +21,7 @@ export interface BuildDailyPlanInput {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -215,13 +217,22 @@ const buildNowOrLater = (
   };
 };
 
-export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanInput): DailyPlan => {
+export const buildDailyPlan = ({
+  weather,
+  hourly,
+  airQuality,
+  airQualityHourly,
+}: BuildDailyPlanInput): DailyPlan => {
   const source = [...hourly].sort(byTime).slice(0, 24);
+  const airQualityEvidence = getDailyPlanAirQualityEvidence({
+    forecastTimes: source.length ? source.map(point => point.time) : [weather.timestamp],
+    airQuality,
+    airQualityHourly,
+  });
   const slots = source.length
     ? source.map(point => {
-        // There is no hourly AQI forecast yet: the current reading is applied to every slot.
-        // Applying it only to the current hour made "now" systematically worse than later
-        // hours and inflated "wait" advice (plan v3 Faz 0.2, L2).
+        // Prefer a fresh exact-hour European AQI sample. The current reading is only a fallback
+        // while fresh; never interpolate timestamps or project stale evidence into future hours.
         return scoreWeatherWindow({
           time: point.time,
           temperature: point.temp,
@@ -231,7 +242,9 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
           precipitationMm: point.precipitationMm,
           windSpeed: point.windSpeed,
           windGust: point.windGust,
-          airQualityIndex: airQuality?.aqi,
+          airQualityIndex:
+            airQualityEvidence.hourlyAqiByTime.get(point.time.getTime()) ??
+            airQualityEvidence.currentAirQuality?.aqi,
           uvIndex: point.uvIndex,
           visibility: point.visibility,
           weatherCode: point.weatherCode,
@@ -244,7 +257,7 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
           apparentTemperature: weather.feelsLike,
           humidity: weather.humidity,
           windSpeed: weather.windSpeed,
-          airQualityIndex: airQuality?.aqi,
+          airQualityIndex: airQualityEvidence.currentAirQuality?.aqi,
           visibility: weather.visibility,
         }),
       ];
@@ -286,7 +299,7 @@ export const buildDailyPlan = ({ weather, hourly, airQuality }: BuildDailyPlanIn
     bestWindowRange,
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
-    airQuality: pickAirQualityAdvice(airQuality),
+    airQuality: pickAirQualityAdvice(airQualityEvidence.currentAirQuality),
     nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible),
     impacts: aggregateImpacts(weighted),
     confidence: confidenceFor(slots),

@@ -665,6 +665,7 @@ const App: React.FC = () => {
                         weather={weather}
                         hourly={forecast.hourly}
                         airQuality={freshAirQuality}
+                        airQualityHourly={freshAirQualityHourly}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
                       />
                     </Suspense>
@@ -707,6 +708,7 @@ const App: React.FC = () => {
                         weather={weather}
                         hourly={forecast.hourly}
                         airQuality={freshAirQuality}
+                        airQualityHourly={freshAirQualityHourly}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
                       />
                     </Suspense>

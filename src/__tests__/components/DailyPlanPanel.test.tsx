@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
-import type { ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 vi.mock('../../analytics/productEvents', () => ({ trackProductEvent: vi.fn() }));
 const settingsMock = vi.hoisted(() => ({ temperatureUnit: 'metric' as 'metric' | 'imperial' }));
@@ -95,6 +95,75 @@ describe('DailyPlanPanel sharing', () => {
     fireEvent.click(summary);
     expect(details).toHaveAttribute('open');
     expect(screen.getByText('hava81.dailyPlan.note')).toBeVisible();
+  });
+
+  it('discloses modeled hourly AQI only when a valid sample exactly matches a forecast hour', () => {
+    const matchingAqi: AirQualityHourly = {
+      hours: [{ time: hourly[0]!.time, europeanAqi: 85 }],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo / CAMS',
+        fetchedAt: new Date(),
+        freshForSeconds: 1800,
+      },
+    };
+    const { unmount } = render(
+      <DailyPlanPanel
+        weather={weather}
+        hourly={hourly}
+        airQualityHourly={matchingAqi}
+        forecastMeta={freshForecastMeta()}
+      />
+    );
+    expect(screen.getByText('hava81.dailyPlan.hourlyAqiSource')).toBeVisible();
+    unmount();
+
+    const unmatchedAqi: AirQualityHourly = {
+      ...matchingAqi,
+      hours: [{ time: new Date(hourly[0]!.time.getTime() + 30 * 60_000), europeanAqi: 85 }],
+    };
+    render(
+      <DailyPlanPanel
+        weather={weather}
+        hourly={hourly}
+        airQualityHourly={unmatchedAqi}
+        forecastMeta={freshForecastMeta()}
+      />
+    );
+    expect(screen.queryByText('hava81.dailyPlan.hourlyAqiSource')).not.toBeInTheDocument();
+  });
+
+  it('removes hourly AQI attribution when its evidence expires without a forecast refresh', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-28T06:00:00.000Z'));
+    try {
+      const airQualityHourly: AirQualityHourly = {
+        hours: [{ time: hourly[0]!.time, europeanAqi: 85 }],
+        meta: {
+          provider: 'Open-Meteo',
+          attribution: 'Open-Meteo / CAMS',
+          fetchedAt: new Date(),
+          freshForSeconds: 30,
+        },
+      };
+      render(
+        <DailyPlanPanel
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={freshForecastMeta()}
+        />
+      );
+      expect(screen.getByText('hava81.dailyPlan.hourlyAqiSource')).toBeVisible();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_101);
+      });
+
+      expect(screen.queryByText('hava81.dailyPlan.hourlyAqiSource')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows the same 12-hour horizon that the score evaluates without repeating band copy in every slot', () => {

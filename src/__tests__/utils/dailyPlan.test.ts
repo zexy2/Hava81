@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
 import { scoreWeatherWindow } from '../../domain/decision/scoreWeatherWindow';
-import type { HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İzmir',
@@ -28,6 +28,8 @@ const weather: NormalizedWeatherData = {
     timezoneOffsetSeconds: 10800,
   },
 };
+
+const freshAqiMeta = () => ({ ...weather.meta, fetchedAt: new Date(), freshForSeconds: 3600 });
 
 const point = (
   hour: number,
@@ -326,7 +328,7 @@ describe('Hava81 daily decision engine v2', () => {
       hourly: Array.from({ length: 12 }, (_, index) =>
         rich(6 + index, 31, { apparentTemperature: 35, uvIndex: 8 })
       ),
-      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70, meta: weather.meta },
+      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70, meta: freshAqiMeta() },
     });
     expect(plan.confidence).toBe('high');
     expect(plan.impacts[0]).toBeDefined();
@@ -345,7 +347,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly,
-      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: weather.meta },
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: freshAqiMeta() },
     });
     expect(plan.nowOrLater.kind).toBe('later');
     expect(plan.nowOrLater.improvement).toBeGreaterThanOrEqual(10);
@@ -373,12 +375,12 @@ describe('Hava81 daily decision engine v2', () => {
     const fair = buildDailyPlan({
       weather,
       hourly: [point(6, 24), point(9, 25), point(12, 26)],
-      airQuality: { aqi: 2, aqiLabel: 'Makul', pm25: 10, pm10: 15, o3: 40, meta: weather.meta },
+      airQuality: { aqi: 2, aqiLabel: 'Makul', pm25: 10, pm10: 15, o3: 40, meta: freshAqiMeta() },
     });
     const good = buildDailyPlan({
       weather,
       hourly: [point(6, 24), point(9, 25), point(12, 26)],
-      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: weather.meta },
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: freshAqiMeta() },
     });
 
     expect(fair.airQuality).toBe('fair');
@@ -390,7 +392,7 @@ describe('Hava81 daily decision engine v2', () => {
     const poor = buildDailyPlan({
       weather,
       hourly,
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: weather.meta },
+      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: freshAqiMeta() },
     });
     const noCurrentAir = buildDailyPlan({ weather, hourly });
 
@@ -401,6 +403,60 @@ describe('Hava81 daily decision engine v2', () => {
     ).toBe(true);
   });
 
+  it('prefers fresh exact-hour European AQI and never interpolates it into unmatched hours', () => {
+    const hourly = [point(6, 24), point(9, 24), point(12, 24)];
+    const currentAir = {
+      aqi: 1,
+      aqiLabel: 'İyi',
+      pm25: 5,
+      pm10: 8,
+      o3: 20,
+      meta: freshAqiMeta(),
+    };
+    const airQualityHourly: AirQualityHourly = {
+      hours: [
+        { time: hourly[0]!.time, europeanAqi: 100 },
+        { time: hourly[2]!.time, europeanAqi: 10 },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo / CAMS',
+        fetchedAt: new Date(),
+        freshForSeconds: 3600,
+      },
+    };
+    const plan = buildDailyPlan({ weather, hourly, airQuality: currentAir, airQualityHourly });
+
+    expect(plan.slots[0]?.reasons).toContain('poor-air-quality');
+    expect(plan.slots[1]?.reasons).not.toContain('poor-air-quality');
+    expect(plan.slots[2]?.reasons).not.toContain('poor-air-quality');
+    expect(plan.slots[0]?.impacts.some(impact => impact.factor === 'air-quality')).toBe(true);
+    expect(plan.slots[1]?.impacts.some(impact => impact.factor === 'air-quality')).toBe(false);
+  });
+
+  it('does not use stale current or hourly AQI evidence in the daily score', () => {
+    const staleMeta = {
+      ...weather.meta,
+      fetchedAt: new Date(Date.now() - 120_000),
+      freshForSeconds: 30,
+    };
+    const hourly = [point(6, 24), point(9, 24)];
+    const withStaleAir = buildDailyPlan({
+      weather,
+      hourly,
+      airQuality: { aqi: 5, aqiLabel: 'Çok kötü', pm25: 90, pm10: 100, o3: 120, meta: staleMeta },
+      airQualityHourly: {
+        hours: [{ time: hourly[0]!.time, europeanAqi: 100 }],
+        meta: { provider: 'Open-Meteo', fetchedAt: staleMeta.fetchedAt, freshForSeconds: 30 },
+      },
+    });
+    const withoutAir = buildDailyPlan({ weather, hourly });
+
+    expect(withStaleAir.slots.map(slot => slot.score)).toEqual(withoutAir.slots.map(slot => slot.score));
+    expect(withStaleAir.slots.every(slot => !slot.impacts.some(impact => impact.factor === 'air-quality'))).toBe(true);
+    expect(withStaleAir.airQuality).toBe('unknown');
+  });
+
   it('does not advise waiting because of the current AQI alone (steady weather, AQI 3)', () => {
     // Antalya-like evening: identical hours, moderate AQI. Before Faz 0.2 the current hour
     // alone carried the AQI penalty (21:00 → 86, 22:00 → 95) and "later" nearly won.
@@ -408,7 +464,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly: steady,
-      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70, meta: weather.meta },
+      airQuality: { aqi: 3, aqiLabel: 'Orta', pm25: 20, pm10: 30, o3: 70, meta: freshAqiMeta() },
     });
 
     expect(plan.nowOrLater.kind).not.toBe('later');
@@ -421,7 +477,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly: [],
-      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: weather.meta },
+      airQuality: { aqi: 4, aqiLabel: 'Sağlıksız', pm25: 40, pm10: 60, o3: 90, meta: freshAqiMeta() },
     });
     expect(plan.airQuality).toBe('poor');
     expect(plan.impacts.map(impact => impact.factor)).toContain('air-quality');
@@ -456,7 +512,7 @@ describe('Hava81 daily decision engine v2', () => {
     const plan = buildDailyPlan({
       weather,
       hourly: [rich(6, 24), rich(7, 24), rich(8, 24), rich(9, 35, { apparentTemperature: 36 })],
-      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: weather.meta },
+      airQuality: { aqi: 1, aqiLabel: 'İyi', pm25: 5, pm10: 8, o3: 20, meta: freshAqiMeta() },
     });
 
     expect(plan.bestWindowRange).toBeDefined();

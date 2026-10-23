@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { buildAlertCandidate, type AlertCandidate } from '../../domain/alerts/buildAlertCandidate';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
-import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
@@ -13,6 +14,7 @@ interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
 }
 const SETTINGS_KEY = 'hava81-alerts-v1';
@@ -57,17 +59,40 @@ const removeStorage = (key: string): void => {
   }
 };
 const readEnabled = () => readStorage(SETTINGS_KEY) === 'enabled';
+interface RequiredAqiEvidence {
+  current: boolean;
+  hourly: boolean;
+}
+
 const isAlertEvidenceFresh = (
   weather: NormalizedWeatherData,
   forecastMeta: ForecastMeta | null,
-  candidateKind?: AlertCandidate['kind'],
-  airQuality?: AirQuality
-): boolean =>
-  forecastMeta !== null &&
-  getCurrentWeatherFreshness(weather.meta).fresh &&
-  getForecastFreshness(forecastMeta).fresh &&
-  (candidateKind !== 'air-quality' ||
-    Boolean(airQuality && getOptionalEvidenceFreshness(airQuality.meta).fresh));
+  candidateKind: AlertCandidate['kind'] | undefined,
+  airQuality: AirQuality | undefined,
+  airQualityHourly: AirQualityHourly | undefined,
+  requiredAqiEvidence: RequiredAqiEvidence
+): boolean => {
+  if (
+    forecastMeta === null ||
+    !getCurrentWeatherFreshness(weather.meta).fresh ||
+    !getForecastFreshness(forecastMeta).fresh
+  ) return false;
+
+  const currentFresh = Boolean(
+    airQuality &&
+    getOptionalEvidenceFreshness(airQuality.meta).fresh &&
+    Number.isInteger(airQuality.aqi) &&
+    airQuality.aqi >= 1 &&
+    airQuality.aqi <= 5
+  );
+  const hourlyFresh = Boolean(
+    airQualityHourly && getOptionalEvidenceFreshness(airQualityHourly.meta).fresh
+  );
+  if (requiredAqiEvidence.current && !currentFresh) return false;
+  if (requiredAqiEvidence.hourly && !hourlyFresh) return false;
+  if (candidateKind === 'air-quality' && !currentFresh && !hourlyFresh) return false;
+  return true;
+};
 const getLocationDateKey = (timezoneOffsetSeconds = 0) =>
   new Date(Date.now() + timezoneOffsetSeconds * 1000).toISOString().slice(0, 10);
 
@@ -102,11 +127,12 @@ const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | nul
   return Math.max(0, nextQuietEndMs - shiftedNowMs) + QUIET_HOURS_BOUNDARY_CUSHION_MS;
 };
 
-export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta }: Props) {
+export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHourly, forecastMeta }: Props) {
   const { t, i18n } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
   const [requestingPermission, setRequestingPermission] = useState(false);
   const [quietHoursRevision, setQuietHoursRevision] = useState(0);
+  const [freshnessRevision, setFreshnessRevision] = useState(0);
   const notificationsSupported = typeof Notification !== 'undefined';
   const [permission, setPermission] = useState<NotificationPermission>(() =>
     notificationsSupported ? Notification.permission : 'default'
@@ -123,15 +149,74 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     document.addEventListener('visibilitychange', syncPermission);
     return () => document.removeEventListener('visibilitychange', syncPermission);
   }, [notificationsSupported]);
+  const currentWeatherFreshness = getCurrentWeatherFreshness(weather.meta);
+  const forecastFreshness = getForecastFreshness(forecastMeta);
+  const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
+  const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
+
+  useEffect(() => {
+    const resyncFreshness = () => setFreshnessRevision(value => value + 1);
+    const expiries = [
+      currentWeatherFreshness.expiresInMs,
+      forecastFreshness.expiresInMs,
+      currentAqiFreshness.expiresInMs,
+      hourlyAqiFreshness.expiresInMs,
+    ].filter((value): value is number => value !== null);
+    const nextExpiryMs = expiries.length ? Math.min(...expiries) : null;
+    const timeout =
+      nextExpiryMs === null ? undefined : window.setTimeout(resyncFreshness, nextExpiryMs);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [
+    airQuality?.meta?.fetchedAt,
+    airQuality?.meta?.freshForSeconds,
+    airQualityHourly?.meta?.fetchedAt,
+    airQualityHourly?.meta?.freshForSeconds,
+    currentAqiFreshness.expiresInMs,
+    currentWeatherFreshness.expiresInMs,
+    forecastFreshness.expiresInMs,
+    forecastMeta,
+    hourlyAqiFreshness.expiresInMs,
+    weather.meta.fetchedAt,
+    weather.meta.freshForSeconds,
+  ]);
+
   const plan = useMemo(
-    () => buildDailyPlan({ weather, hourly, airQuality }),
-    [weather, hourly, airQuality]
+    () => {
+      void freshnessRevision;
+      return buildDailyPlan({ weather, hourly, airQuality, airQualityHourly });
+    },
+    [weather, hourly, airQuality, airQualityHourly, freshnessRevision]
+  );
+  const requiredAqiEvidence = useMemo(() => {
+    void freshnessRevision;
+    const source = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 24);
+    return getDailyPlanAirQualityEvidence({
+      forecastTimes: source.length ? source.map(point => point.time) : [weather.timestamp],
+      airQuality,
+      airQualityHourly,
+    });
+  }, [airQuality, airQualityHourly, freshnessRevision, hourly, weather.timestamp]);
+  const requiredAqiSources = useMemo(
+    () => ({
+      current: requiredAqiEvidence.usesCurrentAqiFallback,
+      hourly: requiredAqiEvidence.usesHourlyAqi,
+    }),
+    [requiredAqiEvidence.usesCurrentAqiFallback, requiredAqiEvidence.usesHourlyAqi]
   );
   const candidate = useMemo(
     () => buildAlertCandidate(weather.cityName, plan),
     [plan, weather.cityName]
   );
-  const alertEvidenceFresh = isAlertEvidenceFresh(weather, forecastMeta, candidate?.kind, airQuality);
+  const alertEvidenceFresh = isAlertEvidenceFresh(
+    weather, forecastMeta, candidate?.kind, airQuality, airQualityHourly, requiredAqiSources
+  );
 
   useEffect(() => {
     if (!enabled || permission !== 'granted' || !candidate || !alertEvidenceFresh) return undefined;
@@ -172,26 +257,29 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     const body = `${t(candidate.bodyKey, alertData)} ${t('hava81.alerts.notificationDisclosure')}`;
     void (async () => {
       try {
+        let registration: ServiceWorkerRegistration | undefined;
         if ('serviceWorker' in navigator) {
-          const registration = await withTimeout(
+          registration = await withTimeout(
             navigator.serviceWorker.ready,
             SERVICE_WORKER_READY_TIMEOUT_MS
           );
-          // Service-worker readiness can outlive the evidence TTL. Never deliver a decision
-          // notification after any evidence required by its candidate has expired in-flight.
-          if (!isAlertEvidenceFresh(weather, forecastMeta, candidate.kind, airQuality)) return;
-          if (typeof registration.showNotification === 'function') {
-            await withTimeout(
-              registration.showNotification(title, {
-                body,
-                tag: candidate.signature,
-                data: { url: window.location.href },
-              }),
-              NOTIFICATION_DELIVERY_TIMEOUT_MS
-            );
-          } else {
-            new Notification(title, { body, tag: candidate.signature });
-          }
+        }
+        // Service-worker readiness can outlive the evidence TTL. Recheck for both delivery paths
+        // immediately before showing the notification; optional evidence must never outlive its TTL.
+        if (
+          !isAlertEvidenceFresh(
+            weather, forecastMeta, candidate.kind, airQuality, airQualityHourly, requiredAqiSources
+          )
+        ) return;
+        if (registration && typeof registration.showNotification === 'function') {
+          await withTimeout(
+            registration.showNotification(title, {
+              body,
+              tag: candidate.signature,
+              data: { url: window.location.href },
+            }),
+            NOTIFICATION_DELIVERY_TIMEOUT_MS
+          );
         } else {
           new Notification(title, { body, tag: candidate.signature });
         }
@@ -205,12 +293,14 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, forecastMeta 
     })();
   }, [
     airQuality,
+    airQualityHourly,
     alertEvidenceFresh,
     candidate,
     enabled,
     forecastMeta,
     i18n.language,
     permission,
+    requiredAqiSources,
     plan.band,
     plan.nowOrLater.targetTime,
     quietHoursRevision,

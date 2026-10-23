@@ -4,6 +4,7 @@ import { useSettings } from '../../context';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { buildDecisionShare } from '../../utils/shareDecision';
 import type {
@@ -11,17 +12,19 @@ import type {
   Hava81ScoreBand,
   Hava81ScoreFactor,
 } from '../../domain/decision/types';
-import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import './DailyPlanPanel.css';
 
 interface DailyPlanPanelProps {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
 }
 
-type FreshDailyPlanPanelProps = Omit<DailyPlanPanelProps, 'forecastMeta'>;
+type FreshDailyPlanPanelProps = Omit<DailyPlanPanelProps, 'forecastMeta'> & { freshnessRevision: number };
 
 const bandKey: Record<Hava81ScoreBand, string> = {
   excellent: 'excellent',
@@ -58,7 +61,7 @@ const factorKey: Record<Hava81ScoreFactor, string> = {
   compound: 'compound',
 };
 
-function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPanelProps) {
+function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, freshnessRevision }: FreshDailyPlanPanelProps) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, getTemperatureSymbol } = useSettings();
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'unavailable'>('idle');
@@ -67,10 +70,24 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
   const shareInFlightRef = useRef(false);
   const trackedPlanRef = useRef<string | null>(null);
   const snapshot = useMemo(
-    () => getDecisionSnapshot({ weather, hourly, airQuality }),
-    [airQuality, hourly, weather]
+    () => {
+      void freshnessRevision;
+      return getDecisionSnapshot({ weather, hourly, airQuality, airQualityHourly });
+    },
+    [airQuality, airQualityHourly, freshnessRevision, hourly, weather]
   );
   const plan = snapshot.plan;
+  const aqiEvidence = useMemo(
+    () => {
+      void freshnessRevision;
+      return getDailyPlanAirQualityEvidence({
+        forecastTimes: plan.slots.map(slot => slot.time),
+        airQuality,
+        airQualityHourly,
+      });
+    },
+    [airQuality, airQualityHourly, freshnessRevision, plan.slots]
+  );
   const bestWindowRange = snapshot.bestWindow;
   const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const temperatureSymbol = getTemperatureSymbol();
@@ -360,6 +377,13 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
 
       <footer className="daily-plan__notes">
         <p className="daily-plan__safety">{t('hava81.dailyPlan.safetyNote')}</p>
+        {aqiEvidence.usesHourlyAqi && airQualityHourly ? (
+          <p className="daily-plan__safety">
+            {t('hava81.dailyPlan.hourlyAqiSource', {
+              source: airQualityHourly.meta.attribution ?? airQualityHourly.meta.provider,
+            })}
+          </p>
+        ) : null}
         <details className="daily-plan__method">
           <summary>{t('hava81.dailyPlan.methodDetails')}</summary>
           <p>{t('hava81.dailyPlan.note')}</p>
@@ -369,17 +393,23 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality }: FreshDailyPlanPane
   );
 }
 
-export function DailyPlanPanel({ weather, hourly, airQuality, forecastMeta }: DailyPlanPanelProps) {
+export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, forecastMeta }: DailyPlanPanelProps) {
   const { t } = useTranslation();
-  const [, setForecastFreshnessRevision] = useState(0);
+  const [freshnessRevision, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
+  const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
+  const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
 
   useEffect(() => {
-    const resyncFreshness = () => setForecastFreshnessRevision(value => value + 1);
+    const resyncFreshness = () => setFreshnessRevision(value => value + 1);
+    const expiries = [
+      freshness.expiresInMs,
+      currentAqiFreshness.expiresInMs,
+      hourlyAqiFreshness.expiresInMs,
+    ].filter((value): value is number => value !== null);
+    const nextExpiryMs = expiries.length ? Math.min(...expiries) : null;
     const timeout =
-      freshness.expiresInMs === null
-        ? undefined
-        : window.setTimeout(resyncFreshness, freshness.expiresInMs);
+      nextExpiryMs === null ? undefined : window.setTimeout(resyncFreshness, nextExpiryMs);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -388,7 +418,16 @@ export function DailyPlanPanel({ weather, hourly, airQuality, forecastMeta }: Da
       if (timeout !== undefined) window.clearTimeout(timeout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [forecastMeta, freshness.expiresInMs]);
+  }, [
+    airQuality?.meta?.fetchedAt,
+    airQuality?.meta?.freshForSeconds,
+    airQualityHourly?.meta?.fetchedAt,
+    airQualityHourly?.meta?.freshForSeconds,
+    currentAqiFreshness.expiresInMs,
+    forecastMeta,
+    freshness.expiresInMs,
+    hourlyAqiFreshness.expiresInMs,
+  ]);
 
   if (!freshness.fresh) {
     return (
@@ -406,7 +445,15 @@ export function DailyPlanPanel({ weather, hourly, airQuality, forecastMeta }: Da
     );
   }
 
-  return <FreshDailyPlanPanel weather={weather} hourly={hourly} airQuality={airQuality} />;
+  return (
+    <FreshDailyPlanPanel
+      weather={weather}
+      hourly={hourly}
+      airQuality={airQuality}
+      airQualityHourly={airQualityHourly}
+      freshnessRevision={freshnessRevision}
+    />
+  );
 }
 
 export default DailyPlanPanel;
