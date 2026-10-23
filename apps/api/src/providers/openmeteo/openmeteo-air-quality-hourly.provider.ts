@@ -7,7 +7,10 @@ import type {
   CoordinateQuery,
 } from "../weather-provider";
 
-const providerTimestampSchema = z.number().int().nonnegative();
+// `Date` accepts timestamps only within ±8.64e15 milliseconds. Open-Meteo uses Unix seconds;
+// reject impossible provider timestamps at schema validation instead of throwing in toISOString.
+const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+const providerTimestampSchema = z.number().int().nonnegative().max(MAX_DATE_UNIX_SECONDS);
 const optionalSeries = z.array(z.number().nullable()).optional();
 
 const airQualityHourlySchema = z.object({
