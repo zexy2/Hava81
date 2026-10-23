@@ -115,6 +115,7 @@ audit_dirty_count=0
 audit_status_unreadable_count=0
 audit_missing_count=0
 audit_in_use_count=0
+audit_unmanaged_ignored_count=0
 
 worktree_is_in_use() {
   local target="$1" cwd_snapshot
@@ -133,6 +134,35 @@ tree_is_removable() {
     return 1
   fi
   return 0
+}
+
+# Removing an entire clean worktree can still destroy ignored local-only data
+# (for example .env files or private fixtures). When the caller asks to remove
+# worktrees, permit only known rebuildable artifact directories plus Husky's
+# generated .husky/_ hooks (created by the package.json prepare script); any other
+# ignored path makes the checkout ineligible. Use normal ignored-directory
+# reporting so node_modules/dist are represented by their roots rather than by
+# ignored package fixtures nested inside them. Artifact-only cleanup stays
+# narrowly scoped to the explicit allowlist and does not need this whole-tree guard.
+worktree_has_unmanaged_ignored_path() {
+  local target="$1" output line path
+  if ! output="$(git -c safe.directory="$target" -C "$target" -c core.quotePath=false status --porcelain=v1 --ignored --untracked-files=normal 2>/dev/null)"; then
+    return 2
+  fi
+  while IFS= read -r line; do
+    [[ "${line:0:2}" == "!!" ]] || continue
+    path="${line:3}"
+    path="${path%/}"
+    case "$path" in
+      .husky/_|.husky/_/*|node_modules|node_modules/*|dist|dist/*|coverage|coverage/*|test-results|test-results/*|playwright-report|playwright-report/*|apps/api/node_modules|apps/api/node_modules/*|apps/api/dist|apps/api/dist/*|apps/api/coverage|apps/api/coverage/*)
+        ;;
+      *)
+        printf '%s' "$path"
+        return 0
+        ;;
+    esac
+  done <<< "$output"
+  return 1
 }
 
 while IFS= read -r wt; do
@@ -193,6 +223,21 @@ while IFS= read -r wt; do
 
   if [[ "$merged" != true && "$stale_clean" != true ]]; then
     continue
+  fi
+
+  if [[ "$remove_worktrees" == true ]]; then
+    unmanaged_ignored_path=""
+    if unmanaged_ignored_path="$(worktree_has_unmanaged_ignored_path "$wt")"; then
+      audit_unmanaged_ignored_count=$((audit_unmanaged_ignored_count + 1))
+      printf 'WOULD_SKIP_UNMANAGED_IGNORED_WORKTREE\t0\t%s/%s\n' "$wt" "$unmanaged_ignored_path"
+      continue
+    else
+      ignored_status=$?
+      if [[ "$ignored_status" -eq 2 ]]; then
+        audit_status_unreadable_count=$((audit_status_unreadable_count + 1))
+        continue
+      fi
+    fi
   fi
 
   wt_bytes="$(du -sb "$wt" 2>/dev/null | awk '{print $1}')"
@@ -258,7 +303,7 @@ while IFS= read -r wt; do
 done < <(git worktree list --porcelain | awk '/^worktree / {sub(/^worktree /, ""); print}')
 
 if [[ "$audit" == true ]]; then
-  printf "Audit: scanned=%d dirty=%d in_use=%d status_unreadable=%d missing=%d. No files, refs, or worktrees were changed.\n" "$audit_scanned_count" "$audit_dirty_count" "$audit_in_use_count" "$audit_status_unreadable_count" "$audit_missing_count"
+  printf "Audit: scanned=%d dirty=%d in_use=%d status_unreadable=%d unmanaged_ignored=%d missing=%d. No files, refs, or worktrees were changed.\n" "$audit_scanned_count" "$audit_dirty_count" "$audit_in_use_count" "$audit_status_unreadable_count" "$audit_unmanaged_ignored_count" "$audit_missing_count"
 fi
 
 if [[ "$remove_worktrees" == true ]]; then
