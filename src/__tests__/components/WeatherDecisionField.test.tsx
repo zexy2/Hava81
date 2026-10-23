@@ -122,6 +122,49 @@ describe('WeatherDecisionField daily range', () => {
     expect(container.querySelector('.hava81-decision-field__trend')).toBeInTheDocument();
   });
 
+  it('compares the first forecast hour with a fresh current rain observation', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, icon: '10d' }}
+          hourly={[
+            { time: new Date('2026-08-29T14:00:00Z'), temp: 26, pop: 0.1, windSpeed: 3, icon: '01d' },
+            { time: new Date('2026-08-29T15:00:00Z'), temp: 26, pop: 0.1, windSpeed: 3, icon: '01d' },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/Yağış .* civarı diniyor\./)).toBeInTheDocument();
+  });
+
+  it('announces rain starting at the first forecast hour when the fresh current observation is dry', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={{ ...weather, icon: '01d' }}
+          hourly={[
+            { time: new Date('2026-08-29T14:00:00Z'), temp: 26, pop: 0.8, windSpeed: 3, icon: '10d' },
+            { time: new Date('2026-08-29T15:00:00Z'), temp: 26, pop: 0.9, windSpeed: 3, icon: '10d' },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText(/17:00 civarı yağış başlıyor\./)).toBeInTheDocument();
+  });
+
+  it('does not claim the forecast will stay steady while hourly data is unavailable', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('Yakın saatler için değişim bilgisi henüz hazır değil.')).toBeInTheDocument();
+    expect(screen.queryByText('Önümüzdeki 24 saatte belirgin bir değişim yok.')).not.toBeInTheDocument();
+  });
+
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {
     render(
       <SettingsProvider>
@@ -479,6 +522,7 @@ describe('WeatherDecisionField daily range', () => {
     );
 
     expect(screen.getByText(/Hissedilen sıcaklık 38°C seviyesine çıkabilir/i)).toBeInTheDocument();
+    expect(screen.getByText(/17:00 civarı 37°C ile ısınıyor\./)).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_200);
@@ -489,6 +533,9 @@ describe('WeatherDecisionField daily range', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByText('Yakın saatler için karar verisi henüz hazır değil.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Yakın saatler için değişim bilgisi henüz hazır değil.')
     ).toBeInTheDocument();
   });
 

@@ -214,6 +214,19 @@ describe('Plan v3 absolute eligibility gates', () => {
     expect([rain, wind, fog].every(item => !item.eligible)).toBe(true);
   });
 
+  it('blocks an extreme gust even when sustained wind remains mild', () => {
+    const scored = scoreHour({
+      intent: 'laundry',
+      point: point(1, { windSpeed: 2, windGust: 25 }),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+
+    expect(scored.gateReasons).toContain('extreme-wind');
+    expect(scored.eligible).toBe(false);
+    expect(scored.score).toBeLessThanOrEqual(30);
+  });
+
   it.each([65, 66, 67, 75, 82, 85, 86, 95, 96, 99])(
     'blocks high-impact WMO weather code %s',
     weatherCode => {

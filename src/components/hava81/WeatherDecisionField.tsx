@@ -393,11 +393,19 @@ export function WeatherDecisionField({
       ? `${numberFormatter.format(freshAirQuality.aqi)}/5 · ${t(airQualityLabelKey)}`
       : t('hava81.decision.notAvailable', { defaultValue: '—' });
 
-  const nextChange = getNextChange(hourly, weather.temperature, new Date(now));
-  const nextChangeText = t(`hava81.decision.upcoming.${nextChange.kind}`, {
-    time: formatCityTime(nextChange.time, weather.meta.timezoneOffsetSeconds, settings.language),
-    temperature: nextChange.temp === null ? '' : formatTemperature(nextChange.temp),
-  });
+  const currentWet = currentEvidenceFresh
+    ? ['09d', '09n', '10d', '10n', '11d', '11n'].includes(weather.icon)
+    : undefined;
+  const nextChange = getNextChange(hourly, weather.temperature, new Date(now), currentWet);
+  const nextChangeText =
+    decisionEvidenceFresh && hourly.length > 0
+      ? t(`hava81.decision.upcoming.${nextChange.kind}`, {
+          time: formatCityTime(nextChange.time, weather.meta.timezoneOffsetSeconds, settings.language),
+          temperature: nextChange.temp === null ? '' : formatTemperature(nextChange.temp),
+        })
+      : t('hava81.decision.upcoming.unavailable', {
+          defaultValue: 'Yakın saatler için değişim bilgisi henüz hazır değil.',
+        });
   const trendHours = hourly.filter(hour => hour.time.getTime() > now).slice(0, 24);
   const trend = (() => {
     if (trendHours.length < 2) return null;

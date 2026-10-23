@@ -119,7 +119,41 @@ If a workflow job invokes a script stored in the repository, that job must check
 - The Node 24 development-image follow-up adds a loopback-only container port binding and a bounded HTTP readiness loop. Keep container names unique per GitHub run, print logs only on failure, and always remove the test container via an EXIT trap. Never publish the dev image.
 - Local YAML parse, extracted shell syntax, full frontend tests (993/993), type-check, lint, production build, focused browser flows (24/24), and whitespace checks passed. Local Docker is unavailable, so only the hosted exact-PR job can prove that the image starts and serves HTTP.
 
+## 2026-10-23 22:46 TRT — next-change rain state and stale-evidence rules
+- A forecast hour is not a current observation. When current weather is fresh, compare the first future precipitation probability against the current observed wet/dry condition derived from the current condition icon. When the current observation is stale, do not infer its state from a future sample.
+- Treat non-finite/out-of-range precipitation probabilities as unknown; never convert missing rain evidence into a dry baseline. When no hourly samples exist or current/forecast evidence expires, do not claim “steady/no notable change”; show the localized unavailable state.
+- The first-screen next-change sentence must follow the same current/forecast freshness gate as the other decision guidance. This is modeled forecast guidance, not an official MGM warning.
 
 ## 2026-10-23 22:48 TRT — development-image port contract
 - `Dockerfile.dev` must keep the Vite listener, `EXPOSE` value, and CI runtime-smoke container port aligned. Vite defaults to 5173; if the image contract is port 3000, pass `--port 3000 --strictPort` to the start script rather than changing only the smoke mapping and leaving `EXPOSE 3000` inaccurate.
 - The CI runtime smoke's failed exact-head run is actionable evidence, not a flaky check: the image built, Vite started, but the port published to the host had no listener. Keep the test and fix the image contract.
+
+## 2026-10-23 23:33 TRT — critical font discovery and final-shell cache identity
+- Preload only the hashed IBM Plex Sans Latin and Latin-Ext font files verified in the exact-main Lighthouse network trace and local browser smoke. Resolve asset names from `dist/assets`; fail the build if either expected font is missing or ambiguous, and keep the links before the module entry so the requests can overlap app boot.
+- The service-worker cache stamp must run after city-page generation and CSP application. Its build identifier must hash the final root HTML, manifest and sorted hashed asset names; otherwise a generator-only change can alter published HTML without changing the shell cache namespace.
+- Local Lighthouse cannot connect to the managed Chrome executable in this environment. Do not substitute a host browser; require hosted exact-head Lighthouse and compare its artifact against the exact-main baseline (performance 90, LCP 2.3 s, TBT 280 ms) before merging the font-preload experiment.
+- When the 81-city live release gate receives HTTP 429, stop the sweep immediately, report the server's Retry-After if present, and return a distinct blocked exit code. Do not continue querying remaining cities after a provider rate limit; the autonomous session itself should continue on independent work without amplifying the limited endpoint.
+
+## 2026-10-24 — Patch the audited Puppeteer/BiDi dependency path through the lockfile
+
+When the root npm audit returned three high-severity findings, keep the fix narrow: refresh the existing lockfile transitive Lighthouse/Puppeteer dependency graph rather than adding a direct Zod override or changing application runtime code. The refreshed graph selects `puppeteer-core 25.16.0`, `chromium-bidi 157.0.8090-0`, and `zod 4.6.7`, which satisfy the declared dependency ranges and eliminate the reported advisory. Keep `package.json` unchanged, verify a clean `npm ci`, and require both root and API audits to pass. Because the development-image build also saw a registry connection reset, address bounded fetch retries separately in `Dockerfile.dev`; do not mix that CI reliability change into the security lockfile PR.
+
+## 2026-10-24 — Retry transient registry fetches in the development image
+
+A real dev-image CI attempt failed during `npm ci` with `ECONNRESET` from the package registry. Keep the image on Node 24 LTS and preserve the existing port-3000/`--strictPort` runtime contract, but make npm fetch retries explicit and bounded: five retries, factor 2, minimum 10 seconds, maximum 60 seconds. This changes only the development image; do not change production images or ports. Keep a static contract test in the Ops workflow so the retry flags cannot disappear silently, and require the hosted Docker build/runtime gate before merge.
+
+## 2026-10-24 — Preserve the HTTP 429 release-gate decision during PR #1398 rebase
+
+- Original decision timestamp: 2026-10-23 23:56 TRT; preserved from PR #1398 head `7ee5e9867df5246191b02e949bfe21cc157dc365` during rebase.
+- HTTP 429 means the API/provider is rate limiting. A sequential 81-city gate must not continue into more current/forecast requests after the first 429, because doing so amplifies pressure and can obscure the original failure.
+- Preserve the raw `Retry-After` response header for operator diagnostics, but do not retry or sleep inside this release gate. Exit with a distinct code 2 and explicit `BLOCKED` result; keep ordinary aggregated failures on exit code 1 and full 81/81 success on exit code 0.
+- Regression coverage injects a mocked first-response 429 and proves there is exactly one fetch, no second city request, and a visible Retry-After hint. No production weather values, scoring, provider fallback, or safety semantics change.
+- The live gate was unintentionally invoked twice during checkpoint shell expansion; both attempts stopped at the first 429. Readiness on both local slots remained healthy afterward. Do not repeat a live sweep until the provider rate-limit window has cleared and a deliberate release-gate run is justified.
+
+## 2026-10-24 00:59 TRT — Compare Lighthouse scores with runner benchmark index
+
+After the lockfile-only security PR, one hosted Lighthouse artifact scored performance 84 with benchmark index 1975; a subsequent main run scored 96 with benchmark index 4482. The script-only HTTP 429 PR scored 83 with benchmark index 1946. Chrome version and generated application bundle were unchanged, and Lighthouse budgets passed. Treat this pattern as runner variance unless repeated comparable runs or production measurements show a regression; retain the raw artifacts and compare benchmark index, LCP, TBT, and bundle hashes rather than using one score in isolation.
+
+## 2026-10-24 01:02 TRT — Defer stale UI and major dependency PRs until rebased and tested
+
+Reviewing an open PR is not a reason to merge it when its base is several commits old or GitHub reports it as non-mergeable. Keep Hava81 on Node 24 LTS; do not merge Node 25 container bumps as a routine Dependabot change. Major TypeScript/Vitest dependency groups require an isolated worktree, full type/unit/browser/build checks, and a clear compatibility result. Old UI PRs (rain-peak and notification contrast) should be compared with current main and rebased in dedicated worktrees before any decision; do not close them automatically.

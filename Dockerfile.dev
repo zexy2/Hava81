@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Keep the development image reproducible and match the root/CI peer policy.
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=60000
 
 # Copy source code
 COPY . .
