@@ -80,3 +80,7 @@ If a workflow job invokes a script stored in the repository, that job must check
 - The “next 12 hours” decision window is anchored to the evaluation time supplied by the visible decision-field clock, not the first hourly sample. Include only finite forecast timestamps strictly after `now` and strictly before `now + 12 hours`; the current instant and exact end boundary are excluded.
 - Sort eligible samples chronologically after filtering. Invalid `Date` values are unavailable evidence and must not participate in risk selection. Current-condition risks are evaluated independently so filtering expired forecast points does not suppress a real current observation.
 - Keep tests deterministic by injecting `now` for domain assertions and generating App integration hourly samples relative to the test run rather than pinning them to a date that eventually becomes historical.
+
+## 2026-10-23 — hourly rain peak uses the shared probability-plus-amount severity
+- Forecast Atlas must select one real hourly sample with `precipitationSignalSeverity(normalizedProbability, amountMm)`, matching the shared rain-decision policy. Do not let maximum probability always win before comparing amount: e.g. a 20% / 6 mm hour can be more actionable than an 80% / 0 mm drizzle.
+- Keep the displayed probability, amount and timestamp tied to that same sample; never combine maxima from different hours. Preserve stable first-sample tie behavior, provider values, forecast freshness, and the distinction between modeled precipitation and official warnings.

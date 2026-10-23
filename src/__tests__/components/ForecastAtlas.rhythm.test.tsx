@@ -103,6 +103,26 @@ describe('ForecastAtlas hourly rhythm', () => {
     }
   });
 
+  it('ranks the rain summary by combined probability and amount, not probability alone', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-21T15:10:00Z'));
+      const hourly = rhythmHours().map((hour, index) => ({
+        ...hour,
+        pop: index === 2 ? 0.8 : index === 9 ? 0.2 : 0,
+        precipitationMm: index === 9 ? 6 : 0,
+      }));
+      renderRhythm(hourly);
+
+      const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
+      const rain = within(summary).getAllByRole('listitem')[2];
+      expect(rain).toHaveTextContent('%20 · 6,0 mm');
+      expect(rain.querySelector('time')).toHaveAttribute('datetime', '2026-10-22T00:00:00.000Z');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('links an hour column on the plot with its value cell while pointing', () => {
     const { container } = renderRhythm();
     const hours = container.querySelector<HTMLOListElement>('.hava81-forecast-atlas__hours');
