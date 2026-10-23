@@ -68,7 +68,9 @@ if grep -qF -- "- '.github/workflows/deploy-api.yml'" <<<"$PUSH_PATH_FILTERS"; t
   fail "workflow-only changes should be validated by CI without deploying the API"
 fi
 DEPLOY_JOB="$(sed -n '/^  deploy:/,$p' "$WORKFLOW")"
-CHECKOUT_LINE="$(grep -nF 'uses: actions/checkout@v6' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"
+# The security contract is about ordering and token persistence, not a pinned action major.
+# Keep Dependabot's compatible checkout upgrades from failing an unrelated deploy gate.
+CHECKOUT_LINE="$(grep -nE 'uses: actions/checkout@v[0-9]+' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"
 SECRET_GATE_LINE="$(grep -nF 'run: bash scripts/check-api-deploy-secrets.sh' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"
 [[ -n "$CHECKOUT_LINE" && -n "$SECRET_GATE_LINE" && "$CHECKOUT_LINE" -lt "$SECRET_GATE_LINE" ]] || \
   fail "deploy job must check out the repository before running the secret gate"
