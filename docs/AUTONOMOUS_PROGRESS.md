@@ -516,3 +516,37 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 ### Follow-up — CI now verifies the dev image build
 - Added a read-only `dev-image` job to `.github/workflows/ci.yml` that builds `Dockerfile.dev` with `docker build --pull` on GitHub-hosted Ubuntu; it does not publish or push the image. YAML parses successfully and the job is present in the parsed workflow graph.
 - This closes the local Docker socket limitation for merge gating: the actual image build will be exercised by the PR's GitHub Actions run. Local Node 24 app validation remains 993/993 tests, type-check/lint/build and 24/24 browser flows passing.
+
+## 2026-10-23 22:33 TRT — Node 24 dev image merged; add a runtime smoke to the image gate
+
+### Completed parent PR and production checks
+- PR #1394 (`chore(dev): move development image to Node 24 LTS`) merged normally after exact head `9102081238219d69d1a604743f7699c9478995df`, base `bc55488a6139f730a9b9ae1a54b5edcb662b9bab`, mergeability and green CI/CD #3407 (`40011366411`), Ops contracts #147 (`40011366307`) and CodeQL #2188 (`40011366303`). Merge commit/current main at checkpoint: `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`.
+- The GitHub-hosted `Development container build` job passed in #3407, confirming `docker build --pull --file Dockerfile.dev` succeeds for Node 24. Local Docker socket remains inaccessible; no local image build was claimed.
+- New main push CI/CD #3408 (`40011842108`) is in progress for `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`; CodeQL #2189 (`40011842104`) is in progress; Ops contracts #148 (`40011842113`) succeeded. Pages deployment is not yet confirmed for this new main SHA. Continue independent work while these run.
+- Direct smoke immediately before the dev-only merge: root, `/izmir/`, `/istanbul/` HTTP 200, each with 7/7 navigation assets HTTP 200; build revision `bc55488a6139f730a9b9ae1a54b5edcb662b9bab`; manifest, service worker, mark, favicon and social card HTTP 200; API health/readiness HTTP 200, CORS preflight HTTP 204, API remains on port 4002. This verifies the previous deployed app revision, not yet the new `9e4eef` revision.
+- Post-deploy read-only responsive audit on that UI revision: **40/40 passed** across İzmir and İstanbul, Turkish/English, light/dark, 320px at 100% and 200%, 390px, 768px and 1440px. 12 live API responses captured and 108 safely replayed; no uncached failures.
+- Latest observer sample before the merge: `collected_at=2026-10-23T19:29:22.817335Z`, production healthy, disk 88.2% used / 11.4 GiB free (warning only), frontend revision consistent at `bc554...`. Query GitHub directly when observer fields lag; do not wait blindly.
+
+### Independent follow-up branch
+- Branch/worktree: `automation/hava81-dev-image-runtime-smoke-20261023-2234`, `/home/chatgpt/hava81-dev-image-runtime-smoke-20261023-2234`, based on `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`.
+- Added a post-build runtime smoke step to the existing `dev-image` job: start the local image with an isolated container name and loopback-only host port, wait up to 30 seconds for HTTP 200, print container logs on failure, and always remove the container. The image is never published.
+- YAML parses, the extracted smoke script passes `bash -n`, and `git diff --check` passes. Actual Docker execution is delegated to GitHub-hosted CI because local Docker socket access is denied. Change is not committed/pushed yet; no PR exists for the runtime-smoke follow-up.
+
+### Exact next actions
+1. Finish review of the runtime smoke step, append this checkpoint and decision, commit/push the isolated branch, and open a PR.
+2. Require exact-head CI/CD (including both build and HTTP runtime smoke), Ops contracts, CodeQL and browser checks. Merge only after direct head/base/mergeability/check verification.
+3. Watch main run #3408 and confirm Pages publishes `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`; repeat root/city revision parity, boot-asset checks, manifest/service worker, API health/readiness, CORS and port 4002.
+4. Keep all other worktrees and the original dirty UI worktree intact. Do not clean up disk warning artifacts without a separate safe audit.
+
+## 2026-10-23 22:42 TRT — runtime smoke local gates completed; PR preparation
+
+- Branch/worktree: `automation/hava81-dev-image-runtime-smoke-20261023-2234`, `/home/chatgpt/hava81-dev-image-runtime-smoke-20261023-2234`; exact base remains `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c`.
+- Final local validation after the CI workflow runtime-smoke change: `npm run test:ci` **993/993 across 103 files**; `npm run type-check`, `npm run lint`, `npm run build`, `npm run e2e -- e2e/decision.spec.ts e2e/app-shell.spec.ts` **24/24**, and `git diff --check` all pass. The repo's locked dependencies were reused from the already-validated Node 24 worktree; tests executed under host Node 22, so Node 24-specific runtime validation remains the hosted CI job's responsibility.
+- PyYAML successfully parsed the workflow; the `dev-image` job includes checkout, build, and smoke. The extracted smoke shell passes `bash -n`. Local Docker daemon socket access remains denied; actual image start + HTTP 200 is intentionally delegated to GitHub-hosted CI. No image was published.
+- Latest main CI/CD run #3408 for exact main SHA `9e4eef71ae3e1f72955aa6a7ec6e8e0897d5c35c` is successful, including the existing build-only dev-image job and Lighthouse artifact retention. This follow-up is not yet pushed and has no PR at this checkpoint.
+
+### Next actions
+1. Re-review only `.github/workflows/ci.yml` plus append-only progress/decision entries, commit the bounded runtime-smoke change, then push through normal authenticated Git and open a PR.
+2. Require exact-head CI/CD, CodeQL, Ops contracts, browser flows, and Lighthouse. Confirm the hosted development-image job both builds and serves HTTP, with guaranteed cleanup and no publish step.
+3. While those checks run, continue the independent next-change evidence-integrity branch `automation/hava81-next-change-rain-baseline-20261023-2237` without modifying this pending branch.
+4. Before merge, re-read the PR's exact head/base/mergeability/checks and refresh observer state; after merge, verify current-main CI/Pages and direct production health. This is a workflow-only change; do not deploy the API or change port 4002.

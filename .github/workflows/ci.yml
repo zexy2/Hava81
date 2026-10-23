@@ -56,6 +56,24 @@ jobs:
       - uses: actions/checkout@v6
       - name: Build development image without publishing it
         run: docker build --pull --file Dockerfile.dev --tag hava81-dev:ci .
+      - name: Smoke-test the development server
+        shell: bash
+        run: |
+          set -euo pipefail
+          container_name="hava81-dev-smoke-${GITHUB_RUN_ID}"
+          docker run --detach --name "$container_name" --publish 127.0.0.1:4173:3000 hava81-dev:ci
+          cleanup() { docker rm --force "$container_name" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null; then
+              echo "Development server responded over HTTP on attempt ${attempt}."
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs "$container_name"
+          echo 'Development container did not serve HTTP within 30 seconds.' >&2
+          exit 1
 
   api:
     name: API test & build

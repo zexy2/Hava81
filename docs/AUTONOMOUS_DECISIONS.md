@@ -111,3 +111,10 @@ If a workflow job invokes a script stored in the repository, that job must check
 - Keep development container runtimes on a supported Node.js LTS line. Node 20 is EOL; Node 24 is LTS per the official Node.js release table. The dev-only base-image change must not implicitly upgrade production API/frontend images.
 - If the Docker daemon socket is unavailable, validate package install and the complete app gates under the matching Node/npm major, but explicitly leave the image build as unverified and require CI image construction before merge. Never infer successful Docker build from host-only tests.
 - A dev Dockerfile change is not fully validated by host-side Node tests alone. The CI workflow now includes a build-only `dev-image` job (`docker build --pull --file Dockerfile.dev`); never push the image from this job. Require that exact PR check to pass before merge.
+
+## 2026-10-23 — development container must start, not just build
+- A successful Docker build does not prove `npm start` binds to the container interface or serves a page. The dev-image CI job now gets a loopback-only HTTP smoke after build, with bounded retries, failure logs and guaranteed container cleanup. Keep the job build-only: never publish a development image from CI.
+
+## 2026-10-23 22:42 TRT — development-image runtime smoke validation
+- The Node 24 development-image follow-up adds a loopback-only container port binding and a bounded HTTP readiness loop. Keep container names unique per GitHub run, print logs only on failure, and always remove the test container via an EXIT trap. Never publish the dev image.
+- Local YAML parse, extracted shell syntax, full frontend tests (993/993), type-check, lint, production build, focused browser flows (24/24), and whitespace checks passed. Local Docker is unavailable, so only the hosted exact-PR job can prove that the image starts and serves HTTP.
