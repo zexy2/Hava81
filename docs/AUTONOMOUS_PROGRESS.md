@@ -293,3 +293,26 @@ Do not mutate a pending branch from a second workstream, don't replace this hist
 4. Preserve the dirty P1.3 worktree; harden score-cap cases into absolute eligibility gates, add tests for low `minWindowScore` overrides, then rebase/copy selectively onto a clean current-main worktree only after the audit is complete.
 5. Do not edit pending Dependabot PR #1381. Its head `1c98e602a23bd0f7e37b12c7fabab86b94a42e54` is based on `183ecd98948067f62ff231464cf2e6f966320f66` and its Deploy script contracts check failed on that older head. Wait for the normal Dependabot branch update path, then verify exact-head checks.
 6. Continue independent work while CI/Pages run; never disable or pause automation and never use an alternate write path to evade platform controls.
+
+
+## 2026-10-23 17:22 TRT — plan-engine hard eligibility gates (local gates green)
+
+### Production and post-merge verification
+- PR #1386 merged normally as `bb9bbba8a2b5998a2243d56468ff7b68afb2c007`. Main CI/CD run #3392 (`39967859095`) succeeded for that exact SHA; Pages deployment run `39968242747` also succeeded. Public cache-busted `/` and `/izmir/` HTML both expose revision `bb9bbba8a2b5998a2243d56468ff7b68afb2c007`; `/manifest.json`, `/sw.js`, and all HTML-linked JS/CSS boot assets returned HTTP 200.
+- Fresh observer snapshot `collected_at=2026-10-23T14:20:23.180069Z`: production HEALTHY, no issues, frontend root/city revisions match current main, API readiness HTTP 200 with `no-store`, CORS allow-origin `https://hava81.zekiakgul.dev`, API primary port 4002, API deployment not pending. API runtime remains `4aa0ee1a40db773a11367b3ebc7d61271686d719` because this main change contains no API runtime files. Disk was 81.3% used with about 18.1 GiB free and API build headroom OK.
+
+### Independent plan-engine safety fix
+- Worktree `/home/chatgpt/hava81-plan-safety-gates-20261023-1711`, branch `automation/hava81-plan-safety-gates-20261023-1711`, base `bb9bbba8a2b5998a2243d56468ff7b68afb2c007`.
+- `scoreHour` already capped scores for extreme heat/cold, heavy hourly precipitation, extreme sustained/gust wind and OpenWeather AQI 5, but those caps did not consistently make a slot ineligible. `findWindows` selects by `eligible`; a capped but eligible slot could therefore still be recommended. Hard eligibility now shares the same `HAVA81_ABSOLUTE_SAFETY_LIMITS` constants as the visible score caps and additionally blocks visibility below 1,000 m and high-impact WMO codes 65, 66, 67, 75, 82, 85, 86, 95, 96 and 99.
+- Added regression coverage for extreme heat/cold, very-poor AQI with the laundry AQI weight set to zero, heavy precipitation, extreme wind, low visibility, all listed high-impact WMO codes, and the empty-window outcome when all forecast hours cross a hard gate.
+- Local gates: targeted plan/threshold suites **44/44 passed**; full `npm run test:ci` **980/980 tests across 103 files**, coverage statements 92.17%, branches 85.81%, functions 91.79%, lines 94.51%; type-check, ESLint/CSS lint, production build, `git diff --check` passed; `npm audit --omit=dev` reported 0 vulnerabilities.
+- No production code was changed. At checkpoint, four source/test files plus this append-only progress/decision documentation are modified locally; no commit, push, PR or hosted run exists yet.
+
+### Exact next action and queue
+1. Re-read the full source/docs diff and commit only this isolated hard-gate change; push the branch and open a PR with the hazard rationale and local gate results.
+2. While hosted checks run, review stale open PRs #1319 and #1294 for exact head/base, conflicts and changed semantics; do not merge their old heads blindly or mutate their pending branches from another workstream.
+3. Recheck exact-head CI, CodeQL and Ops/deploy contracts for the new PR. Merge only after current head and mergeability are directly verified and all required checks are green.
+4. After merge, watch the main pipeline and Pages publish, then refresh the observer and verify root/city revision parity, boot assets, API readiness/CORS and primary port 4002.
+5. Preserve the dirty legacy P1.3 worktree and the dirty near-term decision-window worktree unchanged; do not copy their uncommitted work without a fresh audit/rebase.
+
+Do not disable or pause automation, do not bypass a blocked write path, and do not present modeled guidance as official weather or safety warnings.

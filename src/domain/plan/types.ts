@@ -30,6 +30,11 @@ export type PlanGateReason =
   | 'outside-active-hours'
   | 'precipitation-limit'
   | 'wind-limit'
+  | 'extreme-temperature'
+  | 'heavy-precipitation'
+  | 'extreme-wind'
+  | 'very-poor-air-quality'
+  | 'low-visibility'
   | 'severe-weather'
   | 'outside-availability'
   | 'invalid-weather-data';
