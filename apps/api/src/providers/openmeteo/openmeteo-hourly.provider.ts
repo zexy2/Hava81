@@ -20,6 +20,14 @@ const providerWeatherCodeSchema = z
   .int()
   .refine(code => supportedWeatherCodes.has(code), { message: "unsupported WMO weather code" });
 const ONE_HOUR_MS = 60 * 60 * 1_000;
+// Generous physical ceilings: preserve real extremes while dropping finite-but-impossible
+// provider values before they can become displayed measurements or safety-score evidence.
+const MAX_WIND_SPEED_MS = 150;
+const MAX_WIND_GUST_MS = 150;
+const MAX_HOURLY_PRECIPITATION_MM = 500;
+const MAX_DAILY_PRECIPITATION_MM = 2_000;
+const MAX_VISIBILITY_METERS = 100_000;
+const MAX_UV_INDEX = 50;
 
 
 const hourlySchema = z.object({
@@ -243,7 +251,13 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
         if (temp === null || pop === null || code === null || windSpeed === null || isDay === null) {
           continue;
         }
-        if (!isPlausibleCelsius(temp) || pop < 0 || pop > 100 || windSpeed < 0) {
+        if (
+          !isPlausibleCelsius(temp) ||
+          pop < 0 ||
+          pop > 100 ||
+          windSpeed < 0 ||
+          windSpeed > MAX_WIND_SPEED_MS
+        ) {
           throw new AppError(
             502,
             "INVALID_HOURLY_PROVIDER_RESPONSE",
@@ -260,10 +274,15 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
           windSpeed,
           apparentTemperature: finiteInRangeAt(raw.apparent_temperature, index, -100, 100),
           humidity: finiteInRangeAt(raw.relative_humidity_2m, index, 0, 100),
-          precipitationMm: finiteInRangeAt(raw.precipitation, index, 0),
-          windGust: finiteInRangeAt(raw.wind_gusts_10m, index, 0),
-          uvIndex: finiteInRangeAt(raw.uv_index, index, 0),
-          visibility: finiteInRangeAt(raw.visibility, index, 0),
+          precipitationMm: finiteInRangeAt(
+            raw.precipitation,
+            index,
+            0,
+            MAX_HOURLY_PRECIPITATION_MM,
+          ),
+          windGust: finiteInRangeAt(raw.wind_gusts_10m, index, 0, MAX_WIND_GUST_MS),
+          uvIndex: finiteInRangeAt(raw.uv_index, index, 0, MAX_UV_INDEX),
+          visibility: finiteInRangeAt(raw.visibility, index, 0, MAX_VISIBILITY_METERS),
           dewPoint: finiteInRangeAt(raw.dew_point_2m, index, -100, 100),
           sunshineDuration: finiteInRangeAt(raw.sunshine_duration, index, 0, 3_600),
           weatherCode: code,
@@ -341,7 +360,12 @@ export class OpenMeteoHourlyProvider implements HourlyForecastProvider {
             icon: iconForCode(code, true),
             description: descriptionForCode(code, query.lang),
             pop: Math.max(0, Math.min(100, Math.round(pop))),
-            precipitationMm: finiteInRangeAt(dailyRaw.precipitation_sum, index, 0),
+            precipitationMm: finiteInRangeAt(
+              dailyRaw.precipitation_sum,
+              index,
+              0,
+              MAX_DAILY_PRECIPITATION_MM,
+            ),
             ...daylightBounds(dailyRaw.sunrise?.[index], dailyRaw.sunset?.[index]),
           });
         }

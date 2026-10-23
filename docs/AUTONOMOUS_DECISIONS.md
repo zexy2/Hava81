@@ -157,3 +157,9 @@ After the lockfile-only security PR, one hosted Lighthouse artifact scored perfo
 ## 2026-10-24 01:02 TRT — Defer stale UI and major dependency PRs until rebased and tested
 
 Reviewing an open PR is not a reason to merge it when its base is several commits old or GitHub reports it as non-mergeable. Keep Hava81 on Node 24 LTS; do not merge Node 25 container bumps as a routine Dependabot change. Major TypeScript/Vitest dependency groups require an isolated worktree, full type/unit/browser/build checks, and a clear compatibility result. Old UI PRs (rain-peak and notification contrast) should be compared with current main and rebased in dedicated worktrees before any decision; do not close them automatically.
+
+## 2026-10-24 — omit finite-but-impossible hourly weather measurements
+
+- Keep generous upper sanity bounds at the Open-Meteo adapter boundary so finite outliers cannot become displayed values or decision-score evidence: hourly precipitation <=500 mm, daily precipitation <=2,000 mm, sustained wind/gust <=150 m/s, UV index <=50, and visibility <=100,000 m. These ceilings deliberately leave room for extraordinary real events while excluding values far outside a physically credible range.
+- Optional out-of-range values become unavailable (`undefined`) instead of zero or a fabricated normal reading. Core sustained wind above the bound rejects the provider response so the fallback/error path can handle the bad payload. Keep the published hourly response schema aligned with the adapter's accepted range.
+- Regression tests cover all upper bounds and verify that optional fields are omitted while valid core forecast values remain usable. Do not infer missing UV/visibility/gust/precipitation measurements as zero.
