@@ -136,6 +136,11 @@ jobs:
       ORACLE_SSH_PORT: ${{ secrets.ORACLE_SSH_PORT }}
       ORACLE_DEPLOY_DIR: ${{ vars.ORACLE_DEPLOY_DIR }}
     steps:
+      # The secret gate is a repository script, so this job must check out the
+      # exact workflow SHA before invoking it. Keep credentials unpersisted.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Check deploy secrets (fail closed)
         id: secrets
         env:

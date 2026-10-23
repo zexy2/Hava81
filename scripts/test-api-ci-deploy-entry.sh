@@ -54,6 +54,17 @@ commit_upstream() {
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
+# The fail-closed helper is a repository file; the deploy job must check out
+# this exact SHA before invoking it (without persisting the checkout token).
+WORKFLOW="$REPO_ROOT/.github/workflows/deploy-api.yml"
+DEPLOY_JOB="$(sed -n '/^  deploy:/,$p' "$WORKFLOW")"
+CHECKOUT_LINE="$(grep -nF 'uses: actions/checkout@v6' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"
+SECRET_GATE_LINE="$(grep -nF 'run: bash scripts/check-api-deploy-secrets.sh' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"
+[[ -n "$CHECKOUT_LINE" && -n "$SECRET_GATE_LINE" && "$CHECKOUT_LINE" -lt "$SECRET_GATE_LINE" ]] || \
+  fail "deploy job must check out the repository before running the secret gate"
+grep -qF 'persist-credentials: false' <<<"$DEPLOY_JOB" || \
+  fail "deploy-job checkout must not persist the GitHub token"
+
 # 1. Fast-forwards to the requested SHA and deploys that exact image/revision.
 SHA2="$(commit_upstream two)"
 out="$(bash "$ENTRY" "$SHA2" </dev/null)"
