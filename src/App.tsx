@@ -4,7 +4,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { suggestCity } from './utils/citySuggestion';
 import { formatCityTime } from './utils/format';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
-import { DecisionGlance } from './components/hava81/DecisionGlance';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { useWeather } from './hooks/useWeather';
 import { useForecast } from './hooks/useForecast';
@@ -29,6 +28,7 @@ import { trackProductEvent } from './analytics/productEvents';
 import './styles/App.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
+const DecisionGlance = lazy(() => import('./components/hava81/DecisionGlance'));
 const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
 const CommutePlanPanel = lazy(() => import('./components/hava81/CommutePlanPanel'));
@@ -101,6 +101,18 @@ const App: React.FC = () => {
     const timeoutId = window.setTimeout(() => setIsSlowLoading(true), 3000);
     return () => window.clearTimeout(timeoutId);
   }, [isLoading, weather]);
+
+  // Keep the initial shell lighter, but warm the below-hero decision summary
+  // while current weather is being fetched so the split chunk rarely adds a
+  // second network wait after the forecast arrives.
+  useEffect(() => {
+    if (isPlanView || activeNav === 'compare') return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      void import('./components/hava81/DecisionGlance').catch(() => undefined);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [activeNav, isPlanView]);
 
   const colorMode = useResolvedColorMode(settings.themeMode);
 
@@ -491,13 +503,15 @@ const App: React.FC = () => {
                         uvIndexMax={freshUvIndexMax}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
                       />
-                      <DecisionGlance
-                        weather={weather}
-                        hourly={forecast.hourly}
-                        airQuality={freshAirQuality}
-                        forecastMeta={forecast.displayMeta ?? forecast.meta}
-                        onOpenDetails={openScoreDetails}
-                      />
+                      <Suspense fallback={null}>
+                        <DecisionGlance
+                          weather={weather}
+                          hourly={forecast.hourly}
+                          airQuality={freshAirQuality}
+                          forecastMeta={forecast.displayMeta ?? forecast.meta}
+                          onOpenDetails={openScoreDetails}
+                        />
+                      </Suspense>
 
                       {!forecast.displayMeta && !forecast.error ? (
                         <ForecastLoadingCard

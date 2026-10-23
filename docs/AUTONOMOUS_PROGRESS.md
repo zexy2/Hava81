@@ -243,3 +243,27 @@ Do not disable or pause automation. Do not bypass platform write controls or use
 3. After the observer PR merges, verify main CI/Pages and production root, `/izmir/`, `/api/v1/health`, readiness, CORS and port 4002. Confirm the observer install/update path, refresh its read-only timer safely, and verify a fresh `collected_at` plus current main/API revisions.
 4. Preserve the dirty P1.3 plan-engine worktree `/home/chatgpt/hava81-p1-3-plan-engine-20261023-0943` and unrelated dirty UI worktree `/home/chatgpt/hava81-rain-detail-2135`; inspect and selectively rebase/copy only after auditing against the now-merged exact-hour AQI normalizer.
 5. Keep working on the next highest-value bounded item after every merge/deploy; preserve all previous checkpoint entries and never disable/pause the automation.
+
+
+## 2026-10-23 16:29 TRT — below-hero DecisionGlance chunk split (local gates pass)
+
+### Production and exact-main evidence
+- Current main is `9871162bfc9407a11160a44d4e3f4e2e1d3815b4` (PR #1316 merged normally). Fresh observer collected at `2026-10-23T13:29:07.718662Z`: production HEALTHY, all seven boot assets healthy, root/city frontend revisions match main, API readiness HTTP 200, CORS OK, Nginx API port 4002, disk 80.4% / 19.0 GiB free. Direct root, `/izmir/`, API readiness and CORS smoke checks passed. API runtime revision remains `4aa0ee1a40db773a11367b3ebc7d61271686d719`; this change is frontend-only.
+- Main CI/CD run `39959167450` passed for the exact main SHA; Pages publish `39959545666` passed. Its Lighthouse artifact measured performance 0.67, FCP 2.2 s, LCP 2.4 s, TBT 2,100 ms, 55 KiB estimated unused JS and 13 KiB unused CSS. The prior main artifact `39955373765` measured performance 0.85 / TBT 424 ms, so runner variance is material; use the exact-PR hosted report and don't over-interpret a single score.
+- Main baseline bundle: initial `index` JS 310.85 kB / 95.83 kB gzip; initial CSS 100.67 kB / 19.59 kB gzip.
+
+### Performance branch
+- Worktree: `/home/chatgpt/hava81-performance-profile-20261023-1613`.
+- Branch: `automation/hava81-performance-profile-20261023-1613`, based on `9871162bfc9407a11160a44d4e3f4e2e1d3815b4`. Code change in `src/App.tsx` is currently uncommitted; this checkpoint and the decision note are append-only local changes in the same branch. No PR or hosted run exists yet.
+- `DecisionGlance` is now a lazy-loaded JS/CSS chunk because it is a below-hero summary and does not need to block the initial shell. A post-render timer warms the chunk while current weather is fetched, only for Today/Map views; Plan/Compare routes avoid the unnecessary prefetch. The suspense fallback is intentionally null because the primary weather hero remains eager and visible.
+- Exact local build output after the split: initial `index` JS 305.70 kB / 94.55 kB gzip; initial CSS 79.04 kB / 15.47 kB gzip; `DecisionGlance` JS 5.78 kB / 2.03 kB gzip and CSS 21.64 kB / 4.81 kB gzip. Initial critical JS+CSS is 5.40 kB gzip smaller (1.28 kB JS + 4.12 kB CSS) and moves 21.63 kB of CSS out of the initial stylesheet. This is a build-size result, not yet a hosted performance claim.
+- Validation: targeted App integration + DecisionGlance tests 35/35 pass; full `npm run test:ci` exits 0 and coverage thresholds pass (statements 92.00%, branches 85.52%); `npm run type-check`, `npm run lint`, production build and `git diff --check` pass. Local `npm run lighthouse` could not connect to Chrome after its bounded retry; do not use the Snap/system-browser workaround. Hosted Lighthouse and Browser flows must validate the exact PR head.
+
+### Exact next actions and queue
+1. Review this branch's complete diff, commit/push it and open a PR; record the resulting exact head SHA and CI/Lighthouse run IDs in the next append-only checkpoint.
+2. While hosted checks run, finish the independent checkout-version-agnostic deploy-contract fix in `/home/chatgpt/hava81-contracts-20261023-1620`, branch `automation/hava81-checkout-contract-version-agnostic-20261023-1620`. Its shell/deploy and Ops contract suites pass, including a temporary `actions/checkout@v7` fixture; do not edit Dependabot PR #1381's pending branch.
+3. For every green PR, re-read the remote head, mergeability, exact-head checks and fresh observer immediately before normal merge. After merge, watch main CI/Pages and directly verify root, `/izmir/`, all boot assets, API readiness, CORS, API port 4002 and deployed revision.
+4. If hosted Lighthouse confirms the initial critical-path reduction without a first-viewport regression, keep the split. Consider a separate `WeatherDecisionField` split only as a later bounded experiment with an explicit primary-decision skeleton fallback; don't combine it into this PR.
+5. Investigate Dependabot #1381 after the contract fix lands; keep major dependency upgrades blocked until their exact-head CI and security checks pass.
+
+Do not mutate a pending branch from a second workstream, don't replace this history, and don't bypass a blocked normal write path.
