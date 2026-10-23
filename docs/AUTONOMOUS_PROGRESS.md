@@ -208,3 +208,38 @@ Do not disable or pause the automation. Never bypass platform write controls. Do
 5. After any main merge, directly re-check observer freshness, frontend revision, API readiness/CORS and port 4002 before making deployment claims.
 
 Do not disable or pause automation. Do not bypass platform write controls or use an alternate write path. Preserve all prior valid checkpoint entries.
+
+
+## 2026-10-23 15:24 TRT — PR #1382 merged; API deployment recovered; observer main-head gate fix prepared
+
+### PR #1382 — exact-hour AQI evidence freshness
+- PR: https://github.com/zexy2/Hava81/pull/1382
+- Exact head before merge: `791601c6b6f1dadc1714d95685520da2eb1c37ff`; current base before merge: `771101cfb089a6c8c5980096792588cf805aed48`.
+- Required CI/CD #3380 (`39949110761`), Ops script contracts #120 (`39949110790`), and CodeQL #2161 (`39949110688`) all succeeded on the exact PR head; Browser flows, Lighthouse budgets, Frontend quality, API test/build, production build and the Lighthouse report artifact all passed. No reviews were pending; current head and mergeability were re-read immediately before the normal squash merge.
+- Merge commit / new main SHA: `4aa0ee1a40db773a11367b3ebc7d61271686d719`.
+
+### Main pipeline and API deploy catch-up
+- Main CI/CD #3381 (`39951854470`), Ops contracts #121 (`39951854687`) and CodeQL #2162 (`39951854466`) succeeded for `4aa0ee1a40db773a11367b3ebc7d61271686d719`; Pages deploy within CI/CD #3381 succeeded and verified the public static shell and all 81 province SEO pages.
+- A direct current-branch comparison exposed API runtime drift from Dependabot dependency commits `183ecd989` / `771101cfb`: `apps/api/package.json` and `apps/api/package-lock.json` had changed while the last Oracle API deployment remained `dccd489f48b02a9d314fd28354a08eff05af82c7`. No API deploy run had been created for those dependency-only merges (the push-trigger was skipped), so a normal `workflow_dispatch` was started only after the current main SHA, green CI, API readiness and CORS were re-verified.
+- API deploy run #13: `39952695741`, https://github.com/zexy2/Hava81/actions/runs/39952695741 — completed successfully. API test/build, GHCR image publish, blue/green Oracle deploy, and public `/health` revision verification all succeeded.
+- Direct post-deploy verification: public `/api/v1/health` and `/api/v1/health/ready` both returned HTTP 200 with revision exactly `4aa0ee1a40db773a11367b3ebc7d61271686d719`; provider circuit closed with zero consecutive failures; root and `/izmir/` returned HTTP 200; CORS allow-origin exactly `https://hava81.zekiakgul.dev`; Nginx still proxies to port 4002. No manual service/port switch or rollback was needed.
+- Observer `state.json` was last collected at `2026-10-23T12:18:58.970632Z` during this checkpoint and is stale relative to the completed deploy; do not use that old API revision marker as current truth. Direct public health and workflow job results are the current evidence until the next observer timer refresh.
+
+### Observer reliability branch — current main SHA vs last successful CI
+- Worktree: `/home/chatgpt/hava81-observer-main-revision-guard-20261023-1512`.
+- Branch: `automation/hava81-observer-main-revision-guard-20261023-1512`, based on main `4aa0ee1a40db773a11367b3ebc7d61271686d719`. Changes are local and uncommitted; no PR exists yet.
+- Root cause: `collect_github()` treated the latest main Actions run SHA as the current branch SHA. After main advanced from `e07c3d1811c44fc70e8d136a462e43cdc384325d` through dependency merges to `771101cfb089a6c8c5980096792588cf805aed48`, the observer reported frontend parity with the older run and missed API runtime files changed since that SHA. It could also report merge/deploy readiness before a CI/CD run existed for the actual branch head.
+- Fix: query GitHub's `/branches/main` ref; expose current branch SHA separately from the latest CI/CD run; only treat a CI/CD run on that exact SHA as current; set `main_pipeline_pending` if the current SHA has no run/in-progress run; block readiness on current-main CI failure or unknown branch SHA; compare frontend and API deployment revisions against the real current branch head; show current and latest main CI separately in the status script.
+- Avoid unnecessary API production deploys for observer-only work: API deploy push paths now exclude `deploy/oracle/observer/**`, `deploy/oracle/install-observer.sh`, and `deploy/oracle/README.md`; workflow-only edits are tested by normal CI but do not themselves deploy the API. `scripts/test-api-ci-deploy-entry.sh` asserts these exclusions.
+- Validation: observer unittest discovery **71/71 passed**; `scripts/test-api-ci-deploy-entry.sh` passed; observer logrotate contract passed; observer installer shell syntax, Python compile checks, workflow YAML parse and `git diff --check` passed. A live read-only `collect_github()` call correctly identified branch head `4aa0ee...`, the exact successful main CI run, and (before the catch-up deploy) the two changed API dependency files as pending runtime drift.
+
+### Exact current branch/run and next action
+- Current branch head is still base SHA `4aa0ee1a40db773a11367b3ebc7d61271686d719` with eight modified files (six code/workflow files plus the two append-only checkpoint documents): `.github/workflows/deploy-api.yml`, `deploy/oracle/observer/observer.py`, `deploy/oracle/observer/hava81-worker-status.py`, both observer test files, and `scripts/test-api-ci-deploy-entry.sh`. No commit or PR has been created yet.
+- API deploy run `39952695741` is completed successfully and the public API revision matches main. Main CI/CD #3381 is successful. Next: rerun the focused observer/deploy contracts after final diff review, append the final exact checkpoint, commit/push this isolated observer branch and open a PR; only merge after exact-head CI, Ops and CodeQL are green and the current head/mergeability are reverified.
+
+### Prioritized next queue
+1. Finish review/tests for `automation/hava81-observer-main-revision-guard-20261023-1512`, commit/push and open PR; keep observer code separate from any other worktree.
+2. While its checks run, continue independent product work in a fresh worktree from the actual current `origin/main`; do not wait idle for CI.
+3. After the observer PR merges, verify main CI/Pages and production root, `/izmir/`, `/api/v1/health`, readiness, CORS and port 4002. Confirm the observer install/update path, refresh its read-only timer safely, and verify a fresh `collected_at` plus current main/API revisions.
+4. Preserve the dirty P1.3 plan-engine worktree `/home/chatgpt/hava81-p1-3-plan-engine-20261023-0943` and unrelated dirty UI worktree `/home/chatgpt/hava81-rain-detail-2135`; inspect and selectively rebase/copy only after auditing against the now-merged exact-hour AQI normalizer.
+5. Keep working on the next highest-value bounded item after every merge/deploy; preserve all previous checkpoint entries and never disable/pause the automation.

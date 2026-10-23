@@ -853,6 +853,8 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 payload = pulls
             elif '/actions/runs?' in url:
                 payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': 'main-new', 'commit': {'committer': {'date': '2026-10-23T12:00:00Z'}}}}
             else:
                 raise AssertionError(f'unexpected URL: {url}')
             return {
@@ -883,6 +885,9 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-new')
         self.assertEqual(result['latest_main_run']['run_id'], 12)
         self.assertEqual(result['latest_main_run']['status'], 'completed')
+        self.assertEqual(result['main_branch']['sha'], 'main-new')
+        self.assertEqual(result['main_pipeline']['head_sha'], 'main-new')
+        self.assertFalse(result['signals']['main_pipeline_pending'])
         self.assertEqual(result['open_automation_prs'][0]['ci']['run_id'], 14)
         self.assertEqual(result['open_automation_prs'][0]['ci']['status'], 'in_progress')
         self.assertEqual(result['open_automation_prs'][0]['codeql']['run_id'], 13)
@@ -952,6 +957,8 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 payload = pulls
             elif '/actions/runs?' in url:
                 payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': 'main-sha', 'commit': {'committer': {'date': '2026-10-23T12:00:00Z'}}}}
             elif '/actions/runs/42/jobs?' in url:
                 payload = {
                     'jobs': [
@@ -1053,6 +1060,13 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                     'headers': {'x-ratelimit-remaining': '49'},
                     'json': {'workflow_runs': fallback_runs}, 'error': None,
                 }
+            if '/branches/main' in url:
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1,
+                    'headers': {'x-ratelimit-remaining': '48'},
+                    'json': {'commit': {'sha': 'main-sha', 'commit': {'committer': {'date': '2026-10-23T12:00:00Z'}}}},
+                    'error': None,
+                }
             raise AssertionError(f'unexpected URL: {url}')
 
         try:
@@ -1065,20 +1079,134 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
             observer.http_get = original_http_get
             observer.collect_api_deployment = original_collect_api_deployment
 
-        self.assertEqual(len(requested_urls), 3)
+        self.assertEqual(len(requested_urls), 4)
         self.assertIn('/actions/runs?per_page=100', requested_urls[1])
         self.assertIn(
             f'/actions/runs?per_page={observer.GITHUB_RUNS_FALLBACK_PAGE_SIZE}', requested_urls[2]
         )
-        self.assertEqual(requested_timeouts[1:], [
+        self.assertIn('/branches/main', requested_urls[3])
+        self.assertEqual(requested_timeouts[1:3], [
             observer.GITHUB_RUNS_TIMEOUT_SECONDS, observer.GITHUB_RUNS_TIMEOUT_SECONDS
         ])
+        self.assertEqual(requested_timeouts[3], 6.0)
         self.assertTrue(result['ok'])
         self.assertIsNone(result['error'])
         self.assertEqual(result['rate_limit_remaining'], '49')
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-sha')
         self.assertEqual(result['signals']['ci_green_prs'], [662])
         self.assertEqual(result['signals']['ci_unknown_prs'], [])
+
+    def test_current_main_without_its_own_ci_run_is_pending_even_when_old_run_is_green(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        captured_main_context = {}
+        old_sha = 'a' * 40
+        current_sha = 'b' * 40
+        runs = [{
+            'id': 31, 'run_number': 31, 'name': 'CI/CD Pipeline',
+            'head_sha': old_sha, 'head_branch': 'main', 'event': 'push',
+            'status': 'completed', 'conclusion': 'success',
+            'html_url': 'https://example.test/old-green-main',
+        }]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                payload = []
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': current_sha, 'commit': {'committer': {'date': '2026-10-23T12:00:00Z'}}}}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {'x-ratelimit-remaining': '40'}, 'json': payload, 'error': None}
+
+        def fake_collect_api_deployment(main_context):
+            captured_main_context.update(main_context or {})
+            return {'known': True, 'pending': False, 'error': None}
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = fake_collect_api_deployment
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['latest_main_run']['head_sha'], old_sha)
+        self.assertEqual(result['main_branch']['sha'], current_sha)
+        self.assertIsNone(result['main_pipeline'])
+        self.assertTrue(result['signals']['main_pipeline_pending'])
+        self.assertEqual(captured_main_context['head_sha'], current_sha)
+        self.assertEqual(captured_main_context['status'], 'queued')
+        self.assertIsNone(captured_main_context['created_at'])
+
+    def test_current_main_ci_failure_is_reported_for_the_exact_branch_sha(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        current_sha = 'c' * 40
+        runs = [{
+            'id': 32, 'run_number': 32, 'name': 'CI/CD Pipeline',
+            'head_sha': current_sha, 'head_branch': 'main', 'event': 'push',
+            'status': 'completed', 'conclusion': 'failure',
+            'html_url': 'https://example.test/failed-current-main',
+        }]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                payload = []
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': current_sha}}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {}, 'json': payload, 'error': None}
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda main_context: {'known': True, 'pending': False, 'error': None}
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(result['main_pipeline']['head_sha'], current_sha)
+        self.assertFalse(result['signals']['main_pipeline_pending'])
+        self.assertTrue(result['signals']['main_pipeline_failed'])
+
+    def test_unknown_main_branch_sha_fails_closed(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        runs = [{
+            'id': 33, 'run_number': 33, 'name': 'CI/CD Pipeline',
+            'head_sha': 'a' * 40, 'head_branch': 'main', 'event': 'push',
+            'status': 'completed', 'conclusion': 'success',
+            'html_url': 'https://example.test/green-main',
+        }]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                return {'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {}, 'json': [], 'error': None}
+            if '/actions/runs?' in url:
+                return {'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {}, 'json': {'workflow_runs': runs}, 'error': None}
+            if '/branches/main' in url:
+                return {'ok': False, 'status': 403, 'elapsed_ms': 1, 'headers': {}, 'json': None, 'error': 'HTTP 403'}
+            raise AssertionError(f'unexpected URL: {url}')
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda main_context: {'known': False, 'pending': False, 'error': 'main revision unavailable'}
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['error'], 'HTTP 403')
+        self.assertTrue(result['signals']['main_pipeline_pending'])
+        self.assertTrue(result['signals']['main_pipeline_unknown'])
+        self.assertTrue(result['signals']['api_deploy_unknown'])
 
     def test_does_not_retry_smaller_runs_page_after_rate_limit_403(self) -> None:
         requested_urls: list[str] = []
@@ -1138,6 +1266,18 @@ class ObserverFrontendDeploymentStateTests(unittest.TestCase):
         self.assertTrue(state['matches_main'])
         self.assertFalse(state['pending'])
 
+    def test_uses_current_branch_sha_instead_of_stale_successful_run_sha(self) -> None:
+        deployed = 'd' * 40
+        current_main = 'e' * 40
+        stale_run = 'f' * 40
+        state = observer.frontend_deployment_state(
+            {'known': True, 'consistent': True, 'root': deployed, 'city': deployed},
+            {'sha': current_main, 'head_sha': stale_run, 'known': True},
+        )
+        self.assertEqual(state['main_revision'], current_main)
+        self.assertFalse(state['matches_main'])
+        self.assertTrue(state['pending'])
+
     def test_inconsistent_frontend_shells_do_not_claim_pending_or_match(self) -> None:
         state = observer.frontend_deployment_state(
             {'known': True, 'consistent': False, 'root': 'a' * 40, 'city': 'b' * 40},
@@ -1167,6 +1307,13 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         result = observer.merge_deploy_readiness(*self.healthy_inputs())
         self.assertTrue(result['ok'])
         self.assertEqual(result['blocking_reasons'], [])
+
+    def test_blocks_when_current_main_ci_failed(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        github['signals']['main_pipeline_failed'] = True
+        result = observer.merge_deploy_readiness(production, host, github, frontend)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['main_pipeline_failed'])
 
     def test_blocks_when_host_disk_is_outside_hard_gate(self) -> None:
         production, host, github, frontend = self.healthy_inputs()

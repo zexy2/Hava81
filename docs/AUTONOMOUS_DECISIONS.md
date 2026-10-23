@@ -46,3 +46,10 @@ If a workflow job invokes a script stored in the repository, that job must check
 ## 2026-10-23 — Dependabot ecosystem compatibility
 - Dependabot cooldown fields (`semver-major-days`, `semver-minor-days`, `semver-patch-days`) are not valid for `github-actions` or `docker` entries in this repository's configuration. Keep cooldown only on supported npm entries; retain separate major groups for manual review where cooldown is unsupported.
 - Keep a repository-script contract test for the supported ecosystem/cooldown matrix so the GitHub Dependabot validation check cannot silently regress. Do not weaken required CI gates to work around the failing config check.
+
+
+## 2026-10-23 — authoritative main-head and observer-only deployment rules
+- The current main revision comes from GitHub's branch ref (`/branches/main`), not from the newest successful Actions run. Actions describe validation of a specific SHA and can lag immediately after a merge or when a push-triggered run is missing.
+- A merge/deploy readiness snapshot must require a CI/CD Pipeline run for the exact current main SHA. Missing/currently running CI is pending; a failed/cancelled current-main pipeline blocks readiness; an unavailable branch SHA fails closed. Keep the latest run for diagnostics but do not substitute it for the current branch ref.
+- Frontend parity and API runtime-file comparisons use the actual current main SHA. API deploy freshness metadata must come from a CI run on that same SHA; do not reuse an older run's success timestamp.
+- Observer code, its installer, and Oracle documentation are not API runtime changes. Exclude observer-only paths from the API deploy push trigger so observer PRs do not trigger needless production API rollouts. Validate the filter with the API deploy entry contract; keep `workflow_dispatch` available for an explicitly authorized, green-CI API deployment.

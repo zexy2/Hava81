@@ -57,6 +57,16 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 # The fail-closed helper is a repository file; the deploy job must check out
 # this exact SHA before invoking it (without persisting the checkout token).
 WORKFLOW="$REPO_ROOT/.github/workflows/deploy-api.yml"
+PUSH_PATH_FILTERS="$(sed -n '/^  push:/,/^  workflow_dispatch:/p' "$WORKFLOW")"
+grep -qF -- "- '!deploy/oracle/observer/**'" <<<"$PUSH_PATH_FILTERS" || \
+  fail "observer-only changes must not trigger an API production deployment"
+grep -qF -- "- '!deploy/oracle/install-observer.sh'" <<<"$PUSH_PATH_FILTERS" || \
+  fail "observer installer changes must not trigger an API production deployment"
+grep -qF -- "- '!deploy/oracle/README.md'" <<<"$PUSH_PATH_FILTERS" || \
+  fail "Oracle documentation changes must not trigger an API production deployment"
+if grep -qF -- "- '.github/workflows/deploy-api.yml'" <<<"$PUSH_PATH_FILTERS"; then
+  fail "workflow-only changes should be validated by CI without deploying the API"
+fi
 DEPLOY_JOB="$(sed -n '/^  deploy:/,$p' "$WORKFLOW")"
 CHECKOUT_LINE="$(grep -nF 'uses: actions/checkout@v6' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"
 SECRET_GATE_LINE="$(grep -nF 'run: bash scripts/check-api-deploy-secrets.sh' <<<"$DEPLOY_JOB" | head -n1 | cut -d: -f1)"

@@ -703,6 +703,27 @@ def collect_github() -> dict[str, Any]:
             f'https://api.github.com/repos/{REPO}/actions/runs?per_page={GITHUB_RUNS_FALLBACK_PAGE_SIZE}',
             timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
         )
+    # Read the actual branch ref separately from Actions. The newest successful
+    # workflow can lag the branch head (for example, immediately after a merge or
+    # when a push run has not been created yet); it is not a source of truth for
+    # the current main revision.
+    main_branch_result = (
+        http_get(f'https://api.github.com/repos/{REPO}/branches/main')
+        if runs_result.get('ok')
+        else {'ok': False, 'status': runs_result.get('status'), 'error': runs_result.get('error'), 'headers': {}, 'json': None}
+    )
+    main_branch_json = main_branch_result.get('json') if isinstance(main_branch_result.get('json'), dict) else {}
+    main_commit = main_branch_json.get('commit') if isinstance(main_branch_json.get('commit'), dict) else {}
+    main_sha = main_commit.get('sha')
+    main_commit_details = main_commit.get('commit') if isinstance(main_commit.get('commit'), dict) else {}
+    main_committer = main_commit_details.get('committer') if isinstance(main_commit_details.get('committer'), dict) else {}
+    main_branch_known = bool(main_branch_result.get('ok') is True and isinstance(main_sha, str) and main_sha)
+    main_branch = {
+        'sha': main_sha if main_branch_known else None,
+        'known': main_branch_known,
+        'commit_date': main_committer.get('date'),
+    }
+
     pulls_data = pulls_result.get('json') if isinstance(pulls_result.get('json'), list) else []
     runs_json = runs_result.get('json') if isinstance(runs_result.get('json'), dict) else {}
     runs_data = runs_json.get('workflow_runs') if isinstance(runs_json.get('workflow_runs'), list) else []
@@ -718,19 +739,43 @@ def collect_github() -> dict[str, Any]:
         elif run.get('name') == 'CodeQL' and sha not in codeql_runs_by_sha:
             codeql_runs_by_sha[sha] = run
 
-    latest_main_candidates = [
+    main_candidates = [
         run
         for run in runs_data
         if run.get('head_branch') == 'main' and run.get('event') in ('push', 'workflow_dispatch')
     ]
-    latest_main: dict[str, Any] | None = None
-    if latest_main_candidates:
-        latest_main_sha = latest_main_candidates[0].get('head_sha')
-        same_sha = [run for run in latest_main_candidates if run.get('head_sha') == latest_main_sha]
-        latest_main = next(
-            (run for run in same_sha if run.get('name') == 'CI/CD Pipeline'),
-            same_sha[0] if same_sha else latest_main_candidates[0],
-        )
+    main_pipeline_candidates = [run for run in main_candidates if run.get('name') == 'CI/CD Pipeline']
+    current_main_pipeline = next(
+        (run for run in main_pipeline_candidates if main_branch_known and run.get('head_sha') == main_sha),
+        None,
+    )
+    # Keep a useful latest-run snapshot for diagnostics, but make gating depend
+    # on a CI/CD run for the *current branch SHA*, never a prior green SHA.
+    latest_main: dict[str, Any] | None = current_main_pipeline or (
+        main_pipeline_candidates[0] if main_pipeline_candidates else None
+    )
+    main_pipeline_pending = bool(
+        not main_branch_known
+        or current_main_pipeline is None
+        or current_main_pipeline.get('status') != 'completed'
+    )
+    main_pipeline_failed = bool(
+        current_main_pipeline
+        and current_main_pipeline.get('status') == 'completed'
+        and current_main_pipeline.get('conclusion') != 'success'
+    )
+    main_context: dict[str, Any] | None = None
+    if main_branch_known:
+        main_context = dict(current_main_pipeline or latest_main or {})
+        main_context['head_sha'] = main_sha
+        if current_main_pipeline is None:
+            # Prevent a prior run's success/timestamp from being mistaken for
+            # validation of the current commit. API runtime drift remains
+            # comparable to the real branch head, but its CI age is unknown.
+            main_context['status'] = 'queued'
+            main_context['conclusion'] = None
+            main_context['updated_at'] = None
+            main_context['created_at'] = None
 
     def failed_ci_job_names(run: dict[str, Any]) -> list[str]:
         run_id = run.get('id')
@@ -822,14 +867,20 @@ def collect_github() -> dict[str, Any]:
     ci_failed = [number for number, state in gate_states.items() if state == 'failed']
     ci_running = [number for number, state in gate_states.items() if state == 'running']
     ci_unknown = [number for number, state in gate_states.items() if state == 'unknown']
-    api_deployment = collect_api_deployment(latest_main)
+    api_deployment = collect_api_deployment(main_context)
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
+    github_ok = bool(pulls_result.get('ok') and runs_result.get('ok') and main_branch_known)
+    github_error = pulls_result.get('error') or runs_result.get('error') or main_branch_result.get('error')
+    if not github_error and not main_branch_known:
+        github_error = 'main branch SHA unavailable'
     return {
-        'ok': pulls_result.get('ok') and runs_result.get('ok'),
-        'error': pulls_result.get('error') or runs_result.get('error'),
+        'ok': github_ok,
+        'error': github_error,
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
         'open_automation_prs': automation_prs,
+        'main_branch': main_branch,
+        'main_pipeline': slim_run(current_main_pipeline),
         'latest_main_run': slim_run(latest_main),
         'api_deployment': api_deployment,
         'signals': {
@@ -837,15 +888,22 @@ def collect_github() -> dict[str, Any]:
             'ci_failed_prs': ci_failed,
             'ci_running_prs': ci_running,
             'ci_unknown_prs': ci_unknown,
-            'main_pipeline_pending': bool(latest_main and latest_main.get('status') != 'completed'),
+            'main_pipeline_pending': main_pipeline_pending,
+            'main_pipeline_failed': main_pipeline_failed,
+            'main_pipeline_unknown': not main_branch_known,
             'api_deploy_pending': api_deployment['pending'],
             'api_deploy_unknown': not api_deployment['known'],
         },
     }
 
 
-def frontend_deployment_state(frontend_revision: dict[str, Any], latest_main: dict[str, Any] | None) -> dict[str, Any]:
-    main_revision = latest_main.get('head_sha') if isinstance(latest_main, dict) else None
+def frontend_deployment_state(frontend_revision: dict[str, Any], main_branch: dict[str, Any] | None) -> dict[str, Any]:
+    # Prefer the authoritative current branch ref. `head_sha` remains accepted
+    # for older callers/tests, but production status must not compare against an
+    # arbitrarily older successful Actions run.
+    main_revision = None
+    if isinstance(main_branch, dict):
+        main_revision = main_branch.get('sha') or main_branch.get('head_sha')
     known = frontend_revision.get('known') is True
     consistent = frontend_revision.get('consistent') is True
     deployed_revision = frontend_revision.get('root') if known and consistent else None
@@ -886,6 +944,10 @@ def merge_deploy_readiness(
         reasons.append('api_primary_port_drift')
     if github_signals.get('main_pipeline_pending') is True:
         reasons.append('main_pipeline_pending')
+    if github_signals.get('main_pipeline_failed') is True:
+        reasons.append('main_pipeline_failed')
+    if github_signals.get('main_pipeline_unknown') is True:
+        reasons.append('main_pipeline_unknown')
     if github_signals.get('api_deploy_pending') is True:
         reasons.append('api_deploy_pending')
     if github_signals.get('api_deploy_unknown') is True:
@@ -918,6 +980,8 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
             for pr in prs
         ],
         'main': github.get('latest_main_run'),
+        'main_branch': github.get('main_branch'),
+        'main_pipeline': github.get('main_pipeline'),
         'frontend_revision': {
             key: (production.get('frontend_revision') or {}).get(key)
             for key in ('root', 'city', 'known', 'consistent', 'main_revision', 'matches_main', 'pending')
@@ -990,7 +1054,7 @@ def main() -> int:
     host = collect_host()
     github = collect_github()
     frontend_revision = production.get('frontend_revision') or {}
-    frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('latest_main_run')))
+    frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('main_branch')))
     production['frontend_revision'] = frontend_revision
     merge_deploy = merge_deploy_readiness(production, host, github, frontend_revision)
     state = {
