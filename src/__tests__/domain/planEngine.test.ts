@@ -157,6 +157,95 @@ describe('Plan v3 absolute safety ceilings', () => {
   });
 });
 
+describe('Plan v3 absolute eligibility gates', () => {
+  it.each([
+    { label: 'extreme heat', overrides: { temp: 43, apparentTemperature: 43 } },
+    { label: 'extreme cold', overrides: { temp: -20, apparentTemperature: -20 } },
+  ])('blocks $label even when the scored slot still exists', ({ overrides }) => {
+    const scored = scoreHour({
+      intent: 'walk',
+      point: point(1, overrides),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+
+    expect(scored.eligible).toBe(false);
+    expect(scored.gateReasons).toContain('extreme-temperature');
+  });
+
+  it('blocks very-poor AQI even for laundry, whose AQI score weight is zero', () => {
+    const scored = scoreHour({
+      intent: 'laundry',
+      point: point(),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+      airQuality: currentAirQuality(5),
+    });
+
+    expect(scored.penalties.airQuality).toBe(0);
+    expect(scored.score).toBeLessThanOrEqual(45);
+    expect(scored.eligible).toBe(false);
+    expect(scored.gateReasons).toContain('very-poor-air-quality');
+  });
+
+  it('adds explicit hard-hazard gates for intense rain, extreme wind and low visibility', () => {
+    const rain = scoreHour({
+      intent: 'walk',
+      point: point(1, { precipitationMm: 7.5 }),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+    const wind = scoreHour({
+      intent: 'motorcycle',
+      point: point(1, { windSpeed: 20 }),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+    const fog = scoreHour({
+      intent: 'bike',
+      point: point(1, { visibility: 999 }),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+
+    expect(rain.gateReasons).toContain('heavy-precipitation');
+    expect(wind.gateReasons).toContain('extreme-wind');
+    expect(fog.gateReasons).toContain('low-visibility');
+    expect([rain, wind, fog].every(item => !item.eligible)).toBe(true);
+  });
+
+  it.each([65, 66, 67, 75, 82, 85, 86, 95, 96, 99])(
+    'blocks high-impact WMO weather code %s',
+    weatherCode => {
+      const scored = scoreHour({
+        intent: 'walk',
+        point: point(1, { weatherCode }),
+        timezoneOffsetSeconds: OFFSET,
+        now: NOW,
+      });
+
+      expect(scored.eligible).toBe(false);
+      expect(scored.gateReasons).toContain('severe-weather');
+    }
+  );
+
+  it('does not create a window when every available hour crosses a hard safety ceiling', () => {
+    const weather = { meta: { timezoneOffsetSeconds: OFFSET } } as unknown as NormalizedWeatherData;
+    const snapshot = getPlanSnapshot({
+      intent: 'walk',
+      weather,
+      hourly: [
+        point(1, { temp: 43, apparentTemperature: 43 }),
+        point(2, { temp: 43, apparentTemperature: 43 }),
+      ],
+      now: NOW,
+    });
+
+    expect(snapshot.hours.every(hour => !hour.eligible)).toBe(true);
+    expect(snapshot.windows).toEqual([]);
+  });
+});
+
 describe('Plan v3 window selection', () => {
   it('returns at most three non-overlapping windows ranked by score', () => {
     const scores = [70, 85, 95, 90, 80, 75, 88, 92];

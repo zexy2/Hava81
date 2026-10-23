@@ -43,6 +43,16 @@ export const getScoreBand = (score: number): Hava81ScoreBand => {
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const clampScore = (value: number) => clamp(Math.round(value), 0, 100);
 
+/** Shared absolute ceilings for both visible score caps and plan-window eligibility gates. */
+export const HAVA81_ABSOLUTE_SAFETY_LIMITS = {
+  extremeHeatApparentC: 43,
+  extremeColdApparentC: -20,
+  heavyPrecipitationMm: 7.5,
+  extremeWindSpeedMs: 20,
+  extremeWindGustMs: 25,
+  veryPoorAqiIndex: 5,
+} as const;
+
 const smoothstep = (value: number, start: number, end: number) => {
   if (end <= start) return value >= end ? 1 : 0;
   const t = clamp((value - start) / (end - start), 0, 1);
@@ -234,13 +244,27 @@ export const scoreWeatherWindow = ({
     100 - (thermal + rain + wind + air + uv + visibilityRisk + severe + compound)
   );
 
-  if (apparent >= 43) score = Math.min(score, 30);
-  else if (apparent >= 40) score = Math.min(score, 45);
-  if (apparent <= -20) score = Math.min(score, 20);
-  else if (apparent <= -10) score = Math.min(score, 35);
-  if ((precipitationMm ?? 0) >= 7.5) score = Math.min(score, 35);
-  if (windSpeed >= 20 || (windGust ?? 0) >= 25) score = Math.min(score, 30);
-  if ((airQualityIndex ?? 0) >= 5) score = Math.min(score, 45);
+  if (apparent >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeHeatApparentC) {
+    score = Math.min(score, 30);
+  } else if (apparent >= 40) {
+    score = Math.min(score, 45);
+  }
+  if (apparent <= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeColdApparentC) {
+    score = Math.min(score, 20);
+  } else if (apparent <= -10) {
+    score = Math.min(score, 35);
+  }
+  if ((precipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
+    score = Math.min(score, 35);
+  }
+  if (
+    windSpeed >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeWindSpeedMs ||
+    (windGust ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeWindGustMs
+  )
+    score = Math.min(score, 30);
+  if ((airQualityIndex ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.veryPoorAqiIndex) {
+    score = Math.min(score, 45);
+  }
   if (severe >= 28) score = Math.min(score, 25);
 
   // A named material risk and the “very suitable” label should never coexist. The score

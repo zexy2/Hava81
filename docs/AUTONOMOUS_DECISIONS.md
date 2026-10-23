@@ -68,3 +68,9 @@ If a workflow job invokes a script stored in the repository, that job must check
 
 ## 2026-10-23 — plan-engine hazard caps must also gate eligibility
 - A low `minWindowScore` override must never turn an extreme-temperature, very-poor-AQI or severe-wind hour into a recommendation merely because the visible score is capped. Absolute hazard limits require explicit ineligibility gate reasons plus regression tests under low score thresholds; score caps alone are insufficient.
+
+## 2026-10-23 — plan-engine hard eligibility gates
+- A visible score ceiling is not a safety gate. Any absolute hazard that caps the shared Hava81 score must also make a plan hour ineligible, so `findWindows` cannot recommend it even if an intent assigns a zero/low weight to the factor.
+- Keep score caps and plan eligibility thresholds sourced from the same `HAVA81_ABSOLUTE_SAFETY_LIMITS` object: apparent temperature >=43°C or <=-20°C; hourly precipitation >=7.5 mm; sustained wind >=20 m/s or gust >=25 m/s; OpenWeather AQI 5 only when its evidence is fresh. Do not infer an AQI gate from stale/missing optional evidence.
+- Independently gate finite visibility below 1,000 m and high-impact WMO codes 65, 66, 67, 75, 82, 85, 86, 95, 96 and 99. Missing visibility remains unknown rather than being treated as zero.
+- Preserve the distinction between modeled decision guidance and official warnings; these gates are conservative product eligibility rules, not an MGM alert feed or a safety guarantee.

@@ -1,13 +1,23 @@
 import type { HourlyForecast, AirQuality } from '../../types';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { isDaylightPoint, isWithinActiveHours } from '../decision/eligibility';
-import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
+import {
+  getScoreBand,
+  HAVA81_ABSOLUTE_SAFETY_LIMITS,
+  scoreWeatherWindow,
+} from '../decision/scoreWeatherWindow';
 import type { Hava81ScoreFactor } from '../decision/types';
 import { getPlanConfidence } from './confidence';
 import { getPlanProfile } from './profiles';
 import type { PlanFactor, PlanHourScore, PlanIntent, PlanPenalties } from './types';
 
 const HOUR_MS = 60 * 60 * 1000;
+
+// High-impact WMO codes are absolute eligibility gates, not just weighted score penalties.
+// In particular, some heavy rain/snow codes have a material score penalty but do not cross the
+// shared model's generic severe-weather reason threshold.
+const HARD_SEVERE_WEATHER_CODES = new Set([65, 66, 67, 75, 82, 85, 86, 95, 96, 99]);
+const LOW_VISIBILITY_METERS = 1_000;
 
 const penaltyKey: Readonly<
   Record<Hava81ScoreFactor, keyof Omit<PlanPenalties, 'comfort' | 'total'>>
@@ -185,7 +195,37 @@ export const scoreHour = ({
   ) {
     gateReasons.push('wind-limit');
   }
-  if (base.reasons.includes('severe-weather')) gateReasons.push('severe-weather');
+  // Absolute hazard ceilings must block recommendation eligibility as well as cap the visible
+  // score. Otherwise an intent with a low score threshold or softened factor weights could still
+  // surface an extreme hour as a valid plan window.
+  if (
+    base.apparentTemperature >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeHeatApparentC ||
+    base.apparentTemperature <= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeColdApparentC
+  ) {
+    gateReasons.push('extreme-temperature');
+  }
+  if ((point.precipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
+    gateReasons.push('heavy-precipitation');
+  }
+  if (
+    point.windSpeed >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeWindSpeedMs ||
+    (point.windGust ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeWindGustMs
+  ) {
+    gateReasons.push('extreme-wind');
+  }
+  if ((airQualityIndex ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.veryPoorAqiIndex) {
+    gateReasons.push('very-poor-air-quality');
+  }
+  if (Number.isFinite(point.visibility) && (point.visibility as number) < LOW_VISIBILITY_METERS) {
+    gateReasons.push('low-visibility');
+  }
+  if (
+    (Number.isFinite(point.weatherCode) &&
+      HARD_SEVERE_WEATHER_CODES.has(point.weatherCode as number)) ||
+    base.reasons.includes('severe-weather')
+  ) {
+    gateReasons.push('severe-weather');
+  }
 
   const forecastHoursAhead = Math.max(0, (point.time.getTime() - now.getTime()) / HOUR_MS);
   // Coverage is evidence completeness, not the presence of a derived value. Apparent temperature
