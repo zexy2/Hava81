@@ -18,6 +18,7 @@ checks = {
     "artifact action": r"(?m)^\s+uses: actions/upload-artifact@v7\s*$",
     "named artifact": r"(?m)^\s+name: lighthouse-reports\s*$",
     "JSON report glob": r"(?m)^\s+path: \.lighthouse-results/\*.json\s*$",
+    "include hidden result directory": r"(?m)^\s+include-hidden-files: true\s*$",
     "missing reports warn without masking the job result": r"(?m)^\s+if-no-files-found: warn\s*$",
     "seven-day retention": r"(?m)^\s+retention-days: 7\s*$",
 }
