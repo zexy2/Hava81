@@ -4,7 +4,7 @@ import { getPlanSnapshot } from '../../domain/plan/planEngine';
 import { getPlanConfidence } from '../../domain/plan/confidence';
 import { scoreHour } from '../../domain/plan/scoreHour';
 import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
-import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
 import type { PlanHourScore, PlanPenalties } from '../../domain/plan/types';
 
 const NOW = new Date('2026-10-23T06:00:00.000Z');
@@ -384,6 +384,84 @@ describe('Plan v3 snapshot integration', () => {
       true
     );
     expect(snapshot.confidence).toBe('high');
+  });
+
+  it('prefers fresh exact-hour European AQI over the current reading for matching plan slots', () => {
+    const first = point(1);
+    const second = point(2);
+    const third = point(3);
+    const airQualityHourly: AirQualityHourly = {
+      hours: [
+        { time: first.time, europeanAqi: 100 },
+        { time: third.time, europeanAqi: 10 },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(NOW.getTime() - 1_000),
+        freshForSeconds: 600,
+      },
+    };
+    const snapshot = getPlanSnapshot({
+      intent: 'walk',
+      weather,
+      hourly: [first, second, third],
+      airQuality: currentAirQuality(1),
+      airQualityHourly,
+      now: NOW,
+    });
+
+    expect(snapshot.hours.map(hour => hour.airQualityIndex)).toEqual([5, 1, 1]);
+    expect(snapshot.hours[0]?.reasons).toContain('poor-air-quality');
+    expect(snapshot.hours[1]?.reasons).not.toContain('poor-air-quality');
+  });
+
+  it('does not interpolate hourly AQI across a missing exact timestamp', () => {
+    const first = point(1);
+    const second = point(2);
+    const third = point(3);
+    const airQualityHourly: AirQualityHourly = {
+      hours: [
+        { time: first.time, europeanAqi: 100 },
+        { time: third.time, europeanAqi: 10 },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(NOW.getTime() - 1_000),
+        freshForSeconds: 600,
+      },
+    };
+    const snapshot = getPlanSnapshot({
+      intent: 'walk',
+      weather,
+      hourly: [first, second, third],
+      airQualityHourly,
+      now: NOW,
+    });
+
+    expect(snapshot.hours.map(hour => hour.airQualityIndex)).toEqual([5, undefined, 1]);
+    expect(snapshot.hours[1]?.reasons).not.toContain('poor-air-quality');
+  });
+
+  it('ignores stale hourly AQI even when the stale value is more hazardous than current AQI', () => {
+    const staleAirQualityHourly: AirQualityHourly = {
+      hours: [point(1), point(2), point(3)].map(point => ({ time: point.time, europeanAqi: 100 })),
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(NOW.getTime() - 60 * 60 * 1000),
+        freshForSeconds: 300,
+      },
+    };
+    const snapshot = getPlanSnapshot({
+      intent: 'walk',
+      weather,
+      hourly: [point(1), point(2), point(3)],
+      airQuality: currentAirQuality(1),
+      airQualityHourly: staleAirQualityHourly,
+      now: NOW,
+    });
+
+    expect(snapshot.hours.every(hour => hour.airQualityIndex === 1)).toBe(true);
+    expect(snapshot.hours.every(hour => !hour.reasons.includes('poor-air-quality'))).toBe(true);
   });
 
   it('does not let stale current AQI become evidence for future plan slots', () => {

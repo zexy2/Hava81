@@ -96,3 +96,8 @@ If a workflow job invokes a script stored in the repository, that job must check
 
 ## 2026-10-23 — production Node images must use a supported LTS line
 - Do not merge Node 25 image upgrades: Node 25 reached EOL on 2026-06-01 and is not an LTS line. Prefer Node 24 Alpine (maintenance LTS through 2028-04-30) for builder/runtime/dev images, or retain Node 22 where compatibility requires it (supported through 2027-04-30). Node 20 is also EOL and should not remain in the development image. Revalidate Docker builds, API tests, browser flows and exact-head CI after changing the base image.
+
+## 2026-10-23 21:52 TRT — Plan v3 AQI uses the shared hourly evidence resolver
+- When Plan v3 receives `airQualityHourly`, prefer only fresh European AQI samples whose timestamp exactly matches the scored forecast slot. Normalize them with the shared `europeanAqiToOpenWeatherIndex` mapping before passing them into the OpenWeather 1–5 score contract.
+- Never interpolate or carry an hourly AQI value to neighboring timestamps. Stale hourly data and conflicting/invalid samples remain unavailable; current OpenWeather AQI retains its existing freshness-checked fallback behavior.
+- Keep the AQI source's freshness clock aligned with the plan evaluation `now`, so deterministic snapshots do not mix injected test time with the wall clock. This is evidence routing only; scoring thresholds and official-warning semantics remain unchanged.

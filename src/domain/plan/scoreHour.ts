@@ -67,6 +67,8 @@ export interface ScoreHourInput {
   timezoneOffsetSeconds: number;
   now?: Date;
   airQuality?: AirQuality;
+  /** Fresh, exact-hour AQI already normalized to OpenWeather's 1–5 scale. */
+  airQualityIndexOverride?: number;
 }
 
 /**
@@ -79,6 +81,7 @@ export const scoreHour = ({
   timezoneOffsetSeconds,
   now = new Date(),
   airQuality,
+  airQualityIndexOverride,
 }: ScoreHourInput): PlanHourScore => {
   const profile = getPlanProfile(intent);
   const timeIsValid = point.time instanceof Date && Number.isFinite(point.time.getTime());
@@ -112,7 +115,7 @@ export const scoreHour = ({
     airQuality && getOptionalEvidenceFreshness(airQuality.meta, now.getTime()).fresh
       ? airQuality
       : undefined;
-  const rawAqi = freshAirQuality?.aqi;
+  const rawAqi = airQualityIndexOverride ?? freshAirQuality?.aqi;
   const airQualityIndex =
     Number.isInteger(rawAqi) && (rawAqi as number) >= 1 && (rawAqi as number) <= 5
       ? rawAqi
