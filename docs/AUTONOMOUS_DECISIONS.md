@@ -59,3 +59,12 @@ If a workflow job invokes a script stored in the repository, that job must check
 - Use the exact main/PR Lighthouse artifact when measuring changes. Main's two recent reports differ materially (performance 0.67 / TBT 2.1 s versus 0.85 / TBT 424 ms), so runner contention/variance must be considered before inferring a regression.
 - `DecisionGlance` is below the primary weather hero and only rendered for non-Plan, non-Compare views. Splitting its JS and CSS reduces initial critical resources while a post-render prefetch overlaps the current-weather request. Keep the hero itself eager in this change; if it is split later, provide a layout-matched loading skeleton and validate cold mobile browser flows first.
 - If local Lighthouse cannot connect to the managed Chrome executable, use hosted exact-SHA Lighthouse/Browser-flow gates; don't substitute the host's Snap/system browser.
+
+
+## 2026-10-23 — current-time anchoring for near-term weather decisions
+- The Open-Meteo hourly endpoint can start with the current UTC hour even when that timestamp is already in the past. A “next 12 hours” decision window must be anchored to the injected evaluation time, not the earliest array item: include only timestamps strictly after `now` and strictly before `now + 12h`.
+- Pass the same visible clock into near-term decision derivation so freshness and time-window boundaries agree. Tests must use deterministic current/future forecast timestamps rather than fixed dates that silently become historical.
+- Do not ship a decision-window change until the full suite, type-check, lint and production build pass; preserve an isolated uncommitted experiment if test-fixture edits are blocked, and do not bypass platform write controls.
+
+## 2026-10-23 — plan-engine hazard caps must also gate eligibility
+- A low `minWindowScore` override must never turn an extreme-temperature, very-poor-AQI or severe-wind hour into a recommendation merely because the visible score is capped. Absolute hazard limits require explicit ineligibility gate reasons plus regression tests under low score thresholds; score caps alone are insufficient.

@@ -267,3 +267,29 @@ Do not disable or pause automation. Do not bypass platform write controls or use
 5. Investigate Dependabot #1381 after the contract fix lands; keep major dependency upgrades blocked until their exact-head CI and security checks pass.
 
 Do not mutate a pending branch from a second workstream, don't replace this history, and don't bypass a blocked normal write path.
+
+
+## 2026-10-23 16:59 TRT — PR #1385 merged; main pipeline #3390 pending
+
+### Completed performance change
+- PR #1385 (`perf: split below-hero decision summary`) merged normally. Exact rebased PR head: `edca8aca7b0574300c2f52a4a13dcaa1c4383478`; squash merge / current main SHA: `baf05147d9f58b3c73b6e959dd624f70904acc14`.
+- Exact-head local gates after rebase: `npm run test:ci` **965/965 across 103 files**, type-check, ESLint/CSS lint, production build and `git diff --check` all passed. Hosted CI/CD #3389 (`39965239487`), Ops contracts #129 (`39965239486`) and CodeQL #2170 (`39965239540`) passed; browser flows and Lighthouse budgets passed on the exact PR head. The Pages step was correctly skipped on the PR.
+- Main CI/CD #3390 (`39965652031`) is running for `baf05147d9f58b3c73b6e959dd624f70904acc14`; Ops contracts #130 (`39965651838`) and CodeQL #2171 (`39965651602`) are also running. Do not treat production as updated until the exact-main pipeline and public revision checks complete.
+- Direct smoke during the main pipeline: root and `/izmir/` HTTP 200; API `/api/v1/health` and `/api/v1/health/ready` HTTP 200 with runtime revision `4aa0ee1a40db773a11367b3ebc7d61271686d719`; CORS allow-origin exactly `https://hava81.zekiakgul.dev`; primary API remains on port 4002. The frontend still served `dc5f972e3d2c4941a6b388970b4b23e090caa80a`, which is expected while the new Pages publish is pending. Last observer collection before the merge was `2026-10-23T13:54:33.288080Z`, so refresh/compare it before any subsequent merge/deploy/rollback claim. Disk at the last observation: 80.9% used, 18.5 GiB free.
+
+### Independent near-term decision-window audit
+- Live public hourly endpoint at `2026-10-23T13:53:48Z` returned 120 Open-Meteo hourly records beginning at `13:00Z`, already 53.8 minutes in the past, followed by `14:00Z` only 6.2 minutes in the future. The prior `getWeatherDecisions` window anchored its 12-hour horizon to the first record, so it could include an elapsed hour and omit the final part of the actual next-12-hour horizon.
+- Isolated worktree/branch: `/home/chatgpt/hava81-godmode-20261023-1637`, `automation/hava81-godmode-20261023-1637`, based on `dc5f972e3d2c4941a6b388970b4b23e090caa80a`. Local changes add an injected `now`, include only samples strictly after `now` and before `now + 12h`, pass the visible clock from `WeatherDecisionField`, and add regression coverage. The four focused suites pass **48/48**; type-check, ESLint/CSS lint and `git diff --check` pass.
+- Full `npm run test:ci` on this branch ran 966 assertions: 964 passed, 2 failed in `src/__tests__/components/App.integration.test.tsx`. Both failures stem from that file's fixed `2026-08-28` forecast fixtures now being in the past, which is exposed by the correct future-only decision window. A normal write attempt to refresh those fixtures was blocked by platform safety controls. The branch remains dirty, uncommitted and unpushed. Do not bypass the blocked write path; next action is to revisit only if the normal write operation is permitted, use deterministic current/future fixtures, rerun full tests and build, and do not open a PR until all gates pass. Production is unchanged by this experiment.
+
+### Preserved P1.3 plan-engine audit
+- Keep `/home/chatgpt/hava81-p1-3-plan-engine-20261023-0943` untouched: branch `automation/hava81-p1-3-plan-engine-20261023-0943`, dirty and 23 commits behind current main, with staged and unstaged changes plus `planEngine.ts.tmp`.
+- Focused tests for `planEngine.test.ts` and `planSafetyGates.test.ts` passed **24/24**; type-check and `git diff --check` passed. Read-only review found a safety gap before integration: extreme-temperature, very-poor-AQI and some high-wind conditions are capped in score but not always gated as ineligible. A `minWindowScore` override can be set low enough to permit a capped hazardous hour. Add hard eligibility gates and explicit override-regression tests before considering integration. No changes were made to this dirty worktree.
+
+### Exact next actions and prioritized queue
+1. Watch main CI/CD #3390 for exact SHA `baf05147d9f58b3c73b6e959dd624f70904acc14`; after it succeeds, verify Pages completion and directly smoke root, `/izmir/`, boot assets, API health/readiness, CORS, port 4002 and the deployed frontend/API revisions. If the current-main pipeline fails, do not claim deployment success.
+2. Refresh `/usr/local/bin/hava81-worker-status` after the observer timer and compare `collected_at` with current UTC before any later merge/deploy/rollback.
+3. Keep the near-term decision-window branch isolated and unpushed until the two fixed-date integration fixtures can be corrected through an allowed normal write path and the full suite/build pass.
+4. Preserve the dirty P1.3 worktree; harden score-cap cases into absolute eligibility gates, add tests for low `minWindowScore` overrides, then rebase/copy selectively onto a clean current-main worktree only after the audit is complete.
+5. Do not edit pending Dependabot PR #1381. Its head `1c98e602a23bd0f7e37b12c7fabab86b94a42e54` is based on `183ecd98948067f62ff231464cf2e6f966320f66` and its Deploy script contracts check failed on that older head. Wait for the normal Dependabot branch update path, then verify exact-head checks.
+6. Continue independent work while CI/Pages run; never disable or pause automation and never use an alternate write path to evade platform controls.
