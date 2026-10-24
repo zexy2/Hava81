@@ -121,6 +121,31 @@ describe('one threshold set across Gün planı, Bugün başlığı and Çıkış
   });
 
   it.each([
+    ['negative probability', { pop: -0.1, precipitationMm: undefined }],
+    ['over-range probability', { pop: 1.1, precipitationMm: undefined }],
+    ['negative amount', { pop: undefined, precipitationMm: -0.1 }],
+  ])('treats %s as unknown precipitation evidence across active decision surfaces', (_label, overrides) => {
+    const { daily, decisions, commute, reasons } = verdicts(overrides);
+
+    expect(daily.umbrella).toBe('unknown');
+    expect(daily.confidence).toBe('basic');
+    expect(daily.slots.every(slot => slot.score <= 89)).toBe(true);
+    expect(
+      daily.slots.every(
+        slot => slot.precipitationProbability === undefined && slot.precipitationMm === undefined
+      )
+    ).toBe(true);
+    expect(commute.umbrella).toBe('unknown');
+    expect(commute.outbound.precipitationProbability).toBeUndefined();
+    expect(commute.outbound.precipitationMm).toBeUndefined();
+    expect(commute.return.precipitationProbability).toBeUndefined();
+    expect(commute.return.precipitationMm).toBeUndefined();
+    expect(decisions.some(decision => decision.kind === 'rain')).toBe(false);
+    expect(reasons).not.toContain('rain-risk');
+    expect(reasons).not.toContain('heavy-rain');
+  });
+
+  it.each([
     ['sustained wind', { windSpeed: WIND_STRONG_SPEED + 0.5, windGust: WIND_STRONG_SPEED + 3 }],
     ['gusts only', { windSpeed: 6, windGust: WIND_STRONG_GUST + 1 }],
   ])('strong wind everywhere: %s', (_label, overrides) => {

@@ -335,6 +335,12 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Use a ratio-specific validator at the Forecast Atlas presentation boundary. Preserve exact 0 and 1; keep missing, non-finite, negative and greater-than-one domain values unknown. Leave the legacy raw-percent normalizer unchanged for callers that still receive BFF percentages.
 - This is a frontend data-integrity fix only. It does not alter provider data, scoring, weather interpretation, API contracts, or production routing. Keep the hourly and daily component regression that asserts a 100% input remains 100% after parsing.
 
+## 2026-10-24 19:02 TRT — Invalid finite precipitation is unknown evidence
+
+- A forecast-domain precipitation probability is a 0–1 ratio; an amount is finite, non-negative millimetres. Finite but out-of-range values are not valid evidence and must not be clamped into a believable dry/wet observation. Normalize invalid probability/amount to unknown before scoring and return the sanitized values to downstream presentation.
+- Daily, activity, commute and Plan v3 scoring must share this evidence contract. An hour with neither valid signal remains capped at 89; confidence/coverage, umbrella advice, reasons, eligibility and displayed values must not count invalid fields as known. Explicit zero probability, zero amount and amount-only evidence remain valid.
+- This is defensive data-integrity handling, not a forecast, threshold recalibration, provider/API contract change, or new safety claim. Do not build/deploy the API for this frontend/domain-only change.
+
 ## 2026-10-24 19:10 TRT — Use valid amount-only evidence in the next-change summary
 
 - The first-screen next-change sentence previously considered only precipitation probability, even though the weather domain also carries an hourly precipitation amount. When probability was missing/invalid but a valid amount showed precipitation, the summary could skip a rain transition and jump to a temperature change or say conditions were steady.
@@ -358,3 +364,14 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Product CI/CD and CodeQL are not the complete automation-PR gate set. The repository also runs `Ops script contracts`, with independent CI/agent and deploy-script jobs that validate the observer and production/deploy shell contracts.
 - Treat an automation PR as green only when exact-head CI/CD, Ops script contracts, and CodeQL have all completed successfully. A missing Ops run is unknown; an in-progress Ops run is running; a failed Ops run is failed. This prevents the read-only observer from reporting a false-green PR while deploy-script contracts remain pending.
 - This changes observer diagnostics/gating only. The Oracle SentinelX agent is offline and the SSH gateway has no configured Oracle target, so this source change must not be represented as already installed on the live host. Deploy/update the observer only after Oracle connectivity is restored and its local release gates pass.
+
+## 2026-10-24 21:47 TRT — A green PR does not override the live host hard gate
+
+- Rebased PR #1441 (invalid precipitation evidence) and PR #1443 (European AQI bounds) onto exact current `origin/main=e28ad60f3ef5f93395f87124a6c01bf78a546bb6` in their existing isolated worktrees. Their source patch IDs match the already-validated remote PR diffs; focused tests passed 78/78 and 38/38 respectively, and type-check, lint/CSS lint, and `git diff --check` passed.
+- The observer's `merge_deploy_readiness` contract intentionally blocks when `host.healthy` or `disk.ok` is false. Current state has `host_unhealthy` due root disk usage 92.8%; the enrolled Oracle SentinelX host is offline and the SSH gateway does not identify a configured Oracle target. Do not bypass this hard gate, attempt speculative cleanup, or run API build/deploy/rollback. Continue safe GitHub/local validation and publish rebased PRs only after explicit remote-SHA lease checks.
+- After rebasing, old-head CI/CD/Ops/CodeQL successes are not valid for the new head. Re-query exact-head workflows after publishing and keep the PR branches immutable while those checks are running. A successful main Pages deploy and healthy public smoke do not prove the Oracle host gate has cleared.
+
+## 2026-10-24 21:57 TRT — Separate GitHub merge safety from Oracle deployment safety
+
+- Supersedes the blanket merge portion of the 21:47 host-gate decision: `host_unhealthy` remains a hard stop for Oracle-side API builds, deploys, and rollbacks, but does not by itself forbid merging a fully validated frontend-only PR. PR #1441 and #1443 change only `src/**` and append-only docs; their exact-head CI/CD, Ops contracts, CodeQL, and GitHub mergeability are green. The hosted main workflow deploys the frontend to GitHub Pages; it does not need Oracle disk headroom for these source-only merges.
+- Do not globally force `can_merge_or_deploy=true`. Instead, implement a separate `can_merge` signal based on exact-head required checks/mergeability and a separate `can_deploy` signal that retains production health, disk headroom, API-port, and canary requirements. Until that observer contract is deployed, the run itself must classify file scope and still obey the hard host gate for all server operations.

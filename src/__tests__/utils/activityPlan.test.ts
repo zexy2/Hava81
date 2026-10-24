@@ -248,6 +248,27 @@ describe('activity plans', () => {
     expect(currentOnly.activityImpact).toBeLessThan(explicitlyDry.activityImpact);
   });
 
+  it.each([
+    ['negative probability', { pop: -0.1, precipitationMm: undefined }],
+    ['over-range probability', { pop: 1.1, precipitationMm: undefined }],
+    ['negative amount', { pop: undefined, precipitationMm: -0.1 }],
+  ])('keeps activity scores out of the excellent band for %s', (_label, overrides) => {
+    const points = hourly([20, 20, 20]).map(point => ({ ...point, ...overrides })) as unknown as HourlyForecast[];
+    const plan = buildActivityPlan({
+      activity: 'walk',
+      weather: { ...weather, temperature: 20, feelsLike: 20, windSpeed: 4 },
+      hourly: points,
+    });
+
+    expect(plan.score).toBeLessThanOrEqual(89);
+    expect(plan.slots.every(slot => slot.score <= 89 && slot.band !== 'excellent')).toBe(true);
+    expect(
+      plan.slots.every(
+        slot => slot.precipitationProbability === undefined && slot.precipitationMm === undefined
+      )
+    ).toBe(true);
+  });
+
   it('temperature sensitivity shifts activity comfort', () => {
     const points = hourly([30, 31, 32]);
     const heatSensitive = buildActivityPlan({

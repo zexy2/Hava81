@@ -362,8 +362,8 @@ export const buildActivityPlan = ({
     const adj = activityAdjustment({
       activity,
       temperature: base.apparentTemperature,
-      pop: precipitationProbability,
-      precipitationMm: point.precipitationMm,
+      pop: base.precipitationProbability,
+      precipitationMm: base.precipitationMm,
       wind: point.windSpeed,
       gust: point.windGust,
       aqi: airQualityIndex,
@@ -387,7 +387,7 @@ export const buildActivityPlan = ({
     // Activity-specific comfort benefits must not undo the base scorer's missing-rain cap.
     // The UI explicitly says precipitation is unknown; do not let that hour become excellent.
     const hasPrecipitationEvidence =
-      Number.isFinite(precipitationProbability) || Number.isFinite(point.precipitationMm);
+      base.precipitationProbability !== undefined || base.precipitationMm !== undefined;
     if (!hasPrecipitationEvidence) score = Math.min(score, 89);
     return {
       ...base,

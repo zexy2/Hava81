@@ -186,9 +186,10 @@ export const scoreHour = ({
     gateReasons.push('outside-active-hours');
   }
   if (
-    (Number.isFinite(point.pop) && (point.pop as number) >= profile.maxPrecipitationProbability) ||
-    (Number.isFinite(point.precipitationMm) &&
-      (point.precipitationMm as number) > profile.maxPrecipitationMm)
+    (Number.isFinite(base.precipitationProbability) &&
+      (base.precipitationProbability as number) >= profile.maxPrecipitationProbability) ||
+    (Number.isFinite(base.precipitationMm) &&
+      (base.precipitationMm as number) > profile.maxPrecipitationMm)
   ) {
     gateReasons.push('precipitation-limit');
   }
@@ -207,7 +208,7 @@ export const scoreHour = ({
   ) {
     gateReasons.push('extreme-temperature');
   }
-  if ((point.precipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
+  if ((base.precipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
     gateReasons.push('heavy-precipitation');
   }
   if (
@@ -237,8 +238,8 @@ export const scoreHour = ({
   const signals = [
     point.temp,
     point.humidity,
-    point.pop,
-    point.precipitationMm,
+    base.precipitationProbability,
+    base.precipitationMm,
     point.windSpeed,
     point.windGust,
     airQualityIndex,
@@ -276,6 +277,11 @@ export const scoreHour = ({
   if ((base.impacts.find(impact => impact.factor === 'severe-weather')?.penalty ?? 0) >= 28) {
     score = Math.min(score, 25);
   }
+  // Intent weighting must not erase the shared model's evidence-completeness cap. A finite but
+  // invalid ratio/amount is unknown, just like a missing field, and cannot support an excellent hour.
+  if (base.precipitationProbability === undefined && base.precipitationMm === undefined) {
+    score = Math.min(score, 89);
+  }
   // Match the shared model's label invariant even when intent weighting softens a surfaced risk.
   if (reasons.length > 0) score = Math.min(score, 96);
 
@@ -287,8 +293,8 @@ export const scoreHour = ({
     temperature: point.temp,
     apparentTemperature: base.apparentTemperature,
     humidity: point.humidity,
-    precipitationProbability: point.pop,
-    precipitationMm: point.precipitationMm,
+    precipitationProbability: base.precipitationProbability,
+    precipitationMm: base.precipitationMm,
     windSpeed: point.windSpeed,
     windGust: point.windGust,
     airQualityIndex,
