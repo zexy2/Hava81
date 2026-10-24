@@ -115,10 +115,18 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
       minute: '2-digit',
       timeZone: 'UTC',
     });
-  const formatPrecipitation = (probability: number, amount?: number) => {
-    const probabilityPercent = Math.round(probability * 100);
+  const formatPrecipitation = (probability: number | undefined, amount?: number) => {
+    const hasProbability =
+      typeof probability === 'number' &&
+      Number.isFinite(probability) &&
+      probability >= 0 &&
+      probability <= 1;
+    const hasAmount = typeof amount === 'number' && Number.isFinite(amount) && amount >= 0;
+    if (!hasProbability && !hasAmount) return t('hava81.commute.precipitationUnknown');
+
+    const probabilityPercent = hasProbability ? Math.round((probability as number) * 100) : undefined;
     const parts: string[] = [];
-    if (probabilityPercent > 0) {
+    if (probabilityPercent !== undefined && probabilityPercent > 0) {
       parts.push(
         i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`
       );

@@ -15,8 +15,9 @@ const MINUTE_MS = 60 * 1000;
 const MAX_MATCH_DISTANCE_MS = 2 * 60 * 60 * 1000;
 const SCORE_CHANGE_THRESHOLD = 8;
 
-export type CommuteUmbrellaAdvice = 'take' | 'consider' | 'no';
+export type CommuteUmbrellaAdvice = 'take' | 'consider' | 'no' | 'unknown';
 export type CommuteChangeKind =
+  | 'precipitation-unknown'
   | 'rain-increase'
   | 'rain-amount-increase'
   | 'strong-wind'
@@ -29,6 +30,7 @@ export type CommuteChangeKind =
 export type CommuteAdviceCode =
   | 'umbrella-take'
   | 'umbrella-consider'
+  | 'umbrella-unknown'
   | 'heat'
   | 'cold'
   | 'strong-wind'
@@ -41,7 +43,7 @@ export interface CommuteWindow {
   forecastTime: Date;
   temperature: number;
   apparentTemperature: number;
-  precipitationProbability: number;
+  precipitationProbability?: number;
   precipitationMm?: number;
   windSpeed: number;
   windGust?: number;
@@ -148,6 +150,15 @@ const buildWindow = (
   };
 };
 
+const isProbabilityEvidence = (value: number | undefined): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+
+const isAmountEvidence = (value: number | undefined): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+const hasRainEvidence = (window: CommuteWindow): boolean =>
+  isProbabilityEvidence(window.precipitationProbability) || isAmountEvidence(window.precipitationMm);
+
 const effectiveWind = (window: CommuteWindow) =>
   Math.max(
     window.windSpeed,
@@ -161,6 +172,7 @@ const advicePriority: CommuteAdviceCode[] = [
   'cold',
   'umbrella-consider',
   'wind-caution',
+  'umbrella-unknown',
   'stable',
 ];
 
@@ -206,14 +218,25 @@ export const buildCommutePlan = ({
     timezoneOffsetSeconds
   );
 
-  const maxRain = Math.max(
-    outbound.precipitationProbability,
-    returnWindow.precipitationProbability
+  const knownProbabilities = [outbound.precipitationProbability, returnWindow.precipitationProbability].filter(
+    isProbabilityEvidence
   );
-  const maxRainAmount = Math.max(outbound.precipitationMm ?? 0, returnWindow.precipitationMm ?? 0);
+  const knownAmounts = [outbound.precipitationMm, returnWindow.precipitationMm].filter(
+    isAmountEvidence
+  );
+  const maxRain = knownProbabilities.length ? Math.max(...knownProbabilities) : undefined;
+  const maxRainAmount = knownAmounts.length ? Math.max(...knownAmounts) : undefined;
   const rain = rainLevel(maxRain, maxRainAmount);
+  const hasOutboundRainEvidence = hasRainEvidence(outbound);
+  const hasReturnRainEvidence = hasRainEvidence(returnWindow);
   const umbrella: CommuteUmbrellaAdvice =
-    rain === 'likely' ? 'take' : rain === 'possible' ? 'consider' : 'no';
+    rain === 'likely'
+      ? 'take'
+      : rain === 'possible'
+        ? 'consider'
+        : rain === 'none' && hasOutboundRainEvidence && hasReturnRainEvidence
+          ? 'no'
+          : 'unknown';
   // Shared thresholds (plan v3 Faz 0.4); `maxEffectiveWind` stays as the displayed summary.
   const wind = worseWind(
     windLevel(outbound.windSpeed, outbound.windGust),
@@ -229,9 +252,15 @@ export const buildCommutePlan = ({
     outbound.apparentTemperature,
     returnWindow.apparentTemperature
   );
-  const rainIncrease = returnWindow.precipitationProbability - outbound.precipitationProbability;
+  const hasComparableRainProbability =
+    isProbabilityEvidence(outbound.precipitationProbability) &&
+    isProbabilityEvidence(returnWindow.precipitationProbability);
+  const rainIncrease = hasComparableRainProbability
+    ? (returnWindow.precipitationProbability as number) -
+      (outbound.precipitationProbability as number)
+    : undefined;
   const hasComparableRainAmount =
-    Number.isFinite(outbound.precipitationMm) && Number.isFinite(returnWindow.precipitationMm);
+    isAmountEvidence(outbound.precipitationMm) && isAmountEvidence(returnWindow.precipitationMm);
   const rainAmountIncrease = hasComparableRainAmount
     ? (returnWindow.precipitationMm as number) - (outbound.precipitationMm as number)
     : undefined;
@@ -240,7 +269,7 @@ export const buildCommutePlan = ({
 
   let change: CommuteChangeKind = 'stable';
   let changeValue: number | undefined;
-  if (rainIncrease >= 0.25) {
+  if (rainIncrease !== undefined && rainIncrease >= 0.25) {
     change = 'rain-increase';
     changeValue = Math.round(rainIncrease * 100);
   } else if (rainAmountIncrease !== undefined && rainAmountIncrease >= 0.2) {
@@ -256,6 +285,10 @@ export const buildCommutePlan = ({
   } else if (temperatureDelta >= 6) {
     change = 'temperature-rise';
     changeValue = Math.round(temperatureDelta);
+  } else if (!hasOutboundRainEvidence || !hasReturnRainEvidence) {
+    // Missing rain evidence also caps the hourly score; don't present that data gap as a
+    // real comfort deterioration/improvement between the two commute windows.
+    change = 'precipitation-unknown';
   } else if (scoreDelta <= -SCORE_CHANGE_THRESHOLD) {
     change = 'comfort-worsens';
     changeValue = Math.round(Math.abs(scoreDelta));
@@ -274,6 +307,7 @@ export const buildCommutePlan = ({
   const advice: CommuteAdviceCode[] = [];
   if (umbrella === 'take') advice.push('umbrella-take');
   else if (umbrella === 'consider') advice.push('umbrella-consider');
+  else if (umbrella === 'unknown') advice.push('umbrella-unknown');
   if (wind === 'strong') advice.push('strong-wind');
   else if (wind === 'caution') advice.push('wind-caution');
   if (maxApparentTemperature >= heatThreshold) advice.push('heat');

@@ -374,6 +374,7 @@ export const en = {
       preparation: {
         'umbrella-take': 'Take an umbrella',
         'umbrella-consider': 'Keep an umbrella with you',
+        'umbrella-unknown': 'Precipitation data unavailable; umbrella advice cannot be determined',
         heat: 'Feels like {{temperature}}{{temperatureUnit}}; plan water and shade',
         cold: 'Feels like {{coldTemperature}}{{temperatureUnit}}; add a warmer layer',
         'strong-wind': 'Wind/gusts reach {{wind}} {{windUnit}}; use extra care outdoors',
@@ -389,6 +390,8 @@ export const en = {
       },
       change: {
         'rain-increase': 'Rain risk is about {{value}} points higher when you return.',
+        'precipitation-unknown':
+          'Precipitation data is missing for one or both windows; rain changes cannot be compared.',
         'rain-amount-increase':
           'Hourly precipitation is about {{value}} mm higher when you return.',
         'strong-wind': 'Strong wind appears in either the departure or return window.',
@@ -407,6 +410,7 @@ export const en = {
       feelsLike: 'Feels like',
       rain: 'Rain',
       noRain: 'Not expected',
+      precipitationUnknown: 'Precipitation data unavailable',
       wind: 'Wind',
       empty: 'Choose both times and Hava81 will compare your next departure–return pair.',
       incomplete: 'Choose both a departure and return time to calculate the plan.',
@@ -573,6 +577,7 @@ export const en = {
         'This route estimate is no longer fresh. Check the corridor again for current guidance.',
       error: 'Route weather data could not be loaded.',
       noRain: 'No precipitation',
+      precipitationUnknown: 'Precipitation data unavailable',
     },
   },
   navigation: {

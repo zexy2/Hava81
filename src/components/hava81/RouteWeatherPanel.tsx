@@ -63,13 +63,19 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
   );
   const temperatureSymbol = getTemperatureSymbol();
   const windSpeedSymbol = getWindSpeedSymbol();
-  const formatPrecipitation = (probabilityPercent: number, amount?: number) =>
-    formatPrecipitationSummary(
-      probabilityPercent / 100,
+  const formatPrecipitation = (probabilityPercent: number, amount?: number) => {
+    const hasProbability =
+      Number.isFinite(probabilityPercent) && probabilityPercent >= 0 && probabilityPercent <= 100;
+    const hasAmount = typeof amount === 'number' && Number.isFinite(amount) && amount >= 0;
+    if (!hasProbability && !hasAmount) return t('hava81.route.precipitationUnknown');
+
+    return formatPrecipitationSummary(
+      hasProbability ? probabilityPercent / 100 : Number.NaN,
       amount,
       i18n.language,
       t('hava81.route.noRain')
     );
+  };
   const invalidateRequest = () => {
     requestIdRef.current += 1;
     setResult(null);

@@ -321,3 +321,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - A valid probability of zero or a valid amount of zero is evidence for a dry reading. If both probability and amount are absent/invalid, label the state as unknown in summary, hourly and daily presentation, including chart tooltips. A valid positive amount remains useful even when probability is unavailable.
 - When choosing the hourly summary peak, rank evidence-bearing hours before unknown-only hours. This prevents an early unknown slot from masking a later explicit dry or wet observation; if all slots are unknown, keep the summary unknown. Do not infer rain or dryness from the absence of a signal.
 - This is a frontend presentation/data-integrity guard only. It does not alter provider values, score calibration, official MGM warning semantics, or production API routing. Validate focused and full frontend tests, type-check, lint, build, then require exact-head hosted gates before merge.
+
+## 2026-10-24 — Unknown precipitation must not produce dry commute/route advice
+
+- A commute window or route segment with neither a finite in-range probability nor a finite non-negative precipitation amount has unknown rain evidence, not a zero-rain forecast. Keep the UI and domain model aligned: unknown umbrella advice is distinct from “no umbrella needed”, and missing evidence in either commute window prevents a false rain-change comparison.
+- Preserve valid probability zero, valid amount zero, and amount-only observations. Do not invent rain, do not infer dryness from missing fields, and do not change calibrated score thresholds as part of a presentation/data-integrity fix.
+- Validate both domain decisions and visible/localized route/commute states. Frontend-only changes may proceed through frontend CI; do not build/deploy the API while host disk headroom is low.
+- The Oracle worker host is offline and the SSH gateway has no configured Oracle target. Treat server-side state inspection, disk cleanup, deploy and rollback as blocked rather than silently using the gateway host; continue safe GitHub/local work and record this blocker for the next run.
