@@ -430,3 +430,13 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - `DecisionGlance` memoized its decision snapshot by weather, forecast, hourly and raw AQI object identity, so the component's clock refresh alone could not invalidate the memo when the same AQI sample crossed its freshness boundary. The shared domain builder checks AQI freshness when called, but the memo could prevent that call from happening again.
 - Treat current AQI as optional evidence at the component boundary: pass it only while `getCurrentWeatherFreshness` says it is fresh, schedule the next refresh at the earliest current-weather/AQI/forecast expiry (with the existing short safety refresh), and make the memo depend on the freshness-filtered AQI. Expired AQI is removed from the next decision snapshot without discarding otherwise fresh weather/forecast guidance.
 - Keep this a frontend freshness/cache invalidation fix. Do not change provider values, AQI scale/categories, health interpretation, scoring thresholds, API contract, or deployment behavior. Validate both initially stale AQI and a fresh sample expiring under fake timers, then run the full frontend suite, build, lint/type-check, security audit and focused browser flows.
+
+## 2026-10-25 00:24 TRT — Cover current-weather source-time freshness end to end
+
+- Add a focused Playwright regression for the merged current-weather source timestamp contract: a provider sample three hours old must remain stale even when the BFF `fetchedAt` is only moments old and `freshForSeconds` is 300. This verifies the serialized payload → client normalization → freshness gate → visible UI path, not only the helper in isolation.
+- Assert Turkish mobile and English desktop surfaces show their localized stale labels, explain that the current observation is not fresh, and do not render the stale temperature. The test changes no product code, API behavior, forecast values, or provider metadata; it uses deterministic fixtures only.
+
+## 2026-10-25 00:30 TRT — Verify the merged source-time fix in a browser contract
+
+- The source-time E2E regression was rebased onto the now-deployed main commit `78afbf293dc8b928c9f2a1348d800d624fe3e8d8` after PR #1450 passed all exact-head gates and its production rollout completed. The test remains isolated to `e2e/` and autonomous append-only documentation.
+- Live API sampling confirms current weather still returns its source sample in `timestamp` while `meta.observedAt` is omitted on the deployed API; AQI returns both `fetchedAt` and `observedAt`. Keep the client fallback from current payload `timestamp` to `meta.observedAt` so a fresh BFF envelope cannot disguise an old provider observation.
