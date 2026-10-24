@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { trackProductEvent } from '../../analytics/productEvents';
+import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
@@ -410,6 +411,10 @@ export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, 
   const { t } = useTranslation();
   const [freshnessRevision, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
+  const currentWeatherFreshness = getCurrentWeatherFreshness(weather.meta);
+  // The plan can use fresh hourly forecast alone. Only the no-hourly fallback reads current
+  // temperature/wind as its scored slot, so that path must also expire with the observation.
+  const needsCurrentObservationFallback = hourly.length === 0;
   const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
   const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
 
@@ -417,6 +422,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, 
     const resyncFreshness = () => setFreshnessRevision(value => value + 1);
     const expiries = [
       freshness.expiresInMs,
+      ...(needsCurrentObservationFallback ? [currentWeatherFreshness.expiresInMs] : []),
       currentAqiFreshness.expiresInMs,
       hourlyAqiFreshness.expiresInMs,
     ].filter((value): value is number => value !== null);
@@ -434,6 +440,11 @@ export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, 
   }, [
     airQuality?.meta?.fetchedAt,
     airQuality?.meta?.freshForSeconds,
+    currentWeatherFreshness.expiresInMs,
+    needsCurrentObservationFallback,
+    weather.meta.fetchedAt,
+    weather.meta.freshForSeconds,
+    weather.meta.observedAt,
     airQualityHourly?.meta?.fetchedAt,
     airQualityHourly?.meta?.freshForSeconds,
     currentAqiFreshness.expiresInMs,
@@ -442,7 +453,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, 
     hourlyAqiFreshness.expiresInMs,
   ]);
 
-  if (!freshness.fresh) {
+  if (!freshness.fresh || (needsCurrentObservationFallback && !currentWeatherFreshness.fresh)) {
     return (
       <section className="daily-plan" aria-labelledby="daily-plan-title">
         <header className="daily-plan__header">
@@ -452,7 +463,9 @@ export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, 
           </div>
         </header>
         <p className="daily-plan__note" role="status">
-          {t('hava81.dailyPlan.forecastStale')}
+          {t(
+            freshness.fresh ? 'hava81.dailyPlan.currentStale' : 'hava81.dailyPlan.forecastStale'
+          )}
         </p>
       </section>
     );

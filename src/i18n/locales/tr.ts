@@ -278,6 +278,8 @@ export const tr = {
       title: 'Gün planı',
       forecastStale:
         'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar gün planı önerileri gösterilmiyor.',
+      currentStale:
+        'Mevcut hava gözlemi güncelliğini yitirdi. Yeni bir gözlem veya saatlik tahmin gelene kadar gün planı gösterilmiyor.',
       bands: {
         excellent: 'Çok uygun',
         good: 'Uygun',

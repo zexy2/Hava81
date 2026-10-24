@@ -275,6 +275,8 @@ export const en = {
       title: 'Day plan',
       forecastStale:
         'Forecast data is no longer fresh. Day-plan recommendations are hidden until new data arrives.',
+      currentStale:
+        'The current observation is no longer fresh. The day plan is hidden until a fresh observation or hourly forecast is available.',
       bands: {
         excellent: 'Very suitable',
         good: 'Suitable',
