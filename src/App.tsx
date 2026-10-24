@@ -60,6 +60,7 @@ const App: React.FC = () => {
   // opens Planla. Once opened, keep them mounted while hidden so choices and
   // route form state survive switching back to Today.
   const [hasOpenedPlan, setHasOpenedPlan] = useState(initialView === 'plan');
+  const [forecastAtlasReadyCity, setForecastAtlasReadyCity] = useState<string | null>(null);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchToggleRef = useRef<HTMLButtonElement>(null);
@@ -88,6 +89,10 @@ const App: React.FC = () => {
 
   const forecast = useForecast(settings.language);
   const fetchForecast = forecast.fetch;
+  const hasForecastAtlasData = Boolean(
+    forecast.displayMeta && (forecast.daily.length > 0 || forecast.displayHourly.length > 0)
+  );
+  const canMountForecastAtlas = forecastAtlasReadyCity === weather?.cityName;
   const {
     favorites,
     isFavorite,
@@ -136,6 +141,37 @@ const App: React.FC = () => {
       fetchForecast({ lat, lon }, weather?.cityName);
     }
   }, [fetchForecast, weather?.cityName, weather?.coordinates.lat, weather?.coordinates.lon]);
+
+  // Let the current decision hero paint before evaluating the below-hero forecast chart chunk.
+  // Two animation frames guarantee a paint opportunity without adding a fixed loading delay.
+  // The chart then stays mounted for the active city, so normal navigation has no repeat cost.
+  useEffect(() => {
+    const cityName = weather?.cityName;
+    if (
+      !cityName ||
+      isPlanView ||
+      activeNav === 'compare' ||
+      !hasForecastAtlasData ||
+      forecastAtlasReadyCity === cityName
+    ) {
+      return undefined;
+    }
+
+    let secondFrame: number | undefined;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => setForecastAtlasReadyCity(cityName));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame !== undefined) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [
+    activeNav,
+    forecastAtlasReadyCity,
+    hasForecastAtlasData,
+    isPlanView,
+    weather?.cityName,
+  ]);
 
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
@@ -524,8 +560,12 @@ const App: React.FC = () => {
                           title={t('hava81.forecastAtlas.title')}
                           label={t('common.loading')}
                         />
-                      ) : forecast.displayMeta &&
-                        (forecast.daily.length > 0 || forecast.displayHourly.length > 0) ? (
+                      ) : hasForecastAtlasData && !canMountForecastAtlas ? (
+                        <ForecastLoadingCard
+                          title={t('hava81.forecastAtlas.title')}
+                          label={t('common.loading')}
+                        />
+                      ) : hasForecastAtlasData && forecast.displayMeta ? (
                         <Suspense
                           fallback={
                             <ForecastLoadingCard
