@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { ContextSignals } from '../../types';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
+import { getMarineObservationFreshness } from '../../utils/marineObservationFreshness';
 import './ContextSignalsPanel.css';
 
 interface Props {
@@ -32,12 +33,25 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
   const fetchedAtMs = signals.fetchedAt.getTime();
   const freshness = getOptionalEvidenceFreshness(signals, freshnessNow);
+  const marineFreshness = getMarineObservationFreshness(
+    signals.marine?.observedAt,
+    timezoneOffsetSeconds,
+    freshnessNow
+  );
 
   useEffect(() => {
     let timerId: number | undefined;
     const refresh = () => setFreshnessNow(Date.now());
-    if (freshness.fresh && freshness.expiresInMs !== null) {
-      timerId = window.setTimeout(refresh, freshness.expiresInMs);
+    const deadlines = [
+      ...(freshness.fresh && freshness.expiresInMs !== null ? [freshness.expiresInMs] : []),
+      ...(freshness.fresh &&
+      marineFreshness.status === 'fresh' &&
+      marineFreshness.expiresInMs !== null
+        ? [marineFreshness.expiresInMs]
+        : []),
+    ];
+    if (deadlines.length > 0) {
+      timerId = window.setTimeout(refresh, Math.max(0, Math.min(...deadlines)));
     }
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') refresh();
@@ -47,7 +61,16 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [freshness.expiresInMs, freshness.fresh, signals.fetchedAt, signals.freshForSeconds]);
+  }, [
+    freshness.expiresInMs,
+    freshness.fresh,
+    marineFreshness.expiresInMs,
+    marineFreshness.status,
+    signals.fetchedAt,
+    signals.freshForSeconds,
+    signals.marine?.observedAt,
+    timezoneOffsetSeconds,
+  ]);
 
   const fetchedTime =
     freshness.status === 'unknown'
@@ -74,13 +97,16 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
     signals.units.olivePollen,
   ]);
 
-  if (!freshness.fresh) return null;
-
   const hasPollen = pollen !== undefined;
   const hasMarine = Boolean(
     signals.marine &&
+    marineFreshness.status === 'fresh' &&
     (signals.marine.waveHeight !== undefined || signals.marine.seaSurfaceTemperature !== undefined)
   );
+  const hasAnySignal =
+    signals.uvIndexMax !== undefined || signals.dustMax !== undefined || hasPollen || hasMarine;
+
+  if (!freshness.fresh || !hasAnySignal) return null;
   const seaSurfaceTemperature = signals.marine?.seaSurfaceTemperature;
   const formattedSeaSurfaceTemperature =
     seaSurfaceTemperature === undefined

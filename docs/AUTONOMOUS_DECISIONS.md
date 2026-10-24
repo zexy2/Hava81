@@ -445,3 +445,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - Source attribution is a claim about evidence actually accepted by the decision engine, not merely a provider sample that happens to share a timestamp. For hourly AQI, use `getDailyPlanAirQualityEvidence(...).usesHourlyAqi` rather than an independent `.some()` check so conflicting duplicate samples remain unavailable consistently in both scoring and explanatory UI.
 - Keep exact forecast timestamps, provider freshness, and duplicate-conflict handling aligned. This is a frontend evidence-integrity fix only; it does not alter provider values, AQI categories, health interpretation, thresholds, the API contract, or deployment behavior.
+
+## 2026-10-25 01:18 TRT — Marine current values require their own source-age gate
+
+- Open-Meteo Marine is requested with `timezone=auto`; its `current.time` may therefore be a timezone-less location-local wall-clock value. Do not parse that string in the browser's own timezone or treat a recent BFF `fetchedAt` as proof that the marine sample itself is recent.
+- Normalize timezone-less marine timestamps with the forecast location's UTC offset, but honor explicit `Z`/offset timestamps as absolute instants. Fail closed when the timestamp/offset is missing or invalid, the sample is materially future-dated, or source age exceeds the shared two-hour limit.
+- Expire/hide only the marine card when its source-age deadline passes; keep independently fresh UV, dust and pollen context visible. Schedule a rerender at the earlier of context-cache expiry and marine source expiry, and suppress an otherwise empty context panel.
+- Prefer a future API contract that emits an explicit UTC ISO timestamp from the provider's own timezone metadata. Until then, the frontend compatibility parser must remain deterministic across browser timezones.
