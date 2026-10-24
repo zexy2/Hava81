@@ -80,6 +80,12 @@ test('forecast schema rejects negative and fractional forecast epochs', () => {
   }
 });
 
+test('forecast schema rejects epochs outside the JavaScript Date range', () => {
+  const payload = sample();
+  payload.list[0].dt = 8_640_000_000_001;
+  assert.throws(() => forecastUpstreamSchema.parse(payload));
+});
+
 test('forecast schema rejects a missing provider timezone offset', () => {
   const payload = sample();
   delete (payload.city as Partial<typeof payload.city>).timezone;

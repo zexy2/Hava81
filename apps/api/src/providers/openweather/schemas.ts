@@ -6,6 +6,9 @@ const MAX_AIR_QUALITY_OBSERVATION_FUTURE_SKEW_MS = 60_000;
 // This deliberately generous ceiling is a payload-sanity guard, not an AQI or health threshold.
 const MAX_AIR_QUALITY_COMPONENT_UG_M3 = 100_000;
 const airQualityComponentSchema = z.number().min(0).max(MAX_AIR_QUALITY_COMPONENT_UG_M3);
+// Guard every provider Unix-seconds field before downstream Date(...).toISOString() calls.
+const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+const providerUnixTimestampSchema = z.number().int().nonnegative().max(MAX_DATE_UNIX_SECONDS);
 
 const coordinatesSchema = z.object({
   lon: z.number().min(-180).max(180),
@@ -54,18 +57,14 @@ export const currentWeatherUpstreamSchema = z
     visibility: z.number().min(0).max(10_000).optional(),
     wind: windSchema,
     clouds: cloudsSchema,
-    dt: z
-      .number()
-      .int()
-      .nonnegative()
-      .refine(
+    dt: providerUnixTimestampSchema.refine(
         (value) => value * 1_000 <= Date.now() + MAX_CURRENT_WEATHER_OBSERVATION_FUTURE_SKEW_MS,
         'Current-weather observation timestamp is materially in the future',
       ),
     sys: z.object({
       country: nonBlankProviderTextSchema,
-      sunrise: z.number().int().nonnegative(),
-      sunset: z.number().int().nonnegative(),
+      sunrise: providerUnixTimestampSchema,
+      sunset: providerUnixTimestampSchema,
     }),
     timezone: z.number().min(-43_200).max(50_400),
     id: z.number(),
@@ -94,7 +93,7 @@ const forecastMainWeatherSchema = currentMainWeatherSchema.extend({
 });
 
 const forecastItemSchema = z.object({
-  dt: z.number().int().nonnegative(),
+  dt: providerUnixTimestampSchema,
   main: forecastMainWeatherSchema,
   weather: z.array(weatherConditionSchema).min(1),
   clouds: cloudsSchema,
@@ -132,11 +131,7 @@ export const airQualityUpstreamSchema = z.object({
           pm10: airQualityComponentSchema,
           nh3: airQualityComponentSchema,
         }),
-        dt: z
-          .number()
-          .int()
-          .nonnegative()
-          .refine(
+        dt: providerUnixTimestampSchema.refine(
             (value) => value * 1_000 <= Date.now() + MAX_AIR_QUALITY_OBSERVATION_FUTURE_SKEW_MS,
             'Air-quality observation timestamp is materially in the future',
           ),

@@ -195,3 +195,10 @@ Reviewing an open PR is not a reason to merge it when its base is several commit
 - The Open-Meteo multi-location province feed must emit a current tile only when its temperature is finite and within the existing broad -100–100 °C envelope, its weather code is one of the supported WMO codes, its `is_day` flag is exactly 0 or 1, and its Unix timestamp can be represented as a valid JavaScript date. A malformed location becomes `null` without discarding otherwise valid provinces.
 - Optional province wind speed is published only in the inclusive 0–150 m/s sanity envelope. Values outside it are omitted instead of clamped or rendered as plausible readings.
 - Keep the `/weather/provinces` OpenAPI schema aligned with the provider contract: temperature bounds, the supported WMO code enum, and the optional wind ceiling must be explicit. These are provider-data integrity limits, not official warnings or medical/safety guarantees.
+
+
+## 2026-10-24 — Bound provider Unix timestamps to the JavaScript Date range
+
+- OpenWeather and Open-Meteo timestamps arrive as Unix seconds and are converted to ISO strings in service/provider code. A nonnegative integer alone permits values outside ECMAScript `Date`'s ±8.64e15 ms range, which can make `toISOString()` throw and fail a weather response on malformed provider data.
+- OpenWeather now uses a shared provider timestamp schema (maximum 8,640,000,000,000 seconds) for current, forecast, sunrise/sunset and air-quality epochs; existing current/AQI future-skew checks remain. Open-Meteo's hourly/daily timestamps and sunrise/sunset arrays use the same representability ceiling already used by its hourly air-quality adapter.
+- This is a payload-sanity guard only. It does not clamp or synthesize weather, assert that an extreme-but-representable timestamp is a plausible forecast, or change weather scoring. API runtime changes remain gated by exact-head CI and the normal blue-green/canary process.

@@ -124,3 +124,16 @@ test('current-weather schema rejects negative and fractional sunrise/sunset epoc
     assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
   }
 });
+
+test('current-weather schema rejects sunrise/sunset epochs outside the JavaScript Date range', () => {
+  const maxDateUnixSeconds = 8_640_000_000_000;
+  for (const [sunrise, sunset] of [
+    [maxDateUnixSeconds + 1, maxDateUnixSeconds + 2],
+    [maxDateUnixSeconds, maxDateUnixSeconds + 1],
+  ]) {
+    const payload = sample();
+    payload.sys.sunrise = sunrise;
+    payload.sys.sunset = sunset;
+    assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+  }
+});
