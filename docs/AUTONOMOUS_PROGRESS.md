@@ -1102,3 +1102,20 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Review the four-file diff, commit/push this isolated branch and open a focused PR. Record its code SHA and PR number in the next append-only checkpoint.
 3. Require fresh exact-head Frontend quality, Browser flows, Lighthouse, Ops contracts, and CodeQL checks. While those run, continue independent work from another clean worktree.
 4. Before merge, refresh observer state and directly re-read the PR head/checks/mergeability. After merge, monitor main CI/Pages deploy, then verify root/city/API readiness, CORS, frontend revision parity, and API port 4002. Keep 4001 as rollback/canary.
+
+## 2026-10-24 16:50 TRT — Keep unknown precipitation unknown in city comparison
+
+### Merge and production pipeline
+- PR #1435 (`fix(ui): distinguish unknown precipitation in timeline`) was directly verified at exact head `9102bcf5d9d9a02e2f431943407c5dc0eecf1b93`, mergeable and non-draft. Frontend quality, Browser flows, Lighthouse budgets, API test/build, Production build, deploy-script contracts, CI/agent script contracts, and CodeQL were green on that exact SHA; Pages deploy was correctly skipped for the pull-request event. It was squash-merged as `806d3127370b8e26dc5f2e38f74f21308d138dfe`. Main CI/CD run `40099506982`, Ops contracts `40099506977`, and CodeQL `40099506980` started for the merge SHA and were still running at the last direct query.
+- Immediately before merge, the observer snapshot `collected_at=2026-10-24T13:42:23.714348Z` reported production healthy, frontend root/city revision parity at `5cb19b88c993bd00a9a99b9323d8226ce2416da7`, API readiness HTTP 200, CORS correct, and API port 4002. Direct cache-independent smoke returned HTTP 200 for root, `/izmir/`, `/en/izmir/`, and API readiness; CORS preflight returned HTTP 204. Recheck production after the merge pipeline completes; no API change was made.
+
+### Independent evidence-integrity fix
+- Dedicated worktree `/home/chatgpt/hava81-run11-evidence-audit-20261024-1645`, branch `automation/hava81-run11-evidence-audit-20261024-1645`, based on exact post-merge `origin/main` `806d3127370b8e26dc5f2e38f74f21308d138dfe`. Other worktrees and pending branches were left untouched.
+- The shared `pickMostSignificantPrecipitation` helper previously selected the first hourly slot even when its probability was invalid and its precipitation amount was missing. `ComparePanel` then defaulted both fields to zero and presented the city as dry. The helper now ranks only slots with valid probability or amount evidence; the comparison renders a localized unknown label when none exists. Explicit zero evidence and amount-only observations remain supported.
+- Validation passed: focused precipitation/ComparePanel tests **32/32**; full frontend Vitest **1,044/1,044 across 106 files**; TypeScript type-check; ESLint + CSS lint; `git diff --check`; production frontend build with the production API base, generating 81 Turkish + 81 English province pages and CSP/service-worker stamping. The frontend build completed in 1.33 seconds; disk remained at 92% used with about 8.1 GiB free. No API build, provider sweep, production deployment, or broad disk cleanup was performed.
+
+### Exact next actions
+1. Fetch `origin` and verify this branch still starts from current main; preserve all append-only checkpoints if main moved. Review the final diff, commit/push this isolated branch, and open a focused PR.
+2. Require fresh exact-head Frontend quality, Browser flows, Lighthouse budgets, Ops contracts, and CodeQL before merge. Continue independent work while those checks run.
+3. Recheck the merge SHA's main CI/CD, Ops, CodeQL, and Pages deployment; directly smoke-test root, Turkish/English city routes, API readiness/CORS, frontend revision parity, and port 4002 after deployment. Keep port 4001 as rollback/canary.
+4. Next independent audit: inspect the remaining commute/route precipitation presentation paths for any unsupported dry labels, but only change them with focused regression coverage and no fabricated safety guidance.

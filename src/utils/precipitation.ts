@@ -14,22 +14,27 @@ export const normalizePrecipitationProbability = (value: number): number => {
 };
 
 interface PrecipitationSignal {
-  pop: number;
+  pop?: number;
   precipitationMm?: number;
 }
 
-export const precipitationSignalSeverity = (probability: number, amount?: number): number => {
+export const precipitationSignalSeverity = (probability: number | undefined, amount?: number): number => {
   const normalizedProbability = Number.isFinite(probability)
-    ? Math.min(1, Math.max(0, probability))
+    ? Math.min(1, Math.max(0, probability as number))
     : 0;
   const normalizedAmount = Number.isFinite(amount) ? Math.max(0, amount as number) : 0;
   return normalizedProbability + normalizedAmount * 0.12;
 };
 
+const hasPrecipitationEvidence = (point: PrecipitationSignal): boolean =>
+  (Number.isFinite(point.pop) && (point.pop as number) >= 0 && (point.pop as number) <= 1) ||
+  (Number.isFinite(point.precipitationMm) && (point.precipitationMm as number) >= 0);
+
 export const pickMostSignificantPrecipitation = <T extends PrecipitationSignal>(
   points: readonly T[]
 ): T | undefined =>
   points.reduce<T | undefined>((best, point) => {
+    if (!hasPrecipitationEvidence(point)) return best;
     if (!best) return point;
     return precipitationSignalSeverity(point.pop, point.precipitationMm) >
       precipitationSignalSeverity(best.pop, best.precipitationMm)

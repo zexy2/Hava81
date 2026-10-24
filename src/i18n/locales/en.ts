@@ -249,6 +249,7 @@ export const en = {
       action: 'Compare',
       title: 'City comparison',
       noRain: 'Not expected',
+      precipitationUnknown: 'Precipitation data unavailable',
       needTwo: 'Add at least two cities to favorites to compare them.',
       limitNote:
         'The first 3 saved cities are compared: {{cities}}. Your other saved cities stay in the list.',

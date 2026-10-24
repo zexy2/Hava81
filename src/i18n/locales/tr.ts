@@ -250,6 +250,7 @@ export const tr = {
       action: 'Karşılaştır',
       title: 'Şehir karşılaştırması',
       noRain: 'Beklenmiyor',
+      precipitationUnknown: 'Yağış verisi yok',
       needTwo: 'Karşılaştırmak için en az iki şehri favorilere ekle.',
       limitNote:
         'Kayıtlı listedeki ilk 3 şehir karşılaştırılıyor: {{cities}}. Diğer kayıtlı şehirler listende kalır.',
