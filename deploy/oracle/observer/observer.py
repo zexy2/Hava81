@@ -730,6 +730,7 @@ def collect_github() -> dict[str, Any]:
 
     ci_runs_by_sha: dict[str, dict[str, Any]] = {}
     codeql_runs_by_sha: dict[str, dict[str, Any]] = {}
+    ops_runs_by_sha: dict[str, dict[str, Any]] = {}
     for run in runs_data:
         sha = run.get('head_sha')
         if not sha:
@@ -738,6 +739,8 @@ def collect_github() -> dict[str, Any]:
             ci_runs_by_sha[sha] = run
         elif run.get('name') == 'CodeQL' and sha not in codeql_runs_by_sha:
             codeql_runs_by_sha[sha] = run
+        elif run.get('name') == 'Ops script contracts' and sha not in ops_runs_by_sha:
+            ops_runs_by_sha[sha] = run
 
     main_candidates = [
         run
@@ -807,6 +810,7 @@ def collect_github() -> dict[str, Any]:
         sha = head.get('sha')
         ci_run = ci_runs_by_sha.get(sha, {})
         codeql_run = codeql_runs_by_sha.get(sha, {})
+        ops_run = ops_runs_by_sha.get(sha, {})
         automation_prs.append({
             'number': pr.get('number'),
             'title': pr.get('title'),
@@ -821,6 +825,13 @@ def collect_github() -> dict[str, Any]:
                 'conclusion': ci_run.get('conclusion'),
                 'url': ci_run.get('html_url'),
                 'failed_jobs': failed_ci_job_names(ci_run),
+            },
+            'ops': {
+                'run_id': ops_run.get('id'),
+                'run_number': ops_run.get('run_number'),
+                'status': ops_run.get('status'),
+                'conclusion': ops_run.get('conclusion'),
+                'url': ops_run.get('html_url'),
             },
             'codeql': {
                 'run_id': codeql_run.get('id'),
@@ -848,7 +859,9 @@ def collect_github() -> dict[str, Any]:
     pending_statuses = {'queued', 'in_progress', 'waiting', 'pending'}
 
     def pr_gate_state(pr: dict[str, Any]) -> str:
-        gates = [pr['ci'], pr['codeql']]
+        # A green product pipeline and CodeQL are not enough: the separate Ops
+        # workflow owns observer/deploy-shell contract tests and must finish too.
+        gates = [pr['ci'], pr['ops'], pr['codeql']]
         if any(
             gate['status'] == 'completed' and gate['conclusion'] not in (None, 'success')
             for gate in gates

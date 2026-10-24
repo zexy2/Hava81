@@ -42,8 +42,9 @@ print(f"api_ready: http={ready.get('status')} reported={ready.get('reported_stat
 print(f"cors: {(prod.get('cors') or {}).get('allow_origin')} ok={(prod.get('cors') or {}).get('ok')}")
 for pr in gh.get('open_automation_prs', []):
     ci = pr.get('ci') or {}
+    ops = pr.get('ops') or {}
     codeql = pr.get('codeql') or {}
-    print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} failed_jobs={ci.get('failed_jobs', [])} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
+    print(f"pr#{pr.get('number')}: {pr.get('head_ref')} sha={str(pr.get('head_sha') or '')[:8]} ci={ci.get('status')}/{ci.get('conclusion')} failed_jobs={ci.get('failed_jobs', [])} ops={ops.get('status')}/{ops.get('conclusion')} codeql={codeql.get('status')}/{codeql.get('conclusion')}")
 main_branch = gh.get('main_branch') or {}
 main_pipeline = gh.get('main_pipeline') or {}
 print(f"main_branch: known={main_branch.get('known')} sha={str(main_branch.get('sha') or '')[:12]} commit_date={main_branch.get('commit_date')}")

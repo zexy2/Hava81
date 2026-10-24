@@ -41,6 +41,11 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("codeql={codeql.get('status')}/{codeql.get('conclusion')}", status_script)
         self.assertIn("failed_jobs={ci.get('failed_jobs', [])}", status_script)
 
+    def test_status_script_surfaces_ops_contract_gate_state(self) -> None:
+        status_script = Path(__file__).with_name('hava81-worker-status.py').read_text(encoding='utf-8')
+        self.assertIn("pr.get('ops')", status_script)
+        self.assertIn("ops={ops.get('status')}/{ops.get('conclusion')}", status_script)
+
 
 if __name__ == '__main__':
     unittest.main()
