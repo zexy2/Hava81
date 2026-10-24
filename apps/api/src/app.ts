@@ -156,6 +156,17 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
 
     reply.header('Cache-Control', 'no-store');
 
+    const retryAfterSeconds =
+      normalizedError instanceof AppError ? normalizedError.retryAfterSeconds : undefined;
+    if (
+      statusCode === 503 &&
+      typeof retryAfterSeconds === 'number' &&
+      Number.isSafeInteger(retryAfterSeconds) &&
+      retryAfterSeconds > 0
+    ) {
+      reply.header('Retry-After', String(retryAfterSeconds));
+    }
+
     if (statusCode === 429 && 'error' in (error as object)) {
       reply.status(statusCode).send(error);
       return;

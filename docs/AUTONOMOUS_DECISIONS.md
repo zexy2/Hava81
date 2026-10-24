@@ -241,3 +241,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Distinguish the provider sample time from the BFF fetch time in the environment rail. When a fresh AQI sample has a valid `observedAt`, show a compact localized `<time datetime>` label in the city's timezone (Turkish `Gözlem HH:mm`, English `Observed HH:mm AM/PM`).
 - Keep the timestamp within the existing AQI detail line to avoid adding another card/row or decorative UI. Older payloads without a source timestamp keep the existing detail layout; invalid/stale evidence remains hidden by the shared freshness policy.
 - This is provenance/transparency, not an official health warning or a claim about medical safety. Verify at 320px and 200% text scaling, both locales and themes, before shipping.
+
+## 2026-10-24 09:33 TRT — Respect provider Retry-After without retry amplification
+
+- When OpenWeather returns HTTP 429, parse a positive delay-seconds value or a future HTTP-date `Retry-After` into a positive integer number of seconds. Ignore missing, malformed, zero, negative, past-date, or unsafe values; never copy an upstream header verbatim.
+- Carry the validated delay on `AppError` and emit a `Retry-After` response header only for a 503 error with a positive safe integer delay. Keep error responses `Cache-Control: no-store` and do not expose the upstream body.
+- Treat `PROVIDER_RATE_LIMITED` as non-retryable in `ResilientWeatherProvider`: make exactly one primary request, do not sleep/retry or open the outage circuit for a quota signal, and let the client decide when to retry from the response header. No automatic retry or fallback request is issued on this rate-limit path.
+- Regression tests cover delta-seconds, HTTP-date conversion, invalid values, one upstream attempt, response-header propagation, and absence of the header on unrelated 503 errors. This changes backoff metadata only; it does not alter weather data or provider quotas.

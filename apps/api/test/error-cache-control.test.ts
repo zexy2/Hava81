@@ -44,10 +44,16 @@ test('API error responses explicitly opt out of HTTP caching', async context => 
   app.get('/__test/transient-failure', async () => {
     throw new AppError(503, 'TEST_FAILURE', 'Temporary failure');
   });
+  app.get('/__test/provider-rate-limited', async () => {
+    throw new AppError(503, 'PROVIDER_RATE_LIMITED', 'Provider rate limited', undefined, {
+      retryAfterSeconds: 120,
+    });
+  });
 
   const validation = await app.inject({ method: 'GET', url: '/api/v1/weather/current' });
   const missing = await app.inject({ method: 'GET', url: '/api/v1/does-not-exist' });
   const transient = await app.inject({ method: 'GET', url: '/__test/transient-failure' });
+  const rateLimited = await app.inject({ method: 'GET', url: '/__test/provider-rate-limited' });
 
   assert.equal(validation.statusCode, 400);
   assert.equal(validation.headers['cache-control'], 'no-store');
@@ -55,4 +61,8 @@ test('API error responses explicitly opt out of HTTP caching', async context => 
   assert.equal(missing.headers['cache-control'], 'no-store');
   assert.equal(transient.statusCode, 503);
   assert.equal(transient.headers['cache-control'], 'no-store');
+  assert.equal(transient.headers['retry-after'], undefined);
+  assert.equal(rateLimited.statusCode, 503);
+  assert.equal(rateLimited.headers['cache-control'], 'no-store');
+  assert.equal(rateLimited.headers['retry-after'], '120');
 });

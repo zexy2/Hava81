@@ -1,15 +1,23 @@
 import { ZodError } from 'zod';
 
+export interface AppErrorOptions extends ErrorOptions {
+  /** Positive delay parsed from a trusted upstream Retry-After header. */
+  retryAfterSeconds?: number;
+}
+
 export class AppError extends Error {
+  public readonly retryAfterSeconds: number | undefined;
+
   constructor(
     public readonly statusCode: number,
     public readonly code: string,
     message: string,
     public readonly details?: unknown,
-    options?: ErrorOptions,
+    options?: AppErrorOptions,
   ) {
     super(message, options);
     this.name = 'AppError';
+    this.retryAfterSeconds = options?.retryAfterSeconds;
   }
 }
 
