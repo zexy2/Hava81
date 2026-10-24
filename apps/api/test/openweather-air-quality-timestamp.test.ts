@@ -40,3 +40,24 @@ test('air-quality schema rejects negative and fractional observation timestamps'
     assert.throws(() => airQualityUpstreamSchema.parse(payload));
   }
 });
+
+
+test('air-quality schema accepts the inclusive component ceiling for every pollutant', () => {
+  const pollutants = ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3'] as const;
+
+  for (const pollutant of pollutants) {
+    const payload = sample();
+    payload.list[0].components[pollutant] = 100_000;
+    assert.doesNotThrow(() => airQualityUpstreamSchema.parse(payload), pollutant);
+  }
+});
+
+test('air-quality schema rejects impossible finite component outliers', () => {
+  const pollutants = ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3'] as const;
+
+  for (const pollutant of pollutants) {
+    const payload = sample();
+    payload.list[0].components[pollutant] = 100_000.1;
+    assert.throws(() => airQualityUpstreamSchema.parse(payload), { name: 'ZodError' }, pollutant);
+  }
+});

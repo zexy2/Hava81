@@ -183,3 +183,9 @@ Reviewing an open PR is not a reason to merge it when its base is several commit
 **Why:** Production mobile Lighthouse measured 520 ms TBT and 3.3 s LCP, and its critical request chain loaded five Planla-only chunks while the Today view was visible. The local build after gating those chunks loaded none of them on the initial city view and measured 60 ms TBT / 2.7 s LCP with a Lighthouse performance score of 95. These local results are directional evidence only; production improvement must be confirmed after a green merge/deploy.
 
 **Guardrails:** Do not defer the alert engine or change notification semantics. Direct `?view=plan` entry and score-explanation navigation must load Planla immediately. Once opened, activity choices and route-form state must survive switching back to Today. Regression tests cover those contracts.
+
+## 2026-10-24 — Bound OpenWeather pollutant concentrations at the provider boundary
+
+- OpenWeather documents all Air Pollution API component concentrations (CO, NO, NO₂, O₃, SO₂, NH₃, PM2.5 and PM10) in μg/m³. Accept only finite non-negative values up to a deliberately broad 100,000 μg/m³ ceiling; reject higher values rather than formatting impossible finite outliers as measurements.
+- This is a provider-payload sanity ceiling only, not an AQI category boundary, health threshold, or medical recommendation. Preserve the provider's categorical AQI (1–5) contract and never infer a cleaner/safer category from a rejected component value.
+- Cover the inclusive ceiling and just-over-ceiling regressions for all eight fields at both schema and provider-adapter levels. Keep the change isolated from the pending OpenWeather wind-bound PR and rebase only after re-reading both remote heads.

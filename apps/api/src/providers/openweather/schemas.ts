@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 const MAX_CURRENT_WEATHER_OBSERVATION_FUTURE_SKEW_MS = 60_000;
 const MAX_AIR_QUALITY_OBSERVATION_FUTURE_SKEW_MS = 60_000;
+// OpenWeather documents all Air Pollution API component concentrations in μg/m³.
+// This deliberately generous ceiling is a payload-sanity guard, not an AQI or health threshold.
+const MAX_AIR_QUALITY_COMPONENT_UG_M3 = 100_000;
+const airQualityComponentSchema = z.number().min(0).max(MAX_AIR_QUALITY_COMPONENT_UG_M3);
 
 const coordinatesSchema = z.object({
   lon: z.number().min(-180).max(180),
@@ -119,14 +123,14 @@ export const airQualityUpstreamSchema = z.object({
       z.object({
         main: z.object({ aqi: z.number().int().min(1).max(5) }),
         components: z.object({
-          co: z.number().nonnegative(),
-          no: z.number().nonnegative(),
-          no2: z.number().nonnegative(),
-          o3: z.number().nonnegative(),
-          so2: z.number().nonnegative(),
-          pm2_5: z.number().nonnegative(),
-          pm10: z.number().nonnegative(),
-          nh3: z.number().nonnegative(),
+          co: airQualityComponentSchema,
+          no: airQualityComponentSchema,
+          no2: airQualityComponentSchema,
+          o3: airQualityComponentSchema,
+          so2: airQualityComponentSchema,
+          pm2_5: airQualityComponentSchema,
+          pm10: airQualityComponentSchema,
+          nh3: airQualityComponentSchema,
         }),
         dt: z
           .number()
