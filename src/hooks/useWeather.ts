@@ -513,6 +513,12 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
             return translateError('weather.cityNotFound');
           case ErrorCode.RATE_LIMIT:
             return translateError('errors.rateLimit');
+          case ErrorCode.PROVIDER_RATE_LIMITED:
+            return translateError('errors.providerRateLimited');
+          case ErrorCode.PROVIDER_CIRCUIT_OPEN:
+            return translateError('errors.providerCircuitOpen');
+          case ErrorCode.UPSTREAM_BUDGET_EXHAUSTED:
+            return translateError('errors.upstreamBudgetExhausted');
           case ErrorCode.LOCATION_DENIED:
             return translateError('errors.locationDenied');
           case ErrorCode.LOCATION_UNAVAILABLE:

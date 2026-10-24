@@ -875,6 +875,32 @@ describe('useWeather', () => {
     }
   );
 
+  it.each([
+    ['tr', ErrorCode.PROVIDER_RATE_LIMITED, 'Hava durumu servisi istekleri geçici olarak sınırlandırdı. Tekrar denemeden önce biraz bekleyin.'],
+    ['en', ErrorCode.PROVIDER_RATE_LIMITED, 'The weather service is temporarily limiting requests. Wait a little before trying again.'],
+    ['tr', ErrorCode.PROVIDER_CIRCUIT_OPEN, 'Hava durumu servisi geçici bir kesintiden toparlanıyor. Biraz sonra tekrar deneyin.'],
+    ['en', ErrorCode.PROVIDER_CIRCUIT_OPEN, 'The weather service is recovering from a temporary interruption. Try again shortly.'],
+    ['tr', ErrorCode.UPSTREAM_BUDGET_EXHAUSTED, 'Hava durumu istekleri şu anda yoğun. Biraz sonra tekrar deneyin.'],
+    ['en', ErrorCode.UPSTREAM_BUDGET_EXHAUSTED, 'Weather requests are temporarily busy. Try again shortly.'],
+  ] as const)(
+    'localizes structured provider state %s/%s without exposing internal details',
+    async (language, code, expected) => {
+      (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+        new ApiError('internal provider detail', code, { statusCode: 503 })
+      );
+      const { result } = renderHook(() => useWeather({ language }));
+
+      await act(async () => {
+        await result.current.fetchWeather('İstanbul');
+      });
+
+      expect(result.current.error?.code).toBe(code);
+      expect(result.current.error?.message).toBe(expected);
+      expect(result.current.error?.message).not.toContain('internal provider detail');
+      expect(result.current.error?.retryable).toBe(true);
+    }
+  );
+
   it('uses the translation catalog for English not-found errors', async () => {
     (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
       new ApiError('provider detail', ErrorCode.NOT_FOUND)

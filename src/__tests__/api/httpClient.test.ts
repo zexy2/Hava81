@@ -551,8 +551,10 @@ describe('httpClient BFF transport', () => {
 
       const request = httpClient.get('/weather/current', { city: 'Bursa' });
       const rejection = expect(request).rejects.toMatchObject({
+        code: ErrorCode.PROVIDER_RATE_LIMITED,
         statusCode: 503,
         message: 'Provider rate limited',
+        retryable: true,
       });
       await vi.advanceTimersByTimeAsync(30_000);
       await rejection;
@@ -579,8 +581,10 @@ describe('httpClient BFF transport', () => {
 
         const request = httpClient.get('/weather/current', { city: 'Bursa' });
         const rejection = expect(request).rejects.toMatchObject({
+          code,
           statusCode: 503,
           message: `${code} is not immediately retryable`,
+          retryable: true,
         });
         await vi.advanceTimersByTimeAsync(30_000);
         await rejection;

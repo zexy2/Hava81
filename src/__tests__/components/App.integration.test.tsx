@@ -632,6 +632,23 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/izmir/');
   });
 
+  it('shows a localized provider rate-limit message while preserving explicit retry', async () => {
+    service.getCurrentWeather.mockRejectedValueOnce(
+      new ApiError('internal provider detail', ErrorCode.PROVIDER_RATE_LIMITED, {
+        statusCode: 503,
+      })
+    );
+
+    renderApp();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(
+      'Hava durumu servisi istekleri geçici olarak sınırlandırdı. Tekrar denemeden önce biraz bekleyin.'
+    );
+    expect(alert).not.toHaveTextContent('internal provider detail');
+    expect(screen.getByRole('button', { name: /tekrar dene/i })).toBeInTheDocument();
+  });
+
   it('does not offer retry for a non-retryable current-weather failure', async () => {
     service.getCurrentWeather.mockRejectedValueOnce(
       new ApiError('Şehir bulunamadı', ErrorCode.NOT_FOUND, { retryable: false })
