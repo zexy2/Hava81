@@ -352,3 +352,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - Current `ActivityPlanner.css` already contains the mobile `flex-basis: auto` fix; the old dirty-worktree patch is superseded and should not be copied verbatim. The current `e2e/plan.spec.ts` checks expanded cards at 320px / 200% but did not explicitly assert that the sensitivity control retains the auto basis and stays inside the header.
 - Extend the existing real-browser regression to check header readability, containment of the header within the planner, containment of the sensitivity panel within the header, and the computed auto flex basis. This catches a future flex sizing regression without arbitrary pixel-height ceilings or changes to production CSS.
+
+## 2026-10-24 20:22 TRT — Require the separate Ops contract workflow for green automation PRs
+
+- Product CI/CD and CodeQL are not the complete automation-PR gate set. The repository also runs `Ops script contracts`, with independent CI/agent and deploy-script jobs that validate the observer and production/deploy shell contracts.
+- Treat an automation PR as green only when exact-head CI/CD, Ops script contracts, and CodeQL have all completed successfully. A missing Ops run is unknown; an in-progress Ops run is running; a failed Ops run is failed. This prevents the read-only observer from reporting a false-green PR while deploy-script contracts remain pending.
+- This changes observer diagnostics/gating only. The Oracle SentinelX agent is offline and the SSH gateway has no configured Oracle target, so this source change must not be represented as already installed on the live host. Deploy/update the observer only after Oracle connectivity is restored and its local release gates pass.

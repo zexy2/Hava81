@@ -842,6 +842,17 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'conclusion': 'failure',
                 'html_url': 'https://example.test/codeql-failed-pr-codeql',
             },
+            {
+                'id': 18,
+                'run_number': 18,
+                'name': 'Ops script contracts',
+                'head_sha': 'pr-sha',
+                'head_branch': 'automation/hava81-observer-test',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/pr-ops',
+            },
         ]
 
         requested_timeouts: list[float] = []
@@ -892,6 +903,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['open_automation_prs'][0]['ci']['status'], 'in_progress')
         self.assertEqual(result['open_automation_prs'][0]['codeql']['run_id'], 13)
         self.assertEqual(result['open_automation_prs'][0]['codeql']['conclusion'], 'success')
+        self.assertEqual(result['open_automation_prs'][0]['ops']['conclusion'], 'success')
         self.assertEqual(result['signals']['ci_running_prs'], [497])
         self.assertEqual(result['signals']['ci_unknown_prs'], [484])
         self.assertEqual(result['signals']['ci_failed_prs'], [498])
@@ -1039,6 +1051,17 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                 'conclusion': 'success',
                 'html_url': 'https://example.test/pr-codeql',
             },
+            {
+                'id': 24,
+                'run_number': 1588,
+                'name': 'Ops script contracts',
+                'head_sha': 'pr-sha',
+                'head_branch': 'automation/hava81-context-shell-1156',
+                'event': 'pull_request',
+                'status': 'completed',
+                'conclusion': 'success',
+                'html_url': 'https://example.test/pr-ops',
+            },
         ]
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
@@ -1095,6 +1118,134 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-sha')
         self.assertEqual(result['signals']['ci_green_prs'], [662])
         self.assertEqual(result['signals']['ci_unknown_prs'], [])
+
+    def test_pending_ops_contracts_prevent_a_green_pr_signal(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        pr_sha = 'ops-pending-pr-sha'
+        runs = [
+            {
+                'id': 71, 'run_number': 71, 'name': 'CI/CD Pipeline',
+                'head_sha': 'main-sha', 'head_branch': 'main', 'event': 'push',
+                'status': 'completed', 'conclusion': 'success',
+                'html_url': 'https://example.test/main-ci',
+            },
+            {
+                'id': 72, 'run_number': 72, 'name': 'CI/CD Pipeline',
+                'head_sha': pr_sha, 'head_branch': 'automation/hava81-ops-gate-test',
+                'event': 'pull_request', 'status': 'completed', 'conclusion': 'success',
+                'html_url': 'https://example.test/pr-ci',
+            },
+            {
+                'id': 73, 'run_number': 73, 'name': 'CodeQL',
+                'head_sha': pr_sha, 'head_branch': 'automation/hava81-ops-gate-test',
+                'event': 'pull_request', 'status': 'completed', 'conclusion': 'success',
+                'html_url': 'https://example.test/pr-codeql',
+            },
+            {
+                'id': 74, 'run_number': 74, 'name': 'Ops script contracts',
+                'head_sha': pr_sha, 'head_branch': 'automation/hava81-ops-gate-test',
+                'event': 'pull_request', 'status': 'in_progress', 'conclusion': None,
+                'html_url': 'https://example.test/pr-ops',
+            },
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                payload = [{
+                    'number': 1450, 'title': 'Ops gate test',
+                    'html_url': 'https://example.test/pr/1450', 'draft': False,
+                    'head': {'ref': 'automation/hava81-ops-gate-test', 'sha': pr_sha},
+                }]
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': 'main-sha', 'commit': {'committer': {'date': '2026-10-24T17:00:00Z'}}}}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {
+                'ok': True, 'status': 200, 'elapsed_ms': 1,
+                'headers': {'x-ratelimit-remaining': '50'}, 'json': payload, 'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        pr = result['open_automation_prs'][0]
+        self.assertEqual(pr['ci']['conclusion'], 'success')
+        self.assertEqual(pr['codeql']['conclusion'], 'success')
+        self.assertEqual(pr['ops']['status'], 'in_progress')
+        self.assertEqual(result['signals']['ci_running_prs'], [1450])
+        self.assertEqual(result['signals']['ci_green_prs'], [])
+
+    def test_failed_ops_contracts_mark_a_pr_failed(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        pr_sha = 'ops-failed-pr-sha'
+        runs = [
+            {
+                'id': 81, 'run_number': 81, 'name': 'CI/CD Pipeline',
+                'head_sha': 'main-sha', 'head_branch': 'main', 'event': 'push',
+                'status': 'completed', 'conclusion': 'success',
+                'html_url': 'https://example.test/main-ci',
+            },
+            {
+                'id': 82, 'run_number': 82, 'name': 'CI/CD Pipeline',
+                'head_sha': pr_sha, 'head_branch': 'automation/hava81-ops-failure-test',
+                'event': 'pull_request', 'status': 'completed', 'conclusion': 'success',
+                'html_url': 'https://example.test/pr-ci',
+            },
+            {
+                'id': 83, 'run_number': 83, 'name': 'CodeQL',
+                'head_sha': pr_sha, 'head_branch': 'automation/hava81-ops-failure-test',
+                'event': 'pull_request', 'status': 'completed', 'conclusion': 'success',
+                'html_url': 'https://example.test/pr-codeql',
+            },
+            {
+                'id': 84, 'run_number': 84, 'name': 'Ops script contracts',
+                'head_sha': pr_sha, 'head_branch': 'automation/hava81-ops-failure-test',
+                'event': 'pull_request', 'status': 'completed', 'conclusion': 'failure',
+                'html_url': 'https://example.test/pr-ops',
+            },
+        ]
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                payload = [{
+                    'number': 1451, 'title': 'Ops gate failure test',
+                    'html_url': 'https://example.test/pr/1451', 'draft': False,
+                    'head': {'ref': 'automation/hava81-ops-failure-test', 'sha': pr_sha},
+                }]
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': 'main-sha', 'commit': {'committer': {'date': '2026-10-24T17:00:00Z'}}}}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {
+                'ok': True, 'status': 200, 'elapsed_ms': 1,
+                'headers': {'x-ratelimit-remaining': '50'}, 'json': payload, 'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(result['open_automation_prs'][0]['ops']['conclusion'], 'failure')
+        self.assertEqual(result['signals']['ci_failed_prs'], [1451])
 
     def test_current_main_without_its_own_ci_run_is_pending_even_when_old_run_is_green(self) -> None:
         original_http_get = observer.http_get
