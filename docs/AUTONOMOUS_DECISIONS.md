@@ -206,3 +206,7 @@ Reviewing an open PR is not a reason to merge it when its base is several commit
 ## 2026-10-24 — Normalize forecast order at the service boundary
 
 The public three-hour forecast series and daily-group insertion order must be chronological even if a provider returns otherwise valid samples out of order. Sort a shallow copy of the validated samples by Unix timestamp before building hourly output or local-day groups. Do not mutate the provider-owned array, synthesize samples, change timestamps, or alter weather values. Keep the original numeric `dt` as the ordering authority; `dt_txt` is a redundant display field and must not override it.
+
+## 2026-10-24 — Keep live browser audits usable on locked-down hosts
+
+The live responsive audit should support an explicitly configured loopback Chrome DevTools Protocol endpoint when the host cannot launch a new browser because of Snap/cgroup confinement. `HAVA81_CHROMIUM_CDP_URL` is opt-in, must use HTTP with an explicit port and a loopback hostname only, and must reject credentials, paths, queries, fragments, and remote hosts. Preserve the existing isolated-launch path when unset. This lets a read-only audit reuse the host's already-running browser without exposing a remote debugging endpoint.
