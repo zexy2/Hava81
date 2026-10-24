@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { EnvironmentRail } from '../../components/hava81/EnvironmentRail';
 import { SettingsProvider } from '../../context';
-import type { NormalizedWeatherData } from '../../types';
+import type { AirQuality, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -71,6 +71,39 @@ describe('EnvironmentRail', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('discloses the provider observation time separately from the fetch time', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-28T15:00:00Z'));
+    const airQuality: AirQuality = {
+      aqi: 2,
+      aqiLabel: 'Fair',
+      pm25: 11.2,
+      pm10: 18,
+      o3: 52,
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date('2026-08-28T15:00:00Z'),
+        observedAt: new Date('2026-08-28T14:50:00Z'),
+        freshForSeconds: 300,
+      },
+    };
+
+    render(
+      <SettingsProvider>
+        <EnvironmentRail
+          weather={weather}
+          airQuality={airQuality}
+          onOpenMap={vi.fn()}
+          mapExpanded={false}
+        />
+      </SettingsProvider>
+    );
+
+    const observationTime = screen.getByText('Gözlem 17:50');
+    expect(observationTime.tagName).toBe('TIME');
+    expect(observationTime).toHaveAttribute('datetime', '2026-08-28T14:50:00.000Z');
   });
 
   it('renders sunrise and sunset in the weather location timezone instead of the device timezone', () => {
