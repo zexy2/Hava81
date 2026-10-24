@@ -54,6 +54,8 @@ jobs:
         run: node --test scripts/test-live-audit-options.mjs
       - name: Verify live audit API replay avoids rate-limit storms
         run: node --test scripts/test-live-audit-response-cache.mjs
+      - name: Verify live audit reports failed weather API responses
+        run: node --test scripts/test-live-audit-result.mjs
       - name: Verify 81-city release gate stops on HTTP 429
         run: node --test scripts/test-verify-81-rate-limit.mjs
       - name: Verify Pages CSP meta generation

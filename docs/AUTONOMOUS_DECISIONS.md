@@ -474,3 +474,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Keep a builder-level regression that iterates every province in both languages and checks uniqueness, self-canonical metadata, social URL parity, hreflang pairs and structured-data presence. This complements the sitemap parser test and the generator's existing fail-closed checks for missing OG assets.
 - Generate robots.txt through a pure builder so its separate directive lines and absolute sitemap URL are unit-testable. Preserve the current emitted format; this is a regression guard, not a change to crawl policy.
 - Production crawl results are an observation, not a substitute for tests: all 164 sitemap URLs returned 200 and had matching canonical/OG URLs, language and hreflang in the baseline audit. Hosted CI remains the authority for production build, browser and Lighthouse gates.
+
+## 2026-10-25 02:50 TRT — Live responsive audit must surface failed weather responses
+
+- A visible/ready forecast is not proof that the current live weather request succeeded: cached or previously rendered content can survive a failed request. After the audit's existing single retry, include any failed core `/api/v1/weather/` response in the case result even when layout metrics are available; deduplicate repeated status/path pairs so diagnostics stay concise.
+- Keep API availability failures distinct from CSS/layout regressions. This is an observability/test-contract change only: it must not invent fallback weather, alter provider values, change freshness rules, or make public provider availability a mandatory CI dependency.
+- Keep frontend merge readiness separate from Oracle API deployment readiness. A healthy GitHub Pages deploy does not override a false host/disk/API-build-headroom gate.
