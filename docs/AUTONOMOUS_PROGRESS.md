@@ -903,3 +903,22 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Observer snapshot `collected_at=2026-10-24T03:57:16Z` now agrees with GitHub: main `996445...`, CI success, frontend root/city revision parity, API readiness and CORS healthy, preferred Nginx API port 4002. Disk remains under a warning at 88.6% used / ~11 GiB free; no broad cleanup or duplicate dependency install performed.
 - SentinelX's direct capability check was unavailable and the SSH gateway lists only its local host; no direct server mutation was attempted. The deployment itself was completed by the repository's guarded Oracle blue/green workflow and verified through public readiness/revision/CORS endpoints.
 - Next: push the independent accessibility-test branch, open its PR against current main, and monitor exact-head CI. Do not merge until all required checks are green; re-read current main and remote branch heads before any rebase/merge. Then continue with another bounded data-quality or UX issue while any external workflow runs.
+
+## 2026-10-24 07:48 TRT — Reject incomplete precipitation probability and inverted forecast ranges
+
+### Production/main checkpoint
+- PR #1420 (`test(a11y): broaden axe WCAG coverage`) merged by squash as `7150d11f0471ddab00d9871dbde968615f17bbe7` after exact-head checks were green and mergeability was `clean`.
+- Main CI/CD run `40063336203` succeeded, including frontend quality, API tests/build, browser flows, Lighthouse budgets, and GitHub Pages deployment; CodeQL run `40063336200` and Ops contracts run `40063336228` succeeded.
+- Post-merge direct smoke: `/`, `/izmir/`, `/en/izmir/` return HTTP 200 and embed revision `7150d11f0471ddab00d9871dbde968615f17bbe7`; `/api/v1/health/ready` returns HTTP 200 with API revision `996445ce02f74fdad81489a2c3b07293697d1e1e`; CORS preflight returns HTTP 204 with the production origin. The docs/test-only merge did not change API runtime files, so the API revision correctly remains `996445...`. Observer `collected_at=2026-10-24T04:48:13.188239Z` reports production healthy, frontend revision parity, no blockers, and API on preferred port 4002.
+
+### Independent provider-contract improvement
+- Dedicated worktree: `/home/chatgpt/hava81-run11-20261024-0742`; branch `automation/hava81-run11-20261024-0742`; exact base `origin/main=7150d11f0471ddab00d9871dbde968615f17bbe7`.
+- `apps/api/src/providers/openweather/schemas.ts` no longer defaults a missing forecast `pop` to zero. Missing precipitation probability is malformed/unknown, not a dry forecast. The same schema now rejects a forecast sample whose `temp_min` exceeds `temp_max` rather than allowing an inverted range through validation.
+- Added regressions for missing `pop`, inverted minimum/maximum temperature, and explicit probability boundaries 0 and 1. No provider values are clamped, synthesized, or rewritten.
+- Local gates passed: API tests **112/112**, API type-check/build, API production dependency audit (**0 vulnerabilities**), root test suite with coverage, root type-check/lint/build, root production dependency audit (**0 vulnerabilities**), and `git diff --check`. The root/API installs used the exact checked-in lockfiles; tracked diff remains limited to the two API source/test files plus this append-only documentation.
+
+### Exact next actions
+1. Re-fetch `origin` and confirm the branch still descends from the current main before commit/push; preserve all existing worktrees and never experiment on `main`.
+2. Commit the two-file API change and append-only rationale/checkpoint, push normally, and open a focused PR. Query the exact remote head and require CI/CD, API blue-green deploy checks, Ops contracts, and CodeQL to pass for that head.
+3. Before any merge, re-read `/var/lib/hava81-worker/state.json` and `/usr/local/bin/hava81-worker-status`, directly verify the exact PR head/mergeability, and smoke public root/city pages, API readiness/revision, CORS, and API port. Keep port 4002 primary and 4001 rollback/canary.
+4. While PR checks or deployment run, continue an independent bounded workstream in a fresh worktree from the correct stable base. Do not modify the dirty activity-header, main-thread-profile, or province-future-skew worktrees; do not perform broad disk cleanup (root disk is around 90% used with about 10.6 GiB free).

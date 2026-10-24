@@ -99,3 +99,27 @@ test('forecast schema rejects impossible provider timezone offsets', () => {
     assert.throws(() => forecastUpstreamSchema.parse(payload));
   }
 });
+
+test('forecast schema rejects missing precipitation probability instead of inferring dry weather', () => {
+  const payload = sample();
+  Reflect.deleteProperty(payload.list[0], 'pop');
+
+  assert.equal(forecastUpstreamSchema.safeParse(payload).success, false);
+});
+
+test('forecast schema rejects inverted minimum and maximum temperatures', () => {
+  const payload = sample();
+  payload.list[0].main.temp_min = 26;
+  payload.list[0].main.temp_max = 25;
+
+  assert.equal(forecastUpstreamSchema.safeParse(payload).success, false);
+});
+
+test('forecast schema accepts the inclusive precipitation-probability bounds', () => {
+  for (const pop of [0, 1]) {
+    const payload = sample();
+    payload.list[0].pop = pop;
+
+    assert.equal(forecastUpstreamSchema.safeParse(payload).success, true);
+  }
+});
