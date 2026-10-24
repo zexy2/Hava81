@@ -280,3 +280,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - The browser transport may treat `PROVIDER_RATE_LIMITED`, `PROVIDER_CIRCUIT_OPEN`, `UPSTREAM_BUDGET_EXHAUSTED`, and `AIR_QUALITY_HOURLY_UNAVAILABLE` as deterministic service states only when the HTTP status is 503, matching the API's producer contract.
 - If one of these codes appears with another status, do not let its body override the HTTP status semantics: preserve the normal status-derived error code and bounded retry policy. This protects against malformed or mismatched envelopes without changing valid 503 behavior or introducing retries for valid provider quota/circuit/budget states.
 - Regression tests cover a mismatched HTTP 500 (normal bounded retry remains active) and HTTP 404 (`NOT_FOUND`, no retry). No weather value, provider policy, scoring, or API deployment behavior changes.
+
+## 2026-10-24 14:30 TRT — Lighthouse browser selection is environment-aware
+
+- Respect an explicit `CHROME_PATH` operator override. If none is configured, use the Playwright-managed Chromium executable only when it is installed and accessible; otherwise leave `CHROME_PATH` unset so `chrome-launcher` retains its normal system-browser discovery. Do not install/download browsers as a side effect of the Lighthouse runner.
+- This handles Oracle/local hosts where `/usr/bin/chromium-browser` is a Snap wrapper that cannot be controlled by Lighthouse, while preserving the existing GitHub Actions setup (the Lighthouse job has no Playwright browser install step). Keep the selection logic covered by a focused Node contract test in CI.
+- Lighthouse score movement between 89 and 96 on the same source/build is treated as measurement variance; do not claim product performance gains without repeated controlled runs. The latest measured accessibility, best-practices, and SEO scores remain 100, and performance remains above the 80 target.
