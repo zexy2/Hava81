@@ -335,6 +335,12 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Use a ratio-specific validator at the Forecast Atlas presentation boundary. Preserve exact 0 and 1; keep missing, non-finite, negative and greater-than-one domain values unknown. Leave the legacy raw-percent normalizer unchanged for callers that still receive BFF percentages.
 - This is a frontend data-integrity fix only. It does not alter provider data, scoring, weather interpretation, API contracts, or production routing. Keep the hourly and daily component regression that asserts a 100% input remains 100% after parsing.
 
+## 2026-10-24 19:02 TRT — Invalid finite precipitation is unknown evidence
+
+- A forecast-domain precipitation probability is a 0–1 ratio; an amount is finite, non-negative millimetres. Finite but out-of-range values are not valid evidence and must not be clamped into a believable dry/wet observation. Normalize invalid probability/amount to unknown before scoring and return the sanitized values to downstream presentation.
+- Daily, activity, commute and Plan v3 scoring must share this evidence contract. An hour with neither valid signal remains capped at 89; confidence/coverage, umbrella advice, reasons, eligibility and displayed values must not count invalid fields as known. Explicit zero probability, zero amount and amount-only evidence remain valid.
+- This is defensive data-integrity handling, not a forecast, threshold recalibration, provider/API contract change, or new safety claim. Do not build/deploy the API for this frontend/domain-only change.
+
 ## 2026-10-24 19:10 TRT — Use valid amount-only evidence in the next-change summary
 
 - The first-screen next-change sentence previously considered only precipitation probability, even though the weather domain also carries an hourly precipitation amount. When probability was missing/invalid but a valid amount showed precipitation, the summary could skip a rain transition and jump to a temperature change or say conditions were steady.

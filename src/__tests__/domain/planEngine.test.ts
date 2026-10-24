@@ -157,6 +157,40 @@ describe('Plan v3 absolute safety ceilings', () => {
   });
 });
 
+describe('Plan v3 invalid precipitation evidence', () => {
+  it.each([
+    ['negative probability', { pop: -0.1, precipitationMm: undefined }],
+    ['over-range probability', { pop: 1.1, precipitationMm: undefined }],
+    ['negative amount', { pop: undefined, precipitationMm: -0.1 }],
+  ])('treats %s as unknown and caps the score', (_label, overrides) => {
+    const scored = scoreHour({
+      intent: 'walk',
+      point: point(1, overrides),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+
+    expect(scored.score).toBeLessThanOrEqual(89);
+    expect(scored.band).not.toBe('excellent');
+    expect(scored.precipitationProbability).toBeUndefined();
+    expect(scored.precipitationMm).toBeUndefined();
+    expect(scored.dataCoverage).toBeLessThan(0.8);
+  });
+
+  it('keeps explicit zero probability and amount as valid dry evidence', () => {
+    const scored = scoreHour({
+      intent: 'walk',
+      point: point(1, { pop: 0, precipitationMm: 0 }),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+
+    expect(scored.precipitationProbability).toBe(0);
+    expect(scored.precipitationMm).toBe(0);
+    expect(scored.score).toBeGreaterThan(89);
+  });
+});
+
 describe('Plan v3 absolute eligibility gates', () => {
   it.each([
     { label: 'extreme heat', overrides: { temp: 43, apparentTemperature: 43 } },

@@ -43,6 +43,12 @@ export const getScoreBand = (score: number): Hava81ScoreBand => {
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const clampScore = (value: number) => clamp(Math.round(value), 0, 100);
 
+const isValidPrecipitationProbability = (value?: number): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+
+const isValidPrecipitationAmount = (value?: number): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
 /** Shared absolute ceilings for both visible score caps and plan-window eligibility gates. */
 export const HAVA81_ABSOLUTE_SAFETY_LIMITS = {
   extremeHeatApparentC: 43,
@@ -188,6 +194,14 @@ export const scoreWeatherWindow = ({
   visibility,
   weatherCode,
 }: ScoreWeatherWindowInput): ScoredWeatherWindow => {
+  // Forecast probability is a domain ratio (0–1), and amount is mm. Finite but out-of-range
+  // values are invalid evidence, not values to clamp into a believable dry/wet observation.
+  const validPrecipitationProbability = isValidPrecipitationProbability(precipitationProbability)
+    ? precipitationProbability
+    : undefined;
+  const validPrecipitationMm = isValidPrecipitationAmount(precipitationMm)
+    ? precipitationMm
+    : undefined;
   const apparent = resolveApparentTemperature({
     temperature,
     apparentTemperature,
@@ -198,7 +212,7 @@ export const scoreWeatherWindow = ({
   const reasons: DecisionReasonCode[] = [];
 
   const thermal = thermalPenalty(apparent);
-  const rain = precipitationPenalty(precipitationProbability, precipitationMm);
+  const rain = precipitationPenalty(validPrecipitationProbability, validPrecipitationMm);
   const wind = windPenalty(windSpeed, windGust);
   const air = airQualityPenalty(airQualityIndex);
   const uv = uvPenalty(uvIndex);
@@ -218,7 +232,7 @@ export const scoreWeatherWindow = ({
   else if (apparent <= FREEZING_APPARENT_C) reasons.push('freezing');
   else if (apparent <= COLD_APPARENT_C) reasons.push('cold');
 
-  const rainRisk = rainLevel(precipitationProbability, precipitationMm);
+  const rainRisk = rainLevel(validPrecipitationProbability, validPrecipitationMm);
   if (rainRisk === 'likely') reasons.push('heavy-rain');
   else if (rainRisk === 'possible') reasons.push('rain-risk');
 
@@ -254,7 +268,7 @@ export const scoreWeatherWindow = ({
   } else if (apparent <= -10) {
     score = Math.min(score, 35);
   }
-  if ((precipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
+  if ((validPrecipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
     score = Math.min(score, 35);
   }
   if (
@@ -270,7 +284,7 @@ export const scoreWeatherWindow = ({
   // Missing rain evidence is not evidence of dry weather. Keep an otherwise ideal-looking
   // hour out of the excellent band until at least probability or measured amount is known.
   const hasPrecipitationEvidence =
-    Number.isFinite(precipitationProbability) || Number.isFinite(precipitationMm);
+    validPrecipitationProbability !== undefined || validPrecipitationMm !== undefined;
   if (!hasPrecipitationEvidence) score = Math.min(score, 89);
 
   // A named material risk and the “very suitable” label should never coexist. The score
@@ -283,10 +297,8 @@ export const scoreWeatherWindow = ({
     band: getScoreBand(score),
     temperature,
     apparentTemperature: Math.round(apparent * 10) / 10,
-    precipitationProbability: Number.isFinite(precipitationProbability)
-      ? clamp(precipitationProbability as number, 0, 1)
-      : undefined,
-    precipitationMm,
+    precipitationProbability: validPrecipitationProbability,
+    precipitationMm: validPrecipitationMm,
     windSpeed,
     windGust,
     humidity,
