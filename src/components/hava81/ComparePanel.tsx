@@ -280,8 +280,14 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
             {freshRows.map(row => {
               const nearTerm = row.hourly.slice(0, 6);
               const precipitationPeak = pickMostSignificantPrecipitation(nearTerm);
-              const peakPop = precipitationPeak?.pop ?? 0;
-              const peakPrecipitationMm = precipitationPeak?.precipitationMm ?? 0;
+              const precipitationSummary = precipitationPeak
+                ? formatPrecipitationSummary(
+                    precipitationPeak.pop ?? Number.NaN,
+                    precipitationPeak.precipitationMm,
+                    i18n.language,
+                    t('hava81.compare.noRain')
+                  )
+                : t('hava81.compare.precipitationUnknown');
               return (
                 <article
                   className={`hava81-compare__city${isLeader(row) ? ' is-winner' : ''}`}
@@ -313,12 +319,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                         {t('hava81.compare.rain')}
                       </span>
                       <b>
-                        {formatPrecipitationSummary(
-                          peakPop,
-                          peakPrecipitationMm,
-                          i18n.language,
-                          t('hava81.compare.noRain')
-                        )}
+                        {precipitationSummary}
                       </b>
                     </span>
                     <span>

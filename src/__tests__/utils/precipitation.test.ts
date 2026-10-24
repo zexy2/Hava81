@@ -51,4 +51,22 @@ describe('precipitation signal ranking', () => {
 
     expect(pickMostSignificantPrecipitation(points)?.id).toBe('measured-rain');
   });
+
+  it('does not rank slots that have no valid precipitation evidence', () => {
+    const points = [
+      { pop: Number.NaN, precipitationMm: undefined, id: 'unknown' },
+      { pop: undefined, precipitationMm: -1, id: 'invalid' },
+    ];
+
+    expect(pickMostSignificantPrecipitation(points)).toBeUndefined();
+  });
+
+  it('keeps a valid amount-only observation even when probability is unavailable', () => {
+    const points = [
+      { pop: undefined, precipitationMm: 0.4, id: 'measured-amount' },
+      { pop: Number.NaN, precipitationMm: undefined, id: 'unknown' },
+    ];
+
+    expect(pickMostSignificantPrecipitation(points)?.id).toBe('measured-amount');
+  });
 });

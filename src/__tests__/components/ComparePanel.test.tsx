@@ -164,6 +164,38 @@ describe('ComparePanel', () => {
     expect(screen.getAllByText('Yağış')).toHaveLength(2);
   });
 
+  it('shows unavailable when all near-term precipitation signals are missing or invalid', async () => {
+    api.getHourlyForecast.mockResolvedValue({
+      hourly: [
+        {
+          time: new Date('2026-08-28T09:00:00Z'),
+          temp: 24,
+          icon: '01d',
+          pop: Number.NaN,
+          windSpeed: 3,
+          precipitationMm: undefined,
+        },
+      ],
+      meta: { ...forecast.meta, provider: 'Open-Meteo', intervalHours: 1 },
+    });
+
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul' })).toBeVisible();
+    expect(screen.getAllByText('Yağış verisi yok')).toHaveLength(2);
+    expect(screen.queryByText('Beklenmiyor')).not.toBeInTheDocument();
+  });
+
   it('shows a dry label instead of 0% when no precipitation amount is modeled', async () => {
     api.getHourlyForecast.mockResolvedValue({
       hourly: [

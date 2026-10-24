@@ -308,3 +308,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - If at least one of the two precipitation signals is finite but no positive probability/amount needs display, use the localized dry state. In particular, a valid probability of zero with no amount is evidence of no precipitation expected; it is not the same as both signals missing.
 - When any displayed hour lacks both signals, show one compact note that its score is capped at 89 and that missing data does not mean rain is expected. Reuse the existing safety-note visual treatment rather than adding a card. Keep the underlying conservative scoring guard from the 15:52 checkpoint and do not add a fabricated rain-risk reason.
 - This is an evidence-display and scoring-methodology clarification, not a weather forecast or hazard assertion. Probability-only and amount-only evidence remain valid; no API behavior, provider configuration, cache policy, or deployment target changes.
+
+## 2026-10-24 16:50 TRT — Preserve unknown precipitation in city comparison
+
+- A precipitation row is evidence-backed only when at least one signal is valid: probability in the frontend's 0–1 ratio range, or a finite non-negative precipitation amount. Do not let an invalid/missing probability and missing/invalid amount become the top-ranked slot merely because its fallback severity is zero.
+- If no near-term slot has valid precipitation evidence, city comparison must say `Yağış verisi yok` / `Precipitation data unavailable`, not `Beklenmiyor` / `Not expected`. A valid explicit zero probability or zero amount remains evidence for a dry label; a valid amount remains usable even when probability is unavailable.
+- This is a UI evidence/provenance guard. It does not alter weather values, scoring, ranking of cities, thresholds, provider behavior, or API deployment.
