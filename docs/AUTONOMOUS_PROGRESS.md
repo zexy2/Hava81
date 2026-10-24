@@ -982,6 +982,13 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Direct production smoke before publication: root and `/istanbul/` HTTP 200; API `/api/v1/health` HTTP 200; frontend revision matches main `22d334c...`; API revision remains `298f156aa08afcac422c0e61e09f4b57f55a4cc7` because main's recent commits are frontend/tests-only. Nginx remains on port 4002; no deployment or production runtime change was made by this branch.
 - Next: push this dedicated branch and open a small frontend provenance PR. Require current-head CI/CD, Ops contracts, CodeQL, browser flows and Lighthouse; merge only after directly verifying the exact head, all required gates and mergeability. Continue independent API rate-limit resilience work while hosted checks run.
 
+## 2026-10-24 09:30 TRT — Official MGM warning-feed research refreshed
+
+- Rechecked MGM's own public MeteoUyarı pages and the official 2026 Meteorological Data Processing tariff. The public UI documents two-day warning presentation and color levels; the tariff separately lists `MY-57 — Meteo Uyarı Servisi (Web Servis)` at 12,500 TL/month per item.
+- This is stronger evidence than the earlier assumption that no web service exists, but it is not enough to integrate safely: the reviewed public materials do not expose the service contract, credentials/access path, response schema, issued/expiry timestamps, refresh cadence, or withdrawal semantics. No undocumented endpoint was probed or scraped.
+- Decision remains no runtime change: do not label scraped HTML or guessed endpoint responses as authoritative. Request/obtain the official service specification and freshness contract before adding a server-side adapter. Keep MGM warnings explicitly separate from Hava81's modeled guidance.
+- This is a docs-only branch from exact current `origin/main`; no weather data, product UI, API, deployment, or production configuration changed. Next: diff-check and open a small documentation PR; continue independent performance/reliability work while it validates.
+
 ## 2026-10-24 09:33 TRT — Provider Retry-After PR rebased onto current main
 
 - PR #1425 merged as `514adddc42439f3b12fb810209342c6119ef0783`; current main pipeline and public frontend/API smoke are healthy. Rebased the green provider rate-limit branch onto that exact current main instead of merging against the old `22d334c...` base. Append-only docs conflicts were resolved by retaining the complete current-main history and appending the provider backoff decision/checkpoint.

@@ -242,6 +242,13 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Keep the timestamp within the existing AQI detail line to avoid adding another card/row or decorative UI. Older payloads without a source timestamp keep the existing detail layout; invalid/stale evidence remains hidden by the shared freshness policy.
 - This is provenance/transparency, not an official health warning or a claim about medical safety. Verify at 320px and 200% text scaling, both locales and themes, before shipping.
 
+## 2026-10-24 09:30 TRT — MGM MeteoUyarı service is official but not yet integration-ready
+
+- Fresh review of MGM's official public MeteoUyarı explanation says the public interface displays two days of warning status and explains the yellow/orange/red levels. It does not publish a machine-readable schema, authentication contract, per-record issued/valid-until timestamps, or a freshness/withdrawal contract in the reviewed public documentation.
+- MGM's official 2026 Meteorological Data Processing tariff lists `MY-57 — Meteo Uyarı Servisi (Web Servis)` at 12,500 TL/month per item. This confirms that a distinct official web-service product exists, but does not by itself establish public access, response format, update cadence, or freshness semantics for Hava81.
+- Keep the current decision: do not scrape the public HTML or reverse-engineer an undocumented endpoint and then label the result authoritative. Revisit only after an official service specification/access path and timestamp/expiry semantics are verified; then implement a server-side, attributed adapter that fails closed on stale/unknown warning state and keeps MGM warnings distinct from Hava81 modeled guidance.
+- Official sources reviewed: https://www.mgm.gov.tr/meteouyari/turkiye.aspx ; https://www.mgm.gov.tr/meteouyari/meteouyari-nedir.aspx ; https://www.mgm.gov.tr/site/urunler.aspx?u=veriislem ; 2026 tariff PDF: https://www.mgm.gov.tr/site/urunler/veri-islem-fiyatlar-2026.pdf .
+
 ## 2026-10-24 09:33 TRT — Respect provider Retry-After without retry amplification
 
 - When OpenWeather returns HTTP 429, parse a positive delay-seconds value or a future HTTP-date `Retry-After` into a positive integer number of seconds. Ignore missing, malformed, zero, negative, past-date, or unsafe values; never copy an upstream header verbatim.
