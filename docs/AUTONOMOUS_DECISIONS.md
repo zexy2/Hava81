@@ -346,3 +346,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - The mobile chip-containment gate must compare child and container rectangles from the same synchronous browser evaluation. Two separate Playwright `boundingBox()` calls can straddle resize/text reflow and scroll anchoring, creating contradictory coordinates that look like a layout regression.
 - Keep strict containment and overflow assertions; include both rectangles and the affected chip label in failure diagnostics. Do not relax 320px/200% or 390px mobile checks to hide genuine overflow.
 - This is test-harness reliability only. It does not change production CSS, weather data, scoring, API behavior, or safety guidance.
+
+
+## 2026-10-24 20:28 TRT — Assert activity-planner header reflow at 320px / 200% text
+
+- Current `ActivityPlanner.css` already contains the mobile `flex-basis: auto` fix; the old dirty-worktree patch is superseded and should not be copied verbatim. The current `e2e/plan.spec.ts` checks expanded cards at 320px / 200% but did not explicitly assert that the sensitivity control retains the auto basis and stays inside the header.
+- Extend the existing real-browser regression to check header readability, containment of the header within the planner, containment of the sensitivity panel within the header, and the computed auto flex basis. This catches a future flex sizing regression without arbitrary pixel-height ceilings or changes to production CSS.
