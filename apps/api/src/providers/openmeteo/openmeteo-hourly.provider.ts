@@ -9,7 +9,9 @@ import type {
 } from "../weather-provider";
 
 const optionalHourlySeries = z.array(z.number().nullable()).optional();
-const providerTimestampSchema = z.number().int().nonnegative();
+// Open-Meteo uses Unix seconds; reject values that would make downstream Date(...).toISOString() throw.
+const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+const providerTimestampSchema = z.number().int().nonnegative().max(MAX_DATE_UNIX_SECONDS);
 const providerTimezoneOffsetSchema = z.number().int().min(-43_200).max(50_400);
 const supportedWeatherCodes = new Set([
   0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
