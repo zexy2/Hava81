@@ -414,3 +414,8 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - Re-ran the complete frontend suite, type-check, lint/CSS lint, build and diff checks after rebasing the source-observation timestamp fix onto `d06e30cf`, which includes the confidence-evidence change. The combined tree passed **1,089 tests across 106 files**.
 - Keep source sample time (`timestamp`/`observedAt`) authoritative for observation freshness; `fetchedAt` remains a separate retrieval/cache TTL signal. Preserve this distinction in network and persisted-cache paths. No API server deployment is needed or authorized by this client-side change.
+
+## 2026-10-24 23:58 TRT — Cached-weather E2E fixtures must be source-time fresh
+
+- A cache-suppression test must use a provider sample timestamp inside the freshness window. A fresh `fetchedAt` cannot make an old `timestamp` fresh; the observed Browser-flow failure correctly demonstrated this distinction.
+- Generate the cached fixture's sample time at test execution and keep `observedAt` fallback/sample time aligned. Preserve the test's actual assertion: a fresh localized cache suppresses the static bootstrap request. Do not weaken source-time validation or reintroduce stale-data acceptance to satisfy a stale fixture.

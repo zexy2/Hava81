@@ -31,6 +31,21 @@ const englishCachedCurrent = {
 test('localized cached city identity suppresses the static bootstrap request', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280', 'single browser bootstrap identity coverage');
 
+  // Keep the cached sample fresh at test execution time. The timestamp is
+  // provider observation time, so an old fixed fixture must trigger a refresh.
+  const sampleTime = Date.now();
+  const cachedCurrent = {
+    ...englishCachedCurrent,
+    sunrise: new Date(sampleTime - 6 * 60 * 60_000).toISOString(),
+    sunset: new Date(sampleTime + 4 * 60 * 60_000).toISOString(),
+    timestamp: new Date(sampleTime).toISOString(),
+    meta: {
+      ...englishCachedCurrent.meta,
+      fetchedAt: new Date(sampleTime).toISOString(),
+      freshForSeconds: 300,
+    },
+  };
+
   await page.addInitScript(cachedWeather => {
     window.localStorage.setItem(
       'user-settings',
@@ -45,12 +60,12 @@ test('localized cached city identity suppresses the static bootstrap request', a
       'weather_cache',
       JSON.stringify({ data: cachedWeather, timestamp: Date.now(), language: 'en' })
     );
-  }, englishCachedCurrent);
+  }, cachedCurrent);
 
   let currentRequests = 0;
   await page.route('**/api/v1/weather/current**', route => {
     currentRequests += 1;
-    return route.fulfill({ json: englishCachedCurrent });
+    return route.fulfill({ json: cachedCurrent });
   });
 
   await page.goto('/istanbul');
