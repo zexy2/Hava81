@@ -10,6 +10,7 @@ import {
   buildCityPage,
   buildHomePage,
   buildNotFoundPage,
+  buildRobotsTxt,
   buildSitemap,
   ogImagePath,
   parseProvinces,
@@ -44,7 +45,7 @@ await mkdir(join(dist, 'en'), { recursive: true });
 await writeFile(join(dist, 'en', 'index.html'), buildHomePage(baseHtml, 'en'));
 await writeFile(join(dist, '404.html'), buildNotFoundPage(baseHtml));
 await writeFile(join(dist, 'sitemap.xml'), buildSitemap(provinces));
-await writeFile(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${BASE_URL}/sitemap.xml\n`);
+await writeFile(join(dist, 'robots.txt'), buildRobotsTxt());
 console.log(
   `Generated ${provinces.length} TR + ${provinces.length} EN province pages, 2 home pages, 404 and sitemap.`
 );
