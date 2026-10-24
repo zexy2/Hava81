@@ -34,7 +34,7 @@ export const HTTP_STATUS = {
 export const RETRY_CONFIG = {
   maxRetries: config.api.maxRetries,
   retryDelay: 1000,
-  // Do not retry BFF 429s; structured PROVIDER_RATE_LIMITED 503s are excluded by error code.
+  // Structured non-retryable 503s are excluded by error code in the HTTP client.
   retryStatusCodes: [408, 500, 502, 503, 504],
 } as const;
 

@@ -1006,3 +1006,22 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Monitor main CI/CD run `40071711752`; once green, directly re-read observer state and verify root/city/API readiness, CORS, revision parity and API port 4002.
 3. Re-query PR #1427's exact head and mergeability. Merge only after all required checks remain green and production is healthy; then rebase this client branch onto the new main, preserve both append-only checkpoints, rerun the focused/full frontend gates, and use explicit `--force-with-lease` only after verifying the remote head.
 4. Keep provider quota errors non-retryable automatically on both server and client. Do not trigger the live 81-city provider gate while rate limits may be active; retain port 4001 as rollback/canary.
+
+## 2026-10-24 10:05 TRT — Avoid retries for deterministic 503 service states
+
+### Latest merged production checkpoint
+- PR #1428 (`fix(client): avoid retrying provider rate limits`) merged as `9465d4f61a19d09660b653132eaeeda66dedffd1` from exact head `4451db5d298cf2a661dd88878205e9ad8b512dd2`. Main CI/CD run `40072592765`, CodeQL `40072592757`, and Ops contracts `40072592752` succeeded. The client change is frontend-only; API revision remains `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee` on preferred port 4002.
+- Direct post-merge smoke confirmed root, `/izmir/`, and `/en/izmir/` return HTTP 200 with frontend revision `9465d4f61a19d09660b653132eaeeda66dedffd1`; API readiness returns HTTP 200 with `Cache-Control: no-store`, OpenWeather circuit closed, and API revision `bf4f0da...`; CORS preflight remains HTTP 204. A transient observer asset timeout was checked directly: all 10 referenced assets returned HTTP 200 on repeated GET/HEAD/range checks, and the next observer snapshot returned HEALTHY with no issues. No rollback criteria observed.
+- Read-only live responsive audit on production passed **40/40** variants across İzmir/Şanlıurfa, Turkish/English, light/dark, 320/390/768/1440 px and 200% zoom at 320 px. Twelve live API responses were captured, 108 safely replayed, zero uncached failures.
+
+### Independent follow-up: deterministic 503 states
+- Dedicated branch/worktree: `automation/hava81-run11-20261024-1004-nonretryable-503` / `/home/chatgpt/hava81-autonomous-20261024-0406`, based on exact current main `9465d4f61a19d09660b653132eaeeda66dedffd1` (includes merged PR #1428).
+- The browser client now excludes structured `PROVIDER_CIRCUIT_OPEN`, `UPSTREAM_BUDGET_EXHAUSTED`, and `AIR_QUALITY_HOURLY_UNAVAILABLE` 503 responses from generic automatic retries. These indicate an open circuit, exhausted process budget, or unavailable provider configuration rather than a transient transport error. Generic 503s and retryable provider transport failures keep their existing bounded retry behavior; `PROVIDER_RATE_LIMITED` remains non-retryable from PR #1428.
+- Local gates passed: HTTP client tests **33/33**, full frontend suite **1,027/1,027 across 106 files**, coverage 92.39% statements / 86% branches, frontend type-check, ESLint/CSS lint, production build (81 Turkish + 81 English province pages), and `git diff --check`. No API runtime files or weather data changed.
+- PR #1427 (`docs(research): clarify MGM warning service readiness`) was rebased onto `9465d4f...` with both the MGM 09:30 and provider Retry-After 09:33 checkpoints preserved in chronological order. New head is `d0d2d8a972b8ecb9a1b4ae43b2b0ae55566e58d9`; remote push used explicit `--force-with-lease` against the previously verified remote head `6961374a5369fc2c54053329f08e3e11e93079d7`. GitHub's PR API had not yet reflected the new head at the immediate post-push read; verify the remote head/checks again before merge.
+
+### Exact next actions
+1. Review the deterministic-503 diff, append the decision/progress checkpoint, commit/push this isolated branch and open PR #1429. Require Frontend quality, Browser flows, Lighthouse, Ops contracts and CodeQL.
+2. Confirm PR #1427's API head now matches `d0d2d8a...`; wait for fresh checks on that exact head, not the old `a263badd...`/`6961374...` heads. Merge only when all required checks are green and mergeability is clean.
+3. After PR #1427 merges, rebase PR #1429 onto the latest `origin/main`, preserve all append-only documentation checkpoints, rerun the full frontend gates, and use explicit lease checks before any force update.
+4. Keep API 4002 primary and 4001 rollback/canary. Do not run the live 81-city gate during provider rate limiting or deterministic upstream-budget exhaustion.

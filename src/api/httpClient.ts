@@ -74,6 +74,13 @@ const getRetryDelay = (retryCount: number): number => {
   return Math.min(RETRY_CONFIG.retryDelay * Math.pow(2, retryCount), MAX_RETRY_DELAY_MS);
 };
 
+const NON_RETRYABLE_HTTP_ERROR_CODES: ReadonlySet<string> = new Set([
+  'PROVIDER_RATE_LIMITED',
+  'PROVIDER_CIRCUIT_OPEN',
+  'UPSTREAM_BUDGET_EXHAUSTED',
+  'AIR_QUALITY_HOURLY_UNAVAILABLE',
+]);
+
 const getRetryAfterDelay = (response: Response, retryCount: number): number => {
   const fallbackDelay = getRetryDelay(retryCount);
   const retryAfter = response.headers.get('Retry-After')?.trim();
@@ -271,11 +278,13 @@ const fetchWithRetry = async <T>(
       clearTimeout(timeoutId);
       const errorMessage = errorBody.error?.message ?? errorBody.message;
 
-      // A provider quota response is normalized to 503, but must not trigger another
-      // automatic request. The upstream Retry-After is advisory for a later caller action.
-      const providerRateLimited = errorBody.error?.code === 'PROVIDER_RATE_LIMITED';
+      // These structured 503s represent a quota/circuit/budget/configuration state, not
+      // a transient transport failure. Preserve the error for the caller without retrying.
+      const nonRetryableErrorCode =
+        errorBody.error?.code !== undefined &&
+        NON_RETRYABLE_HTTP_ERROR_CODES.has(errorBody.error.code);
       if (
-        !providerRateLimited &&
+        !nonRetryableErrorCode &&
         (RETRY_CONFIG.retryStatusCodes as readonly number[]).includes(response.status) &&
         retryState.count < retries
       ) {

@@ -562,6 +562,35 @@ describe('httpClient BFF transport', () => {
     }
   });
 
+  it.each(['PROVIDER_CIRCUIT_OPEN', 'UPSTREAM_BUDGET_EXHAUSTED', 'AIR_QUALITY_HOURLY_UNAVAILABLE'])(
+    'does not automatically retry deterministic service state %s',
+    async code => {
+      vi.useFakeTimers();
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      try {
+        (global.fetch as Mock)
+          .mockResolvedValueOnce(
+            mockResponse(
+              { error: { code, message: `${code} is not immediately retryable` } },
+              { ok: false, status: 503 }
+            )
+          )
+          .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+        const request = httpClient.get('/weather/current', { city: 'Bursa' });
+        const rejection = expect(request).rejects.toMatchObject({
+          statusCode: 503,
+          message: `${code} is not immediately retryable`,
+        });
+        await vi.advanceTimersByTimeAsync(30_000);
+        await rejection;
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    }
+  );
+
   it('caps an excessive Retry-After hint at the existing retry-delay maximum', async () => {
     vi.useFakeTimers();
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
