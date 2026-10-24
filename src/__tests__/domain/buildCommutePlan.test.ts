@@ -143,6 +143,43 @@ describe('buildCommutePlan', () => {
     expect(plan?.primaryAdvice).toBe('umbrella-take');
   });
 
+  it('keeps umbrella advice and rain-change comparison unknown when both windows lack rain evidence', () => {
+    const hourly = [
+      { ...point('2026-08-29T09:00:00Z', 22, Number.NaN), precipitationMm: undefined },
+      { ...point('2026-08-29T12:00:00Z', 22, Number.NaN), precipitationMm: undefined },
+    ] as HourlyForecast[];
+
+    const plan = buildCommutePlan({
+      hourly,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+    });
+
+    expect(plan?.umbrella).toBe('unknown');
+    expect(plan?.primaryAdvice).toBe('umbrella-unknown');
+    expect(plan?.change).toBe('precipitation-unknown');
+  });
+
+  it('does not claim no umbrella is needed when one commute window lacks rain evidence', () => {
+    const hourly = [
+      { ...point('2026-08-29T09:00:00Z', 22, 0), precipitationMm: 0 },
+      { ...point('2026-08-29T12:00:00Z', 22, Number.NaN), precipitationMm: undefined },
+    ] as HourlyForecast[];
+
+    const plan = buildCommutePlan({
+      hourly,
+      commuteStart: '12:00',
+      commuteEnd: '15:00',
+      timezoneOffsetSeconds: 3 * 60 * 60,
+      now: new Date('2026-08-29T06:00:00Z'),
+    });
+
+    expect(plan?.umbrella).toBe('unknown');
+    expect(plan?.change).toBe('precipitation-unknown');
+  });
+
   it('fails closed instead of inventing calm wind when a matched commute point has no wind data', () => {
     const hourly = [
       point('2026-08-29T09:00:00Z', 22, 0),

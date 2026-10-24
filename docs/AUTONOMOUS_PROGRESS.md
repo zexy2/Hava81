@@ -1137,3 +1137,22 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Commit/push this isolated branch and open a focused PR only after local gates pass. Require fresh exact-head Frontend quality, Browser flows, Lighthouse, Ops contracts and CodeQL checks.
 4. Before merge, refresh `/usr/local/bin/hava81-worker-status` and directly verify PR head/checks/mergeability plus production root/city/readiness/CORS/revision parity. Keep API 4002 primary and 4001 rollback/canary; do not run an API build or broad cleanup while disk headroom is constrained.
 5. Continue independent work while CI runs; do not mutate either branch after opening its PR.
+
+## 2026-10-24 18:05 TRT — Preserve unknown precipitation in commute and route guidance
+
+### Production baseline and infrastructure access
+- Fresh read-only observer snapshot: `collected_at=2026-10-24T14:59:38.518192Z`; production healthy, root/city frontend revision parity `32c6237dba8d`, API readiness HTTP 200 with `no-store`, CORS correct, API port 4002 primary, main CI/CD run #3511 green. Direct smoke immediately afterward returned HTTP 200 for root, Turkish city, English city and API readiness; CORS preflight returned HTTP 204 with the expected origin/method/header values. No production change was made.
+- SentinelX was explicitly queried for `/var/lib/hava81-worker/state.json`, `/usr/local/bin/hava81-worker-status`, and recent worker events, but the enrolled host `host_90d87ce4d01f4ca6` is offline (last connected `2026-09-27T13:56:34Z`). Zeki SSH Gateway lists only its local `nexus-hermes` host, not the Oracle VM. Therefore direct Oracle-side worker/log inspection, disk operations, deploys and rollback actions are currently blocked; do not substitute the local gateway for the Oracle host or perform speculative server changes. GitHub/local work continues.
+- Disk remains at 91.7% used with ~8.0 GiB free and API build headroom is explicitly low. No API build or cleanup was attempted.
+
+### Bounded commute/route evidence fix
+- Worktree `/home/chatgpt/hava81-run11-commute-evidence-20261024-1700`, branch `automation/hava81-run11-commute-evidence-20261024-1700`, exact base `origin/main` `32c6237dba8de5faf46d3ae91c560ec9f6b7e3ca`.
+- Commute planning now keeps missing/invalid probability and amount evidence unknown, emits an explicit unknown umbrella decision instead of “no umbrella needed”, and avoids comparing a known rain window against an unknown window as if the difference were real. Route segments likewise show a localized unknown state when neither probability nor amount is usable. Valid zero and amount-only evidence remain supported; no provider values or scoring thresholds changed.
+- Validation passed: focused commute/route tests, TypeScript check, ESLint/CSS lint, `git diff --check`, full frontend Vitest **1,048/1,048 across 106 files** (run with `--maxWorkers=2` to avoid unrelated 5-second test timeouts under parallel load), production frontend build (81 TR + 81 EN province pages, 2 home pages, 404/sitemap, CSP and service-worker stamping), and `npm audit --omit=dev --audit-level=high` (**0 vulnerabilities**). No API build or production deploy was performed.
+
+### Pending PR and exact next actions
+1. PR #1437, head SHA `ef423185524b1af1c362b9f5ded4e47a62254212`, CI/CD run #3512 / run ID `40105108487`, was queued/in progress at the last direct query. Do not mutate its branch. Re-query exact-head checks and mergeability; merge only when all required gates are green, then monitor main deploy and smoke-test production.
+2. Review the commute/route diff and append-only docs, commit/push this isolated branch, and open a separate focused PR. Record its resulting commit SHA and CI run IDs in the next checkpoint.
+3. Rebase the commute/route branch onto the post-PR-#1437 main only after reading the new remote head. Preserve both append-only progress/decision checkpoints and use explicit `--force-with-lease` only if history actually changed.
+4. Before any merge/deploy/rollback, re-read worker state directly and verify exact PR head/checks/mergeability. Oracle access remains blocked until the SentinelX agent reconnects or a configured SSH target for the Oracle host is restored; keep API port 4002 primary and 4001 rollback/canary.
+5. Continue independent work while hosted CI/deploy is pending; do not stop at a green or queued PR.

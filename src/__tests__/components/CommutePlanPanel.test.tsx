@@ -153,6 +153,27 @@ describe('CommutePlanPanel', () => {
     expect(screen.queryByText('Ekstra hava hazırlığı gerekmiyor')).not.toBeInTheDocument();
   });
 
+  it('shows unknown precipitation and does not give dry umbrella advice when rain evidence is missing', () => {
+    const unknownRain = [
+      { time: new Date('2026-08-29T09:00:00Z'), temp: 22, pop: Number.NaN, windSpeed: 3, icon: '01d' as const },
+      { time: new Date('2026-08-29T12:00:00Z'), temp: 22, pop: Number.NaN, windSpeed: 3, icon: '01d' as const },
+    ] as HourlyForecast[];
+
+    render(
+      <SettingsProvider>
+        <CommutePlanPanel weather={weather} hourly={unknownRain} forecastMeta={freshForecastMeta()} />
+      </SettingsProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '12:00' } });
+    fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
+
+    expect(screen.getAllByText('Yağış verisi yok')).toHaveLength(2);
+    expect(screen.getByRole('status')).toHaveTextContent('Yağış verisi yok; şemsiye kararı verilemiyor');
+    expect(screen.getByRole('status')).toHaveTextContent('Yağış verisi bir veya iki pencerede yok');
+    expect(screen.getByRole('status')).not.toHaveTextContent('Tahmine göre gerek görünmüyor');
+  });
+
   it('shows measurable rain amount instead of saying precipitation is not expected at 0%', () => {
     const measurableRain: HourlyForecast[] = [
       {

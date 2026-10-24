@@ -377,6 +377,7 @@ export const tr = {
       preparation: {
         'umbrella-take': 'Şemsiyeyi al',
         'umbrella-consider': 'Şemsiye yanında olsun',
+        'umbrella-unknown': 'Yağış verisi yok; şemsiye kararı verilemiyor',
         heat: 'Hissedilen {{temperature}}{{temperatureUnit}}; su ve gölge planla',
         cold: 'Hissedilen {{coldTemperature}}{{temperatureUnit}}; daha sıcak giyin',
         'strong-wind': 'Rüzgâr/hamle {{wind}} {{windUnit}}; açık alanda dikkat',
@@ -392,6 +393,8 @@ export const tr = {
       },
       change: {
         'rain-increase': 'Dönüşte yağmur riski çıkışa göre yaklaşık {{value}} puan artıyor.',
+        'precipitation-unknown':
+          'Yağış verisi bir veya iki pencerede yok; yağış değişimi karşılaştırılamıyor.',
         'rain-amount-increase':
           'Dönüşte saatlik yağış miktarı çıkışa göre yaklaşık {{value}} mm artıyor.',
         'strong-wind': 'Çıkış veya dönüş penceresinde kuvvetli rüzgâr görünüyor.',
@@ -410,6 +413,7 @@ export const tr = {
       feelsLike: 'Hissedilen',
       rain: 'Yağış',
       noRain: 'Beklenmiyor',
+      precipitationUnknown: 'Yağış verisi yok',
       wind: 'Rüzgâr',
       empty: 'İki saati de seçtiğinde Hava81 bir sonraki çıkış–dönüş çiftini karşılaştıracak.',
       incomplete: 'Planı hesaplamak için çıkış ve dönüş saatini birlikte seç.',
@@ -577,6 +581,7 @@ export const tr = {
         'Bu rota tahmininin güncelliği doldu. Güncel koşullar için koridoru tekrar kontrol et.',
       error: 'Rota hava verisi alınamadı.',
       noRain: 'Yağış yok',
+      precipitationUnknown: 'Yağış verisi yok',
     },
   },
   navigation: {
