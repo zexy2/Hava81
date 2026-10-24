@@ -45,6 +45,44 @@ describe('getNextChange', () => {
     expect(change.kind).toBe('rainStops');
     expect(change.time?.toISOString()).toBe('2026-10-21T14:00:00.000Z');
   });
+  it('uses valid amount-only evidence when precipitation probability is unavailable', () => {
+    const forecast = hours([[15, 0], [15, 0]]);
+    forecast[0]!.pop = Number.NaN;
+    forecast[1]!.pop = Number.NaN;
+    forecast[0]!.precipitationMm = 0;
+    forecast[1]!.precipitationMm = 0.4;
+
+    const change = getNextChange(forecast, 15, now, false);
+    expect(change.kind).toBe('rainStarts');
+    expect(change.time?.toISOString()).toBe('2026-10-21T14:00:00.000Z');
+  });
+
+  it('does not let a below-threshold probability hide a positive amount', () => {
+    const forecast = hours([[15, 0], [15, 0]]);
+    forecast[0]!.precipitationMm = 0;
+    forecast[1]!.precipitationMm = 0.2;
+
+    const change = getNextChange(forecast, 15, now, false);
+    expect(change.kind).toBe('rainStarts');
+    expect(change.time?.toISOString()).toBe('2026-10-21T14:00:00.000Z');
+  });
+
+  it('uses a valid zero amount as dry evidence and ignores invalid amounts', () => {
+    const forecast = hours([[15, 0], [15, 0]]);
+    forecast[0]!.pop = Number.NaN;
+    forecast[1]!.pop = Number.NaN;
+    forecast[0]!.precipitationMm = 0.4;
+    forecast[1]!.precipitationMm = 0;
+
+    const change = getNextChange(forecast, 15, now, true);
+    expect(change.kind).toBe('rainStops');
+    expect(change.time?.toISOString()).toBe('2026-10-21T14:00:00.000Z');
+
+    forecast[0]!.precipitationMm = -0.1;
+    forecast[1]!.precipitationMm = Number.NaN;
+    expect(getNextChange(forecast, 15, now, true).kind).toBe('steady');
+  });
+
   it('reports a cooling swing of 3 degrees', () => {
     const change = getNextChange(
       hours([
