@@ -171,7 +171,10 @@ export class WeatherService {
 
   private normalizeForecast(raw: ForecastUpstream): ForecastDto {
     const timezoneOffsetSeconds = raw.city.timezone;
-    const hourly = raw.list.slice(0, 16).map(item => ({
+    // The provider contract is chronological, but keep the public series stable if an
+    // upstream payload arrives out of order. Sort a copy so provider-owned data is untouched.
+    const chronologicalItems = [...raw.list].sort((left, right) => left.dt - right.dt);
+    const hourly = chronologicalItems.slice(0, 16).map(item => ({
       time: new Date(item.dt * 1_000).toISOString(),
       temp: Math.round(item.main.temp),
       icon: item.weather[0].icon,
@@ -181,7 +184,7 @@ export class WeatherService {
     }));
 
     const dailyGroups = new Map<string, ForecastUpstream['list']>();
-    for (const item of raw.list) {
+    for (const item of chronologicalItems) {
       const dateKey = dateKeyAtOffset(item.dt, timezoneOffsetSeconds);
       const group = dailyGroups.get(dateKey) ?? [];
       group.push(item);

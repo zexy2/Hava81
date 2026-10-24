@@ -411,6 +411,52 @@ test('forecast and air-quality endpoints normalize provider data', async (contex
   assert.equal(provider.airQualityCalls, 2);
 });
 
+test('forecast normalization sorts out-of-order provider samples without mutating the upstream list', async (context) => {
+  const provider = new FakeWeatherProvider();
+  const timestamps = [
+    Date.parse('2026-10-26T09:00:00.000Z') / 1_000,
+    Date.parse('2026-10-25T12:00:00.000Z') / 1_000,
+    Date.parse('2026-10-25T09:00:00.000Z') / 1_000,
+  ];
+  const upstreamItems = timestamps.map((dt, index) => {
+    const base = forecastFixture.list[0];
+    return {
+      ...base,
+      dt,
+      dt_txt: new Date(dt * 1_000).toISOString().replace('T', ' ').slice(0, 19),
+      main: { ...base.main, temp: 18 + index },
+    };
+  });
+  provider.getForecast = async () => ({ ...forecastFixture, list: upstreamItems });
+
+  const app = await buildApp({ env: createEnv(), provider, logger: false });
+  context.after(() => app.close());
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/api/v1/weather/forecast?lat=41.01&lon=28.97',
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    response.json().hourly.map((item: { time: string }) => item.time),
+    [
+      '2026-10-25T09:00:00.000Z',
+      '2026-10-25T12:00:00.000Z',
+      '2026-10-26T09:00:00.000Z',
+    ],
+  );
+  assert.deepEqual(
+    response.json().hourly.map((item: { temp: number }) => item.temp),
+    [20, 19, 18],
+  );
+  assert.deepEqual(
+    response.json().daily.map((item: { date: string }) => item.date),
+    ['2026-10-25', '2026-10-26'],
+  );
+  assert.deepEqual(upstreamItems.map(item => item.dt), timestamps);
+});
+
 test('hourly forecast endpoint exposes real one-hour cadence metadata and caches it', async (context) => {
   const hourlyProvider = new FakeHourlyForecastProvider();
   const app = await buildApp({
