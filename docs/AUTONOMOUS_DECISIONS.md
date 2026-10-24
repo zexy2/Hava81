@@ -403,3 +403,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - `timestamp` in the current-weather payload is the source sample time; `meta.fetchedAt` is a retrieval/cache time and is not evidence that the sample itself is fresh. Because the current BFF omits `meta.observedAt`, normalize it from `timestamp` at the frontend boundary and do the same for persisted-cache restoration. Otherwise a three-hour-old provider sample with a newly fetched envelope can be presented as current.
 - Reject malformed/future source timestamps and metadata that disagrees materially with the payload timestamp. Keep stale samples explicitly stale rather than inventing freshness, and do not change the API response contract or run an API production build for this frontend-only fix.
+
+## 2026-10-24 23:50 TRT — Source observation time outranks fresh retrieval metadata
+
+- For current weather, use the provider payload `timestamp` as the observation-time fallback when the BFF omits `meta.observedAt`. `meta.fetchedAt` is retrieval/cache metadata and must not make an older sample look current.
+- Reject malformed explicit observation times, materially future values, or values that disagree with the payload sample time by more than the one-minute contract tolerance. Apply the same rule to persisted-cache restoration so cached and network paths agree.
+- This is a frontend/client data-integrity fix; it does not alter provider output, the API response contract, scoring, hazard thresholds, official MGM warning semantics, or server deployment. Re-run all frontend gates on the exact rebased tree before opening a PR.
