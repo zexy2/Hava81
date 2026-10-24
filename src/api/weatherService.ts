@@ -30,7 +30,6 @@ import type {
   RouteWeatherResult,
 } from '../types';
 
-type SerializedMeta = Omit<WeatherDataMeta, 'fetchedAt'> & { fetchedAt: string };
 type SerializedCurrentMeta = Omit<CurrentWeatherMeta, 'fetchedAt'> & { fetchedAt: string };
 type SerializedWeatherData = Omit<
   NormalizedWeatherData,
@@ -60,7 +59,11 @@ type SerializedHourlyForecast = {
   meta: Omit<ForecastMeta, 'fetchedAt'> & { fetchedAt: string };
 };
 
-type SerializedAirQuality = Omit<AirQuality, 'meta'> & { meta: SerializedMeta };
+type SerializedAirQualityMeta = Omit<WeatherDataMeta, 'fetchedAt'> & {
+  fetchedAt: string;
+  observedAt?: string;
+};
+type SerializedAirQuality = Omit<AirQuality, 'meta'> & { meta: SerializedAirQualityMeta };
 
 type BootstrapWeatherRequest = {
   city: string;
@@ -516,6 +519,12 @@ const validateAirQualityPayload = (data: SerializedAirQuality): AirQuality => {
     'airQuality.meta.provider'
   );
   invalid(
+    data.meta?.observedAt !== undefined &&
+      (typeof data.meta.observedAt !== 'string' ||
+        Number.isNaN(new Date(data.meta.observedAt).getTime())),
+    'airQuality.meta.observedAt'
+  );
+  invalid(
     data.meta?.freshForSeconds !== undefined &&
       (!isFiniteNumber(data.meta.freshForSeconds) ||
         data.meta.freshForSeconds <= 0 ||
@@ -661,10 +670,17 @@ const takeBootstrapHourly = (
   });
 };
 
-const reviveAirQualityMeta = (meta: SerializedMeta): WeatherDataMeta => ({
-  ...meta,
-  fetchedAt: reviveWeatherDate(meta.fetchedAt, 'airQuality.meta.fetchedAt'),
-});
+const reviveAirQualityMeta = (meta: SerializedAirQualityMeta): AirQuality['meta'] => {
+  const { observedAt, ...rest } = meta;
+  const revived: AirQuality['meta'] = {
+    ...rest,
+    fetchedAt: reviveWeatherDate(meta.fetchedAt, 'airQuality.meta.fetchedAt'),
+  };
+  if (observedAt !== undefined) {
+    revived.observedAt = reviveWeatherDate(observedAt, 'airQuality.meta.observedAt');
+  }
+  return revived;
+};
 
 const reviveCurrentMeta = (meta: SerializedCurrentMeta): CurrentWeatherMeta => ({
   ...meta,

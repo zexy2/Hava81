@@ -1085,13 +1085,21 @@ describe('weatherService BFF client', () => {
       pm25: 5,
       pm10: 8,
       o3: 20,
-      meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:01.000Z' },
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: '2026-07-14T12:00:01.000Z',
+        observedAt: '2026-07-14T11:00:00.000Z',
+      },
     };
     mockGet.mockResolvedValue(airQuality);
 
     await expect(weatherService.getAirQuality(38.42, 27.14)).resolves.toMatchObject({
       ...airQuality,
-      meta: { provider: 'OpenWeather', fetchedAt: new Date('2026-07-14T12:00:01.000Z') },
+      meta: {
+        provider: 'OpenWeather',
+        fetchedAt: new Date('2026-07-14T12:00:01.000Z'),
+        observedAt: new Date('2026-07-14T11:00:00.000Z'),
+      },
     });
     expect(mockGet).toHaveBeenCalledWith('/weather/air-quality', {
       lat: 38.42,
@@ -1128,6 +1136,7 @@ describe('weatherService BFF client', () => {
     ['blank label', { aqiLabel: '   ' }],
     ['blank provider', { meta: { provider: '   ', fetchedAt: '2026-07-14T12:00:01.000Z' } }],
     ['invalid metadata timestamp', { meta: { provider: 'OpenWeather', fetchedAt: 'invalid' } }],
+    ['invalid source observation timestamp', { meta: { provider: 'OpenWeather', fetchedAt: '2026-07-14T12:00:01.000Z', observedAt: 'invalid' } }],
   ])('rejects impossible air-quality %s from the BFF', async (_label, invalidField) => {
     mockGet.mockResolvedValue({
       aqi: 1,

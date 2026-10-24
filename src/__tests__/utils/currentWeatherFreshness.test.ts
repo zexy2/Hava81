@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CurrentWeatherMeta } from '../../types';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 
-const meta = (overrides: Partial<CurrentWeatherMeta> = {}): CurrentWeatherMeta => ({
+const meta = (
+  overrides: Partial<CurrentWeatherMeta & { observedAt?: Date | string }> = {}
+): CurrentWeatherMeta & { observedAt?: Date | string } => ({
   provider: 'OpenWeather',
   fetchedAt: new Date('2026-09-02T00:00:00Z'),
   timezoneOffsetSeconds: 10_800,
@@ -70,5 +72,35 @@ describe('getCurrentWeatherFreshness', () => {
       ageMinutes: null,
       expiresInMs: null,
     });
+  });
+});
+
+describe('source observation age', () => {
+  it('does not call an old current AQI sample fresh just because it was fetched recently', () => {
+    const now = Date.parse('2026-09-02T00:00:00Z');
+    expect(
+      getCurrentWeatherFreshness(
+        meta({
+          fetchedAt: new Date(now - 1_000),
+          observedAt: new Date(now - 2 * 60 * 60_000 - 1),
+          freshForSeconds: 300,
+        }),
+        now
+      )
+    ).toMatchObject({ fresh: false, status: 'stale', ageMinutes: 120, expiresInMs: null });
+  });
+
+  it('schedules expiry at the source-age boundary when it comes before cache expiry', () => {
+    const now = Date.parse('2026-09-02T00:00:00Z');
+    expect(
+      getCurrentWeatherFreshness(
+        meta({
+          fetchedAt: new Date(now - 1_000),
+          observedAt: new Date(now - 2 * 60 * 60_000),
+          freshForSeconds: 300,
+        }),
+        now
+      )
+    ).toMatchObject({ fresh: true, status: 'fresh', ageMinutes: 120, expiresInMs: 100 });
   });
 });

@@ -63,6 +63,8 @@ export type AirQualityQueryInput = z.infer<typeof airQualityQuerySchema>;
 export interface DataMetaDto {
   provider: string;
   fetchedAt: string;
+  /** Original provider sample time, distinct from the time this server fetched it. */
+  observedAt?: string;
   timezoneOffsetSeconds?: number;
   intervalHours?: number;
   attribution?: string;

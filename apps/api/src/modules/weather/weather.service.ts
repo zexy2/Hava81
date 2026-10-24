@@ -149,7 +149,11 @@ export class WeatherService {
 
     return this.cache.getOrLoad(key, this.config.CACHE_AIR_QUALITY_TTL_MS, async () => {
       const raw = await this.provider.getAirQuality(query);
-      const sample = raw.list[0];
+      // Current AQI responses are arrays. Choose the newest provider sample rather than
+      // assuming array order, and keep its source timestamp separate from our fetch time.
+      const sample = raw.list.reduce((latest, candidate) =>
+        candidate.dt > latest.dt ? candidate : latest,
+      );
       const labels =
         query.lang === 'en'
           ? ['', 'Good', 'Fair', 'Moderate', 'Poor', 'Very Poor']
@@ -164,6 +168,7 @@ export class WeatherService {
         meta: {
           provider: this.provider.name ?? 'weather-provider',
           fetchedAt: new Date().toISOString(),
+          observedAt: new Date(sample.dt * 1_000).toISOString(),
         },
       };
     });
