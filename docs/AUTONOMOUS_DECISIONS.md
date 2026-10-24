@@ -175,3 +175,11 @@ Reviewing an open PR is not a reason to merge it when its base is several commit
 **Decision:** Treat OpenWeather `main.pressure` as hPa and accept a deliberately broad 100–1,200 hPa envelope for both current observations and forecast entries. Values outside this envelope fail provider schema validation; they are not converted to zero or displayed as a plausible reading.
 
 **Why:** A positive-only schema allows extreme finite values (for example, 1,000,000 hPa) through to the client. The broad range covers ordinary terrestrial surface pressure and high-altitude observations while blocking malformed payloads. Current and forecast share the same main-weather schema, so one bound and paired regressions keep their behavior aligned.
+
+## 2026-10-24 04:22 TRT — Keep alert delivery active; defer the rest of Planla
+
+**Decision:** On the initial Today view, keep `DecisionAlertsPanel` mounted so opted-in notification delivery continues, but do not mount the larger Planla-only panels until the user first opens Planla. After the first visit, leave those panels mounted while hidden so user selections and route form state persist across view changes.
+
+**Why:** Production mobile Lighthouse measured 520 ms TBT and 3.3 s LCP, and its critical request chain loaded five Planla-only chunks while the Today view was visible. The local build after gating those chunks loaded none of them on the initial city view and measured 60 ms TBT / 2.7 s LCP with a Lighthouse performance score of 95. These local results are directional evidence only; production improvement must be confirmed after a green merge/deploy.
+
+**Guardrails:** Do not defer the alert engine or change notification semantics. Direct `?view=plan` entry and score-explanation navigation must load Planla immediately. Once opened, activity choices and route-form state must survive switching back to Today. Regression tests cover those contracts.

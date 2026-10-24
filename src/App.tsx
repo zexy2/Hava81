@@ -56,6 +56,10 @@ const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<AtlasNavItem>(initialView);
   const currentView = resolveAtlasView(activeNav, showMap);
   const isPlanView = currentView === 'plan';
+  // Plan-only UI chunks stay off the first-viewport critical path until the user
+  // opens Planla. Once opened, keep them mounted while hidden so choices and
+  // route form state survive switching back to Today.
+  const [hasOpenedPlan, setHasOpenedPlan] = useState(initialView === 'plan');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchToggleRef = useRef<HTMLButtonElement>(null);
@@ -257,6 +261,7 @@ const App: React.FC = () => {
       }
 
       if (item === 'plan') {
+        setHasOpenedPlan(true);
         setShowMap(false);
         setActiveNav('plan');
         requestAnimationFrame(() => {
@@ -292,6 +297,7 @@ const App: React.FC = () => {
 
   // "Skorun nedenini gör" in the decision summary: the explanation lives in Planla now.
   const openScoreDetails = useCallback(() => {
+    setHasOpenedPlan(true);
     setShowMap(false);
     setActiveNav('plan');
     let attempts = 0;
@@ -633,8 +639,8 @@ const App: React.FC = () => {
                   </>
                 )}
 
-                {/* Planla stays mounted (hidden) on Today so alert notifications, activity
-                    choices and the route form keep working and keep their state. */}
+                {/* Keep alert delivery active on Today. The larger Planla panels mount on
+                    first visit, then stay mounted while hidden so their state survives. */}
                 <section
                   className="atlas-plan-view"
                   id="atlas-plan-view"
@@ -673,7 +679,7 @@ const App: React.FC = () => {
                       )}
                     </div>
                   )}
-                  {forecast.hourly.length > 0 && (
+                  {hasOpenedPlan && forecast.hourly.length > 0 && (
                     <Suspense fallback={null}>
                       <DailyPlanPanel
                         weather={weather}
@@ -685,7 +691,7 @@ const App: React.FC = () => {
                     </Suspense>
                   )}
 
-                  {forecast.hourly.length > 0 && (
+                  {hasOpenedPlan && forecast.hourly.length > 0 && (
                     <Suspense fallback={null}>
                       <CommutePlanPanel
                         weather={weather}
@@ -695,7 +701,7 @@ const App: React.FC = () => {
                     </Suspense>
                   )}
 
-                  {forecast.hourly.length > 0 && (
+                  {hasOpenedPlan && forecast.hourly.length > 0 && (
                     <Suspense fallback={null}>
                       <ActivityPlanner
                         weather={weather}
@@ -707,7 +713,7 @@ const App: React.FC = () => {
                     </Suspense>
                   )}
 
-                  {forecast.contextSignals && (
+                  {hasOpenedPlan && forecast.contextSignals && (
                     <Suspense fallback={null}>
                       <ContextSignalsPanel
                         signals={forecast.contextSignals}
@@ -728,9 +734,11 @@ const App: React.FC = () => {
                     </Suspense>
                   )}
 
-                  <Suspense fallback={null}>
-                    <RouteWeatherPanel currentCityName={weather.cityName} />
-                  </Suspense>
+                  {hasOpenedPlan && (
+                    <Suspense fallback={null}>
+                      <RouteWeatherPanel currentCityName={weather.cityName} />
+                    </Suspense>
+                  )}
                 </section>
               </div>
             )}
