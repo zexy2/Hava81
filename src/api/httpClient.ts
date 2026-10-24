@@ -26,7 +26,6 @@ export interface HttpRequestOptions {
   retries?: number;
 }
 
-
 interface InFlightGet {
   promise: Promise<unknown>;
   controller: AbortController;
@@ -157,8 +156,7 @@ const getProviderEvidenceExpiry = (data: unknown, now: number): number | null =>
       ? (record.meta as Record<string, unknown>)
       : null;
   const evidence =
-    nestedMeta &&
-    (nestedMeta.fetchedAt !== undefined || nestedMeta.freshForSeconds !== undefined)
+    nestedMeta && (nestedMeta.fetchedAt !== undefined || nestedMeta.freshForSeconds !== undefined)
       ? nestedMeta
       : record;
 
@@ -264,7 +262,7 @@ const fetchWithRetry = async <T>(
     // Handle non-OK responses. Keep the request timeout active while reading the body too;
     // fetch() resolves after headers, so clearing it here would leave response.json() unbounded.
     if (!response.ok) {
-      let errorBody: { error?: { message?: string }; message?: string } = {};
+      let errorBody: { error?: { code?: string; message?: string }; message?: string } = {};
       try {
         errorBody = await response.json();
       } catch (error) {
@@ -273,8 +271,11 @@ const fetchWithRetry = async <T>(
       clearTimeout(timeoutId);
       const errorMessage = errorBody.error?.message ?? errorBody.message;
 
-      // Check if this is a retryable status
+      // A provider quota response is normalized to 503, but must not trigger another
+      // automatic request. The upstream Retry-After is advisory for a later caller action.
+      const providerRateLimited = errorBody.error?.code === 'PROVIDER_RATE_LIMITED';
       if (
+        !providerRateLimited &&
         (RETRY_CONFIG.retryStatusCodes as readonly number[]).includes(response.status) &&
         retryState.count < retries
       ) {
