@@ -466,3 +466,11 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Re-evaluate the expiry timer whenever the refresh revision changes. If a refresh fails, remaining province samples must still expire on their own timestamps; a failed request or fresh retrieval metadata must never extend the old observation's lifetime.
 - Refresh the optional province layer every 30 minutes and when the tab becomes visible, while retaining the existing three-hour source-age ceiling and one-minute future-skew guard. Hide only stale province temperatures/attribution; do not blank unrelated city weather or fabricate replacements.
 - This is a frontend data-integrity change. It does not alter provider values, forecast data, map tile routing, scoring, official MGM warning semantics, API contracts, or production deployment. Require exact-head hosted build, browser-flow and Lighthouse gates before merge.
+
+
+## 2026-10-25 02:23 TRT — Validate static SEO contracts across the whole province catalogue
+
+- The production static site is generated for 81 Turkish and 81 English province URLs. Testing only Istanbul can miss a duplicate title, bad slug/canonical, malformed alternate link or missing per-province OG path elsewhere in the catalogue.
+- Keep a builder-level regression that iterates every province in both languages and checks uniqueness, self-canonical metadata, social URL parity, hreflang pairs and structured-data presence. This complements the sitemap parser test and the generator's existing fail-closed checks for missing OG assets.
+- Generate robots.txt through a pure builder so its separate directive lines and absolute sitemap URL are unit-testable. Preserve the current emitted format; this is a regression guard, not a change to crawl policy.
+- Production crawl results are an observation, not a substitute for tests: all 164 sitemap URLs returned 200 and had matching canonical/OG URLs, language and hreflang in the baseline audit. Hosted CI remains the authority for production build, browser and Lighthouse gates.

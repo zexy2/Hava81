@@ -4,6 +4,7 @@ import {
   BASE_URL,
   HOME_COPY,
   buildCityPage,
+  buildRobotsTxt,
   buildHomePage,
   buildNotFoundPage,
   buildSitemap,
@@ -153,6 +154,46 @@ describe('English copy parity with the app', () => {
 });
 
 describe('home, 404, sitemap and build stamp', () => {
+  it.each(['tr', 'en'] as const)(
+    'builds unique self-canonical SEO metadata for all 81 %s province pages',
+    lang => {
+      const titles = new Set<string>();
+      for (const province of provinces) {
+        const path = lang === 'en' ? `/en/${province.slug}/` : `/${province.slug}/`;
+        const doc = parse(buildCityPage(baseHtml, province, provinces, lang));
+        const copy = cityCopy(province, lang);
+        const canonical = `${BASE_URL}${path}`;
+
+        expect(doc.documentElement.lang).toBe(lang);
+        expect(doc.title).toBe(copy.title);
+        expect(titles.has(doc.title)).toBe(false);
+        titles.add(doc.title);
+        expect(attr(doc, 'link[rel="canonical"]', 'href')).toBe(canonical);
+        expect(attr(doc, 'meta[name="description"]')).toBe(copy.description);
+        expect(attr(doc, 'meta[property="og:url"]')).toBe(canonical);
+        expect(attr(doc, 'meta[property="og:title"]')).toBe(copy.title);
+        expect(attr(doc, 'meta[property="og:description"]')).toBe(copy.description);
+        expect(attr(doc, 'link[hreflang="tr"]', 'href')).toBe(`${BASE_URL}/${province.slug}/`);
+        expect(attr(doc, 'link[hreflang="en"]', 'href')).toBe(`${BASE_URL}/en/${province.slug}/`);
+        expect(attr(doc, 'link[hreflang="x-default"]', 'href')).toBe(`${BASE_URL}/${province.slug}/`);
+        expect(attr(doc, 'meta[property="og:image"]')).toBe(`${BASE_URL}/og/${province.slug}.jpg`);
+        expect(doc.querySelector('script[type="application/ld+json"]')).not.toBeNull();
+      }
+      expect(titles.size).toBe(81);
+    }
+  );
+
+  it('writes robots directives on separate lines and references the absolute sitemap URL', () => {
+    const robots = buildRobotsTxt();
+    expect(robots.split(/\r?\n/)).toEqual([
+      'User-agent: *',
+      'Allow: /',
+      `Sitemap: ${BASE_URL}/sitemap.xml`,
+      '',
+    ]);
+    expect(robots).not.toContain('\\n');
+  });
+
   it('builds the English home page with hreflang and keeps no weather bootstrap on home pages', () => {
     const doc = parse(buildHomePage(baseHtml, 'en'));
     expect(doc.documentElement.lang).toBe('en');

@@ -1546,3 +1546,21 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. While hosted CI is pending, continue independent frontend work in another clean worktree. Do not mutate this PR branch from a second workstream.
 4. After merge, observe the main pipeline and smoke `/`, `/istanbul/`, `/en/istanbul/`, API readiness/health and CORS; confirm frontend revision parity. Keep API port 4002 primary and 4001 as rollback/canary.
 5. Keep API-runtime deployment blocked until SentinelX reconnects to the enrolled Oracle host and fresh host/disk/build-headroom checks pass. Do not delete unknown caches or disable/pause the hourly automation.
+
+
+## 2026-10-25 02:23 TRT — Static SEO contracts now cover all province pages
+
+- Dedicated worktree: `/home/chatgpt/hava81-run11-seo-locale-meta-20261025-0215`; branch `automation/hava81-run11-seo-locale-meta-20261025-0215`; base SHA `b73c2babddee65154d7e6b4144b6343a2eb1f0db` (merge of PR #1456). This workstream is isolated from the merged map-freshness branch and the preserved dirty UI/docs worktree.
+- A production crawl of all **164 unique sitemap URLs** returned HTTP 200 for every page, valid sitemap XML, and zero canonical, `og:url`, language, or `hreflang` mismatches; all 81 province OG-image paths were present in metadata. Titles measured 33–48 characters and descriptions 153–173 characters. This audit was against the previously deployed static site before the #1456 main deploy finished.
+- Extracted the existing robots.txt output into the pure `buildRobotsTxt()` builder without changing the published text. Added a newline/sitemap contract test plus an exhaustive builder test for all 81 Turkish and all 81 English province pages: unique titles, self-canonical URLs, descriptions, social URLs, hreflang pairs, OG-image paths and structured data.
+- Validation: city-page generator tests **27/27**; full frontend suite **1,109/1,109 across 108 files**; TypeScript, ESLint + CSS lint, `npm audit --audit-level=high` (**0 vulnerabilities**) and `git diff --check` passed. Local production build remains intentionally skipped because gateway disk headroom is only 6.5 GiB (94% used); hosted CI must cover build/browser/Lighthouse.
+- PR #1456 (`fix(map): expire stale province observations`) merged at `2026-10-24T23:18:19Z`: source head `0ef54737538b61ba2a1c1e79ae2b720570c0ae0a`, merge commit/current main `b73c2babddee65154d7e6b4144b6343a2eb1f0db`. Exact-head CI/CD `40141926576`, Ops contracts `40141926535`, and CodeQL `40141926631` all passed, including production build, browser flows and Lighthouse budgets.
+- Post-merge main CI/CD `40142184173` was in progress at the last direct check; main CodeQL `40142184112` and Ops contracts `40142184056` passed. GitHub Pages deployment `40142407585` was in progress. Public production must be smoke-tested again after deployment and checked for revision parity before treating the map fix as live.
+- SentinelX was retried and still reports the enrolled Oracle host offline (`agent_offline`; context identity unavailable). Zeki SSH Gateway is reachable but currently exposes only `nexus-hermes`; no fresh Oracle state/events/disk reading or API operation was possible. API-runtime PR #1454 remains draft; do not merge/deploy it without fresh Oracle access and host headroom checks.
+
+### Exact next actions / queue
+1. Finish this isolated SEO-contract workstream: commit, push without force, open a PR, then record its exact head SHA and workflow run IDs in the next append-only checkpoint.
+2. Require exact-head production build, browser flows, Lighthouse budgets, Ops contracts and CodeQL; merge only after re-reading current head/base, all checks, review state and mergeability.
+3. Keep polling main run `40142184173` and Pages deploy `40142407585`; meanwhile continue a third independent workstream in a clean worktree. After deploy, verify frontend revision parity, root/TR/EN city routes, API readiness/health, CORS and map rendering.
+4. Retry SentinelX and read `/var/lib/hava81-worker/state.json` or `/usr/local/bin/hava81-worker-status`, plus recent worker events, if the Oracle host reconnects. Only then consider API PR #1454 after disk/RAM/build-headroom and port 4002/4001 rollback checks.
+5. Never clean unknown caches, force-update a branch without an explicit lease, or disable/pause the hourly automation.

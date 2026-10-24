@@ -402,6 +402,11 @@ export function sitemapEntries(provinces) {
   ]);
 }
 
+export const buildRobotsTxt = () => `User-agent: *
+Allow: /
+Sitemap: ${BASE_URL}/sitemap.xml
+`;
+
 export function buildSitemap(provinces) {
   const urls = sitemapEntries(provinces)
     .map(
