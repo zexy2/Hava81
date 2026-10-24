@@ -107,16 +107,15 @@ const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
   const coverage = slots.map(slot => {
     const hasPrecipitationEvidence =
       Number.isFinite(slot.precipitationProbability) || Number.isFinite(slot.precipitationMm);
-    const richness =
-      [
-        slot.apparentTemperature,
-        slot.humidity,
-        slot.precipitationMm,
-        slot.windGust,
-        slot.uvIndex,
-        slot.visibility,
-        slot.weatherCode,
-      ].filter(value => Number.isFinite(value)).length;
+    // Apparent temperature is derived from other inputs and is not an independent signal.
+    const richness = [
+      slot.humidity,
+      slot.precipitationMm,
+      slot.windGust,
+      slot.uvIndex,
+      slot.visibility,
+      slot.weatherCode,
+    ].filter(value => Number.isFinite(value)).length;
     return { richness, hasPrecipitationEvidence };
   });
   // A rich payload without either rain probability or amount cannot support a high-confidence

@@ -585,6 +585,25 @@ describe('Hava81 daily decision engine v2', () => {
     expect(plan.confidence).toBe('medium');
   });
 
+  it('does not count derived apparent temperature as independent confidence evidence', () => {
+    const plan = buildDailyPlan({
+      weather,
+      hourly: [
+        point(6, 24, {
+          humidity: 45,
+          precipitationMm: 0,
+          windGust: 6,
+          uvIndex: 2,
+          visibility: 20000,
+        }),
+      ],
+    });
+
+    // Five independent signals plus a derived feels-like value are useful, but not rich enough
+    // to claim high confidence. The weather code is intentionally absent in this fixture.
+    expect(plan.confidence).toBe('medium');
+  });
+
   it('groups adjacent near-best hours into an honest best-looking range', () => {
     const plan = buildDailyPlan({
       weather,
