@@ -66,6 +66,7 @@ class FakeProvider implements WeatherProvider {
   calls = { current: 0, forecast: 0, airQuality: 0 };
   failAirQuality = false;
   failAll = false;
+  airQualityResult: AirQualityUpstream = airQuality;
   lastCurrentQuery: CurrentWeatherQuery | undefined;
 
   async getCurrent(query: CurrentWeatherQuery) {
@@ -82,7 +83,7 @@ class FakeProvider implements WeatherProvider {
   async getAirQuality() {
     this.calls.airQuality += 1;
     if (this.failAll || this.failAirQuality) throw new AppError(502, 'PROVIDER_ERROR', 'aq down');
-    return airQuality;
+    return this.airQualityResult;
   }
 }
 
@@ -191,6 +192,7 @@ test('bundle returns every part in one response with per-part cache metadata', a
   assert.equal(body.hourly.daily[0].sunrise, '2026-08-28T03:31:00.000Z');
   assert.equal(body.hourly.daily[0].sunset, '2026-08-28T16:40:00.000Z');
   assert.equal(body.airQuality.aqiLabel, 'Makul');
+  assert.equal(body.airQuality.meta.observedAt, new Date(1_720_000_000 * 1_000).toISOString());
   assert.equal(body.context.uvIndexMax, 6);
   assert.equal(body.context.cacheStatus, 'MISS');
   assert.equal(typeof body.context.freshForSeconds, 'number');
@@ -204,6 +206,25 @@ test('bundle returns every part in one response with per-part cache metadata', a
   assert.deepEqual(provider.lastCurrentQuery, { lat: 41.01, lon: 28.97, units: 'metric', lang: 'tr' });
   assert.deepEqual(provider.calls, { current: 1, forecast: 1, airQuality: 1 });
   assert.equal(hourlyProvider.calls, 1);
+});
+
+test('bundle chooses the newest OpenWeather AQI sample and preserves its observation timestamp', async t => {
+  const { app, provider } = await setup();
+  t.after(() => app.close());
+  const base = airQuality.list[0];
+  provider.airQualityResult = {
+    ...airQuality,
+    list: [
+      { ...base, main: { aqi: 2 }, dt: 1_720_000_000 },
+      { ...base, main: { aqi: 4 }, dt: 1_720_003_600 },
+    ],
+  };
+
+  const response = await app.inject({ method: 'GET', url: `${URL_BASE}&include=airQuality` });
+  assert.equal(response.statusCode, 200);
+  const body = response.json();
+  assert.equal(body.airQuality.aqi, 4);
+  assert.equal(body.airQuality.meta.observedAt, new Date(1_720_003_600 * 1_000).toISOString());
 });
 
 test('bundle omits airQualityHourly unless requested (plan v3 P1.2: older clients unchanged)', async t => {

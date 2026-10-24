@@ -1,9 +1,12 @@
+import { getSourceObservationFreshness } from './sourceObservationFreshness';
+
 const OPTIONAL_FRESHNESS_FALLBACK_SECONDS = 300;
 const MAX_OPTIONAL_FUTURE_SKEW_MS = 60_000;
 const OPTIONAL_EXPIRY_CUSHION_MS = 100;
 
 export interface OptionalEvidenceMeta {
   fetchedAt?: Date | string;
+  observedAt?: Date | string;
   freshForSeconds?: number;
 }
 
@@ -37,12 +40,21 @@ export function getOptionalEvidenceFreshness(
   const ageMs = now - fetchedAtMs;
   if (ageMs < -MAX_OPTIONAL_FUTURE_SKEW_MS) return unknownFreshness();
 
+  const observation = getSourceObservationFreshness(meta.observedAt, now);
+  if (observation && observation.status !== 'fresh') {
+    return { fresh: false, status: observation.status, expiresInMs: null };
+  }
+
   const remainingMs = fetchedAtMs + ttlSeconds * 1000 - now;
   const fresh = ageMs <= ttlSeconds * 1000;
+  const cacheExpiryMs = fresh && remainingMs >= 0 ? remainingMs + OPTIONAL_EXPIRY_CUSHION_MS : null;
 
   return {
     fresh,
     status: fresh ? 'fresh' : 'stale',
-    expiresInMs: fresh && remainingMs >= 0 ? remainingMs + OPTIONAL_EXPIRY_CUSHION_MS : null,
+    expiresInMs:
+      fresh && cacheExpiryMs !== null
+        ? Math.min(cacheExpiryMs, observation?.expiresInMs ?? Number.POSITIVE_INFINITY)
+        : null,
   };
 }

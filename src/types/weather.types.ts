@@ -212,7 +212,10 @@ export interface AirQuality {
   pm25: number;
   pm10: number;
   o3: number;
-  meta: WeatherDataMeta;
+  meta: WeatherDataMeta & {
+    /** UTC timestamp of the provider sample; distinct from when the BFF fetched it. */
+    observedAt?: Date;
+  };
 }
 
 /** Plan v3 (P1.2): hourly European AQI (Open-Meteo `european_aqi`, 0–100+) and PM2.5. */

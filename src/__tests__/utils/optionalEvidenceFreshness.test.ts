@@ -39,3 +39,38 @@ describe('getOptionalEvidenceFreshness', () => {
     });
   });
 });
+
+describe('source observation age', () => {
+  const sourceNow = Date.UTC(2026, 8, 2, 3, 0, 0);
+  it('marks an old current AQI sample stale even when the BFF fetched it moments ago', () => {
+    expect(
+      getOptionalEvidenceFreshness({
+        fetchedAt: new Date(sourceNow - 1_000),
+        observedAt: new Date(sourceNow - 2 * 60 * 60_000 - 1),
+        freshForSeconds: 300,
+      }, sourceNow)
+    ).toEqual({ fresh: false, status: 'stale', expiresInMs: null });
+  });
+
+  it('wakes at the earlier of cache expiry and the two-hour source-age boundary', () => {
+    expect(
+      getOptionalEvidenceFreshness({
+        fetchedAt: new Date(sourceNow - 1_000),
+        observedAt: new Date(sourceNow - 2 * 60 * 60_000),
+        freshForSeconds: 300,
+      }, sourceNow)
+    ).toEqual({ fresh: true, status: 'fresh', expiresInMs: 100 });
+  });
+
+  it('fails closed for invalid or materially future source timestamps', () => {
+    for (const observedAt of ['not-a-date', new Date(sourceNow + 60_001)]) {
+      expect(
+        getOptionalEvidenceFreshness({
+          fetchedAt: new Date(sourceNow - 1_000),
+          observedAt,
+          freshForSeconds: 300,
+        }, sourceNow)
+      ).toEqual({ fresh: false, status: 'unknown', expiresInMs: null });
+    }
+  });
+});
