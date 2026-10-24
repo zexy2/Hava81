@@ -15,8 +15,10 @@ git init -b main "$primary" >/dev/null
 git -C "$primary" config user.name 'Hava81 cleanup test'
 git -C "$primary" config user.email 'cleanup-test@example.invalid'
 printf 'base\n' > "$primary/base.txt"
-printf 'dist/\nnode_modules/\n' > "$primary/.gitignore"
-git -C "$primary" add base.txt .gitignore
+printf 'dist/\nnode_modules/\n.env.local\n.husky/_/\n' > "$primary/.gitignore"
+mkdir -p "$primary/.husky"
+printf '#!/bin/sh\nexit 0\n' > "$primary/.husky/pre-commit"
+git -C "$primary" add base.txt .gitignore .husky/pre-commit
 git -C "$primary" commit -m base >/dev/null
 git -C "$primary" remote add origin "$bare"
 git -C "$primary" push -u origin main >/dev/null
@@ -30,6 +32,7 @@ dirty="$tmp/dirty"
 unreadable="$tmp/unreadable"
 busy="$tmp/busy"
 locked="$tmp/locked"
+ignored="$tmp/ignored"
 git -C "$primary" worktree add -b feature-merged "$merged" "$base" >/dev/null
 printf 'same patch\n' > "$merged/merged.txt"
 git -C "$merged" add merged.txt
@@ -39,6 +42,9 @@ merged_head="$(git -C "$merged" rev-parse HEAD)"
 git -C "$primary" cherry-pick "$merged_head" >/dev/null
 git -C "$primary" commit --amend -m 'squash-equivalent main commit' >/dev/null
 git -C "$primary" push origin main >/dev/null
+
+git -C "$primary" worktree add -b feature-ignored "$ignored" origin/main >/dev/null
+printf 'preserve this local-only file\n' > "$ignored/.env.local"
 
 git -C "$primary" worktree add -b feature-locked "$locked" origin/main >/dev/null
 mkdir -p "$locked/dist/locked"
@@ -81,6 +87,12 @@ touch -d '3 days ago' "$unreadable"
 chmod 000 "$(git -C "$unreadable" rev-parse --git-path index)"
 mkdir -p "$merged/dist"
 printf 'build\n' > "$merged/dist/output.txt"
+# Ignore nested generated dependency fixtures, including spaces/Unicode, as a
+# single rebuildable node_modules root rather than treating them as user data.
+mkdir -p "$merged/node_modules/@fastify/send/test/fixtures/snow ☃"
+printf 'rebuildable fixture\n' > "$merged/node_modules/@fastify/send/test/fixtures/snow ☃/index.html"
+mkdir -p "$merged/.husky/_"
+printf '*\n' > "$merged/.husky/_/.gitignore"
 
 mkdir -p "$primary/scripts"
 cp "$cleanup_script" "$primary/scripts/cleanup-merged-worktree-artifacts.sh"
@@ -92,6 +104,7 @@ grep -Fq "Audit: scanned=" <<<"$audit"
 grep -Fq "dirty=" <<<"$audit"
 grep -Eq "in_use=[1-9][0-9]*" <<<"$audit"
 grep -Fq "status_unreadable=" <<<"$audit"
+grep -Fq "unmanaged_ignored=" <<<"$audit"
 grep -Fq "No files, refs, or worktrees were changed." <<<"$audit"
 
 # Apply passes must be owned by the same uid that owns the repository Git dir.
@@ -122,6 +135,8 @@ grep -Fq "$merged" <<<"$dry"
 grep -Fq "$merged/dist" <<<"$dry"
 grep -Fq "WOULD_SKIP_UNWRITABLE_WORKTREE" <<<"$dry"
 grep -Fq "$locked" <<<"$dry"
+grep -Fq "WOULD_SKIP_UNMANAGED_IGNORED_WORKTREE" <<<"$dry"
+grep -Fq "$ignored/.env.local" <<<"$dry"
 grep -Fq "WOULD_SKIP_UNWRITABLE_ARTIFACT" <<<"$dry"
 grep -Fq "$locked/dist" <<<"$dry"
 # A non-writable artifact is visible during audit but must not inflate the
@@ -148,6 +163,8 @@ fi
 [[ ! -d "$merged" ]]
 [[ -d "$locked" ]]
 [[ -f "$locked/dist/locked/output.txt" ]]
+[[ -d "$ignored" ]]
+[[ -f "$ignored/.env.local" ]]
 [[ -d "$busy" ]]
 [[ -f "$busy/dist/output.txt" ]]
 [[ -d "$unmerged" ]]
