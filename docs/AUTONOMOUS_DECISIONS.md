@@ -419,3 +419,8 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - A cache-suppression test must use a provider sample timestamp inside the freshness window. A fresh `fetchedAt` cannot make an old `timestamp` fresh; the observed Browser-flow failure correctly demonstrated this distinction.
 - Generate the cached fixture's sample time at test execution and keep `observedAt` fallback/sample time aligned. Preserve the test's actual assertion: a fresh localized cache suppresses the static bootstrap request. Do not weaken source-time validation or reintroduce stale-data acceptance to satisfy a stale fixture.
+
+## 2026-10-24 22:24 TRT — Freshness-gate optional AQI in the headline score
+
+- Every consumer that feeds current AQI into the shared decision snapshot must use the same freshness boundary. A stale current AQI sample must not continue to affect `DecisionGlance` while weather/forecast evidence remains fresh; exclude only the stale optional AQI rather than blanking otherwise valid weather guidance.
+- Schedule the component's next refresh at the earliest current-weather, AQI, forecast expiry or short safety refresh, and ensure the memoized snapshot recomputes when AQI transitions from fresh to stale. Keep the change local to the UI evidence selection; do not alter provider data, AQI thresholds, or API behavior.
