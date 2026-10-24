@@ -36,6 +36,14 @@ test('forecast schema accepts an integer epoch and valid provider timezone offse
   assert.doesNotThrow(() => forecastUpstreamSchema.parse(sample()));
 });
 
+test('forecast schema rejects pressure outside a broad terrestrial hPa envelope', () => {
+  for (const pressure of [99, 1_201, 1_000_000]) {
+    const payload = sample();
+    payload.list[0].main.pressure = pressure;
+    assert.throws(() => forecastUpstreamSchema.parse(payload));
+  }
+});
+
 test('forecast schema rejects unsupported provider icon codes', () => {
   const payload = sample();
   payload.list[0].weather[0].icon = '99d';

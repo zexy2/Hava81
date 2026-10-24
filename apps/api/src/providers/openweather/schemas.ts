@@ -29,7 +29,8 @@ const currentMainWeatherSchema = z.object({
   feels_like: providerTemperatureSchema,
   temp_min: providerTemperatureSchema,
   temp_max: providerTemperatureSchema,
-  pressure: z.number().positive(),
+  // OpenWeather reports surface pressure in hPa; use a broad terrestrial envelope.
+  pressure: z.number().min(100).max(1_200),
   humidity: z.number().min(0).max(100),
 });
 
