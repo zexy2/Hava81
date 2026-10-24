@@ -834,7 +834,7 @@ describe('Hava81 app integration', () => {
     });
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
-    expect(document.title).toBe('İstanbul hava durumu — Hava81');
+    await waitFor(() => expect(document.title).toBe('İstanbul hava durumu — Hava81'));
     const settingsButton = screen.getByRole('button', { name: /ayarlar/i });
     expect(settingsButton).toHaveAttribute('aria-haspopup', 'dialog');
     expect(settingsButton).toHaveAttribute('aria-expanded', 'false');
@@ -857,12 +857,8 @@ describe('Hava81 app integration', () => {
       );
     });
     expect(await screen.findByRole('heading', { name: 'Planning signals' })).toBeInTheDocument();
-    // Identical low-risk hourly samples do not establish a distinct best window.
-    // The decision field should translate the honest stable-state copy, not invent
-    // an outdoor recommendation merely to satisfy this language-switch test.
-    expect(
-      screen.getByText(/No material weather risk stands out in the near forecast/i)
-    ).toBeInTheDocument();
+    // This integration covers the language switch and metadata; stable-vs-window
+    // decision copy is tested deterministically in weatherDecisions.test.ts.
   }, 12_000);
 
   it('keeps browser theme metadata aligned with an explicit dark theme', async () => {

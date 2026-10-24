@@ -198,6 +198,16 @@ describe('getWeatherDecisions', () => {
     );
   });
 
+  it('uses stable copy when the shared snapshot has no distinct best window', () => {
+    const result = decide({
+      weather,
+      hourly: [point()],
+      bestWindowTime: null,
+    });
+
+    expect(result).toEqual([{ kind: 'stable', severity: 'info' }]);
+  });
+
   it('reports unavailable near-term guidance when no hourly forecast exists', () => {
     const result = decide({ weather, hourly: [] });
     expect(result).toEqual([{ kind: 'unavailable', severity: 'info' }]);
