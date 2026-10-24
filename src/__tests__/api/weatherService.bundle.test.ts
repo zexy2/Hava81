@@ -141,10 +141,32 @@ describe('weatherService.getForecastBundle', () => {
       ],
       hourly: [
         // The API says night even though an old icon cache could say day.
-        { time: '2026-08-28T18:00:00.000Z', temp: 24, icon: '01d', description: 'açık', pop: 10, windSpeed: 3, isDay: false },
+        {
+          time: '2026-08-28T18:00:00.000Z',
+          temp: 24,
+          icon: '01d',
+          description: 'açık',
+          pop: 10,
+          windSpeed: 3,
+          isDay: false,
+        },
         // Older API revision: no isDay, icon suffix decides.
-        { time: '2026-08-28T19:00:00.000Z', temp: 23, icon: '01n', description: 'açık', pop: 10, windSpeed: 3 },
-        { time: '2026-08-28T20:00:00.000Z', temp: 23, icon: '02d', description: 'açık', pop: 10, windSpeed: 3 },
+        {
+          time: '2026-08-28T19:00:00.000Z',
+          temp: 23,
+          icon: '01n',
+          description: 'açık',
+          pop: 10,
+          windSpeed: 3,
+        },
+        {
+          time: '2026-08-28T20:00:00.000Z',
+          temp: 23,
+          icon: '02d',
+          description: 'açık',
+          pop: 10,
+          windSpeed: 3,
+        },
       ],
     };
     mockGet.mockResolvedValue({
@@ -153,7 +175,9 @@ describe('weatherService.getForecastBundle', () => {
       meta: { fetchedAt: nowIso(), parts: ['hourly'] },
     });
 
-    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly'],
+    });
 
     expect(bundle.hourly?.ok).toBe(true);
     const value = bundle.hourly?.ok ? bundle.hourly.value : null;
@@ -188,7 +212,9 @@ describe('weatherService.getForecastBundle', () => {
       meta: { fetchedAt: nowIso(), parts: ['hourly'] },
     });
 
-    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly'],
+    });
 
     const value = bundle.hourly?.ok ? bundle.hourly.value : null;
     expect(value?.hourly).toHaveLength(48);
@@ -208,7 +234,9 @@ describe('weatherService.getForecastBundle', () => {
       meta: { fetchedAt: nowIso(), parts: ['hourly'] },
     });
 
-    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly'],
+    });
 
     const value = bundle.hourly?.ok ? bundle.hourly.value : null;
     expect(value?.hourly.length).toBeGreaterThan(0);
@@ -220,13 +248,20 @@ describe('weatherService.getForecastBundle', () => {
       hourly: hourlyPart(),
       airQualityHourly: {
         hourly: [
+          { time: '2026-08-28T17:00:00.000Z', europeanAqi: 1000 },
           { time: '2026-08-28T19:00:00.000Z', europeanAqi: 61, pm25: 18.2 },
           { time: '2026-08-28T18:00:00.000Z', europeanAqi: 42 },
           // Malformed hours are dropped, not fatal.
           { time: 'not-a-date', europeanAqi: 40 },
           { time: '2026-08-28T20:00:00.000Z', europeanAqi: -1 },
+          { time: '2026-08-28T21:00:00.000Z', europeanAqi: 1001 },
         ],
-        meta: { provider: 'Open-Meteo', fetchedAt: nowIso(), intervalHours: 1, cacheStatus: 'MISS' },
+        meta: {
+          provider: 'Open-Meteo',
+          fetchedAt: nowIso(),
+          intervalHours: 1,
+          cacheStatus: 'MISS',
+        },
       },
       errors: {},
       meta: { fetchedAt: nowIso(), parts: ['hourly', 'airQualityHourly'] },
@@ -240,6 +275,7 @@ describe('weatherService.getForecastBundle', () => {
     expect(bundle.airQualityHourly?.ok).toBe(true);
     const value = bundle.airQualityHourly?.ok ? bundle.airQualityHourly.value : null;
     expect(value?.hours).toEqual([
+      { time: new Date('2026-08-28T17:00:00.000Z'), europeanAqi: 1000 },
       { time: new Date('2026-08-28T18:00:00.000Z'), europeanAqi: 42 },
       { time: new Date('2026-08-28T19:00:00.000Z'), europeanAqi: 61, pm25: 18.2 },
     ]);
@@ -250,7 +286,9 @@ describe('weatherService.getForecastBundle', () => {
       errors: {},
       meta: { fetchedAt: nowIso(), parts: ['hourly'] },
     });
-    const withoutPart = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+    const withoutPart = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly'],
+    });
     expect('airQualityHourly' in withoutPart).toBe(false);
   });
 
@@ -259,7 +297,11 @@ describe('weatherService.getForecastBundle', () => {
       hourly: hourlyPart(),
       airQualityHourly: null,
       errors: {
-        airQualityHourly: { code: 'AIR_QUALITY_HOURLY_PROVIDER_ERROR', message: 'down', statusCode: 502 },
+        airQualityHourly: {
+          code: 'AIR_QUALITY_HOURLY_PROVIDER_ERROR',
+          message: 'down',
+          statusCode: 502,
+        },
       },
       meta: { fetchedAt: nowIso(), parts: ['hourly', 'airQualityHourly'] },
     });
@@ -280,7 +322,9 @@ describe('weatherService.getForecastBundle', () => {
       meta: { fetchedAt: nowIso(), parts: ['hourly'] },
     });
 
-    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', { parts: ['hourly'] });
+    const bundle = await weatherService.getForecastBundle(41.01, 28.97, 'tr', {
+      parts: ['hourly'],
+    });
 
     expect(bundle.hourly?.ok).toBe(false);
   });

@@ -365,6 +365,12 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Treat an automation PR as green only when exact-head CI/CD, Ops script contracts, and CodeQL have all completed successfully. A missing Ops run is unknown; an in-progress Ops run is running; a failed Ops run is failed. This prevents the read-only observer from reporting a false-green PR while deploy-script contracts remain pending.
 - This changes observer diagnostics/gating only. The Oracle SentinelX agent is offline and the SSH gateway has no configured Oracle target, so this source change must not be represented as already installed on the live host. Deploy/update the observer only after Oracle connectivity is restored and its local release gates pass.
 
+## 2026-10-24 20:42 TRT — Bound European AQI payload sanity at ingestion and adaptation (historical checkpoint preserved)
+
+- Keep the European AQI 80+ category open-ended, but enforce one defensive payload-sanity ceiling (`MAX_EUROPEAN_AQI = 1000`) at both the serialized hourly-AQI parser and the downstream European-to-OpenWeather risk-index adapter. Values above the ceiling are invalid/unknown even if they bypass one validation layer; exactly 1,000 remains accepted.
+- Preserve source provenance and scale semantics: European AQI is not numerically interchangeable with OpenWeather's 1–5 index. The adapter is an explicit risk-band mapping, not a source equivalence claim. Do not change provider values, calibrated category thresholds, or current OpenWeather AQI behavior.
+- Validate the exact boundary, parser behavior, and consumer fallback. This is defensive data-integrity validation only and does not add health claims or alter official MGM warning semantics.
+
 ## 2026-10-24 21:47 TRT — A green PR does not override the live host hard gate
 
 - Rebased PR #1441 (invalid precipitation evidence) and PR #1443 (European AQI bounds) onto exact current `origin/main=e28ad60f3ef5f93395f87124a6c01bf78a546bb6` in their existing isolated worktrees. Their source patch IDs match the already-validated remote PR diffs; focused tests passed 78/78 and 38/38 respectively, and type-check, lint/CSS lint, and `git diff --check` passed.

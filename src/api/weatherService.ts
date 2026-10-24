@@ -13,6 +13,7 @@ import {
   type ParsedHourlyForecast,
 } from './weatherBundle';
 import { normalizePrecipitationProbability } from '../utils/precipitation';
+import { MAX_EUROPEAN_AQI } from '../utils/airQuality';
 import { nearestTurkishProvince } from '../utils/cityRoute';
 import { ErrorCode } from '../types';
 import type {
@@ -478,7 +479,11 @@ const parseAirQualityHourlyPayload = (value: unknown): AirQualityHourly => {
     if (!isRecord(item) || typeof item.time !== 'string') continue;
     const time = new Date(item.time);
     if (!Number.isFinite(time.getTime())) continue;
-    if (!isFiniteNumber(item.europeanAqi) || item.europeanAqi < 0 || item.europeanAqi > 1_000) continue;
+    if (
+      !isFiniteNumber(item.europeanAqi) ||
+      item.europeanAqi < 0 ||
+      item.europeanAqi > MAX_EUROPEAN_AQI
+    ) continue;
     const hour: AirQualityHour = { time, europeanAqi: item.europeanAqi };
     if (isFiniteNumber(item.pm25) && item.pm25 >= 0) hour.pm25 = item.pm25;
     hours.push(hour);
