@@ -1,5 +1,5 @@
 import { formatCityTime, formatNumber } from '../../utils/format';
-import { europeanAqiToOpenWeatherIndex } from '../../utils/airQuality';
+import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -126,24 +126,20 @@ export function ActivityPlanner({
   const freshness = getForecastFreshness(forecastMeta);
   const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
   const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
-  const plannedHourTimes = new Set(
-    (hourly.length
-      ? [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 48)
-      : [{ time: weather.timestamp }]
-    )
-      .map(point => point.time)
-      .filter(time => time instanceof Date && Number.isFinite(time.getTime()))
-      .map(time => time.getTime())
-  );
-  const hasMatchingHourlyAqi = Boolean(
-    airQualityHourly?.hours.some(sample => {
-      if (!(sample.time instanceof Date) || !Number.isFinite(sample.time.getTime())) return false;
-      if (europeanAqiToOpenWeatherIndex(sample.europeanAqi) === undefined) return false;
-      return plannedHourTimes.has(sample.time.getTime());
-    })
-  );
+  const plannedHourTimes = hourly.length
+    ? [...hourly]
+        .sort((a, b) => a.time.getTime() - b.time.getTime())
+        .slice(0, 48)
+        .map(point => point.time)
+    : [weather.timestamp];
+  // Use the same resolver as the scorer: a matching timestamp is not enough when duplicate
+  // provider samples disagree. In that case the conflicting AQI is deliberately unavailable.
+  const hourlyAqiEvidence = getDailyPlanAirQualityEvidence({
+    forecastTimes: plannedHourTimes,
+    airQualityHourly,
+  });
   const showHourlyAqiSource = Boolean(
-    airQualityHourly && hourlyAqiFreshness.fresh && hasMatchingHourlyAqi
+    airQualityHourly && hourlyAqiFreshness.fresh && hourlyAqiEvidence.usesHourlyAqi
   );
   const plans = freshness.fresh
     ? profile.activities.map(activity =>
