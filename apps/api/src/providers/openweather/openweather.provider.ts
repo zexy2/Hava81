@@ -27,6 +27,24 @@ const MAX_WIND_SPEED_BY_UNITS: Record<WeatherUnits, number> = {
   imperial: 300,
 };
 
+// Forward only a positive, numeric delay to clients. HTTP-date Retry-After values are
+// converted to seconds so an untrusted upstream header is never copied verbatim.
+const parseRetryAfterSeconds = (value: string | null): number | undefined => {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+
+  if (/^\d+$/.test(raw)) {
+    const seconds = Number(raw);
+    return Number.isSafeInteger(seconds) && seconds > 0 ? seconds : undefined;
+  }
+
+  const timestamp = Date.parse(raw);
+  if (!Number.isFinite(timestamp)) return undefined;
+
+  const seconds = Math.ceil((timestamp - Date.now()) / 1_000);
+  return Number.isSafeInteger(seconds) && seconds > 0 ? seconds : undefined;
+};
+
 export class OpenWeatherProvider implements WeatherProvider {
   readonly name: string;
   private readonly baseUrl: string;
@@ -134,11 +152,17 @@ export class OpenWeatherProvider implements WeatherProvider {
           throw new AppError(404, 'LOCATION_NOT_FOUND', 'Şehir bulunamadı.');
         }
 
-        const statusCode = response.status === 429 ? 503 : 502;
+        const rateLimited = response.status === 429;
+        const statusCode = rateLimited ? 503 : 502;
+        const retryAfterSeconds = rateLimited
+          ? parseRetryAfterSeconds(response.headers.get('retry-after'))
+          : undefined;
         throw new AppError(
           statusCode,
-          response.status === 429 ? 'PROVIDER_RATE_LIMITED' : 'PROVIDER_ERROR',
+          rateLimited ? 'PROVIDER_RATE_LIMITED' : 'PROVIDER_ERROR',
           'Hava durumu sağlayıcısına şu anda ulaşılamıyor.',
+          undefined,
+          retryAfterSeconds === undefined ? undefined : { retryAfterSeconds },
         );
       }
 

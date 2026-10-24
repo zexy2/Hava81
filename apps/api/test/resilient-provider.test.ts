@@ -84,6 +84,27 @@ test('does not retry non-retryable provider errors or count them toward the circ
   assert.equal(provider.getHealth().state, 'closed');
 });
 
+test('does not retry or count provider rate limits as circuit failures', async () => {
+  const primary = new StubProvider('primary', async () => {
+    throw new AppError(503, 'PROVIDER_RATE_LIMITED', 'rate limited', undefined, {
+      retryAfterSeconds: 120,
+    });
+  });
+  const provider = new ResilientWeatherProvider(primary, undefined, config);
+
+  await assert.rejects(() => provider.getCurrent(currentQuery), (error: unknown) => {
+    assert.ok(error instanceof AppError);
+    assert.equal(error.statusCode, 503);
+    assert.equal(error.code, 'PROVIDER_RATE_LIMITED');
+    assert.equal(error.retryAfterSeconds, 120);
+    return true;
+  });
+
+  assert.equal(primary.currentCalls, 1);
+  assert.equal(provider.getHealth().consecutiveFailures, 0);
+  assert.equal(provider.getHealth().state, 'closed');
+});
+
 test('opens the circuit after repeated primary outages and serves fallback without probing primary', async () => {
   const primary = new StubProvider('primary', async () => {
     throw new AppError(503, 'UPSTREAM_DOWN', 'down');

@@ -86,7 +86,14 @@ export class ResilientWeatherProvider implements WeatherProvider {
         return result;
       } catch (error) {
         lastError = error;
-        const retryable = error instanceof AppError ? error.statusCode >= 500 : true;
+        // A provider 429 is a rate-limit signal, not a transient transport failure.
+        // Surface its Retry-After guidance instead of immediately amplifying pressure.
+        const retryable =
+          error instanceof AppError && error.code === 'PROVIDER_RATE_LIMITED'
+            ? false
+            : error instanceof AppError
+              ? error.statusCode >= 500
+              : true;
         if (!retryable) throw error;
         if (attempt < this.config.retryCount) {
           await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
