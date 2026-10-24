@@ -794,6 +794,29 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - PR #1411 (`fix(api): bound OpenWeather wind values by units`) remains open and non-mergeable (`mergeable_state=dirty`), with remote head `1a272bc3e532d2d5d53fad5785ff68a51b66927f` and stale base `89845fb6a29ff1bce42841d5ed921df8caa80f1e`. Its dedicated worktree `/home/chatgpt/hava81-run11-openweather-wind-bounds-20261024-0224` exists; do not modify that pending branch from this workstream. Re-check its owner/worktree and exact head before any action.
 - Prioritized queue: (1) push this tested Planla lazy-mount change and create PR; (2) monitor exact-head CI and, when green, re-read mergeability and current production/observer state immediately before normal merge; (3) watch main pipeline, then smoke-test public root/city pages, API readiness, CORS, revision parity and production Lighthouse; (4) while any CI/deploy is pending, continue independent accessibility/reliability work in a fresh worktree; (5) return to PR #1411 only when its dedicated workstream has produced a rebase/green checks.
 
+## 2026-10-24 05:08 TRT — Harden the 81-province current-observation boundary
+
+### Implementation and local validation
+- Stable base: `origin/main=0ddf4428774257a290f4e01d15c572496ff9b4d2` (main CI/CD run #3461 / `40051604219` succeeded).
+- Dedicated worktree: `/home/chatgpt/hava81-province-observation-guards-20261024-0505`; branch `automation/hava81-province-observation-guards-20261024-0505`.
+- Open-Meteo's 81-province current feed now omits a single location if its WMO code is unsupported/non-integer, `is_day` is absent or not 0/1, or the timestamp cannot be represented safely as a JavaScript date. It keeps the existing -100..100 °C temperature envelope. Optional wind is included only for finite 0..150 m/s values; an invalid wind does not discard otherwise valid temperature/condition data.
+- `/api/v1/weather/provinces` OpenAPI now documents temperature -100..100 °C, the supported WMO weather-code enum, and wind 0..150 m/s. Regression tests cover unsupported/fractional codes, invalid/missing day flags, unrepresentable timestamp, wind boundary/over-bound/negative cases, and OpenAPI parity.
+- Passed: API tests 104/104; API type-check; API build; API production-dependency audit (0 vulnerabilities); root production-dependency audit (0 vulnerabilities); frontend type-check; root lint/CSS lint; frontend production build; `git diff --check`.
+- The full root `npm run test:ci` currently has one unrelated failure (1006/1007 tests): `src/__tests__/components/App.integration.test.tsx` → `opens settings and switches language without leaking provider credentials`. It expects the stable near-forecast copy, but the actual Planning signals list contains a “calmer weather window” because the test's `service.getHourlyForecast` fixture still uses two subtly different samples. Reproduced in isolation. Fix that fixture in a separate test-only branch by supplying truly identical future-relative hourly samples; do not weaken the assertion or edit this API branch from that workstream. Root type-check/lint/build and all API gates pass.
+
+### Production and pending work
+- Direct cache-busted smoke at `2026-10-24T02:02Z`: production `/`, `/izmir/`, and `/en/izmir/` embed revision `0ddf4428774257a290f4e01d15c572496ff9b4d2`; `/api/v1/health` and `/api/v1/health/ready` return HTTP 200; readiness has `Cache-Control: no-store`; CORS preflight returns HTTP 204 for `https://hava81.zekiakgul.dev`. API remains on port 4002. No production mutation was made.
+- Observer snapshot `collected_at=2026-10-24T01:59:46.969276Z` reports production healthy, revision parity and main run #3461 success, but it is older than the direct smoke; re-read it before any merge/deploy/rollback.
+- PR #1411 remains open and non-mergeable: head `1a272bc3e532d2d5d53fad5785ff68a51b66927f`, base `89845fb6a29ff1bce42841d5ed921df8caa80f1e`, `mergeable_state=dirty`, no check runs currently surfaced. Its dedicated worktree `/home/chatgpt/hava81-run11-openweather-wind-bounds-20261024-0224` is clean and must not be mutated by this workstream.
+- Disk is about 90% used with roughly 11 GiB free and a pressure warning. Do not perform broad worktree/cache cleanup.
+
+### Exact next actions
+1. Commit/push this province-boundary change on its dedicated branch; do not open a PR until the independent root integration-test fixture is corrected and the full suite is green.
+2. In a separate worktree from current `origin/main`, fix the `opens settings and switches language...` test fixture so its hourly evidence is genuinely similar and future-relative; run the targeted test, full root suite, type-check, lint, and build. Open a focused test-only PR and merge only on green exact-head checks.
+3. Rebase this API branch onto the new main after the test fix merges, rerun API tests/type-check/build/audit and root `npm run test:ci`, inspect the combined diff, then open the province-boundary PR.
+4. Recheck PR #1411 only after its dedicated workstream updates the branch; never force-update or merge it without exact current head, green CI/CD/Ops/CodeQL and a fresh mergeability check.
+5. Continue independent measured work while checks run; preserve API 4002 primary and 4001 rollback/canary. Do not disable the automation.
+
 ## 2026-10-24 05:21 TRT — Make the language-switch integration deterministic
 
 - Dedicated worktree: `/home/chatgpt/hava81-test-identical-decision-fixture-20261024-0510`; branch `automation/hava81-test-identical-decision-fixture-20261024-0510`, based on `origin/main=0ddf4428774257a290f4e01d15c572496ff9b4d2`.
