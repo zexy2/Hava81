@@ -201,6 +201,48 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(region).queryByText(/00:00 saatinde yağış beklenmiyor/i)).not.toBeInTheDocument();
   });
 
+  it('preserves an exact 100% probability after the API parser has normalized it to a ratio', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00Z'),
+              tempMin: 18,
+              tempMax: 27,
+              icon: '10d',
+              description: 'yağmurlu',
+              pop: 1,
+            },
+          ]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T00:00:00Z'),
+              temp: 22,
+              icon: '10d',
+              description: 'yağmurlu',
+              pop: 1,
+              precipitationMm: 0,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const hourlyRegion = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    const dailyRegion = screen.getByRole('list', { name: /Kaydırılabilir 5 günlük tahmin/i });
+    expect(within(hourlyRegion).getByRole('group', { name: /100%/ })).toBeInTheDocument();
+    expect(within(dailyRegion).getByRole('group', { name: /100%/ })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /1%/ })).not.toBeInTheDocument();
+  });
+
   it('labels hourly precipitation unknown instead of treating invalid probability as dry', () => {
     render(
       <SettingsProvider>

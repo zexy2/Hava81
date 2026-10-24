@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
-import { normalizeOptionalPrecipitationProbability } from '../../utils/precipitation';
+import { normalizeOptionalPrecipitationRatio } from '../../utils/precipitation';
 import { LEGACY_HOUR_LIMIT, REAL_HOURLY_HORIZON } from './forecastAtlas/constants';
 import { DailyForecastSection } from './forecastAtlas/DailyForecastSection';
 import type { ForecastAtlasCurrent } from './forecastAtlas/ForecastAtlasCurrent';
@@ -62,7 +62,7 @@ export function ForecastAtlas({
       ...hour,
       timestamp: hour.time.getTime(),
       convertedTemp: Math.round(convertTemperature(hour.temp)),
-      precipitation: normalizeOptionalPrecipitationProbability(hour.pop),
+      precipitation: normalizeOptionalPrecipitationRatio(hour.pop),
     }));
   }, [convertTemperature, hourly, intervalHours]);
 
@@ -83,7 +83,7 @@ export function ForecastAtlas({
         convertedMaxExact: convertTemperature(day.tempMax),
         convertedMin: Math.round(convertTemperature(day.tempMin)),
         convertedMax: Math.round(convertTemperature(day.tempMax)),
-        precipitation: normalizeOptionalPrecipitationProbability(day.pop),
+        precipitation: normalizeOptionalPrecipitationRatio(day.pop),
       })),
     [convertTemperature, daily]
   );

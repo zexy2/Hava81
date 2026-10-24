@@ -1156,3 +1156,19 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Rebase the commute/route branch onto the post-PR-#1437 main only after reading the new remote head. Preserve both append-only progress/decision checkpoints and use explicit `--force-with-lease` only if history actually changed.
 4. Before any merge/deploy/rollback, re-read worker state directly and verify exact PR head/checks/mergeability. Oracle access remains blocked until the SentinelX agent reconnects or a configured SSH target for the Oracle host is restored; keep API port 4002 primary and 4001 rollback/canary.
 5. Continue independent work while hosted CI/deploy is pending; do not stop at a green or queued PR.
+
+## 2026-10-24 18:25 TRT — Preserve exact 100% precipitation probability in Forecast Atlas
+
+### Production checkpoint after PR #1437
+- PR #1437 (`fix(ui): preserve unknown precipitation in forecast atlas`) merged as `82a27ae49d2a46c013ae6a75d7cba1615ec3dd83`. Main CI/CD run #3514 (`40105904839`) completed successfully; the observer reports production healthy and root/city frontend revision parity on `82a27ae49d2a`. Direct smoke returned HTTP 200 for `/`, `/izmir/`, `/en/izmir/`, and `/api/v1/health/ready`; CORS preflight returned HTTP 204 with the expected origin, methods and headers. API remains on port 4002.
+- The observer reports disk pressure and API-build headroom below its threshold. The SentinelX Oracle host is still offline, so this run made no Oracle-side cleanup, API build, deploy or rollback changes; only public read-only smoke and GitHub/local frontend work were performed.
+
+### Bounded Forecast Atlas probability fix
+- The API parser validates BFF precipitation percentages and converts them to frontend-domain ratios (`100` becomes `1`). Forecast Atlas then ran the legacy `normalizeOptionalPrecipitationProbability` helper a second time; that helper intentionally interprets exactly `1` as the BFF's 1% value, so a valid 100% probability could be displayed as 1% in hourly and daily Atlas surfaces.
+- Added `normalizeOptionalPrecipitationRatio` for already-normalized frontend-domain values. It preserves valid ratios including exact `1`, while keeping missing, non-finite, negative and over-range values unknown. The existing raw-percent normalizer remains unchanged for its established callers.
+- Added utility regressions and a component regression that checks both hourly and daily 100% labels. Local validation passed: focused Forecast Atlas/precipitation tests **54/54**, full frontend Vitest **1,065/1,065 across 106 files**, TypeScript type-check, ESLint/CSS lint, production frontend build (81 Turkish + 81 English province pages, 404/sitemap, CSP and service-worker stamping), and `git diff --check`. No API contract or weather source changed.
+
+### Exact next actions
+1. Review the four source/test files and append-only docs, commit/push isolated branch `automation/hava81-run11-atlas-100-percent-20261024-1520`, and open a focused PR. Record its exact code SHA and PR/check run IDs.
+2. Require fresh exact-head Frontend quality, Browser flows, Lighthouse budgets, Ops contracts and CodeQL before merge. Continue an independent safe workstream while hosted checks run.
+3. Before merge, re-read observer state and directly verify PR head, mergeability and checks. After merge, watch main CI/Pages deployment and smoke root, Turkish/English city pages, API readiness/CORS, frontend revision parity and port 4002. Avoid API builds or broad cleanup while host headroom remains constrained.
