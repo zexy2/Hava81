@@ -392,3 +392,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - Deployment readiness must fail closed if the preferred API target is explicitly false **or unknown**. A missing `preferred_ok` value is not evidence that the expected 4002 primary is active. Report `api_primary_port_drift` for a known mismatch and `api_primary_port_unknown` for an unavailable signal; keep both separate from GitHub merge-candidate readiness.
 - Readiness events must include blocker reasons and merge-candidate changes, not only booleans. Otherwise transitions such as `main_pipeline_pending` to `github_state_unknown` can be invisible while `can_deploy_*` remains false.
+
+## 2026-10-24 23:44 TRT — Confidence coverage counts independent evidence, not derived temperature
+
+- In the daily-plan confidence calculation, do not count apparent/feels-like temperature as a separate richness signal: it is derived from other weather inputs. Keep it available for thermal scoring and user-facing comfort, but not for independent evidence coverage.
+- Regression boundary: five independent finite signals plus a derived apparent-temperature value must not qualify for the six-signal high-confidence threshold. Precipitation still requires at least one valid probability/amount signal for useful/high coverage; missing rain evidence is unknown, not dry.
+- This is a confidence-classification/data-integrity change only. It does not alter weather-provider values, temperature scoring, thresholds, forecast claims, official MGM warning semantics, API contracts, or deployment routing. Frontend gates passed locally; hosted exact-head gates and a fresh pre-merge GitHub review are still required.
