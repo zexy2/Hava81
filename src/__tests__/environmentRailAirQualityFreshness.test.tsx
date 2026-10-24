@@ -75,4 +75,47 @@ describe('EnvironmentRail air-quality freshness', () => {
     expect(screen.queryByText('2 / 5')).not.toBeInTheDocument();
     expect(screen.queryByText(/PM2\.5 11,2 µg\/m³/i)).not.toBeInTheDocument();
   });
+
+  it('expires AQI at the source-observation age limit even when it was fetched moments ago', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-05T04:00:00Z'));
+    const recentlyFetchedWeather: NormalizedWeatherData = {
+      ...weather,
+      meta: {
+        ...weather.meta,
+        fetchedAt: new Date('2026-09-05T04:00:00Z'),
+        freshForSeconds: 300,
+      },
+    };
+    const recentlyFetchedAirQuality: AirQuality = {
+      ...airQuality,
+      meta: {
+        ...airQuality.meta,
+        fetchedAt: new Date('2026-09-05T04:00:00Z'),
+        observedAt: new Date('2026-09-05T02:00:00Z'),
+        freshForSeconds: 300,
+      },
+    };
+
+    render(
+      <SettingsProvider>
+        <EnvironmentRail
+          weather={recentlyFetchedWeather}
+          airQuality={recentlyFetchedAirQuality}
+          onOpenMap={vi.fn()}
+          mapExpanded={false}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('2 / 5')).toBeInTheDocument();
+    expect(screen.getByText(/PM2\.5 11,2 µg\/m³/i)).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+
+    expect(screen.queryByText('2 / 5')).not.toBeInTheDocument();
+    expect(screen.queryByText(/PM2\.5 11,2 µg\/m³/i)).not.toBeInTheDocument();
+  });
 });

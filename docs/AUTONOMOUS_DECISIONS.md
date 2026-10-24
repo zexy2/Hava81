@@ -228,3 +228,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - When a response contains multiple current-AQI samples, use the newest timestamp rather than assuming the first array element is newest.
 - Current AQI evidence must satisfy both the existing fetch/cache TTL and a two-hour source-age ceiling. A malformed/materially future observation is unknown; an over-age observation is stale. Both are unavailable to UI risk labels and activity/day plans; do not replace them with zero or infer a low-risk AQI.
 - The two-hour limit is Hava81's conservative evidence-freshness policy, not an official health threshold or MGM warning. Hourly European AQI remains exact-timestamp-only and is not interpolated. Older API payloads without `observedAt` retain the existing compatibility path during rolling deployments.
+
+## 2026-10-24 08:43 TRT — Expire AQI display on source age, not only BFF cache age
+
+- The environment rail may show current AQI/PM2.5 only while the source observation timestamp is within the same two-hour evidence-freshness policy used by decision logic. A fresh BFF fetch must not make an old provider sample look current.
+- Schedule a UI freshness refresh at the earlier of cache expiry and source-observation expiry; hide AQI and PM2.5 when that boundary passes without requiring a new provider response. Keep this behavior explicit in a component regression using a recent fetch and an observation exactly at the two-hour boundary.
+- This is an internal data-freshness policy, not an official health threshold, medical claim, or authoritative air-quality warning. Missing source timestamps remain compatible with older API responses under the existing policy; invalid or materially future timestamps fail closed.
