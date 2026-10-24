@@ -289,7 +289,7 @@ describe('useWeather', () => {
           icon: '01d',
           sunrise: '2026-07-14T02:43:00.000Z',
           sunset: '2026-07-14T17:34:00.000Z',
-          timestamp: '2026-07-14T12:00:00.000Z',
+          timestamp: new Date().toISOString(),
           coordinates: { lat: 41.01, lon: 28.97 },
           clouds: 0,
           meta: {
@@ -309,6 +309,7 @@ describe('useWeather', () => {
     expect(result.current.weather?.sunrise).toBeInstanceOf(Date);
     expect(result.current.weather?.sunset).toBeInstanceOf(Date);
     expect(result.current.weather?.timestamp).toBeInstanceOf(Date);
+    expect(result.current.weather?.meta.observedAt).toBeInstanceOf(Date);
     expect(weatherService.getCurrentWeather).not.toHaveBeenCalled();
   });
 
@@ -333,12 +334,12 @@ describe('useWeather', () => {
           icon: '01d',
           sunrise: '2026-09-02T03:30:00.000Z',
           sunset: '2026-09-02T16:30:00.000Z',
-          timestamp: new Date(now - 301_000).toISOString(),
+          timestamp: new Date(now - 3 * 60 * 60_000 - 1_000).toISOString(),
           coordinates: { lat: 41.01, lon: 28.97 },
           clouds: 0,
           meta: {
             provider: 'OpenWeather',
-            fetchedAt: new Date(now - 301_000).toISOString(),
+            fetchedAt: new Date(now - 1_000).toISOString(),
             freshForSeconds: 300,
           },
         },

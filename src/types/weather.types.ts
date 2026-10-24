@@ -94,6 +94,8 @@ export interface WeatherDataMeta {
 
 export interface CurrentWeatherMeta extends WeatherDataMeta {
   timezoneOffsetSeconds: number;
+  /** Source sample time, distinct from when the BFF fetched or cached the response. */
+  observedAt?: Date;
 }
 
 // Processed/Normalized weather data for UI

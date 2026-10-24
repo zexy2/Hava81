@@ -54,6 +54,7 @@ interface UseWeatherReturn {
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_RECENT_SEARCHES = 5;
 const MAX_CACHE_FUTURE_SKEW_MS = 60_000;
+const MAX_CURRENT_OBSERVATION_MISMATCH_MS = 60_000;
 const isWeatherResultStale = (
   lastUpdated: Date | null,
   weather: NormalizedWeatherData | null = null,
@@ -163,6 +164,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
   const intervalHours = metaRecord?.intervalHours;
   const freshForSeconds = metaRecord?.freshForSeconds;
   const cacheStatus = metaRecord?.cacheStatus;
+  const observedAtValue = metaRecord?.observedAt;
   if (
     typeof data.cityName !== 'string' ||
     !data.cityName.trim() ||
@@ -198,6 +200,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
     typeof metaRecord.provider !== 'string' ||
     !metaRecord.provider.trim() ||
     typeof metaRecord.fetchedAt !== 'string' ||
+    (observedAtValue !== undefined && typeof observedAtValue !== 'string') ||
     (timezoneOffsetSeconds !== undefined &&
       (!isFiniteNumber(timezoneOffsetSeconds) ||
         timezoneOffsetSeconds < -43_200 ||
@@ -219,13 +222,16 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
   const sunset = new Date(String(data.sunset));
   const timestamp = new Date(String(data.timestamp));
   const fetchedAt = new Date(String(metaRecord.fetchedAt));
-  if ([sunrise, sunset, timestamp, fetchedAt].some(date => Number.isNaN(date.getTime())))
+  const observedAt = observedAtValue === undefined ? timestamp : new Date(observedAtValue);
+  if ([sunrise, sunset, timestamp, fetchedAt, observedAt].some(date => Number.isNaN(date.getTime())))
     return null;
   if (sunset.getTime() < sunrise.getTime()) return null;
   const latestPlausibleCurrentTimestamp = Date.now() + MAX_CACHE_FUTURE_SKEW_MS;
   if (
     timestamp.getTime() > latestPlausibleCurrentTimestamp ||
-    fetchedAt.getTime() > latestPlausibleCurrentTimestamp
+    fetchedAt.getTime() > latestPlausibleCurrentTimestamp ||
+    observedAt.getTime() > latestPlausibleCurrentTimestamp ||
+    Math.abs(observedAt.getTime() - timestamp.getTime()) > MAX_CURRENT_OBSERVATION_MISMATCH_MS
   )
     return null;
 
@@ -244,6 +250,7 @@ const deserializeWeatherCache = (value: string): WeatherCache | null => {
         ...(metaRecord as unknown as NormalizedWeatherData['meta']),
         provider: metaRecord.provider.trim(),
         fetchedAt,
+        observedAt,
       },
     },
   };
