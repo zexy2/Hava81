@@ -5,6 +5,7 @@ import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
+import { buildLiveAuditErrors } from './lib/live-audit-result.mjs';
 import { launchLiveAuditBrowser } from './lib/live-audit-browser.mjs';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
 
@@ -136,15 +137,15 @@ try {
             };
           });
           const expectedCity = provinceNamesBySlug.get(city);
-          item.errors = [
-            ...(item.metrics.city !== expectedCity ? [`Expected ${expectedCity}, got ${item.metrics.city}`] : []),
-            ...(item.metrics.language !== language ? [`Expected language ${language}, got ${item.metrics.language}`] : []),
-            ...(item.metrics.theme !== theme ? [`Expected theme ${theme}, got ${item.metrics.theme}`] : []),
-            ...(item.metrics.forecastState !== 'ready' ? [`Forecast ${item.metrics.forecastState}: final chart not available`] : []),
-            ...(item.metrics.documentWidth > width + 1 ? [`Horizontal overflow: ${item.metrics.documentWidth}px > ${width}px`] : []),
-            ...Object.entries(item.metrics.overlaps).filter(([,area]) => area > 1).map(([name,area]) => `${name} overlap: ${area}px²`),
-            ...pageErrors.map(error => `JavaScript: ${error}`),
-          ];
+          item.errors = buildLiveAuditErrors({
+            metrics: item.metrics,
+            expectedCity,
+            language,
+            theme,
+            width,
+            pageErrors,
+            weatherFailures,
+          });
           item.ok = item.errors.length === 0;
           if (options.screenshots) {
             const variant = language === 'tr' && theme === 'light' ? '' : `-${language}-${theme}`;
