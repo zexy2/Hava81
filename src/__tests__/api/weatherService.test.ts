@@ -217,6 +217,7 @@ describe('weatherService BFF client', () => {
     expect(result.sunrise).toEqual(new Date(serializedWeather.sunrise));
     expect(result.sunset).toEqual(new Date(serializedWeather.sunset));
     expect(result.timestamp).toEqual(new Date(serializedWeather.timestamp));
+    expect(result.meta.observedAt).toEqual(new Date(serializedWeather.timestamp));
   });
 
   it.each(['observation timestamp', 'metadata timestamp'])(

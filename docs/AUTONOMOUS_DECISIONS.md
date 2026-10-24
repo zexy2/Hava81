@@ -398,3 +398,24 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - In the daily-plan confidence calculation, do not count apparent/feels-like temperature as a separate richness signal: it is derived from other weather inputs. Keep it available for thermal scoring and user-facing comfort, but not for independent evidence coverage.
 - Regression boundary: five independent finite signals plus a derived apparent-temperature value must not qualify for the six-signal high-confidence threshold. Precipitation still requires at least one valid probability/amount signal for useful/high coverage; missing rain evidence is unknown, not dry.
 - This is a confidence-classification/data-integrity change only. It does not alter weather-provider values, temperature scoring, thresholds, forecast claims, official MGM warning semantics, API contracts, or deployment routing. Frontend gates passed locally; hosted exact-head gates and a fresh pre-merge GitHub review are still required.
+
+## 2026-10-24 22:05 TRT — Current-weather freshness must use the provider sample timestamp
+
+- `timestamp` in the current-weather payload is the source sample time; `meta.fetchedAt` is a retrieval/cache time and is not evidence that the sample itself is fresh. Because the current BFF omits `meta.observedAt`, normalize it from `timestamp` at the frontend boundary and do the same for persisted-cache restoration. Otherwise a three-hour-old provider sample with a newly fetched envelope can be presented as current.
+- Reject malformed/future source timestamps and metadata that disagrees materially with the payload timestamp. Keep stale samples explicitly stale rather than inventing freshness, and do not change the API response contract or run an API production build for this frontend-only fix.
+
+## 2026-10-24 23:50 TRT — Source observation time outranks fresh retrieval metadata
+
+- For current weather, use the provider payload `timestamp` as the observation-time fallback when the BFF omits `meta.observedAt`. `meta.fetchedAt` is retrieval/cache metadata and must not make an older sample look current.
+- Reject malformed explicit observation times, materially future values, or values that disagree with the payload sample time by more than the one-minute contract tolerance. Apply the same rule to persisted-cache restoration so cached and network paths agree.
+- This is a frontend/client data-integrity fix; it does not alter provider output, the API response contract, scoring, hazard thresholds, official MGM warning semantics, or server deployment. Re-run all frontend gates on the exact rebased tree before opening a PR.
+
+## 2026-10-24 23:58 TRT — Combined validation is required after rebasing source-time freshness
+
+- Re-ran the complete frontend suite, type-check, lint/CSS lint, build and diff checks after rebasing the source-observation timestamp fix onto `d06e30cf`, which includes the confidence-evidence change. The combined tree passed **1,089 tests across 106 files**.
+- Keep source sample time (`timestamp`/`observedAt`) authoritative for observation freshness; `fetchedAt` remains a separate retrieval/cache TTL signal. Preserve this distinction in network and persisted-cache paths. No API server deployment is needed or authorized by this client-side change.
+
+## 2026-10-24 23:58 TRT — Cached-weather E2E fixtures must be source-time fresh
+
+- A cache-suppression test must use a provider sample timestamp inside the freshness window. A fresh `fetchedAt` cannot make an old `timestamp` fresh; the observed Browser-flow failure correctly demonstrated this distinction.
+- Generate the cached fixture's sample time at test execution and keep `observedAt` fallback/sample time aligned. Preserve the test's actual assertion: a fresh localized cache suppresses the static bootstrap request. Do not weaken source-time validation or reintroduce stale-data acceptance to satisfy a stale fixture.

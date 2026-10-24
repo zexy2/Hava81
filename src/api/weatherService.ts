@@ -31,7 +31,10 @@ import type {
   RouteWeatherResult,
 } from '../types';
 
-type SerializedCurrentMeta = Omit<CurrentWeatherMeta, 'fetchedAt'> & { fetchedAt: string };
+type SerializedCurrentMeta = Omit<CurrentWeatherMeta, 'fetchedAt' | 'observedAt'> & {
+  fetchedAt: string;
+  observedAt?: string;
+};
 type SerializedWeatherData = Omit<
   NormalizedWeatherData,
   'sunrise' | 'sunset' | 'timestamp' | 'meta'
@@ -105,6 +108,7 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 };
 
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
+const MAX_CURRENT_OBSERVATION_MISMATCH_MS = 60_000;
 const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
 const WEATHER_ICON_CODE_PATTERN = /^(?:0[1-4]|09|10|11|13|50)[dn]$/;
 const MAX_CONTEXT_FUTURE_SKEW_MS = 60_000;
@@ -139,6 +143,10 @@ const validateCurrentWeatherPayload = (data: SerializedWeatherData, units: Weath
 
   invalid(!isRecord(data), 'current');
   invalid(!isRecord(data.meta), 'current.meta');
+  invalid(
+    data.meta.observedAt !== undefined && typeof data.meta.observedAt !== 'string',
+    'current.meta.observedAt'
+  );
   invalid(typeof data.cityName !== 'string' || !data.cityName.trim(), 'current.cityName');
   invalid(typeof data.country !== 'string' || !data.country.trim(), 'current.country');
   for (const field of ['temperature', 'feelsLike', 'tempMin', 'tempMax'] as const) {
@@ -687,10 +695,27 @@ const reviveAirQualityMeta = (meta: SerializedAirQualityMeta): AirQuality['meta'
   return revived;
 };
 
-const reviveCurrentMeta = (meta: SerializedCurrentMeta): CurrentWeatherMeta => ({
-  ...meta,
-  fetchedAt: reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt'),
-});
+const reviveCurrentMeta = (
+  meta: SerializedCurrentMeta,
+  fallbackObservedAt: Date
+): CurrentWeatherMeta => {
+  const { observedAt, ...rest } = meta;
+  const fetchedAt = reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt');
+  // The current-weather contract already carries the provider sample time as `timestamp`.
+  // Use it when older BFF responses omit meta.observedAt so a fresh fetch/cache timestamp
+  // cannot make an old observation look current.
+  const sourceObservedAt = observedAt === undefined
+    ? fallbackObservedAt
+    : reviveWeatherDate(observedAt, 'current.meta.observedAt');
+  const now = Date.now();
+  if (sourceObservedAt.getTime() > now + MAX_CURRENT_WEATHER_FUTURE_SKEW_MS) {
+    invalidWeatherPayload('current.meta.observedAt');
+  }
+  if (Math.abs(sourceObservedAt.getTime() - fallbackObservedAt.getTime()) > MAX_CURRENT_OBSERVATION_MISMATCH_MS) {
+    invalidWeatherPayload('current.meta.observedAt');
+  }
+  return { ...rest, fetchedAt, observedAt: sourceObservedAt };
+};
 
 const reviveWeatherDates = (
   data: SerializedWeatherData,
@@ -700,7 +725,7 @@ const reviveWeatherDates = (
   const sunrise = reviveWeatherDate(data.sunrise, 'current.sunrise');
   const sunset = reviveWeatherDate(data.sunset, 'current.sunset');
   const timestamp = reviveWeatherDate(data.timestamp, 'current.timestamp');
-  const meta = reviveCurrentMeta(data.meta);
+  const meta = reviveCurrentMeta(data.meta, timestamp);
   if (sunset.getTime() < sunrise.getTime()) {
     invalidWeatherPayload('current.sunset');
   }
