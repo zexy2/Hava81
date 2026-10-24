@@ -209,6 +209,19 @@ describe('activity plans', () => {
     expect(walk.slots[0].precipitationProbability).toBeUndefined();
   });
 
+  it('keeps a current-only activity score out of the excellent band when rain is unknown', () => {
+    const currentOnly = buildActivityPlan({
+      activity: 'walk',
+      weather: { ...weather, temperature: 22, feelsLike: 22, windSpeed: 3, humidity: 45 },
+      hourly: [],
+    });
+
+    expect(currentOnly.slots[0]?.precipitationProbability).toBeUndefined();
+    expect(currentOnly.slots[0]?.score).toBe(89);
+    expect(currentOnly.slots[0]?.band).toBe('good');
+    expect(currentOnly.score).toBeLessThanOrEqual(89);
+  });
+
   it('does not award dry-weather activity benefits when precipitation is unknown', () => {
     const currentOnly = buildActivityPlan({
       activity: 'walk',

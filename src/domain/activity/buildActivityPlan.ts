@@ -384,6 +384,11 @@ export const buildActivityPlan = ({
     const reasons = [...new Set([...base.reasons, ...adj.reasons])];
     let score = clamp(base.score - adj.penalty + reclaimed);
     if (reasons.length > 0) score = Math.min(score, 96);
+    // Activity-specific comfort benefits must not undo the base scorer's missing-rain cap.
+    // The UI explicitly says precipitation is unknown; do not let that hour become excellent.
+    const hasPrecipitationEvidence =
+      Number.isFinite(precipitationProbability) || Number.isFinite(point.precipitationMm);
+    if (!hasPrecipitationEvidence) score = Math.min(score, 89);
     return {
       ...base,
       activity,

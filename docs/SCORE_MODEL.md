@@ -28,7 +28,7 @@ References:
 
 ## Rain
 
-Probability and intensity are deliberately separate. A high chance of a trace amount is not treated like a lower-probability multi-millimeter downpour. When hourly precipitation amount is unavailable, probability alone provides a weaker fallback signal.
+Probability and intensity are deliberately separate. A high chance of a trace amount is not treated like a lower-probability multi-millimeter downpour. When hourly precipitation amount is unavailable, probability alone provides a weaker fallback signal. If both probability and amount are missing, rain is **unknown**, not dry: the individual hour is capped at 89 (good at most), and the day-plan confidence cannot count that hour as high-quality evidence. This is an evidence-completeness policy, not a claim that rain is likely.
 
 ## Wind
 

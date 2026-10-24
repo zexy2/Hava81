@@ -267,6 +267,12 @@ export const scoreWeatherWindow = ({
   }
   if (severe >= 28) score = Math.min(score, 25);
 
+  // Missing rain evidence is not evidence of dry weather. Keep an otherwise ideal-looking
+  // hour out of the excellent band until at least probability or measured amount is known.
+  const hasPrecipitationEvidence =
+    Number.isFinite(precipitationProbability) || Number.isFinite(precipitationMm);
+  if (!hasPrecipitationEvidence) score = Math.min(score, 89);
+
   // A named material risk and the “very suitable” label should never coexist. The score
   // remains continuous, but the top band is reserved for windows with no surfaced warning.
   if (reasons.length > 0) score = Math.min(score, 96);

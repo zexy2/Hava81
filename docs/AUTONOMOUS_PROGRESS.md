@@ -1066,3 +1066,20 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. While hosted CI runs, continue an independent audit from a clean worktree. Re-check PR head/checks and `/usr/local/bin/hava81-worker-status` before merge; once green, merge, monitor main CI/Pages deploy, and verify revision parity and public smoke again.
 3. Use the current Lighthouse report as a baseline, not a reason for risky CSS/JS surgery: all quality categories are at or above target and the score varied across otherwise equivalent runs. Prefer a confirmed, repeatable opportunity before changing runtime assets.
 4. Root disk is still ~91.5% used with ~8.3 GiB free; do not remove caches/worktrees blindly. API remains on 4002 with 4001 as rollback/canary. No live 81-city provider sweep was run.
+
+## 2026-10-24 15:52 TRT — Unknown precipitation cannot score as dry
+
+### Production checkpoint
+- PR #1433 (`fix(a11y): expose decision hero date semantics`) was squash-merged as `9faa3bab55079b536f0edbd9aeefcb938316b600` after exact-head and required-check verification. Main CI/CD run #3505 (`40095380825`) completed successfully. The refreshed observer collected at `2026-10-24T12:50:56.997173Z` reports healthy production, frontend revision parity on `9faa3bab5507`, API readiness HTTP 200, correct CORS origin, and API port 4002. Direct smoke returned HTTP 200 for `/`, `/izmir/`, and API `/api/v1/health/ready`.
+
+### Independent score-evidence guard
+- Dedicated worktree `/home/chatgpt/hava81-activity-action-evidence-20261024`, branch `automation/hava81-run11-20261024-activity-action-evidence`, based on exact `origin/main` `9faa3bab55079b536f0edbd9aeefcb938316b600`. Existing dirty worktrees were left untouched.
+- A rich-looking hour with neither precipitation probability nor amount previously received no rain penalty and could be scored `100 / excellent`, while the UI correctly displayed precipitation as unknown. Activity-specific comfort benefits could also restore a score after the base calculation. The hour is now capped at 89 (`good` at most) when both rain signals are missing; probability-only and amount-only observations remain valid evidence, and no rain-risk reason is fabricated.
+- Daily-plan confidence now requires at least one rain signal for a slot to count toward rich/useful coverage. Added regressions for score cap, probability-only evidence, current-only activity fallback, unknown umbrella state, and rich-but-rainless forecast confidence. Updated `docs/SCORE_MODEL.md` and this decision log.
+- Local gates passed on the branch: full frontend suite **1,040/1,040 across 106 files**, TypeScript type-check, ESLint + CSS lint, focused scoring/activity tests **48/48**, and `git diff --check`. A full production build was intentionally not run locally because the host is at 92% disk use and the observer reports API-build headroom below its threshold; hosted CI must complete the production build before merge.
+
+### Exact next actions
+1. Recheck `origin/main` and this branch's diff, commit and push this isolated change, then open a focused PR. Record the code commit SHA and PR number in the next append-only checkpoint.
+2. Require fresh exact-head Frontend quality, Browser flows, Lighthouse, API test/build, deployment/Ops contracts, and CodeQL checks. Do not merge on stale checks or before the production build passes.
+3. While hosted checks run, continue independent low-risk work from another clean worktree. Avoid broad cache/worktree cleanup and do not run live 81-city provider sweeps while disk/API-build headroom is constrained.
+4. Before merge/deploy, refresh observer state and directly verify PR head, mergeability, checks, root/city/API smoke, CORS, revision parity, and API port 4002. Keep port 4001 as rollback/canary.
