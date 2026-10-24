@@ -133,6 +133,56 @@ test('Open-Meteo provinces provider sends one multi-location request and normali
   ]);
 });
 
+
+test('Open-Meteo provinces provider omits invalid WMO codes, day flags, and timestamps per location', async () => {
+  const base = {
+    time: 1_792_000_000,
+    temperature_2m: 18,
+    weather_code: 3,
+    is_day: 1,
+    wind_speed_10m: 4,
+  };
+  const invalidCases: Array<{ name: string; current: Record<string, unknown> }> = [
+    { name: 'unsupported WMO code', current: { ...base, weather_code: 100 } },
+    { name: 'fractional WMO code', current: { ...base, weather_code: 3.5 } },
+    { name: 'invalid day flag', current: { ...base, is_day: 2 } },
+    { name: 'missing day flag', current: Object.fromEntries(Object.entries(base).filter(([key]) => key !== 'is_day')) },
+    { name: 'unrepresentable timestamp', current: { ...base, time: 9_000_000_000_000 } },
+  ];
+
+  for (const item of invalidCases) {
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify([{ current: item.current }]), { status: 200 })) as typeof fetch;
+    const provider = new OpenMeteoProvincesProvider(fetchImpl, 1_000, 'https://meteo.test');
+    assert.deepEqual(await provider.getCurrent([{ lat: 41, lon: 29 }]), [null], item.name);
+  }
+});
+
+test('Open-Meteo provinces provider keeps only physically bounded optional wind values', async () => {
+  const fetchImpl = (async () =>
+    new Response(
+      JSON.stringify([
+        { current: { time: 1_792_000_000, temperature_2m: 18, weather_code: 3, is_day: 1, wind_speed_10m: 150 } },
+        { current: { time: 1_792_000_000, temperature_2m: 18, weather_code: 3, is_day: 1, wind_speed_10m: 150.1 } },
+        { current: { time: 1_792_000_000, temperature_2m: 18, weather_code: 3, is_day: 1, wind_speed_10m: -1 } },
+      ]),
+      { status: 200 },
+    )) as typeof fetch;
+  const provider = new OpenMeteoProvincesProvider(fetchImpl, 1_000, 'https://meteo.test');
+
+  const result = await provider.getCurrent([
+    { lat: 41, lon: 29 },
+    { lat: 40, lon: 30 },
+    { lat: 39, lon: 31 },
+  ]);
+
+  assert.equal(result[0]?.windSpeed, 150);
+  assert.equal('windSpeed' in (result[1] ?? {}), false);
+  assert.equal('windSpeed' in (result[2] ?? {}), false);
+  assert.equal(result[1]?.temperature, 18);
+  assert.equal(result[2]?.temperature, 18);
+});
+
 test('Open-Meteo provinces provider rejects a mismatched location count', async () => {
   const fetchImpl = (async () =>
     new Response(JSON.stringify([{ current: { time: 1, temperature_2m: 1, weather_code: 0 } }]), {

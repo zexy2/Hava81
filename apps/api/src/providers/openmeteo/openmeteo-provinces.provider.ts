@@ -25,6 +25,11 @@ export interface ProvinceCurrentProvider {
 }
 
 const nullableNumber = z.number().nullable().optional();
+const MAX_WIND_SPEED_MS = 150;
+const SUPPORTED_WEATHER_CODES = new Set([
+  0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+  85, 86, 95, 96, 99,
+]);
 const locationSchema = z.object({
   current: z
     .object({
@@ -90,6 +95,8 @@ export class OpenMeteoProvincesProvider implements ProvinceCurrentProvider {
         const current = location.current;
         const temperature = current?.temperature_2m;
         const code = current?.weather_code;
+        const isDay = current?.is_day;
+        const observedAtMs = current ? current.time * 1_000 : Number.NaN;
         if (
           !current ||
           typeof temperature !== 'number' ||
@@ -97,17 +104,25 @@ export class OpenMeteoProvincesProvider implements ProvinceCurrentProvider {
           temperature < -100 ||
           temperature > 100 ||
           typeof code !== 'number' ||
-          !Number.isInteger(code)
+          !Number.isInteger(code) ||
+          !SUPPORTED_WEATHER_CODES.has(code) ||
+          (isDay !== 0 && isDay !== 1) ||
+          !Number.isFinite(observedAtMs) ||
+          !Number.isFinite(new Date(observedAtMs).getTime())
         ) {
+          // A single malformed location should be omitted rather than turning a
+          // bad icon/day flag/timestamp into a plausible-looking current reading.
           return null;
         }
         const wind = current.wind_speed_10m;
         return {
           temperature: Math.round(temperature * 10) / 10,
           weatherCode: code,
-          isDay: current.is_day !== 0,
-          ...(typeof wind === 'number' && Number.isFinite(wind) && wind >= 0 ? { windSpeed: wind } : {}),
-          observedAt: new Date(current.time * 1_000).toISOString(),
+          isDay: isDay === 1,
+          ...(typeof wind === 'number' && Number.isFinite(wind) && wind >= 0 && wind <= MAX_WIND_SPEED_MS
+            ? { windSpeed: wind }
+            : {}),
+          observedAt: new Date(observedAtMs).toISOString(),
         };
       });
     } catch (error) {

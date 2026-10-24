@@ -189,3 +189,9 @@ Reviewing an open PR is not a reason to merge it when its base is several commit
 - OpenWeather documents all Air Pollution API component concentrations (CO, NO, NO₂, O₃, SO₂, NH₃, PM2.5 and PM10) in μg/m³. Accept only finite non-negative values up to a deliberately broad 100,000 μg/m³ ceiling; reject higher values rather than formatting impossible finite outliers as measurements.
 - This is a provider-payload sanity ceiling only, not an AQI category boundary, health threshold, or medical recommendation. Preserve the provider's categorical AQI (1–5) contract and never infer a cleaner/safer category from a rejected component value.
 - Cover the inclusive ceiling and just-over-ceiling regressions for all eight fields at both schema and provider-adapter levels. Keep the change isolated from the pending OpenWeather wind-bound PR and rebase only after re-reading both remote heads.
+
+## 2026-10-24 — Validate the 81-province current-observation boundary
+
+- The Open-Meteo multi-location province feed must emit a current tile only when its temperature is finite and within the existing broad -100–100 °C envelope, its weather code is one of the supported WMO codes, its `is_day` flag is exactly 0 or 1, and its Unix timestamp can be represented as a valid JavaScript date. A malformed location becomes `null` without discarding otherwise valid provinces.
+- Optional province wind speed is published only in the inclusive 0–150 m/s sanity envelope. Values outside it are omitted instead of clamped or rendered as plausible readings.
+- Keep the `/weather/provinces` OpenAPI schema aligned with the provider contract: temperature bounds, the supported WMO code enum, and the optional wind ceiling must be explicit. These are provider-data integrity limits, not official warnings or medical/safety guarantees.

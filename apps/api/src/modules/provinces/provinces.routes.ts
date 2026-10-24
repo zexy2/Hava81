@@ -12,11 +12,18 @@ const provinceItemJsonSchema = {
     name: { type: 'string' },
     lat: { type: 'number' },
     lon: { type: 'number' },
-    temperature: { type: 'number', description: '°C' },
-    weatherCode: { type: 'integer', description: 'WMO hava kodu' },
+    temperature: { type: 'number', minimum: -100, maximum: 100, description: '°C' },
+    weatherCode: {
+      type: 'integer',
+      enum: [
+        0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+        85, 86, 95, 96, 99,
+      ],
+      description: 'WMO hava kodu',
+    },
     icon: { type: 'string' },
     description: { type: 'string' },
-    windSpeed: { type: 'number', minimum: 0, description: 'm/s' },
+    windSpeed: { type: 'number', minimum: 0, maximum: 150, description: 'm/s' },
     observedAt: { type: 'string', format: 'date-time' },
   },
 } as const;

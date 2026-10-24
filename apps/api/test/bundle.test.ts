@@ -384,4 +384,15 @@ test('bundle and provinces are documented in the OpenAPI schema', async t => {
   assert.ok(paths['/api/v1/weather/provinces']);
   const params = paths['/api/v1/weather/bundle'].get.parameters.map((p: { name: string }) => p.name);
   assert.deepEqual(params.sort(), ['include', 'lang', 'lat', 'lon', 'marine', 'units']);
+  const provinceItem =
+    paths['/api/v1/weather/provinces'].get.responses['200'].content['application/json'].schema.properties
+      .provinces.items.properties;
+  assert.equal(provinceItem.temperature.minimum, -100);
+  assert.equal(provinceItem.temperature.maximum, 100);
+  assert.deepEqual(provinceItem.weatherCode.enum, [
+    0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+    85, 86, 95, 96, 99,
+  ]);
+  assert.equal(provinceItem.windSpeed.minimum, 0);
+  assert.equal(provinceItem.windSpeed.maximum, 150);
 });
