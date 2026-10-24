@@ -197,7 +197,7 @@ describe('Hava81 app integration', () => {
       { city: 'İstanbul', lang: 'tr' },
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-    expect(window.location.pathname).toBe('/istanbul/');
+    await waitFor(() => expect(window.location.pathname).toBe('/istanbul/'));
   });
   it('keeps province URLs canonical when an English weather provider adds Province', async () => {
     window.history.replaceState({}, '', '/sanliurfa/');
