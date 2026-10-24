@@ -33,6 +33,8 @@ const fakeFetch = (async (input: Parameters<typeof fetch>[0]) => {
       { status: 200, headers: { 'content-type': 'application/json' } }
     );
   }
+  const parsedUrl = new URL(url);
+  assert.equal(parsedUrl.searchParams.get('timezone'), 'GMT');
   return new Response(
     JSON.stringify({
       current_units: {
@@ -59,10 +61,33 @@ test('context service normalizes UV, dust, pollen and marine signals', async () 
   assert.equal(result.uvIndexMax, 7);
   assert.equal(result.dustMax, 12);
   assert.equal(result.grassPollenMax, 8);
+  assert.equal(result.marine?.observedAt, '2026-08-28T03:30:00.000Z');
   assert.equal(result.marine?.waveHeight, 0.4);
   assert.equal(result.marine?.waveDirection, 315);
   assert.equal(result.marine?.wavePeriod, 4.8);
   assert.equal(result.marine?.seaSurfaceTemperature, 25.1);
+});
+
+test('context service normalizes marine source time to explicit UTC and rejects invalid timestamps', async () => {
+  const invalidMarineTimeFetch = (async (input: Parameters<typeof fetch>[0]) => {
+    if (String(input).includes('air-quality')) return fakeFetch(input);
+    const url = new URL(String(input));
+    assert.equal(url.searchParams.get('timezone'), 'GMT');
+    return new Response(
+      JSON.stringify({
+        current: {
+          time: 'not-a-model-time',
+          wave_height: 0.4,
+          sea_surface_temperature: 25.1,
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } }
+    );
+  }) as typeof fetch;
+
+  const result = await new ContextSignalsService(invalidMarineTimeFetch).get(38.42, 27.14, true);
+  assert.equal(result.marine, undefined);
+  assert.equal(result.uvIndexMax, 7);
 });
 
 test('GMT model timestamps are parsed as UTC even without an explicit offset', () => {
