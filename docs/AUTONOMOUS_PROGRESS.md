@@ -755,6 +755,25 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Exact next action: query PR #1410's new remote head and fresh checks after this checkpoint push; if the new head is mergeable and all required CI/CD, Ops, and CodeQL checks are green, re-read the head/base and fresh observer immediately before normal merge. After merge, watch the main pipeline, then repeat observer freshness, Pages root/city revision parity, public API readiness/CORS, local 4001/4002 readiness/CORS, and disk headroom. Continue an independent bounded workstream while checks run.
 - Prioritized queue: (1) exact-head PR #1410 checks and merge; (2) post-merge main pipeline and production smoke; (3) review the remaining old rain-peak PR only against current main and do not close/merge duplicates without diff evidence; (4) continue a measured accessibility/performance/reliability improvement. Keep API 4002 primary / 4001 rollback-canary and never run the live 81-city gate while provider rate limiting is active.
 
+## 2026-10-24 03:41 TRT — OpenWeather wind bounds isolated and validated
+
+### Merge/deploy state
+- PR #1410 (`fix(ops): preserve ignored data during worktree cleanup`) merged normally as `89845fb6a29ff1bce42841d5ed921df8caa80f1e` after re-reading exact head `c98284f32a1620f60da1243f78802afcf91b5a21`, mergeability `true`, and all required CI/CD, Ops, and CodeQL checks green. Main pipeline #3455 (`40046084429`), CodeQL #2235 (`40046084402`), and Ops contracts #194 (`40046084393`) are running for the new main SHA.
+- Direct post-merge smoke: production `/` HTTP 200, `/izmir/` HTTP 200, API `/api/v1/health/ready` HTTP 200, CORS preflight HTTP 204. Public HTML still embeds `f38fe6df39fdc32d739eff01c2e9131200653545`; the docs/ops-only merge's Pages deploy is pending, so this is expected propagation lag, not a runtime incident. Do not call Pages revision parity complete until a fresh observer and cache-busted smoke confirm `89845fb...`.
+- Last observer snapshot `collected_at=2026-10-24T00:37:21.237106Z` predates PR #1410 merge. It reported healthy production, all nine boot assets healthy, API readiness 200, CORS OK, and Nginx API port 4002. Disk was 88.6% used with 11.1 GiB free; pressure warning remains, so avoid unrelated cleanup. SentinelX agent returned `agent_offline`; the authenticated Zeki SSH Gateway is available for the local repository and read-only public smoke. No production service, port, or deployment was changed directly.
+
+### Independent API work while main CI runs
+- Branch/worktree: `automation/hava81-openweather-wind-bounds-20261024-0224` at `/home/chatgpt/hava81-run11-openweather-wind-bounds-20261024-0224`.
+- Rebased its preserved local commit onto current main `89845fb...` after confirming no remote branch existed; pushed normally as `614db57b38c3924a32de75216e9fad5b491ed96a`. The change validates OpenWeather current and forecast wind speed/gust in the requested units: 150 m/s for metric/standard and 300 mph for imperial. Impossible finite values reject as `INVALID_PROVIDER_RESPONSE`; values are not silently clamped.
+- Local gates on the rebased source: API tests 98/98, API TypeScript type-check, API production build, API production-dependency audit (0 vulnerabilities), and `git diff --check` all pass. Tests cover metric rejection, imperial boundary acceptance/rejection, current gust rejection, and forecast rejection. No provider data, scoring, UI, Open-Meteo adapter, or production API behavior is deployed by this branch.
+- A docs-only append in this same branch records the unit-specific decision and exact checkpoint. Re-run `git diff --check`, commit/push it fast-forward only after verifying the remote head is unchanged, then open a focused PR. Require exact-head CI/CD, API test/build, Ops contracts, and CodeQL before merge; API changes must follow the normal blue-green/canary pipeline and keep 4002 primary / 4001 rollback.
+
+### Next actions
+1. Poll main run #3455, CodeQL #2235, and Ops contracts #194; when green, refresh observer and confirm Pages root/city revision equals main and API readiness/CORS remain healthy.
+2. Finish publishing the OpenWeather wind-bound PR from branch `automation/hava81-openweather-wind-bounds-20261024-0224` (current code head `614db57b38c3924a32de75216e9fad5b491ed96a` before the pending checkpoint append). Read the remote branch head immediately before push; never force-update if it moved.
+3. Review PR #1379/#1380 and Node 25 PRs only in isolated compatibility worktrees; do not merge major upgrades without current-base CI evidence. Preserve Node 24 LTS.
+4. Continue a separate bounded reliability/accessibility/performance loop while any external check/deploy is pending. Keep the live 81-city release gate unexecuted during provider rate limiting; never fabricate weather or safety data.
+
 ## 2026-10-24 03:44 TRT — OpenWeather pressure bounds tested in a separate worktree
 
 ### Production/main pipeline follow-up
