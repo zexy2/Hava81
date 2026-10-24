@@ -92,16 +92,22 @@ const forecastMainWeatherSchema = currentMainWeatherSchema.extend({
   humidity: forecastHumiditySchema,
 });
 
-const forecastItemSchema = z.object({
-  dt: providerUnixTimestampSchema,
-  main: forecastMainWeatherSchema,
-  weather: z.array(weatherConditionSchema).min(1),
-  clouds: cloudsSchema,
-  wind: windSchema,
-  visibility: z.number().min(0).max(10_000).optional(),
-  pop: z.number().min(0).max(1).default(0),
-  dt_txt: z.string().min(1),
-});
+const forecastItemSchema = z
+  .object({
+    dt: providerUnixTimestampSchema,
+    main: forecastMainWeatherSchema,
+    weather: z.array(weatherConditionSchema).min(1),
+    clouds: cloudsSchema,
+    wind: windSchema,
+    visibility: z.number().min(0).max(10_000).optional(),
+    // Missing precipitation probability is unknown, not a zero-percent rain chance.
+    pop: z.number().min(0).max(1),
+    dt_txt: z.string().min(1),
+  })
+  .refine((item) => item.main.temp_min <= item.main.temp_max, {
+    message: 'Forecast minimum temperature exceeds maximum temperature',
+    path: ['main', 'temp_min'],
+  });
 
 export const forecastUpstreamSchema = z.object({
   cod: z.union([z.string(), z.number()]),

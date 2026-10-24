@@ -216,3 +216,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 **Decision:** Validate OpenWeather sustained wind and optional gust values after unit selection, using a deliberately generous ceiling of 150 m/s for `metric`/`standard` and 300 mph for `imperial`. Reject a provider payload with a finite value above its unit-specific ceiling as `INVALID_PROVIDER_RESPONSE`; do not clamp an impossible value into a believable-looking safety signal.
 
 **Why:** The shared OpenWeather Zod schema can validate non-negativity but cannot infer the requested output unit. Unit-aware validation at the adapter boundary keeps impossible finite wind values out of current and forecast responses while preserving the provider's actual units and the existing fallback/error path. The Open-Meteo hourly adapter has its own unit contract and remains unchanged.
+
+## 2026-10-24 07:48 TRT — Keep missing OpenWeather precipitation probability unknown
+
+- OpenWeather forecast `pop` is a required probability ratio in the inclusive 0–1 range. Do not default a missing value to `0`: downstream rain scoring interprets zero as an explicit no-probability forecast, so a missing field would silently understate rain risk. Reject the malformed provider payload instead of fabricating dry conditions.
+- Require every forecast sample's `main.temp_min` to be less than or equal to `main.temp_max`, matching the current-observation invariant. Do not swap, clamp, or otherwise rewrite the provider's temperature fields; reject an internally inconsistent forecast.
+- Regression coverage proves that missing `pop` and inverted temperature ranges fail validation, while explicit `pop` values of exactly 0 and 1 remain valid. This is provider-data integrity validation, not a new weather forecast or safety threshold.
