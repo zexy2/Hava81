@@ -134,13 +134,33 @@ export async function expectContainedIn(
   context = '',
   axis: 'both' | 'x' = 'both'
 ) {
-  const [a, b] = await Promise.all([inner.boundingBox(), outer.boundingBox()]);
-  expect(a, `${context} inner box`).not.toBeNull();
-  expect(b, `${context} outer box`).not.toBeNull();
-  const insideX = a!.x >= b!.x - 1 && a!.x + a!.width <= b!.x + b!.width + 1;
-  const insideY = a!.y >= b!.y - 1 && a!.y + a!.height <= b!.y + b!.height + 1;
+  const [innerHandle, outerHandle] = await Promise.all([
+    inner.elementHandle(),
+    outer.elementHandle(),
+  ]);
+  expect(innerHandle, `${context} inner box`).not.toBeNull();
+  expect(outerHandle, `${context} outer box`).not.toBeNull();
+  if (!innerHandle || !outerHandle) return;
+
+  // Read both DOMRects in one browser task. Separate boundingBox() calls can
+  // straddle resize/text-reflow scroll anchoring and compare different frames.
+  const { a, b } = await inner.evaluate((element, outerElement) => {
+    const toBox = (rect: DOMRect) => ({
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    });
+    return {
+      a: toBox(element.getBoundingClientRect()),
+      b: toBox((outerElement as Element).getBoundingClientRect()),
+    };
+  }, outerHandle);
+  const insideX = a.x >= b.x - 1 && a.x + a.width <= b.x + b.width + 1;
+  const insideY = a.y >= b.y - 1 && a.y + a.height <= b.y + b.height + 1;
   const contained = axis === 'x' ? insideX : insideX && insideY;
-  expect(contained, `${context} must stay inside its container`.trim()).toBe(true);
+  const boxes = `inner=${JSON.stringify(a)} outer=${JSON.stringify(b)}`;
+  expect(contained, `${context} must stay inside its container (${boxes})`.trim()).toBe(true);
 }
 
 /** Two visible elements do not cover each other (decoration never hides content). */

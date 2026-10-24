@@ -367,8 +367,10 @@ test.describe('daily plan', () => {
       ] as const) {
         await setWidth(page, width, 844);
         await setTextScale(page, scale);
-        for (const chip of await chips.locator('button').all())
-          await expectContainedIn(chip, chips, `chip ${width}px/${scale}%`);
+        for (const chip of await chips.locator('button').all()) {
+          const label = (await chip.innerText()).replace(/\s+/g, ' ').trim();
+          await expectContainedIn(chip, chips, `chip "${label}" ${width}px/${scale}%`);
+        }
         expect(
           await chips.evaluate(element => element.scrollWidth <= element.clientWidth + 1)
         ).toBe(true);
