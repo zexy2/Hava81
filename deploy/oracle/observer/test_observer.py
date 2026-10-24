@@ -1015,6 +1015,7 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
                     'ref': 'automation/hava81-context-shell-1156',
                     'sha': 'pr-sha',
                 },
+                'base': {'ref': 'main', 'sha': 'main-sha'},
             }
         ]
         fallback_runs = [
@@ -1117,7 +1118,77 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(result['rate_limit_remaining'], '49')
         self.assertEqual(result['latest_main_run']['head_sha'], 'main-sha')
         self.assertEqual(result['signals']['ci_green_prs'], [662])
+        self.assertEqual(result['signals']['ci_merge_candidates'], [662])
+        self.assertEqual(result['open_automation_prs'][0]['base_ref'], 'main')
         self.assertEqual(result['signals']['ci_unknown_prs'], [])
+
+    def test_merge_candidates_exclude_drafts_and_non_main_bases(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        specs = [
+            (1401, 'draft-sha', 'automation/hava81-draft-test', 'main', True),
+            (1402, 'release-sha', 'automation/hava81-release-test', 'release', False),
+            (1403, 'ready-sha', 'automation/hava81-ready-test', 'main', False),
+        ]
+        pulls = [
+            {
+                'number': number,
+                'title': f'Candidate {number}',
+                'html_url': f'https://example.test/pr/{number}',
+                'draft': draft,
+                'head': {'ref': ref, 'sha': sha},
+                'base': {'ref': base_ref, 'sha': 'main-sha'},
+            }
+            for number, sha, ref, base_ref, draft in specs
+        ]
+        runs = [{
+            'id': 1, 'run_number': 1, 'name': 'CI/CD Pipeline',
+            'head_sha': 'main-sha', 'head_branch': 'main', 'event': 'push',
+            'status': 'completed', 'conclusion': 'success',
+            'html_url': 'https://example.test/main-ci',
+        }]
+        next_run_id = 10
+        for _, sha, ref, _, _ in specs:
+            for workflow_name in ('CI/CD Pipeline', 'Ops script contracts', 'CodeQL'):
+                runs.append({
+                    'id': next_run_id,
+                    'run_number': next_run_id,
+                    'name': workflow_name,
+                    'head_sha': sha,
+                    'head_branch': ref,
+                    'event': 'pull_request',
+                    'status': 'completed',
+                    'conclusion': 'success',
+                    'html_url': f'https://example.test/run/{next_run_id}',
+                })
+                next_run_id += 1
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/pulls?' in url:
+                payload = pulls
+            elif '/actions/runs?' in url:
+                payload = {'workflow_runs': runs}
+            elif '/branches/main' in url:
+                payload = {'commit': {'sha': 'main-sha', 'commit': {'committer': {'date': '2026-10-24T18:00:00Z'}}}}
+            else:
+                raise AssertionError(f'unexpected URL: {url}')
+            return {
+                'ok': True, 'status': 200, 'elapsed_ms': 1,
+                'headers': {'x-ratelimit-remaining': '50'}, 'json': payload, 'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(result['signals']['ci_green_prs'], [1401, 1402, 1403])
+        self.assertEqual(result['signals']['ci_merge_candidates'], [1403])
 
     def test_pending_ops_contracts_prevent_a_green_pr_signal(self) -> None:
         original_http_get = observer.http_get
@@ -1442,10 +1513,12 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
     def healthy_inputs(self):
         return (
             {'healthy': True, 'nginx': {'preferred_ok': True}},
-            {'healthy': True, 'disk': {'ok': True}},
+            {'healthy': True, 'disk': {'ok': True, 'api_build_headroom_ok': True}},
             {
                 'ok': True,
                 'signals': {
+                    'ci_green_prs': [1440],
+                    'ci_merge_candidates': [1440],
                     'main_pipeline_pending': False,
                     'api_deploy_pending': False,
                     'api_deploy_unknown': False,
@@ -1468,10 +1541,62 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
 
     def test_blocks_when_host_disk_is_outside_hard_gate(self) -> None:
         production, host, github, frontend = self.healthy_inputs()
-        host = {'healthy': False, 'disk': {'ok': False}}
+        host = {'healthy': False, 'disk': {'ok': False, 'api_build_headroom_ok': True}}
         result = observer.merge_deploy_readiness(production, host, github, frontend)
         self.assertFalse(result['ok'])
         self.assertEqual(result['blocking_reasons'], ['host_unhealthy'])
+
+    def test_merge_candidate_is_independent_of_host_and_deployment_readiness(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        host = {'healthy': False, 'disk': {'ok': False, 'api_build_headroom_ok': False}}
+        production['healthy'] = False
+        frontend = {'pending': True}
+        github['signals']['main_pipeline_pending'] = True
+
+        merge = observer.merge_readiness(github)
+        frontend_deploy = observer.frontend_deploy_readiness(production, github, frontend)
+        api_deploy = observer.api_deploy_readiness(production, host, github, frontend)
+
+        self.assertTrue(merge['ok'])
+        self.assertEqual(merge['blocking_reasons'], [])
+        self.assertFalse(frontend_deploy['ok'])
+        self.assertIn('production_unhealthy', frontend_deploy['blocking_reasons'])
+        self.assertIn('frontend_deploy_pending', frontend_deploy['blocking_reasons'])
+        self.assertFalse(api_deploy['ok'])
+        self.assertIn('host_unhealthy', api_deploy['blocking_reasons'])
+        self.assertIn('api_build_headroom_low', api_deploy['blocking_reasons'])
+
+    def test_merge_candidate_requires_exact_head_green_checks_and_main_target(self) -> None:
+        github = {'ok': True, 'signals': {'ci_green_prs': [], 'ci_merge_candidates': []}}
+        result = observer.merge_readiness(github)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['no_green_merge_candidate'])
+
+        github['ok'] = False
+        result = observer.merge_readiness(github)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['github_state_unknown'])
+
+    def test_deploy_fails_closed_when_preferred_api_port_is_unknown(self) -> None:
+        production, _, github, frontend = self.healthy_inputs()
+        production['nginx'] = {'preferred_ok': None}
+
+        result = observer.frontend_deploy_readiness(production, github, frontend)
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['api_primary_port_unknown'])
+
+    def test_api_deploy_requires_explicit_build_headroom(self) -> None:
+        production, host, github, frontend = self.healthy_inputs()
+        host = {'healthy': True, 'disk': {'ok': True, 'api_build_headroom_ok': False}}
+
+        result = observer.api_deploy_readiness(production, host, github, frontend)
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['api_build_headroom_low'])
+        legacy = observer.merge_deploy_readiness(production, host, github, frontend)
+        self.assertFalse(legacy['ok'])
+        self.assertEqual(legacy['blocking_reasons'], ['api_build_headroom_low'])
 
     def test_blocks_while_main_or_frontend_rollout_is_pending(self) -> None:
         production, host, github, frontend = self.healthy_inputs()
@@ -1513,6 +1638,37 @@ class ObserverStateSignatureTests(unittest.TestCase):
                 },
             },
         }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
+
+    def test_readiness_blocker_changes_create_a_change_event(self) -> None:
+        base = {
+            'github': {
+                'open_automation_prs': [],
+                'signals': {'ci_merge_candidates': []},
+                'latest_main_run': {'head_sha': 'main-sha', 'status': 'completed'},
+            },
+            'production': {'healthy': True, 'issues': [], 'nginx': {'port': 4002}},
+            'host': {'disk': {'ok': False, 'api_build_headroom_ok': False}},
+            'worker': {
+                'can_merge': False,
+                'merge_blocking_reasons': ['no_green_merge_candidate'],
+                'can_deploy_frontend': False,
+                'frontend_deploy_blocking_reasons': ['main_pipeline_pending'],
+                'can_deploy_api': False,
+                'api_deploy_blocking_reasons': ['host_unhealthy'],
+                'can_merge_or_deploy': False,
+                'merge_deploy_blocking_reasons': ['host_unhealthy'],
+            },
+        }
+        changed = {
+            **base,
+            'worker': {
+                **base['worker'],
+                'merge_blocking_reasons': ['github_state_unknown'],
+            },
+        }
+
+        self.assertEqual(base['worker']['can_merge'], changed['worker']['can_merge'])
         self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
 
     def test_api_lookup_latency_does_not_create_a_change_event(self) -> None:
