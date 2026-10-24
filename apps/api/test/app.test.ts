@@ -649,6 +649,27 @@ test('OpenWeather adapter applies unit-aware wind ceilings to current and foreca
     (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
   );
 
+  for (const item of [
+    { gust: 300, rejects: false },
+    { gust: 301, rejects: true },
+  ]) {
+    const imperialPayload = structuredClone(currentFixture);
+    Object.assign(imperialPayload.wind, { gust: item.gust });
+    const imperialProvider = new OpenWeatherProvider(
+      createEnv(),
+      (async () => new Response(JSON.stringify(imperialPayload), { status: 200 })) as typeof fetch,
+    );
+    if (item.rejects) {
+      await assert.rejects(
+        () => imperialProvider.getCurrent({ city: 'İzmir', units: 'imperial', lang: 'tr' }),
+        (error: unknown) => error instanceof AppError && error.code === 'INVALID_PROVIDER_RESPONSE',
+      );
+    } else {
+      const result = await imperialProvider.getCurrent({ city: 'İzmir', units: 'imperial', lang: 'tr' });
+      assert.equal(result.wind.gust, item.gust);
+    }
+  }
+
   const forecastPayload = structuredClone(forecastFixture);
   forecastPayload.list[0].wind.speed = 151;
   const forecastProvider = new OpenWeatherProvider(
