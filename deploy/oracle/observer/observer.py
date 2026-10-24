@@ -811,12 +811,15 @@ def collect_github() -> dict[str, Any]:
         ci_run = ci_runs_by_sha.get(sha, {})
         codeql_run = codeql_runs_by_sha.get(sha, {})
         ops_run = ops_runs_by_sha.get(sha, {})
+        base = pr.get('base') if isinstance(pr.get('base'), dict) else {}
         automation_prs.append({
             'number': pr.get('number'),
             'title': pr.get('title'),
             'url': pr.get('html_url'),
             'head_ref': ref,
             'head_sha': sha,
+            'base_ref': base.get('ref'),
+            'base_sha': base.get('sha'),
             'draft': pr.get('draft'),
             'ci': {
                 'run_id': ci_run.get('id'),
@@ -880,6 +883,17 @@ def collect_github() -> dict[str, Any]:
     ci_failed = [number for number, state in gate_states.items() if state == 'failed']
     ci_running = [number for number, state in gate_states.items() if state == 'running']
     ci_unknown = [number for number, state in gate_states.items() if state == 'unknown']
+    # This is a bounded candidate signal, not an instruction to merge. The
+    # checks are keyed to each PR's exact head SHA; the operator must still
+    # query current mergeability, review state and changed-file scope before
+    # any GitHub write. Drafts and PRs targeting another base are not candidates.
+    ci_merge_candidates = [
+        pr['number']
+        for pr in automation_prs
+        if gate_states.get(pr.get('number')) == 'green'
+        and pr.get('draft') is not True
+        and pr.get('base_ref') == 'main'
+    ]
     api_deployment = collect_api_deployment(main_context)
 
     rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
@@ -898,6 +912,7 @@ def collect_github() -> dict[str, Any]:
         'api_deployment': api_deployment,
         'signals': {
             'ci_green_prs': ci_green,
+            'ci_merge_candidates': ci_merge_candidates,
             'ci_failed_prs': ci_failed,
             'ci_running_prs': ci_running,
             'ci_unknown_prs': ci_unknown,
@@ -929,32 +944,44 @@ def frontend_deployment_state(frontend_revision: dict[str, Any], main_branch: di
     }
 
 
-def merge_deploy_readiness(
-    production: dict[str, Any],
-    host: dict[str, Any],
-    github: dict[str, Any],
-    frontend_revision: dict[str, Any],
-) -> dict[str, Any]:
-    """Summarize whether an autonomous merge/deploy is safe to start now.
+def merge_readiness(github: dict[str, Any]) -> dict[str, Any]:
+    """Report whether a non-draft, exact-head-green automation PR is a candidate.
 
-    The observer remains read-only; this signal describes environment readiness,
-    not permission for the observer process itself to mutate the repository.
+    This signal intentionally does not depend on production health, deployment
+    propagation, API port, or host disk. It is not merge authorization: before
+    a GitHub write, the caller must re-read the PR head and base, verify current
+    mergeability/review state and all required checks, and classify changed-file
+    scope. Those checks can change between observer snapshots.
     """
     reasons: list[str] = []
     github_signals = github.get('signals') or {}
+    if github.get('ok') is not True:
+        reasons.append('github_state_unknown')
+    elif not github_signals.get('ci_merge_candidates'):
+        reasons.append('no_green_merge_candidate')
+    return {'ok': not reasons, 'blocking_reasons': reasons}
+
+
+def frontend_deploy_readiness(
+    production: dict[str, Any],
+    github: dict[str, Any],
+    frontend_revision: dict[str, Any],
+) -> dict[str, Any]:
+    """Pages rollout readiness, independent of Oracle host disk pressure."""
+    reasons: list[str] = []
+    github_signals = github.get('signals') or {}
     nginx = production.get('nginx') or {}
-    disk = host.get('disk') or {}
 
     if production.get('healthy') is not True:
         reasons.append('production_unhealthy')
-    if host.get('healthy') is not True or disk.get('ok') is not True:
-        reasons.append('host_unhealthy')
     if github.get('ok') is not True:
         reasons.append('github_state_unknown')
     if frontend_revision.get('pending') is True:
         reasons.append('frontend_deploy_pending')
     if nginx.get('preferred_ok') is False:
         reasons.append('api_primary_port_drift')
+    elif nginx.get('preferred_ok') is not True:
+        reasons.append('api_primary_port_unknown')
     if github_signals.get('main_pipeline_pending') is True:
         reasons.append('main_pipeline_pending')
     if github_signals.get('main_pipeline_failed') is True:
@@ -969,10 +996,42 @@ def merge_deploy_readiness(
     return {'ok': not reasons, 'blocking_reasons': reasons}
 
 
+def api_deploy_readiness(
+    production: dict[str, Any],
+    host: dict[str, Any],
+    github: dict[str, Any],
+    frontend_revision: dict[str, Any],
+) -> dict[str, Any]:
+    """Server-side API deployment readiness, including host and build reserve."""
+    base = frontend_deploy_readiness(production, github, frontend_revision)
+    reasons = list(base['blocking_reasons'])
+    disk = host.get('disk') or {}
+    if host.get('healthy') is not True or disk.get('ok') is not True:
+        reasons.append('host_unhealthy')
+    if disk.get('api_build_headroom_ok') is not True:
+        reasons.append('api_build_headroom_low')
+    return {'ok': not reasons, 'blocking_reasons': reasons}
+
+
+def merge_deploy_readiness(
+    production: dict[str, Any],
+    host: dict[str, Any],
+    github: dict[str, Any],
+    frontend_revision: dict[str, Any],
+) -> dict[str, Any]:
+    """Backward-compatible conservative aggregate for older worker versions.
+
+    New callers should use merge_readiness for GitHub PR candidates,
+    frontend_deploy_readiness for Pages, and api_deploy_readiness for Oracle.
+    """
+    return api_deploy_readiness(production, host, github, frontend_revision)
+
+
 def state_signature(state: dict[str, Any]) -> dict[str, Any]:
     github = state.get('github') or {}
     production = state.get('production') or {}
     host = state.get('host') or {}
+    worker = state.get('worker') or {}
     prs = github.get('open_automation_prs') or []
     return {
         'production_healthy': production.get('healthy'),
@@ -982,6 +1041,16 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'host_disk_ok': ((host.get('disk') or {}).get('ok')),
         'host_disk_pressure_warning': ((host.get('disk') or {}).get('pressure_warning')),
         'api_build_headroom_ok': ((host.get('disk') or {}).get('api_build_headroom_ok')),
+        'worker_readiness': {
+            key: worker.get(key)
+            for key in (
+                'can_merge', 'merge_blocking_reasons',
+                'can_deploy_frontend', 'frontend_deploy_blocking_reasons',
+                'can_deploy_api', 'api_deploy_blocking_reasons',
+                'can_merge_or_deploy', 'merge_deploy_blocking_reasons',
+            )
+        },
+        'ci_merge_candidates': ((github.get('signals') or {}).get('ci_merge_candidates')),
         'stale_hava81_browser_processes': ((host.get('browser_processes') or {}).get('stale_count')),
         'prs': [
             {
@@ -1069,6 +1138,9 @@ def main() -> int:
     frontend_revision = production.get('frontend_revision') or {}
     frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('main_branch')))
     production['frontend_revision'] = frontend_revision
+    merge_ready = merge_readiness(github)
+    frontend_deploy_ready = frontend_deploy_readiness(production, github, frontend_revision)
+    api_deploy_ready = api_deploy_readiness(production, host, github, frontend_revision)
     merge_deploy = merge_deploy_readiness(production, host, github, frontend_revision)
     state = {
         'schema_version': 1,
@@ -1086,6 +1158,12 @@ def main() -> int:
         'worker': {
             'mode': 'read-only-observer',
             'writes_repository': False,
+            'can_merge': merge_ready['ok'],
+            'merge_blocking_reasons': merge_ready['blocking_reasons'],
+            'can_deploy_frontend': frontend_deploy_ready['ok'],
+            'frontend_deploy_blocking_reasons': frontend_deploy_ready['blocking_reasons'],
+            'can_deploy_api': api_deploy_ready['ok'],
+            'api_deploy_blocking_reasons': api_deploy_ready['blocking_reasons'],
             'can_merge_or_deploy': merge_deploy['ok'],
             'merge_deploy_blocking_reasons': merge_deploy['blocking_reasons'],
             'duration_ms': round((time.monotonic() - started) * 1000),
@@ -1100,7 +1178,7 @@ def main() -> int:
             'current': state_signature(state),
         })
     level = 'OK' if production['healthy'] else 'WARN'
-    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} ci_running={github['signals']['ci_running_prs']} ci_unknown={github['signals']['ci_unknown_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
+    print(f"{level} collected={collected_at} production_healthy={production['healthy']} disk_ok={host['disk']['ok']} disk_free_gib={host['disk']['free_bytes'] / (1024**3):.1f} open_prs={len(github['open_automation_prs'])} ci_green={github['signals']['ci_green_prs']} merge_candidates={github['signals']['ci_merge_candidates']} ci_running={github['signals']['ci_running_prs']} ci_unknown={github['signals']['ci_unknown_prs']} main_pending={github['signals']['main_pipeline_pending']} api_deploy_pending={github['signals']['api_deploy_pending']} api_deploy_unknown={github['signals']['api_deploy_unknown']}")
     return 0
 
 
