@@ -4,7 +4,7 @@ import type { DailyForecast, HourlyForecast } from '../../../types';
 export type HourlyDatum = HourlyForecast & {
   timestamp: number;
   convertedTemp: number;
-  precipitation: number;
+  precipitation: number | undefined;
 };
 
 /** A daily row prepared for display (converted and rounded temperatures). */
@@ -14,7 +14,7 @@ export type DailyDatum = DailyForecast & {
   convertedMaxExact: number;
   convertedMin: number;
   convertedMax: number;
-  precipitation: number;
+  precipitation: number | undefined;
 };
 
 /**

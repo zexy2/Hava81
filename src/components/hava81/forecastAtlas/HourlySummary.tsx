@@ -12,10 +12,17 @@ export function HourlySummary({ summary: hourlySummary, clock }: HourlySummaryPr
   const { t } = useTranslation();
   const { atLocationTime, currentLocationDateKey, formatDay, hourTileFormatter } = clock;
   const { locale, temperatureSymbol } = clock;
+  const peakRainProbability = hourlySummary?.peakPrecipitation.precipitation;
+  const peakRainAmount = hourlySummary?.peakPrecipitation.precipitationMm;
+  const hasPeakRainEvidence =
+    (typeof peakRainProbability === 'number' &&
+      Number.isFinite(peakRainProbability) &&
+      peakRainProbability >= 0 &&
+      peakRainProbability <= 1) ||
+    (typeof peakRainAmount === 'number' && Number.isFinite(peakRainAmount) && peakRainAmount >= 0);
   const hasHourlyPrecipitationSignal = Boolean(
-    hourlySummary &&
-    (hourlySummary.peakPrecipitation.precipitation > 0 ||
-      (hourlySummary.peakPrecipitation.precipitationMm ?? 0) > 0)
+    (typeof peakRainProbability === 'number' && peakRainProbability > 0) ||
+    (typeof peakRainAmount === 'number' && peakRainAmount > 0)
   );
   const renderSummaryWhen = (hour: { time: Date } | null) => {
     if (!hour) return null;
@@ -95,12 +102,14 @@ export function HourlySummary({ summary: hourlySummary, clock }: HourlySummaryPr
       >
         <span>{t('hava81.forecastAtlas.summaryRain')}</span>
         <strong>
-          {formatPrecipitationSummary(
-            hourlySummary.peakPrecipitation.precipitation,
-            hourlySummary.peakPrecipitation.precipitationMm,
-            locale,
-            t('hava81.forecastAtlas.precipitationNone')
-          )}
+          {hasPeakRainEvidence
+            ? formatPrecipitationSummary(
+                hourlySummary.peakPrecipitation.precipitation ?? Number.NaN,
+                hourlySummary.peakPrecipitation.precipitationMm,
+                locale,
+                t('hava81.forecastAtlas.precipitationNone')
+              )
+            : t('hava81.forecastAtlas.precipitationUnknown')}
         </strong>
         {hasHourlyPrecipitationSignal ? renderRainPeakWhen(hourlySummary.peakPrecipitation) : null}
       </div>

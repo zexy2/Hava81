@@ -1119,3 +1119,21 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Require fresh exact-head Frontend quality, Browser flows, Lighthouse budgets, Ops contracts, and CodeQL before merge. Continue independent work while those checks run.
 3. Recheck the merge SHA's main CI/CD, Ops, CodeQL, and Pages deployment; directly smoke-test root, Turkish/English city routes, API readiness/CORS, frontend revision parity, and port 4002 after deployment. Keep port 4001 as rollback/canary.
 4. Next independent audit: inspect the remaining commute/route precipitation presentation paths for any unsupported dry labels, but only change them with focused regression coverage and no fabricated safety guidance.
+
+## 2026-10-24 18:00 TRT — Preserve unknown precipitation across Forecast Atlas
+
+### Production baseline
+- Read-only observer refreshed at `2026-10-24T14:49:18Z`: production healthy, frontend root/city revision parity at `32c6237db`, API readiness HTTP 200 with `Cache-Control: no-store`, correct CORS origin, API port 4002 primary, and main CI/CD run #3511 green on `32c6237dba8de5faf46d3ae91c560ec9f6b7e3ca`.
+- Direct smoke returned HTTP 200 for `/`, `/istanbul/`, `/en/istanbul/`, and `/api/v1/health/ready`; a CORS preflight returned HTTP 204 with the expected allow-origin/method/header values. No production change was made.
+
+### Bounded forecast evidence fix
+- Dedicated worktree `/home/chatgpt/hava81-run11-forecast-unknown-precip-20261024`, branch `automation/hava81-run11-forecast-unknown-precip-20261024`, based on exact `origin/main` `32c6237db`.
+- Forecast Atlas previously used `normalizePrecipitationProbability`, which intentionally maps non-finite input to zero for legacy callers. At the presentation boundary this made an invalid/missing hourly or daily probability indistinguishable from an explicit dry forecast. Added `normalizeOptionalPrecipitationProbability` for Forecast Atlas only, widened its prepared datum types to preserve unknown, and now label unknown precipitation in the hourly strip, daily rows, summary and active chart tooltip. The summary prefers an hour with valid precipitation evidence when one exists; explicit zero remains dry, and amount-only observations still render and contribute to the rain gauge.
+- Added regressions for valid/invalid normalization, all-unknown hourly evidence, a known-dry hour beside an unknown hour, and daily unknown state. Focused tests pass **45/45** (ForecastAtlas 22, precipitation utility 23); TypeScript, ESLint/CSS lint and `git diff --check` pass. Full frontend suite/build/audit and hosted gates remain pending; no weather source, provider contract, scoring threshold or safety recommendation was changed.
+
+### Exact next actions
+1. Complete the current independent commute/route branch's bounded full-suite/build/audit job (`job_id=324583e0ed1fd25ae191ea6d`) without changing that worktree; isolate any unrelated timeout before deciding whether it is a product regression.
+2. Run the full frontend suite and production build on this Forecast Atlas branch after the other suite finishes, then inspect the complete diff and append-only docs for consistency.
+3. Commit/push this isolated branch and open a focused PR only after local gates pass. Require fresh exact-head Frontend quality, Browser flows, Lighthouse, Ops contracts and CodeQL checks.
+4. Before merge, refresh `/usr/local/bin/hava81-worker-status` and directly verify PR head/checks/mergeability plus production root/city/readiness/CORS/revision parity. Keep API 4002 primary and 4001 rollback/canary; do not run an API build or broad cleanup while disk headroom is constrained.
+5. Continue independent work while CI runs; do not mutate either branch after opening its PR.

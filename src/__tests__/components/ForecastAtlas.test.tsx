@@ -201,6 +201,112 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(region).queryByText(/00:00 saatinde yağış beklenmiyor/i)).not.toBeInTheDocument();
   });
 
+  it('labels hourly precipitation unknown instead of treating invalid probability as dry', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T00:00:00Z'),
+              temp: 22,
+              icon: '01d',
+              description: 'açık',
+              pop: Number.NaN,
+              windSpeed: 2,
+            },
+            {
+              time: new Date('2026-08-29T01:00:00Z'),
+              temp: 23,
+              icon: '01d',
+              description: 'açık',
+              pop: Number.NaN,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
+    expect(within(region).getAllByText('Yağış verisi yok')).toHaveLength(2);
+    expect(screen.getAllByText('Yağış verisi yok').length).toBeGreaterThan(2);
+    expect(screen.queryByText('Beklenmiyor')).not.toBeInTheDocument();
+  });
+
+  it('uses a known dry hour for the summary when another hour has unknown precipitation', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[
+            {
+              time: new Date('2026-08-29T00:00:00Z'),
+              temp: 22,
+              icon: '01d',
+              description: 'açık',
+              pop: Number.NaN,
+              windSpeed: 2,
+            },
+            {
+              time: new Date('2026-08-29T01:00:00Z'),
+              temp: 23,
+              icon: '01d',
+              description: 'açık',
+              pop: 0,
+              windSpeed: 2,
+            },
+          ]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByText('Yok')).toBeInTheDocument();
+    expect(screen.getByText('Yağış verisi yok')).toBeInTheDocument();
+  });
+
+  it('labels daily precipitation unknown instead of announcing no rain', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[
+            {
+              date: new Date('2026-08-29T12:00:00Z'),
+              tempMin: 20,
+              tempMax: 25,
+              icon: '01d',
+              description: 'açık',
+              pop: Number.NaN,
+            },
+          ]}
+          hourly={[]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    const days = screen.getAllByRole('listitem');
+    expect(within(days[0]).getByRole('group', { name: 'Yağış verisi yok' })).toBeInTheDocument();
+    expect(within(days[0]).queryByText(/yağış beklenmiyor/i)).not.toBeInTheDocument();
+  });
+
   it('keeps hourly rain amount visible even when probability rounds to zero', () => {
     render(
       <SettingsProvider>

@@ -33,9 +33,21 @@ export function DailyForecastSection({
         aria-label={t('hava81.forecastAtlas.dailyRegion')}
       >
         {dailyData.map(day => {
-          const precipitation = Math.round(day.precipitation * 100);
+          const probability =
+            typeof day.precipitation === 'number' &&
+            Number.isFinite(day.precipitation) &&
+            day.precipitation >= 0 &&
+            day.precipitation <= 1
+              ? day.precipitation
+              : undefined;
+          const precipitation = probability !== undefined ? Math.round(probability * 100) : undefined;
           const precipitationAmount = formatPrecipitationAmount(day.precipitationMm, locale);
-          const hasPrecipitation = precipitation > 0 || Boolean(precipitationAmount);
+          const hasAmountEvidence =
+            typeof day.precipitationMm === 'number' &&
+            Number.isFinite(day.precipitationMm) &&
+            day.precipitationMm >= 0;
+          const hasPrecipitation = (precipitation ?? 0) > 0 || Boolean(precipitationAmount);
+          const precipitationUnknown = precipitation === undefined && !hasAmountEvidence;
           const isCurrentDate = day.date.toISOString().slice(0, 10) === currentLocationDateKey;
           const roundedRangeCollapsed =
             day.convertedMax === day.convertedMin &&
@@ -64,7 +76,7 @@ export function DailyForecastSection({
               {hasPrecipitation ? (
                 <span
                   className={
-                    precipitation >= PRECIPITATION_THRESHOLD * 100 ||
+                    (precipitation ?? 0) >= PRECIPITATION_THRESHOLD * 100 ||
                     (day.precipitationMm ?? 0) >= 1
                       ? 'hava81-forecast-atlas__day-pop is-signal'
                       : 'hava81-forecast-atlas__day-pop'
@@ -72,7 +84,7 @@ export function DailyForecastSection({
                   role="group"
                   aria-label={
                     precipitationAmount
-                      ? precipitation > 0
+                      ? (precipitation ?? 0) > 0
                         ? t('hava81.forecastAtlas.dailyPrecipitationWithAmount', {
                             day: formatDay(day.date),
                             percent: precipitation,
@@ -85,11 +97,19 @@ export function DailyForecastSection({
                       : `${t('weather.precipitation')}: ${precipitation}%`
                   }
                 >
-                  {precipitation > 0 ? <span>{precipitation}%</span> : null}
-                  {precipitation > 0 && precipitationAmount ? (
+                  {(precipitation ?? 0) > 0 ? <span>{precipitation}%</span> : null}
+                  {(precipitation ?? 0) > 0 && precipitationAmount ? (
                     <span aria-hidden="true"> · </span>
                   ) : null}
                   {precipitationAmount ? <span>{precipitationAmount}</span> : null}
+                </span>
+              ) : precipitationUnknown ? (
+                <span
+                  className="hava81-forecast-atlas__day-pop"
+                  role="group"
+                  aria-label={t('hava81.forecastAtlas.precipitationUnknown')}
+                >
+                  {t('hava81.forecastAtlas.precipitationUnknown')}
                 </span>
               ) : (
                 <span className="hava81-forecast-atlas__sr-only">

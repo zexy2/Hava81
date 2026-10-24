@@ -314,3 +314,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - A precipitation row is evidence-backed only when at least one signal is valid: probability in the frontend's 0–1 ratio range, or a finite non-negative precipitation amount. Do not let an invalid/missing probability and missing/invalid amount become the top-ranked slot merely because its fallback severity is zero.
 - If no near-term slot has valid precipitation evidence, city comparison must say `Yağış verisi yok` / `Precipitation data unavailable`, not `Beklenmiyor` / `Not expected`. A valid explicit zero probability or zero amount remains evidence for a dry label; a valid amount remains usable even when probability is unavailable.
 - This is a UI evidence/provenance guard. It does not alter weather values, scoring, ranking of cities, thresholds, provider behavior, or API deployment.
+
+## 2026-10-24 — Missing precipitation is unknown in Forecast Atlas
+
+- Preserve the existing strict BFF/API forecast validation and legacy `normalizePrecipitationProbability` contract. Add a separate optional normalizer at the Forecast Atlas presentation boundary so non-finite, negative, over-range, or absent probability cannot silently become a dry reading.
+- A valid probability of zero or a valid amount of zero is evidence for a dry reading. If both probability and amount are absent/invalid, label the state as unknown in summary, hourly and daily presentation, including chart tooltips. A valid positive amount remains useful even when probability is unavailable.
+- When choosing the hourly summary peak, rank evidence-bearing hours before unknown-only hours. This prevents an early unknown slot from masking a later explicit dry or wet observation; if all slots are unknown, keep the summary unknown. Do not infer rain or dryness from the absence of a signal.
+- This is a frontend presentation/data-integrity guard only. It does not alter provider values, score calibration, official MGM warning semantics, or production API routing. Validate focused and full frontend tests, type-check, lint, build, then require exact-head hosted gates before merge.

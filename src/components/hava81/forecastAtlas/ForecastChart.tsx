@@ -150,10 +150,21 @@ export function ForecastChartPlot({
     const localTime = atLocationTime(point.time);
     const dayLabel =
       localTime.toISOString().slice(0, 10) === currentLocationDateKey ? null : formatDay(localTime);
-    const percent = Math.round(point.precipitation * 100);
+    const probability =
+      typeof point.precipitation === 'number' &&
+      Number.isFinite(point.precipitation) &&
+      point.precipitation >= 0 &&
+      point.precipitation <= 1
+        ? point.precipitation
+        : undefined;
+    const percent = probability !== undefined ? Math.round(probability * 100) : undefined;
     const amount = formatPrecipitationAmount(point.precipitationMm, locale);
     const rain =
-      percent > 0 && amount ? `${percent}% · ${amount}` : percent > 0 ? `${percent}%` : amount;
+      percent !== undefined && percent > 0 && amount
+        ? `${percent}% · ${amount}`
+        : percent !== undefined && percent > 0
+          ? `${percent}%`
+          : amount || (percent === undefined ? t('hava81.forecastAtlas.precipitationUnknown') : null);
     // Beside the point (never above it), so the reading is never clipped by
     // the plot's top edge and never covers the curve it describes.
     const placement = tooltipSide === 'left' ? 'is-left' : 'is-right';
@@ -412,7 +423,9 @@ export function ForecastChartPlot({
             <svg viewBox="0 0 12 12" width="11" height="11" focusable="false">
               <path d="M6 1.2C4.4 3.6 2.6 5.5 2.6 7.5a3.4 3.4 0 0 0 6.8 0C9.4 5.5 7.6 3.6 6 1.2Z" />
             </svg>
-            {Math.round(chart.firstPrecipitation.precipitation * 100) > 0
+            {typeof chart.firstPrecipitation.precipitation === 'number' &&
+            Number.isFinite(chart.firstPrecipitation.precipitation) &&
+            Math.round(chart.firstPrecipitation.precipitation * 100) > 0
               ? `${Math.round(chart.firstPrecipitation.precipitation * 100)}%`
               : formatPrecipitationAmount(chart.firstPrecipitation.precipitationMm, locale)}
           </span>
@@ -433,10 +446,13 @@ export function FirstPrecipitationAnnouncement({
   const { t } = useTranslation();
   const { atLocationTime, locale, timeFormatter } = clock;
   const firstPrecipitationAmount = formatPrecipitationAmount(point.precipitationMm, locale);
-  const firstPrecipitationPercent = Math.round(point.precipitation * 100);
+  const firstPrecipitationPercent =
+    typeof point.precipitation === 'number' && Number.isFinite(point.precipitation)
+      ? Math.round(point.precipitation * 100)
+      : undefined;
   return (
     <span className="hava81-forecast-atlas__sr-only">
-      {firstPrecipitationAmount && firstPrecipitationPercent > 0
+      {firstPrecipitationAmount && (firstPrecipitationPercent ?? 0) > 0
         ? t('hava81.forecastAtlas.precipitationAtWithAmount', {
             time: timeFormatter.format(atLocationTime(point.time)),
             percent: firstPrecipitationPercent,
@@ -449,7 +465,7 @@ export function FirstPrecipitationAnnouncement({
             )}`
           : t('hava81.forecastAtlas.precipitationAt', {
               time: timeFormatter.format(atLocationTime(point.time)),
-              percent: firstPrecipitationPercent,
+              percent: firstPrecipitationPercent ?? 0,
             })}
     </span>
   );

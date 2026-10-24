@@ -211,6 +211,7 @@ export const en = {
       rainPeakToday: 'Today',
       rainPeakTomorrow: 'Tomorrow',
       precipitationNone: 'None',
+      precipitationUnknown: 'Precipitation data unavailable',
       nightLabel: 'Night',
       rainBandLabel: 'Rain',
       visibleWindow: 'Showing {{from}} – {{to}}',

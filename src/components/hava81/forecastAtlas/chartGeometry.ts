@@ -90,7 +90,9 @@ export const buildRhythmChart = (
         : CHART_TOP + ((max - hour.convertedTemp) / range) * drawableHeight,
     isNight: hour.icon.endsWith('n'),
     isRainSignal:
-      hour.precipitation >= PRECIPITATION_THRESHOLD ||
+      (typeof hour.precipitation === 'number' &&
+        Number.isFinite(hour.precipitation) &&
+        hour.precipitation >= PRECIPITATION_THRESHOLD) ||
       (Number.isFinite(hour.precipitationMm) && (hour.precipitationMm ?? 0) >= 0.2),
   }));
   const path = buildSmoothPath(points);
@@ -107,16 +109,26 @@ export const buildRhythmChart = (
   // least one cell, so 2-8% stays legible, and colour deepens with each
   // level. Measurable rain with a rounded 0% chance still lights one cell.
   const rainBars = points
-    .filter(point => point.precipitation > 0 || (point.precipitationMm ?? 0) > 0)
-    .map(point => ({
-      key: point.timestamp,
-      index: point.index,
-      level: Math.max(
-        1,
-        Math.min(RAIN_GAUGE_CELLS, Math.ceil(Math.min(1, point.precipitation) * RAIN_GAUGE_CELLS))
-      ),
-      signal: point.isRainSignal,
-    }));
+    .filter(
+      point =>
+        (typeof point.precipitation === 'number' && point.precipitation > 0) ||
+        (point.precipitationMm ?? 0) > 0
+    )
+    .map(point => {
+      const probability =
+        typeof point.precipitation === 'number' && Number.isFinite(point.precipitation)
+          ? point.precipitation
+          : 0;
+      return {
+        key: point.timestamp,
+        index: point.index,
+        level: Math.max(
+          1,
+          Math.min(RAIN_GAUGE_CELLS, Math.ceil(Math.min(1, probability) * RAIN_GAUGE_CELLS))
+        ),
+        signal: point.isRainSignal,
+      };
+    });
 
   // Gradient stops sample the temperature at evenly spaced heights, from the
   // top of the curve band (max) to the area baseline (below min = min).

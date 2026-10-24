@@ -39,8 +39,20 @@ export function HourlyTimeline({
       }}
     >
       {hourlyData.map((hour, index) => {
-        const precipitation = Math.round(hour.precipitation * 100);
+        const probability =
+          typeof hour.precipitation === 'number' &&
+          Number.isFinite(hour.precipitation) &&
+          hour.precipitation >= 0 &&
+          hour.precipitation <= 1
+            ? hour.precipitation
+            : undefined;
+        const precipitation = probability !== undefined ? Math.round(probability * 100) : undefined;
         const precipitationAmount = formatPrecipitationAmount(hour.precipitationMm, locale);
+        const hasAmountEvidence =
+          typeof hour.precipitationMm === 'number' &&
+          Number.isFinite(hour.precipitationMm) &&
+          hour.precipitationMm >= 0;
+        const precipitationUnknown = precipitation === undefined && !hasAmountEvidence;
         const localTime = atLocationTime(hour.time);
         const previousLocalTime = index > 0 ? atLocationTime(hourlyData[index - 1].time) : null;
         const dayChanged =
@@ -89,17 +101,17 @@ export function HourlyTimeline({
                 : hour.convertedTemp}
               °
             </strong>
-            {precipitation > 0 || precipitationAmount ? (
+            {((precipitation ?? 0) > 0 || precipitationAmount) ? (
               <span
                 className={
-                  precipitation >= PRECIPITATION_THRESHOLD * 100 ||
+                  (precipitation ?? 0) >= PRECIPITATION_THRESHOLD * 100 ||
                   (Number.isFinite(hour.precipitationMm) && (hour.precipitationMm ?? 0) >= 0.2)
                     ? 'hava81-forecast-atlas__hour-pop is-signal'
                     : 'hava81-forecast-atlas__hour-pop'
                 }
                 role="group"
                 aria-label={
-                  precipitationAmount && precipitation > 0
+                  precipitationAmount && (precipitation ?? 0) > 0
                     ? t('hava81.forecastAtlas.hourlyPrecipitationWithAmount', {
                         percent: precipitation,
                         amount: precipitationAmount,
@@ -111,11 +123,19 @@ export function HourlyTimeline({
                       : `${t('weather.precipitation')}: ${precipitation}%`
                 }
               >
-                {precipitation > 0 ? <span>{precipitation}%</span> : null}
-                {precipitation > 0 && precipitationAmount ? (
+                {(precipitation ?? 0) > 0 ? <span>{precipitation}%</span> : null}
+                {(precipitation ?? 0) > 0 && precipitationAmount ? (
                   <span aria-hidden="true"> · </span>
                 ) : null}
                 {precipitationAmount ? <span>{precipitationAmount}</span> : null}
+              </span>
+            ) : precipitationUnknown ? (
+              <span
+                className="hava81-forecast-atlas__hour-pop"
+                role="group"
+                aria-label={t('hava81.forecastAtlas.precipitationUnknown')}
+              >
+                {t('hava81.forecastAtlas.precipitationUnknown')}
               </span>
             ) : null}
           </li>
