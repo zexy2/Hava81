@@ -424,3 +424,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - Every consumer that feeds current AQI into the shared decision snapshot must use the same freshness boundary. A stale current AQI sample must not continue to affect `DecisionGlance` while weather/forecast evidence remains fresh; exclude only the stale optional AQI rather than blanking otherwise valid weather guidance.
 - Schedule the component's next refresh at the earliest current-weather, AQI, forecast expiry or short safety refresh, and ensure the memoized snapshot recomputes when AQI transitions from fresh to stale. Keep the change local to the UI evidence selection; do not alter provider data, AQI thresholds, or API behavior.
+
+## 2026-10-25 00:17 TRT — Refresh DecisionGlance when optional AQI evidence expires
+
+- `DecisionGlance` memoized its decision snapshot by weather, forecast, hourly and raw AQI object identity, so the component's clock refresh alone could not invalidate the memo when the same AQI sample crossed its freshness boundary. The shared domain builder checks AQI freshness when called, but the memo could prevent that call from happening again.
+- Treat current AQI as optional evidence at the component boundary: pass it only while `getCurrentWeatherFreshness` says it is fresh, schedule the next refresh at the earliest current-weather/AQI/forecast expiry (with the existing short safety refresh), and make the memo depend on the freshness-filtered AQI. Expired AQI is removed from the next decision snapshot without discarding otherwise fresh weather/forecast guidance.
+- Keep this a frontend freshness/cache invalidation fix. Do not change provider values, AQI scale/categories, health interpretation, scoring thresholds, API contract, or deployment behavior. Validate both initially stale AQI and a fresh sample expiring under fake timers, then run the full frontend suite, build, lint/type-check, security audit and focused browser flows.
