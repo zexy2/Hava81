@@ -480,3 +480,8 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - A visible/ready forecast is not proof that the current live weather request succeeded: cached or previously rendered content can survive a failed request. After the audit's existing single retry, include any failed core `/api/v1/weather/` response in the case result even when layout metrics are available; deduplicate repeated status/path pairs so diagnostics stay concise.
 - Keep API availability failures distinct from CSS/layout regressions. This is an observability/test-contract change only: it must not invent fallback weather, alter provider values, change freshness rules, or make public provider availability a mandatory CI dependency.
 - Keep frontend merge readiness separate from Oracle API deployment readiness. A healthy GitHub Pages deploy does not override a false host/disk/API-build-headroom gate.
+
+## 2026-10-25 03:03 TRT — Distinguish weather network failures from browser teardown
+
+- A failed browser request may have no HTTP response event, so the live responsive audit should also observe `requestfailed` for core `/api/v1/weather/` routes. Record non-cancellation failures in the same per-case diagnostics, strip query strings, and ignore `ERR_ABORTED`/cancelled requests caused by expected navigation or page teardown; otherwise a test harness cleanup could masquerade as an upstream outage.
+- Keep this diagnostic path read-only and bounded to core weather endpoints. Do not treat unrelated optional API failures as current-weather failures, retry provider requests aggressively, or convert network errors into fabricated weather values.
