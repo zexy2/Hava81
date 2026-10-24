@@ -193,7 +193,10 @@ describe('Hava81 app integration', () => {
 
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(service.getCurrentWeather).toHaveBeenCalledWith(
+      { city: 'İstanbul', lang: 'tr' },
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
     expect(window.location.pathname).toBe('/istanbul/');
   });
   it('keeps province URLs canonical when an English weather provider adds Province', async () => {
@@ -225,7 +228,10 @@ describe('Hava81 app integration', () => {
     renderApp();
 
     expect(await screen.findByRole('heading', { name: 'Urla', level: 1 })).toBeInTheDocument();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'Urla,TR', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(service.getCurrentWeather).toHaveBeenCalledWith(
+      { city: 'Urla,TR', lang: 'tr' },
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(window.location.pathname + window.location.search).toBe('/?yer=Urla');
     await waitFor(() => {
@@ -261,13 +267,16 @@ describe('Hava81 app integration', () => {
     renderApp();
 
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
-    expect(service.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(service.getCurrentWeather).toHaveBeenCalledWith(
+      { city: 'İstanbul', lang: 'tr' },
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
     expect(service.getCurrentLocationWeather).not.toHaveBeenCalled();
     expect(screen.queryByText('Havayı bulunduğun yere göre gösterelim')).not.toBeInTheDocument();
   });
 
   it('renders the decision-first city view and forecast metadata', async () => {
-    renderApp();
+    const { container } = renderApp();
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /plan için öne çıkanlar/i, level: 2 })
@@ -300,15 +309,31 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
     expect(screen.getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
-    expect(service.getForecast).toHaveBeenCalledWith(41.01, 28.97, 'tr', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(service.getForecast).toHaveBeenCalledWith(
+      41.01,
+      28.97,
+      'tr',
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
 
-    // Faz 2.3: the day plan lives in the secondary Planla view, not in the main flow.
+    // Plan-only panels are not mounted on Today; their chunks are not needed for first paint.
     expect(screen.queryByRole('heading', { name: /gün planı/i })).not.toBeInTheDocument();
+    expect(container.querySelector('.daily-plan')).toBeNull();
+    expect(container.querySelector('.commute-plan')).toBeNull();
+    expect(container.querySelector('.activity-planner')).toBeNull();
+    expect(container.querySelector('.route-weather')).toBeNull();
+    // The lightweight alert engine stays mounted so opted-in notifications keep running on Today.
+    expect(container.querySelector('.decision-alerts')).not.toBeNull();
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /planla’yı aç/i }));
     expect(
       await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(container.querySelector('.activity-planner')).not.toBeNull();
+      expect(container.querySelector('.commute-plan')).not.toBeNull();
+      expect(container.querySelector('.route-weather')).not.toBeNull();
+    });
     expect(screen.getByText(/şimdi mi, sonra mı/i)).toBeInTheDocument();
     const timeline = screen.getByRole('list', { name: /uygunluk zaman çizelgesi/i });
     expect(
@@ -320,7 +345,7 @@ describe('Hava81 app integration', () => {
   it('opens Planla from ?view=plan and keeps the view in the URL while switching', async () => {
     window.history.replaceState({}, '', '/istanbul/?view=plan');
     const user = userEvent.setup();
-    renderApp();
+    const { container } = renderApp();
 
     expect(
       await screen.findByRole('heading', { name: 'Planla · İstanbul', level: 1 })
@@ -337,10 +362,17 @@ describe('Hava81 app integration', () => {
       'aria-current',
       'page'
     );
+    const activityPlanner = container.querySelector<HTMLElement>('.activity-planner');
+    expect(activityPlanner).not.toBeNull();
+    const walking = within(activityPlanner!).getByRole('button', { name: /yürüyüş/i });
+    expect(walking).toHaveAttribute('aria-pressed', 'true');
+    await user.click(walking);
+    expect(walking).toHaveAttribute('aria-pressed', 'false');
 
     await user.click(screen.getByRole('button', { name: /bugüne dön/i }));
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /gün planı/i })).not.toBeInTheDocument();
+    expect(container.querySelector('.activity-planner')).not.toBeNull();
     await waitFor(() => expect(window.location.search).toBe(''));
     expect(within(nav).getByRole('button', { name: 'Bugün' })).toHaveAttribute(
       'aria-current',
@@ -351,6 +383,11 @@ describe('Hava81 app integration', () => {
     expect(
       await screen.findByRole('heading', { name: 'Planla · İstanbul', level: 1 })
     ).toBeInTheDocument();
+    expect(
+      within(container.querySelector<HTMLElement>('.activity-planner')!).getByRole('button', {
+        name: /yürüyüş/i,
+      })
+    ).toHaveAttribute('aria-pressed', 'false');
     await waitFor(() => expect(window.location.search).toBe('?view=plan'));
   }, 12_000);
 
