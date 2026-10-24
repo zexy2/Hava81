@@ -55,16 +55,19 @@ export function DecisionGlance({
     getCurrentWeatherFreshness(weather.meta, now).fresh &&
     getForecastFreshness(forecastMeta, now).fresh;
   const snapshot = useMemo(
-    () => (evidenceFresh && hourly.length ? getDecisionSnapshot({ weather, hourly, airQuality }) : null),
+    () =>
+      evidenceFresh && hourly.length ? getDecisionSnapshot({ weather, hourly, airQuality }) : null,
     [evidenceFresh, weather, hourly, airQuality]
   );
   const plan = snapshot?.plan ?? null;
+  const cityLocalDate = new Date(now + weather.meta.timezoneOffsetSeconds * 1000);
+  const dateTime = `${cityLocalDate.getUTCFullYear()}-${String(cityLocalDate.getUTCMonth() + 1).padStart(2, '0')}-${String(cityLocalDate.getUTCDate()).padStart(2, '0')}`;
   const dateLabel = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'tr-TR', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     timeZone: 'UTC',
-  }).format(new Date(now + weather.meta.timezoneOffsetSeconds * 1000));
+  }).format(cityLocalDate);
   const bestRange = snapshot?.bestWindow;
   const bestHours = bestRange
     ? formatBestWindowTime({
@@ -130,7 +133,9 @@ export function DecisionGlance({
       <div className="decision-glance__main">
         <div className="decision-glance__heading">
           <span className="atlas-kicker">{t('hava81.glance.title')}</span>
-          <time className="decision-glance__date">{dateLabel}</time>
+          <time className="decision-glance__date" dateTime={dateTime}>
+            {dateLabel}
+          </time>
         </div>
         <strong className="decision-glance__message">{guidance}</strong>
         {plan && bestHours ? (
