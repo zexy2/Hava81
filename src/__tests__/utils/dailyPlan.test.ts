@@ -99,6 +99,40 @@ describe('Hava81 daily decision engine v2', () => {
     expect(result.impacts).toEqual([]);
   });
 
+  it('does not treat missing precipitation evidence as a dry, excellent hour', () => {
+    const unknownRain = scoreWeatherWindow({
+      time: new Date(),
+      temperature: 22,
+      apparentTemperature: 22,
+      humidity: 45,
+      windSpeed: 3,
+      windGust: 5,
+      airQualityIndex: 1,
+      uvIndex: 1,
+      visibility: 20000,
+      weatherCode: 0,
+    });
+    const probabilityOnly = scoreWeatherWindow({
+      time: new Date(),
+      temperature: 22,
+      apparentTemperature: 22,
+      humidity: 45,
+      precipitationProbability: 0,
+      windSpeed: 3,
+      windGust: 5,
+      airQualityIndex: 1,
+      uvIndex: 1,
+      visibility: 20000,
+      weatherCode: 0,
+    });
+
+    expect(unknownRain.precipitationProbability).toBeUndefined();
+    expect(unknownRain.score).toBe(89);
+    expect(unknownRain.band).toBe('good');
+    expect(probabilityOnly.score).toBe(100);
+    expect(probabilityOnly.band).toBe('excellent');
+  });
+
   it('keeps pleasant-but-not-perfect hours below 100 instead of flattening the comfort band', () => {
     const apparentTemperatures = [25.4, 25.1, 24.8, 24.4, 24.2, 23.9, 24];
     const scores = apparentTemperatures.map(
@@ -320,6 +354,17 @@ describe('Hava81 daily decision engine v2', () => {
     const oneHourPlan = buildDailyPlan({ weather, hourly });
     const threeHourPlan = buildDailyPlan({ weather, hourly: threeHourly });
     expect(Math.abs(oneHourPlan.score - threeHourPlan.score)).toBeLessThanOrEqual(1);
+  });
+
+  it('does not report high confidence when every otherwise-rich hour lacks rain evidence', () => {
+    const hourly = Array.from({ length: 12 }, (_, index) =>
+      rich(6 + index, 22, { pop: undefined, precipitationMm: undefined })
+    );
+    const plan = buildDailyPlan({ weather, hourly });
+
+    expect(plan.confidence).toBe('basic');
+    expect(plan.umbrella).toBe('unknown');
+    expect(plan.slots.every(slot => slot.score <= 89)).toBe(true);
   });
 
   it('marks rich one-hour input as high-confidence and exposes the dominant score factors', () => {

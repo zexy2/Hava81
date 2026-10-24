@@ -104,8 +104,10 @@ const aggregateImpacts = (entries: WeightedSlot[]): ScoreFactorImpact[] => {
 
 const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
   if (!slots.length) return 'basic';
-  const richness = slots.map(
-    slot =>
+  const coverage = slots.map(slot => {
+    const hasPrecipitationEvidence =
+      Number.isFinite(slot.precipitationProbability) || Number.isFinite(slot.precipitationMm);
+    const richness =
       [
         slot.apparentTemperature,
         slot.humidity,
@@ -114,10 +116,17 @@ const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
         slot.uvIndex,
         slot.visibility,
         slot.weatherCode,
-      ].filter(value => Number.isFinite(value)).length
-  );
-  const richShare = richness.filter(count => count >= 6).length / slots.length;
-  const usefulShare = richness.filter(count => count >= 4).length / slots.length;
+      ].filter(value => Number.isFinite(value)).length;
+    return { richness, hasPrecipitationEvidence };
+  });
+  // A rich payload without either rain probability or amount cannot support a high-confidence
+  // outdoor recommendation: unknown precipitation must not silently count as dry.
+  const richShare =
+    coverage.filter(({ richness, hasPrecipitationEvidence }) => hasPrecipitationEvidence && richness >= 6)
+      .length / slots.length;
+  const usefulShare =
+    coverage.filter(({ richness, hasPrecipitationEvidence }) => hasPrecipitationEvidence && richness >= 4)
+      .length / slots.length;
   if (richShare >= 0.7) return 'high';
   if (usefulShare >= 0.5) return 'medium';
   return 'basic';

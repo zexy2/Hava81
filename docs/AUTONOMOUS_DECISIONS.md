@@ -293,3 +293,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - The first-screen `DecisionGlance` date is a city-local calendar date, so expose it as `<time datetime="YYYY-MM-DD">` while preserving the existing localized visible label.
 - Derive the date-only value from the same city UTC offset already used for display. Do not use the server/browser's local timezone, and do not serialize the shifted date as a UTC instant; the date-only value describes the city's displayed calendar day.
 - Add a regression that crosses UTC midnight and verifies the displayed city date is the following local day for a UTC+03:00 city. This is semantic metadata only: no forecast values, scoring, refresh behavior, layout, or weather/safety claims change.
+
+## 2026-10-24 — Missing precipitation evidence cannot imply an excellent hour
+
+- Treat precipitation probability and measured amount as one evidence family: either valid signal is enough to evaluate rain, but when both are missing the state is unknown, never implicitly dry.
+- Cap that individual hour at 89 so it cannot receive the 97–100 excellent label; apply the same cap after activity-specific comfort adjustments so a benefit cannot undo the evidence guard. Keep the displayed precipitation state unknown and do not add a fabricated rain-risk reason.
+- Daily-plan confidence requires precipitation evidence for a slot to contribute to the rich/useful coverage shares. A payload may be structurally rich in temperature, UV and visibility yet still be insufficient for a high-confidence outdoor decision when every slot lacks rain evidence.
+- This is a conservative data-completeness rule, not a precipitation forecast or hazard threshold. Probability-only and amount-only observations remain valid evidence.
