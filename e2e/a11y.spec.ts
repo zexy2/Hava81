@@ -50,7 +50,7 @@ test.describe('contrast', () => {
   test.use({ bypassCSP: true });
 
   test(
-    'dashboard text contrast meets WCAG AA in light and dark themes',
+    'dashboard has no axe WCAG A/AA or best-practice violations in light and dark themes',
     DESKTOP,
     async ({ page }) => {
       for (const [width, language, themeMode] of [
@@ -89,16 +89,34 @@ test.describe('contrast', () => {
                     root: Document,
                     options: unknown
                   ) => Promise<{
-                    violations: Array<{ id: string; nodes: Array<{ target: string[] }> }>;
+                    violations: Array<{
+                      id: string;
+                      impact: string | null;
+                      help: string;
+                      nodes: Array<{ target: string[] }>;
+                    }>;
                   }>;
                 };
               }
             ).axe;
             const result = await axe.run(document, {
-              runOnly: { type: 'rule', values: ['color-contrast'] },
+              runOnly: {
+                type: 'tag',
+                values: [
+                  'wcag2a',
+                  'wcag2aa',
+                  'wcag21a',
+                  'wcag21aa',
+                  'wcag22aa',
+                  'best-practice',
+                ],
+              },
             });
             return result.violations.flatMap(violation =>
-              violation.nodes.map(node => `${violation.id}: ${node.target.join(', ')}`)
+              violation.nodes.map(
+                node =>
+                  `${violation.id} (${violation.impact ?? 'unknown'}): ${violation.help} — ${node.target.join(', ')}`
+              )
             );
           });
           expect(
