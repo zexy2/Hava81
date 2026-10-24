@@ -340,3 +340,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - The first-screen next-change sentence previously considered only precipitation probability, even though the weather domain also carries an hourly precipitation amount. When probability was missing/invalid but a valid amount showed precipitation, the summary could skip a rain transition and jump to a temperature change or say conditions were steady.
 - Determine each forecast hour's rain state from either valid signal: a 0–1 probability ratio uses the existing 0.4 threshold; a finite non-negative amount is also evidence, with `> 0 mm` meaning precipitation and exactly `0 mm` meaning dry. If neither signal is valid, keep the state unknown and do not infer dryness. If both valid signals conflict, retain a positive wet signal rather than suppressing it with the other field.
 - This updates only the next-change explanation. It does not alter forecast data, source attribution, scoring thresholds, route/commute decisions, or official warning semantics. Regressions cover amount-only start/stop, explicit zero, invalid amount, and positive amount alongside a below-threshold probability.
+
+## 2026-10-24 19:20 TRT — Measure responsive containment in one browser frame
+
+- The mobile chip-containment gate must compare child and container rectangles from the same synchronous browser evaluation. Two separate Playwright `boundingBox()` calls can straddle resize/text reflow and scroll anchoring, creating contradictory coordinates that look like a layout regression.
+- Keep strict containment and overflow assertions; include both rectangles and the affected chip label in failure diagnostics. Do not relax 320px/200% or 390px mobile checks to hide genuine overflow.
+- This is test-harness reliability only. It does not change production CSS, weather data, scoring, API behavior, or safety guidance.
