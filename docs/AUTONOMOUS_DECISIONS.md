@@ -274,3 +274,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - When the BFF returns a recognized deterministic 503 code (`PROVIDER_RATE_LIMITED`, `PROVIDER_CIRCUIT_OPEN`, `UPSTREAM_BUDGET_EXHAUSTED`, or `AIR_QUALITY_HOURLY_UNAVAILABLE`), preserve that code in the browser `ApiError` instead of collapsing it to a generic status-derived `UNKNOWN` error.
 - Automatic retries remain suppressed for these service-state responses. Keep the existing explicit manual-retry affordance for HTTP 503 responses, but localize the main weather error copy for provider rate limiting, circuit recovery, and upstream request-budget exhaustion so the user knows to wait rather than interpreting the message as a forecast fact.
 - Never expose raw provider/internal error details in the UI, and never turn a service failure into a fabricated weather value. The current/last-known data and its freshness rules remain unchanged.
+
+## 2026-10-24 14:15 TRT — Structured service-state codes must agree with HTTP 503
+
+- The browser transport may treat `PROVIDER_RATE_LIMITED`, `PROVIDER_CIRCUIT_OPEN`, `UPSTREAM_BUDGET_EXHAUSTED`, and `AIR_QUALITY_HOURLY_UNAVAILABLE` as deterministic service states only when the HTTP status is 503, matching the API's producer contract.
+- If one of these codes appears with another status, do not let its body override the HTTP status semantics: preserve the normal status-derived error code and bounded retry policy. This protects against malformed or mismatched envelopes without changing valid 503 behavior or introducing retries for valid provider quota/circuit/budget states.
+- Regression tests cover a mismatched HTTP 500 (normal bounded retry remains active) and HTTP 404 (`NOT_FOUND`, no retry). No weather value, provider policy, scoring, or API deployment behavior changes.

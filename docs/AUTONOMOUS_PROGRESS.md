@@ -1032,3 +1032,20 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Confirm PR #1427's API head now matches `d0d2d8a...`; wait for fresh checks on that exact head, not the old `a263badd...`/`6961374...` heads. Merge only when all required checks are green and mergeability is clean.
 3. After PR #1427 merges, rebase PR #1429 onto the latest `origin/main`, preserve all append-only documentation checkpoints, rerun the full frontend gates, and use explicit lease checks before any force update.
 4. Keep API 4002 primary and 4001 rollback/canary. Do not run the live 81-city gate during provider rate limiting or deterministic upstream-budget exhaustion.
+
+## 2026-10-24 14:15 TRT — Validate structured provider-state codes against HTTP status
+
+### Production and repository baseline
+- SentinelX was checked first but the enrolled `nexus-hermes` agent is offline; the authenticated Zeki SSH Gateway is available. The read-only observer snapshot collected at `2026-10-24T11:08:27Z` reported production healthy, main CI/CD run #3499 green on `10cc80d07cef1e59bab3aec224a57b9991b053f7`, frontend revision parity, API port 4002, and no pending automation PRs. Rechecked public root, `/izmir/`, `/en/izmir/`, manifest, service worker, API health/readiness (all HTTP 200), and CORS preflight (HTTP 204). API revision remains `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee`; no production change was made.
+- Started isolated branch/worktree `automation/hava81-run11-20261024-1410` from exact `origin/main` `10cc80d07cef1e59bab3aec224a57b9991b053f7`. Existing dirty worktrees were not modified. Host disk remains under the observer's hard gate but in warning territory (~92% used, ~8.3 GiB free); no cleanup or dependency installation was performed.
+
+### Bounded client error-contract fix
+- `src/api/httpClient.ts` previously trusted four deterministic service-state codes (`PROVIDER_RATE_LIMITED`, `PROVIDER_CIRCUIT_OPEN`, `UPSTREAM_BUDGET_EXHAUSTED`, `AIR_QUALITY_HOURLY_UNAVAILABLE`) on any HTTP error status. The API contract emits these codes with HTTP 503; if a malformed or mismatched response paired one with HTTP 500/404, it could suppress normal transient retry or misclassify a not-found response.
+- Now only recognize these structured codes for HTTP 503. Other status codes retain their normal status-based mapping and retry policy. Added regressions proving a mismatched `PROVIDER_RATE_LIMITED` + HTTP 500 response still follows the bounded retry path and the same code + HTTP 404 maps to `NOT_FOUND` without retry. Actual structured 503 behavior and explicit user retry remain unchanged; no weather values, scoring, provider configuration, cache policy, or API runtime changed.
+- Local validation on this branch: focused HTTP-client tests **35/35**; full frontend suite **1,036/1,036 across 106 files**; frontend TypeScript check; ESLint + CSS lint; production build including 81 Turkish + 81 English province pages, CSP stamping, and service-worker stamping; `git diff --check`. Hosted browser/Lighthouse/Ops/CodeQL gates remain required before merge.
+
+### Exact next actions
+1. Fetch `origin` again and confirm this branch's base is still current; if main moved, rebase onto its exact new head, preserve all append-only progress/decision checkpoints, and rerun focused/full frontend gates.
+2. Commit/push the isolated branch and open a focused PR. Verify exact head SHA, mergeability, and current Frontend quality, Browser flows, Lighthouse, Ops contracts and CodeQL checks before merging.
+3. While hosted checks run, continue independent low-risk audit work from a clean worktree. Before any merge/deploy, refresh `/usr/local/bin/hava81-worker-status` and directly verify the PR head/checks and production state; keep API port 4002 primary and 4001 rollback/canary.
+4. Avoid broad disk cleanup and live 81-city provider checks during rate-limit windows. Never label modeled guidance as an official MGM warning without the verified official service contract/freshness semantics already documented above.

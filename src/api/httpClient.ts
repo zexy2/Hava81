@@ -282,7 +282,9 @@ const fetchWithRetry = async <T>(
       // a transient transport failure. Preserve the error for the caller without retrying.
       const structuredErrorCode = errorBody.error?.code;
       const nonRetryableErrorCode =
-        structuredErrorCode && NON_RETRYABLE_HTTP_ERROR_CODES.has(structuredErrorCode)
+        response.status === 503 &&
+        structuredErrorCode &&
+        NON_RETRYABLE_HTTP_ERROR_CODES.has(structuredErrorCode)
           ? (structuredErrorCode as ErrorCode)
           : undefined;
       if (

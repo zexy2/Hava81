@@ -595,6 +595,46 @@ describe('httpClient BFF transport', () => {
     }
   );
 
+  it('only treats structured provider service-state codes as non-retryable on HTTP 503', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse(
+            { error: { code: 'PROVIDER_RATE_LIMITED', message: 'Mismatched provider state' } },
+            { ok: false, status: 500 }
+          )
+        )
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+      const request = httpClient.get('/weather/current', { city: 'Bursa' }, { retries: 1 });
+      await vi.advanceTimersByTimeAsync(1000);
+
+      await expect(request).resolves.toEqual({ cityName: 'Bursa' });
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('uses HTTP status semantics when a structured provider code arrives with a 404', async () => {
+    (global.fetch as Mock).mockResolvedValue(
+      mockResponse(
+        { error: { code: 'PROVIDER_RATE_LIMITED', message: 'Mismatched provider state' } },
+        { ok: false, status: 404 }
+      )
+    );
+
+    await expect(httpClient.get('/weather/current', { city: 'Missing' })).rejects.toMatchObject({
+      code: ErrorCode.NOT_FOUND,
+      statusCode: 404,
+      message: 'Mismatched provider state',
+      retryable: false,
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('caps an excessive Retry-After hint at the existing retry-delay maximum', async () => {
     vi.useFakeTimers();
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
