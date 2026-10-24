@@ -478,6 +478,12 @@ test.describe('activities', () => {
       await expect(planner.locator('.activity-card__identity .activity-glyph svg')).toHaveCount(2);
       await setWidth(page, 320, 760);
       await setTextScale(page, 200);
+      const header = planner.locator('.activity-planner__header');
+      const sensitivity = planner.locator('.activity-planner__sensitivity');
+      await expectReadable(page, header, 'planner header at 320px/200%');
+      await expectContainedIn(header, planner, 'planner header');
+      await expectContainedIn(sensitivity, header, 'sensitivity panel');
+      expect(await sensitivity.evaluate(element => getComputedStyle(element).flexBasis)).toBe('auto');
       await planner.locator('.activity-planner__score-explanation').evaluate(element => {
         (element as HTMLDetailsElement).open = true;
       });
