@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DecisionGlance } from '../../components/hava81/DecisionGlance';
 import type { NormalizedWeatherData } from '../../types';
 
@@ -36,7 +36,25 @@ const sampleWeather: NormalizedWeatherData = {
   },
 };
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('Hava81 decision hero decorative weather state', () => {
+  it('exposes the displayed city-local date as a machine-readable date', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-08T23:30:00.000Z'));
+
+    const { container } = render(
+      <DecisionGlance weather={sampleWeather} hourly={[]} forecastMeta={null} />
+    );
+
+    expect(container.querySelector('time.decision-glance__date')).toHaveAttribute(
+      'datetime',
+      '2026-10-09'
+    );
+  });
+
   it.each([
     { icon: '01d', scene: 'clear', night: 'false', sun: true, moon: false },
     { icon: '01n', scene: 'clear', night: 'true', sun: false, moon: true },

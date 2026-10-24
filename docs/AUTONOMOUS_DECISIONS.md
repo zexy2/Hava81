@@ -286,3 +286,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Respect an explicit `CHROME_PATH` operator override. If none is configured, use the Playwright-managed Chromium executable only when it is installed and accessible; otherwise leave `CHROME_PATH` unset so `chrome-launcher` retains its normal system-browser discovery. Do not install/download browsers as a side effect of the Lighthouse runner.
 - This handles Oracle/local hosts where `/usr/bin/chromium-browser` is a Snap wrapper that cannot be controlled by Lighthouse, while preserving the existing GitHub Actions setup (the Lighthouse job has no Playwright browser install step). Keep the selection logic covered by a focused Node contract test in CI.
 - Lighthouse score movement between 89 and 96 on the same source/build is treated as measurement variance; do not claim product performance gains without repeated controlled runs. The latest measured accessibility, best-practices, and SEO scores remain 100, and performance remains above the 80 target.
+
+
+## 2026-10-24 15:00 TRT — Give the decision-hero date a machine-readable value
+
+- The first-screen `DecisionGlance` date is a city-local calendar date, so expose it as `<time datetime="YYYY-MM-DD">` while preserving the existing localized visible label.
+- Derive the date-only value from the same city UTC offset already used for display. Do not use the server/browser's local timezone, and do not serialize the shifted date as a UTC instant; the date-only value describes the city's displayed calendar day.
+- Add a regression that crosses UTC midnight and verifies the displayed city date is the following local day for a UTC+03:00 city. This is semantic metadata only: no forecast values, scoring, refresh behavior, layout, or weather/safety claims change.
