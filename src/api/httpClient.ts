@@ -280,9 +280,11 @@ const fetchWithRetry = async <T>(
 
       // These structured 503s represent a quota/circuit/budget/configuration state, not
       // a transient transport failure. Preserve the error for the caller without retrying.
+      const structuredErrorCode = errorBody.error?.code;
       const nonRetryableErrorCode =
-        errorBody.error?.code !== undefined &&
-        NON_RETRYABLE_HTTP_ERROR_CODES.has(errorBody.error.code);
+        structuredErrorCode && NON_RETRYABLE_HTTP_ERROR_CODES.has(structuredErrorCode)
+          ? (structuredErrorCode as ErrorCode)
+          : undefined;
       if (
         !nonRetryableErrorCode &&
         (RETRY_CONFIG.retryStatusCodes as readonly number[]).includes(response.status) &&
@@ -298,6 +300,17 @@ const fetchWithRetry = async <T>(
           count: retryState.count + 1,
           lastError: ApiError.fromHttpStatus(response.status, errorMessage),
         });
+      }
+
+      if (nonRetryableErrorCode) {
+        // Keep the server's structured service-state code for localized UI copy. The
+        // automatic retry loop above is still suppressed, while an explicit user retry
+        // remains available after the message asks them to wait.
+        throw new ApiError(
+          errorMessage ?? 'Weather service temporarily unavailable',
+          nonRetryableErrorCode,
+          { statusCode: response.status }
+        );
       }
 
       throw ApiError.fromHttpStatus(response.status, errorMessage);

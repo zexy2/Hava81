@@ -673,6 +673,11 @@ export const tr = {
     providerUnavailable: 'Hava durumu sağlayıcısı şu an yanıt vermiyor. Biraz sonra tekrar dene.',
     showingLastKnown: 'Son bilinen veri gösteriliyor ({{time}}).',
     rateLimit: 'Çok fazla istek gönderildi. Kısa bir süre sonra tekrar deneyin.',
+    providerRateLimited:
+      'Hava durumu servisi istekleri geçici olarak sınırlandırdı. Tekrar denemeden önce biraz bekleyin.',
+    providerCircuitOpen:
+      'Hava durumu servisi geçici bir kesintiden toparlanıyor. Biraz sonra tekrar deneyin.',
+    upstreamBudgetExhausted: 'Hava durumu istekleri şu anda yoğun. Biraz sonra tekrar deneyin.',
     apiKeyMissing: 'API anahtarı yapılandırılmamış.',
     locationDenied: 'Konum izni reddedildi',
     locationUnavailable: 'Konum bilgisi alınamadı',

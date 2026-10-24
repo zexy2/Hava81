@@ -669,6 +669,11 @@ export const en = {
     showingLastKnown: 'Showing last known data ({{time}}).',
     networkError: 'Connection error. Check your internet connection.',
     rateLimit: 'Too many requests. Try again in a moment.',
+    providerRateLimited:
+      'The weather service is temporarily limiting requests. Wait a little before trying again.',
+    providerCircuitOpen:
+      'The weather service is recovering from a temporary interruption. Try again shortly.',
+    upstreamBudgetExhausted: 'Weather requests are temporarily busy. Try again shortly.',
     apiKeyMissing: 'API key not configured.',
     locationDenied: 'Location permission denied',
     locationUnavailable: 'Location unavailable',
