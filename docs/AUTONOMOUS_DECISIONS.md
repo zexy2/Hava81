@@ -210,3 +210,9 @@ The public three-hour forecast series and daily-group insertion order must be ch
 ## 2026-10-24 — Keep live browser audits usable on locked-down hosts
 
 The live responsive audit should support an explicitly configured loopback Chrome DevTools Protocol endpoint when the host cannot launch a new browser because of Snap/cgroup confinement. `HAVA81_CHROMIUM_CDP_URL` is opt-in, must use HTTP with an explicit port and a loopback hostname only, and must reject credentials, paths, queries, fragments, and remote hosts. Preserve the existing isolated-launch path when unset. This lets a read-only audit reuse the host's already-running browser without exposing a remote debugging endpoint.
+
+## 2026-10-24 — Apply unit-aware physical ceilings to OpenWeather wind
+
+**Decision:** Validate OpenWeather sustained wind and optional gust values after unit selection, using a deliberately generous ceiling of 150 m/s for `metric`/`standard` and 300 mph for `imperial`. Reject a provider payload with a finite value above its unit-specific ceiling as `INVALID_PROVIDER_RESPONSE`; do not clamp an impossible value into a believable-looking safety signal.
+
+**Why:** The shared OpenWeather Zod schema can validate non-negativity but cannot infer the requested output unit. Unit-aware validation at the adapter boundary keeps impossible finite wind values out of current and forecast responses while preserving the provider's actual units and the existing fallback/error path. The Open-Meteo hourly adapter has its own unit contract and remains unchanged.
