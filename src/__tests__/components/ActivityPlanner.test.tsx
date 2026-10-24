@@ -399,6 +399,35 @@ describe('ActivityPlanner time range', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('does not attribute hourly AQI when duplicate samples conflict at the same forecast hour', () => {
+    const airQualityHourly: AirQualityHourly = {
+      hours: [
+        { time: hourly[0].time, europeanAqi: 10 },
+        { time: new Date(hourly[0].time), europeanAqi: 82 },
+      ],
+      meta: {
+        provider: 'Open-Meteo',
+        attribution: 'Open-Meteo · CC BY 4.0 · CAMS',
+        fetchedAt: new Date(),
+        freshForSeconds: 1800,
+      },
+    };
+    render(
+      <SettingsProvider>
+        <ActivityPlanner
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={freshForecastMeta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.queryByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
+    ).not.toBeInTheDocument();
+  });
+
   it('removes hourly AQI attribution when the optional evidence expires while the planner stays open', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-29T08:00:00Z'));

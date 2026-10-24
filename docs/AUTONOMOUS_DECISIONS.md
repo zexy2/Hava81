@@ -440,3 +440,8 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - The source-time E2E regression was rebased onto the now-deployed main commit `78afbf293dc8b928c9f2a1348d800d624fe3e8d8` after PR #1450 passed all exact-head gates and its production rollout completed. The test remains isolated to `e2e/` and autonomous append-only documentation.
 - Live API sampling confirms current weather still returns its source sample in `timestamp` while `meta.observedAt` is omitted on the deployed API; AQI returns both `fetchedAt` and `observedAt`. Keep the client fallback from current payload `timestamp` to `meta.observedAt` so a fresh BFF envelope cannot disguise an old provider observation.
+
+## 2026-10-25 00:50 TRT — Hourly AQI source attribution must match the scorer's resolver
+
+- Source attribution is a claim about evidence actually accepted by the decision engine, not merely a provider sample that happens to share a timestamp. For hourly AQI, use `getDailyPlanAirQualityEvidence(...).usesHourlyAqi` rather than an independent `.some()` check so conflicting duplicate samples remain unavailable consistently in both scoring and explanatory UI.
+- Keep exact forecast timestamps, provider freshness, and duplicate-conflict handling aligned. This is a frontend evidence-integrity fix only; it does not alter provider values, AQI categories, health interpretation, thresholds, the API contract, or deployment behavior.
