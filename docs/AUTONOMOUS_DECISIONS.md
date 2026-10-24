@@ -328,3 +328,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Preserve valid probability zero, valid amount zero, and amount-only observations. Do not invent rain, do not infer dryness from missing fields, and do not change calibrated score thresholds as part of a presentation/data-integrity fix.
 - Validate both domain decisions and visible/localized route/commute states. Frontend-only changes may proceed through frontend CI; do not build/deploy the API while host disk headroom is low.
 - The Oracle worker host is offline and the SSH gateway has no configured Oracle target. Treat server-side state inspection, disk cleanup, deploy and rollback as blocked rather than silently using the gateway host; continue safe GitHub/local work and record this blocker for the next run.
+
+## 2026-10-24 18:25 TRT — Keep normalized probability ratios separate from BFF percentages
+
+- The frontend weather service validates the BFF's integer percentage and converts it to a 0–1 domain ratio before exposing `HourlyForecast.pop` and `DailyForecast.pop`. A component consuming those domain types must not run the raw-percent normalizer again: its deliberate `1 => 1%` compatibility rule would turn a valid ratio of `1` (100%) into `0.01` (1%).
+- Use a ratio-specific validator at the Forecast Atlas presentation boundary. Preserve exact 0 and 1; keep missing, non-finite, negative and greater-than-one domain values unknown. Leave the legacy raw-percent normalizer unchanged for callers that still receive BFF percentages.
+- This is a frontend data-integrity fix only. It does not alter provider data, scoring, weather interpretation, API contracts, or production routing. Keep the hourly and daily component regression that asserts a 100% input remains 100% after parsing.

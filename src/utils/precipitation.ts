@@ -23,6 +23,16 @@ export const normalizeOptionalPrecipitationProbability = (
   return normalizePrecipitationProbability(value);
 };
 
+/** Preserve a frontend-domain 0–1 probability ratio without reinterpreting it as a BFF percent. */
+export const normalizeOptionalPrecipitationRatio = (
+  value: number | undefined
+): number | undefined => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    return undefined;
+  }
+  return value;
+};
+
 interface PrecipitationSignal {
   pop?: number;
   precipitationMm?: number;

@@ -1,6 +1,7 @@
 import {
   formatPrecipitationAmount,
   normalizeOptionalPrecipitationProbability,
+  normalizeOptionalPrecipitationRatio,
   normalizePrecipitationProbability,
   pickMostSignificantPrecipitation,
   precipitationSignalSeverity,
@@ -36,6 +37,23 @@ describe('normalizeOptionalPrecipitationProbability', () => {
     'preserves invalid or missing probability %p as unknown',
     input => {
       expect(normalizeOptionalPrecipitationProbability(input)).toBeUndefined();
+    }
+  );
+});
+
+describe('normalizeOptionalPrecipitationRatio', () => {
+  it.each([
+    [0, 0],
+    [0.15, 0.15],
+    [1, 1],
+  ])('preserves the frontend ratio %p as %p', (input, expected) => {
+    expect(normalizeOptionalPrecipitationRatio(input)).toBe(expected);
+  });
+
+  it.each([undefined, Number.NaN, Number.POSITIVE_INFINITY, -0.01, 1.01])(
+    'keeps invalid or missing ratios unknown: %p',
+    input => {
+      expect(normalizeOptionalPrecipitationRatio(input)).toBeUndefined();
     }
   );
 });
