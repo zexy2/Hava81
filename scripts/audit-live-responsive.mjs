@@ -5,6 +5,7 @@ import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
+import { launchLiveAuditBrowser } from './lib/live-audit-browser.mjs';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
 
 function parseOptions(args) {
@@ -33,7 +34,7 @@ function parseOptions(args) {
       if (flag === '--languages') options.languages = value.split(',').map(v => v.trim()).filter(Boolean);
       if (flag === '--themes') options.themes = value.split(',').map(v => v.trim()).filter(Boolean);
     } else if (flag === '--help') {
-      console.log('Usage: npm run audit:live-ui -- [--base-url URL] [--cities izmir,sanliurfa] [--quick] [--languages tr,en] [--themes light,dark] [--screenshots] [--output DIRECTORY]');
+      console.log('Usage: npm run audit:live-ui -- [--base-url URL] [--cities izmir,sanliurfa] [--quick] [--languages tr,en] [--themes light,dark] [--screenshots] [--output DIRECTORY]; locked-down hosts may set HAVA81_CHROMIUM_CDP_URL=http://127.0.0.1:9222');
       process.exit(0);
     } else throw new Error(`Unknown argument: ${flag}`);
   }
@@ -58,11 +59,7 @@ function parseOptions(args) {
 
 const options = parseOptions(process.argv.slice(2));
 console.log(`Starting read-only audit at ${options.baseUrl} for ${options.cities.length} cities, ${options.languages.join('/')} languages, ${options.themes.join('/')} themes...`);
-const browser = await chromium.launch({
-  timeout: 30_000,
-  executablePath: process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH || undefined,
-  args: process.env.HAVA81_CHROMIUM_EXECUTABLE_PATH ? ['--no-sandbox'] : [],
-});
+const browser = await launchLiveAuditBrowser(chromium, process.env);
 const results = [];
 const responseCache = createLiveAuditResponseCache();
 try {
