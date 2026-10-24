@@ -13,6 +13,16 @@ export const normalizePrecipitationProbability = (value: number): number => {
   return Math.min(1, Math.max(0, ratio));
 };
 
+/** Preserve a missing or invalid forecast probability instead of turning it into a dry reading. */
+export const normalizeOptionalPrecipitationProbability = (
+  value: number | undefined
+): number | undefined => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
+    return undefined;
+  }
+  return normalizePrecipitationProbability(value);
+};
+
 interface PrecipitationSignal {
   pop?: number;
   precipitationMm?: number;

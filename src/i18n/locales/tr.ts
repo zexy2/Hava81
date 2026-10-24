@@ -212,6 +212,7 @@ export const tr = {
       rainPeakToday: 'Bugün',
       rainPeakTomorrow: 'Yarın',
       precipitationNone: 'Yok',
+      precipitationUnknown: 'Yağış verisi yok',
       nightLabel: 'Gece',
       rainBandLabel: 'Yağış',
       visibleWindow: '{{from}} – {{to}} görünüyor',

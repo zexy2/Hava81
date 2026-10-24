@@ -1,5 +1,6 @@
 import {
   formatPrecipitationAmount,
+  normalizeOptionalPrecipitationProbability,
   normalizePrecipitationProbability,
   pickMostSignificantPrecipitation,
   precipitationSignalSeverity,
@@ -20,6 +21,24 @@ describe('normalizePrecipitationProbability', () => {
   });
 });
 
+
+describe('normalizeOptionalPrecipitationProbability', () => {
+  it.each([
+    [0, 0],
+    [0.25, 0.25],
+    [35, 0.35],
+    [100, 1],
+  ])('normalizes valid evidence %p to %p', (input, expected) => {
+    expect(normalizeOptionalPrecipitationProbability(input)).toBe(expected);
+  });
+
+  it.each([undefined, Number.NaN, Number.POSITIVE_INFINITY, -1, 101])(
+    'preserves invalid or missing probability %p as unknown',
+    input => {
+      expect(normalizeOptionalPrecipitationProbability(input)).toBeUndefined();
+    }
+  );
+});
 
 describe('formatPrecipitationAmount', () => {
   it('uses locale-aware decimal separators and preserves trace amounts', () => {
