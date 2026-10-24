@@ -1083,3 +1083,22 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Require fresh exact-head Frontend quality, Browser flows, Lighthouse, API test/build, deployment/Ops contracts, and CodeQL checks. Do not merge on stale checks or before the production build passes.
 3. While hosted checks run, continue independent low-risk work from another clean worktree. Avoid broad cache/worktree cleanup and do not run live 81-city provider sweeps while disk/API-build headroom is constrained.
 4. Before merge/deploy, refresh observer state and directly verify PR head, mergeability, checks, root/city/API smoke, CORS, revision parity, and API port 4002. Keep port 4001 as rollback/canary.
+
+
+## 2026-10-24 16:30 TRT — Make unknown hourly precipitation explicit
+
+### Production checkpoint and previous PR
+- PR #1434 (`fix(score): treat missing precipitation as unknown`) was merged from exact head `dbd2c60e0b7667064bf6f38f4b9732e27c176d34` as `5cb19b88c993bd00a9a99b9323d8226ce2416da7`. Main CI/CD run #3507 (`40097365185`) and Pages deployment (`40097571486`) completed successfully. The refreshed observer at `2026-10-24T13:27:06.965451Z` reports production healthy, frontend revision parity on `5cb19b88c993`, API ready HTTP 200, correct CORS origin, and API port 4002. Direct root, `/izmir/`, and API readiness smoke returned HTTP 200; a valid CORS preflight returned HTTP 204 with the expected allow-origin/method/header values.
+- The quick production responsive audit passed 10/10 variants. A broader read-only audit covered Turkish/English, light/dark, two cities, 320/390/768/1024/1440 px and 200% text scaling. It passed 57/64; seven failures were score-element/page-navigation timeouts confined to Şanlıurfa Turkish/dark variants. Direct current-weather and bundle API requests for Şanlıurfa returned HTTP 200, with an empty bundle `errors` object. A separate focused recheck of the same city/locale/theme passed **5/5** with three API responses captured, 16 safely replayed, and zero uncached failures. Treat the seven broad-run timeouts as transient audit/navigation flakiness unless reproduced; production remains healthy.
+
+### Bounded daily-plan transparency fix
+- Dedicated clean worktree `/home/chatgpt/hava81-run11-next-audit-20261024-1615`, branch `automation/hava81-run11-next-audit-20261024-1615`, based on exact `origin/main` `5cb19b88c993bd00a9a99b9323d8226ce2416da7`. The existing dirty activity-header worktree was not modified.
+- The hourly timeline previously omitted precipitation text when both probability and amount were missing, making an unknown state visually indistinguishable from an explicit dry forecast. The timeline now says “Yağış verisi yok” / “Precipitation data unavailable” when both signals are absent, says “Yağış beklenmiyor” / “No precipitation expected” when a valid signal is explicitly zero, and adds a compact methodology note when any displayed hour lacks both rain signals: that hour is capped at 89 and missing data does not mean rain is expected. The note reuses the existing safety-note typography; no new card or weather claim was added.
+- Regression covers the unknown label in visible and accessible slot names, the 89/100 cap, the localized methodology note, and the distinct explicit-zero state. Local checks passed: focused DailyPlanPanel tests **17/17**, full frontend Vitest **1,041/1,041 across 106 files**, TypeScript check, ESLint/CSS lint, production frontend build (81 Turkish + 81 English province pages, CSP and service-worker stamping), and `git diff --check`.
+- Host disk remains at ~92% used with ~8.2 GiB free. No API build/deployment or broad cleanup was attempted.
+
+### Exact next actions
+1. The focused Şanlıurfa Turkish/dark live-audit recheck passed 5/5. If the broad-run timeout pattern repeats, instrument the audit to capture failed static-asset requests before changing product runtime code.
+2. Review the four-file diff, commit/push this isolated branch and open a focused PR. Record its code SHA and PR number in the next append-only checkpoint.
+3. Require fresh exact-head Frontend quality, Browser flows, Lighthouse, Ops contracts, and CodeQL checks. While those run, continue independent work from another clean worktree.
+4. Before merge, refresh observer state and directly re-read the PR head/checks/mergeability. After merge, monitor main CI/Pages deploy, then verify root/city/API readiness, CORS, frontend revision parity, and API port 4002. Keep 4001 as rollback/canary.

@@ -308,6 +308,10 @@ export const en = {
         },
       },
       timelineLabel: 'Daily weather suitability timeline',
+      precipitationUnknown: 'Precipitation data unavailable',
+      precipitationDry: 'No precipitation expected',
+      precipitationEvidenceNote:
+        'An hour with neither rain probability nor amount is capped at 89. Missing data does not mean rain is expected.',
       tomorrow: 'Tomorrow',
       explain: {
         label: 'Hava81 score explanation',
