@@ -234,3 +234,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - The environment rail may show current AQI/PM2.5 only while the source observation timestamp is within the same two-hour evidence-freshness policy used by decision logic. A fresh BFF fetch must not make an old provider sample look current.
 - Schedule a UI freshness refresh at the earlier of cache expiry and source-observation expiry; hide AQI and PM2.5 when that boundary passes without requiring a new provider response. Keep this behavior explicit in a component regression using a recent fetch and an observation exactly at the two-hour boundary.
 - This is an internal data-freshness policy, not an official health threshold, medical claim, or authoritative air-quality warning. Missing source timestamps remain compatible with older API responses under the existing policy; invalid or materially future timestamps fail closed.
+
+
+## 2026-10-24 08:56 TRT — Show the provider observation time for current AQI
+
+- Distinguish the provider sample time from the BFF fetch time in the environment rail. When a fresh AQI sample has a valid `observedAt`, show a compact localized `<time datetime>` label in the city's timezone (Turkish `Gözlem HH:mm`, English `Observed HH:mm AM/PM`).
+- Keep the timestamp within the existing AQI detail line to avoid adding another card/row or decorative UI. Older payloads without a source timestamp keep the existing detail layout; invalid/stale evidence remains hidden by the shared freshness policy.
+- This is provenance/transparency, not an official health warning or a claim about medical safety. Verify at 320px and 200% text scaling, both locales and themes, before shipping.
