@@ -26,6 +26,7 @@ export function DecisionGlance({
 }: Props) {
   const { t, i18n } = useTranslation();
   const [now, setNow] = useState(() => Date.now());
+  const airQualityMeta = airQuality?.meta ?? null;
   useEffect(() => {
     let timeoutId: number | undefined;
     const refresh = () => {
@@ -34,6 +35,7 @@ export function DecisionGlance({
       const remaining = [
         30_000,
         getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs,
+        airQualityMeta ? getCurrentWeatherFreshness(airQualityMeta, currentTime).expiresInMs : null,
         getForecastFreshness(forecastMeta, currentTime).expiresInMs,
       ].filter((value): value is number => value !== null);
       timeoutId = window.setTimeout(refresh, Math.max(100, Math.min(...remaining)));
@@ -49,15 +51,23 @@ export function DecisionGlance({
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [weather.meta, forecastMeta]);
+  }, [weather.meta, forecastMeta, airQualityMeta]);
 
   const evidenceFresh =
     getCurrentWeatherFreshness(weather.meta, now).fresh &&
     getForecastFreshness(forecastMeta, now).fresh;
+  // AQI is optional evidence: a stale sample must not keep influencing the
+  // headline score after the rest of the weather snapshot remains fresh.
+  const airQualityFresh = airQuality
+    ? getCurrentWeatherFreshness(airQuality.meta, now).fresh
+    : false;
+  const freshAirQuality = airQualityFresh ? airQuality : undefined;
   const snapshot = useMemo(
     () =>
-      evidenceFresh && hourly.length ? getDecisionSnapshot({ weather, hourly, airQuality }) : null,
-    [evidenceFresh, weather, hourly, airQuality]
+      evidenceFresh && hourly.length
+        ? getDecisionSnapshot({ weather, hourly, airQuality: freshAirQuality })
+        : null,
+    [evidenceFresh, weather, hourly, freshAirQuality]
   );
   const plan = snapshot?.plan ?? null;
   const cityLocalDate = new Date(now + weather.meta.timezoneOffsetSeconds * 1000);
