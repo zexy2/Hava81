@@ -245,6 +245,56 @@ describe('DailyPlanPanel sharing', () => {
     ).toBeInTheDocument();
   });
 
+  it('distinguishes unknown precipitation from an explicit dry signal in hourly slots', () => {
+    const unknownHourly: HourlyForecast[] = [6, 9, 12].map(hour => ({
+      time: new Date(`2026-08-28T${String(hour).padStart(2, '0')}:00:00.000Z`),
+      temp: 24,
+      pop: Number.NaN,
+      windSpeed: 3,
+      windGust: 5,
+      apparentTemperature: 24,
+      humidity: 45,
+      uvIndex: 0,
+      visibility: 20000,
+      weatherCode: 0,
+      icon: '01d',
+      description: 'açık',
+    }));
+
+    const { unmount } = render(
+      <DailyPlanPanel weather={weather} hourly={unknownHourly} forecastMeta={freshForecastMeta()} />
+    );
+    const unknownTimeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    const unknownSlots = within(unknownTimeline).getAllByRole('listitem');
+    expect(unknownSlots).toHaveLength(3);
+    expect(
+      within(unknownTimeline).getAllByText(
+        (_, element) =>
+          element?.tagName === 'SMALL' &&
+          element.textContent?.includes('hava81.dailyPlan.precipitationUnknown') === true
+      )
+    ).toHaveLength(3);
+    expect(unknownSlots.every(slot => /\b89\/100\b/.test(slot.getAttribute('aria-label') ?? ''))).toBe(true);
+    expect(screen.getByText('hava81.dailyPlan.precipitationEvidenceNote')).toBeVisible();
+    expect(unknownSlots[0]).toHaveAccessibleName(/hava81\.dailyPlan\.precipitationUnknown/);
+    unmount();
+
+    const dryHourly: HourlyForecast[] = unknownHourly.map(point => ({
+      ...point,
+      pop: 0,
+    }));
+    render(<DailyPlanPanel weather={weather} hourly={dryHourly} forecastMeta={freshForecastMeta()} />);
+    const dryTimeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
+    expect(
+      within(dryTimeline).getAllByText(
+        (_, element) =>
+          element?.tagName === 'SMALL' &&
+          element.textContent?.includes('hava81.dailyPlan.precipitationDry') === true
+      )
+    ).toHaveLength(3);
+    expect(screen.queryByText('hava81.dailyPlan.precipitationEvidenceNote')).not.toBeInTheDocument();
+  });
+
   it('honors the selected temperature unit in the timeline and accessible label', () => {
     settingsMock.temperatureUnit = 'imperial';
 

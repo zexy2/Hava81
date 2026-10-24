@@ -300,3 +300,11 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Cap that individual hour at 89 so it cannot receive the 97–100 excellent label; apply the same cap after activity-specific comfort adjustments so a benefit cannot undo the evidence guard. Keep the displayed precipitation state unknown and do not add a fabricated rain-risk reason.
 - Daily-plan confidence requires precipitation evidence for a slot to contribute to the rich/useful coverage shares. A payload may be structurally rich in temperature, UV and visibility yet still be insufficient for a high-confidence outdoor decision when every slot lacks rain evidence.
 - This is a conservative data-completeness rule, not a precipitation forecast or hazard threshold. Probability-only and amount-only observations remain valid evidence.
+
+
+## 2026-10-24 16:30 TRT — Distinguish unknown rain evidence from an explicit dry hour in the daily plan
+
+- In the hourly decision timeline, do not render an empty precipitation field when both probability and amount are missing. Show a localized unknown-data label in the visible slot and its accessible name. This keeps missing evidence separate from an explicit zero-probability forecast.
+- If at least one of the two precipitation signals is finite but no positive probability/amount needs display, use the localized dry state. In particular, a valid probability of zero with no amount is evidence of no precipitation expected; it is not the same as both signals missing.
+- When any displayed hour lacks both signals, show one compact note that its score is capped at 89 and that missing data does not mean rain is expected. Reuse the existing safety-note visual treatment rather than adding a card. Keep the underlying conservative scoring guard from the 15:52 checkpoint and do not add a fabricated rain-risk reason.
+- This is an evidence-display and scoring-methodology clarification, not a weather forecast or hazard assertion. Probability-only and amount-only evidence remain valid; no API behavior, provider configuration, cache policy, or deployment target changes.

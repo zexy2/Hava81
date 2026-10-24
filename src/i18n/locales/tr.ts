@@ -311,6 +311,10 @@ export const tr = {
         },
       },
       timelineLabel: 'Günün hava uygunluk zaman çizelgesi',
+      precipitationUnknown: 'Yağış verisi yok',
+      precipitationDry: 'Yağış beklenmiyor',
+      precipitationEvidenceNote:
+        'Yağış olasılığı ve miktarı birlikte yoksa o saat en fazla 89 puan alır. Eksik veri, yağış beklendiği anlamına gelmez.',
       tomorrow: 'Yarın',
       explain: {
         label: 'Hava81 skor açıklaması',

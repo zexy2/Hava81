@@ -77,6 +77,10 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
     [airQuality, airQualityHourly, freshnessRevision, hourly, weather]
   );
   const plan = snapshot.plan;
+  const hasUnknownPrecipitation = plan.slots.some(
+    slot =>
+      !Number.isFinite(slot.precipitationProbability) && !Number.isFinite(slot.precipitationMm)
+  );
   const aqiEvidence = useMemo(
     () => {
       void freshnessRevision;
@@ -103,6 +107,10 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
     });
   };
   const formatSlotPrecipitation = (probability: number | undefined, amount?: number) => {
+    const hasProbability = Number.isFinite(probability);
+    const hasAmount = Number.isFinite(amount);
+    if (!hasProbability && !hasAmount) return t('hava81.dailyPlan.precipitationUnknown');
+
     const probabilityPercent = Number.isFinite(probability)
       ? Math.round((probability as number) * 100)
       : undefined;
@@ -114,7 +122,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
     }
     const amountText = formatPrecipitationAmount(amount, i18n.language);
     if (amountText) parts.push(amountText);
-    return parts.join(' · ');
+    return parts.length ? parts.join(' · ') : t('hava81.dailyPlan.precipitationDry');
   };
 
   useEffect(() => {
@@ -377,6 +385,11 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
 
       <footer className="daily-plan__notes">
         <p className="daily-plan__safety">{t('hava81.dailyPlan.safetyNote')}</p>
+        {hasUnknownPrecipitation ? (
+          <p className="daily-plan__safety">
+            {t('hava81.dailyPlan.precipitationEvidenceNote')}
+          </p>
+        ) : null}
         {aqiEvidence.usesHourlyAqi && airQualityHourly ? (
           <p className="daily-plan__safety">
             {t('hava81.dailyPlan.hourlyAqiSource', {
