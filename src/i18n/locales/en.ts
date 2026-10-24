@@ -596,6 +596,7 @@ export const en = {
     pm25: 'PM2.5',
     pm10: 'PM10',
     ozone: 'Ozone',
+    observedAt: 'Observed {{time}}',
   },
   uv: {
     low: 'Low',

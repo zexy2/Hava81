@@ -600,6 +600,7 @@ export const tr = {
     pm25: 'PM2.5',
     pm10: 'PM10',
     ozone: 'Ozon',
+    observedAt: 'Gözlem {{time}}',
   },
   uv: {
     low: 'Düşük',

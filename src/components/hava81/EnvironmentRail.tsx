@@ -157,6 +157,11 @@ export function EnvironmentRail({
     ? getOpenWeatherAqiLabelKey(freshAirQuality.aqi)
     : undefined;
   const airQualityLabel = airQualityLabelKey ? t(airQualityLabelKey) : t('weather.noData');
+  const airQualityObservedAt = freshAirQuality?.meta.observedAt;
+  const airQualityObservedTime =
+    airQualityObservedAt && isValidDate(airQualityObservedAt)
+      ? timeFormatter.format(atLocationTime(airQualityObservedAt))
+      : null;
 
   const sectionLabel = [
     t('daylight.title'),
@@ -219,11 +224,23 @@ export function EnvironmentRail({
           {airQualityLabelKey ? `${freshAirQuality?.aqi} / 5` : '—'}
         </strong>
         <span className="environment-rail__detail">
-          {freshAirQuality && airQualityLabelKey
-            ? `${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
+          {freshAirQuality && airQualityLabelKey ? (
+            <>
+              {`${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
                 freshAirQuality.pm25
-              )} µg/m³`
-            : t('weather.noData')}
+              )} µg/m³`}
+              {airQualityObservedTime && airQualityObservedAt ? (
+                <>
+                  {' · '}
+                  <time dateTime={airQualityObservedAt.toISOString()}>
+                    {t('airQuality.observedAt', { time: airQualityObservedTime })}
+                  </time>
+                </>
+              ) : null}
+            </>
+          ) : (
+            t('weather.noData')
+          )}
         </span>
       </div>
 
