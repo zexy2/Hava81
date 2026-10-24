@@ -31,6 +31,20 @@ test('current-weather schema accepts a current integer observation timestamp', (
   assert.doesNotThrow(() => currentWeatherUpstreamSchema.parse(sample()));
 });
 
+test('current-weather schema keeps pressure inside a broad terrestrial hPa envelope', () => {
+  for (const pressure of [100, 1_200]) {
+    const payload = sample();
+    payload.main.pressure = pressure;
+    assert.doesNotThrow(() => currentWeatherUpstreamSchema.parse(payload));
+  }
+
+  for (const pressure of [99, 1_201, 1_000_000]) {
+    const payload = sample();
+    payload.main.pressure = pressure;
+    assert.throws(() => currentWeatherUpstreamSchema.parse(payload));
+  }
+});
+
 test('current-weather schema rejects unsupported provider icon codes', () => {
   const payload = sample();
   payload.weather[0].icon = '01x';
