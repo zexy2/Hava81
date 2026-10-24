@@ -25,7 +25,11 @@ const service = vi.hoisted(() => ({
   getProvinceTemperatures: vi.fn(),
 }));
 
-vi.mock('../../api/weatherService', () => ({ weatherService: service }));
+vi.mock('../../api/weatherService', () => ({
+  weatherService: service,
+  MAX_FORECAST_FUTURE_SKEW_MS: 60_000,
+  MAX_PROVINCE_OBSERVATION_AGE_MS: 3 * 60 * 60_000,
+}));
 
 vi.mock('react-leaflet', () => ({
   MapContainer: ({ children, className }: { children: ReactNode; className?: string }) => (
@@ -93,6 +97,21 @@ const renderMap = (props: Partial<Parameters<typeof WeatherMap>[0]> = {}) => {
   return { onCitySelect };
 };
 
+const provinceTemperatures = (observedAt = new Date()) => ({
+  byPlate: new Map([[6, {
+    plate: 6,
+    name: 'Ankara',
+    lat: 39.93,
+    lon: 32.85,
+    temperature: 18,
+    icon: '02d',
+    description: 'parçalı bulutlu',
+    observedAt,
+  }]]),
+  provider: 'Open-Meteo',
+  fetchedAt: new Date(),
+});
+
 describe('WeatherMap', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -149,9 +168,7 @@ describe('WeatherMap', () => {
   });
 
   it('reveals all 81 provinces with live temperatures once zoomed into the atlas', async () => {
-    service.getProvinceTemperatures.mockResolvedValue({
-      byPlate: new Map([[6, { temperature: 18, description: 'parçalı bulutlu' }]]),
-    });
+    service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures());
     renderMap();
     const before = screen.getAllByTestId('marker').length;
     expect(service.getProvinceTemperatures).not.toHaveBeenCalled();
@@ -166,6 +183,121 @@ describe('WeatherMap', () => {
           .find(marker => marker.getAttribute('title')?.startsWith('Ankara:'))
       ).toHaveAttribute('title', expect.stringMatching(/18°C$/))
     );
+  });
+
+  it('removes province temperatures when their source observations expire in an open map', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date());
+    try {
+      service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures(new Date()));
+      renderMap();
+      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      const ankara = () => screen.getAllByTestId('marker').find(marker =>
+        marker.getAttribute('title')?.startsWith('Ankara:')
+      );
+      expect(ankara()?.getAttribute('title')).toMatch(/18°C$/);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3 * 60 * 60_000 + 101);
+      });
+
+      expect(ankara()).toBeDefined();
+      expect(ankara()?.getAttribute('title')).not.toMatch(/18°C$/);
+      expect(screen.queryByText(/Open-Meteo/)).not.toBeInTheDocument();
+      expect(service.getProvinceTemperatures.mock.calls.length).toBeGreaterThan(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('continues expiring remaining province samples when a refresh fails', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date());
+    try {
+      const initial = provinceTemperatures(new Date());
+      const byPlate = new Map(initial.byPlate);
+      byPlate.set(16, {
+        plate: 16,
+        name: 'Bursa',
+        lat: 40.19,
+        lon: 29.06,
+        temperature: 24,
+        icon: '01d',
+        description: 'açık',
+        observedAt: new Date(Date.now() - 60 * 60_000),
+      });
+      service.getProvinceTemperatures
+        .mockResolvedValueOnce({ ...initial, byPlate })
+        .mockRejectedValue(new Error('temporary refresh failure'));
+      renderMap();
+      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      const markerFor = (name: string) => screen.getAllByTestId('marker').find(marker =>
+        marker.getAttribute('title')?.startsWith(`${name}:`)
+      );
+      expect(markerFor('Ankara')?.getAttribute('title')).toMatch(/18°C$/);
+      expect(markerFor('Bursa')?.getAttribute('title')).toMatch(/24°C$/);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2 * 60 * 60_000 + 101);
+      });
+      expect(markerFor('Bursa')?.getAttribute('title')).not.toMatch(/24°C$/);
+      expect(markerFor('Ankara')?.getAttribute('title')).toMatch(/18°C$/);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60 * 60_000 + 101);
+      });
+      expect(markerFor('Ankara')?.getAttribute('title')).not.toMatch(/18°C$/);
+      expect(screen.queryByText(/Open-Meteo/)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not show a future-dated province observation as a live temperature', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date());
+    try {
+      service.getProvinceTemperatures.mockResolvedValue(
+        provinceTemperatures(new Date(Date.now() + 2 * 60_000))
+      );
+      renderMap();
+      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      const ankara = screen.getAllByTestId('marker').find(marker =>
+        marker.getAttribute('title')?.startsWith('Ankara:')
+      );
+      expect(ankara?.getAttribute('title')).not.toMatch(/18°C$/);
+      expect(screen.queryByText(/Open-Meteo/)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('refreshes province observations when a backgrounded map becomes visible again', async () => {
+    service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures());
+    renderMap();
+    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+    await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalledTimes(1));
+
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalledTimes(2));
   });
 
   it('shows the stale-data marker instead of an old temperature', () => {

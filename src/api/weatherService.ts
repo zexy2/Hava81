@@ -109,7 +109,7 @@ const reviveWeatherDate = (value: string, field: string): Date => {
 
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
 const MAX_CURRENT_OBSERVATION_MISMATCH_MS = 60_000;
-const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
+export const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
 const WEATHER_ICON_CODE_PATTERN = /^(?:0[1-4]|09|10|11|13|50)[dn]$/;
 const MAX_CONTEXT_FUTURE_SKEW_MS = 60_000;
 const MAX_AIR_QUALITY_FUTURE_SKEW_MS = 60_000;
@@ -872,7 +872,7 @@ export interface ProvinceTemperatures {
   fetchedAt: Date;
 }
 
-const MAX_PROVINCE_OBSERVATION_AGE_MS = 3 * 60 * 60_000;
+export const MAX_PROVINCE_OBSERVATION_AGE_MS = 3 * 60 * 60_000;
 
 const parseProvinceTemperatures = (raw: unknown): ProvinceTemperatures | null => {
   if (!isRecord(raw) || !Array.isArray(raw.provinces) || !isRecord(raw.meta)) return null;
