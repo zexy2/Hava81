@@ -248,3 +248,10 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Carry the validated delay on `AppError` and emit a `Retry-After` response header only for a 503 error with a positive safe integer delay. Keep error responses `Cache-Control: no-store` and do not expose the upstream body.
 - Treat `PROVIDER_RATE_LIMITED` as non-retryable in `ResilientWeatherProvider`: make exactly one primary request, do not sleep/retry or open the outage circuit for a quota signal, and let the client decide when to retry from the response header. No automatic retry or fallback request is issued on this rate-limit path.
 - Regression tests cover delta-seconds, HTTP-date conversion, invalid values, one upstream attempt, response-header propagation, and absence of the header on unrelated 503 errors. This changes backoff metadata only; it does not alter weather data or provider quotas.
+
+## 2026-10-24 09:52 TRT — Do not automatically retry normalized provider rate limits in the browser
+
+- OpenWeather HTTP 429 is normalized by the BFF to a non-cacheable 503 with `error.code=PROVIDER_RATE_LIMITED` and, when valid, a normalized `Retry-After` header. The server makes one upstream attempt and does not open the outage circuit for this quota signal.
+- The browser HTTP client must inspect the structured error code before applying its generic retryable-status policy. `PROVIDER_RATE_LIMITED` is not automatically retried, even though its HTTP status is 503; otherwise the browser's generic 30-second delay cap could retry before a provider's longer `Retry-After` interval.
+- Keep bounded retries for other transient 503 responses, preserve the existing 429 non-retry rule, and keep error responses uncached. Manual refresh remains available to the user; no timer, provider fallback, weather value, or safety interpretation is synthesized.
+- Regression coverage asserts exactly one browser fetch for `PROVIDER_RATE_LIMITED` even after the fake clock advances beyond the generic retry cap, while existing generic 503/Retry-After tests continue to pass.

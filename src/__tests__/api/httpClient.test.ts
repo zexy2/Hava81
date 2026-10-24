@@ -133,7 +133,11 @@ describe('httpClient BFF transport', () => {
           mockResponse({
             cityName: 'Izmir',
             temperature: 23,
-            meta: { provider: 'OpenWeather', fetchedAt: fetchedAt.toISOString(), freshForSeconds: 60 },
+            meta: {
+              provider: 'OpenWeather',
+              fetchedAt: fetchedAt.toISOString(),
+              freshForSeconds: 60,
+            },
           })
         )
         .mockResolvedValueOnce(
@@ -185,11 +189,15 @@ describe('httpClient BFF transport', () => {
           })
         );
 
-      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+      await expect(
+        httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })
+      ).resolves.toMatchObject({
         marker: 'old',
       });
       vi.setSystemTime(new Date(fetchedAt.getTime() + 60_001));
-      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+      await expect(
+        httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })
+      ).resolves.toMatchObject({
         marker: 'fresh',
       });
 
@@ -224,11 +232,15 @@ describe('httpClient BFF transport', () => {
           })
         );
 
-      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+      await expect(
+        httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })
+      ).resolves.toMatchObject({
         marker: 'old',
       });
       vi.setSystemTime(new Date(fetchedAt.getTime() + 60_001));
-      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+      await expect(
+        httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })
+      ).resolves.toMatchObject({
         marker: 'fresh',
       });
 
@@ -261,10 +273,14 @@ describe('httpClient BFF transport', () => {
           })
         );
 
-      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+      await expect(
+        httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })
+      ).resolves.toMatchObject({
         marker: 'invalid',
       });
-      await expect(httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })).resolves.toMatchObject({
+      await expect(
+        httpClient.get('/weather/context', { lat: 38.4, lon: 27.1 })
+      ).resolves.toMatchObject({
         marker: 'fresh',
       });
 
@@ -515,6 +531,32 @@ describe('httpClient BFF transport', () => {
       await vi.advanceTimersByTimeAsync(1);
       await expect(request).resolves.toEqual({ cityName: 'Bursa' });
       expect(global.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not automatically retry a provider rate-limit 503 even when Retry-After exceeds the client backoff cap', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      (global.fetch as Mock)
+        .mockResolvedValueOnce(
+          mockResponse(
+            { error: { code: 'PROVIDER_RATE_LIMITED', message: 'Provider rate limited' } },
+            { ok: false, status: 503, headers: { 'Retry-After': '120' } }
+          )
+        )
+        .mockResolvedValueOnce(mockResponse({ cityName: 'Bursa' }));
+
+      const request = httpClient.get('/weather/current', { city: 'Bursa' });
+      const rejection = expect(request).rejects.toMatchObject({
+        statusCode: 503,
+        message: 'Provider rate limited',
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      await rejection;
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }
