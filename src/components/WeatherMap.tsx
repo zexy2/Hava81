@@ -6,7 +6,13 @@ import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
 import { useSettings } from '../context/SettingsContext';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
-import { weatherService, type ProvinceTemperatures } from '../api/weatherService';
+import {
+  MAX_FORECAST_FUTURE_SKEW_MS,
+  MAX_PROVINCE_OBSERVATION_AGE_MS,
+  weatherService,
+  type ProvinceTemperature,
+  type ProvinceTemperatures,
+} from '../api/weatherService';
 import './WeatherMap.css';
 
 interface WeatherMapProps {
@@ -31,6 +37,16 @@ const FEATURED_CITY_NAMES = new Set([
 
 /** Faz 2.5: the atlas reveals all 81 provinces once the user zooms in. */
 const ATLAS_ZOOM = 7;
+const PROVINCE_REFRESH_INTERVAL_MS = 30 * 60_000;
+const PROVINCE_EXPIRY_CUSHION_MS = 100;
+
+const isFreshProvinceObservation = (province: ProvinceTemperature, now = Date.now()): boolean => {
+  const observedAtMs = province.observedAt instanceof Date ? province.observedAt.getTime() : NaN;
+  if (!Number.isFinite(observedAtMs)) return false;
+  const ageMs = now - observedAtMs;
+  return ageMs <= MAX_PROVINCE_OBSERVATION_AGE_MS && ageMs >= -MAX_FORECAST_FUTURE_SKEW_MS;
+};
+
 const ZoomWatcher: React.FC<{ onZoom: (zoom: number) => void }> = ({ onZoom }) => {
   useMapEvents({ zoomend: event => onZoom(event.target.getZoom()) });
   return null;
@@ -109,6 +125,8 @@ const createPlateIcon = (
  */
 const useProvinceTemperatures = (enabled: boolean, language: string) => {
   const [data, setData] = useState<ProvinceTemperatures | null>(null);
+  const [refreshRevision, setRefreshRevision] = useState(0);
+
   useEffect(() => {
     if (!enabled) return undefined;
     const controller = new AbortController();
@@ -121,7 +139,47 @@ const useProvinceTemperatures = (enabled: boolean, language: string) => {
         // İsteğe bağlı katman: hata (ya da iptal) haritayı etkilemez.
       });
     return () => controller.abort();
-  }, [enabled, language]);
+  }, [enabled, language, refreshRevision]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const timeout = window.setTimeout(
+      () => setRefreshRevision(revision => revision + 1),
+      PROVINCE_REFRESH_INTERVAL_MS
+    );
+    return () => window.clearTimeout(timeout);
+  }, [enabled, language, refreshRevision]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        setRefreshRevision(revision => revision + 1);
+      }
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => document.removeEventListener('visibilitychange', refreshWhenVisible);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled || !data) return undefined;
+    const now = Date.now();
+    const expiries = Array.from(data.byPlate.values())
+      .map(province => {
+        const observedAtMs = province.observedAt instanceof Date ? province.observedAt.getTime() : NaN;
+        if (!Number.isFinite(observedAtMs)) return null;
+        const remainingMs = observedAtMs + MAX_PROVINCE_OBSERVATION_AGE_MS - now;
+        return remainingMs > 0 ? remainingMs + PROVINCE_EXPIRY_CUSHION_MS : null;
+      })
+      .filter((value): value is number => value !== null);
+    if (!expiries.length) return undefined;
+    const timeout = window.setTimeout(
+      () => setRefreshRevision(revision => revision + 1),
+      Math.min(...expiries)
+    );
+    return () => window.clearTimeout(timeout);
+  }, [data, enabled, refreshRevision]);
+
   return data;
 };
 
@@ -184,6 +242,13 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     if (showAllProvinces) setAtlasRequested(true);
   }, [showAllProvinces]);
   const provinceTemperatures = useProvinceTemperatures(atlasRequested, settings.language);
+  const provinceNow = Date.now();
+  const hasFreshProvinceTemperatures = Boolean(
+    provinceTemperatures &&
+      Array.from(provinceTemperatures.byPlate.values()).some(province =>
+        isFreshProvinceObservation(province, provinceNow)
+      )
+  );
   const featuredCities = useMemo(
     () =>
       TURKISH_CITIES.filter(
@@ -293,9 +358,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           )}
 
           {featuredCities.map(featuredCity => {
-            const live = showAllProvinces
+            const candidate = showAllProvinces
               ? provinceTemperatures?.byPlate.get(featuredCity.plateCode)
               : undefined;
+            const live =
+              candidate && isFreshProvinceObservation(candidate, provinceNow) ? candidate : undefined;
             const liveDisplay = live ? Math.round(convertTemperature(live.temperature)) : null;
             const markerName = `${featuredCity.name}: ${t('hava81.decision.plateCodeLabel', {
               code: String(featuredCity.plateCode).padStart(2, '0'),
@@ -369,7 +436,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       </div>
 
       <p className="weather-map__attribution">
-        {showAllProvinces && provinceTemperatures && (
+        {showAllProvinces && provinceTemperatures && hasFreshProvinceTemperatures && (
           <>
             <span>
               {t('weather.mapLiveProvinces', {
