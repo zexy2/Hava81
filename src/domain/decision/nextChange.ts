@@ -13,6 +13,20 @@ export interface NextChange {
 const RAIN_POP = 0.4;
 const TEMP_STEP = 3;
 
+/** Use either valid forecast signal; missing/invalid rain evidence stays unknown. */
+const rainStateForHour = (hour: HourlyForecast): boolean | undefined => {
+  const hasValidProbability =
+    Number.isFinite(hour.pop) && hour.pop >= 0 && hour.pop <= 1;
+  const hasValidAmount =
+    Number.isFinite(hour.precipitationMm) && (hour.precipitationMm as number) >= 0;
+  if (!hasValidProbability && !hasValidAmount) return undefined;
+
+  return (
+    (hasValidProbability && hour.pop >= RAIN_POP) ||
+    (hasValidAmount && (hour.precipitationMm as number) > 0)
+  );
+};
+
 /**
  * Faz 2.2: one plain "what changes next" sentence for the first screen.
  * Looks at the next 24 forecast hours after `now` and returns the first
@@ -38,12 +52,11 @@ export function getNextChange(
     .slice(0, 24);
   if (upcoming.length === 0) return { kind: 'unavailable', time: null, temp: null };
   // If a fresh current observation is available, compare the first forecast slot to it.
-  // Otherwise establish a baseline from the first valid forecast probability; never
-  // treat a missing/invalid probability as a dry hour.
+  // Otherwise establish a baseline from the first forecast slot with valid probability or
+  // amount evidence; never treat missing/invalid signals as a dry hour.
   let previousWet = currentWet;
   for (const hour of upcoming) {
-    const hasValidProbability = Number.isFinite(hour.pop) && hour.pop >= 0 && hour.pop <= 1;
-    const wet = hasValidProbability ? hour.pop >= RAIN_POP : undefined;
+    const wet = rainStateForHour(hour);
     if (wet !== undefined && previousWet !== undefined && wet !== previousWet) {
       return { kind: wet ? 'rainStarts' : 'rainStops', time: hour.time, temp: hour.temp };
     }
