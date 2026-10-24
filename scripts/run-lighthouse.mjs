@@ -5,6 +5,7 @@ import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
+import { resolveLighthouseChromePath } from './lib/resolve-lighthouse-chrome.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -176,7 +177,29 @@ await mkdir(resultDir, { recursive: true });
 const tempBaseDir = tmpdir();
 await cleanupStaleTempRuns(tempBaseDir);
 const runTempDir = await mkdtemp(join(tempBaseDir, tempPrefix));
-const runEnv = { ...process.env, TMPDIR: runTempDir, TEMP: runTempDir, TMP: runTempDir };
+let playwrightExecutablePath;
+if (!process.env.CHROME_PATH) {
+  try {
+    const { chromium } = await import('playwright');
+    playwrightExecutablePath = chromium.executablePath();
+  } catch {
+    // Playwright is optional for this fallback: keep chrome-launcher's normal discovery.
+  }
+}
+const chromePath = await resolveLighthouseChromePath({
+  configuredPath: process.env.CHROME_PATH,
+  playwrightExecutablePath,
+});
+if (chromePath && !process.env.CHROME_PATH) {
+  console.log(`[lighthouse] using installed Playwright Chromium: ${chromePath}`);
+}
+const runEnv = {
+  ...process.env,
+  ...(chromePath ? { CHROME_PATH: chromePath } : {}),
+  TMPDIR: runTempDir,
+  TEMP: runTempDir,
+  TMP: runTempDir,
+};
 
 const preview = spawn(
   process.execPath,

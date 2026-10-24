@@ -163,6 +163,8 @@ jobs:
         with:
           name: dist
           path: dist
+      - name: Validate Lighthouse browser selection
+        run: node scripts/test-lighthouse-chrome-selection.mjs
       - run: npm run lighthouse
       - name: Preserve Lighthouse JSON reports (including failed budgets)
         if: always()
