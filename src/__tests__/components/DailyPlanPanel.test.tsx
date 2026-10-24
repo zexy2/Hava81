@@ -404,6 +404,42 @@ describe('DailyPlanPanel sharing', () => {
     expect(screen.getByRole('status')).toHaveTextContent('');
   });
 
+  it('does not score a stale current observation when no hourly forecast is available', () => {
+    render(<DailyPlanPanel weather={weather} hourly={[]} forecastMeta={freshForecastMeta()} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('hava81.dailyPlan.currentStale');
+    expect(screen.queryByRole('button', { name: 'hava81.share.action' })).not.toBeInTheDocument();
+  });
+
+  it('expires the current-observation fallback when its source TTL elapses', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-28T06:00:00.000Z'));
+    try {
+      const freshWeather: NormalizedWeatherData = {
+        ...weather,
+        timestamp: new Date('2026-08-28T06:00:00.000Z'),
+        meta: {
+          ...weather.meta,
+          fetchedAt: new Date('2026-08-28T06:00:00.000Z'),
+          observedAt: new Date('2026-08-28T06:00:00.000Z'),
+          freshForSeconds: 30,
+        },
+      };
+      render(<DailyPlanPanel weather={freshWeather} hourly={[]} forecastMeta={freshForecastMeta()} />);
+
+      expect(screen.getByRole('button', { name: 'hava81.share.action' })).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_101);
+      });
+
+      expect(screen.getByRole('status')).toHaveTextContent('hava81.dailyPlan.currentStale');
+      expect(screen.queryByRole('button', { name: 'hava81.share.action' })).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('hides the daily decision surface when forecast evidence expires', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-28T06:00:00.000Z'));
