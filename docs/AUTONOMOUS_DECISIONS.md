@@ -641,3 +641,8 @@ The hourly forecast atlas is intentionally unmounted on mobile until its reserve
 ## 2026-10-25 — Lint the live audit's mixed Node/browser scripts
 
 The live responsive audit is a Node entrypoint whose Playwright `page.evaluate` callbacks intentionally use browser globals. The previous ESLint file list excluded both the audit and its Node contract test, so standalone linting treated legitimate Node/browser globals as undefined and the normal lint gate never checked either file. Add a scoped flat-config override with Node and browser globals for these two scripts and include them in `npm run lint`; do not widen lint to every operational script without a separate inventory and cleanup.
+
+## 2026-10-25 — Make bundle attribution reproducible with current Vite/Rolldown output
+
+- Keep the analyzer ephemeral rather than adding an old visualization dependency to the application. Pin source-map-explorer 2.5.3 in the script, request gzip-aware TSV output under ignored dist/, and omit only the generated rolldown-runtime chunk that has no source map.
+- Current Rolldown maps can report an out-of-range terminal mapping column; use source-map-explorer's documented no-border-checks option for attribution, and keep the report explicitly diagnostic rather than treating module byte attribution as a release budget. Re-run the script on each measured build instead of committing generated reports.
