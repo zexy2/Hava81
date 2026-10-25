@@ -13,6 +13,23 @@ export function createWeatherFixtures(now = Date.now()) {
     new Date(now + offsetHours * 60 * 60_000).toISOString();
   const localDate = (offsetDays = 0) =>
     new Date(now + 3 * 60 * 60_000 + offsetDays * 24 * 60 * 60_000).toISOString().slice(0, 10);
+  const locationDateKey = (date: Date) =>
+    new Date(date.getTime() + 3 * 60 * 60_000).toISOString().slice(0, 10);
+  const locationTime = (hour: number, minute = 0) => {
+    const [year, month, day] = localDate().split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day, hour - 3, minute));
+  };
+  const todayAtLocation = localDate();
+  const sunriseCandidate = new Date(now - 6 * 60 * 60_000);
+  const sunrise =
+    locationDateKey(sunriseCandidate) === todayAtLocation
+      ? sunriseCandidate
+      : locationTime(6);
+  const sunsetCandidate = new Date(now + 6 * 60 * 60_000);
+  const sunset =
+    locationDateKey(sunsetCandidate) === todayAtLocation && sunsetCandidate > sunrise
+      ? sunsetCandidate
+      : locationTime(19, 30);
   const nowIso = new Date(now).toISOString();
 
   const current = {
@@ -29,8 +46,8 @@ export function createWeatherFixtures(now = Date.now()) {
     windDirection: 180,
     description: 'açık',
     icon: '01d',
-    sunrise: isoAtHour(-6),
-    sunset: isoAtHour(6),
+    sunrise: sunrise.toISOString(),
+    sunset: sunset.toISOString(),
     timestamp: isoAtHour(0),
     coordinates: { lat: 41.01, lon: 28.97 },
     clouds: 5,

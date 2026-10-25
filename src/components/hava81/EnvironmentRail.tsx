@@ -59,6 +59,21 @@ function isValidDate(value: Date): boolean {
   return !Number.isNaN(value.getTime());
 }
 
+function getLocationDateKey(date: Date, timezoneOffsetMs: number): string {
+  return new Date(date.getTime() + timezoneOffsetMs).toISOString().slice(0, 10);
+}
+
+function millisecondsUntilNextLocationDay(timezoneOffsetMs: number): number {
+  const shiftedNowMs = Date.now() + timezoneOffsetMs;
+  const locationNow = new Date(shiftedNowMs);
+  const nextDayStartMs = Date.UTC(
+    locationNow.getUTCFullYear(),
+    locationNow.getUTCMonth(),
+    locationNow.getUTCDate() + 1
+  );
+  return Math.max(100, nextDayStartMs - shiftedNowMs);
+}
+
 export function EnvironmentRail({
   weather,
   airQuality,
@@ -68,7 +83,21 @@ export function EnvironmentRail({
   const { t } = useTranslation();
   const { settings, convertWindSpeed, getWindSpeedSymbol } = useSettings();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
-  const [, setFreshnessRevision] = useState(0);
+  const [freshnessRevision, setFreshnessRevision] = useState(0);
+  const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
+  const locationDateKey = getLocationDateKey(new Date(), timezoneOffsetMs);
+  const sunriseDateKey = isValidDate(weather.sunrise)
+    ? getLocationDateKey(weather.sunrise, timezoneOffsetMs)
+    : null;
+  const sunsetDateKey = isValidDate(weather.sunset)
+    ? getLocationDateKey(weather.sunset, timezoneOffsetMs)
+    : null;
+  const hasValidDaylight =
+    sunriseDateKey === locationDateKey &&
+    sunsetDateKey === locationDateKey &&
+    weather.sunset.getTime() > weather.sunrise.getTime();
+  const daylightIsStale =
+    isValidDate(weather.sunrise) && isValidDate(weather.sunset) && !hasValidDaylight;
   const currentFreshness = getCurrentWeatherFreshness(weather.meta);
   const airQualityFreshness = getCurrentWeatherFreshness(airQuality?.meta ?? null);
   const nextFreshnessExpiryMs = [
@@ -79,13 +108,14 @@ export function EnvironmentRail({
       candidate === null ? soonest : soonest === null ? candidate : Math.min(soonest, candidate),
     null
   );
-
   useEffect(() => {
     const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
-    const timerId =
+    const nextLocalDayExpiryMs = millisecondsUntilNextLocationDay(timezoneOffsetMs);
+    const nextRefreshMs =
       nextFreshnessExpiryMs === null
-        ? undefined
-        : window.setTimeout(resyncFreshness, nextFreshnessExpiryMs);
+        ? nextLocalDayExpiryMs
+        : Math.min(nextFreshnessExpiryMs, nextLocalDayExpiryMs);
+    const timerId = window.setTimeout(resyncFreshness, Math.max(100, nextRefreshMs));
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') resyncFreshness();
     };
@@ -98,9 +128,12 @@ export function EnvironmentRail({
   }, [
     airQuality?.meta.fetchedAt,
     airQuality?.meta.freshForSeconds,
+    freshnessRevision,
     nextFreshnessExpiryMs,
+    timezoneOffsetMs,
     weather.meta.fetchedAt,
     weather.meta.freshForSeconds,
+    weather.meta.timezoneOffsetSeconds,
   ]);
 
   const timeFormatter = useMemo(
@@ -121,8 +154,6 @@ export function EnvironmentRail({
     [locale]
   );
 
-  const hasValidDaylight = isValidDate(weather.sunrise) && isValidDate(weather.sunset);
-  const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const sunriseTime = hasValidDaylight
     ? timeFormatter.format(atLocationTime(weather.sunrise))
@@ -188,14 +219,20 @@ export function EnvironmentRail({
             sunsetTime
           )}
         </strong>
-        <span className="environment-rail__detail">
-          {t('daylight.sunrise')}{' '}
-          {hasValidDaylight ? (
-            <time dateTime={weather.sunrise.toISOString()}>{sunriseTime}</time>
+        <span className="environment-rail__detail" role={daylightIsStale ? 'status' : undefined}>
+          {daylightIsStale ? (
+            t('daylight.stale')
           ) : (
-            sunriseTime
-          )}{' '}
-          · {t('daylight.dayLength')} · {daylightLength}
+            <>
+              {t('daylight.sunrise')}{' '}
+              {hasValidDaylight ? (
+                <time dateTime={weather.sunrise.toISOString()}>{sunriseTime}</time>
+              ) : (
+                sunriseTime
+              )}{' '}
+              · {t('daylight.dayLength')} · {daylightLength}
+            </>
+          )}
         </span>
       </div>
 

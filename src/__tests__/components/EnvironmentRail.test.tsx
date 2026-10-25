@@ -107,20 +107,61 @@ describe('EnvironmentRail', () => {
   });
 
   it('renders sunrise and sunset in the weather location timezone instead of the device timezone', () => {
-    render(
-      <SettingsProvider>
-        <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
-      </SettingsProvider>
-    );
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-28T15:00:00Z'));
+      render(
+        <SettingsProvider>
+          <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
+        </SettingsProvider>
+      );
 
-    const sunset = screen.getByText('19:30');
-    const sunrise = screen.getByText('06:00');
-    expect(sunset).toBeInTheDocument();
-    expect(sunrise).toBeInTheDocument();
-    expect(sunset.closest('time')).toHaveAttribute('datetime', '2026-08-28T16:30:00.000Z');
-    expect(sunrise.closest('time')).toHaveAttribute('datetime', '2026-08-28T03:00:00.000Z');
-    expect(sunrise.parentElement).toHaveTextContent('Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk');
-    expect(screen.queryByText('16:30')).not.toBeInTheDocument();
-    expect(screen.queryByText('03:00')).not.toBeInTheDocument();
+      const sunset = screen.getByText('19:30');
+      const sunrise = screen.getByText('06:00');
+      expect(sunset).toBeInTheDocument();
+      expect(sunrise).toBeInTheDocument();
+      expect(sunset.closest('time')).toHaveAttribute('datetime', '2026-08-28T16:30:00.000Z');
+      expect(sunrise.closest('time')).toHaveAttribute('datetime', '2026-08-28T03:00:00.000Z');
+      expect(sunrise.parentElement).toHaveTextContent('Doğuş 06:00 · Gün Uzunluğu · 13 s 30 dk');
+      expect(screen.queryByText('16:30')).not.toBeInTheDocument();
+      expect(screen.queryByText('03:00')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("expires yesterday's daylight times at local midnight while current weather remains fresh", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchedAt = new Date('2026-08-28T20:59:30Z');
+      vi.setSystemTime(fetchedAt);
+      const weatherBeforeMidnight: NormalizedWeatherData = {
+        ...weather,
+        meta: { ...weather.meta, fetchedAt, freshForSeconds: 3600 },
+      };
+
+      render(
+        <SettingsProvider>
+          <EnvironmentRail
+            weather={weatherBeforeMidnight}
+            onOpenMap={vi.fn()}
+            mapExpanded={false}
+          />
+        </SettingsProvider>
+      );
+
+      expect(screen.getByText('19:30')).toBeInTheDocument();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31_000);
+      });
+
+      expect(screen.queryByText('19:30')).not.toBeInTheDocument();
+      expect(screen.queryByText('06:00')).not.toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Gün doğuşu ve batış bilgisi güncel değil'
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
