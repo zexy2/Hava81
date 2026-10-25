@@ -1909,3 +1909,11 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Added tests for both a legacy snapshot and a complete current snapshot. Validation: worker-status + observer suites **97/97 passed**; Python compilation and `git diff --check` passed.
 - Environment boundary: SentinelX reports the enrolled Oracle host offline; Zeki SSH Gateway exposes only local `nexus-hermes`. This is a source/test change only. No observer install, Oracle write, API build/deploy/rollback, cleanup, or port switch was attempted. API primary remains 4002; 4001 remains rollback/canary.
 - Next: inspect final diff, commit/push this bounded observer-diagnostic PR, require exact-head CI/Ops/CodeQL, and leave installation pending until Oracle connectivity is restored.
+
+## 2026-10-25 14:28 TRT — Remove the closed map trigger's dangling ARIA reference
+
+- Started from current `origin/main=4e439106eabcabea1ff8de38d5dc6bf9938abaa3` in reused clean worktree `/home/chatgpt/hava81-run11-alerts-stale-evidence-status-20261025-0326`, new branch `automation/hava81-map-controls-aria-20261025-1428`. Existing branches and pending PR worktrees were left untouched.
+- The header's map trigger always referenced `weather-map-region`, while `App.tsx` only mounts that region when `showMap` is true. It now omits `aria-controls` while closed and references the region when open; `aria-expanded` and all map behavior remain unchanged. Added explicit closed/open assertions.
+- Validation: AppHeader suite **9/9 passed**; TypeScript check passed; focused ESLint passed; CSS lint passed (19 files clean); production frontend build passed; `git diff --check` passed. Hosted browser/Lighthouse gates remain required before merge.
+- Environment boundary: SentinelX still reports the enrolled Oracle host offline. Public frontend/API remain HTTP 200 and CORS preflight HTTP 204, but this source-only change is not deployed. API port 4002 remains primary and 4001 rollback/canary.
+- Next: re-fetch main, commit/push the isolated ARIA fix, open a narrow PR and require exact-head CI/build/browser/Lighthouse/Ops/CodeQL. Continue separate work while checks run.

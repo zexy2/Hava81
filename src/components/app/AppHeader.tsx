@@ -192,7 +192,7 @@ export function AppHeader({
             onClick={onToggleMap}
             disabled={!hasWeather}
             aria-expanded={showMap}
-            aria-controls="weather-map-region"
+            aria-controls={showMap ? 'weather-map-region' : undefined}
             aria-label={mapLabel}
             title={mapLabel}
           >

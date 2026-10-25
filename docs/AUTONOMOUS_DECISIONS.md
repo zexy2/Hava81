@@ -584,3 +584,7 @@ The one-slot persisted weather cache is a resilience fallback, not evidence for 
 
 - The status command must not silently present missing scoped readiness fields as ordinary `None` values. Require `can_merge`, `can_deploy_frontend`, `can_deploy_api` and their blocker arrays to identify the current readiness contract; report `legacy_or_incomplete` and list missing fields when the snapshot predates or omits that contract.
 - This is diagnostic-only. Never infer merge/deploy permission from the schema warning, and keep Oracle host health, API build headroom, production health, and exact-head GitHub checks as independent gates. Do not install the observer or run API build/deploy/rollback while the enrolled Oracle host is offline.
+
+## 2026-10-25 — Only expose map-panel controls while the map region is mounted
+
+The map panel is conditionally rendered. Keep the map trigger's `aria-expanded` state aligned with `showMap`, and set `aria-controls="weather-map-region"` only while the panel exists. A closed-state ID reference is dangling and provides assistive technology a target that is not present. Cover both closed and open states in the header component test; do not change map loading, tile fallback/retry, focus restoration or weather behavior.
