@@ -26,6 +26,9 @@ const marineSchema = z.object({
     .optional(),
 });
 
+const HOUR_MS = 60 * 60_000;
+const CONTEXT_WINDOW_HOURS = 24;
+
 const GMT_MODEL_TIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-]\d{2}:\d{2})?$/;
 
@@ -97,7 +100,7 @@ export const finiteMaxForWindow = (
   hours = 24
 ) => {
   const start = now.getTime();
-  const end = start + hours * 60 * 60_000;
+  const end = start + hours * HOUR_MS;
   const filtered = (values ?? []).filter((value, index): value is number => {
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return false;
     const time = parseGmtModelTime(times[index] ?? '');
@@ -173,6 +176,7 @@ export class ContextSignalsService {
   ) {}
 
   async get(lat: number, lon: number, includeMarine: boolean): Promise<ContextSignals> {
+    const requestedAt = new Date();
     const airUrl = new URL('/v1/air-quality', this.openMeteo.airQualityBaseUrl);
     airUrl.searchParams.set('latitude', String(lat));
     airUrl.searchParams.set('longitude', String(lon));
@@ -201,7 +205,16 @@ export class ContextSignalsService {
         air.hourly.grass_pollen,
         air.hourly.olive_pollen,
       ].filter((series): series is Array<number | null> => series !== undefined);
-      const timelineInvalid = air.hourly.time.some(time => !Number.isFinite(parseGmtModelTime(time)));
+      const parsedTimes = air.hourly.time.map(parseGmtModelTime);
+      const firstRequiredHour = Math.ceil(requestedAt.getTime() / HOUR_MS) * HOUR_MS;
+      const lastRequiredHour =
+        Math.floor((requestedAt.getTime() + CONTEXT_WINDOW_HOURS * HOUR_MS - 1) / HOUR_MS) * HOUR_MS;
+      const timelineInvalid =
+        parsedTimes.length === 0 ||
+        parsedTimes.some(time => !Number.isFinite(time)) ||
+        parsedTimes[0] > firstRequiredHour ||
+        parsedTimes[parsedTimes.length - 1] < lastRequiredHour ||
+        parsedTimes.some((time, index) => index > 0 && time - parsedTimes[index - 1] !== HOUR_MS);
       if (timelineInvalid || modeledSeries.some(series => series.length !== timelineLength)) {
         throw new AppError(
           502,
@@ -246,10 +259,10 @@ export class ContextSignalsService {
       provider: 'Open-Meteo',
       fetchedAt: new Date().toISOString(),
       attribution: 'Open-Meteo · CC BY 4.0',
-      uvIndexMax: finiteMaxForWindow(air.hourly.time, air.hourly.uv_index),
-      dustMax: finiteMaxForWindow(air.hourly.time, air.hourly.dust),
-      grassPollenMax: finiteMaxForWindow(air.hourly.time, air.hourly.grass_pollen),
-      olivePollenMax: finiteMaxForWindow(air.hourly.time, air.hourly.olive_pollen),
+      uvIndexMax: finiteMaxForWindow(air.hourly.time, air.hourly.uv_index, requestedAt),
+      dustMax: finiteMaxForWindow(air.hourly.time, air.hourly.dust, requestedAt),
+      grassPollenMax: finiteMaxForWindow(air.hourly.time, air.hourly.grass_pollen, requestedAt),
+      olivePollenMax: finiteMaxForWindow(air.hourly.time, air.hourly.olive_pollen, requestedAt),
       units: {
         dust: air.hourly_units?.dust,
         grassPollen: air.hourly_units?.grass_pollen,
