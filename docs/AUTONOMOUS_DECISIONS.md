@@ -669,3 +669,8 @@ A navigation can receive an HTTP 500/502/503/504 without rejecting `fetch`, so t
 ## 2026-10-25 — Keep city headline and detailed plan on the same hourly AQI evidence
 
 DecisionGlance, WeatherDecisionField, DailyPlanPanel, and DecisionAlertsPanel are all surfaces of the same city decision. When fresh hourly air-quality evidence exists, pass it into the shared decision snapshot for the headline score and best-window summary as well as the detailed plan. Filter the optional hourly series with its freshness metadata and stop using it at expiry; never keep a stale AQI series merely because the current weather/forecast remains fresh. Do not alter upstream values or synthesize missing hourly AQI.
+
+## 2026-10-25 — Audit the canonical public root, not the HTML implementation filename
+
+- Lighthouse's default homepage target should be the same-origin root route `/`, matching the canonical user-facing route served in production. `/index.html` is an implementation filename and can bypass root-route redirects, document routing, or canonical metadata behavior that the real homepage audit is meant to measure.
+- Preserve the resolver's existing same-origin/path restrictions for operator-supplied targets. This changes only the default audit URL; it does not change production routes or application behavior.
