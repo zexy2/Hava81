@@ -5,8 +5,8 @@ import { resolveLighthouseTargetUrl } from './lib/lighthouse-target-url.mjs';
 const origin = 'http://127.0.0.1:4173';
 assert.equal(
   resolveLighthouseTargetUrl(undefined, origin),
-  `${origin}/index.html`,
-  'the existing homepage target remains the safe default'
+  `${origin}/`,
+  'the canonical root route is the safe default'
 );
 assert.equal(
   resolveLighthouseTargetUrl('/istanbul/', origin),

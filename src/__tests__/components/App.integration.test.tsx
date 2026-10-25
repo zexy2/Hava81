@@ -182,8 +182,14 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname).toBe('/');
     expect(document.title).toBe('Hava81 — Havayı değil, gününü planla');
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-      'http://localhost:3000/'
+      'https://hava81.zekiakgul.dev/'
     );
+    expect(
+      document.querySelector<HTMLLinkElement>('link[rel="alternate"][hreflang="tr"]')?.href
+    ).toBe('https://hava81.zekiakgul.dev/');
+    expect(
+      document.querySelector<HTMLLinkElement>('link[rel="alternate"][hreflang="en"]')?.href
+    ).toBe('https://hava81.zekiakgul.dev/en/');
   });
 
   it('shows İstanbul immediately on the root route without requesting browser location', async () => {
@@ -212,7 +218,7 @@ describe('Hava81 app integration', () => {
     await waitFor(() => {
       expect(window.location.pathname + window.location.search).toBe('/sanliurfa/');
       expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-        'http://localhost:3000/sanliurfa/'
+        'https://hava81.zekiakgul.dev/sanliurfa/'
       );
     });
     expect(screen.getByRole('group', { name: 'Plaka kodu 63' })).toBeInTheDocument();
@@ -236,7 +242,7 @@ describe('Hava81 app integration', () => {
     expect(window.location.pathname + window.location.search).toBe('/?yer=Urla');
     await waitFor(() => {
       expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-        'http://localhost:3000/?yer=Urla'
+        'https://hava81.zekiakgul.dev/?yer=Urla'
       );
     });
   });
@@ -819,10 +825,10 @@ describe('Hava81 app integration', () => {
       expect(document.documentElement.lang).toBe('en');
       expect(document.title).toBe('İstanbul weather — Hava81');
       expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-        'http://localhost:3000/en/istanbul/'
+        'https://hava81.zekiakgul.dev/en/istanbul/'
       );
       expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
-        'http://localhost:3000/en/istanbul/'
+        'https://hava81.zekiakgul.dev/en/istanbul/'
       );
       expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toContain(
         'Current weather, hourly and daily forecast'
@@ -847,7 +853,7 @@ describe('Hava81 app integration', () => {
     renderApp();
     await screen.findByRole('heading', { name: 'İstanbul' });
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-      'http://localhost:3000/istanbul/'
+      'https://hava81.zekiakgul.dev/istanbul/'
     );
 
     window.history.pushState({}, '', '/izmir/');
@@ -856,7 +862,7 @@ describe('Hava81 app integration', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/izmir/');
       expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-        'http://localhost:3000/izmir/'
+        'https://hava81.zekiakgul.dev/izmir/'
       );
       expect(document.title).toBe('İzmir hava durumu — Hava81');
     });
@@ -871,7 +877,7 @@ describe('Hava81 app integration', () => {
     });
     await screen.findByRole('heading', { name: 'İzmir' });
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
-      'http://localhost:3000/izmir/'
+      'https://hava81.zekiakgul.dev/izmir/'
     );
   });
 
@@ -902,9 +908,9 @@ describe('Hava81 app integration', () => {
       'İstanbul için güncel hava, saatlik ve günlük tahmin, Hava81 Skoru, hava açısından en iyi dışarı çıkma penceresi, yağmur-rüzgâr-hava kalitesi ve günlük karar önerileri.';
     await waitFor(() => {
       const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-      expect(canonical?.href).toBe('http://localhost:3000/istanbul/');
+      expect(canonical?.href).toBe('https://hava81.zekiakgul.dev/istanbul/');
       expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
-        'http://localhost:3000/istanbul/'
+        'https://hava81.zekiakgul.dev/istanbul/'
       );
       expect(document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content).toBe(
         'İstanbul hava durumu — Hava81'

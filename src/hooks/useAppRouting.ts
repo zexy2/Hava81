@@ -8,6 +8,10 @@ import { withAtlasView } from '../utils/atlasView';
 import { cityFromPathname, cityPath, homePath, isHomePathname } from '../utils/cityRoute';
 import { ROOT_DOCUMENT_METADATA, ROOT_DOCUMENT_METADATA_EN } from '../utils/rootDocumentMetadata';
 
+// Canonical and alternate metadata must identify the public site even when the
+// app is rendered on localhost by Vite preview or a development server.
+const PUBLIC_SITE_ORIGIN = 'https://hava81.zekiakgul.dev';
+
 interface AppRoutingOptions {
   weather: NormalizedWeatherData | null;
   currentView: AtlasView;
@@ -104,7 +108,7 @@ export function useAppRouting({
           link.hreflang = hreflang;
           document.head.appendChild(link);
         }
-        link.href = new URL(path, window.location.origin).toString();
+        link.href = new URL(path, PUBLIC_SITE_ORIGIN).toString();
       }
     };
 
@@ -114,7 +118,7 @@ export function useAppRouting({
       document.title = cityTitle;
       if (!path) return;
 
-      const canonicalUrl = new URL(path, window.location.origin).toString();
+      const canonicalUrl = new URL(path, PUBLIC_SITE_ORIGIN).toString();
       let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
       if (!canonical) {
         canonical = document.createElement('link');
@@ -171,7 +175,7 @@ export function useAppRouting({
         window.history.replaceState(window.history.state, '', `${home}${window.location.search}`);
       }
       setAlternates('/', '/en/');
-      const canonicalUrl = new URL(home, window.location.origin).toString();
+      const canonicalUrl = new URL(home, PUBLIC_SITE_ORIGIN).toString();
       document.title = rootMetadata.title;
       let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
       if (!canonical) {
