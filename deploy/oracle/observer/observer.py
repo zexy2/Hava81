@@ -50,6 +50,7 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
+PR_CHECK_CACHE_SECONDS = 15 * 60
 API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
@@ -705,7 +706,7 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
     }
 
 
-def collect_github() -> dict[str, Any]:
+def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
     pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
     runs_result = http_get(
         f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
@@ -865,7 +866,106 @@ def collect_github() -> dict[str, Any]:
                 'conclusion': codeql_run.get('conclusion'),
                 'url': codeql_run.get('html_url'),
             },
+            'checks_collected_at': None,
         })
+
+    # The latest 100 Actions runs can omit an older but still-open PR's exact
+    # head checks because every PR produces CI/CD, Ops and CodeQL runs. Reuse a
+    # recent exact-SHA snapshot for at most 15 minutes; otherwise do one bounded
+    # head-SHA lookup per observer cycle. This avoids spending one GitHub request
+    # every five minutes on the same older open PR while keeping unknown checks
+    # fail-closed when no trustworthy result is available.
+    previous_github = previous.get('github') if isinstance(previous, dict) else None
+    previous_prs = previous_github.get('open_automation_prs') if isinstance(previous_github, dict) else None
+    previous_by_number = {
+        item.get('number'): item
+        for item in (previous_prs if isinstance(previous_prs, list) else [])
+        if isinstance(item, dict) and item.get('number') is not None
+    }
+    gate_keys = ('ci', 'ops', 'codeql')
+    for pr in automation_prs:
+        prior = previous_by_number.get(pr.get('number'))
+        prior_age = timestamp_age_seconds(prior.get('checks_collected_at')) if isinstance(prior, dict) else None
+        prior_gates = [prior.get(key) if isinstance(prior, dict) else None for key in gate_keys]
+        prior_complete = (
+            isinstance(prior, dict)
+            and prior.get('head_sha') == pr.get('head_sha')
+            and prior_age is not None
+            and 0 <= prior_age <= PR_CHECK_CACHE_SECONDS
+            and all(
+                isinstance(gate, dict)
+                and gate.get('run_id') is not None
+                and gate.get('status') == 'completed'
+                and gate.get('conclusion') is not None
+                for gate in prior_gates
+            )
+        )
+        if prior_complete:
+            for key in gate_keys:
+                if pr[key].get('run_id') is None:
+                    pr[key] = prior[key]
+            if all(pr[key].get('run_id') is not None for key in gate_keys):
+                pr['checks_collected_at'] = prior.get('checks_collected_at')
+        elif all(pr[key].get('run_id') is not None for key in gate_keys):
+            pr['checks_collected_at'] = now_iso()
+
+    missing_check_prs = [
+        pr for pr in automation_prs
+        if any(pr[key].get('run_id') is None for key in gate_keys)
+    ]
+    rate_headers_for_lookup = runs_result.get('headers') or {}
+    remaining_raw = rate_headers_for_lookup.get('x-ratelimit-remaining')
+    if remaining_raw is None:
+        remaining_raw = (pulls_result.get('headers') or {}).get('x-ratelimit-remaining')
+    try:
+        remaining_for_lookup = int(remaining_raw) if remaining_raw is not None else None
+    except (TypeError, ValueError):
+        remaining_for_lookup = None
+    can_lookup_missing_head = remaining_for_lookup is None or remaining_for_lookup > 5
+    targeted_lookup_headers: dict[str, Any] | None = None
+    if (
+        previous is not None
+        and pulls_result.get('ok') is True
+        and runs_result.get('ok') is True
+        and missing_check_prs
+        and can_lookup_missing_head
+    ):
+        # Pull requests are returned newest-updated first; prioritize the oldest
+        # still-open automation PR whose exact-head gates fell outside page one.
+        target_pr = missing_check_prs[-1]
+        target_sha = target_pr.get('head_sha')
+        targeted = http_get(
+            f'https://api.github.com/repos/{REPO}/actions/runs?head_sha={target_sha}&per_page=100',
+            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+        )
+        targeted_lookup_headers = targeted.get('headers') or None
+        targeted_json = targeted.get('json') if isinstance(targeted.get('json'), dict) else {}
+        targeted_runs = targeted_json.get('workflow_runs') if isinstance(targeted_json.get('workflow_runs'), list) else []
+        latest_targeted_by_name: dict[str, dict[str, Any]] = {}
+        for run in targeted_runs:
+            if run.get('head_sha') != target_sha:
+                continue
+            name = run.get('name')
+            if name in ('CI/CD Pipeline', 'Ops script contracts', 'CodeQL') and name not in latest_targeted_by_name:
+                latest_targeted_by_name[name] = run
+        for workflow_name, key in (
+            ('CI/CD Pipeline', 'ci'),
+            ('Ops script contracts', 'ops'),
+            ('CodeQL', 'codeql'),
+        ):
+            run = latest_targeted_by_name.get(workflow_name)
+            if run is None:
+                continue
+            target_pr[key] = {
+                'run_id': run.get('id'),
+                'run_number': run.get('run_number'),
+                'status': run.get('status'),
+                'conclusion': run.get('conclusion'),
+                'url': run.get('html_url'),
+                'failed_jobs': failed_ci_job_names(run) if key == 'ci' else [],
+            }
+        if all(target_pr[key].get('run_id') is not None for key in gate_keys):
+            target_pr['checks_collected_at'] = now_iso()
 
     def slim_run(run: dict[str, Any] | None) -> dict[str, Any] | None:
         if not run:
@@ -918,7 +1018,7 @@ def collect_github() -> dict[str, Any]:
     ]
     api_deployment = collect_api_deployment(main_context)
 
-    rate_headers = runs_result.get('headers') or pulls_result.get('headers') or {}
+    rate_headers = targeted_lookup_headers or runs_result.get('headers') or pulls_result.get('headers') or {}
     github_ok = bool(pulls_result.get('ok') and runs_result.get('ok') and main_branch_known)
     github_error = pulls_result.get('error') or runs_result.get('error') or main_branch_result.get('error')
     if not github_error and not main_branch_known:
@@ -1156,7 +1256,7 @@ def main() -> int:
     collected_at = now_iso()
     production = collect_production()
     host = collect_host()
-    github = collect_github()
+    github = collect_github(previous)
     frontend_revision = production.get('frontend_revision') or {}
     frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('main_branch')))
     production['frontend_revision'] = frontend_revision
