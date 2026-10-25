@@ -579,3 +579,8 @@ Both Turkish `/` and English `/en/` are first-class static entry points. Each sh
 ## 2026-10-25 — Last-known weather fallback must match the requested city and locale
 
 The one-slot persisted weather cache is a resilience fallback, not evidence for whichever route happens to be open. When there is no active payload and an infrastructure request fails, show the cache only if its canonical province identity matches the explicit city request and its stored locale matches the current interface locale. Set the expected identity from the initial city and each explicit city fetch; clear it when switching to location mode or clearing weather because the target is then unknown. Preserve same-city stale-cache fallback with its visible last-known timestamp. Do not silently present another province's observation as the requested city's weather, and do not fabricate a replacement observation.
+
+## 2026-10-25 — Worker status must identify legacy readiness snapshots
+
+- The status command must not silently present missing scoped readiness fields as ordinary `None` values. Require `can_merge`, `can_deploy_frontend`, `can_deploy_api` and their blocker arrays to identify the current readiness contract; report `legacy_or_incomplete` and list missing fields when the snapshot predates or omits that contract.
+- This is diagnostic-only. Never infer merge/deploy permission from the schema warning, and keep Oracle host health, API build headroom, production health, and exact-head GitHub checks as independent gates. Do not install the observer or run API build/deploy/rollback while the enrolled Oracle host is offline.

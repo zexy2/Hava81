@@ -19,10 +19,41 @@ class WorkerStatusScriptTests(unittest.TestCase):
     def test_status_script_surfaces_snapshot_freshness(self) -> None:
         status_script = STATUS_PATH.read_text(encoding='utf-8')
         self.assertIn('snapshot_freshness:', status_script)
+        self.assertIn('readiness_schema:', status_script)
+        self.assertIn('legacy_or_incomplete', status_script)
         self.assertIn('MAX_STATE_AGE_SECONDS = 10 * 60', status_script)
         self.assertIn("freshness['reason']", status_script)
         self.assertIn("frontend_revision.get('english_city')", status_script)
         self.assertIn("boot_assets.get('english_city_count')", status_script)
+
+    def test_readiness_schema_flags_legacy_snapshots_without_scoped_gates(self) -> None:
+        legacy = status.readiness_schema({'can_merge_or_deploy': False})
+        self.assertFalse(legacy['current'])
+        self.assertIn('can_merge', legacy['missing_fields'])
+        self.assertIn('can_deploy_frontend', legacy['missing_fields'])
+        self.assertIn('can_deploy_api', legacy['missing_fields'])
+
+        current = status.readiness_schema({field: [] for field in status.READINESS_FIELDS})
+        self.assertTrue(current['current'])
+        self.assertEqual(current['missing_fields'], [])
+
+    def test_main_prints_readiness_schema_warning_for_legacy_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / 'state.json'
+            state_path.write_text(
+                json.dumps({
+                    'collected_at': datetime.now(timezone.utc).isoformat(),
+                    'worker': {'can_merge_or_deploy': False},
+                }),
+                encoding='utf-8',
+            )
+            output = StringIO()
+            with patch.object(status, 'STATE_FILE', state_path), redirect_stdout(output):
+                exit_code = status.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn('readiness_schema: state=legacy_or_incomplete', output.getvalue())
+        self.assertIn('can_deploy_api', output.getvalue())
 
     def test_main_prints_snapshot_age_and_freshness(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
