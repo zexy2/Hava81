@@ -349,6 +349,9 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHou
         <small className="decision-alerts__modeled-note">
           {t('hava81.alerts.modeledDisclosure')}
         </small>
+        {enabled && permission === 'granted' && !alertEvidenceFresh ? (
+          <small role="status">{t('hava81.alerts.freshnessPaused')}</small>
+        ) : null}
         {!notificationsSupported ? (
           <small
             id="decision-alerts-permission-help"

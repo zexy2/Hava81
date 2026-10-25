@@ -491,3 +491,8 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - `EnvironmentRail` already removes AQI values and PM2.5 details when provider TTL or source-observation age expires, but the detail line then said only “No data.” Keep the numeric sample hidden, but distinguish a previously received sample that is now stale from data that was never available or whose freshness is unknown.
 - Reuse the existing localized stale-current-observation copy and expose the changed state with `role="status"` so the transition is announced without adding a new health interpretation or provider claim.
 - This is presentation/accessibility only. Do not change AQI values/categories, source timestamps, freshness thresholds, scoring, API contracts, or weather guidance.
+
+## 2026-10-25 03:26 TRT — Make alert suppression visible when required evidence is stale
+
+- Browser alerts already fail closed when current weather, the forecast, or required AQI evidence is missing/stale. When the user has enabled alerts and browser permission is granted, surface a localized status explaining that new alerts are temporarily paused until the evidence is fresh enough.
+- Keep the opt-in setting enabled so a temporary data-quality issue does not silently revoke the user's preference; keep the disable control available. Do not change alert candidate rules, quiet hours, deduplication, notification delivery, modeled-guidance disclosure, or any weather value/score.

@@ -539,6 +539,7 @@ export const tr = {
         'Yağmur, belirgin bekleme avantajı veya zorlayıcı gün oluştuğunda; Hava81 açıkken tarayıcı bildirimi gösterir.',
       quietHours: 'Sessiz saatler: 22:00–07:00. Bildirim izni yalnızca sen açarsan istenir.',
       modeledDisclosure: 'Bu bildirimler Hava81 model rehberidir; resmî MGM MeteoUyarı değildir.',
+      freshnessPaused: 'Güncel hava ve tahmin verisi yeterince taze olmadığı için yeni bildirimler geçici olarak duraklatıldı.',
       notificationDisclosure: 'Hava81 model rehberi; resmî MGM MeteoUyarı değildir.',
       enable: 'Bildirimleri aç',
       disable: 'Bildirimleri kapat',

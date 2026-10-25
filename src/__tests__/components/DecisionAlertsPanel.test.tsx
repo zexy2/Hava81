@@ -230,6 +230,9 @@ describe('DecisionAlertsPanel', () => {
 
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Güncel hava ve tahmin verisi yeterince taze olmadığı için yeni bildirimler geçici olarak duraklatıldı.'
+    );
     expect(
       Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
         key?.startsWith('hava81-alert-sent:')
