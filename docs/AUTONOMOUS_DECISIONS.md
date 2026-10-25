@@ -679,3 +679,7 @@ DecisionGlance, WeatherDecisionField, DailyPlanPanel, and DecisionAlertsPanel ar
 ## 2026-10-25 — Keep client-side canonical metadata pinned to the public origin
 - Client-side canonical URLs, `og:url`, and hreflang alternates must resolve against `https://hava81.zekiakgul.dev`, not the current browser origin. A local preview/development origin is not the public canonical and can make Lighthouse's SEO canonical audit fail after JavaScript runs even when static HTML is correct.
 - Preserve the production canonical host while changing only the active route path/query. Add integration assertions for home, English, province, query, and alternate links. Keep the Lighthouse SEO hard floor; fix invalid metadata rather than lowering the budget.
+
+## 2026-10-25 — Share deferred-forecast activation across audit runners
+
+The hourly forecast atlas intentionally stays unmounted on narrow screens until its reserved placeholder approaches the viewport. Both the live responsive audit and the full-page screenshot audit must use the same activation helper: wait for the localized placeholder or existing chart/error state, approach the placeholder when necessary, ignore only an IntersectionObserver detach race, wait for the finished chart or visible error, and restore scroll position zero before measuring. Do not add fixed sleeps, relax geometry assertions, force the production component to mount early, or alter forecast data/provider semantics. Keep the helper covered by behavioral tests and lint both entrypoints so the two audit paths cannot drift again.

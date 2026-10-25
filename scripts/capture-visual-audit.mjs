@@ -1,4 +1,5 @@
 import { chromium } from '@playwright/test';
+import { activateDeferredForecast, restoreViewportTop } from './lib/activate-deferred-forecast.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -50,8 +51,9 @@ try{
   await page.addInitScript(({theme})=>localStorage.setItem('user-settings', JSON.stringify({temperatureUnit:'metric',windSpeedUnit:'ms',language:'tr',themeMode:theme})),{theme:v.theme});
   try{
    const response=await page.goto(baseUrl+'/izmir/',{waitUntil:'domcontentloaded',timeout:25000});
-   await page.locator('.hava81-decision-field__city').waitFor({timeout:20000}).catch(()=>{});
-   await page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card').first().waitFor({timeout:16000}).catch(()=>{});
+   await page.locator('.hava81-decision-field__city').waitFor({timeout:20000});
+   await activateDeferredForecast(page, { timeout: 16000 });
+   await restoreViewportTop(page);
    await page.waitForTimeout(650);
    // Render offscreen panels for complete full-page visual evidence only.
    await page.addStyleTag({content: '.atlas-dashboard > .activity-planner, .atlas-dashboard > .context-signals, .atlas-dashboard > .decision-alerts, .atlas-dashboard > .commute-plan, .atlas-dashboard > .route-weather { content-visibility: visible !important; }'});

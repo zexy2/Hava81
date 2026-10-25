@@ -6,6 +6,8 @@ import test from 'node:test';
 import { provinceNamesBySlug, provinceCentersBySlug, cityCenterDistanceKm } from './lib/live-audit-city-catalog.mjs';
 
 const auditScript = fileURLToPath(new URL('./audit-live-responsive.mjs', import.meta.url));
+const captureScript = fileURLToPath(new URL('./capture-visual-audit.mjs', import.meta.url));
+const forecastHelper = fileURLToPath(new URL('./lib/activate-deferred-forecast.mjs', import.meta.url));
 
 function runAuditOptions(args) {
   // Invalid options must fail before launching a browser or contacting the API.
@@ -85,15 +87,23 @@ test('release gate rejects another province weather even when it contains valid 
   assert.equal(cityCenterDistanceKm('izmir', { lat: 91, lon: 0 }), Number.POSITIVE_INFINITY);
 });
 
-test('live audit activates the deferred forecast before measuring first-viewport geometry', () => {
-  const source = readFileSync(auditScript, 'utf8');
-  const activate = source.indexOf("element => element.scrollIntoView({ block: 'center', behavior: 'auto' })");
-  const settled = source.indexOf("await forecastContent.waitFor({ state: 'visible', timeout: 15_000 });", activate);
-  const restoreTop = source.indexOf("window.scrollTo({ top: 0, behavior: 'auto' })", settled);
-  const measure = source.indexOf('item.metrics = await page.evaluate', restoreTop);
+test('live and screenshot audits share deferred-forecast activation before measuring', () => {
+  const liveSource = readFileSync(auditScript, 'utf8');
+  const captureSource = readFileSync(captureScript, 'utf8');
+  const helperSource = readFileSync(forecastHelper, 'utf8');
 
+  assert.ok(liveSource.includes('activateDeferredForecast(page)'));
+  assert.ok(captureSource.includes('activateDeferredForecast(page'));
+  assert.ok(captureSource.includes('restoreViewportTop(page)'));
+
+  const activate = helperSource.indexOf('scrollIntoView');
+  const settled = helperSource.indexOf("await forecastContent.waitFor({ state: 'visible', timeout });", activate);
+  const restoreTop = helperSource.indexOf("window.scrollTo({ top: 0, behavior: 'auto' })");
   assert.ok(activate >= 0, 'the deferred forecast placeholder must be approached to trigger lazy loading');
-  assert.ok(settled > activate, 'the audit must wait for the chart or its error state after activation');
-  assert.ok(restoreTop > settled, 'the audit must restore the top position after the chart settles');
-  assert.ok(measure > restoreTop, 'first-viewport geometry must be measured only after restoring the top position');
+  assert.ok(settled > activate, 'the helper must wait for the chart or visible error state after activation');
+  assert.ok(restoreTop >= 0, 'the helper must restore the first viewport after activation');
+  assert.ok(
+    captureSource.indexOf('await activateDeferredForecast(page') < captureSource.indexOf('const snapshot=await page.evaluate'),
+    'visual geometry must be measured after the deferred chart is activated',
+  );
 });
