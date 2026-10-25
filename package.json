@@ -69,7 +69,7 @@
     "lint": "eslint src vite.config.ts playwright.config.ts \"e2e/**/*.ts\" scripts/audit-live-responsive.mjs scripts/test-live-audit-options.mjs && npm run lint:css",
     "lint:css": "node scripts/lint-css.mjs",
     "lint:fix": "eslint . --fix",
-    "analyze": "ANALYZE=true npm run build && npx source-map-explorer \\\"dist/assets/*.js\\\"",
+    "analyze": "ANALYZE=true npm run build && npx --yes source-map-explorer@2.5.3 --no-border-checks --gzip --tsv dist/bundle-analysis.tsv $(find dist/assets -maxdepth 1 -type f -name '*.js' ! -name 'rolldown-runtime-*.js' -print)",
     "docker:build": "docker compose build",
     "docker:run": "docker compose up",
     "docker:dev": "docker compose --profile dev up weather-api weather-app-dev",
