@@ -1698,3 +1698,23 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Keep checking main CI/CD #3584, Ops #323, CodeQL #2364 directly. After all required jobs pass, smoke root/TR/EN routes, API ready/live and CORS, and verify public build revision equals `e053c9fd`.
 3. Once production is healthy, rebase PR #1466 onto the deployed main with explicit lease after verifying its current remote head; rerun exact-head CI, then merge when green. Continue independent work while any new checks run.
 4. Retry SentinelX when the Oracle host reconnects; gateway disk pressure does not authorize API build/deploy or unknown-file deletion. Keep API primary port 4002 and PR #1454 draft.
+
+## 2026-10-25 06:23 TRT — Service-worker cache identity and failed-install cleanup
+
+### Production / infrastructure (fresh read-only verification)
+- SentinelX remains `agent_offline`; the SSH Gateway exposes only local `nexus-hermes`, so Oracle-host process/disk operations are still unavailable. Gateway root filesystem is 93.6% used with about 6.3 GiB free; the observer's API-build headroom gate remains false. No API build, deployment, rollback, cleanup, or production write was attempted.
+- Main CI/CD run #3587 (`40157329972`) completed successfully for main `410069dcd4b2e7d6aa73054dbcca80c08e396a92`. Direct cache-busted production requests to `/`, `/istanbul/`, and `/en/istanbul/` now embed that exact revision. `/api/v1/health/ready` and `/api/v1/health/live` returned HTTP 200; CORS preflight returned HTTP 204 with `Access-Control-Allow-Origin: https://hava81.zekiakgul.dev`. API revision remains `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee`; Nginx API port remains 4002.
+- PR #1466 (`docs(readme): refresh live production screenshots`) is still open at head `578286edaa8db7c774a4f58a1dbccb2f96c60e8e`, based on old main `e053c9fd1de065278ace22dd778587f1c2cb7f7e`. Exact-head CI/CD #3586 and CodeQL #2366 succeeded, but the PR is behind current main and must be rebased in its own worktree after checking the remote head. Do not modify that worktree from this PWA branch.
+
+### PWA change
+- Worktree `/home/chatgpt/hava81-run11-pwa-cache-audit-20261025-0225`, branch `automation/hava81-run11-pwa-cache-audit-20261025-0225`, code commit `16bfc966f` on exact current main `410069dcd4b2e7d6aa73054dbcca80c08e396a92`.
+- The cache namespace now includes the service-worker implementation as well as generated HTML, manifest, and hashed asset filenames. A worker-only behavior change therefore cannot silently reuse the previous worker's shell cache.
+- A failed install now best-effort deletes the partial versioned cache before rethrowing the install error. Cleanup failure is swallowed so it cannot mask the original root/required-asset failure; optional manifest failures remain non-blocking. No provider, weather, scoring, offline routing, or API behavior changed.
+- Post-rebase validation passed: full frontend Vitest **1,113/1,113 across 109 files**, TypeScript `--noEmit`, ESLint + CSS lint (19 files clean), script syntax checks, and `git diff --check`. Local production build was intentionally skipped because free disk is ~6.3 GiB and `api_build_headroom_ok=false`; hosted CI must validate production build, browser flows, Lighthouse budgets, Ops contracts, and CodeQL.
+- The branch is committed and clean locally; no remote branch/PR was created yet. No production write/deploy occurred.
+
+### Exact next actions / prioritized queue
+1. Re-fetch `origin/main` and recheck whether another run has created the PWA branch remotely; push the clean branch only after confirming no remote head exists, then open a narrow PR and record exact head SHA plus CI/CD/Ops/CodeQL run IDs.
+2. Continue independent work while hosted gates run. First inspect the observer's frontend revision/deploy-pending predicate: the 03:14 snapshot marked revision `e053c9...` pending against main `410069...`, but the 03:23 direct smoke shows all three public HTML routes now serve `410069...`. If a fresh snapshot still disagrees, distinguish normal propagation delay from a false positive; do not weaken the gate without evidence.
+3. Re-check PR #1466 in its own worktree after the current main deploy; verify exact remote head before rebase and use an explicit lease if a forced update is needed.
+4. Keep API-runtime PR #1454 draft/blocked until the enrolled Oracle host is reachable and fresh host-specific disk/build-headroom checks pass. Preserve API primary port 4002 and 4001 as rollback/canary. Never disable/pause the automation.
