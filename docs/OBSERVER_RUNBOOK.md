@@ -4,7 +4,7 @@ This runbook explains how to interpret the read-only worker signals before any m
 
 ## Freshness
 
-Treat `collected_at` as the age of the observation, not as proof that the current host is healthy. The compact `hava81-worker-status` output reports `snapshot_freshness` using a ten-minute maximum age (two five-minute observer intervals) and a 60-second future-clock tolerance; missing, malformed, stale or materially future timestamps are not fresh. This is an operator warning, not a substitute for checking the readiness gates. Re-read the live host state and production endpoints immediately before a mutation. If the snapshot or observer GitHub fields are stale or unknown, query GitHub directly rather than waiting for the next five-minute cycle.
+Treat `collected_at` as the age of the observation, not as proof that the current host is healthy. The compact `hava81-worker-status` output reports `snapshot_freshness` using a ten-minute maximum age (two five-minute observer intervals) and a 60-second future-clock tolerance; missing, malformed, stale or materially future timestamps are not fresh. It also prints root/TR/EN build revisions and boot-asset counts so a shell-parity incident can be localized without dumping the full state file. This is an operator warning, not a substitute for checking the readiness gates. Re-read the live host state and production endpoints immediately before a mutation. If the snapshot or observer GitHub fields are stale or unknown, query GitHub directly rather than waiting for the next five-minute cycle.
 
 ## Merge and deploy gates
 
