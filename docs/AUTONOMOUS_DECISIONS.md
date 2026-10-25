@@ -664,3 +664,8 @@ Canonical metadata may legitimately point to the current local preview root or t
 ## 2026-10-25 — Use the cached app shell for navigation HTTP 5xx, but not 4xx
 
 A navigation can receive an HTTP 500/502/503/504 without rejecting `fetch`, so the existing network-error fallback alone can still leave a user on a server error page even when a usable Hava81 shell is cached. For navigation responses with status >= 500, prefer the cached path shell, then the cached root shell; if neither is available, return the original HTTP response. Keep 4xx responses untouched so a real missing route is not silently replaced by stale HTML. Never cache the failed response or change API requests, forecast data, provider attribution, freshness, or scoring. Cache Storage remains best-effort, and rejected network requests still preserve their original error when no cached shell can be read.
+
+
+## 2026-10-25 — Keep city headline and detailed plan on the same hourly AQI evidence
+
+DecisionGlance, WeatherDecisionField, DailyPlanPanel, and DecisionAlertsPanel are all surfaces of the same city decision. When fresh hourly air-quality evidence exists, pass it into the shared decision snapshot for the headline score and best-window summary as well as the detailed plan. Filter the optional hourly series with its freshness metadata and stop using it at expiry; never keep a stale AQI series merely because the current weather/forecast remains fresh. Do not alter upstream values or synthesize missing hourly AQI.

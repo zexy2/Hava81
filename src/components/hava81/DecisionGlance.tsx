@@ -3,15 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import { withAtlasView } from '../../utils/atlasView';
-import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 import './DecisionGlance.css';
 
 interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
   /** Opens the Planla view on the day plan, where this score is explained (Faz 2.3). */
   onOpenDetails?: () => void;
@@ -21,6 +23,7 @@ export function DecisionGlance({
   weather,
   hourly,
   airQuality,
+  airQualityHourly,
   forecastMeta,
   onOpenDetails,
 }: Props) {
@@ -38,6 +41,7 @@ export function DecisionGlance({
         getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs,
         airQualityMeta ? getCurrentWeatherFreshness(airQualityMeta, currentTime).expiresInMs : null,
         getForecastFreshness(forecastMeta, currentTime).expiresInMs,
+        getOptionalEvidenceFreshness(airQualityHourly?.meta, currentTime).expiresInMs,
       ].filter((value): value is number => value !== null);
       timeoutId = window.setTimeout(() => refresh(true), Math.max(100, Math.min(...remaining)));
     };
@@ -53,7 +57,7 @@ export function DecisionGlance({
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [weather.meta, forecastMeta, airQualityMeta]);
+  }, [weather.meta, forecastMeta, airQualityMeta, airQualityHourly]);
 
   const evidenceFresh =
     getCurrentWeatherFreshness(weather.meta, now).fresh &&
@@ -64,12 +68,21 @@ export function DecisionGlance({
     ? getCurrentWeatherFreshness(airQuality.meta, now).fresh
     : false;
   const freshAirQuality = airQualityFresh ? airQuality : undefined;
+  const freshAirQualityHourly =
+    airQualityHourly && getOptionalEvidenceFreshness(airQualityHourly.meta, now).fresh
+      ? airQualityHourly
+      : undefined;
   const snapshot = useMemo(
     () =>
       evidenceFresh && hourly.length
-        ? getDecisionSnapshot({ weather, hourly, airQuality: freshAirQuality })
+        ? getDecisionSnapshot({
+            weather,
+            hourly,
+            airQuality: freshAirQuality,
+            ...(freshAirQualityHourly ? { airQualityHourly: freshAirQualityHourly } : {}),
+          })
         : null,
-    [evidenceFresh, weather, hourly, freshAirQuality]
+    [evidenceFresh, weather, hourly, freshAirQuality, freshAirQualityHourly]
   );
   const plan = snapshot?.plan ?? null;
   const cityLocalDate = new Date(now + weather.meta.timezoneOffsetSeconds * 1000);

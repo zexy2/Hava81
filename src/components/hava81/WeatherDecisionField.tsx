@@ -4,6 +4,7 @@ import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
 import type {
   AirQuality,
+  AirQualityHourly,
   DailyForecast,
   ForecastMeta,
   HourlyForecast,
@@ -13,6 +14,7 @@ import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
+import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getNextChange } from '../../domain/decision/nextChange';
 import { formatCityTime } from '../../utils/format';
@@ -25,6 +27,7 @@ export interface WeatherDecisionFieldProps {
   hourly: HourlyForecast[];
   daily?: DailyForecast[];
   airQuality?: AirQuality;
+  airQualityHourly?: AirQualityHourly;
   uvIndexMax?: number;
   forecastMeta?: ForecastMeta | null;
   className?: string;
@@ -35,6 +38,7 @@ export function WeatherDecisionField({
   hourly,
   daily = [],
   airQuality,
+  airQualityHourly,
   uvIndexMax,
   forecastMeta,
   className = '',
@@ -300,9 +304,14 @@ export function WeatherDecisionField({
       const airQualityExpiresInMs = airQuality
         ? getCurrentWeatherFreshness(airQuality.meta, currentTime).expiresInMs
         : null;
-      const evidenceExpiryDelays = [currentExpiresInMs, airQualityExpiresInMs].filter(
-        (value): value is number => value !== null
-      );
+      const hourlyAirQualityExpiresInMs = airQualityHourly
+        ? getOptionalEvidenceFreshness(airQualityHourly.meta, currentTime).expiresInMs
+        : null;
+      const evidenceExpiryDelays = [
+        currentExpiresInMs,
+        airQualityExpiresInMs,
+        hourlyAirQualityExpiresInMs,
+      ].filter((value): value is number => value !== null);
       const nextDelay = Math.min(nextMinuteDelay, ...evidenceExpiryDelays);
       timerId = window.setTimeout(() => scheduleFreshnessRefresh(true), nextDelay);
     };
@@ -319,7 +328,7 @@ export function WeatherDecisionField({
       if (timerId !== undefined) window.clearTimeout(timerId);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [airQuality, weather.meta]);
+  }, [airQuality, airQualityHourly, weather.meta]);
 
   useEffect(() => {
     if (forecastMeta === undefined) return undefined;
@@ -352,6 +361,10 @@ export function WeatherDecisionField({
       weather.temperature < (todayDaily?.tempMin ?? -Infinity) - 0.5);
   const airQualityFreshness = airQuality ? getCurrentWeatherFreshness(airQuality.meta, now) : null;
   const freshAirQuality = airQualityFreshness?.fresh ? airQuality : undefined;
+  const freshAirQualityHourly =
+    airQualityHourly && getOptionalEvidenceFreshness(airQualityHourly.meta, now).fresh
+      ? airQualityHourly
+      : undefined;
   const decisionEvidenceFresh = currentEvidenceFresh && (forecastFreshness?.fresh ?? true);
   const decisions = useMemo(
     () =>
@@ -362,13 +375,18 @@ export function WeatherDecisionField({
             airQuality: freshAirQuality,
             uvIndexMax,
             bestWindowTime: hourly.length
-              ? (getDecisionSnapshot({ weather, hourly, airQuality: freshAirQuality }).bestWindow
+              ? (getDecisionSnapshot({
+                    weather,
+                    hourly,
+                    airQuality: freshAirQuality,
+                    ...(freshAirQualityHourly ? { airQualityHourly: freshAirQualityHourly } : {}),
+                  }).bestWindow
                   ?.peak.time ?? null)
               : undefined,
             now: new Date(now),
           })
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
-    [decisionEvidenceFresh, freshAirQuality, hourly, now, uvIndexMax, weather]
+    [decisionEvidenceFresh, freshAirQuality, freshAirQualityHourly, hourly, now, uvIndexMax, weather]
   );
   const freshnessText =
     ageMinutes === null

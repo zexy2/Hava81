@@ -2142,3 +2142,12 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - PR #1497 was merged as `e5f6f258aec6343074667abb852fb1054225aac1`. Main CI/CD run `40232281096`, CodeQL `40232281108`, and Ops contracts `40232281097` are successful. Direct production smoke after Pages deploy: `/`, `/izmir/`, `/en/`, `/en/istanbul/` all HTTP 200 and embed `e5f6f258...`; API live/ready HTTP 200 on runtime revision `295543ad...`; CORS preflight HTTP 204; Nginx still serves API via port 4002 with 4001 retained as rollback/canary.
 - Current operational constraint: root filesystem is around 92% used and `api_build_headroom_ok=false`; do not run API builds or deployments. This change is frontend-only and does not require an API action.
 - Next: inspect/commit/push this branch, open a narrow PR, and verify exact-head CI/CD, Ops contracts, CodeQL, browser flows, Lighthouse, and mergeability. Continue independent work while hosted checks run.
+
+
+## 2026-10-25 23:06 TRT — Keep hourly AQI evidence consistent across city decisions
+
+- Dedicated branch: automation/hava81-decision-snapshot-evidence-parity-20261025-2255, based on origin/main=295543ad98644d812e3808a2c67c64d769983130.
+- Evidence: DecisionGlance and WeatherDecisionField called the shared decision snapshot with current AQI only, while DailyPlanPanel and DecisionAlertsPanel also received fresh hourly AQI. The same city view could therefore show a headline score/window that did not reflect the hourly air-quality evidence used by the detailed plan.
+- Passed fresh hourly AQI evidence from App into both headline surfaces, filter it with the same freshness contract, and schedule refresh at its expiry so stale hourly air-quality data is removed from the snapshot. Added regression coverage for both fresh evidence and expiry.
+- Local gates passed: npm run lint, npm run type-check, npm run test:ci (113 files / 1,143 tests passed), npm run build (81 TR + 81 EN province pages, 165 CSP HTML pages, service worker stamped), and git diff --check. No API source, provider response, or deployment routing changed.
+- Next: inspect the complete diff, commit/push a narrow PR, verify exact-head CI/CD, Ops contracts, CodeQL, browser and Lighthouse checks, then merge only after fresh host readiness and mergeability checks. Keep PR #1494 and the audit-helper PR #1495 isolated until their exact heads are rechecked.
