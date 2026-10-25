@@ -181,10 +181,17 @@ def extract_boot_asset_paths(html: Any) -> list[str]:
     return sorted(assets)
 
 
-def collect_boot_assets(root: dict[str, Any], city: dict[str, Any] | None = None) -> dict[str, Any]:
+def collect_boot_assets(
+    root: dict[str, Any],
+    city: dict[str, Any] | None = None,
+    english_city: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     root_paths = extract_boot_asset_paths(root.get('text'))
     city_paths = extract_boot_asset_paths(city.get('text')) if city is not None else root_paths
-    paths = sorted(set(root_paths) | set(city_paths))
+    english_city_paths = (
+        extract_boot_asset_paths(english_city.get('text')) if english_city is not None else []
+    )
+    paths = sorted(set(root_paths) | set(city_paths) | set(english_city_paths))
     failed: list[dict[str, Any]] = []
     transient_retries_remaining = BOOT_ASSET_TRANSIENT_RETRY_LIMIT
     for path in paths[:32]:
@@ -195,10 +202,17 @@ def collect_boot_assets(root: dict[str, Any], city: dict[str, Any] | None = None
         if result.get('status') != 200:
             failed.append({'path': path, **slim_http(result)})
     return {
-        'ok': bool(root_paths) and bool(city_paths) and not failed and len(paths) <= 32,
+        'ok': (
+            bool(root_paths)
+            and bool(city_paths)
+            and (english_city is None or bool(english_city_paths))
+            and not failed
+            and len(paths) <= 32
+        ),
         'count': len(paths),
         'root_count': len(root_paths),
         'city_count': len(city_paths),
+        'english_city_count': len(english_city_paths),
         'failed': failed,
         'truncated': len(paths) > 32,
     }
@@ -219,18 +233,22 @@ def timestamp_age_seconds(value: Any) -> float | None:
 def collect_production() -> dict[str, Any]:
     root = http_get('https://hava81.zekiakgul.dev/')
     city = http_get('https://hava81.zekiakgul.dev/istanbul/')
+    english_city = http_get('https://hava81.zekiakgul.dev/en/istanbul/')
     ready = http_get(
         'https://api.hava81.zekiakgul.dev/api/v1/health/ready',
         headers={'Origin': 'https://hava81.zekiakgul.dev'},
     )
-    boot_assets = collect_boot_assets(root, city)
+    boot_assets = collect_boot_assets(root, city, english_city)
     root_revision = extract_build_revision(root.get('text'))
     city_revision = extract_build_revision(city.get('text'))
+    english_city_revision = extract_build_revision(english_city.get('text'))
+    revisions = (root_revision, city_revision, english_city_revision)
     frontend_revision = {
-        'known': root_revision is not None and city_revision is not None,
-        'consistent': root_revision is not None and root_revision == city_revision,
+        'known': all(revision is not None for revision in revisions),
+        'consistent': all(revision is not None for revision in revisions) and len(set(revisions)) == 1,
         'root': root_revision,
         'city': city_revision,
+        'english_city': english_city_revision,
     }
     ready_json = ready.get('json') if isinstance(ready.get('json'), dict) else {}
     ready_headers = ready.get('headers') or {}
@@ -243,6 +261,9 @@ def collect_production() -> dict[str, Any]:
     checks = {
         'root_200': root.get('status') == 200,
         'istanbul_200': city.get('status') == 200,
+        'english_istanbul_200': english_city.get('status') == 200,
+        'frontend_revision_known': frontend_revision['known'],
+        'frontend_revision_consistent': frontend_revision['consistent'],
         'boot_assets_200': boot_assets.get('ok') is True,
         'api_ready_200': ready.get('status') == 200,
         'api_reports_ready': ready_json.get('status') == 'ready',
@@ -262,6 +283,7 @@ def collect_production() -> dict[str, Any]:
         'checks': checks,
         'root': slim_http(root),
         'istanbul': slim_http(city),
+        'english_istanbul': slim_http(english_city),
         'boot_assets': boot_assets,
         'frontend_revision': frontend_revision,
         'api_ready': {
@@ -1066,7 +1088,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'main_pipeline': github.get('main_pipeline'),
         'frontend_revision': {
             key: (production.get('frontend_revision') or {}).get(key)
-            for key in ('root', 'city', 'known', 'consistent', 'main_revision', 'matches_main', 'pending')
+            for key in ('root', 'city', 'english_city', 'known', 'consistent', 'main_revision', 'matches_main', 'pending')
         },
         'api_deployment': {
             key: (github.get('api_deployment') or {}).get(key)

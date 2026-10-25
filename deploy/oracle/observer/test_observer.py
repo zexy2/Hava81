@@ -118,6 +118,125 @@ class ObserverFreshnessTests(unittest.TestCase):
         self.assertEqual(production['cors']['allow_origin'], '*')
         self.assertIn('cors_ok', production['issues'])
 
+    def test_collect_production_checks_english_shell_and_revision_parity(self) -> None:
+        original_http_get = observer.http_get
+        original_nginx_target = observer.nginx_target
+        revision = 'a' * 40
+        html = (
+            f'<meta name="hava81-build-revision" content="{revision}">'
+            '<script type="module" src="/assets/main.js"></script>'
+        )
+        requested_urls: list[str] = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if '/health/ready' in url:
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'elapsed_ms': 1,
+                    'headers': {
+                        'access-control-allow-origin': 'https://hava81.zekiakgul.dev',
+                        'cache-control': 'no-store',
+                    },
+                    'json': {
+                        'status': 'ready',
+                        'timestamp': observer.now_iso(),
+                        'provider': {'name': 'OpenWeather', 'state': 'closed'},
+                    },
+                    'error': None,
+                }
+            return {
+                'ok': True,
+                'status': 200,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': html,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.nginx_target = lambda: {
+                'port': 4002, 'expected': 4002, 'preferred': 4002,
+                'preferred_ok': True, 'ok': True, 'error': None,
+            }
+            production = observer.collect_production()
+        finally:
+            observer.http_get = original_http_get
+            observer.nginx_target = original_nginx_target
+
+        self.assertIn('https://hava81.zekiakgul.dev/en/istanbul/', requested_urls)
+        self.assertTrue(production['healthy'])
+        self.assertTrue(production['checks']['english_istanbul_200'])
+        self.assertTrue(production['checks']['frontend_revision_known'])
+        self.assertTrue(production['checks']['frontend_revision_consistent'])
+        self.assertEqual(production['frontend_revision']['english_city'], revision)
+        self.assertEqual(production['boot_assets']['english_city_count'], 1)
+
+    def test_english_shell_revision_mismatch_fails_closed(self) -> None:
+        original_http_get = observer.http_get
+        original_nginx_target = observer.nginx_target
+        revisions = {
+            'https://hava81.zekiakgul.dev/': 'a' * 40,
+            'https://hava81.zekiakgul.dev/istanbul/': 'a' * 40,
+            'https://hava81.zekiakgul.dev/en/istanbul/': 'b' * 40,
+        }
+        requested_urls: list[str] = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if '/health/ready' in url:
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'elapsed_ms': 1,
+                    'headers': {
+                        'access-control-allow-origin': 'https://hava81.zekiakgul.dev',
+                        'cache-control': 'no-store',
+                    },
+                    'json': {
+                        'status': 'ready',
+                        'timestamp': observer.now_iso(),
+                        'provider': {'name': 'OpenWeather', 'state': 'closed'},
+                    },
+                    'error': None,
+                }
+            revision = revisions.get(url)
+            if revision is None and '/assets/' in url:
+                return {
+                    'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {},
+                    'json': None, 'text': None, 'error': None,
+                }
+            html = (
+                f'<meta name="hava81-build-revision" content="{revision}">'
+                '<script type="module" src="/assets/main.js"></script>'
+            )
+            return {
+                'ok': True, 'status': 200, 'elapsed_ms': 1, 'headers': {},
+                'json': None, 'text': html, 'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.nginx_target = lambda: {
+                'port': 4002, 'expected': 4002, 'preferred': 4002,
+                'preferred_ok': True, 'ok': True, 'error': None,
+            }
+            production = observer.collect_production()
+        finally:
+            observer.http_get = original_http_get
+            observer.nginx_target = original_nginx_target
+
+        self.assertFalse(production['healthy'])
+        self.assertFalse(production['checks']['frontend_revision_consistent'])
+        self.assertIn('frontend_revision_consistent', production['issues'])
+        self.assertNotEqual(
+            production['frontend_revision']['city'],
+            production['frontend_revision']['english_city'],
+        )
+
     def test_material_future_readiness_timestamp_marks_production_unhealthy(self) -> None:
         original_http_get = observer.http_get
         original_nginx_target = observer.nginx_target
@@ -299,6 +418,38 @@ class ObserverBootAssetTests(unittest.TestCase):
         self.assertFalse(result['ok'])
         self.assertEqual(sum(attempts.values()), 6)
         self.assertEqual(attempts['https://hava81.zekiakgul.dev/assets/missing.js'], 1)
+
+    def test_english_city_shell_boot_asset_is_verified(self) -> None:
+        original_http_get = observer.http_get
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            status = 404 if url.endswith('/assets/en-city-missing.js') else 200
+            return {
+                'ok': status == 200,
+                'status': status,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': None,
+                'error': None if status == 200 else 'HTTP 404',
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.collect_boot_assets(
+                {'text': '<script src="/assets/index.js"></script>'},
+                {'text': '<script src="/assets/city.js"></script>'},
+                {'text': '<script src="/assets/en-city-missing.js"></script>'},
+            )
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['english_city_count'], 1)
+        self.assertEqual(
+            [failure['path'] for failure in result['failed']],
+            ['/assets/en-city-missing.js'],
+        )
 
     def test_city_shell_boot_asset_is_verified(self) -> None:
         original_http_get = observer.http_get
@@ -1622,7 +1773,7 @@ class ObserverStateSignatureTests(unittest.TestCase):
             'production': {
                 'healthy': True, 'issues': [], 'nginx': {'port': 4001},
                 'frontend_revision': {
-                    'root': 'a' * 40, 'city': 'a' * 40, 'known': True, 'consistent': True,
+                    'root': 'a' * 40, 'city': 'a' * 40, 'english_city': 'a' * 40, 'known': True, 'consistent': True,
                     'main_revision': 'b' * 40, 'matches_main': False, 'pending': True,
                 },
             },
@@ -1633,8 +1784,39 @@ class ObserverStateSignatureTests(unittest.TestCase):
             'production': {
                 **base['production'],
                 'frontend_revision': {
-                    'root': 'b' * 40, 'city': 'b' * 40, 'known': True, 'consistent': True,
+                    'root': 'b' * 40, 'city': 'b' * 40, 'english_city': 'b' * 40, 'known': True, 'consistent': True,
                     'main_revision': 'b' * 40, 'matches_main': True, 'pending': False,
+                },
+            },
+        }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
+
+    def test_english_shell_revision_alone_changes_the_state_signature(self) -> None:
+        base = {
+            'github': {'open_automation_prs': []},
+            'production': {
+                'healthy': True,
+                'issues': [],
+                'frontend_revision': {
+                    'root': 'a' * 40,
+                    'city': 'a' * 40,
+                    'english_city': 'a' * 40,
+                    'known': True,
+                    'consistent': True,
+                    'main_revision': 'a' * 40,
+                    'matches_main': True,
+                    'pending': False,
+                },
+            },
+            'host': {'disk': {'ok': True}},
+        }
+        changed = {
+            **base,
+            'production': {
+                **base['production'],
+                'frontend_revision': {
+                    **base['production']['frontend_revision'],
+                    'english_city': 'b' * 40,
                 },
             },
         }

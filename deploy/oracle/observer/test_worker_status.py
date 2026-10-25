@@ -21,6 +21,8 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn('snapshot_freshness:', status_script)
         self.assertIn('MAX_STATE_AGE_SECONDS = 10 * 60', status_script)
         self.assertIn("freshness['reason']", status_script)
+        self.assertIn("frontend_revision.get('english_city')", status_script)
+        self.assertIn("boot_assets.get('english_city_count')", status_script)
 
     def test_main_prints_snapshot_age_and_freshness(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

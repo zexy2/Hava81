@@ -535,3 +535,9 @@ The generated shell-cache namespace must change when `public/sw.js` behavior cha
 - The five-minute observer writes `collected_at`, but the compact status command previously printed only the timestamp. Add a directly testable freshness classification and age so an old snapshot cannot look current just because its production fields say healthy.
 - Treat snapshots older than ten minutes (two expected collection intervals) or more than 60 seconds in the future as not fresh. Missing or malformed timestamps are unknown/not fresh. Keep this informational: it must not mutate observer state, alter merge/deploy gates, or imply that a fresh snapshot alone authorizes a production operation.
 - Preserve the existing status fields and installer flow. Validate stale, future, invalid and recent timestamps through the same status helper used by the deployed script.
+
+## 2026-10-25 07:56 TRT — Verify the English city shell in production observer parity
+
+- The production observer checked only `/` and `/istanbul/`; a stale or broken `/en/istanbul/` static shell could therefore escape its revision and boot-asset checks even though the English route is a first-class production entry point. Fetch the English city shell as well and include its referenced assets in the same bounded verification.
+- Treat a missing build-revision marker or any mismatch among root, Turkish city and English city as production unhealthy. Keep a consistent revision that is merely behind the current `main` SHA classified as deploy-pending, not as a shell-integrity failure.
+- This is a read-only observer contract change. It does not deploy the observer, change API behavior, modify weather data, or switch traffic; Oracle observer installation remains blocked while the enrolled host is offline.
