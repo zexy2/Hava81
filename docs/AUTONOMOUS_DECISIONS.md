@@ -613,3 +613,11 @@ Service-worker runtime caching is an optimization, not a prerequisite for loadin
 
 - The read-only worker status reports root usage at 92.4%, about 7.3 GiB free, and `api_build_headroom_ok=false` with roughly 0.91 GiB additional free space required. This is an operational host warning, not a production incident: frontend and API readiness/CORS checks are healthy.
 - Do not run a local API build, switch ports, or deploy/rollback the API while this gate is false. If cleanup is needed, restrict it to measured regenerable package-manager caches or explicitly reclaimable private build cache older than 24 hours. Never prune images, containers, volumes, shared browser binaries, or unrelated worktrees.
+
+## 2026-10-25 — Defer below-fold hourly chart work until it approaches the viewport
+
+On narrow mobile layouts, the hourly forecast atlas can be below the first viewport while its lazy component still mounts immediately and starts downloading its JavaScript/CSS. Keep the chart split into its own chunk, but mount it only when its reserved placeholder enters a 120px vertical proximity window or the placeholder is interacted with. Desktop layouts should still load promptly because a visible side-by-side chart intersects immediately. If `IntersectionObserver` is unavailable, fail open and show the forecast rather than leaving it permanently deferred. Keep the placeholder accessible and reserve the forecast slot; do not defer forecast data fetching, change provider/freshness semantics, or synthesize weather values.
+
+## 2026-10-25 — E2E chart assertions must activate the intentionally deferred forecast
+
+The mobile forecast atlas is intentionally not mounted until its reserved placeholder approaches the viewport. E2E tests that inspect interval controls, source links, hourly summaries, or chart accessibility must first wait for the localized deferred-placeholder state, approach it, and wait for the atlas to mount. Use a shared helper that handles the placeholder being detached by `IntersectionObserver` during the scroll; do not add fixed sleeps or weaken the chart assertions. Keep the first-viewport regression separate and explicitly verify that the chart chunk is absent before scroll and present after activation. This is test synchronization only; do not change forecast data, freshness, scoring, provider attribution, or safety guidance.

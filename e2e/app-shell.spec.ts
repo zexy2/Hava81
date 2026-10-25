@@ -1,4 +1,5 @@
 import { DESKTOP, MOBILE, expect, test } from './helpers/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import { expectReadable, setTextScale, setWidth } from './helpers/layout';
 import { fixtures, overrideApi, seedSettings } from './helpers/weather-fixtures';
 
@@ -10,6 +11,7 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page).toHaveURL(/\/istanbul\/$/);
   await expect(page.getByText(/OpenWeather/)).toBeVisible();
+  await ensureForecastAtlasLoaded(page);
   const hourlySection = page.getByRole('region', { name: /Saatlik tahmin · sonraki 24 saat/i });
   await expect(
     page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })

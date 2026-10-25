@@ -1,3 +1,5 @@
+import type { Ref } from 'react';
+
 /** Loading skeletons for the app shell (first load and the lazy forecast card). */
 
 export const AtlasLoadingState = ({
@@ -29,11 +31,24 @@ export const AtlasLoadingState = ({
 
 // Keep the forecast column visible both while the API responds and while
 // the split ForecastAtlas bundle is being downloaded on a cold connection.
-export const ForecastLoadingCard = ({ title, label }: { title: string; label: string }) => (
+export const ForecastLoadingCard = ({
+  title,
+  label,
+  anchorRef,
+  onActivate,
+}: {
+  title: string;
+  label: string;
+  anchorRef?: Ref<HTMLElement>;
+  onActivate?: () => void;
+}) => (
   <section
+    ref={anchorRef}
     className="atlas-forecast-loading atlas-forecast-loading--card"
     role="status"
     aria-live="polite"
+    onPointerDown={onActivate}
+    onFocusCapture={onActivate}
   >
     <h2 className="atlas-forecast-loading__title">{title}</h2>
     <span className="sr-only">{label}</span>

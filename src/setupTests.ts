@@ -30,16 +30,27 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock IntersectionObserver
-class IntersectionObserver {
-  observe = vi.fn();
+// Most component tests render the target in the visible test viewport. Dedicated
+// deferred-mount tests replace this with a controllable observer to verify the
+// before/after-intersection behavior explicitly.
+class TestIntersectionObserver {
+  constructor(private readonly callback: IntersectionObserverCallback) {}
+
+  observe = vi.fn((target: Element) => {
+    this.callback(
+      [{ isIntersecting: true, target } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    );
+  });
   disconnect = vi.fn();
   unobserve = vi.fn();
+  takeRecords = vi.fn(() => []);
 }
 
 Object.defineProperty(window, 'IntersectionObserver', {
+  configurable: true,
   writable: true,
-  value: IntersectionObserver,
+  value: TestIntersectionObserver,
 });
 
 // Mock ResizeObserver

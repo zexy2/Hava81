@@ -1,4 +1,5 @@
 import { DESKTOP, MOBILE, TABLET, expect, test } from './helpers/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import {
   expectSelectedStateDistinct,
   expectVisibleFocusRing,
@@ -11,6 +12,7 @@ import { TWO_FAVORITES, seedFavorites } from './helpers/weather-fixtures';
 test.describe('target size', () => {
   test('mobile interactive controls are at least 44px', MOBILE, async ({ page }) => {
     await page.goto('/istanbul');
+    await ensureForecastAtlasLoaded(page);
     await expect(
       page.locator('.hava81-forecast-atlas__source').getByRole('link', { name: 'Open-Meteo' })
     ).toBeVisible();
@@ -30,6 +32,7 @@ test.describe('target size', () => {
     TABLET,
     async ({ page }) => {
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       await expect(page.locator('.hava81-forecast-atlas__source').getByRole('link')).toHaveCount(2);
       expect(await findUndersizedTargets(page.locator('.hava81-forecast-atlas__source'))).toEqual(
         []
@@ -136,6 +139,7 @@ test.describe('forced colors', () => {
   test('selected and pressed states stay distinguishable on mobile', MOBILE, async ({ page }) => {
     await page.emulateMedia({ forcedColors: 'active' });
     await page.goto('/istanbul');
+    await ensureForecastAtlasLoaded(page);
 
     await expectSelectedStateDistinct(
       page.locator('.hava81-forecast-atlas__range-button[aria-pressed="true"]'),
@@ -230,6 +234,7 @@ test.describe('keyboard focus', () => {
     MOBILE,
     async ({ page }) => {
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       for (const control of [
         page.locator('.hava81-forecast-atlas__range-button').first(),
         page.locator('.environment-rail__module--action'),

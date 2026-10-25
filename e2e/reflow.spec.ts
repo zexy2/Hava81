@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { DESKTOP, expect, test } from './helpers/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import {
   expectNoHorizontalScroll,
   expectNoOverlap,
@@ -124,6 +125,7 @@ test.describe('200% text reflow', () => {
         }
         await setWidth(page, widths[0], 900);
         await page.goto(plan ? '/istanbul/?view=plan' : '/istanbul');
+        if (region.startsWith('.hava81-forecast-atlas')) await ensureForecastAtlasLoaded(page);
         await expect(
           page.locator(plan ? '.atlas-plan-view__header h1' : '.hava81-decision-field__city')
         ).toBeVisible();

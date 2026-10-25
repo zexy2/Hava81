@@ -1,4 +1,5 @@
 import { DESKTOP, MOBILE, expect, test } from './helpers/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import {
   expectBeforeInDom,
   expectContainedIn,
@@ -67,6 +68,7 @@ test.describe('forecast errors', () => {
 test.describe('hourly atlas', () => {
   test('hourly interval controls resample the same 24-hour forecast', DESKTOP, async ({ page }) => {
     await page.goto('/istanbul');
+    await ensureForecastAtlasLoaded(page);
 
     const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
     await expect(page.getByText(/24 saatlik tahmin sabit kalır/i)).toBeVisible();
@@ -126,6 +128,7 @@ test.describe('hourly atlas', () => {
       await overrideApiJson(page, 'hourly', { error: { code: 'HOURLY_PROVIDER_ERROR' } }, 503);
 
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       await expect(page.getByRole('heading', { name: /3 saat aralıklarla tahmin/i })).toBeVisible();
       await page.getByRole('button', { name: /Planla’yı aç/ }).click();
       await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
@@ -137,6 +140,7 @@ test.describe('hourly atlas', () => {
     DESKTOP,
     async ({ page }) => {
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       await expect(page.getByRole('heading', { name: 'Bugünün ritmi' })).toBeVisible();
       await expect(
         page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })
@@ -149,11 +153,40 @@ test.describe('hourly atlas', () => {
   );
 
   test(
+    'mobile first viewport defers the hourly chart chunk until its section nears the viewport',
+    MOBILE,
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 480 });
+      const chartChunkRequests: string[] = [];
+      page.on('request', request => {
+        const pathname = new URL(request.url()).pathname;
+        if (/\/ForecastAtlas-[^/]+\.js$/.test(pathname)) chartChunkRequests.push(pathname);
+      });
+
+      await page.goto('/istanbul/');
+      const deferred = page.locator('.atlas-forecast-loading--card');
+      await expect(deferred).toContainText(
+        'Saatlik tahmin, bu bölüm ekrana yaklaştığında yüklenir.'
+      );
+      await expect(deferred).not.toBeInViewport();
+      await expect(page.locator('.hava81-forecast-atlas')).toHaveCount(0);
+      expect(chartChunkRequests).toHaveLength(0);
+
+      await deferred.scrollIntoViewIfNeeded();
+      await expect(
+        page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })
+      ).toBeVisible();
+      await expect.poll(() => chartChunkRequests.length).toBeGreaterThan(0);
+    }
+  );
+
+  test(
     'narrow hourly atlas keeps every interval, its summary and a sticky axis usable',
     MOBILE,
     async ({ page }) => {
       await setWidth(page, 320, 720);
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
 
       const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
       // Guidance is available to assistive technology without a long visible paragraph.
@@ -229,6 +262,7 @@ test.describe('hourly atlas', () => {
     MOBILE,
     async ({ page }) => {
       await page.goto('/izmir/');
+      await ensureForecastAtlasLoaded(page);
       const chart = page.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
       await expect(chart).toBeVisible();
       const navigation = page.getByRole('group', { name: 'Saatlik tahminde gezin' });
@@ -259,6 +293,7 @@ test.describe('hourly atlas', () => {
     DESKTOP,
     async ({ page }) => {
       await page.goto('/izmir/');
+      await ensureForecastAtlasLoaded(page);
       const viewport = page.locator('.hava81-forecast-atlas__hourly-viewport');
       await expect(viewport).toBeVisible();
       const navigation = page.locator('.hava81-forecast-atlas__scroll-navigation');
@@ -286,6 +321,7 @@ test.describe('hourly atlas', () => {
     async ({ page }) => {
       await seedSettings(page, { language: 'en' });
       await page.goto('/istanbul/');
+      await ensureForecastAtlasLoaded(page);
       const forecast = page.locator('.hava81-forecast-atlas');
       await expect(forecast).toBeVisible();
       const times = forecast.locator('.hava81-forecast-atlas__hour time > span:last-child');
@@ -322,6 +358,7 @@ test.describe('hourly atlas', () => {
       await seedSettings(page, { language: 'en', themeMode: 'dark' });
       await setWidth(page, 320, 720);
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       const summary = page.getByRole('list', { name: 'Hourly forecast summary' });
       const rainItem = summary.getByRole('listitem').filter({ hasText: 'Rain peak' });
       await expect(rainItem).toContainText('45% · 0.2 mm');
@@ -348,6 +385,7 @@ test.describe('five-day forecast', () => {
       }));
       await overrideDaily(page, fiveDays);
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       const days = page.locator('.hava81-forecast-atlas__days');
       await expect(days).toBeVisible();
       await expect(days).toHaveAttribute('tabindex', '0');
@@ -386,6 +424,7 @@ test.describe('five-day forecast', () => {
         },
       ]);
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       await setTextScale(page, 200);
       const days = page.locator('.hava81-forecast-atlas__day');
       await expect(days).toHaveCount(2);
@@ -420,6 +459,7 @@ test.describe('five-day forecast', () => {
         },
       ]);
       await page.goto('/istanbul');
+      await ensureForecastAtlasLoaded(page);
       const days = page.locator('.hava81-forecast-atlas__days');
       await expect(page.locator('.hava81-forecast-atlas__description')).toHaveCount(2);
       await expect(page.getByText('gök gürültülü fırtına')).toBeVisible();
