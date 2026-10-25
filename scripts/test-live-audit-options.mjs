@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -82,4 +83,17 @@ test('release gate rejects another province weather even when it contains valid 
   assert.equal(cityCenterDistanceKm('unknown', izmir), Number.POSITIVE_INFINITY);
   assert.equal(cityCenterDistanceKm('izmir', { lat: NaN, lon: izmir.lon }), Number.POSITIVE_INFINITY);
   assert.equal(cityCenterDistanceKm('izmir', { lat: 91, lon: 0 }), Number.POSITIVE_INFINITY);
+});
+
+test('live audit activates the deferred forecast before measuring first-viewport geometry', () => {
+  const source = readFileSync(auditScript, 'utf8');
+  const activate = source.indexOf("element => element.scrollIntoView({ block: 'center', behavior: 'auto' })");
+  const settled = source.indexOf("await forecastContent.waitFor({ state: 'visible', timeout: 15_000 });", activate);
+  const restoreTop = source.indexOf("window.scrollTo({ top: 0, behavior: 'auto' })", settled);
+  const measure = source.indexOf('item.metrics = await page.evaluate', restoreTop);
+
+  assert.ok(activate >= 0, 'the deferred forecast placeholder must be approached to trigger lazy loading');
+  assert.ok(settled > activate, 'the audit must wait for the chart or its error state after activation');
+  assert.ok(restoreTop > settled, 'the audit must restore the top position after the chart settles');
+  assert.ok(measure > restoreTop, 'first-viewport geometry must be measured only after restoring the top position');
 });

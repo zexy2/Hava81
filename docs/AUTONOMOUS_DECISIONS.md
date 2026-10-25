@@ -632,3 +632,8 @@ The mobile forecast atlas is intentionally not mounted until its reserved placeh
 ## 2026-10-25 — Reject impossible provider model timestamps before parsing
 
 JavaScript `Date.parse` can normalize impossible calendar dates such as February 30 into a different valid day instead of rejecting the source timestamp. For Open-Meteo model timelines, validate the exact date/time syntax, Gregorian calendar fields, clock ranges, and explicit UTC-offset bounds before converting a timestamp to an epoch. Malformed hourly timelines must fail closed rather than silently understate maxima; malformed marine `current.time` must omit only marine evidence while retaining independently valid UV, dust, and pollen context. Keep timezone-less Open-Meteo GMT strings interpreted as UTC and preserve explicit-offset semantics. Do not infer or synthesize replacement weather values.
+
+
+## 2026-10-25 — Activate the deferred forecast in the live responsive audit
+
+The hourly forecast atlas is intentionally unmounted on mobile until its reserved placeholder enters the 120px `IntersectionObserver` activation margin. A manual live responsive audit must detect the localized deferred placeholder, approach it to trigger lazy loading, wait for the atlas or a visible error state, and then restore the page to scroll position zero before measuring first-viewport geometry or taking screenshots. This prevents a correct deferred-loading state from being misclassified as a responsive failure without biasing the first-viewport measurements. Keep the audit read-only and response-cache-bounded; do not change the chart's loading behavior, weather data, or provider semantics.
