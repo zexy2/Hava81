@@ -662,6 +662,7 @@ export const en = {
     sunrise: 'Sunrise',
     sunset: 'Sunset',
     dayLength: 'Day Length',
+    stale: 'Sunrise and sunset times are outdated',
     hours: 'h',
     minutes: 'm',
   },

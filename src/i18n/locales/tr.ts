@@ -665,6 +665,7 @@ export const tr = {
     sunrise: 'Doğuş',
     sunset: 'Batış',
     dayLength: 'Gün Uzunluğu',
+    stale: 'Gün doğuşu ve batış bilgisi güncel değil',
     hours: 's',
     minutes: 'dk',
   },

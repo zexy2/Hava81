@@ -541,3 +541,9 @@ The generated shell-cache namespace must change when `public/sw.js` behavior cha
 - The production observer checked only `/` and `/istanbul/`; a stale or broken `/en/istanbul/` static shell could therefore escape its revision and boot-asset checks even though the English route is a first-class production entry point. Fetch the English city shell as well and include its referenced assets in the same bounded verification.
 - Treat a missing build-revision marker or any mismatch among root, Turkish city and English city as production unhealthy. Keep a consistent revision that is merely behind the current `main` SHA classified as deploy-pending, not as a shell-integrity failure.
 - This is a read-only observer contract change. It does not deploy the observer, change API behavior, modify weather data, or switch traffic; Oracle observer installation remains blocked while the enrolled host is offline.
+
+## 2026-10-25 — Sunrise and sunset values are scoped to the location's current day
+
+- A fetched weather object can remain in memory after its sunrise/sunset timestamps belong to yesterday. Do not keep presenting those timestamps or the derived day length as today's values merely because the current-weather cache TTL has not expired.
+- Validate both instants against the current calendar date in the weather location's timezone and require sunset to follow sunrise. If valid timestamps no longer match the local day, hide both times and the derived day length, and announce a localized stale-daylight status. Missing/invalid timestamps remain “no data”; do not calculate or invent replacement sun times.
+- Schedule a lightweight re-evaluation at the next location-local midnight even when the weather sample remains otherwise fresh, and keep the existing freshness-expiry/visibility refresh behavior. This is presentation freshness only; do not alter provider timestamps, forecast values, scoring, alerts or API behavior.
