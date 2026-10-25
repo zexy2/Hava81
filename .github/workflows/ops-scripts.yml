@@ -81,6 +81,8 @@ jobs:
           PY
       - name: Verify observer installer shell syntax
         run: bash -n deploy/oracle/install-observer.sh
+      - name: Verify observer installer lock migration
+        run: bash scripts/test-observer-installer-lock.sh
 
   deploy-scripts:
     name: Deploy script contracts
