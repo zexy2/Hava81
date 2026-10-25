@@ -1,4 +1,4 @@
-const DEFAULT_PATH = '/index.html';
+const DEFAULT_PATH = '/';
 
 /** Resolve an operator-selected Lighthouse path without permitting off-preview URLs. */
 export function resolveLighthouseTargetUrl(requestedPath, origin) {
