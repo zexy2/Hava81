@@ -29,4 +29,13 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
+  {
+    // The live audit runs in Node but also evaluates browser-side callbacks in Playwright.
+    files: ['scripts/audit-live-responsive.mjs', 'scripts/test-live-audit-options.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
 );
