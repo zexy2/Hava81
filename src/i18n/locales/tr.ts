@@ -218,7 +218,7 @@ export const tr = {
       rainBandLabel: 'Yağış',
       visibleWindow: '{{from}} – {{to}} görünüyor',
       nowLabel: 'Şimdi',
-      hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} saat',
+      hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} {{unit}}',
       hourUnitSingular: 'saat',
       hourUnitPlural: 'saat',
       intervalOption: 'Her {{hours}} saatte bir göster',
