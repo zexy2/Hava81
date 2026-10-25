@@ -73,14 +73,11 @@ export function HourlyForecastSection({
     intervalHours === 1
       ? t('hava81.forecastAtlas.hourlyForecastNext', {
           hours: realHourlyHorizon,
-          unit:
-            settings.language === 'en'
-              ? t(
-                  realHourlyHorizon === 1
-                    ? 'hava81.forecastAtlas.hourUnitSingular'
-                    : 'hava81.forecastAtlas.hourUnitPlural'
-                )
-              : '',
+          unit: t(
+            settings.language === 'en' && realHourlyHorizon === 1
+              ? 'hava81.forecastAtlas.hourUnitSingular'
+              : 'hava81.forecastAtlas.hourUnitPlural'
+          ),
         })
       : t('hava81.forecastAtlas.intervalForecast', { hours: intervalHours });
 

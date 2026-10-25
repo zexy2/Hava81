@@ -646,3 +646,8 @@ The live responsive audit is a Node entrypoint whose Playwright `page.evaluate` 
 
 - Keep the analyzer ephemeral rather than adding an old visualization dependency to the application. Pin source-map-explorer 2.5.3 in the script, request gzip-aware TSV output under ignored dist/, and omit only the generated rolldown-runtime chunk that has no source map.
 - Current Rolldown maps can report an out-of-range terminal mapping column; use source-map-explorer's documented no-border-checks option for attribution, and keep the report explicitly diagnostic rather than treating module byte attribution as a release budget. Re-run the script on each measured build instead of committing generated reports.
+
+## 2026-10-25 — Keep locale resources eager until async loading proves faster
+
+- Bundle attribution measured each complete locale catalog at roughly 9–10 KB gzip and found exact 549-key parity. Loading only one locale could save that amount on first load, but would introduce a separate asynchronous locale request and delay translated first render unless preloaded per effective language. Do not add that waterfall based only on the unused-JavaScript estimate; require a measured net improvement on real production/Lighthouse before changing initialization.
+- Enforce the stable localization contract instead: both catalogs must expose identical leaf keys and interpolation placeholders. The former hourlyForecastNext placeholder difference was only grammatical (Turkish already said “saat”); pass the localized unit explicitly so the shared contract remains consistent without changing visible copy.
