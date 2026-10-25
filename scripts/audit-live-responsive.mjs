@@ -107,12 +107,33 @@ try {
           await page.locator('.decision-glance__score').waitFor({ timeout: 20_000 });
           await page.locator('.hava81-decision-field__city').waitFor({ timeout: 15_000 });
           await page.evaluate(value => { document.documentElement.style.fontSize = `${value}%`; }, zoom);
-          // The city header and hero can finish before the forecast API and
-          // lazily imported chart. Measure and screenshot the finished content,
-          // not an empty column or transient skeleton. A real error card also
-          // settles the UI, but must be reported rather than counted as pass.
-          await page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card').first()
+          // The mobile forecast atlas is intentionally deferred until its reserved
+          // slot approaches the viewport. Activate that slot before waiting for the
+          // finished chart, then restore the top-of-page position before measuring
+          // first-viewport geometry or capturing a screenshot.
+          const forecastContent = page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card').first();
+          const deferredForecast = page.locator('.atlas-forecast-loading--card')
+            .filter({ hasText: /Saatlik tahmin, bu bölüm ekrana yaklaştığında yüklenir\.|Hourly forecast loads as you approach this section\./i })
+            .first();
+          await page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card, .atlas-forecast-loading--card').first()
             .waitFor({ state: 'visible', timeout: 15_000 });
+          if (!(await forecastContent.count()) && await deferredForecast.isVisible().catch(() => false)) {
+            try {
+              await deferredForecast.evaluate(
+                element => element.scrollIntoView({ block: 'center', behavior: 'auto' }),
+                undefined,
+                { timeout: 1_000 },
+              );
+            } catch (error) {
+              // IntersectionObserver may replace the placeholder between the
+              // visibility check and scroll. Continue only when it was actually
+              // detached/replaced; otherwise preserve the actionable error.
+              if (await deferredForecast.isVisible().catch(() => false)) throw error;
+            }
+          }
+          await forecastContent.waitFor({ state: 'visible', timeout: 15_000 });
+          await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+          await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
           item.metrics = await page.evaluate(() => {
             const element = selector => document.querySelector(selector);
             const bounds = selector => element(selector)?.getBoundingClientRect() || null;
