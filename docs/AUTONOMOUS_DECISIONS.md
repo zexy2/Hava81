@@ -485,3 +485,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - A failed browser request may have no HTTP response event, so the live responsive audit should also observe `requestfailed` for core `/api/v1/weather/` routes. Record non-cancellation failures in the same per-case diagnostics, strip query strings, and ignore `ERR_ABORTED`/cancelled requests caused by expected navigation or page teardown; otherwise a test harness cleanup could masquerade as an upstream outage.
 - Keep this diagnostic path read-only and bounded to core weather endpoints. Do not treat unrelated optional API failures as current-weather failures, retry provider requests aggressively, or convert network errors into fabricated weather values.
+
+## 2026-10-25 03:22 TRT — Explain expired AQI separately from unavailable AQI
+
+- `EnvironmentRail` already removes AQI values and PM2.5 details when provider TTL or source-observation age expires, but the detail line then said only “No data.” Keep the numeric sample hidden, but distinguish a previously received sample that is now stale from data that was never available or whose freshness is unknown.
+- Reuse the existing localized stale-current-observation copy and expose the changed state with `role="status"` so the transition is announced without adding a new health interpretation or provider claim.
+- This is presentation/accessibility only. Do not change AQI values/categories, source timestamps, freshness thresholds, scoring, API contracts, or weather guidance.
