@@ -151,7 +151,7 @@ describe('WeatherMap', () => {
 
   it('keeps an honest tile status: loading, loaded, failed on both providers, retry', () => {
     renderMap();
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
     act(() => leaflet.tileHandlers.load());
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
@@ -160,6 +160,7 @@ describe('WeatherMap', () => {
     expect(screen.getByTestId('tiles').getAttribute('data-url')).not.toBe(primary);
     act(() => leaflet.tileHandlers.tileerror());
     const alert = screen.getByRole('alert');
+    expect(alert).toHaveAttribute('aria-live', 'assertive');
     expect(alert).toHaveTextContent(i18n.t('weather.mapTilesUnavailable'));
 
     fireEvent.click(within(alert).getByRole('button', { name: i18n.t('weather.mapTilesRetry') }));

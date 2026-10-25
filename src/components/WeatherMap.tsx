@@ -416,7 +416,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           <div
             className={`weather-map__tile-status${tilesFailed ? ' weather-map__tile-status--failed' : ''}`}
             role={tilesFailed ? 'alert' : 'status'}
-            aria-live="polite"
+            aria-live={tilesFailed ? 'assertive' : 'polite'}
           >
             {tilesFailed ? (
               <>
