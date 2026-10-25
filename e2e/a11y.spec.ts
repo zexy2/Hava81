@@ -58,6 +58,7 @@ test.describe('contrast', () => {
     async ({ page }) => {
       for (const [width, language, themeMode] of [
         [320, 'tr', 'light'],
+        [320, 'en', 'dark'],
         [390, 'en', 'light'],
         [1440, 'tr', 'light'],
         [390, 'tr', 'dark'],
