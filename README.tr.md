@@ -16,6 +16,8 @@ Türkiye'nin 81 ili için karar odaklı hava durumu deneyimi.
 
 ![İstanbul karar alanı, saatlik tahmin ve çevresel bağlamı gösteren Hava81 masaüstü arayüzü](docs/images/hava81-desktop.png)
 
+<sub>25 Ekim 2026 tarihinde alınmış ürün arayüzü görüntüsü; hava değerleri çekim anındaki canlı veridir ve değişebilir.</sub>
+
 ## Neden Hava81?
 
 Çoğu hava durumu uygulaması **havanın ne olduğunu** söyler. Hava81, **havanın günün için ne anlama geldiğini** anlatmak üzere tasarlanır.
@@ -46,6 +48,8 @@ Anlık koşulları, saatlik ve günlük tahmini, hava kalitesini ve çevresel si
 <p align="center">
   <img src="docs/images/hava81-mobile.png" width="390" alt="İstanbul hava durumu karar görünümünü ve alt navigasyonu gösteren Hava81 mobil arayüzü" />
 </p>
+
+<p align="center"><sub>25 Ekim 2026 tarihinde alındı; canlı hava değerleri değişebilir.</sub></p>
 
 ## Canlı Yüzeyler
 

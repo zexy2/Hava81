@@ -1670,6 +1670,20 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Merge only after the new PR's exact head has green build/browser/Lighthouse/CodeQL checks and fresh mergeability/review state. Then watch the main deploy, verify production revision parity, smoke root/TR/EN routes plus API readiness/CORS, and rerun clean-context Lighthouse on `/istanbul/` to confirm SEO 100 when weather is unavailable.
 4. PR #1454 remains draft/blocked: SentinelX has not exposed a connected Oracle host; the gateway observer still reports `host_incident=true` and API build headroom false. Do not deploy API-runtime changes, keep port 4002 primary/4001 rollback, and never disable this automation.
 
+## 2026-10-25 05:15 TRT — Refresh README screenshots from live production
+
+- Captured fresh public-production screenshots at 2026-10-25 05:04 TRT in Turkish/light mode: desktop 1440×1000 and mobile 390×844. The real `/api/v1/weather/current`, `/hourly` and `/bundle` responses all returned HTTP 200; the UI showed its OpenWeather source and “just updated” freshness label. Both viewports had `scrollWidth === innerWidth` (no horizontal overflow). No API mocks or synthetic weather were used.
+- Replaced `docs/images/hava81-desktop.png` (optimized 584 KiB) and `docs/images/hava81-mobile.png` (optimized 192 KiB). Updated English and Turkish README captions to identify the 25 October 2026 capture and explicitly note that weather values are live at capture time and may change. Existing image dimensions remain 1440×1000 and 390×844.
+- Isolated screenshot branch/worktree: `automation/hava81-run11-readme-live-screenshots-20261025-0505` at `/home/chatgpt/hava81-run11-readme-live-screenshots-20261025-0505`, based on main `84db780bfe142cc50d4ce6357662af266948d2f7`. This is independent of the pending city-metadata PR #1465 (`b1a96407b75c54a7e5fca2e442c4777311d653a8`); its browser-flow check is still running while CodeQL, production build, API tests, frontend quality, Lighthouse budgets and script contracts are green.
+- SentinelX still has no connected Oracle host (`host_id=null`, `host_incident=true`). The gateway-local observer snapshot is not an Oracle disk measurement; no API deploy was attempted.
+
+### Exact next actions / queue
+
+1. Run `git diff --check`, confirm the two screenshot dimensions and inspect the README/README.tr diff; commit the screenshot and caption update, fetch main, and rebase if PR #1465 has merged while this branch was being prepared.
+2. Push `automation/hava81-run11-readme-live-screenshots-20261025-0505` and open a documentation-only PR. While its CI is pending, continue an independent task in a separate worktree; do not modify the pending locale-metadata PR from this branch.
+3. For PR #1465, wait for the exact-head browser-flow result. If it turns green, re-check head SHA, mergeability, review state and the latest observer snapshot immediately before merge; merge, watch main CI/deploy, and verify production. Then rebase the screenshot branch onto the resulting main SHA, preserving both append-only checkpoints.
+4. After the locale-metadata fix deploys, run a clean-context Lighthouse request to `/istanbul/` and confirm SEO 100 with weather API unavailable. Keep PR #1454 draft/blocked until the actual Oracle host and API-build-headroom gate are freshly healthy. Never disable this automation.
+
 ## 2026-10-25 05:56 TRT — Announce map tile failure promptly
 
 - Started from freshly fetched `origin/main=5d69cc383fb2a708f53cbb77e8673213b7067648` in isolated worktree `/home/chatgpt/hava81-run11-map-tile-alert-20261025-0545`, branch `automation/hava81-map-tile-error-announcement-20261025-0545`. No pending branch or dirty worktree was reused.
