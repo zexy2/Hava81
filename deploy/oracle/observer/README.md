@@ -5,7 +5,7 @@ This directory versions the read-only observer that runs on the Oracle host ever
 Runtime paths:
 
 - `/usr/local/lib/hava81-worker/observer.py` — collector
-- `/usr/local/bin/hava81-worker-status` — compact human-readable status
+- `/usr/local/bin/hava81-worker-status` — compact human-readable status, including snapshot age/freshness (stale after ten minutes; future clock skew over 60 seconds is rejected)
 - `/etc/systemd/system/hava81-observer.service` — hardened oneshot service
 - `/etc/systemd/system/hava81-observer.timer` — five-minute timer
 - `/var/lib/hava81-worker/state.json` — latest state snapshot
