@@ -512,3 +512,7 @@ The live responsive audit should support an explicitly configured loopback Chrom
 ## 2026-10-25 — City route metadata must not wait for live weather
 
 A canonical province slug is sufficient to derive the localized city route, title, description, canonical URL and hreflang alternates. Apply those from the route while the current-weather request is pending or failed; a provider response must not be a prerequisite for correct URL/head metadata. Preserve the user's view query/hash during the early locale path correction. Keep the fallback weather state honest: this change changes routing/metadata only and must never invent weather observations. Regression coverage must include both locales with the API blocked, and a clean-context production Lighthouse run must confirm canonical SEO no longer races the client-side locale change. This is frontend-only; it does not authorize an API deployment while the Oracle host/headroom gate is red.
+
+## 2026-10-25 — Map tile failure announcements are assertive; loading remains polite
+
+Keep the map's initial tile-loading message as a polite status. When both tile providers fail, expose the visible failure and retry action as an assertive alert, with an explicit `aria-live="assertive"` that agrees with the `alert` role rather than inheriting the loading state's polite setting. This is an accessibility announcement change only; do not alter tile sources, fallback/retry behavior, map state, weather evidence or safety guidance.
