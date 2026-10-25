@@ -13,7 +13,7 @@ Keep merge/deploy fail-closed when any of the following is true:
 - the host reports `healthy=false` or `root_disk_pressure`;
 - `api_build_headroom_ok=false`;
 - a pending branch head cannot be matched to the expected SHA;
-- production readiness, CORS, root, city, boot-assets or nginx-port checks are not green.
+- production readiness, CORS, root/TR/EN city shells, their shared build revision, boot assets or nginx-port checks are not green.
 
 Do not weaken disk thresholds to make a PR mergeable. Prefer isolated documentation, tests or UI work from a clean `origin/main` base while host pressure remains.
 
