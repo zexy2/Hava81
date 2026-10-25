@@ -16,6 +16,8 @@ Decision-first weather intelligence for all 81 provinces of Türkiye.
 
 ![Hava81 desktop interface showing the İstanbul decision field, hourly forecast and environmental context](docs/images/hava81-desktop.png)
 
+<sub>Product UI snapshot captured 25 October 2026; weather values are live at capture time and may change.</sub>
+
 ## Why Hava81?
 
 Most weather apps answer **what the weather is**. Hava81 is designed to answer **what it means for your day**.
@@ -46,6 +48,8 @@ It combines current conditions, hourly and daily forecasts, air quality and envi
 <p align="center">
   <img src="docs/images/hava81-mobile.png" width="390" alt="Hava81 mobile interface showing the İstanbul weather decision view and bottom navigation" />
 </p>
+
+<p align="center"><sub>Captured 25 October 2026; live weather values may change.</sub></p>
 
 ## Live Surfaces
 
