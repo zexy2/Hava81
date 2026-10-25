@@ -506,6 +506,7 @@ const App: React.FC = () => {
                         hourly={forecast.hourly}
                         daily={forecast.daily}
                         airQuality={freshAirQuality}
+                        airQualityHourly={freshAirQualityHourly}
                         uvIndexMax={freshUvIndexMax}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
                       />
@@ -514,6 +515,7 @@ const App: React.FC = () => {
                           weather={weather}
                           hourly={forecast.hourly}
                           airQuality={freshAirQuality}
+                          airQualityHourly={freshAirQualityHourly}
                           forecastMeta={forecast.displayMeta ?? forecast.meta}
                           onOpenDetails={openScoreDetails}
                         />

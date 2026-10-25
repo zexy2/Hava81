@@ -3,8 +3,9 @@ import { Profiler } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
+import * as decisionSnapshot from '../../domain/decision/decisionSnapshot';
 import { SettingsProvider } from '../../context';
-import type { AirQuality, ForecastMeta, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -53,7 +54,116 @@ describe('WeatherDecisionField daily range', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
+  });
+
+  it('shares fresh hourly AQI evidence with the headline decision snapshot', () => {
+    const snapshotSpy = vi.spyOn(decisionSnapshot, 'getDecisionSnapshot');
+    const time = new Date('2026-08-29T14:00:00Z');
+    const hourly: HourlyForecast[] = [
+      {
+        time,
+        temp: 26,
+        icon: '01d',
+        description: 'açık',
+        pop: 0.1,
+        windSpeed: 3,
+        humidity: 55,
+        windGust: 4,
+        uvIndex: 1,
+        visibility: 10000,
+        weatherCode: 1,
+      },
+    ];
+    const airQualityHourly: AirQualityHourly = {
+      hours: [{ time, europeanAqi: 100 }],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date('2026-08-29T13:00:00Z'),
+        freshForSeconds: 300,
+      },
+    };
+    const forecastMeta: ForecastMeta = {
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-29T13:00:00Z'),
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 1,
+      freshForSeconds: 1800,
+    };
+
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={forecastMeta}
+        />
+      </SettingsProvider>
+    );
+
+    expect(snapshotSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ weather, hourly, airQualityHourly })
+    );
+  });
+
+  it('stops using hourly AQI evidence at its freshness deadline', () => {
+    const snapshotSpy = vi.spyOn(decisionSnapshot, 'getDecisionSnapshot');
+    const time = new Date('2026-08-29T14:00:00Z');
+    const hourly: HourlyForecast[] = [
+      {
+        time,
+        temp: 26,
+        icon: '01d',
+        description: 'açık',
+        pop: 0.1,
+        windSpeed: 3,
+        humidity: 55,
+        windGust: 4,
+        uvIndex: 1,
+        visibility: 10000,
+        weatherCode: 1,
+      },
+    ];
+    const airQualityHourly: AirQualityHourly = {
+      hours: [{ time, europeanAqi: 100 }],
+      meta: {
+        provider: 'Open-Meteo',
+        fetchedAt: new Date('2026-08-29T13:00:00Z'),
+        freshForSeconds: 30,
+      },
+    };
+    const forecastMeta: ForecastMeta = {
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-29T13:00:00Z'),
+      timezoneOffsetSeconds: 10800,
+      intervalHours: 1,
+      freshForSeconds: 1800,
+    };
+
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField
+          weather={weather}
+          hourly={hourly}
+          airQualityHourly={airQualityHourly}
+          forecastMeta={forecastMeta}
+        />
+      </SettingsProvider>
+    );
+
+    expect(snapshotSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ weather, hourly, airQualityHourly })
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(30_100);
+    });
+
+    const lastInput = snapshotSpy.mock.calls[snapshotSpy.mock.calls.length - 1]?.[0];
+    expect(lastInput).toBeDefined();
+    expect(lastInput).not.toHaveProperty('airQualityHourly');
   });
 
   it('does not commit a redundant render just to schedule the freshness clock', () => {

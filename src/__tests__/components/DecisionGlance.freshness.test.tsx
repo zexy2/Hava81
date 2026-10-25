@@ -3,7 +3,7 @@ import { Profiler } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { DecisionGlance } from '../../components/hava81/DecisionGlance';
-import type { AirQuality, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -62,6 +62,11 @@ const airQuality = (fetchedAt: number, freshForSeconds: number): AirQuality => (
   meta: { provider: 'OpenWeather', fetchedAt: new Date(fetchedAt), freshForSeconds },
 });
 
+const hourlyAirQuality = (fetchedAt: number, freshForSeconds: number): AirQualityHourly => ({
+  hours: [{ time: hourly[0]!.time, europeanAqi: 100 }],
+  meta: { provider: 'Open-Meteo', fetchedAt: new Date(fetchedAt), freshForSeconds },
+});
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(now);
@@ -100,6 +105,54 @@ describe('DecisionGlance optional AQI freshness', () => {
 
     expect(getDecisionSnapshot).toHaveBeenCalledTimes(1);
     expect(getDecisionSnapshot).toHaveBeenCalledWith({
+      weather,
+      hourly,
+      airQuality: undefined,
+    });
+  });
+
+  it('passes fresh hourly AQI evidence into the headline decision snapshot', () => {
+    const freshHourlyAqi = hourlyAirQuality(now, 60);
+    render(
+      <DecisionGlance
+        weather={weather}
+        hourly={hourly}
+        airQualityHourly={freshHourlyAqi}
+        forecastMeta={forecastMeta}
+      />
+    );
+
+    expect(getDecisionSnapshot).toHaveBeenCalledWith({
+      weather,
+      hourly,
+      airQuality: undefined,
+      airQualityHourly: freshHourlyAqi,
+    });
+  });
+
+  it('drops hourly AQI evidence from the headline snapshot when it expires', () => {
+    const expiringHourlyAqi = hourlyAirQuality(now, 10);
+    render(
+      <DecisionGlance
+        weather={weather}
+        hourly={hourly}
+        airQualityHourly={expiringHourlyAqi}
+        forecastMeta={forecastMeta}
+      />
+    );
+
+    expect(getDecisionSnapshot).toHaveBeenLastCalledWith({
+      weather,
+      hourly,
+      airQuality: undefined,
+      airQualityHourly: expiringHourlyAqi,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(10_100);
+    });
+
+    expect(getDecisionSnapshot).toHaveBeenLastCalledWith({
       weather,
       hourly,
       airQuality: undefined,
