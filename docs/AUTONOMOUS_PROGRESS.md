@@ -1926,3 +1926,12 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Validation on current main: AppHeader + App integration tests **41/41 passed**; TypeScript check passed; focused ESLint passed; CSS lint passed (19 files clean); `git diff --check` passed. The earlier live axe review found zero confirmed violations; the dangling reference appeared only in axe's incomplete/manual-review list. Hosted CI will provide full build/browser/Lighthouse/Ops/CodeQL gates.
 - No production operation was made. SentinelX still reports the enrolled Oracle host offline; public frontend/API smoke remains HTTP 200 and CORS preflight HTTP 204, but current main deployment after PR #1482 is still propagating the previous frontend revision. API primary remains port 4002 and 4001 remains rollback/canary.
 - Next: verify main/remote branch state, commit and push this isolated ARIA fix, open a narrow PR, and require exact-head hosted gates before merge. Continue independent work while CI runs; do not mutate other pending PR branches.
+
+
+## 2026-10-25 14:30 TRT — Align EnvironmentRail map ARIA controls with mounted state
+
+- Started from current `origin/main=4e439106eabcabea1ff8de38d5dc6bf9938abaa3` in reused worktree `/home/chatgpt/hava81-run11-evidence-state-ux-20261025-0815`, branch `automation/hava81-environment-rail-map-controls-20261025-1430`. The separate header-trigger fix in pending PR #1486 was not modified.
+- A follow-up scan of all `aria-controls` found the EnvironmentRail's map action also referenced `weather-map-region` even when `App.tsx` had not mounted the region. Its `aria-controls` now appears only when `mapExpanded` is true. Updated the component test to cover both closed and expanded states.
+- Validation: EnvironmentRail + air-quality freshness tests **7/7**; TypeScript check, full ESLint/CSS lint (19 CSS files clean), production frontend build, and `git diff --check` all passed. Hosted exact-head browser/Lighthouse/Ops/CodeQL gates are still required before merge.
+- No production change or API operation was performed. SentinelX's enrolled Oracle host remains offline; public frontend/API smoke is HTTP 200 and CORS preflight is HTTP 204. API primary remains 4002 and 4001 rollback/canary.
+- Next: commit/push this separate component fix and open a narrow PR; keep PR #1486 independent, then rebase only after its own gates and the main deployment state are directly checked. Continue work while hosted checks run.

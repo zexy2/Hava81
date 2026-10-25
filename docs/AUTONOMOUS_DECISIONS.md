@@ -593,3 +593,8 @@ The map panel is conditionally rendered. Keep the map trigger's `aria-expanded` 
 ## 2026-10-25 — Only reference a conditionally mounted settings dialog while it exists
 
 For the settings trigger, keep `aria-haspopup="dialog"` and `aria-expanded` available in both states, but expose `aria-controls` only while the dialog element is mounted. A dangling ID reference is misleading to assistive technology and can trigger axe's incomplete/manual-review `aria-valid-attr-value` result. Do not change dialog mounting, focus trap, escape handling, or the visible settings interaction; cover both closed and open states in component and app integration tests.
+
+
+## 2026-10-25 — EnvironmentRail must not reference the closed map region
+
+The environment rail exposes a second map disclosure trigger that controls the same conditionally mounted `weather-map-region`. Its `aria-controls` must follow `mapExpanded`: omit the reference while closed and expose it while expanded. Keep its accessible label/value and `aria-expanded` synchronized; do not change map opening/closing, focus restoration, map tiles, or weather evidence. This complements the header-trigger fix without modifying its pending branch.
