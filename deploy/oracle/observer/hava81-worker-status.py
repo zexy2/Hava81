@@ -8,6 +8,21 @@ from typing import Any
 STATE_FILE = Path('/var/lib/hava81-worker/state.json')
 MAX_STATE_AGE_SECONDS = 10 * 60
 MAX_FUTURE_SKEW_SECONDS = 60
+READINESS_FIELDS = (
+    'can_merge',
+    'merge_blocking_reasons',
+    'can_deploy_frontend',
+    'frontend_deploy_blocking_reasons',
+    'can_deploy_api',
+    'api_deploy_blocking_reasons',
+)
+
+
+def readiness_schema(worker: Any) -> dict[str, Any]:
+    """Identify snapshots produced before scoped merge/deploy readiness was added."""
+    source = worker if isinstance(worker, dict) else {}
+    missing = [field for field in READINESS_FIELDS if field not in source]
+    return {'current': not missing, 'missing_fields': missing}
 
 
 def timestamp_age_seconds(value: Any, *, now: datetime | None = None) -> float | None:
@@ -55,6 +70,9 @@ def main() -> int:
         f'max_age_s={MAX_STATE_AGE_SECONDS} future_skew_s={MAX_FUTURE_SKEW_SECONDS} '
         f"reason={freshness['reason']}"
     )
+    readiness = readiness_schema(worker)
+    readiness_state = 'current' if readiness['current'] else 'legacy_or_incomplete'
+    print(f"readiness_schema: state={readiness_state} missing={readiness['missing_fields']}")
     print(f"merge_ready: {worker.get('can_merge')} blockers={worker.get('merge_blocking_reasons', [])}")
     print(f"frontend_deploy_ready: {worker.get('can_deploy_frontend')} blockers={worker.get('frontend_deploy_blocking_reasons', [])}")
     print(f"api_deploy_ready: {worker.get('can_deploy_api')} blockers={worker.get('api_deploy_blocking_reasons', [])}")

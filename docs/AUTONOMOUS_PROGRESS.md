@@ -1901,3 +1901,11 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Verify the exact PR head, all required checks, and `mergeable_state=clean` directly before merge. While hosted CI runs, continue a separate independent task rather than waiting.
 3. After merge, monitor main CI/Pages deploy and directly verify root/TR/EN revision parity, API health/readiness/liveness, CORS, and live current/hourly weather responses.
 4. Do not merge API-runtime changes or install/update the Oracle observer until the actual Oracle host is reachable and fresh host-specific disk/build-headroom plus blue-green/canary gates pass. Keep API primary on 4002 and 4001 as rollback/canary. Preserve unrelated dirty worktrees and never disable or pause this automation.
+
+## 2026-10-25 13:45 TRT — Surface stale worker-readiness schema
+
+- Directly compared the live read-only status output with current `origin/main`. The installed status command showed only the legacy `merge_deploy_ready` aggregate, while current source already defines separate `merge_ready`, `frontend_deploy_ready`, and `api_deploy_ready` fields. The snapshot also lacked those scoped readiness keys, so the output did not make the schema drift explicit.
+- Added a diagnostic-only `readiness_schema` check to `deploy/oracle/observer/hava81-worker-status.py`. It identifies `legacy_or_incomplete` snapshots and enumerates missing readiness booleans/blocker arrays; it does not alter any gate or grant permission to merge/deploy.
+- Added tests for both a legacy snapshot and a complete current snapshot. Validation: worker-status + observer suites **97/97 passed**; Python compilation and `git diff --check` passed.
+- Environment boundary: SentinelX reports the enrolled Oracle host offline; Zeki SSH Gateway exposes only local `nexus-hermes`. This is a source/test change only. No observer install, Oracle write, API build/deploy/rollback, cleanup, or port switch was attempted. API primary remains 4002; 4001 remains rollback/canary.
+- Next: inspect final diff, commit/push this bounded observer-diagnostic PR, require exact-head CI/Ops/CodeQL, and leave installation pending until Oracle connectivity is restored.
