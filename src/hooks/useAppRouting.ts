@@ -50,6 +50,15 @@ export function useAppRouting({
     const handlePopState = () => {
       const routeCity = cityFromPathname(window.location.pathname);
       if (routeCity) {
+        // `useAsync` deliberately preserves the last successful payload during a
+        // refresh. On browser back/forward, that payload may belong to another
+        // province; clear it before fetching so the route and displayed evidence
+        // cannot temporarily describe different cities.
+        const targetCityPath = cityPath(routeCity.name, 'tr');
+        const currentCityPath = weather ? cityPath(weather.cityName, 'tr') : null;
+        if (weather && targetCityPath && currentCityPath !== targetCityPath) {
+          clearWeather();
+        }
         void fetchWeather(routeCity.name);
         return;
       }
@@ -68,7 +77,7 @@ export function useAppRouting({
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [clearWeather, fetchWeather, setActiveNav, setShowMap]);
+  }, [clearWeather, fetchWeather, setActiveNav, setShowMap, weather]);
 
   useEffect(() => {
     const setMetaContent = (selector: string, content: string) => {
