@@ -833,6 +833,48 @@ describe('Hava81 app integration', () => {
     });
   });
 
+  it('clears a different city payload before browser back/forward navigation', async () => {
+    let resolveIzmir: ((value: typeof current) => void) | undefined;
+    service.getCurrentWeather.mockImplementation(({ city }: { city: string }) => {
+      if (city === 'İzmir') {
+        return new Promise<typeof current>(resolve => {
+          resolveIzmir = resolve;
+        });
+      }
+      return Promise.resolve(current);
+    });
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'İstanbul' });
+    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+      'http://localhost:3000/istanbul/'
+    );
+
+    window.history.pushState({}, '', '/izmir/');
+    act(() => window.dispatchEvent(new PopStateEvent('popstate')));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/izmir/');
+      expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+        'http://localhost:3000/izmir/'
+      );
+      expect(document.title).toBe('İzmir hava durumu — Hava81');
+    });
+    expect(resolveIzmir).toBeDefined();
+
+    await act(async () => {
+      resolveIzmir!({
+        ...current,
+        cityName: 'İzmir',
+        coordinates: { lat: 38.42, lon: 27.14 },
+      });
+    });
+    await screen.findByRole('heading', { name: 'İzmir' });
+    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+      'http://localhost:3000/izmir/'
+    );
+  });
+
   it('keeps social metadata aligned with the active city and language', async () => {
     const socialTags = [
       ['name', 'description'],
