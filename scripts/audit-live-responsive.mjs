@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
-import { buildLiveAuditErrors } from './lib/live-audit-result.mjs';
+import { buildLiveAuditErrors, formatWeatherRequestFailure } from './lib/live-audit-result.mjs';
 import { launchLiveAuditBrowser } from './lib/live-audit-browser.mjs';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
 
@@ -94,6 +94,13 @@ try {
           if (response.url().includes('/api/v1/weather/') && response.status() >= 400) {
             weatherFailures.push(`${response.status()} ${response.url().split('?')[0]}`);
           }
+        });
+        page.on('requestfailed', request => {
+          const failure = formatWeatherRequestFailure(
+            request.url(),
+            request.failure()?.errorText
+          );
+          if (failure) weatherFailures.push(failure);
         });
         try {
           await page.goto(`${options.baseUrl}/${city}/`, { waitUntil: 'domcontentloaded', timeout: 25_000 });

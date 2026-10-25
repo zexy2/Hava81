@@ -1,3 +1,5 @@
+import { URL } from 'node:url';
+
 /** Build deterministic errors for one responsive live-audit case. */
 export function buildLiveAuditErrors({
   metrics,
@@ -22,4 +24,18 @@ export function buildLiveAuditErrors({
     ...[...new Set(weatherFailures)].map(failure => `Weather API: ${failure}`),
     ...pageErrors.map(error => `JavaScript: ${error}`),
   ];
+}
+
+/** Ignore browser teardown cancellations; report real network failures for core weather routes. */
+export function formatWeatherRequestFailure(url, errorText) {
+  let pathname;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    return null;
+  }
+
+  if (!pathname.startsWith('/api/v1/weather/')) return null;
+  if (/ERR_ABORTED|ERR_CANCELED|ERR_CANCELLED/i.test(errorText || '')) return null;
+  return `network ${errorText || 'request failed'} ${url.split('?')[0]}`;
 }

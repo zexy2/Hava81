@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLiveAuditErrors } from './lib/live-audit-result.mjs';
+import { buildLiveAuditErrors, formatWeatherRequestFailure } from './lib/live-audit-result.mjs';
 
 const healthyMetrics = {
   city: 'İzmir',
@@ -46,4 +46,26 @@ test('duplicate failed responses are reported once without masking layout errors
 test('a healthy responsive case stays green and missing metrics fail closed', () => {
   assert.deepEqual(buildLiveAuditErrors(expected), []);
   assert.deepEqual(buildLiveAuditErrors({ ...expected, metrics: null }), ['Responsive metrics unavailable']);
+});
+
+
+test('live audit reports core weather network failures without query-string noise', () => {
+  assert.equal(
+    formatWeatherRequestFailure(
+      'https://api.hava81.zekiakgul.dev/api/v1/weather/current?city=izmir',
+      'net::ERR_CONNECTION_RESET'
+    ),
+    'network net::ERR_CONNECTION_RESET https://api.hava81.zekiakgul.dev/api/v1/weather/current'
+  );
+});
+
+test('live audit ignores unrelated routes and expected browser teardown cancellations', () => {
+  assert.equal(
+    formatWeatherRequestFailure('https://api.hava81.zekiakgul.dev/api/v1/air-quality/current', 'net::ERR_FAILED'),
+    null
+  );
+  assert.equal(
+    formatWeatherRequestFailure('https://api.hava81.zekiakgul.dev/api/v1/weather/current', 'net::ERR_ABORTED'),
+    null
+  );
 });
