@@ -5,10 +5,11 @@ import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
+import { HOME_COPY } from './lib/city-pages.mjs';
 
 const script = fileURLToPath(new URL('./verify-public-seo.mjs', import.meta.url));
 
-async function runFixture({ wrongCanonical = false, badSitemap = false, temporaryFailure = false } = {}) {
+async function runFixture({ wrongCanonical = false, badSitemap = false, temporaryFailure = false, wrongEnglishHomeJsonLd = false } = {}) {
   const attempts = new Map();
   let base;
   const server = createServer((req, res) => {
@@ -29,7 +30,33 @@ async function runFixture({ wrongCanonical = false, badSitemap = false, temporar
         url, name: title(name, lang), about: { name },
       }) + '</script></head><body>Weather</body></html>';
     res.setHeader('Content-Type', path.endsWith('.xml') ? 'application/xml' : 'text/html; charset=utf-8');
-    if (path === '/') { res.end(document('Hava81', base + '/')); return; }
+    const homeDocument = (lang, url) => {
+      const copy = HOME_COPY[lang];
+      const structured = {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Hava81',
+        url: wrongEnglishHomeJsonLd && lang === 'en' ? base + '/' : url,
+        inLanguage: wrongEnglishHomeJsonLd && lang === 'en' ? 'tr' : lang,
+        description: wrongEnglishHomeJsonLd && lang === 'en' ? HOME_COPY.tr.description : copy.description,
+      };
+      return '<!doctype html><html lang="' + lang + '"><head>' +
+        '<title>' + copy.title + '</title>' +
+        '<meta name="description" content="' + copy.description + '">' +
+        '<link rel="canonical" href="' + url + '">' +
+        '<link rel="alternate" hreflang="tr" href="' + base + '/">' +
+        '<link rel="alternate" hreflang="en" href="' + base + '/en/">' +
+        '<link rel="alternate" hreflang="x-default" href="' + base + '/">' +
+        '<meta property="og:url" content="' + url + '">' +
+        '<meta property="og:title" content="' + copy.title + '">' +
+        '<meta property="og:description" content="' + copy.socialDescription + '">' +
+        '<meta name="twitter:title" content="' + copy.title + '">' +
+        '<meta name="twitter:description" content="' + copy.socialDescription + '">' +
+        '<script type="application/ld+json">' + JSON.stringify(structured) + '</script>' +
+        '</head><body>Home</body></html>';
+    };
+    if (path === '/') { res.end(homeDocument('tr', base + '/')); return; }
+    if (path === '/en/') { res.end(homeDocument('en', base + '/en/')); return; }
     if (path === '/sitemap.xml') {
       const slugs = [...provinceNamesBySlug.keys()];
       const urls = [
@@ -75,13 +102,20 @@ test('validates 81 published provinces, homepage and sitemap', async () => {
   const result = await runFixture();
   assert.equal(result.exitCode, 0, result.output);
   assert.match(result.output, /81 province pages/);
-  assert.equal(result.attempts.size, 164);
+  assert.equal(result.attempts.size, 165);
+  assert.equal(result.attempts.get('/'), 1);
+  assert.equal(result.attempts.get('/en/'), 1);
 });
 test('rejects a wrong published city canonical URL', async () => {
   const result = await runFixture({ wrongCanonical: true });
   assert.notEqual(result.exitCode, 0);
   assert.match(result.output, /\/izmir\/: Canonical URL mismatch/);
   assert.match(result.output, /\/en\/izmir\/: Canonical URL mismatch/);
+});
+test('rejects English homepage JSON-LD that points at the Turkish root', async () => {
+  const result = await runFixture({ wrongEnglishHomeJsonLd: true });
+  assert.notEqual(result.exitCode, 0);
+  assert.match(result.output, /\/en\/: Homepage JSON-LD mismatch/);
 });
 test('rejects a missing published sitemap entry', async () => {
   const result = await runFixture({ badSitemap: true });
