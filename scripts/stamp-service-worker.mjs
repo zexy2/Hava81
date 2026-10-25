@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createHash } from 'node:crypto';
+import { buildServiceWorkerCacheId } from './lib/service-worker-stamp.mjs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -22,12 +22,7 @@ if (!swSource.includes(placeholder)) {
   throw new Error(`Service worker cache placeholder ${placeholder} is missing`);
 }
 
-const buildId = createHash('sha256')
-  .update(indexHtml)
-  .update(manifest)
-  .update(assetFiles.sort().join('\n'))
-  .digest('hex')
-  .slice(0, 12);
+const buildId = buildServiceWorkerCacheId({ indexHtml, manifest, assetFiles, swSource });
 
 const stamped = swSource.replaceAll(placeholder, buildId);
 if (stamped.includes(placeholder)) {

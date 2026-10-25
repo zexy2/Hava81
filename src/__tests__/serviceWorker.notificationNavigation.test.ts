@@ -128,6 +128,7 @@ describe('service worker install and navigation caching', () => {
       (event: { waitUntil: (promise: Promise<unknown>) => void }) => void
     >();
     const cachePut = vi.fn().mockResolvedValue(undefined);
+    const cacheDelete = vi.fn().mockResolvedValue(true);
     const rootClone = vi.fn(() => ({
       ok: true,
       text: vi
@@ -155,7 +156,7 @@ describe('service worker install and navigation caching', () => {
       caches: {
         open: vi.fn().mockResolvedValue({ put: cachePut }),
         keys: vi.fn().mockResolvedValue([]),
-        delete: vi.fn().mockResolvedValue(true),
+        delete: cacheDelete,
       },
       fetch: fetchMock,
       URL,
@@ -175,6 +176,7 @@ describe('service worker install and navigation caching', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(cachePut).toHaveBeenCalledTimes(1);
     expect(cachePut).toHaveBeenCalledWith('/', expect.anything());
+    expect(cacheDelete).toHaveBeenCalledWith('hava81-shell-__HAVA81_BUILD_ID__');
   });
 
   it('finishes install when optional manifest caching fails after the root is secured', async () => {
@@ -184,6 +186,7 @@ describe('service worker install and navigation caching', () => {
       (event: { waitUntil: (promise: Promise<unknown>) => void }) => void
     >();
     const cachePut = vi.fn().mockResolvedValue(undefined);
+    const cacheDelete = vi.fn().mockResolvedValue(true);
     const clone = vi.fn(() => ({ ok: true, text: vi.fn().mockResolvedValue('<html></html>') }));
     const fetchMock = vi
       .fn()
@@ -206,7 +209,7 @@ describe('service worker install and navigation caching', () => {
       caches: {
         open: vi.fn().mockResolvedValue({ put: cachePut }),
         keys: vi.fn().mockResolvedValue([]),
-        delete: vi.fn().mockResolvedValue(true),
+        delete: cacheDelete,
       },
       fetch: fetchMock,
       URL,
@@ -225,15 +228,17 @@ describe('service worker install and navigation caching', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/manifest.json', { cache: 'no-store' });
     expect(cachePut).toHaveBeenCalledTimes(1);
     expect(cachePut).toHaveBeenCalledWith('/', expect.anything());
+    expect(cacheDelete).not.toHaveBeenCalled();
   });
 
-  it('rejects install when the root shell cannot be secured', async () => {
+  it('preserves the root error when cache cleanup also fails', async () => {
     const source = readFileSync('public/sw.js', 'utf8');
     const listeners = new Map<
       string,
       (event: { waitUntil: (promise: Promise<unknown>) => void }) => void
     >();
     const cachePut = vi.fn().mockResolvedValue(undefined);
+    const cacheDelete = vi.fn().mockRejectedValueOnce(new Error('cache cleanup denied'));
     const fetchMock = vi.fn().mockRejectedValueOnce(new Error('root unavailable'));
     let installPromise: Promise<unknown> | undefined;
 
@@ -252,7 +257,7 @@ describe('service worker install and navigation caching', () => {
       caches: {
         open: vi.fn().mockResolvedValue({ put: cachePut }),
         keys: vi.fn().mockResolvedValue([]),
-        delete: vi.fn().mockResolvedValue(true),
+        delete: cacheDelete,
       },
       fetch: fetchMock,
       URL,
@@ -269,5 +274,6 @@ describe('service worker install and navigation caching', () => {
     await expect(installPromise).rejects.toThrow('root unavailable');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(cachePut).not.toHaveBeenCalled();
+    expect(cacheDelete).toHaveBeenCalledWith('hava81-shell-__HAVA81_BUILD_ID__');
   });
 });
