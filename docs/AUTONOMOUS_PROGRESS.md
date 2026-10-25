@@ -1684,3 +1684,17 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Monitor PR #1466's exact head `ab1ea03d212d5a9685dcb1c6973f6578bf953158`; after CI/CD #3582, Ops #321 and CodeQL #2362 are green, verify head/base/review/mergeability, merge, and smoke the new production revision.
 3. Continue an independent accessibility or performance task while checks run; do not modify either pending PR branch from the next workstream.
 4. Retry SentinelX status/state/events when the Oracle host reconnects. Keep PR #1454 draft until host-specific disk/build-headroom checks are fresh and green; never disable/pause this automation.
+
+## 2026-10-25 06:07 TRT — Add browser-level regression for map failure announcement
+
+- Started isolated worktree `/home/chatgpt/hava81-run11-map-tile-browser-regression-20261025-0610` from current main `e053c9fd1de065278ace22dd778587f1c2cb7f7e`, after PR #1467 merged. This branch does not modify PR #1466 or any other pending branch.
+- Added browser assertions to the existing dual-tile-provider failure/retry scenario: the visible failure must expose `role="alert"` and `aria-live="assertive"` while the retry button remains enabled, large enough for touch, and successful recovery hides the status. This complements the unit regression by exercising the actual built app and retry flow.
+- Local lint/type checks and diff check will run before commit. A local production build/browser run is intentionally avoided while the gateway root disk is 93.6% used and its build-headroom gate is red; hosted CI must run the browser suite on the exact PR head.
+- Main commit `e053c9fd1de065278ace22dd778587f1c2cb7f7e` is in CI/CD #3584 (`40156854089`), Ops #323 (`40156854104`) and CodeQL #2364 (`40156854127`). At last direct check, API tests/build, production build/SEO checks, development-container smoke and Lighthouse budgets had passed; frontend full coverage and browser flows were still running. Production remained on `5d69cc383fb2` with root and API readiness returning HTTP 200; do not treat the pending deploy as complete yet.
+- PR #1466 remains green at head `ab1ea03d212d5a9685dcb1c6973f6578bf953158` (CI/CD #3582, Ops #321, CodeQL #2362) but is behind the merged accessibility commit. Rebase it in its own worktree only after main pipeline and public deployment are healthy; preserve both append-only docs.
+
+### Exact next actions / queue
+1. Run `npm run lint`, `npm run type-check`, and `git diff --check` on this browser-regression branch; inspect the exact diff, commit/push, open a narrow PR and record exact head SHA/run IDs in the next checkpoint.
+2. Keep checking main CI/CD #3584, Ops #323, CodeQL #2364 directly. After all required jobs pass, smoke root/TR/EN routes, API ready/live and CORS, and verify public build revision equals `e053c9fd`.
+3. Once production is healthy, rebase PR #1466 onto the deployed main with explicit lease after verifying its current remote head; rerun exact-head CI, then merge when green. Continue independent work while any new checks run.
+4. Retry SentinelX when the Oracle host reconnects; gateway disk pressure does not authorize API build/deploy or unknown-file deletion. Keep API primary port 4002 and PR #1454 draft.
