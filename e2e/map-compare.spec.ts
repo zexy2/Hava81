@@ -274,6 +274,8 @@ test.describe('map view', () => {
 
     const failed = page.locator('.weather-map__tile-status--failed');
     await expect(failed).toBeVisible();
+    await expect(failed).toHaveAttribute('role', 'alert');
+    await expect(failed).toHaveAttribute('aria-live', 'assertive');
     await expect(failed).toContainText('Harita yüklenemedi');
     const retry = failed.getByRole('button', { name: 'Tekrar dene' });
     await expect(retry).toBeEnabled();

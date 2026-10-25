@@ -516,3 +516,7 @@ A canonical province slug is sufficient to derive the localized city route, titl
 ## 2026-10-25 — Map tile failure announcements are assertive; loading remains polite
 
 Keep the map's initial tile-loading message as a polite status. When both tile providers fail, expose the visible failure and retry action as an assertive alert, with an explicit `aria-live="assertive"` that agrees with the `alert` role rather than inheriting the loading state's polite setting. This is an accessibility announcement change only; do not alter tile sources, fallback/retry behavior, map state, weather evidence or safety guidance.
+
+## 2026-10-25 — Test map tile alert semantics in the browser, not only in unit tests
+
+The dual-provider map tile failure/retry browser flow should assert that the visible failure has both `role="alert"` and `aria-live="assertive"`. Keep the loading state polite, preserve the enabled retry control and successful recovery behavior, and do not change tile providers, weather data, or safety messaging. This browser regression complements the component unit test because it exercises the built app and real focus/touch flow.
