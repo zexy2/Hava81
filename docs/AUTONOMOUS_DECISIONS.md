@@ -555,3 +555,8 @@ The generated shell-cache namespace must change when `public/sw.js` behavior cha
 ## 2026-10-25 08:56 TRT — Query old PR checks by exact head SHA with bounded caching and rate-limit guard
 
 A single `actions/runs?per_page=100` page is not a complete source for open-PR checks when CI/CD, Ops contracts and CodeQL each create separate workflow runs. When an automation PR is missing any required run, use one `actions/runs?head_sha=<exact-sha>&per_page=100` lookup per observer cycle if the known GitHub rate-limit remainder is above five. Cache only complete, concluded gate snapshots for the same head SHA for at most 15 minutes, then refresh; do not cache in-progress or unknown checks. If lookup fails or rate budget is low, leave the PR unknown and keep merge readiness fail-closed. Direct exact-head checks remain mandatory immediately before merge; the observer is advisory/read-only and cannot grant merge or deploy permission by itself.
+
+
+## 2026-10-25 09:06 TRT — Reclaim only unused private Docker build cache when disk pressure blocks future builds
+
+Before freeing disk, verify API ready/live, green/canary container health, no active build/deploy process, and `docker builder du` marks the target cache reclaimable and older than 24 hours. Use `docker builder prune --filter until=24h --force` for private cache and regenerable package-manager cache cleanup only when needed. Do not use `docker system prune`, delete images/containers/volumes, remove shared cache, or clean unrelated worktrees. Recheck API ready/live and free space afterward. If API build headroom remains false, do not build/deploy the API; leave rollback/canary images intact.
