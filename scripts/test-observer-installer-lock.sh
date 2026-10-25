@@ -14,6 +14,8 @@ grep -Fq 'flock -x -w 60 "$legacy_lock_fd"' "$installer"
 grep -Fq 'flock -x -w 60 "$observer_lock_fd"' "$installer"
 grep -Fq 'flock -u "$legacy_lock_fd"' "$installer"
 grep -Fq 'flock -u "$observer_lock_fd"' "$installer"
+grep -Fq 'install -o ubuntu -g ubuntu -m 0644 /dev/null' "$installer"
+grep -Fq 'chown ubuntu:ubuntu "$lock_file"' "$installer"
 grep -Fq 'ExecStart=/usr/bin/flock -n /var/lib/hava81-worker/observer.lock' "$service"
 grep -Fq 'StateDirectory=hava81-worker' "$service"
 grep -Fq 'RuntimeDirectory=hava81-worker' "$service"
@@ -23,8 +25,10 @@ grep -Fq 'persistent `/var/lib/hava81-worker/observer.lock`' "$readme"
 reload_line=$(grep -n '^systemctl daemon-reload$' "$installer" | cut -d: -f1)
 persistent_unlock_line=$(grep -n '^flock -u "\$observer_lock_fd"$' "$installer" | cut -d: -f1)
 legacy_unlock_line=$(grep -n '^flock -u "\$legacy_lock_fd"$' "$installer" | cut -d: -f1)
+enable_line=$(grep -n '^systemctl enable --now hava81-observer.timer >/dev/null$' "$installer" | cut -d: -f1)
 start_line=$(grep -n '^systemctl start hava81-observer.service$' "$installer" | cut -d: -f1)
 (( reload_line < persistent_unlock_line && reload_line < legacy_unlock_line ))
+(( persistent_unlock_line < enable_line && legacy_unlock_line < enable_line ))
 (( persistent_unlock_line < start_line && legacy_unlock_line < start_line ))
 
 if grep -Eq '^systemctl (stop|disable) hava81-observer\.(timer|service)' "$installer"; then
