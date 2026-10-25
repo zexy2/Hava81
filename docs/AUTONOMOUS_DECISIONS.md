@@ -660,3 +660,7 @@ The Open-Meteo context request asks for 25 hourly forecast slots, but timestamp 
 ## 2026-10-25 — Keep canonical-origin E2E strict but preview-aware
 
 Canonical metadata may legitimately point to the current local preview root or to the fixed public production root during SEO/Lighthouse validation. The root-route E2E should allow exactly those two URLs and continue to reject any other origin or route; do not weaken the assertion to an arbitrary HTTPS URL or only check that a canonical link exists.
+
+## 2026-10-25 — Use the cached app shell for navigation HTTP 5xx, but not 4xx
+
+A navigation can receive an HTTP 500/502/503/504 without rejecting `fetch`, so the existing network-error fallback alone can still leave a user on a server error page even when a usable Hava81 shell is cached. For navigation responses with status >= 500, prefer the cached path shell, then the cached root shell; if neither is available, return the original HTTP response. Keep 4xx responses untouched so a real missing route is not silently replaced by stale HTML. Never cache the failed response or change API requests, forecast data, provider attribution, freshness, or scoring. Cache Storage remains best-effort, and rejected network requests still preserve their original error when no cached shell can be read.
