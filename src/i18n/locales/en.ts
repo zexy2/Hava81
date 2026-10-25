@@ -519,6 +519,7 @@ export const en = {
       sourceModified: 'summarized by Hava81',
       fetchedAt: 'data fetched {{time}}',
       waveUnavailable: 'Wave data unavailable',
+      marineStale: 'Marine model data is stale; wave and sea-surface values are hidden.',
       next24h: 'Model maximum over the next 24 hours.',
       note: 'UV, dust, pollen and marine values are Open-Meteo model outputs; they are not local measurements or health/navigation safety guarantees.',
     },
