@@ -2286,3 +2286,27 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Monitor PR #1499's exact head `990515e0bc5b12f20480630b726c6c747baaca53`; merge only when CI/CD, Ops, CodeQL and any required browser/Lighthouse checks are green and mergeability is clean. While checks run, continue a separate independent workstream.
 3. Once the installer-lock PR is green and mergeable, merge it. Immediately re-verify current host state, API 4002/4001 health, CORS, production revision and disk headroom before running the merged installer; verify the persistent lock path is installed and the timer remains enabled/active.
 4. Keep API deployment blocked while `api_build_headroom_ok=false`; preserve all unrelated worktrees, images, containers, volumes and shared browser assets. Keep the automation enabled.
+
+
+## 2026-10-26 02:40 TRT — Recover local Lighthouse on the locked-down host
+
+### Production and observer (freshly re-verified)
+- Current `origin/main` is `e6e8dbc42fc86ef1959b7978dfed7da399340cf0`; main CI/CD run #3673 (`40244606277`) succeeded for that SHA.
+- Worker snapshot collected at `2026-10-25T23:40:46.967Z` was fresh and reported production healthy, readiness 200, CORS healthy, boot assets 12/12, root/TR/EN revision markers aligned to `e6e8dbc...`, and Nginx API port 4002. Public root, `/izmir/`, `/en/`, and `/en/istanbul/` returned HTTP 200 with the same frontend revision. `/api/v1/health` returned HTTP 200 at API revision `295543ad98644d812e3808a2c67c64d769983130`; CORS preflight returned 204.
+- Root disk is 91.8% used with about 7.9 GiB free; `api_build_headroom_ok=false`. Do not run an API build/deploy or change ports until a fresh observer snapshot explicitly grants API deploy readiness. Keep 4002 primary and 4001 rollback/canary.
+
+### Measurements
+- Read-only live responsive audit: **40/40 passed** across İzmir and Şanlıurfa, Turkish/English, light/dark, 320/390/768/1440 px, and 200% zoom at 320 px. One first-attempt screenshot/navigation was transiently retried; the final checks passed.
+- Read-only production Lighthouse audit through the existing local Chrome DevTools endpoint: performance **84**, accessibility **100**, best practices **100**, SEO **100**; FCP 1.8 s, LCP 3.0 s, TBT 400 ms, CLS 0, Speed Index 2.2 s. Follow-up performance queue: reduce main-thread work / unused JavaScript and improve LCP without weakening score floors.
+- `npm audit --omit=dev --audit-level=high`: zero vulnerabilities.
+
+### Implemented on an isolated branch
+- Branch: `automation/hava81-live-responsive-audit-20261026-0240`, based on `origin/main=e6e8dbc42fc86ef1959b7978dfed7da399340cf0`.
+- Added a shared loopback-only CDP URL parser for the responsive and Lighthouse runners. Lighthouse now reuses an existing browser via `--port` when `HAVA81_CHROMIUM_CDP_URL` is set; remote endpoints and preview-port collisions fail before any preview/report cleanup. Default isolated Chrome discovery remains unchanged.
+- Validation passed: `npm run lint`; `npm run type-check`; `npm run test:ci` (**114 files / 1,151 tests**, 92.79% statement / 86.80% branch coverage); `npm run build`; `git diff --check`; live-audit option tests (**30 assertions**); Lighthouse browser/CDP contract tests; local Lighthouse through CDP (**90 performance / 100 accessibility / 96 best practices / 100 SEO**). The local-preview run that pointed directly at the production API produced expected CORS errors because the origin was localhost; it was not treated as a production issue. The direct production Lighthouse run above is the reliable production measurement.
+- No production files, runtime API, ports, or deployments were changed. Shared Chromium was left running.
+
+### Exact next actions
+1. Finish the diff review, commit and push this branch, open a narrow PR, then verify exact-head CI/CD, Ops script contracts, CodeQL, browser flows, Lighthouse, and mergeability. Do not mutate its branch after checks start.
+2. While those hosted checks run, use a separate clean branch from current `origin/main` to investigate the measured LCP/TBT and roughly 25 KiB unused main-bundle JavaScript. Measure the SettingsContext import path before changing it; do not split locale resources without evidence of a net improvement, and do not lower Lighthouse floors.
+3. Before any merge/deploy, re-read the observer snapshot and current remote head. API build/deploy remains blocked by disk headroom; do not prune images, containers, volumes, browser assets, or worktrees.

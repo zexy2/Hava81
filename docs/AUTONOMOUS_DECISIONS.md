@@ -691,3 +691,11 @@ The live worker status must expose independent merge, frontend-deploy and API-de
 ## 2026-10-26 — Serialize observer upgrades without pausing the timer
 
 The observer installer must coordinate with the oneshot collector before replacing its code and systemd unit. During migration, acquire the legacy `/run/hava81-worker/observer.lock` plus a persistent `/var/lib/hava81-worker/observer.lock`, use bounded waits and fail before replacing files if either lock cannot be acquired, atomically replace the versioned files and reload systemd while both locks are held, then release both before starting the collector. The service should use the persistent state-directory lock because systemd may remove `/run` between oneshot executions. Never stop or disable the five-minute timer; add a contract test so the service path, installer lock order, release-before-start order and timer-preservation behavior cannot drift.
+
+
+## 2026-10-26 — Share loopback Chrome DevTools validation with Lighthouse
+
+- The live responsive audit already supports `HAVA81_CHROMIUM_CDP_URL` on locked-down Linux hosts, but the Lighthouse runner always attempted to launch a separate browser. On this Oracle host that path failed with “Unable to connect to Chrome” even though the existing loopback DevTools endpoint was healthy.
+- Keep one shared parser for both audit runners. Accept only explicit-port loopback HTTP endpoints; reject remote hosts, credentials, non-root paths, queries, and fragments. Reject a DevTools/preview port collision before clearing reports or starting the preview.
+- When configured, Lighthouse attaches through its `--port` option and must not launch or close the shared browser. When unset, preserve the existing isolated Chrome launch path.
+- A local preview calling the production API directly has a different origin and correctly fails the production CORS policy. Do not weaken production CORS to accommodate local audits; use a same-origin proxy for local previews or run the read-only Lighthouse audit against the public production origin.

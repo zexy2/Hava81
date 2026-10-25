@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import process from 'node:process';
 import { resolveLighthouseChromePath } from './lib/resolve-lighthouse-chrome.mjs';
 import { resolveLighthouseTargetUrl } from './lib/lighthouse-target-url.mjs';
+import { resolveLoopbackCdpPort } from './lib/loopback-cdp-url.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -21,6 +22,12 @@ const targetUrl = resolveLighthouseTargetUrl(
   process.env.HAVA81_LIGHTHOUSE_PATH,
   `http://${host}:${port}`
 );
+const cdpPort = process.env.HAVA81_CHROMIUM_CDP_URL?.trim()
+  ? resolveLoopbackCdpPort(process.env.HAVA81_CHROMIUM_CDP_URL.trim())
+  : undefined;
+if (cdpPort === port) {
+  throw new Error('HAVA81_CHROMIUM_CDP_URL port must differ from the local Lighthouse preview port.');
+}
 const tempPrefix = 'hava81-lighthouse-';
 const staleTempAgeMs = 6 * 60 * 60 * 1000;
 const resultDir = '.lighthouse-results';
@@ -145,7 +152,9 @@ async function runLighthouse(outputPath, env) {
       '--output=json',
       `--output-path=${outputPath}`,
       '--only-categories=performance,accessibility,best-practices,seo',
-      '--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage',
+      ...(cdpPort
+        ? [`--port=${cdpPort}`]
+        : ['--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage']),
       '--quiet',
     ],
     { env }
@@ -181,29 +190,38 @@ await mkdir(resultDir, { recursive: true });
 const tempBaseDir = tmpdir();
 await cleanupStaleTempRuns(tempBaseDir);
 const runTempDir = await mkdtemp(join(tempBaseDir, tempPrefix));
-let playwrightExecutablePath;
-if (!process.env.CHROME_PATH) {
-  try {
-    const { chromium } = await import('playwright');
-    playwrightExecutablePath = chromium.executablePath();
-  } catch {
-    // Playwright is optional for this fallback: keep chrome-launcher's normal discovery.
+let chromePath;
+if (!cdpPort) {
+  let playwrightExecutablePath;
+  if (!process.env.CHROME_PATH) {
+    try {
+      const { chromium } = await import('playwright');
+      playwrightExecutablePath = chromium.executablePath();
+    } catch {
+      // Playwright is optional for this fallback: keep chrome-launcher's normal discovery.
+    }
   }
-}
-const chromePath = await resolveLighthouseChromePath({
-  configuredPath: process.env.CHROME_PATH,
-  playwrightExecutablePath,
-});
-if (chromePath && !process.env.CHROME_PATH) {
-  console.log(`[lighthouse] using installed Playwright Chromium: ${chromePath}`);
+  chromePath = await resolveLighthouseChromePath({
+    configuredPath: process.env.CHROME_PATH,
+    playwrightExecutablePath,
+  });
+  if (chromePath && !process.env.CHROME_PATH) {
+    console.log(`[lighthouse] using installed Playwright Chromium: ${chromePath}`);
+  }
+} else {
+  console.log(`[lighthouse] connecting to existing loopback Chrome DevTools port ${cdpPort}`);
 }
 const runEnv = {
   ...process.env,
-  ...(chromePath ? { CHROME_PATH: chromePath } : {}),
   TMPDIR: runTempDir,
   TEMP: runTempDir,
   TMP: runTempDir,
 };
+if (cdpPort) {
+  delete runEnv.CHROME_PATH;
+} else if (chromePath) {
+  runEnv.CHROME_PATH = chromePath;
+}
 
 const preview = spawn(
   process.execPath,

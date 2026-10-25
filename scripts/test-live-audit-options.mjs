@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { provinceNamesBySlug, provinceCentersBySlug, cityCenterDistanceKm } from './lib/live-audit-city-catalog.mjs';
+import { parseLoopbackCdpUrl, resolveLoopbackCdpPort } from './lib/loopback-cdp-url.mjs';
 
 const auditScript = fileURLToPath(new URL('./audit-live-responsive.mjs', import.meta.url));
 const captureScript = fileURLToPath(new URL('./capture-visual-audit.mjs', import.meta.url));
@@ -18,6 +19,33 @@ function runAuditOptions(args) {
   assert.equal(result.error, undefined, result.error?.message);
   return result;
 }
+
+
+test('shared Chrome DevTools configuration accepts only explicit loopback HTTP endpoints', async t => {
+  for (const value of ['http://127.0.0.1:9222', 'http://localhost:9222/', 'http://[::1]:9222']) {
+    await t.test(value, () => {
+      const origin = parseLoopbackCdpUrl(value);
+      assert.equal(new URL(origin).protocol, 'http:');
+      assert.equal(resolveLoopbackCdpPort(value), 9222);
+    });
+  }
+
+  for (const value of [
+    '',
+    'not-a-url',
+    'https://127.0.0.1:9222',
+    'http://127.0.0.1',
+    'http://example.com:9222',
+    'http://127.0.0.1:9222/devtools',
+    'http://user:pass@127.0.0.1:9222',
+    'http://127.0.0.1:9222/?token=secret',
+    'http://127.0.0.1:9222/#fragment',
+  ]) {
+    await t.test(`rejects ${JSON.stringify(value)}`, () => {
+      assert.throws(() => parseLoopbackCdpUrl(value), /HAVA81_CHROMIUM_CDP_URL/);
+    });
+  }
+});
 
 test('live audit refuses empty, malformed or non-URL-safe city lists', async t => {
   for (const cities of [',', ',,', 'izmir,,sanliurfa', '-izmir', 'izmir-', 'izmir, -']) {
