@@ -196,6 +196,7 @@ export const en = {
     },
     forecastAtlas: {
       title: "Today's rhythm",
+      deferred: 'Hourly forecast loads as you approach this section.',
       stale:
         'Forecast data is no longer fresh. The forecast chart is hidden until new data arrives.',
 

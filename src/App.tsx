@@ -19,6 +19,7 @@ import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
 import { NotFoundState } from './components/app/NotFoundState';
+import { DeferredForecastAtlas } from './components/app/DeferredForecastAtlas';
 import { isHomePathname, isUnknownPathname } from './utils/cityRoute';
 import { AtlasLoadingState, ForecastLoadingCard } from './components/app/AppSkeletons';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
@@ -29,7 +30,6 @@ import './styles/App.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const DecisionGlance = lazy(() => import('./components/hava81/DecisionGlance'));
-const ForecastAtlas = lazy(() => import('./components/hava81/ForecastAtlas'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
 const CommutePlanPanel = lazy(() => import('./components/hava81/CommutePlanPanel'));
 const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail'));
@@ -526,25 +526,16 @@ const App: React.FC = () => {
                         />
                       ) : forecast.displayMeta &&
                         (forecast.daily.length > 0 || forecast.displayHourly.length > 0) ? (
-                        <Suspense
-                          fallback={
-                            <ForecastLoadingCard
-                              title={t('hava81.forecastAtlas.title')}
-                              label={t('common.loading')}
-                            />
-                          }
-                        >
-                          <ForecastAtlas
-                            daily={forecast.daily}
-                            hourly={forecast.displayHourly}
-                            meta={forecast.displayMeta}
-                            current={{
-                              temperature: weather.temperature,
-                              icon: weather.icon,
-                              description: weather.description,
-                            }}
-                          />
-                        </Suspense>
+                        <DeferredForecastAtlas
+                          daily={forecast.daily}
+                          hourly={forecast.displayHourly}
+                          meta={forecast.displayMeta}
+                          current={{
+                            temperature: weather.temperature,
+                            icon: weather.icon,
+                            description: weather.description,
+                          }}
+                        />
                       ) : forecast.error ? (
                         <section
                           className="atlas-forecast-error-card"

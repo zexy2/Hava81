@@ -149,6 +149,34 @@ test.describe('hourly atlas', () => {
   );
 
   test(
+    'mobile first viewport defers the hourly chart chunk until its section nears the viewport',
+    MOBILE,
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 480 });
+      const chartChunkRequests: string[] = [];
+      page.on('request', request => {
+        const pathname = new URL(request.url()).pathname;
+        if (/\/ForecastAtlas-[^/]+\.js$/.test(pathname)) chartChunkRequests.push(pathname);
+      });
+
+      await page.goto('/istanbul/');
+      const deferred = page.locator('.atlas-forecast-loading--card');
+      await expect(deferred).toContainText(
+        'Saatlik tahmin, bu bölüm ekrana yaklaştığında yüklenir.'
+      );
+      await expect(deferred).not.toBeInViewport();
+      await expect(page.locator('.hava81-forecast-atlas')).toHaveCount(0);
+      expect(chartChunkRequests).toHaveLength(0);
+
+      await deferred.scrollIntoViewIfNeeded();
+      await expect(
+        page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })
+      ).toBeVisible();
+      await expect.poll(() => chartChunkRequests.length).toBeGreaterThan(0);
+    }
+  );
+
+  test(
     'narrow hourly atlas keeps every interval, its summary and a sticky axis usable',
     MOBILE,
     async ({ page }) => {
