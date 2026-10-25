@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { URL } from 'node:url';
 
 /** Build deterministic errors for one responsive live-audit case. */
@@ -38,4 +40,13 @@ export function formatWeatherRequestFailure(url, errorText) {
   if (!pathname.startsWith('/api/v1/weather/')) return null;
   if (/ERR_ABORTED|ERR_CANCELED|ERR_CANCELLED/i.test(errorText || '')) return null;
   return `network ${errorText || 'request failed'} ${url.split('?')[0]}`;
+}
+
+
+/** Persist the structured report even when screenshots are disabled. */
+export async function writeLiveAuditResults(outputDirectory, report) {
+  await mkdir(outputDirectory, { recursive: true });
+  const resultPath = join(outputDirectory, 'results.json');
+  await writeFile(resultPath, JSON.stringify(report, null, 2));
+  return resultPath;
 }
