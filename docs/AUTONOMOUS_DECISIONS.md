@@ -637,3 +637,7 @@ JavaScript `Date.parse` can normalize impossible calendar dates such as February
 ## 2026-10-25 — Activate the deferred forecast in the live responsive audit
 
 The hourly forecast atlas is intentionally unmounted on mobile until its reserved placeholder enters the 120px `IntersectionObserver` activation margin. A manual live responsive audit must detect the localized deferred placeholder, approach it to trigger lazy loading, wait for the atlas or a visible error state, and then restore the page to scroll position zero before measuring first-viewport geometry or taking screenshots. This prevents a correct deferred-loading state from being misclassified as a responsive failure without biasing the first-viewport measurements. Keep the audit read-only and response-cache-bounded; do not change the chart's loading behavior, weather data, or provider semantics.
+
+## 2026-10-25 — Lint the live audit's mixed Node/browser scripts
+
+The live responsive audit is a Node entrypoint whose Playwright `page.evaluate` callbacks intentionally use browser globals. The previous ESLint file list excluded both the audit and its Node contract test, so standalone linting treated legitimate Node/browser globals as undefined and the normal lint gate never checked either file. Add a scoped flat-config override with Node and browser globals for these two scripts and include them in `npm run lint`; do not widen lint to every operational script without a separate inventory and cleanup.
