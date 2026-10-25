@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import socket
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -61,6 +62,11 @@ def main() -> int:
     print(f"merge_deploy_ready: {worker.get('can_merge_or_deploy')} blockers={worker.get('merge_deploy_blocking_reasons', [])} observer_writes={worker.get('writes_repository')}")
     print(f"production: {'HEALTHY' if prod.get('healthy') else 'UNHEALTHY'} issues={prod.get('issues', [])}")
     host = s.get('host', {})
+    print(f"status_process_host: hostname={socket.gethostname()}")
+    print(
+        f"observer_host: snapshot_hostname={host.get('hostname') or 'unknown'} "
+        'disk_scope=observer-host-local'
+    )
     disk = host.get('disk') or {}
     used_bytes = disk.get('used_bytes')
     free_bytes = disk.get('free_bytes')

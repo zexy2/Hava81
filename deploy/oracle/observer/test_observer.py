@@ -2295,6 +2295,12 @@ class ObserverHostDiskTests(unittest.TestCase):
             observer.os.statvfs = original_statvfs
             observer.collect_hava81_browser_processes = original_collect
 
+    def test_disk_metrics_include_the_hostname_of_the_collecting_host(self) -> None:
+        with mock.patch.object(observer.socket, 'gethostname', return_value='observer-test-host'):
+            host = self._collect_with_available_blocks(2_000_000)
+
+        self.assertEqual(host['hostname'], 'observer-test-host')
+
     def test_high_disk_percentage_is_unhealthy_even_above_absolute_free_floor(self) -> None:
         host = self._collect_with_available_blocks(750_000)  # ~3.1 GB free, 92.5% used
         self.assertGreater(host['disk']['free_bytes'], observer.MINIMUM_ROOT_FREE_BYTES)

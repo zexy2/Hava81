@@ -1,6 +1,6 @@
 # Hava81 production observer
 
-This directory versions the read-only observer that runs on the Oracle host every five minutes.
+This directory versions the read-only observer intended to run on the Oracle host every five minutes. Each snapshot records the hostname where disk and browser-process metrics were collected; a copied or gateway-local snapshot is not a fresh measurement of Oracle disk capacity.
 
 Runtime paths:
 

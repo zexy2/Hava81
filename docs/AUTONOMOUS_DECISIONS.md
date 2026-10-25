@@ -570,3 +570,7 @@ Both Turkish `/` and English `/en/` are first-class static entry points. Each sh
 ## 2026-10-25 — first-visit browser locale SEO contract
 - The default Playwright locale is Turkish, so a test that pre-seeds English in localStorage does not cover a first-visit English browser. Add a fresh-context `en-US` E2E case for a Turkish city URL, with weather API requests aborted, and assert the client-selected English path plus canonical, Open Graph URL and all language alternates before weather is available.
 - Keep this a frontend test/metadata change only. Do not infer weather availability from successful route rendering; do not merge/deploy API-runtime work until the real Oracle host is reachable and host-specific disk/build-headroom plus blue-green/canary gates pass.
+
+
+## 2026-10-25 10:27 TRT — Observer disk metrics must identify their measured host
+- `host.disk` is collected locally by the observer process. Every snapshot must include that host's hostname, and the human-readable status must show both the snapshot hostname and the status process hostname. Label disk scope as observer-host-local; do not treat a gateway-local snapshot as Oracle disk evidence unless the measured hostname is confirmed to be the Oracle host. Keep all existing fail-closed disk and deployment gates intact.
