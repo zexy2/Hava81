@@ -574,3 +574,8 @@ Both Turkish `/` and English `/en/` are first-class static entry points. Each sh
 
 ## 2026-10-25 10:27 TRT — Observer disk metrics must identify their measured host
 - `host.disk` is collected locally by the observer process. Every snapshot must include that host's hostname, and the human-readable status must show both the snapshot hostname and the status process hostname. Label disk scope as observer-host-local; do not treat a gateway-local snapshot as Oracle disk evidence unless the measured hostname is confirmed to be the Oracle host. Keep all existing fail-closed disk and deployment gates intact.
+
+
+## 2026-10-25 — Last-known weather fallback must match the requested city and locale
+
+The one-slot persisted weather cache is a resilience fallback, not evidence for whichever route happens to be open. When there is no active payload and an infrastructure request fails, show the cache only if its canonical province identity matches the explicit city request and its stored locale matches the current interface locale. Set the expected identity from the initial city and each explicit city fetch; clear it when switching to location mode or clearing weather because the target is then unknown. Preserve same-city stale-cache fallback with its visible last-known timestamp. Do not silently present another province's observation as the requested city's weather, and do not fabricate a replacement observation.

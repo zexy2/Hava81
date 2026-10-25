@@ -1881,3 +1881,23 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Merge PR #1478 only after its exact current head has all required hosted checks green and `mergeable_state=clean`; then monitor its main deploy and production smoke.
 4. SentinelX's enrolled Oracle host remains offline. The accessible `nexus-hermes` gateway's root disk is 92.4% used / 7.3 GiB free; these are gateway-local measurements, not Oracle measurements, and `api_build_headroom_ok=false`. Do not install the observer on Oracle or build/deploy/rollback API runtime until the actual Oracle host is reachable and fresh host-specific disk/build-headroom and blue-green/canary gates pass. Keep API primary on 4002 and 4001 as rollback/canary.
 5. Preserve all unrelated dirty worktrees; never disable or pause this automation.
+
+
+## 2026-10-25 10:54 TRT — Scope emergency weather-cache fallback to the requested province
+
+### Change and validation
+- Started from deployed `origin/main=c943cfe957c25593eff3fecc1f8f2b5803e019cc` in isolated worktree `/tmp/hava81-run11-stale-evidence-20261025-1045`, branch `automation/hava81-run11-stale-evidence-20261025-1045`. Code commit before this append-only checkpoint: `467229c89` (`fix(weather): keep cached fallback scoped to requested city`).
+- Reproduced a wrong-city failure: a fresh localStorage cache for İzmir, an initial route/request for İstanbul, and an upstream network failure caused `useWeather` to return cached İzmir even though the active request targeted İstanbul. The cache fast path correctly rejected the mismatch, but the emergency failure fallback did not.
+- The fallback now requires the cached province identity to match the expected explicit city request and the cache locale to match the current interface language. The expected identity follows city fetches and is cleared for current-location mode and `clearWeather`, when the intended province is not yet known. A same-city stale cache remains available on infrastructure failure and keeps its original last-known timestamp; no weather values are synthesized.
+- Added regressions for wrong-province cache, wrong-language cache, location failure with an unrelated city cache, and preservation of same-city stale-cache fallback. The focused hook suite passed **68/68**. Full frontend coverage suite passed **109/109 files**, overall **92.72% statement coverage / 86.58% branch coverage**; `npm run lint`, `npm run type-check`, `npm run build`, and `git diff --check` passed. The regression failed before the implementation and passed after it.
+
+### Production / infrastructure
+- PR #1477 merged as `ab97229c64d9acd16045e026290488a85f03f172`; PR #1478 merged as `c943cfe957c25593eff3fecc1f8f2b5803e019cc`. Main CI/CD `40174240958`, Ops script contracts `40174240953`, and CodeQL `40174240951` succeeded; Pages deployment `40174398636` succeeded.
+- Direct post-deploy smoke at 10:52 TRT: `/`, `/istanbul/`, `/en/istanbul/` all HTTP 200 and each embeds exact main SHA `c943cfe957c25593eff3fecc1f8f2b5803e019cc`; API `/api/v1/health`, `/api/v1/health/ready`, `/api/v1/health/live` HTTP 200; CORS preflight HTTP 204. API runtime revision remains `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee`; API port 4002 remains primary.
+- SentinelX's enrolled Oracle host is still offline. `nexus-hermes` gateway root is 93% used with 7.4 GiB free; these are gateway-local figures, not Oracle disk measurements, and the observer's API build-headroom gate is false. No API build/deploy/rollback, cleanup, observer install, or port switch was attempted.
+
+### Current branch / next actions
+1. Finish this append-only decision/progress checkpoint, run `git diff --check`, push branch `automation/hava81-run11-stale-evidence-20261025-1045`, and open a narrow PR. Record the resulting exact head SHA and hosted CI/CD, Ops and CodeQL run IDs.
+2. Verify the exact PR head, all required checks, and `mergeable_state=clean` directly before merge. While hosted CI runs, continue a separate independent task rather than waiting.
+3. After merge, monitor main CI/Pages deploy and directly verify root/TR/EN revision parity, API health/readiness/liveness, CORS, and live current/hourly weather responses.
+4. Do not merge API-runtime changes or install/update the Oracle observer until the actual Oracle host is reachable and fresh host-specific disk/build-headroom plus blue-green/canary gates pass. Keep API primary on 4002 and 4001 as rollback/canary. Preserve unrelated dirty worktrees and never disable or pause this automation.
