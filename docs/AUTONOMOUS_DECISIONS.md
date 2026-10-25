@@ -674,3 +674,8 @@ DecisionGlance, WeatherDecisionField, DailyPlanPanel, and DecisionAlertsPanel ar
 
 - Lighthouse's default homepage target should be the same-origin root route `/`, matching the canonical user-facing route served in production. `/index.html` is an implementation filename and can bypass root-route redirects, document routing, or canonical metadata behavior that the real homepage audit is meant to measure.
 - Preserve the resolver's existing same-origin/path restrictions for operator-supplied targets. This changes only the default audit URL; it does not change production routes or application behavior.
+
+
+## 2026-10-25 — Keep client-side canonical metadata pinned to the public origin
+- Client-side canonical URLs, `og:url`, and hreflang alternates must resolve against `https://hava81.zekiakgul.dev`, not the current browser origin. A local preview/development origin is not the public canonical and can make Lighthouse's SEO canonical audit fail after JavaScript runs even when static HTML is correct.
+- Preserve the production canonical host while changing only the active route path/query. Add integration assertions for home, English, province, query, and alternate links. Keep the Lighthouse SEO hard floor; fix invalid metadata rather than lowering the budget.

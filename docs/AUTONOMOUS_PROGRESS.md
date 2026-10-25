@@ -2177,3 +2177,25 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Pre-rebase validation: `node --check` for the resolver and contract test, `node scripts/test-lighthouse-target-url.mjs` (PASS), and `git diff --check` (PASS). Re-run those gates on the rebased commit and inspect the exact diff before push.
 - This is an operational audit-target change only: no application assets, weather data, API code, production routing or deploy changed. The latest worker snapshot (2026-10-25T18:54:26Z) reports frontend/API healthy, API 4002 primary, CORS/readiness healthy, 8.4 GiB free and API build headroom true; refresh the state before any merge/deploy. Disk pressure warning persists.
 - Next: rerun the contract/syntax/diff checks, push the unique branch normally, open a narrow PR, require exact-head CI/CD, Ops script contracts, CodeQL and required checks, and continue independent work while hosted gates run.
+
+## 2026-10-25 22:28 TRT — Repair canonical-root Lighthouse SEO gate
+
+### Cause and implementation
+- PR #1494 initially failed exact-head CI/CD run `40224423956` (#3652) only at `Lighthouse budgets`: the canonical-root audit scored SEO 92 because the client-side route hook rewrote `rel=canonical` and `og:url` against `window.location.origin`. During local preview that changed the public canonical URL to `http://127.0.0.1:4173/`, which Lighthouse correctly treats as an invalid canonical. The public production root already serves the correct `https://hava81.zekiakgul.dev/` canonical.
+- On the same dedicated branch/worktree `/home/ubuntu/hava81-lighthouse-root-target-20261025-2010`, changed client-side canonical, `og:url`, and hreflang alternates to resolve against the public site origin, preserving the route path and query. Added regression assertions for the Turkish/English home alternates and updated existing canonical/social metadata assertions for home, English, province, and query routes.
+- Source/test commit: `de00679ead144f97dce3c64a494be3d4356c22c6`, atop branch commit `42ac282958272e9be3546e1688991e590fec092f`; base `origin/main=295543ad98644d812e3808a2c67c64d769983130`. The source commit is local-only until the docs checkpoint is committed; remote branch head was still `42ac282...` at the last direct query. Re-read remote head before a normal fast-forward push.
+
+### Validation
+- `npm run lint` and `npm run type-check`: PASS.
+- Focused App integration suite: 32/32 passed after the final alternate-link assertions.
+- Full `npm run test:ci`: 113 files / 1,139 tests passed; 92.79% statements and 86.78% branches.
+- `npm run build`: PASS; generated 81 Turkish + 81 English province pages, CSP applied to 165 HTML files, service worker stamped.
+- `node --check` for both Lighthouse target scripts, `node scripts/test-lighthouse-target-url.mjs`, and `git diff --check`: PASS.
+- Local `HAVA81_LIGHTHOUSE_PORT=4174 npm run lighthouse`: performance 86 (floor 60), accessibility 100, best-practices 96, SEO 100; LCP 2.8 s, TBT 330 ms, CLS 0.056. Port 4173 was already occupied by another process, so used 4174 and did not interrupt it. The local API proxy on 4000 was absent; no API service was started or changed.
+- Fresh observer snapshot `2026-10-25T19:26:07.006823Z`: production healthy, root/city/main frontend revision `295543ad98644d812e3808a2c67c64d769983130`, readiness HTTP 200, CORS healthy, API primary port 4002, no pending deploy, disk 91.5% used / 8.3 GiB free with API build headroom true (disk pressure warning persists). Direct smoke: `/`, `/izmir/`, and API readiness HTTP 200; CORS preflight HTTP 204 with the expected origin; production root canonical is the public HTTPS URL. No production files or services were changed.
+
+### Next actions
+1. Commit this append-only progress/decision checkpoint, re-read the remote branch SHA, push the dedicated branch normally, and directly query exact-head CI/CD, Ops contracts, CodeQL, and mergeability.
+2. Keep the Lighthouse SEO floor unchanged; the invalid local canonical was a real client-side metadata bug, not a reason to weaken the gate.
+3. When all exact-head gates are green, refresh worker state and PR head/mergeability, merge normally, then verify main CI/Pages deploy and public revision parity. Continue an independent task in a separate clean worktree while checks run.
+4. Preserve the disk-pressure warning, API port 4002 primary and 4001 rollback/canary. Do not disable the automation.
