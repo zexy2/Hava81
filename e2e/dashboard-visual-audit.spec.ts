@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -48,9 +49,8 @@ test('dashboard hero and current weather fit mobile and desktop viewports', asyn
     await page.goto('/istanbul');
     const hero = page.locator('.decision-glance').first();
     await expect(hero).toBeVisible();
-    // A screenshot taken while the forecast skeleton is visible cannot audit the loaded dashboard.
-    await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
-    await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);
+    // Do not force the below-fold forecast into view here: this audit measures the hero's
+    // first-viewport geometry. The chart may be deferred or already mounted within the margin.
     const city = page.getByText('İstanbul', { exact: true }).first();
     await expect(city).toBeVisible();
     const geometry = await page.evaluate(() => ({
@@ -89,6 +89,9 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     expect(loadingHeight, 'mobile forecast placeholder should be compact').toBeLessThanOrEqual(320);
     await captureEvidence(page, 'forecast-mobile-loading.png');
     releaseForecast();
+    // After the API resolves, the compact placeholder remains until the user
+    // approaches the below-fold section. This test explicitly approaches it.
+    await ensureForecastAtlasLoaded(page);
     await expect(skeleton).toHaveCount(0, { timeout: 15000 });
     const loaded = page.locator('.hava81-forecast-atlas');
     await expect(loaded).toBeVisible();

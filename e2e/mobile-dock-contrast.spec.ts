@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import { mockNewEndpointsMissing } from './helpers/weather-fixtures';
 
 const now = Date.now();
@@ -44,6 +45,7 @@ test('320px English dock keeps readable foreground against gradient stops', asyn
     await page.route('**/api/v1/weather/air-quality**', route => route.fulfill({ status: 503, json: {} }));
     await page.route('**/api/v1/weather/context**', route => route.fulfill({ status: 503, json: {} }));
     await page.goto('/istanbul/');
+    await ensureForecastAtlasLoaded(page);
     await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
     await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
     await expect(page.locator('.atlas-forecast-loading--card')).toHaveCount(0);

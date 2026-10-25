@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ensureForecastAtlasLoaded } from './helpers/forecast';
 
 const fixedNow = new Date('2026-08-29T20:30:00.000Z');
 const nowIso = fixedNow.toISOString();
@@ -90,6 +91,7 @@ test('hourly precipitation summary names the local day and time of the rain peak
   );
 
   await page.goto('/istanbul');
+  await ensureForecastAtlasLoaded(page);
   await expect(page.locator('.hava81-forecast-atlas')).toBeVisible();
   const rain = page.locator('.hava81-forecast-atlas__summary-item.is-precipitation');
   await expect(rain).toHaveClass(/has-signal/);
