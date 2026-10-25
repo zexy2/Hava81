@@ -6,7 +6,12 @@ import {
   parseGmtModelTime,
 } from '../src/modules/context/context.service';
 
-const toGmtModelTime = (date: Date) => date.toISOString().slice(0, 16);
+const HOUR_MS = 60 * 60_000;
+const buildHourlyTimeline = (length = 25) => {
+  const start = Math.floor(Date.now() / HOUR_MS) * HOUR_MS;
+  return Array.from({ length }, (_, index) => new Date(start + index * HOUR_MS).toISOString().slice(0, 16));
+};
+const values = (length: number, value: number) => Array.from({ length }, () => value);
 
 const fakeFetch = (async (input: Parameters<typeof fetch>[0]) => {
   const url = String(input);
@@ -15,19 +20,17 @@ const fakeFetch = (async (input: Parameters<typeof fetch>[0]) => {
     assert.equal(parsedUrl.searchParams.get('timezone'), 'GMT');
     assert.equal(parsedUrl.searchParams.get('forecast_hours'), '25');
     assert.equal(parsedUrl.searchParams.has('forecast_days'), false);
+    const timeline = buildHourlyTimeline();
     return new Response(
       JSON.stringify({
         timezone: 'GMT',
         hourly_units: { dust: 'μg/m³', grass_pollen: 'grains/m³', olive_pollen: 'grains/m³' },
         hourly: {
-          time: [
-            toGmtModelTime(new Date(Date.now() + 60 * 60_000)),
-            toGmtModelTime(new Date(Date.now() + 2 * 60 * 60_000)),
-          ],
-          uv_index: [2, 7],
-          dust: [4, 12],
-          grass_pollen: [1, 8],
-          olive_pollen: [0, 3],
+          time: timeline,
+          uv_index: timeline.map((_, index) => (index === 0 ? 2 : index === 1 ? 7 : 0)),
+          dust: timeline.map((_, index) => (index === 0 ? 4 : index === 1 ? 12 : 0)),
+          grass_pollen: timeline.map((_, index) => (index === 0 ? 1 : index === 1 ? 8 : 0)),
+          olive_pollen: timeline.map((_, index) => (index === 1 ? 3 : 0)),
         },
       }),
       { status: 200, headers: { 'content-type': 'application/json' } }
@@ -167,17 +170,55 @@ test('context service reports malformed upstream air payloads as provider failur
   );
 });
 
-test('context service rejects malformed or misaligned air-model timelines instead of understating maxima', async () => {
+test('context service rejects incomplete, malformed or misaligned hourly timelines instead of understating maxima', async () => {
+  const validTimes = buildHourlyTimeline();
+  const invalidTime = [...validTimes];
+  invalidTime[1] = 'not-a-model-time';
+  const duplicateTime = [...validTimes];
+  duplicateTime[1] = duplicateTime[0];
+  const outOfOrderTime = [...validTimes];
+  [outOfOrderTime[1], outOfOrderTime[2]] = [outOfOrderTime[2], outOfOrderTime[1]];
+  const shortTimes = validTimes.slice(0, 2);
   const cases = [
     {
       label: 'short UV series',
-      time: ['2026-08-30T12:00', '2026-08-30T13:00'],
+      time: validTimes,
       uvIndex: [2],
+      dust: values(validTimes.length, 4),
+      grassPollen: values(validTimes.length, 1),
+      olivePollen: values(validTimes.length, 0),
     },
     {
       label: 'invalid model time',
-      time: ['2026-08-30T12:00', 'not-a-model-time'],
-      uvIndex: [2, 7],
+      time: invalidTime,
+      uvIndex: values(validTimes.length, 2),
+      dust: values(validTimes.length, 4),
+      grassPollen: values(validTimes.length, 1),
+      olivePollen: values(validTimes.length, 0),
+    },
+    {
+      label: 'duplicate hour',
+      time: duplicateTime,
+      uvIndex: values(validTimes.length, 2),
+      dust: values(validTimes.length, 4),
+      grassPollen: values(validTimes.length, 1),
+      olivePollen: values(validTimes.length, 0),
+    },
+    {
+      label: 'out-of-order hour',
+      time: outOfOrderTime,
+      uvIndex: values(validTimes.length, 2),
+      dust: values(validTimes.length, 4),
+      grassPollen: values(validTimes.length, 1),
+      olivePollen: values(validTimes.length, 0),
+    },
+    {
+      label: 'truncated 24-hour coverage',
+      time: shortTimes,
+      uvIndex: values(shortTimes.length, 2),
+      dust: values(shortTimes.length, 4),
+      grassPollen: values(shortTimes.length, 1),
+      olivePollen: values(shortTimes.length, 0),
     },
   ];
 
@@ -189,9 +230,9 @@ test('context service rejects malformed or misaligned air-model timelines instea
           hourly: {
             time: item.time,
             uv_index: item.uvIndex,
-            dust: [4, 12],
-            grass_pollen: [1, 8],
-            olive_pollen: [0, 3],
+            dust: item.dust,
+            grass_pollen: item.grassPollen,
+            olive_pollen: item.olivePollen,
           },
         }),
         { status: 200, headers: { 'content-type': 'application/json' } }
@@ -203,7 +244,7 @@ test('context service rejects malformed or misaligned air-model timelines instea
         assert.equal((error as { code?: string }).code, 'INVALID_CONTEXT_PROVIDER_RESPONSE');
         return true;
       },
-      `expected ${item.label} to fail closed`
+      'expected ' + item.label + ' to fail closed'
     );
   }
 });
