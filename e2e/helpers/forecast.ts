@@ -27,9 +27,16 @@ export async function ensureForecastAtlasLoaded(page: Page) {
   // Directly approach the deferred placeholder after the observer is installed. The observer
   // may replace it as soon as the scroll reaches its 120px activation margin.
   try {
-    await deferred.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'auto' }));
+    // The observer can replace the placeholder between isVisible() and this call.
+    // Bound the locator wait so a detached placeholder cannot consume the whole test timeout.
+    await deferred.evaluate(
+      element => element.scrollIntoView({ block: 'center', behavior: 'auto' }),
+      undefined,
+      { timeout: 1_000 }
+    );
   } catch (error) {
-    if (!(await atlas.count())) throw error;
+    if (await atlas.count().catch(() => 0)) return;
+    throw error;
   }
   await expect(atlas, 'approaching the forecast slot should mount the chart').toHaveCount(1, {
     timeout: 15_000,
