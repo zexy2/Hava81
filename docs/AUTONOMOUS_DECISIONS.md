@@ -621,3 +621,9 @@ On narrow mobile layouts, the hourly forecast atlas can be below the first viewp
 ## 2026-10-25 — E2E chart assertions must activate the intentionally deferred forecast
 
 The mobile forecast atlas is intentionally not mounted until its reserved placeholder approaches the viewport. E2E tests that inspect interval controls, source links, hourly summaries, or chart accessibility must first wait for the localized deferred-placeholder state, approach it, and wait for the atlas to mount. Use a shared helper that handles the placeholder being detached by `IntersectionObserver` during the scroll; do not add fixed sleeps or weaken the chart assertions. Keep the first-viewport regression separate and explicitly verify that the chart chunk is absent before scroll and present after activation. This is test synchronization only; do not change forecast data, freshness, scoring, provider attribution, or safety guidance.
+
+## 2026-10-25 01:23 TRT — Marine API timestamps must be explicit UTC instants
+
+- When requesting Open-Meteo Marine `current` data, request `timezone=GMT` and serialize a valid provider `current.time` as an explicit ISO-8601 UTC instant. Never return a timezone-less local wall-clock string as though it were an unambiguous observation timestamp.
+- If the marine timestamp is malformed, omit only the marine section and retain independently valid UV/dust/pollen context. The frontend still keeps a compatibility parser for existing deployed API revisions and enforces source-age freshness.
+- This changes API runtime behavior. Do not merge or deploy until the real Oracle host is reachable and fresh host/disk/headroom checks pass. Validate with hosted CI, then use blue-green/canary; keep API 4002 primary and 4001 as rollback/canary. No deployment is authorized from the gateway host.

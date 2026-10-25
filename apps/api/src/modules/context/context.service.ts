@@ -162,7 +162,9 @@ export class ContextSignalsService {
             'current',
             'wave_height,wave_direction,wave_period,sea_surface_temperature'
           );
-          marineUrl.searchParams.set('timezone', 'auto');
+          // Emit an unambiguous source timestamp; the frontend must not guess the provider's
+          // location-local wall clock from the browser timezone.
+          marineUrl.searchParams.set('timezone', 'GMT');
           if (this.openMeteo.apiKey) marineUrl.searchParams.set('apikey', this.openMeteo.apiKey);
           return getJson(marineUrl, this.fetchImpl)
             .then(data => marineSchema.parse(data))
@@ -171,6 +173,17 @@ export class ContextSignalsService {
       : Promise.resolve(null);
 
     const [air, marine] = await Promise.all([airPromise, marinePromise]);
+    const marineObservedAtMs = marine?.current ? parseGmtModelTime(marine.current.time) : Number.NaN;
+    const marineCurrent =
+      marine?.current && Number.isFinite(marineObservedAtMs)
+        ? {
+            observedAt: new Date(marineObservedAtMs).toISOString(),
+            waveHeight: marine.current.wave_height ?? undefined,
+            waveDirection: marine.current.wave_direction ?? undefined,
+            wavePeriod: marine.current.wave_period ?? undefined,
+            seaSurfaceTemperature: marine.current.sea_surface_temperature ?? undefined,
+          }
+        : undefined;
     return {
       provider: 'Open-Meteo',
       fetchedAt: new Date().toISOString(),
@@ -188,15 +201,7 @@ export class ContextSignalsService {
         wavePeriod: marine?.current_units?.wave_period,
         seaSurfaceTemperature: marine?.current_units?.sea_surface_temperature,
       },
-      marine: marine?.current
-        ? {
-            observedAt: marine.current.time,
-            waveHeight: marine.current.wave_height ?? undefined,
-            waveDirection: marine.current.wave_direction ?? undefined,
-            wavePeriod: marine.current.wave_period ?? undefined,
-            seaSurfaceTemperature: marine.current.sea_surface_temperature ?? undefined,
-          }
-        : undefined,
+      marine: marineCurrent,
     };
   }
 }
