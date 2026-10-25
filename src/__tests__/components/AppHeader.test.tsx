@@ -119,6 +119,10 @@ describe('AppHeader', () => {
     fireEvent.click(search);
     expect(props.onToggleMobileSearch).toHaveBeenCalled();
 
+    const closedMap = screen.getByRole('button', { name: i18n.t('weather.showMap') });
+    expect(closedMap).toHaveAttribute('aria-expanded', 'false');
+    expect(closedMap).not.toHaveAttribute('aria-controls');
+
     rerender(<AppHeader {...props} isMobileSearchOpen showMap />);
     expect(screen.getByRole('banner')).toHaveClass('atlas-header--search-open');
     expect(screen.getByRole('button', { name: i18n.t('hava81.closeSearch') })).toHaveAttribute(
@@ -127,6 +131,7 @@ describe('AppHeader', () => {
     );
     const map = screen.getByRole('button', { name: i18n.t('weather.hideMap') });
     expect(map).toHaveAttribute('aria-expanded', 'true');
+    expect(map).toHaveAttribute('aria-controls', 'weather-map-region');
     fireEvent.click(map);
     expect(props.onToggleMap).toHaveBeenCalled();
 
