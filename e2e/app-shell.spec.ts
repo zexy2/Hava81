@@ -59,11 +59,10 @@ test.describe('routing and location', () => {
       await expect(page).toHaveURL(/\/$/);
       await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toHaveCount(0);
       await expect(page).toHaveTitle('Hava81 — Havayı değil, gününü planla');
-      // The preview port is configurable for isolated/parallel local runs; the canonical
-      // origin should follow the actual app origin instead of assuming the default 4173.
-      expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe(
-        new URL('/', page.url()).href
-      );
+      // A local preview may use its own origin, while SEO audits deliberately keep the
+      // public production canonical. Accept only those two exact root URLs, never a third host.
+      const canonicalHref = await page.locator('link[rel="canonical"]').getAttribute('href');
+      expect([new URL('/', page.url()).href, 'https://hava81.zekiakgul.dev/']).toContain(canonicalHref);
     }
   );
 
