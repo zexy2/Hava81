@@ -99,7 +99,50 @@ export function useAppRouting({
       }
     };
 
+    const updateCityMetadata = (cityName: string, path: string | null) => {
+      const cityTitle = t('hava81.cityDocumentTitle', { city: cityName });
+      const cityDescription = t('hava81.cityDocumentDescription', { city: cityName });
+      document.title = cityTitle;
+      if (!path) return;
+
+      const canonicalUrl = new URL(path, window.location.origin).toString();
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+      }
+      canonical.href = canonicalUrl;
+      setMetaContent('meta[name="description"]', cityDescription);
+      setMetaContent('meta[property="og:url"]', canonicalUrl);
+      setMetaContent('meta[property="og:title"]', cityTitle);
+      setMetaContent('meta[property="og:description"]', cityDescription);
+      setMetaContent('meta[property="og:image:alt"]', cityTitle);
+      setMetaContent('meta[name="twitter:title"]', cityTitle);
+      setMetaContent('meta[name="twitter:description"]', cityDescription);
+      setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
+      setMetaContent('meta[property="og:locale"]', language === 'en' ? 'en_US' : 'tr_TR');
+      setMetaContent('meta[property="og:locale:alternate"]', language === 'en' ? 'tr_TR' : 'en_US');
+    };
+
     if (!weather) {
+      // A city slug already gives us canonical identity. Keep the URL and head
+      // locale-correct while the live weather request is slow or unavailable.
+      const routeCity = cityFromPathname(window.location.pathname);
+      if (routeCity) {
+        const path = cityPath(routeCity.name, language);
+        if (!path) return;
+        if (window.location.pathname !== path) {
+          window.history.replaceState(
+            window.history.state,
+            '',
+            `${path}${window.location.search}${window.location.hash}`
+          );
+        }
+        setAlternates(cityPath(routeCity.name, 'tr'), cityPath(routeCity.name, 'en'));
+        updateCityMetadata(routeCity.name, path);
+        return;
+      }
       if (!isHomePathname(window.location.pathname)) return;
       const rootMetadata =
         language === 'en'
@@ -157,30 +200,7 @@ export function useAppRouting({
         previousCity && previousCity !== weather.cityName ? 'pushState' : 'replaceState';
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
-    const cityTitle = t('hava81.cityDocumentTitle', { city: weather.cityName });
-    const cityDescription = t('hava81.cityDocumentDescription', { city: weather.cityName });
-    document.title = cityTitle;
-    if (path) {
-      const canonicalUrl = new URL(path, window.location.origin).toString();
-      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-      if (!canonical) {
-        canonical = document.createElement('link');
-        canonical.rel = 'canonical';
-        document.head.appendChild(canonical);
-      }
-      canonical.href = canonicalUrl;
-
-      setMetaContent('meta[name="description"]', cityDescription);
-      setMetaContent('meta[property="og:url"]', canonicalUrl);
-      setMetaContent('meta[property="og:title"]', cityTitle);
-      setMetaContent('meta[property="og:description"]', cityDescription);
-      setMetaContent('meta[property="og:image:alt"]', cityTitle);
-      setMetaContent('meta[name="twitter:title"]', cityTitle);
-      setMetaContent('meta[name="twitter:description"]', cityDescription);
-      setMetaContent('meta[name="twitter:image:alt"]', cityTitle);
-      setMetaContent('meta[property="og:locale"]', language === 'en' ? 'en_US' : 'tr_TR');
-      setMetaContent('meta[property="og:locale:alternate"]', language === 'en' ? 'tr_TR' : 'en_US');
-    }
+    updateCityMetadata(weather.cityName, path);
   }, [language, t, weather]);
 
   useEffect(() => {

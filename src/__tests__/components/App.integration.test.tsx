@@ -777,6 +777,62 @@ describe('Hava81 app integration', () => {
     expect(compare!).not.toHaveAttribute('aria-pressed');
   });
 
+  it('keeps city URL and SEO metadata locale-correct while weather is unavailable', async () => {
+    const tags = [
+      ['name', 'description'],
+      ['property', 'og:url'],
+      ['property', 'og:title'],
+      ['property', 'og:description'],
+      ['property', 'og:image:alt'],
+      ['property', 'og:locale'],
+      ['property', 'og:locale:alternate'],
+      ['name', 'twitter:title'],
+      ['name', 'twitter:description'],
+      ['name', 'twitter:image:alt'],
+    ] as const;
+    tags.forEach(([attribute, value]) => {
+      let meta = document.querySelector<HTMLMetaElement>(`meta[${attribute}="${value}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attribute, value);
+        document.head.appendChild(meta);
+      }
+      meta.content = 'stale';
+    });
+    window.history.replaceState({}, '', '/istanbul/');
+    await i18n.changeLanguage('en');
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'auto',
+        language: 'en',
+      })
+    );
+    service.getCurrentWeather.mockImplementation(() => new Promise(() => {}));
+
+    renderApp();
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/en/istanbul/');
+      expect(document.documentElement.lang).toBe('en');
+      expect(document.title).toBe('İstanbul weather — Hava81');
+      expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+        'http://localhost:3000/en/istanbul/'
+      );
+      expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
+        'http://localhost:3000/en/istanbul/'
+      );
+      expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toContain(
+        'Current weather, hourly and daily forecast'
+      );
+      expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).not.toContain(
+        'için güncel hava'
+      );
+    });
+  });
+
   it('keeps social metadata aligned with the active city and language', async () => {
     const socialTags = [
       ['name', 'description'],
