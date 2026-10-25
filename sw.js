@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hava81-shell-b37654aff690';
+const CACHE_NAME = 'hava81-shell-2440354fbb31';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
 
@@ -27,8 +27,9 @@ function extractBootAssetPaths(html) {
 }
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(CACHE_NAME);
       // Do not activate a new versioned worker without a complete offline boot shell.
       // Rejecting this install leaves the previous worker/cache authoritative until retry.
       const rootResponse = await fetch('/', { cache: 'no-store' });
@@ -50,8 +51,17 @@ self.addEventListener('install', event => {
           // Optional metadata must not block an otherwise usable shell upgrade.
         }
       }
-    })
-  );
+    } catch (error) {
+      // A failed install must not leave a partial versioned shell consuming Cache Storage.
+      // Preserve the original install error even if best-effort cleanup itself fails.
+      try {
+        await caches.delete(CACHE_NAME);
+      } catch {
+        // The rejected install still preserves the previous active worker.
+      }
+      throw error;
+    }
+  })());
   self.skipWaiting();
 });
 
