@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLiveAuditErrors, formatWeatherRequestFailure } from './lib/live-audit-result.mjs';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { buildLiveAuditErrors, formatWeatherRequestFailure, writeLiveAuditResults } from './lib/live-audit-result.mjs';
 
 const healthyMetrics = {
   city: 'İzmir',
@@ -68,4 +71,19 @@ test('live audit ignores unrelated routes and expected browser teardown cancella
     formatWeatherRequestFailure('https://api.hava81.zekiakgul.dev/api/v1/weather/current', 'net::ERR_ABORTED'),
     null
   );
+});
+
+
+test('live audit persists structured failures even when screenshots are disabled', async t => {
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'hava81-live-audit-results-'));
+  t.after(() => rm(outputDirectory, { recursive: true, force: true }));
+  const report = {
+    checkedAt: '2026-10-25T01:00:00.000Z',
+    baseUrl: 'https://hava81.zekiakgul.dev',
+    results: [{ city: 'izmir', ok: false, errors: ['Weather API: 502 /api/v1/weather/hourly'] }],
+  };
+
+  const resultPath = await writeLiveAuditResults(outputDirectory, report);
+  assert.equal(resultPath, join(outputDirectory, 'results.json'));
+  assert.deepEqual(JSON.parse(await readFile(resultPath, 'utf8')), report);
 });

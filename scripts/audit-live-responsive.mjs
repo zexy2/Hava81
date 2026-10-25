@@ -2,10 +2,10 @@
 /** Read-only live responsive audit. Run manually; do not make public network
  * or weather-provider availability a mandatory CI requirement. */
 import { chromium } from '@playwright/test';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
-import { buildLiveAuditErrors, formatWeatherRequestFailure } from './lib/live-audit-result.mjs';
+import { buildLiveAuditErrors, formatWeatherRequestFailure, writeLiveAuditResults } from './lib/live-audit-result.mjs';
 import { launchLiveAuditBrowser } from './lib/live-audit-browser.mjs';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
 
@@ -187,9 +187,11 @@ try {
   await browser.close();
 }
 const failed = results.filter(item => !item.ok);
-if (options.screenshots) {
-  await writeFile(join(options.output, 'results.json'), JSON.stringify({ checkedAt: new Date().toISOString(), baseUrl: options.baseUrl, results }, null, 2));
-}
+await writeLiveAuditResults(options.output, {
+  checkedAt: new Date().toISOString(),
+  baseUrl: options.baseUrl,
+  results,
+});
 console.log(`Responsive audit: ${results.length - failed.length}/${results.length} passed.`);
 console.log(`Live API responses: ${responseCache.stats.captured} captured, ${responseCache.stats.replayed} safely replayed, ${responseCache.stats.uncached} uncached (failures/non-JSON/oversized).`);
 if (failed.length) process.exitCode = 1;

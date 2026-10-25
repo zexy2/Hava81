@@ -496,3 +496,9 @@ The live responsive audit should support an explicitly configured loopback Chrom
 
 - Browser alerts already fail closed when current weather, the forecast, or required AQI evidence is missing/stale. When the user has enabled alerts and browser permission is granted, surface a localized status explaining that new alerts are temporarily paused until the evidence is fresh enough.
 - Keep the opt-in setting enabled so a temporary data-quality issue does not silently revoke the user's preference; keep the disable control available. Do not change alert candidate rules, quiet hours, deduplication, notification delivery, modeled-guidance disclosure, or any weather value/score.
+
+## 2026-10-25 04:09 TRT — Persist live audit diagnostics independently of screenshots
+
+- Every completed live responsive audit must persist a structured `results.json`, including failed cases and screenshot-free runs. The report is operational evidence needed to inspect viewport, locale/theme, layout metrics and weather-request failures; screenshots remain opt-in to avoid unnecessary disk usage.
+- Write the artifact after browser cleanup and after the case result array is complete. Preserve nonzero exit status when any case fails: artifact persistence improves diagnosis and must never convert an audit failure into success.
+- This is a local diagnostics/test-contract change only. Do not retry provider requests aggressively, alter weather data, make live public API availability a mandatory CI dependency, or change production routing.
