@@ -26,10 +26,68 @@ const marineSchema = z.object({
     .optional(),
 });
 
+const GMT_MODEL_TIME_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-]\d{2}:\d{2})?$/;
+
 export const parseGmtModelTime = (value: string): number => {
-  if (!value) return Number.NaN;
-  const hasExplicitZone = /(?:Z|[+-]\d{2}:\d{2})$/.test(value);
-  return Date.parse(hasExplicitZone ? value : `${value}Z`);
+  if (typeof value !== 'string' || value.length === 0) return Number.NaN;
+
+  const match = GMT_MODEL_TIME_PATTERN.exec(value);
+  if (!match) return Number.NaN;
+
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText, fractionText, zone] =
+    match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText ?? '0');
+  const millisecond = Number((fractionText ?? '').padEnd(3, '0') || '0');
+
+  if (
+    month < 1 || month > 12 ||
+    day < 1 || day > 31 ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) {
+    return Number.NaN;
+  }
+
+  // Date.parse normalizes impossible calendar dates (for example, February 30) on some
+  // runtimes. Validate the provider's wall-clock fields before parsing the absolute instant.
+  const calendar = new Date(0);
+  calendar.setUTCFullYear(year, month - 1, day);
+  calendar.setUTCHours(hour, minute, second, millisecond);
+  if (
+    calendar.getUTCFullYear() !== year ||
+    calendar.getUTCMonth() !== month - 1 ||
+    calendar.getUTCDate() !== day ||
+    calendar.getUTCHours() !== hour ||
+    calendar.getUTCMinutes() !== minute ||
+    calendar.getUTCSeconds() !== second ||
+    calendar.getUTCMilliseconds() !== millisecond
+  ) {
+    return Number.NaN;
+  }
+
+  if (zone && zone !== 'Z') {
+    const offset = /([+-])(\d{2}):(\d{2})$/.exec(zone);
+    if (!offset) return Number.NaN;
+    const offsetHours = Number(offset[2]);
+    const offsetMinutes = Number(offset[3]);
+    if (
+      offsetHours > 14 ||
+      offsetMinutes > 59 ||
+      (offsetHours === 14 && offsetMinutes !== 0)
+    ) {
+      return Number.NaN;
+    }
+  }
+
+  const timestamp = Date.parse(zone ? value : `${value}Z`);
+  return Number.isFinite(timestamp) ? timestamp : Number.NaN;
 };
 
 export const finiteMaxForWindow = (

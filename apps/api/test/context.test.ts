@@ -68,7 +68,7 @@ test('context service normalizes UV, dust, pollen and marine signals', async () 
   assert.equal(result.marine?.seaSurfaceTemperature, 25.1);
 });
 
-test('context service normalizes marine source time to explicit UTC and rejects invalid timestamps', async () => {
+test('context service omits marine values when the provider returns an impossible calendar timestamp', async () => {
   const invalidMarineTimeFetch = (async (input: Parameters<typeof fetch>[0]) => {
     if (String(input).includes('air-quality')) return fakeFetch(input);
     const url = new URL(String(input));
@@ -76,7 +76,7 @@ test('context service normalizes marine source time to explicit UTC and rejects 
     return new Response(
       JSON.stringify({
         current: {
-          time: 'not-a-model-time',
+          time: '2026-02-30T11:00',
           wave_height: 0.4,
           sea_surface_temperature: 25.1,
         },
@@ -98,6 +98,36 @@ test('GMT model timestamps are parsed as UTC even without an explicit offset', (
   assert.equal(
     parseGmtModelTime('2026-08-28T11:00:00+03:00'),
     Date.parse('2026-08-28T11:00:00+03:00')
+  );
+});
+
+test('GMT model timestamps reject impossible calendar, clock and offset fields', () => {
+  for (const value of [
+    '2026-02-30T11:00',
+    '2026-04-31T11:00',
+    '2026-00-01T11:00',
+    '2026-08-28T24:00',
+    '2026-08-28T11:60',
+    '2026-08-28T11:00:60',
+    '2026-08-28T11:00+14:01',
+    '2026-08-28T11:00+03:60',
+    '2026-08-28',
+    '2026-08-28T11:00Ztrailing',
+  ]) {
+    assert.ok(Number.isNaN(parseGmtModelTime(value)), `expected ${value} to be rejected`);
+  }
+
+  assert.equal(
+    parseGmtModelTime('2028-02-29T23:59:59.123'),
+    Date.parse('2028-02-29T23:59:59.123Z')
+  );
+});
+
+test('context maxima ignore values attached to impossible provider calendar dates', () => {
+  const now = new Date('2026-08-28T10:00:00Z');
+  assert.equal(
+    finiteMaxForWindow(['2026-02-30T11:00', '2026-08-28T11:00'], [99, 4], now),
+    4
   );
 });
 
