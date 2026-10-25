@@ -194,15 +194,38 @@ describe('home, 404, sitemap and build stamp', () => {
     expect(robots).not.toContain('\\n');
   });
 
-  it('builds the English home page with hreflang and keeps no weather bootstrap on home pages', () => {
-    const doc = parse(buildHomePage(baseHtml, 'en'));
-    expect(doc.documentElement.lang).toBe('en');
-    expect(doc.title).toBe(HOME_COPY.en.title);
-    expect(attr(doc, 'link[rel="canonical"]', 'href')).toBe(`${BASE_URL}/en/`);
-    expect(attr(doc, 'link[hreflang="tr"]', 'href')).toBe(`${BASE_URL}/`);
-    expect(doc.documentElement.innerHTML).not.toContain('__HAVA81_BOOTSTRAP_WEATHER__');
-    expect(doc.querySelector('link[rel="preconnect"]')).toBeNull();
-  });
+  it.each(['tr', 'en'] as const)(
+    'builds localized %s homepage metadata and WebSite structured data without weather bootstrap',
+    lang => {
+      const doc = parse(buildHomePage(baseHtml, lang));
+      const copy = HOME_COPY[lang];
+      const path = lang === 'en' ? '/en/' : '/';
+      const canonical = `${BASE_URL}${path}`;
+      const structured = JSON.parse(
+        doc.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}'
+      );
+
+      expect(doc.documentElement.lang).toBe(lang);
+      expect(doc.title).toBe(copy.title);
+      expect(attr(doc, 'meta[name="description"]')).toBe(copy.description);
+      expect(attr(doc, 'meta[property="og:description"]')).toBe(copy.socialDescription);
+      expect(attr(doc, 'meta[name="twitter:description"]')).toBe(copy.socialDescription);
+      expect(attr(doc, 'link[rel="canonical"]', 'href')).toBe(canonical);
+      expect(attr(doc, 'meta[property="og:url"]')).toBe(canonical);
+      expect(attr(doc, 'link[hreflang="tr"]', 'href')).toBe(`${BASE_URL}/`);
+      expect(attr(doc, 'link[hreflang="en"]', 'href')).toBe(`${BASE_URL}/en/`);
+      expect(structured).toMatchObject({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Hava81',
+        url: canonical,
+        inLanguage: lang,
+        description: copy.description,
+      });
+      expect(doc.documentElement.innerHTML).not.toContain('__HAVA81_BOOTSTRAP_WEATHER__');
+      expect(doc.querySelector('link[rel="preconnect"]')).toBeNull();
+    }
+  );
 
   it('builds a real, non-indexed 404 page', () => {
     const doc = parse(buildNotFoundPage(baseHtml));

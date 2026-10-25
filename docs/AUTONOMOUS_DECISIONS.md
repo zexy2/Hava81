@@ -560,3 +560,8 @@ A single `actions/runs?per_page=100` page is not a complete source for open-PR c
 ## 2026-10-25 09:06 TRT — Reclaim only unused private Docker build cache when disk pressure blocks future builds
 
 Before freeing disk, verify API ready/live, green/canary container health, no active build/deploy process, and `docker builder du` marks the target cache reclaimable and older than 24 hours. Use `docker builder prune --filter until=24h --force` for private cache and regenerable package-manager cache cleanup only when needed. Do not use `docker system prune`, delete images/containers/volumes, remove shared cache, or clean unrelated worktrees. Recheck API ready/live and free space afterward. If API build headroom remains false, do not build/deploy the API; leave rollback/canary images intact.
+
+
+## 2026-10-25 — Localized homepage WebSite structured data must match the canonical locale
+
+Both Turkish `/` and English `/en/` are first-class static entry points. Each should emit exactly one `schema.org/WebSite` JSON-LD block whose URL, `inLanguage`, and description match that locale's canonical HTML metadata. The published-SEO verifier must check both live homepages independently, including canonical/title/language, social metadata and all `tr`/`en`/`x-default` alternate links. Treat a cross-locale JSON-LD URL or language as a release failure. This is static descriptive metadata only: do not embed modeled/current weather claims, depend on weather API availability, or alter forecast, provider, scoring, MGM, UV/AQI or safety behavior.

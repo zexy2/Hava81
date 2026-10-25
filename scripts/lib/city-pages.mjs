@@ -372,6 +372,14 @@ export function buildHomePage(baseHtml, lang) {
     canonicalPath: homePath(lang),
     trPath: homePath('tr'),
     enPath: homePath('en'),
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Hava81',
+      url: `${BASE_URL}${homePath(lang)}`,
+      inLanguage: lang,
+      description: copy.description,
+    },
   });
 }
 
