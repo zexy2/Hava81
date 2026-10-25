@@ -602,3 +602,14 @@ The environment rail exposes a second map disclosure trigger that controls the s
 ## 2026-10-25 — Runtime cache failures must not mask successful network responses
 
 Service-worker runtime caching is an optimization, not a prerequisite for loading the application. For navigation and static-asset requests, cache open/read/write failures must fall through to the network when possible; a successful network response must still be returned if cache persistence fails. For an offline navigation, serve the matching cached shell (or root shell) when available, but if cache access also fails, rethrow the original network error so diagnostics retain the actual connectivity failure. Keep API requests outside this cache strategy and preserve install-time required-asset fail-closed behavior.
+
+## 2026-10-25 16:08 TRT — Restore the existing SentinelX enrollment instead of minting another identity
+
+- The Oracle host was verified through OCI metadata (Ubuntu 22.04.5, AArch64, Oracle kernel, `VM.Standard.A1.Flex`, `ap-mumbai-1`) and matches the enrolled `nexus-hermes` host. The local `/etc/sentinelx/identity.json` used a different host ID from the only enrolled host; the preserved `identity.json.pre-reenroll-20260927` backup matched the enrolled record.
+- Preserved the mismatched current identity at `/etc/sentinelx/identity.json.pre-restore-20261025-1258` (mode 0600), restored the existing enrolled identity plus `/etc/sentinelx/host_id`, and restarted `sentinelx-cloud-core`. SentinelX now reports the host connected and `sentinel_ping` succeeds. No new enrollment was minted and no token material was emitted.
+- Keep both identity backups until the connection remains stable across several observer cycles. Do not mint a new enrollment to recover an existing host; use the preserved enrolled identity when it matches the host record. Keep SentinelX as the primary observer path and the authenticated gateway as fallback.
+
+## 2026-10-25 16:08 TRT — API build remains gated by measured disk headroom
+
+- The read-only worker status reports root usage at 92.4%, about 7.3 GiB free, and `api_build_headroom_ok=false` with roughly 0.91 GiB additional free space required. This is an operational host warning, not a production incident: frontend and API readiness/CORS checks are healthy.
+- Do not run a local API build, switch ports, or deploy/rollback the API while this gate is false. If cleanup is needed, restrict it to measured regenerable package-manager caches or explicitly reclaimable private build cache older than 24 hours. Never prune images, containers, volumes, shared browser binaries, or unrelated worktrees.
