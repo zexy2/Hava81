@@ -28,17 +28,27 @@ const weather: NormalizedWeatherData = {
 };
 
 describe('EnvironmentRail', () => {
-  it('associates the map disclosure button with the map region', () => {
-    render(
+  it('references the map region only while the map disclosure is expanded', () => {
+    const { rerender } = render(
       <SettingsProvider>
         <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
       </SettingsProvider>
     );
 
-    const mapButton = screen.getByRole('button', { name: /haritayı göster/i });
-    expect(mapButton).toHaveAttribute('aria-controls', 'weather-map-region');
-    expect(mapButton).toHaveAttribute('aria-expanded', 'false');
-    expect(mapButton).not.toHaveAttribute('aria-pressed');
+    const closedMapButton = screen.getByRole('button', { name: /haritayı göster/i });
+    expect(closedMapButton).not.toHaveAttribute('aria-controls');
+    expect(closedMapButton).toHaveAttribute('aria-expanded', 'false');
+    expect(closedMapButton).not.toHaveAttribute('aria-pressed');
+
+    rerender(
+      <SettingsProvider>
+        <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded />
+      </SettingsProvider>
+    );
+
+    const openMapButton = screen.getByRole('button', { name: /haritayı gizle/i });
+    expect(openMapButton).toHaveAttribute('aria-controls', 'weather-map-region');
+    expect(openMapButton).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('stops presenting stale current wind as a live observation at the provider TTL', async () => {
