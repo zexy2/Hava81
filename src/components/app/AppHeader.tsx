@@ -204,7 +204,7 @@ export function AppHeader({
             onClick={onOpenSettings}
             aria-haspopup="dialog"
             aria-expanded={isSettingsOpen}
-            aria-controls="settings-panel-dialog"
+            aria-controls={isSettingsOpen ? 'settings-panel-dialog' : undefined}
             aria-label={t('common.settings')}
           >
             <span className="atlas-settings-button__language" aria-hidden="true">
