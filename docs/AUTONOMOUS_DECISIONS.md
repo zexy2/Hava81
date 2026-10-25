@@ -520,3 +520,7 @@ Keep the map's initial tile-loading message as a polite status. When both tile p
 ## 2026-10-25 — Test map tile alert semantics in the browser, not only in unit tests
 
 The dual-provider map tile failure/retry browser flow should assert that the visible failure has both `role="alert"` and `aria-live="assertive"`. Keep the loading state polite, preserve the enabled retry control and successful recovery behavior, and do not change tile providers, weather data, or safety messaging. This browser regression complements the component unit test because it exercises the built app and real focus/touch flow.
+
+## 2026-10-25 — Include worker implementation in the offline-shell cache identity
+
+The generated shell-cache namespace must change when `public/sw.js` behavior changes, even if the HTML, manifest, and asset filenames remain identical. Hash the worker template before replacing its build-ID placeholder to avoid a self-referential cache name. If installation fails after opening the new versioned cache, delete that partial cache best-effort and rethrow the original failure; cleanup failure must not replace the install error. Required root/boot assets remain fail-closed, optional manifest caching remains non-blocking, and the previously active worker/cache must remain authoritative when the new install fails. Validate cache-ID determinism and worker-code invalidation with unit tests; do not change weather provenance, forecast/scoring behavior, API contracts, or production routing.
