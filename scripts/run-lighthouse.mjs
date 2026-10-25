@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
 import { resolveLighthouseChromePath } from './lib/resolve-lighthouse-chrome.mjs';
+import { resolveLighthouseTargetUrl } from './lib/lighthouse-target-url.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -16,7 +17,10 @@ const port =
   requestedPreviewPort <= 65535
     ? requestedPreviewPort
     : DEFAULT_PREVIEW_PORT;
-const targetUrl = `http://${host}:${port}/index.html`;
+const targetUrl = resolveLighthouseTargetUrl(
+  process.env.HAVA81_LIGHTHOUSE_PATH,
+  `http://${host}:${port}`
+);
 const tempPrefix = 'hava81-lighthouse-';
 const staleTempAgeMs = 6 * 60 * 60 * 1000;
 const resultDir = '.lighthouse-results';
@@ -209,6 +213,7 @@ const preview = spawn(
 
 let exitCode = 0;
 try {
+  console.log(`[lighthouse] target ${targetUrl}`);
   await waitForPreview(preview);
   let report = await runLighthouseWithStartupRetry(resultPath, runEnv);
   const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');

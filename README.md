@@ -155,6 +155,8 @@ npm run e2e
 
 CI (`ci.yml`) additionally validates browser flows across representative viewport sizes, Lighthouse budgets, generated SEO pages and, after deploy, the published static shell. Ops and deployment script contracts run in a separate workflow (`ops-scripts.yml`); visual screenshot baselines can be generated on CI Linux with the manual `visual-baseline.yml` workflow.
 
+The Lighthouse runner measures `/index.html` by default. To inspect another generated route, set `HAVA81_LIGHTHOUSE_PATH` (for example, `HAVA81_LIGHTHOUSE_PATH=/en/istanbul/ HAVA81_LIGHTHOUSE_PORT=4174 npm run lighthouse`). The target is restricted to the local preview origin; a city route's live weather requires an API setup that permits that preview origin, so the default CI audit remains independent of public API availability.
+
 ## API Snapshot
 
 | Endpoint | Purpose |
