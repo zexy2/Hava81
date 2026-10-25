@@ -565,3 +565,8 @@ Before freeing disk, verify API ready/live, green/canary container health, no ac
 ## 2026-10-25 — Localized homepage WebSite structured data must match the canonical locale
 
 Both Turkish `/` and English `/en/` are first-class static entry points. Each should emit exactly one `schema.org/WebSite` JSON-LD block whose URL, `inLanguage`, and description match that locale's canonical HTML metadata. The published-SEO verifier must check both live homepages independently, including canonical/title/language, social metadata and all `tr`/`en`/`x-default` alternate links. Treat a cross-locale JSON-LD URL or language as a release failure. This is static descriptive metadata only: do not embed modeled/current weather claims, depend on weather API availability, or alter forecast, provider, scoring, MGM, UV/AQI or safety behavior.
+
+
+## 2026-10-25 — first-visit browser locale SEO contract
+- The default Playwright locale is Turkish, so a test that pre-seeds English in localStorage does not cover a first-visit English browser. Add a fresh-context `en-US` E2E case for a Turkish city URL, with weather API requests aborted, and assert the client-selected English path plus canonical, Open Graph URL and all language alternates before weather is available.
+- Keep this a frontend test/metadata change only. Do not infer weather availability from successful route rendering; do not merge/deploy API-runtime work until the real Oracle host is reachable and host-specific disk/build-headroom plus blue-green/canary gates pass.

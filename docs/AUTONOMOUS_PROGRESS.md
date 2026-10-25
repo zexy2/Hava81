@@ -1823,3 +1823,22 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. While those checks run, continue a separate stale-weather-evidence/UI audit in a fresh worktree; do not modify the SEO PR branch from another workstream.
 4. Directly recheck main #3601's production revision parity and current observer snapshot; if still stale after a fresh cycle, investigate the observer/deploy-pending predicate without weakening fail-closed behavior.
 5. Keep PR #1454 draft/blocked until the actual Oracle host reconnects and fresh host-specific API build headroom is green. Preserve API port 4002 primary / 4001 rollback-canary; never disable or pause this automation.
+
+
+## 2026-10-25 10:18 TRT — Guard first-visit English-browser SEO metadata before weather resolves
+
+### Change and validation
+- Worktree `/home/chatgpt/hava81-run11-20261025-0940-continuity`; branch `automation/hava81-run11-city-canonical-locale-20261025-1005`; base/main SHA `8293b34e0c943ea1d8466839fa76b276d8da5bd4` (fresh fetch confirmed unchanged).
+- Added `e2e/seo-browser-locale.spec.ts`: a fresh `en-US` browser opens `/istanbul/` while `/api/v1/` requests are aborted, then verifies `/en/istanbul/`, `lang`, title, self-canonical, Open Graph URL and TR/EN/x-default alternates. Existing SEO E2E pre-seeded English in localStorage and did not cover this first-visit path.
+- Direct production Chromium run passed 1/1 against `https://hava81.zekiakgul.dev`; `/istanbul/` settled at `/en/istanbul/`, metadata matched and no page errors occurred while API requests were blocked.
+- Validation: type-check passed; focused ESLint passed; language unit tests 2/2; full frontend suite 1,116/1,116 across 109 files (92.71% statements, 86.52% branches); full lint passed (CSS lint 19 files); Playwright discovered the new test; `git diff --check` passed. No local production build due gateway disk at 93% and observer API build-headroom false; hosted CI must validate build/browser/Lighthouse gates.
+
+### Production and infrastructure
+- Observer snapshot `collected_at=2026-10-25T07:05:41.213529Z`: production HEALTHY/no production issues; frontend root/city revision matches main `8293b34e0c943ea1d8466839fa76b276d8da5bd4`; main CI/CD #3603, Ops #342 and CodeQL #2383 succeeded; API ready HTTP 200; CORS OK; Nginx API primary 4002; 12/12 boot assets pass. Direct smoke at 10:15 TRT: root, `/istanbul/`, `/en/istanbul/` HTTP 200 with correct static metadata; `/api/v1/health` HTTP 200 at runtime revision `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee` (expected for frontend/SEO-only main changes); CORS preflight HTTP 204.
+- SentinelX reports the enrolled Oracle host `agent_offline`; SSH Gateway has no configured remote host and `ssh oracle` fails DNS resolution. Gateway-local disk is 93% used with 7.5 GiB free; observer API build headroom is false. This is not a fresh Oracle disk measurement. Keep API-runtime PR #1454 draft until actual Oracle access and host-specific disk/build-headroom checks recover; do not deploy API or switch ports.
+- Exact-head PR #1454 SHA `685497d85ccff5a682079272ec06c253eca4f66d` has CI/CD #3555, Ops #294 and CodeQL #2335 successful, but green checks alone do not authorize API deployment.
+
+### Exact next actions
+1. Inspect diff, commit/push this isolated test branch, open a narrow PR and record exact head SHA plus hosted CI/CD/Ops/CodeQL run IDs.
+2. Merge only after exact-head hosted gates and mergeability are green; watch Pages deployment and smoke root/TR/EN plus API health/CORS.
+3. While jobs run, continue independent work in a separate clean worktree. Restore SentinelX/Oracle access before API-runtime operations. Keep 4002 primary and 4001 rollback/canary. Never disable or pause this automation.
