@@ -134,6 +134,47 @@ test.describe('contrast', () => {
       }
     }
   );
+
+  test(
+    'dashboard reflows at 200% root text size on a 320px English dark viewport',
+    DESKTOP,
+    async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 900 });
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          'user-settings',
+          JSON.stringify({
+            temperatureUnit: 'metric',
+            windSpeedUnit: 'ms',
+            language: 'en',
+            themeMode: 'dark',
+          })
+        );
+      });
+
+      for (const view of ['today', 'plan'] as const) {
+        await page.goto(view === 'plan' ? '/izmir/?view=plan' : '/izmir/');
+        await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+        await expect(
+          page.locator(view === 'plan' ? '.daily-plan__decision' : '.decision-glance__score')
+        ).toBeVisible();
+
+        const layout = await page.evaluate(() => ({
+          viewportWidth: window.innerWidth,
+          documentWidth: document.documentElement.scrollWidth,
+          bodyWidth: document.body.scrollWidth,
+          rootFontSize: getComputedStyle(document.documentElement).fontSize,
+        }));
+        expect(Number.parseFloat(layout.rootFontSize)).toBeGreaterThan(16);
+        expect(layout.documentWidth, `${view} document must not overflow at 200% text size`).toBeLessThanOrEqual(
+          layout.viewportWidth
+        );
+        expect(layout.bodyWidth, `${view} body must not overflow at 200% text size`).toBeLessThanOrEqual(
+          layout.viewportWidth
+        );
+      }
+    }
+  );
 });
 
 test.describe('forced colors', () => {
