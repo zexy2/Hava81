@@ -153,6 +153,10 @@ export function EnvironmentRail({
     ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${getWindSpeedSymbol()}`
     : t('weather.noData');
   const freshAirQuality = airQuality && airQualityFreshness.fresh ? airQuality : undefined;
+  const airQualityIsStale =
+    airQuality !== undefined &&
+    !airQualityFreshness.fresh &&
+    airQualityFreshness.status === 'stale';
   const airQualityLabelKey = freshAirQuality
     ? getOpenWeatherAqiLabelKey(freshAirQuality.aqi)
     : undefined;
@@ -223,7 +227,10 @@ export function EnvironmentRail({
         <strong className="environment-rail__value">
           {airQualityLabelKey ? `${freshAirQuality?.aqi} / 5` : '—'}
         </strong>
-        <span className="environment-rail__detail">
+        <span
+          className="environment-rail__detail"
+          role={airQualityIsStale ? 'status' : undefined}
+        >
           {freshAirQuality && airQualityLabelKey ? (
             <>
               {`${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
@@ -238,6 +245,8 @@ export function EnvironmentRail({
                 </>
               ) : null}
             </>
+          ) : airQualityIsStale ? (
+            t('weather.staleCurrentData')
           ) : (
             t('weather.noData')
           )}

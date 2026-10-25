@@ -74,6 +74,7 @@ describe('EnvironmentRail air-quality freshness', () => {
 
     expect(screen.queryByText('2 / 5')).not.toBeInTheDocument();
     expect(screen.queryByText(/PM2\.5 11,2 µg\/m³/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
   });
 
   it('expires AQI at the source-observation age limit even when it was fetched moments ago', async () => {
@@ -117,5 +118,6 @@ describe('EnvironmentRail air-quality freshness', () => {
 
     expect(screen.queryByText('2 / 5')).not.toBeInTheDocument();
     expect(screen.queryByText(/PM2\.5 11,2 µg\/m³/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
   });
 });
