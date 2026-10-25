@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
@@ -26,26 +26,28 @@ export function DecisionGlance({
 }: Props) {
   const { t, i18n } = useTranslation();
   const [now, setNow] = useState(() => Date.now());
+  const hasScheduledFreshnessRef = useRef(false);
   const airQualityMeta = airQuality?.meta ?? null;
   useEffect(() => {
     let timeoutId: number | undefined;
-    const refresh = () => {
+    const refresh = (updateNow = false) => {
       const currentTime = Date.now();
-      setNow(currentTime);
+      if (updateNow) setNow(currentTime);
       const remaining = [
         30_000,
         getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs,
         airQualityMeta ? getCurrentWeatherFreshness(airQualityMeta, currentTime).expiresInMs : null,
         getForecastFreshness(forecastMeta, currentTime).expiresInMs,
       ].filter((value): value is number => value !== null);
-      timeoutId = window.setTimeout(refresh, Math.max(100, Math.min(...remaining)));
+      timeoutId = window.setTimeout(() => refresh(true), Math.max(100, Math.min(...remaining)));
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState !== 'visible') return;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
-      refresh();
+      refresh(true);
     };
-    refresh();
+    refresh(hasScheduledFreshnessRef.current);
+    hasScheduledFreshnessRef.current = true;
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);

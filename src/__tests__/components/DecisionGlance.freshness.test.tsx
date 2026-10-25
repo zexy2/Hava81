@@ -1,4 +1,5 @@
 import { act, render } from '@testing-library/react';
+import { Profiler } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { DecisionGlance } from '../../components/hava81/DecisionGlance';
@@ -76,6 +77,17 @@ afterEach(() => {
 });
 
 describe('DecisionGlance optional AQI freshness', () => {
+  it('does not commit a redundant render just to schedule the freshness clock', () => {
+    const onRender = vi.fn();
+    render(
+      <Profiler id="decision-glance" onRender={onRender}>
+        <DecisionGlance weather={weather} hourly={hourly} forecastMeta={forecastMeta} />
+      </Profiler>
+    );
+
+    expect(onRender).toHaveBeenCalledTimes(1);
+  });
+
   it('does not pass stale current AQI into the headline decision snapshot', () => {
     render(
       <DecisionGlance

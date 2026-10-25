@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import { Profiler } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
@@ -53,6 +54,19 @@ describe('WeatherDecisionField daily range', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('does not commit a redundant render just to schedule the freshness clock', () => {
+    const onRender = vi.fn();
+    render(
+      <SettingsProvider>
+        <Profiler id="weather-decision-field" onRender={onRender}>
+          <WeatherDecisionField weather={weather} hourly={[]} />
+        </Profiler>
+      </SettingsProvider>
+    );
+
+    expect(onRender).toHaveBeenCalledTimes(1);
   });
 
   it('identifies a district without inventing a province plate code', () => {

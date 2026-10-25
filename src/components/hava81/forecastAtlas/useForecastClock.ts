@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ForecastMeta } from '../../../types';
 import { getForecastFreshness } from '../../../utils/forecastFreshness';
 import { HOUR_MS } from './constants';
@@ -11,26 +11,28 @@ import { HOUR_MS } from './constants';
 export function useForecastClock(meta: ForecastMeta) {
   const timezoneOffsetMs = meta.timezoneOffsetSeconds * 1000;
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
+  const hasScheduledHourRef = useRef(false);
   const [, setFreshnessRevision] = useState(0);
   const forecastFreshness = getForecastFreshness(meta);
 
   useEffect(() => {
     let timerId: number | undefined;
-    const scheduleCurrentHourRefresh = () => {
+    const scheduleCurrentHourRefresh = (updateNow = false) => {
       const now = Date.now();
-      setCurrentTimeMs(now);
+      if (updateNow) setCurrentTimeMs(now);
       const locationClockMs = now + timezoneOffsetMs;
       const elapsedInHour = ((locationClockMs % HOUR_MS) + HOUR_MS) % HOUR_MS;
       const delay = HOUR_MS - elapsedInHour + 100;
-      timerId = window.setTimeout(scheduleCurrentHourRefresh, delay);
+      timerId = window.setTimeout(() => scheduleCurrentHourRefresh(true), delay);
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState !== 'visible') return;
       if (timerId !== undefined) window.clearTimeout(timerId);
-      scheduleCurrentHourRefresh();
+      scheduleCurrentHourRefresh(true);
     };
 
-    scheduleCurrentHourRefresh();
+    scheduleCurrentHourRefresh(hasScheduledHourRef.current);
+    hasScheduledHourRef.current = true;
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       if (timerId !== undefined) window.clearTimeout(timerId);

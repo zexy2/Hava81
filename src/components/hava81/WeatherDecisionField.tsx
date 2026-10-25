@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
@@ -284,15 +284,16 @@ export function WeatherDecisionField({
   };
 
   const [now, setNow] = useState(() => Date.now());
+  const hasScheduledFreshnessRef = useRef(false);
   const [, setForecastFreshnessRevision] = useState(0);
   const forecastFreshness = forecastMeta === undefined ? null : getForecastFreshness(forecastMeta);
   const forecastExpiresInMs = forecastFreshness?.expiresInMs ?? null;
   useEffect(() => {
     let timerId: number | undefined;
 
-    const scheduleFreshnessRefresh = () => {
+    const scheduleFreshnessRefresh = (updateNow = false) => {
       const currentTime = Date.now();
-      setNow(currentTime);
+      if (updateNow) setNow(currentTime);
       const elapsedInMinute = ((currentTime % 60_000) + 60_000) % 60_000;
       const nextMinuteDelay = 60_000 - elapsedInMinute + 100;
       const currentExpiresInMs = getCurrentWeatherFreshness(weather.meta, currentTime).expiresInMs;
@@ -303,15 +304,16 @@ export function WeatherDecisionField({
         (value): value is number => value !== null
       );
       const nextDelay = Math.min(nextMinuteDelay, ...evidenceExpiryDelays);
-      timerId = window.setTimeout(scheduleFreshnessRefresh, nextDelay);
+      timerId = window.setTimeout(() => scheduleFreshnessRefresh(true), nextDelay);
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState !== 'visible') return;
       if (timerId !== undefined) window.clearTimeout(timerId);
-      scheduleFreshnessRefresh();
+      scheduleFreshnessRefresh(true);
     };
 
-    scheduleFreshnessRefresh();
+    scheduleFreshnessRefresh(hasScheduledFreshnessRef.current);
+    hasScheduledFreshnessRef.current = true;
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       if (timerId !== undefined) window.clearTimeout(timerId);
