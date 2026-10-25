@@ -140,9 +140,14 @@ describe('AppHeader', () => {
 
     const settings = screen.getByRole('button', { name: i18n.t('common.settings') });
     expect(settings).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(settings).toHaveAttribute('aria-expanded', 'false');
+    expect(settings).not.toHaveAttribute('aria-controls');
     expect(settings).toHaveTextContent('TR');
     fireEvent.click(settings);
     expect(props.onOpenSettings).toHaveBeenCalled();
+    rerender(<AppHeader {...props} isSettingsOpen />);
+    expect(settings).toHaveAttribute('aria-expanded', 'true');
+    expect(settings).toHaveAttribute('aria-controls', 'settings-panel-dialog');
   });
 
   it('toggles the favorite state with a matching pressed state and label', () => {

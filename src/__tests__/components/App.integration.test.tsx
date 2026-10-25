@@ -953,11 +953,12 @@ describe('Hava81 app integration', () => {
     const settingsButton = screen.getByRole('button', { name: /ayarlar/i });
     expect(settingsButton).toHaveAttribute('aria-haspopup', 'dialog');
     expect(settingsButton).toHaveAttribute('aria-expanded', 'false');
-    expect(settingsButton).toHaveAttribute('aria-controls', 'settings-panel-dialog');
+    expect(settingsButton).not.toHaveAttribute('aria-controls');
     await user.click(settingsButton);
     const settingsDialog = await screen.findByRole('dialog', {}, { timeout: 5_000 });
     expect(settingsDialog).toHaveAttribute('id', 'settings-panel-dialog');
     expect(settingsButton).toHaveAttribute('aria-expanded', 'true');
+    expect(settingsButton).toHaveAttribute('aria-controls', settingsDialog.id);
     expect(
       await screen.findByRole('heading', { name: 'Birimler' }, { timeout: 5_000 })
     ).toBeInTheDocument();

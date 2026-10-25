@@ -588,3 +588,8 @@ The one-slot persisted weather cache is a resilience fallback, not evidence for 
 ## 2026-10-25 — Only expose map-panel controls while the map region is mounted
 
 The map panel is conditionally rendered. Keep the map trigger's `aria-expanded` state aligned with `showMap`, and set `aria-controls="weather-map-region"` only while the panel exists. A closed-state ID reference is dangling and provides assistive technology a target that is not present. Cover both closed and open states in the header component test; do not change map loading, tile fallback/retry, focus restoration or weather behavior.
+
+
+## 2026-10-25 — Only reference a conditionally mounted settings dialog while it exists
+
+For the settings trigger, keep `aria-haspopup="dialog"` and `aria-expanded` available in both states, but expose `aria-controls` only while the dialog element is mounted. A dangling ID reference is misleading to assistive technology and can trigger axe's incomplete/manual-review `aria-valid-attr-value` result. Do not change dialog mounting, focus trap, escape handling, or the visible settings interaction; cover both closed and open states in component and app integration tests.
