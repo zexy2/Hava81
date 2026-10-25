@@ -1622,3 +1622,16 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 2. Push the rebased branch and open a PR. Require hosted Production build, Browser flows, Lighthouse budgets, CodeQL and Ops contracts. Compare exact-head LCP/performance with the noisy 80–85 / 3.4–3.5 s baseline; revise/drop the change if there is no repeatable improvement or if loading/accessibility regresses.
 3. While that PR validates, continue a third independent audit in another worktree. Do not mutate the pending performance PR from that workstream.
 4. Keep PR #1454 draft API-runtime work blocked until SentinelX reaches the enrolled Oracle host and fresh host/disk/build-headroom checks pass. Never clean unknown temporary directories or disable the hourly automation.
+
+## 2026-10-25 04:02 TRT — First-paint chart deferral revalidated on current main
+
+- Rebased the local-only first-viewport branch onto current `origin/main=c423bd522512c2b51d4813a6be0192efcd6a14e9`; preserved all current-main append-only documentation and re-appended the earlier Lighthouse baseline/deferral rationale. No remote branch or PR exists for this work yet.
+- `ForecastAtlas` remains a below-hero lazy chunk. Its first mount waits for two animation frames after usable forecast data, while the existing loading card stays visible. Current-weather and forecast requests are unchanged. The chart remains mounted while its city is active; no fixed timeout or API preconnect was added.
+- Added a small integration-test synchronization assertion so the existing desktop Escape-focus test waits for the deferred chart to settle before checking focus behavior. Full frontend suite on the rebased tree: **1,109/1,109 across 108 files**; TypeScript `--noEmit`, ESLint + CSS lint, and `git diff --check` passed. Local production build/Lighthouse remain intentionally skipped due to gateway root disk pressure (94% used, ~6.4 GiB free).
+- Production Lighthouse baseline remains noisy: Performance **80–85**, LCP **3.4–3.5 s**, TBT **170–300 ms**, CLS 0. Do not claim the optimization works until exact-head hosted Lighthouse demonstrates a repeatable improvement with no Browser-flow regression. No production write/deploy was performed.
+
+### Exact next actions / queue
+1. Confirm remote `main` is still `c423bd522512c2b51d4813a6be0192efcd6a14e9` and the performance branch is absent remotely; commit the integration-test sync and this checkpoint, push without force, and open a narrow PR.
+2. Require exact-head hosted production build, Browser flows, Lighthouse budgets, CodeQL and Ops/script contracts. Compare LCP/performance to the noisy baseline; revise/drop the deferral if it is neutral/regressing or causes loading/focus regressions.
+3. While that PR validates, monitor #1461 at head `640c78f7ac4a8beeaae9b7bfd3a7395b27664f9e` (Browser flows were running at last check) and #1462 at head `167f0d781a6d32c4fbb0c89fcfe9d8c33983318f`; do not touch their branches. Recheck exact head/base/mergeability/review/checks before any merge.
+4. Keep PR #1454 draft and all API deployment/rollback actions blocked until SentinelX can reach the real Oracle host and fresh disk/build-headroom/readiness checks pass. Never disable/pause the hourly automation.

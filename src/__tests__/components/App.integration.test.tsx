@@ -553,6 +553,9 @@ describe('Hava81 app integration', () => {
     const user = userEvent.setup();
     const { container } = renderApp();
     await screen.findByRole('heading', { name: 'İstanbul', level: 1 });
+    // Let the post-paint forecast mount settle before asserting focus behavior; its
+    // deferred chunk state update is independent of the search interaction below.
+    await screen.findByRole('heading', { name: /saatlik tahmin · sonraki 2 saat/i });
 
     const searchToggle = container.querySelector<HTMLButtonElement>('.atlas-icon-button--search');
     const searchInput = screen.getByRole('combobox', { name: /şehir ara/i });
