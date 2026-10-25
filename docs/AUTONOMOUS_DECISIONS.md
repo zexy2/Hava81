@@ -627,3 +627,8 @@ The mobile forecast atlas is intentionally not mounted until its reserved placeh
 - When requesting Open-Meteo Marine `current` data, request `timezone=GMT` and serialize a valid provider `current.time` as an explicit ISO-8601 UTC instant. Never return a timezone-less local wall-clock string as though it were an unambiguous observation timestamp.
 - If the marine timestamp is malformed, omit only the marine section and retain independently valid UV/dust/pollen context. The frontend still keeps a compatibility parser for existing deployed API revisions and enforces source-age freshness.
 - This changes API runtime behavior. Do not merge or deploy until the real Oracle host is reachable and fresh host/disk/headroom checks pass. Validate with hosted CI, then use blue-green/canary; keep API 4002 primary and 4001 as rollback/canary. No deployment is authorized from the gateway host.
+
+
+## 2026-10-25 — Reject impossible provider model timestamps before parsing
+
+JavaScript `Date.parse` can normalize impossible calendar dates such as February 30 into a different valid day instead of rejecting the source timestamp. For Open-Meteo model timelines, validate the exact date/time syntax, Gregorian calendar fields, clock ranges, and explicit UTC-offset bounds before converting a timestamp to an epoch. Malformed hourly timelines must fail closed rather than silently understate maxima; malformed marine `current.time` must omit only marine evidence while retaining independently valid UV, dust, and pollen context. Keep timezone-less Open-Meteo GMT strings interpreted as UTC and preserve explicit-offset semantics. Do not infer or synthesize replacement weather values.
