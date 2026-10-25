@@ -2083,3 +2083,10 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 
 - The i18n-parity branch was rebased onto d522cbe and then revalidated on that combined base: npm run lint, npm run type-check, npm run test:ci (112 files / 1,137 tests; 92.73% statements, 86.61% branches), npm run build, and git diff --check all passed. The build generated all 81 Turkish and 81 English province pages, applied CSP to 165 HTML pages, and stamped the service worker.
 - PR #1491 (analyzer workflow fix) remains an independent workstream at head 91e6e873fc51481de5bd16c964a132d66537656d with browser/Lighthouse checks still running at the last direct check. Main d522cbe pipeline run #3644 is green and public production is healthy; continue without waiting for PR #1491.
+
+## 2026-10-25 19:57 TRT — Locale parity gates passed on current main
+
+- Rebased branch automation/hava81-run11-i18n-parity-20261025-1920 onto origin/main=23156cc57a88f9994b9b23907d095ed68fe5d37c, preserving the main bundle-analyzer checkpoint and the locale parity decision. Current code commit is 2be6660 and the append-only validation checkpoint is 8ddd92f before this entry.
+- Full sequential local gate job job_9339ec2a8cab succeeded in 186.82 seconds: npm run lint, npm run type-check, npm run test:ci (**113 files / 1,139 tests passed**, 92.73% statements / 86.61% branches), npm run build (81 Turkish + 81 English province pages, 165 CSP HTML pages, service worker stamped), and git diff --check. The only stderr line is the expected localStorage persistence-failure test diagnostic; exit code was 0.
+- Production remains healthy on frontend SHA 23156cc57a88f9994b9b23907d095ed68fe5d37c; API runtime remains b2f8aee6caed816e4fe11fef99adc2967a765aa8 on port 4002. This branch changes only localization copy/interpolation and catalog contract tests plus documentation; no production API action is needed.
+- Next: inspect diff, commit this checkpoint, push the branch as a new remote ref, open a narrow PR, then require exact-head CI/CD, Ops contracts, CodeQL, browser and Lighthouse gates before merge. Do not touch the independent API timeline branch while its review preparation proceeds.
