@@ -1842,3 +1842,21 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 1. Inspect diff, commit/push this isolated test branch, open a narrow PR and record exact head SHA plus hosted CI/CD/Ops/CodeQL run IDs.
 2. Merge only after exact-head hosted gates and mergeability are green; watch Pages deployment and smoke root/TR/EN plus API health/CORS.
 3. While jobs run, continue independent work in a separate clean worktree. Restore SentinelX/Oracle access before API-runtime operations. Keep 4002 primary and 4001 rollback/canary. Never disable or pause this automation.
+
+
+## 2026-10-25 10:27 TRT — Label the host that owns observer disk metrics; keep live UI evidence fresh
+
+### Change and validation
+- Started from freshly fetched `origin/main=c130afa8de5e63a23a458c428771dc251c05f002` in isolated worktree `/tmp/hava81-run11-observer-host-label-20261025-1030`, branch `automation/hava81-run11-observer-host-label-20261025-1030`.
+- The current status snapshot reports root disk at 92.4% used / 7.4 GiB free, but the command is executing on `nexus-hermes`, while SentinelX's enrolled Oracle agent is offline and `ssh oracle` cannot resolve. The snapshot had no hostname field, so readers could mistake observer-local disk capacity for Oracle capacity. `collect_host()` now records its hostname; the status output distinguishes the current status-process hostname from the snapshot hostname and labels disk scope as observer-host-local; the observer README documents the limitation. This does not weaken any disk/merge/deploy gate.
+- Observer collector tests: **82/82 passed**; status formatter tests: **13/13 passed**; Python compile and `git diff --check` passed.
+- Independent live responsive audit on current public production passed **40/40** combinations: İstanbul/İzmir, TR/EN, light/dark, widths 320/390/768/1440, including 200% text at 320px. It captured 12 real API responses, replayed 106 validated cached responses and had 0 uncached responses; no responsive/UI issue found. Evidence: `/tmp/hava81-live-audit-run11-1025/results.json` and log `/tmp/hava81-live-audit-run11-1025.log`.
+
+### Concurrent PRs and production
+- PR #1476 (`7e1d8c1fc12cc17c10041c534d18d55fe267046a`) was directly verified against exact-head CI/CD #3604, Ops #343 and CodeQL #2384 (all success), then squash-merged as `c130afa8de5e63a23a458c428771dc251c05f002`. Main CI/CD #3606 is still running; CodeQL #2386 and Ops #345 are green. Direct post-merge smoke showed `/`, `/istanbul/`, `/en/istanbul/` HTTP 200 with the previous frontend revision `8293b34e0c943ea1d8466839fa76b276d8da5bd4`, expected while main Pages publication is pending; API `/api/v1/health`, `/api/v1/health/live`, `/api/v1/health/ready` all return HTTP 200, CORS preflight 204, API revision remains `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee`, Nginx primary remains 4002.
+- PR #1477 (`e4c7af383679fd68b5d72ba6b4100b37ba7d1287`) exact-head CI/CD #3605, Ops #344 and CodeQL #2385 are all green, but its base is the pre-merge SHA `8293b34e0c943ea1d8466839fa76b276d8da5bd4`. Rebase it onto current main only after the current main pipeline/Pages revision is healthy; preserve append-only checkpoints, rerun gates, and use explicit `--force-with-lease` against a freshly read remote head.
+- PR #1454 remains draft/blocked. Do not install this observer change or perform API build/deploy/rollback until the actual Oracle host is reachable and host-specific disk/build-headroom evidence is available. Keep API 4002 primary and 4001 rollback/canary.
+
+### Exact current branch / next actions
+- Current branch `automation/hava81-run11-observer-host-label-20261025-1030`, based on `c130afa8de5e63a23a458c428771dc251c05f002`; five observer source/test/README files modified, not yet committed/pushed.
+- Next: review the diff, commit/push and open a narrow observer observability PR; monitor main #3606 and public revision parity while it runs. Then rebase PR #1477 once production is healthy, verify its exact new head and required checks, and merge normally if green. Continue independent work while jobs run; never disable/pause automation.

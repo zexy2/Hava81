@@ -39,6 +39,31 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn('snapshot_freshness: fresh=True', output.getvalue())
         self.assertIn('max_age_s=600', output.getvalue())
 
+    def test_status_distinguishes_process_host_from_snapshot_disk_host(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / 'state.json'
+            state_path.write_text(
+                json.dumps({
+                    'collected_at': datetime.now(timezone.utc).isoformat(),
+                    'host': {'hostname': 'snapshot-node', 'disk': {}},
+                }),
+                encoding='utf-8',
+            )
+            output = StringIO()
+            with (
+                patch.object(status, 'STATE_FILE', state_path),
+                patch.object(status.socket, 'gethostname', return_value='status-node'),
+                redirect_stdout(output),
+            ):
+                exit_code = status.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn('status_process_host: hostname=status-node', output.getvalue())
+        self.assertIn(
+            'observer_host: snapshot_hostname=snapshot-node disk_scope=observer-host-local',
+            output.getvalue(),
+        )
+
     def test_recent_snapshot_is_fresh(self) -> None:
         now = datetime(2026, 10, 25, 4, 47, tzinfo=timezone.utc)
         collected_at = (now - timedelta(minutes=5)).isoformat().replace('+00:00', 'Z')

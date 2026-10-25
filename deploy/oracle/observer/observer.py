@@ -6,6 +6,7 @@ import math
 import os
 import pwd
 import re
+import socket
 import ssl
 import subprocess
 import tempfile
@@ -464,6 +465,8 @@ def collect_host() -> dict[str, Any]:
     if browser_processes['stale_count'] > 0:
         warnings.append('stale_hava81_browser_processes')
     return {
+        # Disk and process observations are local to the machine running this collector.
+        'hostname': socket.gethostname(),
         'disk': {
             'free_bytes': free_bytes,
             'used_bytes': used_bytes,
