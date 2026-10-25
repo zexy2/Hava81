@@ -54,7 +54,7 @@ curl -s https://api.hava81.zekiakgul.dev/api/v1/health
 
 1. **verify**: API type-check, tests, build and the deploy-script contract tests.
 2. **image**: builds `apps/api` with `HAVA81_API_REVISION=<sha>` and pushes `ghcr.io/zexy2/hava81-api:<sha>` and `:main` using the job's `GITHUB_TOKEN` (`packages: write`).
-3. **deploy** (`environment: production`): if any of the secrets below is missing, the job prints a warning and skips (the run stays green). Otherwise it SSHes to the host and runs `deploy/oracle/ci-deploy-api.sh <sha>`, piping the short-lived `GITHUB_TOKEN` on stdin for the GHCR pull. Finally it requires `https://api.hava81.zekiakgul.dev/api/v1/health` to report `revision == <sha>`.
+3. **deploy** (`environment: production`): the fail-closed secret gate runs before SSH. If any required secret is missing, the job fails with the missing secret names and explicitly reports that the published image was not deployed; configure the secrets and rerun the workflow for that commit. With secrets present, it SSHes to the host and runs `deploy/oracle/ci-deploy-api.sh <sha>`, piping the short-lived `GITHUB_TOKEN` on stdin for the GHCR pull. After a deployment result of `deployed`, it requires `https://api.hava81.zekiakgul.dev/api/v1/health` to report `revision == <sha>`; a `superseded` result is explicitly warned and skips the obsolete SHA verification because a newer main revision owns the deployment.
 
 Runs are serialized (`concurrency: hava81-api-deploy`, never cancelled mid-switch).
 
