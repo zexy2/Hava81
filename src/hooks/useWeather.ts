@@ -288,6 +288,11 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   });
   const previousLanguageRef = useRef(language);
   const activeSourceRef = useRef<'city' | 'location'>('city');
+  // A last-known cache is eligible only for the explicit city request it belongs to.
+  // Location mode has no confirmed city identity until the location request succeeds.
+  const expectedCacheCityRef = useRef<string | null>(
+    initialCity.trim() ? cityIdentity(initialCity) : null
+  );
   const searchTokenRef = useRef(0);
   // Faz 3.2: yeni şehir isteği (ya da konum devralması/unmount) bir öncekini iptal eder.
   const cityRequestRef = useRef<AbortController | null>(null);
@@ -378,6 +383,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       // invalidated up front, settled location data is replaced on success.
       if (locationAsync.isLoading) locationAsync.reset();
       const normalizedTarget = targetCity.trim();
+      expectedCacheCityRef.current = normalizedTarget;
       const token = ++searchTokenRef.current;
       const result = await weatherAsync.execute(normalizedTarget);
       // A location result that landed meanwhile stays authoritative.
@@ -389,6 +395,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
 
   // Fetch current location weather
   const fetchCurrentLocation = useCallback(async () => {
+    expectedCacheCityRef.current = null;
     // A location action supersedes any stale city-request failure. Clear only the
     // opposite-mode error so the last successful city data remains visible while
     // geolocation runs and any new location failure can surface authoritatively.
@@ -399,6 +406,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   }, [locationAsync, weatherAsync]);
 
   const clearWeather = useCallback(() => {
+    expectedCacheCityRef.current = null;
     weatherAsync.reset();
     locationAsync.reset();
     activeSourceRef.current = 'city';
@@ -552,8 +560,17 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
     rawError?.code === ErrorCode.API_ERROR ||
     rawError?.code === ErrorCode.RATE_LIMIT ||
     (rawError?.statusCode !== undefined && rawError.statusCode >= 500);
+  const expectedCacheCity = expectedCacheCityRef.current;
+  const cacheMatchesExpectedRequest = Boolean(
+    cachedWeather &&
+    expectedCacheCity &&
+    cityIdentity(cachedWeather.data.cityName) === cityIdentity(expectedCacheCity) &&
+    (cachedWeather.language ?? 'tr') === language
+  );
   const lastKnownWeather =
-    !activeWeather && infrastructureFailure && enableCache && cachedWeather ? cachedWeather.data : null;
+    !activeWeather && infrastructureFailure && enableCache && cacheMatchesExpectedRequest
+      ? (cachedWeather?.data ?? null)
+      : null;
   const lastKnownAt = lastKnownWeather && cachedWeather ? new Date(cachedWeather.timestamp) : null;
 
   return {

@@ -49,6 +49,46 @@ vi.mock('../../api/weatherService', () => ({
   },
 }));
 
+const persistWeatherCache = (cityName: string, language: 'tr' | 'en' = 'tr') => {
+  const now = Date.now();
+  const cachedAt = now - 10 * 60 * 1000;
+  const coordinates =
+    cityName === 'İstanbul' ? { lat: 41.01, lon: 28.97 } : { lat: 38.42, lon: 27.14 };
+  localStorage.setItem(
+    'weather_cache',
+    JSON.stringify({
+      data: {
+        cityName,
+        country: 'TR',
+        temperature: 22,
+        feelsLike: 21,
+        tempMin: 18,
+        tempMax: 25,
+        humidity: 65,
+        pressure: 1015,
+        visibility: 10000,
+        windSpeed: 3.5,
+        windDirection: 180,
+        description: `cached ${cityName}`,
+        icon: '01d',
+        sunrise: new Date(now - 6 * 60 * 60 * 1000).toISOString(),
+        sunset: new Date(now + 6 * 60 * 60 * 1000).toISOString(),
+        timestamp: new Date(cachedAt).toISOString(),
+        coordinates,
+        clouds: 0,
+        meta: {
+          provider: 'OpenWeather',
+          fetchedAt: new Date(cachedAt).toISOString(),
+          freshForSeconds: 300,
+        },
+      },
+      timestamp: cachedAt,
+      language,
+    })
+  );
+  return cachedAt;
+};
+
 describe('useWeather', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -84,6 +124,60 @@ describe('useWeather', () => {
     await waitFor(() => {
       expect(result.current.weather?.cityName).toBe('İzmir');
     });
+  });
+
+  it('does not show cached weather from another city when the initial city request fails', async () => {
+    persistWeatherCache('İzmir');
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider unavailable', ErrorCode.NETWORK_ERROR)
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+    await waitFor(() => expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR));
+    expect(result.current.weather).toBeNull();
+    expect(result.current.lastKnownAt).toBeNull();
+  });
+
+  it('does not reuse cached weather from another language after a request fails', async () => {
+    persistWeatherCache('İstanbul', 'tr');
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider unavailable', ErrorCode.NETWORK_ERROR)
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul', language: 'en' }));
+
+    await waitFor(() => expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR));
+    expect(result.current.weather).toBeNull();
+    expect(result.current.lastKnownAt).toBeNull();
+  });
+
+  it('does not reuse a city cache when current-location lookup fails', async () => {
+    persistWeatherCache('İstanbul');
+    (weatherService.getCurrentLocationWeather as Mock).mockRejectedValueOnce(
+      new ApiError('location unavailable', ErrorCode.NETWORK_ERROR)
+    );
+
+    const { result } = renderHook(() => useWeather());
+    await act(async () => {
+      await result.current.fetchCurrentLocation();
+    });
+
+    expect(result.current.weather).toBeNull();
+    expect(result.current.lastKnownAt).toBeNull();
+  });
+
+  it('shows stale cached weather after an infrastructure failure only for the requested city', async () => {
+    const cachedAt = persistWeatherCache('İstanbul');
+    (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
+      new ApiError('provider unavailable', ErrorCode.NETWORK_ERROR)
+    );
+
+    const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+
+    await waitFor(() => expect(result.current.error?.code).toBe(ErrorCode.NETWORK_ERROR));
+    expect(result.current.weather?.cityName).toBe('İstanbul');
+    expect(result.current.lastKnownAt?.getTime()).toBe(cachedAt);
   });
 
   it('refreshes provider-expired city evidence on resume even when the response was just received', async () => {
@@ -395,7 +489,10 @@ describe('useWeather', () => {
     const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
 
     await waitFor(() =>
-      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith({ city: 'İstanbul', lang: 'tr' }, expect.objectContaining({ signal: expect.any(AbortSignal) }))
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledWith(
+        { city: 'İstanbul', lang: 'tr' },
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      )
     );
     await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
     expect(result.current.weather?.description).not.toBe('   ');
