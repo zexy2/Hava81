@@ -2105,3 +2105,12 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - Direct Open-Meteo Air Quality response for İzmir with the production request shape (GMT, forecast_hours=25) returned 25 timestamps from 2026-10-25T17:00 through 2026-10-26T17:00 UTC, exactly one hour apart. UV, dust, grass-pollen and olive-pollen series each contained 25 values. This confirms the new coverage gate matches the current upstream contract; the provider response was inspected read-only and no values were changed.
 - Frontend locale-parity PR #1492 is open at exact head 79bff563a2a6b7a0ce7cd0ba1b6977f5a806a393 on base 23156cc57a88f9994b9b23907d095ed68fe5d37c. Exact-head CI/CD run 40214485020 (#3647), Ops script contracts 40214485069 (#386), and CodeQL 40214485030 (#2427) were queued at the last direct query. Do not mutate that branch; poll and merge only after all required gates pass and the current head/mergeability are rechecked.
 - API timeline branch remains isolated and locally green: 121/121 API tests, API type-check, API build, and diff check passed. No API deploy was performed. Before merge or deployment, refresh the observer and require healthy readiness/CORS, current exact-head CI, API build headroom, port 4002 primary and 4001 rollback/canary.
+
+
+## 2026-10-25 23:08 TRT — Accept the intentional public canonical in preview E2E
+
+- Dedicated branch: automation/hava81-seo-canonical-e2e-contract-20261025-2305, based on origin/main=295543ad98644d812e3808a2c67c64d769983130.
+- The browser-history E2E asserted that canonical metadata must always match the current preview origin. PR #1494 intentionally pins canonical metadata to the public production root for SEO/Lighthouse checks, so the test rejected the intended public canonical even though the route was correct.
+- Updated the test to allow only two exact root URLs: the current preview origin root or https://hava81.zekiakgul.dev/. It still rejects arbitrary hosts, paths, queries, and fragments; no application runtime code changed.
+- Validation: npm run build, targeted browser-history E2E passed (1/1) on isolated port 4174, npm run lint, npm run type-check, and git diff --check passed. The first attempt used occupied port 4173 and was stopped without touching the existing preview; the rerun used 4174.
+- Next: commit/push a narrow test-only PR. After it merges, directly re-check PR #1494's exact head and browser-flow status; do not mutate PR #1494's pending branch from this workstream.

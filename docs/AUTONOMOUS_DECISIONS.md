@@ -655,3 +655,8 @@ The live responsive audit is a Node entrypoint whose Playwright `page.evaluate` 
 ## 2026-10-25 — Require complete, monotonic hourly coverage for 24-hour context maxima
 
 The Open-Meteo context request asks for 25 hourly forecast slots, but timestamp syntax and aligned array lengths alone do not prove that the provider returned the full rolling 24-hour window. A truncated series could make UV, dust, or pollen maxima look safer simply because later hours were absent; duplicate or out-of-order timestamps could also misalign the evidence. Anchor the requested window at fetch start, require every timestamp to be valid and each adjacent instant exactly one hour apart, and require coverage from the first future hourly slot through the final slot before the 24-hour boundary. Reject incomplete timelines as an invalid provider response instead of interpolating or returning partial maxima. Keep the marine section independently optional and leave source values/attribution unchanged.
+
+
+## 2026-10-25 — Keep canonical-origin E2E strict but preview-aware
+
+Canonical metadata may legitimately point to the current local preview root or to the fixed public production root during SEO/Lighthouse validation. The root-route E2E should allow exactly those two URLs and continue to reject any other origin or route; do not weaken the assertion to an arbitrary HTTPS URL or only check that a canonical link exists.
