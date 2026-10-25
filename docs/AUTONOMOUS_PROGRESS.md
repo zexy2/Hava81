@@ -1860,3 +1860,24 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 ### Exact current branch / next actions
 - Current branch `automation/hava81-run11-observer-host-label-20261025-1030`, based on `c130afa8de5e63a23a458c428771dc251c05f002`; five observer source/test/README files modified, not yet committed/pushed.
 - Next: review the diff, commit/push and open a narrow observer observability PR; monitor main #3606 and public revision parity while it runs. Then rebase PR #1477 once production is healthy, verify its exact new head and required checks, and merge normally if green. Continue independent work while jobs run; never disable/pause automation.
+
+
+## 2026-10-25 10:42 TRT — Rebase observer-host provenance change after deploy-contract docs merge
+
+### Completed in this loop
+- PR #1477 (`automation/hava81-run11-deploy-docs-contract-20261025-1025`, head `29b458b9ba1c71c5f27dd669401b907a1e66e72d`) was rechecked immediately before merge: exact-head CI/CD, Ops script contracts and CodeQL were green; mergeability was `clean`; no reviews were submitted. It was squash-merged normally as main SHA `ab97229c64d9acd16045e026290488a85f03f172`.
+- The observer-host provenance branch was clean at remote head `558a46bc7ccd6514257b398f47bfd960d82a22b4`; it was rebased onto the fetched merge SHA `ab97229c64d9acd16045e026290488a85f03f172` without conflicts. Rebased source head before this append-only checkpoint: `993654e9ec0e02c0ed5b2d35adb5ae358fb95fed`.
+- Revalidation after rebase: observer unittest discovery **95/95 passed**, Python compile passed for collector/status/tests, `git diff --check` passed. No production API code or routing was changed.
+- Public smoke at 10:40 TRT: Turkish root, Turkish city, and English city pages HTTP 200; API `/api/v1/health`, `/api/v1/health/ready`, and `/api/v1/health/live` HTTP 200; CORS preflight HTTP 204. API runtime revision remains `bf4f0da53022119ed0d8ffe1cfa645e3c4211aee`, and Nginx remains on port 4002. The main CI/CD run `40173540249` was still in progress after PR #1477; Ops contracts `40173540352` succeeded and CodeQL `40173540238` was still running.
+
+### Current branch / exact pending state
+- Worktree `/tmp/hava81-run11-observer-host-label-20261025-1030`; branch `automation/hava81-run11-observer-host-label-20261025-1030`.
+- Remote branch head before the rebase push: `558a46bc7ccd6514257b398f47bfd960d82a22b4`. The checkpoint commit will advance the rebased source head; read the resulting exact PR head SHA from GitHub after push before trusting or merging checks.
+- PR #1478 is the pending observer-only change. Push only after re-reading the remote head and use `--force-with-lease` against exactly `558a46bc7ccd6514257b398f47bfd960d82a22b4`. Then verify current PR head/base, CI/CD, Ops contracts, CodeQL and mergeability directly.
+
+### Infrastructure guardrail and next queue
+1. Continue monitoring main run `40173540249` and CodeQL `40173540238`; while they run, continue an independent clean-branch task instead of waiting.
+2. After main deploy completes, directly verify root/TR/EN frontend revision parity with main, API ready/live/health, CORS, and a live weather/hourly response.
+3. Merge PR #1478 only after its exact current head has all required hosted checks green and `mergeable_state=clean`; then monitor its main deploy and production smoke.
+4. SentinelX's enrolled Oracle host remains offline. The accessible `nexus-hermes` gateway's root disk is 92.4% used / 7.3 GiB free; these are gateway-local measurements, not Oracle measurements, and `api_build_headroom_ok=false`. Do not install the observer on Oracle or build/deploy/rollback API runtime until the actual Oracle host is reachable and fresh host-specific disk/build-headroom and blue-green/canary gates pass. Keep API primary on 4002 and 4001 as rollback/canary.
+5. Preserve all unrelated dirty worktrees; never disable or pause this automation.
