@@ -66,7 +66,7 @@
     "api:build": "npm --prefix apps/api run build",
     "api:test": "npm --prefix apps/api test",
     "api:type-check": "npm --prefix apps/api run type-check",
-    "lint": "eslint src vite.config.ts playwright.config.ts \"e2e/**/*.ts\" scripts/audit-live-responsive.mjs scripts/test-live-audit-options.mjs && npm run lint:css",
+    "lint": "eslint src vite.config.ts playwright.config.ts \"e2e/**/*.ts\" scripts/audit-live-responsive.mjs scripts/capture-visual-audit.mjs scripts/lib/activate-deferred-forecast.mjs scripts/test-live-audit-options.mjs && npm run lint:css",
     "lint:css": "node scripts/lint-css.mjs",
     "lint:fix": "eslint . --fix",
     "analyze": "ANALYZE=true npm run build && npx --yes source-map-explorer@2.5.3 --no-border-checks --gzip --tsv dist/bundle-analysis.tsv $(find dist/assets -maxdepth 1 -type f -name '*.js' ! -name 'rolldown-runtime-*.js' -print)",

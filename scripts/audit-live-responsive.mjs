@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
 import { buildLiveAuditErrors, formatWeatherRequestFailure, writeLiveAuditResults } from './lib/live-audit-result.mjs';
 import { launchLiveAuditBrowser } from './lib/live-audit-browser.mjs';
+import { activateDeferredForecast, restoreViewportTop } from './lib/activate-deferred-forecast.mjs';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
 
 function parseOptions(args) {
@@ -111,29 +112,8 @@ try {
           // slot approaches the viewport. Activate that slot before waiting for the
           // finished chart, then restore the top-of-page position before measuring
           // first-viewport geometry or capturing a screenshot.
-          const forecastContent = page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card').first();
-          const deferredForecast = page.locator('.atlas-forecast-loading--card')
-            .filter({ hasText: /Saatlik tahmin, bu bölüm ekrana yaklaştığında yüklenir\.|Hourly forecast loads as you approach this section\./i })
-            .first();
-          await page.locator('.hava81-forecast-atlas, .atlas-forecast-error-card, .atlas-forecast-loading--card').first()
-            .waitFor({ state: 'visible', timeout: 15_000 });
-          if (!(await forecastContent.count()) && await deferredForecast.isVisible().catch(() => false)) {
-            try {
-              await deferredForecast.evaluate(
-                element => element.scrollIntoView({ block: 'center', behavior: 'auto' }),
-                undefined,
-                { timeout: 1_000 },
-              );
-            } catch (error) {
-              // IntersectionObserver may replace the placeholder between the
-              // visibility check and scroll. Continue only when it was actually
-              // detached/replaced; otherwise preserve the actionable error.
-              if (await deferredForecast.isVisible().catch(() => false)) throw error;
-            }
-          }
-          await forecastContent.waitFor({ state: 'visible', timeout: 15_000 });
-          await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'auto' }));
-          await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+          await activateDeferredForecast(page);
+          await restoreViewportTop(page);
           item.metrics = await page.evaluate(() => {
             const element = selector => document.querySelector(selector);
             const bounds = selector => element(selector)?.getBoundingClientRect() || null;

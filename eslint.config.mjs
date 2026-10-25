@@ -31,7 +31,7 @@ export default tseslint.config(
   },
   {
     // The live audit runs in Node but also evaluates browser-side callbacks in Playwright.
-    files: ['scripts/audit-live-responsive.mjs', 'scripts/test-live-audit-options.mjs'],
+    files: ['scripts/audit-live-responsive.mjs', 'scripts/capture-visual-audit.mjs', 'scripts/lib/activate-deferred-forecast.mjs', 'scripts/test-live-audit-options.mjs'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
