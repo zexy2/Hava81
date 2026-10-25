@@ -1612,6 +1612,20 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Rebase each prepared branch separately onto the then-current main, preserve both append-only progress/decision entries if they conflict, rerun focused/full tests and lint, then use `--force-with-lease` only if history actually changed.
 4. Keep production API on 4002 and require a validated canary for any API change. Retry SentinelX status/state/events when the Oracle agent reconnects; never disable/pause the hourly automation.
 
+## 2026-10-25 03:55 TRT — Explain stale marine context without revealing expired values
+
+- Independent worktree `/home/chatgpt/hava81-run11-marine-stale-context-status-20261025-0330`, branch `automation/hava81-run11-marine-stale-context-status-20261025-0330`, based on `origin/main=c423bd522512c2b51d4813a6be0192efcd6a14e9`. The worktree had an uncommitted, isolated ContextSignalsPanel improvement; no matching remote branch exists.
+- Found a silent-state gap: stale marine wave/sea-surface values were already hidden, but when marine data was the only context signal the entire panel disappeared. When other signals remained, users also saw no explanation for the missing marine values. The panel now retains a small localized `role="status"` note only when a previously supplied marine sample is stale; numeric marine values remain hidden. Fresh UV/dust/pollen and the existing modeled-data disclaimer remain independent.
+- Validation on the current tree: focused ContextSignalsPanel tests **14/14**; full frontend Vitest **1,110/1,110 across 108 files**; TypeScript `--noEmit`; ESLint + repository CSS lint; `git diff --check` all passed. Local production build intentionally skipped because the **gateway** root filesystem is 94% used (~6.4 GiB free); hosted CI must validate build/browser/Lighthouse gates.
+- Read-only public smoke: homepage, `/istanbul/`, `/en/istanbul/`, and API `/api/v1/health/ready` returned HTTP 200. No production code was deployed. SentinelX still reports its enrolled host offline; Gateway exposes only local `nexus-hermes`, so its disk pressure is not a fresh Oracle-host measurement. Do not perform API build/deploy/rollback or delete unknown data.
+- PR #1461 was rebased safely onto `origin/main=c423bd522512c2b51d4813a6be0192efcd6a14e9` and pushed with explicit lease; new head `640c78f7ac4a8beeaae9b7bfd3a7395b27664f9e`. CodeQL, Lighthouse, frontend quality, production build, API test/build, and script contracts are green; Browser flows are still running. Do not touch that PR branch from this worktree.
+
+### Exact next actions / queue
+1. Commit/push this isolated marine stale-state UI change only after re-fetching `origin/main` and confirming it is still `c423bd522512c2b51d4813a6be0192efcd6a14e9`; open a narrow PR and require exact-head hosted build/browser/Lighthouse, script contracts, CodeQL, mergeability and review-state checks.
+2. Continue monitoring PR #1461 while this PR's checks run. Merge either only after its exact head/base, all required checks and review state are freshly verified; then verify the main pipeline and public revision parity.
+3. Retry SentinelX state/status/events when the enrolled Oracle host reconnects. Preserve production API on port 4002 and rollback/canary on 4001; keep PR #1454 draft and API deployment blocked until the real host and build-headroom gate are healthy.
+4. Continue an independent evidence-based first-viewport/performance or accessibility task while external checks run. Never disable/pause the hourly automation.
+
 ## 2026-10-25 04:09 TRT — Persist structured live responsive audit results on failures
 
 - New isolated worktree `/home/chatgpt/hava81-run11-live-audit-results-20261025-0410`, branch `automation/hava81-run11-live-audit-results-20261025-0410`, based on `origin/main=45176b5107f04c9d9fd704ee2c5df8e16ff4859c` (post-merge #1461). Separate from pending UI/performance PRs; no API or production changes.

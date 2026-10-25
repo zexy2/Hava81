@@ -103,8 +103,17 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
     marineFreshness.status === 'fresh' &&
     (signals.marine.waveHeight !== undefined || signals.marine.seaSurfaceTemperature !== undefined)
   );
+  const hasStaleMarine = Boolean(
+    signals.marine &&
+    marineFreshness.status === 'stale' &&
+    (signals.marine.waveHeight !== undefined || signals.marine.seaSurfaceTemperature !== undefined)
+  );
   const hasAnySignal =
-    signals.uvIndexMax !== undefined || signals.dustMax !== undefined || hasPollen || hasMarine;
+    signals.uvIndexMax !== undefined ||
+    signals.dustMax !== undefined ||
+    hasPollen ||
+    hasMarine ||
+    hasStaleMarine;
 
   if (!freshness.fresh || !hasAnySignal) return null;
   const seaSurfaceTemperature = signals.marine?.seaSurfaceTemperature;
@@ -195,6 +204,11 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           </article>
         ) : null}
       </div>
+      {hasStaleMarine ? (
+        <p className="context-signals__note" role="status">
+          {t('hava81.context.marineStale')}
+        </p>
+      ) : null}
       <p className="context-signals__note">{t('hava81.context.note')}</p>
     </section>
   );

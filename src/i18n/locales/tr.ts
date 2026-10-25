@@ -524,6 +524,7 @@ export const tr = {
       sourceModified: 'Hava81 tarafından özetlendi',
       fetchedAt: 'veri alındı {{time}}',
       waveUnavailable: 'Dalga verisi yok',
+      marineStale: 'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
     },

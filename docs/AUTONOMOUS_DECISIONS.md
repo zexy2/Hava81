@@ -497,6 +497,12 @@ The live responsive audit should support an explicitly configured loopback Chrom
 - Browser alerts already fail closed when current weather, the forecast, or required AQI evidence is missing/stale. When the user has enabled alerts and browser permission is granted, surface a localized status explaining that new alerts are temporarily paused until the evidence is fresh enough.
 - Keep the opt-in setting enabled so a temporary data-quality issue does not silently revoke the user's preference; keep the disable control available. Do not change alert candidate rules, quiet hours, deduplication, notification delivery, modeled-guidance disclosure, or any weather value/score.
 
+## 2026-10-25 03:55 TRT — Explain stale marine model data as an unavailable context state
+
+- When a marine source timestamp expires, keep its wave and sea-surface values hidden. If those were the only context signals, retain the panel's explanatory state rather than silently dropping the entire panel; when other signals remain, explain the missing marine values without hiding fresh UV, dust or pollen.
+- Show the note only for a previously received marine sample explicitly classified as stale, using localized `role="status"` copy. Missing/invalid timestamp states remain fail-closed and must not be relabeled as confirmed stale unless the freshness helper says so.
+- This is presentation/accessibility only. Do not change marine timestamps, freshness limits, provider attribution, modeled-vs-observed claims, weather scores, API contracts, or production routing.
+
 ## 2026-10-25 04:09 TRT — Persist live audit diagnostics independently of screenshots
 
 - Every completed live responsive audit must persist a structured `results.json`, including failed cases and screenshot-free runs. The report is operational evidence needed to inspect viewport, locale/theme, layout metrics and weather-request failures; screenshots remain opt-in to avoid unnecessary disk usage.

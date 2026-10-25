@@ -81,6 +81,31 @@ describe('ContextSignalsPanel', () => {
     expect(screen.getByText('3,2')).toBeInTheDocument();
     expect(screen.queryByText('25,1°C')).not.toBeInTheDocument();
     expect(screen.queryByText(/0,40 m/)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.'
+    );
+  });
+
+  it('explains stale marine evidence when it is the only available context signal', () => {
+    renderPanel({
+      provider: 'Open-Meteo',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      freshForSeconds: 300,
+      attribution: 'Open-Meteo · CC BY 4.0',
+      units: { waveHeight: 'm', seaSurfaceTemperature: '°C' },
+      marine: {
+        observedAt: '2026-08-28T06:59:59',
+        waveHeight: 0.4,
+        seaSurfaceTemperature: 25.1,
+      },
+    });
+
+    expect(screen.getByRole('region')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.'
+    );
+    expect(screen.queryByText('25,1°C')).not.toBeInTheDocument();
+    expect(screen.queryByText(/0,40 m/)).not.toBeInTheDocument();
   });
 
   it('removes marine values at their source-age deadline without hiding other context', async () => {
@@ -106,6 +131,9 @@ describe('ContextSignalsPanel', () => {
 
     expect(screen.queryByText('25,1°C')).not.toBeInTheDocument();
     expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.'
+    );
   });
 
   it('does not leave an empty context panel when marine evidence is missing its timestamp', () => {
