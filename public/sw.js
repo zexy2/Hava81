@@ -88,6 +88,16 @@ self.addEventListener('activate', event => {
   })());
 });
 
+async function cachedNavigationFallback(navigationCacheKey) {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    return (await cache.match(navigationCacheKey)) || (await cache.match('/'));
+  } catch {
+    // Cache Storage is optional during runtime; callers preserve the original network result.
+    return undefined;
+  }
+}
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -108,17 +118,20 @@ self.addEventListener('fetch', event => {
             } catch {
               // Runtime cache writes are best-effort; never discard a successful navigation.
             }
+            return response;
+          }
+
+          // A transient server failure should not discard an already-cached application shell.
+          // Keep 4xx responses network-authentic so missing routes are not hidden by stale HTML.
+          if (response.status >= 500) {
+            const cached = await cachedNavigationFallback(navigationCacheKey);
+            if (cached) return cached;
           }
           return response;
         })
         .catch(async networkError => {
-          try {
-            const cache = await caches.open(CACHE_NAME);
-            const cached = (await cache.match(navigationCacheKey)) || (await cache.match('/'));
-            if (cached) return cached;
-          } catch {
-            // If Cache Storage is unavailable too, preserve the original network failure.
-          }
+          const cached = await cachedNavigationFallback(navigationCacheKey);
+          if (cached) return cached;
           throw networkError;
         })
     );

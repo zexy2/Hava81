@@ -207,6 +207,58 @@ describe('service worker fetch strategy', () => {
     ).resolves.toBe(response);
   });
 
+  it('serves the cached shell for a transient navigation server error', async () => {
+    const serverError = { ok: false, status: 503 };
+    const fetchImpl = vi.fn().mockResolvedValue(serverError);
+    const worker = loadWorker({ fetchImpl, cached: 'cached-shell' });
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/?campaign=1`,
+        },
+      })
+    ).resolves.toBe('cached-shell');
+    expect(worker.cache.match).toHaveBeenCalledWith(`${ORIGIN}/istanbul/`);
+    expect(worker.cache.put).not.toHaveBeenCalled();
+  });
+
+  it('keeps a navigation server error when no cached shell is available', async () => {
+    const serverError = { ok: false, status: 503 };
+    const worker = loadWorker({ fetchImpl: vi.fn().mockResolvedValue(serverError) });
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/`,
+        },
+      })
+    ).resolves.toBe(serverError);
+  });
+
+  it('does not mask a missing route with the cached application shell', async () => {
+    const notFound = { ok: false, status: 404 };
+    const worker = loadWorker({ fetchImpl: vi.fn().mockResolvedValue(notFound), cached: 'cached-shell' });
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/not-a-real-route/`,
+        },
+      })
+    ).resolves.toBe(notFound);
+    expect(worker.caches.open).not.toHaveBeenCalled();
+  });
+
   it('returns a successful navigation when Cache Storage cannot be opened', async () => {
     const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
     const fetchImpl = vi.fn().mockResolvedValue(response);
