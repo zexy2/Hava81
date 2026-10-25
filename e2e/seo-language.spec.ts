@@ -28,6 +28,44 @@ test.describe('English edition and 404', () => {
   );
 
   test(
+    'keeps city URL and canonical metadata locale-correct when weather is unavailable',
+    DESKTOP,
+    async ({ page }) => {
+      await page.addInitScript(() => {
+        try {
+          const current = JSON.parse(localStorage.getItem('user-settings') ?? '{}');
+          localStorage.setItem(
+            'user-settings',
+            JSON.stringify({
+              ...current,
+              language: 'en',
+              temperatureUnit: 'metric',
+              windSpeedUnit: 'ms',
+              themeMode: 'auto',
+            })
+          );
+        } catch {
+          // The first about:blank document has no localStorage origin.
+        }
+      });
+      await page.route('**/api/v1/**', route => route.abort());
+      await page.goto('/istanbul/');
+
+      await expect(page).toHaveURL(/\/en\/istanbul\/$/);
+      await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+      await expect(page).toHaveTitle('İstanbul weather — Hava81');
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        /\/en\/istanbul\/$/
+      );
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+        'content',
+        /Current weather, hourly and daily forecast/
+      );
+    }
+  );
+
+  test(
     'an unknown address shows "Bu adreste bir il yok" with province suggestions',
     DESKTOP,
     async ({ page }) => {
