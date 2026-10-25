@@ -102,14 +102,24 @@ self.addEventListener('fetch', event => {
       fetch(request, { cache: 'no-store' })
         .then(async response => {
           if (response.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.put(navigationCacheKey, response.clone());
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(navigationCacheKey, response.clone());
+            } catch {
+              // Runtime cache writes are best-effort; never discard a successful navigation.
+            }
           }
           return response;
         })
-        .catch(async () => {
-          const cache = await caches.open(CACHE_NAME);
-          return (await cache.match(navigationCacheKey)) || (await cache.match('/'));
+        .catch(async networkError => {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            const cached = (await cache.match(navigationCacheKey)) || (await cache.match('/'));
+            if (cached) return cached;
+          } catch {
+            // If Cache Storage is unavailable too, preserve the original network failure.
+          }
+          throw networkError;
         })
     );
     return;
@@ -120,15 +130,27 @@ self.addEventListener('fetch', event => {
     ['script', 'style', 'font', 'image'].includes(request.destination);
   if (!cacheableStaticAsset) return;
 
-  event.respondWith(
-    caches.open(CACHE_NAME).then(async cache => {
+  event.respondWith((async () => {
+    let cache;
+    try {
+      cache = await caches.open(CACHE_NAME);
       const cached = await cache.match(request);
       if (cached) return cached;
-      const response = await fetch(request);
-      if (response.ok) await cache.put(request, response.clone());
-      return response;
-    })
-  );
+    } catch {
+      // Cache Storage may be disabled or quota-limited. Keep the network path available.
+      cache = undefined;
+    }
+
+    const response = await fetch(request);
+    if (response.ok && cache) {
+      try {
+        await cache.put(request, response.clone());
+      } catch {
+        // A cache write failure must not break a successfully fetched script/style/font/image.
+      }
+    }
+    return response;
+  })());
 });
 
 self.addEventListener('notificationclick', event => {

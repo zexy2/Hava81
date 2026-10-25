@@ -189,6 +189,140 @@ describe('service worker fetch strategy', () => {
     expect(worker.cache.put).toHaveBeenCalledWith(request, expect.anything());
   });
 
+  it('returns a successful navigation response when runtime cache writes fail', async () => {
+    const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    const fetchImpl = vi.fn().mockResolvedValue(response);
+    const worker = loadWorker({ fetchImpl });
+    worker.cache.put.mockRejectedValueOnce(new Error('cache quota exceeded'));
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/`,
+        },
+      })
+    ).resolves.toBe(response);
+  });
+
+  it('returns a successful navigation when Cache Storage cannot be opened', async () => {
+    const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    const fetchImpl = vi.fn().mockResolvedValue(response);
+    const worker = loadWorker({ fetchImpl });
+    worker.caches.open.mockRejectedValueOnce(new Error('storage disabled'));
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/`,
+        },
+      })
+    ).resolves.toBe(response);
+    expect(fetchImpl).toHaveBeenCalledWith(expect.anything(), { cache: 'no-store' });
+  });
+
+  it('returns a successful static asset when its runtime cache write fails', async () => {
+    const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    const fetchImpl = vi.fn().mockResolvedValue(response);
+    const worker = loadWorker({ fetchImpl });
+    worker.cache.put.mockRejectedValueOnce(new Error('cache quota exceeded'));
+    const request = {
+      method: 'GET',
+      mode: 'no-cors',
+      destination: 'script',
+      url: `${ORIGIN}/assets/index-abc.js`,
+    };
+
+    await expect(worker.dispatch('fetch', { request })).resolves.toBe(response);
+  });
+
+  it('fetches static assets when Cache Storage cannot be opened', async () => {
+    const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    const fetchImpl = vi.fn().mockResolvedValue(response);
+    const worker = loadWorker({ fetchImpl });
+    worker.caches.open.mockRejectedValueOnce(new Error('storage disabled'));
+    const request = {
+      method: 'GET',
+      mode: 'no-cors',
+      destination: 'script',
+      url: `${ORIGIN}/assets/index-abc.js`,
+    };
+
+    await expect(worker.dispatch('fetch', { request })).resolves.toBe(response);
+    expect(fetchImpl).toHaveBeenCalledWith(request);
+  });
+
+  it('fetches static assets when a cached lookup fails', async () => {
+    const response = { ok: true, clone: vi.fn(() => ({ ok: true })) };
+    const fetchImpl = vi.fn().mockResolvedValue(response);
+    const worker = loadWorker({ fetchImpl });
+    worker.cache.match.mockRejectedValueOnce(new Error('cache read failed'));
+    const request = {
+      method: 'GET',
+      mode: 'no-cors',
+      destination: 'script',
+      url: `${ORIGIN}/assets/index-abc.js`,
+    };
+
+    await expect(worker.dispatch('fetch', { request })).resolves.toBe(response);
+    expect(fetchImpl).toHaveBeenCalledWith(request);
+  });
+
+  it('preserves the original network error when a navigation cache lookup fails', async () => {
+    const networkError = new Error('offline');
+    const worker = loadWorker({ fetchImpl: vi.fn().mockRejectedValue(networkError) });
+    worker.cache.match.mockRejectedValueOnce(new Error('cache read failed'));
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/`,
+        },
+      })
+    ).rejects.toBe(networkError);
+  });
+
+  it('preserves the original network error when offline cache access also fails', async () => {
+    const networkError = new Error('offline');
+    const worker = loadWorker({ fetchImpl: vi.fn().mockRejectedValue(networkError) });
+    worker.caches.open.mockRejectedValueOnce(new Error('storage disabled'));
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/`,
+        },
+      })
+    ).rejects.toBe(networkError);
+  });
+
+  it('rejects an offline navigation when neither its path nor root shell is cached', async () => {
+    const networkError = new Error('offline');
+    const worker = loadWorker({ fetchImpl: vi.fn().mockRejectedValue(networkError) });
+
+    await expect(
+      worker.dispatch('fetch', {
+        request: {
+          method: 'GET',
+          mode: 'navigate',
+          destination: 'document',
+          url: `${ORIGIN}/istanbul/`,
+        },
+      })
+    ).rejects.toBe(networkError);
+  });
+
   it('leaves API calls, other origins and non-GET requests to the network', async () => {
     const worker = loadWorker();
     for (const request of [

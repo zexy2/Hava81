@@ -598,3 +598,7 @@ For the settings trigger, keep `aria-haspopup="dialog"` and `aria-expanded` avai
 ## 2026-10-25 — EnvironmentRail must not reference the closed map region
 
 The environment rail exposes a second map disclosure trigger that controls the same conditionally mounted `weather-map-region`. Its `aria-controls` must follow `mapExpanded`: omit the reference while closed and expose it while expanded. Keep its accessible label/value and `aria-expanded` synchronized; do not change map opening/closing, focus restoration, map tiles, or weather evidence. This complements the header-trigger fix without modifying its pending branch.
+
+## 2026-10-25 — Runtime cache failures must not mask successful network responses
+
+Service-worker runtime caching is an optimization, not a prerequisite for loading the application. For navigation and static-asset requests, cache open/read/write failures must fall through to the network when possible; a successful network response must still be returned if cache persistence fails. For an offline navigation, serve the matching cached shell (or root shell) when available, but if cache access also fails, rethrow the original network error so diagnostics retain the actual connectivity failure. Keep API requests outside this cache strategy and preserve install-time required-asset fail-closed behavior.
