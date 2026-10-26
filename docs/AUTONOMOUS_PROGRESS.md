@@ -1,3 +1,23 @@
+# Current checkpoint — 2026-10-27 (latest verified)
+
+## Main, production, and observer
+- Base `main` SHA: `704d94d22a242657975219e118b17769c3fa1550`; main CI/CD run #3761 (`40401035547`) succeeded for that SHA. Direct public smoke returned HTTP 200 for `/`, `/izmir/`, `/en/istanbul/`, and API readiness. The current-weather endpoint returned HTTP 200; CORS preflight returned 204 with the expected public origin.
+- Fresh observer snapshot: `2026-10-26T21:57:11.971249Z`; production healthy, API readiness HTTP 200 with provider circuit closed, frontend revision matched main, Nginx/API port 4002 primary and 4001 reserved as rollback/canary. `hava81-observer.timer` is enabled and active. Root disk was 89.3% used with about 10.3 GiB free; API build-headroom gate true with a disk-pressure warning. No production restart, API deployment, port switch, cleanup, or rollback was performed.
+- PR #1531 remains open at head `3a4992418c3410fd8447b00d4141808cbd56eb8c`; CI/CD #3743, API container verification, Ops #482, and CodeQL #2524 succeeded. Keep it held until the official Node 26 Active LTS transition scheduled for 2026-10-28; re-check the live official schedule and exact remote head before any rebase/merge/deploy.
+
+## Active independent work
+- Offline localized-route safety branch: `automation/hava81-run13-offline-route-20261027-0011`, based on `704d94d22a242657975219e118b17769c3fa1550`. It makes the service-worker root-shell fallback URL-neutral, strips stale content-length/encoding/transfer-encoding headers, and protects BFCache-restored city identity until matching weather arrives. No synthetic or cached weather was added. Local validation on the exact code tree passed: `npm run lint`, `npm run type-check`, `npm run test:ci` (118 files / 1,224 tests), `npm run build`, PWA E2E 11/11, plus post-hook lint/type/focused tests (59/59). Re-read the current remote branch head and PR checks before any merge.
+- Read-only responsive audit on `/tmp/hava81-run13-live-ui-audit-20261027-2205` found 43px interval buttons at 320 CSS px / 200% root text in all eight city/language/theme variants (32/40 cases passed). A separate branch is correcting the narrow-phone layout and validating against a local preview with the real API proxied same-origin. Original screenshots/reports are in `/tmp/hava81-run13-live-ui-audit-20261027-2205/results`; validation job `job_c0c2761ed222` was running at this checkpoint.
+- Service-worker lint coverage is being added independently on `automation/hava81-run13-service-worker-lint-20261027-2208`; local `npm run lint`, type-check, and 24 focused service-worker tests passed. Do not mix it into the offline-route branch.
+- Preserve other concurrent worktrees. Do not reset or edit `/home/ubuntu/hava81-run13-mainthread-profile-20261027-0037` (it has uncommitted DeferredEnvironmentRail/App/CSS work) or `/home/ubuntu/hava81-run11-offline-shell-fallback-20261026-1942` (separate PWA/docs tests).
+
+## Next queue
+1. Re-read the remote branch head, open/inspect its PR, and require exact-head CI, browser, Lighthouse/live-weather, Ops, and CodeQL gates before merge.
+2. Finish the isolated 40-case responsive audit; keep only a CSS change that brings all interval targets to at least 44×44 CSS px without introducing overflow. Then run full frontend coverage/build and open a separate PR.
+3. Finish service-worker lint coverage on its own branch, run the full frontend gate, and open a separate PR if green.
+4. Re-check fresh observer state immediately before every merge/deploy. Keep 4002 primary and 4001 rollback/canary; do not deploy API code or switch ports without full blue-green/canary gates.
+5. On/after 2026-10-28, verify the official Node.js release schedule before rebasing PR #1531; never merge/deploy solely because the calendar date arrived.
+
 # Current checkpoint — 2026-10-26 21:45 TRT (18:45 UTC)
 
 ## Main, production, and deployment pipeline
