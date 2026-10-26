@@ -788,3 +788,11 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - An unvisited localized route can fall back to the cached root HTML shell while the browser keeps the requested city pathname. Reconstruct the fallback response without stale root-response URL metadata and remove body-length/encoding headers that no longer describe the reconstructed response.
 - When browser back-forward cache restores a different city URL, keep the restored route authoritative until weather for that city arrives; a late response for the previous city must not rewrite the explicit route or remain presented as the new city's observation.
 - Keep weather API requests network-only. Do not cache or synthesize weather for an unvisited city. An offline route may show the correct city shell with unavailable weather, but must not reuse another city's observation or imply that a fresh observation was fetched.
+
+
+## 2026-10-27 — Keep forecast interval controls at 44px on narrow phones
+
+- The read-only production responsive audit found the seven forecast interval buttons at 43 CSS px wide at a 320px viewport with 200% root text in the tested Turkish/English and light/dark variants. The page itself stayed within the viewport, so the defect was undersized targets rather than horizontal overflow.
+- At the narrow-phone breakpoint, make the interval-control and range containers fill the available width while retaining a 44px minimum button width and the existing four-column layout. Do not lower the 44px audit threshold or solve this by introducing horizontal scrolling.
+- Keep both a CSS visual-contract assertion and a browser regression that measures all seven actual button bounding boxes at 320px/200% text across Turkish/English, light/dark, and two city routes, while also asserting no horizontal page overflow.
+- This is presentation/accessibility-only: no forecast intervals, weather data, provider provenance, freshness, scoring, or safety guidance changes.
