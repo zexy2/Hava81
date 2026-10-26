@@ -2377,6 +2377,7 @@
       .hava81-forecast-atlas__interval-control {
       display: grid;
       flex: 1 1 100%;
+      width: 100%;
       gap: 8px;
     }
 
@@ -2452,6 +2453,7 @@
   @media (max-width: 22.5rem) {
     .app .hava81-forecast-atlas .hava81-forecast-atlas__rhythm .hava81-forecast-atlas__range {
       display: grid;
+      width: 100%;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       grid-auto-rows: minmax(44px, auto);
       gap: 2px;
@@ -2463,7 +2465,7 @@
       .hava81-forecast-atlas__rhythm
       .hava81-forecast-atlas__range-button {
       width: 100%;
-      min-width: 0;
+      min-width: 44px;
       padding-inline: 4px;
     }
   }
