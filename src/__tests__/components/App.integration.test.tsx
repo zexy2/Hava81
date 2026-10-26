@@ -216,6 +216,34 @@ describe('Hava81 app integration', () => {
     expect(JSON.parse(localStorage.getItem('user-settings') ?? '{}').language).toBe('en');
   });
 
+  it('replaces weather when a restored route no longer matches the visible city', async () => {
+    service.getCurrentWeather.mockResolvedValueOnce(current).mockResolvedValueOnce({
+      ...current,
+      cityName: 'Ankara',
+      coordinates: { lat: 39.9334, lon: 32.8597 },
+    });
+    window.history.replaceState({}, '', '/istanbul/');
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState({}, '', '/ankara/');
+      const pageshow = new Event('pageshow');
+      Object.defineProperty(pageshow, 'persisted', { value: true });
+      window.dispatchEvent(pageshow);
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Ankara', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'İstanbul', level: 1 })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(service.getCurrentWeather).toHaveBeenLastCalledWith(
+        { city: 'Ankara', lang: 'tr' },
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      );
+    });
+  });
+
   it('shows İstanbul immediately on the root route without requesting browser location', async () => {
     window.history.replaceState({}, '', '/');
 
@@ -854,12 +882,12 @@ describe('Hava81 app integration', () => {
       expect(document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
         'https://hava81.zekiakgul.dev/en/istanbul/'
       );
-      expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toContain(
-        'Current weather, hourly and daily forecast'
-      );
-      expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).not.toContain(
-        'için güncel hava'
-      );
+      expect(
+        document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content
+      ).toContain('Current weather, hourly and daily forecast');
+      expect(
+        document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content
+      ).not.toContain('için güncel hava');
     });
   });
 
