@@ -4,7 +4,8 @@ import type { ActivityKind } from '../src/domain/activity/types';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../src/types';
 
 const baseUrl = (process.env.BASE_URL || 'http://127.0.0.1:4001/api/v1').replace(/\/$/, '');
-const delayMs = Number(process.env.DELAY_MS || 1100);
+// Three requests per province share the API's 60/min client budget; leave room for concurrent smoke checks.
+const delayMs = Number(process.env.DELAY_MS || 1600);
 const cities = [
   'Adana',
   'Adıyaman',
