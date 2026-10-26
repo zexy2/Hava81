@@ -37,7 +37,9 @@ const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
 const ActivityPlanner = lazy(() => import('./components/hava81/ActivityPlanner'));
 const ContextSignalsPanel = lazy(() => import('./components/hava81/ContextSignalsPanel'));
-const DeferredDecisionAlertsPanel = lazy(() => import('./components/app/DeferredDecisionAlertsPanel'));
+const DeferredDecisionAlertsPanel = lazy(
+  () => import('./components/app/DeferredDecisionAlertsPanel')
+);
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
 type AtlasNavItem = AtlasView;
@@ -50,6 +52,21 @@ const App: React.FC = () => {
   }, [settings.language]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(
+    () => typeof navigator !== 'undefined' && navigator.onLine === false
+  );
+  // Cached weather may remain useful offline, but the connection state must be explicit.
+  useEffect(() => {
+    const syncOnlineState = () => {
+      setIsOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    };
+    window.addEventListener('online', syncOnlineState);
+    window.addEventListener('offline', syncOnlineState);
+    return () => {
+      window.removeEventListener('online', syncOnlineState);
+      window.removeEventListener('offline', syncOnlineState);
+    };
+  }, []);
   // Faz 2.5 + 2.3: `?view=map`, `?view=compare` and `?view=plan` open those views directly.
   const [initialView] = useState(() => parseAtlasView(window.location.search));
   const [showMap, setShowMap] = useState(initialView === 'map');
@@ -447,6 +464,16 @@ const App: React.FC = () => {
             aria-busy={isLoading}
             ref={overviewRef}
           >
+            {isOffline && weather && error?.message !== t('errors.offline') ? (
+              <section
+                className="atlas-message atlas-message--offline"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <p>{t('errors.offlineCached')}</p>
+              </section>
+            ) : null}
             {activeNav === 'compare' ? (
               <Suspense fallback={<p role="status">{t('common.loading')}</p>}>
                 <ComparePanel
