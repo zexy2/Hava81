@@ -100,6 +100,90 @@ process.on('exit', () => console.log('MOCK_FETCH_CALLS=' + calls));
   }
 });
 
+test('verify:81 stops after a stalled HTTP request instead of timing out every province', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'hava81-verify81-timeout-'));
+  try {
+    const preloadPath = join(tempDir, 'mock-fetch.mjs');
+    writeFileSync(preloadPath, `
+let calls = 0;
+globalThis.fetch = async (_input, init = {}) => {
+  calls += 1;
+  return await new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+  });
+};
+process.on('exit', () => console.log('MOCK_FETCH_CALLS=' + calls));
+`);
+
+    const scriptPath = resolve('scripts/verify-81-cities.mjs');
+    const result = spawnSync(process.execPath, [scriptPath], {
+      encoding: 'utf8',
+      timeout: 5_000,
+      env: {
+        ...process.env,
+        BASE_URL: 'https://mock.invalid/api/v1',
+        DELAY_MS: '0',
+        REQUEST_TIMEOUT_MS: '1000',
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, `--import=${pathToFileURL(preloadPath).href}`]
+          .filter(Boolean)
+          .join(' '),
+      },
+    });
+
+    assert.equal(result.error, undefined, result.error?.message);
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    assert.match(result.stdout, /BLOCKED \(request timed out after 1000ms\)/);
+    assert.match(result.stdout, /RESULT: BLOCKED \(request timeout at Adana\)/);
+    assert.match(result.stdout, /MOCK_FETCH_CALLS=1/);
+    assert.doesNotMatch(result.stdout, /\[02\/81\]/);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('verify:81 timeout also covers a response body that stalls after headers arrive', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'hava81-verify81-body-timeout-'));
+  try {
+    const preloadPath = join(tempDir, 'mock-fetch.mjs');
+    writeFileSync(preloadPath, `
+let calls = 0;
+globalThis.fetch = async (_input, init = {}) => {
+  calls += 1;
+  const response = new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+  response.json = () => new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+  });
+  return response;
+};
+process.on('exit', () => console.log('MOCK_FETCH_CALLS=' + calls));
+`);
+
+    const scriptPath = resolve('scripts/verify-81-cities.mjs');
+    const result = spawnSync(process.execPath, [scriptPath], {
+      encoding: 'utf8',
+      timeout: 5_000,
+      env: {
+        ...process.env,
+        BASE_URL: 'https://mock.invalid/api/v1',
+        DELAY_MS: '0',
+        REQUEST_TIMEOUT_MS: '1000',
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, `--import=${pathToFileURL(preloadPath).href}`]
+          .filter(Boolean)
+          .join(' '),
+      },
+    });
+
+    assert.equal(result.error, undefined, result.error?.message);
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    assert.match(result.stdout, /BLOCKED \(request timed out after 1000ms\)/);
+    assert.match(result.stdout, /RESULT: BLOCKED \(request timeout at Adana\)/);
+    assert.match(result.stdout, /MOCK_FETCH_CALLS=1/);
+    assert.doesNotMatch(result.stdout, /\[02\/81\]/);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('decision calibration gate shares the conservative 81-city request pacing', () => {
   const source = readFileSync(resolve('scripts/verify-decision-81.ts'), 'utf8');
   assert.match(source, /const delayMs = Number\(process\.env\.DELAY_MS \|\| 1600\);/);
