@@ -150,7 +150,7 @@ jobs:
   lighthouse:
     name: Lighthouse budgets
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     needs: build
     steps:
       - uses: actions/checkout@v7
@@ -159,15 +159,22 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci --no-audit
-      - uses: actions/download-artifact@v8
-        with:
-          name: dist
-          path: dist
+      # Build a separate, non-deployed variant. The production dist artifact uses
+      # the public API origin, which rejects the local preview origin by CORS.
+      # A relative API base plus the Vite preview proxy exercises the same UI
+      # against real API responses without weakening production CORS.
+      - name: Build Lighthouse variant with same-origin API routing
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: /api/v1
       - name: Validate Lighthouse browser selection
         run: node scripts/test-lighthouse-chrome-selection.mjs
       - name: Validate Lighthouse target-path safety
         run: node scripts/test-lighthouse-target-url.mjs
-      - run: npm run lighthouse
+      - name: Measure the built UI through the real API proxy
+        run: npm run lighthouse
+        env:
+          HAVA81_PREVIEW_API_PROXY_TARGET: https://api.hava81.zekiakgul.dev
       - name: Preserve Lighthouse JSON reports (including failed budgets)
         if: always()
         uses: actions/upload-artifact@v7

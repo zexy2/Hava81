@@ -8,6 +8,7 @@ import process from 'node:process';
 import { resolveLighthouseChromePath } from './lib/resolve-lighthouse-chrome.mjs';
 import { resolveLighthouseTargetUrl } from './lib/lighthouse-target-url.mjs';
 import { resolveLoopbackCdpPort } from './lib/loopback-cdp-url.mjs';
+import { assertLighthouseWeatherReady } from './lib/lighthouse-weather-readiness.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -234,6 +235,7 @@ try {
   console.log(`[lighthouse] target ${targetUrl}`);
   await waitForPreview(preview);
   let report = await runLighthouseWithStartupRetry(resultPath, runEnv);
+  assertLighthouseWeatherReady(report);
   const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');
   const firstPerformanceScore = report.categories?.performance?.score;
   if (
@@ -246,6 +248,7 @@ try {
         'running one confirmation measurement to distinguish a persistent regression from runner contention.'
     );
     report = await runLighthouseWithStartupRetry(confirmResultPath, runEnv);
+    assertLighthouseWeatherReady(report);
   }
   let hasError = false;
   for (const threshold of thresholds) {

@@ -1,5 +1,27 @@
 # Hava81 autonomous progress
 
+Updated: 2026-10-26 07:26 TRT (04:26 UTC)
+
+## Current production and CI
+- `origin/main` is `0ae5850fa3b6613df29eb6a259fd5fb31b045ec2`; main CI/CD run #3681 (`40260623188`) succeeded for this exact SHA. No open automation PRs were returned by the direct GitHub query at the start of this workstream.
+- Fresh public smoke: `/`, `/izmir/`, and `/en/istanbul/` returned HTTP 200 with the same frontend revision `0ae5850fa3b6613df29eb6a259fd5fb31b045ec2`. API readiness returned HTTP 200 at revision `295543ad98644d812e3808a2c67c64d769983130`; production CORS preflight returned 204 for `https://hava81.zekiakgul.dev`.
+- Root disk is 92% used with about 8.6 GiB free. Preserve worktrees, containers, images, volumes and shared browser assets; do not run an API build/deploy or change ports until a fresh observer explicitly confirms API build headroom. Keep API 4002 primary and 4001 rollback/canary.
+- The worker snapshot read at the start of this run was collected at `2026-10-26T01:07:56Z` and was fresh then; its main SHA and green run matched `0ae5850...`. Re-read the observer immediately before any merge/deploy because that snapshot is now stale.
+
+## Active workstreams
+- **Lighthouse CORS/measurement fix:** worktree `/home/chatgpt/hava81-run11-lighthouse-api-proxy-20261026-0712`, branch `automation/hava81-run11-lighthouse-api-proxy-20261026-0712`, based on `0ae5850...`. Local gates passed: lint, TypeScript, full Vitest coverage suite (**115 files / 1,156 tests**, 92.77% statements / 86.68% branches), non-deployed build with `VITE_API_BASE_URL=/api/v1`, proxy/readiness/artifact/publication contract tests, and Lighthouse via the cached Playwright headless shell. Lighthouse measured 75 performance (floor 60, target 80), 100 accessibility, 100 best practices, 100 SEO; FCP 1.9 s, LCP 2.8 s, TBT 870 ms, CLS 0.03; the current-weather request returned HTTP 200. A first local run with the host's Snap Chromium failed to connect; the isolated headless-shell rerun passed. Changes are not yet committed and no PR is open. The Lighthouse workflow builds a separate non-deployed variant, proxies `/api` to the real public API, and leaves the production build artifact and CORS policy unchanged; `run-lighthouse.mjs` fails closed if the current-weather response is missing or unsuccessful.
+- **Loading-state CLS experiment:** worktree `/home/chatgpt/hava81-run11-loading-skeleton-layout-stability-20261026-0712`, branch `automation/hava81-run11-loading-skeleton-layout-stability-20261026-0712`, based on `0ae5850...`. One untracked Playwright test delays the current-weather response and asserts mobile CLS < 0.05; it has not yet been run. Do not change skeleton CSS until the baseline browser measurement proves a reproducible shift.
+- Preserve the unrelated dirty worktree `/home/chatgpt/hava81-rain-detail-2135` and the active font-preload experiment `/home/chatgpt/hava81-main-thread-profile-20261024-0634`. Do not mutate either branch or its shared preview/browser processes.
+
+## Prioritized next queue
+1. Finish local review of the Lighthouse proxy diff, commit/push the dedicated branch, open a narrow PR, then record its exact PR number/head SHA and hosted run IDs. Require exact-head CI/CD, Ops script contracts, CodeQL and mergeability before merge.
+2. While that PR's checks run, validate the independent loading-state CLS test in its own worktree; adjust CSS only if measured CLS exceeds the 0.05 target, then run mobile/desktop browser and visual checks.
+3. Re-check the exact pending PR head and fresh observer immediately before merge. Once merged, watch main CI/Pages, then smoke public root/TR/EN routes, API readiness/CORS and revision parity. Do not deploy API code or switch ports.
+4. The now data-loaded local Lighthouse measurement is performance 75 (floor 60, target 80), accessibility 100, best practices 100, SEO 100; FCP 1.9 s, LCP 2.8 s, TBT 870 ms, CLS 0.03, Speed Index 2.0 s. After the proxy PR is green, investigate main-thread work on a separate branch and coordinate with—not duplicate—the existing font-preload experiment. Do not lower Lighthouse floors.
+5. Keep the five-minute observer enabled and read-only; never disable the automation. Never fabricate weather, UV, health or safety data.
+
+## Historical baseline summary (preserved; superseded by the current snapshot above)
+
 Updated: 2026-10-23 12:50 TRT (09:50 UTC)
 
 ## Production
@@ -38,6 +60,8 @@ Updated: 2026-10-23 12:50 TRT (09:50 UTC)
 7. After merge, monitor CI/deploy and verify public production revision; keep working on independent tasks while pipelines run.
 
 Do not disable the automation. Keep API primary on 4002 and 4001 as rollback/canary. Never invent weather or safety information.
+
+## Historical checkpoints (append-only)
 
 ## 2026-10-23 10:30 TRT — fresh pipeline update
 - Direct GitHub check at 07:30Z: main API deploy #39917390622 and CodeQL #39917390549 succeeded for SHA `564d8445b388c98ebb5a01abf71d50d61f7f86bc`; main Ops script contracts #39917390666 also succeeded. Main CI/CD #39917390657 remained in progress only on `Deploy to GitHub Pages`; its build, quality, API, browser and Lighthouse jobs were successful.

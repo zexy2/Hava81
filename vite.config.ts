@@ -10,6 +10,16 @@ export default defineConfig({
   },
   preview: {
     port: 4173,
+    // The Lighthouse build uses a same-origin /api/v1 base so its browser
+    // requests pass through this proxy instead of failing production CORS from
+    // http://127.0.0.1. Production Pages builds keep their absolute API origin.
+    proxy: {
+      '/api': {
+        target: process.env.HAVA81_PREVIEW_API_PROXY_TARGET || 'https://api.hava81.zekiakgul.dev',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
   build: {
     sourcemap: process.env.ANALYZE === "true",

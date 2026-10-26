@@ -64,6 +64,10 @@ jobs:
         run: node --test scripts/test-verify-public-seo.mjs
       - name: Verify Lighthouse report artifact retention contract
         run: python3 scripts/test-lighthouse-artifact-contract.py
+      - name: Verify Lighthouse preview API proxy
+        run: node scripts/test-lighthouse-preview-proxy.mjs
+      - name: Verify Lighthouse refuses to score unavailable weather data
+        run: node scripts/test-lighthouse-weather-readiness.mjs
       - name: Verify observer logrotate contract
         run: bash scripts/test-observer-logrotate.sh
       - name: Verify Hava81 Git compaction contract
