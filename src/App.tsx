@@ -37,7 +37,7 @@ const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
 const ActivityPlanner = lazy(() => import('./components/hava81/ActivityPlanner'));
 const ContextSignalsPanel = lazy(() => import('./components/hava81/ContextSignalsPanel'));
-const DecisionAlertsPanel = lazy(() => import('./components/hava81/DecisionAlertsPanel'));
+const DeferredDecisionAlertsPanel = lazy(() => import('./components/app/DeferredDecisionAlertsPanel'));
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
 
 type AtlasNavItem = AtlasView;
@@ -717,7 +717,7 @@ const App: React.FC = () => {
 
                   {forecast.hourly.length > 0 && (
                     <Suspense fallback={null}>
-                      <DecisionAlertsPanel
+                      <DeferredDecisionAlertsPanel
                         weather={weather}
                         hourly={forecast.hourly}
                         airQuality={freshAirQuality}
