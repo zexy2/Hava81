@@ -28,6 +28,65 @@ test.describe('target size', () => {
   });
 
   test(
+    'forecast interval targets remain at least 44px at 320px with 200% text',
+    DESKTOP,
+    async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 900 });
+      await page.goto('/');
+
+      const variants = [
+        { path: '/izmir/', language: 'tr', themeMode: 'light' },
+        { path: '/sanliurfa/', language: 'tr', themeMode: 'dark' },
+        { path: '/en/izmir/', language: 'en', themeMode: 'light' },
+        { path: '/en/sanliurfa/', language: 'en', themeMode: 'dark' },
+      ] as const;
+
+      for (const variant of variants) {
+        await page.evaluate(value => {
+          localStorage.setItem(
+            'user-settings',
+            JSON.stringify({
+              temperatureUnit: 'metric',
+              windSpeedUnit: 'ms',
+              language: value.language,
+              themeMode: value.themeMode,
+            })
+          );
+        }, variant);
+        await page.goto(variant.path);
+        await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+        await ensureForecastAtlasLoaded(page);
+
+        const buttons = page.locator('.hava81-forecast-atlas__range-button');
+        await expect(buttons).toHaveCount(7);
+        const sizes = await buttons.evaluateAll(elements =>
+          elements.map(element => {
+            const rect = element.getBoundingClientRect();
+            return {
+              label: element.getAttribute('aria-label') || element.textContent?.trim() || 'interval',
+              width: rect.width,
+              height: rect.height,
+            };
+          })
+        );
+        for (const size of sizes) {
+          expect(size.width, variant.path + ' ' + size.label + ' width').toBeGreaterThanOrEqual(44);
+          expect(size.height, variant.path + ' ' + size.label + ' height').toBeGreaterThanOrEqual(44);
+        }
+
+        const layout = await page.evaluate(() => ({
+          viewportWidth: window.innerWidth,
+          documentWidth: document.documentElement.scrollWidth,
+        }));
+        expect(
+          layout.documentWidth,
+          variant.path + ' must not overflow at 320px / 200% text'
+        ).toBeLessThanOrEqual(layout.viewportWidth);
+      }
+    }
+  );
+
+  test(
     'context-signal attribution links meet the 24px desktop target size',
     DESKTOP,
     async ({ page }) => {
