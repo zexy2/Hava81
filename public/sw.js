@@ -107,7 +107,25 @@ self.addEventListener('activate', event => {
 async function cachedNavigationFallback(navigationCacheKey) {
   try {
     const cache = await caches.open(CACHE_NAME);
-    return (await cache.match(navigationCacheKey)) || (await cache.match('/'));
+    const cachedRoute = await cache.match(navigationCacheKey);
+    if (cachedRoute) return cachedRoute;
+
+    const rootShell = await cache.match('/');
+    if (!rootShell) return undefined;
+
+    // A cached Response retains the URL of the root document. Rebuild the shell response without
+    // that URL metadata so the browser boots the app at the originally requested city pathname.
+    // Otherwise a root-shell fallback can initialize route state from '/' and briefly restore the
+    // previous city's weather while the address bar already points at an unvisited city.
+    const headers = new Headers(rootShell.headers);
+    headers.delete('content-length');
+    headers.delete('content-encoding');
+    headers.delete('transfer-encoding');
+    return new Response(rootShell.body, {
+      status: rootShell.status,
+      statusText: rootShell.statusText,
+      headers,
+    });
   } catch {
     // Cache Storage is optional during runtime; callers preserve the original network result.
     return undefined;

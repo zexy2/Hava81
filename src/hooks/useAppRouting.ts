@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 import type { NormalizedWeatherData } from '../types/weather.types';
@@ -39,6 +39,28 @@ export function useAppRouting({
   setShowMap,
   setActiveNav,
 }: AppRoutingOptions) {
+  // useWeather currently recreates these callbacks when its async-state wrappers
+  // return fresh objects. Keep the metadata effect tied to meaningful inputs while
+  // still calling the latest implementations when a restored route mismatches.
+  const fetchWeatherRef = useRef(fetchWeather);
+  const clearWeatherRef = useRef(clearWeather);
+  fetchWeatherRef.current = fetchWeather;
+  clearWeatherRef.current = clearWeather;
+
+  // A BFCache restore can preserve React state while restoring a different URL.
+  // Re-run the route/data consistency effect on pageshow so old weather cannot be
+  // presented as evidence for the city in the restored address bar.
+  const [routeRevision, setRouteRevision] = useState(0);
+  const previousRouteRevisionRef = useRef(routeRevision);
+  const pendingRestoredRouteRevisionRef = useRef<number | null>(null);
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) setRouteRevision(revision => revision + 1);
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   const rootDocumentMetadataRef = useRef({
     title: ROOT_DOCUMENT_METADATA.title,
     description: ROOT_DOCUMENT_METADATA.description,
@@ -84,6 +106,10 @@ export function useAppRouting({
   }, [clearWeather, fetchWeather, setActiveNav, setShowMap, weather]);
 
   useEffect(() => {
+    const routeWasRestored = previousRouteRevisionRef.current !== routeRevision;
+    previousRouteRevisionRef.current = routeRevision;
+    if (routeWasRestored) pendingRestoredRouteRevisionRef.current = routeRevision;
+
     const setMetaContent = (selector: string, content: string) => {
       const meta = document.querySelector<HTMLMetaElement>(selector);
       if (meta) meta.content = content;
@@ -137,6 +163,23 @@ export function useAppRouting({
       setMetaContent('meta[property="og:locale"]', language === 'en' ? 'en_US' : 'tr_TR');
       setMetaContent('meta[property="og:locale:alternate"]', language === 'en' ? 'tr_TR' : 'en_US');
     };
+
+    // BFCache can preserve the old observation while restoring a different city URL.
+    // Keep the route check pending until matching weather arrives, so a late response
+    // from the pre-restore request cannot rewrite the explicit route either.
+    const routeCity = cityFromPathname(window.location.pathname);
+    if (pendingRestoredRouteRevisionRef.current === routeRevision && weather && routeCity) {
+      const routePath = cityPath(routeCity.name, language);
+      const weatherPath = cityPath(weather.cityName, language);
+      if (routePath && weatherPath && routePath !== weatherPath) {
+        clearWeatherRef.current();
+        void fetchWeatherRef.current(routeCity.name);
+        return;
+      }
+      if (routePath && weatherPath && routePath === weatherPath) {
+        pendingRestoredRouteRevisionRef.current = null;
+      }
+    }
 
     if (!weather) {
       // A city slug already gives us canonical identity. Keep the URL and head
@@ -214,7 +257,7 @@ export function useAppRouting({
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
     updateCityMetadata(weather.cityName, path);
-  }, [language, t, weather]);
+  }, [language, routeRevision, t, weather]);
 
   useEffect(() => {
     if (!weather) return;

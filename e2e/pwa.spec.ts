@@ -183,6 +183,54 @@ test.describe('PWA and branding', () => {
     }
   );
 
+  test(
+    'offline weather on an unvisited city never reuses another city’s cached observation',
+    DESKTOP,
+    async ({ page }) => {
+      await page.goto('/istanbul/');
+      const registration = await page.evaluate(async () => {
+        const ready = await navigator.serviceWorker.ready;
+        return { active: Boolean(ready.active) };
+      });
+      expect(registration.active).toBe(true);
+
+      // Cache a known city and the shared application chunks, then request a different city
+      // whose weather has never been cached in this browser context.
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'İstanbul' })).toBeVisible();
+      await page.locator('.decision-glance__score').waitFor({ state: 'visible', timeout: 15_000 });
+      await page.locator('.hava81-decision-field__temperature').waitFor({ state: 'visible', timeout: 15_000 });
+
+      // The shared fixture intentionally returns İstanbul for every request. Remove it for this
+      // route-identity test and fail weather requests explicitly so a fixture cannot masquerade as
+      // a fresh observation. The service-worker fallback itself has a separate unit contract.
+      await page.unrouteAll();
+      await page.route('**/api/v1/**', route => route.abort('internetdisconnected'));
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
+      });
+
+      await page.context().setOffline(true);
+      try {
+        await page.goto('/en/ankara/', { waitUntil: 'domcontentloaded', timeout: 15_000 });
+        // Chromium may restore online emulation for the new document; the init script keeps the
+        // offline presentation deterministic while the API route remains blocked.
+        await page.context().setOffline(true);
+        await expect(page).toHaveURL(/\/en\/ankara\/$/);
+        await expect(page).toHaveTitle(/Ankara weather — Hava81/);
+        await expect(
+          page.getByText('You are offline. Data will refresh when the connection is back.', {
+            exact: true,
+          })
+        ).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByRole('heading', { name: 'İstanbul' })).toHaveCount(0);
+        await expect(page.locator('.hava81-decision-field__temperature')).toHaveCount(0);
+      } finally {
+        await page.context().setOffline(false);
+      }
+    }
+  );
+
   test('service worker update checks bypass the HTTP cache', DESKTOP, async ({ page }) => {
     await page.goto('/');
     await page.waitForFunction(async () => {

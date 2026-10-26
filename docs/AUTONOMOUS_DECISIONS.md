@@ -781,3 +781,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - Do not merge or deploy the API Node 26 image upgrade (#1530/#1531) before the 26.x LTS transition. Keep the existing production API serving on port 4002 and port 4001 available as rollback/canary. This is a timing guard, not a rejection of the upgrade.
 - On or after 2026-10-28, re-check the official release schedule, re-read the exact remote PR head(s), rebase the selected PR onto current main in an isolated worktree, and require current-head CI, API tests/build, ARM64 image/liveness smoke, Lighthouse/live-weather, Ops, and CodeQL gates before any merge. Prefer #1531 if it retains the Node 26 Dockerfile change plus the ARM64 smoke workflow; avoid merging duplicate #1530 separately.
 - API deployment remains authorized only after the fresh observer confirms production health, port 4002 primary, adequate disk/build headroom, and a successful blue-green/canary path. Never switch ports or deploy merely because a future date has arrived.
+
+
+## 2026-10-27 — Keep offline route identity separate from cached weather
+
+- An unvisited localized route can fall back to the cached root HTML shell while the browser keeps the requested city pathname. Reconstruct the fallback response without stale root-response URL metadata and remove body-length/encoding headers that no longer describe the reconstructed response.
+- When browser back-forward cache restores a different city URL, keep the restored route authoritative until weather for that city arrives; a late response for the previous city must not rewrite the explicit route or remain presented as the new city's observation.
+- Keep weather API requests network-only. Do not cache or synthesize weather for an unvisited city. An offline route may show the correct city shell with unavailable weather, but must not reuse another city's observation or imply that a fresh observation was fetched.
