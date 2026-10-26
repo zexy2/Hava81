@@ -83,8 +83,18 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (serialized: string) => deserializeSettings(serialized, initialSettings),
     [initialSettings]
   );
+  const transformInitialSettings = useCallback((value: UserSettings): UserSettings => {
+    // The English URL is authoritative on first render. Applying this only while
+    // hydrating persisted state avoids starting a Turkish weather request before
+    // the mount-only layout effect can reconcile the stored preference.
+    if (/^\/en(\/|$)/.test(window.location.pathname) && value.language !== 'en') {
+      return { ...value, language: 'en' };
+    }
+    return value;
+  }, []);
   const [settings, setSettings] = useLocalStorage<UserSettings>('user-settings', initialSettings, {
     deserializer: deserializePersistedSettings,
+    transformInitialValue: transformInitialSettings,
   });
 
   const updateSetting = useCallback(
@@ -97,8 +107,26 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Faz 4: an /en/ URL is the English edition; adopt it as the language choice.
   useLayoutEffect(() => {
-    if (/^\/en(\/|$)/.test(window.location.pathname) && settings.language !== 'en') {
+    if (!/^\/en(\/|$)/.test(window.location.pathname)) return;
+
+    if (settings.language !== 'en') {
       updateSetting('language', 'en');
+      return;
+    }
+
+    // The initial transform intentionally avoids a wrong-language first render.
+    // Persist the same URL-authoritative choice as the previous mount-only effect,
+    // but never apply that override to later live storage events/user changes.
+    try {
+      const serialized = window.localStorage.getItem('user-settings');
+      if (
+        serialized &&
+        (JSON.parse(serialized) as { language?: unknown }).language === 'tr'
+      ) {
+        updateSetting('language', 'en');
+      }
+    } catch {
+      // State is already correct for the route; storage may be unavailable.
     }
     // Only on mount: switching language later rewrites the URL instead.
     // eslint-disable-next-line react-hooks/exhaustive-deps

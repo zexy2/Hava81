@@ -10,6 +10,8 @@ type SetValue<T> = (value: T | ((prev: T) => T)) => void;
 interface UseLocalStorageOptions<T> {
   serializer?: (value: T) => string;
   deserializer?: (value: string) => T;
+  /** Normalize the initial/rehydrated value without rewriting live storage events. */
+  transformInitialValue?: (value: T) => T;
 }
 
 export function useLocalStorage<T>(
@@ -17,7 +19,11 @@ export function useLocalStorage<T>(
   initialValue: T,
   options: UseLocalStorageOptions<T> = {}
 ): [T, SetValue<T>, () => void] {
-  const { serializer = JSON.stringify, deserializer = JSON.parse } = options;
+  const {
+    serializer = JSON.stringify,
+    deserializer = JSON.parse,
+    transformInitialValue,
+  } = options;
 
   // Get stored value or fall back to initial
   const readValue = useCallback((): T => {
@@ -27,12 +33,13 @@ export function useLocalStorage<T>(
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? deserializer(item) : initialValue;
+      const value = item ? deserializer(item) : initialValue;
+      return transformInitialValue ? transformInitialValue(value) : value;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
-  }, [key, initialValue, deserializer]);
+  }, [key, initialValue, deserializer, transformInitialValue]);
 
   const [storedValue, setStoredValue] = useState<T>(readValue);
   const storedValueRef = useRef(storedValue);

@@ -63,6 +63,35 @@ describe('useLocalStorage synchronization', () => {
     expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
+  it('transforms hydrated values without overriding later live storage changes', () => {
+    localStorage.setItem('route-pref', JSON.stringify('tr'));
+    window.history.replaceState(null, '', '/en/izmir/');
+    try {
+      const { result } = renderHook(() =>
+        useLocalStorage('route-pref', 'tr', {
+          transformInitialValue: value =>
+            window.location.pathname.startsWith('/en/') ? 'en' : value,
+        })
+      );
+
+      expect(result.current[0]).toBe('en');
+
+      act(() => {
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key: 'route-pref',
+            newValue: JSON.stringify('tr'),
+            storageArea: localStorage,
+          })
+        );
+      });
+
+      expect(result.current[0]).toBe('tr');
+    } finally {
+      window.history.replaceState(null, '', '/');
+    }
+  });
+
   it('rehydrates persisted state when the storage key changes', () => {
     localStorage.setItem('first-pref', JSON.stringify('dark'));
     localStorage.setItem('second-pref', JSON.stringify('light'));

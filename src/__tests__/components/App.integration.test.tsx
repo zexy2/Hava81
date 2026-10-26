@@ -192,6 +192,30 @@ describe('Hava81 app integration', () => {
     ).toBe('https://hava81.zekiakgul.dev/en/');
   });
 
+  it('starts an English city route in English when persisted settings still say Turkish', async () => {
+    await i18n.changeLanguage('en');
+    window.history.replaceState({}, '', '/en/istanbul/');
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({
+        temperatureUnit: 'metric',
+        windSpeedUnit: 'ms',
+        themeMode: 'auto',
+        language: 'tr',
+      })
+    );
+
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
+    await waitFor(() => expect(service.getCurrentWeather).toHaveBeenCalledTimes(1));
+    expect(service.getCurrentWeather).toHaveBeenCalledWith(
+      { city: 'İstanbul', lang: 'en' },
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(JSON.parse(localStorage.getItem('user-settings') ?? '{}').language).toBe('en');
+  });
+
   it('shows İstanbul immediately on the root route without requesting browser location', async () => {
     window.history.replaceState({}, '', '/');
 
