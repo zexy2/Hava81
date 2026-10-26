@@ -28,6 +28,31 @@ test.describe('target size', () => {
   });
 
   test(
+    'context-signal attribution links meet the 24px desktop target size',
+    DESKTOP,
+    async ({ page }) => {
+      await page.goto('/istanbul/?view=plan');
+      const links = page.locator('.context-signals__source').getByRole('link');
+      await expect(links).toHaveCount(2);
+      await expect(links.nth(0)).toBeVisible();
+      const sizes = await links.evaluateAll(elements =>
+        elements.map(element => {
+          const rect = element.getBoundingClientRect();
+          return {
+            label: element.textContent?.trim() || element.tagName,
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          };
+        })
+      );
+      for (const size of sizes) {
+        expect(size.width, size.label + ' target width').toBeGreaterThanOrEqual(24);
+        expect(size.height, size.label + ' target height').toBeGreaterThanOrEqual(24);
+      }
+    }
+  );
+
+  test(
     'tablet forecast sources and interval controls are at least 44px',
     TABLET,
     async ({ page }) => {
