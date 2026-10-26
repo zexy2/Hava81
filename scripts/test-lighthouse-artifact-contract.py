@@ -18,8 +18,26 @@ build_step = re.search(
 assert build_step, "Lighthouse must build a separate same-origin API variant"
 assert "actions/download-artifact@v8" not in job, "Lighthouse must not overwrite/use the production dist artifact"
 assert "needs: build" in job, "Lighthouse must remain gated on the production build"
-assert "HAVA81_PREVIEW_API_PROXY_TARGET: https://api.hava81.zekiakgul.dev" in job, (
-    "Lighthouse must proxy same-origin API requests to the real public API"
+assert "HAVA81_PREVIEW_API_PROXY_TARGET=http://127.0.0.1:4000" in job, (
+    "Lighthouse must proxy same-origin requests to the local API service"
+)
+assert "OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}" in job, (
+    "Lighthouse must use the repository's real provider credential, never synthetic weather"
+)
+assert "node apps/api/dist/src/server.js" in job, (
+    "Lighthouse must start the locally built API before browser measurement"
+)
+assert "api/v1/health/ready" in job and "api/v1/weather/current?city=Istanbul" in job, (
+    "Lighthouse must wait for API readiness and verify a live current-weather response"
+)
+assert "npm ci --prefix apps/api --no-audit" in job and "npm run api:build" in job, (
+    "The local real-weather API must be installed and built from the checked-out source"
+)
+assert "refusing a synthetic fallback" in job, (
+    "Missing provider credentials must fail closed rather than substitute fabricated weather"
+)
+assert "unset OPENWEATHER_API_KEY" in job, (
+    "The provider credential must not be inherited by the Lighthouse/browser process"
 )
 vite_config = Path("vite.config.ts").read_text(encoding="utf-8")
 assert "HAVA81_PREVIEW_API_PROXY_TARGET || 'http://127.0.0.1:4000'" in vite_config, (
@@ -32,10 +50,16 @@ assert production_build and "VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}" in pro
     "The deployable production build must retain its configured absolute API origin"
 )
 runner = Path("scripts/run-lighthouse.mjs").read_text(encoding="utf-8")
-assert "assertLighthouseWeatherReady(report)" in runner, (
-    "Lighthouse must reject a report that never loaded current weather"
+assert "withLighthouseWeatherReadinessConfirmation(" in runner, (
+    "Lighthouse must retry one failed real-weather readiness measurement without bypassing the gate"
 )
-run_index = job.find("run: npm run lighthouse")
+assert "assertLighthouseWeatherReady(report)" in runner, (
+    "Lighthouse performance confirmation must still reject a report that never loaded current weather"
+)
+assert "run: node scripts/test-lighthouse-weather-readiness.mjs" in job, (
+    "The bounded weather-readiness retry contract must run in CI"
+)
+run_index = job.find("npm run lighthouse")
 assert run_index >= 0, "Lighthouse command is missing from the job"
 assert build_step.start() < run_index, "Lighthouse variant must build before measurement"
 artifact_index = job.find("- name: Preserve Lighthouse JSON reports (including failed budgets)")

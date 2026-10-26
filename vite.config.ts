@@ -19,6 +19,16 @@ export default defineConfig({
         target: process.env.HAVA81_PREVIEW_API_PROXY_TARGET || 'http://127.0.0.1:4000',
         changeOrigin: true,
         secure: true,
+        configure: proxy => {
+          // Keep upstream-connectivity failures visible in CI instead of leaving
+          // the browser request to time out without identifying the proxy boundary.
+          proxy.on('error', (error, request) => {
+            const code = (error as NodeJS.ErrnoException).code ?? error.message;
+            console.error(
+              `[preview API proxy] ${request.method ?? 'GET'} ${request.url ?? '/'} failed: ${code}`
+            );
+          });
+        },
       },
     },
   },
