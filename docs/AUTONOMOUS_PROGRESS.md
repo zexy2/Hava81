@@ -1,3 +1,34 @@
+# Current checkpoint — 2026-10-26 14:53 TRT (11:53 UTC)
+
+## Main, production and observer
+- Current `origin/main`: `6c552daaa66436f813258f4abdbd01f358c49f6c` (`fix(weather): clear stale location errors on city search`). Main CI/CD run #3714 (`40313966250`) succeeded for this exact SHA; its API test/build, frontend quality, production build, Lighthouse live-weather readiness, browser flows, and GitHub Pages deploy jobs all succeeded.
+- Direct production smoke at `2026-10-26T11:52Z`: `/`, `/izmir/`, `/en/istanbul/`, and `https://api.hava81.zekiakgul.dev/api/v1/health/ready` all returned HTTP 200. API readiness reported revision `295543ad98644d812e3808a2c67c64d769983130`. Nginx remains on API port 4002; port 4001 remains the rollback/canary. No API build/deploy, service restart, port switch, or rollback was attempted.
+- `hava81-observer.timer` was confirmed enabled and active. The last state snapshot before cleanup was collected at `2026-10-26T11:49:06Z`; it is now stale relative to the disk cleanup and still reports the pre-cleanup 93.9% usage. The next timer tick was scheduled for `11:54:14Z`. **Re-read fresh observer state before treating the API build-headroom gate as clear.** Production was directly smoke-tested after cleanup and remained HTTP 200, but no deploy is authorized merely by that smoke.
+- GitHub/observer currently report no open automation PRs. The latest verified main CI/CD run is #3714; query GitHub directly again before any merge decision.
+
+## Guarded disk recovery (completed; source preserved)
+- Before cleanup: root filesystem showed about 5.8 GiB available / 95% used; observer `api_build_headroom_ok=false`.
+- Removed only rebuildable `node_modules` directories from seven inactive, Hava81-specific temporary worktrees, after scanning process command lines and working directories and confirming no active process referenced those paths:
+  - `/tmp/hava81-plan-v3-p1-3-engine-20261023-0410/node_modules`
+  - `/tmp/hava81-aqi-scale-guard-20261023-0342/node_modules`
+  - `/tmp/hava81-performance-main-js-20261023-1542/node_modules`
+  - `/tmp/hava81-near-term-clock-20261023-1750/node_modules`
+  - `/tmp/hava81-first-screen-a11y-20261024-0053/node_modules`
+  - `/tmp/hava81-run11-bottom-nav-clearance-20261026-0422/node_modules`
+  - `/tmp/hava81-run11-locale-rebase-20261026-0902/node_modules`
+- The seven complete dependency trees represented `2,420,407,976` bytes. A preceding non-sudo attempt was denied on root-owned package files; the guarded root retry removed only the allowlisted dependency trees. Post-cleanup `df` showed about 8.6 GiB available / 92% used (roughly 2.8 GiB more free than the initial rounded reading). Source files, `.git` metadata, `dist`, test-results, logs, all worktrees, Postify paths, shared browser assets, and active preview processes were preserved. Dependencies can be recreated with `npm ci` when needed.
+- No API deploy is allowed until a **fresh** observer reports `host_disk.ok=true` and `api_build_headroom_ok=true`; the pre-cleanup observer snapshot must not be reused for that decision.
+
+## Pending independent work
+- Live responsive audit is running under SentinelX job `job_a2eccd986408` in isolated worktree `/tmp/hava81-run11-responsive-audit-20261026-1153`, branch `automation/hava81-run11-responsive-audit-20261026-1153`, based on `6c552daaa66436f813258f4abdbd01f358c49f6c`. It checks İzmir and Şanlıurfa across TR/EN, light/dark, 320/390/768/1440 widths and 200% zoom where configured. No code change has been made on that branch yet. Next: inspect its log/report when the job completes; implement only reproducible, bounded findings and run focused tests plus the relevant full gates.
+- A separate main-thread prewarm experiment exists at `/tmp/hava81-run11-main-thread-profile` (branch `automation/hava81-run11-main-thread-profile-20261026`, commit `24917ed364c6fe953f9d3255d10180267248d9a9`). Do not modify that worktree/branch; coordinate only after its exact remote head and checks are re-read.
+
+## Prioritized next queue
+1. Read `/var/lib/hava81-worker/state.json` and `/usr/local/bin/hava81-worker-status` after the next observer tick; verify fresh `collected_at`, root free bytes, production, port 4002/4001 roles, frontend revision parity, API readiness/CORS, and timer enabled/active.
+2. Finish the independent live responsive audit; keep weather real and the Lighthouse readiness gate fail-closed.
+3. Continue with the highest-value evidence-based mobile/accessibility/performance issue on a separate branch. Do not duplicate the main-thread prewarm experiment.
+4. Open/refresh this documentation checkpoint PR after checking the current remote branch/main SHA. Require exact-head CI/Ops/CodeQL gates before merge, then smoke production and confirm the observer is fresh.
+5. Preserve all existing worktrees and append-only checkpoints. Do not disable/pause the observer or automation. Do not build/deploy API code or switch ports until the fresh disk gate and exact-head hosted checks are green.
 # Current checkpoint — 2026-10-26 11:57 TRT (08:57 UTC)
 
 ## Main and production (directly verified)
