@@ -767,3 +767,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - Add a desktop E2E regression that opens the planning view and asserts both attribution links are visible and at least 24×24px. Keep the assertion explicit instead of weakening the general mobile target-size contract.
 - Local lint, type-check, frontend coverage (116 files / 1,166 tests), and production build passed. The focused browser test could not launch the host's Snap Chromium wrapper under the SentinelX service (`not a snap cgroup`); require the hosted browser-flow gate to verify the exact PR head before merge.
 
+
+
+## 2026-10-26 — Keep service-worker activation resilient to cache-cleanup failures
+
+- The install handler remains fail-closed: a new worker must secure the root shell and all discovered same-origin boot scripts/styles before it can activate. Do not relax this requirement.
+- After a successful install, enumerating and deleting old versioned shell caches is housekeeping. A transient Cache Storage enumeration/deletion failure must not make activation of the complete new worker fail or prevent `clients.claim()`; leave any undeleted cache for a later activation to retry.
+- Add deterministic regressions for both `caches.keys()` and `caches.delete()` rejection. Runtime navigation remains network-fresh, API requests remain uncached, and no weather freshness, provider, alert, or safety behavior changes.
