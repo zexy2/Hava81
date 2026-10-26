@@ -688,6 +688,8 @@ export const tr = {
   errors: {
     networkError: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.',
     offline: 'İnternet bağlantın yok. Bağlantı gelince otomatik yenilenecek.',
+    offlineCached:
+      'Çevrimdışısın. Son alınan hava verileri gösteriliyor; bağlantı gelince yenilenecek.',
     serverUnreachable:
       'Hava81 sunucusuna şu an ulaşılamıyor. Sorun sende değil; biraz sonra tekrar dene.',
     serverError: 'Hava81 sunucusunda bir sorun oluştu. Biraz sonra tekrar dene.',

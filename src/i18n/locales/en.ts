@@ -682,6 +682,8 @@ export const en = {
   },
   errors: {
     offline: 'You are offline. Data will refresh when the connection is back.',
+    offlineCached:
+      "You're offline. Showing the last available weather; it will refresh when you're back online.",
     serverUnreachable:
       'The Hava81 server cannot be reached right now. It is not your connection; try again shortly.',
     serverError: 'Something went wrong on the Hava81 server. Try again shortly.',

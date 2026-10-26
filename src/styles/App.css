@@ -545,6 +545,10 @@
     border-inline-start-color: var(--color-vermilion);
   }
 
+  .atlas-message--offline {
+    background: color-mix(in srgb, var(--color-aegean) 8%, var(--color-atlas-paper));
+  }
+
   .atlas-message--inline {
     margin-bottom: 0;
   }
@@ -2534,5 +2538,4 @@
     outline-offset: 2px;
     border-radius: var(--radius-md);
   }
-
 }
