@@ -296,6 +296,7 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   const searchTokenRef = useRef(0);
   // Faz 3.2: yeni şehir isteği (ya da konum devralması/unmount) bir öncekini iptal eder.
   const cityRequestRef = useRef<AbortController | null>(null);
+  const locationRequestsInFlightRef = useRef(0);
   const abortCityRequest = useCallback(() => {
     cityRequestRef.current?.abort();
     cityRequestRef.current = null;
@@ -348,8 +349,12 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
   // Location-based weather
   const locationAsync = useAsync(
     async () => {
-      const data = await weatherService.getCurrentLocationWeather(language);
-      return data;
+      locationRequestsInFlightRef.current += 1;
+      try {
+        return await weatherService.getCurrentLocationWeather(language);
+      } finally {
+        locationRequestsInFlightRef.current = Math.max(0, locationRequestsInFlightRef.current - 1);
+      }
     },
     {
       onSuccess: data => {
@@ -478,7 +483,11 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
         navigator.onLine === false ||
         !isWeatherResultStale(lastUpdated, weatherAsync.data || locationAsync.data) ||
         weatherAsync.isLoading ||
-        locationAsync.isLoading
+        locationAsync.isLoading ||
+        // State updates may not have rerendered yet when a visibility/online event
+        // fires during the same passive-effect flush that started the initial request.
+        cityRequestRef.current !== null ||
+        locationRequestsInFlightRef.current > 0
       ) {
         return;
       }

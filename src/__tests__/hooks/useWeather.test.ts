@@ -126,6 +126,31 @@ describe('useWeather', () => {
     });
   });
 
+  it('does not restart the initial city request when visibility changes before loading state rerenders', async () => {
+    const originalAddEventListener = document.addEventListener.bind(document);
+    const visibilityState = vi
+      .spyOn(document, 'visibilityState', 'get')
+      .mockReturnValue('visible');
+    const addEventListener = vi.spyOn(document, 'addEventListener').mockImplementation(
+      (type, listener, options) => {
+        originalAddEventListener(type, listener, options);
+        if (type === 'visibilitychange') {
+          // Reproduce a resume event in the same effect flush that starts the request.
+          document.dispatchEvent(new Event('visibilitychange'));
+        }
+      }
+    );
+
+    try {
+      const { result } = renderHook(() => useWeather({ initialCity: 'İstanbul' }));
+      await waitFor(() => expect(result.current.weather?.cityName).toBe('İzmir'));
+      expect(weatherService.getCurrentWeather).toHaveBeenCalledTimes(1);
+    } finally {
+      addEventListener.mockRestore();
+      visibilityState.mockRestore();
+    }
+  });
+
   it('does not show cached weather from another city when the initial city request fails', async () => {
     persistWeatherCache('İzmir');
     (weatherService.getCurrentWeather as Mock).mockRejectedValueOnce(
