@@ -28,3 +28,9 @@ The preferred API port is 4002. Port 4001 is retained for canary/rollback. Any A
 ## Data integrity
 
 Keep provider attribution, freshness and unavailable states visible. Do not label interpolated precipitation as radar or nowcast. Do not present scraped or inferred MGM text as an authoritative warning without a verified stable freshness-aware official feed.
+
+## GitHub REST authentication
+
+The observer runs every five minutes, which can exhaust GitHub's shared 60-requests/hour anonymous REST quota. For stable CI/PR observation, provision a fine-grained token restricted to repository `zexy2/Hava81` with **Contents: read-only**, **Actions: read-only**, and **Pull requests: read-only** permissions. Store it in `/etc/hava81-worker/github.env` as `HAVA81_GITHUB_TOKEN=...`, with the file owned by `root:root` and mode `0600`. Do not commit the file, put the token on a command line, reuse a broad interactive token, or use the OpenWeather credential. The observer sends it only to `https://api.github.com`, and urllib is prevented from forwarding the Authorization header to redirect targets; production weather/API requests never receive it.
+
+If no credential is provisioned, the observer stays anonymous and reports `auth_mode=anonymous`; a 403 with `rate_limit_remaining=0` means GitHub state is unknown and all merge/deploy gates must remain fail-closed. After provisioning, start one collector run and verify `auth_mode=token`, nonzero rate-limit headroom, current `main` SHA, exact PR-head checks, and fresh production state. Never stop or disable `hava81-observer.timer` during this change.

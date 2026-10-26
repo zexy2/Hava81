@@ -14,6 +14,113 @@ observer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(observer)
 
 
+class ObserverGitHubAuthenticationTests(unittest.TestCase):
+    def _response(self):
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.status = 200
+        response.headers = {
+            'content-type': 'application/json',
+            'x-ratelimit-remaining': '4999',
+        }
+        response.read.return_value = b'{}'
+        return response
+
+    def test_optional_token_is_sent_only_to_github_api(self) -> None:
+        with mock.patch.dict(observer.os.environ, {'HAVA81_GITHUB_TOKEN': 'unit-test-token'}):
+            with mock.patch.object(observer.urllib.request, 'urlopen', return_value=self._response()) as urlopen:
+                result = observer.http_get('https://api.github.com/repos/zexy2/Hava81/branches/main')
+                self.assertTrue(result['ok'])
+                request = urlopen.call_args.args[0]
+                self.assertEqual(request.unredirected_hdrs.get('Authorization'), 'Bearer unit-test-token')
+
+            for url in (
+                'https://api.hava81.zekiakgul.dev/api/v1/health',
+                'https://api.github.com.evil.example/repos/zexy2/Hava81',
+            ):
+                with mock.patch.object(observer.urllib.request, 'urlopen', return_value=self._response()) as urlopen:
+                    result = observer.http_get(url)
+                    self.assertTrue(result['ok'])
+                    request = urlopen.call_args.args[0]
+                    self.assertIsNone(request.unredirected_hdrs.get('Authorization'))
+
+    def test_authorization_is_not_forwarded_to_redirect_targets(self) -> None:
+        with mock.patch.dict(observer.os.environ, {'HAVA81_GITHUB_TOKEN': 'unit-test-token'}):
+            with mock.patch.object(observer.urllib.request, 'urlopen', return_value=self._response()) as urlopen:
+                observer.http_get('https://api.github.com/repos/zexy2/Hava81/branches/main')
+                original = urlopen.call_args.args[0]
+        redirected = observer.urllib.request.HTTPRedirectHandler().redirect_request(
+            original, None, 302, 'Found', {}, 'https://example.test/redirected'
+        )
+        self.assertIsNotNone(redirected)
+        self.assertIsNone(redirected.unredirected_hdrs.get('Authorization'))
+        self.assertIsNone(redirected.get_header('Authorization'))
+
+    def test_optional_token_does_not_override_explicit_github_authorization(self) -> None:
+        with mock.patch.dict(observer.os.environ, {'HAVA81_GITHUB_TOKEN': 'environment-token'}):
+            with mock.patch.object(observer.urllib.request, 'urlopen', return_value=self._response()) as urlopen:
+                observer.http_get(
+                    'https://api.github.com/repos/zexy2/Hava81/branches/main',
+                    headers={'Authorization': 'Bearer explicit-token'},
+                )
+                request = urlopen.call_args.args[0]
+                self.assertEqual(request.unredirected_hdrs.get('Authorization'), 'Bearer explicit-token')
+
+    def test_service_loads_optional_github_credential_file(self) -> None:
+        service = Path(__file__).with_name('hava81-observer.service').read_text(encoding='utf-8')
+        self.assertIn('EnvironmentFile=-/etc/hava81-worker/github.env', service)
+
+    def test_collect_github_exposes_auth_mode_and_rate_limit_reset(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        rate_headers = {'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '1793001124'}
+
+        def rate_limited(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            return {
+                'ok': False,
+                'status': 403,
+                'elapsed_ms': 1,
+                'headers': rate_headers,
+                'json': None,
+                'error': 'GitHub API rate limit exhausted (reset epoch 1793001124)',
+            }
+
+        try:
+            observer.http_get = rate_limited
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': False, 'pending': False, 'error': 'GitHub state unknown',
+                'freshness': {'state': 'unknown'},
+            }
+            with mock.patch.dict(observer.os.environ, {'HAVA81_GITHUB_TOKEN': ''}):
+                result = observer.collect_github()
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['auth_mode'], 'anonymous')
+        self.assertEqual(result['rate_limit_remaining'], '0')
+        self.assertEqual(result['rate_limit_reset'], '1793001124')
+        self.assertIn('rate limit exhausted', result['error'])
+
+    def test_github_rate_limit_error_includes_reset_without_exposing_token(self) -> None:
+        from email.message import Message
+        import urllib.error
+
+        response_headers = Message()
+        response_headers['x-ratelimit-remaining'] = '0'
+        response_headers['x-ratelimit-reset'] = '1793001124'
+        failure = urllib.error.HTTPError(
+            'https://api.github.com/repos/zexy2/Hava81/pulls', 403, 'rate limited', response_headers, None
+        )
+        with mock.patch.dict(observer.os.environ, {'HAVA81_GITHUB_TOKEN': 'unit-test-token'}):
+            with mock.patch.object(observer.urllib.request, 'urlopen', side_effect=failure):
+                result = observer.http_get('https://api.github.com/repos/zexy2/Hava81/pulls')
+        self.assertEqual(result['error'], 'GitHub API rate limit exhausted (reset epoch 1793001124)')
+        self.assertNotIn('unit-test-token', result['error'])
+        self.assertEqual(result['headers']['x-ratelimit-remaining'], '0')
+
+
 class ObserverFreshnessTests(unittest.TestCase):
     def test_timestamp_age_accepts_current_and_rejects_invalid_values(self) -> None:
         age = observer.timestamp_age_seconds(observer.now_iso())

@@ -10,6 +10,7 @@ User=ubuntu
 Group=ubuntu
 ExecStart=/usr/bin/flock -n /var/lib/hava81-worker/observer.lock /usr/bin/python3 /usr/local/lib/hava81-worker/observer.py
 Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=-/etc/hava81-worker/github.env
 StateDirectory=hava81-worker
 LogsDirectory=hava81-worker
 RuntimeDirectory=hava81-worker
