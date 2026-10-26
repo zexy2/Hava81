@@ -22,8 +22,8 @@ assert "HAVA81_PREVIEW_API_PROXY_TARGET: https://api.hava81.zekiakgul.dev" in jo
     "Lighthouse must proxy same-origin API requests to the real public API"
 )
 vite_config = Path("vite.config.ts").read_text(encoding="utf-8")
-assert "HAVA81_PREVIEW_API_PROXY_TARGET || 'https://api.hava81.zekiakgul.dev'" in vite_config, (
-    "Vite preview must default its same-origin API proxy to the real public API"
+assert "HAVA81_PREVIEW_API_PROXY_TARGET || 'http://127.0.0.1:4000'" in vite_config, (
+    "Ordinary local preview must keep its local API proxy default"
 )
 production_build = re.search(
     r"(?ms)^  build:\n(?P<body>.*?)(?=^  [a-zA-Z0-9_-]+:|\Z)", workflow
