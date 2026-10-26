@@ -291,6 +291,13 @@ describe('mobile horizontal rails (Faz 0.5)', () => {
     expect(computed(range, 'flex-wrap')).toBe('wrap');
     expect(computed(range, 'overflow-x')).toBe('visible');
   });
+
+  it('keeps forecast interval targets at least 44px wide in the narrow-phone grid', () => {
+    mountStyles([forecast], { viewport: { width: 320, height: 640 } });
+    markup('<div class="app"><section class="hava81-forecast-atlas"><div class="hava81-forecast-atlas__rhythm"><div class="hava81-forecast-atlas__range"><button class="hava81-forecast-atlas__range-button">1sa</button></div></div></section></div>');
+    expect(computed(el('.hava81-forecast-atlas__range'), 'width')).toBe('100%');
+    expect(computed(el('.hava81-forecast-atlas__range-button'), 'min-width')).toBe('44px');
+  });
 });
 
 describe('offscreen decision panel containment', () => {
