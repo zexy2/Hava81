@@ -90,6 +90,43 @@ describe('useWeather city/location handoff', () => {
     expect(result.current.weather?.cityName).toBe('İzmir');
   });
 
+  it('lets a city selection supersede a location request before loading state rerenders', async () => {
+    let resolveLocation: ((value: typeof locationWeather) => void) | undefined;
+    let resolveCity: ((value: typeof cityWeather) => void) | undefined;
+    (weatherService.getCurrentLocationWeather as Mock).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveLocation = resolve;
+        })
+    );
+    (weatherService.getCurrentWeather as Mock).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveCity = resolve;
+        })
+    );
+
+    const { result } = renderHook(() => useWeather());
+    let locationRequest: Promise<unknown>;
+    let cityRequest: Promise<unknown>;
+    act(() => {
+      // Keep both calls in one React batch so fetchWeather sees the pre-loading snapshot.
+      locationRequest = result.current.fetchCurrentLocation();
+      cityRequest = result.current.fetchWeather('İzmir');
+    });
+
+    await act(async () => {
+      resolveLocation?.(locationWeather);
+      await locationRequest!;
+    });
+    await act(async () => {
+      resolveCity?.(cityWeather);
+      await cityRequest!;
+    });
+
+    expect(result.current.weather?.cityName).toBe('İzmir');
+  });
+
   it('keeps the current city visible while a location handoff is pending or fails', async () => {
     (weatherService.getCurrentWeather as Mock).mockResolvedValueOnce(cityWeather);
     let rejectLocation: ((reason?: unknown) => void) | undefined;

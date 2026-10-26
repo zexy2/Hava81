@@ -386,7 +386,11 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       // A failed search (typo, unknown place) must not wipe the city on screen (Faz 1.3).
       // Keep the last successful payload visible; only an in-flight location request is
       // invalidated up front, settled location data is replaced on success.
-      if (locationAsync.isLoading) locationAsync.reset();
+      // The loading state may not have rerendered yet when two actions happen in one
+      // effect/event flush. The synchronous counter is the authoritative in-flight signal.
+      if (locationAsync.isLoading || locationRequestsInFlightRef.current > 0) {
+        locationAsync.reset();
+      }
       const normalizedTarget = targetCity.trim();
       expectedCacheCityRef.current = normalizedTarget;
       const token = ++searchTokenRef.current;
