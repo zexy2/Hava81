@@ -10,6 +10,17 @@ export default defineConfig({
   },
   preview: {
     port: 4173,
+    // Keep ordinary local previews on the local API. Lighthouse explicitly
+    // overrides this target to the public API so its same-origin requests load
+    // real weather without weakening production CORS. Pages builds keep their
+    // configured absolute API origin.
+    proxy: {
+      '/api': {
+        target: process.env.HAVA81_PREVIEW_API_PROXY_TARGET || 'http://127.0.0.1:4000',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
   build: {
     sourcemap: process.env.ANALYZE === "true",

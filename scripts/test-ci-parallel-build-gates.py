@@ -21,7 +21,7 @@ def dependencies(job: str) -> set[str]:
 
 assert not dependencies('build'), 'Build must run in parallel with API/frontend quality'
 assert dependencies('browser') == {'build'}, 'Browser tests must test the production build'
-assert dependencies('lighthouse') == {'build'}, 'Lighthouse must audit the production build'
+assert dependencies('lighthouse') == {'build'}, 'Lighthouse must be gated on a passing production build'
 assert {'quality', 'api', 'build', 'browser', 'lighthouse'} <= dependencies('deploy'), (
     'Pages publication must wait for passing security, API, build, browser and Lighthouse gates'
 )
