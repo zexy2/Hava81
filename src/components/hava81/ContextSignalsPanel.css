@@ -89,6 +89,13 @@
     line-height: 1.45;
     text-align: right;
   }
+  /* Attribution links meet WCAG 2.2's 24px target-size minimum on desktop. */
+  .context-signals__source a {
+    display: inline-flex;
+    min-height: 24px;
+    align-items: center;
+    vertical-align: middle;
+  }
   .context-signals__grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
