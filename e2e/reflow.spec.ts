@@ -101,6 +101,10 @@ const CASES: ReflowCase[] = [
     region: '.decision-alerts',
     widths: [320, 390, 768],
     plan: true,
+    prepare: async page => {
+      await page.locator('.atlas-deferred-alerts-slot').scrollIntoViewIfNeeded();
+      await expect(page.locator('.decision-alerts')).toBeVisible();
+    },
   },
   { name: 'context signals', region: '.context-signals', widths: [320, 390], plan: true },
   {
