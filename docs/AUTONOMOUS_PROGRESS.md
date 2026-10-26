@@ -2610,3 +2610,63 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - SentinelX still reports the enrolled Oracle host offline (`last_disconnected_at=2026-10-26T15:01:29Z`); Zeki SSH Gateway ping/info/shell calls still fail internally. Observer state, disk headroom, timer state, current public production, CORS, frontend/API revision parity, and the post-merge main deployment remain unverified. No production write, restart, rollback, cache cleanup, or port switch was attempted.
 - Server worktree/branch is unknown until access returns. Preserve the existing main-thread experiment and responsive-audit worktree until their actual current heads/job status are read.
 - Next: restore host access; read fresh worker state/events and verify the five-minute timer; inspect main CI/CD for `d4d82b7...`; smoke public TR/EN routes and API readiness/CORS; then inspect the pending responsive audit and continue a separate measured UI/performance loop. Keep API 4002 primary / 4001 rollback-candidate and keep the automation enabled.
+
+
+## 2026-10-26 18:49 TRT (2026-10-26 15:49 UTC) — Repair deferred-alerts CI and preserve Oracle recovery state
+
+### Verified GitHub / deployment state
+- Current `main` at checkpoint creation: `4d594ef4f4294a8f2909a89b7405154e287000df`.
+- Main CI/CD run #40349160846, Ops contracts #40349160790, and CodeQL #40349160837 completed successfully for this SHA. The Pages deploy job in the main CI/CD run (job 121665776593) also completed successfully. This proves the workflow completed; it does **not** substitute for a live public API smoke test.
+- Latest open UI PR #1521: https://github.com/zexy2/Hava81/pull/1521. Current exact head before this checkpoint: `16cc524f4ed6facc0df29babd3a90ea8b9b6780c`; its base is still `d4d82b7e638cd72b66bb78ddb8de04fe035e2663`. PR is reported mergeable.
+- Exact-head CI/CD run #40352635689 is running; CodeQL run #40352635625 is running; Ops contracts run #40352635746 passed. At last job inspection, type-check and production build passed; frontend coverage, browser flows and Lighthouse were still running.
+
+### Root causes found and fixes pushed to #1521
+- Previous head `af8dc82a5ee8eb295282ffd67bd294e2c597b41d` failed frontend type-check because the test used untyped `ReturnType<typeof vi.fn>` values as callable functions. The observer test now records the observed element and disconnect state without calling those untyped mock values.
+- Browser flows failed because the deferred alert slot retained a named `region` landmark after the real alert panel mounted, duplicating the panel's own landmark. The wrapper now exposes region/name/busy semantics only while the placeholder is active; the unit test checks that the placeholder landmark disappears after activation.
+- Existing Playwright contrast/reflow checks assumed the lazy panel was already mounted. They now focus or scroll the accessible slot into view before measuring the real panel. No weather data, provider freshness, notification permission, scoring, warning or safety rules changed.
+- Fix commits on the PR branch: `3b1365e208606e99291cf3e28cf42861f1658bce` (landmark semantics), `f351d2dc280380c239bf5a34ed4f0f97aa60c2bd` (typed-safe observer test), `32f7d6d2e9c5865aadeb2a84471da54f4ab70ad6` (contrast activation), `16cc524f4ed6facc0df29babd3a90ea8b9b6780c` (reflow activation). Do not merge unless the final exact head passes all required CI, Lighthouse/live-weather, browser, Ops and CodeQL gates.
+
+### Oracle / production guard
+- SentinelX host `host_90d87ce4d01f4ca6` was listed connected briefly, but reads of `/var/lib/hava81-worker/state.json`, `/usr/local/bin/hava81-worker-status`, and recent `/var/log/hava81-worker/events.jsonl` timed out. SentinelX diagnosis returned `host_overloaded` with medium confidence; a later execution returned `agent_offline`. Zeki SSH Gateway ping/server-info/shell calls failed internally.
+- Observer freshness, disk headroom, current API readiness, CORS, API/frontend revision parity, API port 4002 primary / 4001 rollback-candidate roles, and current production smoke are therefore **unverified**. The web inspection tool could not access the custom production frontend/API URLs. Do not restart services, clean caches, switch ports, deploy API changes, or infer API health from a successful Pages deployment.
+- Automation and observer were not disabled, paused, or modified.
+
+### Exact continuation queue
+1. Poll #1521 run #40352635689 and CodeQL #40352635625 for the exact current head; inspect any failed job logs, patch only after re-reading the remote branch head, and preserve unrelated commits. Ops #40352635746 is green.
+2. If and only if all required gates are green, re-fetch #1521 metadata/head/mergeability, merge using the verified exact head, then watch main CI/CD and Pages deployment and smoke the public routes.
+3. Retry host status with short, read-only operations when SentinelX reconnects. Read worker state and recent events, compare `collected_at` to current time, check timer activity and disk/RAM/process load before considering service actions.
+4. Directly verify API readiness/current weather/CORS and frontend/API revision parity. Keep port 4002 primary and 4001 rollback/canary; use blue-green/canary for any API change.
+5. Continue independent bounded UI/accessibility/performance work while any external run is pending. Do not weaken the real-weather Lighthouse gate or ship synthetic weather.
+
+
+## 2026-10-26 19:02 TRT (2026-10-26 16:02 UTC) — Merged performance fix, regression guard and live production smoke
+
+### Merges and exact CI evidence
+- PR #1521 `perf(ui): defer optional alert panel until near viewport` merged as `6cb44493069910e1c7d7c181fe52c98fee92ce64`. Exact head `16cc524f4ed6facc0df29babd3a90ea8b9b6780c` passed frontend quality (including type-check and coverage), production build, API test/build, development container build, browser flows, Lighthouse budgets, CodeQL and Ops contracts.
+- PR #1523 `test(perf): guard deferred alert chunk loading` merged as `cb6c6810c9d42b3317a14cf314b19cbfb4b93299`. Exact head `e68de438ab9dda59e51def562a4616b7ff292242` passed the same required CI/CD, browser, Lighthouse, CodeQL and Ops gates. It adds a browser regression that proves the notification/freshness JS chunk is not requested while the alert slot is more than the 320px observer margin below the viewport, and that it is requested after approaching the slot.
+- Main CI/CD for `6cb4449` run #40353527595 completed successfully; Pages deploy job 121681421054 succeeded. The new main pipeline for `cb6c681` is run #40354661179 (in progress at last check); CodeQL #40354660948 and Ops #40354661623 are green. Do not treat the previous SHA's successful deployment as proof that the latest SHA's deployment has finished.
+- PR #1521's Lighthouse artifact confirms `DecisionAlertsPanel-*.js` is absent from the initial network requests after the change. The score itself is noisy: main had a 46/100 run with 6.44s TBT and a 94/100 confirmation with 10ms TBT; PR #1521 scored 71/100 with 940ms TBT and 3.1s LCP. Keep the real-weather gate and report the chunk-level evidence; do not claim a stable Lighthouse score improvement from these divergent single-run scores.
+
+### Direct production smoke after the #1521 deployment
+Executed from the Oracle host after the Pages deploy job completed:
+- `https://hava81.zekiakgul.dev/`: HTTP 200 (about 0.05s on the second, warm request).
+- `https://hava81.zekiakgul.dev/izmir/`: HTTP 200.
+- `https://hava81.zekiakgul.dev/en/istanbul/`: HTTP 200.
+- `https://api.hava81.zekiakgul.dev/api/v1/health/ready`: HTTP 200.
+- CORS preflight from `https://hava81.zekiakgul.dev` to the weather bundle: HTTP 204.
+- Real weather bundle for Istanbul coordinates: HTTP 200 (first request about 0.93s; subsequent cached request about 0.05s).
+- `/sw.js`: HTTP 200.
+- Observer state at `2026-10-26T15:58:53.986262Z` reported production healthy, no production issues, API primary port 4002, no API deploy pending, no stale browser processes, and no host incident. The frontend revision still matched `6cb4449` while the test-only `cb6c681` Pages workflow was pending; verify the fresh observer state after the latest pipeline completes.
+
+### Host headroom — observation only, no cleanup performed
+- Root disk is about 91.3% used with roughly 9.04 GB free; API build headroom currently passes, but `root_disk_pressure_warning` remains active. `df -h /` rounded to 92% used / 8.5G free.
+- `uptime` reported current load 0.14, 5-minute load 29.75 and 15-minute load 106.33; memory showed about 2.0 GiB available and no swap. The observer reported zero stale Hava81 browser processes.
+- Read-only `du` found approximately 11 GB under `/home/ubuntu`, 4.1 GB under `/home/ubuntu/projects`, 3.4 GB under `/var/lib`, 940 MB under `/var/log`, 2.4 GB under `/opt`, 360 MB in `.npm`, 736 MB in `.venvs`, and 778 MB in `.local`. Many Hava81 worktrees exist. No caches, worktrees, logs, Docker images, or other files were deleted because ownership/use has not been verified and current API build headroom passes.
+- SentinelX now responds to read-only commands. The status script itself is not on the SentinelX command allowlist; no allowlist change or agent restart was attempted. State and event log were read directly instead.
+
+### Exact next actions
+1. Poll main run #40354661179 for `cb6c6810c9d42b3317a14cf314b19cbfb4b93299`; wait for its Pages deploy job to finish.
+2. Re-read `/var/lib/hava81-worker/state.json` and compare `collected_at` to current time. Re-run root, Turkish city, English city, readiness, CORS, real-weather bundle and `/sw.js` smoke checks. Confirm frontend revision parity or explain any revision-marker limitation.
+3. PR #1522 is the append-only progress checkpoint branch. It has a green exact-head CI/CodeQL/Ops run, but this new append changes its head and must pass CI again. After that, re-verify its current head and mergeability, and merge only when the current main pipeline/deploy is no longer pending.
+4. PR #1523 is merged. Keep working on independent improvements while any new run is pending; do not weaken weather readiness, freshness, alert or safety semantics.
+5. Continue investigating disk-pressure headroom read-only. Do not clean or delete any Hava81 worktree until remote branch/PR ownership and active processes are verified.
