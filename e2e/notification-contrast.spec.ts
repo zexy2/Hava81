@@ -69,6 +69,8 @@ const contrastRatio = async (button: import('@playwright/test').Locator) =>
 test('blocked notification action stays WCAG-readable in light and dark themes', DESKTOP, async ({ page }) => {
   await installBlockedNotificationPermission(page);
   await page.goto('/istanbul/?view=plan');
+  await page.locator('.atlas-deferred-alerts-slot').focus();
+  await expect(page.locator('.decision-alerts')).toBeVisible();
 
   const panel = page.locator('.decision-alerts');
   const button = panel.locator('button');
@@ -94,6 +96,8 @@ test('blocked notification action stays WCAG-readable in light and dark themes',
 test('blocked notification action fits 320px and 200% text without horizontal overflow', MOBILE, async ({ page }) => {
   await installBlockedNotificationPermission(page);
   await page.goto('/istanbul/?view=plan');
+  await page.locator('.atlas-deferred-alerts-slot').focus();
+  await expect(page.locator('.decision-alerts')).toBeVisible();
 
   const panel = page.locator('.decision-alerts');
   const button = panel.locator('button');
