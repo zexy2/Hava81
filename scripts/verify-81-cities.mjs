@@ -2,7 +2,8 @@
 import { provinceNamesBySlug, cityCenterDistanceKm } from './lib/live-audit-city-catalog.mjs';
 
 const baseUrl = (process.env.BASE_URL || 'http://127.0.0.1:4001/api/v1').replace(/\/$/, '');
-const delayMs = Number(process.env.DELAY_MS || 1100);
+// Two requests per province share the API's 60/min client budget; leave room for concurrent smoke checks.
+const delayMs = Number(process.env.DELAY_MS || 1600);
 const requestedTimeoutMs = Number(process.env.REQUEST_TIMEOUT_MS || 10000);
 const requestTimeoutMs =
   Number.isFinite(requestedTimeoutMs) && requestedTimeoutMs >= 1000 && requestedTimeoutMs <= 60000

@@ -699,3 +699,9 @@ The observer installer must coordinate with the oneshot collector before replaci
 - Keep one shared parser for both audit runners. Accept only explicit-port loopback HTTP endpoints; reject remote hosts, credentials, non-root paths, queries, and fragments. Reject a DevTools/preview port collision before clearing reports or starting the preview.
 - When configured, Lighthouse attaches through its `--port` option and must not launch or close the shared browser. When unset, preserve the existing isolated Chrome launch path.
 - A local preview calling the production API directly has a different origin and correctly fails the production CORS policy. Do not weaken production CORS to accommodate local audits; use a same-origin proxy for local previews or run the read-only Lighthouse audit against the public production origin.
+
+## 2026-10-26 — Pace both 81-province release gates below the shared API limit
+
+- The API's default per-client request limit is 60/min. The 81-city release gate makes two requests per province; the decision-calibration gate makes three. A 1.1-second gap after each request allows about 54 requests/min when run serially, leaving too little headroom for concurrent smoke checks or other work using the same loopback client.
+- Use a 1.6-second default gap in both gates (about 37.5 requests/min), while retaining the explicit `DELAY_MS` override for controlled tests. Keep the 81-city gate's fail-fast HTTP 429 behavior: print `Retry-After`, stop immediately, and do not probe further cities or retry on behalf of the provider. A rate limit is a blocked gate, not permission to hammer the upstream or weaken the gate.
+- Do not run the two full 81-city gates concurrently. Keep API port 4002 primary and 4001 as rollback/canary; these pacing changes affect only manual verification scripts, not API runtime behavior.
