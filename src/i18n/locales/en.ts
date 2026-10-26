@@ -118,7 +118,7 @@ export const en = {
       title: 'Plan',
       titleWithCity: 'Plan · {{city}}',
       intro:
-        'Day plan, commute times, activities, alerts and route weather. Scores here are hourly or activity-specific; the one score for the day is the Hava81 Score on Today.',
+        'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.',
       back: 'Back to Today',
       entryEyebrow: 'Next step',
       entryBody: 'Day plan, commute times, activities, alerts and route weather.',
@@ -359,7 +359,8 @@ export const en = {
         clear: 'No material weather risk stands out',
       },
       safetyNote: 'Weather-based decision support only; it is not a safety guarantee.',
-      hourlyAqiSource: 'Hourly air quality uses the {{source}} model only for exact matching forecast hours. Unmatched hours use the current AQI only while fresh; otherwise no AQI risk is inferred. This is modeled guidance, not an official warning.',
+      hourlyAqiSource:
+        'Hourly air quality uses the {{source}} model only for exact matching forecast hours. Unmatched hours use the current AQI only while fresh; otherwise no AQI risk is inferred. This is modeled guidance, not an official warning.',
       methodDetails: 'Data coverage and method',
       note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Fresh European AQI samples are used only for forecast hours with an exact timestamp match. A fresh current reading is a fallback for unmatched hours; if both are unavailable or stale, no AQI risk is inferred. Other missing fields reduce data coverage rather than being invented.',
     },
@@ -483,7 +484,8 @@ export const en = {
       noWindow: 'No clearly good window in the near forecast.',
       empty: 'Select at least one activity to see personal scores.',
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
-      hourlyAqiSource: 'Hourly air-quality outlook uses the {{source}} model. For unmatched hours, the current AQI is used only while fresh; if it is stale too, no AQI risk is inferred for that hour. This is modeled guidance, not an official warning.',
+      hourlyAqiSource:
+        'Hourly air-quality outlook uses the {{source}} model. For unmatched hours, the current AQI is used only while fresh; if it is stale too, no AQI risk is inferred for that hour. This is modeled guidance, not an official warning.',
       sensitivity: {
         label: 'Temperature sensitivity',
         cold: 'Sensitive to cold',

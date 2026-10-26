@@ -132,6 +132,28 @@ test.describe('Planla view', () => {
     );
     await expect(page.locator('.activity-card__score').first()).toContainText('For this activity');
   });
+
+  test('plan intro keeps the mobile first viewport compact in Turkish and English', MOBILE, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const language of ['tr', 'en'] as const) {
+      await seedSettings(page, { language, themeMode: 'dark' });
+      await page.goto(PLAN);
+      const intro = page.locator('.atlas-plan-view__header p');
+      await expect(intro).toBeVisible();
+      await expect(intro).toHaveText(
+        language === 'en'
+          ? 'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.'
+          : 'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.'
+      );
+      const metrics = await intro.evaluate(element => ({
+        height: element.getBoundingClientRect().height,
+        lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+      }));
+      expect(metrics.height, `${language} plan intro line budget`).toBeLessThanOrEqual(
+        metrics.lineHeight * 3.1
+      );
+    }
+  });
 });
 
 test.describe('daily plan', () => {
