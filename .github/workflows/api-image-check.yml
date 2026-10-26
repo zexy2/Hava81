@@ -1,0 +1,49 @@
+name: API container verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-image-check.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hava81-api-image-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: Build and smoke-test API container (ARM64)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build API image without publishing
+        run: docker build --pull --file apps/api/Dockerfile --tag hava81-api:ci apps/api
+      - name: Smoke-test API process liveness (no weather request)
+        shell: bash
+        run: |
+          set -euo pipefail
+          container_name="hava81-api-image-smoke-${GITHUB_RUN_ID}"
+          docker run --detach --name "$container_name" \
+            --publish 127.0.0.1:4400:4000 \
+            --env OPENWEATHER_API_KEY=ci-smoke-placeholder \
+            --env CORS_ORIGINS=http://127.0.0.1:4173 \
+            --env HAVA81_API_REVISION=ci-smoke \
+            hava81-api:ci
+          cleanup() { docker rm --force "$container_name" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4400/api/v1/health/live -o "$RUNNER_TEMP/hava81-api-live.json"; then
+              node -e 'const d=require(process.argv[1]); if(d.status!=="ok"||d.revision!=="ci-smoke") process.exit(1)' "$RUNNER_TEMP/hava81-api-live.json"
+              echo "API container liveness and revision contract passed on attempt ${attempt}."
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs "$container_name"
+          echo 'API container did not pass the liveness smoke test within 30 seconds.' >&2
+          exit 1
