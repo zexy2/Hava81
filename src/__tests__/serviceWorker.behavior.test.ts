@@ -93,6 +93,24 @@ describe('service worker activation', () => {
     expect(worker.workerClients.claim).toHaveBeenCalled();
   });
 
+  it('continues activation when an older shell cache cannot be deleted', async () => {
+    const worker = loadWorker({ cacheKeys: [CURRENT, 'hava81-shell-stale'] });
+    worker.caches.delete.mockRejectedValueOnce(new Error('cache cleanup denied'));
+
+    await expect(worker.dispatch('activate', {})).resolves.toBeUndefined();
+    expect(worker.caches.delete).toHaveBeenCalledWith('hava81-shell-stale');
+    expect(worker.workerClients.claim).toHaveBeenCalled();
+  });
+
+  it('continues activation when cache enumeration is temporarily unavailable', async () => {
+    const worker = loadWorker({ cacheKeys: ['hava81-shell-stale'] });
+    worker.caches.keys.mockRejectedValueOnce(new Error('cache enumeration denied'));
+
+    await expect(worker.dispatch('activate', {})).resolves.toBeUndefined();
+    expect(worker.caches.delete).not.toHaveBeenCalled();
+    expect(worker.workerClients.claim).toHaveBeenCalled();
+  });
+
   it('reloads open tabs once when upgrading from a legacy shell worker', async () => {
     const tab = client(`${ORIGIN}/istanbul/`);
     const worker = loadWorker({ cacheKeys: ['hava81-shell-v2'], clients: [tab] });

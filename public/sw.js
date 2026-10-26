@@ -67,12 +67,28 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    const keys = await caches.keys();
+    // Cache cleanup is housekeeping, not a prerequisite for activating a fully installed shell.
+    // If storage enumeration/deletion is temporarily unavailable, keep the new worker usable and
+    // leave any undeleted old cache for a later activation to retry.
+    let keys = [];
+    try {
+      keys = await caches.keys();
+    } catch {
+      // Continue activation; the complete current shell was secured during install.
+    }
     const oldShellKeys = keys.filter(
       key => key.startsWith('hava81-shell-') && key !== CACHE_NAME
     );
     const upgradingLegacyShell = oldShellKeys.some(key => LEGACY_RELOAD_CACHE_NAMES.has(key));
-    await Promise.all(oldShellKeys.map(key => caches.delete(key)));
+    await Promise.all(
+      oldShellKeys.map(async key => {
+        try {
+          await caches.delete(key);
+        } catch {
+          // A stale cache may remain, but it must not block clients from using the new worker.
+        }
+      })
+    );
     await self.clients.claim();
 
     // One-time migration from older shell workers: reload open Hava81 tabs so they stop rendering
