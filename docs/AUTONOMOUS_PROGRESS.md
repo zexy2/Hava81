@@ -2610,3 +2610,30 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 - SentinelX still reports the enrolled Oracle host offline (`last_disconnected_at=2026-10-26T15:01:29Z`); Zeki SSH Gateway ping/info/shell calls still fail internally. Observer state, disk headroom, timer state, current public production, CORS, frontend/API revision parity, and the post-merge main deployment remain unverified. No production write, restart, rollback, cache cleanup, or port switch was attempted.
 - Server worktree/branch is unknown until access returns. Preserve the existing main-thread experiment and responsive-audit worktree until their actual current heads/job status are read.
 - Next: restore host access; read fresh worker state/events and verify the five-minute timer; inspect main CI/CD for `d4d82b7...`; smoke public TR/EN routes and API readiness/CORS; then inspect the pending responsive audit and continue a separate measured UI/performance loop. Keep API 4002 primary / 4001 rollback-candidate and keep the automation enabled.
+
+
+## 2026-10-26 18:49 TRT (2026-10-26 15:49 UTC) — Repair deferred-alerts CI and preserve Oracle recovery state
+
+### Verified GitHub / deployment state
+- Current `main` at checkpoint creation: `4d594ef4f4294a8f2909a89b7405154e287000df`.
+- Main CI/CD run #40349160846, Ops contracts #40349160790, and CodeQL #40349160837 completed successfully for this SHA. The Pages deploy job in the main CI/CD run (job 121665776593) also completed successfully. This proves the workflow completed; it does **not** substitute for a live public API smoke test.
+- Latest open UI PR #1521: https://github.com/zexy2/Hava81/pull/1521. Current exact head before this checkpoint: `16cc524f4ed6facc0df29babd3a90ea8b9b6780c`; its base is still `d4d82b7e638cd72b66bb78ddb8de04fe035e2663`. PR is reported mergeable.
+- Exact-head CI/CD run #40352635689 is running; CodeQL run #40352635625 is running; Ops contracts run #40352635746 passed. At last job inspection, type-check and production build passed; frontend coverage, browser flows and Lighthouse were still running.
+
+### Root causes found and fixes pushed to #1521
+- Previous head `af8dc82a5ee8eb295282ffd67bd294e2c597b41d` failed frontend type-check because the test used untyped `ReturnType<typeof vi.fn>` values as callable functions. The observer test now records the observed element and disconnect state without calling those untyped mock values.
+- Browser flows failed because the deferred alert slot retained a named `region` landmark after the real alert panel mounted, duplicating the panel's own landmark. The wrapper now exposes region/name/busy semantics only while the placeholder is active; the unit test checks that the placeholder landmark disappears after activation.
+- Existing Playwright contrast/reflow checks assumed the lazy panel was already mounted. They now focus or scroll the accessible slot into view before measuring the real panel. No weather data, provider freshness, notification permission, scoring, warning or safety rules changed.
+- Fix commits on the PR branch: `3b1365e208606e99291cf3e28cf42861f1658bce` (landmark semantics), `f351d2dc280380c239bf5a34ed4f0f97aa60c2bd` (typed-safe observer test), `32f7d6d2e9c5865aadeb2a84471da54f4ab70ad6` (contrast activation), `16cc524f4ed6facc0df29babd3a90ea8b9b6780c` (reflow activation). Do not merge unless the final exact head passes all required CI, Lighthouse/live-weather, browser, Ops and CodeQL gates.
+
+### Oracle / production guard
+- SentinelX host `host_90d87ce4d01f4ca6` was listed connected briefly, but reads of `/var/lib/hava81-worker/state.json`, `/usr/local/bin/hava81-worker-status`, and recent `/var/log/hava81-worker/events.jsonl` timed out. SentinelX diagnosis returned `host_overloaded` with medium confidence; a later execution returned `agent_offline`. Zeki SSH Gateway ping/server-info/shell calls failed internally.
+- Observer freshness, disk headroom, current API readiness, CORS, API/frontend revision parity, API port 4002 primary / 4001 rollback-candidate roles, and current production smoke are therefore **unverified**. The web inspection tool could not access the custom production frontend/API URLs. Do not restart services, clean caches, switch ports, deploy API changes, or infer API health from a successful Pages deployment.
+- Automation and observer were not disabled, paused, or modified.
+
+### Exact continuation queue
+1. Poll #1521 run #40352635689 and CodeQL #40352635625 for the exact current head; inspect any failed job logs, patch only after re-reading the remote branch head, and preserve unrelated commits. Ops #40352635746 is green.
+2. If and only if all required gates are green, re-fetch #1521 metadata/head/mergeability, merge using the verified exact head, then watch main CI/CD and Pages deployment and smoke the public routes.
+3. Retry host status with short, read-only operations when SentinelX reconnects. Read worker state and recent events, compare `collected_at` to current time, check timer activity and disk/RAM/process load before considering service actions.
+4. Directly verify API readiness/current weather/CORS and frontend/API revision parity. Keep port 4002 primary and 4001 rollback/canary; use blue-green/canary for any API change.
+5. Continue independent bounded UI/accessibility/performance work while any external run is pending. Do not weaken the real-weather Lighthouse gate or ship synthetic weather.
