@@ -2670,3 +2670,36 @@ Executed from the Oracle host after the Pages deploy job completed:
 3. PR #1522 is the append-only progress checkpoint branch. It has a green exact-head CI/CodeQL/Ops run, but this new append changes its head and must pass CI again. After that, re-verify its current head and mergeability, and merge only when the current main pipeline/deploy is no longer pending.
 4. PR #1523 is merged. Keep working on independent improvements while any new run is pending; do not weaken weather readiness, freshness, alert or safety semantics.
 5. Continue investigating disk-pressure headroom read-only. Do not clean or delete any Hava81 worktree until remote branch/PR ownership and active processes are verified.
+
+
+# Recovery checkpoint — 2026-10-26 20:40 TRT (17:40 UTC)
+
+## Current verified GitHub state
+- Authoritative `main` ref at checkpoint start: `e854bbb5f55dcee06c22e7a69b2a38d4c76ba6e4`.
+- Main CI/CD run #3732 (`40362587747`) completed successfully for `e854bbb5f55dcee06c22e7a69b2a38d4c76ba6e4` at 2026-10-26 16:52 UTC. Its Development container build, Production build, API test/build, Frontend quality, Lighthouse budgets, Browser flows, and GitHub Pages deploy jobs all reported success.
+- Ops script contracts run #471 (`40362587625`) and CodeQL run #2513 (`40362587363`) also succeeded for the same SHA.
+- GitHub Pages deployment run #1172 (`40363098727`) completed successfully at 16:51 UTC. This is deployment-pipeline evidence, not a substitute for a fresh API-host smoke test.
+- PR #1524 (desktop context-signal attribution target sizes) merged at 16:48 UTC; its merge commit is now in main. PR #1523 (deferred alert chunk-load regression) merged at 15:58 UTC.
+- PRs #1510 (city/location handoff race), #1512 (route-locale fallback under blocked storage), #1513 (clear stale location error on city search), and #1514 (prior checkpoint) are closed as merged. PR #1511 is closed unmerged because main already contains the equivalent readiness-confirmation helper and tests.
+- At this checkpoint the only open PRs observed were Dependabot #1380 (npm majors), #1379 (API npm majors), #1376 (root Node image major), #1375 (API Node image major), and #1165 (React/type updates). Re-fetch the open PR list before acting.
+
+## Host access and production status
+- SentinelX was queried first for worker status, `/var/lib/hava81-worker/state.json`, and recent `/var/log/hava81-worker/events.jsonl`; both capability/status access and command execution returned `agent_offline` (one enrolled host, none connected).
+- Zeki SSH Gateway was retried through `server_info`, `ping`, `host_list`, and a read-only shell command; all returned an internal tool failure. No host state, observer `collected_at`, timer status, disk headroom, live API revision, public CORS, or direct production smoke could be verified during this session.
+- Do not interpret the successful GitHub pipeline/Pages deployment as fresh evidence that the Oracle API is healthy. Production API status remains **unverified** until gateway access returns and direct smoke checks succeed.
+- No host service, timer, worker, port, deployment, rollback, or automation setting was changed. No production mutation was attempted.
+
+## Exact recovery sequence
+1. Retry SentinelX worker status/state/events and Zeki SSH Gateway read-only health checks. If SentinelX remains offline but the Gateway recovers, use the Gateway as the primary operational path and record the actual host timestamp.
+2. Read fresh `state.json`; compare `collected_at` to the current UTC time. Verify `hava81-observer.timer` remains enabled/active, root disk free bytes and `api_build_headroom_ok`, API readiness, CORS preflight, real weather bundle, frontend routes, `/sw.js`, API revision, and port roles (4002 primary; 4001 rollback/canary).
+3. Query GitHub's current main SHA, exact-head CI/Ops/CodeQL status, and deployment state immediately before any merge or production operation. Never merge a stale head based on this checkpoint.
+4. Continue an independent responsive/accessibility/performance task in a separate worktree/branch while host access or hosted runs are pending. The previous responsive audit worktree/job named in the earlier checkpoint is not confirmed alive; inspect GitHub branch/worktree/job state rather than assuming it completed.
+5. Review Dependabot PRs individually. Do not merge major dependency or Node image upgrades based on green status alone; require compatibility/build/browser/security evidence and keep API blue-green safeguards intact.
+6. Once host access is restored and fresh evidence is healthy, update this progress log append-only, then resume the next bounded improvement. If the host remains unreachable, continue safe GitHub-only work and preserve this exact blocker for the next invocation.
+
+## Prioritized next queue
+1. **Restore/read-only host observability** (state, recent events, timer, disk, API/CORS/revision/port parity).
+2. **Verify production directly** (frontend routes, readiness, CORS, real weather, service worker) after host connectivity is restored.
+3. **Resume independent UI/mobile/accessibility work** with a fresh isolated worktree and real browser evidence; do not duplicate PR #1524's desktop attribution target change.
+4. **Evaluate Dependabot majors separately**, beginning with lockfile/toolchain compatibility in a clean branch.
+5. Keep all weather-readiness checks fail-closed; no synthetic weather, no interpolated radar-nowcast claim, no weakened score floors, no API deployment without local gates, green hosted checks, and validated blue-green/canary readiness.
