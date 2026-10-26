@@ -2703,3 +2703,31 @@ Executed from the Oracle host after the Pages deploy job completed:
 3. **Resume independent UI/mobile/accessibility work** with a fresh isolated worktree and real browser evidence; do not duplicate PR #1524's desktop attribution target change.
 4. **Evaluate Dependabot majors separately**, beginning with lockfile/toolchain compatibility in a clean branch.
 5. Keep all weather-readiness checks fail-closed; no synthetic weather, no interpolated radar-nowcast claim, no weakened score floors, no API deployment without local gates, green hosted checks, and validated blue-green/canary readiness.
+
+
+# Recovery checkpoint — 2026-10-26 20:50 TRT (17:50 UTC)
+
+## Current main and merged work
+- Authoritative `main` at checkpoint start: `e2fc82b0a2796dad0c72e600d621ba038c5e5a8f`.
+- PR #1525 (append-only host-connectivity/current-gates checkpoint) merged as `5ec2ad64e04906b731a3a75819aa4ee375ca608b`.
+- PR #1526 (service-worker activation resilience) merged as `e2fc82b0a2796dad0c72e600d621ba038c5e5a8f`. It treats old-shell cache enumeration/deletion as best-effort after a complete install and adds regressions for both `caches.keys()` and `caches.delete()` failure. Its exact-head CI/CD #3734, Frontend quality, Browser flows, Lighthouse budgets, Production build, API test/build, development container build, Ops contracts, and CodeQL checks all passed before merge.
+- No API/runtime server change was included. No Oracle service, port, timer, worker, or automation setting was changed.
+
+## Exact pending CI and PR state
+- Main CI/CD run #3736 (`40371999503`) is in progress for `e2fc82b0a2796dad0c72e600d621ba038c5e5a8f`. Latest job snapshot: API test/build, production build, development container build, and Lighthouse budgets passed; Frontend quality and Browser flows were still running. Ops contracts run #475 (`40372000073`) and CodeQL run #2517 (`40371999579`) were still in progress at the last query.
+- The previous main run #3735 (`40371683673`) for `5ec2ad64...` was cancelled after the next main commit arrived; its Lighthouse job had passed with real OpenWeather preflight data (Istanbul, fetched at 17:47:05Z) and scores Performance 74, Accessibility 100, Best Practices 100, SEO 100; TBT was 860 ms. Do not infer a regression from this single noisy result. The decisions log already requires repeated exact-code measurements before performance changes.
+- PR #1527 is open: `docs(ops): record service worker activation resilience rationale`, branch `automation/hava81-run11-sw-activation-decision-20261026-1750`, exact head `c5a83b8d526ae12a7c164082ec8c5585a6c6f8b1`, base `e2fc82b0a2796dad0c72e600d621ba038c5e5a8f`. CodeQL, production build, API test/build, development container build, CI/agent script contracts, and deploy-script contracts passed; Frontend quality, Browser flows, and Lighthouse were still in progress at the last query. Re-fetch its head, mergeability, and exact-head checks before merge.
+- Do not edit either pending PR branch from another workstream. The next checkpoint branch for this section is separate and touches only `docs/AUTONOMOUS_PROGRESS.md`.
+
+## Host access / production evidence
+- Repeated SentinelX attempts still return `agent_offline` (one enrolled host, none connected). Zeki SSH Gateway `server_info`, `ping`, `host_list`, and read-only shell calls still fail internally.
+- Therefore the worker status, observer `collected_at`, recent event log, timer state, disk headroom, direct public production smoke, API revision, CORS, and live 4002/4001 port roles remain unverified. The previous checkpoint's healthy observation is historical, not fresh.
+- GitHub CI proves the local live-weather Lighthouse preflight and build path passed; it does **not** replace a fresh public API/Oracle host check. Do not deploy API code, switch ports, restart services, or roll back while the host remains inaccessible.
+- No API deploy workflow was triggered by these frontend/docs-only merges.
+
+## Next actions and prioritized queue
+1. Poll main CI/CD #3736, Ops #475, and CodeQL #2517. When the run finishes, verify exact SHA `e2fc82b0a2796dad0c72e600d621ba038c5e5a8f`; inspect any failure rather than waiting on stale observer fields.
+2. Poll PR #1527 to completion; verify exact head `c5a83b8d526ae12a7c164082ec8c5585a6c6f8b1`, all required gates, and mergeability. Merge when green, then monitor the new main pipeline.
+3. Retry SentinelX and Zeki SSH Gateway read-only access. Once available, immediately read `state.json`, compare `collected_at` to current time, inspect recent events, verify timer/disk/API readiness/CORS/real weather/frontend revision and 4002-primary/4001-rollback roles, then run direct public smoke.
+4. Continue independent work while any pipeline is pending. Use a separate branch/worktree; do not mutate PR #1527 or any other pending branch.
+5. Keep weather readiness fail-closed, avoid synthetic weather and interpolated radar-nowcast claims, and require evidence plus green exact-head gates before any production change.
