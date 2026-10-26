@@ -1,3 +1,29 @@
+# Current checkpoint — 2026-10-26 21:45 TRT (18:45 UTC)
+
+## Main, production, and deployment pipeline
+- PR #1532 (ARM64 API image/liveness verification workflow only) merged normally as main SHA `ee2888afeda6190f71f5468078a96b5aea0b9945`.
+- Main CI/CD run #3745 (`40379718115`) is validating that exact SHA. API test/build, frontend quality, production build, Lighthouse/live-weather readiness, and browser flows passed; GitHub Pages deploy was still running at the last direct check. Main CodeQL run `40379718116` completed successfully. Ops script contracts run `40379718255` completed successfully.
+- Direct public smoke at approximately `2026-10-26T18:38:40Z`: `/`, `/izmir/`, `/en/istanbul/`, and `https://api.hava81.zekiakgul.dev/api/v1/health/ready` all returned HTTP 200. No API runtime change, production restart, traffic switch, or rollback was made.
+- Last fresh observer snapshot collected at `2026-10-26T18:37:56.990351Z`: production healthy, API readiness HTTP 200, CORS valid, frontend revision matched main, Nginx/API port 4002 primary, 4001 retained for rollback/canary. Root filesystem was 91.5% used with 8.3 GiB free and `api_build_headroom_ok=true`. `hava81-observer.timer` was enabled and active at the last direct host check.
+- **Host access subsequently dropped:** Zeki SSH Gateway calls returned internal failures and SentinelX reported `agent_offline`. Do not infer current production or disk health from the previous snapshot; re-read state and recent events when the host reconnects. SentinelX reported agent version 0.22.0; a security notice recommends updating to >=0.23.34. Investigate and apply the supported agent update only after connectivity is restored and the installed update procedure is verified.
+
+## Exact pending PRs, runs, and heads
+- **PR #1533** — Node 26 LTS timing guard; branch `automation/hava81-node26-lts-window-20261026`; head `6aeb4bac59adadc9faff3186c7a19e2f1f33b488`, base `ee2888afeda6190f71f5468078a96b5aea0b9945`. CI/CD run #3747 (`40380196066`) was queued; Ops run `40380195841` and CodeQL run `40380195844` were in progress at last check. Next: wait for exact-head green checks, then merge if mergeability and current main base remain valid.
+- **PR #1531** — Node 26 API image plus ARM64 build/liveness smoke; branch `automation/hava81-run11-api-node26-arm64-smoke-20261026-1755`; head `3a4992418c3410fd8447b00d4141808cbd56eb8c`. CI, ARM64 smoke, Lighthouse/live-weather, Ops, and CodeQL passed for that head, but its base is stale and GitHub reported mergeability UNKNOWN. Official Node.js release schedule says 26.x Active LTS starts 2026-10-28; do not merge/deploy this API image before the LTS transition. After that date, verify the live schedule, rebase in an isolated worktree, rerun all exact-head gates, and use blue-green/canary with port 4002 remaining primary unless a validated switch is required.
+- **PR #1530** — Node 26 API Dockerfile only; branch `automation/hava81-run11-api-node26-rebased-20261026-1753`; head `00d3bc7794a9429a752a17f9c9c1b81f9ff46c2f`. Checks passed for its older base `e2fc82b0a2796dad0c72e600d621ba038c5e5a8f`, but mergeability was UNKNOWN. Prefer #1531 because it includes the ARM64 smoke workflow; avoid merging #1530 separately.
+- **Main deployment run #3745** — `40379718115`, SHA `ee2888afeda6190f71f5468078a96b5aea0b9945`; next action is to query status, wait for Pages completion, and smoke-test the published root/city/English routes plus API readiness/CORS/revision parity.
+- **Independent worktree to preserve:** `/home/chatgpt/hava81-run11-defer-alerts-fix-20261026-1830`, branch `automation/hava81-run11-defer-alerts-20261026-1820`, HEAD `af8dc82a5`; it has an uncommitted test change in `src/__tests__/components/DeferredDecisionAlertsPanel.test.tsx`. No PR was found for this branch before host access failed. On reconnect, re-read the remote head and inspect/run the focused test before committing anything.
+- **Independent worktree to preserve:** `/home/chatgpt/hava81-run11-main-thread-optimization-20261026-1740`, local HEAD `100a824b5`, tracking `origin/main` and behind by two commits at last read. It has uncommitted changes in `e2e/header-search.spec.ts`, `src/__tests__/components/SearchBar.test.tsx`, `src/components/SearchBar.tsx`, `src/components/app/AppHeader.tsx`, and `src/styles/App.css`. Do not reset, clean, or reuse this worktree; re-read its branch and remote head before continuing.
+
+## Prioritized next queue
+1. Query main run #3745 and PR #1533 runs directly; merge #1533 only after its exact head is green and mergeable. Continue independent work while any deployment/check is pending.
+2. Restore host visibility: read `/var/lib/hava81-worker/state.json`, `/usr/local/bin/hava81-worker-status`, recent `/var/log/hava81-worker/events.jsonl`, timer state, disk headroom, API/Nginx service state, port 4002/4001 roles, readiness, CORS, and frontend revision parity. Do not restart or switch traffic without fresh evidence.
+3. Verify/update SentinelX agent to the supported secure version after connectivity is restored; do not disable or pause the observer.
+4. Keep Node 26 API upgrade blocked until its official LTS transition on 2026-10-28; then rebase #1531 independently and require full exact-head gates plus blue-green/canary.
+5. Preserve both dirty worktrees above; inspect their exact remote heads and tests before any commit/push. Continue with a separate evidence-based UX/accessibility/performance improvement after the host and worktree state are revalidated.
+
+---
+
 # Current checkpoint — 2026-10-26 14:53 TRT (11:53 UTC)
 
 ## Main, production and observer
