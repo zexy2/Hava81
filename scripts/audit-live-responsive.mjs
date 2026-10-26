@@ -126,6 +126,23 @@ try {
               return Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
                 Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
             };
+            // Buttons and form controls are primary touch targets. Record controls
+            // below 44 CSS px so the live audit can catch regressions on phones and
+            // tablets without treating ordinary inline text links as buttons.
+            const smallTargets = [...document.querySelectorAll('button,[role="button"],input,select,[role="tab"]')]
+              .filter(node => {
+                const rect = node.getBoundingClientRect();
+                const style = getComputedStyle(node);
+                return rect.width > 0 && rect.height > 0 && style.display !== 'none' &&
+                  style.visibility !== 'hidden' && (rect.width < 44 || rect.height < 44);
+              })
+              .map(node => {
+                const rect = node.getBoundingClientRect();
+                const label = (node.getAttribute('aria-label') || node.getAttribute('title') ||
+                  node.getAttribute('placeholder') || node.textContent || node.tagName)
+                  .trim().replace(/\s+/g, ' ').slice(0, 60) || node.tagName.toLowerCase();
+                return `${label} (${Math.floor(rect.width)}×${Math.floor(rect.height)})`;
+              });
             return {
               city: element('.hava81-decision-field__city')?.textContent?.trim(),
               language: document.documentElement.lang,
@@ -134,6 +151,7 @@ try {
                 : isVisible('.atlas-forecast-error-card') ? 'error' : 'pending',
               documentWidth: document.documentElement.scrollWidth,
               viewportWidth: innerWidth,
+              smallTargets,
               headerHeight: Math.round(bounds('.atlas-header__inner')?.height || 0),
               overlaps: {
                 header: Math.round(overlap(bounds('.atlas-brand'), bounds('.atlas-header__actions'))),
