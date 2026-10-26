@@ -3,7 +3,7 @@ set -euo pipefail
 
 file=Dockerfile.dev
 [[ -f "$file" ]]
-grep -Fxq 'FROM node:24-alpine' "$file"
+grep -Fxq 'FROM node:26-alpine' "$file"
 line=$(grep -E '^RUN npm ci --legacy-peer-deps([[:space:]]|$)' "$file")
 for flag in \
   '--fetch-retries=5' \
