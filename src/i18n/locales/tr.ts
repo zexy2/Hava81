@@ -118,7 +118,7 @@ export const tr = {
       title: 'Planla',
       titleWithCity: 'Planla · {{city}}',
       intro:
-        'Gün planı, çıkış saatleri, aktiviteler, uyarılar ve rota havası. Buradaki puanlar saatlik ya da aktiviteye özeldir; günün tek skoru Bugün’deki Hava81 Skoru’dur.',
+        'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.',
       back: 'Bugüne dön',
       entryEyebrow: 'Sıradaki adım',
       entryBody: 'Gün planı, çıkış saatleri, aktiviteler, uyarılar ve rota havası.',
@@ -362,7 +362,8 @@ export const tr = {
         clear: 'Belirgin hava riski görünmüyor',
       },
       safetyNote: 'Yalnız hava koşullarına dayalı karar desteğidir; güvenlik garantisi değildir.',
-      hourlyAqiSource: 'Saatlik hava kalitesi {{source}} modelini yalnızca tahminle aynı zaman damgası eşleştiğinde kullanır. Eşleşmeyen saatlerde güncel AQI yalnızca tazeyse yedek olur; değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+      hourlyAqiSource:
+        'Saatlik hava kalitesi {{source}} modelini yalnızca tahminle aynı zaman damgası eşleştiğinde kullanır. Eşleşmeyen saatlerde güncel AQI yalnızca tazeyse yedek olur; değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
       methodDetails: 'Veri kapsamı ve yöntem',
       note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Taze Avrupa AQI örnekleri yalnızca tahmin saatleriyle zaman damgası tam eşleştiğinde kullanılır. Eşleşmeyen saatlerde taze güncel ölçüm yedek olabilir; ikisi de eksik veya eskiyse AQI riski çıkarılmaz. Diğer eksik alanlar uydurulmaz, veri kapsamını düşürür.',
     },
@@ -487,7 +488,8 @@ export const tr = {
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',
       empty: 'Kişisel skor görmek için en az bir aktivite seç.',
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
-      hourlyAqiSource: 'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+      hourlyAqiSource:
+        'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
       sensitivity: {
         label: 'Sıcaklık hassasiyeti',
         cold: 'Soğuğa hassasım',
@@ -525,7 +527,8 @@ export const tr = {
       sourceModified: 'Hava81 tarafından özetlendi',
       fetchedAt: 'veri alındı {{time}}',
       waveUnavailable: 'Dalga verisi yok',
-      marineStale: 'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.',
+      marineStale:
+        'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
     },
@@ -541,7 +544,8 @@ export const tr = {
         'Yağmur, belirgin bekleme avantajı veya zorlayıcı gün oluştuğunda; Hava81 açıkken tarayıcı bildirimi gösterir.',
       quietHours: 'Sessiz saatler: 22:00–07:00. Bildirim izni yalnızca sen açarsan istenir.',
       modeledDisclosure: 'Bu bildirimler Hava81 model rehberidir; resmî MGM MeteoUyarı değildir.',
-      freshnessPaused: 'Güncel hava ve tahmin verisi yeterince taze olmadığı için yeni bildirimler geçici olarak duraklatıldı.',
+      freshnessPaused:
+        'Güncel hava ve tahmin verisi yeterince taze olmadığı için yeni bildirimler geçici olarak duraklatıldı.',
       notificationDisclosure: 'Hava81 model rehberi; resmî MGM MeteoUyarı değildir.',
       enable: 'Bildirimleri aç',
       disable: 'Bildirimleri kapat',
