@@ -27,6 +27,14 @@ class HttpResponseError extends Error {
   }
 }
 
+class RequestTimeoutError extends Error {
+  constructor(timeoutMs) {
+    super(`request timed out after ${timeoutMs}ms`);
+    this.name = 'RequestTimeoutError';
+    this.timeoutMs = timeoutMs;
+  }
+}
+
 async function getJson(url) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
@@ -36,7 +44,13 @@ async function getJson(url) {
       signal: controller.signal,
     });
     let body;
-    try { body = await response.json(); } catch { body = null; }
+    try {
+      body = await response.json();
+    } catch (error) {
+      // Do not turn an aborted body read into a normal invalid-payload failure.
+      if (controller.signal.aborted) throw error;
+      body = null;
+    }
     if (!response.ok) {
       const retryAfter = response.headers.get('retry-after')?.trim() || undefined;
       throw new HttpResponseError(response.status, retryAfter);
@@ -44,7 +58,7 @@ async function getJson(url) {
     return body;
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new Error(`request timed out after ${requestTimeoutMs}ms`);
+      throw new RequestTimeoutError(requestTimeoutMs);
     }
     throw error;
   } finally {
@@ -54,6 +68,7 @@ async function getJson(url) {
 
 const failures = [];
 let rateLimited = null;
+let requestTimedOut = null;
 let currentOk = 0;
 let forecastOk = 0;
 const startedAt = Date.now();
@@ -96,6 +111,13 @@ for (const [index, [provinceSlug, city]] of cities.entries()) {
       // Stop immediately: further cities would amplify a provider/API rate limit.
       break;
     }
+    if (error instanceof RequestTimeoutError) {
+      requestTimedOut = { city, message };
+      failures.push({ city, message });
+      console.log(`BLOCKED (${message})`);
+      // A stalled request is a systemic gate failure; do not multiply its timeout by 81 cities.
+      break;
+    }
     failures.push({ city, message });
     console.log(`FAIL (${message})`);
   }
@@ -114,6 +136,10 @@ if (rateLimited) {
   console.log(`RESULT: BLOCKED (HTTP 429 rate limit at ${rateLimited.city})`);
   if (rateLimited.retryAfter) console.log(`Retry-After: ${rateLimited.retryAfter}`);
   process.exitCode = 2;
+} else if (requestTimedOut) {
+  console.log(`RESULT: BLOCKED (request timeout at ${requestTimedOut.city})`);
+  console.log(`Failure: ${requestTimedOut.city}: ${requestTimedOut.message}`);
+  process.exitCode = 1;
 } else if (failures.length) {
   console.log(`Failures: ${failures.length}`);
   for (const item of failures) console.log(`- ${item.city}: ${item.message}`);
