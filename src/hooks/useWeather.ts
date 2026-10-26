@@ -381,6 +381,9 @@ export function useWeather(options: UseWeatherOptions = {}): UseWeatherReturn {
       if (!targetCity.trim()) return null;
 
       activeSourceRef.current = 'city';
+      // A new city action supersedes any previous location failure immediately,
+      // rather than showing an obsolete geolocation error while the city loads.
+      locationAsync.clearError();
       // City search is a handoff from location mode. Clear and invalidate any
       // existing/in-flight location result so it cannot remain visible or win a late race.
       // A failed search (typo, unknown place) must not wipe the city on screen (Faz 1.3).
