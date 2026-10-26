@@ -61,10 +61,10 @@ export function DeferredDecisionAlertsPanel(props: Props) {
     <div
       ref={slotRef}
       className="atlas-deferred-alerts-slot"
-      role="region"
-      aria-label={t('hava81.alerts.title')}
-      aria-busy={!isNearViewport}
-      tabIndex={isNearViewport ? -1 : 0}
+      role={isNearViewport ? undefined : 'region'}
+      aria-label={isNearViewport ? undefined : t('hava81.alerts.title')}
+      aria-busy={isNearViewport ? undefined : true}
+      tabIndex={isNearViewport ? undefined : 0}
       onPointerDown={activate}
       onFocusCapture={activate}
     >
