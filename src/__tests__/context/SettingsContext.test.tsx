@@ -89,9 +89,19 @@ describe('SettingsProvider persisted settings', () => {
     localStorage.setItem('user-settings', JSON.stringify({ language: 'tr' }));
     window.history.replaceState(null, '', '/en/izmir/');
     try {
-      const { result } = renderHook(() => useSettings(), { wrapper });
+      const observedLanguages: string[] = [];
+      const { result } = renderHook(() => {
+        const value = useSettings();
+        observedLanguages.push(value.settings.language);
+        return value;
+      }, { wrapper });
+      expect(observedLanguages[0]).toBe('en');
       expect(result.current.settings.language).toBe('en');
       expect(JSON.parse(localStorage.getItem('user-settings') ?? '{}').language).toBe('en');
+
+      act(() => result.current.updateSetting('language', 'tr'));
+      expect(result.current.settings.language).toBe('tr');
+      expect(JSON.parse(localStorage.getItem('user-settings') ?? '{}').language).toBe('tr');
     } finally {
       window.history.replaceState(null, '', '/');
     }
