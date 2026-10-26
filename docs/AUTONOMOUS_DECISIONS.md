@@ -729,3 +729,10 @@ A per-request timeout is not enough if the verifier continues through all 81 pro
 - An `/en/...` route is authoritative for the first rendered settings value even when an older persisted `user-settings` object still says `tr`. The i18n bootstrap already prioritizes the URL, so allowing the settings provider to render `tr` for one commit can create a locale mismatch and an avoidable wrong-language city request before the mount-only reconciliation.
 - Add an opt-in `transformInitialValue` to `useLocalStorage` for initial/key rehydration only. Do not apply it to live storage events: a user must still be able to switch from English to Turkish while the URL is being rewritten. Persist a legacy stored `tr` value to `en` on the initial English-route mount, preserving the existing route-precedence behavior.
 - Regression coverage records the first language observed by a consumer, verifies that the first English city request uses `lang=en` exactly once, and proves later explicit Turkish setting/storage changes still work. This is client initialization only; no weather data, API, scoring, provider, or safety semantics change.
+
+
+## 2026-10-26 — Confirm transient Lighthouse weather-readiness failures once
+
+- Hosted Lighthouse reports for PR heads `faf379c...` and `935f2f1...` contained a current-weather request ending with `statusCode=-1` after about 30 seconds; the immediately preceding main report had a successful 200 response in under one second. The readiness gate correctly refused to score either failed report.
+- After a failed readiness assertion, allow one fresh full measurement against the same real API proxy. Score only the report containing a successful 2xx `/api/v1/weather/current` response; if the confirmation also fails, fail the job and preserve both reports for diagnosis.
+- Do not mock weather, retry individual provider requests, weaken Lighthouse score floors, change production CORS, or deploy a build that has not passed the readiness gate. This is a bounded confirmation for transient measurement/API stalls, not a bypass.

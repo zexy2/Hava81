@@ -27,3 +27,26 @@ export function assertLighthouseWeatherReady(report) {
   }
   return true;
 }
+
+/**
+ * Retry one full Lighthouse measurement when its real current-weather request
+ * failed or was cancelled. Never return a report until the weather UI is backed
+ * by a successful response; persistent API failures remain a hard CI failure.
+ */
+export async function retryLighthouseWeatherReadiness(report, rerun) {
+  try {
+    assertLighthouseWeatherReady(report);
+    return report;
+  } catch (firstError) {
+    const confirmation = await rerun(firstError);
+    try {
+      assertLighthouseWeatherReady(confirmation);
+    } catch (confirmationError) {
+      if (confirmationError instanceof Error && firstError instanceof Error) {
+        confirmationError.message += ` (first measurement: ${firstError.message})`;
+      }
+      throw confirmationError;
+    }
+    return confirmation;
+  }
+}

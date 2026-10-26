@@ -8,7 +8,7 @@ import process from 'node:process';
 import { resolveLighthouseChromePath } from './lib/resolve-lighthouse-chrome.mjs';
 import { resolveLighthouseTargetUrl } from './lib/lighthouse-target-url.mjs';
 import { resolveLoopbackCdpPort } from './lib/loopback-cdp-url.mjs';
-import { assertLighthouseWeatherReady } from './lib/lighthouse-weather-readiness.mjs';
+import { assertLighthouseWeatherReady, retryLighthouseWeatherReadiness } from './lib/lighthouse-weather-readiness.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -235,7 +235,14 @@ try {
   console.log(`[lighthouse] target ${targetUrl}`);
   await waitForPreview(preview);
   let report = await runLighthouseWithStartupRetry(resultPath, runEnv);
-  assertLighthouseWeatherReady(report);
+  report = await retryLighthouseWeatherReadiness(report, async firstError => {
+    const detail = firstError instanceof Error ? firstError.message : String(firstError);
+    console.warn(
+      `Lighthouse weather-data readiness failed (${detail}); repeating the real-API measurement once. The gate remains fail-closed.`
+    );
+    await sleep(1_500);
+    return runLighthouseWithStartupRetry(confirmResultPath, runEnv);
+  });
   const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');
   const firstPerformanceScore = report.categories?.performance?.score;
   if (

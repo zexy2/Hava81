@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { assertLighthouseWeatherReady } from './lib/lighthouse-weather-readiness.mjs';
+import { assertLighthouseWeatherReady, retryLighthouseWeatherReadiness } from './lib/lighthouse-weather-readiness.mjs';
 
 const report = requests => ({
   audits: {
@@ -33,5 +33,36 @@ for (const [label, requests] of [
     label
   );
 }
+
+const readyReport = report([
+  { url: 'http://127.0.0.1:4173/api/v1/weather/current?city=Istanbul', statusCode: 200 },
+]);
+const unavailableReport = report([
+  { url: 'http://127.0.0.1:4173/api/v1/weather/current?city=Istanbul', statusCode: -1 },
+]);
+let rerunCount = 0;
+assert.equal(
+  await retryLighthouseWeatherReadiness(readyReport, async () => {
+    rerunCount += 1;
+    return unavailableReport;
+  }),
+  readyReport,
+  'a ready first report should be reused without a second live measurement'
+);
+assert.equal(rerunCount, 0);
+
+const recoveredReport = await retryLighthouseWeatherReadiness(unavailableReport, async firstError => {
+  rerunCount += 1;
+  assert.match(firstError.message, /refusing to score the loading\/error shell/);
+  return readyReport;
+});
+assert.equal(recoveredReport, readyReport, 'a successful real-API confirmation should be scored');
+assert.equal(rerunCount, 1, 'readiness failure should trigger exactly one confirmation measurement');
+
+await assert.rejects(
+  () => retryLighthouseWeatherReadiness(unavailableReport, async () => unavailableReport),
+  /refusing to score the loading\/error shell/,
+  'two unavailable reports must remain a hard failure'
+);
 
 console.log('Lighthouse weather-data readiness contract: PASS');
