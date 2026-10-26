@@ -5,7 +5,9 @@ import { weatherService } from '../../api/weatherService';
 import { useSettings } from '../../context';
 import { buildActivityPlan } from '../../domain/activity/buildActivityPlan';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
-import { useDecisionProfile } from '../../hooks/useDecisionProfile';
+import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
+import { buildDayOutlook, outlookDayLabelKey } from '../../domain/plan/dayOutlook';
+import { toleranceOf, useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type {
   AirQuality,
   FavoriteCity,
@@ -46,6 +48,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
   const [loading, setLoading] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
   const [freshnessRevision, setFreshnessRevision] = useState(0);
+  const [compareDay, setCompareDay] = useState<string | null>(null);
   const primaryActivity = profile.activities[0];
 
   useEffect(() => {
@@ -144,6 +147,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
       weather: row.weather,
       hourly: row.hourly,
       airQuality: freshAirQuality,
+      now: new Date(),
     });
     const activityPlan = primaryActivity
       ? buildActivityPlan({
@@ -154,11 +158,27 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
           sensitivity: profile.temperatureSensitivity,
           preferredStart: profile.activityStart,
           preferredEnd: profile.activityEnd,
+          now: new Date(),
+          tolerance: toleranceOf(profile),
         })
       : undefined;
 
-    return [{ ...row, airQuality: freshAirQuality, plan, activityPlan }];
+    const outlook = buildDayOutlook({
+      weather: row.weather,
+      hourly: row.hourly,
+      airQuality: freshAirQuality,
+      now: new Date(),
+    });
+    const dayFor = (dateKey: string) => outlook.find(day => day.dateKey === dateKey);
+    return [{ ...row, airQuality: freshAirQuality, plan, activityPlan, outlook, dayFor }];
   });
+  // Days every compared city has a summary for (tomorrow onwards); "next 12 h" is the default.
+  const dayOptions = (freshRows[0]?.outlook ?? []).filter(
+    day => day.dayOffset >= 1 && freshRows.every(row => row.dayFor(day.dateKey))
+  );
+  const selectedDay = dayOptions.some(day => day.dateKey === compareDay) ? compareDay : null;
+  const headlineOf = (row: (typeof freshRows)[number]) =>
+    (selectedDay ? row.dayFor(selectedDay) : undefined) ?? row.plan;
   const staleCount = rows.length - freshRows.length;
   const unavailableCount = failedCount + staleCount;
 
@@ -189,12 +209,14 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
     };
   }, [freshnessRevision, rows]);
 
-  const leaders = useMemo(() => {
-    if (freshRows.length === 0) return [];
-    const topScore = Math.max(...freshRows.map(row => row.plan.score));
-    return freshRows.filter(row => row.plan.score === topScore);
-  }, [freshRows]);
+  // freshRows is rebuilt every render, so this is a plain derivation (three cities at most).
+  const topScore = freshRows.length ? Math.max(...freshRows.map(row => headlineOf(row).score)) : 0;
+  const leaders = freshRows.filter(row => headlineOf(row).score === topScore);
   const winner = leaders.length === 1 ? leaders[0] : undefined;
+  const selectedDayOption = dayOptions.find(day => day.dateKey === selectedDay);
+  const selectedDayLabel = selectedDayOption
+    ? t(outlookDayLabelKey(selectedDayOption, freshRows[0].weather.meta.timezoneOffsetSeconds))
+    : undefined;
   const isLeader = (row: (typeof freshRows)[number]) => leaders.includes(row);
   const offsetTime = (row: CompareRow, date?: Date) => {
     if (!date) return '—';
@@ -214,12 +236,16 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
           <div className="hava81-compare__winner" role="status">
             {winner ? (
               <>
-                <span>{t('hava81.compare.winnerLabel')}</span>
+                <span>
+                  {selectedDayLabel
+                    ? t('hava81.compare.dayWinnerLabel', { day: selectedDayLabel })
+                    : t('hava81.compare.winnerLabel')}
+                </span>
                 <strong>
                   {t('hava81.compare.winner', {
                     city: winner.weather.cityName,
-                    score: winner.plan.score,
-                    band: t(`hava81.dailyPlan.bands.${winner.plan.band}`),
+                    score: headlineOf(winner).score,
+                    band: t(`hava81.dailyPlan.bands.${headlineOf(winner).band}`),
                   })}
                 </strong>
               </>
@@ -229,7 +255,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                 <strong>
                   {t('hava81.compare.tie', {
                     cities: leaders.map(row => row.weather.cityName).join(', '),
-                    score: leaders[0]?.plan.score,
+                    score: leaders[0] ? headlineOf(leaders[0]).score : undefined,
                   })}
                 </strong>
               </>
@@ -276,8 +302,31 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
               )}
             </p>
           ) : null}
+          {dayOptions.length ? (
+            <div
+              className="hava81-compare__days"
+              role="group"
+              aria-label={t('hava81.compare.dayLabel')}
+            >
+              <button type="button" aria-pressed={!selectedDay} onClick={() => setCompareDay(null)}>
+                {t('hava81.compare.next12')}
+              </button>
+              {dayOptions.map(day => (
+                <button
+                  key={day.dateKey}
+                  type="button"
+                  aria-pressed={selectedDay === day.dateKey}
+                  onClick={() => setCompareDay(day.dateKey)}
+                >
+                  {t(outlookDayLabelKey(day, freshRows[0].weather.meta.timezoneOffsetSeconds))}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="hava81-compare__table" role="list" aria-label={t('hava81.compare.title')}>
             {freshRows.map(row => {
+              const dayView = selectedDay ? row.dayFor(selectedDay) : undefined;
+              const headline = dayView ?? row.plan;
               const nearTerm = row.hourly.slice(0, 6);
               const precipitationPeak = pickMostSignificantPrecipitation(nearTerm);
               const precipitationSummary = precipitationPeak
@@ -297,71 +346,81 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                   <header>
                     <h3>{row.weather.cityName}</h3>
                     <div className="hava81-compare__score-wrap">
-                      <small>{t(`hava81.dailyPlan.bands.${row.plan.band}`)}</small>
+                      <small>{t(`hava81.dailyPlan.bands.${headline.band}`)}</small>
                       <strong className="hava81-compare__score">
-                        {row.plan.score}
+                        {headline.score}
                         <span>/100</span>
                       </strong>
                     </div>
                   </header>
                   <div className="hava81-compare__metrics">
-                    <span>
-                      <span className="hava81-compare__metric-label">
-                        {t('hava81.compare.temp')}
+                    {dayView ? (
+                      <span>
+                        <span className="hava81-compare__metric-label">
+                          {t('hava81.compare.dayRisk')}
+                        </span>
+                        <b>
+                          {dayView.reasons[0]
+                            ? t(`hava81.dailyPlan.reasons.${REASON_I18N_KEY[dayView.reasons[0]]}`)
+                            : t('hava81.dailyPlan.reasons.clear')}
+                        </b>
                       </span>
-                      <b>
-                        {Math.round(convertTemperature(row.weather.temperature))}
-                        {getTemperatureSymbol()}
-                      </b>
-                    </span>
-                    <span>
-                      <span className="hava81-compare__metric-label">
-                        {t('hava81.compare.rain')}
-                      </span>
-                      <b>
-                        {precipitationSummary}
-                      </b>
-                    </span>
-                    <span>
-                      <span className="hava81-compare__metric-label">{t('weather.wind')}</span>
-                      <b>
-                        {formatWithUnit(convertWindSpeed(row.weather.windSpeed), getWindSpeedSymbol(), i18n.language)}
-                      </b>
-                    </span>
-                    <span>
-                      <span className="hava81-compare__metric-label">
-                        {t('hava81.compare.aqi')}
-                      </span>
-                      <b>{row.airQuality ? `${row.airQuality.aqi}/5` : '—'}</b>
-                    </span>
+                    ) : (
+                      <>
+                        <span>
+                          <span className="hava81-compare__metric-label">
+                            {t('hava81.compare.temp')}
+                          </span>
+                          <b>
+                            {Math.round(convertTemperature(row.weather.temperature))}
+                            {getTemperatureSymbol()}
+                          </b>
+                        </span>
+                        <span>
+                          <span className="hava81-compare__metric-label">
+                            {t('hava81.compare.rain')}
+                          </span>
+                          <b>{precipitationSummary}</b>
+                        </span>
+                        <span>
+                          <span className="hava81-compare__metric-label">{t('weather.wind')}</span>
+                          <b>
+                            {formatWithUnit(
+                              convertWindSpeed(row.weather.windSpeed),
+                              getWindSpeedSymbol(),
+                              i18n.language
+                            )}
+                          </b>
+                        </span>
+                        <span>
+                          <span className="hava81-compare__metric-label">
+                            {t('hava81.compare.aqi')}
+                          </span>
+                          <b>{row.airQuality ? `${row.airQuality.aqi}/5` : '—'}</b>
+                        </span>
+                      </>
+                    )}
                     <span>
                       <span className="hava81-compare__metric-label">
                         {t('hava81.compare.bestTime')}
                       </span>
                       <b>
-                        {row.plan.bestWindowRange ? (
-                          row.plan.bestWindowRange.start.time.getTime() ===
-                          row.plan.bestWindowRange.end.time.getTime() ? (
-                            <time dateTime={row.plan.bestWindowRange.peak.time.toISOString()}>
-                              {offsetTime(row, row.plan.bestWindowRange.peak.time)}
+                        {headline.bestWindowRange ? (
+                          <>
+                            <time dateTime={headline.bestWindowRange.start.time.toISOString()}>
+                              {offsetTime(row, headline.bestWindowRange.start.time)}
                             </time>
-                          ) : (
-                            <>
-                              <time dateTime={row.plan.bestWindowRange.start.time.toISOString()}>
-                                {offsetTime(row, row.plan.bestWindowRange.start.time)}
-                              </time>
-                              {'–'}
-                              <time dateTime={row.plan.bestWindowRange.end.time.toISOString()}>
-                                {offsetTime(row, row.plan.bestWindowRange.end.time)}
-                              </time>
-                            </>
-                          )
+                            {'–'}
+                            <time dateTime={headline.bestWindowRange.endTime.toISOString()}>
+                              {offsetTime(row, headline.bestWindowRange.endTime)}
+                            </time>
+                          </>
                         ) : (
                           '—'
                         )}
                       </b>
                     </span>
-                    {row.activityPlan ? (
+                    {row.activityPlan && !dayView ? (
                       <span>
                         <span className="hava81-compare__metric-label">
                           {t(`hava81.activities.names.${row.activityPlan.activity}`)} (

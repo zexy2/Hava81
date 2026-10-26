@@ -5,6 +5,7 @@ import type {
   DecisionProfile,
   TemperatureSensitivity,
 } from '../domain/activity/types';
+import type { PersonalTolerance, WeatherTolerance } from '../domain/plan/types';
 import { trackProductEvent } from '../analytics/productEvents';
 
 const DEFAULT_PROFILE: DecisionProfile = {
@@ -21,12 +22,15 @@ const ACTIVITY_KINDS: readonly ActivityKind[] = [
   'laundry',
 ];
 const TEMPERATURE_SENSITIVITIES: readonly TemperatureSensitivity[] = ['cold', 'balanced', 'heat'];
+const WEATHER_TOLERANCES: readonly WeatherTolerance[] = ['low', 'normal', 'high'];
 const CLOCK_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 const isActivityKind = (value: unknown): value is ActivityKind =>
   typeof value === 'string' && ACTIVITY_KINDS.includes(value as ActivityKind);
 const isTemperatureSensitivity = (value: unknown): value is TemperatureSensitivity =>
   typeof value === 'string' && TEMPERATURE_SENSITIVITIES.includes(value as TemperatureSensitivity);
+const isWeatherTolerance = (value: unknown): value is WeatherTolerance =>
+  typeof value === 'string' && WEATHER_TOLERANCES.includes(value as WeatherTolerance);
 const isClockTime = (value: unknown): value is string =>
   typeof value === 'string' && CLOCK_TIME_PATTERN.test(value);
 
@@ -54,6 +58,13 @@ const deserializeDecisionProfile = (serialized: string): DecisionProfile => {
     ...(isClockTime(candidate.commuteEnd) ? { commuteEnd: candidate.commuteEnd } : {}),
     ...(isClockTime(candidate.activityStart) ? { activityStart: candidate.activityStart } : {}),
     ...(isClockTime(candidate.activityEnd) ? { activityEnd: candidate.activityEnd } : {}),
+    ...(isWeatherTolerance(candidate.windTolerance)
+      ? { windTolerance: candidate.windTolerance }
+      : {}),
+    ...(isWeatherTolerance(candidate.rainTolerance)
+      ? { rainTolerance: candidate.rainTolerance }
+      : {}),
+    ...(candidate.pollenAllergy === true ? { pollenAllergy: true } : {}),
   };
 };
 
@@ -88,6 +99,21 @@ export function useDecisionProfile() {
     },
     [setProfile]
   );
+  const setTolerance = useCallback(
+    (kind: 'wind' | 'rain', value: WeatherTolerance) => {
+      const key = kind === 'wind' ? 'windTolerance' : 'rainTolerance';
+      setProfile(current => ({ ...current, [key]: value }));
+      trackProductEvent('weather_tolerance_changed', { kind, value });
+    },
+    [setProfile]
+  );
+  const setPollenAllergy = useCallback(
+    (pollenAllergy: boolean) => {
+      setProfile(current => ({ ...current, pollenAllergy }));
+      trackProductEvent('pollen_allergy_changed', { pollenAllergy });
+    },
+    [setProfile]
+  );
   const setCommuteTime = useCallback(
     (kind: 'start' | 'end', value?: string) => {
       if (value !== undefined && !isClockTime(value)) return;
@@ -118,9 +144,18 @@ export function useDecisionProfile() {
     profile,
     toggleActivity,
     setTemperatureSensitivity,
+    setTolerance,
+    setPollenAllergy,
     setCommuteTime,
     clearCommuteTimes,
     setActivityWindow,
     clearActivityWindow,
   };
 }
+
+/** The profile's comfort tolerances in the shape the scorers expect. */
+export const toleranceOf = (profile: DecisionProfile): PersonalTolerance => ({
+  wind: profile.windTolerance,
+  rain: profile.rainTolerance,
+  pollenAllergy: profile.pollenAllergy === true,
+});

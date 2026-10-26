@@ -1,8 +1,13 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
-import type { AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 
 vi.mock('../../analytics/productEvents', () => ({ trackProductEvent: vi.fn() }));
 const settingsMock = vi.hoisted(() => ({ temperatureUnit: 'metric' as 'metric' | 'imperial' }));
@@ -61,7 +66,13 @@ const hourly: HourlyForecast[] = [6, 9, 12].map(hour => ({
 }));
 
 describe('DailyPlanPanel sharing', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   beforeEach(() => {
+    // The plan drops forecast steps that already ended; pin the clock to the fixture morning.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-28T06:00:00.000Z'));
     settingsMock.temperatureUnit = 'metric';
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
     Object.defineProperty(navigator, 'clipboard', {
@@ -274,7 +285,9 @@ describe('DailyPlanPanel sharing', () => {
           element.textContent?.includes('hava81.dailyPlan.precipitationUnknown') === true
       )
     ).toHaveLength(3);
-    expect(unknownSlots.every(slot => /\b89\/100\b/.test(slot.getAttribute('aria-label') ?? ''))).toBe(true);
+    expect(
+      unknownSlots.every(slot => /\b89\/100\b/.test(slot.getAttribute('aria-label') ?? ''))
+    ).toBe(true);
     expect(screen.getByText('hava81.dailyPlan.precipitationEvidenceNote')).toBeVisible();
     expect(unknownSlots[0]).toHaveAccessibleName(/hava81\.dailyPlan\.precipitationUnknown/);
     unmount();
@@ -283,7 +296,9 @@ describe('DailyPlanPanel sharing', () => {
       ...point,
       pop: 0,
     }));
-    render(<DailyPlanPanel weather={weather} hourly={dryHourly} forecastMeta={freshForecastMeta()} />);
+    render(
+      <DailyPlanPanel weather={weather} hourly={dryHourly} forecastMeta={freshForecastMeta()} />
+    );
     const dryTimeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
     expect(
       within(dryTimeline).getAllByText(
@@ -292,7 +307,9 @@ describe('DailyPlanPanel sharing', () => {
           element.textContent?.includes('hava81.dailyPlan.precipitationDry') === true
       )
     ).toHaveLength(3);
-    expect(screen.queryByText('hava81.dailyPlan.precipitationEvidenceNote')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('hava81.dailyPlan.precipitationEvidenceNote')
+    ).not.toBeInTheDocument();
   });
 
   it('honors the selected temperature unit in the timeline and accessible label', () => {
@@ -405,6 +422,7 @@ describe('DailyPlanPanel sharing', () => {
   });
 
   it('does not score a stale current observation when no hourly forecast is available', () => {
+    vi.setSystemTime(new Date('2026-08-29T06:00:00.000Z')); // a day after the observation
     render(<DailyPlanPanel weather={weather} hourly={[]} forecastMeta={freshForecastMeta()} />);
 
     expect(screen.getByRole('status')).toHaveTextContent('hava81.dailyPlan.currentStale');
@@ -425,7 +443,9 @@ describe('DailyPlanPanel sharing', () => {
           freshForSeconds: 30,
         },
       };
-      render(<DailyPlanPanel weather={freshWeather} hourly={[]} forecastMeta={freshForecastMeta()} />);
+      render(
+        <DailyPlanPanel weather={freshWeather} hourly={[]} forecastMeta={freshForecastMeta()} />
+      );
 
       expect(screen.getByRole('button', { name: 'hava81.share.action' })).toBeInTheDocument();
 

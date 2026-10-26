@@ -1,4 +1,5 @@
-import type { BestWindowRange, ScoredWeatherWindow } from "./types";
+import { rainUncertainty } from './aggregateHorizon';
+import type { BestWindowRange, ScoredWeatherWindow } from './types';
 
 const DEFAULT_TOLERANCE = 3;
 const DEFAULT_MAX_RANGE_HOURS = 4;
@@ -26,8 +27,13 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   // and also stop the range from growing across them.
   const candidates = ordered.filter(slot => isEligible(slot));
   if (!candidates.length) return undefined;
+  // Equal scores: prefer the hour whose rain forecast is more decided, then the earlier one.
   const peak = candidates.reduce(
-    (best, slot) => (slot.score > best.score ? slot : best),
+    (best, slot) =>
+      slot.score > best.score ||
+      (slot.score === best.score && rainUncertainty(slot) < rainUncertainty(best))
+        ? slot
+        : best,
     candidates[0]
   );
   const peakIndex = ordered.indexOf(peak);
@@ -48,25 +54,29 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
 
   // A mathematically near-flat 12-hour period should not become an unhelpful 10–12 hour
   // recommendation. Grow around the peak while the neighboring point is still near-best,
-  // contiguous, and keeps the user-facing interval within a practical four-hour span.
+  // contiguous, and keeps the covered interval (including the last slot) within four hours.
   while (true) {
     const left = startIndex > 0 ? ordered[startIndex - 1] : undefined;
     const right = endIndex < ordered.length - 1 ? ordered[endIndex + 1] : undefined;
-    const leftGap = left ? ordered[startIndex].time.getTime() - left.time.getTime() : Number.POSITIVE_INFINITY;
-    const rightGap = right ? right.time.getTime() - ordered[endIndex].time.getTime() : Number.POSITIVE_INFINITY;
+    const leftGap = left
+      ? ordered[startIndex].time.getTime() - left.time.getTime()
+      : Number.POSITIVE_INFINITY;
+    const rightGap = right
+      ? right.time.getTime() - ordered[endIndex].time.getTime()
+      : Number.POSITIVE_INFINITY;
     const canTakeLeft = Boolean(
       left &&
-        left.score >= floor &&
-        isRiskCompatible(left) &&
-        leftGap <= maxAdjacentGapMs &&
-        ordered[endIndex].time.getTime() - left.time.getTime() <= maxRangeMs
+      left.score >= floor &&
+      isRiskCompatible(left) &&
+      leftGap <= maxAdjacentGapMs &&
+      ordered[endIndex].time.getTime() + cadenceMs - left.time.getTime() <= maxRangeMs
     );
     const canTakeRight = Boolean(
       right &&
-        right.score >= floor &&
-        isRiskCompatible(right) &&
-        rightGap <= maxAdjacentGapMs &&
-        right.time.getTime() - ordered[startIndex].time.getTime() <= maxRangeMs
+      right.score >= floor &&
+      isRiskCompatible(right) &&
+      rightGap <= maxAdjacentGapMs &&
+      right.time.getTime() + cadenceMs - ordered[startIndex].time.getTime() <= maxRangeMs
     );
 
     if (!canTakeLeft && !canTakeRight) break;
@@ -80,9 +90,18 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
     }
   }
 
+  // A slot describes its whole forecast step, so the range lasts until the last slot ends.
+  const lastSlotMs = ordered[endIndex].time.getTime();
+  const nextSlotMs = ordered[endIndex + 1]?.time.getTime();
+  const lastSlotSpanMs =
+    nextSlotMs !== undefined && nextSlotMs - lastSlotMs <= maxAdjacentGapMs
+      ? nextSlotMs - lastSlotMs
+      : cadenceMs;
+
   return {
     start: ordered[startIndex],
     end: ordered[endIndex],
+    endTime: new Date(lastSlotMs + lastSlotSpanMs),
     peak,
     tolerance: Math.max(0, tolerance),
   };

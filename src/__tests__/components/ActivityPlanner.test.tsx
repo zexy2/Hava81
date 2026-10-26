@@ -1,5 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ActivityPlanner } from '../../components/hava81/ActivityPlanner';
 import { SettingsProvider } from '../../context';
@@ -76,7 +76,15 @@ const hourly: HourlyForecast[] = [
 ];
 
 describe('ActivityPlanner time range', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    // The plan drops forecast steps that already ended; pin the clock to the fixture morning.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-29T06:00:00Z'));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('persists a preferred range and makes the displayed activity score explicitly range-based', () => {
     render(
@@ -156,7 +164,9 @@ describe('ActivityPlanner time range', () => {
     );
 
     expect(screen.getByText(/Koşuda 50–72°F/i)).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sıcaklık hassasiyeti' }), {
+      target: { value: 'heat' },
+    });
     expect(
       screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 5°F daha erken başlar.')
     ).toBeInTheDocument();
@@ -294,6 +304,63 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getAllByText('Yağış %35 · 0,8 mm')).toHaveLength(2);
   });
 
+  it('stores wind / rain tolerance and pollen allergy, and ignores corrupt saved values', () => {
+    localStorage.setItem(
+      'hava81-decision-profile-v1',
+      JSON.stringify({
+        activities: ['run'],
+        temperatureSensitivity: 'balanced',
+        windTolerance: 'extreme',
+        pollenAllergy: 'yes',
+      })
+    );
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
+      </SettingsProvider>
+    );
+
+    const group = screen.getByRole('group', { name: 'Kişisel tolerans' });
+    const wind = within(group).getByRole('combobox', { name: 'Rüzgâr' });
+    const allergy = within(group).getByRole('checkbox', { name: 'Polen alerjim var' });
+    expect(wind).toHaveValue('normal');
+    expect(allergy).not.toBeChecked();
+
+    fireEvent.change(wind, { target: { value: 'high' } });
+    fireEvent.click(allergy);
+    const saved = JSON.parse(localStorage.getItem('hava81-decision-profile-v1') ?? '{}');
+    expect(saved).toMatchObject({ windTolerance: 'high', pollenAllergy: true });
+    expect(screen.getByText(/sınırları herkes için aynıdır/)).toBeInTheDocument();
+  });
+
+  it('says why the recommended range wins, with the measured values', () => {
+    // 09:00–20:00 local; 12:00–17:00 local feels like 40 °C, the rest 22 °C.
+    const hot: HourlyForecast[] = Array.from({ length: 12 }, (_, index) => {
+      const local = 9 + index;
+      const feels = local >= 12 && local < 18 ? 40 : 22;
+      return {
+        time: new Date(Date.UTC(2026, 7, 29, 6 + index)),
+        temp: feels,
+        apparentTemperature: feels,
+        pop: 0,
+        precipitationMm: 0,
+        windSpeed: 2,
+        isDay: true,
+        icon: '01d',
+      };
+    });
+    render(
+      <SettingsProvider>
+        <ActivityPlanner weather={weather} hourly={hot} forecastMeta={freshForecastMeta()} />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.getAllByText(/Neden bu aralık\? \d{2}:00 civarı hissedilen 40°C, bu aralıkta 22°C\./)
+        .length
+    ).toBeGreaterThan(0);
+  });
+
   it('shows near-best hours as a range and explains what temperature sensitivity changes', () => {
     const plateau: HourlyForecast[] = [15, 16, 17].map(hour => ({
       time: new Date(Date.UTC(2026, 7, 29, hour)),
@@ -311,10 +378,13 @@ describe('ActivityPlanner time range', () => {
 
     expect(screen.getByText('Standart konfor aralıkları kullanılır.')).toBeInTheDocument();
     expect(
-      screen.getAllByText('Hava açısından en uygun aralık: 18:00–20:00').length
+      // A flat 18:00–21:00 plateau: the plan picks a block as long as the activity (walk: 60 min).
+      screen.getAllByText('Hava açısından en uygun aralık: 18:00–19:00').length
     ).toBeGreaterThan(0);
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'heat' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sıcaklık hassasiyeti' }), {
+      target: { value: 'heat' },
+    });
     expect(
       screen.getByText('Sıcak kaynaklı puan düşüşleri yaklaşık 3°C daha erken başlar.')
     ).toBeInTheDocument();
@@ -512,7 +582,11 @@ describe('ActivityPlanner time range', () => {
       );
 
       const runCard = screen.getByRole('heading', { name: 'Koşu' }).closest('.activity-card');
-      const runScore = () => Number.parseInt(runCard?.querySelector('.activity-card__score strong')?.textContent ?? '', 10);
+      const runScore = () =>
+        Number.parseInt(
+          runCard?.querySelector('.activity-card__score strong')?.textContent ?? '',
+          10
+        );
       const scoreBeforeExpiry = runScore();
       expect(Number.isFinite(scoreBeforeExpiry)).toBe(true);
       expect(scoreBeforeExpiry).toBeLessThan(80);
@@ -522,9 +596,7 @@ describe('ActivityPlanner time range', () => {
       });
 
       expect(runScore()).toBeGreaterThan(scoreBeforeExpiry);
-      expect(
-        screen.getByText(/güncel AQI yalnızca tazeyse kullanılır/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/güncel AQI yalnızca tazeyse kullanılır/i)).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
@@ -537,7 +609,7 @@ describe('ActivityPlanner time range', () => {
       </SettingsProvider>
     );
 
-    const select = screen.getByRole('combobox');
+    const select = screen.getByRole('combobox', { name: 'Sıcaklık hassasiyeti' });
     const label = document.getElementById(select.getAttribute('aria-labelledby') ?? '');
     const help = document.getElementById(select.getAttribute('aria-describedby') ?? '');
     expect(label).toBeVisible();

@@ -2,6 +2,8 @@ export type ProductEventName =
   | 'daily_plan_viewed'
   | 'activity_preference_changed'
   | 'temperature_sensitivity_changed'
+  | 'weather_tolerance_changed'
+  | 'pollen_allergy_changed'
   | 'activity_window_changed'
   | 'activity_window_cleared'
   | 'commute_schedule_changed'

@@ -1,4 +1,9 @@
-import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { buildDailyPlan } from './buildDailyPlan';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import type { BestWindowRange, DailyPlan } from './types';
@@ -58,17 +63,18 @@ export const next24hRange = (hourly: HourlyForecast[]): { min: number; max: numb
   if (!hourly.length) return null;
   const sorted = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime());
   const end = sorted[0].time.getTime() + 24 * HOUR_MS;
-  const temps = sorted.filter(p => p.time.getTime() < end).map(p => p.temp).filter(Number.isFinite);
+  const temps = sorted
+    .filter(p => p.time.getTime() < end)
+    .map(p => p.temp)
+    .filter(Number.isFinite);
   return temps.length ? { min: Math.min(...temps), max: Math.max(...temps) } : null;
 };
 
-export const buildDecisionSnapshot = ({
-  weather,
-  hourly,
-  airQuality,
-  airQualityHourly,
-}: DecisionSnapshotInput): DecisionSnapshot => {
-  const plan = buildDailyPlan({ weather, hourly, airQuality, airQualityHourly });
+export const buildDecisionSnapshot = (
+  { weather, hourly, airQuality, airQualityHourly }: DecisionSnapshotInput,
+  now?: Date
+): DecisionSnapshot => {
+  const plan = buildDailyPlan({ weather, hourly, airQuality, airQualityHourly, now });
   return {
     plan,
     bestWindow: plan.nowOrLater.kind === 'similar' ? undefined : plan.bestWindowRange,
@@ -95,10 +101,16 @@ export const getDecisionSnapshot = (input: DecisionSnapshotInput): DecisionSnaps
   const cached = byHourlyAir.get(hourlyAirKey);
   if (cached && (cached.expiresAt === null || now < cached.expiresAt)) return cached.snapshot;
 
-  const snapshot = buildDecisionSnapshot(input);
+  const snapshot = buildDecisionSnapshot(input, new Date(now));
+  // "Now" is the forecast step in progress; when the next step starts the plan must be rebuilt.
+  const nextSlotStart = snapshot.plan.slots[1]?.time.getTime();
+  const expiries = [
+    nextOptionalEvidenceExpiry(input, now),
+    nextSlotStart !== undefined && nextSlotStart > now ? nextSlotStart : null,
+  ].filter((value): value is number => value !== null);
   byHourlyAir.set(hourlyAirKey, {
     snapshot,
-    expiresAt: nextOptionalEvidenceExpiry(input, now),
+    expiresAt: expiries.length ? Math.min(...expiries) : null,
   });
   return snapshot;
 };

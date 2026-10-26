@@ -602,3 +602,29 @@
     overflow-wrap: anywhere;
   }
 }
+
+@layer components {
+  .hava81-compare__days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .hava81-compare__days button {
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    color: var(--color-aegean-deep);
+    background: transparent;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: 999px;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .hava81-compare__days button[aria-pressed='true'] {
+    color: var(--color-atlas-paper);
+    background: var(--color-aegean-deep);
+    border-color: var(--color-aegean-deep);
+  }
+}

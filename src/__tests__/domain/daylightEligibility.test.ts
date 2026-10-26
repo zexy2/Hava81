@@ -84,12 +84,12 @@ const localHours = (range?: { start: { time: Date }; end: { time: Date } }) => {
 };
 
 describe('eligibility helpers', () => {
-  it('reads API isDay first, then the icon suffix, and treats unknown as day', () => {
+  it('reads API isDay first, then the icon suffix, and never assumes daylight when unknown', () => {
     expect(isDaylightPoint({ isDay: false, icon: '01d' })).toBe(false);
     expect(isDaylightPoint({ isDay: true, icon: '01n' })).toBe(true);
     expect(isDaylightPoint({ icon: '02n' })).toBe(false);
     expect(isDaylightPoint({ icon: '02d' })).toBe(true);
-    expect(isDaylightPoint({})).toBe(true);
+    expect(isDaylightPoint({})).toBe(false);
   });
 
   it('applies the daylight gate to picnic/children/laundry and 07–23 to walk/run/general', () => {

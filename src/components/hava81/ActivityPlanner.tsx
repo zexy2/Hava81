@@ -1,4 +1,5 @@
 import { formatCityTime, formatNumber } from '../../utils/format';
+import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { useEffect, useState } from 'react';
@@ -9,11 +10,13 @@ import {
   buildActivityPlan,
 } from '../../domain/activity/buildActivityPlan';
 import type { ActivityKind } from '../../domain/activity/types';
-import type { DecisionReasonCode } from '../../domain/decision/types';
-import { useDecisionProfile } from '../../hooks/useDecisionProfile';
+import { toleranceOf, useDecisionProfile } from '../../hooks/useDecisionProfile';
+import type { WeatherTolerance } from '../../domain/plan/types';
+import { useWindowWhy } from '../../hooks/useWindowWhy';
 import type {
   AirQuality,
   AirQualityHourly,
+  ContextSignals,
   ForecastMeta,
   HourlyForecast,
   NormalizedWeatherData,
@@ -28,6 +31,8 @@ interface Props {
   airQuality?: AirQuality;
   airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
+  /** Optional context (dust peak) for breathing-heavy activities. */
+  contextSignals?: ContextSignals | null;
 }
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
@@ -88,22 +93,7 @@ function ActivityGlyph({ kind }: { kind: ActivityKind }) {
     </span>
   );
 }
-const reasonKey: Record<DecisionReasonCode, string> = {
-  'extreme-heat': 'extremeHeat',
-  heat: 'heat',
-  freezing: 'freezing',
-  cold: 'cold',
-  'heavy-rain': 'heavyRain',
-  'rain-risk': 'rainRisk',
-  'strong-wind': 'strongWind',
-  windy: 'windy',
-  'gusty-wind': 'gustyWind',
-  'poor-air-quality': 'poorAirQuality',
-  'sensitive-air-quality': 'sensitiveAirQuality',
-  'high-uv': 'highUv',
-  'low-visibility': 'lowVisibility',
-  'severe-weather': 'severeWeather',
-};
+const reasonKey = REASON_I18N_KEY;
 
 export function ActivityPlanner({
   weather,
@@ -111,6 +101,7 @@ export function ActivityPlanner({
   airQuality,
   airQualityHourly,
   forecastMeta,
+  contextSignals,
 }: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
@@ -119,6 +110,8 @@ export function ActivityPlanner({
     profile,
     toggleActivity,
     setTemperatureSensitivity,
+    setTolerance,
+    setPollenAllergy,
     setActivityWindow,
     clearActivityWindow,
   } = useDecisionProfile();
@@ -126,6 +119,7 @@ export function ActivityPlanner({
   const freshness = getForecastFreshness(forecastMeta);
   const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
   const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
+  const contextFreshness = getOptionalEvidenceFreshness(contextSignals ?? undefined);
   const plannedHourTimes = hourly.length
     ? [...hourly]
         .sort((a, b) => a.time.getTime() - b.time.getTime())
@@ -152,6 +146,9 @@ export function ActivityPlanner({
           sensitivity: profile.temperatureSensitivity,
           preferredStart: profile.activityStart,
           preferredEnd: profile.activityEnd,
+          now: new Date(),
+          contextSignals,
+          tolerance: toleranceOf(profile),
         })
       )
     : [];
@@ -162,6 +159,7 @@ export function ActivityPlanner({
       freshness.expiresInMs,
       hourlyAqiFreshness.expiresInMs,
       currentAqiFreshness.expiresInMs,
+      contextFreshness.expiresInMs,
     ].filter((value): value is number => value !== null);
     const nextExpiryMs = expiries.length ? Math.min(...expiries) : null;
     const timeout =
@@ -180,12 +178,16 @@ export function ActivityPlanner({
     airQualityHourly?.meta?.fetchedAt,
     airQualityHourly?.meta?.freshForSeconds,
     currentAqiFreshness.expiresInMs,
+    contextFreshness.expiresInMs,
+    contextSignals?.fetchedAt,
+    contextSignals?.freshForSeconds,
     forecastMeta,
     freshness.expiresInMs,
     hourlyAqiFreshness.expiresInMs,
   ]);
   const offset = weather.meta.timezoneOffsetSeconds * 1000;
   const formatTime = (date?: Date) => formatCityTime(date, offset / 1000, i18n.language);
+  const windowWhy = useWindowWhy(date => formatTime(date));
   const hasWindow = Boolean(profile.activityStart && profile.activityEnd);
   const hasPartialWindow = Boolean(profile.activityStart) !== Boolean(profile.activityEnd);
   const activityWindowStatusId = hasPartialWindow ? 'activity-window-incomplete' : undefined;
@@ -235,6 +237,37 @@ export function ActivityPlanner({
           </small>
         </label>
       </header>
+
+      <div
+        className="activity-planner__personal"
+        role="group"
+        aria-label={t('hava81.activities.tolerance.label')}
+      >
+        {(['wind', 'rain'] as const).map(kind => (
+          <label key={kind} className="activity-planner__tolerance">
+            <span>{t(`hava81.activities.tolerance.${kind}`)}</span>
+            <select
+              value={(kind === 'wind' ? profile.windTolerance : profile.rainTolerance) ?? 'normal'}
+              onChange={event => setTolerance(kind, event.target.value as WeatherTolerance)}
+            >
+              <option value="low">{t('hava81.activities.tolerance.low')}</option>
+              <option value="normal">{t('hava81.activities.tolerance.normal')}</option>
+              <option value="high">{t('hava81.activities.tolerance.high')}</option>
+            </select>
+          </label>
+        ))}
+        <label className="activity-planner__allergy">
+          <input
+            type="checkbox"
+            checked={profile.pollenAllergy === true}
+            onChange={event => setPollenAllergy(event.target.checked)}
+          />
+          <span>{t('hava81.activities.tolerance.pollenAllergy')}</span>
+        </label>
+        <small className="activity-planner__tolerance-note">
+          {t('hava81.activities.tolerance.note')}
+        </small>
+      </div>
 
       <div
         className="activity-planner__window"
@@ -382,14 +415,39 @@ export function ActivityPlanner({
                   </header>
                   <p>
                     {bestRange
-                      ? bestRange.start.time.getTime() === bestRange.end.time.getTime()
-                        ? t('hava81.activities.bestTime', { time: formatTime(bestRange.peak.time) })
-                        : t('hava81.activities.bestRange', {
-                            start: formatTime(bestRange.start.time),
-                            end: formatTime(bestRange.end.time),
-                          })
+                      ? t('hava81.activities.bestRange', {
+                          start: formatTime(bestRange.start.time),
+                          end: formatTime(bestRange.endTime),
+                        })
                       : t('hava81.activities.noWindow')}
                   </p>
+                  {plan.scoreRange && !plan.windowUnavailable ? (
+                    <small className="activity-card__range">
+                      {t('hava81.dailyPlan.scoreRange', {
+                        low: plan.scoreRange.low,
+                        high: plan.scoreRange.high,
+                      })}
+                    </small>
+                  ) : null}
+                  {windowWhy(plan.explanation) ? (
+                    <small className="activity-card__why">{windowWhy(plan.explanation)}</small>
+                  ) : null}
+                  {plan.bestWindowScore !== undefined ? (
+                    <small className="activity-card__duration">
+                      {t('hava81.activities.fullDuration', { minutes: plan.durationMinutes })}
+                    </small>
+                  ) : null}
+                  {plan.alternativeWindows.length ? (
+                    <small className="activity-card__alternatives">
+                      {t('hava81.activities.alternatives', {
+                        list: plan.alternativeWindows
+                          .map(
+                            range => `${formatTime(range.start.time)}–${formatTime(range.endTime)}`
+                          )
+                          .join(', '),
+                      })}
+                    </small>
+                  ) : null}
                   {best ? (
                     <div className="activity-card__conditions">
                       <span>

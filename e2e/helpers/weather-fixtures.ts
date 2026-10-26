@@ -82,8 +82,12 @@ export function createWeatherFixtures(now = Date.now()) {
     // Normal Open-Meteo hourly success carries the same-provider daily series too.
     // Tests that customize daily evidence should override both endpoints together.
     daily: forecast.daily,
+    // Starts at the next full hour after `now` (09:00 for VISUAL_FIXED_NOW): the decision layer
+    // drops forecast steps that already ended, so a fixed calendar date would be all "past".
     hourly: Array.from({ length: 24 }, (_, index) => ({
-      time: new Date(Date.parse('2026-08-28T09:00:00.000Z') + index * 60 * 60_000).toISOString(),
+      time: new Date(
+        Math.ceil(now / (60 * 60_000)) * 60 * 60_000 + index * 60 * 60_000
+      ).toISOString(),
       temp: 22 - Math.floor(index / 6),
       icon: index < 3 ? '01d' : '02n',
       description: index < 3 ? 'açık' : 'çoğunlukla açık',

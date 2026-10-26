@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
+import { useWindowWhy } from '../../hooks/useWindowWhy';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
@@ -8,12 +10,14 @@ import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { buildDecisionShare } from '../../utils/shareDecision';
+import type { Hava81ScoreBand, Hava81ScoreFactor } from '../../domain/decision/types';
 import type {
-  DecisionReasonCode,
-  Hava81ScoreBand,
-  Hava81ScoreFactor,
-} from '../../domain/decision/types';
-import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+  AirQuality,
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import './DailyPlanPanel.css';
 
@@ -25,7 +29,9 @@ interface DailyPlanPanelProps {
   forecastMeta: ForecastMeta | null;
 }
 
-type FreshDailyPlanPanelProps = Omit<DailyPlanPanelProps, 'forecastMeta'> & { freshnessRevision: number };
+type FreshDailyPlanPanelProps = Omit<DailyPlanPanelProps, 'forecastMeta'> & {
+  freshnessRevision: number;
+};
 
 const bandKey: Record<Hava81ScoreBand, string> = {
   excellent: 'excellent',
@@ -34,22 +40,7 @@ const bandKey: Record<Hava81ScoreBand, string> = {
   difficult: 'difficult',
 };
 
-const reasonKey: Record<DecisionReasonCode, string> = {
-  'extreme-heat': 'extremeHeat',
-  heat: 'heat',
-  freezing: 'freezing',
-  cold: 'cold',
-  'heavy-rain': 'heavyRain',
-  'rain-risk': 'rainRisk',
-  'strong-wind': 'strongWind',
-  windy: 'windy',
-  'gusty-wind': 'gustyWind',
-  'poor-air-quality': 'poorAirQuality',
-  'sensitive-air-quality': 'sensitiveAirQuality',
-  'high-uv': 'highUv',
-  'low-visibility': 'lowVisibility',
-  'severe-weather': 'severeWeather',
-};
+const reasonKey = REASON_I18N_KEY;
 
 const factorKey: Record<Hava81ScoreFactor, string> = {
   thermal: 'thermal',
@@ -62,7 +53,13 @@ const factorKey: Record<Hava81ScoreFactor, string> = {
   compound: 'compound',
 };
 
-function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, freshnessRevision }: FreshDailyPlanPanelProps) {
+function FreshDailyPlanPanel({
+  weather,
+  hourly,
+  airQuality,
+  airQualityHourly,
+  freshnessRevision,
+}: FreshDailyPlanPanelProps) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, getTemperatureSymbol } = useSettings();
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'unavailable'>('idle');
@@ -70,29 +67,23 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
   const shareFeedbackTimerRef = useRef<number | null>(null);
   const shareInFlightRef = useRef(false);
   const trackedPlanRef = useRef<string | null>(null);
-  const snapshot = useMemo(
-    () => {
-      void freshnessRevision;
-      return getDecisionSnapshot({ weather, hourly, airQuality, airQualityHourly });
-    },
-    [airQuality, airQualityHourly, freshnessRevision, hourly, weather]
-  );
+  const snapshot = useMemo(() => {
+    void freshnessRevision;
+    return getDecisionSnapshot({ weather, hourly, airQuality, airQualityHourly });
+  }, [airQuality, airQualityHourly, freshnessRevision, hourly, weather]);
   const plan = snapshot.plan;
   const hasUnknownPrecipitation = plan.slots.some(
     slot =>
       !Number.isFinite(slot.precipitationProbability) && !Number.isFinite(slot.precipitationMm)
   );
-  const aqiEvidence = useMemo(
-    () => {
-      void freshnessRevision;
-      return getDailyPlanAirQualityEvidence({
-        forecastTimes: plan.slots.map(slot => slot.time),
-        airQuality,
-        airQualityHourly,
-      });
-    },
-    [airQuality, airQualityHourly, freshnessRevision, plan.slots]
-  );
+  const aqiEvidence = useMemo(() => {
+    void freshnessRevision;
+    return getDailyPlanAirQualityEvidence({
+      forecastTimes: plan.slots.map(slot => slot.time),
+      airQuality,
+      airQualityHourly,
+    });
+  }, [airQuality, airQualityHourly, freshnessRevision, plan.slots]);
   const bestWindowRange = snapshot.bestWindow;
   const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const temperatureSymbol = getTemperatureSymbol();
@@ -107,6 +98,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
       timeZone: 'UTC',
     });
   };
+  const windowWhy = useWindowWhy(date => formatTime(date));
   const formatSlotPrecipitation = (probability: number | undefined, amount?: number) => {
     const hasProbability = Number.isFinite(probability);
     const hasAmount = Number.isFinite(amount);
@@ -153,9 +145,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
         : t('hava81.dailyPlan.nowOrLater.similar');
 
   const bestWindowShareText = bestWindowRange
-    ? bestWindowRange.start.time.getTime() === bestWindowRange.end.time.getTime()
-      ? formatTime(bestWindowRange.peak.time)
-      : `${formatTime(bestWindowRange.start.time)}–${formatTime(bestWindowRange.end.time)}`
+    ? `${formatTime(bestWindowRange.start.time)}–${formatTime(bestWindowRange.endTime)}`
     : undefined;
 
   // Keep the visible timeline aligned with the same 12-hour horizon used by the score.
@@ -257,8 +247,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
             <strong>{plan.score}</strong>
             <span>/100</span>
             <small>
-              {t('hava81.scoreScope.day')} ·{' '}
-              {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
+              {t('hava81.scoreScope.day')} · {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
             </small>
           </div>
         </div>
@@ -269,14 +258,21 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
         <strong>{nowOrLaterText}</strong>
         {bestWindowRange ? (
           <small>
-            {bestWindowRange.start.time.getTime() === bestWindowRange.end.time.getTime()
-              ? t('hava81.dailyPlan.bestWindow', {
-                  time: formatTime(bestWindowRange.peak.time),
-                })
-              : t('hava81.dailyPlan.bestRange', {
-                  start: formatTime(bestWindowRange.start.time),
-                  end: formatTime(bestWindowRange.end.time),
-                })}
+            {t('hava81.dailyPlan.bestRange', {
+              start: formatTime(bestWindowRange.start.time),
+              end: formatTime(bestWindowRange.endTime),
+            })}
+          </small>
+        ) : null}
+        {bestWindowRange && windowWhy(plan?.explanation) ? (
+          <small className="daily-plan__why">{windowWhy(plan?.explanation)}</small>
+        ) : null}
+        {plan?.scoreRange ? (
+          <small className="daily-plan__range">
+            {t('hava81.dailyPlan.scoreRange', {
+              low: plan.scoreRange.low,
+              high: plan.scoreRange.high,
+            })}
           </small>
         ) : null}
       </div>
@@ -338,8 +334,8 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
           // Highlight the actual recommendation interval; this only affects presentation.
           const isBestWindow = Boolean(
             bestWindowRange &&
-              slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
-              slot.time.getTime() <= bestWindowRange.end.time.getTime()
+            slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
+            slot.time.getTime() <= bestWindowRange.end.time.getTime()
           );
           const primaryReason = slot.reasons[0];
           const primaryReasonText = primaryReason
@@ -362,7 +358,9 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
           return (
             <div
               className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}`}
-              style={{ '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%` } as CSSProperties}
+              style={
+                { '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%` } as CSSProperties
+              }
               key={slot.time.toISOString()}
               role="listitem"
               aria-label={slotAriaLabel}
@@ -387,9 +385,7 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
       <footer className="daily-plan__notes">
         <p className="daily-plan__safety">{t('hava81.dailyPlan.safetyNote')}</p>
         {hasUnknownPrecipitation ? (
-          <p className="daily-plan__safety">
-            {t('hava81.dailyPlan.precipitationEvidenceNote')}
-          </p>
+          <p className="daily-plan__safety">{t('hava81.dailyPlan.precipitationEvidenceNote')}</p>
         ) : null}
         {aqiEvidence.usesHourlyAqi && airQualityHourly ? (
           <p className="daily-plan__safety">
@@ -407,7 +403,13 @@ function FreshDailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, fr
   );
 }
 
-export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, forecastMeta }: DailyPlanPanelProps) {
+export function DailyPlanPanel({
+  weather,
+  hourly,
+  airQuality,
+  airQualityHourly,
+  forecastMeta,
+}: DailyPlanPanelProps) {
   const { t } = useTranslation();
   const [freshnessRevision, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
@@ -463,9 +465,7 @@ export function DailyPlanPanel({ weather, hourly, airQuality, airQualityHourly, 
           </div>
         </header>
         <p className="daily-plan__note" role="status">
-          {t(
-            freshness.fresh ? 'hava81.dailyPlan.currentStale' : 'hava81.dailyPlan.forecastStale'
-          )}
+          {t(freshness.fresh ? 'hava81.dailyPlan.currentStale' : 'hava81.dailyPlan.forecastStale')}
         </p>
       </section>
     );

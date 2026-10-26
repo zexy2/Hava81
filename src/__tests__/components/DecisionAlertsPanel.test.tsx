@@ -59,7 +59,9 @@ describe('DecisionAlertsPanel', () => {
   it('clearly distinguishes modeled alerts from official MGM warnings', () => {
     vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn() });
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
 
     expect(screen.getByText(/hava81 model rehberidir/i)).toHaveTextContent(
       /resmî MGM MeteoUyarı değildir/i
@@ -80,7 +82,11 @@ describe('DecisionAlertsPanel', () => {
     ];
 
     render(
-      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={waitHourly} />
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={waitHourly}
+      />
     );
 
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
@@ -116,7 +122,9 @@ describe('DecisionAlertsPanel', () => {
   it('distinguishes an unsupported browser from blocked notification permission', () => {
     vi.stubGlobal('Notification', undefined);
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
@@ -128,10 +136,15 @@ describe('DecisionAlertsPanel', () => {
   });
 
   it('refreshes externally changed notification permission when the tab becomes visible', () => {
-    const notificationApi = { permission: 'default' as NotificationPermission, requestPermission: vi.fn() };
+    const notificationApi = {
+      permission: 'default' as NotificationPermission,
+      requestPermission: vi.fn(),
+    };
     vi.stubGlobal('Notification', notificationApi);
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
     expect(screen.getByRole('button')).toBeEnabled();
 
     notificationApi.permission = 'denied';
@@ -147,7 +160,9 @@ describe('DecisionAlertsPanel', () => {
     const requestPermission = vi.fn();
     vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
@@ -166,7 +181,9 @@ describe('DecisionAlertsPanel', () => {
     const requestPermission = vi.fn(() => permissionPromise);
     vi.stubGlobal('Notification', { permission: 'default', requestPermission });
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -190,7 +207,9 @@ describe('DecisionAlertsPanel', () => {
       requestPermission: vi.fn().mockRejectedValue(new Error('prompt failed')),
     });
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -206,7 +225,9 @@ describe('DecisionAlertsPanel', () => {
     const requestPermission = vi.fn();
     vi.stubGlobal('Notification', { permission: 'denied', requestPermission });
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
 
     const button = screen.getByRole('button');
     expect(button).toBeEnabled();
@@ -249,7 +270,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
 
     await waitFor(() => expect(notification).toHaveBeenCalled());
     expect(
@@ -276,7 +303,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
     await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
 
     rerender(
@@ -315,7 +348,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
 
     rerender(
@@ -334,8 +373,8 @@ describe('DecisionAlertsPanel', () => {
     resolveDelivery();
     await waitFor(() =>
       expect(
-        Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(key =>
-          key?.startsWith('hava81-alert-sent:')
+        Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).some(
+          key => key?.startsWith('hava81-alert-sent:')
         )
       ).toBe(true)
     );
@@ -365,7 +404,9 @@ describe('DecisionAlertsPanel', () => {
     };
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
 
-    render(<DecisionAlertsPanel forecastMeta={forecastMeta} weather={weather} hourly={rainyHourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={forecastMeta} weather={weather} hourly={rainyHourly} />
+    );
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_101);
@@ -443,7 +484,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
     await waitFor(() => expect(showNotification).toHaveBeenCalledTimes(1));
     await Promise.resolve();
     await Promise.resolve();
@@ -479,7 +526,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    const { rerender } = render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    const { rerender } = render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
     await Promise.resolve();
     expect(readyReads).toBe(1);
 
@@ -520,7 +573,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
 
     await Promise.resolve();
     expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
@@ -537,7 +596,9 @@ describe('DecisionAlertsPanel', () => {
       throw new DOMException('blocked', 'SecurityError');
     });
 
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />);
+    render(
+      <DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={hourly} />
+    );
     const button = screen.getByRole('button');
     await user.click(button);
 
@@ -550,9 +611,21 @@ describe('DecisionAlertsPanel', () => {
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
     vi.stubGlobal('Notification', notification);
 
-    const difficultWeather = { ...weather, temperature: 45, feelsLike: 50, tempMin: 42, tempMax: 47 };
+    const difficultWeather = {
+      ...weather,
+      temperature: 45,
+      feelsLike: 50,
+      tempMin: 42,
+      tempMax: 47,
+    };
     const difficultHourly = hourly.map(item => ({ ...item, temp: 45, feelsLike: 50 }));
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={difficultWeather} hourly={difficultHourly} />);
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={difficultWeather}
+        hourly={difficultHourly}
+      />
+    );
 
     await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
     const [, options] = notification.mock.calls[0];
@@ -567,15 +640,28 @@ describe('DecisionAlertsPanel', () => {
     Object.assign(notification, { permission: 'granted', requestPermission: vi.fn() });
     vi.stubGlobal('Notification', notification);
 
-    const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
+    // Rain still ahead of the 19:30 local clock: an alert is never sent for rain that already ended.
+    const rainyHourly = hourly.map((item, index) => ({
+      ...item,
+      time: new Date(Date.parse('2026-08-29T01:00:00Z') + index * 3 * 3600_000),
+      pop: 0.95,
+    }));
     const westernWeather = {
       ...weather,
       meta: { ...weather.meta, timezoneOffsetSeconds: -18000 },
     };
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={westernWeather} hourly={rainyHourly} />);
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={westernWeather}
+        hourly={rainyHourly}
+      />
+    );
 
     await waitFor(() => expect(notification).toHaveBeenCalledTimes(1));
-    const sentKeys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index));
+    const sentKeys = Array.from({ length: localStorage.length }, (_, index) =>
+      localStorage.key(index)
+    );
     expect(sentKeys.some(key => key?.startsWith('hava81-alert-sent:2026-08-28:'))).toBe(true);
     expect(sentKeys.some(key => key?.startsWith('hava81-alert-sent:2026-08-29:'))).toBe(false);
   });
@@ -589,7 +675,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
 
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();
@@ -605,7 +697,13 @@ describe('DecisionAlertsPanel', () => {
     vi.stubGlobal('Notification', notification);
 
     const rainyHourly = hourly.map(item => ({ ...item, pop: 0.95 }));
-    render(<DecisionAlertsPanel forecastMeta={freshForecastMeta()} weather={weather} hourly={rainyHourly} />);
+    render(
+      <DecisionAlertsPanel
+        forecastMeta={freshForecastMeta()}
+        weather={weather}
+        hourly={rainyHourly}
+      />
+    );
 
     await Promise.resolve();
     expect(notification).not.toHaveBeenCalled();

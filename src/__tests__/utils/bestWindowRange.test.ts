@@ -62,11 +62,7 @@ describe('findBestWindowRange', () => {
   });
 
   it('does not bridge a forecast gap just because both sides have similar scores', () => {
-    const range = findBestWindowRange([
-      slot(18, 94),
-      slot(19, 96),
-      slot(23, 95),
-    ]);
+    const range = findBestWindowRange([slot(18, 94), slot(19, 96), slot(23, 95)]);
 
     expect(range?.start.time.toISOString()).toBe('2026-08-29T18:00:00.000Z');
     expect(range?.end.time.toISOString()).toBe('2026-08-29T19:00:00.000Z');
@@ -78,7 +74,7 @@ describe('findBestWindowRange', () => {
     expect(range?.end.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
   });
 
-  it('caps a long flat near-best period to a practical four-hour recommendation', () => {
+  it('caps a long flat near-best period to a practical four-hour recommendation, last slot included', () => {
     const range = findBestWindowRange([
       slot(17, 97),
       slot(18, 97),
@@ -91,13 +87,17 @@ describe('findBestWindowRange', () => {
 
     expect(range?.peak.time.toISOString()).toBe('2026-08-29T17:00:00.000Z');
     expect(range?.start.time.toISOString()).toBe('2026-08-29T17:00:00.000Z');
-    expect(range?.end.time.toISOString()).toBe('2026-08-29T21:00:00.000Z');
+    // Four one-hour slots (17, 18, 19, 20) cover 17:00–21:00; the 21:00 slot would make it five.
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T20:00:00.000Z');
+    expect(range?.endTime.toISOString()).toBe('2026-08-29T21:00:00.000Z');
   });
 
-  it('chooses the stronger side of a peak when three-hour cadence cannot fit both neighbors', () => {
+  it('keeps a single three-hour slot when a neighbor would exceed four covered hours', () => {
     const range = findBestWindowRange([slot(12, 94), slot(15, 96), slot(18, 95)]);
 
+    // One three-hour step already covers 15:00–18:00; a second one would cover six hours.
     expect(range?.start.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
-    expect(range?.end.time.toISOString()).toBe('2026-08-29T18:00:00.000Z');
+    expect(range?.end.time.toISOString()).toBe('2026-08-29T15:00:00.000Z');
+    expect(range?.endTime.toISOString()).toBe('2026-08-29T18:00:00.000Z');
   });
 });

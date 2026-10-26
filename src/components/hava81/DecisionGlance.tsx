@@ -6,7 +6,13 @@ import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import { withAtlasView } from '../../utils/atlasView';
-import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import './DecisionGlance.css';
 
 interface Props {
@@ -97,7 +103,7 @@ export const DecisionGlance = memo(function DecisionGlance({
   const bestHours = bestRange
     ? formatBestWindowTime({
         start: bestRange.start.time,
-        end: bestRange.end.time,
+        end: bestRange.endTime,
         now: new Date(now),
         timezoneOffsetSeconds: weather.meta.timezoneOffsetSeconds,
         language: i18n.language,

@@ -27,6 +27,8 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
     maxPrecipitationMm: 3,
     requiresDaylight: false,
     activeHoursOnly: true,
+    dustWeight: 0.6,
+    pollenWeight: 0.8,
   },
   run: {
     intent: 'run',
@@ -46,6 +48,9 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
     maxPrecipitationMm: 2,
     requiresDaylight: false,
     activeHoursOnly: true,
+    mugginessWeight: 1,
+    dustWeight: 1,
+    pollenWeight: 1,
   },
   bike: {
     intent: 'bike',
@@ -82,6 +87,8 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
     maxPrecipitationMm: 0.8,
     requiresDaylight: true,
     activeHoursOnly: false,
+    requiresRainEvidence: true,
+    pollenWeight: 1,
   },
   children: {
     intent: 'children',
@@ -102,18 +109,22 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
     maxPrecipitationMm: 0.6,
     requiresDaylight: true,
     activeHoursOnly: false,
+    mugginessWeight: 0.5,
+    dustWeight: 1,
+    pollenWeight: 1,
   },
   laundry: {
     intent: 'laundry',
     durationMinutes: 90,
-    comfortRangeC: [10, 28],
+    // Warm, sunny air dries laundry: heat and UV are not penalties here, only cold and damp air.
+    comfortRangeC: [12, 45],
     weights: {
       ...sharedWeights,
       thermal: 0.9,
       precipitation: 1.6,
       wind: 0.65,
       'air-quality': 0,
-      uv: 0.25,
+      uv: 0,
       visibility: 0.25,
       'severe-weather': 1,
     },
@@ -123,6 +134,9 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
     maxPrecipitationMm: 0.2,
     requiresDaylight: true,
     activeHoursOnly: false,
+    requiresRainEvidence: true,
+    heatIsBeneficial: true,
+    dryingModel: true,
   },
   motorcycle: {
     intent: 'motorcycle',

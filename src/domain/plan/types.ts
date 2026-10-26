@@ -15,20 +15,53 @@ export type PlanFactor =
 export interface PlanProfile {
   intent: PlanIntent;
   durationMinutes: number;
+  /** Apparent-temperature range with no comfort penalty for this intent. */
   comfortRangeC: readonly [number, number];
   weights: Readonly<Record<PlanFactor, number>>;
+  /** Gate limits are the largest allowed value: a slot is gated when it goes above them. */
   maxWindSpeedMs: number;
   maxWindGustMs: number;
   maxPrecipitationProbability: number;
   maxPrecipitationMm: number;
   requiresDaylight: boolean;
   activeHoursOnly: boolean;
+  /**
+   * The plan is only about rain (laundry, picnic): an hour with unknown precipitation cannot be
+   * recommended and stays out of the good band.
+   */
+  requiresRainEvidence?: boolean;
+  /** Heat helps rather than hurts (drying laundry): only cold stress and the range count. */
+  heatIsBeneficial?: boolean;
+  /**
+   * Drying plan (laundry): scored by drying power — vapour-pressure deficit from temperature and
+   * dew point (relative humidity as fallback) and sunshine — instead of human comfort.
+   */
+  dryingModel?: boolean;
+  /** Exertion plans feel a high dew point beyond apparent temperature (running). 0–1. */
+  mugginessWeight?: number;
+  /** Breathing-heavy plans react to Saharan dust (daily peak, µg/m³). 0–1. */
+  dustWeight?: number;
+  /** Outdoor-air plans where pollen matters to an allergic person. 0–1. */
+  pollenWeight?: number;
+}
+
+export type PlanTemperatureSensitivity = 'cold' | 'balanced' | 'heat';
+
+/** Personal comfort tolerance: re-weights comfort only, never safety caps or gates. */
+export type WeatherTolerance = 'low' | 'normal' | 'high';
+
+export interface PersonalTolerance {
+  wind?: WeatherTolerance;
+  rain?: WeatherTolerance;
+  /** Seasonal pollen counts only for people who say they react to it. */
+  pollenAllergy?: boolean;
 }
 
 export type PlanGateReason =
   | 'daylight-required'
   | 'outside-active-hours'
   | 'precipitation-limit'
+  | 'precipitation-unknown'
   | 'wind-limit'
   | 'extreme-temperature'
   | 'heavy-precipitation'
@@ -47,6 +80,13 @@ export interface PlanPenalties {
   uv: number;
   visibility: number;
   severeWeather: number;
+  /** Intent-only penalties: laundry drying power, running mugginess. */
+  drying: number;
+  muggy: number;
+  /** Saharan dust exposure for breathing-heavy intents. */
+  dust: number;
+  /** Pollen exposure, only with a declared allergy. */
+  pollen: number;
   compound: number;
   /** Comfort-range penalty is included in thermal. This field exposes its contribution. */
   comfort: number;
@@ -57,6 +97,8 @@ export interface PlanHourScore {
   intent: PlanIntent;
   time: Date;
   score: number;
+  /** The general Hava81 score of the same hour, before intent weighting. */
+  baseScore: number;
   band: Hava81ScoreBand;
   temperature: number;
   apparentTemperature: number;
@@ -70,6 +112,8 @@ export interface PlanHourScore {
   visibility?: number;
   weatherCode?: number;
   reasons: DecisionReasonCode[];
+  /** Reasons of the general score; `reasons` minus these are intent-specific. */
+  baseReasons: DecisionReasonCode[];
   penalties: PlanPenalties;
   eligible: boolean;
   gateReasons: PlanGateReason[];

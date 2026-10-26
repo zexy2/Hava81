@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
 import { buildAlertCandidate, type AlertCandidate } from '../../domain/alerts/buildAlertCandidate';
 import { buildDailyPlan } from '../../domain/decision/buildDailyPlan';
-import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
@@ -29,7 +35,10 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<
     return await Promise.race([
       promise,
       new Promise<T>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error('Timed out waiting for notification delivery')), timeoutMs);
+        timeout = setTimeout(
+          () => reject(new Error('Timed out waiting for notification delivery')),
+          timeoutMs
+        );
       }),
     ]);
   } finally {
@@ -76,7 +85,8 @@ const isAlertEvidenceFresh = (
     forecastMeta === null ||
     !getCurrentWeatherFreshness(weather.meta).fresh ||
     !getForecastFreshness(forecastMeta).fresh
-  ) return false;
+  )
+    return false;
 
   const currentFresh = Boolean(
     airQuality &&
@@ -121,13 +131,17 @@ const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | nul
     locationNow.getUTCDate()
   );
   const nextQuietEndMs =
-    dayStartMs +
-    QUIET_HOURS_END_HOUR * 60 * 60_000 +
-    (hour >= 22 ? 24 * 60 * 60_000 : 0);
+    dayStartMs + QUIET_HOURS_END_HOUR * 60 * 60_000 + (hour >= 22 ? 24 * 60 * 60_000 : 0);
   return Math.max(0, nextQuietEndMs - shiftedNowMs) + QUIET_HOURS_BOUNDARY_CUSHION_MS;
 };
 
-export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHourly, forecastMeta }: Props) {
+export function DecisionAlertsPanel({
+  weather,
+  hourly,
+  airQuality,
+  airQualityHourly,
+  forecastMeta,
+}: Props) {
   const { t, i18n } = useTranslation();
   const [enabled, setEnabled] = useState(readEnabled);
   const [requestingPermission, setRequestingPermission] = useState(false);
@@ -187,13 +201,10 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHou
     weather.meta.freshForSeconds,
   ]);
 
-  const plan = useMemo(
-    () => {
-      void freshnessRevision;
-      return buildDailyPlan({ weather, hourly, airQuality, airQualityHourly });
-    },
-    [weather, hourly, airQuality, airQualityHourly, freshnessRevision]
-  );
+  const plan = useMemo(() => {
+    void freshnessRevision;
+    return buildDailyPlan({ weather, hourly, airQuality, airQualityHourly, now: new Date() });
+  }, [weather, hourly, airQuality, airQualityHourly, freshnessRevision]);
   const requiredAqiEvidence = useMemo(() => {
     void freshnessRevision;
     const source = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 24);
@@ -215,7 +226,12 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHou
     [plan, weather.cityName]
   );
   const alertEvidenceFresh = isAlertEvidenceFresh(
-    weather, forecastMeta, candidate?.kind, airQuality, airQualityHourly, requiredAqiSources
+    weather,
+    forecastMeta,
+    candidate?.kind,
+    airQuality,
+    airQualityHourly,
+    requiredAqiSources
   );
 
   useEffect(() => {
@@ -268,9 +284,15 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHou
         // immediately before showing the notification; optional evidence must never outlive its TTL.
         if (
           !isAlertEvidenceFresh(
-            weather, forecastMeta, candidate.kind, airQuality, airQualityHourly, requiredAqiSources
+            weather,
+            forecastMeta,
+            candidate.kind,
+            airQuality,
+            airQualityHourly,
+            requiredAqiSources
           )
-        ) return;
+        )
+          return;
         if (registration && typeof registration.showNotification === 'function') {
           await withTimeout(
             registration.showNotification(title, {
@@ -376,17 +398,19 @@ export function DecisionAlertsPanel({ weather, hourly, airQuality, airQualityHou
         aria-pressed={enabled}
         aria-describedby={permissionHelpId}
         aria-busy={requestingPermission}
-        disabled={requestingPermission || (!enabled && (!notificationsSupported || permission === 'denied'))}
+        disabled={
+          requestingPermission || (!enabled && (!notificationsSupported || permission === 'denied'))
+        }
       >
         {requestingPermission
           ? t('common.loading')
           : enabled
             ? t('hava81.alerts.disable')
-          : !notificationsSupported
-            ? t('hava81.alerts.unsupported')
-            : permission === 'denied'
-              ? t('hava81.alerts.blocked')
-              : t('hava81.alerts.enable')}
+            : !notificationsSupported
+              ? t('hava81.alerts.unsupported')
+              : permission === 'denied'
+                ? t('hava81.alerts.blocked')
+                : t('hava81.alerts.enable')}
       </button>
     </section>
   );

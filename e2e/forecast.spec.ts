@@ -12,7 +12,14 @@ import {
   setTextScale,
   setWidth,
 } from './helpers/layout';
-import { fixtures, overrideApiJson, overrideDaily, seedSettings } from './helpers/weather-fixtures';
+import {
+  createWeatherFixtures,
+  fixtures,
+  overrideApiJson,
+  overrideDaily,
+  seedSettings,
+  VISUAL_FIXED_NOW,
+} from './helpers/weather-fixtures';
 
 const { localDate } = fixtures;
 
@@ -67,6 +74,11 @@ test.describe('forecast errors', () => {
 
 test.describe('hourly atlas', () => {
   test('hourly interval controls resample the same 24-hour forecast', DESKTOP, async ({ page }) => {
+    // 11:30 İstanbul: the 24-hour series starts at 12:00, which the sampled labels below assert.
+    const pinned = createWeatherFixtures(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(new Date(VISUAL_FIXED_NOW));
+    await overrideApiJson(page, 'current', pinned.current);
+    await overrideApiJson(page, 'hourly', pinned.hourlyForecast);
     await page.goto('/istanbul');
     await ensureForecastAtlasLoaded(page);
 

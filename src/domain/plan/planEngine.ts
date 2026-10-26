@@ -1,10 +1,21 @@
-import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
+import { dropElapsedSlots } from '../decision/aggregateHorizon';
 import { findWindows } from './findWindows';
 import { getPlanProfile } from './profiles';
 import { scoreHour } from './scoreHour';
 import { getPlanConfidence, worstPlanConfidence } from './confidence';
-import type { PlanAvailability, PlanIntent, PlanSnapshot } from './types';
+import type {
+  PlanAvailability,
+  PlanIntent,
+  PlanSnapshot,
+  PlanTemperatureSensitivity,
+} from './types';
 
 export interface GetPlanSnapshotInput {
   intent: PlanIntent;
@@ -14,6 +25,7 @@ export interface GetPlanSnapshotInput {
   airQualityHourly?: AirQualityHourly;
   durationMinutes?: number;
   availability?: PlanAvailability;
+  sensitivity?: PlanTemperatureSensitivity;
   now?: Date;
 }
 
@@ -29,6 +41,7 @@ export const getPlanSnapshot = ({
   airQualityHourly,
   durationMinutes,
   availability,
+  sensitivity,
   now = new Date(),
 }: GetPlanSnapshotInput): PlanSnapshot => {
   const profile = getPlanProfile(intent);
@@ -37,14 +50,15 @@ export const getPlanSnapshot = ({
       ? Math.max(1, Math.min(12 * 60, Math.round(durationMinutes as number)))
       : profile.durationMinutes;
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
-  const future = [...hourly]
+  const valid = [...hourly]
     .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
     .filter(
       point =>
         Number.isFinite(point.temp) && Number.isFinite(point.windSpeed) && point.windSpeed >= 0
     )
-    .filter(point => point.time.getTime() >= now.getTime())
     .sort((a, b) => a.time.getTime() - b.time.getTime());
+  // Keep the step in progress (14:00 at 14:20): it is "now", not the past.
+  const future = dropElapsedSlots(valid, now);
   const airQualityEvidence = getDailyPlanAirQualityEvidence({
     forecastTimes: future.map(point => point.time),
     airQuality,
@@ -60,6 +74,7 @@ export const getPlanSnapshot = ({
       now,
       airQuality: airQualityEvidence.currentAirQuality,
       airQualityIndexOverride: airQualityEvidence.hourlyAqiByTime.get(point.time.getTime()),
+      sensitivity,
     })
   );
   const windows = findWindows(hours, {

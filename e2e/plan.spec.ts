@@ -12,6 +12,7 @@ import {
 } from './helpers/layout';
 import {
   createWeatherFixtures,
+  VISUAL_FIXED_NOW,
   fixtures,
   overrideApi,
   overrideApiJson,
@@ -161,10 +162,15 @@ test.describe('daily plan', () => {
     'daily plan timeline matches its 12-hour score horizon and shows risk-first slot copy',
     DESKTOP,
     async ({ page }) => {
+      // Pin the browser clock to the series start: ended forecast steps are not scored.
+      const evening = createWeatherFixtures(Date.parse('2026-08-28T18:00:00.000Z'));
+      await page.clock.setFixedTime(new Date(evening.now));
+      await overrideApiJson(page, 'current', evening.current);
       await overrideApi(page, 'hourly', route =>
         route.fulfill({
           json: {
             ...hourlyForecast,
+            meta: evening.hourlyForecast.meta,
             hourly: Array.from({ length: 24 }, (_, index) => ({
               ...hourlyForecast.hourly[index],
               time: new Date(
@@ -453,6 +459,12 @@ test.describe('activities', () => {
     'narrow English planner keeps disclosures working and content readable at 320px',
     MOBILE,
     async ({ page }) => {
+      // 11:30 İstanbul: the fixture's 45 % rain hour (13:00) is inside the active hours, so the
+      // main-risk line exists whenever CI runs.
+      const pinned = createWeatherFixtures(VISUAL_FIXED_NOW);
+      await page.clock.setFixedTime(new Date(VISUAL_FIXED_NOW));
+      await overrideApiJson(page, 'current', pinned.current);
+      await overrideApiJson(page, 'hourly', pinned.hourlyForecast);
       await seedSettings(page, { language: 'en' });
       await setWidth(page, 320, 720);
       await page.goto(PLAN);
@@ -481,6 +493,43 @@ test.describe('activities', () => {
 
       for (const region of ['.daily-plan', '.activity-planner']) {
         await expectReadable(page, page.locator(region), `${region} at 320px`);
+      }
+    }
+  );
+
+  test(
+    'coming days stay readable at 320px with 200% text and switch to an activity',
+    MOBILE,
+    async ({ page }) => {
+      // Pinned clock: the five-day series starts at the next full hour after 11:30 İstanbul.
+      const pinned = createWeatherFixtures(VISUAL_FIXED_NOW);
+      await page.clock.setFixedTime(new Date(VISUAL_FIXED_NOW));
+      await overrideApiJson(page, 'current', pinned.current);
+      await overrideApiJson(page, 'hourly', {
+        ...pinned.hourlyForecast,
+        hourly: Array.from({ length: 120 }, (_, index) => ({
+          ...pinned.hourlyForecast.hourly[index % 24],
+          time: new Date(
+            Math.ceil(VISUAL_FIXED_NOW / 3_600_000) * 3_600_000 + index * 3_600_000
+          ).toISOString(),
+        })),
+      });
+      await page.goto(PLAN);
+      const outlook = page.locator('section.day-outlook');
+      await expect(outlook.getByRole('heading', { name: 'Önümüzdeki günler' })).toBeVisible();
+      await expect(outlook.locator('.day-outlook__day').first()).toContainText('Bugün');
+      await expect(outlook.locator('.day-outlook__day').nth(1)).toContainText('Yarın');
+
+      await setWidth(page, 320, 760);
+      await setTextScale(page, 200);
+      await expectReadable(page, outlook, 'coming days at 320px/200%');
+      await expectNoHorizontalScroll(page, 'coming days at 320px/200%');
+
+      const intents = outlook.locator('.day-outlook__intents button');
+      if ((await intents.count()) > 1) {
+        await intents.nth(1).click();
+        await expect(intents.nth(1)).toHaveAttribute('aria-pressed', 'true');
+        await expectReadable(page, outlook, 'coming days for an activity');
       }
     }
   );
@@ -578,8 +627,16 @@ test.describe('daylight (plan v3 Faz 0.3)', () => {
       const cards = page.locator('.activity-card');
       await expect(cards).toHaveCount(3);
 
-      const rangeHours = (text: string) =>
-        [...text.matchAll(/(\d{2}):00/g)].map(match => Number(match[1]));
+      // A range "start–end" ends when its last slot ends, so the recommended hours are
+      // start … end-1: "21:00–23:00" means the 21:00 and 22:00 slots.
+      const rangeHours = (text: string) => {
+        const [start, end] = [...text.matchAll(/(\d{2}):00/g)].map(match => Number(match[1]));
+        if (start === undefined) return [];
+        if (end === undefined) return [start];
+        const hours: number[] = [];
+        for (let hour = start; hour !== end; hour = (hour + 1) % 24) hours.push(hour);
+        return hours;
+      };
       const dayPlanText = (await page.locator('.daily-plan__decision').innerText()) ?? '';
       expect(dayPlanText).not.toContain('21:00–01:00');
       for (const hour of rangeHours(dayPlanText)) {
