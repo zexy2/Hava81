@@ -752,3 +752,10 @@ The Decision Glance performs freshness checks for current weather, forecast and 
 ## 2026-10-26 — Clear obsolete location errors when a city search supersedes geolocation
 
 A city search is an explicit handoff away from location mode. Clear only the prior location-source error synchronously when a non-empty city request begins, so an old permission/network error cannot remain visible while the selected city loads. Preserve the existing source/token authority rules and the synchronous in-flight location/city race guard; keep both regressions covered. Empty city submissions return before clearing state, and errors from the active city request still surface normally. This is UI state consistency only: no weather data, provider provenance, scoring, freshness windows, API, warning or safety semantics change.
+
+
+## 2026-10-26 — Treat one low Lighthouse TBT result as a measurement signal, not a regression verdict
+
+- Compare repeated exact-code measurements before changing application code or budgets. Run #3693 measured performance 95 / TBT 87 ms / benchmark index 2924.5; run #3714 measured performance 80 / TBT 503 ms / benchmark index 2309.5; a later exact-code PR run #3717 measured performance 93 / TBT 70 ms. LCP stayed in a narrow 2.81–3.03 s range, while the low-score trace's two largest main-bundle tasks were 293 ms and 249 ms.
+- The corresponding production-build artifacts changed by only tens of raw bytes in the main bundle (304,785 to 304,815), SettingsContext (103,234 to 103,272), and DecisionGlance (6,212 to 6,225). The evidence does not establish a material bundle-size regression. Runner benchmark variation and task scheduling are plausible explanations, not proven causes.
+- Keep the Lighthouse performance floor/target and real-current-weather readiness gate unchanged. Do not optimize or relax thresholds from one outlier. For future performance work, collect repeated exact-head runs and inspect source-attributed traces; require a reproducible metric improvement plus frontend quality, type, coverage, browser, Lighthouse, Ops and CodeQL gates. Never score a weather-loading shell or substitute synthetic weather.
