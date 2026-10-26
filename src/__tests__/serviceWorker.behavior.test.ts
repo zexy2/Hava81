@@ -49,6 +49,8 @@ function loadWorker({
     caches,
     fetch: fetchImpl,
     URL,
+    Headers,
+    Response,
     Set,
     Error,
     Promise,
@@ -193,6 +195,41 @@ describe('service worker fetch strategy', () => {
     expect(response).toBe('cached-shell');
   });
 
+  it('falls back to a URL-neutral root shell for an unvisited city while offline', async () => {
+    const networkError = new Error('offline');
+    const worker = loadWorker({ fetchImpl: vi.fn().mockRejectedValue(networkError) });
+    const rootShell = new Response('<html><div id="root"></div></html>', {
+      status: 200,
+      headers: {
+        'content-type': 'text/html',
+        'content-length': '36',
+        'content-encoding': 'gzip',
+        'transfer-encoding': 'chunked',
+      },
+    });
+    worker.cache.match.mockResolvedValueOnce(undefined).mockResolvedValueOnce(rootShell);
+
+    const response = await worker.dispatch('fetch', {
+      request: {
+        method: 'GET',
+        mode: 'navigate',
+        destination: 'document',
+        url: `${ORIGIN}/en/ankara/`,
+      },
+    });
+
+    expect(response).toBeInstanceOf(Response);
+    const fallbackResponse = response as Response;
+    expect(fallbackResponse.url).toBe('');
+    expect(fallbackResponse.status).toBe(200);
+    expect(fallbackResponse.headers.get('content-length')).toBeNull();
+    expect(fallbackResponse.headers.get('content-encoding')).toBeNull();
+    expect(fallbackResponse.headers.get('transfer-encoding')).toBeNull();
+    await expect(fallbackResponse.text()).resolves.toContain('id="root"');
+    expect(worker.cache.match).toHaveBeenNthCalledWith(1, `${ORIGIN}/en/ankara/`);
+    expect(worker.cache.match).toHaveBeenNthCalledWith(2, '/');
+  });
+
   it('caches hashed static assets from the versioned cache only', async () => {
     const worker = loadWorker();
     const request = {
@@ -262,7 +299,10 @@ describe('service worker fetch strategy', () => {
 
   it('does not mask a missing route with the cached application shell', async () => {
     const notFound = { ok: false, status: 404 };
-    const worker = loadWorker({ fetchImpl: vi.fn().mockResolvedValue(notFound), cached: 'cached-shell' });
+    const worker = loadWorker({
+      fetchImpl: vi.fn().mockResolvedValue(notFound),
+      cached: 'cached-shell',
+    });
 
     await expect(
       worker.dispatch('fetch', {
