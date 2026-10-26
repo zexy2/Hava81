@@ -2637,3 +2637,36 @@ Do not disable or pause automation, do not bypass a blocked write path, and do n
 3. Retry host status with short, read-only operations when SentinelX reconnects. Read worker state and recent events, compare `collected_at` to current time, check timer activity and disk/RAM/process load before considering service actions.
 4. Directly verify API readiness/current weather/CORS and frontend/API revision parity. Keep port 4002 primary and 4001 rollback/canary; use blue-green/canary for any API change.
 5. Continue independent bounded UI/accessibility/performance work while any external run is pending. Do not weaken the real-weather Lighthouse gate or ship synthetic weather.
+
+
+## 2026-10-26 19:02 TRT (2026-10-26 16:02 UTC) — Merged performance fix, regression guard and live production smoke
+
+### Merges and exact CI evidence
+- PR #1521 `perf(ui): defer optional alert panel until near viewport` merged as `6cb44493069910e1c7d7c181fe52c98fee92ce64`. Exact head `16cc524f4ed6facc0df29babd3a90ea8b9b6780c` passed frontend quality (including type-check and coverage), production build, API test/build, development container build, browser flows, Lighthouse budgets, CodeQL and Ops contracts.
+- PR #1523 `test(perf): guard deferred alert chunk loading` merged as `cb6c6810c9d42b3317a14cf314b19cbfb4b93299`. Exact head `e68de438ab9dda59e51def562a4616b7ff292242` passed the same required CI/CD, browser, Lighthouse, CodeQL and Ops gates. It adds a browser regression that proves the notification/freshness JS chunk is not requested while the alert slot is more than the 320px observer margin below the viewport, and that it is requested after approaching the slot.
+- Main CI/CD for `6cb4449` run #40353527595 completed successfully; Pages deploy job 121681421054 succeeded. The new main pipeline for `cb6c681` is run #40354661179 (in progress at last check); CodeQL #40354660948 and Ops #40354661623 are green. Do not treat the previous SHA's successful deployment as proof that the latest SHA's deployment has finished.
+- PR #1521's Lighthouse artifact confirms `DecisionAlertsPanel-*.js` is absent from the initial network requests after the change. The score itself is noisy: main had a 46/100 run with 6.44s TBT and a 94/100 confirmation with 10ms TBT; PR #1521 scored 71/100 with 940ms TBT and 3.1s LCP. Keep the real-weather gate and report the chunk-level evidence; do not claim a stable Lighthouse score improvement from these divergent single-run scores.
+
+### Direct production smoke after the #1521 deployment
+Executed from the Oracle host after the Pages deploy job completed:
+- `https://hava81.zekiakgul.dev/`: HTTP 200 (about 0.05s on the second, warm request).
+- `https://hava81.zekiakgul.dev/izmir/`: HTTP 200.
+- `https://hava81.zekiakgul.dev/en/istanbul/`: HTTP 200.
+- `https://api.hava81.zekiakgul.dev/api/v1/health/ready`: HTTP 200.
+- CORS preflight from `https://hava81.zekiakgul.dev` to the weather bundle: HTTP 204.
+- Real weather bundle for Istanbul coordinates: HTTP 200 (first request about 0.93s; subsequent cached request about 0.05s).
+- `/sw.js`: HTTP 200.
+- Observer state at `2026-10-26T15:58:53.986262Z` reported production healthy, no production issues, API primary port 4002, no API deploy pending, no stale browser processes, and no host incident. The frontend revision still matched `6cb4449` while the test-only `cb6c681` Pages workflow was pending; verify the fresh observer state after the latest pipeline completes.
+
+### Host headroom — observation only, no cleanup performed
+- Root disk is about 91.3% used with roughly 9.04 GB free; API build headroom currently passes, but `root_disk_pressure_warning` remains active. `df -h /` rounded to 92% used / 8.5G free.
+- `uptime` reported current load 0.14, 5-minute load 29.75 and 15-minute load 106.33; memory showed about 2.0 GiB available and no swap. The observer reported zero stale Hava81 browser processes.
+- Read-only `du` found approximately 11 GB under `/home/ubuntu`, 4.1 GB under `/home/ubuntu/projects`, 3.4 GB under `/var/lib`, 940 MB under `/var/log`, 2.4 GB under `/opt`, 360 MB in `.npm`, 736 MB in `.venvs`, and 778 MB in `.local`. Many Hava81 worktrees exist. No caches, worktrees, logs, Docker images, or other files were deleted because ownership/use has not been verified and current API build headroom passes.
+- SentinelX now responds to read-only commands. The status script itself is not on the SentinelX command allowlist; no allowlist change or agent restart was attempted. State and event log were read directly instead.
+
+### Exact next actions
+1. Poll main run #40354661179 for `cb6c6810c9d42b3317a14cf314b19cbfb4b93299`; wait for its Pages deploy job to finish.
+2. Re-read `/var/lib/hava81-worker/state.json` and compare `collected_at` to current time. Re-run root, Turkish city, English city, readiness, CORS, real-weather bundle and `/sw.js` smoke checks. Confirm frontend revision parity or explain any revision-marker limitation.
+3. PR #1522 is the append-only progress checkpoint branch. It has a green exact-head CI/CodeQL/Ops run, but this new append changes its head and must pass CI again. After that, re-verify its current head and mergeability, and merge only when the current main pipeline/deploy is no longer pending.
+4. PR #1523 is merged. Keep working on independent improvements while any new run is pending; do not weaken weather readiness, freshness, alert or safety semantics.
+5. Continue investigating disk-pressure headroom read-only. Do not clean or delete any Hava81 worktree until remote branch/PR ownership and active processes are verified.
