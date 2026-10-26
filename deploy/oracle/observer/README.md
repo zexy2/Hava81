@@ -19,3 +19,9 @@ Deploy a merged observer revision with `sudo bash deploy/oracle/install-observer
 After any observer deployment, inspect `state.json` and confirm the expected new checks are present and healthy. The Nginx target check follows `/var/lib/hava81/current-api-port`, which is updated only after a validated blue/green traffic switch; if that state file is absent on a legacy install, the observer falls back to port 4002.
 
 Repository smoke test: `python3 deploy/oracle/observer/test_observer.py`. It covers timestamp parsing, blue/green Nginx state, disk guards and API deployment-tree drift detection.
+
+## GitHub REST authentication
+
+The five-minute observer can use an optional read-only GitHub token from `/etc/hava81-worker/github.env`. The file is loaded by systemd when the oneshot service starts; its only supported variable is `HAVA81_GITHUB_TOKEN`. Use a fine-grained token restricted to `zexy2/Hava81` with **Contents: read-only**, **Actions: read-only**, and **Pull requests: read-only** permissions, and set an expiry/rotation reminder. Keep the file root-owned and mode `0600`; never commit it, print its contents, or reuse the OpenWeather production credential. The request client attaches the token only to HTTPS requests whose exact host is `api.github.com`; it uses an unredirected Authorization header so urllib cannot forward the token to a different redirect host.
+
+If the file is absent, the observer continues anonymously and records `auth_mode=anonymous`. GitHub's shared unauthenticated REST quota may then return HTTP 403 with `rate_limit_remaining=0`; that means CI/PR state is unknown, not green. Configure the credential before relying on the observer's merge/deploy signals. The timer remains enabled and active throughout credential setup.

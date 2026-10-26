@@ -15,6 +15,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 from typing import Any
 
 STATE_DIR = Path('/var/lib/hava81-worker')
@@ -68,7 +69,30 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
     request_headers = {'User-Agent': USER_AGENT, 'Accept': 'application/json,text/html;q=0.9,*/*;q=0.8'}
     if headers:
         request_headers.update(headers)
+
+    # The observer runs every five minutes, so anonymous REST requests can
+    # exhaust GitHub's 60/hour shared-IP limit. An optional read-only token is
+    # supplied by the systemd EnvironmentFile; never attach it to production,
+    # weather-provider, or arbitrary URLs, and never include it in diagnostics.
+    parsed_url = urlsplit(url)
+    github_token = os.environ.get('HAVA81_GITHUB_TOKEN', '').strip()
+    if (
+        github_token
+        and parsed_url.scheme == 'https'
+        and parsed_url.hostname == 'api.github.com'
+    ):
+        request_headers.setdefault('Authorization', f'Bearer {github_token}')
+
+    # urllib copies Request.headers to redirect targets. Keep Authorization in
+    # unredirected_hdrs so it is sent to the original API request but is never
+    # copied if GitHub responds with a cross-host redirect.
+    authorization = next(
+        (request_headers.pop(key) for key in tuple(request_headers) if key.lower() == 'authorization'),
+        None,
+    )
     req = urllib.request.Request(url, headers=request_headers, method='GET')
+    if authorization:
+        req.add_unredirected_header('Authorization', authorization)
     started = time.monotonic()
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=SSL_CONTEXT) as response:
@@ -101,6 +125,13 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
                 'error': None,
             }
     except urllib.error.HTTPError as exc:
+        remaining = exc.headers.get('x-ratelimit-remaining') if exc.headers else None
+        reset = exc.headers.get('x-ratelimit-reset') if exc.headers else None
+        error = f'HTTP {exc.code}'
+        if parsed_url.hostname == 'api.github.com' and str(remaining) == '0':
+            error = 'GitHub API rate limit exhausted'
+            if reset:
+                error += f' (reset epoch {reset})'
         return {
             'ok': False,
             'status': exc.code,
@@ -108,11 +139,11 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
             'headers': {
                 'access-control-allow-origin': exc.headers.get('access-control-allow-origin') if exc.headers else None,
                 'cache-control': exc.headers.get('cache-control') if exc.headers else None,
-                'x-ratelimit-remaining': exc.headers.get('x-ratelimit-remaining') if exc.headers else None,
-                'x-ratelimit-reset': exc.headers.get('x-ratelimit-reset') if exc.headers else None,
+                'x-ratelimit-remaining': remaining,
+                'x-ratelimit-reset': reset,
             },
             'json': None,
-            'error': f'HTTP {exc.code}',
+            'error': error,
         }
     except Exception as exc:  # bounded observer: record, never mutate production
         return {
@@ -1029,7 +1060,9 @@ def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         'ok': github_ok,
         'error': github_error,
+        'auth_mode': 'token' if os.environ.get('HAVA81_GITHUB_TOKEN', '').strip() else 'anonymous',
         'rate_limit_remaining': rate_headers.get('x-ratelimit-remaining'),
+        'rate_limit_reset': rate_headers.get('x-ratelimit-reset'),
         'open_automation_prs': automation_prs,
         'main_branch': main_branch,
         'main_pipeline': slim_run(current_main_pipeline),
