@@ -53,6 +53,10 @@ export function useAppRouting({
   const [routeRevision, setRouteRevision] = useState(0);
   const previousRouteRevisionRef = useRef(routeRevision);
   const pendingRestoredRouteRevisionRef = useRef<number | null>(null);
+  // A popstate handler can clear weather and start the next request before React
+  // flushes the metadata effect from the previous render. Keep the explicit route
+  // target so that old weather cannot push its city back into the address bar.
+  const pendingNavigationCityRef = useRef<string | null>(null);
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) setRouteRevision(revision => revision + 1);
@@ -76,6 +80,7 @@ export function useAppRouting({
     const handlePopState = () => {
       const routeCity = cityFromPathname(window.location.pathname);
       if (routeCity) {
+        pendingNavigationCityRef.current = routeCity.name;
         // `useAsync` deliberately preserves the last successful payload during a
         // refresh. On browser back/forward, that payload may belong to another
         // province; clear it before fetching so the route and displayed evidence
@@ -88,6 +93,7 @@ export function useAppRouting({
         void fetchWeather(routeCity.name);
         return;
       }
+      pendingNavigationCityRef.current = null;
       const district = isHomePathname(window.location.pathname)
         ? districtFromQuery(window.location.search)
         : null;
@@ -164,6 +170,26 @@ export function useAppRouting({
       setMetaContent('meta[property="og:locale:alternate"]', language === 'en' ? 'tr_TR' : 'en_US');
     };
 
+    // A normal back/forward event can race the metadata effect for the previous
+    // render. While that old payload is still present, keep metadata aligned with the
+    // explicit URL instead of pushing the stale city's path back into history.
+    const pendingNavigationCity = pendingNavigationCityRef.current;
+    if (weather && pendingNavigationCity) {
+      const targetPath = cityPath(pendingNavigationCity, language);
+      const weatherPath = cityPath(weather.cityName, language);
+      if (targetPath && weatherPath && targetPath !== weatherPath) {
+        setAlternates(
+          cityPath(pendingNavigationCity, 'tr'),
+          cityPath(pendingNavigationCity, 'en')
+        );
+        updateCityMetadata(pendingNavigationCity, targetPath);
+        return;
+      }
+      if (targetPath && weatherPath && targetPath === weatherPath) {
+        pendingNavigationCityRef.current = null;
+      }
+    }
+
     // BFCache can preserve the old observation while restoring a different city URL.
     // Keep the route check pending until matching weather arrives, so a late response
     // from the pre-restore request cannot rewrite the explicit route either.
@@ -182,6 +208,9 @@ export function useAppRouting({
     }
 
     if (!weather) {
+      // clearWeather() invalidates the previous request before the new city fetch.
+      // Once its empty state is committed, the one-render stale-metadata guard is done.
+      pendingNavigationCityRef.current = null;
       // A city slug already gives us canonical identity. Keep the URL and head
       // locale-correct while the live weather request is slow or unavailable.
       const routeCity = cityFromPathname(window.location.pathname);
