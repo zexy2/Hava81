@@ -8,7 +8,7 @@ import {
   setTextScale,
   setWidth,
 } from './helpers/layout';
-import { seedSettings } from './helpers/weather-fixtures';
+import { mockWeatherApi, seedSettings } from './helpers/weather-fixtures';
 
 // Mobile bottom navigation (dock) and the mobile app shell.
 
@@ -117,4 +117,61 @@ test.describe('mobile bottom navigation', () => {
     expect(short.rootMinHeight).toBeCloseTo(short.viewportHeight, 0);
     expect(short.appMinHeight).toBeCloseTo(short.viewportHeight, 0);
   });
+});
+
+test('main content can scroll fully above the fixed dock at 200% text', MOBILE, async ({ page }) => {
+  await mockWeatherApi(page);
+  await setWidth(page, 320, 720);
+  await page.goto('/istanbul/');
+  await expect(page.locator('.decision-glance__score')).toBeVisible();
+
+  // Portrait makes the labels wrap into two dock rows; landscape uses the
+  // compact horizontal dock. In both cases the last content edge must remain
+  // reachable above the fixed navigation, not just above the viewport edge.
+  for (const viewport of [
+    { width: 320, height: 720, name: 'portrait' },
+    { width: 568, height: 320, name: 'landscape' },
+  ]) {
+    await setWidth(page, viewport.width, viewport.height);
+    await setTextScale(page, 200);
+    // The deferred forecast can extend the document after its slot activates;
+    // scroll to the current end repeatedly until its height has settled.
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      await page.evaluate(() => {
+        // The app enables smooth scrolling by default; use an instant end jump
+        // so this geometry assertion measures the settled bottom, not animation.
+        document.documentElement.style.scrollBehavior = 'auto';
+        const scroller = document.scrollingElement;
+        if (scroller) scroller.scrollTo(0, scroller.scrollHeight);
+      });
+      await page.waitForTimeout(100);
+    }
+
+    const geometry = await page.evaluate(() => {
+      const main = document.querySelector('#main-content');
+      const dock = document.querySelector('.atlas-bottom-nav');
+      const scroller = document.scrollingElement;
+      if (!main || !dock || !scroller) throw new Error('main content, dock, or scroller is missing');
+      const mainRect = main.getBoundingClientRect();
+      const dockRect = dock.getBoundingClientRect();
+      return {
+        mainBottom: Math.round(mainRect.bottom),
+        dockTop: Math.round(dockRect.top),
+        dockHeight: Math.round(dockRect.height),
+        viewportHeight: window.innerHeight,
+        clientHeight: scroller.clientHeight,
+        scrollHeight: scroller.scrollHeight,
+        scrollTop: scroller.scrollTop,
+        maxScroll: Math.max(0, scroller.scrollHeight - scroller.clientHeight),
+      };
+    });
+    expect(
+      Math.abs(geometry.maxScroll - geometry.scrollTop),
+      `${viewport.name} must reach the true document end: ${JSON.stringify(geometry)}`
+    ).toBeLessThanOrEqual(2);
+    expect(
+      geometry.dockTop - geometry.mainBottom,
+      `${viewport.name} 200% text must leave an 8px gap above the dock: ${JSON.stringify(geometry)}`
+    ).toBeGreaterThanOrEqual(8);
+  }
 });
