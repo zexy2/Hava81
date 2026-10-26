@@ -8,7 +8,10 @@ import process from 'node:process';
 import { resolveLighthouseChromePath } from './lib/resolve-lighthouse-chrome.mjs';
 import { resolveLighthouseTargetUrl } from './lib/lighthouse-target-url.mjs';
 import { resolveLoopbackCdpPort } from './lib/loopback-cdp-url.mjs';
-import { assertLighthouseWeatherReady } from './lib/lighthouse-weather-readiness.mjs';
+import {
+  assertLighthouseWeatherReady,
+  withLighthouseWeatherReadinessConfirmation,
+} from './lib/lighthouse-weather-readiness.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -234,8 +237,16 @@ let exitCode = 0;
 try {
   console.log(`[lighthouse] target ${targetUrl}`);
   await waitForPreview(preview);
-  let report = await runLighthouseWithStartupRetry(resultPath, runEnv);
-  assertLighthouseWeatherReady(report);
+  let report = await withLighthouseWeatherReadinessConfirmation(
+    await runLighthouseWithStartupRetry(resultPath, runEnv),
+    async () => {
+      console.warn(
+        'Lighthouse did not observe real current weather on the first measurement; retrying readiness once with a fresh report.'
+      );
+      await sleep(1_500);
+      return runLighthouseWithStartupRetry(confirmResultPath, runEnv);
+    }
+  );
   const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');
   const firstPerformanceScore = report.categories?.performance?.score;
   if (

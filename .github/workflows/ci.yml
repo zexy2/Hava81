@@ -161,20 +161,86 @@ jobs:
       - run: npm ci --no-audit
       # Build a separate, non-deployed variant. The production dist artifact uses
       # the public API origin, which rejects the local preview origin by CORS.
-      # A relative API base plus the Vite preview proxy exercises the same UI
-      # against real API responses without weakening production CORS.
+      # Lighthouse runs the same API source locally with the repository's real
+      # OpenWeather credential, so CI does not depend on Oracle ingress or fake data.
       - name: Build Lighthouse variant with same-origin API routing
         run: npm run build
         env:
           VITE_API_BASE_URL: /api/v1
+      - name: Install API dependencies for live-weather Lighthouse
+        run: npm ci --prefix apps/api --no-audit
+      - name: Build local API for live-weather Lighthouse
+        run: npm run api:build
       - name: Validate Lighthouse browser selection
         run: node scripts/test-lighthouse-chrome-selection.mjs
       - name: Validate Lighthouse target-path safety
         run: node scripts/test-lighthouse-target-url.mjs
-      - name: Measure the built UI through the real API proxy
-        run: npm run lighthouse
+      - name: Validate real-weather readiness and bounded confirmation
+        run: node scripts/test-lighthouse-weather-readiness.mjs
+      - name: Validate Lighthouse preview API proxy contract
+        run: node scripts/test-lighthouse-preview-proxy.mjs
+      - name: Validate Lighthouse workflow artifact contract
+        run: python3 scripts/test-lighthouse-artifact-contract.py
+      - name: Measure the built UI through the live-weather API proxy
+        run: |
+          set -euo pipefail
+          if [ -z "${OPENWEATHER_API_KEY:-}" ]; then
+            echo "OPENWEATHER_API_KEY secret is required for real-weather Lighthouse; refusing a synthetic fallback." >&2
+            exit 1
+          fi
+
+          api_log="$RUNNER_TEMP/hava81-lighthouse-api.log"
+          ready_file="$RUNNER_TEMP/hava81-lighthouse-api-ready.json"
+          weather_file="$RUNNER_TEMP/hava81-lighthouse-api-weather.json"
+          OPENWEATHER_API_KEY="$OPENWEATHER_API_KEY" \
+            NODE_ENV=production HOST=127.0.0.1 PORT=4000 \
+            CORS_ORIGINS=http://127.0.0.1:4173 \
+            node apps/api/dist/src/server.js >"$api_log" 2>&1 &
+          api_pid=$!
+          cleanup() {
+            kill "$api_pid" 2>/dev/null || true
+            wait "$api_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          unset OPENWEATHER_API_KEY
+          export HAVA81_PREVIEW_API_PROXY_TARGET=http://127.0.0.1:4000
+
+          api_ready=false
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail --max-time 2 \
+              http://127.0.0.1:4000/api/v1/health/ready -o "$ready_file"; then
+              if node -e 'const d = require(process.argv[1]); if (d.status !== "ready") process.exit(1)' "$ready_file"; then
+                api_ready=true
+                break
+              fi
+            fi
+            if ! kill -0 "$api_pid" 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          if [ "$api_ready" != true ]; then
+            echo "Local live-weather API did not become ready for Lighthouse." >&2
+            tail -n 30 "$api_log" | sed -E 's/(appid=)[^&[:space:]]+/\1[redacted]/g'
+            exit 1
+          fi
+
+          # Prime and validate the real provider response before browser measurement.
+          # Lighthouse still enforces its own successful current-weather request gate.
+          if ! curl --silent --show-error --fail --max-time 20 \
+            'http://127.0.0.1:4000/api/v1/weather/current?city=Istanbul&units=metric&lang=en' \
+            -o "$weather_file"; then
+            echo "Local API could not return live current weather from OpenWeather." >&2
+            tail -n 30 "$api_log" | sed -E 's/(appid=)[^&[:space:]]+/\1[redacted]/g'
+            exit 1
+          fi
+          if ! node -e 'const d = require(process.argv[1]); if (typeof d.cityName !== "string" || !Number.isFinite(d.temperature) || typeof d.timestamp !== "string" || typeof d.meta?.provider !== "string" || typeof d.meta?.fetchedAt !== "string") process.exit(1); console.log(`Live weather preflight: ${d.cityName}, provider=${d.meta.provider}, fetchedAt=${d.meta.fetchedAt}`)' "$weather_file"; then
+            echo "Live weather preflight response did not satisfy the current-weather contract." >&2
+            exit 1
+          fi
+          npm run lighthouse
         env:
-          HAVA81_PREVIEW_API_PROXY_TARGET: https://api.hava81.zekiakgul.dev
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
       - name: Preserve Lighthouse JSON reports (including failed budgets)
         if: always()
         uses: actions/upload-artifact@v7
