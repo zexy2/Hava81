@@ -796,3 +796,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - At the narrow-phone breakpoint, make the interval-control and range containers fill the available width while retaining a 44px minimum button width and the existing four-column layout. Do not lower the 44px audit threshold or solve this by introducing horizontal scrolling.
 - Keep both a CSS visual-contract assertion and a browser regression that measures all seven actual button bounding boxes at 320px/200% text across Turkish/English, light/dark, and two city routes, while also asserting no horizontal page overflow.
 - This is presentation/accessibility-only: no forecast intervals, weather data, provider provenance, freshness, scoring, or safety guidance changes.
+
+## 2026-10-27 — Keep browser-history city identity authoritative during refresh races
+
+- A `popstate` handler can synchronously clear the previous city's weather and start the requested city fetch before React flushes the metadata effect for the previous render. While that old payload is still present, derive canonical/alternate metadata from the explicit destination route instead of rewriting the address bar back to the stale city.
+- Keep the pending destination only until the matching city's weather arrives or the cleared-weather render commits. The existing integration regression `clears a different city payload before browser back/forward navigation` must pass; do not weaken its URL assertion or reuse the prior city's observation.
+- This is route/metadata concurrency protection only. Keep API requests, provider provenance, freshness windows, weather values, scoring, alerts, and safety guidance unchanged.
