@@ -20,6 +20,12 @@ export function buildLiveAuditErrors({
     ...(metrics.theme !== theme ? [`Expected theme ${theme}, got ${metrics.theme}`] : []),
     ...(metrics.forecastState !== 'ready' ? [`Forecast ${metrics.forecastState}: final chart not available`] : []),
     ...(metrics.documentWidth > width + 1 ? [`Horizontal overflow: ${metrics.documentWidth}px > ${width}px`] : []),
+    ...(width <= 768 && !Array.isArray(metrics.smallTargets)
+      ? ['Interactive target metrics unavailable']
+      : []),
+    ...(width <= 768
+      ? (metrics.smallTargets || []).map(target => `Small interactive target: ${target}`)
+      : []),
     ...Object.entries(metrics.overlaps || {})
       .filter(([, area]) => area > 1)
       .map(([name, area]) => `${name} overlap: ${area}px²`),

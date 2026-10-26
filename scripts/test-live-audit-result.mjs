@@ -11,6 +11,7 @@ const healthyMetrics = {
   theme: 'light',
   forecastState: 'ready',
   documentWidth: 320,
+  smallTargets: [],
   overlaps: { header: 0, scoreDate: 0, scoreDetails: 0, temperatureArt: 0 },
 };
 
@@ -51,6 +52,22 @@ test('a healthy responsive case stays green and missing metrics fail closed', ()
   assert.deepEqual(buildLiveAuditErrors({ ...expected, metrics: null }), ['Responsive metrics unavailable']);
 });
 
+
+test('mobile live audit reports undersized interactive controls but ignores desktop-only measurements', () => {
+  const metrics = { ...healthyMetrics, smallTargets: ['Search (40×36)'] };
+  assert.deepEqual(buildLiveAuditErrors({ ...expected, metrics }), [
+    'Small interactive target: Search (40×36)',
+  ]);
+  assert.deepEqual(buildLiveAuditErrors({ ...expected, width: 1024, metrics }), []);
+});
+
+test('mobile live audit fails closed when interactive target metrics are missing', () => {
+  const legacyMetrics = { ...healthyMetrics };
+  delete legacyMetrics.smallTargets;
+  assert.deepEqual(buildLiveAuditErrors({ ...expected, metrics: legacyMetrics }), [
+    'Interactive target metrics unavailable',
+  ]);
+});
 
 test('live audit reports core weather network failures without query-string noise', () => {
   assert.equal(
