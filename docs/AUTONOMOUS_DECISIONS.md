@@ -788,3 +788,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - An unvisited localized route can fall back to the cached root HTML shell while the browser keeps the requested city pathname. Reconstruct the fallback response without stale root-response URL metadata and remove body-length/encoding headers that no longer describe the reconstructed response.
 - When browser back-forward cache restores a different city URL, keep the restored route authoritative until weather for that city arrives; a late response for the previous city must not rewrite the explicit route or remain presented as the new city's observation.
 - Keep weather API requests network-only. Do not cache or synthesize weather for an unvisited city. An offline route may show the correct city shell with unavailable weather, but must not reuse another city's observation or imply that a fresh observation was fetched.
+
+
+## 2026-10-27 — Defer the below-fold environment rail only if Lighthouse confirms a win
+
+- Main Lighthouse run #3763 at `90a4f95` measured performance 70, LCP 3.2s, TBT 990ms, and CLS 0.042. The initial route loaded `EnvironmentRail` (6.2KB JS / 2.2KB gzip plus 11.4KB CSS / 2.7KB gzip) even though it is secondary to the decision and forecast surfaces.
+- Test a bounded IntersectionObserver gate with keyboard/pointer activation and a no-IntersectionObserver fallback. Reserve 8rem on desktop, 14rem at tablet/phone widths, and 26rem at the narrowest breakpoint to match the actual rail grid more closely and avoid an oversized placeholder collapsing on activation.
+- This is a measured experiment, not an assumed win: keep it only if exact-head Lighthouse reduces initial transfer or main-thread work without a CLS regression. No forecast data, provider provenance, freshness, scoring, or safety guidance changes.
