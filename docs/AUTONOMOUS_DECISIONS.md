@@ -774,3 +774,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The install handler remains fail-closed: a new worker must secure the root shell and all discovered same-origin boot scripts/styles before it can activate. Do not relax this requirement.
 - After a successful install, enumerating and deleting old versioned shell caches is housekeeping. A transient Cache Storage enumeration/deletion failure must not make activation of the complete new worker fail or prevent `clients.claim()`; leave any undeleted cache for a later activation to retry.
 - Add deterministic regressions for both `caches.keys()` and `caches.delete()` rejection. Runtime navigation remains network-fresh, API requests remain uncached, and no weather freshness, provider, alert, or safety behavior changes.
+
+## 2026-10-26 — Node 26 LTS transition guard
+
+- As of 2026-10-26, the official Node.js Release schedule lists 26.x as **Current** with Active LTS starting 2026-10-28; 24.x remains in Maintenance LTS through 2028-04-30. Source: https://github.com/nodejs/Release (verify the live schedule before acting because dates may change).
+- Do not merge or deploy the API Node 26 image upgrade (#1530/#1531) before the 26.x LTS transition. Keep the existing production API serving on port 4002 and port 4001 available as rollback/canary. This is a timing guard, not a rejection of the upgrade.
+- On or after 2026-10-28, re-check the official release schedule, re-read the exact remote PR head(s), rebase the selected PR onto current main in an isolated worktree, and require current-head CI, API tests/build, ARM64 image/liveness smoke, Lighthouse/live-weather, Ops, and CodeQL gates before any merge. Prefer #1531 if it retains the Node 26 Dockerfile change plus the ARM64 smoke workflow; avoid merging duplicate #1530 separately.
+- API deployment remains authorized only after the fresh observer confirms production health, port 4002 primary, adequate disk/build headroom, and a successful blue-green/canary path. Never switch ports or deploy merely because a future date has arrived.
