@@ -37,7 +37,13 @@ export function useLocalStorage<T>(
       return transformInitialValue ? transformInitialValue(value) : value;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
+      // Keep route-derived initial settings correct even when browser storage is blocked.
+      if (!transformInitialValue) return initialValue;
+      try {
+        return transformInitialValue(initialValue);
+      } catch {
+        return initialValue;
+      }
     }
   }, [key, initialValue, deserializer, transformInitialValue]);
 

@@ -92,6 +92,28 @@ describe('useLocalStorage synchronization', () => {
     }
   });
 
+  it('normalizes the fallback value when localStorage reads are blocked', () => {
+    const originalPath = window.location.pathname;
+    window.history.replaceState(null, '', '/en/istanbul/');
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementationOnce(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+
+    try {
+      const { result } = renderHook(() =>
+        useLocalStorage('route-pref', 'tr', {
+          transformInitialValue: value =>
+            window.location.pathname.startsWith('/en/') ? 'en' : value,
+        })
+      );
+
+      expect(result.current[0]).toBe('en');
+    } finally {
+      window.history.replaceState(null, '', originalPath);
+    }
+  });
+
   it('rehydrates persisted state when the storage key changes', () => {
     localStorage.setItem('first-pref', JSON.stringify('dark'));
     localStorage.setItem('second-pref', JSON.stringify('light'));
