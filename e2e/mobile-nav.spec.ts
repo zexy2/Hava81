@@ -89,6 +89,113 @@ test.describe('mobile bottom navigation', () => {
     );
   }
 
+  test(
+    'last plan controls remain reachable above the two-row dock at 200% text',
+    MOBILE,
+    async ({ page }) => {
+      await seedSettings(page, { language: 'en', themeMode: 'dark' });
+      await setWidth(page, 320, 720);
+      await page.goto('/istanbul/?view=plan');
+      await expect(page.locator('.activity-planner')).toBeVisible();
+      await expect(page.locator('.atlas-bottom-nav')).toBeVisible();
+      await setTextScale(page, 200);
+      await expectNoHorizontalScroll(page, '320px/200% plan at scroll end');
+
+      // Label-size and page-overflow checks alone do not prove the fixed dock
+      // leaves the final interactive content reachable above its hit area.
+      let previousHeight = -1;
+      let stableAtEnd = 0;
+      let layout:
+        | {
+            dock: { top: number; bottom: number; height: number };
+            appPaddingBottom: string;
+            scrollAtEnd: boolean;
+            scroll: { top: number; clientHeight: number; height: number };
+            overlappingControls: Array<{ tag: string; label: string; top: number; bottom: number }>;
+          }
+        | undefined;
+
+      await expect
+        .poll(
+          async () => {
+            layout = await page.evaluate(() => {
+              document.documentElement.style.scrollBehavior = 'auto';
+              const root = document.scrollingElement;
+              const dock = document.querySelector<HTMLElement>('.atlas-bottom-nav');
+              const app = document.querySelector<HTMLElement>('.app');
+              if (!root || !dock || !app) {
+                throw new Error('Document scroll root, mobile app or bottom navigation is missing');
+              }
+              // Scroll again on each poll: lazy sections may extend the page after
+              // the first scroll event, so wait for a stable height at the true end.
+              root.scrollTop = root.scrollHeight;
+              const rootHeight = root.scrollHeight;
+              const rootTop = root.scrollTop;
+              const dockRect = dock.getBoundingClientRect();
+              const controls = Array.from(
+                document.querySelectorAll<HTMLElement>(
+                  '.app a[href], .app button:not([disabled]), .app input:not([disabled]), .app select:not([disabled]), .app textarea:not([disabled])'
+                )
+              )
+                .filter(
+                  control =>
+                    !control.closest('.atlas-bottom-nav') &&
+                    control.checkVisibility({ visibilityProperty: true })
+                )
+                .map(control => {
+                  const rect = control.getBoundingClientRect();
+                  return {
+                    tag: control.tagName,
+                    label: (
+                      control.innerText ||
+                      control.getAttribute('aria-label') ||
+                      control.getAttribute('placeholder') ||
+                      ''
+                    )
+                      .trim()
+                      .replace(/\s+/g, ' ')
+                      .slice(0, 60),
+                    top: Math.round(rect.top),
+                    bottom: Math.round(rect.bottom),
+                  };
+                })
+                .filter(control => control.bottom > 0 && control.top < window.innerHeight);
+              return {
+                dock: {
+                  top: Math.round(dockRect.top),
+                  bottom: Math.round(dockRect.bottom),
+                  height: Math.round(dockRect.height),
+                },
+                appPaddingBottom: getComputedStyle(app).paddingBottom,
+                scrollAtEnd: rootTop + root.clientHeight >= rootHeight - 1,
+                scroll: { top: rootTop, clientHeight: root.clientHeight, height: rootHeight },
+                overlappingControls: controls.filter(
+                  control => control.bottom > dockRect.top + 1 && control.top < dockRect.bottom - 1
+                ),
+              };
+            });
+            if (layout.scrollAtEnd && layout.scroll.height === previousHeight) stableAtEnd += 1;
+            else stableAtEnd = 0;
+            previousHeight = layout.scroll.height;
+            return stableAtEnd;
+          },
+          {
+            timeout: 5_000,
+            message: 'page should reach a stable scroll end before dock overlap is measured',
+          }
+        )
+        .toBeGreaterThanOrEqual(3);
+
+      expect(layout).toBeDefined();
+      expect(layout!.scrollAtEnd, JSON.stringify(layout, null, 2)).toBe(true);
+      expect(
+        layout!.dock.height,
+        '200% text should exercise the wrapped two-row dock'
+      ).toBeGreaterThan(100);
+      expect(layout!.overlappingControls, JSON.stringify(layout, null, 2)).toEqual([]);
+    }
+  );
+
   test('mobile shell tracks dynamic viewport height changes', MOBILE, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/istanbul');
