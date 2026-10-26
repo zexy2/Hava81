@@ -20,6 +20,7 @@ import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
 import { NotFoundState } from './components/app/NotFoundState';
 import { DeferredForecastAtlas } from './components/app/DeferredForecastAtlas';
+import { DeferredEnvironmentRail } from './components/app/DeferredEnvironmentRail';
 import { isHomePathname, isUnknownPathname } from './utils/cityRoute';
 import { AtlasLoadingState, ForecastLoadingCard } from './components/app/AppSkeletons';
 import { scrollIntoViewRespectingMotion } from './utils/motion';
@@ -32,7 +33,6 @@ const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const DecisionGlance = lazy(() => import('./components/hava81/DecisionGlance'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
 const CommutePlanPanel = lazy(() => import('./components/hava81/CommutePlanPanel'));
-const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
 const ActivityPlanner = lazy(() => import('./components/hava81/ActivityPlanner'));
@@ -605,14 +605,12 @@ const App: React.FC = () => {
                       </section>
                     )}
 
-                    <Suspense fallback={null}>
-                      <EnvironmentRail
-                        weather={weather}
-                        airQuality={freshAirQuality}
-                        onOpenMap={showMap ? closeMap : openMap}
-                        mapExpanded={showMap}
-                      />
-                    </Suspense>
+                    <DeferredEnvironmentRail
+                      weather={weather}
+                      airQuality={freshAirQuality}
+                      onOpenMap={showMap ? closeMap : openMap}
+                      mapExpanded={showMap}
+                    />
 
                     {showMap && (
                       <section
