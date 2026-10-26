@@ -188,3 +188,11 @@ test('decision calibration gate shares the conservative 81-city request pacing',
   const source = readFileSync(resolve('scripts/verify-decision-81.ts'), 'utf8');
   assert.match(source, /const delayMs = Number\(process\.env\.DELAY_MS \|\| 1600\);/);
 });
+
+test('decision calibration gate stops after the first request timeout', () => {
+  const source = readFileSync(resolve('scripts/verify-decision-81.ts'), 'utf8');
+  assert.match(source, /import \{ RequestTimeoutError, fetchJsonResponse \}/);
+  assert.match(source, /catch \(error\) \{\s*if \(error instanceof RequestTimeoutError\) throw error;\s*airRaw = null;/);
+  assert.match(source, /if \(error instanceof RequestTimeoutError\)[\s\S]*?timedOutCity = city;[\s\S]*?break;/);
+  assert.match(source, /RESULT: BLOCKED \(request timeout at ' \+ timedOutCity \+ '\)/);
+});

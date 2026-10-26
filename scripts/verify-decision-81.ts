@@ -2,10 +2,16 @@ import { buildDailyPlan } from '../src/domain/decision/buildDailyPlan';
 import { buildActivityPlan } from '../src/domain/activity/buildActivityPlan';
 import type { ActivityKind } from '../src/domain/activity/types';
 import type { AirQuality, HourlyForecast, NormalizedWeatherData } from '../src/types';
+import { RequestTimeoutError, fetchJsonResponse } from './lib/decision-gate-http.mjs';
 
 const baseUrl = (process.env.BASE_URL || 'http://127.0.0.1:4001/api/v1').replace(/\/$/, '');
 // Three requests per province share the API's 60/min client budget; leave room for concurrent smoke checks.
 const delayMs = Number(process.env.DELAY_MS || 1600);
+const requestedTimeoutMs = Number(process.env.REQUEST_TIMEOUT_MS || 10000);
+const requestTimeoutMs =
+  Number.isFinite(requestedTimeoutMs) && requestedTimeoutMs >= 1000 && requestedTimeoutMs <= 60000
+    ? requestedTimeoutMs
+    : 10000;
 const cities = [
   'Adana',
   'Adıyaman',
@@ -93,8 +99,7 @@ const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorc
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const json = async (url: string) => {
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    const response = await fetch(url, { headers: { accept: 'application/json' } });
-    const body = await response.json();
+    const { response, body } = await fetchJsonResponse(url, { timeoutMs: requestTimeoutMs });
     if (response.ok) return body;
     if (response.status === 429 && attempt < 3) {
       const retryAfterSeconds = Number(response.headers.get('retry-after') || 15);
@@ -112,6 +117,7 @@ const bandCounts = new Map<string, number>();
 const activityTotals = new Map<ActivityKind, { sum: number; count: number }>();
 const cityScores: Array<{ city: string; score: number }> = [];
 const failures: Array<{ city: string; message: string }> = [];
+let timedOutCity: string | null = null;
 
 for (const [index, city] of cities.entries()) {
   process.stdout.write(`[${String(index + 1).padStart(2, '0')}/81] ${city} ... `);
@@ -126,7 +132,8 @@ for (const [index, city] of cities.entries()) {
     let airRaw: any = null;
     try {
       airRaw = await json(`${baseUrl}/weather/air-quality?lat=${lat}&lon=${lon}&lang=tr`);
-    } catch {
+    } catch (error) {
+      if (error instanceof RequestTimeoutError) throw error;
       airRaw = null;
     }
     await sleep(delayMs);
@@ -173,6 +180,11 @@ for (const [index, city] of cities.entries()) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     failures.push({ city, message });
+    if (error instanceof RequestTimeoutError) {
+      timedOutCity = city;
+      console.log('BLOCKED (' + message + ')');
+      break;
+    }
     console.log(`FAIL ${message}`);
   }
 }
@@ -205,6 +217,10 @@ console.log(
 if (failures.length) {
   console.log(`Failures: ${failures.length}`);
   failures.forEach(f => console.log(`- ${f.city}: ${f.message}`));
-  process.exit(1);
+  if (timedOutCity) {
+    console.log('RESULT: BLOCKED (request timeout at ' + timedOutCity + ')');
+  }
+  process.exitCode = 1;
+} else {
+  console.log('RESULT: PASS 81/81 decision plans + 486 activity plans');
 }
-console.log('RESULT: PASS 81/81 decision plans + 486 activity plans');
