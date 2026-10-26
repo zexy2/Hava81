@@ -1,6 +1,8 @@
 import type { HourlyForecast } from '../../types';
+import { RAIN_LIKELY_PROBABILITY, RAIN_POSSIBLE_MM } from './thresholds';
 
-export type NextChangeKind = 'rainStarts' | 'rainStops' | 'warmer' | 'cooler' | 'steady' | 'unavailable';
+export type NextChangeKind =
+  'rainStarts' | 'rainStops' | 'warmer' | 'cooler' | 'steady' | 'unavailable';
 
 export interface NextChange {
   kind: NextChangeKind;
@@ -10,20 +12,22 @@ export interface NextChange {
   temp: number | null;
 }
 
-const RAIN_POP = 0.4;
 const TEMP_STEP = 3;
 
-/** Use either valid forecast signal; missing/invalid rain evidence stays unknown. */
+/**
+ * Use either valid forecast signal; missing/invalid rain evidence stays unknown. "Wet" reads the
+ * shared thresholds: the umbrella-"yes" probability, or a measurable forecast amount, so the
+ * "rain starts" line and the umbrella advice cannot disagree about the same hour.
+ */
 const rainStateForHour = (hour: HourlyForecast): boolean | undefined => {
-  const hasValidProbability =
-    Number.isFinite(hour.pop) && hour.pop >= 0 && hour.pop <= 1;
+  const hasValidProbability = Number.isFinite(hour.pop) && hour.pop >= 0 && hour.pop <= 1;
   const hasValidAmount =
     Number.isFinite(hour.precipitationMm) && (hour.precipitationMm as number) >= 0;
   if (!hasValidProbability && !hasValidAmount) return undefined;
 
   return (
-    (hasValidProbability && hour.pop >= RAIN_POP) ||
-    (hasValidAmount && (hour.precipitationMm as number) > 0)
+    (hasValidProbability && hour.pop >= RAIN_LIKELY_PROBABILITY) ||
+    (hasValidAmount && (hour.precipitationMm as number) >= RAIN_POSSIBLE_MM)
   );
 };
 

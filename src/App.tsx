@@ -36,6 +36,7 @@ const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail')
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const ComparePanel = lazy(() => import('./components/hava81/ComparePanel'));
 const ActivityPlanner = lazy(() => import('./components/hava81/ActivityPlanner'));
+const DayOutlookPanel = lazy(() => import('./components/hava81/DayOutlookPanel'));
 const ContextSignalsPanel = lazy(() => import('./components/hava81/ContextSignalsPanel'));
 const DeferredDecisionAlertsPanel = lazy(
   () => import('./components/app/DeferredDecisionAlertsPanel')
@@ -723,12 +724,26 @@ const App: React.FC = () => {
 
                   {hasOpenedPlan && forecast.hourly.length > 0 && (
                     <Suspense fallback={null}>
+                      <DayOutlookPanel
+                        weather={weather}
+                        hourly={forecast.hourly}
+                        airQuality={freshAirQuality}
+                        airQualityHourly={freshAirQualityHourly}
+                        contextSignals={forecast.contextSignals}
+                        forecastMeta={forecast.displayMeta ?? forecast.meta}
+                      />
+                    </Suspense>
+                  )}
+
+                  {hasOpenedPlan && forecast.hourly.length > 0 && (
+                    <Suspense fallback={null}>
                       <ActivityPlanner
                         weather={weather}
                         hourly={forecast.hourly}
                         airQuality={freshAirQuality}
                         airQualityHourly={freshAirQualityHourly}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
+                        contextSignals={forecast.contextSignals}
                       />
                     </Suspense>
                   )}

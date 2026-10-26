@@ -243,6 +243,15 @@ export const en = {
       dailyRange: 'High {{high}}{{unit}}, low {{low}}{{unit}}',
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },
+    outlook: {
+      title: 'Coming days',
+      intentLabel: 'For which plan?',
+      general: 'General',
+      window: 'Best {{start}}–{{end}}',
+      noWindow: 'No suitable window',
+      confidence: { medium: 'forecast', low: 'uncertain forecast' },
+      note: 'Same decision engine: each day is judged on its own hours only. Forecasts further out can change.',
+    },
     compare: {
       emptyTitle: 'Two cities, one clear choice',
       emptyTip:
@@ -261,6 +270,10 @@ export const en = {
       partialStale:
         'Some city data is no longer fresh or could not update; only current results are shown.',
       winnerLabel: 'Leading under these weather criteria',
+      dayWinnerLabel: 'Leading on {{day}} under these weather criteria',
+      dayLabel: 'Which day?',
+      next12: 'Next 12 hours',
+      dayRisk: 'Main factor of the day',
       winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       tieLabel: 'Tied under these weather criteria',
       tie: '{{cities}} · Hava81 {{score}}/100',
@@ -293,6 +306,20 @@ export const en = {
       },
       bestWindow: 'Best-looking weather time in the next 12 hours: {{time}}',
       bestRange: 'Best-looking weather range in the next 12 hours: {{start}}–{{end}}',
+      scoreRange: 'Depends on the rain: {{low}} if it rains, {{high}} if it stays dry.',
+      why: {
+        thermal:
+          'Why this range? Around {{time}} it feels like {{worst}}{{unit}}, here {{best}}{{unit}}.',
+        precipitation:
+          'Why this range? Around {{time}} the rain chance is {{worst}}%, here {{best}}%.',
+        'precipitation-mm':
+          'Why this range? Around {{time}} {{worst}} mm of rain is expected, here {{best}} mm.',
+        wind: 'Why this range? Around {{time}} wind reaches {{worst}} {{unit}}, here {{best}} {{unit}}.',
+        uv: 'Why this range? Around {{time}} UV is {{worst}}, here {{best}}.',
+        visibility: 'Why this range? Around {{time}} visibility is {{worst}} km, here {{best}} km.',
+        'air-quality': 'Why this range? Air quality is worse around {{time}}.',
+        'severe-weather': 'Why this range? Severe weather is expected around {{time}}.',
+      },
       quickLabel: 'Practical weather decisions',
       quick: {
         umbrella: {
@@ -356,6 +383,9 @@ export const en = {
         highUv: 'High UV',
         lowVisibility: 'Low visibility',
         severeWeather: 'Severe weather risk',
+        muggy: 'Muggy air',
+        dust: 'Saharan dust',
+        pollen: 'High pollen',
         clear: 'No material weather risk stands out',
       },
       safetyNote: 'Weather-based decision support only; it is not a safety guarantee.',
@@ -443,6 +473,8 @@ export const en = {
       },
       bestTime: 'Best weather time: {{time}}',
       bestRange: 'Best weather range: {{start}}–{{end}}',
+      fullDuration: 'Suitable for the full planned {{minutes}} minutes.',
+      alternatives: 'Other good windows: {{list}}',
       score: {
         default: '12-hour suitability',
         filtered: '{{start}}–{{end}} suitability',
@@ -486,6 +518,16 @@ export const en = {
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
       hourlyAqiSource:
         'Hourly air-quality outlook uses the {{source}} model. For unmatched hours, the current AQI is used only while fresh; if it is stale too, no AQI risk is inferred for that hour. This is modeled guidance, not an official warning.',
+      tolerance: {
+        label: 'Personal tolerance',
+        wind: 'Wind',
+        rain: 'Rain',
+        low: 'I mind it',
+        normal: 'Balanced',
+        high: "Doesn't bother me",
+        pollenAllergy: 'I have a pollen allergy',
+        note: 'These settings change the comfort score only; storm, strong-wind and heavy-rain limits are the same for everyone.',
+      },
       sensitivity: {
         label: 'Temperature sensitivity',
         cold: 'Sensitive to cold',

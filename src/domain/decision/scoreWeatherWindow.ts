@@ -70,7 +70,8 @@ const heatIndexC = (temperatureC: number, humidity: number): number => {
   const rh = clamp(humidity, 0, 100);
   const simple = 0.5 * (t + 61 + (t - 68) * 1.2 + rh * 0.094);
   const averaged = (simple + t) / 2;
-  if (averaged < 80) return temperatureC;
+  // NWS: below 80 °F the simple Steadman formula is the heat index, not the raw temperature.
+  if (averaged < 80) return ((simple - 32) * 5) / 9;
 
   let hi =
     -42.379 +
@@ -118,14 +119,21 @@ const addImpact = (impacts: ScoreFactorImpact[], factor: Hava81ScoreFactor, pena
   if (penalty >= 0.5) impacts.push({ factor, penalty: Math.round(penalty * 10) / 10 });
 };
 
-const thermalPenalty = (apparent: number) => {
+/**
+ * Thermal penalty in two parts so intent profiles can replace the general comfort centre with
+ * their own comfort range without counting comfort twice: `centre` is the gentle distance from
+ * 22 °C, `stress` is the heat/cold stress curve that every intent shares.
+ */
+export const thermalComponents = (apparent: number) => {
   // Keep 100 for genuinely near-ideal comfort instead of treating the broad 18–25°C
   // range as equally perfect. The gentle centre-distance penalty creates useful
   // hour-to-hour separation while preserving the previous extreme-heat/cold ceiling.
-  const comfort = 4 * smoothstep(Math.abs(apparent - 22), 0, 4);
-  if (apparent > 25) return comfort + 54 * smoothstep(apparent, 25, 43);
-  if (apparent < 18) return comfort + 51 * smoothstep(18 - apparent, 0, 28);
-  return comfort;
+  const centre = 4 * smoothstep(Math.abs(apparent - 22), 0, 4);
+  if (apparent > 25)
+    return { centre, stress: 54 * smoothstep(apparent, 25, 43), side: 'heat' as const };
+  if (apparent < 18)
+    return { centre, stress: 51 * smoothstep(18 - apparent, 0, 28), side: 'cold' as const };
+  return { centre, stress: 0, side: 'none' as const };
 };
 
 const precipitationPenalty = (probability?: number, amount?: number) => {
@@ -139,7 +147,9 @@ const precipitationPenalty = (probability?: number, amount?: number) => {
   // Give probability enough weight to distinguish a dry-looking 15% hour from a 35–50%
   // “may rain” hour, while measured accumulation still carries the larger penalty.
   const chancePart = 20 * smoothstep(pop, 0.12, 0.75);
-  const amountPart = 30 * smoothstep(mm, 0.2, 6) * (0.55 + 0.45 * pop);
+  // An unknown probability is not a 0% chance: a forecast amount alone is full rain evidence.
+  const amountConfidence = hasProbability ? 0.55 + 0.45 * pop : 1;
+  const amountPart = 30 * smoothstep(mm, 0.2, 6) * amountConfidence;
   return Math.min(38, chancePart + amountPart);
 };
 
@@ -170,14 +180,95 @@ const visibilityPenalty = (visibility?: number) => {
   return 24 * smoothstep(5000 - meters, 0, 4800);
 };
 
-const severeWeatherPenalty = (weatherCode?: number) => {
+/**
+ * One WMO code table for the score, the reason codes and the plan-engine gates.
+ * `covers` names the measured signal that already describes the same phenomenon: the code only
+ * adds pressure when that signal is missing, so fog or a downpour is not counted twice.
+ */
+const WMO_SEVERITY: Readonly<
+  Record<number, { penalty: number; covers?: 'visibility' | 'precipitation' }>
+> = {
+  // Hail thunderstorms, freezing rain and dense freezing drizzle: ice/hail hazard.
+  96: { penalty: 28 },
+  99: { penalty: 28 },
+  66: { penalty: 28 },
+  67: { penalty: 28 },
+  57: { penalty: 28 },
+  // Lightning, light freezing drizzle and heavy snow are hazards beyond the rain amount.
+  95: { penalty: 20 },
+  56: { penalty: 20 },
+  75: { penalty: 20 },
+  86: { penalty: 20 },
+  // Heavy rain / violent showers: the measured amount already carries this risk.
+  65: { penalty: 20, covers: 'precipitation' },
+  82: { penalty: 20, covers: 'precipitation' },
+  73: { penalty: 14 },
+  85: { penalty: 12 },
+  71: { penalty: 8 },
+  77: { penalty: 8 },
+  // Fog: measured visibility already carries this risk.
+  45: { penalty: 6, covers: 'visibility' },
+  48: { penalty: 8, covers: 'visibility' },
+};
+
+/** Codes at or above this penalty are named `severe-weather` and block plan recommendations. */
+export const SEVERE_WEATHER_PENALTY = 20;
+
+export const wmoSeverityPenalty = (weatherCode?: number): number => {
   if (!Number.isFinite(weatherCode)) return 0;
-  const code = weatherCode as number;
-  if ([96, 99, 66, 67].includes(code)) return 28;
-  if ([95, 75, 82, 86].includes(code)) return 20;
-  if ([71, 73, 77, 85].includes(code)) return 10;
-  if ([45, 48].includes(code)) return 6;
-  return 0;
+  return WMO_SEVERITY[weatherCode as number]?.penalty ?? 0;
+};
+
+const severeWeatherPenalty = (
+  weatherCode: number | undefined,
+  evidence: { visibility: boolean; precipitationMm: boolean }
+) => {
+  if (!Number.isFinite(weatherCode)) return 0;
+  const entry = WMO_SEVERITY[weatherCode as number];
+  if (!entry) return 0;
+  if (entry.covers && evidence[entry.covers === 'visibility' ? 'visibility' : 'precipitationMm']) {
+    return 0;
+  }
+  return entry.penalty;
+};
+
+export interface SafetyCapInput {
+  apparentTemperature: number;
+  precipitationMm?: number;
+  windSpeed: number;
+  windGust?: number;
+  airQualityIndex?: number;
+  weatherCode?: number;
+}
+
+/**
+ * Absolute ceilings shared by the general score and every intent score. Intent weights tune
+ * comfort, never these limits, so a softened factor cannot make a dangerous hour look fine.
+ */
+export const applySafetyCaps = (
+  score: number,
+  input: SafetyCapInput,
+  /** The plan does not keep a person outside in the heat (hanging laundry); other caps stay. */
+  options: { heatExposure?: boolean } = {}
+): number => {
+  const limits = HAVA81_ABSOLUTE_SAFETY_LIMITS;
+  const { apparentTemperature: apparent } = input;
+  const heatExposure = options.heatExposure ?? true;
+  let capped = score;
+  if (heatExposure && apparent >= limits.extremeHeatApparentC) capped = Math.min(capped, 30);
+  else if (heatExposure && apparent >= 40) capped = Math.min(capped, 45);
+  if (apparent <= limits.extremeColdApparentC) capped = Math.min(capped, 20);
+  else if (apparent <= -10) capped = Math.min(capped, 35);
+  if ((input.precipitationMm ?? 0) >= limits.heavyPrecipitationMm) capped = Math.min(capped, 35);
+  if (
+    input.windSpeed >= limits.extremeWindSpeedMs ||
+    (input.windGust ?? 0) >= limits.extremeWindGustMs
+  ) {
+    capped = Math.min(capped, 30);
+  }
+  if ((input.airQualityIndex ?? 0) >= limits.veryPoorAqiIndex) capped = Math.min(capped, 45);
+  if (wmoSeverityPenalty(input.weatherCode) >= 28) capped = Math.min(capped, 25);
+  return capped;
 };
 
 export const scoreWeatherWindow = ({
@@ -202,26 +293,35 @@ export const scoreWeatherWindow = ({
   const validPrecipitationMm = isValidPrecipitationAmount(precipitationMm)
     ? precipitationMm
     : undefined;
-  const apparent = resolveApparentTemperature({
+  // Required fields can still arrive broken from a provider; never let NaN reach the score.
+  const temperatureKnown = Number.isFinite(temperature);
+  const wind = Number.isFinite(windSpeed) && windSpeed >= 0 ? windSpeed : 0;
+  const gust = Number.isFinite(windGust) && (windGust as number) >= 0 ? windGust : undefined;
+  const resolved = resolveApparentTemperature({
     temperature,
     apparentTemperature,
     humidity,
-    windSpeed,
+    windSpeed: wind,
   });
+  const apparent = Number.isFinite(resolved) ? resolved : 22;
   const impacts: ScoreFactorImpact[] = [];
   const reasons: DecisionReasonCode[] = [];
 
-  const thermal = thermalPenalty(apparent);
+  const thermalParts = thermalComponents(apparent);
+  const thermal = Number.isFinite(resolved) ? thermalParts.centre + thermalParts.stress : 0;
   const rain = precipitationPenalty(validPrecipitationProbability, validPrecipitationMm);
-  const wind = windPenalty(windSpeed, windGust);
+  const windRiskPenalty = windPenalty(wind, gust);
   const air = airQualityPenalty(airQualityIndex);
   const uv = uvPenalty(uvIndex);
   const visibilityRisk = visibilityPenalty(visibility);
-  const severe = severeWeatherPenalty(weatherCode);
+  const severe = severeWeatherPenalty(weatherCode, {
+    visibility: Number.isFinite(visibility),
+    precipitationMm: validPrecipitationMm !== undefined,
+  });
 
   addImpact(impacts, 'thermal', thermal);
   addImpact(impacts, 'precipitation', rain);
-  addImpact(impacts, 'wind', wind);
+  addImpact(impacts, 'wind', windRiskPenalty);
   addImpact(impacts, 'air-quality', air);
   addImpact(impacts, 'uv', uv);
   addImpact(impacts, 'visibility', visibilityRisk);
@@ -236,9 +336,9 @@ export const scoreWeatherWindow = ({
   if (rainRisk === 'likely') reasons.push('heavy-rain');
   else if (rainRisk === 'possible') reasons.push('rain-risk');
 
-  const windRisk = windLevel(windSpeed, windGust);
+  const windRisk = windLevel(wind, gust);
   if (windRisk === 'strong') reasons.push('strong-wind');
-  else if ((windGust ?? 0) >= WIND_CAUTION_GUST) reasons.push('gusty-wind');
+  else if ((gust ?? 0) >= WIND_CAUTION_GUST) reasons.push('gusty-wind');
   else if (windRisk === 'caution') reasons.push('windy');
 
   const airRisk = airLevel(airQualityIndex);
@@ -246,40 +346,27 @@ export const scoreWeatherWindow = ({
   else if (airRisk === 'sensitive') reasons.push('sensitive-air-quality');
   if ((uvIndex ?? 0) >= 6) reasons.push('high-uv');
   if ((visibility ?? Number.POSITIVE_INFINITY) < 2000) reasons.push('low-visibility');
-  if (severe >= 20) reasons.push('severe-weather');
+  if (wmoSeverityPenalty(weatherCode) >= SEVERE_WEATHER_PENALTY) reasons.push('severe-weather');
 
-  const materialRisks = [thermal, rain, wind, air, uv, visibilityRisk, severe].filter(
+  const materialRisks = [thermal, rain, windRiskPenalty, air, uv, visibilityRisk, severe].filter(
     value => value >= 8
   ).length;
   const compound = materialRisks >= 2 ? Math.min(12, (materialRisks - 1) * 4) : 0;
   addImpact(impacts, 'compound', compound);
 
   let score = clampScore(
-    100 - (thermal + rain + wind + air + uv + visibilityRisk + severe + compound)
+    100 - (thermal + rain + windRiskPenalty + air + uv + visibilityRisk + severe + compound)
   );
-
-  if (apparent >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeHeatApparentC) {
-    score = Math.min(score, 30);
-  } else if (apparent >= 40) {
-    score = Math.min(score, 45);
-  }
-  if (apparent <= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeColdApparentC) {
-    score = Math.min(score, 20);
-  } else if (apparent <= -10) {
-    score = Math.min(score, 35);
-  }
-  if ((validPrecipitationMm ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.heavyPrecipitationMm) {
-    score = Math.min(score, 35);
-  }
-  if (
-    windSpeed >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeWindSpeedMs ||
-    (windGust ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.extremeWindGustMs
-  )
-    score = Math.min(score, 30);
-  if ((airQualityIndex ?? 0) >= HAVA81_ABSOLUTE_SAFETY_LIMITS.veryPoorAqiIndex) {
-    score = Math.min(score, 45);
-  }
-  if (severe >= 28) score = Math.min(score, 25);
+  score = applySafetyCaps(score, {
+    apparentTemperature: apparent,
+    precipitationMm: validPrecipitationMm,
+    windSpeed: wind,
+    windGust: gust,
+    airQualityIndex,
+    weatherCode,
+  });
+  // An hour without a temperature is incomplete evidence, never an ideal hour.
+  if (!temperatureKnown || !Number.isFinite(resolved)) score = Math.min(score, 89);
 
   // Missing rain evidence is not evidence of dry weather. Keep an otherwise ideal-looking
   // hour out of the excellent band until at least probability or measured amount is known.
@@ -297,10 +384,22 @@ export const scoreWeatherWindow = ({
     band: getScoreBand(score),
     temperature,
     apparentTemperature: Math.round(apparent * 10) / 10,
+    penalties: {
+      thermal,
+      thermalCentre: Number.isFinite(resolved) ? thermalParts.centre : 0,
+      thermalStress: Number.isFinite(resolved) ? thermalParts.stress : 0,
+      precipitation: rain,
+      wind: windRiskPenalty,
+      airQuality: air,
+      uv,
+      visibility: visibilityRisk,
+      severeWeather: severe,
+      compound,
+    },
     precipitationProbability: validPrecipitationProbability,
     precipitationMm: validPrecipitationMm,
-    windSpeed,
-    windGust,
+    windSpeed: wind,
+    windGust: gust,
     humidity,
     uvIndex,
     visibility,

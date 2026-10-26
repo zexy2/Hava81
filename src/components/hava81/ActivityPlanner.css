@@ -1168,3 +1168,64 @@
     }
   }
 }
+
+@layer components {
+  /* Kişisel tolerans: açık zeminde, saat aralığı bölümüyle aynı dil. */
+  .app .activity-planner__personal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: clamp(0.95rem, 2vw, 1.4rem);
+    border: 1px solid var(--activity-line);
+    border-radius: var(--radius-md);
+    background: var(--activity-surface);
+    color: var(--activity-ink);
+  }
+
+  .app .activity-planner__tolerance {
+    display: grid;
+    flex: 1 1 10rem;
+    gap: 0.35rem;
+    min-width: 0;
+    font-weight: 600;
+  }
+
+  .app .activity-planner__tolerance select {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 0 0.6rem;
+    border: 1px solid var(--activity-line);
+    border-radius: var(--radius-sm);
+    background: var(--color-atlas-paper);
+    color: var(--activity-ink);
+    font: inherit;
+  }
+
+  .app .activity-planner__allergy {
+    display: inline-flex;
+    flex: 1 1 12rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* The visible box stays small; the label row and the enlarged input give a 44px target. */
+  .app .activity-planner__allergy input {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    accent-color: var(--color-aegean-deep);
+    cursor: pointer;
+  }
+
+  .app .activity-planner__tolerance-note {
+    flex: 1 1 100%;
+    color: var(--activity-muted);
+    overflow-wrap: anywhere;
+  }
+}

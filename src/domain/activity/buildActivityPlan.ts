@@ -1,11 +1,35 @@
-import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  ContextSignals,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
-import { europeanAqiToOpenWeatherIndex } from '../../utils/airQuality';
-import { isRecommendableHour } from '../decision/eligibility';
+import {
+  aggregateHorizonScore,
+  dropElapsedSlots,
+  forecastCadenceMs,
+  rainScenarioRange,
+  rainUncertainty,
+  weightHorizonSlots,
+} from '../decision/aggregateHorizon';
+import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
 import { findBestWindowRange } from '../decision/bestWindowRange';
-import { AQI_POOR, rainLevel } from '../decision/thresholds';
-import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
-import type { DecisionReasonCode } from '../decision/types';
+import { explainWindow } from '../decision/explain';
+import { getScoreBand } from '../decision/scoreWeatherWindow';
+import type { DecisionReasonCode, Hava81ScoreFactor, ScoreFactorImpact } from '../decision/types';
+import { findWindows } from '../plan/findWindows';
+import { PLAN_PROFILES } from '../plan/profiles';
+import { scoreHour } from '../plan/scoreHour';
+import type {
+  PersonalTolerance,
+  PlanGateReason,
+  PlanHourScore,
+  PlanPenalties,
+  PlanWindow,
+} from '../plan/types';
+import type { BestWindowRange } from '../decision/types';
 import type {
   ActivityKind,
   ActivityPlan,
@@ -15,212 +39,18 @@ import type {
 
 const HOUR_MS = 60 * 60 * 1000;
 const HORIZON_HOURS = 12;
+/** Gates about the time of day, not the weather. */
+const TIME_GATES: ReadonlySet<PlanGateReason> = new Set<PlanGateReason>([
+  'daylight-required',
+  'outside-active-hours',
+]);
 
+/** Comfort ranges shown in the UI; the plan profiles are the single source. */
 export const ACTIVITY_COMFORT_RANGES_C: Partial<Record<ActivityKind, readonly [number, number]>> = {
-  walk: [12, 26],
-  run: [10, 22],
-  picnic: [16, 27],
-  children: [14, 25],
-};
-const clamp = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
-const unit = (value: number) => Math.max(0, Math.min(1, value));
-const smoothstep = (value: number, start: number, end: number) => {
-  const t = unit((value - start) / (end - start));
-  return t * t * (3 - 2 * t);
-};
-
-interface ActivityAdjustmentInput {
-  activity: ActivityKind;
-  temperature: number;
-  pop?: number;
-  precipitationMm?: number;
-  wind?: number;
-  gust?: number;
-  aqi?: number;
-  humidity?: number;
-  uvIndex?: number;
-  visibility?: number;
-  sensitivity: TemperatureSensitivity;
-}
-
-const rainExposure = (pop?: number, precipitationMm?: number) => {
-  const chance = Number.isFinite(pop) ? smoothstep(pop as number, 0.15, 0.85) * 0.72 : 0;
-  const amount = Number.isFinite(precipitationMm)
-    ? smoothstep(precipitationMm as number, 0.1, 5)
-    : 0;
-  return Math.max(chance, amount);
-};
-
-const windExposure = (wind?: number, gust?: number) => {
-  const hasWind = Number.isFinite(wind);
-  const hasGust = Number.isFinite(gust);
-  if (!hasWind && !hasGust) return { effective: undefined, exposure: 0 };
-  const effective = Math.max(hasWind ? (wind as number) : 0, hasGust ? (gust as number) * 0.72 : 0);
-  return { effective, exposure: smoothstep(effective, 6, 18) };
-};
-
-const airExposure = (aqi?: number) => (Number.isFinite(aqi) ? smoothstep(aqi as number, 2, 5) : 0);
-
-const uvExposure = (uvIndex?: number) =>
-  Number.isFinite(uvIndex) ? smoothstep(uvIndex as number, 3, 11) : 0;
-
-const lowVisibilityExposure = (visibility?: number) =>
-  Number.isFinite(visibility) ? smoothstep(5000 - Math.max(0, visibility as number), 0, 4800) : 0;
-
-const activityAdjustment = ({
-  activity,
-  temperature,
-  pop,
-  precipitationMm,
-  wind,
-  gust,
-  aqi,
-  humidity,
-  uvIndex,
-  visibility,
-  sensitivity,
-}: ActivityAdjustmentInput) => {
-  let penalty = 0;
-  let benefit = 0;
-  const reasons: DecisionReasonCode[] = [];
-  const rain = rainExposure(pop, precipitationMm);
-  const hasRainSignal = Number.isFinite(pop) || Number.isFinite(precipitationMm);
-  const { effective: effectiveWind, exposure: windRisk } = windExposure(wind, gust);
-  const air = airExposure(aqi);
-  const uv = uvExposure(uvIndex);
-  const visibilityRisk = lowVisibilityExposure(visibility);
-  const heatShift = sensitivity === 'heat' ? -3 : sensitivity === 'cold' ? 2 : 0;
-  const coldShift = sensitivity === 'cold' ? 3 : sensitivity === 'heat' ? -2 : 0;
-
-  const addHeat = (start: number, end: number, maxPenalty: number) => {
-    const penaltyValue = maxPenalty * smoothstep(temperature, start + heatShift, end + heatShift);
-    penalty += penaltyValue;
-    if (penaltyValue >= 8)
-      reasons.push(temperature >= end + heatShift - 1 ? 'extreme-heat' : 'heat');
-  };
-  const addCold = (start: number, end: number, maxPenalty: number) => {
-    const penaltyValue = maxPenalty * smoothstep(start + coldShift - temperature, 0, start - end);
-    penalty += penaltyValue;
-    if (penaltyValue >= 7) reasons.push(temperature <= end + 1 ? 'freezing' : 'cold');
-  };
-  const addRain = (maxPenalty: number) => {
-    const penaltyValue = maxPenalty * rain;
-    penalty += penaltyValue;
-    if (penaltyValue >= 7)
-      reasons.push(rainLevel(pop, precipitationMm) === 'likely' ? 'heavy-rain' : 'rain-risk');
-  };
-  const addWind = (maxPenalty: number) => {
-    const penaltyValue = maxPenalty * windRisk;
-    penalty += penaltyValue;
-    if (penaltyValue >= 7) reasons.push((effectiveWind ?? 0) >= 13 ? 'strong-wind' : 'windy');
-  };
-  const addAir = (maxPenalty: number) => {
-    const penaltyValue = maxPenalty * air;
-    penalty += penaltyValue;
-    if (penaltyValue >= 7)
-      reasons.push((aqi ?? 0) >= AQI_POOR ? 'poor-air-quality' : 'sensitive-air-quality');
-  };
-  const addUv = (maxPenalty: number) => {
-    const penaltyValue = maxPenalty * uv;
-    penalty += penaltyValue;
-    if (penaltyValue >= 6) reasons.push('high-uv');
-  };
-
-  switch (activity) {
-    case 'run':
-      addHeat(24, 36, 22);
-      addCold(8, -5, 10);
-      addRain(14);
-      addWind(14);
-      addAir(20);
-      addUv(8);
-      if (
-        temperature >= 10 &&
-        temperature <= 22 &&
-        hasRainSignal &&
-        rain < 0.12 &&
-        effectiveWind !== undefined &&
-        effectiveWind < 7 &&
-        air < 0.2
-      ) {
-        benefit += 6;
-      }
-      break;
-    case 'walk':
-      addHeat(27, 38, 11);
-      addCold(7, -5, 7);
-      addRain(9);
-      addWind(8);
-      addAir(10);
-      addUv(5);
-      if (
-        temperature >= 12 &&
-        temperature <= 26 &&
-        hasRainSignal &&
-        rain < 0.18 &&
-        effectiveWind !== undefined &&
-        effectiveWind < 8
-      )
-        benefit += 4;
-      break;
-    case 'picnic':
-      addHeat(28, 39, 14);
-      addCold(10, 0, 12);
-      addRain(28);
-      addWind(22);
-      addAir(8);
-      addUv(9);
-      if (
-        temperature >= 16 &&
-        temperature <= 27 &&
-        hasRainSignal &&
-        rain < 0.08 &&
-        effectiveWind !== undefined &&
-        effectiveWind < 7
-      )
-        benefit += 7;
-      break;
-    case 'children':
-      addHeat(26, 37, 24);
-      addCold(10, 0, 15);
-      addRain(14);
-      addWind(13);
-      addAir(24);
-      addUv(13);
-      if (temperature >= 14 && temperature <= 25 && hasRainSignal && rain < 0.12 && air < 0.15)
-        benefit += 5;
-      break;
-    case 'motorcycle':
-      addHeat(34, 43, 8);
-      addCold(8, -3, 12);
-      addRain(34);
-      addWind(34);
-      if (visibilityRisk > 0) {
-        const penaltyValue = 22 * visibilityRisk;
-        penalty += penaltyValue;
-        if (penaltyValue >= 7) reasons.push('low-visibility');
-      }
-      break;
-    case 'laundry': {
-      addRain(42);
-      const humidityPenalty = Number.isFinite(humidity)
-        ? 18 * smoothstep(humidity as number, 65, 90)
-        : 0;
-      penalty += humidityPenalty;
-      if (effectiveWind !== undefined && effectiveWind >= 14) {
-        const strongWindPenalty = 14 * smoothstep(effectiveWind, 14, 25);
-        penalty += strongWindPenalty;
-        if (strongWindPenalty >= 6) reasons.push('strong-wind');
-      } else if (effectiveWind !== undefined && effectiveWind >= 2 && effectiveWind <= 9) {
-        benefit += 8;
-      }
-      if (temperature >= 18 && temperature <= 32) benefit += 8;
-      addCold(5, -5, 10);
-      break;
-    }
-  }
-
-  return { penalty, benefit, reasons: [...new Set(reasons)] };
+  walk: PLAN_PROFILES.walk.comfortRangeC,
+  run: PLAN_PROFILES.run.comfortRangeC,
+  picnic: PLAN_PROFILES.picnic.comfortRangeC,
+  children: PLAN_PROFILES.children.comfortRangeC,
 };
 
 export interface BuildActivityPlanInput {
@@ -233,7 +63,35 @@ export interface BuildActivityPlanInput {
   sensitivity?: TemperatureSensitivity;
   preferredStart?: string;
   preferredEnd?: string;
+  /** Clock used to drop forecast steps that already ended. UI callers pass the live clock. */
+  now?: Date;
+  /** Context signals (Open-Meteo); the fresh 24-hour dust and pollen peaks are used. */
+  contextSignals?: ContextSignals | null;
+  /** Personal wind / rain tolerance and pollen allergy. */
+  tolerance?: PersonalTolerance;
 }
+
+/** Context peaks cover the 24 hours after the fetch; outside that, or stale, they are unknown. */
+const contextPeakForSlot = (
+  signals: ContextSignals | null | undefined,
+  value: number | undefined,
+  time: Date,
+  nowMs: number
+) => {
+  if (!signals || !Number.isFinite(value)) return undefined;
+  if (!getOptionalEvidenceFreshness(signals, nowMs).fresh) return undefined;
+  const fetchedMs = signals.fetchedAt.getTime();
+  const slotMs = time.getTime();
+  return slotMs >= fetchedMs - HOUR_MS && slotMs < fetchedMs + 24 * HOUR_MS ? value : undefined;
+};
+
+/** The worse of the two seasonal pollens Open-Meteo reports for Türkiye (grass, olive). */
+const pollenPeak = (signals: ContextSignals | null | undefined) => {
+  const values = [signals?.grassPollenMax, signals?.olivePollenMax].filter(
+    (value): value is number => Number.isFinite(value)
+  );
+  return values.length ? Math.max(...values) : undefined;
+};
 
 const parseClockMinutes = (clock?: string): number | null => {
   if (!clock) return null;
@@ -247,49 +105,66 @@ const localClockMinutes = (date: Date, timezoneOffsetSeconds: number) => {
   return local.getUTCHours() * 60 + local.getUTCMinutes();
 };
 
+/** Start inclusive, end exclusive (09:00–12:00 ends before the 12:00 slot), like plan windows. */
 const clockInRange = (value: number, start: number, end: number) => {
   if (start === end) return value === start;
-  return start < end ? value >= start && value <= end : value >= start || value <= end;
+  return start < end ? value >= start && value < end : value >= start || value < end;
 };
 
-const weightedActivityScore = (slots: ActivityWindowScore[], horizonHours = HORIZON_HOURS) => {
-  if (!slots.length) return 0;
-  if (slots.length === 1) return slots[0].score;
+const impactFactors: ReadonlyArray<[keyof PlanPenalties, Hava81ScoreFactor]> = [
+  ['thermal', 'thermal'],
+  ['precipitation', 'precipitation'],
+  ['wind', 'wind'],
+  ['airQuality', 'air-quality'],
+  ['uv', 'uv'],
+  ['visibility', 'visibility'],
+  ['severeWeather', 'severe-weather'],
+  ['compound', 'compound'],
+];
 
-  const diffs = slots
-    .slice(1)
-    .map((slot, index) => (slot.time.getTime() - slots[index].time.getTime()) / HOUR_MS)
-    .filter(value => value > 0 && Number.isFinite(value))
-    .sort((a, b) => a - b);
-  const cadenceHours = diffs.length ? diffs[Math.floor(diffs.length / 2)] : 1;
-  const naturalEnd = slots[slots.length - 1].time.getTime() + cadenceHours * HOUR_MS;
-  const hardEnd = slots[0].time.getTime() + horizonHours * HOUR_MS;
-  const end = Math.min(naturalEnd, hardEnd);
-  const selected = slots.filter(slot => slot.time.getTime() < end);
-  if (!selected.length) return slots[0].score;
+const toImpacts = (penalties: PlanPenalties): ScoreFactorImpact[] =>
+  impactFactors
+    .map(([key, factor]) => ({
+      factor,
+      // Intent-only effects are shown with the family they belong to: drying power with
+      // moisture, mugginess with thermal comfort, dust and pollen with air quality.
+      penalty:
+        penalties[key] +
+        (key === 'precipitation' ? penalties.drying : 0) +
+        (key === 'thermal' ? penalties.muggy : 0) +
+        (key === 'airQuality' ? penalties.dust + penalties.pollen : 0),
+    }))
+    .filter(impact => impact.penalty >= 0.5)
+    .sort((a, b) => b.penalty - a.penalty);
 
-  const weighted = selected.map((slot, index) => {
-    const current = slot.time.getTime();
-    const next = selected[index + 1]?.time.getTime() ?? end;
-    return { slot, weight: Math.max(0.01, (Math.min(next, end) - current) / HOUR_MS) };
-  });
-  const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
-  const mean = weighted.reduce((sum, entry) => sum + entry.slot.score * entry.weight, 0) / total;
-  const downsideTarget = total * 0.25;
-  let remaining = downsideTarget;
-  let downsideSum = 0;
-  let downsideWeight = 0;
-  for (const entry of [...weighted].sort((a, b) => a.slot.score - b.slot.score)) {
-    if (remaining <= 0) break;
-    const used = Math.min(entry.weight, remaining);
-    downsideSum += entry.slot.score * used;
-    downsideWeight += used;
-    remaining -= used;
-  }
-  const downside = downsideWeight ? downsideSum / downsideWeight : mean;
-  return clamp(mean * 0.82 + downside * 0.18);
-};
+const toActivitySlot = (activity: ActivityKind, hour: PlanHourScore): ActivityWindowScore => ({
+  time: hour.time,
+  score: hour.score,
+  band: hour.band,
+  temperature: hour.temperature,
+  apparentTemperature: hour.apparentTemperature,
+  precipitationProbability: hour.precipitationProbability,
+  precipitationMm: hour.precipitationMm,
+  windSpeed: hour.windSpeed,
+  windGust: hour.windGust,
+  humidity: hour.humidity,
+  uvIndex: hour.uvIndex,
+  visibility: hour.visibility,
+  weatherCode: hour.weatherCode,
+  reasons: hour.reasons,
+  impacts: toImpacts(hour.penalties),
+  activity,
+  baselineScore: hour.baseScore,
+  activityReasons: hour.reasons.filter(reason => !hour.baseReasons.includes(reason)),
+  eligible: hour.eligible,
+  gateReasons: hour.gateReasons,
+});
 
+/**
+ * Activity plan on the single intent scorer (`plan/scoreHour`): one weighting model, one set of
+ * gates (daylight, active hours, rain/wind limits, safety), and the same 12-hour aggregation as
+ * the day plan.
+ */
 export const buildActivityPlan = ({
   activity,
   weather,
@@ -299,9 +174,16 @@ export const buildActivityPlan = ({
   sensitivity = 'balanced',
   preferredStart,
   preferredEnd,
+  now,
+  contextSignals,
+  tolerance,
 }: BuildActivityPlanInput): ActivityPlan => {
-  const source = [...hourly].sort((a, b) => a.time.getTime() - b.time.getTime()).slice(0, 48);
-  const points = source.length
+  const valid = [...hourly]
+    .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
+  const source = dropElapsedSlots(valid, now).slice(0, 48);
+  // Without hourly data only the current observation remains; rain stays unknown on purpose.
+  const points: HourlyForecast[] = source.length
     ? source
     : [
         {
@@ -309,98 +191,58 @@ export const buildActivityPlan = ({
           temp: weather.temperature,
           apparentTemperature: weather.feelsLike,
           humidity: weather.humidity,
-          pop: undefined,
-          precipitationMm: undefined,
+          pop: Number.NaN,
           windSpeed: weather.windSpeed,
-          windGust: undefined,
-          uvIndex: undefined,
           visibility: weather.visibility,
-          weatherCode: undefined,
+          icon: weather.icon,
+          description: weather.description,
         },
       ];
 
   // Prefer fresh, exact-hour European AQI. Never interpolate between AQI timestamps; when a
-  // matching hourly sample is unavailable, retain the existing fresh current-reading fallback.
-  // Laundry drying does not depend on air quality, so it keeps ignoring AQI.
-  const freshHourlyAirQuality =
-    airQualityHourly && getOptionalEvidenceFreshness(airQualityHourly.meta).fresh
-      ? airQualityHourly
-      : undefined;
-  const freshCurrentAirQuality =
-    airQuality &&
-    getOptionalEvidenceFreshness(airQuality.meta).fresh &&
-    Number.isInteger(airQuality.aqi) &&
-    airQuality.aqi >= 1 &&
-    airQuality.aqi <= 5
-      ? airQuality
-      : undefined;
-  const hourlyAqiByTime = new Map<number, number>();
-  for (const sample of freshHourlyAirQuality?.hours ?? []) {
-    if (!(sample.time instanceof Date) || !Number.isFinite(sample.time.getTime())) continue;
-    const riskIndex = europeanAqiToOpenWeatherIndex(sample.europeanAqi);
-    if (riskIndex !== undefined) hourlyAqiByTime.set(sample.time.getTime(), riskIndex);
-  }
-  const slots: ActivityWindowScore[] = points.map(point => {
-    const precipitationProbability = 'pop' in point ? point.pop : undefined;
-    const hourlyAqi = hourlyAqiByTime.get(point.time.getTime());
-    const airQualityIndex =
-      activity === 'laundry' ? undefined : hourlyAqi ?? freshCurrentAirQuality?.aqi;
-    const base = scoreWeatherWindow({
-      time: point.time,
-      temperature: point.temp,
-      apparentTemperature: point.apparentTemperature,
-      humidity: point.humidity,
-      precipitationProbability,
-      precipitationMm: point.precipitationMm,
-      windSpeed: point.windSpeed,
-      windGust: point.windGust,
-      airQualityIndex,
-      uvIndex: point.uvIndex,
-      visibility: point.visibility,
-      weatherCode: point.weatherCode,
-    });
-    const adj = activityAdjustment({
-      activity,
-      temperature: base.apparentTemperature,
-      pop: base.precipitationProbability,
-      precipitationMm: base.precipitationMm,
-      wind: point.windSpeed,
-      gust: point.windGust,
-      aqi: airQualityIndex,
-      humidity: point.humidity,
-      uvIndex: point.uvIndex,
-      visibility: point.visibility,
-      sensitivity,
-    });
-    // Activity comfort can only refund generic penalties that the activity genuinely benefits from.
-    // It must never erase unrelated AQI, UV, precipitation, visibility or severe-weather risk.
-    const reclaimablePenalty = base.impacts
-      .filter(
-        impact =>
-          impact.factor === 'thermal' || (activity === 'laundry' && impact.factor === 'wind')
-      )
-      .reduce((sum, impact) => sum + impact.penalty, 0);
-    const reclaimed = Math.min(adj.benefit, reclaimablePenalty);
-    const reasons = [...new Set([...base.reasons, ...adj.reasons])];
-    let score = clamp(base.score - adj.penalty + reclaimed);
-    if (reasons.length > 0) score = Math.min(score, 96);
-    // Activity-specific comfort benefits must not undo the base scorer's missing-rain cap.
-    // The UI explicitly says precipitation is unknown; do not let that hour become excellent.
-    const hasPrecipitationEvidence =
-      base.precipitationProbability !== undefined || base.precipitationMm !== undefined;
-    if (!hasPrecipitationEvidence) score = Math.min(score, 89);
-    return {
-      ...base,
-      activity,
-      baselineScore: base.score,
-      score,
-      band: getScoreBand(score),
-      activityReasons: adj.reasons,
-      reasons,
-    };
+  // matching hourly sample is unavailable, keep the fresh current-reading fallback. Laundry
+  // gives air quality zero weight in its profile.
+  const airQualityEvidence = getDailyPlanAirQualityEvidence({
+    forecastTimes: points.map(point => point.time),
+    airQuality,
+    airQualityHourly,
+    now: now?.getTime(),
   });
-
+  const scoringNow = now ?? new Date();
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
+  const scorePoint = (point: HourlyForecast) =>
+    scoreHour({
+      intent: activity,
+      point,
+      timezoneOffsetSeconds,
+      now: scoringNow,
+      airQualityIndexOverride:
+        airQualityEvidence.hourlyAqiByTime.get(point.time.getTime()) ??
+        airQualityEvidence.currentAirQuality?.aqi,
+      sensitivity,
+      dustUgM3: contextPeakForSlot(
+        contextSignals,
+        contextSignals?.dustMax,
+        point.time,
+        scoringNow.getTime()
+      ),
+      pollenGrainsM3: contextPeakForSlot(
+        contextSignals,
+        pollenPeak(contextSignals),
+        point.time,
+        scoringNow.getTime()
+      ),
+      tolerance,
+    });
+  const hourScores = points.map(scorePoint);
+  const slots = hourScores.map(hour => toActivitySlot(activity, hour));
+  const slotByHour = new Map<PlanHourScore, ActivityWindowScore>(
+    hourScores.map((hour, index) => [hour, slots[index]])
+  );
+  const hourBySlot = new Map<ActivityWindowScore, PlanHourScore>(
+    hourScores.map((hour, index) => [slots[index], hour])
+  );
+
   const startMinutes = parseClockMinutes(preferredStart);
   const endMinutes = parseClockMinutes(preferredEnd);
   const windowApplied =
@@ -408,56 +250,116 @@ export const buildActivityPlan = ({
       ? { start: preferredStart, end: preferredEnd }
       : undefined;
 
-  const defaultEnd = slots[0]?.time.getTime() + HORIZON_HOURS * HOUR_MS;
-  const defaultSlots = defaultEnd ? slots.filter(slot => slot.time.getTime() < defaultEnd) : slots;
-  const nextDayEnd = slots[0]?.time.getTime() + 24 * HOUR_MS;
-  const filteredSlots =
-    windowApplied && nextDayEnd
-      ? slots.filter(
-          slot =>
-            slot.time.getTime() < nextDayEnd &&
-            clockInRange(
-              localClockMinutes(slot.time, timezoneOffsetSeconds),
-              startMinutes!,
-              endMinutes!
-            )
-        )
-      : defaultSlots;
-  const evaluatedSlots = windowApplied ? filteredSlots : defaultSlots;
-
-  // Plan v3 Faz 0.3: dark hours never become the best time for picnic/children/laundry, and
-  // walk/run only consider 07–23 local. Scores and the timeline still include every hour.
-  const eligibleSlots = new WeakSet<ActivityWindowScore>(
-    slots.filter((slot, index) =>
-      isRecommendableHour(
-        {
-          time: slot.time,
-          isDay: 'isDay' in points[index] ? points[index].isDay : undefined,
-          icon: 'icon' in points[index] ? points[index].icon : undefined,
-        },
-        timezoneOffsetSeconds,
-        activity
-      )
-    )
+  const firstMs = slots[0].time.getTime();
+  const horizonHours = windowApplied ? 24 : HORIZON_HOURS;
+  const horizonEndMs = firstMs + horizonHours * HOUR_MS;
+  const evaluatedSlots = slots.filter(
+    slot =>
+      slot.time.getTime() < horizonEndMs &&
+      (!windowApplied ||
+        clockInRange(
+          localClockMinutes(slot.time, timezoneOffsetSeconds),
+          startMinutes!,
+          endMinutes!
+        ))
   );
-  const isEligible = (slot: ActivityWindowScore) => eligibleSlots.has(slot);
+
+  // Plan v3 Faz 0.3 + intent gates: dark hours never become the best picnic/children/laundry
+  // time, walk/run only consider 07–23 local, and unknown rain never becomes a laundry window.
+  // Every hour is still scored and shown on the timeline.
+  const isEligible = (slot: ActivityWindowScore) => slot.eligible === true;
   // Without a user-selected clock range, an evening search whose next 12 hours are all
   // ineligible (e.g. a winter picnic after sunset) looks at the next 24 hours instead of
   // showing no window at all.
+  const nextDayEndMs = firstMs + 24 * HOUR_MS;
   const candidateSlots =
-    !windowApplied && !evaluatedSlots.some(isEligible) && nextDayEnd
-      ? slots.filter(slot => slot.time.getTime() < nextDayEnd)
+    !windowApplied && !evaluatedSlots.some(isEligible)
+      ? slots.filter(slot => slot.time.getTime() < nextDayEndMs)
       : evaluatedSlots;
-  const bestWindowRange = findBestWindowRange(candidateSlots, undefined, isEligible);
-  const bestWindow = bestWindowRange?.peak;
-  const scoringHorizon = windowApplied ? 24 : HORIZON_HOURS;
-  const rawScore = weightedActivityScore(evaluatedSlots, scoringHorizon);
-  const baselineScore = weightedActivityScore(
-    evaluatedSlots.map(slot => ({ ...slot, score: slot.baselineScore })),
-    scoringHorizon
+  // A plan needs the whole activity, not one good clock tick: choose the best block in which
+  // every slot of the activity's duration is recommendable (a 2-hour picnic needs 2 dry hours).
+  // Sparse three-hourly data cannot prove a continuous block; it keeps the near-best range.
+  const durationMinutes = PLAN_PROFILES[activity].durationMinutes;
+  // A selected single instant ("18:00–18:00") asks about that moment, not a block.
+  const instantWindow = Boolean(windowApplied && startMinutes === endMinutes);
+  const blocksIn = (pool: ActivityWindowScore[]) =>
+    instantWindow
+      ? []
+      : findWindows(
+          pool.map(slot => hourBySlot.get(slot)!),
+          {
+            durationMinutes,
+            timezoneOffsetSeconds,
+            availability: windowApplied
+              ? { startTime: windowApplied.start, endTime: windowApplied.end }
+              : undefined,
+          }
+        );
+  // No full block in the next 12 hours (a 21:00 picnic with one bright hour before 09:00):
+  // the honest next answer is tomorrow's block, not "nothing".
+  let windowPool = candidateSlots;
+  let windows = blocksIn(windowPool);
+  if (!windows.length && !windowApplied) {
+    windowPool = slots.filter(slot => slot.time.getTime() < nextDayEndMs);
+    windows = blocksIn(windowPool);
+  }
+  const meanUncertainty = (window: PlanWindow) =>
+    window.slots.reduce((sum, slot) => sum + rainUncertainty(slot), 0) / window.slots.length;
+  // Equal scores: the more decided forecast first, then the earlier window.
+  const ranked = [...windows].sort(
+    (a, b) =>
+      b.score - a.score ||
+      meanUncertainty(a) - meanUncertainty(b) ||
+      a.start.getTime() - b.start.getTime()
   );
+  const toRange = (window: PlanWindow): BestWindowRange<ActivityWindowScore> => ({
+    start: slotByHour.get(window.slots[0])!,
+    end: slotByHour.get(window.slots[window.slots.length - 1])!,
+    endTime: window.end,
+    peak: slotByHour.get(window.peak)!,
+    tolerance: 0,
+  });
+  // With hourly data, "no block fits the whole activity" is the honest answer; a shorter range
+  // would promise a 2-hour picnic in a 1-hour gap.
+  const hourlyCadence =
+    !instantWindow && forecastCadenceMs(slots) <= 1.5 * HOUR_MS && slots.length > 1;
+  const bestWindowRange = ranked.length
+    ? toRange(ranked[0])
+    : hourlyCadence
+      ? undefined
+      : findBestWindowRange(candidateSlots, undefined, isEligible);
+  const alternativeWindows = ranked.slice(1, 3).map(toRange);
+  const bestWindow = bestWindowRange?.peak;
+
+  // Same rule as the day plan: the headline reads the hours of day this activity can use
+  // (daylight / active hours). Weather gates must stay in: a storm hour is not recommendable,
+  // but hiding it from the score would make a stormy day look perfect.
+  const usableTime = (slot: ActivityWindowScore) =>
+    !slot.gateReasons?.some(reason => TIME_GATES.has(reason));
+  const usableEvaluated = evaluatedSlots.filter(usableTime);
+  const scoringSlots = usableEvaluated.length ? usableEvaluated : evaluatedSlots;
+  const cadenceMs = forecastCadenceMs(slots);
+  const rawScore = aggregateHorizonScore(weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs));
+  const pointOf = new Map(slots.map((slot, index) => [slot, points[index]]));
+  const scoreRange = rainScenarioRange(
+    scoringSlots.map(slot => pointOf.get(slot)!),
+    point => scorePoint(point).score,
+    horizonEndMs,
+    cadenceMs
+  );
+  const baselineScore = aggregateHorizonScore(
+    weightHorizonSlots(
+      scoringSlots.map(slot => ({ time: slot.time, score: slot.baselineScore })),
+      horizonEndMs,
+      cadenceMs
+    )
+  );
+  // Compare against the hours of day the activity could use in the same search window.
+  const explanation = bestWindowRange
+    ? explainWindow(bestWindowRange, windowPool.filter(usableTime))
+    : undefined;
   const reasonCounts = new Map<DecisionReasonCode, number>();
-  evaluatedSlots.forEach(slot =>
+  scoringSlots.forEach(slot =>
     slot.reasons.forEach(reason => reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1))
   );
   const reasons = [...reasonCounts.entries()]
@@ -465,16 +367,20 @@ export const buildActivityPlan = ({
     .slice(0, 3)
     .map(([reason]) => reason);
   const score = reasons.length > 0 ? Math.min(rawScore, 96) : rawScore;
-  const activityImpact = score - baselineScore;
 
   return {
     activity,
     score,
     baselineScore,
-    activityImpact,
+    activityImpact: score - baselineScore,
     band: getScoreBand(score),
     bestWindow,
     bestWindowRange,
+    bestWindowScore: ranked[0]?.score,
+    alternativeWindows,
+    durationMinutes,
+    explanation,
+    scoreRange,
     slots,
     reasons,
     windowApplied,

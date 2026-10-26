@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDecisionSnapshot, next24hRange } from '../../domain/decision/decisionSnapshot';
 import { getWeatherDecisions } from '../../utils/weatherDecisions';
 import type { AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
@@ -24,6 +24,15 @@ const weather = {
 } as unknown as NormalizedWeatherData;
 
 describe('decision snapshot (Faz 1.1)', () => {
+  // The snapshot drops forecast steps that already ended, so pin the clock to the fixture.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(start));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('is computed once and shared across surfaces', () => {
     expect(getDecisionSnapshot({ weather, hourly })).toBe(getDecisionSnapshot({ weather, hourly }));
   });

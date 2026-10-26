@@ -4,7 +4,12 @@ import { getPlanSnapshot } from '../../domain/plan/planEngine';
 import { getPlanConfidence } from '../../domain/plan/confidence';
 import { scoreHour } from '../../domain/plan/scoreHour';
 import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
-import type { AirQuality, AirQualityHourly, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 import type { PlanHourScore, PlanPenalties } from '../../domain/plan/types';
 
 const NOW = new Date('2026-10-23T06:00:00.000Z');
@@ -49,6 +54,10 @@ const emptyPenalties: PlanPenalties = {
   uv: 0,
   visibility: 0,
   severeWeather: 0,
+  drying: 0,
+  muggy: 0,
+  dust: 0,
+  pollen: 0,
   compound: 0,
   comfort: 0,
   total: 0,
@@ -62,11 +71,13 @@ const scoredSlot = (
   intent: 'walk',
   time,
   score,
+  baseScore: score,
   band: getScoreBand(score),
   temperature: 20,
   apparentTemperature: 20,
   windSpeed: 2,
   reasons: [],
+  baseReasons: [],
   penalties: { ...emptyPenalties },
   eligible: true,
   gateReasons: [],
@@ -145,7 +156,7 @@ describe('Plan v3 absolute safety ceilings', () => {
 
   it('never gives the excellent band to a slot with a surfaced material risk', () => {
     const scored = scoreHour({
-      intent: 'laundry',
+      intent: 'walk',
       point: point(1, { uvIndex: 11 }),
       timezoneOffsetSeconds: OFFSET,
       now: NOW,
@@ -154,6 +165,18 @@ describe('Plan v3 absolute safety ceilings', () => {
     expect(scored.reasons).toContain('high-uv');
     expect(scored.score).toBeLessThanOrEqual(96);
     expect(scored.band).not.toBe('excellent');
+  });
+
+  it('does not treat strong sun as a laundry risk: sun dries laundry', () => {
+    const scored = scoreHour({
+      intent: 'laundry',
+      point: point(1, { uvIndex: 11 }),
+      timezoneOffsetSeconds: OFFSET,
+      now: NOW,
+    });
+
+    expect(scored.reasons).not.toContain('high-uv');
+    expect(scored.penalties.uv).toBe(0);
   });
 });
 

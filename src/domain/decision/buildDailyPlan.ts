@@ -6,8 +6,17 @@ import type {
 } from '../../types';
 import { getDailyPlanAirQualityEvidence } from './airQualityEvidence';
 import { findBestWindowRange } from './bestWindowRange';
+import { explainWindow } from './explain';
 import { isRecommendableHour } from './eligibility';
 import { airLevel, rainLevel, windLevel } from './thresholds';
+import {
+  aggregateHorizonScore,
+  dropElapsedSlots,
+  forecastCadenceMs,
+  rainScenarioRange,
+  weightHorizonSlots,
+  type WeightedHorizonSlot,
+} from './aggregateHorizon';
 import { getScoreBand, scoreWeatherWindow } from './scoreWeatherWindow';
 import type {
   AirQualityAdvice,
@@ -27,17 +36,14 @@ export interface BuildDailyPlanInput {
   hourly: HourlyForecast[];
   airQuality?: AirQuality;
   airQualityHourly?: AirQualityHourly;
+  /** Clock used to drop forecast steps that already ended. UI callers pass the live clock. */
+  now?: Date;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
 // One horizon for every Gün planı verdict (score, best window, now/later, umbrella, wind),
 // plan v3 Faz 0.5 (L6).
 const SCORE_HORIZON_HOURS = 12;
-
-interface WeightedSlot {
-  slot: ScoredWeatherWindow;
-  weightHours: number;
-}
 
 const byTime = <T extends { time: Date }>(a: T, b: T) => a.time.getTime() - b.time.getTime();
 
@@ -49,45 +55,9 @@ const withinHours = (slots: ScoredWeatherWindow[], hours: number) => {
   return selected.length ? selected : [first];
 };
 
-const buildWeightedSlots = (slots: ScoredWeatherWindow[], horizonHours: number): WeightedSlot[] => {
-  const selected = withinHours(slots, horizonHours);
-  const first = selected[0];
-  if (!first) return [];
-  if (selected.length === 1) return [{ slot: first, weightHours: horizonHours }];
-
-  const horizonEnd = first.time.getTime() + horizonHours * HOUR_MS;
-  return selected.map((slot, index) => {
-    const current = slot.time.getTime();
-    const next = selected[index + 1]?.time.getTime() ?? horizonEnd;
-    const effectiveEnd = Math.min(Math.max(next, current), horizonEnd);
-    return { slot, weightHours: Math.max(0.01, (effectiveEnd - current) / HOUR_MS) };
-  });
-};
-
-const weightedAverage = (entries: WeightedSlot[]) => {
-  const total = entries.reduce((sum, entry) => sum + entry.weightHours, 0);
-  if (total <= 0) return 0;
-  return entries.reduce((sum, entry) => sum + entry.slot.score * entry.weightHours, 0) / total;
-};
-
-const weightedDownsideAverage = (entries: WeightedSlot[], fraction = 0.25) => {
-  const totalWeight = entries.reduce((sum, entry) => sum + entry.weightHours, 0);
-  const targetWeight = Math.max(0.25, totalWeight * fraction);
-  let remaining = targetWeight;
-  let sum = 0;
-  let used = 0;
-
-  for (const entry of [...entries].sort((a, b) => a.slot.score - b.slot.score)) {
-    if (remaining <= 0) break;
-    const weight = Math.min(entry.weightHours, remaining);
-    sum += entry.slot.score * weight;
-    used += weight;
-    remaining -= weight;
-  }
-  return used > 0 ? sum / used : weightedAverage(entries);
-};
-
-const aggregateImpacts = (entries: WeightedSlot[]): ScoreFactorImpact[] => {
+const aggregateImpacts = (
+  entries: WeightedHorizonSlot<ScoredWeatherWindow>[]
+): ScoreFactorImpact[] => {
   const totalWeight = entries.reduce((sum, entry) => sum + entry.weightHours, 0);
   if (totalWeight <= 0) return [];
   const totals = new Map<Hava81ScoreFactor, number>();
@@ -121,11 +91,13 @@ const confidenceFor = (slots: ScoredWeatherWindow[]): ScoreConfidence => {
   // A rich payload without either rain probability or amount cannot support a high-confidence
   // outdoor recommendation: unknown precipitation must not silently count as dry.
   const richShare =
-    coverage.filter(({ richness, hasPrecipitationEvidence }) => hasPrecipitationEvidence && richness >= 6)
-      .length / slots.length;
+    coverage.filter(
+      ({ richness, hasPrecipitationEvidence }) => hasPrecipitationEvidence && richness >= 6
+    ).length / slots.length;
   const usefulShare =
-    coverage.filter(({ richness, hasPrecipitationEvidence }) => hasPrecipitationEvidence && richness >= 4)
-      .length / slots.length;
+    coverage.filter(
+      ({ richness, hasPrecipitationEvidence }) => hasPrecipitationEvidence && richness >= 4
+    ).length / slots.length;
   if (richShare >= 0.7) return 'high';
   if (usefulShare >= 0.5) return 'medium';
   return 'basic';
@@ -156,12 +128,19 @@ const pickWindAdvice = (slots: ScoredWeatherWindow[]): WindAdvice => {
   return level === 'strong' ? 'strong' : level === 'caution' ? 'caution' : 'normal';
 };
 
-const pickAirQualityAdvice = (airQuality?: AirQuality): AirQualityAdvice => {
-  const level = airLevel(airQuality?.aqi);
+/**
+ * The air-quality card describes the same horizon as the score: the worst known index among
+ * the current fresh reading and the exact-hour forecast values inside the horizon.
+ */
+const pickAirQualityAdvice = (slotAqi: readonly (number | undefined)[]): AirQualityAdvice => {
+  const known = slotAqi.filter((value): value is number => Number.isFinite(value));
+  if (!known.length) return 'unknown';
+  const worst = Math.max(...known);
+  const level = airLevel(worst);
   if (!level) return 'unknown';
   if (level === 'poor' || level === 'very-poor') return 'poor';
   if (level === 'sensitive') return 'sensitive';
-  return (airQuality?.aqi ?? 0) >= 2 ? 'fair' : 'good';
+  return worst >= 2 ? 'fair' : 'good';
 };
 
 const LATER_MIN_IMPROVEMENT = 10;
@@ -192,9 +171,9 @@ const buildNowOrLater = (
     };
   }
 
-  const { start, end, peak } = bestWindowRange;
+  const { start, endTime, peak } = bestWindowRange;
   const currentMs = current.time.getTime();
-  const containsCurrent = start.time.getTime() <= currentMs && currentMs <= end.time.getTime();
+  const containsCurrent = start.time.getTime() <= currentMs && currentMs < endTime.getTime();
   const improvement = peak.score - current.score;
   const goodNow = current.band === 'excellent' || current.band === 'good';
 
@@ -235,34 +214,45 @@ export const buildDailyPlan = ({
   hourly,
   airQuality,
   airQualityHourly,
+  now,
 }: BuildDailyPlanInput): DailyPlan => {
-  const source = [...hourly].sort(byTime).slice(0, 24);
+  const valid = [...hourly]
+    .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
+    .sort(byTime);
+  // "Now" must be the step in progress, never a cached hour that already ended.
+  const source = dropElapsedSlots(valid, now).slice(0, 24);
   const airQualityEvidence = getDailyPlanAirQualityEvidence({
     forecastTimes: source.length ? source.map(point => point.time) : [weather.timestamp],
     airQuality,
     airQualityHourly,
+    now: now?.getTime(),
   });
+  // Prefer a fresh exact-hour European AQI sample. The current reading is only a fallback
+  // while fresh; never interpolate timestamps or project stale evidence into future hours.
+  const slotAqi = source.length
+    ? source.map(
+        point =>
+          airQualityEvidence.hourlyAqiByTime.get(point.time.getTime()) ??
+          airQualityEvidence.currentAirQuality?.aqi
+      )
+    : [airQualityEvidence.currentAirQuality?.aqi];
+  const scorePoint = (point: HourlyForecast, airQualityIndex: number | undefined) =>
+    scoreWeatherWindow({
+      time: point.time,
+      temperature: point.temp,
+      apparentTemperature: point.apparentTemperature,
+      humidity: point.humidity,
+      precipitationProbability: point.pop,
+      precipitationMm: point.precipitationMm,
+      windSpeed: point.windSpeed,
+      windGust: point.windGust,
+      airQualityIndex,
+      uvIndex: point.uvIndex,
+      visibility: point.visibility,
+      weatherCode: point.weatherCode,
+    });
   const slots = source.length
-    ? source.map(point => {
-        // Prefer a fresh exact-hour European AQI sample. The current reading is only a fallback
-        // while fresh; never interpolate timestamps or project stale evidence into future hours.
-        return scoreWeatherWindow({
-          time: point.time,
-          temperature: point.temp,
-          apparentTemperature: point.apparentTemperature,
-          humidity: point.humidity,
-          precipitationProbability: point.pop,
-          precipitationMm: point.precipitationMm,
-          windSpeed: point.windSpeed,
-          windGust: point.windGust,
-          airQualityIndex:
-            airQualityEvidence.hourlyAqiByTime.get(point.time.getTime()) ??
-            airQualityEvidence.currentAirQuality?.aqi,
-          uvIndex: point.uvIndex,
-          visibility: point.visibility,
-          weatherCode: point.weatherCode,
-        });
-      })
+    ? source.map((point, index) => scorePoint(point, slotAqi[index]))
     : [
         scoreWeatherWindow({
           time: weather.timestamp,
@@ -270,18 +260,10 @@ export const buildDailyPlan = ({
           apparentTemperature: weather.feelsLike,
           humidity: weather.humidity,
           windSpeed: weather.windSpeed,
-          airQualityIndex: airQualityEvidence.currentAirQuality?.aqi,
+          airQualityIndex: slotAqi[0],
           visibility: weather.visibility,
         }),
       ];
-
-  const weighted = buildWeightedSlots(slots, SCORE_HORIZON_HOURS);
-  const meanScore = weightedAverage(weighted);
-  const downsideScore = weightedDownsideAverage(weighted);
-  let score = Math.round(meanScore * 0.78 + downsideScore * 0.22);
-  const minimumScore = Math.min(...weighted.map(entry => entry.slot.score));
-  if (minimumScore <= 25) score = Math.min(score, 55);
-  else if (minimumScore <= 40) score = Math.min(score, 65);
 
   // Plan v3 Faz 0.3: the general plan follows the walking rule (07–23 local). The fallback
   // single "now" slot (no hourly data) is not filtered.
@@ -297,12 +279,35 @@ export const buildDailyPlan = ({
       : slots
   );
   const isEligible = (slot: ScoredWeatherWindow) => eligibleSlots.has(slot);
-  const bestWindowRange = findBestWindowRange(
-    withinHours(slots, SCORE_HORIZON_HOURS),
-    undefined,
-    isEligible
+
+  const horizonSlots = withinHours(slots, SCORE_HORIZON_HOURS);
+  const horizonEndMs = slots[0].time.getTime() + SCORE_HORIZON_HOURS * HOUR_MS;
+  // The score answers "how good are the hours you could actually use?": it reads the same
+  // recommendable hours the best window is chosen from, so 03:00 cold cannot drag down an
+  // evening plan. Umbrella and wind advice keep every hour, because the walk home still counts.
+  const eligibleHorizon = horizonSlots.filter(isEligible);
+  const scoringSlots = eligibleHorizon.length ? eligibleHorizon : horizonSlots;
+  const cadenceMs = forecastCadenceMs(slots);
+  const weighted = weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs);
+  const score = aggregateHorizonScore(weighted);
+  // "Depends on the rain": the same scoring hours under both outcomes of the open showers.
+  const indexOf = new Map(slots.map((slot, index) => [slot, index]));
+  const scoringPoints = source.length
+    ? scoringSlots.map(slot => ({
+        ...source[indexOf.get(slot)!],
+        aqi: slotAqi[indexOf.get(slot)!],
+      }))
+    : [];
+  const scoreRange = rainScenarioRange(
+    scoringPoints,
+    point => scorePoint(point, point.aqi).score,
+    horizonEndMs,
+    cadenceMs
   );
+
+  const bestWindowRange = findBestWindowRange(horizonSlots, undefined, isEligible);
   const bestWindow = bestWindowRange?.peak;
+  const explanation = bestWindowRange ? explainWindow(bestWindowRange, scoringSlots) : undefined;
 
   return {
     score,
@@ -312,10 +317,12 @@ export const buildDailyPlan = ({
     bestWindowRange,
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
-    airQuality: pickAirQualityAdvice(airQualityEvidence.currentAirQuality),
+    airQuality: pickAirQualityAdvice(slotAqi.slice(0, horizonSlots.length)),
     nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible),
     impacts: aggregateImpacts(weighted),
     // Confidence must describe the same forecast horizon that contributes to the score.
     confidence: confidenceFor(weighted.map(entry => entry.slot)),
+    explanation,
+    scoreRange,
   };
 };

@@ -244,6 +244,15 @@ export const tr = {
       dailyRange: 'Yüksek {{high}}{{unit}}, düşük {{low}}{{unit}}',
       dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
+    outlook: {
+      title: 'Önümüzdeki günler',
+      intentLabel: 'Hangi plan için?',
+      general: 'Genel',
+      window: 'En uygun {{start}}–{{end}}',
+      noWindow: 'Uygun pencere yok',
+      confidence: { medium: 'tahmini', low: 'belirsiz tahmin' },
+      note: 'Aynı karar motoru: her gün yalnızca o günün saatleriyle değerlendirilir. Uzak günlerde tahmin değişebilir.',
+    },
     compare: {
       emptyTitle: 'İki şehir, tek karar',
       emptyTip:
@@ -264,6 +273,10 @@ export const tr = {
       partialStale:
         'Bazı şehirlerin verisi artık güncel değil veya güncellenemedi; yalnızca güncel sonuçlar gösteriliyor.',
       winnerLabel: 'Bu hava kriterlerinde öne çıkan',
+      dayWinnerLabel: '{{day}} için bu hava kriterlerinde öne çıkan',
+      dayLabel: 'Hangi gün?',
+      next12: 'Önümüzdeki 12 saat',
+      dayRisk: 'Günün başlıca etkeni',
       winner: '{{city}} · Hava81 {{score}}/100 · {{band}}',
       tieLabel: 'Bu hava kriterlerinde eşit',
       tie: '{{cities}} · Hava81 {{score}}/100',
@@ -296,6 +309,20 @@ export const tr = {
       },
       bestWindow: 'Hava açısından önümüzdeki 12 saatte en iyi görünen saat: {{time}}',
       bestRange: 'Hava açısından önümüzdeki 12 saatte en uygun görünen aralık: {{start}}–{{end}}',
+      scoreRange: 'Yağışa bağlı: yağarsa {{low}}, yağmazsa {{high}}.',
+      why: {
+        thermal:
+          'Neden bu aralık? {{time}} civarı hissedilen {{worst}}{{unit}}, bu aralıkta {{best}}{{unit}}.',
+        precipitation:
+          'Neden bu aralık? {{time}} civarı yağış ihtimali %{{worst}}, bu aralıkta %{{best}}.',
+        'precipitation-mm':
+          'Neden bu aralık? {{time}} civarı {{worst}} mm yağış bekleniyor, bu aralıkta {{best}} mm.',
+        wind: 'Neden bu aralık? {{time}} civarı rüzgâr {{worst}} {{unit}}, bu aralıkta {{best}} {{unit}}.',
+        uv: 'Neden bu aralık? {{time}} civarı UV {{worst}}, bu aralıkta {{best}}.',
+        visibility: 'Neden bu aralık? {{time}} civarı görüş {{worst}} km, bu aralıkta {{best}} km.',
+        'air-quality': 'Neden bu aralık? {{time}} civarı hava kalitesi daha zayıf.',
+        'severe-weather': 'Neden bu aralık? {{time}} civarı şiddetli hava bekleniyor.',
+      },
       quickLabel: 'Pratik hava kararları',
       quick: {
         umbrella: {
@@ -359,6 +386,9 @@ export const tr = {
         highUv: 'UV yüksek',
         lowVisibility: 'Görüş düşük',
         severeWeather: 'Şiddetli hava riski',
+        muggy: 'Bunaltıcı nem',
+        dust: 'Toz taşınımı',
+        pollen: 'Polen yüksek',
         clear: 'Belirgin hava riski görünmüyor',
       },
       safetyNote: 'Yalnız hava koşullarına dayalı karar desteğidir; güvenlik garantisi değildir.',
@@ -446,6 +476,8 @@ export const tr = {
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
       bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
+      fullDuration: 'Planlanan {{minutes}} dakikanın tamamı uygun koşullarda.',
+      alternatives: 'Diğer uygun aralıklar: {{list}}',
       score: {
         default: '12 saatlik uygunluk',
         filtered: '{{start}}–{{end}} uygunluğu',
@@ -490,6 +522,16 @@ export const tr = {
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
       hourlyAqiSource:
         'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+      tolerance: {
+        label: 'Kişisel tolerans',
+        wind: 'Rüzgâr',
+        rain: 'Yağmur',
+        low: 'Hassasım',
+        normal: 'Dengeli',
+        high: 'Sorun değil',
+        pollenAllergy: 'Polen alerjim var',
+        note: 'Bu ayarlar yalnızca konfor puanını değiştirir; fırtına, kuvvetli rüzgâr ve yoğun yağış sınırları herkes için aynıdır.',
+      },
       sensitivity: {
         label: 'Sıcaklık hassasiyeti',
         cold: 'Soğuğa hassasım',

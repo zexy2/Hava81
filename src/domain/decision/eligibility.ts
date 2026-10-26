@@ -21,11 +21,14 @@ const DAYLIGHT_ONLY: ReadonlySet<ActivityKind> = new Set<ActivityKind>([
 ]);
 const ACTIVE_HOURS_ONLY: ReadonlySet<ActivityKind> = new Set<ActivityKind>(['walk', 'run']);
 
-/** Daylight flag: API `isDay` first, then the icon's `d`/`n` suffix; unknown counts as day. */
+/**
+ * Daylight flag: API `isDay` first, then the icon's `d`/`n` suffix. Unknown is not daylight: a
+ * daylight-only plan (picnic, laundry) must not be recommended on evidence we do not have.
+ */
 export const isDaylightPoint = (point: { isDay?: boolean; icon?: string }): boolean => {
   if (typeof point.isDay === 'boolean') return point.isDay;
   if (typeof point.icon === 'string' && /[dn]$/.test(point.icon)) return !point.icon.endsWith('n');
-  return true;
+  return false;
 };
 
 export const localHourOf = (time: Date, timezoneOffsetSeconds: number): number =>

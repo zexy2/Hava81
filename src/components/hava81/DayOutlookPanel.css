@@ -1,0 +1,95 @@
+@layer components {
+  .day-outlook {
+    display: grid;
+    gap: 0.9rem;
+    min-width: 0;
+    padding: clamp(1.1rem, 2.3vw, 1.8rem);
+    color: var(--color-atlas-ink);
+    background: var(--color-atlas-paper);
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-md);
+  }
+
+  .day-outlook__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .day-outlook__header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+
+  .day-outlook__intents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .day-outlook__intents button {
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    color: var(--color-aegean-deep);
+    background: transparent;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: 999px;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .day-outlook__intents button[aria-pressed='true'] {
+    color: var(--color-atlas-paper);
+    background: var(--color-aegean-deep);
+    border-color: var(--color-aegean-deep);
+  }
+
+  .day-outlook__days {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .day-outlook__day {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 1fr) auto;
+    gap: 0.15rem 0.75rem;
+    min-width: 0;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .day-outlook__name {
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .day-outlook__score {
+    justify-self: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .day-outlook__score small,
+  .day-outlook__window,
+  .day-outlook__meta,
+  .day-outlook__note {
+    color: var(--color-atlas-muted);
+    font-weight: 400;
+  }
+
+  .day-outlook__window,
+  .day-outlook__meta {
+    grid-column: 1 / -1;
+    overflow-wrap: anywhere;
+  }
+
+  .day-outlook__note {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+}

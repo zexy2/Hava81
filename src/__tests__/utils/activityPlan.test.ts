@@ -70,7 +70,8 @@ describe('activity plans', () => {
   it('penalizes wind and rain strongly for motorcycle', () => {
     const points = hourly([22, 22, 22], [0.6, 0.5, 0.3], [13, 15, 12]);
     const plan = buildActivityPlan({ activity: 'motorcycle', weather, hourly: points });
-    expect(plan.score).toBeLessThan(40);
+    // Strong wind plus likely rain is a "difficult" ride, whatever the exact number.
+    expect(plan.band).toBe('difficult');
     expect(plan.reasons).toContain('strong-wind');
     expect(plan.reasons).toContain('heavy-rain');
   });
@@ -334,7 +335,10 @@ describe('activity plans', () => {
     ['over-range probability', { pop: 1.1, precipitationMm: undefined }],
     ['negative amount', { pop: undefined, precipitationMm: -0.1 }],
   ])('keeps activity scores out of the excellent band for %s', (_label, overrides) => {
-    const points = hourly([20, 20, 20]).map(point => ({ ...point, ...overrides })) as unknown as HourlyForecast[];
+    const points = hourly([20, 20, 20]).map(point => ({
+      ...point,
+      ...overrides,
+    })) as unknown as HourlyForecast[];
     const plan = buildActivityPlan({
       activity: 'walk',
       weather: { ...weather, temperature: 20, feelsLike: 20, windSpeed: 4 },
