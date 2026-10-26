@@ -30,6 +30,16 @@ export default tseslint.config(
     },
   },
   {
+    // The public service worker is a classic worker script, not a page or Node module.
+    // Use Service Worker Web API globals so no-undef catches real mistakes.
+    files: ['public/sw.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+      globals: { ...globals.serviceworker },
+    },
+  },
+  {
     // The live audit runs in Node but also evaluates browser-side callbacks in Playwright.
     files: ['scripts/audit-live-responsive.mjs', 'scripts/capture-visual-audit.mjs', 'scripts/lib/activate-deferred-forecast.mjs', 'scripts/test-live-audit-options.mjs'],
     languageOptions: {

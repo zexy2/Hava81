@@ -802,3 +802,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A `popstate` handler can synchronously clear the previous city's weather and start the requested city fetch before React flushes the metadata effect for the previous render. While that old payload is still present, derive canonical/alternate metadata from the explicit destination route instead of rewriting the address bar back to the stale city.
 - Keep the pending destination only until the matching city's weather arrives or the cleared-weather render commits. The existing integration regression `clears a different city payload before browser back/forward navigation` must pass; do not weaken its URL assertion or reuse the prior city's observation.
 - This is route/metadata concurrency protection only. Keep API requests, provider provenance, freshness windows, weather values, scoring, alerts, and safety guidance unchanged.
+
+## 2026-10-27 — Lint the public service worker as a classic worker
+
+- `public/sw.js` is production JavaScript but was excluded from the repository's `npm run lint` target. Include it in the lint command and give it a dedicated ESLint file config with `sourceType: 'script'` and `globals.serviceworker`.
+- Do not add Node or page globals to this file: the worker must be checked against the actual Service Worker Web API surface so undeclared identifiers are caught without false positives for `self`, `caches`, `clients`, `Request`, and `Response`.
+- This is a static-analysis coverage change only. The service-worker install/activation, navigation fallback, API network-only behavior, cache semantics, and weather freshness remain unchanged.
