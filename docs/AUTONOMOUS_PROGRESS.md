@@ -1,3 +1,85 @@
+# Current checkpoint — 2026-10-26 11:57 TRT (08:57 UTC)
+
+## Main and production (directly verified)
+- PR #1517 (`fix(ops): authenticate observer GitHub requests safely`) merged normally as main SHA `daa5319e1c432fa71f51b24218960ad76d91bfaf`.
+- Main CI/CD run #3706 (`40294986167`), Ops script contracts #445 (`40294986104`), and CodeQL #2486 (`40294986239`) succeeded for that exact SHA. Pages deployment #1161 (`40295324081`) also succeeded.
+- Public smoke at `2026-10-26T08:54Z`: `/`, `/izmir/`, and `/en/istanbul/` each returned HTTP 200 and embedded the exact main SHA `daa5319...`. API `/api/v1/health/ready` returned 200 and reported API runtime revision `295543ad98644d812e3808a2c67c64d769983130`; current İzmir weather returned 200; CORS preflight returned 204 with `Access-Control-Allow-Origin: https://hava81.zekiakgul.dev`.
+- Nginx still targets API port 4002; 4001 remains the rollback/canary. No API runtime files changed in #1517 and no API deployment or port switch was attempted.
+- `hava81-observer.timer` is **enabled and active**; its oneshot service being inactive between runs is expected. Observer snapshot `2026-10-26T08:50:09Z` reported production healthy and API deployment up to date; it is older than the post-deploy public smoke, so refresh it before any merge/deploy decision. Direct GitHub state confirms main run #3706 is green.
+- Root filesystem is about 93% used with ~7.4 GiB free. The observer reports `api_build_headroom_ok=false`; do not run an API build/deploy or change ports until the guard clears. The merged observer token support is optional and no GitHub token was provisioned or printed; anonymous fallback remains.
+
+## Active work and exact heads
+- **PR #1510 — location handoff race:** remote head at last direct read `935f2f1c67eb83ebd7f4104fa86db19f96294ab1`; rebased in isolated clone `/tmp/hava81-run11-work-20261026-0850` onto current main. Local rebased head is `8c6a6b3488d163b069f39faedb6745dc35133c92`. `npm ci`, lint, type-check, focused hook test (5/5), full frontend suite (115 files / 1,161 tests; 92.76% statements / 86.68% branches), and production build passed. First E2E attempt hit the existing shared preview on port 4173; no shared process was killed. E2E is rerunning on isolated port 4273 under SentinelX job `job_7bd47275c989`. Do not push until that job completes and the current remote head is re-read; then use explicit `--force-with-lease` expecting `935f2f1...`.
+- **PR #1514 — this checkpoint:** local branch `pr-1514` in `/tmp/hava81-progress-20261026-0855` was rebased onto `daa5319...` without dropping either historical checkpoint; pre-new-checkpoint local head `2caf679bccd397c64baa03bace4ff1888871aade`. This new top block is intentionally additive; all older checkpoint text remains below. Remote PR head before this update was `10e0cf719c7a5195183c08a0727e6e4aba95d31e`; the ref update is protected by an explicit expected-head lease.
+- **PRs #1511, #1512, #1513:** their old heads were `8f2d98340a97acd90eded65e048f4db0ca3872b5`, `b0cfb53f4c2dbade80410a5ac331b0d903daeaa4`, and `5c34fa02b5c04143014871c50ad5c70466c5cb23`. Their prior CI runs failed only at Lighthouse real-weather readiness while the old base was `f2fa714...`; do not weaken the gate. Main #3706 and PR #1517's run #3705 both passed the newer local-API/live-weather Lighthouse path. Rebase and rerun exact-head checks before considering these PRs.
+
+## Prioritized next queue
+1. Finish E2E on port 4273. If green, re-read PR #1510 head/mergeability and fresh observer; push the rebased head with explicit lease, then wait for exact-head CI/Ops/CodeQL and merge only when all are green.
+2. Rebase the independent locale-storage fix (#1512) onto current main in its own clone, run focused tests, and push with an explicit lease only after verifying its remote head.
+3. After #1510 merges, rebase #1513 onto the new main while preserving both the synchronous location-request cancellation and stale-location-error fix plus their tests. Rebase #1511 independently, preserving the fail-closed real-weather gate and its confirmation tests.
+4. Push the refreshed checkpoint branch only after confirming PR #1514's remote head is still `10e0cf719c7a5195183c08a0727e6e4aba95d31e`; require green exact-head CI/Ops/CodeQL before merge.
+5. For every merge, re-read the observer and current main SHA immediately before the action; verify main pipeline, Pages, public routes, API readiness/CORS and frontend/API revision parity afterwards. Continue independent work while external checks run.
+6. Keep the observer timer and automation enabled. Do not delete containers, volumes, worktrees or shared browser assets to reclaim disk; no API build/deploy until the disk headroom guard passes. Never invent weather, UV, health or safety information.
+
+---
+
+## Follow-up status — 2026-10-26 08:56 TRT (05:56 UTC)
+
+- `main` remains `f2fa7148daf89d7fbc6b0bb78671925f3ddc89d4`; no PR has been merged and no production mutation was made.
+- **PR #1510** head `935f2f1c67eb83ebd7f4104fa86db19f96294ab1`, CI/CD run `40275556255`: failed only at `Lighthouse budgets` real-API readiness. Browser, frontend quality, build, API test/build, Ops `40275556294`, and CodeQL `40275556330` succeeded.
+- **PR #1511** head `8f2d98340a97acd90eded65e048f4db0ca3872b5`, CI/CD run `40275997726`: failed only at Lighthouse readiness. Ops `40275997794`, CodeQL `40275997638`, browser, quality, build, and API tests succeeded. Artifact `12630411411` confirms both the first and confirmation reports lacked a successful current-weather response.
+- **PR #1512** head `b0cfb53f4c2dbade80410a5ac331b0d903daeaa4`, CI/CD run `40276270883`: failed only at Lighthouse readiness; Ops `40276270916`, CodeQL `40276270823`, browser, quality, build, and API tests succeeded.
+- **PR #1513** head `5c34fa02b5c04143014871c50ad5c70466c5cb23`, CI/CD run `40276407427`: failed only at Lighthouse readiness; Ops `40276407424`, CodeQL `40276407420`, browser, quality, build, and API tests succeeded.
+- **PR #1514** (this progress checkpoint) head `6710f55133c95aee4dd2123da5cbcd25fe57c49e`, CI/CD run `40276615465`: failed only at Lighthouse readiness; Ops script contracts and CodeQL succeeded. The checkpoint is present on its remote branch; this PR remains open pending a green full gate.
+- The common failing artifact signature remains a real `/api/v1/weather/current` request ending `statusCode=-1` after roughly 30 seconds. The latest repeat confirmation did not recover. SentinelX still reports `agent_offline`; Zeki SSH Gateway calls fail internally; sandbox DNS cannot resolve the Hava81 hostnames. Treat current production health and observer freshness as **unverified**, not healthy.
+- **No merge is authorized yet**: the required Lighthouse gate is red for all five current PRs, so do not bypass branch protection or rerun repeatedly against an apparently unavailable API. Wait for a working host/API connection, inspect fresh observer state, then rerun the exact failed Lighthouse jobs once connectivity is confirmed.
+
+### Next actions from this follow-up
+
+1. Reconnect SentinelX/SSH Gateway and read the worker status/state plus recent event log; verify `collected_at`, timer-enabled state, disk space, API/Nginx readiness and port 4002/4001 roles.
+2. From the host, check recent API 5xx/timeouts and a real public `/api/v1/health/ready` request plus CORS preflight. Do not restart, redeploy, switch traffic, or roll back without fresh host state and evidence.
+3. Once the API responds, rerun Lighthouse for #1510–#1514 on their exact unchanged heads. Merge only fully green, current-head, mergeable PRs; after each merge watch main CI/Pages and directly smoke-test production.
+4. When rebasing #1513 after #1510 merges, preserve both the synchronous in-flight location cancellation guard and stale-location-error clearing, including both regression tests. Rebase all other prepared branches independently with explicit remote-head/lease checks.
+5. Continue with independent UX/accessibility/performance work while any external gate runs; do not alter a pending branch from a separate workstream.
+
+---
+
+# Current checkpoint — 2026-10-26 08:52 TRT (05:52 UTC)
+
+## Main, production and host access
+
+- Current `main` SHA: `f2fa7148daf89d7fbc6b0bb78671925f3ddc89d4`.
+- Main CI/CD run #3693 (`40273544201`) succeeded for this SHA, including the Pages deploy step; Ops script contracts run `40273544270` and CodeQL run `40273544207` also succeeded. The Pages build/deployment workflow #1158 (`40273807065`) succeeded. These are the latest verified GitHub pipeline results.
+- The last direct production smoke recorded earlier in this file was for `d3ff1c79bd91a34d45dce49680740aaac92d5279` before PR #1509 advanced main to `f2fa714...`. A fresh exact-SHA production smoke has **not** been possible in this invocation.
+- SentinelX returned `agent_offline`; Zeki SSH Gateway `server_info`, `ping`, and shell calls failed internally. Sandbox DNS resolution also failed for both public Hava81 hostnames. This does **not** prove public DNS is globally down, but it means the live Oracle observer state, `collected_at`, event log, service state, disk headroom, and current production health could not be directly verified. The previous observer snapshot noted elsewhere in this file is stale and must not be treated as current.
+- No API build/deploy, traffic switch, rollback, service restart, or production mutation was attempted. Keep API port 4002 primary and 4001 as rollback/canary. Do not delete worktrees, containers, images, volumes, or shared browser assets to reclaim disk. Do not disable or pause the five-minute observer/timer.
+
+## Lighthouse readiness incident — preserve the hard gate
+
+- Main run #3693 artifact `12629735594` (`lhr.json`) contained a successful `/api/v1/weather/current` response (HTTP 200 in about 0.9 seconds), final route `/en/istanbul/`, scores performance 95 / accessibility 100 / best practices 100 / SEO 100.
+- Dependabot PR #1375 run #3694 (`40274684359`), PR #1510 CI/CD `40275556255`, and PR #1511 CI/CD `40275997726` each produced a Lighthouse report where the current-weather request ended with `statusCode=-1` after about 30 seconds and the page remained at `/en/`. PR #1511's bounded confirmation measurement also failed readiness (both `lhr.json` and `lhr-confirm.json` in artifact `12630411411` show the unavailable response). Lighthouse scores alone are not valid when the weather request fails.
+- The readiness gate is correctly fail-closed. Do not weaken it, substitute mock/fabricated weather, add localhost to production CORS, or deploy an app-shell-only Lighthouse result. The exact cause of the repeated timeout remains unverified until the public API and Oracle host can be checked from a working connection.
+
+## Exact open PRs and heads at this checkpoint
+
+- **PR #1510** — `fix(weather): make city handoff cancel pending location request`; branch `automation/hava81-run11-location-handoff-race-20261026-0836`; head `935f2f1c67eb83ebd7f4104fa86db19f96294ab1`; base `f2fa7148...`. Ops `40275556294` and CodeQL `40275556330` succeeded; CI/CD `40275556255` failed only at the Lighthouse real-API readiness step; browser flows succeeded. Do not change this pending branch from another workstream.
+- **PR #1511** — `fix(ci): confirm transient Lighthouse weather readiness once`; branch `automation/hava81-run11-lighthouse-readiness-confirmation-20261026-0847`; head `8f2d98340a97acd90eded65e048f4db0ca3872b5`; base `f2fa7148...`. Ops `40275997794` and CodeQL `40275997638` succeeded; CI/CD `40275997726` failed because both real-API measurements were unavailable. The change preserves a hard failure after one confirmation; it must not be treated as green while the API request fails.
+- **PR #1512** — `fix(settings): normalize route locale when storage is blocked`; branch `automation/hava81-run11-localstorage-route-fallback-20261026-0852`; head `b0cfb53f4c2dbade80410a5ac331b0d903daeaa4`; base `f2fa7148...`. Ops `40276270916` and CodeQL `40276270823` succeeded; CI/CD `40276270883` was in progress at the last direct query.
+- **PR #1513** — `fix(weather): clear stale location errors on city search`; branch `automation/hava81-run11-clear-stale-location-error-20261026-0858`; head `5c34fa02b5c04143014871c50ad5c70466c5cb23`; base `f2fa7148...`. CI/CD `40276407427`, Ops `40276407424`, and CodeQL `40276407420` were in progress at the last direct query.
+- **Dependabot**: PR #1375 (`faf379c49386d954052abb02113463240abc3b76`) remains blocked by the same Lighthouse readiness failure; PR #1379 (`cc0b9d289d9ef5e9a8357c36eedd7c5ca14c7fe2`) had an API test/build failure; PR #1380 (`710eb5bd74c50d3f32121804fae5aeb2c82ccde3`) had production-build/frontend-quality/Ops failures; PR #1165 is old and still has failed/cancelled checks. Do not merge these without exact-head green checks.
+
+## Prioritized next actions
+
+1. **Restore read-only visibility first:** retry SentinelX, then Zeki SSH Gateway. Read `/var/lib/hava81-worker/state.json` or `/usr/local/bin/hava81-worker-status`, compare `collected_at` with current time, inspect recent `/var/log/hava81-worker/events.jsonl`, and verify the five-minute timer is still enabled. Do not wait on a stale observer field; query GitHub directly as already done.
+2. From a working Oracle connection, perform read-only checks of Nginx/API service state, public health/readiness, CORS preflight, port 4002 primary / 4001 rollback-candidate, recent 5xx/timeouts, and disk headroom. Do not deploy API code or change ports until a fresh snapshot confirms adequate build headroom and exact-head CI is green.
+3. Re-check PR #1512 and #1513 exact heads, all required jobs, and mergeability. Merge only if every required gate is green; use the expected head SHA. Keep working on other isolated branches while checks run.
+4. Once the real API is reachable from GitHub runners again, rerun the failed Lighthouse job for PR #1510 and PR #1511 on their unchanged exact heads. Keep the readiness gate fail-closed. If PR #1511 becomes fully green, re-read its head/mergeability and merge normally.
+5. After any merge, re-read current `main`, rebase each prepared branch independently while preserving every valid checkpoint, and use explicit leases if rebased history changes. PR #1513 overlaps `useWeather.ts` with PR #1510; after PR #1510 merges, preserve both the synchronous in-flight cancellation guard and the stale-location-error clearing change when rebasing.
+6. After main CI/Pages succeeds, directly smoke-test `/`, `/izmir/`, `/en/istanbul/`, all referenced boot assets, API health/readiness, CORS preflight, frontend/API revision parity, and confirm port 4002 remains primary. Record exact response codes and SHAs; do not claim production healthy without this direct check.
+7. Continue independent quality work while any check or propagation is pending. Preserve the existing dirty worktree `/home/chatgpt/hava81-rain-detail-2135`, the font-preload experiment, all unrelated worktrees, and shared browser processes. Never mutate a pending branch from another workstream.
+
+---
+
 # Hava81 autonomous progress
 
 Updated: 2026-10-26 07:30 TRT (2026-10-26 04:30 UTC)
