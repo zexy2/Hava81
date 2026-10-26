@@ -18,8 +18,8 @@ const props = {
 };
 
 let observerCallback: IntersectionObserverCallback | undefined;
-let observedTarget: Element | undefined;
-let disconnectCalled = false;
+let observerObserve: ReturnType<typeof vi.fn> | undefined;
+let observerDisconnect: ReturnType<typeof vi.fn> | undefined;
 
 class MockIntersectionObserver {
   root = null;
@@ -28,23 +28,20 @@ class MockIntersectionObserver {
   unobserve = vi.fn();
   takeRecords = vi.fn(() => []);
 
+  observe = vi.fn();
+  disconnect = vi.fn();
+
   constructor(callback: IntersectionObserverCallback) {
     observerCallback = callback;
+    observerObserve = this.observe;
+    observerDisconnect = this.disconnect;
   }
-
-  observe = vi.fn((target: Element) => {
-    observedTarget = target;
-  });
-
-  disconnect = vi.fn(() => {
-    disconnectCalled = true;
-  });
 }
 
 beforeEach(() => {
   observerCallback = undefined;
-  observedTarget = undefined;
-  disconnectCalled = false;
+  observerObserve = undefined;
+  observerDisconnect = undefined;
   vi.stubGlobal('IntersectionObserver', MockIntersectionObserver as unknown as typeof IntersectionObserver);
 });
 
@@ -60,7 +57,7 @@ describe('DeferredDecisionAlertsPanel', () => {
     expect(region).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('heading', { name: 'hava81.alerts.title' })).toBeInTheDocument();
     expect(screen.queryByTestId('loaded-alerts')).not.toBeInTheDocument();
-    expect(observedTarget).toBe(region);
+    expect(observerObserve).toHaveBeenCalledWith(region);
     expect(observerCallback).toBeDefined();
 
     act(() => {
@@ -68,7 +65,7 @@ describe('DeferredDecisionAlertsPanel', () => {
     });
 
     expect(await screen.findByTestId('loaded-alerts')).toBeInTheDocument();
-    expect(disconnectCalled).toBe(true);
+    expect(observerDisconnect).toHaveBeenCalled();
     expect(screen.queryByRole('region', { name: 'hava81.alerts.title' })).not.toBeInTheDocument();
   });
 
