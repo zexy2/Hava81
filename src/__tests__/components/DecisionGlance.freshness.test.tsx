@@ -1,7 +1,8 @@
-import { act, render } from '@testing-library/react';
-import { Profiler } from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { Profiler, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
+import * as currentWeatherFreshness from '../../utils/currentWeatherFreshness';
 import { DecisionGlance } from '../../components/hava81/DecisionGlance';
 import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
 
@@ -91,6 +92,27 @@ describe('DecisionGlance optional AQI freshness', () => {
     );
 
     expect(onRender).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips parent-only work when the decision inputs are unchanged', () => {
+    const freshnessSpy = vi.spyOn(currentWeatherFreshness, 'getCurrentWeatherFreshness');
+    const Parent = () => {
+      const [, setTick] = useState(0);
+      return (
+        <>
+          <button type="button" onClick={() => setTick(tick => tick + 1)}>
+            Rerender
+          </button>
+          <DecisionGlance weather={weather} hourly={hourly} forecastMeta={forecastMeta} />
+        </>
+      );
+    };
+    render(<Parent />);
+
+    const initialCalls = freshnessSpy.mock.calls.length;
+    expect(initialCalls).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Rerender' }));
+    expect(freshnessSpy).toHaveBeenCalledTimes(initialCalls);
   });
 
   it('does not pass stale current AQI into the headline decision snapshot', () => {

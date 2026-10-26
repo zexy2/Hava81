@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
@@ -19,7 +19,7 @@ interface Props {
   onOpenDetails?: () => void;
 }
 
-export function DecisionGlance({
+export const DecisionGlance = memo(function DecisionGlance({
   weather,
   hourly,
   airQuality,
@@ -247,6 +247,6 @@ export function DecisionGlance({
       </div>
     </section>
   );
-}
+});
 
 export default DecisionGlance;
