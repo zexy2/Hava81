@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { resolvePreviewPort } from './lib/playwright-preview-port.mjs';
 
 const PREFIX = 'hava81-playwright-';
 const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
@@ -36,6 +37,7 @@ function delay(ms) {
 
 const baseDir = tmpdir();
 await cleanupStaleRuns(baseDir);
+const previewPort = await resolvePreviewPort(process.env.HAVA81_PLAYWRIGHT_PORT);
 const runTmpDir = await mkdtemp(join(baseDir, PREFIX));
 const usesProcessGroup = process.platform !== 'win32';
 
@@ -44,7 +46,7 @@ const child = spawn(
   ['playwright', 'test', ...process.argv.slice(2)],
   {
     detached: usesProcessGroup,
-    env: { ...process.env, TMPDIR: runTmpDir, TEMP: runTmpDir, TMP: runTmpDir },
+    env: { ...process.env, HAVA81_PLAYWRIGHT_PORT: String(previewPort), TMPDIR: runTmpDir, TEMP: runTmpDir, TMP: runTmpDir },
     stdio: 'inherit',
   }
 );
