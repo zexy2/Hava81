@@ -1,3 +1,16 @@
+## Current checkpoint — 2026-10-27 06:56 TRT / 03:56 UTC
+
+- **Stable base:** `origin/main` = `7325700046772c0906a68a5c201b975ec3e867f3` (`perf(web): preconnect weather API from root shell`, PR #1548). Main CI run #3782 (`40442135335`) and Pages deploy #1190 (`40442446956`) are both successful.
+- **Production / observer:** latest observer snapshot `2026-10-27T03:55:23.721106Z`; observer timer is enabled and active. Production is healthy with no reported issues; frontend root and city routes plus `sw.js` returned HTTP 200, API readiness returned 200, CORS preflight succeeded, and the real current-weather endpoint returned JSON. API remains on port 4002; 4001 remains rollback/canary.
+- **Host constraint:** disk usage is 91.9% with 8,411,549,696 bytes free. API-build headroom is still false by 434,073,600 bytes, so do not build/deploy API images until safe headroom is restored. Frontend merge/deploy remains permitted by the fresh observer.
+- **Open PRs:** #1549 `fix(a11y): use singular one-hour interval labels` is still open at head `9c5ce704c9802f7f5e19280cb7ed08cdc97589ce`; CI run #3781 (`40441820273`) failed and GitHub reports mergeable state `blocked`. Do not mutate its pending branch from another workstream. #1531 Node 26 ARM64 remains held until the scheduled 2026-10-28 validation window.
+- **Completed bounded loop:** production axe audit found two compare-view defects: missing level-one page heading and invalid `role=listitem` on `article` cards. Local code commit `b831b5ffab1cbcdcdd5db6d52edc4913c1eeee6d` changes the compare title to H1, keeps city-card headings at H2, and uses valid `div[role=listitem]` semantics; regression tests cover heading/list semantics.
+- **Validation:** `npm run lint`, `npm run type-check`, `npm run test:ci`, `npm run build`, `git diff --check`, and `e2e/map-compare.spec.ts --project=desktop-1280` all passed on the compare branch. A local built-preview axe audit across five TR/EN, light/dark, mobile/desktop states returned **0 violations and 0 page errors**.
+- **Current branch / next action:** `automation/hava81-run16-overlay-a11y-audit-20261027-0645` is locally committed; push it, open a small PR, verify the exact remote head and CI, then continue the independent map/route accessibility worktree. Re-query the PR head and fresh observer immediately before any merge.
+- **Prioritized queue:** (1) finish map-view H1 hierarchy, crowded 81-province marker touch targets, and route-segment list semantics in `automation/hava81-run16-map-route-a11y-20261027-0652`; (2) rerun local axe on initial mobile map and zoomed atlas plus map/route E2E; (3) inspect PR #1549 failures without editing its branch; (4) observe #1531 at the 2026-10-28 validation window; (5) keep API work blocked until disk headroom is safe.
+
+---
+
 # Current checkpoint — 2026-10-27 05:08 TRT (02:08 UTC)
 
 ## Main, production, and observer

@@ -829,3 +829,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A direct production Lighthouse report identified https://api.hava81.zekiakgul.dev as the strongest preconnect candidate, with estimated 300ms LCP savings. The root SPA document had no hint even though the first visible weather decision depends on that cross-origin API.
 - Add one early preconnect with crossorigin to the root HTML. Province-page generation already derives from that HTML, so do not inject a second preconnect or redundant DNS-prefetch; generated city pages must contain exactly one hint. The static 404 page removes the hint because it has no weather request to make.
 - This is a resource-discovery optimization only. Do not change API requests, provider provenance, freshness, forecast values, scores, or safety guidance. Keep the change only if post-deployment production Lighthouse remains healthy and the real API still responds successfully.
+
+
+## 2026-10-27 — City comparison accessibility semantics
+
+- A fresh production axe audit of the populated compare view (desktop, dark theme, three saved cities) found `page-has-heading-one` and `aria-allowed-role` violations. The dedicated compare view replaces the dashboard, so its title is the page H1; city cards then use H2 headings.
+- Do not assign `role="listitem"` to an `article` element: axe flags that role mapping as invalid. Keep the labelled comparison list and use valid `div[role="listitem"]` children so assistive technology retains list navigation without invalid role overrides.
+- Preserve existing typography with explicit CSS selectors, and guard the heading level/list-item structure with component and browser tests. A local production-like build was re-audited across five mobile/desktop, TR/EN, light/dark states; axe reported zero violations and no page errors.
