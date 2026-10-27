@@ -38,7 +38,7 @@ const DarkThemeIcon = () => (
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
   const { t, i18n } = useTranslation();
   const { settings, updateSetting } = useSettings();
-  const panelRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
@@ -125,7 +125,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
         <>
           <div className="settings-backdrop" aria-hidden="true" onClick={onClose} />
 
-          <aside
+          <div
             id="settings-panel-dialog"
             ref={panelRef}
             className="settings-panel"
@@ -312,7 +312,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             <div className="settings-panel__footer">
               <p className="settings-panel__version">v{packageMeta.version}</p>
             </div>
-          </aside>
+          </div>
         </>
       )}
     </>
