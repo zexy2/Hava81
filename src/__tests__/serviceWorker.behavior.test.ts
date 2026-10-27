@@ -163,6 +163,14 @@ describe('service worker notification clicks', () => {
     expect(worker.workerClients.openWindow).toHaveBeenCalledWith('/');
   });
 
+  it('opens the intended URL when window enumeration fails', async () => {
+    const worker = loadWorker();
+    worker.workerClients.matchAll.mockRejectedValueOnce(new Error('client enumeration unavailable'));
+
+    await expect(worker.dispatch('notificationclick', click('/izmir/?view=plan#saat'))).resolves.toBeUndefined();
+    expect(worker.workerClients.openWindow).toHaveBeenCalledWith('/izmir/?view=plan#saat');
+  });
+
   it('opens the intended URL when every open window is stale', async () => {
     const stale = client();
     stale.navigate.mockRejectedValue(new Error('gone'));

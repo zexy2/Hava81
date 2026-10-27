@@ -217,7 +217,14 @@ self.addEventListener('notificationclick', event => {
     // Malformed notification data falls back to the app root.
   }
   event.waitUntil((async () => {
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    let clients;
+    try {
+      clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    } catch {
+      // A temporary client-enumeration failure must not swallow a notification click.
+      // The URL was normalized above to a same-origin path, so opening it is a safe fallback.
+      return self.clients.openWindow(url);
+    }
     for (const client of clients) {
       if (!('focus' in client)) continue;
       try {
