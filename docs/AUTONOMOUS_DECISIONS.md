@@ -928,3 +928,7 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - Pin the browser clock and coherent current/forecast/optional-evidence fixtures to VISUAL_FIXED_NOW, provide the deterministic five-day hourly series, and wait for the Planla heading plus the visible outlook group before interaction. Assert the selected intent survives the Today → Planla round trip.
 - Do not weaken the production minimum-usable-hours or freshness rules and do not synthesize production weather. This is a test-fixture stabilization only; weather, scoring, provider provenance, freshness, and safety guidance remain unchanged.
 
+## 2026-10-27 — Align Lighthouse live-weather preflight with observer integrity checks
+
+- The read-only observer already fails closed unless Istanbul's country and broad coordinate envelope agree, the Celsius temperature is finite and within -100..100, and optional `meta.observedAt` agrees with the top-level sample timestamp within 60 seconds. The Lighthouse preflight previously checked the display city and finite temperature but did not enforce those same location/sanity/consistency checks.
+- Require `country=TR` and coordinates inside the same broad Istanbul envelope, preserve the existing -100..100 °C sanity range, and reject optional `meta.observedAt` drift over 60 seconds. Keep the current two-hour observation-freshness policy, timezone-qualified timestamps, and provider/readiness consistency. This is a test/preflight integrity check; it does not create or rewrite weather data.

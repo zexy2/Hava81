@@ -7,6 +7,7 @@ const ISO_TIMESTAMP_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(
 const MAX_FUTURE_OBSERVATION_SKEW_MS = 5 * 60 * 1000;
 const MAX_FUTURE_FETCH_SKEW_MS = 60 * 1000;
 const MAX_FRESHNESS_SECONDS = 24 * 60 * 60;
+const MAX_OBSERVED_AT_DIFFERENCE_MS = 60 * 1000;
 
 function parseTimestamp(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -49,11 +50,48 @@ export function validateLiveWeatherPayload(payload, { now = Date.now(), expected
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     throw new Error('payload must be a JSON object');
   }
-  if (typeof payload.cityName !== 'string' || payload.cityName.trim().toLowerCase() !== expectedCity.toLowerCase()) {
+  if (typeof expectedCity !== 'string' || expectedCity.trim() === '') {
+    throw new Error('expectedCity must be a non-empty string');
+  }
+  if (
+    typeof payload.cityName !== 'string' ||
+    payload.cityName.trim().toLowerCase() !== expectedCity.trim().toLowerCase()
+  ) {
     throw new Error(`cityName must match the requested city (${expectedCity})`);
   }
-  if (typeof payload.temperature !== 'number' || !Number.isFinite(payload.temperature)) {
-    throw new Error('temperature must be a finite number');
+
+  // The Lighthouse preflight is intentionally anchored to the Istanbul route. A matching
+  // display name alone is insufficient if a malformed/misrouted response carries other coordinates.
+  if (expectedCity.trim().toLowerCase() === 'istanbul') {
+    if (payload.country !== 'TR') {
+      throw new Error('country must be TR for Istanbul');
+    }
+    const coordinates = payload.coordinates;
+    if (!coordinates || typeof coordinates !== 'object' || Array.isArray(coordinates)) {
+      throw new Error('coordinates must identify the Istanbul location');
+    }
+    const { lat, lon } = coordinates;
+    if (
+      typeof lat !== 'number' ||
+      !Number.isFinite(lat) ||
+      lat < 40 ||
+      lat > 42 ||
+      typeof lon !== 'number' ||
+      !Number.isFinite(lon) ||
+      lon < 27 ||
+      lon > 30
+    ) {
+      throw new Error('coordinates must fall within the Istanbul location envelope');
+    }
+  }
+
+  if (
+    typeof payload.temperature !== 'number' ||
+    !Number.isFinite(payload.temperature) ||
+    payload.temperature < -100 ||
+    payload.temperature > 100
+  ) {
+    throw new Error('temperature must be finite and within [-100, 100] °C');
   }
 
   const observedAtMs = parseTimestamp(payload.timestamp, 'timestamp');
@@ -87,6 +125,9 @@ export function validateLiveWeatherPayload(payload, { now = Date.now(), expected
     const explicitObservedAtMs = parseTimestamp(meta.observedAt, 'meta.observedAt');
     if (explicitObservedAtMs > now + MAX_FUTURE_OBSERVATION_SKEW_MS) {
       throw new Error('meta.observedAt is materially in the future');
+    }
+    if (Math.abs(explicitObservedAtMs - observedAtMs) > MAX_OBSERVED_AT_DIFFERENCE_MS) {
+      throw new Error('meta.observedAt must agree with timestamp within 60 seconds');
     }
   }
 
