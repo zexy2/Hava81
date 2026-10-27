@@ -102,7 +102,7 @@ describe('ForecastAtlas hourly rhythm', () => {
     }
   });
 
-  it('ranks the rain summary by combined probability and amount, not probability alone', () => {
+  it('ranks the rain summary by probability first, not a blended amount score', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     try {
       vi.setSystemTime(new Date('2026-10-21T15:10:00Z'));
@@ -115,8 +115,9 @@ describe('ForecastAtlas hourly rhythm', () => {
 
       const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
       const rain = within(summary).getAllByRole('listitem')[2];
-      expect(rain).toHaveTextContent('%20 · 6,0 mm');
-      expect(rain.querySelector('time')).toHaveAttribute('datetime', '2026-10-22T00:00:00.000Z');
+      expect(rain).toHaveTextContent('%80');
+      expect(rain).toHaveTextContent('17:00');
+      expect(rain).not.toHaveTextContent('6,0 mm');
     } finally {
       vi.useRealTimers();
     }
