@@ -932,3 +932,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - The read-only observer already fails closed unless Istanbul's country and broad coordinate envelope agree, the Celsius temperature is finite and within -100..100, and optional `meta.observedAt` agrees with the top-level sample timestamp within 60 seconds. The Lighthouse preflight previously checked the display city and finite temperature but did not enforce those same location/sanity/consistency checks.
 - Require `country=TR` and coordinates inside the same broad Istanbul envelope, preserve the existing -100..100 °C sanity range, and reject optional `meta.observedAt` drift over 60 seconds. Keep the current two-hour observation-freshness policy, timezone-qualified timestamps, and provider/readiness consistency. This is a test/preflight integrity check; it does not create or rewrite weather data.
+
+## 2026-10-27 — Extend axe coverage to map and city-comparison views
+
+- Existing cross-cutting axe checks cover the dashboard, Planla, and settings but not the dedicated map and comparison surfaces. Add real-Chromium axe scans for WCAG 2.0/2.1/2.2 A/AA and best practices in Turkish/light at 390px and English/dark at 1280px, waiting for the map container and live comparison rows before scanning.
+- Keep map tiles deterministic with the existing fixture helper. This is test-only; no production weather, API, or UI behavior changes.
