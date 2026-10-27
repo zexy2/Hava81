@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hava81-shell-c11ea4a9c1a1';
+const CACHE_NAME = 'hava81-shell-58a03880edb8';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
 
@@ -109,28 +109,40 @@ self.addEventListener('activate', event => {
   })());
 });
 
+function makeNavigationResponseUrlNeutral(response) {
+  // Cache keys intentionally omit search parameters, but Hava81 uses some of those parameters
+  // as initial UI state (`?view=plan`, `?view=map`, and `?yer=...`). Cache Storage preserves the
+  // original Response URL, so returning it directly can make a later offline navigation boot
+  // with a previous query string instead of the URL the visitor actually requested.
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.delete('transfer-encoding');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 async function cachedNavigationFallback(navigationCacheKey) {
   try {
     const cache = await caches.open(CACHE_NAME);
     const cachedRoute = await cache.match(navigationCacheKey);
-    if (cachedRoute) return cachedRoute;
+    if (cachedRoute) {
+      // Test doubles may use a sentinel value, but production Cache Storage returns a Response.
+      return cachedRoute instanceof Response
+        ? makeNavigationResponseUrlNeutral(cachedRoute)
+        : cachedRoute;
+    }
 
     const rootShell = await cache.match('/');
     if (!rootShell) return undefined;
 
     // A cached Response retains the URL of the root document. Rebuild the shell response without
-    // that URL metadata so the browser boots the app at the originally requested city pathname.
-    // Otherwise a root-shell fallback can initialize route state from '/' and briefly restore the
-    // previous city's weather while the address bar already points at an unvisited city.
-    const headers = new Headers(rootShell.headers);
-    headers.delete('content-length');
-    headers.delete('content-encoding');
-    headers.delete('transfer-encoding');
-    return new Response(rootShell.body, {
-      status: rootShell.status,
-      statusText: rootShell.statusText,
-      headers,
-    });
+    // that URL metadata so the browser boots the app at the originally requested route. Otherwise
+    // a root-shell fallback can initialize route state from '/' and briefly restore another city.
+    return makeNavigationResponseUrlNeutral(rootShell);
   } catch {
     // Cache Storage is optional during runtime; callers preserve the original network result.
     return undefined;
