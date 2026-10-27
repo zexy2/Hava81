@@ -953,3 +953,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - Unit tests already cover native-share success, native-share rejection, clipboard fallback, cancellation, and unavailable transports. Browser coverage only verified the share button's touch target, leaving the real mobile clipboard path and its live-region feedback unverified.
 - Add a deterministic mobile Chromium regression that disables native sharing, captures the clipboard write, activates the real Planla share control, and verifies the copied payload contains Hava81's weather-based decision, umbrella guidance, and canonical Istanbul URL. Assert that the polite status region announces the localized “Kopyalandı” success state.
 - Keep this test-only. Do not alter the share transport, score, recommendation, forecast freshness, provider attribution, or safety wording. Require exact-head CI/CD Browser flows, CodeQL, and Ops checks before merge.
+## 2026-10-27 — Require timezone-qualified current-weather timestamps
+
+- The current sample time, BFF fetch time, and optional `meta.observedAt` drive freshness decisions. JavaScript accepts timezone-less ISO-looking timestamps as local time, so the same payload can imply a different observation age in browsers with different timezones.
+- Add a dedicated strict parser for those three current-weather fields, accepting an explicit `Z` or `±HH:MM` offset. Keep the general date parser for other established fields; do not change provider requests or weather values.
+- Regression coverage rejects timezone-less sample/fetch/source timestamps and accepts a valid explicit UTC offset. Require exact-head API/client tests, lint, type-check, build, and CI before merge; no API image build or deployment is part of this change.
