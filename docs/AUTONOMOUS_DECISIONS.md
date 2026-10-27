@@ -864,3 +864,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-27 — concurrent Playwright previews must avoid occupied ports
 - scripts/run-playwright.mjs should probe the configured HAVA81_PLAYWRIGHT_PORT (or historic 4173 default) before launching Chromium tests. If another worktree already owns it, select a loopback ephemeral port and pass that exact port to the child process so playwright.config.ts builds the matching preview URL.
 - Never kill or reuse another worktree's preview server just to make a test pass. Keep explicit port overrides when free, and cover occupied-port fallback with a runner contract test.
+
+## 2026-10-27 — Protect the Settings dialog keyboard-focus lifecycle with unit and browser regressions
+
+- The Settings dialog already implements initial focus, Tab/Shift+Tab containment, Escape dismissal, background `inert`, and focus restoration. The existing focused unit test only covered forward Tab when focus was moved outside the panel, leaving both boundary wraps and the full close/restore lifecycle unguarded.
+- Keep the production behavior unchanged and add focused regressions for wrapping from the last control to the first and from the first control to the last, closing on Escape, returning focus to the opener, and removing the temporary background `inert` attribute. Add a mobile Playwright check against the real built app so the keyboard contract is exercised in Chromium as well as JSDOM.
+- This is test-only: do not alter dialog timing, settings persistence, keyboard shortcuts, weather values, provider provenance, freshness, scoring, alerts, or safety guidance. Require lint, type-check, the full unit/coverage suite, production build, and the focused Settings browser suite before merge.

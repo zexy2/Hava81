@@ -27,6 +27,30 @@ test.describe('settings dialog', () => {
     await expect(dialog.getByRole('contentinfo')).toHaveCount(0);
   });
 
+  test('contains keyboard focus and restores the trigger after Escape', MOBILE, async ({ page }) => {
+    await page.goto('/istanbul');
+    const trigger = page.locator('.atlas-settings-button');
+    await trigger.focus();
+    await trigger.press('Enter');
+
+    const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
+    await expect(dialog).toBeVisible();
+    const close = dialog.locator('.settings-panel__close');
+    const lastOption = dialog.getByRole('button', { name: /koyu|dark/i });
+    await expect(close).toBeFocused();
+
+    await lastOption.focus();
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(lastOption).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test(
     'short landscape settings keeps header and footer on screen and scrolls its content at 200% text',
     DESKTOP,
