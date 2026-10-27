@@ -36,7 +36,7 @@ const FEATURED_CITY_NAMES = new Set([
 ]);
 
 /** Faz 2.5: the atlas reveals all 81 provinces once the user zooms in. */
-const ATLAS_ZOOM = 7;
+const ATLAS_ZOOM = 8;
 const PROVINCE_REFRESH_INTERVAL_MS = 30 * 60_000;
 const PROVINCE_EXPIRY_CUSHION_MS = 100;
 
@@ -284,9 +284,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
 
   return (
     <div className={`weather-map ${className}`}>
-      <h3 id={mapTitleId} className="weather-map__title">
+      <h2 id={mapTitleId} className="weather-map__title">
         {t('weather.mapTitle')}
-      </h3>
+      </h2>
 
       <div className="weather-map__container" role="region" aria-labelledby={mapTitleId}>
         <MapContainer
@@ -341,7 +341,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             >
               <Popup className="weather-map__popup">
                 <div className="weather-map__popup-content">
-                  <h4>{weather.cityName}</h4>
+                  <h3>{weather.cityName}</h3>
                   {currentFreshness.fresh ? (
                     <>
                       <p className="weather-map__popup-temp">
@@ -389,7 +389,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                     <span className="weather-map__popup-plate">
                       {String(featuredCity.plateCode).padStart(2, '0')}
                     </span>
-                    <h4>{featuredCity.name}</h4>
+                    <h3>{featuredCity.name}</h3>
                     {live && (
                       <>
                         <p className="weather-map__popup-temp">
@@ -461,6 +461,10 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           </a>
         )}
       </p>
+
+      {!showAllProvinces ? (
+        <p className="weather-map__zoom-hint">{t('weather.mapZoomHint')}</p>
+      ) : null}
 
       <div className="weather-map__legend" role="list" aria-label={t('weather.temperatureLegend')}>
         <span className="weather-map__legend-item weather-map__legend-item--cold" role="listitem">

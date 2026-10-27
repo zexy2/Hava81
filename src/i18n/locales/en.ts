@@ -59,6 +59,7 @@ export const en = {
     mapTilesLoading: 'Loading map tiles',
     mapTilesUnavailable: 'Map tiles unavailable. City markers still work.',
     mapLiveProvinces: 'Live temperatures for 81 provinces: {{provider}}',
+    mapZoomHint: 'Zoom in to reveal all 81 province markers.',
     mapTilesRetry: 'Try again',
     viewCityWeather: 'View city weather',
     temperatureLegend: 'Map temperature colors',
