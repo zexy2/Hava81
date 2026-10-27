@@ -584,8 +584,16 @@ describe('weatherService BFF client', () => {
     ['impossible daily calendar date', { dailyDate: '2026-02-31' }],
     ['hourly time', { hourlyTime: 'not-a-date' }],
     ['impossible hourly calendar timestamp', { hourlyTime: '2026-02-30T12:00:00.000Z' }],
+    [
+      'impossible hourly calendar timestamp with space separator',
+      { hourlyTime: '2026-02-30 12:00:00.000Z' },
+    ],
     ['metadata timestamp', { fetchedAt: 'not-a-date' }],
     ['impossible metadata calendar timestamp', { fetchedAt: '2026-02-30T12:00:01.000Z' }],
+    [
+      'impossible metadata calendar timestamp with space separator',
+      { fetchedAt: '2026-02-30 12:00:01.000Z' },
+    ],
   ])('rejects malformed BFF forecast %s instead of clamping or reviving it', async (_label, fixture) => {
     const invalid = fixture as InvalidForecastFields;
     mockGet.mockResolvedValue({
