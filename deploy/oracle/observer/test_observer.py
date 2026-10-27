@@ -6,6 +6,7 @@ import unittest
 from unittest import mock
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 MODULE_PATH = Path(__file__).with_name('observer.py')
 spec = importlib.util.spec_from_file_location('hava81_observer', MODULE_PATH)
@@ -440,6 +441,170 @@ class ObserverFreshnessTests(unittest.TestCase):
         self.assertIn('api_ready_fresh', production['issues'])
 
 
+class ObserverTransientRetryTests(unittest.TestCase):
+    @staticmethod
+    def result(status: int | None, error: str | None = None) -> dict[str, Any]:
+        return {
+            'ok': status is not None and 200 <= status < 400,
+            'status': status,
+            'elapsed_ms': 3,
+            'headers': {},
+            'json': None,
+            'text': None,
+            'error': error,
+        }
+
+    def test_collect_production_uses_retry_for_public_shell_and_readiness_probes(self) -> None:
+        original_http_get = observer.http_get
+        original_nginx_target = observer.nginx_target
+        revision = 'a' * 40
+        html = (
+            f'<meta name="hava81-build-revision" content="{revision}">'
+            '<script type="module" src="/assets/main.js"></script>'
+        )
+        attempts: dict[str, int] = {}
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            attempts[url] = attempts.get(url, 0) + 1
+            if url == 'https://hava81.zekiakgul.dev/' and attempts[url] == 1:
+                return self.result(503, 'HTTP 503')
+            if '/health/ready' in url:
+                return {
+                    'ok': True,
+                    'status': 200,
+                    'elapsed_ms': 1,
+                    'headers': {
+                        'access-control-allow-origin': 'https://hava81.zekiakgul.dev',
+                        'cache-control': 'no-store',
+                    },
+                    'json': {
+                        'status': 'ready',
+                        'timestamp': observer.now_iso(),
+                        'provider': {'name': 'OpenWeather', 'state': 'closed'},
+                    },
+                    'error': None,
+                }
+            return {
+                'ok': True,
+                'status': 200,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': html,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.nginx_target = lambda: {
+                'port': 4002, 'expected': 4002, 'preferred': 4002,
+                'preferred_ok': True, 'ok': True, 'error': None,
+            }
+            with mock.patch.object(observer.time, 'sleep'):
+                production = observer.collect_production()
+        finally:
+            observer.http_get = original_http_get
+            observer.nginx_target = original_nginx_target
+
+        self.assertTrue(production['healthy'])
+        self.assertEqual(attempts['https://hava81.zekiakgul.dev/'], 2)
+        self.assertEqual(production['root']['retry']['first_status'], 503)
+        self.assertTrue(production['root']['retry']['recovered'])
+
+    def test_retries_transient_http_503_once_and_records_recovery(self) -> None:
+        with (
+            mock.patch.object(
+                observer,
+                'http_get',
+                side_effect=[
+                    self.result(503, 'HTTP 503'),
+                    self.result(200),
+                ],
+            ) as http_get,
+            mock.patch.object(observer.time, 'sleep') as sleep,
+        ):
+            result = observer.http_get_with_transient_retry('https://hava81.zekiakgul.dev/')
+
+        self.assertEqual(http_get.call_count, 2)
+        sleep.assert_called_once_with(observer.SHELL_TRANSIENT_RETRY_DELAY_SECONDS)
+        self.assertEqual(
+            result['retry'],
+            {
+                'attempts': 2,
+                'first_status': 503,
+                'first_error': 'HTTP 503',
+                'first_elapsed_ms': 3,
+                'recovered': True,
+            },
+        )
+        self.assertEqual(result['status'], 200)
+
+    def test_does_not_retry_permanent_http_errors_or_rate_limits(self) -> None:
+        for status in (400, 401, 403, 404, 429):
+            with self.subTest(status=status):
+                with mock.patch.object(observer, 'http_get', return_value=self.result(status, f'HTTP {status}')) as http_get:
+                    result = observer.http_get_with_transient_retry('https://hava81.zekiakgul.dev/missing')
+                http_get.assert_called_once()
+                self.assertNotIn('retry', result)
+
+    def test_retry_is_bounded_when_transient_failure_persists(self) -> None:
+        with (
+            mock.patch.object(
+                observer,
+                'http_get',
+                side_effect=[
+                    self.result(502, 'HTTP 502'),
+                    self.result(503, 'HTTP 503'),
+                ],
+            ) as http_get,
+            mock.patch.object(observer.time, 'sleep'),
+        ):
+            result = observer.http_get_with_transient_retry(
+                'https://hava81.zekiakgul.dev/',
+                retry_limit=1,
+            )
+
+        self.assertEqual(http_get.call_count, 2)
+        self.assertEqual(result['status'], 503)
+        self.assertFalse(result['retry']['recovered'])
+        self.assertEqual(result['retry']['attempts'], 2)
+
+    def test_transient_failure_followed_by_permanent_error_is_not_recovery(self) -> None:
+        with (
+            mock.patch.object(
+                observer,
+                'http_get',
+                side_effect=[
+                    self.result(503, 'HTTP 503'),
+                    self.result(404, 'HTTP 404'),
+                ],
+            ) as http_get,
+            mock.patch.object(observer.time, 'sleep'),
+        ):
+            result = observer.http_get_with_transient_retry('https://hava81.zekiakgul.dev/missing')
+
+        self.assertEqual(http_get.call_count, 2)
+        self.assertEqual(result['status'], 404)
+        self.assertFalse(result['retry']['recovered'])
+
+    def test_retries_only_known_network_failures_without_http_status(self) -> None:
+        self.assertTrue(
+            observer.is_transient_shell_failure(
+                self.result(None, 'TimeoutError: timed out')
+            )
+        )
+        self.assertTrue(
+            observer.is_transient_shell_failure(
+                self.result(None, 'URLError: connection reset by peer')
+            )
+        )
+        self.assertFalse(
+            observer.is_transient_shell_failure(
+                self.result(None, 'ValueError: malformed local state')
+            )
+        )
+
+
 class ObserverBootAssetTests(unittest.TestCase):
     def test_extracts_only_safe_same_origin_boot_assets(self) -> None:
         html = '''
@@ -523,6 +688,47 @@ class ObserverBootAssetTests(unittest.TestCase):
                     )
                 }
             )
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertTrue(result['ok'])
+        self.assertEqual(attempts['https://hava81.zekiakgul.dev/assets/index.css'], 2)
+        self.assertEqual(attempts['https://hava81.zekiakgul.dev/assets/index.js'], 1)
+
+    def test_transient_boot_asset_http_503_uses_global_retry_budget(self) -> None:
+        original_http_get = observer.http_get
+        attempts: dict[str, int] = {}
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            attempts[url] = attempts.get(url, 0) + 1
+            if url.endswith('/assets/index.css') and attempts[url] == 1:
+                return {
+                    'ok': False,
+                    'status': 503,
+                    'elapsed_ms': 1,
+                    'headers': {},
+                    'json': None,
+                    'text': None,
+                    'error': 'HTTP 503',
+                }
+            return {
+                'ok': True,
+                'status': 200,
+                'elapsed_ms': 1,
+                'headers': {},
+                'json': None,
+                'text': None,
+                'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            result = observer.collect_boot_assets({
+                'text': (
+                    '<script src="/assets/index.js"></script>'
+                    '<link rel="stylesheet" href="/assets/index.css">'
+                )
+            })
         finally:
             observer.http_get = original_http_get
 
