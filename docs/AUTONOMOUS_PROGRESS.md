@@ -1,3 +1,26 @@
+# Current checkpoint — 2026-10-27 05:08 TRT (02:08 UTC)
+
+## Main, production, and observer
+- PR #1546 (`fix(a11y): correct dialog role and muted text contrast`) merged normally as main SHA `08cd33ab950c0a3105d274693e18f081677665eb` (merge commit). The PR head was `044fef5a99f96cb688469976120c4590887303ec`; exact-head CI/CD #3776 (`40435208136`), Ops #515 (`40435207951`), and CodeQL #2557 (`40435208057`) all succeeded. The patch fixes the Settings panel dialog semantics, raises muted text contrast, and adds computed-style regressions.
+- Main CI/CD run #3778 (`40436839230`) is validating exactly `08cd33ab950c0a3105d274693e18f081677665eb`. Frontend quality, production build, API test/build, development container build, Lighthouse budgets/live-weather readiness, and browser flows passed; GitHub Pages deployment was still in progress at the latest direct check. Main Ops run `40436839235` and CodeQL run `40436840720` succeeded.
+- Direct public smoke after merge: `/`, `/izmir/`, `/en/istanbul/`, and `/api/v1/health/ready` returned HTTP 200; CORS preflight returned HTTP 204 for `https://hava81.zekiakgul.dev`. Production still served frontend revision `beab5396fc6784e87400c60c013015211746559f` at the last smoke, so verify the new Pages revision after deployment before calling the release complete. API readiness was healthy and Nginx still targets port 4002; 4001 remains rollback/canary.
+- Latest observer snapshot at `2026-10-27T02:07:56.963598Z` was fresh at the time of read and reported production healthy, provider circuit closed, frontend revision consistent with the then-current main, and no stale browser audits. Root disk was 91.6% used with about 8.1 GiB free; `api_build_headroom_ok=false` (`api_build_headroom_low`). Do not deploy API code, switch ports, or restart production until a fresh observer clears the disk/build-headroom gate.
+- The observer timer remains enabled/active; do not disable or pause it. Re-read its state immediately before every merge/deploy/rollback.
+
+## Exact pending PRs, runs, and heads
+- **PR #1531** remains open at head `3a4992418c3410fd8447b00d4141808cbd56eb8c`, branch `automation/hava81-run11-api-node26-arm64-smoke-20261026-1755`, with old green checks from runs #3743 / Ops #482 / CodeQL #2524. Its base is stale (`c6be6f09940e346eb29babd21aca5ca9c26f6333`), so do not merge it on those old checks. The official Node.js schedule was last recorded as Node 26 Active LTS starting 2026-10-28; on/after that date verify the live official schedule, re-read the remote head, rebase in an isolated worktree, and rerun all exact-head CI, API, ARM64 image/liveness, Lighthouse/live-weather, Ops, and CodeQL gates before any blue-green/canary API deployment.
+- **Main CI/CD run #3778** (`40436839230`) is the active production pipeline for SHA `08cd33ab950c0a3105d274693e18f081677665eb`. Next: poll its Pages job, then smoke `/`, `/izmir/`, `/en/istanbul/`, API readiness, current real weather, CORS, and frontend revision parity. Keep working on independent improvements while deployment is pending.
+- **This checkpoint branch** is `automation/hava81-run14-progress-checkpoint-20261027-0508`, based on `08cd33ab950c0a3105d274693e18f081677665eb`. It updates the stale progress header only; all historical checkpoint entries below are preserved.
+
+## Findings and next queue
+1. The earlier responsive 44px forecast-interval fix (`10386d0`) and public service-worker lint coverage (`b965631`) are already present in current `main`; do not create duplicate PRs from the older run13 worktrees. The corresponding source files in main show the expected `minmax(48px, 1fr)` / 44px target rules and classic-worker ESLint config.
+2. Finish the #3778 deployment observation and verify published revision parity; do not infer deployment success from a green build while the Pages job is pending.
+3. Run a fresh, independent production responsive/axe audit on current main (320px and 390px, 200% text, TR/EN, light/dark, multiple city routes) and keep only reproducible defects in a new branch/worktree.
+4. Preserve all existing worktrees and any dirty changes. The older `/tmp` run13 responsive worktree references a missing worktree-admin path; do not reset, clean, or repoint it. The standalone `/tmp/hava81-run13-sw-lint-fix-20261027` worktree is clean at `9a2ee170ed6e871ed6f54d0bfb5675e0d391da85`, but its change duplicates current-main lint coverage and should not be pushed as a separate PR.
+5. Keep API port 4002 primary / 4001 rollback-candidate, do not fabricate weather, and do not lower the real-current-weather Lighthouse gate. Re-check current remote heads and observer state before any later merge/deploy.
+
+---
+
 # Current checkpoint — 2026-10-27 (latest verified)
 
 ## Main, production, and observer
