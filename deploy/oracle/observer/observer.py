@@ -55,6 +55,9 @@ GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 PR_CHECK_CACHE_SECONDS = 15 * 60
 API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
+SHELL_TRANSIENT_RETRY_LIMIT = 1
+SHELL_TRANSIENT_RETRY_DELAY_SECONDS = 0.25
+TRANSIENT_HTTP_STATUS_CODES = {408, 425, 500, 502, 503, 504}
 HAVA81_BROWSER_STALE_SECONDS = 2 * 60 * 60
 MAX_STALE_BROWSER_PROCESSES_REPORTED = 8
 HAVA81_BROWSER_PROFILE_NAMES = {'h81deploycheck', 'h81meta', 'h81text'}
@@ -180,12 +183,70 @@ def nginx_target() -> dict[str, Any]:
 
 
 def slim_http(result: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         'ok': result.get('ok'),
         'status': result.get('status'),
         'elapsed_ms': result.get('elapsed_ms'),
         'error': result.get('error'),
     }
+    retry = result.get('retry')
+    if isinstance(retry, dict):
+        summary['retry'] = retry
+    return summary
+
+
+def is_transient_shell_failure(result: dict[str, Any]) -> bool:
+    status = result.get('status')
+    if status in TRANSIENT_HTTP_STATUS_CODES:
+        return True
+    if status is not None:
+        return False
+
+    error = str(result.get('error') or '').lower()
+    return any(
+        marker in error
+        for marker in (
+            'timed out',
+            'timeout',
+            'connection reset',
+            'connection aborted',
+            'remote end closed',
+            'temporarily unavailable',
+            'temporary failure in name resolution',
+        )
+    )
+
+
+def http_get_with_transient_retry(
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    timeout: float = 6.0,
+    retry_limit: int = SHELL_TRANSIENT_RETRY_LIMIT,
+) -> dict[str, Any]:
+    result = http_get(url, headers=headers, timeout=timeout)
+    if retry_limit <= 0 or not is_transient_shell_failure(result):
+        return result
+
+    first_attempt = {
+        'status': result.get('status'),
+        'error': result.get('error'),
+        'elapsed_ms': result.get('elapsed_ms'),
+    }
+    attempts = 1
+    while attempts <= retry_limit and is_transient_shell_failure(result):
+        time.sleep(SHELL_TRANSIENT_RETRY_DELAY_SECONDS)
+        result = http_get(url, headers=headers, timeout=timeout)
+        attempts += 1
+
+    result['retry'] = {
+        'attempts': attempts,
+        'first_status': first_attempt['status'],
+        'first_error': first_attempt['error'],
+        'first_elapsed_ms': first_attempt['elapsed_ms'],
+        'recovered': result.get('ok') is True,
+    }
+    return result
 
 
 def extract_build_revision(html: Any) -> str | None:
@@ -229,9 +290,21 @@ def collect_boot_assets(
     transient_retries_remaining = BOOT_ASSET_TRANSIENT_RETRY_LIMIT
     for path in paths[:32]:
         result = http_get(f'https://hava81.zekiakgul.dev{path}', timeout=4.0)
-        if result.get('status') is None and transient_retries_remaining > 0:
+        if is_transient_shell_failure(result) and transient_retries_remaining > 0:
+            first_attempt = {
+                'status': result.get('status'),
+                'error': result.get('error'),
+                'elapsed_ms': result.get('elapsed_ms'),
+            }
             transient_retries_remaining -= 1
             result = http_get(f'https://hava81.zekiakgul.dev{path}', timeout=4.0)
+            result['retry'] = {
+                'attempts': 2,
+                'first_status': first_attempt['status'],
+                'first_error': first_attempt['error'],
+                'first_elapsed_ms': first_attempt['elapsed_ms'],
+                'recovered': result.get('status') == 200,
+            }
         if result.get('status') != 200:
             failed.append({'path': path, **slim_http(result)})
     return {
@@ -264,10 +337,13 @@ def timestamp_age_seconds(value: Any) -> float | None:
 
 
 def collect_production() -> dict[str, Any]:
-    root = http_get('https://hava81.zekiakgul.dev/')
-    city = http_get('https://hava81.zekiakgul.dev/istanbul/')
-    english_city = http_get('https://hava81.zekiakgul.dev/en/istanbul/')
-    ready = http_get(
+    # One bounded retry absorbs a short edge/network blip without masking persistent
+    # failures. GitHub API requests deliberately do not use this helper: a 429 or
+    # exhausted REST quota must not trigger another request.
+    root = http_get_with_transient_retry('https://hava81.zekiakgul.dev/')
+    city = http_get_with_transient_retry('https://hava81.zekiakgul.dev/istanbul/')
+    english_city = http_get_with_transient_retry('https://hava81.zekiakgul.dev/en/istanbul/')
+    ready = http_get_with_transient_retry(
         'https://api.hava81.zekiakgul.dev/api/v1/health/ready',
         headers={'Origin': 'https://hava81.zekiakgul.dev'},
     )
