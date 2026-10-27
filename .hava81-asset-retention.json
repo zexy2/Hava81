@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "retentionMinutes": 30,
-  "generatedAt": "2026-10-26T23:53:43Z",
+  "generatedAt": "2026-10-27T00:57:46Z",
   "generations": [
     {
-      "publishedAt": "2026-10-26T23:53:43Z",
+      "publishedAt": "2026-10-27T00:57:46Z",
       "files": [
         "assets/ActivityPlanner-BK9z0zQq.js",
         "assets/ActivityPlanner-DR51K6eT.css",
@@ -53,58 +53,6 @@
         "assets/useDecisionProfile-DYiwX27z.js",
         "assets/useLocalStorage-BADy2LQl.js",
         "assets/useWindowWhy-CfMLW-N5.js"
-      ]
-    },
-    {
-      "publishedAt": "2026-10-26T23:44:17Z",
-      "files": [
-        "assets/ActivityPlanner-6VIX3avG.js",
-        "assets/ActivityPlanner-DR51K6eT.css",
-        "assets/CommutePlanPanel-BrXKL1c7.js",
-        "assets/CommutePlanPanel-DUaPg_KM.css",
-        "assets/ComparePanel-DN1DRGnD.css",
-        "assets/ComparePanel-DaM4uOoP.js",
-        "assets/ContextSignalsPanel-LTiS_Qed.css",
-        "assets/ContextSignalsPanel-rzzjs9P3.js",
-        "assets/DailyPlanPanel-BDP9OU-h.css",
-        "assets/DailyPlanPanel-B_sglXcW.js",
-        "assets/DayOutlookPanel-DpEGPQNx.js",
-        "assets/DayOutlookPanel-LNrQipkq.css",
-        "assets/DecisionAlertsPanel-CaRBvcUM.js",
-        "assets/DecisionAlertsPanel-DyaJOOBP.css",
-        "assets/DecisionGlance-BAG1iuIu.css",
-        "assets/DecisionGlance-HHBdxU_7.js",
-        "assets/DeferredDecisionAlertsPanel-DDWMDfly.js",
-        "assets/EnvironmentRail-4B-gNvUI.css",
-        "assets/EnvironmentRail-DGWD6tWC.js",
-        "assets/ForecastAtlas-CcNsTA29.js",
-        "assets/ForecastAtlas-DQG71_e6.css",
-        "assets/RouteWeatherPanel-BAaHB49J.css",
-        "assets/RouteWeatherPanel-B_BXNdxj.js",
-        "assets/SettingsContext-ogzSXyLm.js",
-        "assets/SettingsPanel-Bch7wpOx.css",
-        "assets/SettingsPanel-Cx7_TbIw.js",
-        "assets/WeatherMap-C_3fjHzn.js",
-        "assets/WeatherMap-CwlKogeP.css",
-        "assets/airQuality-xz_AwSRr.js",
-        "assets/buildActivityPlan-CfHf0l-u.js",
-        "assets/dayOutlook-Cg1nbfFR.js",
-        "assets/eligibility-D9tM3s0t.js",
-        "assets/ibm-plex-sans-latin-ext-wght-normal-CIII54If.woff2",
-        "assets/ibm-plex-sans-latin-wght-normal-IvpUvPa2.woff2",
-        "assets/index-BDYEnQ9y.js",
-        "assets/index-Xkdz8X4Y.css",
-        "assets/jsx-runtime-Bc_zHfLR.js",
-        "assets/optionalEvidenceFreshness-BFAH5jgM.js",
-        "assets/reasonKeys-xXgi9LIY.js",
-        "assets/rolldown-runtime-WkwZ5CU-.js",
-        "assets/scoreWeatherWindow-DjCmEcF8.js",
-        "assets/source-serif-4-latin-ext-wght-normal-CxNHBx-q.woff2",
-        "assets/source-serif-4-latin-wght-normal-D9elroTD.woff2",
-        "assets/sourceObservationFreshness-BSm1mffO.js",
-        "assets/useDecisionProfile-CNgcqzU3.js",
-        "assets/useLocalStorage-BADy2LQl.js",
-        "assets/useWindowWhy-DESFac_P.js"
       ]
     }
   ]
