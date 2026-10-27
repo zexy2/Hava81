@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hava81-shell-a3749c778ee7';
+const CACHE_NAME = 'hava81-shell-d75acea1c9a7';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
 
@@ -217,7 +217,14 @@ self.addEventListener('notificationclick', event => {
     // Malformed notification data falls back to the app root.
   }
   event.waitUntil((async () => {
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    let clients;
+    try {
+      clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    } catch {
+      // A temporary client-enumeration failure must not swallow a notification click.
+      // The URL was normalized above to a same-origin path, so opening it is a safe fallback.
+      return self.clients.openWindow(url);
+    }
     for (const client of clients) {
       if (!('focus' in client)) continue;
       try {
