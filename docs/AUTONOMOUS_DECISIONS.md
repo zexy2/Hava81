@@ -947,3 +947,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - Main runs #3831 and #3838 audited the same local-preview route (http://127.0.0.1:4173/en/istanbul/) with identical JavaScript, stylesheet, and font transfer sizes, but benchmarkIndex moved from 1233.5 to 3490, performance score from 61 to 76, LCP from 3.67 s to 3.08 s, and TBT from 1,759 ms to 696.5 ms. The changes between these runs were test/operations/docs-only, so this is not evidence of a runtime bundle improvement or regression; host/CPU variance is the likely driver.
 - Do not refactor or split bundles based on one local-preview Lighthouse score. Require repeated production measurements and correlate transfer sizes and main-thread profiles before changing runtime code.
+
+## 2026-10-27 — Verify mobile decision sharing end to end
+
+- Unit tests already cover native-share success, native-share rejection, clipboard fallback, cancellation, and unavailable transports. Browser coverage only verified the share button's touch target, leaving the real mobile clipboard path and its live-region feedback unverified.
+- Add a deterministic mobile Chromium regression that disables native sharing, captures the clipboard write, activates the real Planla share control, and verifies the copied payload contains Hava81's weather-based decision, umbrella guidance, and canonical Istanbul URL. Assert that the polite status region announces the localized “Kopyalandı” success state.
+- Keep this test-only. Do not alter the share transport, score, recommendation, forecast freshness, provider attribution, or safety wording. Require exact-head CI/CD Browser flows, CodeQL, and Ops checks before merge.
