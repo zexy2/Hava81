@@ -117,6 +117,32 @@ async function getText(path) {
   }
   throw lastError;
 }
+async function verifyImageAsset(path, expectedType) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(origin + path, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: { 'User-Agent': 'Hava81-public-release-seo-smoke/1.0', 'Cache-Control': 'no-cache' },
+      });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const contentType = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
+      if (contentType !== expectedType) {
+        throw new Error('Expected ' + expectedType + ' content type, received ' + (contentType || 'missing'));
+      }
+      const contentLength = Number(response.headers.get('content-length'));
+      if (!Number.isSafeInteger(contentLength) || contentLength < 10000) {
+        throw new Error('Unexpected image content length ' + String(response.headers.get('content-length')));
+      }
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+    }
+  }
+  throw lastError;
+}
 function verifyCity(slug, name, lang, html) {
   const url = origin + cityPathFor(slug, lang);
   const trUrl = origin + cityPathFor(slug, 'tr');
@@ -195,9 +221,22 @@ try {
     throw new Error('Sitemap does not contain exactly the ' + expected.size + ' canonical URLs');
   }
 } catch (error) { failures.push('sitemap: ' + error.message); }
+const imageJobs = [
+  ['/hava81-social-card.png?v=20261022', 'image/png'],
+  ...provinces.map(([slug]) => ['/og/' + slug + '.jpg', 'image/jpeg']),
+];
+let imageIndex = 0;
+async function imageWorker() {
+  while (imageIndex < imageJobs.length) {
+    const [path, contentType] = imageJobs[imageIndex++];
+    try { await verifyImageAsset(path, contentType); }
+    catch (error) { failures.push('social image ' + path + ': ' + error.message); }
+  }
+}
+await Promise.all(Array.from({ length: 4 }, () => imageWorker()));
 if (failures.length) {
   console.error('Published SEO validation failed (' + failures.length + ' errors):\n' + failures.join('\n'));
   process.exitCode = 1;
 } else {
-  console.log('Verified live SEO: 81 province pages in TR + EN, both homepages and sitemap (164 canonical URLs).');
+  console.log('Verified live SEO: 81 province pages in TR + EN, both homepages, sitemap (164 canonical URLs), and 82 social image assets.');
 }
