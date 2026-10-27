@@ -389,12 +389,17 @@ const App: React.FC = () => {
   return (
     <>
       <ErrorBoundary
-        fallback={(_caughtError, reset) => (
+        fallback={(_caughtError, reset, focusRef) => (
           <div className="app-fatal" role="alert">
             <span className="atlas-kicker">{t('hava81.systemStatus')}</span>
             <h1>{t('common.error')}</h1>
             <p>{t('errors.genericError')}</p>
-            <button type="button" onClick={reset} className="atlas-button atlas-button--primary">
+            <button
+              ref={focusRef}
+              type="button"
+              onClick={reset}
+              className="atlas-button atlas-button--primary"
+            >
               {t('common.retry')}
             </button>
           </div>

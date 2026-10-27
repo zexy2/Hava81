@@ -8,7 +8,11 @@ import i18n from '../i18n';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
+  fallback?: ReactNode | ((
+    error: Error,
+    reset: () => void,
+    focusRef: (element: HTMLElement | null) => void
+  ) => ReactNode);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -19,6 +23,11 @@ interface State {
 
 export class ErrorBoundary extends Component<Props, State> {
   private retryButtonRef = React.createRef<HTMLButtonElement>();
+  private fallbackFocusElement: HTMLElement | null = null;
+
+  private setFallbackFocusElement = (element: HTMLElement | null): void => {
+    this.fallbackFocusElement = element;
+  };
 
   constructor(props: Props) {
     super(props);
@@ -32,9 +41,13 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
-    // Move keyboard focus into the default recovery surface after the failed
-    // subtree is replaced. Custom fallbacks retain ownership of their focus policy.
-    this.retryButtonRef.current?.focus();
+    // Focus the recovery action in the default fallback, or the explicit focus
+    // target supplied by a custom fallback after the failed subtree is replaced.
+    if (typeof this.props.fallback === 'function') {
+      this.fallbackFocusElement?.focus();
+    } else {
+      this.retryButtonRef.current?.focus();
+    }
     
     // Report to error tracking service
     this.props.onError?.(error, errorInfo);
@@ -55,7 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     if (hasError && error) {
       if (typeof fallback === 'function') {
-        return fallback(error, this.handleReset);
+        return fallback(error, this.handleReset, this.setFallbackFocusElement);
       }
       
       if (fallback) {
