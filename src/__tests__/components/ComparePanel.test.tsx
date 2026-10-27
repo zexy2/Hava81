@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComparePanel } from '../../components/hava81/ComparePanel';
 import { SettingsProvider } from '../../context';
@@ -104,6 +104,29 @@ describe('ComparePanel', () => {
     );
     expect(screen.getByText(/en az iki şehri/i)).toBeVisible();
     expect(screen.getByRole('heading', { name: /şehir karşılaştırması/i })).toHaveFocus();
+  });
+
+  it('uses a level-one view heading and valid list-item semantics for comparison cards', async () => {
+    render(
+      <SettingsProvider>
+        <ComparePanel
+          language="tr"
+          cities={[
+            { name: 'İstanbul', lat: 41, lon: 29 },
+            { name: 'İzmir', lat: 38, lon: 27 },
+          ]}
+        />
+      </SettingsProvider>
+    );
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: /şehir karşılaştırması/i })
+    ).toHaveFocus();
+    await screen.findByRole('heading', { level: 2, name: 'İstanbul' });
+    const list = screen.getByRole('list', { name: /şehir karşılaştırması/i });
+    const items = within(list).getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    expect(items.every(item => item.tagName === 'DIV')).toBe(true);
   });
 
   it('clears the busy state when favorites drop below the comparison minimum mid-load', () => {
@@ -389,8 +412,8 @@ describe('ComparePanel', () => {
     expect(screen.getByText('Bu hava kriterlerinde eşit')).toBeVisible();
     expect(screen.getByText(/İstanbul, İzmir · Hava81 \d+\/100/)).toBeVisible();
     expect(screen.queryByText(/bu hava kriterlerinde öne çıkan/i)).not.toBeInTheDocument();
-    expect(istanbul.closest('article')).toHaveClass('is-winner');
-    expect(izmir.closest('article')).toHaveClass('is-winner');
+    expect(istanbul.closest('.hava81-compare__city')).toHaveClass('is-winner');
+    expect(izmir.closest('.hava81-compare__city')).toHaveClass('is-winner');
   });
 
   it('clears stale city cards while a changed comparison is loading', async () => {

@@ -335,7 +335,9 @@ test.describe('compare view', () => {
       await expect(compare).toBeVisible();
       await expect(compare).not.toHaveAttribute('aria-current');
       await compare.click();
-      await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 1, name: /Şehir karşılaştırması/i })
+      ).toBeVisible();
       await expect(compare).toHaveAttribute('aria-current', 'page');
       await expect(page.locator('.atlas-dashboard')).toHaveCount(0);
       await expect(compare).not.toHaveAttribute('aria-pressed');
@@ -389,7 +391,7 @@ test.describe('compare view', () => {
         const at = `${width}px/${scale}%`;
         await expectReadable(page, compare, at);
         for (const city of await compare.locator('.hava81-compare__city').all()) {
-          await expectContainedIn(city.locator('h3'), city, `city name ${at}`);
+          await expectContainedIn(city.locator('h2'), city, `city name ${at}`);
           await expectContainedIn(city.locator('.hava81-compare__metrics'), city, `metrics ${at}`);
         }
       }

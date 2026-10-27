@@ -15,7 +15,7 @@
     box-shadow: var(--refine-card-shadow);
   }
 
-  .app .hava81-compare__header h2 {
+  .app .hava81-compare__header h1 {
     color: var(--premium-ink);
     font-weight: 760;
     letter-spacing: -0.035em;
@@ -70,7 +70,7 @@
     gap: 0.7rem;
   }
 
-  .app .hava81-compare__empty h3 {
+  .app .hava81-compare__empty h2 {
     margin: 0.1rem 0;
     color: var(--premium-ink);
     font-size: clamp(1.2rem, 2vw, 1.5rem);
@@ -151,7 +151,7 @@
   /* Programmatic heading focus announces the new comparison view to screen readers.
  * It is not a tab stop; remove the browser's accidental black rectangle. */
 
-  .app .hava81-compare__header h2:focus {
+  .app .hava81-compare__header h1:focus {
     outline: none;
   }
 
@@ -181,11 +181,11 @@
   }
 
   .hava81-compare__header > div,
-  .hava81-compare__header h2 {
+  .hava81-compare__header h1 {
     min-width: 0;
   }
 
-  .hava81-compare__header h2 {
+  .hava81-compare__header h1 {
     margin: 0.2rem 0 0;
     overflow-wrap: anywhere;
     font-size: 1.5rem;
@@ -240,7 +240,7 @@
     gap: var(--space-xs);
   }
 
-  .hava81-compare__city h3 {
+  .hava81-compare__city h2 {
     min-width: 0;
     margin: 0;
     overflow-wrap: anywhere;
@@ -374,7 +374,7 @@
       flex-wrap: wrap;
     }
 
-    .hava81-compare__city h3 {
+    .hava81-compare__city h2 {
       flex: 1 1 8rem;
     }
 
@@ -390,7 +390,7 @@
     gap: clamp(1.15rem, 2.4vw, 2rem);
     padding: clamp(1rem, 2vw, 1.7rem) clamp(1rem, 2.2vw, 1.75rem);
   }
-  .app .hava81-compare__header h2 {
+  .app .hava81-compare__header h1 {
     font-size: clamp(1.65rem, 2.7vw, 2.35rem);
     letter-spacing: -0.045em;
     line-height: 1.12;
@@ -483,7 +483,7 @@
     height: 68%;
     background: linear-gradient(180deg, #5bd6b7, #13977c);
   }
-  .app .hava81-compare__empty h3 {
+  .app .hava81-compare__empty h2 {
     grid-area: heading;
     font-size: clamp(1.6rem, 3vw, 2.4rem);
     line-height: 1.1;
@@ -585,7 +585,7 @@
     .app .hava81-compare__empty-bar {
       width: 2.85rem;
     }
-    .app .hava81-compare__empty h3 {
+    .app .hava81-compare__empty h2 {
       font-size: clamp(1.5rem, 5.7vw, 2rem);
     }
     .app .hava81-compare__empty-action {
