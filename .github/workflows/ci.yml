@@ -177,6 +177,8 @@ jobs:
         run: node scripts/test-lighthouse-target-url.mjs
       - name: Validate real-weather readiness and bounded confirmation
         run: node scripts/test-lighthouse-weather-readiness.mjs
+      - name: Validate live-weather payload integrity
+        run: node scripts/test-live-weather-payload.mjs
       - name: Validate Lighthouse preview API proxy contract
         run: node scripts/test-lighthouse-preview-proxy.mjs
       - name: Validate Lighthouse workflow artifact contract
@@ -234,8 +236,8 @@ jobs:
             tail -n 30 "$api_log" | sed -E 's/(appid=)[^&[:space:]]+/\1[redacted]/g'
             exit 1
           fi
-          if ! node -e 'const d = require(process.argv[1]); if (typeof d.cityName !== "string" || !Number.isFinite(d.temperature) || typeof d.timestamp !== "string" || typeof d.meta?.provider !== "string" || typeof d.meta?.fetchedAt !== "string") process.exit(1); console.log(`Live weather preflight: ${d.cityName}, provider=${d.meta.provider}, fetchedAt=${d.meta.fetchedAt}`)' "$weather_file"; then
-            echo "Live weather preflight response did not satisfy the current-weather contract." >&2
+          if ! node scripts/lib/live-weather-payload.mjs "$weather_file"; then
+            echo "Live weather preflight response did not satisfy the current-weather integrity contract." >&2
             exit 1
           fi
           npm run lighthouse

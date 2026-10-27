@@ -881,3 +881,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-27 — Settings dialog accessibility audit scope
 - Keep the full axe-core WCAG A/AA and best-practice audit for the Settings dialog separate from the dashboard audit and run it at narrow mobile, standard mobile, and desktop widths across Turkish/English and light/dark themes. The dialog can pass keyboard/focus checks yet still regress in semantics or contrast.
 - Scope `bypassCSP` only to the test suite that injects axe-core; do not weaken the production Content Security Policy to make auditing easier.
+
+## 2026-10-27 — Validate live-weather payload integrity before Lighthouse scoring
+
+- The Lighthouse preflight previously checked only that the current-weather timestamps were strings. A malformed or timezone-less timestamp, a materially future-dated value, a response for the wrong city, a non-live provider label, or a missing/unbounded cache lifetime could therefore pass the preflight and still produce a score.
+- Validate that the response city matches the requested Istanbul route, temperature is finite, the provider is the configured OpenWeather source, observation/fetch timestamps are timezone-qualified ISO date-times with valid calendar values, future clock skew is bounded, and `freshForSeconds` is finite and in `(0, 86400]`.
+- Do not reject a historical but syntactically valid provider observation solely because of age: the existing application freshness state remains responsible for showing stale/unavailable guidance. Never synthesize or rewrite weather values to satisfy the gate.
+- Cover 17 negative payload cases and validate a real production response. This is a CI/preflight integrity change only; it does not change API data, provider behavior, CORS, production ports, or deployed weather semantics.
