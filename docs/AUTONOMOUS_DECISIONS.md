@@ -859,3 +859,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - The accessible interval button name read “1h Show every 1 hours” because the compact visible interval and plural translation were reused for every option. Keep the visible compact value unchanged, but use a dedicated singular translation for the one-hour option and retain plural wording for multi-hour options.
 - Test the actual accessible names for one-hour and multi-hour controls in English and Turkish. This is presentation/accessibility-only: do not change the selected interval, sampling cadence, hourly data, or 24-hour forecast horizon.
+
+
+## 2026-10-27 — concurrent Playwright previews must avoid occupied ports
+- scripts/run-playwright.mjs should probe the configured HAVA81_PLAYWRIGHT_PORT (or historic 4173 default) before launching Chromium tests. If another worktree already owns it, select a loopback ephemeral port and pass that exact port to the child process so playwright.config.ts builds the matching preview URL.
+- Never kill or reuse another worktree's preview server just to make a test pass. Keep explicit port overrides when free, and cover occupied-port fallback with a runner contract test.

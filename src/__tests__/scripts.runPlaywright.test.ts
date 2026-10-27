@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -50,6 +51,55 @@ afterEach(async () => {
 });
 
 describe('Playwright temp runner', () => {
+  it('falls back to a free preview port when the configured port is already occupied', async () => {
+    const root = await makeTempRoot();
+    const bin = join(root, 'bin');
+    const portFile = join(root, 'resolved-preview-port');
+    await mkdir(bin);
+
+    const occupied = createServer();
+    await new Promise<void>((resolveListen, reject) => {
+      occupied.once('error', reject);
+      occupied.listen(0, '127.0.0.1', resolveListen);
+    });
+    const address = occupied.address();
+    if (!address || typeof address === 'string') throw new Error('Expected an IPv4 loopback port');
+
+    const fakeNpx = join(bin, 'npx');
+    await writeFile(
+      fakeNpx,
+      [
+        '#!/usr/bin/env node',
+        "require('node:fs').writeFileSync(process.env.RESOLVED_PORT_FILE, process.env.HAVA81_PLAYWRIGHT_PORT || 'missing');",
+        'process.exit(0);',
+        '',
+      ].join('\n')
+    );
+    await chmod(fakeNpx, 0o755);
+
+    let result: { code: number | null; signal: NodeJS.Signals | null };
+    try {
+      result = await run(['--list'], {
+        ...process.env,
+        PATH: `${bin}:${dirname(process.execPath)}:/usr/bin:/bin`,
+        HAVA81_PLAYWRIGHT_PORT: String(address.port),
+        RESOLVED_PORT_FILE: portFile,
+        TMPDIR: root,
+        TEMP: root,
+        TMP: root,
+      });
+    } finally {
+      await new Promise<void>(resolveClose => occupied.close(() => resolveClose()));
+    }
+
+    expect(result.code).toBe(0);
+    const selectedPort = Number(await readFile(portFile, 'utf8'));
+    expect(selectedPort).toBeGreaterThanOrEqual(1024);
+    expect(selectedPort).toBeLessThanOrEqual(65535);
+    expect(selectedPort).not.toBe(address.port);
+    expect(await runnerTempDirs(root)).toHaveLength(0);
+  }, 10_000);
+
   it('removes its temp directory when Playwright cannot spawn', async () => {
     const root = await makeTempRoot();
     const result = await run(['--list'], {
