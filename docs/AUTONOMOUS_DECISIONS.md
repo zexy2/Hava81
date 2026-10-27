@@ -996,3 +996,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - `DayOutlookPanel` must not rely on unrelated parent renders to re-evaluate forecast age. Its adjacent Planla panels already schedule a timer for the forecast TTL, but the multi-day outlook previously only checked freshness during render; an open tab could therefore keep displaying the outlook after its evidence expired.
 - Schedule a bounded rerender at `getForecastFreshness().expiresInMs` and recheck freshness when the tab becomes visible. Once stale, hide the multi-day outlook rather than preserving an outdated recommendation. Do not change the TTL, weather inputs, score, risk labels, provider attribution, or safety semantics.
 - Keep regression coverage for both timer-driven expiry and returning to a visible tab after expiry. Require lint, type-check, full unit/coverage, production build, and the focused Planla browser suite before merge. No API image build, service restart, production deploy, or port switch is part of this change.
+
+
+## 2026-10-27 — accessible empty forecast state
+- When a fresh forecast response contains no hourly or daily rows, keep the existing localized “No data” message and expose it as role=status so assistive technology can announce the state change.
+- This is presentation semantics only. Never replace missing forecast evidence with zero values or fabricated weather, and keep stale evidence governed by the existing fail-closed freshness rules.
