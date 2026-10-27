@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DecisionGlance } from '../../components/hava81/DecisionGlance';
 import type { NormalizedWeatherData } from '../../types';
 
@@ -36,13 +36,17 @@ const sampleWeather: NormalizedWeatherData = {
   },
 };
 
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-10-08T12:00:00.000Z'));
+});
+
 afterEach(() => {
   vi.useRealTimers();
 });
 
 describe('Hava81 decision hero decorative weather state', () => {
   it('exposes the displayed city-local date as a machine-readable date', () => {
-    vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-08T23:30:00.000Z'));
 
     const { container } = render(
@@ -78,4 +82,24 @@ describe('Hava81 decision hero decorative weather state', () => {
       );
     }
   );
+
+  it('uses a neutral scene when the current observation is stale', () => {
+    vi.setSystemTime(new Date('2026-10-08T12:06:00.000Z'));
+
+    const { container } = render(
+      <DecisionGlance
+        weather={{ ...sampleWeather, icon: '01n' }}
+        hourly={[]}
+        forecastMeta={null}
+      />
+    );
+    const section = screen.getByTestId('decision-glance');
+
+    expect(section).toHaveAttribute('data-weather-scene', 'unknown');
+    expect(section).toHaveAttribute('data-night', 'false');
+    expect(container.querySelector('.decision-glance__sun')).toBeNull();
+    expect(container.querySelector('.decision-glance__moon')).toBeNull();
+    expect(container.querySelector('.decision-glance__precipitation')).toBeNull();
+  });
+
 });
