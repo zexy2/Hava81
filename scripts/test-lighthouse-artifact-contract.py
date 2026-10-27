@@ -59,6 +59,12 @@ assert "assertLighthouseWeatherReady(report)" in runner, (
 assert "run: node scripts/test-lighthouse-weather-readiness.mjs" in job, (
     "The bounded weather-readiness retry contract must run in CI"
 )
+assert "run: node scripts/test-live-weather-payload.mjs" in job, (
+    "Live provider payload integrity regressions must run in CI"
+)
+assert 'node scripts/lib/live-weather-payload.mjs "$weather_file"' in job, (
+    "The real provider response must pass timestamp, city, provider and freshness validation"
+)
 run_index = job.find("npm run lighthouse")
 assert run_index >= 0, "Lighthouse command is missing from the job"
 assert build_step.start() < run_index, "Lighthouse variant must build before measurement"
