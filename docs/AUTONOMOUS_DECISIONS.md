@@ -901,3 +901,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The five-minute observer should tolerate a single short edge/network blip without converting it into a production incident, but it must still fail closed for persistent failures. Retry once (250 ms delay) only for HTTP 408/425/500/502/503/504 and known transient timeout/reset/DNS errors; retain first-attempt status/error/timing and an explicit recovery flag in the snapshot.
 - Apply the retry wrapper only to the public frontend shells and API readiness probe. Never retry GitHub REST calls, especially 403/429 or exhausted quota. Permanent HTTP errors, including 404 and 429, must not be retried. Keep boot-asset retry bounded by the existing global two-retry budget across all assets; do not create an independent retry budget per asset.
 - A second transient failure must remain unhealthy; a retry that ends in a permanent error is not “recovered”. Test both outcomes, the production probe call sites, and the asset-budget behavior. This is observer-only and read-only: do not restart services, change Nginx ports, alter API/provider behavior, or deploy API code as part of this fix.
+
+## 2026-10-27 — offline navigation fallback regression contract
+- Cached route and root-shell responses must be returned without stale response-URL metadata; otherwise the browser can restore an old query-derived view instead of the navigation the user requested.
+- Use the cached root shell for network failures and transient 5xx responses, but keep 4xx responses network-authentic so a missing route is not hidden by stale HTML.
+- Cache Storage failures must not mask the original navigation network failure or discard a successful network response.
+- Keep these contracts covered against the actual `public/sw.js` source in the VM-based unit suite; this test-only change must not alter production worker behavior.
