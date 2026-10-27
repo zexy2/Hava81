@@ -39,6 +39,21 @@ describe('getForecastFreshness', () => {
     });
   });
 
+  it('fails closed for explicitly invalid or unbounded freshness windows', () => {
+    const now = Date.parse('2026-09-02T00:00:00.000Z');
+    for (const freshForSeconds of [0, -1, Number.NaN, Number.POSITIVE_INFINITY, 86_401]) {
+      expect(getForecastFreshness(meta(new Date(now), freshForSeconds), now)).toEqual({
+        fresh: false,
+        expiresInMs: null,
+      });
+    }
+
+    expect(getForecastFreshness(meta(new Date(now), 86_400), now)).toEqual({
+      fresh: true,
+      expiresInMs: 86_400_100,
+    });
+  });
+
   it('uses one clock snapshot so an expiry boundary cannot lose its timer', () => {
     vi.useRealTimers();
     const boundary = Date.parse('2026-09-02T00:00:20.000Z');
