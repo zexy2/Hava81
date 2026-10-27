@@ -138,13 +138,16 @@ export function ForecastChartPlot({
 
   // The draw-in animation needs the curve's real length (stroke-dashoffset
   // runs from the full length to zero); it is re-measured whenever the path
-  // changes so a new interval or width draws itself again.
+  // changes so a new interval or width draws itself again. Keep this effect
+  // keyed to chart geometry: pointer-driven highlighting rerenders the plot
+  // frequently, but does not change the path length and should not force a
+  // synchronous SVG geometry read on every pointer move.
   useLayoutEffect(() => {
     const curve = curveRef.current;
     if (!curve || typeof curve.getTotalLength !== 'function') return;
     const length = Math.ceil(curve.getTotalLength());
     if (length > 0) curve.style.setProperty('--rhythm-curve-length', `${length}`);
-  });
+  }, [chart]);
 
   const renderTooltip = (point: RhythmPoint) => {
     const localTime = atLocationTime(point.time);

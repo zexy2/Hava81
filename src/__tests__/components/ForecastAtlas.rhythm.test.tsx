@@ -203,6 +203,46 @@ describe('ForecastAtlas hourly rhythm', () => {
     expect(container.querySelector('.hava81-forecast-atlas__tooltip')).toBeNull();
   });
 
+  it('does not remeasure the SVG curve for pointer-only highlight renders', () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'getTotalLength');
+    const getTotalLength = vi.fn(() => 100);
+    Object.defineProperty(SVGElement.prototype, 'getTotalLength', {
+      configurable: true,
+      value: getTotalLength,
+    });
+
+    try {
+      const { container } = renderRhythm();
+      expect(getTotalLength).toHaveBeenCalledTimes(1);
+
+      const hours = container.querySelector<HTMLOListElement>('.hava81-forecast-atlas__hours');
+      const track = container.querySelector<HTMLElement>('.hava81-forecast-atlas__hourly-track');
+      expect(hours).not.toBeNull();
+      expect(track).not.toBeNull();
+      vi.spyOn(hours as HTMLOListElement, 'getBoundingClientRect').mockReturnValue({
+        left: 0,
+        right: 2400,
+        width: 2400,
+        top: 0,
+        bottom: 100,
+        height: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect);
+
+      fireEvent.pointerMove(track as HTMLElement, { clientX: 550 });
+      expect(container.querySelector('.hava81-forecast-atlas__hour.is-active')).toBeInTheDocument();
+      expect(getTotalLength).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(SVGElement.prototype, 'getTotalLength', originalDescriptor);
+      } else {
+        Reflect.deleteProperty(SVGElement.prototype, 'getTotalLength');
+      }
+    }
+  });
+
   it('colours the curve by temperature, warm at the top and cold at the bottom', () => {
     const { container } = renderRhythm();
     const stops = Array.from(
