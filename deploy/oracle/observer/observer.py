@@ -742,10 +742,29 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
 
 def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
     pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
-    runs_result = http_get(
-        f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
-        timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+    pulls_headers = pulls_result.get('headers') or {}
+    pulls_rate_limited = (
+        not pulls_result.get('ok')
+        and str(pulls_headers.get('x-ratelimit-remaining')) == '0'
     )
+    if pulls_rate_limited:
+        # GitHub explicitly asks clients not to retry while the primary quota is
+        # exhausted. Do not spend a second request on Actions after the first
+        # endpoint has already reported remaining=0; synthesize the same
+        # fail-closed transport state so downstream readiness remains unknown.
+        runs_result = {
+            'ok': False,
+            'status': pulls_result.get('status'),
+            'elapsed_ms': 0,
+            'headers': pulls_headers,
+            'json': None,
+            'error': pulls_result.get('error') or 'GitHub API rate limit exhausted',
+        }
+    else:
+        runs_result = http_get(
+            f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
+            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+        )
     runs_status = runs_result.get('status')
     should_retry_runs = (
         not runs_result.get('ok')

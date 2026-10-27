@@ -70,6 +70,30 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn('snapshot_freshness: fresh=True', output.getvalue())
         self.assertIn('max_age_s=600', output.getvalue())
 
+    def test_main_prints_github_rate_limit_recovery_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / 'state.json'
+            state_path.write_text(
+                json.dumps({
+                    'collected_at': datetime.now(timezone.utc).isoformat(),
+                    'github': {
+                        'auth_mode': 'anonymous',
+                        'rate_limit_remaining': '0',
+                        'rate_limit_reset': '1793061868',
+                        'error': 'GitHub API rate limit exhausted',
+                    },
+                }),
+                encoding='utf-8',
+            )
+            output = StringIO()
+            with patch.object(status, 'STATE_FILE', state_path), redirect_stdout(output):
+                exit_code = status.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn('github_api: auth_mode=anonymous rate_limit_remaining=0 reset_epoch=1793061868', output.getvalue())
+        self.assertIn('github_api_action: configure the documented repository-scoped read-only token', output.getvalue())
+        self.assertNotIn('token=', output.getvalue())
+
     def test_status_distinguishes_process_host_from_snapshot_disk_host(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             state_path = Path(tmp) / 'state.json'

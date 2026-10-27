@@ -74,8 +74,10 @@ class ObserverGitHubAuthenticationTests(unittest.TestCase):
         original_http_get = observer.http_get
         original_collect_api_deployment = observer.collect_api_deployment
         rate_headers = {'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '1793001124'}
+        requested_urls: list[str] = []
 
         def rate_limited(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
             return {
                 'ok': False,
                 'status': 403,
@@ -102,6 +104,8 @@ class ObserverGitHubAuthenticationTests(unittest.TestCase):
         self.assertEqual(result['rate_limit_remaining'], '0')
         self.assertEqual(result['rate_limit_reset'], '1793001124')
         self.assertIn('rate limit exhausted', result['error'])
+        self.assertEqual(len(requested_urls), 1)
+        self.assertIn('/pulls?', requested_urls[0])
 
     def test_github_rate_limit_error_includes_reset_without_exposing_token(self) -> None:
         from email.message import Message
