@@ -958,3 +958,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The current sample time, BFF fetch time, and optional `meta.observedAt` drive freshness decisions. JavaScript accepts timezone-less ISO-looking timestamps as local time, so the same payload can imply a different observation age in browsers with different timezones.
 - Add a dedicated strict parser for those three current-weather fields, accepting an explicit `Z` or `±HH:MM` offset. Keep the general date parser for other established fields; do not change provider requests or weather values.
 - Regression coverage rejects timezone-less sample/fetch/source timestamps and accepts a valid explicit UTC offset. Require exact-head API/client tests, lint, type-check, build, and CI before merge; no API image build or deployment is part of this change.
+## 2026-10-27 — Fail closed on invalid current-weather freshness windows
+
+- The 300-second current-weather fallback is for metadata that omits a freshness TTL, not for an explicitly invalid TTL. Zero, negative, non-finite, or greater-than-24-hour values must not silently become a fresh five-minute reading.
+- Match the API normalization and observer contract: accept only finite `freshForSeconds` in `(0, 86400]`; treat invalid explicit metadata as unknown. This is defensive utility-level validation and does not change valid production payloads.
+- Cover invalid values and the exact 24-hour upper boundary. Keep the change limited to the current-weather freshness helper and its unit tests; require lint, type-check, unit/coverage, build, and required CI gates before merge. No API image build or deployment is part of this work.

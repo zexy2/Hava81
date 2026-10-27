@@ -2,6 +2,7 @@ import type { WeatherDataMeta } from '../types';
 import { getSourceObservationFreshness } from './sourceObservationFreshness';
 
 const CURRENT_FRESHNESS_FALLBACK_SECONDS = 300;
+const MAX_CURRENT_FRESHNESS_SECONDS = 86_400;
 const MAX_FUTURE_SKEW_MS = 60_000;
 const CURRENT_EXPIRY_CUSHION_MS = 100;
 
@@ -39,12 +40,16 @@ export function getCurrentWeatherFreshness(
     };
   }
 
-  const ttlSeconds =
-    typeof meta.freshForSeconds === 'number' &&
-    Number.isFinite(meta.freshForSeconds) &&
-    meta.freshForSeconds > 0
-      ? meta.freshForSeconds
-      : CURRENT_FRESHNESS_FALLBACK_SECONDS;
+  const explicitTtl = meta.freshForSeconds;
+  if (
+    explicitTtl !== undefined &&
+    (!Number.isFinite(explicitTtl) ||
+      explicitTtl <= 0 ||
+      explicitTtl > MAX_CURRENT_FRESHNESS_SECONDS)
+  ) {
+    return unknownFreshness();
+  }
+  const ttlSeconds = explicitTtl ?? CURRENT_FRESHNESS_FALLBACK_SECONDS;
   const ageMs = now - fetchedAtMs;
   if (ageMs < -MAX_FUTURE_SKEW_MS) return unknownFreshness();
 

@@ -39,6 +39,21 @@ describe('getCurrentWeatherFreshness', () => {
     });
   });
 
+  it('fails closed for explicitly invalid or unbounded freshness windows', () => {
+    const now = Date.parse('2026-09-02T00:00:00Z');
+    const unknown = { fresh: false, status: 'unknown', ageMinutes: null, expiresInMs: null };
+
+    for (const freshForSeconds of [0, -1, Number.NaN, Number.POSITIVE_INFINITY, 86_401]) {
+      expect(
+        getCurrentWeatherFreshness(meta({ fetchedAt: new Date(now), freshForSeconds }), now)
+      ).toEqual(unknown);
+    }
+
+    expect(
+      getCurrentWeatherFreshness(meta({ fetchedAt: new Date(now), freshForSeconds: 86_400 }), now)
+    ).toMatchObject({ fresh: true, status: 'fresh' });
+  });
+
   it('accepts an explicit clock for consumers that need one freshness decision per render', () => {
     expect(
       getCurrentWeatherFreshness(meta({ freshForSeconds: 30 }), Date.parse('2026-09-02T00:00:10Z'))
