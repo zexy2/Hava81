@@ -11,6 +11,7 @@ import ssl
 import subprocess
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -37,6 +38,8 @@ API_BUILD_DISK_RESERVE_BYTES = 512 * 1024 * 1024
 ROOT_DISK_WARNING_USED_PERCENT = 85.0
 MAX_READY_AGE_SECONDS = 180
 MAX_FUTURE_SKEW_SECONDS = 60
+MAX_CURRENT_WEATHER_SOURCE_AGE_SECONDS = 2 * 60 * 60
+MAX_CURRENT_WEATHER_FRESHNESS_SECONDS = 24 * 60 * 60
 USER_AGENT = 'Hava81-Deterministic-Observer/1.0'
 SSL_CONTEXT = ssl.create_default_context()
 API_RUNTIME_PATHS = {
@@ -325,7 +328,11 @@ def collect_boot_assets(
 
 
 def timestamp_age_seconds(value: Any) -> float | None:
-    if not isinstance(value, str) or not value:
+    if (
+        not isinstance(value, str)
+        or 'T' not in value
+        or not re.search(r'(?:Z|[+-]\d{2}:\d{2})$', value)
+    ):
         return None
     try:
         parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
@@ -334,6 +341,135 @@ def timestamp_age_seconds(value: Any) -> float | None:
         return round((datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds(), 1)
     except ValueError:
         return None
+
+
+def strict_timestamp_age_seconds(value: Any, now: datetime | None = None) -> float | None:
+    """Parse a timezone-qualified ISO timestamp without assuming a timezone for naive values."""
+    if (
+        not isinstance(value, str)
+        or 'T' not in value
+        or not re.search(r'(?:Z|[+-]\d{2}:\d{2})$', value)
+    ):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            return None
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None or current.utcoffset() is None:
+            return None
+        return round(
+            (current.astimezone(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds(),
+            1,
+        )
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def normalize_city_label(value: Any) -> str:
+    if not isinstance(value, str):
+        return ''
+    decomposed = unicodedata.normalize('NFKD', value).casefold()
+    return ''.join(char for char in decomposed if not unicodedata.combining(char)).strip()
+
+
+def evaluate_current_weather(
+    result: dict[str, Any],
+    expected_provider: Any,
+    now: datetime | None = None,
+) -> tuple[dict[str, bool], dict[str, Any]]:
+    """Fail closed unless the real public current-weather response is fresh and coherent."""
+    payload = result.get('json') if isinstance(result.get('json'), dict) else {}
+    meta = payload.get('meta') if isinstance(payload.get('meta'), dict) else {}
+    coordinates = payload.get('coordinates') if isinstance(payload.get('coordinates'), dict) else {}
+
+    city_name = payload.get('cityName')
+    country = payload.get('country')
+    temperature = payload.get('temperature')
+    provider = meta.get('provider')
+    fetched_age = strict_timestamp_age_seconds(meta.get('fetchedAt'), now)
+    timestamp_age = strict_timestamp_age_seconds(payload.get('timestamp'), now)
+    observed_value = meta.get('observedAt', payload.get('timestamp'))
+    observation_age = strict_timestamp_age_seconds(observed_value, now)
+    observed_timestamp_age = (
+        strict_timestamp_age_seconds(meta.get('observedAt'), now)
+        if meta.get('observedAt') is not None
+        else timestamp_age
+    )
+    fresh_for = meta.get('freshForSeconds')
+    fresh_for_valid = (
+        isinstance(fresh_for, (int, float))
+        and not isinstance(fresh_for, bool)
+        and math.isfinite(fresh_for)
+        and 0 < fresh_for <= MAX_CURRENT_WEATHER_FRESHNESS_SECONDS
+    )
+    lat = coordinates.get('lat')
+    lon = coordinates.get('lon')
+    coordinates_match = (
+        isinstance(lat, (int, float))
+        and not isinstance(lat, bool)
+        and math.isfinite(lat)
+        and 40 <= lat <= 42
+        and isinstance(lon, (int, float))
+        and not isinstance(lon, bool)
+        and math.isfinite(lon)
+        and 27 <= lon <= 30
+    )
+    observation_consistent = True
+    if meta.get('observedAt') is not None:
+        observation_consistent = (
+            timestamp_age is not None
+            and observed_timestamp_age is not None
+            and abs(timestamp_age - observed_timestamp_age) <= 60
+        )
+
+    checks = {
+        'current_weather_200': result.get('ok') is True and result.get('status') == 200,
+        'current_weather_city_matches': (
+            normalize_city_label(city_name) == 'istanbul'
+            and isinstance(country, str)
+            and country.upper() == 'TR'
+            and coordinates_match
+        ),
+        'current_weather_temperature_valid': (
+            isinstance(temperature, (int, float))
+            and not isinstance(temperature, bool)
+            and math.isfinite(temperature)
+            and -100 <= temperature <= 100
+        ),
+        'current_weather_provider_matches': (
+            isinstance(provider, str)
+            and bool(provider.strip())
+            and isinstance(expected_provider, str)
+            and provider == expected_provider
+        ),
+        'current_weather_fetch_fresh': (
+            fetched_age is not None
+            and fresh_for_valid
+            and -MAX_FUTURE_SKEW_SECONDS <= fetched_age <= fresh_for
+        ),
+        'current_weather_observation_fresh': (
+            observation_age is not None
+            and -MAX_FUTURE_SKEW_SECONDS
+            <= observation_age
+            <= MAX_CURRENT_WEATHER_SOURCE_AGE_SECONDS
+        ),
+        'current_weather_observation_consistent': observation_consistent,
+    }
+    return checks, {
+        'status': result.get('status'),
+        'elapsed_ms': result.get('elapsed_ms'),
+        'city_name': city_name if isinstance(city_name, str) else None,
+        'country': country if isinstance(country, str) else None,
+        'provider': provider if isinstance(provider, str) else None,
+        'temperature_valid': checks['current_weather_temperature_valid'],
+        'fetched_age_seconds': fetched_age,
+        'observation_age_seconds': observation_age,
+        'fresh_for_seconds': fresh_for if fresh_for_valid else None,
+        'cache_status': meta.get('cacheStatus') if isinstance(meta.get('cacheStatus'), str) else None,
+        'ok': all(checks.values()),
+        'error': result.get('error'),
+    }
 
 
 def collect_production() -> dict[str, Any]:
@@ -345,6 +481,13 @@ def collect_production() -> dict[str, Any]:
     english_city = http_get_with_transient_retry('https://hava81.zekiakgul.dev/en/istanbul/')
     ready = http_get_with_transient_retry(
         'https://api.hava81.zekiakgul.dev/api/v1/health/ready',
+        headers={'Origin': 'https://hava81.zekiakgul.dev'},
+    )
+    current_weather = http_get_with_transient_retry(
+        (
+            'https://api.hava81.zekiakgul.dev/api/v1/weather/current'
+            '?city=%C4%B0stanbul&units=metric&lang=en'
+        ),
         headers={'Origin': 'https://hava81.zekiakgul.dev'},
     )
     boot_assets = collect_boot_assets(root, city, english_city)
@@ -360,6 +503,11 @@ def collect_production() -> dict[str, Any]:
         'english_city': english_city_revision,
     }
     ready_json = ready.get('json') if isinstance(ready.get('json'), dict) else {}
+    provider = ready_json.get('provider') if isinstance(ready_json.get('provider'), dict) else {}
+    current_weather_checks, current_weather_summary = evaluate_current_weather(
+        current_weather,
+        provider.get('name'),
+    )
     ready_headers = ready.get('headers') or {}
     cors_value = ready_headers.get('access-control-allow-origin')
     cors_ok = cors_value == 'https://hava81.zekiakgul.dev'
@@ -383,9 +531,9 @@ def collect_production() -> dict[str, Any]:
         'api_ready_no_store': 'no-store' in ready_cache_control.lower(),
         'cors_ok': cors_ok,
         'nginx_port_ok': nginx.get('ok') is True,
+        **current_weather_checks,
     }
     issues = [name for name, ok in checks.items() if not ok]
-    provider = ready_json.get('provider') if isinstance(ready_json.get('provider'), dict) else {}
     return {
         'healthy': not issues,
         'issues': issues,
@@ -404,6 +552,7 @@ def collect_production() -> dict[str, Any]:
             'provider': provider.get('name'),
             'provider_state': provider.get('state'),
         },
+        'current_weather': current_weather_summary,
         'cors': {'allow_origin': cors_value, 'ok': cors_ok},
         'nginx': nginx,
     }

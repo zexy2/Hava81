@@ -15,6 +15,38 @@ observer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(observer)
 
 
+def valid_current_weather_result(**payload_overrides: Any) -> dict[str, Any]:
+    now = observer.now_iso()
+    payload: dict[str, Any] = {
+        'cityName': 'Istanbul',
+        'country': 'TR',
+        'temperature': 14,
+        'timestamp': now,
+        'coordinates': {'lat': 41.0351, 'lon': 28.9833},
+        'meta': {
+            'provider': 'OpenWeather',
+            'fetchedAt': now,
+            'freshForSeconds': 300,
+            'cacheStatus': 'HIT',
+        },
+    }
+    for key, value in payload_overrides.items():
+        if key == 'meta' and isinstance(value, dict):
+            payload['meta'] = {**payload['meta'], **value}
+        elif key == 'coordinates' and isinstance(value, dict):
+            payload['coordinates'] = {**payload['coordinates'], **value}
+        else:
+            payload[key] = value
+    return {
+        'ok': True,
+        'status': 200,
+        'elapsed_ms': 2,
+        'headers': {'content-type': 'application/json'},
+        'json': payload,
+        'error': None,
+    }
+
+
 class ObserverGitHubAuthenticationTests(unittest.TestCase):
     def _response(self):
         response = mock.MagicMock()
@@ -178,6 +210,8 @@ class ObserverFreshnessTests(unittest.TestCase):
         original_nginx_target = observer.nginx_target
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/weather/current' in url:
+                return valid_current_weather_result()
             if '/health/ready' in url:
                 return {
                     'ok': True,
@@ -226,6 +260,8 @@ class ObserverFreshnessTests(unittest.TestCase):
         original_nginx_target = observer.nginx_target
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/weather/current' in url:
+                return valid_current_weather_result()
             if '/health/ready' in url:
                 return {
                     'ok': True,
@@ -280,6 +316,9 @@ class ObserverFreshnessTests(unittest.TestCase):
         requested_urls: list[str] = []
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/weather/current' in url:
+                requested_urls.append(url)
+                return valid_current_weather_result()
             requested_urls.append(url)
             if '/health/ready' in url:
                 return {
@@ -319,7 +358,10 @@ class ObserverFreshnessTests(unittest.TestCase):
             observer.nginx_target = original_nginx_target
 
         self.assertIn('https://hava81.zekiakgul.dev/en/istanbul/', requested_urls)
+        self.assertTrue(any('/api/v1/weather/current?' in url for url in requested_urls))
         self.assertTrue(production['healthy'])
+        self.assertTrue(production['checks']['current_weather_fetch_fresh'])
+        self.assertTrue(production['checks']['current_weather_observation_fresh'])
         self.assertTrue(production['checks']['english_istanbul_200'])
         self.assertTrue(production['checks']['frontend_revision_known'])
         self.assertTrue(production['checks']['frontend_revision_consistent'])
@@ -337,6 +379,9 @@ class ObserverFreshnessTests(unittest.TestCase):
         requested_urls: list[str] = []
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/weather/current' in url:
+                requested_urls.append(url)
+                return valid_current_weather_result()
             requested_urls.append(url)
             if '/health/ready' in url:
                 return {
@@ -397,6 +442,8 @@ class ObserverFreshnessTests(unittest.TestCase):
         ).isoformat().replace('+00:00', 'Z')
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/weather/current' in url:
+                return valid_current_weather_result()
             if '/health/ready' in url:
                 return {
                     'ok': True,
@@ -441,6 +488,116 @@ class ObserverFreshnessTests(unittest.TestCase):
         self.assertIn('api_ready_fresh', production['issues'])
 
 
+class ObserverCurrentWeatherIntegrityTests(unittest.TestCase):
+    def evaluate(self, result: dict[str, Any]) -> tuple[dict[str, bool], dict[str, Any]]:
+        return observer.evaluate_current_weather(result, 'OpenWeather', now=datetime.now(timezone.utc))
+
+    def test_accepts_fresh_realistic_istanbul_payload(self) -> None:
+        now = datetime.now(timezone.utc)
+        timestamp = now.isoformat().replace('+00:00', 'Z')
+        result = valid_current_weather_result(
+            timestamp=timestamp,
+            meta={'fetchedAt': timestamp},
+        )
+        checks, summary = self.evaluate(result)
+        self.assertTrue(all(checks.values()), checks)
+        self.assertTrue(summary['ok'])
+        self.assertEqual(summary['provider'], 'OpenWeather')
+
+    def test_rejects_missing_nonfinite_or_impossible_temperature(self) -> None:
+        for value in (None, float('nan'), float('inf'), -101, 101, True):
+            with self.subTest(value=value):
+                checks, summary = self.evaluate(valid_current_weather_result(temperature=value))
+                self.assertFalse(checks['current_weather_temperature_valid'])
+                self.assertFalse(summary['ok'])
+
+    def test_rejects_wrong_city_country_or_coordinates(self) -> None:
+        cases = [
+            {'cityName': 'Ankara'},
+            {'country': 'US'},
+            {'coordinates': {'lat': 39.9, 'lon': 32.8}},
+        ]
+        for overrides in cases:
+            with self.subTest(overrides=overrides):
+                checks, _ = self.evaluate(valid_current_weather_result(**overrides))
+                self.assertFalse(checks['current_weather_city_matches'])
+
+    def test_rejects_provider_mismatch(self) -> None:
+        checks, _ = self.evaluate(valid_current_weather_result(meta={'provider': 'Unknown'}))
+        self.assertFalse(checks['current_weather_provider_matches'])
+
+    def test_rejects_non_200_and_invalid_cache_lifetimes(self) -> None:
+        result = valid_current_weather_result()
+        result['ok'] = False
+        result['status'] = 503
+        checks, _ = self.evaluate(result)
+        self.assertFalse(checks['current_weather_200'])
+
+        for lifetime in (0, -1, float('nan'), float('inf'), 86_401, True):
+            with self.subTest(lifetime=lifetime):
+                checks, _ = self.evaluate(
+                    valid_current_weather_result(meta={'freshForSeconds': lifetime})
+                )
+                self.assertFalse(checks['current_weather_fetch_fresh'])
+
+    def test_rejects_stale_fetch_or_source_observation(self) -> None:
+        now = datetime.now(timezone.utc)
+        stale_fetch = (now - timedelta(seconds=301)).isoformat().replace('+00:00', 'Z')
+        fresh_timestamp = now.isoformat().replace('+00:00', 'Z')
+        checks, _ = self.evaluate(
+            valid_current_weather_result(
+                timestamp=fresh_timestamp,
+                meta={'fetchedAt': stale_fetch, 'freshForSeconds': 300},
+            )
+        )
+        self.assertFalse(checks['current_weather_fetch_fresh'])
+
+        stale_source = (now - timedelta(hours=2, seconds=1)).isoformat().replace('+00:00', 'Z')
+        checks, _ = self.evaluate(
+            valid_current_weather_result(
+                timestamp=stale_source,
+                meta={'fetchedAt': fresh_timestamp},
+            )
+        )
+        self.assertFalse(checks['current_weather_observation_fresh'])
+
+    def test_rejects_timezone_less_invalid_and_materially_future_timestamps(self) -> None:
+        now = datetime.now(timezone.utc)
+        fresh = now.isoformat().replace('+00:00', 'Z')
+        invalid_cases = [
+            {'timestamp': '2026-10-27T15:00:00', 'meta': {'fetchedAt': fresh}},
+            {'timestamp': 'not-a-time', 'meta': {'fetchedAt': fresh}},
+            {
+                'timestamp': (now + timedelta(seconds=61)).isoformat().replace('+00:00', 'Z'),
+                'meta': {'fetchedAt': fresh},
+            },
+            {
+                'timestamp': fresh,
+                'meta': {'fetchedAt': (now + timedelta(seconds=61)).isoformat().replace('+00:00', 'Z')},
+            },
+            {'timestamp': fresh, 'meta': {'fetchedAt': '2026-10-27T15:00:00'}},
+        ]
+        for overrides in invalid_cases:
+            with self.subTest(overrides=overrides):
+                checks, _ = self.evaluate(valid_current_weather_result(**overrides))
+                if overrides.get('timestamp') != fresh:
+                    self.assertFalse(checks['current_weather_observation_fresh'])
+                if overrides.get('meta', {}).get('fetchedAt') != fresh:
+                    self.assertFalse(checks['current_weather_fetch_fresh'])
+
+    def test_rejects_conflicting_explicit_observation_metadata(self) -> None:
+        now = datetime.now(timezone.utc)
+        fresh = now.isoformat().replace('+00:00', 'Z')
+        different = (now - timedelta(minutes=3)).isoformat().replace('+00:00', 'Z')
+        checks, _ = self.evaluate(
+            valid_current_weather_result(
+                timestamp=fresh,
+                meta={'fetchedAt': fresh, 'observedAt': different},
+            )
+        )
+        self.assertFalse(checks['current_weather_observation_consistent'])
+
+
 class ObserverTransientRetryTests(unittest.TestCase):
     @staticmethod
     def result(status: int | None, error: str | None = None) -> dict[str, Any]:
@@ -465,6 +622,8 @@ class ObserverTransientRetryTests(unittest.TestCase):
         attempts: dict[str, int] = {}
 
         def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            if '/weather/current' in url:
+                return valid_current_weather_result()
             attempts[url] = attempts.get(url, 0) + 1
             if url == 'https://hava81.zekiakgul.dev/' and attempts[url] == 1:
                 return self.result(503, 'HTTP 503')
