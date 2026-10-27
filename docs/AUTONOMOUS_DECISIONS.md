@@ -963,3 +963,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The 300-second current-weather fallback is for metadata that omits a freshness TTL, not for an explicitly invalid TTL. Zero, negative, non-finite, or greater-than-24-hour values must not silently become a fresh five-minute reading.
 - Match the API normalization and observer contract: accept only finite `freshForSeconds` in `(0, 86400]`; treat invalid explicit metadata as unknown. This is defensive utility-level validation and does not change valid production payloads.
 - Cover invalid values and the exact 24-hour upper boundary. Keep the change limited to the current-weather freshness helper and its unit tests; require lint, type-check, unit/coverage, build, and required CI gates before merge. No API image build or deployment is part of this work.
+
+## 2026-10-27 — Reject impossible ISO calendar timestamps
+
+- JavaScript's Date parser normalizes impossible calendar days such as 2026-02-30 to a different valid date instead of rejecting the source value. That can make a malformed current-weather or forecast timestamp appear parseable and then enter freshness decisions.
+- Validate the calendar components of ISO date-time strings before accepting them. Apply the check to current-weather dates and forecast hourly/fetch timestamps while preserving the existing date-only forecast parser, explicit-timezone contract, valid leap days, and freshness thresholds.
+- Regression coverage rejects impossible current sample/fetch/observation dates, an hour overflow, forecast hourly and metadata dates, and accepts a real leap-day timestamp without upgrading its stale freshness status. This is client-boundary validation only; it does not generate weather, alter scoring, or change API deployment/runtime code.

@@ -101,9 +101,54 @@ const invalidWeatherPayload = (field: string): never => {
   });
 };
 
+const ISO_CALENDAR_DATE_TIME_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})?$/i;
+
+const hasValidIsoCalendarDateTime = (value: string): boolean => {
+  const match = ISO_CALENDAR_DATE_TIME_PATTERN.exec(value);
+  if (!match) return true;
+
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) {
+    return false;
+  }
+
+  // Date.parse normalizes impossible days such as February 30 into March.
+  // Compare the UTC calendar fields before accepting that normalized value.
+  const calendar = new Date(0);
+  calendar.setUTCFullYear(year, month - 1, day);
+  calendar.setUTCHours(hour, minute, second, 0);
+
+  return (
+    calendar.getUTCFullYear() === year &&
+    calendar.getUTCMonth() === month - 1 &&
+    calendar.getUTCDate() === day &&
+    calendar.getUTCHours() === hour &&
+    calendar.getUTCMinutes() === minute &&
+    calendar.getUTCSeconds() === second
+  );
+};
+
 const reviveWeatherDate = (value: string, field: string): Date => {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return invalidWeatherPayload(field);
+  if (Number.isNaN(date.getTime()) || !hasValidIsoCalendarDateTime(value)) {
+    return invalidWeatherPayload(field);
+  }
   return date;
 };
 
@@ -227,7 +272,12 @@ const reviveForecastDate = (value: string, field: string, dateOnly = false): Dat
   }
 
   const date = new Date(dateOnly ? `${value}T12:00:00.000Z` : value);
-  if (Number.isNaN(date.getTime())) return invalidForecastPayload(field);
+  if (
+    Number.isNaN(date.getTime()) ||
+    (!dateOnly && !hasValidIsoCalendarDateTime(value))
+  ) {
+    return invalidForecastPayload(field);
+  }
   if (dateOnly && date.toISOString().slice(0, 10) !== value) {
     return invalidForecastPayload(field);
   }

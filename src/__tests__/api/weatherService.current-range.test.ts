@@ -139,6 +139,40 @@ describe('current observation timestamp contract', () => {
     });
   });
 
+  it.each([
+    [
+      'current sample timestamp',
+      { timestamp: '2026-02-30T12:00:00.000Z' },
+      'current.timestamp',
+    ],
+    [
+      'current fetch timestamp',
+      { meta: { fetchedAt: '2026-04-31T12:00:01.000Z' } },
+      'current.meta.fetchedAt',
+    ],
+    [
+      'current sample time overflow',
+      { timestamp: '2026-07-14T24:00:00.000Z' },
+      'current.timestamp',
+    ],
+    [
+      'current source observation timestamp',
+      {
+        timestamp: '2026-03-02T12:00:00.000Z',
+        meta: { observedAt: '2026-02-30T12:00:00.000Z' },
+      },
+      'current.meta.observedAt',
+    ],
+  ])('rejects impossible calendar values in %s', async (_label, overrides, field) => {
+    mockGet.mockResolvedValue(currentPayload(overrides as Record<string, unknown>));
+
+    await expect(weatherService.getCurrentWeather({ city: 'Izmir' })).rejects.toMatchObject({
+      code: ErrorCode.API_ERROR,
+      retryable: true,
+      details: { field },
+    });
+  });
+
   it('accepts timezone-qualified current timestamps with an explicit UTC offset', async () => {
     const sampleTime = new Date(Date.now() - 30_000).toISOString().replace('Z', '+00:00');
     mockGet.mockResolvedValue(
@@ -150,6 +184,21 @@ describe('current observation timestamp contract', () => {
 
     const result = await weatherService.getCurrentWeather({ city: 'Izmir' });
     expect(result.meta.observedAt).toEqual(new Date(sampleTime));
+  });
+
+  it('accepts a real leap-day timestamp without upgrading its stale freshness state', async () => {
+    const leapDay = '2024-02-29T12:00:00.000Z';
+    mockGet.mockResolvedValue(
+      currentPayload({
+        timestamp: leapDay,
+        meta: { observedAt: leapDay, fetchedAt: new Date().toISOString() },
+      })
+    );
+
+    const result = await weatherService.getCurrentWeather({ city: 'Izmir' });
+
+    expect(result.timestamp.toISOString()).toBe(leapDay);
+    expect(getCurrentWeatherFreshness(result.meta).fresh).toBe(false);
   });
 
   it('rejects a source observation timestamp beyond the future-skew ceiling', async () => {
