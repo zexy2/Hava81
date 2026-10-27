@@ -808,3 +808,17 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - `public/sw.js` is production JavaScript but was excluded from the repository's `npm run lint` target. Include it in the lint command and give it a dedicated ESLint file config with `sourceType: 'script'` and `globals.serviceworker`.
 - Do not add Node or page globals to this file: the worker must be checked against the actual Service Worker Web API surface so undeclared identifiers are caught without false positives for `self`, `caches`, `clients`, `Request`, and `Response`.
 - This is a static-analysis coverage change only. The service-worker install/activation, navigation fallback, API network-only behavior, cache semantics, and weather freshness remain unchanged.
+
+
+## 2026-10-27 — Stop observer GitHub polling immediately after a quota-exhausted response
+
+- The Oracle observer's anonymous GitHub REST quota was exhausted (`x-ratelimit-remaining: 0`, reset epoch `1793061868`). Its first `/pulls` request already supplied the authoritative rate-limit signal, but the collector still issued `/actions/runs`, consuming another request during a window when GitHub instructs clients not to retry.
+- After a failed request reports `remaining=0`, synthesize a fail-closed result for the dependent Actions lookup instead of sending another request. Keep `github.ok=false`, main/PR CI state unknown, and merge/deploy readiness blocked; do not reuse a stale green signal as current. Normal transport/5xx retries remain bounded as before, and a rate-limited Actions request still suppresses the branch lookup.
+- This reduces avoidable quota use but does not replace the documented fine-grained read-only token requirement. Do not copy a broad interactive `gh` token into the systemd environment; `/etc/hava81-worker/github.env` remains operator-managed and must contain only a repository-scoped, read-only token.
+
+
+## 2026-10-27 — Respect cached anonymous GitHub rate-limit reset across observer intervals
+
+- A one-call short-circuit alone still allowed the five-minute timer to repeat the same quota-exhausted `/pulls` request on every subsequent interval. When the previous snapshot records `auth_mode=anonymous`, `rate_limit_remaining=0`, and a future `rate_limit_reset`, skip all GitHub API requests until that epoch passes.
+- The cooldown is bypassed immediately when `HAVA81_GITHUB_TOKEN` is configured, and expired/malformed reset values do not suppress a new attempt. During cooldown the observer continues collecting production/host signals and reports GitHub state as unknown; no stale green PR/main state can authorize a merge or deploy.
+- This is backoff, not authentication: the fine-grained repository-scoped read-only token remains required for reliable five-minute GitHub observation.

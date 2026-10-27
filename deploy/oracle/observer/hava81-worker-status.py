@@ -135,6 +135,19 @@ def main() -> int:
         print(f"main_ci_current: run#{main_pipeline.get('run_number')} sha={str(main_pipeline.get('head_sha') or '')[:12]} {main_pipeline.get('status')}/{main_pipeline.get('conclusion')}")
     else:
         print('main_ci_current: no CI/CD run found for the current main SHA')
+    auth_mode = gh.get('auth_mode') or 'unknown'
+    rate_remaining = gh.get('rate_limit_remaining')
+    rate_reset = gh.get('rate_limit_reset')
+    print(
+        f"github_api: auth_mode={auth_mode} "
+        f"rate_limit_remaining={rate_remaining if rate_remaining is not None else 'unknown'} "
+        f"reset_epoch={rate_reset or 'unknown'}"
+    )
+    if auth_mode == 'anonymous' and str(rate_remaining) == '0':
+        print(
+            'github_api_action: configure the documented repository-scoped read-only token '
+            'in /etc/hava81-worker/github.env; do not reuse a broad interactive token'
+        )
     main = gh.get('latest_main_run') or {}
     if main:
         print(f"main_ci_latest: run#{main.get('run_number')} sha={str(main.get('head_sha') or '')[:12]} {main.get('status')}/{main.get('conclusion')}")

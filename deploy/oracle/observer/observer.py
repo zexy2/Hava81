@@ -740,12 +740,61 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
     }
 
 
+def cached_github_rate_limit_reset(previous: dict[str, Any] | None) -> int | None:
+    """Honor a prior anonymous quota reset instead of polling before GitHub allows it."""
+    if os.environ.get('HAVA81_GITHUB_TOKEN', '').strip() or not isinstance(previous, dict):
+        return None
+    github = previous.get('github') if isinstance(previous.get('github'), dict) else {}
+    if github.get('auth_mode') != 'anonymous' or str(github.get('rate_limit_remaining')) != '0':
+        return None
+    try:
+        reset_epoch = int(github.get('rate_limit_reset'))
+    except (TypeError, ValueError):
+        return None
+    return reset_epoch if reset_epoch > int(datetime.now(timezone.utc).timestamp()) else None
+
+
 def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
-    pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
-    runs_result = http_get(
-        f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
-        timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+    cached_reset = cached_github_rate_limit_reset(previous)
+    if cached_reset is not None:
+        # The previous snapshot already recorded exhausted anonymous quota. Do
+        # not poll any GitHub endpoint until its reset time; remain fail-closed.
+        pulls_result = {
+            'ok': False,
+            'status': 403,
+            'elapsed_ms': 0,
+            'headers': {
+                'x-ratelimit-remaining': '0',
+                'x-ratelimit-reset': str(cached_reset),
+            },
+            'json': None,
+            'error': f'GitHub API rate limit exhausted (reset epoch {cached_reset})',
+        }
+    else:
+        pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
+    pulls_headers = pulls_result.get('headers') or {}
+    pulls_rate_limited = (
+        not pulls_result.get('ok')
+        and str(pulls_headers.get('x-ratelimit-remaining')) == '0'
     )
+    if pulls_rate_limited:
+        # GitHub explicitly asks clients not to retry while the primary quota is
+        # exhausted. Do not spend a second request on Actions after the first
+        # endpoint has already reported remaining=0; synthesize the same
+        # fail-closed transport state so downstream readiness remains unknown.
+        runs_result = {
+            'ok': False,
+            'status': pulls_result.get('status'),
+            'elapsed_ms': 0,
+            'headers': pulls_headers,
+            'json': None,
+            'error': pulls_result.get('error') or 'GitHub API rate limit exhausted',
+        }
+    else:
+        runs_result = http_get(
+            f'https://api.github.com/repos/{REPO}/actions/runs?per_page=100',
+            timeout=GITHUB_RUNS_TIMEOUT_SECONDS,
+        )
     runs_status = runs_result.get('status')
     should_retry_runs = (
         not runs_result.get('ok')
