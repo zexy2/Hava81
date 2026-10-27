@@ -107,6 +107,16 @@ const reviveWeatherDate = (value: string, field: string): Date => {
   return date;
 };
 
+const TIMEZONE_QUALIFIED_TIMESTAMP_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/i;
+
+const reviveCurrentWeatherTimestamp = (value: string, field: string): Date => {
+  if (typeof value !== 'string' || !TIMEZONE_QUALIFIED_TIMESTAMP_PATTERN.test(value)) {
+    return invalidWeatherPayload(field);
+  }
+  return reviveWeatherDate(value, field);
+};
+
 const MAX_CURRENT_WEATHER_FUTURE_SKEW_MS = 60_000;
 const MAX_CURRENT_OBSERVATION_MISMATCH_MS = 60_000;
 export const MAX_FORECAST_FUTURE_SKEW_MS = 60_000;
@@ -700,13 +710,13 @@ const reviveCurrentMeta = (
   fallbackObservedAt: Date
 ): CurrentWeatherMeta => {
   const { observedAt, ...rest } = meta;
-  const fetchedAt = reviveWeatherDate(meta.fetchedAt, 'current.meta.fetchedAt');
+  const fetchedAt = reviveCurrentWeatherTimestamp(meta.fetchedAt, 'current.meta.fetchedAt');
   // The current-weather contract already carries the provider sample time as `timestamp`.
   // Use it when older BFF responses omit meta.observedAt so a fresh fetch/cache timestamp
   // cannot make an old observation look current.
   const sourceObservedAt = observedAt === undefined
     ? fallbackObservedAt
-    : reviveWeatherDate(observedAt, 'current.meta.observedAt');
+    : reviveCurrentWeatherTimestamp(observedAt, 'current.meta.observedAt');
   const now = Date.now();
   if (sourceObservedAt.getTime() > now + MAX_CURRENT_WEATHER_FUTURE_SKEW_MS) {
     invalidWeatherPayload('current.meta.observedAt');
@@ -724,7 +734,7 @@ const reviveWeatherDates = (
   validateCurrentWeatherPayload(data, units);
   const sunrise = reviveWeatherDate(data.sunrise, 'current.sunrise');
   const sunset = reviveWeatherDate(data.sunset, 'current.sunset');
-  const timestamp = reviveWeatherDate(data.timestamp, 'current.timestamp');
+  const timestamp = reviveCurrentWeatherTimestamp(data.timestamp, 'current.timestamp');
   const meta = reviveCurrentMeta(data.meta, timestamp);
   if (sunset.getTime() < sunrise.getTime()) {
     invalidWeatherPayload('current.sunset');
