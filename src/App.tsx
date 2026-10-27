@@ -625,7 +625,7 @@ const App: React.FC = () => {
                         <div className="atlas-map-panel__header">
                           <div>
                             <span className="atlas-kicker">{t('hava81.mapEyebrow')}</span>
-                            <h2 id="weather-map-heading">{t('common.map')}</h2>
+                            <h1 id="weather-map-heading">{t('common.map')}</h1>
                           </div>
                           <button type="button" className="atlas-text-button" onClick={closeMap}>
                             {t('common.close')}

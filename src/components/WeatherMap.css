@@ -69,7 +69,7 @@
       linear-gradient(115deg, #f1faff, #dceeff);
   }
 
-  .app .atlas-map-panel__header h2 {
+  .app .atlas-map-panel__header h1 {
     color: #13395f;
     font-size: clamp(1.6rem, 2.5vw, 2rem);
     font-weight: 800;
@@ -152,7 +152,7 @@
     border-color: #3b728d;
   }
 
-  .app[data-color-mode='dark'] .atlas-map-panel__header h2 {
+  .app[data-color-mode='dark'] .atlas-map-panel__header h1 {
     color: #f1f9ff;
   }
 
@@ -175,7 +175,7 @@
       margin-bottom: 0.65rem;
       border-radius: 15px;
     }
-    .app .atlas-map-panel__header h2 {
+    .app .atlas-map-panel__header h1 {
       font-size: 1.6rem;
     }
     .app .weather-map__container {
@@ -383,7 +383,7 @@
     padding: 1rem;
   }
 
-  .weather-map__popup-content h4 {
+  .weather-map__popup-content h3 {
     margin: 0.25rem 0;
     font-size: 1rem;
     font-weight: 600;
@@ -432,6 +432,13 @@
   .weather-map__popup-btn:focus-visible {
     outline: 2px solid var(--color-focus, #146b73);
     outline-offset: 2px;
+  }
+
+  .weather-map__zoom-hint {
+    margin: 0 0 0.55rem;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
   }
 
   .weather-map__legend {
