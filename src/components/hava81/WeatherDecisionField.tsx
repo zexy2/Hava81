@@ -472,8 +472,12 @@ export function WeatherDecisionField({
       line += ` C${f(a.x + dx)},${f(a.y + tangents[i] * dx)} ${f(b.x - dx)},${f(b.y - tangents[i + 1] * dx)} ${f(b.x)},${f(b.y)}`;
     }
     const peakIndex = temps.indexOf(max);
-    // Four evenly spaced hour labels give the curve a time axis.
-    const tickIndexes = [0, 1, 2, 3].map(step => Math.round((step / 3) * (trendHours.length - 1)));
+    // Use at most four evenly spaced labels, but never repeat a sample when the
+    // provider only supplies two or three future hours (duplicate React keys and labels).
+    const tickCount = Math.min(4, trendHours.length);
+    const tickIndexes = Array.from({ length: tickCount }, (_, step) =>
+      Math.round((step / (tickCount - 1)) * (trendHours.length - 1))
+    );
     return {
       min,
       max,

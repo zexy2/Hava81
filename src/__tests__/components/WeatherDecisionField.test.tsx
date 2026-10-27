@@ -261,6 +261,7 @@ describe('WeatherDecisionField daily range', () => {
       container.querySelector('.hava81-decision-field__trend-placeholder')
     ).not.toBeInTheDocument();
     expect(container.querySelector('.hava81-decision-field__trend')).toBeInTheDocument();
+    expect(container.querySelectorAll('.hava81-decision-field__trend-ticks li')).toHaveLength(2);
   });
 
   it('compares the first forecast hour with a fresh current rain observation', () => {
