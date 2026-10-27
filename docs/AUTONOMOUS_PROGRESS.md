@@ -1,3 +1,16 @@
+## Current checkpoint — 2026-10-28 — owner paused autonomous code changes
+
+**Read `docs/AUTONOMOUS_DECISIONS.md` → “OWNER DIRECTIVE — 2026-10-28” before doing anything.**
+Autonomous code changes and merges are paused. The queue below is replaced by:
+
+### Prioritized next queue (replaces every earlier queue)
+1. Do not merge or update PR #1591 or any other PR; do not push the local sky-clock branch.
+2. Continue read-only production observation only (routes, revision parity, API readiness/CORS,
+   disk headroom). Do not build, deploy or switch API ports.
+3. For a real defect or production risk, open a GitHub issue with evidence; do not fix it.
+
+---
+
 ## Current checkpoint — 2026-10-27 22:50 TRT / 19:50 UTC
 
 ### Stable main and production

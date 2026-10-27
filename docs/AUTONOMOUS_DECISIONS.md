@@ -1,5 +1,23 @@
 # Hava81 autonomous decisions
 
+## OWNER DIRECTIVE — 2026-10-28 — autonomous code changes are paused (read first)
+
+The repository owner (Zeki Akgül) now develops Hava81 with two interactive agents in parallel.
+A third, autonomous code workstream causes merge conflicts and edits code those agents are
+actively changing. Effective immediately and until the owner removes this section:
+
+- **Do not change application or test code.** No new branches, commits, pushes or PRs that touch
+  `src/`, `e2e/`, `apps/`, `public/`, `scripts/`, `.github/`, `package*.json` or styles.
+- **Do not merge any PR**, including your own open ones. Leave PR #1591 open for the owner's agents
+  to review. Do not push the local sky-clock branch; discard it.
+- **Do not deploy, build or publish API images, and do not switch API ports.**
+- **Keep observing.** Read-only production monitoring (public routes, revision parity, API
+  readiness/CORS, disk headroom) continues as before.
+- **Report instead of fixing.** For a real defect or production risk, open a GitHub issue with the
+  evidence and a proposed fix, and stop there. Do not open a PR for it.
+- If any write is blocked (for example, a required review on `main`), stop. Do not look for an
+  alternative path; that is the intended control.
+
 ## Release and branch safety
 - Do not experiment on main. Keep each improvement in its own branch/worktree.
 - Never edit the pending PR #1358 branch from a second workstream. P1.3 is a dependent branch based on its head and must be rebased only after the parent merges.
