@@ -98,16 +98,35 @@ test.describe('Planla view', () => {
   );
 
   test('plan-view state survives a round trip to Today', DESKTOP, async ({ page }) => {
+    // The outlook hides when the available forecast cannot support at least two local-day
+    // summaries. Pin a five-day forecast so this state-persistence regression is independent
+    // of the hour at which CI happens to run.
+    const pinned = createWeatherFixtures(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(new Date(VISUAL_FIXED_NOW));
+    await overrideApiJson(page, 'current', pinned.current);
+    await overrideApiJson(page, 'forecast', pinned.forecast);
+    await overrideApiJson(page, 'hourly', pinned.hourlyForecast120());
+    await overrideApiJson(page, 'air', pinned.air);
+    await overrideApiJson(page, 'context', pinned.context);
+    await overrideApiJson(page, 'route', pinned.routeResult);
+
     await page.goto(PLAN);
-    // The outlook intent group offers General, Walk and Run; Picnic belongs to
-    // the separate personal-activity picker farther down the same view.
-    const runPlan = page.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' });
+    const plan = page.locator('.atlas-plan-view');
+    await expect(plan.getByRole('heading', { name: 'Planla · İstanbul', level: 1 })).toBeVisible();
+    const outlook = plan.locator('section.day-outlook');
+    await expect(outlook).toBeVisible();
+    await expect(outlook.locator('.day-outlook__day').nth(1)).toBeVisible();
+
+    const runPlan = outlook.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' });
     await runPlan.click();
     await expect(runPlan).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Bugüne dön' }).click();
     await expect(page.locator('.hava81-decision-field')).toBeVisible();
+    await expect(plan).toBeHidden();
     await page.locator('.atlas-plan-button').click();
-    await expect(page.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' })).toHaveAttribute(
+    await expect(plan).toBeVisible();
+    await expect(outlook).toBeVisible();
+    await expect(outlook.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
