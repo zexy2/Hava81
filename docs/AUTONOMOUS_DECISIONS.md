@@ -836,3 +836,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A fresh production axe audit of the populated compare view (desktop, dark theme, three saved cities) found `page-has-heading-one` and `aria-allowed-role` violations. The dedicated compare view replaces the dashboard, so its title is the page H1; city cards then use H2 headings.
 - Do not assign `role="listitem"` to an `article` element: axe flags that role mapping as invalid. Keep the labelled comparison list and use valid `div[role="listitem"]` children so assistive technology retains list navigation without invalid role overrides.
 - Preserve existing typography with explicit CSS selectors, and guard the heading level/list-item structure with component and browser tests. A local production-like build was re-audited across five mobile/desktop, TR/EN, light/dark states; axe reported zero violations and no page errors.
+
+
+## 2026-10-27 — Keep comparison geometry tests aligned with semantic headings
+
+- The H1/H2 correction exposed a stale E2E selector that still queried `h3` when measuring city-card containment at 200% text. Keep the semantic H2 hierarchy and update the geometry test selector rather than reverting the accessibility fix. The focused mobile map/compare suite passed 13/13 after the selector correction.
+- A safe host-cache cleanup removed regenerable APT metadata and reclaimable Docker build cache only; do not prune images, containers, or volumes because those can include rollback/canary assets. Confirm new free-space headroom through the observer before enabling API builds.
