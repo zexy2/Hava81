@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hava81-shell-e40a59855c01';
+const CACHE_NAME = 'hava81-shell-d4a5213d4fe7';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
 
@@ -94,12 +94,17 @@ self.addEventListener('activate', event => {
     // One-time migration from older shell workers: reload open Hava81 tabs so they stop rendering
     // HTML that the browser may still consider fresh for several minutes after a Pages deploy.
     if (upgradingLegacyShell) {
-      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      await Promise.all(
-        windows.map(client =>
-          'navigate' in client ? client.navigate(client.url).catch(() => undefined) : undefined
-        )
-      );
+      try {
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        await Promise.all(
+          windows.map(client =>
+            'navigate' in client ? client.navigate(client.url).catch(() => undefined) : undefined
+          )
+        );
+      } catch {
+        // The one-time legacy reload is best-effort; a transient client-enumeration failure must
+        // not reject activation after the complete new shell has already been installed and claimed.
+      }
     }
   })());
 });
