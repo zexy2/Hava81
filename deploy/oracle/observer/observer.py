@@ -740,8 +740,38 @@ def collect_api_deployment(latest_main: dict[str, Any] | None) -> dict[str, Any]
     }
 
 
+def cached_github_rate_limit_reset(previous: dict[str, Any] | None) -> int | None:
+    """Honor a prior anonymous quota reset instead of polling before GitHub allows it."""
+    if os.environ.get('HAVA81_GITHUB_TOKEN', '').strip() or not isinstance(previous, dict):
+        return None
+    github = previous.get('github') if isinstance(previous.get('github'), dict) else {}
+    if github.get('auth_mode') != 'anonymous' or str(github.get('rate_limit_remaining')) != '0':
+        return None
+    try:
+        reset_epoch = int(github.get('rate_limit_reset'))
+    except (TypeError, ValueError):
+        return None
+    return reset_epoch if reset_epoch > int(datetime.now(timezone.utc).timestamp()) else None
+
+
 def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
-    pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
+    cached_reset = cached_github_rate_limit_reset(previous)
+    if cached_reset is not None:
+        # The previous snapshot already recorded exhausted anonymous quota. Do
+        # not poll any GitHub endpoint until its reset time; remain fail-closed.
+        pulls_result = {
+            'ok': False,
+            'status': 403,
+            'elapsed_ms': 0,
+            'headers': {
+                'x-ratelimit-remaining': '0',
+                'x-ratelimit-reset': str(cached_reset),
+            },
+            'json': None,
+            'error': f'GitHub API rate limit exhausted (reset epoch {cached_reset})',
+        }
+    else:
+        pulls_result = http_get(f'https://api.github.com/repos/{REPO}/pulls?state=open&per_page=30')
     pulls_headers = pulls_result.get('headers') or {}
     pulls_rate_limited = (
         not pulls_result.get('ok')
