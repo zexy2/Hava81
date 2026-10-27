@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { sunAt, type SkyScene, type SunPosition } from './skyScene';
+import { paletteFor, smooth, type Rgb } from './skyPalette';
+import { sunAt, type SkyScene } from './skyScene';
 
 /**
  * A filmed-looking cloud sky behind the weather field, in the spirit of Apple Weather's
@@ -11,100 +12,6 @@ import { sunAt, type SkyScene, type SunPosition } from './skyScene';
  * is hidden or the field is off screen, draws a single still frame for reduced motion and
  * renders nothing when WebGL is unavailable (the field's own colour shows instead).
  */
-
-type Rgb = readonly [number, number, number];
-
-interface Palette {
-  zenith: Rgb;
-  horizon: Rgb;
-  lit: Rgb;
-  shade: Rgb;
-}
-
-// Clear-sky colour by sun elevation. Morning and evening twilight differ (dawn is cooler
-// and rosier, dusk warmer and redder). Highlights stay well below white so the white type
-// on top stays readable at noon.
-type Stop = readonly [elevation: number, palette: Palette];
-const P = (zenith: Rgb, horizon: Rgb, lit: Rgb, shade: Rgb): Palette => ({
-  zenith,
-  horizon,
-  lit,
-  shade,
-});
-const NIGHT = P([6, 12, 30], [20, 34, 66], [70, 84, 112], [16, 22, 40]);
-const DAWN_TWILIGHT = P([28, 40, 92], [140, 104, 138], [172, 146, 168], [66, 66, 106]);
-const DUSK_TWILIGHT = P([24, 30, 78], [160, 90, 92], [190, 124, 116], [66, 52, 92]);
-const SUNRISE = P([46, 72, 136], [226, 146, 110], [238, 184, 156], [104, 92, 126]);
-const SUNSET = P([38, 50, 114], [228, 116, 78], [240, 154, 116], [96, 70, 106]);
-const GOLDEN = P([44, 92, 160], [200, 152, 106], [226, 196, 160], [104, 112, 144]);
-const MORNING = P([30, 86, 162], [84, 140, 200], [178, 198, 224], [92, 118, 156]);
-const NOON = P([16, 76, 168], [70, 136, 206], [184, 204, 230], [96, 124, 164]);
-
-const clearStops = (evening: boolean): readonly Stop[] => [
-  [-0.6, NIGHT],
-  [-0.22, evening ? DUSK_TWILIGHT : DAWN_TWILIGHT],
-  [0, evening ? SUNSET : SUNRISE],
-  [0.16, GOLDEN],
-  [0.42, MORNING],
-  [0.85, NOON],
-];
-
-const mix = (a: Rgb, b: Rgb, t: number): Rgb => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-  a[2] + (b[2] - a[2]) * t,
-];
-const mixPalette = (a: Palette, b: Palette, t: number): Palette => ({
-  zenith: mix(a.zenith, b.zenith, t),
-  horizon: mix(a.horizon, b.horizon, t),
-  lit: mix(a.lit, b.lit, t),
-  shade: mix(a.shade, b.shade, t),
-});
-const smooth = (edge0: number, edge1: number, x: number) => {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-};
-
-const clearSkyAt = ({ elevation, azimuth }: SunPosition): Palette => {
-  const stops = clearStops(azimuth > 0.5);
-  if (elevation <= stops[0][0]) return stops[0][1];
-  for (let i = 1; i < stops.length; i += 1) {
-    const [e1, p1] = stops[i];
-    if (elevation <= e1) {
-      const [e0, p0] = stops[i - 1];
-      return mixPalette(p0, p1, smooth(0, 1, (elevation - e0) / (e1 - e0)));
-    }
-  }
-  return stops[stops.length - 1][1];
-};
-
-// Overcast: one grey that brightens with the sun and warms slightly near the horizon.
-const overcastAt = ({ elevation }: SunPosition): Palette => {
-  const light = smooth(-0.5, 0.5, elevation);
-  const warm = Math.exp(-(elevation * elevation) / 0.02) * 0.28;
-  const tint = (value: Rgb): Rgb => mix(value, [150, 100, 88], warm);
-  return {
-    zenith: mix([14, 18, 28], [58, 70, 88], light),
-    horizon: tint(mix([30, 36, 50], [96, 108, 124], light)),
-    lit: tint(mix([80, 88, 104], [146, 156, 170], light)),
-    shade: mix([22, 26, 36], [58, 68, 84], light),
-  };
-};
-
-const paletteFor = (scene: SkyScene, sun: SunPosition): Palette => {
-  const grey = scene.condition === 'clear' ? 0 : scene.condition === 'partly' ? 0.15 : 1;
-  const base = mixPalette(clearSkyAt(sun), overcastAt(sun), grey);
-  // Storm skies are heavier and darker than plain rain, so they read as a storm even
-  // between lightning flashes.
-  if (scene.condition !== 'storm') return base;
-  const tone = (value: Rgb): Rgb => [value[0] * 0.58, value[1] * 0.58, value[2] * 0.58];
-  return {
-    zenith: tone(base.zenith),
-    horizon: tone(base.horizon),
-    lit: tone(base.lit),
-    shade: tone(base.shade),
-  };
-};
 
 const VERTEX = `
 attribute vec2 p;
@@ -281,199 +188,262 @@ interface HeroSkyProps {
   scene: SkyScene;
 }
 
+function startSky(
+  canvas: HTMLCanvasElement,
+  sceneRef: { readonly current: SkyScene }
+): (() => void) | undefined {
+  const gl = canvas.getContext('webgl', {
+    antialias: false,
+    alpha: false,
+    depth: false,
+    powerPreference: 'low-power',
+  });
+  if (!gl) {
+    canvas.hidden = true;
+    return undefined;
+  }
+
+  // A software rasteriser (no GPU, or acceleration disabled) runs this shader on the CPU:
+  // animating it would freeze the page. Such devices — and Save-Data users — get one
+  // still frame of the same sky instead.
+  const debug = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = String(
+    gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? ''
+  );
+  const softwareRenderer = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
+  const saveData =
+    (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ===
+    true;
+  let stillOnly = softwareRenderer || saveData;
+
+  const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
+  const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
+  const program = gl.createProgram();
+  if (!vertex || !fragment || !program) {
+    canvas.hidden = true;
+    return undefined;
+  }
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    canvas.hidden = true;
+    return undefined;
+  }
+  gl.useProgram(program);
+
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const position = gl.getAttribLocation(program, 'p');
+  gl.enableVertexAttribArray(position);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+  const uniform = (name: string) => gl.getUniformLocation(program, name);
+  const u = {
+    res: uniform('uRes'),
+    time: uniform('uTime'),
+    cover: uniform('uCover'),
+    wind: uniform('uWind'),
+    rain: uniform('uRain'),
+    snow: uniform('uSnow'),
+    stars: uniform('uStars'),
+    sunPos: uniform('uSunPos'),
+    sunColor: uniform('uSunColor'),
+    sunGlow: uniform('uSunGlow'),
+    horizonGlow: uniform('uHorizonGlow'),
+    lightDir: uniform('uLightDir'),
+    fog: uniform('uFog'),
+    flash: uniform('uFlash'),
+    puffy: uniform('uPuffy'),
+    zenith: uniform('uZenith'),
+    horizon: uniform('uHorizon'),
+    lit: uniform('uLit'),
+    shade: uniform('uShade'),
+  };
+
+  // Half resolution: clouds are soft by nature, and it quarters the per-frame cost. The
+  // adaptive step below can lower it further on slow GPUs.
+  let resolution = 0.5;
+  const resize = () => {
+    const scale = Math.min(window.devicePixelRatio || 1, 2) * resolution;
+    const width = Math.max(1, Math.round(canvas.clientWidth * scale));
+    const height = Math.max(1, Math.round(canvas.clientHeight * scale));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      gl.viewport(0, 0, width, height);
+    }
+  };
+
+  const rgb = (value: Rgb) => [value[0] / 255, value[1] / 255, value[2] / 255] as const;
+  // A fixed offset so even the still frame shows a developed sky, not the noise origin.
+  const startedAt = performance.now() - 40_000;
+  // Lightning: a double flicker every 5–12 s, never more than ~3 flashes a second. Off for
+  // reduced motion (the still frame shows none).
+  let nextFlash = performance.now() + 3000;
+  let flashStart = -Infinity;
+  const flashAt = (now: number) => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return 0;
+    if (now >= nextFlash) {
+      flashStart = now;
+      nextFlash = now + 5000 + Math.random() * 7000;
+    }
+    const age = now - flashStart;
+    if (age < 0 || age > 700) return 0;
+    const first = Math.exp(-age / 70);
+    const second = age > 260 ? Math.exp(-(age - 260) / 110) * 0.8 : 0;
+    return Math.min(1, first + second) * 0.55;
+  };
+  const draw = (now: number) => {
+    resize();
+    const current = sceneRef.current;
+    // Recomputed every frame from the real clock, so the sky drifts through the day.
+    const sun = sunAt(Date.now(), current.sunrise, current.sunset, current.phase === 'night');
+    const palette = paletteFor(current, sun);
+    // Partly cloudy keeps at least half the sky open; overcast fills it.
+    const cover =
+      current.condition === 'clear'
+        ? 0.18
+        : current.condition === 'partly'
+          ? Math.max(0.32, Math.min(0.48, 0.3 + current.cloudCover * 0.25))
+          : current.condition === 'cloudy'
+            ? Math.max(0.88, Math.min(0.96, 0.6 + current.cloudCover * 0.36))
+            : Math.max(0.3, Math.min(0.92, 0.28 + current.cloudCover * 0.64));
+    gl.uniform2f(u.res, canvas.width, canvas.height);
+    gl.uniform1f(u.time, (now - startedAt) / 1000);
+    gl.uniform1f(u.cover, cover);
+    gl.uniform1f(u.puffy, current.condition === 'partly' || current.condition === 'clear' ? 1 : 0);
+    gl.uniform1f(u.wind, 0.012 + Math.min(current.windSpeed, 15) * 0.0035);
+    const wetStrength = 0.45 + 0.55 * current.intensity;
+    const open = current.condition === 'clear' || current.condition === 'partly';
+    gl.uniform1f(
+      u.rain,
+      current.condition === 'storm' ? 1 : current.condition === 'rain' ? wetStrength : 0
+    );
+    gl.uniform1f(u.snow, current.condition === 'snow' ? wetStrength : 0);
+    const darkness = smooth(-0.08, -0.45, sun.elevation);
+    gl.uniform1f(u.stars, open ? darkness * (current.condition === 'clear' ? 1 : 0.6) : 0);
+    // Screen position: east on the left, west on the right. A risen sun climbs quickly into
+    // the band above the reading, so its glow never sits behind the big white numeral.
+    const height = Math.max(sun.elevation, 0);
+    const sunY = 0.1 + 0.88 * Math.sqrt(height);
+    gl.uniform2f(u.sunPos, 0.1 + 0.8 * sun.azimuth, sunY);
+    const highSun = smooth(0, 0.45, sun.elevation);
+    gl.uniform3f(u.sunColor, 1, 0.58 + 0.36 * highSun, 0.32 + 0.5 * highSun);
+    const visible = smooth(-0.12, 0.04, sun.elevation);
+    gl.uniform1f(u.sunGlow, visible * (open ? (current.condition === 'clear' ? 1 : 0.55) : 0.18));
+    gl.uniform1f(u.horizonGlow, Math.exp(-Math.abs(sun.elevation + 0.02) * 9) * (open ? 1 : 0.35));
+    // Light direction towards the sun by day; a soft overhead moonlight by night.
+    const toward =
+      sun.elevation > -0.1 ? [0.1 + 0.8 * sun.azimuth - 0.5, sunY - 0.5] : [-0.35, 0.6];
+    const length = Math.hypot(toward[0], toward[1]) || 1;
+    gl.uniform2f(u.lightDir, toward[0] / length, toward[1] / length);
+    gl.uniform1f(u.fog, current.condition === 'fog' ? 1 : 0);
+    gl.uniform1f(u.flash, current.condition === 'storm' ? flashAt(now) : 0);
+    gl.uniform3f(u.zenith, ...rgb(palette.zenith));
+    gl.uniform3f(u.horizon, ...rgb(palette.horizon));
+    gl.uniform3f(u.lit, ...rgb(palette.lit));
+    gl.uniform3f(u.shade, ...rgb(palette.shade));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  let frame = 0;
+  let last = 0;
+  let visible = true;
+  // Adaptive quality: if frames keep arriving late, first drop resolution and frame rate,
+  // then settle on a still frame rather than ever janking the page.
+  let interval = 33;
+  let slowFrames = 0;
+  let sampled = 0;
+  const loop = (now: number) => {
+    const gap = now - last;
+    if (gap < interval) {
+      frame = requestAnimationFrame(loop);
+      return;
+    }
+    if (last > 0) {
+      sampled += 1;
+      if (gap > interval * 2.2) slowFrames += 1;
+      if (sampled >= 24) {
+        if (slowFrames > 8) {
+          if (resolution > 0.3) {
+            resolution = 0.3;
+            interval = 50;
+          } else {
+            // Too slow even at the lower quality: stop for good on a still frame.
+            stillOnly = true;
+            draw(now);
+            return;
+          }
+        }
+        sampled = 0;
+        slowFrames = 0;
+      }
+    }
+    last = now;
+    draw(now);
+    frame = requestAnimationFrame(loop);
+  };
+  const start = () => {
+    cancelAnimationFrame(frame);
+    last = 0;
+    if (stillOnly || reducedMotion?.matches || document.hidden || !visible) {
+      draw(performance.now());
+      return;
+    }
+    frame = requestAnimationFrame(loop);
+  };
+
+  const observer =
+    typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver(([entry]) => {
+          visible = entry?.isIntersecting ?? true;
+          start();
+        })
+      : null;
+  observer?.observe(canvas);
+  const resizeObserver =
+    typeof ResizeObserver === 'function' ? new ResizeObserver(() => draw(performance.now())) : null;
+  resizeObserver?.observe(canvas);
+  document.addEventListener('visibilitychange', start);
+  reducedMotion?.addEventListener?.('change', start);
+  start();
+
+  return () => {
+    cancelAnimationFrame(frame);
+    observer?.disconnect();
+    resizeObserver?.disconnect();
+    document.removeEventListener('visibilitychange', start);
+    reducedMotion?.removeEventListener?.('change', start);
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+  };
+}
+
 export default function HeroSky({ scene }: HeroSkyProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
-    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false });
-    if (!gl) {
-      canvas.hidden = true;
-      return undefined;
-    }
-
-    const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
-    const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
-    const program = gl.createProgram();
-    if (!vertex || !fragment || !program) {
-      canvas.hidden = true;
-      return undefined;
-    }
-    gl.attachShader(program, vertex);
-    gl.attachShader(program, fragment);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      canvas.hidden = true;
-      return undefined;
-    }
-    gl.useProgram(program);
-
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const position = gl.getAttribLocation(program, 'p');
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-
-    const uniform = (name: string) => gl.getUniformLocation(program, name);
-    const u = {
-      res: uniform('uRes'),
-      time: uniform('uTime'),
-      cover: uniform('uCover'),
-      wind: uniform('uWind'),
-      rain: uniform('uRain'),
-      snow: uniform('uSnow'),
-      stars: uniform('uStars'),
-      sunPos: uniform('uSunPos'),
-      sunColor: uniform('uSunColor'),
-      sunGlow: uniform('uSunGlow'),
-      horizonGlow: uniform('uHorizonGlow'),
-      lightDir: uniform('uLightDir'),
-      fog: uniform('uFog'),
-      flash: uniform('uFlash'),
-      puffy: uniform('uPuffy'),
-      zenith: uniform('uZenith'),
-      horizon: uniform('uHorizon'),
-      lit: uniform('uLit'),
-      shade: uniform('uShade'),
+    // Nothing runs before the page is idle: shader compilation and the first frames must
+    // never compete with first paint or input.
+    let teardown: (() => void) | undefined;
+    let cancelled = false;
+    const run = () => {
+      const canvas = canvasRef.current;
+      if (!cancelled && canvas) teardown = startSky(canvas, sceneRef);
     };
-
-    // Half resolution: clouds are soft by nature, and it quarters the per-frame cost.
-    const resize = () => {
-      const scale = Math.min(window.devicePixelRatio || 1, 2) * 0.5;
-      const width = Math.max(1, Math.round(canvas.clientWidth * scale));
-      const height = Math.max(1, Math.round(canvas.clientHeight * scale));
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-        gl.viewport(0, 0, width, height);
-      }
-    };
-
-    const rgb = (value: Rgb) => [value[0] / 255, value[1] / 255, value[2] / 255] as const;
-    // A fixed offset so even the still frame shows a developed sky, not the noise origin.
-    const startedAt = performance.now() - 40_000;
-    // Lightning: a double flicker every 5–12 s, never more than ~3 flashes a second. Off for
-    // reduced motion (the still frame shows none).
-    let nextFlash = performance.now() + 3000;
-    let flashStart = -Infinity;
-    const flashAt = (now: number) => {
-      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return 0;
-      if (now >= nextFlash) {
-        flashStart = now;
-        nextFlash = now + 5000 + Math.random() * 7000;
-      }
-      const age = now - flashStart;
-      if (age < 0 || age > 700) return 0;
-      const first = Math.exp(-age / 70);
-      const second = age > 260 ? Math.exp(-(age - 260) / 110) * 0.8 : 0;
-      return Math.min(1, first + second) * 0.55;
-    };
-    const draw = (now: number) => {
-      resize();
-      const current = sceneRef.current;
-      // Recomputed every frame from the real clock, so the sky drifts through the day.
-      const sun = sunAt(Date.now(), current.sunrise, current.sunset, current.phase === 'night');
-      const palette = paletteFor(current, sun);
-      // Partly cloudy keeps at least half the sky open; overcast fills it.
-      const cover =
-        current.condition === 'clear'
-          ? 0.18
-          : current.condition === 'partly'
-            ? Math.max(0.32, Math.min(0.48, 0.3 + current.cloudCover * 0.25))
-            : current.condition === 'cloudy'
-              ? Math.max(0.88, Math.min(0.96, 0.6 + current.cloudCover * 0.36))
-              : Math.max(0.3, Math.min(0.92, 0.28 + current.cloudCover * 0.64));
-      gl.uniform2f(u.res, canvas.width, canvas.height);
-      gl.uniform1f(u.time, (now - startedAt) / 1000);
-      gl.uniform1f(u.cover, cover);
-      gl.uniform1f(
-        u.puffy,
-        current.condition === 'partly' || current.condition === 'clear' ? 1 : 0
-      );
-      gl.uniform1f(u.wind, 0.012 + Math.min(current.windSpeed, 15) * 0.0035);
-      const wetStrength = 0.45 + 0.55 * current.intensity;
-      const open = current.condition === 'clear' || current.condition === 'partly';
-      gl.uniform1f(
-        u.rain,
-        current.condition === 'storm' ? 1 : current.condition === 'rain' ? wetStrength : 0
-      );
-      gl.uniform1f(u.snow, current.condition === 'snow' ? wetStrength : 0);
-      const darkness = smooth(-0.08, -0.45, sun.elevation);
-      gl.uniform1f(u.stars, open ? darkness * (current.condition === 'clear' ? 1 : 0.6) : 0);
-      // Screen position: east on the left, west on the right. A risen sun climbs quickly into
-      // the band above the reading, so its glow never sits behind the big white numeral.
-      const height = Math.max(sun.elevation, 0);
-      const sunY = 0.1 + 0.88 * Math.sqrt(height);
-      gl.uniform2f(u.sunPos, 0.1 + 0.8 * sun.azimuth, sunY);
-      const highSun = smooth(0, 0.45, sun.elevation);
-      gl.uniform3f(u.sunColor, 1, 0.58 + 0.36 * highSun, 0.32 + 0.5 * highSun);
-      const visible = smooth(-0.12, 0.04, sun.elevation);
-      gl.uniform1f(u.sunGlow, visible * (open ? (current.condition === 'clear' ? 1 : 0.55) : 0.18));
-      gl.uniform1f(
-        u.horizonGlow,
-        Math.exp(-Math.abs(sun.elevation + 0.02) * 9) * (open ? 1 : 0.35)
-      );
-      // Light direction towards the sun by day; a soft overhead moonlight by night.
-      const toward =
-        sun.elevation > -0.1 ? [0.1 + 0.8 * sun.azimuth - 0.5, sunY - 0.5] : [-0.35, 0.6];
-      const length = Math.hypot(toward[0], toward[1]) || 1;
-      gl.uniform2f(u.lightDir, toward[0] / length, toward[1] / length);
-      gl.uniform1f(u.fog, current.condition === 'fog' ? 1 : 0);
-      gl.uniform1f(u.flash, current.condition === 'storm' ? flashAt(now) : 0);
-      gl.uniform3f(u.zenith, ...rgb(palette.zenith));
-      gl.uniform3f(u.horizon, ...rgb(palette.horizon));
-      gl.uniform3f(u.lit, ...rgb(palette.lit));
-      gl.uniform3f(u.shade, ...rgb(palette.shade));
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    };
-
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    let frame = 0;
-    let last = 0;
-    let visible = true;
-    const loop = (now: number) => {
-      frame = requestAnimationFrame(loop);
-      if (now - last < 33) return;
-      last = now;
-      draw(now);
-    };
-    const start = () => {
-      cancelAnimationFrame(frame);
-      if (reducedMotion?.matches || document.hidden || !visible) {
-        draw(performance.now());
-        return;
-      }
-      frame = requestAnimationFrame(loop);
-    };
-
-    const observer =
-      typeof IntersectionObserver === 'function'
-        ? new IntersectionObserver(([entry]) => {
-            visible = entry?.isIntersecting ?? true;
-            start();
-          })
-        : null;
-    observer?.observe(canvas);
-    const resizeObserver =
-      typeof ResizeObserver === 'function'
-        ? new ResizeObserver(() => draw(performance.now()))
-        : null;
-    resizeObserver?.observe(canvas);
-    document.addEventListener('visibilitychange', start);
-    reducedMotion?.addEventListener?.('change', start);
-    start();
-
+    const idle =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback(run, { timeout: 3000 })
+        : window.setTimeout(run, 1500);
     return () => {
-      cancelAnimationFrame(frame);
-      observer?.disconnect();
-      resizeObserver?.disconnect();
-      document.removeEventListener('visibilitychange', start);
-      reducedMotion?.removeEventListener?.('change', start);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      cancelled = true;
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+      teardown?.();
     };
   }, []);
 
