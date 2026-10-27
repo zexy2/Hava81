@@ -969,3 +969,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - JavaScript's Date parser normalizes impossible calendar days such as 2026-02-30 to a different valid date instead of rejecting the source value. That can make a malformed current-weather or forecast timestamp appear parseable and then enter freshness decisions.
 - Validate the calendar components of ISO date-time strings before accepting them. Apply the check to current-weather dates and forecast hourly/fetch timestamps while preserving the existing date-only forecast parser, explicit-timezone contract, valid leap days, and freshness thresholds.
 - Regression coverage rejects impossible current sample/fetch/observation dates, an hour overflow, forecast hourly and metadata dates, and accepts a real leap-day timestamp without upgrading its stale freshness status. This is client-boundary validation only; it does not generate weather, alter scoring, or change API deployment/runtime code.
+
+
+## 2026-10-27 — Validate malformed space-separated forecast timestamps
+
+- JavaScript Date parsing can accept space-separated date-time strings even though the Hava81 BFF emits ISO timestamps with a T separator. The calendar guard matched only T, so an impossible day in a space-separated forecast hourly or fetchedAt value could bypass the component check on runtimes that normalize it.
+- Extend the calendar-component detector to recognize either T or a space separator and add negative regressions for both hourly and metadata timestamps. Preserve date-only forecast handling, the current-weather timezone-qualified contract, valid leap days, and all freshness thresholds.
+- Client-boundary validation and tests only. Do not change provider requests, API runtime, scoring, weather values, or safety guidance.

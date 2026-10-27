@@ -101,8 +101,9 @@ const invalidWeatherPayload = (field: string): never => {
   });
 };
 
+// Date also accepts space-separated timestamps; validate those before parsing too.
 const ISO_CALENDAR_DATE_TIME_PATTERN =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})?$/i;
+  /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})?$/i;
 
 const hasValidIsoCalendarDateTime = (value: string): boolean => {
   const match = ISO_CALENDAR_DATE_TIME_PATTERN.exec(value);
