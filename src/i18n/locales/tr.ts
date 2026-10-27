@@ -59,6 +59,7 @@ export const tr = {
     mapTilesLoading: 'Harita hazırlanıyor',
     mapTilesUnavailable: 'Harita yüklenemedi. Şehir işaretleri kullanılabilir.',
     mapLiveProvinces: '81 ilin anlık sıcaklığı: {{provider}}',
+    mapZoomHint: 'Yakınlaştırarak 81 ilin tüm işaretlerini gör.',
     mapTilesRetry: 'Tekrar dene',
     viewCityWeather: 'Şehrin havasını gör',
     temperatureLegend: 'Harita sıcaklık renkleri',

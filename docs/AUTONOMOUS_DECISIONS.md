@@ -848,3 +848,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The read-only 64-case responsive audit intentionally reuses each successful weather URL across viewport/theme variants to avoid flooding the public API. A long run can exceed the current-weather fallback freshness of 300 seconds, however, and the app correctly hides the stale current reading; that creates false visual-audit failures rather than evidence of a layout regression.
 - Bound the cache to two minutes, honor a response's advertised `meta.freshForSeconds` and `meta.fetchedAt` with a 30-second safety margin, and refetch from the real API after expiry. Never rewrite timestamps, fabricate weather, or replay an expired response. Invalid JSON or unusable freshness metadata is not cached.
 - Add deterministic tests for default expiry, shorter provider TTLs, malformed payloads, and invalid freshness metadata; include the cache module and test in the lint target. Keep the live weather readiness requirement unchanged.
+
+## 2026-10-27 — Keep map atlas E2E aligned with zoom-gated live temperatures
+
+- The all-province atlas intentionally activates at zoom 8. Browser coverage must wait for Leaflet’s zoom transition and the real /api/v1/weather/provinces response before asserting a province temperature; two rapid clicks can be ignored while the first zoom animation is still in flight.
+- Keep provider-observation freshness checks intact. Do not lower the freshness threshold or fabricate fixture timestamps to make the test pass. The test now verifies the atlas gate and response before checking Bursa’s rounded temperature.
+- The map popup city name is an H3 after the dedicated map view’s H1; update the geometry test selector to match the accessible heading instead of reverting the semantic hierarchy.
