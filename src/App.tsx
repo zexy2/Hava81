@@ -26,7 +26,7 @@ import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { parseAtlasView, resolveAtlasView, type AtlasView } from './utils/atlasView';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
-import { resolveSkyScene } from './components/sky/skyScene';
+import { SkyBackdrop } from './components/sky/SkyBackdrop';
 import './styles/App.css';
 import './styles/editorial.css';
 // Glass and hero styles load with the page, not with the lazy sky chunks: a late
@@ -48,7 +48,6 @@ const DeferredDecisionAlertsPanel = lazy(
   () => import('./components/app/DeferredDecisionAlertsPanel')
 );
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
-const LivingSky = lazy(() => import('./components/sky/LivingSky'));
 
 type AtlasNavItem = AtlasView;
 
@@ -144,17 +143,6 @@ const App: React.FC = () => {
   }, [activeNav, isPlanView]);
 
   const colorMode = useResolvedColorMode(settings.themeMode);
-  // The living sky follows the clock too (dawn → day → dusk → night) without a refetch.
-  const [skyClock, setSkyClock] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = window.setInterval(() => setSkyClock(Date.now()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
-  const skyScene = useMemo(
-    () => (weather ? resolveSkyScene(weather, forecast.hourly, skyClock) : null),
-    [weather, forecast.hourly, skyClock]
-  );
-
   useEffect(() => {
     const themeColor = colorMode === 'dark' ? '#0E2C32' : '#F3F6F4';
     document.documentElement.style.colorScheme = colorMode;
@@ -427,13 +415,9 @@ const App: React.FC = () => {
           data-color-mode={colorMode}
           data-active-nav={activeNav}
           data-has-bottom-nav={weather || favorites.length > 0 ? 'true' : 'false'}
-          data-living-sky={skyScene ? 'true' : undefined}
+          data-living-sky={weather ? 'true' : undefined}
         >
-          {skyScene ? (
-            <Suspense fallback={null}>
-              <LivingSky scene={skyScene} />
-            </Suspense>
-          ) : null}
+          {weather ? <SkyBackdrop weather={weather} hourly={forecast.hourly} /> : null}
           <a
             className="skip-link"
             href="#main-content"
