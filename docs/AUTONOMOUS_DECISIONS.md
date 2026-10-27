@@ -822,3 +822,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A one-call short-circuit alone still allowed the five-minute timer to repeat the same quota-exhausted `/pulls` request on every subsequent interval. When the previous snapshot records `auth_mode=anonymous`, `rate_limit_remaining=0`, and a future `rate_limit_reset`, skip all GitHub API requests until that epoch passes.
 - The cooldown is bypassed immediately when `HAVA81_GITHUB_TOKEN` is configured, and expired/malformed reset values do not suppress a new attempt. During cooldown the observer continues collecting production/host signals and reports GitHub state as unknown; no stale green PR/main state can authorize a merge or deploy.
 - This is backoff, not authentication: the fine-grained repository-scoped read-only token remains required for reliable five-minute GitHub observation.
+
+
+## 2026-10-27 — Singular English interval control copy
+
+- A live responsive audit exposed an accessibility label reading “1h Show every 1 hours”. Keep the visible compact interval value unchanged, but use a dedicated singular translation for the one-hour option; retain the existing plural copy for multi-hour intervals.
+- Keep the wording natural in both English and Turkish, and test the actual accessible button names for 1-hour and 2-hour options. This is copy-only and must not change the selected interval, sampling cadence, or 24-hour forecast horizon.

@@ -220,6 +220,7 @@ export const en = {
       hourlyForecastNext: 'Hourly forecast · next {{hours}} {{unit}}',
       hourUnitSingular: 'hour',
       hourUnitPlural: 'hours',
+      intervalOptionSingle: 'Show every hour',
       intervalOption: 'Show every {{hours}} hours',
       intervalOptionCompact: '{{hours}}h',
       formattedByHava81: 'Formatted by Hava81',
