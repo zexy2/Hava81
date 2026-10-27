@@ -822,3 +822,17 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A one-call short-circuit alone still allowed the five-minute timer to repeat the same quota-exhausted `/pulls` request on every subsequent interval. When the previous snapshot records `auth_mode=anonymous`, `rate_limit_remaining=0`, and a future `rate_limit_reset`, skip all GitHub API requests until that epoch passes.
 - The cooldown is bypassed immediately when `HAVA81_GITHUB_TOKEN` is configured, and expired/malformed reset values do not suppress a new attempt. During cooldown the observer continues collecting production/host signals and reports GitHub state as unknown; no stale green PR/main state can authorize a merge or deploy.
 - This is backoff, not authentication: the fine-grained repository-scoped read-only token remains required for reliable five-minute GitHub observation.
+
+## 2026-10-27 — Enforce contrast on tinted forecast bands and use a neutral dialog container
+
+- A production axe scan found a real 4.44:1 contrast ratio for the 13px precipitation-probability label on the tinted current-night band. The app-level light muted token was #506985, which misses 4.5:1 against #dde4f2 by a small margin despite its old comment claiming WCAG AA.
+- Move the light app muted token to #4d6685 and extend the computed-style regression to check precipitation labels against both light band backgrounds. Keep the dark palette unchanged and verify all existing muted text remains readable.
+- The settings footer also had a separate #5c7696 override that fell below 4.5:1 on #f3f7fd. Use the app muted token rather than another raw color so future palette changes stay consistent.
+- SettingsPanel should be a neutral div with role=dialog, aria-modal and aria-labelledby. An aside element has an implicit complementary landmark and axe flags role=dialog as an invalid role combination; the neutral container preserves the dialog semantics and focus-trap behavior without a competing landmark.
+- This is presentation and accessibility only. Do not alter weather values, provider provenance, freshness, scoring, alerts or safety guidance. The overlay axe regression scans settings and map surfaces with the shipped CSP bypassed only inside the test browser; production CSP remains unchanged.
+
+## 2026-10-27 — Canonicalize localized map city names before filtering the active marker
+
+- The live English map exposed a duplicate active city: the weather API returned “Istanbul” while the province catalog stores “İstanbul”. Direct string equality failed to filter the featured plate marker, leaving two overlapping interactive targets at the same location and triggering axe target-size.
+- Use the existing citySlug canonicalizer to compare the active city with Turkish catalog names. Add a WeatherMap regression where the current city name is English and assert the Turkish featured marker is absent.
+- Local production build and preview against the real API passed the axe target-size rule for English desktop and mobile map surfaces with zero API errors. The app still renders the current temperature marker and other province markers; no weather values or locations were changed.

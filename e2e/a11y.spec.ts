@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { DESKTOP, MOBILE, TABLET, expect, test } from './helpers/test';
 import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import {
@@ -5,7 +6,50 @@ import {
   expectVisibleFocusRing,
   findUndersizedTargets,
 } from './helpers/layout';
-import { TWO_FAVORITES, seedFavorites } from './helpers/weather-fixtures';
+import { TWO_FAVORITES, seedFavorites, fixtures, mockWeatherApi } from './helpers/weather-fixtures';
+
+async function collectOverlayAxeViolations(page: Page) {
+  await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+  return page.evaluate(async () => {
+    const axe = (
+      window as unknown as Window & {
+        axe: {
+          run: (
+            root: Document,
+            options: unknown
+          ) => Promise<{
+            violations: Array<{
+              id: string;
+              impact: string | null;
+              help: string;
+              nodes: Array<{ target: string[] }>;
+            }>;
+          }>;
+        };
+      }
+    ).axe;
+    const result = await axe.run(document, {
+      runOnly: {
+        type: 'tag',
+        values: [
+          'wcag2a',
+          'wcag2aa',
+          'wcag21a',
+          'wcag21aa',
+          'wcag22aa',
+          'best-practice',
+        ],
+      },
+    });
+    return result.violations.flatMap(violation =>
+      violation.nodes.map(
+        node =>
+          violation.id + ' (' + (violation.impact ?? 'unknown') + '): ' +
+          violation.help + ' — ' + node.target.join(', ')
+      )
+    );
+  });
+}
 
 // Cross-cutting accessibility gates: target size, contrast, forced colors, focus visibility.
 
@@ -375,3 +419,78 @@ test.describe('keyboard focus', () => {
     }
   );
 });
+
+test.describe('overlay accessibility', () => {
+  // axe-core is injected as an inline script, so bypass the production CSP only
+  // in these tests. The app's shipped CSP is unchanged.
+  test.use({ bypassCSP: true });
+
+  test(
+    'settings dialog has no WCAG A/AA or best-practice violations on mobile',
+    MOBILE,
+    async ({ page }) => {
+    await page.goto('/izmir/');
+    await expect(page.locator('.decision-glance__score')).toBeVisible();
+
+    await page.locator('.atlas-settings-button').click();
+    const dialog = page.locator('#settings-panel-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute('role', 'dialog');
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(dialog).toHaveAttribute('aria-labelledby', 'settings-panel-title');
+
+    const failures = await collectOverlayAxeViolations(page);
+    expect(failures, 'settings dialog accessibility').toEqual([]);
+    }
+  );
+
+  test(
+    'interactive weather map has no WCAG A/AA or best-practice violations on desktop',
+    DESKTOP,
+    async ({ page }) => {
+    await page.goto('/izmir/');
+    await expect(page.locator('.decision-glance__score')).toBeVisible();
+
+    const mapToggle = page.locator('.atlas-icon-button--map');
+    await expect(mapToggle).toBeEnabled();
+    await mapToggle.click();
+
+    const mapPanel = page.locator('#weather-map-region');
+    await expect(mapPanel).toBeVisible();
+    await expect(mapPanel.getByRole('heading', { level: 2 })).toBeVisible();
+    await expect(mapPanel.locator('.leaflet-container')).toBeVisible();
+
+    const failures = await collectOverlayAxeViolations(page);
+    expect(failures, 'weather map accessibility').toEqual([]);
+    }
+  );
+});
+
+  test.describe('English active city marker', () => {
+    test.use({ mockApi: false });
+
+    test(
+      'does not duplicate the active province marker on an English city route',
+      DESKTOP,
+      async ({ page }) => {
+        // Test-only fixture: the API's cityName is localized, while the province catalog stays Turkish.
+        await mockWeatherApi(page, {
+          ...fixtures,
+          current: { ...fixtures.current, cityName: 'Istanbul' },
+        });
+        await page.goto('/en/istanbul/');
+        await expect(page.locator('.decision-glance__score')).toBeVisible();
+
+        await page.locator('.atlas-icon-button--map').click();
+        const mapPanel = page.locator('#weather-map-region');
+        await expect(mapPanel).toBeVisible();
+        await expect(mapPanel.locator('.leaflet-container')).toBeVisible();
+        await expect(
+          mapPanel.locator('.weather-map__plate-marker[aria-label^="İstanbul:"]')
+        ).toHaveCount(0);
+
+        const failures = await collectOverlayAxeViolations(page);
+        expect(failures, 'English weather map accessibility').toEqual([]);
+      }
+    );
+  });

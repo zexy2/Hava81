@@ -1,3 +1,32 @@
+# Current checkpoint — 2026-10-27 04:53 TRT (01:53 UTC)
+
+## Main, production and observer
+- Current origin/main at last fetch: beab5396fc6784e87400c60c013015211746559f. Main CI/CD run #3775 (40429347863) succeeded for this SHA.
+- Last observer snapshot was collected at 2026-10-27T01:42:20.464700Z and reported production healthy: root/TR/EN routes, 13 boot assets, API readiness, CORS and frontend revision parity all passed; Nginx targeted API port 4002. This snapshot is now stale, so refresh /usr/local/bin/hava81-worker-status and state.json before any merge/deploy/rollback.
+- Root disk was 91.5% used with about 8.2 GiB free; api_build_headroom_ok=false by about 0.04 GiB. Do not build/deploy API code, restart services, switch ports or roll back until a fresh observer clears that gate. Frontend-only builds and local preview tests are allowed. No production mutation was made.
+- PR #1531 remains open at head 3a4992418c3410fd8447b00d4141808cbd56eb8c; CI/CD #3743, API container verification, Ops #482 and CodeQL #2524 were green. Hold until on/after 2026-10-28; verify the official Node release schedule and exact remote head before rebase/merge/deploy.
+
+## Completed live audits
+- Read-only responsive audit on automation/hava81-run14-live-accessibility-audit-20261027-0435 passed 64/64 cases across İzmir and Şanlıurfa, Turkish/English, light/dark, widths 320/390/768/1024/1440 and 200% text where configured. It captured 12 successful real API responses and safely replayed 180 measurements; no uncached failures. Results/screenshots are outside Git at /tmp/hava81-run14-live-accessibility-audit-20261027-0435/results.
+- Public SEO verification passed for all 81 Turkish and 81 English province pages, both homepages and the sitemap: 164 canonical URLs with expected canonical, hreflang, social metadata, OG cards and JSON-LD.
+- Production axe scan reproduced the settings dialog role issue, light settings version contrast below 4.5:1, and forecast precipitation text at 4.44:1 (#506985 on #dde4f2). A separate English map scan found the active city temperature marker overlapping its Turkish featured-plate marker because the active city name was localized as “Istanbul” while the catalog uses “İstanbul”.
+
+## Active PRs, branches and exact next actions
+- PR #1546: https://github.com/zexy2/Hava81/pull/1546, head SHA 044fef5a99f96cb688469976120c4590887303ec. It fixes the dialog container, muted contrast token and computed-style regressions. Local lint, type-check, full Vitest coverage suite, build, generated SEO verification, diff check and six real-browser axe scans passed (TR/EN settings in light/dark, TR map in light/dark; zero violations and no API errors). CI/CD run #3776 is in progress; Ops #515 and CodeQL #2557 are green. Next: wait event-driven for exact-head CI/CD, re-read mergeability/head and fresh observer state before merge.
+- Map dedupe branch: automation/hava81-run14-map-marker-dedupe-20261027-0455, base beab5396fc6784e87400c60c013015211746559f. It compares canonical city slugs so the English “Istanbul” current marker is not duplicated by the Turkish “İstanbul” plate marker. WeatherMap unit tests pass 11/11; lint, type-check, production build and generated SEO verification pass. A local preview proxied to the real API on port 4002 passed the axe target-size rule for the English desktop map and English mobile map, with zero API errors; the mobile map showed 80 province plate markers plus one current temperature marker. Full frontend coverage job job_5992740ecc56 is running; its log is at /tmp/hava81-run14-map-marker-dedupe-validation.log. Next: inspect that exact job result, then commit/push and open a PR only if green.
+- Overlay regression branch: automation/hava81-run14-overlay-a11y-contract-20261027-0435, base beab5396fc6784e87400c60c013015211746559f. It adds axe checks for the settings dialog and map plus an English-route regression using a test-only localized cityName fixture. Local lint/type-check and the prior full frontend coverage/build/SEO job job_1cad9581a28d passed before the final English test was added; the final file passes ESLint and TypeScript. Do not open this PR yet: rebase only after PR #1546 and the map-dedupe PR merge, then rerun full gates and hosted browser tests.
+- No changes to API/weather values, provider provenance, freshness, scoring, alerts or safety guidance.
+
+## Prioritized next queue
+1. Check job_5992740ecc56 completion without polling repeatedly. If green, commit/push the map dedupe branch and open a PR with the real-browser evidence.
+2. For PR #1546, verify exact head 044fef5a99f96cb688469976120c4590887303ec and mergeability, wait for all required hosted checks, refresh observer state, then merge if green.
+3. After both fixes merge, rebase the overlay regression branch onto current main in its own worktree; rerun full lint/type/unit/build/SEO and the E2E axe checks, then open/merge only when all required checks are green.
+4. Continue an independent high-value frontend reliability/accessibility/performance loop while CI runs. Never mutate another pending branch from a second workstream.
+5. Before any API deployment, re-read fresh observer state and require api_build_headroom_ok=true. Keep port 4002 primary and 4001 rollback/canary. Never disable/pause the observer or automation.
+
+
+---
+
 # Current checkpoint — 2026-10-27 (latest verified)
 
 ## Main, production, and observer
