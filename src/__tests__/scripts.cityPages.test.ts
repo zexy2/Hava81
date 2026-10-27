@@ -34,6 +34,18 @@ const istanbul = provinces.find(p => p.name === 'İstanbul')!;
 const attr = (doc: Document, selector: string, name = 'content') =>
   doc.querySelector(selector)?.getAttribute(name) ?? null;
 
+describe('root document critical connections', () => {
+  it('preconnects to the production weather API once before the app module', () => {
+    const doc = parse(baseHtml);
+    const preconnect = doc.querySelector<HTMLLinkElement>('link[rel="preconnect"]');
+
+    expect(attr(doc, 'link[rel="preconnect"]', 'href')).toBe('https://api.hava81.zekiakgul.dev');
+    expect(preconnect?.hasAttribute('crossorigin')).toBe(true);
+    expect(doc.querySelectorAll('link[rel="preconnect"]')).toHaveLength(1);
+    expect(baseHtml.indexOf('rel="preconnect"')).toBeLessThan(baseHtml.indexOf('type="module"'));
+  });
+});
+
 describe('province catalogue', () => {
   it('reads all 81 provinces with the same slugs as the client router', () => {
     expect(provinces).toHaveLength(81);
@@ -127,6 +139,7 @@ describe.each(['tr', 'en'] as const)('%s province page', lang => {
       lang === 'en' ? 'let lang = "en"' : "let lang = 'tr'"
     );
     expect(attr(doc, 'link[rel="preconnect"]', 'href')).toBe('https://api.hava81.zekiakgul.dev');
+    expect(doc.querySelectorAll('link[rel="preconnect"]')).toHaveLength(1);
   });
 
   it('keeps the outing recommendation scoped to weather', () => {
@@ -178,6 +191,7 @@ describe('home, 404, sitemap and build stamp', () => {
         expect(attr(doc, 'link[hreflang="x-default"]', 'href')).toBe(`${BASE_URL}/${province.slug}/`);
         expect(attr(doc, 'meta[property="og:image"]')).toBe(`${BASE_URL}/og/${province.slug}.jpg`);
         expect(doc.querySelector('script[type="application/ld+json"]')).not.toBeNull();
+        expect(doc.querySelectorAll('link[rel="preconnect"]')).toHaveLength(1);
       }
       expect(titles.size).toBe(81);
     }
@@ -223,7 +237,9 @@ describe('home, 404, sitemap and build stamp', () => {
         description: copy.description,
       });
       expect(doc.documentElement.innerHTML).not.toContain('__HAVA81_BOOTSTRAP_WEATHER__');
-      expect(doc.querySelector('link[rel="preconnect"]')).toBeNull();
+      expect(attr(doc, 'link[rel="preconnect"]', 'href')).toBe('https://api.hava81.zekiakgul.dev');
+      expect(doc.querySelectorAll('link[rel="preconnect"]')).toHaveLength(1);
+      expect(doc.querySelector('link[rel="preconnect"]')?.hasAttribute('crossorigin')).toBe(true);
     }
   );
 
@@ -235,6 +251,7 @@ describe('home, 404, sitemap and build stamp', () => {
     expect(doc.querySelector('#root h1')?.textContent).toBe('Bu adreste bir il yok');
     expect(doc.querySelector('#root a[href="/"]')).not.toBeNull();
     expect(doc.querySelector('script[type="module"]')).not.toBeNull();
+    expect(doc.querySelector('link[rel="preconnect"]')).toBeNull();
   });
 
   it('lists every TR and EN URL once in the sitemap with alternates', () => {
