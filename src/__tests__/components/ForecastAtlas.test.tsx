@@ -437,7 +437,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
     expect(screen.getByText(/24 saatlik tahmin sabit kalır/i)).toBeInTheDocument();
     expect(
-      within(interval).getByRole('button', { name: '1sa Her 1 saatte bir göster' })
+      within(interval).getByRole('button', { name: '1sa Her saat göster' })
     ).toHaveAttribute('aria-pressed', 'true');
     expect(
       within(interval)

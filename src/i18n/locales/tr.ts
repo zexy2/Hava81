@@ -221,6 +221,7 @@ export const tr = {
       hourlyForecastNext: 'Saatlik tahmin · sonraki {{hours}} {{unit}}',
       hourUnitSingular: 'saat',
       hourUnitPlural: 'saat',
+      intervalOptionSingle: 'Her saat göster',
       intervalOption: 'Her {{hours}} saatte bir göster',
       intervalOptionCompact: '{{hours}}sa',
       formattedByHava81: 'Hava81 tarafından biçimlendirildi',

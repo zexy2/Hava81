@@ -842,3 +842,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - The H1/H2 correction exposed a stale E2E selector that still queried `h3` when measuring city-card containment at 200% text. Keep the semantic H2 hierarchy and update the geometry test selector rather than reverting the accessibility fix. The focused mobile map/compare suite passed 13/13 after the selector correction.
 - A safe host-cache cleanup removed regenerable APT metadata and reclaimable Docker build cache only; do not prune images, containers, or volumes because those can include rollback/canary assets. Confirm new free-space headroom through the observer before enabling API builds.
+
+
+## 2026-10-27 — Singular English interval control copy
+
+- A live responsive audit exposed an accessibility label reading “1h Show every 1 hours”. Keep the visible compact interval value unchanged, but use a dedicated singular translation for the one-hour option; retain the existing plural copy for multi-hour intervals.
+- Keep the wording natural in both English and Turkish, and test the actual accessible button names for 1-hour and 2-hour options. This is copy-only and must not change the selected interval, sampling cadence, or 24-hour forecast horizon.
+
