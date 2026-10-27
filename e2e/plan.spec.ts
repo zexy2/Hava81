@@ -99,13 +99,15 @@ test.describe('Planla view', () => {
 
   test('plan-view state survives a round trip to Today', DESKTOP, async ({ page }) => {
     await page.goto(PLAN);
-    const picnic = page.getByRole('button', { name: 'Piknik' });
-    await picnic.click();
-    await expect(picnic).toHaveAttribute('aria-pressed', 'true');
+    // The outlook intent group offers General, Walk and Run; Picnic belongs to
+    // the separate personal-activity picker farther down the same view.
+    const runPlan = page.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' });
+    await runPlan.click();
+    await expect(runPlan).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Bugüne dön' }).click();
     await expect(page.locator('.hava81-decision-field')).toBeVisible();
     await page.locator('.atlas-plan-button').click();
-    await expect(page.getByRole('button', { name: 'Piknik' })).toHaveAttribute(
+    await expect(page.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -435,7 +437,7 @@ test.describe('activities', () => {
     DESKTOP,
     async ({ page }) => {
       await page.goto(PLAN);
-      const picnic = page.getByRole('button', { name: 'Piknik' });
+      const picnic = page.getByLabel('Aktivite seçimi').getByRole('button', { name: 'Piknik' });
       await expect(picnic).toHaveAttribute('aria-pressed', 'false');
       await picnic.click();
       await expect(picnic).toHaveAttribute('aria-pressed', 'true');
