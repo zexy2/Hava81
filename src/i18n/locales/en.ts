@@ -72,6 +72,8 @@ export const en = {
   hava81: {
     glance: {
       bestLabel: 'Best time',
+      bestAny: 'Any hour works the same',
+      bestNone: 'No clear window',
       umbrellaLabel: 'Umbrella advice',
       summaryLabel: 'Conditions',
       title: 'TODAY’S DECISION',
@@ -121,6 +123,7 @@ export const en = {
       intro:
         'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.',
       back: 'Back to Today',
+      asideLabel: 'Days, local context and notifications',
       entryEyebrow: 'Next step',
       entryBody: 'Day plan, commute times, activities, alerts and route weather.',
       open: 'Open Plan',
@@ -141,6 +144,7 @@ export const en = {
         steady: 'No notable change in the next 24 hours.',
         unavailable: 'Change guidance is not available for the upcoming hours yet.',
         chart: 'Temperature curve for the next 24 hours: low {{min}}, high {{max}}',
+        peak: 'High {{temperature}}',
       },
       freshness: {
         unknown: 'Update time unavailable',
@@ -154,7 +158,7 @@ export const en = {
       longitude: 'Longitude',
       feelsLike: 'Feels like {{temperature}}',
       nextChange: 'Planning signals',
-      forecastHighLow: 'Today (calendar day) high / low',
+      forecastHighLow: 'High / low',
       sourceDifference:
         'The live observation ({{currentProvider}}) and daily forecast ({{forecastProvider}}) may use different sources or times.',
       actions: {
@@ -170,6 +174,7 @@ export const en = {
         uv: 'The modeled UV maximum for the next 24 hours is {{uv}}; plan sun protection.',
         outdoor: 'Around {{time}} looks like a calmer weather window for being outdoors.',
         stable: 'No material weather risk stands out in the near forecast.',
+        stableLightRain: 'Apart from a chance of light rain, no material weather risk stands out.',
         unavailable: 'Near-term decision data is not ready yet.',
       },
       compactActions: {
@@ -183,6 +188,7 @@ export const en = {
         uv: 'Modeled UV peak {{uv}} · Plan sun protection',
         outdoor: 'Calmer weather · Around {{time}}',
         stable: 'No material weather risk stands out',
+        stableLightRain: 'No material risk beyond light rain',
         unavailable: 'Decision data is being prepared',
       },
       notAvailable: '—',
@@ -249,6 +255,7 @@ export const en = {
       title: 'Coming days',
       intentLabel: 'For which plan?',
       general: 'General',
+      intentAria: 'Coming days: {{name}}',
       window: 'Best {{start}}–{{end}}',
       noWindow: 'No suitable window',
       confidence: { medium: 'forecast', low: 'uncertain forecast' },

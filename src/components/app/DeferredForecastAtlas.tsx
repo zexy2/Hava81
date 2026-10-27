@@ -51,6 +51,7 @@ export function DeferredForecastAtlas(props: ForecastAtlasProps) {
         label={t('hava81.forecastAtlas.deferred')}
         anchorRef={placeholderRef}
         onActivate={activate}
+        reserveLoadedHeight
       />
     );
   }
@@ -61,6 +62,7 @@ export function DeferredForecastAtlas(props: ForecastAtlasProps) {
         <ForecastLoadingCard
           title={t('hava81.forecastAtlas.title')}
           label={t('common.loading')}
+          reserveLoadedHeight
         />
       }
     >

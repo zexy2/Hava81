@@ -21,6 +21,10 @@ export function DailyForecastSection({
 }: DailyForecastSectionProps) {
   const { t } = useTranslation();
   const { currentLocationDateKey, formatDay, locale, temperatureSymbol } = clock;
+  // Every day's range bar sits on one shared scale, so the days compare at a glance.
+  const weekMin = Math.min(...dailyData.map(day => day.convertedMinExact));
+  const weekMax = Math.max(...dailyData.map(day => day.convertedMaxExact));
+  const weekSpan = Math.max(weekMax - weekMin, 1);
 
   return (
     <section className="hava81-forecast-atlas__section" aria-labelledby={`${id}-daily-title`}>
@@ -40,7 +44,8 @@ export function DailyForecastSection({
             day.precipitation <= 1
               ? day.precipitation
               : undefined;
-          const precipitation = probability !== undefined ? Math.round(probability * 100) : undefined;
+          const precipitation =
+            probability !== undefined ? Math.round(probability * 100) : undefined;
           const precipitationAmount = formatPrecipitationAmount(day.precipitationMm, locale);
           const hasAmountEvidence =
             typeof day.precipitationMm === 'number' &&
@@ -59,7 +64,16 @@ export function DailyForecastSection({
             ? preciseTemperatureFormatter.format(day.convertedMinExact)
             : String(day.convertedMin);
           return (
-            <li className="hava81-forecast-atlas__day" key={`day-${day.timestamp}`}>
+            <li
+              className="hava81-forecast-atlas__day"
+              key={`day-${day.timestamp}`}
+              style={
+                {
+                  '--range-lo': `${((day.convertedMinExact - weekMin) / weekSpan) * 100}%`,
+                  '--range-hi': `${((day.convertedMaxExact - weekMin) / weekSpan) * 100}%`,
+                } as React.CSSProperties
+              }
+            >
               <time
                 className="hava81-forecast-atlas__day-name"
                 dateTime={day.date.toISOString().slice(0, 10)}
@@ -72,50 +86,54 @@ export function DailyForecastSection({
                 size={28}
                 className="hava81-forecast-atlas__day-symbol"
               />
-              <span className="hava81-forecast-atlas__description">{day.description}</span>
-              {hasPrecipitation ? (
-                <span
-                  className={
-                    (precipitation ?? 0) >= PRECIPITATION_THRESHOLD * 100 ||
-                    (day.precipitationMm ?? 0) >= 1
-                      ? 'hava81-forecast-atlas__day-pop is-signal'
-                      : 'hava81-forecast-atlas__day-pop'
-                  }
-                  role="group"
-                  aria-label={
-                    precipitationAmount
-                      ? (precipitation ?? 0) > 0
-                        ? t('hava81.forecastAtlas.dailyPrecipitationWithAmount', {
-                            day: formatDay(day.date),
-                            percent: precipitation,
-                            amount: precipitationAmount,
-                          })
-                        : t('hava81.forecastAtlas.dailyPrecipitationAmount', {
-                            day: formatDay(day.date),
-                            amount: precipitationAmount,
-                          })
-                      : `${t('weather.precipitation')}: ${precipitation}%`
-                  }
-                >
-                  {(precipitation ?? 0) > 0 ? <span>{precipitation}%</span> : null}
-                  {(precipitation ?? 0) > 0 && precipitationAmount ? (
-                    <span aria-hidden="true"> · </span>
-                  ) : null}
-                  {precipitationAmount ? <span>{precipitationAmount}</span> : null}
-                </span>
-              ) : precipitationUnknown ? (
-                <span
-                  className="hava81-forecast-atlas__day-pop"
-                  role="group"
-                  aria-label={t('hava81.forecastAtlas.precipitationUnknown')}
-                >
-                  {t('hava81.forecastAtlas.precipitationUnknown')}
-                </span>
-              ) : (
-                <span className="hava81-forecast-atlas__sr-only">
-                  {t('hava81.forecastAtlas.noDailyPrecipitation', { day: formatDay(day.date) })}
-                </span>
-              )}
+              {/* Description and rain read as one detail line under the day name. */}
+              <span className="hava81-forecast-atlas__day-detail">
+                <span className="hava81-forecast-atlas__description">{day.description}</span>
+                {hasPrecipitation ? (
+                  <span
+                    className={
+                      (precipitation ?? 0) >= PRECIPITATION_THRESHOLD * 100 ||
+                      (day.precipitationMm ?? 0) >= 1
+                        ? 'hava81-forecast-atlas__day-pop is-signal'
+                        : 'hava81-forecast-atlas__day-pop'
+                    }
+                    role="group"
+                    aria-label={
+                      precipitationAmount
+                        ? (precipitation ?? 0) > 0
+                          ? t('hava81.forecastAtlas.dailyPrecipitationWithAmount', {
+                              day: formatDay(day.date),
+                              percent: precipitation,
+                              amount: precipitationAmount,
+                            })
+                          : t('hava81.forecastAtlas.dailyPrecipitationAmount', {
+                              day: formatDay(day.date),
+                              amount: precipitationAmount,
+                            })
+                        : `${t('weather.precipitation')}: ${precipitation}%`
+                    }
+                  >
+                    {(precipitation ?? 0) > 0 ? <span>{precipitation}%</span> : null}
+                    {(precipitation ?? 0) > 0 && precipitationAmount ? (
+                      <span aria-hidden="true"> · </span>
+                    ) : null}
+                    {precipitationAmount ? <span>{precipitationAmount}</span> : null}
+                  </span>
+                ) : precipitationUnknown ? (
+                  <span
+                    className="hava81-forecast-atlas__day-pop"
+                    role="group"
+                    aria-label={t('hava81.forecastAtlas.precipitationUnknown')}
+                  >
+                    {t('hava81.forecastAtlas.precipitationUnknown')}
+                  </span>
+                ) : (
+                  <span className="hava81-forecast-atlas__sr-only">
+                    {t('hava81.forecastAtlas.noDailyPrecipitation', { day: formatDay(day.date) })}
+                  </span>
+                )}
+              </span>
+              <span className="hava81-forecast-atlas__day-range" aria-hidden="true" />
               <span
                 className="hava81-forecast-atlas__day-temperatures"
                 role="group"

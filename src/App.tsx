@@ -26,7 +26,13 @@ import { scrollIntoViewRespectingMotion } from './utils/motion';
 import { parseAtlasView, resolveAtlasView, type AtlasView } from './utils/atlasView';
 import { getOptionalEvidenceFreshness } from './utils/optionalEvidenceFreshness';
 import { trackProductEvent } from './analytics/productEvents';
+import { resolveSkyScene } from './components/sky/skyScene';
 import './styles/App.css';
+import './styles/editorial.css';
+// Glass and hero styles load with the page, not with the lazy sky chunks: a late
+// stylesheet re-lays out the weather field after first paint (a layout shift).
+import './components/sky/LivingSky.css';
+import './components/sky/HeroSky.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const DecisionGlance = lazy(() => import('./components/hava81/DecisionGlance'));
@@ -42,6 +48,7 @@ const DeferredDecisionAlertsPanel = lazy(
   () => import('./components/app/DeferredDecisionAlertsPanel')
 );
 const RouteWeatherPanel = lazy(() => import('./components/hava81/RouteWeatherPanel'));
+const LivingSky = lazy(() => import('./components/sky/LivingSky'));
 
 type AtlasNavItem = AtlasView;
 
@@ -137,6 +144,16 @@ const App: React.FC = () => {
   }, [activeNav, isPlanView]);
 
   const colorMode = useResolvedColorMode(settings.themeMode);
+  // The living sky follows the clock too (dawn → day → dusk → night) without a refetch.
+  const [skyClock, setSkyClock] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setSkyClock(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const skyScene = useMemo(
+    () => (weather ? resolveSkyScene(weather, forecast.hourly, skyClock) : null),
+    [weather, forecast.hourly, skyClock]
+  );
 
   useEffect(() => {
     const themeColor = colorMode === 'dark' ? '#0E2C32' : '#F3F6F4';
@@ -410,7 +427,13 @@ const App: React.FC = () => {
           data-color-mode={colorMode}
           data-active-nav={activeNav}
           data-has-bottom-nav={weather || favorites.length > 0 ? 'true' : 'false'}
+          data-living-sky={skyScene ? 'true' : undefined}
         >
+          {skyScene ? (
+            <Suspense fallback={null}>
+              <LivingSky scene={skyScene} />
+            </Suspense>
+          ) : null}
           <a
             className="skip-link"
             href="#main-content"
@@ -534,15 +557,17 @@ const App: React.FC = () => {
                 {!isPlanView && (
                   <>
                     <div className="atlas-dashboard__primary">
-                      <WeatherDecisionField
-                        weather={weather}
-                        hourly={forecast.hourly}
-                        daily={forecast.daily}
-                        airQuality={freshAirQuality}
-                        airQualityHourly={freshAirQualityHourly}
-                        uvIndexMax={freshUvIndexMax}
-                        forecastMeta={forecast.displayMeta ?? forecast.meta}
-                      />
+                      <div className="atlas-dashboard__field-rail">
+                        <WeatherDecisionField
+                          weather={weather}
+                          hourly={forecast.hourly}
+                          daily={forecast.daily}
+                          airQuality={freshAirQuality}
+                          airQualityHourly={freshAirQualityHourly}
+                          uvIndexMax={freshUvIndexMax}
+                          forecastMeta={forecast.displayMeta ?? forecast.meta}
+                        />
+                      </div>
                       <Suspense fallback={null}>
                         <DecisionGlance
                           weather={weather}
@@ -705,8 +730,10 @@ const App: React.FC = () => {
                       )}
                     </div>
                   )}
-                  {hasOpenedPlan && forecast.hourly.length > 0 && (
-                    <Suspense fallback={null}>
+                  {/* One loading boundary for every Planla section: they arrive together in a
+                      reserved slot instead of pushing each other down one by one. */}
+                  <Suspense fallback={null}>
+                    {hasOpenedPlan && forecast.hourly.length > 0 && (
                       <DailyPlanPanel
                         weather={weather}
                         hourly={forecast.hourly}
@@ -714,71 +741,67 @@ const App: React.FC = () => {
                         airQualityHourly={freshAirQualityHourly}
                         forecastMeta={forecast.displayMeta ?? forecast.meta}
                       />
-                    </Suspense>
-                  )}
+                    )}
 
-                  {hasOpenedPlan && forecast.hourly.length > 0 && (
-                    <Suspense fallback={null}>
-                      <CommutePlanPanel
-                        weather={weather}
-                        hourly={forecast.hourly}
-                        forecastMeta={forecast.displayMeta ?? forecast.meta}
-                      />
-                    </Suspense>
-                  )}
+                    {/* Main tools on the wide column; short reference panels on a narrow
+                        column that stays in view instead of stretching to its neighbour. */}
+                    <div className="atlas-plan-view__columns">
+                      <div className="atlas-plan-view__main">
+                        {hasOpenedPlan && forecast.hourly.length > 0 && (
+                          <ActivityPlanner
+                            weather={weather}
+                            hourly={forecast.hourly}
+                            airQuality={freshAirQuality}
+                            airQualityHourly={freshAirQualityHourly}
+                            forecastMeta={forecast.displayMeta ?? forecast.meta}
+                            contextSignals={forecast.contextSignals}
+                          />
+                        )}
 
-                  {hasOpenedPlan && forecast.hourly.length > 0 && (
-                    <Suspense fallback={null}>
-                      <DayOutlookPanel
-                        weather={weather}
-                        hourly={forecast.hourly}
-                        airQuality={freshAirQuality}
-                        airQualityHourly={freshAirQualityHourly}
-                        contextSignals={forecast.contextSignals}
-                        forecastMeta={forecast.displayMeta ?? forecast.meta}
-                      />
-                    </Suspense>
-                  )}
+                        {hasOpenedPlan && forecast.hourly.length > 0 && (
+                          <CommutePlanPanel
+                            weather={weather}
+                            hourly={forecast.hourly}
+                            forecastMeta={forecast.displayMeta ?? forecast.meta}
+                          />
+                        )}
+                      </div>
+                      <aside
+                        className="atlas-plan-view__aside"
+                        aria-label={t('hava81.planView.asideLabel')}
+                      >
+                        {hasOpenedPlan && forecast.hourly.length > 0 && (
+                          <DayOutlookPanel
+                            weather={weather}
+                            hourly={forecast.hourly}
+                            airQuality={freshAirQuality}
+                            airQualityHourly={freshAirQualityHourly}
+                            contextSignals={forecast.contextSignals}
+                            forecastMeta={forecast.displayMeta ?? forecast.meta}
+                          />
+                        )}
 
-                  {hasOpenedPlan && forecast.hourly.length > 0 && (
-                    <Suspense fallback={null}>
-                      <ActivityPlanner
-                        weather={weather}
-                        hourly={forecast.hourly}
-                        airQuality={freshAirQuality}
-                        airQualityHourly={freshAirQualityHourly}
-                        forecastMeta={forecast.displayMeta ?? forecast.meta}
-                        contextSignals={forecast.contextSignals}
-                      />
-                    </Suspense>
-                  )}
+                        {hasOpenedPlan && forecast.contextSignals && (
+                          <ContextSignalsPanel
+                            signals={forecast.contextSignals}
+                            timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
+                          />
+                        )}
 
-                  {hasOpenedPlan && forecast.contextSignals && (
-                    <Suspense fallback={null}>
-                      <ContextSignalsPanel
-                        signals={forecast.contextSignals}
-                        timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
-                      />
-                    </Suspense>
-                  )}
+                        {forecast.hourly.length > 0 && (
+                          <DeferredDecisionAlertsPanel
+                            weather={weather}
+                            hourly={forecast.hourly}
+                            airQuality={freshAirQuality}
+                            airQualityHourly={freshAirQualityHourly}
+                            forecastMeta={forecast.displayMeta ?? forecast.meta}
+                          />
+                        )}
+                      </aside>
+                    </div>
 
-                  {forecast.hourly.length > 0 && (
-                    <Suspense fallback={null}>
-                      <DeferredDecisionAlertsPanel
-                        weather={weather}
-                        hourly={forecast.hourly}
-                        airQuality={freshAirQuality}
-                        airQualityHourly={freshAirQualityHourly}
-                        forecastMeta={forecast.displayMeta ?? forecast.meta}
-                      />
-                    </Suspense>
-                  )}
-
-                  {hasOpenedPlan && (
-                    <Suspense fallback={null}>
-                      <RouteWeatherPanel currentCityName={weather.cityName} />
-                    </Suspense>
-                  )}
+                    {hasOpenedPlan && <RouteWeatherPanel currentCityName={weather.cityName} />}
+                  </Suspense>
                 </section>
               </div>
             )}

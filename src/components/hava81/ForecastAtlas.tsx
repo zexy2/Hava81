@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import type { DailyForecast, HourlyForecast, ForecastMeta } from '../../types';
@@ -38,7 +38,6 @@ export function ForecastAtlas({
 }: ForecastAtlasProps) {
   const { t } = useTranslation();
   const { settings, convertTemperature, getTemperatureSymbol } = useSettings();
-  const [displayIntervalHours, setDisplayIntervalHours] = useState(1);
   const id = useId();
   const locale = settings.language === 'en' ? 'en-US' : 'tr-TR';
   const temperatureSymbol = getTemperatureSymbol();
@@ -66,13 +65,9 @@ export function ForecastAtlas({
     }));
   }, [convertTemperature, hourly, intervalHours]);
 
-  const hourlyData = useMemo(
-    () =>
-      intervalHours === 1
-        ? hourlyHorizonData.filter((_, index) => index % displayIntervalHours === 0)
-        : hourlyHorizonData,
-    [displayIntervalHours, hourlyHorizonData, intervalHours]
-  );
+  // Every forecast hour is shown, like Apple and Google weather: the strip scrolls through
+  // the next 24 hours instead of thinning them out to every 2nd, 3rd … 12th hour.
+  const hourlyData = hourlyHorizonData;
 
   const dailyData = useMemo(
     () =>
@@ -154,8 +149,6 @@ export function ForecastAtlas({
           hourlyCount={hourly.length}
           hourlyHorizonData={hourlyHorizonData}
           hourlyData={hourlyData}
-          displayIntervalHours={displayIntervalHours}
-          onDisplayIntervalChange={setDisplayIntervalHours}
           isFahrenheit={isFahrenheit}
           clock={clock}
           current={current}

@@ -1,6 +1,5 @@
 export const LEGACY_HOUR_LIMIT = 12;
 export const REAL_HOURLY_HORIZON = 24;
-export const DISPLAY_INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 12] as const;
 export const MIN_CHART_WIDTH = 320;
 export const MIN_DISPLAY_COLUMN_WIDTH = 72;
 export const CHART_COLUMN_UNITS = 100;

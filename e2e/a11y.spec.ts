@@ -21,24 +21,14 @@ async function collectAxeFailures(page: Page): Promise<string[]> {
     const axe = (
       window as unknown as Window & {
         axe: {
-          run: (
-            root: Document,
-            options: unknown
-          ) => Promise<{ violations: AxeViolation[] }>;
+          run: (root: Document, options: unknown) => Promise<{ violations: AxeViolation[] }>;
         };
       }
     ).axe;
     const result = await axe.run(document, {
       runOnly: {
         type: 'tag',
-        values: [
-          'wcag2a',
-          'wcag2aa',
-          'wcag21a',
-          'wcag21aa',
-          'wcag22aa',
-          'best-practice',
-        ],
+        values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'],
       },
     });
     return result.violations.flatMap(violation =>
@@ -71,7 +61,7 @@ test.describe('target size', () => {
   });
 
   test(
-    'forecast interval targets remain at least 44px at 320px with 200% text',
+    'the forecast never overflows sideways at 320px with 200% text',
     DESKTOP,
     async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 900 });
@@ -99,23 +89,6 @@ test.describe('target size', () => {
         await page.goto(variant.path);
         await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
         await ensureForecastAtlasLoaded(page);
-
-        const buttons = page.locator('.hava81-forecast-atlas__range-button');
-        await expect(buttons).toHaveCount(7);
-        const sizes = await buttons.evaluateAll(elements =>
-          elements.map(element => {
-            const rect = element.getBoundingClientRect();
-            return {
-              label: element.getAttribute('aria-label') || element.textContent?.trim() || 'interval',
-              width: rect.width,
-              height: rect.height,
-            };
-          })
-        );
-        for (const size of sizes) {
-          expect(size.width, variant.path + ' ' + size.label + ' width').toBeGreaterThanOrEqual(44);
-          expect(size.height, variant.path + ' ' + size.label + ' height').toBeGreaterThanOrEqual(44);
-        }
 
         const layout = await page.evaluate(() => ({
           viewportWidth: window.innerWidth,
@@ -154,24 +127,12 @@ test.describe('target size', () => {
     }
   );
 
-  test(
-    'tablet forecast sources and interval controls are at least 44px',
-    TABLET,
-    async ({ page }) => {
-      await page.goto('/istanbul');
-      await ensureForecastAtlasLoaded(page);
-      await expect(page.locator('.hava81-forecast-atlas__source').getByRole('link')).toHaveCount(2);
-      expect(await findUndersizedTargets(page.locator('.hava81-forecast-atlas__source'))).toEqual(
-        []
-      );
-      await expect(
-        page.getByRole('group', { name: 'Gösterim aralığı' }).getByRole('button')
-      ).toHaveCount(7);
-      expect(
-        await findUndersizedTargets(page.getByRole('group', { name: 'Gösterim aralığı' }))
-      ).toEqual([]);
-    }
-  );
+  test('tablet forecast source links are at least 44px', TABLET, async ({ page }) => {
+    await page.goto('/istanbul');
+    await ensureForecastAtlasLoaded(page);
+    await expect(page.locator('.hava81-forecast-atlas__source').getByRole('link')).toHaveCount(2);
+    expect(await findUndersizedTargets(page.locator('.hava81-forecast-atlas__source'))).toEqual([]);
+  });
 });
 
 test.describe('contrast', () => {
@@ -233,14 +194,7 @@ test.describe('contrast', () => {
             const result = await axe.run(document, {
               runOnly: {
                 type: 'tag',
-                values: [
-                  'wcag2a',
-                  'wcag2aa',
-                  'wcag21a',
-                  'wcag21aa',
-                  'wcag22aa',
-                  'best-practice',
-                ],
+                values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'],
               },
             });
             return result.violations.flatMap(violation =>
@@ -311,14 +265,7 @@ test.describe('contrast', () => {
           const result = await axe.run(document, {
             runOnly: {
               type: 'tag',
-              values: [
-                'wcag2a',
-                'wcag2aa',
-                'wcag21a',
-                'wcag21aa',
-                'wcag22aa',
-                'best-practice',
-              ],
+              values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'],
             },
           });
           return result.violations.flatMap(violation =>
@@ -423,12 +370,14 @@ test.describe('contrast', () => {
           rootFontSize: getComputedStyle(document.documentElement).fontSize,
         }));
         expect(Number.parseFloat(layout.rootFontSize)).toBeGreaterThan(16);
-        expect(layout.documentWidth, `${view} document must not overflow at 200% text size`).toBeLessThanOrEqual(
-          layout.viewportWidth
-        );
-        expect(layout.bodyWidth, `${view} body must not overflow at 200% text size`).toBeLessThanOrEqual(
-          layout.viewportWidth
-        );
+        expect(
+          layout.documentWidth,
+          `${view} document must not overflow at 200% text size`
+        ).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(
+          layout.bodyWidth,
+          `${view} body must not overflow at 200% text size`
+        ).toBeLessThanOrEqual(layout.viewportWidth);
       }
     }
   );
@@ -440,11 +389,6 @@ test.describe('forced colors', () => {
     await page.goto('/istanbul');
     await ensureForecastAtlasLoaded(page);
 
-    await expectSelectedStateDistinct(
-      page.locator('.hava81-forecast-atlas__range-button[aria-pressed="true"]'),
-      page.locator('.hava81-forecast-atlas__range-button[aria-pressed="false"]').first(),
-      'forecast interval'
-    );
     await expectSelectedStateDistinct(
       page.locator('.atlas-bottom-nav__button[aria-current="page"]'),
       page.locator('.atlas-bottom-nav__button:not([aria-current])').first(),
@@ -534,10 +478,7 @@ test.describe('keyboard focus', () => {
     async ({ page }) => {
       await page.goto('/istanbul');
       await ensureForecastAtlasLoaded(page);
-      for (const control of [
-        page.locator('.hava81-forecast-atlas__range-button').first(),
-        page.locator('.environment-rail__module--action'),
-      ]) {
+      for (const control of [page.locator('.environment-rail__module--action')]) {
         await control.scrollIntoViewIfNeeded();
         await expectVisibleFocusRing(control, { insideClippingRail: true });
       }

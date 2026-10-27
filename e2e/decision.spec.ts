@@ -79,10 +79,9 @@ test.describe('first screen composition (Faz 2)', () => {
       const value = field.locator('.hava81-decision-field__temperature-value');
       const symbol = field.locator('.hava81-decision-field__symbol');
       await expect(value).toBeVisible();
-      await expect(symbol).toBeVisible();
+      // On desktop the live sky behind the field shows the condition; the icon steps aside.
+      await expect(symbol).toBeHidden();
       await expectReadable(page, field.locator('.hava81-decision-field__reading'), 'reading block');
-      await expectNoOverlap(value, symbol, 'temperature vs weather art');
-      await expectContainedIn(symbol, field, 'weather art');
       await expectContainedIn(value, field, 'temperature');
       await expectReadable(
         page,

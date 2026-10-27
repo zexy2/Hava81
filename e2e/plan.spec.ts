@@ -126,10 +126,9 @@ test.describe('Planla view', () => {
     await page.locator('.atlas-plan-button').click();
     await expect(plan).toBeVisible();
     await expect(outlook).toBeVisible();
-    await expect(outlook.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    await expect(
+      outlook.getByLabel('Hangi plan için?').getByRole('button', { name: 'Koşu' })
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('scores in Planla are labelled hourly or per activity', DESKTOP, async ({ page }) => {
@@ -155,27 +154,31 @@ test.describe('Planla view', () => {
     await expect(page.locator('.activity-card__score').first()).toContainText('For this activity');
   });
 
-  test('plan intro keeps the mobile first viewport compact in Turkish and English', MOBILE, async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    for (const language of ['tr', 'en'] as const) {
-      await seedSettings(page, { language, themeMode: 'dark' });
-      await page.goto(PLAN);
-      const intro = page.locator('.atlas-plan-view__header p');
-      await expect(intro).toBeVisible();
-      await expect(intro).toHaveText(
-        language === 'en'
-          ? 'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.'
-          : 'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.'
-      );
-      const metrics = await intro.evaluate(element => ({
-        height: element.getBoundingClientRect().height,
-        lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
-      }));
-      expect(metrics.height, `${language} plan intro line budget`).toBeLessThanOrEqual(
-        metrics.lineHeight * 3.1
-      );
+  test(
+    'plan intro keeps the mobile first viewport compact in Turkish and English',
+    MOBILE,
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      for (const language of ['tr', 'en'] as const) {
+        await seedSettings(page, { language, themeMode: 'dark' });
+        await page.goto(PLAN);
+        const intro = page.locator('.atlas-plan-view__header p');
+        await expect(intro).toBeVisible();
+        await expect(intro).toHaveText(
+          language === 'en'
+            ? 'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.'
+            : 'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.'
+        );
+        const metrics = await intro.evaluate(element => ({
+          height: element.getBoundingClientRect().height,
+          lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+        }));
+        expect(metrics.height, `${language} plan intro line budget`).toBeLessThanOrEqual(
+          metrics.lineHeight * 3.1
+        );
+      }
     }
-  });
+  );
 });
 
 test.describe('daily plan', () => {
@@ -496,8 +499,8 @@ test.describe('activities', () => {
       await expect(picnic).toHaveAttribute('aria-pressed', 'true');
       await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
       await expect(page.getByText(/Üç aktivite seçtin/i)).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
-      await expect(page.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Çamaşır', exact: true })).toBeDisabled();
 
       await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
       await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
@@ -609,7 +612,9 @@ test.describe('activities', () => {
       await expectReadable(page, header, 'planner header at 320px/200%');
       await expectContainedIn(header, planner, 'planner header');
       await expectContainedIn(sensitivity, header, 'sensitivity panel');
-      expect(await sensitivity.evaluate(element => getComputedStyle(element).flexBasis)).toBe('auto');
+      expect(await sensitivity.evaluate(element => getComputedStyle(element).flexBasis)).toBe(
+        'auto'
+      );
       await planner.locator('.activity-planner__score-explanation').evaluate(element => {
         (element as HTMLDetailsElement).open = true;
       });
@@ -670,7 +675,12 @@ test.describe('daylight (plan v3 Faz 0.3)', () => {
           description: 'açık',
         };
       });
-      await overrideApiJson(page, 'current', { ...evening.current, icon: '01n', temperature: 18, feelsLike: 18 });
+      await overrideApiJson(page, 'current', {
+        ...evening.current,
+        icon: '01n',
+        temperature: 18,
+        feelsLike: 18,
+      });
       await overrideApiJson(page, 'forecast', evening.forecast);
       await overrideApiJson(page, 'hourly', { ...evening.hourlyForecast, hourly });
       await overrideApiJson(page, 'air', evening.air);
@@ -678,7 +688,7 @@ test.describe('daylight (plan v3 Faz 0.3)', () => {
       await page.clock.setFixedTime(new Date(EVENING));
 
       await page.goto(PLAN);
-      await page.getByRole('button', { name: 'Piknik' }).click();
+      await page.getByRole('button', { name: 'Piknik', exact: true }).click();
       const cards = page.locator('.activity-card');
       await expect(cards).toHaveCount(3);
 

@@ -31,15 +31,16 @@ describe('WeatherIllustration', () => {
   });
 
   it('renders precipitation and mist only for relevant conditions', () => {
+    // Rain is three separately animated drops; they appear only for rain.
     const { container, rerender } = render(<WeatherIllustration code="09d" label="Yağmur" />);
-    expect(
-      container.querySelector('path[d="m56 114-5 10 M86 114l-5 10 M116 114l-5 10"]')
-    ).not.toBeNull();
+    expect(container.querySelectorAll('.wx-rain .wx-drop')).toHaveLength(3);
 
     rerender(<WeatherIllustration code="13d" label="Kar" />);
     expect(container.querySelector('circle[cx="57"][cy="119"]')).not.toBeNull();
+    expect(container.querySelectorAll('.wx-drop')).toHaveLength(0);
 
     rerender(<WeatherIllustration code="50d" label="Sis" />);
     expect(container.querySelector('path[d="M25 45h100 M38 69h108 M14 94h110"]')).not.toBeNull();
+    expect(container.querySelectorAll('.wx-drop')).toHaveLength(0);
   });
 });

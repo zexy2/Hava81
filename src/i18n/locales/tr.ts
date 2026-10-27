@@ -72,6 +72,8 @@ export const tr = {
   hava81: {
     glance: {
       bestLabel: 'En uygun saatler',
+      bestAny: 'Saatler arasında fark yok',
+      bestNone: 'Belirgin bir aralık yok',
       umbrellaLabel: 'Şemsiye önerisi',
       summaryLabel: 'Genel durum',
       title: 'BUGÜNÜN KARARI',
@@ -121,6 +123,7 @@ export const tr = {
       intro:
         'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.',
       back: 'Bugüne dön',
+      asideLabel: 'Günler, yerel bağlam ve bildirimler',
       entryEyebrow: 'Sıradaki adım',
       entryBody: 'Gün planı, çıkış saatleri, aktiviteler, uyarılar ve rota havası.',
       open: 'Planla’yı aç',
@@ -141,6 +144,7 @@ export const tr = {
         steady: 'Önümüzdeki 24 saatte belirgin bir değişim yok.',
         unavailable: 'Yakın saatler için değişim bilgisi henüz hazır değil.',
         chart: 'Önümüzdeki 24 saatin sıcaklık eğrisi: en düşük {{min}}, en yüksek {{max}}',
+        peak: 'En yüksek {{temperature}}',
       },
       freshness: {
         unknown: 'Güncellik bilinmiyor',
@@ -154,7 +158,7 @@ export const tr = {
       longitude: 'Boylam',
       feelsLike: 'Hissedilen {{temperature}}',
       nextChange: 'Plan için öne çıkanlar',
-      forecastHighLow: 'Bugün (takvim günü) yüksek / düşük',
+      forecastHighLow: 'Yüksek / düşük',
       sourceDifference:
         'Anlık ölçüm ({{currentProvider}}) ve günlük tahmin ({{forecastProvider}}) farklı kaynak veya zamanlardan gelebilir.',
       actions: {
@@ -171,6 +175,7 @@ export const tr = {
         outdoor:
           '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
         stable: 'Yakın tahmin aralığında belirgin bir hava riski görünmüyor.',
+        stableLightRain: 'Hafif yağış ihtimali dışında belirgin bir hava riski görünmüyor.',
         unavailable: 'Yakın saatler için karar verisi henüz hazır değil.',
       },
       compactActions: {
@@ -184,6 +189,7 @@ export const tr = {
         uv: 'UV model zirvesi {{uv}} · Korunma planla',
         outdoor: 'Daha sakin hava · {{time}} civarı',
         stable: 'Belirgin hava riski görünmüyor',
+        stableLightRain: 'Hafif yağış dışında belirgin risk yok',
         unavailable: 'Karar verisi hazırlanıyor',
       },
       notAvailable: '—',
@@ -250,6 +256,7 @@ export const tr = {
       title: 'Önümüzdeki günler',
       intentLabel: 'Hangi plan için?',
       general: 'Genel',
+      intentAria: 'Önümüzdeki günler: {{name}}',
       window: 'En uygun {{start}}–{{end}}',
       noWindow: 'Uygun pencere yok',
       confidence: { medium: 'tahmini', low: 'belirsiz tahmin' },

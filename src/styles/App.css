@@ -447,7 +447,7 @@
       grid-row: 1;
     }
 
-    .atlas-dashboard__primary > .hava81-decision-field {
+    .atlas-dashboard__primary .hava81-decision-field {
       grid-column: 1;
       grid-row: 2;
     }
@@ -1426,7 +1426,7 @@
       grid-column: 1 / -1;
       grid-row: 1;
     }
-    .app .atlas-dashboard__primary > .hava81-decision-field {
+    .app .atlas-dashboard__primary .hava81-decision-field {
       grid-column: 1;
       grid-row: 2;
     }
@@ -2333,13 +2333,13 @@
 
   /* Identity + temperature lead; the decision summary follows it. */
 
-  .app .atlas-dashboard__primary > .hava81-decision-field {
+  .app .atlas-dashboard__primary .hava81-decision-field {
     order: -1;
   }
 
   @media (min-width: 64rem) {
     /* Desktop: city/temperature beside the 24h rhythm chart form the first view. */
-    .app .atlas-dashboard__primary > .hava81-decision-field {
+    .app .atlas-dashboard__primary .hava81-decision-field {
       grid-column: 1;
       grid-row: 1;
     }
@@ -2503,9 +2503,11 @@
 
   /* Reserve a stable slot while the optional notification panel stays off the
    * first-viewport path. The panel loads before it enters view or on keyboard focus. */
+  /* Holds about the loaded panel's height (≈ 390–420 px), so the panel arriving never
+   * pushes the route section below it. */
   .atlas-deferred-alerts-slot {
     min-width: 0;
-    min-height: 10rem;
+    min-height: 25rem;
   }
 
   .atlas-deferred-alerts-placeholder {

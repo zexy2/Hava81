@@ -1,0 +1,643 @@
+@layer editorial {
+  /* The sky sits behind everything; content scrolls over it. */
+  .living-sky {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Still fallback until the first frame (and without Canvas 2D). */
+    background: linear-gradient(180deg, rgb(42 116 204), rgb(152 204 240));
+  }
+
+  .app[data-color-mode='dark'] .living-sky {
+    background: linear-gradient(180deg, rgb(6 14 34), rgb(24 44 78));
+  }
+
+  .living-sky__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The app is its own stacking context; the sky sits at its very back, so fixed and
+     sticky children (header, bottom navigation) keep their positioning untouched. */
+  .app[data-living-sky='true'] {
+    isolation: isolate;
+    background: transparent;
+  }
+
+  /* ── Glass panels over the sky ──
+     Each panel keeps its own colour (so text colours and contrast stay as designed) but
+     becomes translucent and blurs the sky behind it. Without backdrop-filter support the
+     panels stay opaque. */
+
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .app[data-living-sky='true']
+      :is(
+        .hava81-decision-field,
+        .hava81-forecast-atlas,
+        .environment-rail,
+        .daily-plan,
+        .activity-planner,
+        .commute-plan,
+        .day-outlook,
+        .context-signals,
+        .decision-alerts,
+        .route-weather,
+        .atlas-forecast-loading--card
+      ) {
+      background-color: color-mix(in srgb, var(--color-atlas-paper) 74%, transparent);
+      -webkit-backdrop-filter: blur(22px) saturate(150%);
+      backdrop-filter: blur(22px) saturate(150%);
+      border-color: color-mix(in srgb, var(--color-atlas-paper) 55%, transparent);
+      box-shadow: 0 18px 50px rgb(8 28 54 / 0.18);
+    }
+
+    /* Header: a smoked-glass bar the sky scrolls behind. 0.72, not lighter: the white
+       brand and controls must stay ≥ 4.5:1 even over the brightest day sky or, before the
+       sky paints, over the light page. */
+    .app[data-living-sky='true'] .atlas-header {
+      background: rgb(8 28 54 / 0.72);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      backdrop-filter: blur(18px) saturate(160%);
+      box-shadow: none;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .app[data-living-sky='true']
+      :is(
+        .hava81-decision-field,
+        .hava81-forecast-atlas,
+        .environment-rail,
+        .daily-plan,
+        .activity-planner,
+        .commute-plan,
+        .day-outlook,
+        .context-signals,
+        .decision-alerts,
+        .route-weather
+      ) {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background-color: var(--color-atlas-paper);
+    }
+
+    /* The header carries white text: it falls back to an opaque deep blue, never paper. */
+    .app[data-living-sky='true'] .atlas-header {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: rgb(8 28 54);
+    }
+
+    @media (min-width: 64rem) {
+      .app[data-living-sky='true'] .hava81-decision-field {
+        background-color: rgb(12 36 66);
+      }
+    }
+  }
+
+  /* The page sky is already real; the glance's painted clouds and hills only read as smudges. */
+  .app[data-living-sky='true'] .decision-glance__cloud,
+  .app[data-living-sky='true'] .decision-glance__hills {
+    display: none;
+  }
+
+  /* ── Desktop weather field: a live cloud sky with the reading centred on it ──
+     Apple Weather's layout: location, a very large thin temperature, the condition and
+     feels-like, centred over the moving sky. Everything below sits on the same surface,
+     separated only by space and hairlines — no box inside the box. The panel colour under
+     the canvas stays deep so the white type passes contrast even without WebGL. */
+
+  .app[data-living-sky='true'] .hava81-decision-field {
+    --hero-ink: rgb(255 255 255);
+    --hero-soft: rgb(230 238 248);
+    --hero-line: rgb(255 255 255 / 0.16);
+    --hero-gap: 1.5rem;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background-image: none;
+    background-color: rgb(14 28 50);
+    color: var(--hero-ink);
+    box-shadow: 0 24px 60px rgb(4 16 34 / 0.32);
+  }
+
+  /* Darkens the lower half where the denser text sits; the sky stays bright above. */
+  .app[data-living-sky='true'] .hava81-decision-field::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgb(6 14 28 / 0.1) 0%,
+      rgb(6 14 28 / 0.2) 40%,
+      rgb(6 14 28 / 0.62) 72%,
+      rgb(6 14 28 / 0.78) 100%
+    );
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field > :not(.hero-sky) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* No decorative layers from older field styles: they read as ghost boxes on the sky. */
+  .app[data-living-sky='true']
+    .hava81-decision-field
+    :is(
+      .hava81-decision-field__identity,
+      .hava81-decision-field__current,
+      .hava81-decision-field__reading,
+      .hava81-decision-field__temperature,
+      .hava81-decision-field__temperature-value,
+      .hava81-decision-field__trend-wrap,
+      .hava81-decision-field__change,
+      .hava81-decision-field__rail,
+      .hava81-decision-field__metric
+    ) {
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    filter: none;
+  }
+
+  .app[data-living-sky='true']
+    .hava81-decision-field
+    :is(
+      .hava81-decision-field__current,
+      .hava81-decision-field__identity,
+      .hava81-decision-field__change,
+      .hava81-decision-field__metric
+    )::before,
+  .app[data-living-sky='true']
+    .hava81-decision-field
+    :is(
+      .hava81-decision-field__current,
+      .hava81-decision-field__change,
+      .hava81-decision-field__city
+    )::after,
+  .app[data-living-sky='true'] .hava81-decision-field__city::before {
+    content: none;
+  }
+
+  .app[data-living-sky='true']
+    .hava81-decision-field
+    :is(
+      .hava81-decision-field__city,
+      .hava81-decision-field__temperature-value,
+      .hava81-decision-field__temperature-unit,
+      .hava81-decision-field__condition,
+      .hava81-decision-field__next-change,
+      .hava81-decision-field__metric dd,
+      .hava81-decision-field__decision-list li
+    ) {
+    color: var(--hero-ink);
+  }
+
+  .app[data-living-sky='true']
+    .hava81-decision-field
+    :is(
+      .hava81-decision-field__atlas-meta,
+      .hava81-decision-field__atlas-meta *,
+      .hava81-decision-field__feels-like,
+      .hava81-decision-field__metric dt,
+      .hava81-decision-field__change-title,
+      .hava81-decision-field__source-note,
+      .hava81-decision-field__trend-ticks
+    ) {
+    color: var(--hero-soft);
+  }
+
+  /* Identity: city and time centred like Apple's location header. The coordinates and
+     provider are reference data, not a reading: they stay for assistive tech only. */
+  .app[data-living-sky='true'] .hava81-decision-field__identity {
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    padding-block-end: 0;
+    border: 0;
+    text-align: center;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__city-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__city {
+    font-size: clamp(1.9rem, 2.4vw, 2.4rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 12px rgb(4 14 30 / 0.45);
+  }
+
+  /* The plate is a quiet reference tag, not a coloured badge. */
+  .app[data-living-sky='true'] .hava81-decision-field__plate,
+  .app[data-living-sky='true'] .hava81-decision-field__plate > * {
+    border-color: rgb(255 255 255 / 0.32);
+    background: none;
+    color: var(--hero-soft);
+    box-shadow: none;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__atlas-meta {
+    justify-content: center;
+    font-size: 0.875rem;
+  }
+
+  .app[data-living-sky='true']
+    .hava81-decision-field
+    :is(
+      .hava81-decision-field__coordinate-meta,
+      .hava81-decision-field__provider-meta,
+      .hava81-decision-field__provider-meta + [aria-hidden='true']
+    ) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Reading: centred, the icon gives way to the sky itself. */
+  .app[data-living-sky='true'] .hava81-decision-field__current {
+    display: grid;
+    justify-items: center;
+    padding: var(--hero-gap) 0 0;
+    border: 0;
+    text-align: center;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__reading {
+    display: flex;
+    justify-content: center;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__temperature {
+    position: relative;
+    justify-content: center;
+  }
+
+  /* A thin, very large numeral. Line height leaves room for every glyph so nothing is cut. */
+  .app[data-living-sky='true'] .hava81-decision-field__temperature-value {
+    font-size: clamp(6.5rem, 9vw, 9rem);
+    font-weight: 200;
+    line-height: 1.12;
+    letter-spacing: -0.05em;
+    text-shadow: 0 2px 30px rgb(4 14 30 / 0.4);
+  }
+
+  /* The unit hangs off the numeral's top right without shifting the number off centre. */
+  .app[data-living-sky='true'] .hava81-decision-field__temperature-unit {
+    position: absolute;
+    inset-inline-start: 100%;
+    top: 0.9rem;
+    margin: 0 0 0 0.2rem;
+    font-size: 1.5rem;
+    font-weight: 300;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__condition {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    text-shadow: 0 1px 12px rgb(4 14 30 / 0.45);
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__feels-like {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+  }
+
+  /* The next change is the line that most affects a plan: a pill with a cue for its kind. */
+  /* The pill reserves two lines: its text changes length as the forecast arrives
+     ("not ready yet" → "rain starts at 16:00"), and nothing below may move when it does. */
+  .app[data-living-sky='true'] .hava81-decision-field__next-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    box-sizing: border-box;
+    min-height: calc(2lh + 1rem + 2px);
+    margin: var(--hero-gap) 0 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgb(255 255 255 / 0.22);
+    border-radius: 999px;
+    background: rgb(6 16 32 / 0.42);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__next-change::before {
+    content: '';
+    flex: none;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: rgb(230 238 248);
+  }
+
+  /* A drop for rain: a rounded square turned 45° with one sharp corner on top. */
+  .app[data-living-sky='true']
+    .hava81-decision-field__next-change:is(
+      [data-kind='rainStarts'],
+      [data-kind='rainStops']
+    )::before {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50% 0 50% 50%;
+    background: rgb(140 200 255);
+    transform: rotate(-45deg);
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__next-change[data-kind='warmer']::before {
+    background: rgb(255 196 107);
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__next-change[data-kind='cooler']::before {
+    background: rgb(140 200 255);
+  }
+
+  /* Trend: the curve, its hours and its high, full width under the reading. */
+  .app[data-living-sky='true'] .hava81-decision-field__trend-wrap {
+    justify-self: stretch;
+    margin-block: calc(var(--hero-gap) + 1rem) 1.75rem;
+  }
+
+  /* A fixed curve height (not one derived from the width), so the loading placeholder
+     can reserve exactly the same space and nothing shifts when the forecast arrives. */
+  .app[data-living-sky='true'] .hava81-decision-field__trend {
+    height: 3.5rem;
+    color: rgb(255 255 255);
+  }
+
+  /* Curve 3.5rem + tick gap 0.45rem + tick row 1.1rem, with the curve block's margins. */
+  .app[data-living-sky='true'] .hava81-decision-field__trend-placeholder {
+    justify-self: stretch;
+    height: 5.05rem;
+    margin-block: calc(var(--hero-gap) + 1rem) 1.75rem;
+    border-radius: 0;
+    background: none;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__trend-line {
+    stroke-width: 2.5;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__trend-area {
+    opacity: 1;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__trend-now {
+    border-color: rgb(255 255 255);
+  }
+
+  /* Signal: a status dot and one line, under a hairline. */
+  .app[data-living-sky='true'] .hava81-decision-field__change {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1.1rem 0 0;
+    border: 0;
+    border-top: 1px solid var(--hero-line);
+    text-align: start;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__change-title {
+    margin: 0;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__decision-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__decision-list li::before {
+    content: '';
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(120 220 170);
+    transform: translateY(-0.1em);
+  }
+
+  .app[data-living-sky='true']
+    .hava81-decision-field__decision-list
+    li[data-severity='moderate']::before {
+    background: rgb(255 196 107);
+  }
+
+  .app[data-living-sky='true']
+    .hava81-decision-field__decision-list
+    li[data-severity='high']::before {
+    background: rgb(255 128 112);
+  }
+
+  /* Missing data is not good news: a neutral dot, never the green "all clear". */
+  .app[data-living-sky='true']
+    .hava81-decision-field__decision-list
+    li[data-kind='unavailable']::before {
+    background: rgb(150 162 180);
+  }
+
+  /* Metrics: four columns under a hairline; each value sits right under its label. */
+  .app[data-living-sky='true'] .hava81-decision-field__rail {
+    align-items: start;
+    gap: 0;
+    margin-block-start: var(--hero-gap);
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--hero-line);
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__metric {
+    display: grid;
+    align-content: start;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0 1rem;
+    border: 0;
+    border-inline-start: 1px solid var(--hero-line);
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__metric:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__metric dt {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .app[data-living-sky='true'] .hava81-decision-field__metric dd {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Desktop: the sky itself shows the condition, so the icon steps aside and the
+     metrics run as four columns. */
+  @media (min-width: 64rem) {
+    .app[data-living-sky='true'] .hava81-decision-field__symbol {
+      display: none;
+    }
+  }
+
+  /* Phones and tablets: temperature and icon side by side, metrics as a 2 × 2 grid —
+     still open, with hairlines instead of boxes. */
+  @media (max-width: 63.99rem) {
+    /* At large text sizes the icon moves under the number instead of pushing out. */
+    .app[data-living-sky='true'] .hava81-decision-field__reading {
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+    }
+
+    /* Pixel-sized on purpose: enlarged text must not enlarge the art past the card. */
+    .app[data-living-sky='true'] .hava81-decision-field__symbol {
+      flex: none;
+      width: 88px;
+      height: 88px;
+    }
+
+    .app[data-living-sky='true'] .hava81-decision-field__temperature-value {
+      font-size: clamp(4.5rem, 22vw, 6rem);
+    }
+
+    .app[data-living-sky='true'] .hava81-decision-field__rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 1rem;
+    }
+
+    .app[data-living-sky='true'] .hava81-decision-field__metric:nth-child(odd) {
+      padding-inline-start: 0;
+      border-inline-start: 0;
+    }
+
+    .app[data-living-sky='true'] .hava81-decision-field__metric dt {
+      white-space: normal;
+    }
+  }
+
+  @media (min-width: 64rem) and (prefers-reduced-transparency: reduce) {
+    .app[data-living-sky='true'] .hava81-decision-field {
+      background-color: rgb(12 36 66);
+    }
+  }
+
+  /* ── Today's decision: the same deep glass as the weather field, no painted rings ──
+     The three quick facts are columns divided by hairlines instead of framed tiles. */
+
+  .app[data-living-sky='true'] .decision-glance {
+    border: 1px solid rgb(255 255 255 / 0.14);
+    /* Opaque deep navy where the headline starts (white text ≈ 16:1), easing into glass. */
+    background: linear-gradient(
+      110deg,
+      rgb(14 28 50) 0%,
+      rgb(14 28 50 / 0.9) 55%,
+      rgb(20 40 70 / 0.82) 100%
+    );
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    backdrop-filter: blur(22px) saturate(140%);
+    box-shadow: 0 24px 60px rgb(4 16 34 / 0.28);
+  }
+
+  .app[data-living-sky='true'] .decision-glance::before,
+  .app[data-living-sky='true'] .decision-glance::after,
+  .app[data-living-sky='true'] .decision-glance__atmosphere {
+    display: none;
+  }
+
+  .app[data-living-sky='true'] .decision-glance__quick-list {
+    gap: 0;
+  }
+
+  .app[data-living-sky='true'] .decision-glance__quick,
+  .app[data-living-sky='true'][data-color-mode='dark'] .decision-glance__quick {
+    min-height: 0;
+    padding: 0.25rem 1.25rem;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 0;
+    border-inline-start: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app[data-living-sky='true'] .decision-glance__quick:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  /* Icons become small tinted glyphs, not filled discs. */
+  .app[data-living-sky='true'] .decision-glance__quick-icon {
+    background: rgb(255 255 255 / 0.08);
+    box-shadow: none;
+  }
+
+  /* The explanation link stays one line; its arrow never wraps on its own. */
+  .app[data-living-sky='true'] .decision-glance__details {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app[data-living-sky='true'] .decision-glance__quick {
+      padding: 0.6rem 0;
+      border-inline-start: 0;
+      border-top: 1px solid rgb(255 255 255 / 0.16);
+    }
+
+    .app[data-living-sky='true'] .decision-glance__quick:first-child {
+      border-top: 0;
+    }
+
+    /* The narrow side column cannot hold the link on one line: it widens to the score's
+       column and keeps a short, single line. */
+    .app[data-living-sky='true'] .decision-glance__details {
+      max-width: 100%;
+      padding-inline: 0.7rem;
+      white-space: normal;
+      font-size: 0.75rem;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    /* Give the side column the room a two-word link needs, so it wraps once at most. */
+    .app[data-living-sky='true'] .decision-glance__side {
+      flex-basis: 8.5rem;
+      min-width: 0;
+    }
+  }
+
+  /* ── Environment rail: values carry the module, icons are quiet glyphs ── */
+
+  .app[data-living-sky='true'] .environment-rail__icon,
+  .app[data-living-sky='true'] .environment-rail__module:nth-child(n) .environment-rail__icon {
+    border: 0;
+    background: none;
+    box-shadow: none;
+    opacity: 0.75;
+  }
+
+  /* The map entry is an action, not a reading: link-sized, not a 2rem numeral. */
+  .app[data-living-sky='true'] .environment-rail__module--action .environment-rail__value {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+}

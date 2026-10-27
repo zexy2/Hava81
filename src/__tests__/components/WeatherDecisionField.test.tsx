@@ -5,7 +5,13 @@ import i18n from '../../i18n';
 import { WeatherDecisionField } from '../../components/hava81/WeatherDecisionField';
 import * as decisionSnapshot from '../../domain/decision/decisionSnapshot';
 import { SettingsProvider } from '../../context';
-import type { AirQuality, AirQualityHourly, ForecastMeta, HourlyForecast, NormalizedWeatherData } from '../../types';
+import type {
+  AirQuality,
+  AirQualityHourly,
+  ForecastMeta,
+  HourlyForecast,
+  NormalizedWeatherData,
+} from '../../types';
 
 const weather: NormalizedWeatherData = {
   cityName: 'İstanbul',
@@ -207,10 +213,7 @@ describe('WeatherDecisionField daily range', () => {
   it('keeps unknown provider localities unchanged rather than inventing a province', () => {
     render(
       <SettingsProvider>
-        <WeatherDecisionField
-          weather={{ ...weather, cityName: 'Urla Province' }}
-          hourly={[]}
-        />
+        <WeatherDecisionField weather={{ ...weather, cityName: 'Urla Province' }} hourly={[]} />
       </SettingsProvider>
     );
     expect(screen.getByRole('heading', { name: 'Urla Province' })).toBeInTheDocument();
@@ -235,14 +238,28 @@ describe('WeatherDecisionField daily range', () => {
         <WeatherDecisionField
           weather={weather}
           hourly={[
-            { time: new Date('2026-08-29T14:00:00Z'), temp: 24, pop: 0.1, windSpeed: 3, icon: '01d' },
-            { time: new Date('2026-08-29T15:00:00Z'), temp: 25, pop: 0.1, windSpeed: 3, icon: '01d' },
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 24,
+              pop: 0.1,
+              windSpeed: 3,
+              icon: '01d',
+            },
+            {
+              time: new Date('2026-08-29T15:00:00Z'),
+              temp: 25,
+              pop: 0.1,
+              windSpeed: 3,
+              icon: '01d',
+            },
           ]}
         />
       </SettingsProvider>
     );
 
-    expect(container.querySelector('.hava81-decision-field__trend-placeholder')).not.toBeInTheDocument();
+    expect(
+      container.querySelector('.hava81-decision-field__trend-placeholder')
+    ).not.toBeInTheDocument();
     expect(container.querySelector('.hava81-decision-field__trend')).toBeInTheDocument();
   });
 
@@ -252,8 +269,20 @@ describe('WeatherDecisionField daily range', () => {
         <WeatherDecisionField
           weather={{ ...weather, icon: '10d' }}
           hourly={[
-            { time: new Date('2026-08-29T14:00:00Z'), temp: 26, pop: 0.1, windSpeed: 3, icon: '01d' },
-            { time: new Date('2026-08-29T15:00:00Z'), temp: 26, pop: 0.1, windSpeed: 3, icon: '01d' },
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 26,
+              pop: 0.1,
+              windSpeed: 3,
+              icon: '01d',
+            },
+            {
+              time: new Date('2026-08-29T15:00:00Z'),
+              temp: 26,
+              pop: 0.1,
+              windSpeed: 3,
+              icon: '01d',
+            },
           ]}
         />
       </SettingsProvider>
@@ -268,8 +297,20 @@ describe('WeatherDecisionField daily range', () => {
         <WeatherDecisionField
           weather={{ ...weather, icon: '01d' }}
           hourly={[
-            { time: new Date('2026-08-29T14:00:00Z'), temp: 26, pop: 0.8, windSpeed: 3, icon: '10d' },
-            { time: new Date('2026-08-29T15:00:00Z'), temp: 26, pop: 0.9, windSpeed: 3, icon: '10d' },
+            {
+              time: new Date('2026-08-29T14:00:00Z'),
+              temp: 26,
+              pop: 0.8,
+              windSpeed: 3,
+              icon: '10d',
+            },
+            {
+              time: new Date('2026-08-29T15:00:00Z'),
+              temp: 26,
+              pop: 0.9,
+              windSpeed: 3,
+              icon: '10d',
+            },
           ]}
         />
       </SettingsProvider>
@@ -285,8 +326,12 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText('Yakın saatler için değişim bilgisi henüz hazır değil.')).toBeInTheDocument();
-    expect(screen.queryByText('Önümüzdeki 24 saatte belirgin bir değişim yok.')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Yakın saatler için değişim bilgisi henüz hazır değil.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Önümüzdeki 24 saatte belirgin bir değişim yok.')
+    ).not.toBeInTheDocument();
   });
 
   it('uses the daily forecast rather than current-provider temp_min/temp_max', () => {
@@ -308,7 +353,7 @@ describe('WeatherDecisionField daily range', () => {
         />
       </SettingsProvider>
     );
-    expect(screen.getByText('Bugün (takvim günü) yüksek / düşük')).toBeInTheDocument();
+    expect(screen.getByText('Yüksek / düşük')).toBeInTheDocument();
     expect(screen.getByText('32°C / 20°C')).toBeInTheDocument();
     expect(screen.queryByText('26°C / 26°C')).not.toBeInTheDocument();
   });
@@ -577,10 +622,10 @@ describe('WeatherDecisionField daily range', () => {
       expect(i18n.t(key, { lng: 'tr' })).toBe(translations[0]);
       expect(i18n.t(key, { lng: 'en' })).toBe(translations[1]);
     }
-    expect(i18n.t('hava81.decision.freshness.minutes', { lng: 'tr', count: 2 }))
-      .toBe('2 dk önce');
-    expect(i18n.t('hava81.decision.freshness.minutes', { lng: 'en', count: 2 }))
-      .toBe('Updated 2 min ago');
+    expect(i18n.t('hava81.decision.freshness.minutes', { lng: 'tr', count: 2 })).toBe('2 dk önce');
+    expect(i18n.t('hava81.decision.freshness.minutes', { lng: 'en', count: 2 })).toBe(
+      'Updated 2 min ago'
+    );
   });
 
   it('advances freshness text at the next minute boundary without waiting a full minute from mount', async () => {
@@ -736,7 +781,7 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    const label = screen.getByText('Bugün (takvim günü) yüksek / düşük');
+    const label = screen.getByText('Yüksek / düşük');
     expect(label.parentElement).toHaveTextContent('—');
     expect(screen.queryByText('34°C / 21°C')).not.toBeInTheDocument();
   });

@@ -1,14 +1,18 @@
 /* Performance experiment: keep lower decision tools mounted and semantic while
    allowing Chromium to skip offscreen style/layout/paint work until approached. */
 @layer utilities {
+  /* Reserved sizes are close to the real rendered heights (activities ≈ 1550 px on
+     desktop / 2500 px on phones, local context ≈ 610 / 690 px); a far smaller placeholder
+     pushes the next section down when the panel paints. `auto` keeps the real size once
+     the panel has rendered. */
   .atlas-dashboard .activity-planner {
     content-visibility: auto;
-    contain-intrinsic-size: auto 36rem;
+    contain-intrinsic-size: auto 97rem;
   }
 
   .atlas-dashboard .context-signals {
     content-visibility: auto;
-    contain-intrinsic-size: auto 18rem;
+    contain-intrinsic-size: auto 38rem;
   }
 
   .atlas-dashboard .decision-alerts {
@@ -24,5 +28,15 @@
   .atlas-dashboard .route-weather {
     content-visibility: auto;
     contain-intrinsic-size: auto 7rem;
+  }
+
+  @media (max-width: 47.99rem) {
+    .atlas-dashboard .activity-planner {
+      contain-intrinsic-size: auto 155rem;
+    }
+
+    .atlas-dashboard .context-signals {
+      contain-intrinsic-size: auto 43rem;
+    }
   }
 }

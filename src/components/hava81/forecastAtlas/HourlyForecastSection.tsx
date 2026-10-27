@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../context';
 import type { ForecastMeta } from '../../../types';
 import {
-  DISPLAY_INTERVAL_OPTIONS,
   MIN_CHART_WIDTH,
   MIN_DISPLAY_COLUMN_WIDTH,
   REAL_HOURLY_HORIZON,
@@ -23,7 +22,6 @@ import { HourlySource } from './HourlySource';
 import { HourlySummary } from './HourlySummary';
 import { buildHourlySummary } from './hourlySummaryData';
 import { HourlyTimeline } from './HourlyTimeline';
-import { IntervalSelector } from './IntervalSelector';
 import type { ForecastAtlasClock, HourlyDatum } from './types';
 import { useHourlyViewport } from './useHourlyViewport';
 
@@ -35,15 +33,13 @@ interface HourlyForecastSectionProps {
   hourlyCount: number;
   hourlyHorizonData: readonly HourlyDatum[];
   hourlyData: readonly HourlyDatum[];
-  displayIntervalHours: number;
-  onDisplayIntervalChange: (hours: number) => void;
   isFahrenheit: boolean;
   clock: ForecastAtlasClock;
   current?: ForecastAtlasCurrent;
 }
 
 /**
- * Hourly forecast: heading and interval selector, summary, the scrolling
+ * Hourly forecast: heading, summary, the scrolling
  * chart + hour strip with its navigation, and the data source line.
  */
 export function HourlyForecastSection({
@@ -52,12 +48,12 @@ export function HourlyForecastSection({
   hourlyCount,
   hourlyHorizonData,
   hourlyData,
-  displayIntervalHours,
-  onDisplayIntervalChange,
   isFahrenheit,
   clock,
   current,
 }: HourlyForecastSectionProps) {
+  // Always hourly; kept as a value so the chart and strip keep their tested geometry.
+  const displayIntervalHours = 1;
   const { t } = useTranslation();
   const { settings } = useSettings();
   const hourlyViewportRef = useRef<HTMLDivElement>(null);
@@ -87,13 +83,6 @@ export function HourlyForecastSection({
   );
   const hourlySummary = useMemo(() => buildHourlySummary(hourlyHorizonData), [hourlyHorizonData]);
 
-  const intervalOptions = useMemo(
-    () =>
-      intervalHours === 1 && hourlyCount > 1
-        ? DISPLAY_INTERVAL_OPTIONS.filter(hours => hours === 1 || hourlyCount > hours)
-        : [],
-    [hourlyCount, intervalHours]
-  );
   const trackWidth = `max(100%, ${Math.max(
     MIN_CHART_WIDTH,
     hourlyData.length * MIN_DISPLAY_COLUMN_WIDTH + TRACK_GUTTER
@@ -153,12 +142,6 @@ export function HourlyForecastSection({
     });
   };
 
-  const selectDisplayInterval = (hours: number) => {
-    onDisplayIntervalChange(hours);
-    setActiveHourIndex(null);
-    if (hourlyViewportRef.current) hourlyViewportRef.current.scrollLeft = 0;
-  };
-
   return (
     <section
       className="hava81-forecast-atlas__section hava81-forecast-atlas__rhythm"
@@ -168,14 +151,6 @@ export function HourlyForecastSection({
         <h3 id={`${id}-hourly-title`} className="hava81-forecast-atlas__section-title">
           {hourlyHeading}
         </h3>
-        {intervalOptions.length > 1 ? (
-          <IntervalSelector
-            id={id}
-            options={intervalOptions}
-            displayIntervalHours={displayIntervalHours}
-            onSelect={selectDisplayInterval}
-          />
-        ) : null}
       </div>
 
       {hourlySummary ? <HourlySummary summary={hourlySummary} clock={clock} /> : null}
