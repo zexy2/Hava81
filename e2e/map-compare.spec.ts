@@ -74,6 +74,8 @@ test.describe('map view', () => {
 
       const map = page.locator('#weather-map-region');
       await expect(map).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: /harita/i })).toBeVisible();
+      await expect(page.getByText(/yakınlaştırarak 81 ilin tüm işaretlerini gör/i)).toBeVisible();
       await expect(page).toHaveURL(/\?view=map$/);
       await expect(page.locator('.atlas-dashboard__primary')).toBeHidden();
       await expect(page.locator('.daily-plan')).toBeHidden();

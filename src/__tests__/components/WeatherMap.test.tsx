@@ -120,7 +120,7 @@ describe('WeatherMap', () => {
 
   it('names the interactive map region from its visible heading', () => {
     renderMap();
-    const heading = screen.getByRole('heading', { level: 3, name: i18n.t('weather.mapTitle') });
+    const heading = screen.getByRole('heading', { level: 2, name: i18n.t('weather.mapTitle') });
     const region = screen.getByRole('region', { name: i18n.t('weather.mapTitle') });
     expect(region).toHaveAttribute('aria-labelledby', heading.id);
     expect(region).toContainElement(screen.getByTestId('leaflet-map'));
@@ -168,13 +168,17 @@ describe('WeatherMap', () => {
     expect(screen.getByTestId('tiles').getAttribute('data-url')).toBe(primary);
   });
 
-  it('reveals all 81 provinces with live temperatures once zoomed into the atlas', async () => {
+  it('reveals all 81 provinces only after zooming beyond the initial map view', async () => {
     service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures());
     renderMap();
     const before = screen.getAllByTestId('marker').length;
     expect(service.getProvinceTemperatures).not.toHaveBeenCalled();
 
     act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+    expect(service.getProvinceTemperatures).not.toHaveBeenCalled();
+    expect(screen.getAllByTestId('marker').length).toBe(before);
+
+    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
     await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalled());
     expect(screen.getAllByTestId('marker').length).toBeGreaterThan(before);
     await waitFor(() =>
@@ -192,7 +196,7 @@ describe('WeatherMap', () => {
     try {
       service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures(new Date()));
       renderMap();
-      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
       await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
@@ -237,7 +241,7 @@ describe('WeatherMap', () => {
         .mockResolvedValueOnce({ ...initial, byPlate })
         .mockRejectedValue(new Error('temporary refresh failure'));
       renderMap();
-      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
       await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
@@ -274,7 +278,7 @@ describe('WeatherMap', () => {
         provinceTemperatures(new Date(Date.now() + 2 * 60_000))
       );
       renderMap();
-      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
       await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
@@ -294,7 +298,7 @@ describe('WeatherMap', () => {
   it('refreshes province observations when a backgrounded map becomes visible again', async () => {
     service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures());
     renderMap();
-    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
     await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalledTimes(1));
 
     act(() => document.dispatchEvent(new Event('visibilitychange')));

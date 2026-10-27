@@ -361,7 +361,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               aria-label={t('hava81.route.segments')}
             >
               {result.segments.map((segment, index) => (
-                <article
+                <div
                   role="listitem"
                   key={`${segment.fraction}-${index}`}
                   className={`route-segment route-segment--${segment.risk}`}
@@ -379,7 +379,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                     {numberFormatter.format(convertWindSpeed(segment.windSpeed))} {windSpeedSymbol}
                   </span>
                   <small>{segment.description}</small>
-                </article>
+                </div>
               ))}
             </div>
             <small className="route-weather__disclaimer">{result.disclaimer}</small>
