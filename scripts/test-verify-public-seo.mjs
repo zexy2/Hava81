@@ -10,7 +10,7 @@ import { cityCopy, HOME_COPY } from './lib/city-pages.mjs';
 
 const script = fileURLToPath(new URL('./verify-public-seo.mjs', import.meta.url));
 
-async function runFixture({ wrongCanonical = false, badSitemap = false, temporaryFailure = false, wrongEnglishHomeJsonLd = false, wrongHomeSocialImage = false, wrongCityDescription = false, wrongCityHreflang = false, wrongCitySocialImage = false } = {}) {
+async function runFixture({ wrongCanonical = false, badSitemap = false, temporaryFailure = false, wrongEnglishHomeJsonLd = false, wrongHomeSocialImage = false, wrongCityDescription = false, wrongCityHreflang = false, wrongCitySocialImage = false, missingHomeSocialAsset = false, missingCitySocialAsset = false, wrongCitySocialAssetType = false } = {}) {
   const attempts = new Map();
   let base;
   const server = createServer((req, res) => {
@@ -20,6 +20,25 @@ async function runFixture({ wrongCanonical = false, badSitemap = false, temporar
     if (path === '/izmir/' && temporaryFailure && seen === 1) {
       res.writeHead(503);
       res.end('try again');
+      return;
+    }
+    if (req.method === 'HEAD' && (path === '/hava81-social-card.png' || path.startsWith('/og/'))) {
+      const slug = path.match(/^\/og\/([a-z0-9-]+)\.jpg$/)?.[1];
+      const isHomeImage = path === '/hava81-social-card.png';
+      if ((isHomeImage && missingHomeSocialAsset) ||
+          (slug === 'izmir' && missingCitySocialAsset) ||
+          (slug && !provinceNamesBySlug.has(slug))) {
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+      const contentType = isHomeImage ? 'image/png' :
+        (slug === 'izmir' && wrongCitySocialAssetType ? 'text/html' : 'image/jpeg');
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': isHomeImage ? '438152' : '48747',
+      });
+      res.end();
       return;
     }
     const document = (slug, name, url, lang = 'tr') => {
@@ -144,7 +163,9 @@ test('validates 81 published provinces, homepage and sitemap', async () => {
   const result = await runFixture();
   assert.equal(result.exitCode, 0, result.output);
   assert.match(result.output, /81 province pages/);
-  assert.equal(result.attempts.size, 165);
+  assert.equal(result.attempts.size, 247);
+  assert.equal(result.attempts.get('/og/izmir.jpg'), 1);
+  assert.equal(result.attempts.get('/hava81-social-card.png'), 1);
   assert.equal(result.attempts.get('/'), 1);
   assert.equal(result.attempts.get('/en/'), 1);
 });
@@ -192,4 +213,23 @@ test('rejects a homepage social card that points to the wrong asset', async () =
   const result = await runFixture({ wrongHomeSocialImage: true });
   assert.notEqual(result.exitCode, 0);
   assert.ok(result.output.includes('homepage: Homepage social image metadata mismatch'), result.output);
+});
+
+
+test('rejects a missing city social image asset', async () => {
+  const result = await runFixture({ missingCitySocialAsset: true });
+  assert.notEqual(result.exitCode, 0);
+  assert.ok(result.output.includes('social image /og/izmir.jpg: HTTP 404'), result.output);
+});
+
+test('rejects a city social image served with an HTML content type', async () => {
+  const result = await runFixture({ wrongCitySocialAssetType: true });
+  assert.notEqual(result.exitCode, 0);
+  assert.ok(result.output.includes('social image /og/izmir.jpg: Expected image/jpeg content type'), result.output);
+});
+
+test('rejects a missing homepage social image asset', async () => {
+  const result = await runFixture({ missingHomeSocialAsset: true });
+  assert.notEqual(result.exitCode, 0);
+  assert.ok(result.output.includes('social image /hava81-social-card.png?v=20261022: HTTP 404'), result.output);
 });
