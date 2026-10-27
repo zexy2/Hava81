@@ -220,6 +220,85 @@ test.describe('contrast', () => {
   );
 
   test(
+    'settings dialog has no axe WCAG A/AA or best-practice violations across themes and locales',
+    DESKTOP,
+    async ({ page }) => {
+      for (const variant of [
+        { width: 320, language: 'tr', themeMode: 'light' },
+        { width: 390, language: 'en', themeMode: 'dark' },
+        { width: 1280, language: 'tr', themeMode: 'dark' },
+      ] as const) {
+        await page.setViewportSize({ width: variant.width, height: 900 });
+        await page.goto('/istanbul/');
+        await page.evaluate(({ language, themeMode }) => {
+          localStorage.setItem(
+            'user-settings',
+            JSON.stringify({
+              temperatureUnit: 'metric',
+              windSpeedUnit: 'ms',
+              language,
+              themeMode,
+            })
+          );
+        }, variant);
+        await page.reload();
+        await page.locator('.atlas-settings-button').click();
+        const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
+        await expect(dialog).toBeVisible();
+        await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+
+        const failures = await page.evaluate(async () => {
+          const axe = (
+            window as unknown as Window & {
+              axe: {
+                run: (
+                  root: Document,
+                  options: unknown
+                ) => Promise<{
+                  violations: Array<{
+                    id: string;
+                    impact: string | null;
+                    help: string;
+                    nodes: Array<{ target: string[] }>;
+                  }>;
+                }>;
+              };
+            }
+          ).axe;
+          const result = await axe.run(document, {
+            runOnly: {
+              type: 'tag',
+              values: [
+                'wcag2a',
+                'wcag2aa',
+                'wcag21a',
+                'wcag21aa',
+                'wcag22aa',
+                'best-practice',
+              ],
+            },
+          });
+          return result.violations.flatMap(violation =>
+            violation.nodes.map(
+              node =>
+                `${violation.id} (${violation.impact ?? 'unknown'}): ${violation.help} — ${node.target.join(', ')}`
+            )
+          );
+        });
+
+        expect(
+          failures,
+          `settings dialog at ${variant.width}px (${variant.language}, ${variant.themeMode})`
+        ).toEqual([]);
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+          `settings dialog must not overflow at ${variant.width}px`
+        ).toBe(true);
+      }
+    }
+  );
+
+  test(
     'dashboard reflows at 200% root text size on a 320px English dark viewport',
     DESKTOP,
     async ({ page }) => {

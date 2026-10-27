@@ -877,3 +877,7 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The one-time migration from the legacy hava81-shell-v1 / hava81-shell-v2 cache reloads open tabs after the new versioned shell is installed and clients.claim() succeeds. A transient rejection from clients.matchAll() previously propagated out of the activation event's waitUntil, rejecting activation even though the new shell was complete and already claimed.
 - A deterministic service-worker VM regression reproduced the rejection before the fix. Treat the legacy tab reload as best-effort housekeeping: catch failures from client enumeration/reload orchestration so they cannot turn a successful shell install into an activation failure. Keep per-client navigation failures isolated.
 - This changes neither the install fail-closed requirement for required boot assets nor runtime cache behavior. Weather/API requests remain network-only, navigation freshness and route identity remain unchanged, and no weather/provider/safety semantics change.
+
+## 2026-10-27 — Settings dialog accessibility audit scope
+- Keep the full axe-core WCAG A/AA and best-practice audit for the Settings dialog separate from the dashboard audit and run it at narrow mobile, standard mobile, and desktop widths across Turkish/English and light/dark themes. The dialog can pass keyboard/focus checks yet still regress in semantics or contrast.
+- Scope `bypassCSP` only to the test suite that injects axe-core; do not weaken the production Content Security Policy to make auditing easier.
