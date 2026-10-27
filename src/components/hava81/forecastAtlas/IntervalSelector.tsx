@@ -55,10 +55,12 @@ export function IntervalSelector({
             key={hours}
             type="button"
             className="hava81-forecast-atlas__range-button"
-            aria-label={`${t('hava81.forecastAtlas.intervalOptionCompact', { hours })} ${t(
-              'hava81.forecastAtlas.intervalOption',
-              { hours }
-            )}`}
+            aria-label={[
+              t('hava81.forecastAtlas.intervalOptionCompact', { hours }),
+              hours === 1
+                ? t('hava81.forecastAtlas.intervalOptionSingle')
+                : t('hava81.forecastAtlas.intervalOption', { hours }),
+            ].join(' ')}
             aria-pressed={displayIntervalHours === hours}
             onClick={() => onSelect(hours)}
           >

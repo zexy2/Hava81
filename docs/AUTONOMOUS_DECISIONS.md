@@ -854,3 +854,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The all-province atlas intentionally activates at zoom 8. Browser coverage must wait for Leaflet’s zoom transition and the real /api/v1/weather/provinces response before asserting a province temperature; two rapid clicks can be ignored while the first zoom animation is still in flight.
 - Keep provider-observation freshness checks intact. Do not lower the freshness threshold or fabricate fixture timestamps to make the test pass. The test now verifies the atlas gate and response before checking Bursa’s rounded temperature.
 - The map popup city name is an H3 after the dedicated map view’s H1; update the geometry test selector to match the accessible heading instead of reverting the semantic hierarchy.
+
+## 2026-10-27 — Keep one-hour forecast interval copy singular
+
+- The accessible interval button name read “1h Show every 1 hours” because the compact visible interval and plural translation were reused for every option. Keep the visible compact value unchanged, but use a dedicated singular translation for the one-hour option and retain plural wording for multi-hour options.
+- Test the actual accessible names for one-hour and multi-hour controls in English and Turkish. This is presentation/accessibility-only: do not change the selected interval, sampling cadence, hourly data, or 24-hour forecast horizon.
