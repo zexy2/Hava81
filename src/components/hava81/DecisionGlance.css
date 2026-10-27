@@ -1277,4 +1277,14 @@
       border: 1px solid CanvasText;
     }
   }
+
+  /* Do not imply live conditions when the current observation has expired. */
+  .app .decision-glance[data-weather-scene='unknown'] {
+    background: var(--color-atlas-paper);
+  }
+
+  .app .decision-glance[data-weather-scene='unknown'] .decision-glance__atmosphere {
+    display: none;
+  }
+
 }
