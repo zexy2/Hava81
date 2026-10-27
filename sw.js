@@ -1,6 +1,26 @@
-const CACHE_NAME = 'hava81-shell-6a3c29ed3cff';
+const CACHE_NAME = 'hava81-shell-53db795daf77';
 const LEGACY_RELOAD_CACHE_NAMES = new Set(['hava81-shell-v1', 'hava81-shell-v2']);
 const OPTIONAL_SHELL = ['/manifest.json'];
+
+function hasSameOriginApplicationScript(html) {
+  for (const match of html.matchAll(/<script\b[^>]*>/gi)) {
+    const rawPath = match[0].match(/\bsrc=["']([^"']+)["']/i)?.[1];
+    if (!rawPath) continue;
+    try {
+      const assetUrl = new URL(rawPath, self.location.origin);
+      if (
+        assetUrl.origin === self.location.origin &&
+        assetUrl.pathname.startsWith('/assets/') &&
+        /\.m?js$/i.test(assetUrl.pathname)
+      ) {
+        return true;
+      }
+    } catch {
+      // Invalid script URLs cannot establish that the application shell can boot.
+    }
+  }
+  return false;
+}
 
 function extractBootAssetPaths(html) {
   const paths = new Set();
@@ -35,6 +55,9 @@ self.addEventListener('install', event => {
       const rootResponse = await fetch('/', { cache: 'no-store' });
       if (!rootResponse.ok) throw new Error('Hava81 shell root unavailable');
       const rootHtml = await rootResponse.clone().text();
+      if (!hasSameOriginApplicationScript(rootHtml)) {
+        throw new Error('Hava81 shell has no same-origin application script');
+      }
       await cache.put('/', rootResponse.clone());
 
       for (const assetPath of extractBootAssetPaths(rootHtml)) {
