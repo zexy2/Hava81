@@ -9,6 +9,7 @@ import { buildLiveAuditErrors, formatWeatherRequestFailure, writeLiveAuditResult
 import { launchLiveAuditBrowser } from './lib/live-audit-browser.mjs';
 import { activateDeferredForecast, restoreViewportTop } from './lib/activate-deferred-forecast.mjs';
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
+import { LIVE_AUDIT_INTERACTIVE_TARGET_SELECTOR } from './lib/live-audit-target-selector.mjs';
 
 function parseOptions(args) {
   const options = {
@@ -114,7 +115,7 @@ try {
           // first-viewport geometry or capturing a screenshot.
           await activateDeferredForecast(page);
           await restoreViewportTop(page);
-          item.metrics = await page.evaluate(() => {
+          item.metrics = await page.evaluate(targetSelector => {
             const element = selector => document.querySelector(selector);
             const bounds = selector => element(selector)?.getBoundingClientRect() || null;
             const isVisible = selector => {
@@ -126,10 +127,9 @@ try {
               return Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
                 Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
             };
-            // Buttons and form controls are primary touch targets. Record controls
-            // below 44 CSS px so the live audit can catch regressions on phones and
-            // tablets without treating ordinary inline text links as buttons.
-            const smallTargets = [...document.querySelectorAll('button,[role="button"],input,select,[role="tab"]')]
+            // Include primary action/navigation links as well as native controls.
+            // Ordinary inline attribution links are intentionally excluded.
+            const smallTargets = [...document.querySelectorAll(targetSelector)]
               .filter(node => {
                 const rect = node.getBoundingClientRect();
                 const style = getComputedStyle(node);
@@ -161,7 +161,7 @@ try {
                 temperatureArt: Math.round(overlap(bounds('.hava81-decision-field__temperature'), bounds('.hava81-decision-field__symbol'))),
               },
             };
-          });
+          }, LIVE_AUDIT_INTERACTIVE_TARGET_SELECTOR);
           const expectedCity = provinceNamesBySlug.get(city);
           item.errors = buildLiveAuditErrors({
             metrics: item.metrics,

@@ -6,7 +6,7 @@ Run this **manual, read-only** smoke audit after a GitHub Pages release:
 npm run audit:live-ui
 ```
 
-The default matrix checks İzmir and Şanlıurfa at 320, 390, 768, 1024 and 1440 px, including 200% text where relevant. It verifies each city label, horizontal overflow, and collisions among the header, score/date, score/explanation, and temperature/weather art. An external-weather load gets one retry before a failure is reported. The audit does not alter remote data.
+The default matrix checks İzmir and Şanlıurfa at 320, 390, 768, 1024 and 1440 px, including 200% text where relevant. It verifies each city label, horizontal overflow, and collisions among the header, score/date, score/explanation, and temperature/weather art. Touch-target checks include native controls, button-like links, the brand/home link, the primary decision-details link, and navigation links; ordinary inline attribution links are excluded. An external-weather load gets one retry before a failure is reported. The audit does not alter remote data.
 The hourly chart is intentionally deferred on narrow viewports until its reserved placeholder approaches the viewport. The audit activates that placeholder, waits for the chart or a visible error state, then returns to the top before measuring first-viewport geometry; this avoids false timeouts without biasing the viewport measurements.
 
 For before/after screenshot evidence and a JSON report:

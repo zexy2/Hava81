@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { provinceNamesBySlug, provinceCentersBySlug, cityCenterDistanceKm } from './lib/live-audit-city-catalog.mjs';
 import { parseLoopbackCdpUrl, resolveLoopbackCdpPort } from './lib/loopback-cdp-url.mjs';
+import { LIVE_AUDIT_INTERACTIVE_TARGET_SELECTOR, LIVE_AUDIT_INTERACTIVE_TARGET_SELECTORS } from './lib/live-audit-target-selector.mjs';
 
 const auditScript = fileURLToPath(new URL('./audit-live-responsive.mjs', import.meta.url));
 const captureScript = fileURLToPath(new URL('./capture-visual-audit.mjs', import.meta.url));
@@ -56,6 +57,24 @@ test('live audit refuses empty, malformed or non-URL-safe city lists', async t =
       assert.doesNotMatch(result.stdout, /Starting read-only audit/);
     });
   }
+});
+
+test('live touch-target audit includes primary links but excludes inline attribution links', () => {
+  for (const selector of [
+    'button', '[role="button"]', 'input', 'select', '[role="tab"]',
+    'a.atlas-button', 'a.atlas-brand', 'a.decision-glance__details', 'nav a[href]',
+  ]) {
+    assert.ok(LIVE_AUDIT_INTERACTIVE_TARGET_SELECTORS.includes(selector), 'missing ' + selector);
+  }
+  assert.equal(LIVE_AUDIT_INTERACTIVE_TARGET_SELECTOR, LIVE_AUDIT_INTERACTIVE_TARGET_SELECTORS.join(','));
+  assert.ok(!LIVE_AUDIT_INTERACTIVE_TARGET_SELECTORS.includes('a[href]'), 'ordinary inline links must not be treated as buttons');
+
+  const headerSource = readFileSync(new URL('../src/components/app/AppHeader.tsx', import.meta.url), 'utf8');
+  const notFoundSource = readFileSync(new URL('../src/components/app/NotFoundState.tsx', import.meta.url), 'utf8');
+  const decisionSource = readFileSync(new URL('../src/components/hava81/DecisionGlance.tsx', import.meta.url), 'utf8');
+  assert.ok(headerSource.includes('className="atlas-brand"'), 'brand selector must match the real home link');
+  assert.ok(notFoundSource.includes('className="atlas-button"'), 'button-link selector must match the real recovery link');
+  assert.ok(decisionSource.includes('className="decision-glance__details"'), 'details selector must match the primary decision action');
 });
 
 test('live audit help exits successfully without starting an audit', () => {
