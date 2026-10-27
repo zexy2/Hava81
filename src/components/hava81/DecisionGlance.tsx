@@ -65,9 +65,8 @@ export const DecisionGlance = memo(function DecisionGlance({
     };
   }, [weather.meta, forecastMeta, airQualityMeta, airQualityHourly]);
 
-  const evidenceFresh =
-    getCurrentWeatherFreshness(weather.meta, now).fresh &&
-    getForecastFreshness(forecastMeta, now).fresh;
+  const currentWeatherFresh = getCurrentWeatherFreshness(weather.meta, now).fresh;
+  const evidenceFresh = currentWeatherFresh && getForecastFreshness(forecastMeta, now).fresh;
   // AQI is optional evidence: a stale sample must not keep influencing the
   // headline score after the rest of the weather snapshot remains fresh.
   const airQualityFresh = airQuality
@@ -127,8 +126,10 @@ export const DecisionGlance = memo(function DecisionGlance({
   // Match the decorative hero to real current conditions. The illustration
   // must never show a sunny sky during rain, snow or nighttime.
   const iconFamily = weather.icon.slice(0, 2);
-  const scene =
-    iconFamily === '09' || iconFamily === '10' || iconFamily === '11'
+  // Never let an expired observation drive the hero's weather illustration.
+  const scene = !currentWeatherFresh
+    ? 'unknown'
+    : iconFamily === '09' || iconFamily === '10' || iconFamily === '11'
       ? 'rain'
       : iconFamily === '13'
         ? 'snow'
@@ -137,7 +138,7 @@ export const DecisionGlance = memo(function DecisionGlance({
           : iconFamily === '03' || iconFamily === '04'
             ? 'cloud'
             : 'clear';
-  const night = weather.icon.endsWith('n');
+  const night = currentWeatherFresh && weather.icon.endsWith('n');
 
   return (
     <section
