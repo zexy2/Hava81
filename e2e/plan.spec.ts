@@ -448,6 +448,40 @@ test.describe('daily plan', () => {
       await expectTouchTarget(header.locator('.daily-plan__share'), 'share action');
     }
   );
+
+  test(
+    'mobile sharing copies a canonical city decision and announces success',
+    MOBILE,
+    async ({ page }) => {
+      await page.addInitScript(() => {
+        const w = window as Window & { __hava81ClipboardText?: string };
+        Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: {
+            writeText: async (text: string) => {
+              w.__hava81ClipboardText = text;
+            },
+          },
+        });
+      });
+
+      await page.goto(PLAN);
+      const shareButton = page.locator('.daily-plan__share');
+      await expect(shareButton).toBeVisible();
+      await expect(shareButton).toBeEnabled();
+      await shareButton.click();
+
+      const feedback = page.locator('.daily-plan__header-actions [role="status"]');
+      await expect(feedback).toHaveText('Kopyalandı');
+      const copiedText = await page.evaluate(
+        () => (window as Window & { __hava81ClipboardText?: string }).__hava81ClipboardText ?? ''
+      );
+      expect(copiedText).toContain('Hava81');
+      expect(copiedText).toContain('Şemsiye:');
+      expect(copiedText).toContain('/istanbul/');
+    }
+  );
 });
 
 test.describe('activities', () => {
