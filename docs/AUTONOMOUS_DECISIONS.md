@@ -907,3 +907,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - Use the cached root shell for network failures and transient 5xx responses, but keep 4xx responses network-authentic so a missing route is not hidden by stale HTML.
 - Cache Storage failures must not mask the original navigation network failure or discard a successful network response.
 - Keep these contracts covered against the actual `public/sw.js` source in the VM-based unit suite; this test-only change must not alter production worker behavior.
+
+## 2026-10-27 — service-worker notification-click contract
+- Notification URLs must be normalized to same-origin paths while preserving the requested pathname, search, and hash; malformed or cross-origin URLs fall back to the app root.
+- A notification click must still open its intended safe URL if client enumeration fails or an existing window cannot be navigated/focused.
+- Exercise the real `public/sw.js` handler in the VM-based unit suite so browser-window failure paths cannot silently swallow notification activation.
