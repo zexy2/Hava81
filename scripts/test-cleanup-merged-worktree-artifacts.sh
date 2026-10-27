@@ -195,4 +195,23 @@ fi
 
 chmod 0644 "$(git -C "$primary" rev-parse --git-path worktrees/$(basename "$unreadable")/index 2>/dev/null || true)" 2>/dev/null || true
 chmod 0755 "$locked/dist/locked"
+
+# Artifact-only cleanup must skip a symlinked allowlisted path instead of
+# following or deleting the external target. This models shared build outputs
+# and keeps a cleanup pass from crossing a worktree boundary.
+symlinked="$tmp/symlinked"
+external_artifact="$tmp/external-artifact"
+git -C "$primary" worktree add -b feature-symlinked "$symlinked" origin/main >/dev/null
+mkdir -p "$external_artifact"
+printf 'keep external data\n' > "$external_artifact/keep.txt"
+ln -s "$external_artifact" "$symlinked/dist"
+symlink_dry="$(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh)"
+if grep -Fq "$symlinked/dist" <<<"$symlink_dry"; then
+  echo 'symlinked generated artifact appeared in cleanup candidates' >&2
+  exit 1
+fi
+(cd "$primary" && scripts/cleanup-merged-worktree-artifacts.sh --apply >/dev/null)
+[[ -L "$symlinked/dist" ]]
+[[ -f "$external_artifact/keep.txt" ]]
+
 printf 'cleanup worktree safety contract: PASS\n'
