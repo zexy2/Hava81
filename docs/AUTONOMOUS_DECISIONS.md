@@ -830,7 +830,6 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - Add one early preconnect with crossorigin to the root HTML. Province-page generation already derives from that HTML, so do not inject a second preconnect or redundant DNS-prefetch; generated city pages must contain exactly one hint. The static 404 page removes the hint because it has no weather request to make.
 - This is a resource-discovery optimization only. Do not change API requests, provider provenance, freshness, forecast values, scores, or safety guidance. Keep the change only if post-deployment production Lighthouse remains healthy and the real API still responds successfully.
 
-
 ## 2026-10-27 — City comparison accessibility semantics
 
 - A fresh production axe audit of the populated compare view (desktop, dark theme, three saved cities) found `page-has-heading-one` and `aria-allowed-role` violations. The dedicated compare view replaces the dashboard, so its title is the page H1; city cards then use H2 headings.
@@ -842,3 +841,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - The H1/H2 correction exposed a stale E2E selector that still queried `h3` when measuring city-card containment at 200% text. Keep the semantic H2 hierarchy and update the geometry test selector rather than reverting the accessibility fix. The focused mobile map/compare suite passed 13/13 after the selector correction.
 - A safe host-cache cleanup removed regenerable APT metadata and reclaimable Docker build cache only; do not prune images, containers, or volumes because those can include rollback/canary assets. Confirm new free-space headroom through the observer before enabling API builds.
+
+
+## 2026-10-27 — Refresh live responsive-audit weather before its freshness expires
+
+- The read-only 64-case responsive audit intentionally reuses each successful weather URL across viewport/theme variants to avoid flooding the public API. A long run can exceed the current-weather fallback freshness of 300 seconds, however, and the app correctly hides the stale current reading; that creates false visual-audit failures rather than evidence of a layout regression.
+- Bound the cache to two minutes, honor a response's advertised `meta.freshForSeconds` and `meta.fetchedAt` with a 30-second safety margin, and refetch from the real API after expiry. Never rewrite timestamps, fabricate weather, or replay an expired response. Invalid JSON or unusable freshness metadata is not cached.
+- Add deterministic tests for default expiry, shorter provider TTLs, malformed payloads, and invalid freshness metadata; include the cache module and test in the lint target. Keep the live weather readiness requirement unchanged.
