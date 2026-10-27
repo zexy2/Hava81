@@ -848,4 +848,3 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - A live responsive audit exposed an accessibility label reading “1h Show every 1 hours”. Keep the visible compact interval value unchanged, but use a dedicated singular translation for the one-hour option; retain the existing plural copy for multi-hour intervals.
 - Keep the wording natural in both English and Turkish, and test the actual accessible button names for 1-hour and 2-hour options. This is copy-only and must not change the selected interval, sampling cadence, or 24-hour forecast horizon.
-
