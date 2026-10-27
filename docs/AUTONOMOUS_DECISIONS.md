@@ -1019,3 +1019,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-28 — cleanup allowlists must never follow symlinks
 - Artifact-only cleanup must skip a symlink even when its name matches an allowlisted generated directory (`dist`, `coverage`, etc.). Never follow or remove the target outside the worktree. Preserve the default dry-run, clean/merged worktree, process-use, metadata-owner, and explicit artifact-allowlist guards.
 - Keep a regression fixture with a symlinked `dist` pointing outside its worktree and assert both the link and external target survive `--apply`.
+
+## 2026-10-28 — Derive trend-axis tick count from available forecast samples
+
+- The current-temperature trend used four fixed tick indexes regardless of how many future hourly samples remained. With two samples the indexes became `[0, 0, 1, 1]`, duplicating the first/last labels and React keys `0`/`100`; with three samples the interior index also repeated.
+- Use `min(4, availableSamples)` ticks and distribute them across the available sample range. Keep the trend hidden below two samples as before. Add a regression asserting a two-hour trend renders exactly two time labels; do not alter forecast values, interpolation, scoring, or freshness policy.
