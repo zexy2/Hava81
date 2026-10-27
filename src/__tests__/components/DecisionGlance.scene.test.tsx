@@ -62,6 +62,13 @@ describe('Hava81 decision hero decorative weather state', () => {
     { icon: '10n', scene: 'rain', night: 'true', sun: false, moon: false },
     { icon: '13d', scene: 'snow', night: 'false', sun: false, moon: false },
     { icon: '50d', scene: 'mist', night: 'false', sun: false, moon: false },
+    {
+      icon: '01x' as NormalizedWeatherData['icon'],
+      scene: 'unknown',
+      night: 'false',
+      sun: false,
+      moon: false,
+    },
   ] as const)(
     'illustrates $icon without showing an inaccurate sun',
     ({ icon, scene, night, sun, moon }) => {

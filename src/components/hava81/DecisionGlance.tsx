@@ -126,9 +126,11 @@ export const DecisionGlance = memo(function DecisionGlance({
 
   // Match the decorative hero to real current conditions. The illustration
   // must never show a sunny sky during rain, snow or nighttime.
+  const supportedWeatherIcon = /^(?:01|02|03|04|09|10|11|13|50)[dn]$/.test(weather.icon);
   const iconFamily = weather.icon.slice(0, 2);
-  const scene =
-    iconFamily === '09' || iconFamily === '10' || iconFamily === '11'
+  const scene = !supportedWeatherIcon
+    ? 'unknown'
+    : iconFamily === '09' || iconFamily === '10' || iconFamily === '11'
       ? 'rain'
       : iconFamily === '13'
         ? 'snow'
@@ -137,7 +139,7 @@ export const DecisionGlance = memo(function DecisionGlance({
           : iconFamily === '03' || iconFamily === '04'
             ? 'cloud'
             : 'clear';
-  const night = weather.icon.endsWith('n');
+  const night = supportedWeatherIcon && weather.icon.endsWith('n');
 
   return (
     <section

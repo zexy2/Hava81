@@ -1009,3 +1009,8 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-28 — avoid repeated SVG geometry reads during forecast chart interaction
 - ForecastChartPlot needs the curve length only when memoized chart geometry changes (hourly samples, display interval, temperature unit, or measured plot width). Pointer-driven highlighting does not alter the path; keep getTotalLength() out of every pointer-triggered render to avoid unnecessary synchronous SVG geometry reads.
 - Regression coverage stubs SVGElement.getTotalLength and confirms pointer-only highlight rerenders do not repeat the measurement. Keep the draw-in animation measurement when chart geometry changes; weather inputs, scores, and accessibility semantics remain unchanged.
+
+
+## 2026-10-28 — unsupported weather icon must not imply clear skies
+- If a weather icon code is outside the known provider family set, the decision hero must not fall through to the clear/sunny illustration. Use a neutral unknown scene and do not infer night or precipitation from malformed input.
+- Keep API payload validation strict; this component guard is defense in depth, not permission to accept invalid provider data or fabricate a condition.
