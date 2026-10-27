@@ -829,3 +829,11 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A direct production Lighthouse report identified https://api.hava81.zekiakgul.dev as the strongest preconnect candidate, with estimated 300ms LCP savings. The root SPA document had no hint even though the first visible weather decision depends on that cross-origin API.
 - Add one early preconnect with crossorigin to the root HTML. Province-page generation already derives from that HTML, so do not inject a second preconnect or redundant DNS-prefetch; generated city pages must contain exactly one hint. The static 404 page removes the hint because it has no weather request to make.
 - This is a resource-discovery optimization only. Do not change API requests, provider provenance, freshness, forecast values, scores, or safety guidance. Keep the change only if post-deployment production Lighthouse remains healthy and the real API still responds successfully.
+
+
+## 2026-10-27 — Map density and route-list accessibility
+
+- A production axe audit on the mobile map found a province-plate target obscured by nearby markers. The map was revealing all 81 provinces at zoom 7, which is also the mobile default; move the all-province threshold to zoom 8 so the initial view keeps only featured cities and the user can explicitly zoom in. Show a short translated hint instead of silently hiding province plates.
+- The dedicated map panel replaces the dashboard while open, so its visible title is the page H1. Keep the internal map-region label at H2 and popup city names at H3.
+- Do not put `role="listitem"` on `article` for the route corridor: axe reports the role mapping as invalid. Keep the labelled list and use `div[role="listitem"]` segment children.
+- Local production-like axe audit after the changes covered mobile 320px and 390px, initial map with popup, zoomed 81-province atlas, desktop map, route corridor, and denied-notification state: zero violations and no page errors. Browser map/plan tests passed 17/17.

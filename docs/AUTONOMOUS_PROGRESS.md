@@ -1,3 +1,16 @@
+## Current checkpoint — 2026-10-27 06:59 TRT / 03:59 UTC
+
+- **Stable base:** `origin/main` = `7325700046772c0906a68a5c201b975ec3e867f3`. Main CI run #3782 (`40442135335`) and Pages deploy #1190 (`40442446956`) are successful. Production remains healthy; observer timer is enabled/active, the latest observer snapshot is `2026-10-27T03:55:23.721106Z`, API readiness is HTTP 200 on port 4002, and the frontend revision matches main.
+- **Host constraint:** disk usage is 91.9% with 8,411,549,696 bytes free; API-build headroom is short by 434,073,600 bytes. Keep API builds/deploys blocked until headroom is safe; frontend work is permitted.
+- **PR #1550:** head `3ad74f3d40745fee285fa217e248e2533a55d839`; CI run #3783 (`40446971714`) is in progress, with Browser flows still running. CodeQL run #2564 (`40446971796`), Lighthouse budgets, Frontend quality, production build, API test/build, and ops contracts have passed. Do not merge until the full pipeline is green and the head/mergeability plus fresh observer state are directly rechecked.
+- **Other open PRs:** #1549 remains blocked after CI run #3781 (`40441820273`) failed at head `9c5ce704c9802f7f5e19280cb7ed08cdc97589ce`; do not mutate that branch from another workstream. #1531 Node 26 ARM64 remains held until the 2026-10-28 validation window.
+- **Completed bounded loop:** production axe audit found a missing H1 in map view, a serious target-size/overlap violation for a province plate at mobile zoom, and five invalid `role=listitem` overrides on route-segment `article` elements. Code commit `2d6d4350746a8da6419b44c8bdb2549c9b0ee71e` makes the dedicated map title H1, keeps the map region label at H2 and popup city titles at H3, reveals all 81 province markers only after zoom 8, adds a translated zoom hint, and uses valid `div[role=listitem]` route segments.
+- **Validation:** lint, type-check, focused WeatherMap/ComparePanel/RouteWeatherPanel tests, full `npm run test:ci`, production build, and `git diff --check` passed. `e2e/map-compare.spec.ts` + `e2e/plan.spec.ts --project=desktop-1280` passed **17/17**. Local built-preview axe audit across mobile 320px/390px, the initial map, the zoomed 81-province atlas, a map popup, desktop map, route corridor, and denied-notification state returned **0 violations and 0 page errors**.
+- **Current branch / next action:** `automation/hava81-run16-map-route-a11y-20261027-0652` has code commit `2d6d4350746a8da6419b44c8bdb2549c9b0ee71e`; append the rationale/checkpoint, push, and open a frontend-only PR. Continue monitoring #1550 while this PR runs. When #1550 is green, recheck its exact head and fresh observer state, merge it, watch main deployment and smoke-test production, then rebase this branch with an explicit lease and preserve both append-only doc checkpoints.
+- **Prioritized queue:** (1) publish this map/route PR; (2) recheck #1550 Browser flows and merge only when all gates are green; (3) smoke-test production after merge; (4) rebase map/route branch onto the resulting main and rerun gates; (5) inspect #1549 failure without editing its branch; (6) revisit #1531 at the scheduled 2026-10-28 window; (7) keep API builds blocked until disk headroom is restored.
+
+---
+
 # Current checkpoint — 2026-10-27 05:08 TRT (02:08 UTC)
 
 ## Main, production, and observer
