@@ -122,7 +122,9 @@ describe('service worker activation', () => {
 
   it('keeps activation successful when legacy-tab enumeration fails', async () => {
     const worker = loadWorker({ cacheKeys: ['hava81-shell-v2'] });
-    worker.workerClients.matchAll.mockRejectedValueOnce(new Error('client enumeration unavailable'));
+    worker.workerClients.matchAll.mockRejectedValueOnce(
+      new Error('client enumeration unavailable')
+    );
 
     await expect(worker.dispatch('activate', {})).resolves.toBeUndefined();
     expect(worker.workerClients.claim).toHaveBeenCalled();
@@ -165,9 +167,13 @@ describe('service worker notification clicks', () => {
 
   it('opens the intended URL when window enumeration fails', async () => {
     const worker = loadWorker();
-    worker.workerClients.matchAll.mockRejectedValueOnce(new Error('client enumeration unavailable'));
+    worker.workerClients.matchAll.mockRejectedValueOnce(
+      new Error('client enumeration unavailable')
+    );
 
-    await expect(worker.dispatch('notificationclick', click('/izmir/?view=plan#saat'))).resolves.toBeUndefined();
+    await expect(
+      worker.dispatch('notificationclick', click('/izmir/?view=plan#saat'))
+    ).resolves.toBeUndefined();
     expect(worker.workerClients.openWindow).toHaveBeenCalledWith('/izmir/?view=plan#saat');
   });
 
@@ -193,6 +199,43 @@ describe('service worker fetch strategy', () => {
     });
     expect(worker.fetchImpl).toHaveBeenCalledWith(expect.anything(), { cache: 'no-store' });
     expect(worker.cache.put).toHaveBeenCalledWith(`${ORIGIN}/bursa/`, expect.anything());
+  });
+
+  it('does not restore stale query state from a path-only cached navigation', async () => {
+    const cachedRoute = new Response('<html><div id="root"></div></html>', {
+      status: 200,
+      headers: {
+        'content-type': 'text/html',
+        'content-length': '36',
+        'content-encoding': 'gzip',
+        'transfer-encoding': 'chunked',
+      },
+    });
+    Object.defineProperty(cachedRoute, 'url', {
+      value: `${ORIGIN}/istanbul/?view=plan`,
+    });
+    const worker = loadWorker({
+      fetchImpl: vi.fn().mockRejectedValue(new Error('offline')),
+    });
+    worker.cache.match.mockResolvedValueOnce(cachedRoute);
+
+    const response = await worker.dispatch('fetch', {
+      request: {
+        method: 'GET',
+        mode: 'navigate',
+        destination: 'document',
+        url: `${ORIGIN}/istanbul/?view=map`,
+      },
+    });
+
+    expect(response).toBeInstanceOf(Response);
+    expect(response).not.toBe(cachedRoute);
+    expect((response as Response).url).toBe('');
+    expect((response as Response).headers.get('content-length')).toBeNull();
+    expect((response as Response).headers.get('content-encoding')).toBeNull();
+    expect((response as Response).headers.get('transfer-encoding')).toBeNull();
+    await expect((response as Response).text()).resolves.toContain('id="root"');
+    expect(worker.cache.match).toHaveBeenCalledWith(`${ORIGIN}/istanbul/`);
   });
 
   it('serves the cached shell when the network is down', async () => {
