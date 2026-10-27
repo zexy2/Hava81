@@ -1,0 +1,41 @@
+@layer editorial {
+  .app .severe-weather-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin-block-end: 0.75rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgb(214 140 0 / 45%);
+    border-radius: var(--radius-md);
+    color: rgb(92 56 0);
+    background: rgb(255 241 210);
+  }
+
+  .app .severe-weather-banner[data-severity='severe'] {
+    border-color: rgb(196 52 44 / 50%);
+    color: rgb(110 24 18);
+    background: rgb(255 228 224);
+  }
+
+  .app[data-color-mode='dark'] .severe-weather-banner {
+    color: rgb(255 228 180);
+    background: rgb(70 46 8 / 80%);
+  }
+
+  .app[data-color-mode='dark'] .severe-weather-banner[data-severity='severe'] {
+    color: rgb(255 214 208);
+    background: rgb(84 22 18 / 80%);
+  }
+
+  .app .severe-weather-banner__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .app .severe-weather-banner__text {
+    font-weight: 600;
+  }
+}

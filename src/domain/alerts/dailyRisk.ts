@@ -12,7 +12,6 @@ export interface DailyWeatherRisk {
   severity: DailyWeatherRiskSeverity;
 }
 
-const DAY_MS = 86_400_000;
 const HORIZON_DAYS = 5;
 
 /** Daily rows carry OpenWeather-style icons; `11d`/`11n` is thunderstorm. */
@@ -45,12 +44,20 @@ export const classifyDailyRisk = (day: DailyForecast): DailyWeatherRisk | null =
 /** First day (today or later, within the 5-day horizon) carrying a weather risk. */
 export const findDailyWeatherRisk = (
   daily: readonly DailyForecast[] | undefined,
-  now: Date | number
+  now: Date | number,
+  /** City offset: daily rows are keyed by the location's calendar date. */
+  timezoneOffsetSeconds = 0
 ): DailyWeatherRisk | null => {
   if (!daily?.length) return null;
   const nowMs = typeof now === 'number' ? now : now.getTime();
+  const todayKey = new Date(nowMs + timezoneOffsetSeconds * 1000).toISOString().slice(0, 10);
   const upcoming = daily
-    .filter(day => day.date instanceof Date && day.date.getTime() + DAY_MS > nowMs)
+    .filter(
+      day =>
+        day.date instanceof Date &&
+        Number.isFinite(day.date.getTime()) &&
+        day.date.toISOString().slice(0, 10) >= todayKey
+    )
     .slice(0, HORIZON_DAYS);
   for (const day of upcoming) {
     const risk = classifyDailyRisk(day);

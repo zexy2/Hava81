@@ -40,6 +40,8 @@ type ValuedWeatherDecision = WeatherDecisionBase & {
 type ContextWeatherDecision = WeatherDecisionBase & {
   kind: 'outdoor-window' | 'stable' | 'unavailable';
   value?: number;
+  /** Shared best-window range (start, exclusive end), when the window comes from the snapshot. */
+  range?: { start: Date; end: Date };
 };
 
 export type WeatherDecision = ValuedWeatherDecision | ContextWeatherDecision;
@@ -54,6 +56,8 @@ export interface WeatherDecisionInput {
    * decision uses this time (or is omitted for `null`) instead of a separate local pick.
    */
   bestWindowTime?: Date | null;
+  /** Snapshot best-window range paired with `bestWindowTime`, so every surface shows one range. */
+  bestWindowRange?: { start: Date; end: Date };
   /** Reference instant for the near-term window; supplied by the rendered freshness clock. */
   now?: Date;
 }
@@ -82,6 +86,7 @@ export const getWeatherDecisions = ({
   airQuality,
   uvIndexMax,
   bestWindowTime,
+  bestWindowRange,
   now = new Date(),
 }: WeatherDecisionInput): WeatherDecision[] => {
   const next = nextHours(hourly, 12, now);
@@ -209,6 +214,7 @@ export const getWeatherDecisions = ({
       severity: 'info',
       time: snapshotPoint.point.time,
       value: snapshotPoint.point.apparentTemperature ?? snapshotPoint.point.temp,
+      ...(bestWindowTime && bestWindowRange ? { range: bestWindowRange } : {}),
     });
   }
 

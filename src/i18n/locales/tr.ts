@@ -70,6 +70,15 @@ export const tr = {
     temperatureHot: 'Çok sıcak (>{{thirty}}{{unit}})',
   },
   hava81: {
+    severe: {
+      label: 'Hava uyarısı',
+      storm: '{{day}} gök gürültülü fırtına bekleniyor',
+      'heavy-rain': '{{day}} kuvvetli yağış bekleniyor',
+      today: 'Bugün',
+      tomorrow: 'Yarın',
+      weekday: '{{weekday}}',
+      percent: '%{{percent}}',
+    },
     glance: {
       bestLabel: 'En uygun saatler',
       bestAny: 'Saatler arasında fark yok',
@@ -82,6 +91,11 @@ export const tr = {
       now: 'Şu an dışarı çıkmak için hava uygun.',
       later: 'Dışarı çıkmak için en uygun saatleri beklemek daha iyi olabilir.',
       similar: 'Yakın saatlerde hava koşulları benzer görünüyor.',
+      bestTimeHeadline: 'Dışarı için en iyi zaman: {{range}}',
+      nowHeadline: 'Şu an dışarı çıkmak için iyi bir zaman.',
+      nowHeadlineRange: 'Şu an dışarı çıkmak için iyi bir zaman ({{range}}).',
+      similarHeadline: 'Önümüzdeki 12 saatte koşullar benzer; her saat uygun.',
+      umbrellaAdvised: 'Şemsiye önerilir.',
       bestHours: 'Önümüzdeki 12 saatte hava açısından en yüksek puanlı saatler: {{hours}}',
       score: 'Hava81 Skoru',
       umbrella: 'Şemsiye: {{advice}}',
@@ -138,6 +152,9 @@ export const tr = {
     decision: {
       upcoming: {
         rainStarts: '{{time}} civarı yağış başlıyor.',
+        rainPossible: '{{time}} sonrası yağmur olası (%{{pop}}).',
+        rainLikely: '{{time}} sonrası yağmur bekleniyor (%{{pop}}).',
+        nowTick: 'Şimdi',
         rainStops: 'Yağış {{time}} civarı diniyor.',
         warmer: '{{time}} civarı {{temperature}} ile ısınıyor.',
         cooler: '{{time}} civarı {{temperature}} ile serinliyor.',
@@ -174,6 +191,7 @@ export const tr = {
         uv: 'Önümüzdeki 24 saatte UV model maksimumu {{uv}}; güneşten korunma planı yap.',
         outdoor:
           '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
+        outdoorRange: '{{range}} dışarıda olmak için en sakin pencere görünüyor.',
         stable: 'Yakın tahmin aralığında belirgin bir hava riski görünmüyor.',
         stableLightRain: 'Hafif yağış ihtimali dışında belirgin bir hava riski görünmüyor.',
         unavailable: 'Yakın saatler için karar verisi henüz hazır değil.',
@@ -188,6 +206,7 @@ export const tr = {
         airQuality: 'AQI {{aqi}}/5 · Dış aktiviteyi azalt',
         uv: 'UV model zirvesi {{uv}} · Korunma planla',
         outdoor: 'Daha sakin hava · {{time}} civarı',
+        outdoorRange: 'En sakin pencere · {{range}}',
         stable: 'Belirgin hava riski görünmüyor',
         stableLightRain: 'Hafif yağış dışında belirgin risk yok',
         unavailable: 'Karar verisi hazırlanıyor',
@@ -247,6 +266,7 @@ export const tr = {
       dailyPrecipitationWithAmount:
         '{{day}} için yağış olasılığı %{{percent}}; günlük toplam {{amount}}.',
       dailyPrecipitationAmount: '{{day}} için günlük toplam yağış {{amount}}.',
+      dailyChance: '%{{percent}} olasılık',
       noDailyPrecipitation: '{{day}} için yağış beklenmiyor.',
       dailyRegion: 'Kaydırılabilir 5 günlük tahmin',
       dailyRange: 'Yüksek {{high}}{{unit}}, düşük {{low}}{{unit}}',
@@ -697,6 +717,17 @@ export const tr = {
       W: 'B',
       NW: 'KB',
     },
+    fromDirection: '{{direction}} · {{degrees}}°',
+    from: {
+      N: 'Kuzeyden',
+      NE: 'Kuzeydoğudan',
+      E: 'Doğudan',
+      SE: 'Güneydoğudan',
+      S: 'Güneyden',
+      SW: 'Güneybatıdan',
+      W: 'Batıdan',
+      NW: 'Kuzeybatıdan',
+    },
     beaufort: {
       calm: 'Sakin',
       lightAir: 'Hafif',
@@ -722,6 +753,7 @@ export const tr = {
     sunset: 'Batış',
     dayLength: 'Gün Uzunluğu',
     stale: 'Gün doğuşu ve batış bilgisi güncel değil',
+    nextSunrise: 'Gün doğumu',
     hours: 's',
     minutes: 'dk',
   },

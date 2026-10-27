@@ -62,4 +62,11 @@ describe('findDailyWeatherRisk', () => {
     expect(findDailyWeatherRisk(far, now)).toBeNull();
     expect(findDailyWeatherRisk(far, now.getTime() + 86_400_000)?.mm).toBe(50);
   });
+
+  it('uses the city calendar date to decide what counts as today', () => {
+    const lateNight = new Date('2026-10-21T22:30:00Z'); // 01:30 on the 22nd at UTC+3
+    const days = [day(0, { icon: '11d' }), day(1)];
+    expect(findDailyWeatherRisk(days, lateNight)?.kind).toBe('storm');
+    expect(findDailyWeatherRisk(days, lateNight, 3 * 3600)).toBeNull();
+  });
 });

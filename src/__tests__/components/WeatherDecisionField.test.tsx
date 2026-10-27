@@ -110,7 +110,8 @@ describe('WeatherDecisionField daily range', () => {
     );
 
     expect(snapshotSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ weather, hourly, airQualityHourly })
+      expect.objectContaining({ weather, hourly, airQualityHourly }),
+      expect.any(Number)
     );
   });
 
@@ -160,7 +161,8 @@ describe('WeatherDecisionField daily range', () => {
     );
 
     expect(snapshotSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ weather, hourly, airQualityHourly })
+      expect.objectContaining({ weather, hourly, airQualityHourly }),
+      expect.any(Number)
     );
 
     act(() => {
@@ -317,7 +319,7 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText(/17:00 civarı yağış başlıyor\./)).toBeInTheDocument();
+    expect(screen.getByText(/17:00 sonrası yağmur bekleniyor \(%80\)\./)).toBeInTheDocument();
   });
 
   it('does not claim the forecast will stay steady while hourly data is unavailable', () => {

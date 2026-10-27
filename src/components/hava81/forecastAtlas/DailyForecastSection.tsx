@@ -113,7 +113,11 @@ export function DailyForecastSection({
                         : `${t('weather.precipitation')}: ${precipitation}%`
                     }
                   >
-                    {(precipitation ?? 0) > 0 ? <span>{precipitation}%</span> : null}
+                    {(precipitation ?? 0) > 0 ? (
+                      <span>
+                        {t('hava81.forecastAtlas.dailyChance', { percent: precipitation })}
+                      </span>
+                    ) : null}
                     {(precipitation ?? 0) > 0 && precipitationAmount ? (
                       <span aria-hidden="true"> · </span>
                     ) : null}

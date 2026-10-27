@@ -651,7 +651,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(
       within(days[0]).getByRole('group', { name: /günlük toplam yağış 0,4 mm/i })
     ).toBeInTheDocument();
-    expect(days[1]).toHaveTextContent('35% · 2,3 mm');
+    expect(days[1]).toHaveTextContent('%35 olasılık · 2,3 mm');
     expect(
       within(days[1]).getByRole('group', {
         name: /yağış olasılığı %35; günlük toplam 2,3 mm/i,

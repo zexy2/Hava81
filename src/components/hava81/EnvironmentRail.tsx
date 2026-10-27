@@ -162,6 +162,19 @@ export function EnvironmentRail({
     ? timeFormatter.format(atLocationTime(weather.sunset))
     : t('weather.noData');
 
+  // Outside daylight the useful next event is the sunrise, not a sunset that already passed.
+  // Only today's pair is known, so after sunset the next sunrise is approximated as +24h.
+  const nowMs = Date.now();
+  const showSunrise =
+    hasValidDaylight && (nowMs >= weather.sunset.getTime() || nowMs < weather.sunrise.getTime());
+  const nextSunrise =
+    showSunrise && nowMs >= weather.sunset.getTime()
+      ? new Date(weather.sunrise.getTime() + 86_400_000)
+      : weather.sunrise;
+  const nextSunriseTime = hasValidDaylight
+    ? timeFormatter.format(atLocationTime(nextSunrise))
+    : t('weather.noData');
+
   const daylightLength = useMemo(() => {
     if (!hasValidDaylight) return t('weather.noData');
 
@@ -176,7 +189,9 @@ export function EnvironmentRail({
   }, [hasValidDaylight, t, weather.sunrise, weather.sunset]);
 
   const hasValidWind =
-    currentFreshness.fresh && Number.isFinite(weather.windDirection) && Number.isFinite(weather.windSpeed);
+    currentFreshness.fresh &&
+    Number.isFinite(weather.windDirection) &&
+    Number.isFinite(weather.windSpeed);
   const normalizedDirection = hasValidWind ? ((weather.windDirection % 360) + 360) % 360 : 0;
   const directionKey = WIND_DIRECTION_KEYS[Math.round(normalizedDirection / 45) % 8];
   const directionLabel = hasValidWind ? t(`wind.directions.${directionKey}`) : t('weather.noData');
@@ -211,9 +226,13 @@ export function EnvironmentRail({
         <span className="environment-rail__icon">
           <DaylightIcon />
         </span>
-        <span className="environment-rail__label">{t('daylight.sunset')}</span>
+        <span className="environment-rail__label">
+          {showSunrise ? t('daylight.nextSunrise') : t('daylight.sunset')}
+        </span>
         <strong className="environment-rail__value">
-          {hasValidDaylight ? (
+          {showSunrise ? (
+            <time dateTime={nextSunrise.toISOString()}>{nextSunriseTime}</time>
+          ) : hasValidDaylight ? (
             <time dateTime={weather.sunset.toISOString()}>{sunsetTime}</time>
           ) : (
             sunsetTime
@@ -222,6 +241,12 @@ export function EnvironmentRail({
         <span className="environment-rail__detail" role={daylightIsStale ? 'status' : undefined}>
           {daylightIsStale ? (
             t('daylight.stale')
+          ) : showSunrise ? (
+            <>
+              {t('daylight.sunset')}{' '}
+              <time dateTime={weather.sunset.toISOString()}>{sunsetTime}</time> ·{' '}
+              {t('daylight.dayLength')} · {daylightLength}
+            </>
           ) : (
             <>
               {t('daylight.sunrise')}{' '}
@@ -249,7 +274,10 @@ export function EnvironmentRail({
           role={currentFreshness.fresh ? undefined : 'status'}
         >
           {hasValidWind
-            ? `${Math.round(normalizedDirection)}°`
+            ? t('wind.fromDirection', {
+                direction: t(`wind.from.${directionKey}`),
+                degrees: Math.round(normalizedDirection),
+              })
             : currentFreshness.fresh
               ? t('weather.noData')
               : t('weather.staleCurrentData')}
@@ -264,10 +292,7 @@ export function EnvironmentRail({
         <strong className="environment-rail__value">
           {airQualityLabelKey ? `${freshAirQuality?.aqi} / 5` : '—'}
         </strong>
-        <span
-          className="environment-rail__detail"
-          role={airQualityIsStale ? 'status' : undefined}
-        >
+        <span className="environment-rail__detail" role={airQualityIsStale ? 'status' : undefined}>
           {freshAirQuality && airQualityLabelKey ? (
             <>
               {`${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(

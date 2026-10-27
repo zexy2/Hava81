@@ -36,6 +36,7 @@ import './components/sky/HeroSky.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const DecisionGlance = lazy(() => import('./components/hava81/DecisionGlance'));
+const SevereWeatherBanner = lazy(() => import('./components/hava81/SevereWeatherBanner'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
 const CommutePlanPanel = lazy(() => import('./components/hava81/CommutePlanPanel'));
 const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail'));
@@ -569,9 +570,14 @@ const App: React.FC = () => {
                         />
                       </div>
                       <Suspense fallback={null}>
+                        <SevereWeatherBanner
+                          daily={forecast.daily}
+                          timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
+                        />
                         <DecisionGlance
                           weather={weather}
                           hourly={forecast.hourly}
+                          daily={forecast.daily}
                           airQuality={freshAirQuality}
                           airQualityHourly={freshAirQualityHourly}
                           forecastMeta={forecast.displayMeta ?? forecast.meta}

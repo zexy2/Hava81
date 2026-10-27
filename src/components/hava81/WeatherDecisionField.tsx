@@ -18,6 +18,7 @@ import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshn
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getNextChange } from '../../domain/decision/nextChange';
 import { formatCityTime } from '../../utils/format';
+import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherIllustration } from './WeatherIllustration';
 import './WeatherDecisionField.css';
@@ -136,6 +137,18 @@ export function WeatherDecisionField({
     return Number.isNaN(date.getTime()) ? '—' : timeFormatter.format(atLocationTime(date));
   };
 
+  const formatRange = (range: { start: Date; end: Date }): string =>
+    formatBestWindowTime({
+      start: range.start,
+      end: range.end,
+      // Called during render, after the freshness clock below is set.
+      now: new Date(now),
+      timezoneOffsetSeconds: weather.meta.timezoneOffsetSeconds,
+      language: settings.language,
+      todayLabel: t('days.today'),
+      tomorrowLabel: t('days.tomorrow'),
+    });
+
   const observedAt =
     weather.timestamp instanceof Date ? weather.timestamp : new Date(weather.timestamp);
   const observedAtText = Number.isNaN(observedAt.getTime())
@@ -206,6 +219,8 @@ export function WeatherDecisionField({
           uv: uvFormatter.format(decision.value),
         });
       case 'outdoor-window':
+        if (decision.range)
+          return t('hava81.decision.actions.outdoorRange', { range: formatRange(decision.range) });
         return t('hava81.decision.actions.outdoor', {
           defaultValue:
             '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
@@ -275,6 +290,10 @@ export function WeatherDecisionField({
           uv: uvFormatter.format(decision.value),
         });
       case 'outdoor-window':
+        if (decision.range)
+          return t('hava81.decision.compactActions.outdoorRange', {
+            range: formatRange(decision.range),
+          });
         return t('hava81.decision.compactActions.outdoor', {
           defaultValue: 'Daha sakin hava · {{time}} civarı',
           time: decision.time ? formatForecastTime(decision.time) : '—',
@@ -372,21 +391,30 @@ export function WeatherDecisionField({
   const decisions = useMemo(
     () =>
       decisionEvidenceFresh
-        ? getWeatherDecisions({
-            weather,
-            hourly,
-            airQuality: freshAirQuality,
-            uvIndexMax,
-            bestWindowTime: hourly.length
-              ? (getDecisionSnapshot({
-                  weather,
-                  hourly,
-                  airQuality: freshAirQuality,
-                  ...(freshAirQualityHourly ? { airQualityHourly: freshAirQualityHourly } : {}),
-                }).bestWindow?.peak.time ?? null)
-              : undefined,
-            now: new Date(now),
-          })
+        ? (() => {
+            const bestWindow = hourly.length
+              ? getDecisionSnapshot(
+                  {
+                    weather,
+                    hourly,
+                    airQuality: freshAirQuality,
+                    ...(freshAirQualityHourly ? { airQualityHourly: freshAirQualityHourly } : {}),
+                  },
+                  now
+                ).bestWindow
+              : undefined;
+            return getWeatherDecisions({
+              weather,
+              hourly,
+              airQuality: freshAirQuality,
+              uvIndexMax,
+              bestWindowTime: hourly.length ? (bestWindow?.peak.time ?? null) : undefined,
+              ...(bestWindow
+                ? { bestWindowRange: { start: bestWindow.start.time, end: bestWindow.endTime } }
+                : {}),
+              now: new Date(now),
+            });
+          })()
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
     [
       decisionEvidenceFresh,
@@ -429,18 +457,31 @@ export function WeatherDecisionField({
   const nextChange = getNextChange(hourly, weather.temperature, new Date(now), currentWet);
   const nextChangeText =
     decisionEvidenceFresh && hourly.length > 0
-      ? t(`hava81.decision.upcoming.${nextChange.kind}`, {
-          time: formatCityTime(
-            nextChange.time,
-            weather.meta.timezoneOffsetSeconds,
-            settings.language
-          ),
-          temperature: nextChange.temp === null ? '' : formatTemperature(nextChange.temp),
-        })
+      ? t(
+          nextChange.kind === 'rainStarts' && typeof nextChange.pop === 'number'
+            ? nextChange.pop >= 0.5
+              ? 'hava81.decision.upcoming.rainLikely'
+              : 'hava81.decision.upcoming.rainPossible'
+            : `hava81.decision.upcoming.${nextChange.kind}`,
+          {
+            pop: typeof nextChange.pop === 'number' ? Math.round(nextChange.pop * 100) : '',
+            time: formatCityTime(
+              nextChange.time,
+              weather.meta.timezoneOffsetSeconds,
+              settings.language
+            ),
+            temperature: nextChange.temp === null ? '' : formatTemperature(nextChange.temp),
+          }
+        )
       : t('hava81.decision.upcoming.unavailable', {
           defaultValue: 'Yakın saatler için değişim bilgisi henüz hazır değil.',
         });
-  const trendHours = hourly.filter(hour => hour.time.getTime() > now).slice(0, 24);
+  // Start at the in-progress hour, like the hourly table, so the curve begins at "now".
+  const currentHourStart = (() => {
+    const offsetMs = weather.meta.timezoneOffsetSeconds * 1000;
+    return Math.floor((now + offsetMs) / 3_600_000) * 3_600_000 - offsetMs;
+  })();
+  const trendHours = hourly.filter(hour => hour.time.getTime() >= currentHourStart).slice(0, 24);
   const trend = (() => {
     if (trendHours.length < 2) return null;
     const temps = trendHours.map(hour => hour.temp);
@@ -487,7 +528,10 @@ export function WeatherDecisionField({
       peak: { x: (points[peakIndex].x / 240) * 100, y: (points[peakIndex].y / 48) * 100 },
       ticks: tickIndexes.map(index => ({
         x: (points[index].x / 240) * 100,
-        label: formatForecastTime(trendHours[index].time),
+        label:
+          index === 0 && trendHours[0].time.getTime() <= now
+            ? t('hava81.decision.upcoming.nowTick')
+            : formatForecastTime(trendHours[index].time),
       })),
       // Absolute temperature colours (the same scale as the hourly chart), so a 2° day is
       // not painted as a full cold-to-hot swing.
