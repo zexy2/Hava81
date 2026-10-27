@@ -5,7 +5,50 @@ import {
   expectVisibleFocusRing,
   findUndersizedTargets,
 } from './helpers/layout';
-import { TWO_FAVORITES, seedFavorites } from './helpers/weather-fixtures';
+import { mockMapTiles, TWO_FAVORITES, seedFavorites } from './helpers/weather-fixtures';
+import type { Page } from '@playwright/test';
+
+type AxeViolation = {
+  id: string;
+  impact: string | null;
+  help: string;
+  nodes: Array<{ target: string[] }>;
+};
+
+async function collectAxeFailures(page: Page): Promise<string[]> {
+  await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+  return page.evaluate(async () => {
+    const axe = (
+      window as unknown as Window & {
+        axe: {
+          run: (
+            root: Document,
+            options: unknown
+          ) => Promise<{ violations: AxeViolation[] }>;
+        };
+      }
+    ).axe;
+    const result = await axe.run(document, {
+      runOnly: {
+        type: 'tag',
+        values: [
+          'wcag2a',
+          'wcag2aa',
+          'wcag21a',
+          'wcag21aa',
+          'wcag22aa',
+          'best-practice',
+        ],
+      },
+    });
+    return result.violations.flatMap(violation =>
+      violation.nodes.map(
+        node =>
+          `${violation.id} (${violation.impact ?? 'unknown'}): ${violation.help} — ${node.target.join(', ')}`
+      )
+    );
+  });
+}
 
 // Cross-cutting accessibility gates: target size, contrast, forced colors, focus visibility.
 
@@ -294,6 +337,57 @@ test.describe('contrast', () => {
           await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
           `settings dialog must not overflow at ${variant.width}px`
         ).toBe(true);
+      }
+    }
+  );
+
+  test(
+    'map and city-comparison views have no axe WCAG A/AA or best-practice violations',
+    DESKTOP,
+    async ({ page }) => {
+      await mockMapTiles(page);
+      await seedFavorites(page, TWO_FAVORITES);
+
+      for (const variant of [
+        { width: 390, language: 'tr', themeMode: 'light' },
+        { width: 1280, language: 'en', themeMode: 'dark' },
+      ] as const) {
+        await page.setViewportSize({ width: variant.width, height: 900 });
+        await page.goto('/istanbul/');
+        await page.evaluate(({ language, themeMode }) => {
+          localStorage.setItem(
+            'user-settings',
+            JSON.stringify({
+              temperatureUnit: 'metric',
+              windSpeedUnit: 'ms',
+              language,
+              themeMode,
+            })
+          );
+        }, variant);
+        await page.reload();
+
+        await page.goto('/istanbul/?view=map');
+        await expect(page.locator('#weather-map-region')).toBeVisible();
+        await expect(page.locator('.weather-map__container')).toBeVisible();
+        const mapFailures = await collectAxeFailures(page);
+        expect(
+          mapFailures,
+          `map view at ${variant.width}px (${variant.language}, ${variant.themeMode})`
+        ).toEqual([]);
+
+        await page.goto('/istanbul/?view=compare');
+        const comparison = page.locator('.hava81-compare');
+        await expect(comparison.getByRole('heading', { level: 1 })).toBeVisible();
+        await expect(comparison).toHaveAttribute('aria-busy', 'false');
+        await expect
+          .poll(() => comparison.locator('.hava81-compare__city').count(), { timeout: 20_000 })
+          .toBeGreaterThanOrEqual(2);
+        const compareFailures = await collectAxeFailures(page);
+        expect(
+          compareFailures,
+          `city comparison at ${variant.width}px (${variant.language}, ${variant.themeMode})`
+        ).toEqual([]);
       }
     }
   );
