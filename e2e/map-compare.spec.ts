@@ -391,7 +391,7 @@ test.describe('compare view', () => {
         const at = `${width}px/${scale}%`;
         await expectReadable(page, compare, at);
         for (const city of await compare.locator('.hava81-compare__city').all()) {
-          await expectContainedIn(city.locator('h3'), city, `city name ${at}`);
+          await expectContainedIn(city.locator('h2'), city, `city name ${at}`);
           await expectContainedIn(city.locator('.hava81-compare__metrics'), city, `metrics ${at}`);
         }
       }
