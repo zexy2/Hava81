@@ -144,6 +144,62 @@ describe('coming days and weekend compare (F4)', () => {
     expect(screen.queryByRole('region')).not.toBeInTheDocument();
   });
 
+  it('hides the multi-day outlook when forecast freshness expires while mounted', async () => {
+    vi.useRealTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    vi.setSystemTime(new Date(NOW));
+
+    render(
+      <SettingsProvider>
+        <DayOutlookPanel
+          weather={weatherFor('İstanbul')}
+          hourly={series(() => false)}
+          forecastMeta={meta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByRole('list')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_800_101);
+    });
+
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
+
+  it('rechecks forecast freshness when a stale tab becomes visible', () => {
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    try {
+      render(
+        <SettingsProvider>
+          <DayOutlookPanel
+            weather={weatherFor('İstanbul')}
+            hourly={series(() => false)}
+            forecastMeta={meta()}
+          />
+        </SettingsProvider>
+      );
+
+      expect(screen.getByRole('list')).toBeInTheDocument();
+      vi.setSystemTime(new Date(NOW + 1_800_101));
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+
+      expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    } finally {
+      if (originalVisibilityState) {
+        Object.defineProperty(document, 'visibilityState', originalVisibilityState);
+      } else {
+        Reflect.deleteProperty(document, 'visibilityState');
+      }
+    }
+  });
+
   it('picks the weekend winner by that day, not by the next 12 hours', async () => {
     // İzmir is wet today, dry on Saturday; İstanbul is dry today, wet all Saturday daylight.
     const todayRain = (time: number) => time < NOW + 12 * HOUR;

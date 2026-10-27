@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import type { ActivityKind } from '../../domain/activity/types';
@@ -37,7 +37,26 @@ export function DayOutlookPanel({
   const { t, i18n } = useTranslation();
   const { profile } = useDecisionProfile();
   const [intent, setIntent] = useState<ActivityKind | 'general'>('general');
-  const fresh = getForecastFreshness(forecastMeta).fresh;
+  const [, setFreshnessRevision] = useState(0);
+  const freshness = getForecastFreshness(forecastMeta);
+  const fresh = freshness.fresh;
+
+  useEffect(() => {
+    const resyncFreshness = () => setFreshnessRevision(revision => revision + 1);
+    const timeout =
+      freshness.expiresInMs === null
+        ? undefined
+        : window.setTimeout(resyncFreshness, freshness.expiresInMs);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') resyncFreshness();
+    };
+
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [forecastMeta, freshness.expiresInMs]);
   const offsetSeconds = weather.meta.timezoneOffsetSeconds;
   const activity =
     intent === 'general' || !profile.activities.includes(intent) ? undefined : intent;
