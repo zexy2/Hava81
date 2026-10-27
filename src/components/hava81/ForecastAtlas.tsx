@@ -141,7 +141,11 @@ export function ForecastAtlas({
         <span className="hava81-forecast-atlas__unit">{temperatureSymbol}</span>
       </header>
 
-      {!hasData ? <p className="hava81-forecast-atlas__empty">{t('weather.noData')}</p> : null}
+      {!hasData ? (
+        <p className="hava81-forecast-atlas__empty" role="status">
+          {t('weather.noData')}
+        </p>
+      ) : null}
 
       {hourlyData.length > 0 ? (
         <HourlyForecastSection

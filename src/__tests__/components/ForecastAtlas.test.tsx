@@ -885,3 +885,24 @@ describe('ForecastAtlas interval control semantics (Faz 3.4)', () => {
     expect(within(group).getAllByRole('button').length).toBeGreaterThan(1);
   });
 });
+
+describe('ForecastAtlas empty state', () => {
+  it('announces an empty but fresh forecast as a status', () => {
+    render(
+      <SettingsProvider>
+        <ForecastAtlas
+          daily={[]}
+          hourly={[]}
+          meta={{
+            provider: 'Open-Meteo',
+            fetchedAt: new Date(),
+            timezoneOffsetSeconds: 0,
+            intervalHours: 1,
+          }}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Veri yok');
+  });
+});
