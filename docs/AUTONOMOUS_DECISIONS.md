@@ -1019,3 +1019,9 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-28 — cleanup allowlists must never follow symlinks
 - Artifact-only cleanup must skip a symlink even when its name matches an allowlisted generated directory (`dist`, `coverage`, etc.). Never follow or remove the target outside the worktree. Preserve the default dry-run, clean/merged worktree, process-use, metadata-owner, and explicit artifact-allowlist guards.
 - Keep a regression fixture with a symlinked `dist` pointing outside its worktree and assert both the link and external target survive `--apply`.
+
+## 2026-10-28 — Keep the living-sky clock outside the dashboard render tree
+
+- The minute clock exists only to recompute the decorative background scene at the next minute/hour boundary, but its state lived in `App`. Every tick therefore rerendered the entire dashboard tree (header, navigation, forecast, and decision panels), and it ran even on the empty home route where no sky was mounted.
+- Move the clock and scene derivation into a memoized `SkyBackdrop` child. Mount it only while a normalized current-weather observation exists; keep `data-living-sky` synchronized with that same condition. Stable weather/hourly references allow unrelated parent updates to skip the backdrop, while its own timer still advances dawn/day/dusk/night without refetching.
+- Add a deterministic fake-clock regression: the scene advances after 60 seconds, but the dashboard parent render count does not increase. Keep the change presentation/performance-only; no weather data, freshness policy, provider, score, recommendation, or safety guidance changes.
