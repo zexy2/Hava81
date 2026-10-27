@@ -1,0 +1,815 @@
+/*
+ * Editoryal atlas — layout and rhythm layer.
+ *
+ * Sits after `components` in the cascade (see tokens.css), so these structural rules win
+ * over the accumulated per-component refinements regardless of lazy-chunk load order.
+ * Keep it structural: spacing, grids, reserved space, motion. Colour stays in tokens.
+ */
+@layer editorial {
+  /* ── Planla: one lead section, then a wide tool column and a narrow reference column ── */
+
+  .app .atlas-plan-view__columns,
+  .app .atlas-plan-view__main,
+  .app .atlas-plan-view__aside {
+    display: grid;
+    gap: var(--space-4, 1rem);
+    min-width: 0;
+    align-content: start;
+  }
+
+  /* Planla is its own view: while its data and chunks load, the page is at least one screen
+     tall, so arriving sections never push a visible footer down (no layout shift). */
+  .app .atlas-dashboard--plan .atlas-plan-view {
+    min-height: 100dvh;
+    align-content: start;
+  }
+
+  @media (min-width: 64rem) {
+    .app .atlas-plan-view {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .app .atlas-plan-view__columns {
+      grid-template-columns: minmax(0, 1.6fr) minmax(19rem, 1fr);
+      align-items: start;
+      gap: var(--space-lg, 1.5rem);
+    }
+
+    /* The reference column keeps its own height and stays in view while the tools scroll. */
+    .app .atlas-plan-view__aside {
+      position: sticky;
+      top: 6.5rem;
+    }
+  }
+
+  /* Children of the plan columns must never inherit the old 2-column grid placement. */
+  .app .atlas-plan-view__columns > *,
+  .app .atlas-plan-view__main > *,
+  .app .atlas-plan-view__aside > * {
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+  }
+
+  /* ── Today (desktop): the weather field keeps its natural height and stays in view ──
+     It is not stretched to the hourly atlas (that left an empty panel). Instead it sticks
+     below the header while the rhythm column scrolls beside it; the space under it shows
+     the living sky, not a blank box. */
+
+  /* On phones and tablets the rail is layout-neutral: the field stays a direct grid item. */
+  .app .atlas-dashboard__field-rail {
+    display: contents;
+  }
+
+  @media (min-width: 64rem) {
+    /* The rail fills the row beside the atlas; the field sticks only inside it, so it stops
+       with the atlas instead of sliding under the decision summary. */
+    .app .atlas-dashboard__field-rail {
+      display: block;
+      grid-column: 1;
+      grid-row: 1;
+      align-self: stretch;
+      min-width: 0;
+    }
+
+    .app
+      .atlas-dashboard:not(.atlas-dashboard--plan)
+      .atlas-dashboard__field-rail
+      .hava81-decision-field {
+      position: sticky;
+      top: 6.5rem;
+      z-index: 1;
+    }
+
+    /* The decision summary and everything below scroll over the pinned weather field. */
+    .app .atlas-dashboard:not(.atlas-dashboard--plan) .atlas-dashboard__primary > .decision-glance,
+    .app .atlas-dashboard:not(.atlas-dashboard--plan) > .environment-rail,
+    .app .atlas-dashboard:not(.atlas-dashboard--plan) > .atlas-plan-entry {
+      position: relative;
+      z-index: 2;
+    }
+  }
+
+  /* ── Hero trend: "now" and the peak are HTML marks over the stretched SVG ──
+     (an SVG circle or label would be squashed by preserveAspectRatio="none"). */
+
+  .app .hava81-decision-field__trend-wrap {
+    position: relative;
+    /* Room above for the peak label, outside the box so mark % equal SVG %. */
+    margin-block-start: 2.1rem;
+  }
+
+  .app .hava81-decision-field__trend-wrap .hava81-decision-field__trend {
+    display: block;
+    width: 100%;
+  }
+
+  .app .hava81-decision-field__trend-now,
+  .app .hava81-decision-field__trend-peak {
+    position: absolute;
+    translate: -50% -50%;
+    pointer-events: none;
+  }
+
+  .app .hava81-decision-field__trend-now {
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: rgb(255 196 107);
+    translate: 0 -50%;
+  }
+
+  /* Hour labels under the curve: the first aligns left, the last right, the rest centred. */
+  .app .hava81-decision-field__trend-ticks {
+    position: relative;
+    height: 1.1rem;
+    margin: 0.45rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .hava81-decision-field__trend-ticks li {
+    position: absolute;
+    top: 0;
+    translate: -50% 0;
+    white-space: nowrap;
+  }
+
+  .app .hava81-decision-field__trend-ticks li:first-child {
+    translate: 0 0;
+  }
+
+  .app .hava81-decision-field__trend-ticks li:last-child {
+    translate: -100% 0;
+  }
+
+  .app .hava81-decision-field__trend-peak {
+    translate: -50% calc(-100% - 0.45rem);
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* Near an edge the label anchors to that edge so it is never cut off. */
+  .app .hava81-decision-field__trend-peak.is-start {
+    translate: -0.3rem calc(-100% - 0.45rem);
+  }
+
+  .app .hava81-decision-field__trend-peak.is-end {
+    translate: calc(-100% + 0.3rem) calc(-100% - 0.45rem);
+  }
+
+  /* ── Activity cards: the name never breaks inside a word ──
+     The card header reacts to the card's own width: identity and score side by side when
+     there is room, the score below the name when there is not. */
+
+  .app .activity-card {
+    container: activity-card / inline-size;
+  }
+
+  /* Break between words; split a word only when it cannot fit on a line by itself
+     (a 320 px phone at 200 % text), never just because the header is crowded. */
+  .app .activity-card h3 {
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: manual;
+  }
+
+  .app .activity-card__identity {
+    min-width: min(100%, 9rem);
+  }
+
+  @container activity-card (max-width: 22rem) {
+    .app .activity-card header {
+      flex-wrap: wrap;
+    }
+
+    .app .activity-card__score {
+      flex: 1 1 100%;
+    }
+  }
+
+  /* ── Five-day forecast: a ruled list with shared-scale range bars, not five boxes ── */
+
+  .app .hava81-forecast-atlas__days {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--color-atlas-line);
+    scroll-snap-type: none;
+  }
+
+  .app .hava81-forecast-atlas__day,
+  .app .hava81-forecast-atlas__day:first-child,
+  .app .hava81-forecast-atlas__day:nth-child(odd),
+  .app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(9rem, 1fr) 2.75rem minmax(6rem, 1.4fr) 2.75rem;
+    grid-template-areas:
+      'symbol name low range high'
+      'symbol detail low range high';
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+    align-items: center;
+    column-gap: 0.85rem;
+    row-gap: 0.1rem;
+    min-height: 0;
+    margin: 0;
+    padding: 0.75rem 0.5rem;
+    border: 0;
+    border-bottom: 1px solid var(--color-atlas-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    transition: background-color 160ms ease;
+  }
+
+  .app .hava81-forecast-atlas__day:hover {
+    background: color-mix(in srgb, var(--color-aegean-pale) 45%, transparent);
+  }
+
+  .app .hava81-forecast-atlas__day::before,
+  .app .hava81-forecast-atlas__day::after {
+    content: none;
+  }
+
+  .app .hava81-forecast-atlas__day > * {
+    min-height: 0;
+    margin: 0;
+  }
+
+  .app .hava81-forecast-atlas__day-symbol {
+    grid-area: symbol;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .app .hava81-forecast-atlas__day-name {
+    grid-area: name;
+    min-width: 0;
+    font-weight: 700;
+  }
+
+  /* Description and rain flow as one wrapping detail line under the day name. */
+  .app .hava81-forecast-atlas__day-detail {
+    grid-area: detail;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  .app .hava81-forecast-atlas__day .hava81-forecast-atlas__description {
+    min-width: 0;
+    color: var(--color-atlas-muted);
+    overflow-wrap: break-word;
+  }
+
+  .app .hava81-forecast-atlas__day-pop {
+    min-width: 0;
+    overflow: visible;
+    font-variant-numeric: tabular-nums;
+    white-space: normal;
+    text-overflow: clip;
+  }
+
+  /* The high and low sit either side of the bar; display: contents lets each take a column. */
+  .app .hava81-forecast-atlas__day-temperatures {
+    display: contents;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .hava81-forecast-atlas__day-temperatures > [aria-hidden='true'] {
+    display: none;
+  }
+
+  .app .hava81-forecast-atlas__day-temperatures > strong {
+    grid-area: high;
+    justify-self: end;
+    font-size: 1.05rem;
+  }
+
+  .app .hava81-forecast-atlas__day-temperatures > span:last-child {
+    grid-area: low;
+    justify-self: end;
+    color: var(--color-atlas-muted);
+    font-weight: 600;
+  }
+
+  /* Range bar: a track for the whole week; the filled part is this day's low → high,
+     coloured by where it falls on the week's cool → warm gradient. */
+  .app .hava81-forecast-atlas__day-range {
+    grid-area: range;
+    position: relative;
+    height: 0.375rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-atlas-line) 80%, transparent);
+    overflow: hidden;
+  }
+
+  /* The fill spans the whole track as one cool → warm gradient and is clipped to this day's
+     range, so each bar shows its true slice of the week's temperatures. */
+  .app .hava81-forecast-atlas__day-range::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-aegean), var(--color-saffron));
+    clip-path: inset(0 calc(100% - var(--range-hi, 100%)) 0 var(--range-lo, 0%) round 999px);
+  }
+
+  /* Today stays recognisable by its label weight and accent, not by a box. */
+  .app .hava81-forecast-atlas__day-name[aria-current='date'] {
+    color: var(--color-aegean-deep);
+  }
+
+  /* Narrow panels: the bar moves to its own line under the name. */
+  @container (max-width: 30rem) {
+    .app .hava81-forecast-atlas__day,
+    .app .hava81-forecast-atlas__day:first-child,
+    .app .hava81-forecast-atlas__day:nth-child(odd),
+    .app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+      grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        'symbol name low high'
+        'symbol detail detail detail'
+        'symbol range range range';
+      column-gap: 0.6rem;
+    }
+
+    .app .hava81-forecast-atlas__day-range {
+      margin-block-start: 0.35rem;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .hava81-forecast-atlas__day,
+    .app .hava81-forecast-atlas__day:first-child,
+    .app .hava81-forecast-atlas__day:nth-child(odd),
+    .app .hava81-forecast-atlas__day:has(.hava81-forecast-atlas__day-name[aria-current='date']) {
+      grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        'symbol name low high'
+        'symbol detail detail detail'
+        'symbol range range range';
+      column-gap: 0.6rem;
+      padding-inline: 0.25rem;
+    }
+
+    .app .hava81-forecast-atlas__day-range {
+      margin-block-start: 0.35rem;
+    }
+  }
+
+  /* ── Local context: columns follow the panel's own width, not the screen ──
+     It now sits in the narrow Planla column on desktop, where four tiles were too tight. */
+
+  .app .context-signals {
+    container: context-signals / inline-size;
+  }
+
+  @container context-signals (min-width: 36rem) {
+    .app .context-signals__grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @container context-signals (min-width: 18rem) and (max-width: 35.99rem) {
+    .app .context-signals__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container context-signals (max-width: 17.99rem) {
+    .app .context-signals__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ── Environment rail: one surface, ruled columns — not four colour worlds ── */
+
+  .app .environment-rail {
+    gap: 0;
+    padding: 0;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-lg);
+    background: var(--color-atlas-paper);
+    box-shadow: none;
+  }
+
+  .app .environment-rail__module,
+  .app .environment-rail__module:nth-child(n),
+  .app .environment-rail__module + .environment-rail__module {
+    min-height: 0;
+    padding: clamp(1rem, 2vw, 1.4rem);
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .environment-rail__module::before,
+  .app .environment-rail__module::after {
+    content: none;
+  }
+
+  /* Hairline dividers between columns (and between rows when the rail wraps). */
+  .app .environment-rail__module + .environment-rail__module {
+    border-inline-start: 1px solid var(--color-atlas-line);
+  }
+
+  .app .environment-rail__icon,
+  .app .environment-rail__module:nth-child(n) .environment-rail__icon {
+    border: 0;
+    background: color-mix(in srgb, var(--color-aegean) 10%, transparent);
+    color: var(--color-aegean-deep);
+  }
+
+  /* Solid muted colour, no translucency: on the plain surface opacity would drop the
+     effective contrast below 4.5:1. */
+  .app .environment-rail__module:nth-child(n) .environment-rail__label,
+  .app .environment-rail__module:nth-child(n) .environment-rail__detail {
+    color: var(--color-atlas-muted);
+    opacity: 1;
+  }
+
+  .app .environment-rail__module:nth-child(n) .environment-rail__value {
+    color: var(--color-atlas-ink);
+  }
+
+  /* The map tile is an action: it reads as one, with an arrow that moves on hover. */
+  .app .environment-rail__module--action {
+    cursor: pointer;
+    text-align: start;
+    transition: background-color 180ms ease;
+  }
+
+  .app .environment-rail__module--action .environment-rail__value::after {
+    content: '→';
+    display: inline-block;
+    margin-inline-start: 0.35em;
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .app .environment-rail__module--action:hover {
+    background: color-mix(in srgb, var(--color-aegean) 6%, transparent);
+  }
+
+  .app .environment-rail__module--action:hover .environment-rail__value::after {
+    transform: translateX(0.25rem);
+  }
+
+  @media (max-width: 63.99rem) {
+    /* Two columns: the third tile starts a new row, so it gets the row rule instead. */
+    .app .environment-rail__module:nth-child(3) {
+      border-inline-start: 0;
+    }
+
+    .app .environment-rail__module:nth-child(n + 3) {
+      border-top: 1px solid var(--color-atlas-line);
+    }
+  }
+
+  @media (max-width: 24rem) {
+    /* One column: every tile after the first is separated by a row rule. */
+    .app .environment-rail__module + .environment-rail__module {
+      border-inline-start: 0;
+      border-top: 1px solid var(--color-atlas-line);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .environment-rail__module--action,
+    .app .environment-rail__module--action .environment-rail__value::after {
+      transition: none;
+    }
+  }
+
+  /* ── Motion ──
+     Transform-only: text keeps full contrast at every frame, and nothing here changes
+     layout, so motion never causes a layout shift. All of it is off for reduced motion. */
+
+  /* Static by default: without motion the ring shows the score immediately. */
+  .app .decision-glance__score {
+    --glance-fill: var(--glance-target);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* The score ring fills from 0 to the score once, on arrival. */
+    .app .decision-glance__score {
+      animation: editorial-ring-fill 1200ms cubic-bezier(0.22, 1, 0.36, 1) 250ms both;
+    }
+
+    /* First view settles in order: weather, rhythm, then the decision. */
+    .app .atlas-dashboard__primary .hava81-decision-field,
+    .app .atlas-dashboard__primary > .hava81-forecast-atlas,
+    .app .atlas-dashboard__primary > .decision-glance,
+    .app .atlas-plan-view > .daily-plan {
+      animation: editorial-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .app .atlas-dashboard__primary > .hava81-forecast-atlas {
+      animation-delay: 80ms;
+    }
+
+    .app .atlas-dashboard__primary > .decision-glance {
+      animation-delay: 160ms;
+    }
+
+    /* Below the first view, sections ride in as they enter the viewport. */
+    @supports (animation-timeline: view()) {
+      .app .environment-rail,
+      .app .atlas-plan-entry,
+      .app .atlas-plan-view__columns > *,
+      .app .atlas-plan-view__main > *,
+      .app .atlas-plan-view__aside > *,
+      .app .atlas-plan-view > .route-weather {
+        animation: editorial-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 60%;
+      }
+
+      /* Column wrappers stay still; their children carry the motion. */
+      .app .atlas-plan-view__columns > .atlas-plan-view__main,
+      .app .atlas-plan-view__columns > .atlas-plan-view__aside {
+        animation: none;
+      }
+    }
+  }
+
+  /* The deferred (data-ready) atlas placeholder holds about the loaded atlas's height on
+     phones (≈ 1230 px), so the atlas arriving does not push the environment rail. It sits
+     below the first view, so it never shows as a tall empty first-screen column. */
+  @media (max-width: 47.99rem) {
+    .app .atlas-forecast-loading--deferred {
+      min-height: 76rem;
+    }
+  }
+
+  /* ── Hero motion: the reading comes alive in the same language as the hourly rhythm ── */
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* The big temperature settles in from a soft blur. */
+    .app .hava81-decision-field__temperature-value {
+      /* backwards, not both: once settled no filter remains (a filter layer clips the glyphs). */
+      animation: hero-focus 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms backwards;
+    }
+
+    /* The 24-hour trend draws itself left to right, then rests. A clip reveal (not a dash
+       offset) because the line uses a non-scaling stroke, which breaks dash lengths. */
+    .app .hava81-decision-field__trend {
+      animation: hero-reveal 1500ms cubic-bezier(0.65, 0, 0.35, 1) 300ms backwards;
+    }
+
+    .app .hava81-decision-field__trend-area {
+      animation: hero-fade 900ms ease-out 900ms both;
+    }
+
+    /* "Now" breathes on the curve; the peak label lands after the line has drawn to it. */
+    .app .hava81-decision-field__trend-now {
+      animation: hero-pulse 2.8s cubic-bezier(0.2, 0.6, 0.3, 1) 1.8s infinite;
+    }
+
+    .app .hava81-decision-field__trend-peak {
+      animation: hero-land 600ms cubic-bezier(0.22, 1, 0.36, 1) 1500ms both;
+    }
+
+    /* Signal and metrics rise in one after another once the reading has settled. */
+    .app .hava81-decision-field__change,
+    .app .hava81-decision-field__metric {
+      animation: editorial-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: 650ms;
+    }
+
+    .app .hava81-decision-field__metric:nth-child(1) {
+      animation-delay: 760ms;
+    }
+
+    .app .hava81-decision-field__metric:nth-child(2) {
+      animation-delay: 840ms;
+    }
+
+    .app .hava81-decision-field__metric:nth-child(3) {
+      animation-delay: 920ms;
+    }
+
+    .app .hava81-decision-field__metric:nth-child(4) {
+      animation-delay: 1000ms;
+    }
+
+    /* The status dot of the signal glows softly, like an indicator light. */
+    .app .hava81-decision-field__decision-list li::before {
+      animation: hero-glow 3s ease-in-out 1.4s infinite;
+    }
+
+    /* The weather icon is alive: clouds drift, rays turn, rain and snow fall, bolts flicker. */
+    .app .wx-cloud {
+      animation: wx-drift 7s ease-in-out infinite alternate;
+    }
+
+    .app .wx-rays {
+      transform-box: view-box;
+      transform-origin: 80px 64px;
+      animation: wx-turn 40s linear infinite;
+    }
+
+    .app .wx-stars circle {
+      animation: wx-twinkle 3.4s ease-in-out infinite;
+    }
+
+    .app .wx-stars circle:nth-child(2) {
+      animation-delay: 1.1s;
+    }
+
+    .app .wx-stars circle:nth-child(3) {
+      animation-delay: 2.2s;
+    }
+
+    .app .wx-drop {
+      animation: wx-fall 1.1s cubic-bezier(0.55, 0, 1, 0.45) infinite;
+    }
+
+    .app .wx-drop:nth-child(2) {
+      animation-delay: 0.37s;
+    }
+
+    .app .wx-drop:nth-child(3) {
+      animation-delay: 0.74s;
+    }
+
+    .app .wx-flake {
+      animation: wx-flutter 3.2s ease-in-out infinite;
+    }
+
+    .app .wx-flake:nth-child(2) {
+      animation-delay: 1s;
+    }
+
+    .app .wx-flake:nth-child(3) {
+      animation-delay: 2.1s;
+    }
+
+    .app .wx-bolt {
+      animation: wx-flicker 5.5s steps(1, end) infinite;
+    }
+
+    .app .wx-haze path {
+      animation: wx-drift 9s ease-in-out infinite alternate;
+    }
+  }
+}
+
+@property --glance-fill {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+@keyframes editorial-ring-fill {
+  from {
+    --glance-fill: 0%;
+  }
+
+  to {
+    --glance-fill: var(--glance-target);
+  }
+}
+
+@keyframes editorial-rise {
+  /* Translate only: scaling would shrink controls below 44 px while they move. */
+  from {
+    transform: translate3d(0, 1.25rem, 0);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes hero-focus {
+  from {
+    filter: blur(14px);
+    transform: translate3d(0, 0.75rem, 0);
+  }
+
+  to {
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes hero-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes wx-drift {
+  from {
+    transform: translate3d(-3px, 0, 0);
+  }
+
+  to {
+    transform: translate3d(4px, -2px, 0);
+  }
+}
+
+@keyframes wx-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wx-twinkle {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Drops fall from the cloud and fade out low; at rest (no motion) they are fully visible. */
+@keyframes wx-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-3px, 12px, 0);
+  }
+}
+
+@keyframes wx-flutter {
+  0%,
+  100% {
+    transform: translate3d(0, -3px, 0);
+  }
+
+  50% {
+    transform: translate3d(3px, 5px, 0);
+  }
+}
+
+/* A brief double flicker every few seconds: well under three flashes per second. */
+@keyframes wx-flicker {
+  0%,
+  86%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+
+  88%,
+  92% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes hero-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 196 107 / 0.55);
+  }
+
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.75rem rgb(255 196 107 / 0);
+  }
+}
+
+@keyframes hero-land {
+  from {
+    opacity: 0;
+    translate: -50% calc(-100% + 0.2rem);
+  }
+}
+
+@keyframes hero-glow {
+  50% {
+    box-shadow: 0 0 0 0.3rem rgb(255 255 255 / 0.06);
+    opacity: 0.75;
+  }
+}

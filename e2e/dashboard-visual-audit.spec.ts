@@ -85,8 +85,14 @@ test('forecast loading skeleton resolves to real hourly content on mobile', asyn
     const skeleton = page.locator('.atlas-forecast-loading--card');
     await expect(skeleton).toBeVisible();
     await expect(page.locator('.decision-glance')).toBeVisible();
-    const loadingHeight = await skeleton.evaluate(element => element.getBoundingClientRect().height);
-    expect(loadingHeight, 'mobile forecast placeholder should be compact').toBeLessThanOrEqual(320);
+    // The first view must never show a tall empty column. Below the fold the deferred
+    // placeholder may hold the loaded atlas's height so its arrival shifts nothing.
+    const placement = await skeleton.evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top, height: rect.height, viewport: window.innerHeight };
+    });
+    const visibleInFirstView = Math.max(0, Math.min(placement.viewport, placement.top + placement.height) - Math.max(0, placement.top));
+    expect(visibleInFirstView, 'mobile forecast placeholder in the first view should be compact').toBeLessThanOrEqual(320);
     await captureEvidence(page, 'forecast-mobile-loading.png');
     releaseForecast();
     // After the API resolves, the compact placeholder remains until the user

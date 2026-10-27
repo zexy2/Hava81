@@ -2,7 +2,6 @@ import { DESKTOP, MOBILE, expect, test } from './helpers/test';
 import { ensureForecastAtlasLoaded } from './helpers/forecast';
 import {
   expectBeforeInDom,
-  expectContainedIn,
   expectNoHorizontalScroll,
   expectNoOverlap,
   expectReadable,
@@ -73,8 +72,8 @@ test.describe('forecast errors', () => {
 });
 
 test.describe('hourly atlas', () => {
-  test('hourly interval controls resample the same 24-hour forecast', DESKTOP, async ({ page }) => {
-    // 11:30 İstanbul: the 24-hour series starts at 12:00, which the sampled labels below assert.
+  test('the hourly strip shows every hour of the 24-hour forecast', DESKTOP, async ({ page }) => {
+    // 11:30 İstanbul: the 24-hour series starts at 12:00.
     const pinned = createWeatherFixtures(VISUAL_FIXED_NOW);
     await page.clock.setFixedTime(new Date(VISUAL_FIXED_NOW));
     await overrideApiJson(page, 'current', pinned.current);
@@ -82,55 +81,17 @@ test.describe('hourly atlas', () => {
     await page.goto('/istanbul');
     await ensureForecastAtlasLoaded(page);
 
-    const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
-    await expect(page.getByText(/24 saatlik tahmin sabit kalır/i)).toBeVisible();
-    await expect(interval).toHaveAttribute('aria-describedby', /-interval-help$/);
-    await expect(
-      interval.getByRole('button', { name: '1sa Her saat göster' })
-    ).toHaveAttribute('aria-pressed', 'true');
-    await expect(interval.getByRole('button')).toHaveCount(7);
-    for (const hours of [2, 3, 4, 6, 8, 12]) {
-      await expect(
-        interval.getByRole('button', {
-          name: `${hours}sa Her ${hours} saatte bir göster`,
-          exact: true,
-        })
-      ).toBeVisible();
-    }
+    // Like Apple and Google weather: no sampling control, no skipped hours.
+    await expect(page.getByRole('group', { name: 'Gösterim aralığı' })).toHaveCount(0);
     await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(24);
-
-    const displayedTimes = async () =>
-      page.locator('.hava81-forecast-atlas__hour time > span:last-child').allTextContents();
-
-    await interval
-      .getByRole('button', { name: '2sa Her 2 saatte bir göster', exact: true })
-      .click();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(12);
-
-    await interval.getByRole('button', { name: '3sa Her 3 saatte bir göster' }).click();
-    await expect(
-      page.getByRole('heading', { name: /Saatlik tahmin · sonraki 24 saat/i })
-    ).toBeVisible();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(8);
-    expect((await displayedTimes()).slice(0, 4)).toEqual(['12:00', '15:00', '18:00', '21:00']);
+    const times = await page
+      .locator('.hava81-forecast-atlas__hour time > span:last-child')
+      .allTextContents();
+    expect(times.slice(0, 4)).toEqual(['12:00', '13:00', '14:00', '15:00']);
     await expect(page.locator('.hava81-forecast-atlas__hour-day')).toHaveCount(1);
     await expect(page.locator('.hava81-forecast-atlas__hour.is-day-boundary')).toContainText(
       '00:00'
     );
-
-    await interval.getByRole('button', { name: '4sa Her 4 saatte bir göster' }).click();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(6);
-
-    await interval.getByRole('button', { name: '6sa Her 6 saatte bir göster' }).click();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(4);
-    expect(await displayedTimes()).toEqual(['12:00', '18:00', '00:00', '06:00']);
-
-    await interval.getByRole('button', { name: '8sa Her 8 saatte bir göster' }).click();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(3);
-
-    await interval.getByRole('button', { name: '12sa Her 12 saatte bir göster' }).click();
-    await expect(page.locator('.hava81-forecast-atlas__hour')).toHaveCount(2);
-    expect(await displayedTimes()).toEqual(['12:00', '00:00']);
   });
 
   test(
@@ -193,24 +154,13 @@ test.describe('hourly atlas', () => {
   );
 
   test(
-    'narrow hourly atlas keeps every interval, its summary and a sticky axis usable',
+    'narrow hourly atlas keeps its summary and a sticky axis usable',
     MOBILE,
     async ({ page }) => {
       await setWidth(page, 320, 720);
       await page.goto('/istanbul');
       await ensureForecastAtlasLoaded(page);
 
-      const interval = page.getByRole('group', { name: 'Gösterim aralığı' });
-      // Guidance is available to assistive technology without a long visible paragraph.
-      const intervalHelp = page.locator('.hava81-forecast-atlas__range-help');
-      await expect(intervalHelp).toContainText('24 saatlik tahmin sabit kalır');
-      expect(await interval.getAttribute('aria-describedby')).toBe(
-        await intervalHelp.getAttribute('id')
-      );
-      const options = interval.getByRole('button');
-      await expect(options).toHaveCount(7);
-
-      // All seven sampling options are reachable without a horizontal swipe, also at 200% text.
       for (const [width, scale] of [
         [320, 100],
         [320, 200],
@@ -218,25 +168,10 @@ test.describe('hourly atlas', () => {
       ] as const) {
         await setWidth(page, width, 844);
         await setTextScale(page, scale);
-        const at = `${width}px/${scale}%`;
-        for (const option of await options.all())
-          await expectContainedIn(option, interval, `interval option ${at}`);
-        expect(
-          await interval.evaluate(element => element.scrollWidth <= element.clientWidth + 1),
-          `no hidden intervals ${at}`
-        ).toBe(true);
-        await expectNoHorizontalScroll(page, at);
-        // The Turkish "1sa"…"12sa" labels stay inside their buttons (overflow-wrap: anywhere).
-        await expectTextNotClipped(interval, `interval labels ${at}`);
+        await expectNoHorizontalScroll(page, `${width}px/${scale}%`);
       }
-      await setWidth(page, 390, 844);
-      await expectTextNotClipped(interval, 'interval labels at 390px/200%');
       await setWidth(page, 320, 720);
       await setTextScale(page, 100);
-      await options.last().click();
-      await expect(options.last()).toHaveAttribute('aria-pressed', 'true');
-      await options.first().click();
-      await expect(options.first()).toHaveAttribute('aria-pressed', 'true');
 
       const summary = page.getByRole('list', { name: 'Saatlik tahmin özeti' });
       await expect(summary.getByRole('listitem')).toHaveCount(3);
@@ -293,10 +228,6 @@ test.describe('hourly atlas', () => {
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
       ).toBe(true);
-
-      // Sampling down the 24-hour forecast avoids needless navigation controls.
-      await page.getByRole('button', { name: /12sa.*12 saatte bir göster/i }).click();
-      await expect(navigation).toBeHidden();
     }
   );
 
@@ -443,7 +374,6 @@ test.describe('five-day forecast', () => {
       await expect(page.getByText('thunderstorms with heavy rain')).toBeVisible();
       await expect(page.getByText('partly cloudy with scattered showers')).toBeVisible();
       await expectReadable(page, page.locator('.hava81-forecast-atlas__days'), '390px/200%');
-      await expectTextNotClipped(page.locator('.hava81-forecast-atlas__range'), 'interval labels');
     }
   );
 

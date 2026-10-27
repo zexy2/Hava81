@@ -21,6 +21,9 @@ import { formatCityTime } from '../../utils/format';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherIllustration } from './WeatherIllustration';
 import './WeatherDecisionField.css';
+import HeroSky from '../sky/HeroSky';
+import { resolveSkyScene } from '../sky/skyScene';
+import { TEMPERATURE_SCALE_DARK, temperatureColor } from './forecastAtlas/temperatureColor';
 
 export interface WeatherDecisionFieldProps {
   weather: NormalizedWeatherData;
@@ -376,17 +379,24 @@ export function WeatherDecisionField({
             uvIndexMax,
             bestWindowTime: hourly.length
               ? (getDecisionSnapshot({
-                    weather,
-                    hourly,
-                    airQuality: freshAirQuality,
-                    ...(freshAirQualityHourly ? { airQualityHourly: freshAirQualityHourly } : {}),
-                  }).bestWindow
-                  ?.peak.time ?? null)
+                  weather,
+                  hourly,
+                  airQuality: freshAirQuality,
+                  ...(freshAirQualityHourly ? { airQualityHourly: freshAirQualityHourly } : {}),
+                }).bestWindow?.peak.time ?? null)
               : undefined,
             now: new Date(now),
           })
         : ([{ kind: 'unavailable', severity: 'info' }] satisfies WeatherDecision[]),
-    [decisionEvidenceFresh, freshAirQuality, freshAirQualityHourly, hourly, now, uvIndexMax, weather]
+    [
+      decisionEvidenceFresh,
+      freshAirQuality,
+      freshAirQualityHourly,
+      hourly,
+      now,
+      uvIndexMax,
+      weather,
+    ]
   );
   const freshnessText =
     ageMinutes === null
@@ -420,7 +430,11 @@ export function WeatherDecisionField({
   const nextChangeText =
     decisionEvidenceFresh && hourly.length > 0
       ? t(`hava81.decision.upcoming.${nextChange.kind}`, {
-          time: formatCityTime(nextChange.time, weather.meta.timezoneOffsetSeconds, settings.language),
+          time: formatCityTime(
+            nextChange.time,
+            weather.meta.timezoneOffsetSeconds,
+            settings.language
+          ),
           temperature: nextChange.temp === null ? '' : formatTemperature(nextChange.temp),
         })
       : t('hava81.decision.upcoming.unavailable', {
@@ -433,16 +447,65 @@ export function WeatherDecisionField({
     const min = Math.min(...temps);
     const max = Math.max(...temps);
     const span = Math.max(max - min, 1);
-    const points = temps.map((temp, index) => {
-      const x = (index / (temps.length - 1)) * 240;
-      const y = 6 + (1 - (temp - min) / span) * 36;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    const points = temps.map((temp, index) => ({
+      x: (index / (temps.length - 1)) * 240,
+      y: 6 + (1 - (temp - min) / span) * 36,
+    }));
+    // Monotone cubic (Fritsch–Carlson) curve: smooth like a drawn line, but it never
+    // overshoots the hourly values, so it cannot suggest a temperature that is not forecast.
+    const slopes = points
+      .slice(1)
+      .map((point, i) => (point.y - points[i].y) / (point.x - points[i].x));
+    const tangents = points.map((_, i) => {
+      if (i === 0) return slopes[0];
+      if (i === points.length - 1) return slopes[slopes.length - 1];
+      const before = slopes[i - 1];
+      const after = slopes[i];
+      return before * after <= 0 ? 0 : (2 * before * after) / (before + after);
     });
-    return { min, max, line: points.join(' '), area: `0,48 ${points.join(' ')} 240,48` };
+    const f = (value: number) => value.toFixed(1);
+    let line = `M${f(points[0].x)},${f(points[0].y)}`;
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const dx = (b.x - a.x) / 3;
+      line += ` C${f(a.x + dx)},${f(a.y + tangents[i] * dx)} ${f(b.x - dx)},${f(b.y - tangents[i + 1] * dx)} ${f(b.x)},${f(b.y)}`;
+    }
+    const peakIndex = temps.indexOf(max);
+    // Four evenly spaced hour labels give the curve a time axis.
+    const tickIndexes = [0, 1, 2, 3].map(step => Math.round((step / 3) * (trendHours.length - 1)));
+    return {
+      min,
+      max,
+      line,
+      area: `${line} L240,48 L0,48 Z`,
+      start: { x: 0, y: (points[0].y / 48) * 100 },
+      peak: { x: (points[peakIndex].x / 240) * 100, y: (points[peakIndex].y / 48) * 100 },
+      ticks: tickIndexes.map(index => ({
+        x: (points[index].x / 240) * 100,
+        label: formatForecastTime(trendHours[index].time),
+      })),
+      // Absolute temperature colours (the same scale as the hourly chart), so a 2° day is
+      // not painted as a full cold-to-hot swing.
+      warmColor: temperatureColor(max, TEMPERATURE_SCALE_DARK),
+      coolColor: temperatureColor(min, TEMPERATURE_SCALE_DARK),
+    };
   })();
+  const heroScene = useMemo(() => resolveSkyScene(weather, hourly, now), [weather, hourly, now]);
+  // Light rain below the "likely" threshold still gets the next-change line; the calm verdict
+  // must not read as if that rain did not exist.
+  const lightRainAhead = nextChange.kind === 'rainStarts';
+  const stableCopy = (compact: boolean) =>
+    t(
+      compact
+        ? 'hava81.decision.compactActions.stableLightRain'
+        : 'hava81.decision.actions.stableLightRain'
+    );
+  const trendGradientId = `${headingId}-trend`.replace(/[^a-zA-Z0-9_-]/g, '');
 
   return (
     <section className={`hava81-decision-field ${className}`.trim()} aria-labelledby={headingId}>
+      <HeroSky scene={heroScene} />
       <header className="hava81-decision-field__identity">
         <div className="hava81-decision-field__city-row">
           <h1 id={headingId} className="hava81-decision-field__city">
@@ -491,7 +554,7 @@ export function WeatherDecisionField({
           <span className="hava81-decision-field__coordinate-meta" aria-hidden="true">
             ·
           </span>
-          <span>{weather.meta.provider}</span>
+          <span className="hava81-decision-field__provider-meta">{weather.meta.provider}</span>
           <span aria-hidden="true">·</span>
           <span className={isStale ? 'is-stale' : undefined}>
             {isStale
@@ -528,21 +591,74 @@ export function WeatherDecisionField({
                 temperature: formatTemperature(weather.feelsLike),
               })}
             </p>
-            <p className="hava81-decision-field__next-change">{nextChangeText}</p>
+            <p className="hava81-decision-field__next-change" data-kind={nextChange.kind}>
+              {nextChangeText}
+            </p>
             {trend ? (
-              <svg
-                className="hava81-decision-field__trend"
-                viewBox="0 0 240 48"
-                preserveAspectRatio="none"
-                role="img"
-                aria-label={t('hava81.decision.upcoming.chart', {
-                  min: formatTemperature(trend.min),
-                  max: formatTemperature(trend.max),
-                })}
-              >
-                <polygon className="hava81-decision-field__trend-area" points={trend.area} />
-                <polyline className="hava81-decision-field__trend-line" points={trend.line} />
-              </svg>
+              <div className="hava81-decision-field__trend-wrap">
+                <svg
+                  className="hava81-decision-field__trend"
+                  viewBox="0 0 240 48"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label={t('hava81.decision.upcoming.chart', {
+                    min: formatTemperature(trend.min),
+                    max: formatTemperature(trend.max),
+                  })}
+                >
+                  <defs>
+                    {/* Colour follows temperature: warm hours glow amber, cool hours blue. */}
+                    <linearGradient
+                      id={trendGradientId}
+                      gradientUnits="userSpaceOnUse"
+                      x1="0"
+                      y1="6"
+                      x2="0"
+                      y2="42"
+                    >
+                      <stop offset="0" stopColor={trend.warmColor} />
+                      <stop offset="1" stopColor={trend.coolColor} />
+                    </linearGradient>
+                    <linearGradient id={`${trendGradientId}-area`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="currentColor" stopOpacity="0.16" />
+                      <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    className="hava81-decision-field__trend-area"
+                    d={trend.area}
+                    style={{ fill: `url(#${trendGradientId}-area)` }}
+                  />
+                  <path
+                    className="hava81-decision-field__trend-line"
+                    d={trend.line}
+                    style={{ stroke: `url(#${trendGradientId})` }}
+                  />
+                </svg>
+                <span
+                  className="hava81-decision-field__trend-now"
+                  style={{ left: `${trend.start.x}%`, top: `${trend.start.y}%` }}
+                  aria-hidden="true"
+                />
+                <span
+                  className={`hava81-decision-field__trend-peak${
+                    trend.peak.x < 15 ? ' is-start' : trend.peak.x > 85 ? ' is-end' : ''
+                  }`}
+                  style={{ left: `${trend.peak.x}%`, top: `${trend.peak.y}%` }}
+                  aria-hidden="true"
+                >
+                  {t('hava81.decision.upcoming.peak', {
+                    temperature: formatTemperature(trend.max),
+                  })}
+                </span>
+                <ol className="hava81-decision-field__trend-ticks" aria-hidden="true">
+                  {trend.ticks.map(tick => (
+                    <li key={tick.x} style={{ left: `${tick.x}%` }}>
+                      {tick.label}
+                    </li>
+                  ))}
+                </ol>
+              </div>
             ) : !forecastMeta ? (
               <div className="hava81-decision-field__trend-placeholder" aria-hidden="true" />
             ) : null}
@@ -560,18 +676,20 @@ export function WeatherDecisionField({
         </h2>
         <ul className="hava81-decision-field__decision-list">
           {decisions.map((decision, index) => {
-            const fullCopy = decisionCopy(decision);
+            const lightRainCalm = decision.kind === 'stable' && lightRainAhead;
+            const fullCopy = lightRainCalm ? stableCopy(false) : decisionCopy(decision);
             return (
               <li
                 key={`${decision.kind}-${index}`}
                 data-severity={decision.severity}
+                data-kind={decision.kind}
                 aria-label={fullCopy}
               >
                 <span className="hava81-decision-field__decision-copy--full" aria-hidden="true">
                   {fullCopy}
                 </span>
                 <span className="hava81-decision-field__decision-copy--compact" aria-hidden="true">
-                  {compactDecisionCopy(decision)}
+                  {lightRainCalm ? stableCopy(true) : compactDecisionCopy(decision)}
                 </span>
               </li>
             );

@@ -102,6 +102,12 @@ export function DayOutlookPanel({
                 key={option}
                 type="button"
                 aria-pressed={(activity ?? 'general') === option}
+                aria-label={t('hava81.outlook.intentAria', {
+                  name:
+                    option === 'general'
+                      ? t('hava81.outlook.general')
+                      : t(`hava81.activities.names.${option}`),
+                })}
                 onClick={() => setIntent(option)}
               >
                 {option === 'general'

@@ -1,5 +1,4 @@
 import { act, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ForecastAtlas } from '../../components/hava81/ForecastAtlas';
@@ -428,34 +427,13 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(within(region).getByText('1%')).toBeInTheDocument();
   });
 
-  it('keeps the available horizon while exposing useful compact sampling intervals', () => {
+  it('keeps the available horizon without a sampling-interval control', () => {
     renderRangeAtlas(8);
 
     expect(
       screen.getByRole('heading', { name: /saatlik tahmin · sonraki 8 saat/i })
     ).toBeInTheDocument();
-    const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
-    expect(screen.getByText(/24 saatlik tahmin sabit kalır/i)).toBeInTheDocument();
-    expect(
-      within(interval).getByRole('button', { name: '1sa Her saat göster' })
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      within(interval)
-        .getAllByRole('button')
-        .map(button => button.textContent)
-    ).toEqual(['1sa', '2sa', '3sa', '4sa', '6sa']);
-    expect(
-      within(interval).getByRole('button', { name: '2sa Her 2 saatte bir göster' })
-    ).toBeInTheDocument();
-    expect(
-      within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' })
-    ).toBeInTheDocument();
-    expect(
-      within(interval).queryByRole('button', { name: '8sa Her 8 saatte bir göster' })
-    ).not.toBeInTheDocument();
-    expect(
-      within(interval).queryByRole('button', { name: '12sa Her 12 saatte bir göster' })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /gösterim aralığı/i })).not.toBeInTheDocument();
   });
 
   it('presents the hourly trend as a summarized visual forecast surface', () => {
@@ -532,53 +510,18 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(document.querySelectorAll('.hava81-forecast-atlas__axis-label')).toHaveLength(1);
   });
 
-  it('changes sampling cadence without changing the 24-hour forecast horizon', async () => {
-    const user = userEvent.setup();
+  it('shows every hour of the 24-hour horizon in the scrolling strip', () => {
     renderRangeAtlas();
 
-    const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
-    expect(
-      within(interval).getByRole('button', { name: '1sa Her saat göster' })
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(within(interval).getAllByRole('button')).toHaveLength(7);
-    expect(within(region).getAllByRole('listitem')).toHaveLength(24);
-
-    await user.click(within(interval).getByRole('button', { name: '2sa Her 2 saatte bir göster' }));
-    expect(within(region).getAllByRole('listitem')).toHaveLength(12);
-
-    await user.click(within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' }));
-    expect(
-      within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' })
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByRole('heading', { name: /saatlik tahmin · sonraki 24 saat/i })
-    ).toBeInTheDocument();
-    expect(within(region).getAllByRole('listitem')).toHaveLength(8);
-    expect(
-      within(region)
-        .getAllByRole('listitem')
-        .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
-    ).toEqual(['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00']);
-
-    await user.click(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' }));
-    expect(
-      within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' })
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(within(region).getAllByRole('listitem')).toHaveLength(4);
-    expect(
-      within(region)
-        .getAllByRole('listitem')
-        .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0])
-    ).toEqual(['00:00', '06:00', '12:00', '18:00']);
-
-    await user.click(
-      within(interval).getByRole('button', { name: '12sa Her 12 saatte bir göster' })
-    );
-    expect(within(region).getAllByRole('listitem')).toHaveLength(2);
+    const hours = within(region)
+      .getAllByRole('listitem')
+      .map(item => item.textContent?.match(/\d{2}:\d{2}/)?.[0]);
+    expect(hours).toHaveLength(24);
+    expect(hours.slice(0, 4)).toEqual(['00:00', '01:00', '02:00', '03:00']);
   });
-  it('keeps the 24-hour summary and chart scale stable when display sampling changes', async () => {
-    const user = userEvent.setup();
+
+  it('builds the summary and chart scale from the full 24-hour horizon', () => {
     const { container } = render(
       <SettingsProvider>
         <ForecastAtlas
@@ -603,7 +546,6 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     );
 
     const summary = screen.getByRole('list', { name: /saatlik tahmin özeti/i });
-    const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
     const assertFullHorizonSummary = () => {
       expect(summary).toHaveTextContent('12°C');
       expect(summary).toHaveTextContent('31°C');
@@ -620,17 +562,6 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       ).toEqual(['31°', '22°', '12°']);
     };
 
-    assertFullHorizonSummary();
-    assertFullHorizonScale();
-    await user.click(within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' }));
-    assertFullHorizonSummary();
-    assertFullHorizonScale();
-    await user.click(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' }));
-    assertFullHorizonSummary();
-    assertFullHorizonScale();
-    await user.click(
-      within(interval).getByRole('button', { name: '12sa Her 12 saatte bir göster' })
-    );
     assertFullHorizonSummary();
     assertFullHorizonScale();
   });
@@ -830,8 +761,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     expect(hours[1]).toHaveClass('is-day-boundary');
   });
 
-  it('marks the local day change without repeating a date on every hourly card', async () => {
-    const user = userEvent.setup();
+  it('marks the local day change without repeating a date on every hourly card', () => {
     render(
       <SettingsProvider>
         <ForecastAtlas
@@ -854,35 +784,12 @@ describe('ForecastAtlas hourly precipitation labels', () => {
       </SettingsProvider>
     );
 
-    const interval = screen.getByRole('group', { name: /gösterim aralığı/i });
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
 
     const boundaryFor = () => region.querySelectorAll('.hava81-forecast-atlas__hour-day');
 
     expect(boundaryFor()).toHaveLength(1);
     expect(boundaryFor()[0].closest('li')).toHaveTextContent('00:00');
-
-    await user.click(within(interval).getByRole('button', { name: '3sa Her 3 saatte bir göster' }));
-    expect(boundaryFor()).toHaveLength(1);
-    expect(boundaryFor()[0].closest('li')).toHaveTextContent('02:00');
-
-    await user.click(within(interval).getByRole('button', { name: '6sa Her 6 saatte bir göster' }));
-    expect(boundaryFor()).toHaveLength(1);
-    expect(boundaryFor()[0].closest('li')).toHaveTextContent('02:00');
-  });
-});
-
-describe('ForecastAtlas interval control semantics (Faz 3.4)', () => {
-  it('links the interval button group to its visible label and help text', () => {
-    renderRangeAtlas(24);
-    const group = screen.getByRole('group', { name: 'Gösterim aralığı' });
-    const label = document.getElementById(group.getAttribute('aria-labelledby') ?? '');
-    const help = document.getElementById(group.getAttribute('aria-describedby') ?? '');
-    expect(group).not.toHaveAttribute('aria-label');
-    expect(label).toBeVisible();
-    expect(group).toHaveAccessibleName(label?.textContent?.trim() ?? '');
-    expect(group).toHaveAccessibleDescription(help?.textContent?.trim() ?? '');
-    expect(within(group).getAllByRole('button').length).toBeGreaterThan(1);
   });
 });
 

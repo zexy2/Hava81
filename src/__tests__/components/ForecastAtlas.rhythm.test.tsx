@@ -1,8 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import i18n from '../../i18n';
 import { ForecastAtlas } from '../../components/hava81/ForecastAtlas';
-import { IntervalSelector } from '../../components/hava81/forecastAtlas/IntervalSelector';
 import { SettingsProvider } from '../../context';
 import type { HourlyForecast } from '../../types';
 
@@ -39,52 +37,6 @@ const renderRhythm = (hourly = rhythmHours()) =>
       />
     </SettingsProvider>
   );
-
-describe('Forecast interval accessible labels', () => {
-  it('uses singular English copy for the one-hour option', async () => {
-    const previousLanguage = i18n.resolvedLanguage ?? 'tr';
-    await i18n.changeLanguage('en');
-    let unmount: () => void = () => {};
-    try {
-      const view = render(
-        <IntervalSelector
-          id="interval-en"
-          options={[1, 2]}
-          displayIntervalHours={1}
-          onSelect={() => undefined}
-        />
-      );
-      unmount = view.unmount;
-      expect(screen.getByRole('button', { name: '1h Show every hour' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '2h Show every 2 hours' })).toBeInTheDocument();
-    } finally {
-      unmount();
-      await i18n.changeLanguage(previousLanguage);
-    }
-  });
-
-  it('keeps the Turkish one-hour label natural', async () => {
-    const previousLanguage = i18n.resolvedLanguage ?? 'tr';
-    await i18n.changeLanguage('tr');
-    let unmount: () => void = () => {};
-    try {
-      const view = render(
-        <IntervalSelector
-          id="interval-tr"
-          options={[1, 2]}
-          displayIntervalHours={1}
-          onSelect={() => undefined}
-        />
-      );
-      unmount = view.unmount;
-      expect(screen.getByRole('button', { name: '1sa Her saat göster' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '2sa Her 2 saatte bir göster' })).toBeInTheDocument();
-    } finally {
-      unmount();
-      await i18n.changeLanguage(previousLanguage);
-    }
-  });
-});
 
 describe('ForecastAtlas hourly rhythm', () => {
   it('shades provider night hours on the plot and in the matching hour values', () => {
@@ -204,7 +156,10 @@ describe('ForecastAtlas hourly rhythm', () => {
   });
 
   it('does not remeasure the SVG curve for pointer-only highlight renders', () => {
-    const originalDescriptor = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'getTotalLength');
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      SVGElement.prototype,
+      'getTotalLength'
+    );
     const getTotalLength = vi.fn(() => 100);
     Object.defineProperty(SVGElement.prototype, 'getTotalLength', {
       configurable: true,

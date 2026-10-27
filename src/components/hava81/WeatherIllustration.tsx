@@ -14,7 +14,8 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
   const night = code.endsWith('n');
   const cloud = ['02', '03', '04', '09', '10', '11', '13'].includes(family);
   const sun = ['02', '10'].includes(family) && !night;
-  const moon = ['02', '10'].includes(family) && night;
+  // Partly cloudy at night shows the moon behind the cloud, never a daytime cloud alone.
+  const moon = ['02', '03', '10'].includes(family) && night;
   const rain = ['09', '10', '11'].includes(family);
   const snow = family === '13';
   const haze = family === '50';
@@ -51,12 +52,19 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
       </defs>
       {sun && <circle cx="111" cy="42" r="31" fill={`url(#${id('sun')})`} />}
       {family === '01' && !night && (
-        <g stroke="#ffcc69" strokeWidth="4" strokeLinecap="round" opacity=".8" aria-hidden="true">
+        <g
+          className="wx-rays"
+          stroke="#ffcc69"
+          strokeWidth="4"
+          strokeLinecap="round"
+          opacity=".8"
+          aria-hidden="true"
+        >
           <path d="M80 5v10 M80 113v10 M23 64h10 M127 64h10 M40 24l7 7 M112 101l7 7 M41 103l7-7 M112 30l7-7" />
         </g>
       )}
       {family === '01' && night && (
-        <g fill="#b7d5ed" aria-hidden="true">
+        <g className="wx-stars" fill="#b7d5ed" aria-hidden="true">
           <circle cx="40" cy="25" r="2.5" />
           <circle cx="120" cy="28" r="2.1" />
           <circle cx="35" cy="105" r="1.8" />
@@ -73,7 +81,7 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
         />
       )}
       {cloud && (
-        <g filter={`url(#${id('shadow')})`}>
+        <g className="wx-cloud" filter={`url(#${id('shadow')})`}>
           {family === '04' && (
             <path
               d="M29 73c-1-17 11-26 25-24 10-26 48-26 59 1 22 0 29 28 15 36H38C29 85 27 79 29 73Z"
@@ -98,19 +106,22 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
         </g>
       )}
       {rain && (
-        <g fill="none" stroke="#409fe1" strokeWidth="5" strokeLinecap="round">
-          <path d="m56 114-5 10 M86 114l-5 10 M116 114l-5 10" />
+        <g className="wx-rain" fill="none" stroke="#409fe1" strokeWidth="5" strokeLinecap="round">
+          <path className="wx-drop" d="m56 114-5 10" />
+          <path className="wx-drop" d="M86 114l-5 10" />
+          <path className="wx-drop" d="M116 114l-5 10" />
         </g>
       )}
       {snow && (
-        <g fill="#78bdf2">
-          <circle cx="57" cy="119" r="4" />
-          <circle cx="89" cy="124" r="4" />
-          <circle cx="119" cy="119" r="4" />
+        <g className="wx-snow" fill="#78bdf2">
+          <circle className="wx-flake" cx="57" cy="119" r="4" />
+          <circle className="wx-flake" cx="89" cy="124" r="4" />
+          <circle className="wx-flake" cx="119" cy="119" r="4" />
         </g>
       )}
       {family === '11' && (
         <path
+          className="wx-bolt"
           d="m93 93-14 22h14l-8 18 30-29H99l9-11Z"
           fill="#ffd256"
           stroke="#f4ab33"
@@ -118,7 +129,7 @@ export function WeatherIllustration({ code, label, className = '' }: Props) {
         />
       )}
       {haze && (
-        <g stroke="#aacadd" strokeWidth="9" strokeLinecap="round" opacity=".8">
+        <g className="wx-haze" stroke="#aacadd" strokeWidth="9" strokeLinecap="round" opacity=".8">
           <path d="M25 45h100 M38 69h108 M14 94h110" />
         </g>
       )}

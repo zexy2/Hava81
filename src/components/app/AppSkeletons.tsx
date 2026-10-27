@@ -36,15 +36,23 @@ export const ForecastLoadingCard = ({
   label,
   anchorRef,
   onActivate,
+  reserveLoadedHeight = false,
 }: {
   title: string;
   label: string;
   anchorRef?: Ref<HTMLElement>;
   onActivate?: () => void;
+  /**
+   * Data is in and only the chart is deferred: hold the loaded atlas's space so it can arrive
+   * without pushing the sections below. API loading / error placeholders stay compact.
+   */
+  reserveLoadedHeight?: boolean;
 }) => (
   <section
     ref={anchorRef}
-    className="atlas-forecast-loading atlas-forecast-loading--card"
+    className={`atlas-forecast-loading atlas-forecast-loading--card${
+      reserveLoadedHeight ? ' atlas-forecast-loading--deferred' : ''
+    }`}
     role="status"
     aria-live="polite"
     onPointerDown={onActivate}

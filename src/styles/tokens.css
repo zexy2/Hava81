@@ -15,7 +15,7 @@
  * Ham renk, köşe yarıçapı ve breakpoint değerleri yalnız bu dosyada serbesttir
  * (bkz. .stylelintrc.json).
  */
-@layer tokens, base, vendor, components, utilities;
+@layer tokens, base, vendor, components, editorial, utilities;
 
 @layer tokens {
   :root {

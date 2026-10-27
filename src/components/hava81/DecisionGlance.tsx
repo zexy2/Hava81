@@ -186,7 +186,14 @@ export const DecisionGlance = memo(function DecisionGlance({
             </span>
             <span>
               <small>{t('hava81.glance.bestLabel')}</small>
-              <strong>{bestHours ?? '—'}</strong>
+              <strong>
+                {bestHours ??
+                  (!plan
+                    ? t('hava81.glance.pending')
+                    : plan.nowOrLater.kind === 'similar'
+                      ? t('hava81.glance.bestAny')
+                      : t('hava81.glance.bestNone'))}
+              </strong>
             </span>
           </div>
           <div className="decision-glance__quick">
@@ -220,9 +227,13 @@ export const DecisionGlance = memo(function DecisionGlance({
           <>
             <div
               className={`decision-glance__score decision-glance__score--${plan.band}`}
-              style={{
-                background: `conic-gradient(var(--decision-ring) ${plan.score}%, var(--decision-ring-track) 0)`,
-              }}
+              style={
+                {
+                  '--glance-target': `${plan.score}%`,
+                  background:
+                    'conic-gradient(var(--decision-ring) var(--glance-fill, var(--glance-target)), var(--decision-ring-track) 0)',
+                } as React.CSSProperties
+              }
             >
               <strong>
                 {plan.score}
