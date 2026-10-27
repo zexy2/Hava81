@@ -120,6 +120,14 @@ describe('service worker activation', () => {
     expect(tab.navigate).toHaveBeenCalledWith(`${ORIGIN}/istanbul/`);
   });
 
+  it('keeps activation successful when legacy-tab enumeration fails', async () => {
+    const worker = loadWorker({ cacheKeys: ['hava81-shell-v2'] });
+    worker.workerClients.matchAll.mockRejectedValueOnce(new Error('client enumeration unavailable'));
+
+    await expect(worker.dispatch('activate', {})).resolves.toBeUndefined();
+    expect(worker.workerClients.claim).toHaveBeenCalled();
+  });
+
   it('does not reload tabs for a regular versioned upgrade', async () => {
     const tab = client();
     const worker = loadWorker({ cacheKeys: ['hava81-shell-abc123'], clients: [tab] });
