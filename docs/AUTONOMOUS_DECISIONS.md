@@ -989,3 +989,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The blocked-notification axe audit failed before the scan because Playwright's `page.addScriptTag({ path })` injects inline script content and the generated production CSP correctly blocks it. This is a test-harness incompatibility, not a product accessibility violation.
 - Use the repository's established `test.use({ bypassCSP: true })` pattern inside a dedicated Playwright `describe` containing only this axe audit. Do not loosen the generated CSP, add `unsafe-inline`, or change production response headers.
 - Keep the bypass local to the test fixture; the scan must still run against the real rendered deferred-alert panel and keep notification permission denied.
+
+
+## 2026-10-27 — Expire the multi-day outlook when forecast freshness expires
+
+- `DayOutlookPanel` must not rely on unrelated parent renders to re-evaluate forecast age. Its adjacent Planla panels already schedule a timer for the forecast TTL, but the multi-day outlook previously only checked freshness during render; an open tab could therefore keep displaying the outlook after its evidence expired.
+- Schedule a bounded rerender at `getForecastFreshness().expiresInMs` and recheck freshness when the tab becomes visible. Once stale, hide the multi-day outlook rather than preserving an outdated recommendation. Do not change the TTL, weather inputs, score, risk labels, provider attribution, or safety semantics.
+- Keep regression coverage for both timer-driven expiry and returning to a visible tab after expiry. Require lint, type-check, full unit/coverage, production build, and the focused Planla browser suite before merge. No API image build, service restart, production deploy, or port switch is part of this change.

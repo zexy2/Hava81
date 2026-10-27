@@ -1,3 +1,28 @@
+## Current checkpoint — 2026-10-27 22:50 TRT / 19:50 UTC
+
+### Stable main and production
+- Current `origin/main` is `56ce07d1e9a5ed956506d0923988faf75ef26a7c`. CI/CD run #3863 (`40570467372`), CodeQL #2644 (`40570467490`), and Ops contracts #602 (`40570467291`) are green on that exact SHA. The Pages deployment is published: `/`, `/izmir/`, and `/en/istanbul/` return HTTP 200 and all carry the exact `56ce07d1...` revision; `/sw.js` returns HTTP 200 with JavaScript content type. API readiness returns HTTP 200/ready with `Cache-Control: no-store`, provider OpenWeather/circuit closed; CORS preflight returns HTTP 204. Production API remains on port 4002; port 4001 remains rollback/canary.
+- The fresh read-only observer snapshot (`2026-10-27T19:40:55Z`) confirms production healthy, exact frontend revision parity, main CI success, and no stale browser audits. Root disk remains at 93.0% used with about 6.8 GiB free, below the 8.85 GB API-build reserve. Do not build/publish/deploy API images or switch ports while `api_build_headroom_low` remains set.
+- A direct read-only responsive audit of production passed **40/40** cases across İzmir and Şanlıurfa, Turkish/English, light/dark, 320/390/768/1440 px and 200% text scaling. A separate axe audit found zero violations in four home/city/Planla viewport samples; no horizontal overflow or undersized mobile interactive targets were found.
+
+### Run 51 — expire the multi-day outlook when forecast evidence expires
+- Branch/worktree: `automation/hava81-run51-outlook-freshness-expiry-20261027`, `/home/ubuntu/agent-workspaces/hava81-run51-outlook-freshness-expiry-20261027`, based on exact current main `56ce07d1e9a5ed956506d0923988faf75ef26a7c`. No remote PR exists yet; the current source diff is limited to `src/components/hava81/DayOutlookPanel.tsx` and `src/__tests__/components/DayOutlook.test.tsx`.
+- Inspection found that `DayOutlookPanel` checked `getForecastFreshness()` only during render. Unlike the adjacent Planla components, it had no own expiry timer or visibility-resume check, so a multi-day outlook could remain visible after its forecast TTL if no unrelated parent state happened to rerender. The component now schedules a rerender at the exact freshness deadline and rechecks when a stale tab becomes visible; the existing fail-closed freshness rules and all weather/score values remain unchanged.
+- Added deterministic tests for both TTL expiry while mounted and returning to a visible tab after expiry. The focused DayOutlook suite passes **6/6**. Full local gates pass: `npm run lint`, `npm run type-check`, `npm run test:ci` (**119 files / 1,265 tests; 93.40% statements, 87.22% branches, 93.29% functions, 95.40% lines**), `npm run build` (81 TR + 81 EN province pages, two home pages, 404 and sitemap), and `git diff --check`. The focused Planla Playwright suite passes **29/29** across mobile/tablet/desktop, including 320 px and 200% text cases.
+- Next: inspect the complete diff, commit and push this branch, open a narrow PR, then require fresh exact-head CI/CD, CodeQL, Ops contracts, mergeability, and browser-flow gates. While those checks run, continue independent work in a separate worktree. Merge only after current-head gates are green and fresh observer state is directly re-verified; after merge, smoke public routes/API readiness/CORS/revision parity.
+
+### API PR #1531 remains held
+- Official Node.js Release Working Group schedule checked on 2026-10-27: Node 26 is still `Current`, with Active LTS scheduled for **2026-10-28** (dates subject to change; source: https://github.com/nodejs/Release#release-schedule). Do not merge the Node 26 ARM64 image-validation PR #1531 until the schedule/status is rechecked on 2026-10-28, its exact remote head/base and all exact-head CI/Ops/CodeQL checks are revalidated, and the Oracle API-build disk reserve is green. Its earlier green checks do not authorize an API image build or deployment.
+
+### Prioritized next queue
+1. Review the Run 51 source diff and append-only docs; commit/push/open its PR from this exact base.
+2. Re-read the PR's remote head after publishing; require exact-head CI/CD, CodeQL, Ops, and browser-flow success. Continue a separate safe workstream while CI runs.
+3. Merge only after current-head mergeability and fresh observer state are directly confirmed; watch main CI/Pages deploy and repeat production smoke.
+4. Keep API port 4002 primary and 4001 rollback/canary; do not run an API build/deploy until free disk exceeds the 8.85 GB reserve and the formal observer gate clears.
+5. On 2026-10-28, recheck the official Node.js 26 status and PR #1531 head/base before considering that PR; do not infer LTS solely from the calendar.
+
+---
+
 ## Current checkpoint — 2026-10-27 20:34 TRT / 17:34 UTC
 
 - **Main/production:** PR #1574 is merged as `651a87b4ea781f7f4a40df966d0432f740fb9dbc`. Main CI/CD run #3840 (`40550612829`) has frontend quality, API test/build, development/production builds, Lighthouse budgets, and Browser flows green; CodeQL (`40550612793`) and Ops (`40550612898`) are green. Pages has published `651a87...`; the final public-shell/81-province verification was still in progress at the last direct check. Public `/`, `/izmir/`, and `/en/istanbul/` all return HTTP 200 with exact `651a87...` revision parity; API readiness is HTTP 200/no-store and CORS is correct. API runtime remains `295543ad98644d812e3808a2c67c64d769983130` on port 4002; keep 4001 as rollback/canary.
