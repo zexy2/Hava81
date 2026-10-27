@@ -104,7 +104,7 @@ test.describe('map view', () => {
       await expectTouchTarget(popupClose, 'popup close');
       await expectNoOverlap(
         popupClose,
-        page.locator('.weather-map__popup-content h4'),
+        page.locator('.weather-map__popup-content h3'),
         'popup close vs heading'
       );
     }

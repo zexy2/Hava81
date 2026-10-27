@@ -89,6 +89,26 @@ test.describe('map live province temperatures', () => {
     await setWidth(page, 390, 844);
     await page.goto('/istanbul/?view=map');
 
+    // The all-province atlas is intentionally hidden at the default zoom (6).
+    // Zoom to 8 before asserting live province temperatures, matching the UI contract.
+    const zoomIn = page.locator('.leaflet-control-zoom-in');
+    const zoomHint = page.locator('.weather-map__zoom-hint');
+    await expect(zoomIn).toBeVisible();
+    await expect(zoomHint).toBeVisible();
+    const provinceResponse = page.waitForResponse(response => {
+      const { pathname } = new URL(response.url());
+      return pathname.endsWith('/api/v1/weather/provinces') && response.ok();
+    });
+
+    // Wait for each Leaflet zoom animation before the next click; a rapid second
+    // click can be ignored while the first zoom is still in flight.
+    for (let attempt = 0; attempt < 3 && (await zoomHint.count()) > 0; attempt += 1) {
+      await zoomIn.click();
+      await expect.poll(() => zoomHint.count(), { timeout: 1500 }).toBe(0).catch(() => undefined);
+    }
+    await expect(zoomHint).toHaveCount(0);
+    await expect(provinceResponse).resolves.toBeTruthy();
+
     const bursa = page.locator('.weather-map__plate-marker').filter({ hasText: '16' });
     await expect(bursa).toBeVisible();
     await expect(bursa.locator('.weather-map__plate-temp')).toHaveText('18°');
