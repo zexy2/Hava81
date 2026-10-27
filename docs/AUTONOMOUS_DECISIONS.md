@@ -976,3 +976,16 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - JavaScript Date parsing can accept space-separated date-time strings even though the Hava81 BFF emits ISO timestamps with a T separator. The calendar guard matched only T, so an impossible day in a space-separated forecast hourly or fetchedAt value could bypass the component check on runtimes that normalize it.
 - Extend the calendar-component detector to recognize either T or a space separator and add negative regressions for both hourly and metadata timestamps. Preserve date-only forecast handling, the current-weather timezone-qualified contract, valid leap days, and all freshness thresholds.
 - Client-boundary validation and tests only. Do not change provider requests, API runtime, scoring, weather values, or safety guidance.
+
+## 2026-10-27 — Audit the deferred notification panel with axe
+
+- The existing notification checks verify the blocked opt-in button's contrast and 320px/200% text reflow, but they do not run an accessibility-tree audit against the lazy-loaded alert panel itself.
+- Add a scoped axe WCAG A/AA and best-practice audit of the real panel in Turkish/light at 320px, English/dark at 390px, and Turkish/dark at 1280px. Keep browser permission denied so the test exercises the actual blocked-action/help relationship without sending notifications or relying on real weather.
+- This is test-only coverage. Do not change alert thresholds, provenance, notification permission behavior, weather freshness, or safety guidance unless a reproducible violation proves a runtime fix is necessary.
+
+
+## 2026-10-27 — Scope axe-core CSP bypass to the test that injects it
+
+- The blocked-notification axe audit failed before the scan because Playwright's `page.addScriptTag({ path })` injects inline script content and the generated production CSP correctly blocks it. This is a test-harness incompatibility, not a product accessibility violation.
+- Use the repository's established `test.use({ bypassCSP: true })` pattern inside a dedicated Playwright `describe` containing only this axe audit. Do not loosen the generated CSP, add `unsafe-inline`, or change production response headers.
+- Keep the bypass local to the test fixture; the scan must still run against the real rendered deferred-alert panel and keep notification permission denied.
