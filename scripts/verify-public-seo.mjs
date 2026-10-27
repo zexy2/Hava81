@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+/* global process, fetch, AbortSignal, setTimeout, console */
 // Check what GitHub Pages actually serves, not just the locally generated dist.
 import { provinceNamesBySlug } from './lib/live-audit-city-catalog.mjs';
+import { cityCopy } from './lib/city-pages.mjs';
 
 const HOME_SEO = {
   tr: {
@@ -41,7 +43,7 @@ const pageTitle = html => html.match(/<title>([^<]+)<\/title>/i)?.[1] ?? null;
 function metaContent(html, attributeName, expectedValue) {
   const matches = tags(html, 'meta').filter(tag => attribute(tag, attributeName) === expectedValue);
   if (matches.length !== 1) {
-    throw new Error(`Expected exactly one meta ${attributeName}=\"${expectedValue}\"`);
+    throw new Error(`Expected exactly one meta ${attributeName}="${expectedValue}"`);
   }
   return attribute(matches[0], 'content');
 }
@@ -76,6 +78,17 @@ function verifyHome(lang, html) {
       alternateHref(html, 'x-default') !== origin + '/') {
     throw new Error('Homepage hreflang mismatch');
   }
+  const homeImage = origin + '/hava81-social-card.png?v=20261022';
+  if (metaContent(html, 'property', 'og:image') !== homeImage ||
+      metaContent(html, 'property', 'og:image:type') !== 'image/png' ||
+      metaContent(html, 'property', 'og:image:width') !== '1200' ||
+      metaContent(html, 'property', 'og:image:height') !== '630' ||
+      metaContent(html, 'property', 'og:image:alt') !== expected.title ||
+      metaContent(html, 'name', 'twitter:card') !== 'summary_large_image' ||
+      metaContent(html, 'name', 'twitter:image') !== homeImage ||
+      metaContent(html, 'name', 'twitter:image:alt') !== expected.title) {
+    throw new Error('Homepage social image metadata mismatch');
+  }
   const ld = structuredData(html);
   if (ld['@type'] !== 'WebSite' || ld.name !== 'Hava81' || ld.url !== url ||
       ld.inLanguage !== lang || ld.description !== expected.description) {
@@ -106,12 +119,48 @@ async function getText(path) {
 }
 function verifyCity(slug, name, lang, html) {
   const url = origin + cityPathFor(slug, lang);
+  const trUrl = origin + cityPathFor(slug, 'tr');
+  const enUrl = origin + cityPathFor(slug, 'en');
   const expectedTitle = cityTitle(name, lang);
+  const copy = cityCopy({ name, region: '' }, lang);
+  const image = origin + '/og/' + slug + '.jpg';
+  const htmlTags = tags(html, 'html');
   if (canonical(html) !== url) throw new Error('Canonical URL mismatch');
   if (pageTitle(html) !== expectedTitle) throw new Error('City title mismatch');
+  if (htmlTags.length !== 1 || attribute(htmlTags[0], 'lang') !== lang) {
+    throw new Error('City language mismatch');
+  }
+  if (metaContent(html, 'name', 'description') !== copy.description) {
+    throw new Error('City meta description mismatch');
+  }
+  if (metaContent(html, 'property', 'og:url') !== url ||
+      metaContent(html, 'property', 'og:title') !== expectedTitle ||
+      metaContent(html, 'property', 'og:description') !== copy.description ||
+      metaContent(html, 'name', 'twitter:title') !== expectedTitle ||
+      metaContent(html, 'name', 'twitter:description') !== copy.description) {
+    throw new Error('City social metadata mismatch');
+  }
+  if (metaContent(html, 'property', 'og:image') !== image ||
+      metaContent(html, 'property', 'og:image:type') !== 'image/jpeg' ||
+      metaContent(html, 'property', 'og:image:width') !== '1200' ||
+      metaContent(html, 'property', 'og:image:height') !== '630' ||
+      metaContent(html, 'property', 'og:image:alt') !== expectedTitle ||
+      metaContent(html, 'name', 'twitter:card') !== 'summary_large_image' ||
+      metaContent(html, 'name', 'twitter:image') !== image ||
+      metaContent(html, 'name', 'twitter:image:alt') !== expectedTitle) {
+    throw new Error('City social image metadata mismatch');
+  }
+  if (alternateHref(html, 'tr') !== trUrl ||
+      alternateHref(html, 'en') !== enUrl ||
+      alternateHref(html, 'x-default') !== trUrl) {
+    throw new Error('City hreflang mismatch');
+  }
   const ld = structuredData(html);
-  if (ld.url !== url || ld.name !== expectedTitle || ld.about?.name !== name) {
-    throw new Error('JSON-LD province, title or URL mismatch');
+  const homeUrl = origin + (lang === 'en' ? '/en/' : '/');
+  if (ld['@type'] !== 'WebPage' || ld.url !== url || ld.name !== expectedTitle ||
+      ld.description !== copy.description || ld.about?.name !== name ||
+      ld.inLanguage !== lang || ld.isPartOf?.url !== homeUrl) {
+    throw new Error('JSON-LD province, title, description, language or URL mismatch');
   }
 }
 const provinces = [...provinceNamesBySlug.entries()];
