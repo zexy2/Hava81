@@ -1005,3 +1005,7 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-27 — service-worker install requires a bootable app shell
 - A successful HTTP 200 root response is not enough to install a new offline shell. Require at least one same-origin JavaScript entrypoint under /assets before caching the root document; otherwise reject the install and delete the incomplete versioned cache so the previously active worker remains authoritative.
 - Keep optional manifest failures non-blocking only after the required app shell has been secured. Do not loosen CSP or treat an empty shell as a valid offline fallback.
+
+## 2026-10-28 — avoid repeated SVG geometry reads during forecast chart interaction
+- ForecastChartPlot needs the curve length only when memoized chart geometry changes (hourly samples, display interval, temperature unit, or measured plot width). Pointer-driven highlighting does not alter the path; keep getTotalLength() out of every pointer-triggered render to avoid unnecessary synchronous SVG geometry reads.
+- Regression coverage stubs SVGElement.getTotalLength and confirms pointer-only highlight rerenders do not repeat the measurement. Keep the draw-in animation measurement when chart geometry changes; weather inputs, scores, and accessibility semantics remain unchanged.
