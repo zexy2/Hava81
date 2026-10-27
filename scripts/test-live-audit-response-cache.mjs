@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLiveAuditResponseCache } from './lib/live-audit-response-cache.mjs';
@@ -37,6 +38,63 @@ test('captures one live response, then replays it with safe headers', async () =
   assert.equal(second.calls.fulfilled[0].headers['access-control-allow-origin'], '*');
   assert.equal(second.calls.fulfilled[0].headers['content-encoding'], undefined);
   assert.deepEqual(cache.stats, { captured: 1, replayed: 1, uncached: 0 });
+});
+
+test('refreshes cached live responses before the bounded audit cache expires', async () => {
+  let currentTime = 0;
+  const cache = createLiveAuditResponseCache({ maxAgeMs: 120_000, now: () => currentTime });
+  const first = makeRoute();
+  await cache.handle(first, 'tr');
+
+  currentTime = 119_999;
+  const stillFresh = makeRoute();
+  await cache.handle(stillFresh, 'tr');
+  assert.equal(stillFresh.calls.fetch, 0);
+
+  currentTime = 120_000;
+  const refreshed = makeRoute();
+  await cache.handle(refreshed, 'tr');
+  assert.equal(refreshed.calls.fetch, 1);
+  assert.deepEqual(cache.stats, { captured: 2, replayed: 1, uncached: 0 });
+});
+
+test('respects advertised current-weather freshness and does not cache expired evidence', async () => {
+  let currentTime = 0;
+  const cache = createLiveAuditResponseCache({
+    maxAgeMs: 120_000,
+    freshnessSafetyMarginMs: 30_000,
+    now: () => currentTime,
+  });
+  const freshBody = () => JSON.stringify({ meta: { fetchedAt: new Date(currentTime).toISOString(), freshForSeconds: 60 } });
+  await cache.handle(makeRoute({ body: freshBody() }), 'tr');
+
+  currentTime = 29_999;
+  const stillFresh = makeRoute({ body: freshBody() });
+  await cache.handle(stillFresh, 'tr');
+  assert.equal(stillFresh.calls.fetch, 0);
+
+  currentTime = 30_000;
+  const expired = makeRoute({ body: freshBody() });
+  await cache.handle(expired, 'tr');
+  assert.equal(expired.calls.fetch, 1);
+  assert.deepEqual(cache.stats, { captured: 2, replayed: 1, uncached: 0 });
+});
+
+test('does not cache malformed JSON or provider freshness metadata without a valid lifetime', async () => {
+  for (const body of [
+    '{not-json',
+    JSON.stringify({ meta: { fetchedAt: new Date(0).toISOString(), freshForSeconds: 20 } }),
+    JSON.stringify({ meta: { fetchedAt: 'not-a-date', freshForSeconds: 300 } }),
+  ]) {
+    const cache = createLiveAuditResponseCache({ now: () => 0 });
+    const first = makeRoute({ body });
+    const second = makeRoute({ body });
+    await cache.handle(first, 'tr');
+    await cache.handle(second, 'tr');
+    assert.equal(first.calls.fetch, 1);
+    assert.equal(second.calls.fetch, 1);
+    assert.deepEqual(cache.stats, { captured: 0, replayed: 0, uncached: 2 });
+  }
 });
 
 test('distinct languages, cities and queries never share an API response', async () => {

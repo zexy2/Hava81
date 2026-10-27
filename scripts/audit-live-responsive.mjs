@@ -212,5 +212,5 @@ await writeLiveAuditResults(options.output, {
   results,
 });
 console.log(`Responsive audit: ${results.length - failed.length}/${results.length} passed.`);
-console.log(`Live API responses: ${responseCache.stats.captured} captured, ${responseCache.stats.replayed} safely replayed, ${responseCache.stats.uncached} uncached (failures/non-JSON/oversized).`);
+console.log(`Live API responses: ${responseCache.stats.captured} captured, ${responseCache.stats.replayed} safely replayed, ${responseCache.stats.uncached} uncached (failures/non-JSON/oversized/unusable freshness).`);
 if (failed.length) process.exitCode = 1;
