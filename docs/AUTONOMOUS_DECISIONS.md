@@ -937,3 +937,13 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 
 - Existing cross-cutting axe checks cover the dashboard, Planla, and settings but not the dedicated map and comparison surfaces. Add real-Chromium axe scans for WCAG 2.0/2.1/2.2 A/AA and best practices in Turkish/light at 390px and English/dark at 1280px, waiting for the map container and live comparison rows before scanning.
 - Keep map tiles deterministic with the existing fixture helper. This is test-only; no production weather, API, or UI behavior changes.
+
+## 2026-10-27 — Lock the multi-day outlook eligibility and freshness contract
+
+- The panel deliberately returns no region when fewer than two usable local-day summaries are available, and it must also stay hidden when forecast metadata is stale. Keep these eligibility/freshness contracts separate from E2E timing; do not weaken production forecast rules to make a test pass.
+- Add deterministic component coverage using the fixed 08:00 Istanbul-local test clock: a 12-hour same-day fixture protects the minimum-day rule, while a full five-day fixture with a fetch time three hours old protects the freshness gate. The existing five-day fresh test protects the positive path. This is test-only and does not change production weather or guidance.
+
+## 2026-10-27 — Treat local-preview Lighthouse swings as environmental until corroborated
+
+- Main runs #3831 and #3838 audited the same local-preview route (http://127.0.0.1:4173/en/istanbul/) with identical JavaScript, stylesheet, and font transfer sizes, but benchmarkIndex moved from 1233.5 to 3490, performance score from 61 to 76, LCP from 3.67 s to 3.08 s, and TBT from 1,759 ms to 696.5 ms. The changes between these runs were test/operations/docs-only, so this is not evidence of a runtime bundle improvement or regression; host/CPU variance is the likely driver.
+- Do not refactor or split bundles based on one local-preview Lighthouse score. Require repeated production measurements and correlate transfer sizes and main-thread profiles before changing runtime code.

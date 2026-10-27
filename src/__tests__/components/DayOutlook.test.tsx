@@ -110,6 +110,40 @@ describe('coming days and weekend compare (F4)', () => {
     expect(days[0]).not.toHaveTextContent('tahmini');
   });
 
+  it('hides the multi-day outlook when fewer than two local days are usable', () => {
+    // The 12-hour fixture stays inside one Istanbul-local date at the pinned test clock.
+    render(
+      <SettingsProvider>
+        <DayOutlookPanel
+          weather={weatherFor('İstanbul')}
+          hourly={series(() => false).slice(0, 12)}
+          forecastMeta={meta()}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  });
+
+  it('hides the multi-day outlook when forecast metadata is stale', () => {
+    const staleMeta = {
+      ...meta(),
+      fetchedAt: new Date(NOW - 3 * HOUR),
+    };
+
+    render(
+      <SettingsProvider>
+        <DayOutlookPanel
+          weather={weatherFor('İstanbul')}
+          hourly={series(() => false)}
+          forecastMeta={staleMeta}
+        />
+      </SettingsProvider>
+    );
+
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  });
+
   it('picks the weekend winner by that day, not by the next 12 hours', async () => {
     // İzmir is wet today, dry on Saturday; İstanbul is dry today, wet all Saturday daylight.
     const todayRain = (time: number) => time < NOW + 12 * HOUR;
