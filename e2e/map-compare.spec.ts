@@ -335,7 +335,9 @@ test.describe('compare view', () => {
       await expect(compare).toBeVisible();
       await expect(compare).not.toHaveAttribute('aria-current');
       await compare.click();
-      await expect(page.getByRole('heading', { name: /Şehir karşılaştırması/i })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 1, name: /Şehir karşılaştırması/i })
+      ).toBeVisible();
       await expect(compare).toHaveAttribute('aria-current', 'page');
       await expect(page.locator('.atlas-dashboard')).toHaveCount(0);
       await expect(compare).not.toHaveAttribute('aria-pressed');

@@ -228,9 +228,9 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
       <header className="hava81-compare__header">
         <div>
           <span className="atlas-kicker">{t('weather.favoriteCities')}</span>
-          <h2 id="hava81-compare-title" ref={headingRef} tabIndex={-1}>
+          <h1 id="hava81-compare-title" ref={headingRef} tabIndex={-1}>
             {t('hava81.compare.title')}
-          </h2>
+          </h1>
         </div>
         {freshRows.length >= 2 && leaders.length > 0 ? (
           <div className="hava81-compare__winner" role="status">
@@ -276,7 +276,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
             <span className="hava81-compare__empty-bar" />
             <span className="hava81-compare__empty-bar" />
           </div>
-          <h3>{t('hava81.compare.emptyTitle')}</h3>
+          <h2>{t('hava81.compare.emptyTitle')}</h2>
           <p>{t('hava81.compare.needTwo')}</p>
           <p className="hava81-compare__empty-tip">{t('hava81.compare.emptyTip')}</p>
           {onExplore ? (
@@ -338,13 +338,13 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                   )
                 : t('hava81.compare.precipitationUnknown');
               return (
-                <article
+                <div
                   className={`hava81-compare__city${isLeader(row) ? ' is-winner' : ''}`}
                   role="listitem"
                   key={row.weather.cityName}
                 >
                   <header>
-                    <h3>{row.weather.cityName}</h3>
+                    <h2>{row.weather.cityName}</h2>
                     <div className="hava81-compare__score-wrap">
                       <small>{t(`hava81.dailyPlan.bands.${headline.band}`)}</small>
                       <strong className="hava81-compare__score">
@@ -434,7 +434,7 @@ export function ComparePanel({ cities, language, onExplore }: ComparePanelProps)
                     ) : null}
                   </div>
                   <small>{row.weather.description}</small>
-                </article>
+                </div>
               );
             })}
           </div>
