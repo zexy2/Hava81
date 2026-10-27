@@ -822,3 +822,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - A one-call short-circuit alone still allowed the five-minute timer to repeat the same quota-exhausted `/pulls` request on every subsequent interval. When the previous snapshot records `auth_mode=anonymous`, `rate_limit_remaining=0`, and a future `rate_limit_reset`, skip all GitHub API requests until that epoch passes.
 - The cooldown is bypassed immediately when `HAVA81_GITHUB_TOKEN` is configured, and expired/malformed reset values do not suppress a new attempt. During cooldown the observer continues collecting production/host signals and reports GitHub state as unknown; no stale green PR/main state can authorize a merge or deploy.
 - This is backoff, not authentication: the fine-grained repository-scoped read-only token remains required for reliable five-minute GitHub observation.
+
+
+## 2026-10-27 — Preconnect from the SPA shell without duplicate generated-page hints
+
+- A direct production Lighthouse report identified https://api.hava81.zekiakgul.dev as the strongest preconnect candidate, with estimated 300ms LCP savings. The root SPA document had no hint even though the first visible weather decision depends on that cross-origin API.
+- Add one early preconnect with crossorigin to the root HTML. Province-page generation already derives from that HTML, so do not inject a second preconnect or redundant DNS-prefetch; generated city pages must contain exactly one hint. The static 404 page removes the hint because it has no weather request to make.
+- This is a resource-discovery optimization only. Do not change API requests, provider provenance, freshness, forecast values, scores, or safety guidance. Keep the change only if post-deployment production Lighthouse remains healthy and the real API still responds successfully.

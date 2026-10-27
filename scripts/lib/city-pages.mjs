@@ -269,9 +269,6 @@ const bootstrapWeatherScript = (cityName, expectedPath, forcedLang) => `    <scr
       })();
     </script>`;
 
-const API_CONNECTION_HINTS =
-  '    <link rel="dns-prefetch" href="//api.hava81.zekiakgul.dev" />\n    <link rel="preconnect" href="https://api.hava81.zekiakgul.dev" crossorigin />';
-
 function replaceOnce(html, pattern, replacement, label) {
   const matches = html.match(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'));
   if (!matches || matches.length !== 1) {
@@ -357,7 +354,6 @@ export function buildCityPage(baseHtml, province, provinces, lang) {
       inLanguage: lang,
     },
   });
-  html = insertBefore(html, '    <link rel="canonical"', API_CONNECTION_HINTS, 'its canonical link');
   html = insertBefore(html, '    <script type="module"', bootstrapWeatherScript(province.name, path, lang === 'en' ? 'en' : null), 'the Vite module entry script');
   return withRootContent(html, staticCitySummary(province, provinces, lang));
 }
@@ -386,6 +382,12 @@ export function buildHomePage(baseHtml, lang) {
 /** GitHub Pages serves this with HTTP 404 for every unknown path; the SPA adds suggestions. */
 export function buildNotFoundPage(baseHtml) {
   let html = replaceOnce(baseHtml, /<title>[^<]*<\/title>/, `<title>${NOT_FOUND_COPY.title}</title>`, 'title');
+  html = replaceOnce(
+    html,
+    /<link rel="preconnect" href="[^"]+" crossorigin \/>/,
+    '',
+    'API preconnect'
+  );
   html = replaceOnce(html, /\s*<link rel="canonical" href="[^"]+" \/>/, '', 'canonical');
   html = insertBefore(html, '    <title>', '    <meta name="robots" content="noindex" />', 'its title');
   const content =
