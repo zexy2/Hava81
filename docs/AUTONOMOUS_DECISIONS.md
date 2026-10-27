@@ -1001,3 +1001,7 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 ## 2026-10-27 — accessible empty forecast state
 - When a fresh forecast response contains no hourly or daily rows, keep the existing localized “No data” message and expose it as role=status so assistive technology can announce the state change.
 - This is presentation semantics only. Never replace missing forecast evidence with zero values or fabricated weather, and keep stale evidence governed by the existing fail-closed freshness rules.
+
+## 2026-10-27 — service-worker install requires a bootable app shell
+- A successful HTTP 200 root response is not enough to install a new offline shell. Require at least one same-origin JavaScript entrypoint under /assets before caching the root document; otherwise reject the install and delete the incomplete versioned cache so the previously active worker remains authoritative.
+- Keep optional manifest failures non-blocking only after the required app shell has been secured. Do not loosen CSP or treat an empty shell as a valid offline fallback.
