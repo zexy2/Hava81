@@ -101,7 +101,7 @@
     --radius-xl: 26px;
     --color-atlas-field: #f0f5fb;
     --color-atlas-ink: #13264b;
-    --color-atlas-muted: #506985; /* readable small text on pale cards (WCAG AA) */
+    --color-atlas-muted: #4d6685; /* clears WCAG AA on the tinted night-hour band */
     --color-atlas-line: #dbe5f2;
     --color-control-line: #c7d7eb;
     --color-aegean: #226bd9;

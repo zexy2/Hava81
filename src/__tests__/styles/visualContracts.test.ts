@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import app from '../../styles/App.css?inline';
 import offscreen from '../../styles/offscreen-panels.css?inline';
+import settingsPanel from '../../components/SettingsPanel.css?inline';
 import cityTabs from '../../components/CityTabs.css?inline';
 import bottomNav from '../../components/hava81/AtlasBottomNav.css?inline';
 import alerts from '../../components/hava81/DecisionAlertsPanel.css?inline';
@@ -42,7 +43,7 @@ describe('hourly rhythm labels meet WCAG AA on tinted hour columns', () => {
           <ol class="hava81-forecast-atlas__hours">
             <li class="hava81-forecast-atlas__hour is-current"><time>
               <span class="hava81-forecast-atlas__hour-now">Now</span><span>9 PM</span>
-            </time></li>
+            </time><span class="hava81-forecast-atlas__hour-pop" role="group"><span>3%</span></span></li>
             <li class="hava81-forecast-atlas__hour is-day-boundary"><time>
               <span class="hava81-forecast-atlas__hour-day">Tomorrow</span><span>12 AM</span>
             </time></li>
@@ -59,9 +60,11 @@ describe('hourly rhythm labels meet WCAG AA on tinted hour columns', () => {
     const timeLabel = el('.hava81-forecast-atlas__hour time > span:not(.hava81-forecast-atlas__hour-now):not(.hava81-forecast-atlas__hour-day)');
     const nowLabel = el('.hava81-forecast-atlas__hour-now');
     const dayLabel = el('.hava81-forecast-atlas__hour-day');
+    const precipitationLabel = el('.hava81-forecast-atlas__hour-pop');
     const timeColor = computed(timeLabel, 'color');
     const accentColor = computed(nowLabel, 'color');
     const dayAccentColor = computed(dayLabel, 'color');
+    const precipitationColor = computed(precipitationLabel, 'color');
     const backgrounds = mode === 'light'
       ? ['#dde4f2', '#eff0f4']
       : ['#102733', '#173342'];
@@ -72,6 +75,7 @@ describe('hourly rhythm labels meet WCAG AA on tinted hour columns', () => {
     for (const background of backgrounds) {
       expect(contrast(timeColor, background)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(accentColor, background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(precipitationColor, background)).toBeGreaterThanOrEqual(4.5);
     }
   });
 });
@@ -343,5 +347,22 @@ describe('200% text overflow guards', () => {
       expect(computed(target, 'overflow-wrap')).toBe('anywhere');
       expect(computed(target, 'white-space')).not.toBe('nowrap');
     }
+  });
+});
+
+describe('settings version metadata contrast', () => {
+  const html = (mode: 'light' | 'dark') =>
+    '<div class="app" data-color-mode="' + mode + '">' +
+      '<div class="settings-panel"><div class="settings-panel__footer">' +
+        '<p class="settings-panel__version">v2.1.0</p>' +
+      '</div></div></div>';
+
+  it.each(['light', 'dark'] as const)('%s version text meets WCAG AA', mode => {
+    mountStyles([app, settingsPanel]);
+    markup(html(mode));
+
+    const color = computed(el('.settings-panel__version'), 'color');
+    const background = mode === 'light' ? '#f3f7fd' : '#0c2131';
+    expect(contrast(color, background)).toBeGreaterThanOrEqual(4.5);
   });
 });

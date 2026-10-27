@@ -129,7 +129,7 @@
   }
 
   .app .settings-panel__version {
-    color: #5c7696;
+    color: var(--color-atlas-muted);
   }
 
   /* Dark mode is deliberately distinct, not a low-contrast blue overlay. */
