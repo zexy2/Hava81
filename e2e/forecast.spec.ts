@@ -86,7 +86,7 @@ test.describe('hourly atlas', () => {
     await expect(page.getByText(/24 saatlik tahmin sabit kalır/i)).toBeVisible();
     await expect(interval).toHaveAttribute('aria-describedby', /-interval-help$/);
     await expect(
-      interval.getByRole('button', { name: '1sa Her 1 saatte bir göster' })
+      interval.getByRole('button', { name: '1sa Her saat göster' })
     ).toHaveAttribute('aria-pressed', 'true');
     await expect(interval.getByRole('button')).toHaveCount(7);
     for (const hours of [2, 3, 4, 6, 8, 12]) {
