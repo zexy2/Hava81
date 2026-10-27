@@ -870,3 +870,10 @@ A city search is an explicit handoff away from location mode. Clear only the pri
 - The Settings dialog already implements initial focus, Tab/Shift+Tab containment, Escape dismissal, background `inert`, and focus restoration. The existing focused unit test only covered forward Tab when focus was moved outside the panel, leaving both boundary wraps and the full close/restore lifecycle unguarded.
 - Keep the production behavior unchanged and add focused regressions for wrapping from the last control to the first and from the first control to the last, closing on Escape, returning focus to the opener, and removing the temporary background `inert` attribute. Add a mobile Playwright check against the real built app so the keyboard contract is exercised in Chromium as well as JSDOM.
 - This is test-only: do not alter dialog timing, settings persistence, keyboard shortcuts, weather values, provider provenance, freshness, scoring, alerts, or safety guidance. Require lint, type-check, the full unit/coverage suite, production build, and the focused Settings browser suite before merge.
+
+
+## 2026-10-27 — Keep legacy-shell activation resilient to client-enumeration failure
+
+- The one-time migration from the legacy hava81-shell-v1 / hava81-shell-v2 cache reloads open tabs after the new versioned shell is installed and clients.claim() succeeds. A transient rejection from clients.matchAll() previously propagated out of the activation event's waitUntil, rejecting activation even though the new shell was complete and already claimed.
+- A deterministic service-worker VM regression reproduced the rejection before the fix. Treat the legacy tab reload as best-effort housekeeping: catch failures from client enumeration/reload orchestration so they cannot turn a successful shell install into an activation failure. Keep per-client navigation failures isolated.
+- This changes neither the install fail-closed requirement for required boot assets nor runtime cache behavior. Weather/API requests remain network-only, navigation freshness and route identity remain unchanged, and no weather/provider/safety semantics change.
