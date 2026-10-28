@@ -1723,6 +1723,68 @@ class ObserverGithubRunSelectionTests(unittest.TestCase):
         self.assertEqual(pr['checks_collected_at'], previous_pr['checks_collected_at'])
         self.assertEqual(result['signals']['ci_green_prs'], [1502])
 
+    def test_stale_cached_green_checks_are_unknown_and_not_merge_candidates(self) -> None:
+        original_http_get = observer.http_get
+        original_collect_api_deployment = observer.collect_api_deployment
+        requested_urls: list[str] = []
+        pr_sha = 'stale-cached-pr-sha'
+        pr_ref = 'automation/hava81-stale-cached-open-pr'
+        pulls = [{
+            'number': 1505,
+            'title': 'Stale cached open automation PR',
+            'html_url': 'https://example.test/pr/1505',
+            'draft': False,
+            'head': {'ref': pr_ref, 'sha': pr_sha},
+            'base': {'ref': 'main', 'sha': 'main-sha'},
+        }]
+        main_run = {
+            'id': 1, 'run_number': 1, 'name': 'CI/CD Pipeline',
+            'head_sha': 'main-sha', 'head_branch': 'main', 'event': 'push',
+            'status': 'completed', 'conclusion': 'success',
+            'html_url': 'https://example.test/main-ci',
+        }
+        stale_stamp = (datetime.now(timezone.utc) - timedelta(minutes=14)).isoformat().replace('+00:00', 'Z')
+        previous_pr = {
+            'number': 1505, 'head_sha': pr_sha, 'head_ref': pr_ref,
+            'checks_collected_at': stale_stamp,
+            'ci': {'run_id': 301, 'run_number': 301, 'status': 'completed', 'conclusion': 'success', 'url': 'https://example.test/ci', 'failed_jobs': []},
+            'ops': {'run_id': 302, 'run_number': 302, 'status': 'completed', 'conclusion': 'success', 'url': 'https://example.test/ops'},
+            'codeql': {'run_id': 303, 'run_number': 303, 'status': 'completed', 'conclusion': 'success', 'url': 'https://example.test/codeql'},
+        }
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested_urls.append(url)
+            if '/pulls?' in url:
+                payload = pulls
+            elif '/actions/runs?per_page=100' in url:
+                payload = {'workflow_runs': [main_run]}
+            elif '/branches/main' in url:
+                payload = {
+                    'commit': {'sha': 'main-sha', 'commit': {'committer': {'date': observer.now_iso()}}}
+                }
+            else:
+                raise AssertionError(f'unexpected stale-cache lookup: {url}')
+            return {
+                'ok': True, 'status': 200, 'elapsed_ms': 1,
+                'headers': {'x-ratelimit-remaining': '50'}, 'json': payload, 'error': None,
+            }
+
+        try:
+            observer.http_get = fake_http_get
+            observer.collect_api_deployment = lambda latest_main: {
+                'known': True, 'pending': False, 'error': None,
+            }
+            result = observer.collect_github({'github': {'open_automation_prs': [previous_pr]}})
+        finally:
+            observer.http_get = original_http_get
+            observer.collect_api_deployment = original_collect_api_deployment
+
+        self.assertEqual(len(requested_urls), 3, 'stale cached checks do not force a rate-limit-heavy lookup every cycle')
+        self.assertFalse(any('head_sha=' in url for url in requested_urls))
+        self.assertEqual(result['signals']['ci_green_prs'], [])
+        self.assertEqual(result['signals']['ci_merge_candidates'], [])
+        self.assertEqual(result['signals']['ci_unknown_prs'], [1505])
+
     def test_skips_targeted_pr_lookup_near_github_rate_limit(self) -> None:
         original_http_get = observer.http_get
         original_collect_api_deployment = observer.collect_api_deployment
@@ -2497,6 +2559,36 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         result = observer.merge_deploy_readiness(production, host, github, frontend)
         self.assertFalse(result['ok'])
         self.assertEqual(result['blocking_reasons'], ['github_state_unknown', 'api_deploy_unknown'])
+
+
+class ObserverPullRequestCheckFreshnessTests(unittest.TestCase):
+    @staticmethod
+    def green_pr(checks_collected_at: str | None) -> dict[str, object]:
+        return {
+            'checks_collected_at': checks_collected_at,
+            'ci': {'run_id': 1, 'status': 'completed', 'conclusion': 'success'},
+            'ops': {'run_id': 2, 'status': 'completed', 'conclusion': 'success'},
+            'codeql': {'run_id': 3, 'status': 'completed', 'conclusion': 'success'},
+        }
+
+    def test_recent_exact_head_checks_can_be_green(self) -> None:
+        self.assertEqual(observer.pr_gate_state(self.green_pr(observer.now_iso())), 'green')
+
+    def test_stale_or_unknown_check_snapshots_are_not_merge_candidates(self) -> None:
+        stale = (datetime.now(timezone.utc) - timedelta(seconds=14 * 60)).isoformat().replace('+00:00', 'Z')
+        future = (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat().replace('+00:00', 'Z')
+        for stamp in (stale, None, 'not-a-timestamp', future):
+            with self.subTest(checks_collected_at=stamp):
+                self.assertEqual(observer.pr_gate_state(self.green_pr(stamp)), 'unknown')
+
+    def test_fresh_failed_or_running_checks_keep_their_state(self) -> None:
+        failed = self.green_pr(observer.now_iso())
+        failed['ci'] = {'run_id': 1, 'status': 'completed', 'conclusion': 'failure'}
+        self.assertEqual(observer.pr_gate_state(failed), 'failed')
+
+        running = self.green_pr(observer.now_iso())
+        running['ops'] = {'run_id': 2, 'status': 'in_progress', 'conclusion': None}
+        self.assertEqual(observer.pr_gate_state(running), 'running')
 
 
 class ObserverOwnerPolicyTests(unittest.TestCase):

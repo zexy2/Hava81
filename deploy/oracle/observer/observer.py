@@ -56,6 +56,7 @@ GITHUB_COMPARE_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_TIMEOUT_SECONDS = 12.0
 GITHUB_RUNS_FALLBACK_PAGE_SIZE = 30
 PR_CHECK_CACHE_SECONDS = 15 * 60
+PR_MERGE_CANDIDATE_MAX_CHECK_AGE_SECONDS = 10 * 60
 API_DEPLOY_REVIEW_AFTER_SECONDS = 2 * 60 * 60
 BOOT_ASSET_TRANSIENT_RETRY_LIMIT = 2
 SHELL_TRANSIENT_RETRY_LIMIT = 1
@@ -1183,8 +1184,9 @@ def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
     # head checks because every PR produces CI/CD, Ops and CodeQL runs. Reuse a
     # recent exact-SHA snapshot for at most 15 minutes; otherwise do one bounded
     # head-SHA lookup per observer cycle. This avoids spending one GitHub request
-    # every five minutes on the same older open PR while keeping unknown checks
-    # fail-closed when no trustworthy result is available.
+    # every five minutes on the same older open PR. The separate ten-minute gate
+    # below still prevents a cached green snapshot from becoming merge readiness
+    # after it ages out; unknown checks remain fail-closed.
     previous_github = previous.get('github') if isinstance(previous, dict) else None
     previous_prs = previous_github.get('open_automation_prs') if isinstance(previous_github, dict) else None
     previous_by_number = {
@@ -1290,25 +1292,6 @@ def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
             'created_at': run.get('created_at'),
             'updated_at': run.get('updated_at'),
         }
-
-    pending_statuses = {'queued', 'in_progress', 'waiting', 'pending'}
-
-    def pr_gate_state(pr: dict[str, Any]) -> str:
-        # A green product pipeline and CodeQL are not enough: the separate Ops
-        # workflow owns observer/deploy-shell contract tests and must finish too.
-        gates = [pr['ci'], pr['ops'], pr['codeql']]
-        if any(
-            gate['status'] == 'completed' and gate['conclusion'] not in (None, 'success')
-            for gate in gates
-        ):
-            return 'failed'
-        if all(gate['status'] == 'completed' and gate['conclusion'] == 'success' for gate in gates):
-            return 'green'
-        if any(gate['run_id'] is None for gate in gates):
-            return 'unknown'
-        if any(gate['status'] in pending_statuses for gate in gates):
-            return 'running'
-        return 'unknown'
 
     gate_states = {pr['number']: pr_gate_state(pr) for pr in automation_prs}
     ci_green = [number for number, state in gate_states.items() if state == 'green']
@@ -1444,6 +1427,32 @@ def apply_owner_policy(github: dict[str, Any]) -> None:
         and prs_by_number[number].get('base_sha') == main_sha
         and prs_by_number[number].get('mergeable') is True
     ]
+
+
+def pr_gate_state(pr: dict[str, Any]) -> str:
+    """Return a merge-candidate gate state only from a recent exact-head snapshot."""
+    gates = [pr.get(key) if isinstance(pr.get(key), dict) else {} for key in ('ci', 'ops', 'codeql')]
+    pending_statuses = {'queued', 'in_progress', 'waiting', 'pending'}
+    # Freshly observed failures and running jobs are never merge candidates, so
+    # retain those conservative states even if another gate is absent/stale.
+    if any(
+        gate.get('status') == 'completed' and gate.get('conclusion') not in (None, 'success')
+        for gate in gates
+    ):
+        return 'failed'
+    if any(gate.get('status') in pending_statuses for gate in gates):
+        return 'running'
+    if any(gate.get('run_id') is None for gate in gates):
+        return 'unknown'
+
+    age = timestamp_age_seconds(pr.get('checks_collected_at'))
+    if age is None or age < 0 or age > PR_MERGE_CANDIDATE_MAX_CHECK_AGE_SECONDS:
+        return 'unknown'
+    # A green product pipeline and CodeQL are not enough: the separate Ops
+    # workflow owns observer/deploy-shell contract tests and must finish too.
+    if all(gate.get('status') == 'completed' and gate.get('conclusion') == 'success' for gate in gates):
+        return 'green'
+    return 'unknown'
 
 
 def merge_readiness(github: dict[str, Any]) -> dict[str, Any]:

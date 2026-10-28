@@ -28,11 +28,14 @@ current `main` SHA. The file must contain exactly one machine-readable marker:
 Missing, ambiguous, malformed, or unreachable policy fails closed: `owner_policy.known=false`,
 `can_merge=false`, and the candidate list is empty. A paused marker likewise clears all merge
 candidates. Under active policy, candidates must additionally have exact-head CI/CD, Ops and CodeQL
-success, target `main` at the current `main` SHA, be non-draft, and have GitHub `mergeable=true`;
-unknown mergeability or a stale base is not a candidate. This is readiness telemetry only: the
-observer never writes to GitHub, and any merge still requires a fresh direct review of head/base,
-mergeability, approvals and required checks. The status command prints the policy state and error
-so a failed policy fetch cannot be mistaken for an ordinary empty queue.
+success, a `checks_collected_at` snapshot no older than ten minutes, target `main` at the current
+`main` SHA, be non-draft, and have GitHub `mergeable=true`; unknown mergeability, a stale check
+snapshot, or a stale base is not a candidate. The 15-minute cached-check reuse window is retained
+to conserve anonymous GitHub API quota, but cached results older than ten minutes are not advertised
+as merge-ready until refreshed. This is readiness telemetry only: the observer never writes to
+GitHub, and any merge still requires a fresh direct review of head/base, mergeability, approvals and
+required checks. The status command prints the policy state and error so a failed policy fetch
+cannot be mistaken for an ordinary empty queue.
 
 ## GitHub REST authentication
 
