@@ -396,6 +396,8 @@ function FreshDailyPlanPanel({
               style={
                 {
                   '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%`,
+                  // 50–100 mapped to 0–1: the bar under the hour that the strip reads as a chart.
+                  '--bar-scale': Math.min(1, Math.max(0.08, (slot.score - 50) / 50)).toFixed(2),
                 } as CSSProperties
               }
               key={slot.time.toISOString()}
