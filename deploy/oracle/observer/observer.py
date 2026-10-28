@@ -111,7 +111,7 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
                 except (UnicodeDecodeError, json.JSONDecodeError):
                     parsed = None
             body_text: str | None = None
-            if 'html' in content_type.lower():
+            if 'html' in content_type.lower() or 'text/plain' in content_type.lower():
                 try:
                     body_text = body.decode('utf-8')
                 except UnicodeDecodeError:
@@ -1152,6 +1152,8 @@ def collect_github(previous: dict[str, Any] | None = None) -> dict[str, Any]:
             'base_ref': base.get('ref'),
             'base_sha': base.get('sha'),
             'draft': pr.get('draft'),
+            'mergeable': pr.get('mergeable'),
+            'mergeable_state': pr.get('mergeable_state'),
             'ci': {
                 'run_id': ci_run.get('id'),
                 'run_number': ci_run.get('run_number'),
@@ -1376,20 +1378,91 @@ def frontend_deployment_state(frontend_revision: dict[str, Any], main_branch: di
     }
 
 
-def merge_readiness(github: dict[str, Any]) -> dict[str, Any]:
-    """Report whether a non-draft, exact-head-green automation PR is a candidate.
+OWNER_POLICY_MARKER = re.compile(r'(?m)^<!--\s* hava81-autonomous-policy:\s*(active|paused)\s*-->\s*$')
 
-    This signal intentionally does not depend on production health, deployment
-    propagation, API port, or host disk. It is not merge authorization: before
-    a GitHub write, the caller must re-read the PR head and base, verify current
-    mergeability/review state and all required checks, and classify changed-file
-    scope. Those checks can change between observer snapshots.
+
+def parse_owner_policy(text: str | None) -> dict[str, Any]:
+    """Parse one explicit owner mode; absent or ambiguous policy fails closed."""
+    if not isinstance(text, str) or not text.strip():
+        return {
+            'known': False, 'mode': 'unknown', 'paused': True,
+            'error': 'owner_policy_content_unavailable',
+        }
+    matches = OWNER_POLICY_MARKER.findall(text)
+    if len(matches) != 1:
+        return {
+            'known': False, 'mode': 'unknown', 'paused': True,
+            'error': 'owner_policy_marker_missing_or_ambiguous',
+        }
+    mode = matches[0].lower()
+    return {'known': True, 'mode': mode, 'paused': mode == 'paused', 'error': None}
+
+
+def collect_owner_policy(main_sha: str | None) -> dict[str, Any]:
+    """Read policy pinned to the current main SHA; never guess on fetch failure."""
+    if not isinstance(main_sha, str) or not main_sha:
+        return {'known': False, 'mode': 'unknown', 'paused': True, 'error': 'main_sha_unavailable'}
+    result = http_get(
+        f'https://raw.githubusercontent.com/{REPO}/{main_sha}/docs/AUTONOMOUS_DECISIONS.md',
+        timeout=6.0,
+    )
+    if result.get('ok') is not True or not isinstance(result.get('text'), str):
+        return {
+            'known': False,
+            'mode': 'unknown',
+            'paused': True,
+            'error': result.get('error') or f'owner_policy_fetch_failed:{result.get("status")}',
+        }
+    return parse_owner_policy(result['text'])
+
+
+def apply_owner_policy(github: dict[str, Any]) -> None:
+    """Apply the pinned owner mode and exact current-base/mergeability gates in-place."""
+    main_branch = github.get('main_branch') if isinstance(github.get('main_branch'), dict) else {}
+    main_sha = main_branch.get('sha') if main_branch.get('known') is True else None
+    policy = collect_owner_policy(main_sha)
+    github['owner_policy'] = policy
+    signals = github.get('signals') if isinstance(github.get('signals'), dict) else {}
+    github['signals'] = signals
+    candidate_numbers = signals.get('ci_merge_candidates')
+    candidate_numbers = candidate_numbers if isinstance(candidate_numbers, list) else []
+    if policy.get('known') is not True or policy.get('paused') is not False or not main_sha:
+        signals['ci_merge_candidates'] = []
+        return
+
+    prs = github.get('open_automation_prs')
+    prs_by_number = {
+        pr.get('number'): pr
+        for pr in (prs if isinstance(prs, list) else [])
+        if isinstance(pr, dict) and pr.get('number') is not None
+    }
+    signals['ci_merge_candidates'] = [
+        number
+        for number in candidate_numbers
+        if isinstance(prs_by_number.get(number), dict)
+        and prs_by_number[number].get('base_ref') == 'main'
+        and prs_by_number[number].get('base_sha') == main_sha
+        and prs_by_number[number].get('mergeable') is True
+    ]
+
+
+def merge_readiness(github: dict[str, Any]) -> dict[str, Any]:
+    """Report candidates only when owner policy and exact-head GitHub state are known.
+
+    This is readiness telemetry, not merge authorization. Before any GitHub
+    write, re-read the current PR head/base, mergeability, review state and all
+    required checks; these can change between observer snapshots.
     """
     reasons: list[str] = []
+    policy = github.get('owner_policy') if isinstance(github.get('owner_policy'), dict) else {}
     github_signals = github.get('signals') or {}
+    if policy.get('known') is not True:
+        reasons.append('owner_policy_unknown')
+    elif policy.get('paused') is True:
+        reasons.append('owner_directive_paused')
     if github.get('ok') is not True:
         reasons.append('github_state_unknown')
-    elif not github_signals.get('ci_merge_candidates'):
+    elif policy.get('known') is True and policy.get('paused') is False and not github_signals.get('ci_merge_candidates'):
         reasons.append('no_green_merge_candidate')
     return {'ok': not reasons, 'blocking_reasons': reasons}
 
@@ -1483,6 +1556,10 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
             )
         },
         'ci_merge_candidates': ((github.get('signals') or {}).get('ci_merge_candidates')),
+        'owner_policy': {
+            key: (github.get('owner_policy') or {}).get(key)
+            for key in ('known', 'mode', 'paused', 'error')
+        },
         'stale_hava81_browser_processes': ((host.get('browser_processes') or {}).get('stale_count')),
         'prs': [
             {
@@ -1567,6 +1644,7 @@ def main() -> int:
     production = collect_production()
     host = collect_host()
     github = collect_github(previous)
+    apply_owner_policy(github)
     frontend_revision = production.get('frontend_revision') or {}
     frontend_revision.update(frontend_deployment_state(frontend_revision, github.get('main_branch')))
     production['frontend_revision'] = frontend_revision
