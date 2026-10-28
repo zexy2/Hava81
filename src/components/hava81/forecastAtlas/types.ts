@@ -1,3 +1,4 @@
+import type { ClockFormatter } from './useForecastFormatters';
 import type { DailyForecast, HourlyForecast } from '../../../types';
 
 /** An hourly sample prepared for display (converted unit, 0-1 rain chance). */
@@ -26,8 +27,8 @@ export interface ForecastAtlasClock {
   temperatureSymbol: string;
   atLocationTime: (date: Date) => Date;
   formatDay: (date: Date) => string;
-  timeFormatter: Intl.DateTimeFormat;
-  hourTileFormatter: Intl.DateTimeFormat;
+  timeFormatter: ClockFormatter;
+  hourTileFormatter: ClockFormatter;
   currentLocationDateKey: string;
   currentLocationHourKey: string;
 }

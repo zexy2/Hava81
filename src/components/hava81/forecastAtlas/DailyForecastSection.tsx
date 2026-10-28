@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { capitalizeFirst } from '../../../utils/format';
 import { formatPrecipitationAmount } from '../../../utils/precipitation';
 import { WeatherSymbol } from '../WeatherSymbol';
 import { PRECIPITATION_THRESHOLD } from './constants';
@@ -19,7 +20,7 @@ export function DailyForecastSection({
   preciseTemperatureFormatter,
   clock,
 }: DailyForecastSectionProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentLocationDateKey, formatDay, locale, temperatureSymbol } = clock;
   // Every day's range bar sits on one shared scale, so the days compare at a glance.
   const weekMin = Math.min(...dailyData.map(day => day.convertedMinExact));
@@ -88,7 +89,9 @@ export function DailyForecastSection({
               />
               {/* Description and rain read as one detail line under the day name. */}
               <span className="hava81-forecast-atlas__day-detail">
-                <span className="hava81-forecast-atlas__description">{day.description}</span>
+                <span className="hava81-forecast-atlas__description">
+                  {capitalizeFirst(day.description, i18n.language)}
+                </span>
                 {hasPrecipitation ? (
                   <span
                     className={

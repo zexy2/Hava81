@@ -4,6 +4,8 @@ import { useSettings } from '../../context';
 import type { AirQuality, NormalizedWeatherData } from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
+import { getCityMetadata } from '../../constants/cityMetadata';
+import { formatCityClock } from '../../utils/format';
 import './EnvironmentRail.css';
 
 const WIND_DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
@@ -136,15 +138,10 @@ export function EnvironmentRail({
     weather.meta.timezoneOffsetSeconds,
   ]);
 
-  const timeFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'UTC',
-      }),
-    [locale]
-  );
+  const timeFormatter = {
+    format: (date: Date) =>
+      formatCityClock(date, { language: settings.language, timezoneOffsetSeconds: 0 }),
+  };
 
   const numberFormatter = useMemo(
     () =>
@@ -329,7 +326,9 @@ export function EnvironmentRail({
         <strong className="environment-rail__value">
           {mapExpanded ? t('weather.hideMap') : t('weather.showMap')}
         </strong>
-        <span className="environment-rail__detail">{weather.cityName}</span>
+        <span className="environment-rail__detail">
+          {getCityMetadata(weather.cityName)?.name ?? weather.cityName}
+        </span>
       </button>
     </section>
   );

@@ -5,6 +5,7 @@ import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness'
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
+import { capitalizeFirst, formatCityDateLabel } from '../../utils/format';
 import { withAtlasView } from '../../utils/atlasView';
 import { WeatherSymbol } from './WeatherSymbol';
 import type {
@@ -97,12 +98,10 @@ export const DecisionGlance = memo(function DecisionGlance({
   const plan = snapshot?.plan ?? null;
   const cityLocalDate = new Date(now + weather.meta.timezoneOffsetSeconds * 1000);
   const dateTime = `${cityLocalDate.getUTCFullYear()}-${String(cityLocalDate.getUTCMonth() + 1).padStart(2, '0')}-${String(cityLocalDate.getUTCDate()).padStart(2, '0')}`;
-  const dateLabel = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'tr-TR', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(cityLocalDate);
+  const dateLabel = formatCityDateLabel(new Date(now), {
+    language: i18n.language,
+    timezoneOffsetSeconds: weather.meta.timezoneOffsetSeconds,
+  });
   const bestRange = snapshot?.bestWindow;
   const bestHours = bestRange
     ? formatBestWindowTime({
@@ -228,7 +227,7 @@ export const DecisionGlance = memo(function DecisionGlance({
             </span>
             <span>
               <small>{t('hava81.glance.summaryLabel')}</small>
-              <strong>{weather.description}</strong>
+              <strong>{capitalizeFirst(weather.description, i18n.language)}</strong>
             </span>
           </div>
         </div>

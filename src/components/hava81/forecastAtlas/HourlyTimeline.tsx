@@ -1,6 +1,7 @@
 import type { CSSProperties, RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../context';
+import { capitalizeFirst } from '../../../utils/format';
 import { formatPrecipitationAmount } from '../../../utils/precipitation';
 import { WeatherSymbol } from '../WeatherSymbol';
 import { PRECIPITATION_THRESHOLD } from './constants';
@@ -25,7 +26,7 @@ export function HourlyTimeline({
   clock,
   current,
 }: HourlyTimelineProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { convertTemperature } = useSettings();
   const { atLocationTime, currentLocationHourKey, formatDay, hourTileFormatter, locale } = clock;
 
@@ -92,7 +93,10 @@ export function HourlyTimeline({
             <WeatherSymbol
               code={isCurrentHour && current ? current.icon : hour.icon}
               size={28}
-              label={isCurrentHour && current ? current.description : hour.description}
+              label={capitalizeFirst(
+                isCurrentHour && current ? current.description : hour.description,
+                i18n.language
+              )}
               className="hava81-forecast-atlas__hour-symbol"
             />
             <strong>
@@ -101,7 +105,7 @@ export function HourlyTimeline({
                 : hour.convertedTemp}
               °
             </strong>
-            {((precipitation ?? 0) > 0 || precipitationAmount) ? (
+            {(precipitation ?? 0) > 0 || precipitationAmount ? (
               <span
                 className={
                   (precipitation ?? 0) >= PRECIPITATION_THRESHOLD * 100 ||

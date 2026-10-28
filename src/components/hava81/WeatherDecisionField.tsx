@@ -17,7 +17,12 @@ import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness'
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { getDecisionSnapshot } from '../../domain/decision/decisionSnapshot';
 import { getNextChange } from '../../domain/decision/nextChange';
-import { formatCityTime } from '../../utils/format';
+import {
+  capitalizeFirst,
+  formatCityClock,
+  formatCityDateLabel,
+  formatCityTime,
+} from '../../utils/format';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import { getWeatherDecisions, type WeatherDecision } from '../../utils/weatherDecisions';
 import { WeatherIllustration } from './WeatherIllustration';
@@ -76,34 +81,6 @@ export function WeatherDecisionField({
       }),
     [locale]
   );
-  const dateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'UTC',
-      }),
-    [locale]
-  );
-  const compactDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'UTC',
-      }),
-    [locale]
-  );
-  const timeFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-    [locale]
-  );
-
   const formatTemperature = (temperature: number): string =>
     `${numberFormatter.format(Math.round(convertTemperature(temperature)))}${temperatureSymbol}`;
   const formatDailyRange = (high: number, low: number): string => {
@@ -127,6 +104,10 @@ export function WeatherDecisionField({
     return `${preciseFormatter.format(convertedHigh)}${temperatureSymbol} / ${preciseFormatter.format(convertedLow)}${temperatureSymbol}`;
   };
 
+  const clockOptions = {
+    language: settings.language,
+    timezoneOffsetSeconds: weather.meta.timezoneOffsetSeconds,
+  };
   const timezoneOffsetMs = weather.meta.timezoneOffsetSeconds * 1000;
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
   const todayKey = atLocationTime(new Date()).toISOString().slice(0, 10);
@@ -134,7 +115,7 @@ export function WeatherDecisionField({
 
   const formatForecastTime = (time: Date): string => {
     const date = time instanceof Date ? time : new Date(time);
-    return Number.isNaN(date.getTime()) ? '—' : timeFormatter.format(atLocationTime(date));
+    return formatCityClock(date, clockOptions);
   };
 
   const formatRange = (range: { start: Date; end: Date }): string =>
@@ -153,10 +134,10 @@ export function WeatherDecisionField({
     weather.timestamp instanceof Date ? weather.timestamp : new Date(weather.timestamp);
   const observedAtText = Number.isNaN(observedAt.getTime())
     ? '—'
-    : dateFormatter.format(atLocationTime(observedAt));
+    : `${formatCityDateLabel(observedAt, clockOptions)} · ${formatCityClock(observedAt, clockOptions)}`;
   const compactObservedAtText = Number.isNaN(observedAt.getTime())
     ? '—'
-    : compactDateFormatter.format(atLocationTime(observedAt));
+    : `${new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(atLocationTime(observedAt))} · ${formatCityClock(observedAt, clockOptions)}`;
   const observedAtDateTime = Number.isNaN(observedAt.getTime())
     ? undefined
     : observedAt.toISOString();
@@ -632,7 +613,9 @@ export function WeatherDecisionField({
               </div>
             </div>
 
-            <p className="hava81-decision-field__condition">{weather.description}</p>
+            <p className="hava81-decision-field__condition">
+              {capitalizeFirst(weather.description, settings.language)}
+            </p>
             <p className="hava81-decision-field__feels-like">
               {t('hava81.decision.feelsLike', {
                 defaultValue: 'Hissedilen {{temperature}}',

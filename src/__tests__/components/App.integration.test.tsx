@@ -346,8 +346,8 @@ describe('Hava81 app integration', () => {
         { timeout: 5_000 }
       )
     ).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'açık' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'çoğunlukla açık' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Açık' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Çoğunlukla açık' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
       'href',
       'https://open-meteo.com/'

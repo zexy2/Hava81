@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { suggestCity } from './utils/citySuggestion';
 import { formatCityTime } from './utils/format';
+import { getCityMetadata } from './constants/cityMetadata';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { useWeather } from './hooks/useWeather';
@@ -707,7 +708,9 @@ const App: React.FC = () => {
                     <div>
                       <span className="atlas-kicker">{t('hava81.planView.eyebrow')}</span>
                       <h1 id="atlas-plan-view-title">
-                        {t('hava81.planView.titleWithCity', { city: weather.cityName })}
+                        {t('hava81.planView.titleWithCity', {
+                          city: getCityMetadata(weather.cityName)?.name ?? weather.cityName,
+                        })}
                       </h1>
                       <p>{t('hava81.planView.intro')}</p>
                     </div>
