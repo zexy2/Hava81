@@ -2652,7 +2652,12 @@ class ObserverOwnerPolicyTests(unittest.TestCase):
         repository_root = Path(__file__).resolve().parents[3]
         text = (repository_root / 'docs' / 'AUTONOMOUS_DECISIONS.md').read_text(encoding='utf-8')
         state = observer.parse_owner_policy(text)
-        self.assertEqual(state, {'known': True, 'mode': 'active', 'paused': False, 'error': None})
+        # The document must carry exactly one readable marker. Which mode it holds is the
+        # owner's decision, so either valid mode passes; the parser tests cover both.
+        self.assertTrue(state['known'], state)
+        self.assertIsNone(state['error'], state)
+        self.assertIn(state['mode'], ('active', 'paused'))
+        self.assertEqual(state['paused'], state['mode'] == 'paused')
 
     def test_owner_policy_fetch_is_pinned_to_current_main_sha(self) -> None:
         original_http_get = observer.http_get
