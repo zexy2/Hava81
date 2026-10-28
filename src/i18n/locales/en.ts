@@ -452,7 +452,8 @@ export const en = {
         no: 'Forecast suggests no need',
       },
       change: {
-        'rain-increase': 'Rain risk is about {{value}} points higher when you return.',
+        'rain-increase':
+          'The chance of rain is about {{value}} percentage points higher when you return.',
         'precipitation-unknown':
           'Precipitation data is missing for one or both windows; rain changes cannot be compared.',
         'rain-amount-increase':
@@ -554,6 +555,11 @@ export const en = {
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
       hourlyAqiSource:
         'Hourly air-quality outlook uses the {{source}} model. For unmatched hours, the current AQI is used only while fresh; if it is stale too, no AQI risk is inferred for that hour. This is modeled guidance, not an official warning.',
+      prefs: {
+        title: 'Preferences',
+        edit: 'Edit',
+        pollenOn: 'Pollen allergy',
+      },
       tolerance: {
         label: 'Personal tolerance',
         wind: 'Wind',

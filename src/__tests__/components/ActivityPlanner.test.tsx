@@ -207,6 +207,8 @@ describe('ActivityPlanner time range', () => {
       </SettingsProvider>
     );
 
+    // Preferences live in their own disclosure; open it before reaching the time range.
+    fireEvent.click(screen.getByText('Tercihler'));
     const helpSummary = screen.getByText('Nasıl çalışır?');
     const helpDetails = helpSummary.closest('details');
     expect(helpDetails).not.toBeNull();
@@ -609,6 +611,7 @@ describe('ActivityPlanner time range', () => {
       </SettingsProvider>
     );
 
+    fireEvent.click(screen.getByText('Tercihler'));
     const select = screen.getByRole('combobox', { name: 'Sıcaklık hassasiyeti' });
     const label = document.getElementById(select.getAttribute('aria-labelledby') ?? '');
     const help = document.getElementById(select.getAttribute('aria-describedby') ?? '');

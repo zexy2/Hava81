@@ -455,7 +455,8 @@ export const tr = {
         no: 'Tahmine göre gerek görünmüyor',
       },
       change: {
-        'rain-increase': 'Dönüşte yağmur riski çıkışa göre yaklaşık {{value}} puan artıyor.',
+        'rain-increase':
+          'Dönüşte yağış ihtimali çıkışa göre yaklaşık {{value}} yüzde puanı yüksek.',
         'precipitation-unknown':
           'Yağış verisi bir veya iki pencerede yok; yağış değişimi karşılaştırılamıyor.',
         'rain-amount-increase':
@@ -559,6 +560,11 @@ export const tr = {
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
       hourlyAqiSource:
         'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+      prefs: {
+        title: 'Tercihler',
+        edit: 'Düzenle',
+        pollenOn: 'Polen alerjisi',
+      },
       tolerance: {
         label: 'Kişisel tolerans',
         wind: 'Rüzgâr',

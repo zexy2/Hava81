@@ -207,6 +207,18 @@ export function ActivityPlanner({
     });
   };
 
+  const preferenceSummary = [
+    t(`hava81.activities.sensitivity.${profile.temperatureSensitivity}`),
+    `${t('hava81.activities.tolerance.wind')} ${t(`hava81.activities.tolerance.${profile.windTolerance ?? 'normal'}`).toLocaleLowerCase(i18n.language)}`,
+    `${t('hava81.activities.tolerance.rain')} ${t(`hava81.activities.tolerance.${profile.rainTolerance ?? 'normal'}`).toLocaleLowerCase(i18n.language)}`,
+    profile.pollenAllergy ? t('hava81.activities.prefs.pollenOn') : null,
+    profile.activityStart && profile.activityEnd
+      ? `${profile.activityStart}–${profile.activityEnd}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <section className="activity-planner" aria-labelledby="activity-planner-title">
       <header className="activity-planner__header">
@@ -215,105 +227,7 @@ export function ActivityPlanner({
           <h2 id="activity-planner-title">{t('hava81.activities.title')}</h2>
           <p>{t('hava81.activities.subtitle')}</p>
         </div>
-        <label className="activity-planner__sensitivity">
-          <span id={sensitivityLabelId}>{t('hava81.activities.sensitivity.label')}</span>
-          <select
-            value={profile.temperatureSensitivity}
-            aria-labelledby={sensitivityLabelId}
-            aria-describedby={sensitivityHelpId}
-            onChange={event =>
-              setTemperatureSensitivity(event.target.value as 'cold' | 'balanced' | 'heat')
-            }
-          >
-            <option value="cold">{t('hava81.activities.sensitivity.cold')}</option>
-            <option value="balanced">{t('hava81.activities.sensitivity.balanced')}</option>
-            <option value="heat">{t('hava81.activities.sensitivity.heat')}</option>
-          </select>
-          <small id={sensitivityHelpId}>
-            {t(`hava81.activities.sensitivity.help.${profile.temperatureSensitivity}`, {
-              value: sensitivityShift,
-              unit: temperatureSymbol,
-            })}
-          </small>
-        </label>
       </header>
-
-      <div
-        className="activity-planner__personal"
-        role="group"
-        aria-label={t('hava81.activities.tolerance.label')}
-      >
-        {(['wind', 'rain'] as const).map(kind => (
-          <label key={kind} className="activity-planner__tolerance">
-            <span>{t(`hava81.activities.tolerance.${kind}`)}</span>
-            <select
-              value={(kind === 'wind' ? profile.windTolerance : profile.rainTolerance) ?? 'normal'}
-              onChange={event => setTolerance(kind, event.target.value as WeatherTolerance)}
-            >
-              <option value="low">{t('hava81.activities.tolerance.low')}</option>
-              <option value="normal">{t('hava81.activities.tolerance.normal')}</option>
-              <option value="high">{t('hava81.activities.tolerance.high')}</option>
-            </select>
-          </label>
-        ))}
-        <label className="activity-planner__allergy">
-          <input
-            type="checkbox"
-            checked={profile.pollenAllergy === true}
-            onChange={event => setPollenAllergy(event.target.checked)}
-          />
-          <span>{t('hava81.activities.tolerance.pollenAllergy')}</span>
-        </label>
-        <small className="activity-planner__tolerance-note">
-          {t('hava81.activities.tolerance.note')}
-        </small>
-      </div>
-
-      <div
-        className="activity-planner__window"
-        role="group"
-        aria-label={t('hava81.activities.window.label')}
-      >
-        <div className="activity-planner__window-copy">
-          <strong>{t('hava81.activities.window.title')}</strong>
-          <details className="activity-planner__window-help">
-            <summary>{t('hava81.activities.window.helpTitle')}</summary>
-            <p>{t('hava81.activities.window.help')}</p>
-          </details>
-        </div>
-        <label>
-          <span>{t('hava81.activities.window.start')}</span>
-          <input
-            type="time"
-            value={profile.activityStart ?? ''}
-            aria-describedby={activityWindowStatusId}
-            onChange={event => setActivityWindow('start', event.target.value || undefined)}
-          />
-        </label>
-        <label>
-          <span>{t('hava81.activities.window.end')}</span>
-          <input
-            type="time"
-            value={profile.activityEnd ?? ''}
-            aria-describedby={activityWindowStatusId}
-            onChange={event => setActivityWindow('end', event.target.value || undefined)}
-          />
-        </label>
-        {hasPartialWindow ? (
-          <p
-            id="activity-window-incomplete"
-            className="activity-planner__window-status"
-            role="status"
-          >
-            {t('hava81.activities.window.incomplete')}
-          </p>
-        ) : null}
-        {profile.activityStart || profile.activityEnd ? (
-          <button type="button" className="atlas-text-button" onClick={clearActivityWindow}>
-            {t('hava81.activities.window.clear')}
-          </button>
-        ) : null}
-      </div>
 
       <div
         className="activity-planner__chips"
@@ -340,6 +254,118 @@ export function ActivityPlanner({
           );
         })}
       </div>
+      <details className="activity-planner__prefs">
+        <summary>
+          <span className="activity-planner__prefs-title">
+            {t('hava81.activities.prefs.title')}
+          </span>
+          <span className="activity-planner__prefs-summary">{preferenceSummary}</span>
+          <span className="activity-planner__prefs-edit" aria-hidden="true">
+            {t('hava81.activities.prefs.edit')}
+          </span>
+        </summary>
+        <div className="activity-planner__prefs-body">
+          <label className="activity-planner__sensitivity">
+            <span id={sensitivityLabelId}>{t('hava81.activities.sensitivity.label')}</span>
+            <select
+              value={profile.temperatureSensitivity}
+              aria-labelledby={sensitivityLabelId}
+              aria-describedby={sensitivityHelpId}
+              onChange={event =>
+                setTemperatureSensitivity(event.target.value as 'cold' | 'balanced' | 'heat')
+              }
+            >
+              <option value="cold">{t('hava81.activities.sensitivity.cold')}</option>
+              <option value="balanced">{t('hava81.activities.sensitivity.balanced')}</option>
+              <option value="heat">{t('hava81.activities.sensitivity.heat')}</option>
+            </select>
+            <small id={sensitivityHelpId}>
+              {t(`hava81.activities.sensitivity.help.${profile.temperatureSensitivity}`, {
+                value: sensitivityShift,
+                unit: temperatureSymbol,
+              })}
+            </small>
+          </label>
+          <div
+            className="activity-planner__personal"
+            role="group"
+            aria-label={t('hava81.activities.tolerance.label')}
+          >
+            {(['wind', 'rain'] as const).map(kind => (
+              <label key={kind} className="activity-planner__tolerance">
+                <span>{t(`hava81.activities.tolerance.${kind}`)}</span>
+                <select
+                  value={
+                    (kind === 'wind' ? profile.windTolerance : profile.rainTolerance) ?? 'normal'
+                  }
+                  onChange={event => setTolerance(kind, event.target.value as WeatherTolerance)}
+                >
+                  <option value="low">{t('hava81.activities.tolerance.low')}</option>
+                  <option value="normal">{t('hava81.activities.tolerance.normal')}</option>
+                  <option value="high">{t('hava81.activities.tolerance.high')}</option>
+                </select>
+              </label>
+            ))}
+            <label className="activity-planner__allergy">
+              <input
+                type="checkbox"
+                checked={profile.pollenAllergy === true}
+                onChange={event => setPollenAllergy(event.target.checked)}
+              />
+              <span>{t('hava81.activities.tolerance.pollenAllergy')}</span>
+            </label>
+            <small className="activity-planner__tolerance-note">
+              {t('hava81.activities.tolerance.note')}
+            </small>
+          </div>
+
+          <div
+            className="activity-planner__window"
+            role="group"
+            aria-label={t('hava81.activities.window.label')}
+          >
+            <div className="activity-planner__window-copy">
+              <strong>{t('hava81.activities.window.title')}</strong>
+              <details className="activity-planner__window-help">
+                <summary>{t('hava81.activities.window.helpTitle')}</summary>
+                <p>{t('hava81.activities.window.help')}</p>
+              </details>
+            </div>
+            <label>
+              <span>{t('hava81.activities.window.start')}</span>
+              <input
+                type="time"
+                value={profile.activityStart ?? ''}
+                aria-describedby={activityWindowStatusId}
+                onChange={event => setActivityWindow('start', event.target.value || undefined)}
+              />
+            </label>
+            <label>
+              <span>{t('hava81.activities.window.end')}</span>
+              <input
+                type="time"
+                value={profile.activityEnd ?? ''}
+                aria-describedby={activityWindowStatusId}
+                onChange={event => setActivityWindow('end', event.target.value || undefined)}
+              />
+            </label>
+            {hasPartialWindow ? (
+              <p
+                id="activity-window-incomplete"
+                className="activity-planner__window-status"
+                role="status"
+              >
+                {t('hava81.activities.window.incomplete')}
+              </p>
+            ) : null}
+            {profile.activityStart || profile.activityEnd ? (
+              <button type="button" className="atlas-text-button" onClick={clearActivityWindow}>
+                {t('hava81.activities.window.clear')}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </details>
       {profile.activities.length >= 3 ? (
         <p
           id="activity-selection-limit"
@@ -404,8 +430,8 @@ export function ActivityPlanner({
                       <small>
                         <span className="activity-card__score-scope">
                           {t('hava81.scoreScope.activity')}
-                        </span>{' '}
-                        · {scoreLabel} · {scoreBandLabel}
+                        </span>
+                        {scoreLabel} · {scoreBandLabel}
                       </small>
                       <strong>
                         {plan.windowUnavailable ? '—' : plan.score}

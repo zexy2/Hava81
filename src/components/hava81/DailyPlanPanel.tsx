@@ -19,6 +19,8 @@ import type {
   NormalizedWeatherData,
 } from '../../types';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
+import HeroSky from '../sky/HeroSky';
+import { resolveSkyScene } from '../sky/skyScene';
 import './DailyPlanPanel.css';
 
 interface DailyPlanPanelProps {
@@ -72,6 +74,11 @@ function FreshDailyPlanPanel({
     return getDecisionSnapshot({ weather, hourly, airQuality, airQualityHourly });
   }, [airQuality, airQualityHourly, freshnessRevision, hourly, weather]);
   const plan = snapshot.plan;
+  // Same scene as the Today field, so both pages show the same sky for the same data.
+  const heroScene = useMemo(() => {
+    void freshnessRevision;
+    return resolveSkyScene(weather, hourly, Date.now());
+  }, [freshnessRevision, hourly, weather]);
   const hasUnknownPrecipitation = plan.slots.some(
     slot =>
       !Number.isFinite(slot.precipitationProbability) && !Number.isFinite(slot.precipitationMm)
@@ -231,7 +238,8 @@ function FreshDailyPlanPanel({
   };
 
   return (
-    <section className="daily-plan" aria-labelledby="daily-plan-title">
+    <section className="daily-plan daily-plan--sky" aria-labelledby="daily-plan-title">
+      <HeroSky scene={heroScene} />
       <header className="daily-plan__header">
         <div>
           <span className="atlas-kicker">{t('hava81.dailyPlan.eyebrow')}</span>
@@ -367,7 +375,9 @@ function FreshDailyPlanPanel({
           );
           // Highlight the actual recommendation interval; this only affects presentation.
           const isWeak = weakTimes.has(slot.time.getTime());
+          // On an even day there is no best window to mark: the headline says so.
           const isBestWindow = Boolean(
+            !evenDay &&
             bestWindowRange &&
             slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
             slot.time.getTime() <= bestWindowRange.end.time.getTime()
@@ -396,6 +406,7 @@ function FreshDailyPlanPanel({
               style={
                 {
                   '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%`,
+                  '--slot-index': index,
                   // 50–100 mapped to 0–1: the bar under the hour that the strip reads as a chart.
                   '--bar-scale': Math.min(1, Math.max(0.08, (slot.score - 50) / 50)).toFixed(2),
                 } as CSSProperties

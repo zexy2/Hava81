@@ -336,6 +336,8 @@ test.describe('daily plan', () => {
           ...morning.hourlyForecast.hourly[index],
           time: new Date(hour.getTime() + index * 60 * 60_000).toISOString(),
           temp: 21 - Math.floor(index / 6),
+          // A wet afternoon: the morning is clearly better, so a best window exists.
+          ...(index >= 4 ? { pop: 80, precipitationMm: 2.5 } : { pop: 0, precipitationMm: 0 }),
           apparentTemperature: 20,
           humidity: 55,
           windGust: 5,
@@ -509,6 +511,8 @@ test.describe('activities', () => {
       await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeDisabled();
       await expect(page.getByRole('button', { name: 'Çamaşır', exact: true })).toBeDisabled();
 
+      // Preferences live in their own disclosure since the Planla redesign.
+      await page.locator('.activity-planner__prefs > summary').click();
       await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
       await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
       await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
@@ -537,6 +541,7 @@ test.describe('activities', () => {
       await expect(page.getByRole('heading', { name: 'What are you doing today?' })).toBeAttached();
       await expect(page.locator('.daily-plan__quick > *')).toHaveCount(3);
 
+      await page.locator('.activity-planner__prefs > summary').click();
       const windowHelp = page.locator('.activity-planner__window-help');
       await expect(windowHelp.locator('summary')).toHaveText('How it works');
       await expect(windowHelp.locator('p')).toBeHidden();
@@ -615,10 +620,13 @@ test.describe('activities', () => {
       await setWidth(page, 320, 760);
       await setTextScale(page, 200);
       const header = planner.locator('.activity-planner__header');
+      const prefs = planner.locator('.activity-planner__prefs');
+      await prefs.locator(':scope > summary').click();
       const sensitivity = planner.locator('.activity-planner__sensitivity');
       await expectReadable(page, header, 'planner header at 320px/200%');
       await expectContainedIn(header, planner, 'planner header');
-      await expectContainedIn(sensitivity, header, 'sensitivity panel');
+      await expectReadable(page, prefs, 'preferences at 320px/200%');
+      await expectContainedIn(sensitivity, prefs, 'sensitivity panel');
       expect(await sensitivity.evaluate(element => getComputedStyle(element).flexBasis)).toBe(
         'auto'
       );
@@ -639,6 +647,7 @@ test.describe('activities', () => {
 
   test('activity disclosures keep a visible keyboard focus ring', DESKTOP, async ({ page }) => {
     await page.goto(PLAN);
+    await page.locator('.activity-planner__prefs > summary').click();
     for (const summary of [
       page.locator('.activity-planner__window-help summary'),
       page.locator('.activity-planner__score-explanation summary'),
