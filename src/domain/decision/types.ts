@@ -111,4 +111,9 @@ export interface DailyPlan {
   explanation?: WindowExplanation;
   /** Wet / dry headline when open rain chances move the score by at least 8 points. */
   scoreRange?: ScoreRange;
+  /**
+   * Most usable hours score within a few points of the peak: the day is even and no window is
+   * promoted. `weakSlots` are the usable hours clearly below the rest.
+   */
+  evenDay?: { weakSlots: ScoredWeatherWindow[] };
 }

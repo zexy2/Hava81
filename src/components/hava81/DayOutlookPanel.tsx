@@ -12,7 +12,9 @@ import type {
   HourlyForecast,
   NormalizedWeatherData,
 } from '../../types';
+import { useSettings } from '../../context';
 import { formatCityTime } from '../../utils/format';
+import { WeatherSymbol } from './WeatherSymbol';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import './DayOutlookPanel.css';
 
@@ -35,6 +37,7 @@ export function DayOutlookPanel({
   forecastMeta,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const { convertTemperature } = useSettings();
   const { profile } = useDecisionProfile();
   const [intent, setIntent] = useState<ActivityKind | 'general'>('general');
   const [, setFreshnessRevision] = useState(0);
@@ -86,6 +89,7 @@ export function DayOutlookPanel({
   if (days.length < 2) return null;
 
   const time = (date: Date) => formatCityTime(date, offsetSeconds, i18n.language);
+  const degrees = (value: number) => `${Math.round(convertTemperature(value))}°`;
 
   return (
     <section className="day-outlook" aria-labelledby="day-outlook-title">
@@ -120,8 +124,17 @@ export function DayOutlookPanel({
       </header>
       <ol className="day-outlook__days">
         {days.map(day => (
-          <li key={day.dateKey} className={`day-outlook__day is-${day.band}`}>
+          <li
+            key={day.dateKey}
+            className={`day-outlook__day is-${day.band}${day.thunderHours.length ? ' has-thunder' : ''}`}
+          >
+            {day.icon ? <WeatherSymbol code={day.icon} className="day-outlook__symbol" /> : null}
             <span className="day-outlook__name">{t(outlookDayLabelKey(day, offsetSeconds))}</span>
+            {day.tempMax !== undefined && day.tempMin !== undefined ? (
+              <span className="day-outlook__temps">
+                {degrees(day.tempMax)} <span>{degrees(day.tempMin)}</span>
+              </span>
+            ) : null}
             <strong className="day-outlook__score">
               {day.score}
               <small>/100 · {t(`hava81.dailyPlan.bands.${day.band}`)}</small>
@@ -134,6 +147,13 @@ export function DayOutlookPanel({
                   })
                 : t('hava81.outlook.noWindow')}
             </span>
+            {day.thunderHours.length ? (
+              <span className="day-outlook__thunder" role="note">
+                {t('hava81.outlook.thunder', {
+                  times: day.thunderHours.map(time).join(', '),
+                })}
+              </span>
+            ) : null}
             <span className="day-outlook__meta">
               {day.reasons[0]
                 ? t(`hava81.dailyPlan.reasons.${REASON_I18N_KEY[day.reasons[0]]}`)

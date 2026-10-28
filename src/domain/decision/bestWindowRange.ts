@@ -19,7 +19,9 @@ const median = (values: number[]) => {
 export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   slots: T[],
   tolerance = DEFAULT_TOLERANCE,
-  isEligible: (slot: T) => boolean = () => true
+  isEligible: (slot: T) => boolean = () => true,
+  /** Cap on the range length; an even day's "suitable stretch" lifts it. */
+  maxRangeHours = DEFAULT_MAX_RANGE_HOURS
 ): BestWindowRange<T> | undefined => {
   if (!slots.length) return undefined;
   const ordered = [...slots].sort((a, b) => a.time.getTime() - b.time.getTime());
@@ -48,7 +50,7 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
   const isRiskCompatible = (candidate: T) =>
     isEligible(candidate) && candidate.reasons.every(reason => peakReasons.has(reason));
 
-  const maxRangeMs = DEFAULT_MAX_RANGE_HOURS * HOUR_MS;
+  const maxRangeMs = maxRangeHours * HOUR_MS;
   let startIndex = peakIndex;
   let endIndex = peakIndex;
 
@@ -105,4 +107,49 @@ export const findBestWindowRange = <T extends ScoredWeatherWindow>(
     peak,
     tolerance: Math.max(0, tolerance),
   };
+};
+
+/** Below this share of usable hours near the peak, the day has a real best window. */
+const EVEN_DAY_SHARE = 0.75;
+/** An even day needs enough usable hours for "all day" to mean something. */
+const EVEN_DAY_MIN_SLOTS = 6;
+/** Hours this far below the peak are called out as the weak spots of an otherwise even day. */
+const WEAK_HOUR_GAP = 5;
+
+export interface EvenDayAssessment<T extends ScoredWeatherWindow = ScoredWeatherWindow> {
+  /** Most usable hours sit within the tolerance of the peak: no single window is "best". */
+  even: boolean;
+  /** Usable hours clearly below the peak (score gap > 5), in time order. */
+  weakSlots: T[];
+}
+
+/**
+ * A forecast cannot honestly say 13:00 is the best hour when 11 of 12 usable hours score within
+ * three points of it. This flags such a day so the UI says "similar all day" and names only the
+ * hours that are clearly weaker, instead of promoting a near-arbitrary window.
+ */
+export const assessEvenDay = <T extends ScoredWeatherWindow>(
+  slots: readonly T[],
+  tolerance = DEFAULT_TOLERANCE,
+  isEligible: (slot: T) => boolean = () => true
+): EvenDayAssessment<T> => {
+  const usable = slots.filter(slot => isEligible(slot));
+  if (usable.length < EVEN_DAY_MIN_SLOTS) return { even: false, weakSlots: [] };
+  // "Any time" must be true: if a gated hour (rain, storm, darkness) splits the usable hours,
+  // the day has separate windows, not one even stretch.
+  const ordered = [...slots].sort((a, b) => a.time.getTime() - b.time.getTime());
+  const first = ordered.findIndex(slot => isEligible(slot));
+  const last = ordered.length - 1 - [...ordered].reverse().findIndex(slot => isEligible(slot));
+  if (ordered.slice(first, last + 1).some(slot => !isEligible(slot))) {
+    return { even: false, weakSlots: [] };
+  }
+  const peak = Math.max(...usable.map(slot => slot.score));
+  const near = usable.filter(slot => slot.score >= peak - Math.max(0, tolerance)).length;
+  const even = near / usable.length >= EVEN_DAY_SHARE;
+  const weakSlots = even
+    ? [...usable]
+        .filter(slot => slot.score < peak - WEAK_HOUR_GAP)
+        .sort((a, b) => a.time.getTime() - b.time.getTime())
+    : [];
+  return { even, weakSlots };
 };

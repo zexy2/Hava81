@@ -14,6 +14,9 @@ interface Props {
 
 type Level = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
 const normalizeMicroUnit = (unit?: string) => unit?.replace(/μ/g, 'µ') ?? '';
+const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
+const compassKey = (degrees: number) =>
+  COMPASS[Math.round((((degrees % 360) + 360) % 360) / 45) % 8];
 const uvLevel = (uv?: number): Level | undefined =>
   uv === undefined
     ? undefined
@@ -177,7 +180,12 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           <article className="context-signal">
             <span>{t('hava81.context.pollen')}</span>
             <strong>
-              {pollen ? formatFixed(pollen.value, i18n.language, 1) : null} <small>{normalizeMicroUnit(pollen?.unit)}</small>
+              {pollen ? formatFixed(pollen.value, i18n.language, 1) : null}{' '}
+              <small>
+                {/^grains\/m[³3]$/.test(pollen?.unit ?? '')
+                  ? t('hava81.context.pollenUnit')
+                  : normalizeMicroUnit(pollen?.unit)}
+              </small>
             </strong>
             <p>{t('hava81.context.pollenNote')}</p>
           </article>
@@ -188,17 +196,27 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
             <strong>{formattedSeaSurfaceTemperature}</strong>
             <p>
               {signals.marine?.waveHeight !== undefined
-                ? t('hava81.context.waveDetails', {
-                    height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
-                    unit: signals.units.waveHeight ?? '',
-                    period: (signals.marine.wavePeriod != null ? formatFixed(signals.marine.wavePeriod, i18n.language, 1) : null) ?? '—',
-                    periodUnit: signals.units.wavePeriod ?? '',
-                    direction:
-                      signals.marine.waveDirection !== undefined
-                        ? Math.round(signals.marine.waveDirection)
-                        : '—',
-                    directionUnit: signals.units.waveDirection ?? '',
-                  })
+                ? [
+                    t('hava81.context.wave', {
+                      height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
+                      unit: signals.units.waveHeight ?? '',
+                    }),
+                    // Period and direction are optional in the model; a missing part is left
+                    // out rather than printed as a dash.
+                    signals.marine.wavePeriod != null
+                      ? t('hava81.context.wavePeriod', {
+                          period: formatFixed(signals.marine.wavePeriod, i18n.language, 1),
+                          unit: signals.units.wavePeriod ?? '',
+                        })
+                      : null,
+                    signals.marine.waveDirection !== undefined
+                      ? t('hava81.context.waveFrom', {
+                          direction: `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`,
+                        })
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
                 : t('hava81.context.waveUnavailable')}
             </p>
           </article>

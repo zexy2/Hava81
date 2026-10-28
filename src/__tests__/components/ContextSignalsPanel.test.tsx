@@ -54,12 +54,11 @@ describe('ContextSignalsPanel', () => {
     expect(screen.getByText(/Hava81 tarafından özetlendi/)).toBeInTheDocument();
     expect(screen.getByText(/veri alındı/i)).toBeInTheDocument();
     expect(screen.queryByText(/model \d{2}:\d{2}/i)).not.toBeInTheDocument();
-    expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(screen.getByText('UV · 24 saat en yüksek')).toBeInTheDocument();
     expect(screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)).toBeInTheDocument();
     expect(screen.getByText('25,1°C')).toBeInTheDocument();
     expect(screen.getByText(/0,40 m.*4,8 s.*315°/)).toBeInTheDocument();
   });
-
 
   it('hides stale marine model values while keeping fresh UV and pollen context visible', () => {
     renderPanel({
@@ -77,7 +76,7 @@ describe('ContextSignalsPanel', () => {
       },
     });
 
-    expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(screen.getByText('UV · 24 saat en yüksek')).toBeInTheDocument();
     expect(screen.getByText('3,2')).toBeInTheDocument();
     expect(screen.queryByText('25,1°C')).not.toBeInTheDocument();
     expect(screen.queryByText(/0,40 m/)).not.toBeInTheDocument();
@@ -130,7 +129,7 @@ describe('ContextSignalsPanel', () => {
     });
 
     expect(screen.queryByText('25,1°C')).not.toBeInTheDocument();
-    expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(screen.getByText('UV · 24 saat en yüksek')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(
       'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.'
     );
@@ -204,7 +203,7 @@ describe('ContextSignalsPanel', () => {
 
     expect(screen.queryByText(/veri alındı/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Hava81 tarafından özetlendi/)).not.toBeInTheDocument();
-    expect(screen.queryByText('UV · 24s model maksimumu')).not.toBeInTheDocument();
+    expect(screen.queryByText('UV · 24 saat en yüksek')).not.toBeInTheDocument();
   });
 
   it('recommends protection from the WHO moderate UV band upward', () => {
@@ -273,14 +272,14 @@ describe('ContextSignalsPanel', () => {
       units: { dust: 'µg/m³' },
     });
 
-    expect(screen.getByText('UV · 24s model maksimumu')).toBeInTheDocument();
+    expect(screen.getByText('UV · 24 saat en yüksek')).toBeInTheDocument();
     expect(screen.getByText('18')).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_200);
     });
 
-    expect(screen.queryByText('UV · 24s model maksimumu')).not.toBeInTheDocument();
+    expect(screen.queryByText('UV · 24 saat en yüksek')).not.toBeInTheDocument();
     expect(screen.queryByText('18')).not.toBeInTheDocument();
     expect(screen.queryByText(/Hava81 tarafından özetlendi/)).not.toBeInTheDocument();
   });

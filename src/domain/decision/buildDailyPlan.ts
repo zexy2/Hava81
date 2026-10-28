@@ -5,8 +5,8 @@ import type {
   NormalizedWeatherData,
 } from '../../types';
 import { getDailyPlanAirQualityEvidence } from './airQualityEvidence';
-import { findBestWindowRange } from './bestWindowRange';
-import { explainWindow } from './explain';
+import { assessEvenDay, findBestWindowRange } from './bestWindowRange';
+import { explainContrast, explainWindow } from './explain';
 import { isRecommendableHour } from './eligibility';
 import { airLevel, rainLevel, windLevel } from './thresholds';
 import {
@@ -307,7 +307,20 @@ export const buildDailyPlan = ({
 
   const bestWindowRange = findBestWindowRange(horizonSlots, undefined, isEligible);
   const bestWindow = bestWindowRange?.peak;
-  const explanation = bestWindowRange ? explainWindow(bestWindowRange, scoringSlots) : undefined;
+  const evenDay = assessEvenDay(horizonSlots, undefined, isEligible);
+  // On an even day the "why" names what makes the weak hours weaker, not why a window won.
+  const weakSet = new Set(evenDay.weakSlots);
+  const explanation = evenDay.even
+    ? bestWindowRange
+      ? explainContrast(
+          scoringSlots.filter(slot => !weakSet.has(slot)),
+          evenDay.weakSlots,
+          bestWindowRange.peak
+        )
+      : undefined
+    : bestWindowRange
+      ? explainWindow(bestWindowRange, scoringSlots)
+      : undefined;
 
   return {
     score,
@@ -318,7 +331,9 @@ export const buildDailyPlan = ({
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
     airQuality: pickAirQualityAdvice(slotAqi.slice(0, horizonSlots.length)),
+    // The verdict itself is shared with Today; `evenDay` only changes how Planla words it.
     nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible),
+    ...(evenDay.even ? { evenDay: { weakSlots: evenDay.weakSlots } } : {}),
     impacts: aggregateImpacts(weighted),
     // Confidence must describe the same forecast horizon that contributes to the score.
     confidence: confidenceFor(weighted.map(entry => entry.slot)),

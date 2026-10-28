@@ -29,6 +29,7 @@ import { trackProductEvent } from './analytics/productEvents';
 import { resolveSkyScene } from './components/sky/skyScene';
 import './styles/App.css';
 import './styles/editorial.css';
+import './styles/planla.css';
 // Glass and hero styles load with the page, not with the lazy sky chunks: a late
 // stylesheet re-lays out the weather field after first paint (a layout shift).
 import './components/sky/LivingSky.css';

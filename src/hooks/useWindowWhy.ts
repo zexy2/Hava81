@@ -9,7 +9,11 @@ export const useWindowWhy = (formatTime: (date: Date) => string) => {
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
     useSettings();
 
-  return (explanation?: WindowExplanation): string | undefined => {
+  // `window`: why the recommended window wins. `weak`: on an even day, why some hours are weaker.
+  return (
+    explanation?: WindowExplanation,
+    mode: 'window' | 'weak' = 'window'
+  ): string | undefined => {
     if (!explanation) return undefined;
     const { factor, worstValue, windowValue } = explanation;
     const time = formatTime(explanation.worstTime);
@@ -21,7 +25,7 @@ export const useWindowWhy = (formatTime: (date: Date) => string) => {
       if (factor === 'wind') return formatNumber(convertWindSpeed(value), i18n.language);
       return formatNumber(value, i18n.language);
     };
-    return t(`hava81.dailyPlan.why.${factor}`, {
+    return t(`hava81.dailyPlan.${mode === 'weak' ? 'whyWeak' : 'why'}.${factor}`, {
       time,
       worst: needsValues ? convert(worstValue as number) : undefined,
       best: needsValues ? convert(windowValue as number) : undefined,

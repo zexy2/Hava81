@@ -22,9 +22,7 @@ export function createWeatherFixtures(now = Date.now()) {
   const todayAtLocation = localDate();
   const sunriseCandidate = new Date(now - 6 * 60 * 60_000);
   const sunrise =
-    locationDateKey(sunriseCandidate) === todayAtLocation
-      ? sunriseCandidate
-      : locationTime(6);
+    locationDateKey(sunriseCandidate) === todayAtLocation ? sunriseCandidate : locationTime(6);
   const sunsetCandidate = new Date(now + 6 * 60 * 60_000);
   const sunset =
     locationDateKey(sunsetCandidate) === todayAtLocation && sunsetCandidate > sunrise
@@ -84,17 +82,22 @@ export function createWeatherFixtures(now = Date.now()) {
     daily: forecast.daily,
     // Starts at the next full hour after `now` (09:00 for VISUAL_FIXED_NOW): the decision layer
     // drops forecast steps that already ended, so a fixed calendar date would be all "past".
-    hourly: Array.from({ length: 24 }, (_, index) => ({
-      time: new Date(
-        Math.ceil(now / (60 * 60_000)) * 60 * 60_000 + index * 60 * 60_000
-      ).toISOString(),
-      temp: 22 - Math.floor(index / 6),
-      icon: index < 3 ? '01d' : '02n',
-      description: index < 3 ? 'açık' : 'çoğunlukla açık',
-      pop: index === 4 ? 45 : 10,
-      precipitationMm: index === 4 ? 0.2 : 0,
-      windSpeed: 3 + index * 0.05,
-    })),
+    // 48 hours (the second day repeats the first) so day-level views such as the Planla
+    // outlook still have a full next day when the real clock is late in the evening.
+    hourly: Array.from({ length: 48 }, (_, step) => {
+      const index = step % 24;
+      return {
+        time: new Date(
+          Math.ceil(now / (60 * 60_000)) * 60 * 60_000 + step * 60 * 60_000
+        ).toISOString(),
+        temp: 22 - Math.floor(index / 6),
+        icon: index < 3 ? '01d' : '02n',
+        description: index < 3 ? 'açık' : 'çoğunlukla açık',
+        pop: index === 4 ? 45 : 10,
+        precipitationMm: index === 4 ? 0.2 : 0,
+        windSpeed: 3 + index * 0.05,
+      };
+    }),
     meta: {
       provider: 'Open-Meteo',
       attribution: 'Open-Meteo · CC BY 4.0',
@@ -262,7 +265,9 @@ export async function mockWeatherApi(page: Page, data: WeatherFixtures = fixture
  * mock'lanmadan preview sunucusunun `/api` proxy'sine (127.0.0.1:4000) gider.
  */
 export async function mockNewEndpointsMissing(page: Page) {
-  await page.route(API.bundle, route => route.fulfill({ status: 404, json: ROUTE_NOT_FOUND }));
+  // A 200 without the bundle envelope takes the same legacy fallback as a missing route, but
+  // without the browser's "Failed to load resource" console error that a 404 always logs.
+  await page.route(API.bundle, route => route.fulfill({ json: {} }));
   await page.route(API.provinces, route => route.fulfill({ status: 404, json: ROUTE_NOT_FOUND }));
 }
 
@@ -282,7 +287,11 @@ export async function mockBundleApi(page: Page, data: WeatherFixtures = fixtures
       requested.map(part => [part, parts[part] ?? null])
     );
     return route.fulfill({
-      json: { ...body, errors: {}, meta: { fetchedAt: new Date().toISOString(), parts: requested } },
+      json: {
+        ...body,
+        errors: {},
+        meta: { fetchedAt: new Date().toISOString(), parts: requested },
+      },
     });
   });
 }

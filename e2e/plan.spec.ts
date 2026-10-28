@@ -136,7 +136,7 @@ test.describe('Planla view', () => {
     await expect(page.locator('.daily-plan__slots-caption')).toHaveText(
       'Saatlik uygunluk · 0–100 · yüksek daha uygun'
     );
-    await expect(page.locator('.daily-plan__score small')).toContainText('Hava81 Skoru');
+    await expect(page.locator('.daily-plan__score small')).toContainText('Genel dışarı skoru');
     const cards = page.locator('.activity-card');
     await expect(cards).toHaveCount(2);
     for (const card of await cards.all())
@@ -365,11 +365,18 @@ test.describe('daily plan', () => {
       });
       expect(state.metersMatch).toBe(true);
       expect(state.best).toBeGreaterThan(0);
-      // Twelve hours do not fit: the timeline scrolls on its own, the page does not.
-      await timeline.evaluate(element => {
-        element.scrollLeft = 200;
-      });
-      expect(await timeline.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+      // The strip either fits all twelve hours or scrolls on its own; the page never does.
+      const overflows = await timeline.evaluate(
+        element => element.scrollWidth > element.clientWidth + 1
+      );
+      if (overflows) {
+        await timeline.evaluate(element => {
+          element.scrollLeft = 200;
+        });
+        expect(await timeline.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+      } else {
+        await expect(slots.last()).toBeInViewport();
+      }
       await expectNoHorizontalScroll(page);
     }
   );

@@ -48,6 +48,12 @@ export interface ActivityPlan {
   bestWindowScore?: number;
   /** Up to two further non-overlapping windows that fit the whole activity, best first. */
   alternativeWindows: BestWindowRange<ActivityWindowScore>[];
+  /** Even day: the whole near-best stretch around the best block ("any time 12:00–16:00"). */
+  suitableSpan?: BestWindowRange<ActivityWindowScore>;
+  /** The recommended block includes hours after dark. */
+  inDarkness?: boolean;
+  /** Most usable hours score alike; `weakSlots` are the clearly weaker ones. */
+  evenDay?: { weakSlots: ActivityWindowScore[] };
   /** How long the activity is planned for (profile default). */
   durationMinutes: number;
   /** Why the best window wins over the other usable hours; absent when the day is even. */

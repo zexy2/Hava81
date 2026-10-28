@@ -73,6 +73,41 @@ const measured = (
   }
 };
 
+/**
+ * The factor that separates a good set of hours from a weaker set, with values at the weakest
+ * hour and at `reference` (a good hour). Used both for "why this window" and, on an even day,
+ * for "why these hours are weaker".
+ */
+export const explainContrast = (
+  good: readonly ScoredWeatherWindow[],
+  weak: readonly ScoredWeatherWindow[],
+  reference: ScoredWeatherWindow
+): WindowExplanation | undefined => {
+  if (!good.length || !weak.length) return undefined;
+
+  let best: { factor: Hava81ScoreFactor; gap: number; worst: ScoredWeatherWindow } | undefined;
+  for (const factor of EXPLAINABLE) {
+    const goodWorst = Math.max(...good.map(slot => penaltyOf(slot, factor)));
+    const worst = weak.reduce((a, b) => (penaltyOf(b, factor) > penaltyOf(a, factor) ? b : a));
+    const gap = penaltyOf(worst, factor) - goodWorst;
+    if (gap >= MIN_PENALTY_GAP && (!best || gap > best.gap)) best = { factor, gap, worst };
+  }
+  if (!best) return undefined;
+
+  const atWorst = measured(best.worst, best.factor);
+  const atWindow = measured(reference, best.factor);
+  // Precipitation is described in one unit on both sides; fall back to mm only when the
+  // probability is unknown for either slot.
+  const sameUnit = atWorst.factor === atWindow.factor;
+  const factor = sameUnit ? atWorst.factor : 'precipitation-mm';
+  return {
+    factor,
+    worstTime: best.worst.time,
+    worstValue: sameUnit ? atWorst.value : best.worst.precipitationMm,
+    windowValue: sameUnit ? atWindow.value : reference.precipitationMm,
+  };
+};
+
 export const explainWindow = (
   window: { start: ScoredWeatherWindow; endTime: Date; peak: ScoredWeatherWindow },
   usableSlots: readonly ScoredWeatherWindow[]
@@ -85,27 +120,5 @@ export const explainWindow = (
   const outside = usableSlots.filter(
     slot => slot.time.getTime() < startMs || slot.time.getTime() >= endMs
   );
-  if (!inside.length || !outside.length) return undefined;
-
-  let best: { factor: Hava81ScoreFactor; gap: number; worst: ScoredWeatherWindow } | undefined;
-  for (const factor of EXPLAINABLE) {
-    const insideWorst = Math.max(...inside.map(slot => penaltyOf(slot, factor)));
-    const worst = outside.reduce((a, b) => (penaltyOf(b, factor) > penaltyOf(a, factor) ? b : a));
-    const gap = penaltyOf(worst, factor) - insideWorst;
-    if (gap >= MIN_PENALTY_GAP && (!best || gap > best.gap)) best = { factor, gap, worst };
-  }
-  if (!best) return undefined;
-
-  const atWorst = measured(best.worst, best.factor);
-  const atWindow = measured(window.peak, best.factor);
-  // Precipitation is described in one unit on both sides; fall back to mm only when the
-  // probability is unknown for either slot.
-  const sameUnit = atWorst.factor === atWindow.factor;
-  const factor = sameUnit ? atWorst.factor : 'precipitation-mm';
-  return {
-    factor,
-    worstTime: best.worst.time,
-    worstValue: sameUnit ? atWorst.value : best.worst.precipitationMm,
-    windowValue: sameUnit ? atWindow.value : window.peak.precipitationMm,
-  };
+  return explainContrast(inside, outside, window.peak);
 };
