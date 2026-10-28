@@ -6,13 +6,10 @@ import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import { withAtlasView } from '../../utils/atlasView';
-import { findDailyWeatherRisk } from '../../domain/alerts/dailyRisk';
-import { formatDailyRisk } from './severeWeatherCopy';
 import { WeatherSymbol } from './WeatherSymbol';
 import type {
   AirQuality,
   AirQualityHourly,
-  DailyForecast,
   ForecastMeta,
   HourlyForecast,
   NormalizedWeatherData,
@@ -22,8 +19,6 @@ import './DecisionGlance.css';
 interface Props {
   weather: NormalizedWeatherData;
   hourly: HourlyForecast[];
-  /** Daily rows, used to mention an upcoming storm or heavy-rain day under the headline. */
-  daily?: readonly DailyForecast[];
   airQuality?: AirQuality;
   airQualityHourly?: AirQualityHourly;
   forecastMeta: ForecastMeta | null;
@@ -34,7 +29,6 @@ interface Props {
 export const DecisionGlance = memo(function DecisionGlance({
   weather,
   hourly,
-  daily,
   airQuality,
   airQualityHourly,
   forecastMeta,
@@ -123,30 +117,19 @@ export const DecisionGlance = memo(function DecisionGlance({
     : null;
 
   // Concrete headline: name the window instead of a vague "wait for later".
+  // When the headline already carries the range, the window line is not repeated.
+  const headlineHasRange = plan?.nowOrLater.kind === 'later' && Boolean(bestHours);
   const headline = !plan
     ? t('hava81.glance.loading')
     : plan.nowOrLater.kind === 'similar'
-      ? t('hava81.glance.similarHeadline')
+      ? t('hava81.glance.similar')
       : plan.nowOrLater.kind === 'now'
-        ? bestHours
-          ? t('hava81.glance.nowHeadlineRange', { range: bestHours })
-          : t('hava81.glance.nowHeadline')
+        ? t('hava81.glance.now')
         : bestHours
           ? t('hava81.glance.bestTimeHeadline', { range: bestHours })
           : t('hava81.glance.later');
   const guidance =
     plan?.umbrella === 'yes' ? `${headline} ${t('hava81.glance.umbrellaAdvised')}` : headline;
-  const dailyRisk = plan
-    ? findDailyWeatherRisk(daily, now, weather.meta.timezoneOffsetSeconds)
-    : null;
-  const riskText = dailyRisk
-    ? formatDailyRisk(dailyRisk, {
-        t,
-        language: i18n.language,
-        now,
-        timezoneOffsetSeconds: weather.meta.timezoneOffsetSeconds,
-      })
-    : null;
 
   const umbrellaAdvice = plan
     ? t(`hava81.dailyPlan.quick.umbrella.${plan.umbrella}`)
@@ -199,17 +182,9 @@ export const DecisionGlance = memo(function DecisionGlance({
           </time>
         </div>
         <strong className="decision-glance__message">{guidance}</strong>
-        {plan && bestHours ? (
+        {plan && bestHours && !headlineHasRange ? (
           <p className="decision-glance__window">
             {t('hava81.glance.bestHours', { hours: bestHours })}
-          </p>
-        ) : null}
-        {riskText ? (
-          <p
-            className="decision-glance__window decision-glance__risk"
-            data-severity={dailyRisk?.severity}
-          >
-            {riskText}
           </p>
         ) : null}
         <div className="decision-glance__quick-list">

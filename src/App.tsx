@@ -577,7 +577,6 @@ const App: React.FC = () => {
                         <DecisionGlance
                           weather={weather}
                           hourly={forecast.hourly}
-                          daily={forecast.daily}
                           airQuality={freshAirQuality}
                           airQualityHourly={freshAirQualityHourly}
                           forecastMeta={forecast.displayMeta ?? forecast.meta}
