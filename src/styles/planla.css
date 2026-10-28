@@ -1405,6 +1405,13 @@
     font-size: clamp(2rem, 1.2rem + 3.2vw, 3.75rem);
   }
 
+  .app .atlas-plan-view .daily-plan--sky .daily-plan__night-note {
+    margin: 0;
+    color: rgb(255 255 255 / 76%);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+
   .app .atlas-plan-view .daily-plan--sky .daily-plan__sentence {
     max-inline-size: 48rem;
     margin: 0;

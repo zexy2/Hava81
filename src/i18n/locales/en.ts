@@ -299,7 +299,9 @@ export const en = {
         best: 'Best time {{start}}–{{end}}',
         even: 'Much the same all day',
       },
-      nightFlag: 'Night',
+      nightFlag: 'Night · not suggested',
+      nightNote:
+        'Night hours ({{range}}) score higher, but recommendations are chosen between 07:00 and 23:00.',
       bestFlag: 'Best',
       legend: {
         good: 'Good',

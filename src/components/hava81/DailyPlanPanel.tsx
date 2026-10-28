@@ -200,6 +200,18 @@ function FreshDailyPlanPanel({
     }
     flush();
   }
+  // Night hours are scored but never recommended (07–23 rule). When one outscores the best
+  // window, say so — otherwise "best 07:00" next to a 92 at 03:00 reads as a contradiction.
+  const offsetSeconds = weather.meta.timezoneOffsetSeconds;
+  const nightSlots = timelineSlots.filter(slot => !isWithinActiveHours(slot.time, offsetSeconds));
+  const nightOutscoresBest = Boolean(
+    !evenDay && bestWindowRange && nightSlots.some(slot => slot.score > bestWindowRange.start.score)
+  );
+  const nightRange = nightSlots.length
+    ? nightSlots.length === 1
+      ? formatTime(nightSlots[0].time)
+      : `${formatTime(nightSlots[0].time)}–${formatTime(nightSlots[nightSlots.length - 1].time)}`
+    : '';
   const localDateKey = (date: Date) =>
     new Date(date.getTime() + timezoneOffsetMs).toISOString().slice(0, 10);
 
@@ -311,6 +323,11 @@ function FreshDailyPlanPanel({
         </strong>
         {evenDay || bestWindowRange ? (
           <p className="daily-plan__sentence">{nowOrLaterText}</p>
+        ) : null}
+        {nightOutscoresBest ? (
+          <p className="daily-plan__night-note">
+            {t('hava81.dailyPlan.nightNote', { range: nightRange })}
+          </p>
         ) : null}
         {evenDay ? (
           weakSlots.length ? (
