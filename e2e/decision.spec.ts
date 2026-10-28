@@ -354,9 +354,11 @@ test.describe('decision hero (Karar özeti)', () => {
 
     await page.goto('/istanbul/');
     const hero = page.locator('.decision-glance');
-    const windowCopy = hero.locator('.decision-glance__window');
+    // A later window is named in the headline itself; the separate window line is not repeated.
+    const windowCopy = hero.locator('.decision-glance__message');
     await expect(windowCopy).toContainText('Yarın');
     await expect(windowCopy).not.toContainText(/Yarın 0[0-6]:/);
+    await expect(hero.locator('.decision-glance__window')).toHaveCount(0);
     await expect(hero.locator('.decision-glance__quick').first()).toContainText('Yarın');
     await setWidth(page, 320, 844);
     await expectNoHorizontalScroll(page, '320px');
