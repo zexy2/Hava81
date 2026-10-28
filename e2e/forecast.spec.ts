@@ -103,7 +103,7 @@ test.describe('hourly atlas', () => {
       await page.goto('/istanbul');
       await ensureForecastAtlasLoaded(page);
       await expect(page.getByRole('heading', { name: /3 saat aralıklarla tahmin/i })).toBeVisible();
-      await page.getByRole('button', { name: /Planla’yı aç/ }).click();
+      await page.getByRole('button', { name: 'Planla', exact: true }).click();
       await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
     }
   );

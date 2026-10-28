@@ -10,7 +10,6 @@ import type {
   HourlyForecast,
   NormalizedWeatherData,
 } from '../../types';
-import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { formatPrecipitationAmount } from '../../utils/precipitation';
 import { getForecastFreshness } from '../../utils/forecastFreshness';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
@@ -421,17 +420,6 @@ export function WeatherDecisionField({
   const currentTemperature = currentEvidenceFresh
     ? numberFormatter.format(Math.round(convertTemperature(weather.temperature)))
     : '—';
-  const windSpeed = currentEvidenceFresh
-    ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${windSpeedSymbol}`
-    : '—';
-  const airQualityLabelKey = freshAirQuality
-    ? getOpenWeatherAqiLabelKey(freshAirQuality.aqi)
-    : undefined;
-  const airQualityValue =
-    freshAirQuality && airQualityLabelKey
-      ? `${numberFormatter.format(freshAirQuality.aqi)}/5 · ${t(airQualityLabelKey)}`
-      : t('hava81.decision.notAvailable', { defaultValue: '—' });
-
   const currentWet = currentEvidenceFresh
     ? ['09d', '09n', '10d', '10n', '11d', '11n'].includes(weather.icon)
     : undefined;
@@ -745,14 +733,12 @@ export function WeatherDecisionField({
           <dt>{t('weather.humidity')}</dt>
           <dd>{currentEvidenceFresh ? `${numberFormatter.format(weather.humidity)}%` : '—'}</dd>
         </div>
-        <div className="hava81-decision-field__metric">
-          <dt>{t('weather.wind')}</dt>
-          <dd>{windSpeed}</dd>
-        </div>
-        <div className="hava81-decision-field__metric">
-          <dt>{t('weather.airQuality')}</dt>
-          <dd>{airQualityValue}</dd>
-        </div>
+        {typeof uvIndexMax === 'number' && Number.isFinite(uvIndexMax) ? (
+          <div className="hava81-decision-field__metric">
+            <dt>{t('weather.uvIndex')}</dt>
+            <dd>{uvFormatter.format(uvIndexMax)}</dd>
+          </div>
+        ) : null}
       </dl>
       {outsideForecastRange && (
         <p className="hava81-decision-field__source-note">

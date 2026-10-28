@@ -88,7 +88,6 @@ export function AppHeader({
           <span className="atlas-brand__name">Hava81</span>
           <span className="atlas-brand__index" aria-hidden="true">
             <b>81</b>
-            <small>ATLAS</small>
           </span>
         </a>
 

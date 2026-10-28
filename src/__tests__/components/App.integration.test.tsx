@@ -383,7 +383,8 @@ describe('Hava81 app integration', () => {
     // The lightweight alert engine stays mounted so opted-in notifications keep running on Today.
     expect(container.querySelector('.decision-alerts')).not.toBeNull();
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /planla’yı aç/i }));
+    expect(container.querySelector('.atlas-plan-entry')).toBeNull();
+    await user.click(container.querySelector<HTMLButtonElement>('.atlas-plan-button') as HTMLButtonElement);
     expect(
       await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
     ).toBeInTheDocument();

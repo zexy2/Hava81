@@ -679,20 +679,6 @@ const App: React.FC = () => {
                       </section>
                     )}
 
-                    <section className="atlas-plan-entry" aria-labelledby="atlas-plan-entry-title">
-                      <div>
-                        <span className="atlas-kicker">{t('hava81.planView.entryEyebrow')}</span>
-                        <h2 id="atlas-plan-entry-title">{t('hava81.planView.title')}</h2>
-                        <p>{t('hava81.planView.entryBody')}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="atlas-button atlas-button--primary"
-                        onClick={() => handleBottomNav('plan')}
-                      >
-                        {t('hava81.planView.open')} <span aria-hidden="true">→</span>
-                      </button>
-                    </section>
                   </>
                 )}
 

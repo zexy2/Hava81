@@ -53,6 +53,39 @@ export type RhythmPoint = HourlyDatum & {
 
 export type RhythmChart = NonNullable<ReturnType<typeof buildRhythmChart>>;
 
+const NICE_STEPS = [1, 2, 5];
+
+/**
+ * Evenly spaced axis ticks: the smallest 1/2/5 x 10^n step that yields at most
+ * four ticks between floor(min) and ceil(max), kept inside the plotted range.
+ */
+export const buildNiceTicks = (min: number, max: number): number[] => {
+  const low = Math.floor(min);
+  const high = Math.ceil(max);
+  if (high - low <= 0) return [Math.round(min)];
+  for (let magnitude = 1; ; magnitude *= 10) {
+    for (const base of NICE_STEPS) {
+      const step = base * magnitude;
+      const ticks: number[] = [];
+      for (let value = Math.ceil(min / step) * step; value <= max; value += step) {
+        ticks.push(value);
+      }
+      if (ticks.length <= 4) return (ticks.length > 0 ? ticks : [low]).reverse();
+    }
+  }
+};
+
+/** Amount levels in mm: >0-0.5, 0.5-2, 2-5, 5-10, >=10. */
+const rainAmountLevel = (mm: number) =>
+  mm <= 0 ? 0 : mm < 0.5 ? 1 : mm < 2 ? 2 : mm < 5 ? 3 : mm < 10 ? 4 : 5;
+
+export const rainGaugeLevel = (probability: number, mm: number | null | undefined) => {
+  const amount = typeof mm === 'number' && Number.isFinite(mm) ? mm : 0;
+  if (probability < 0.05 && amount <= 0) return 0;
+  const chanceLevel = Math.ceil(Math.min(1, Math.max(0, probability)) * RAIN_GAUGE_CELLS);
+  return Math.min(RAIN_GAUGE_CELLS, Math.max(chanceLevel, rainAmountLevel(amount)));
+};
+
 /**
  * Geometry for the hourly rhythm chart: curve and area paths, axis ticks, the
  * rain gauge, temperature-coloured gradient stops and night bands. Pure: the
@@ -98,16 +131,14 @@ export const buildRhythmChart = (
   const path = buildSmoothPath(points);
   const areaPath = `${path} L ${points[points.length - 1].x} ${AREA_BASELINE} L ${points[0].x} ${AREA_BASELINE} Z`;
   const firstPrecipitation = points.find(point => point.isRainSignal);
-  const tickValues =
-    range === 0 ? [min] : Array.from(new Set([max, Math.round((max + min) / 2), min]));
+  const tickValues = buildNiceTicks(min, max);
   const yTicks = tickValues.map(value => ({
     value,
     y: CHART_TOP + ((max - value) / Math.max(range, 1)) * drawableHeight,
   }));
 
-  // Rain chance reads as a five-cell gauge per hour: any chance lights at
-  // least one cell, so 2-8% stays legible, and colour deepens with each
-  // level. Measurable rain with a rounded 0% chance still lights one cell.
+  // Rain reads as a five-cell gauge per hour: the higher of the chance level
+  // and the amount level wins, so heavy rain at a modest chance still reads.
   const rainBars = points
     .filter(
       point =>
@@ -122,10 +153,7 @@ export const buildRhythmChart = (
       return {
         key: point.timestamp,
         index: point.index,
-        level: Math.max(
-          1,
-          Math.min(RAIN_GAUGE_CELLS, Math.ceil(Math.min(1, probability) * RAIN_GAUGE_CELLS))
-        ),
+        level: rainGaugeLevel(probability, point.precipitationMm),
         signal: point.isRainSignal,
       };
     });

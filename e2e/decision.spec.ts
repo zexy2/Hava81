@@ -35,12 +35,11 @@ test.describe('first screen composition (Faz 2)', () => {
       await expectNoOverlap(decision, rhythm, 'decision field vs rhythm chart');
       await expect(decision.locator('.hava81-decision-field__next-change')).toBeVisible();
 
-      // Reading order: Karar → Ritim → one environmental surface → a single Planla entry.
+      // Reading order: Karar → Ritim → one environmental surface. Planla lives in the
+      // header and bottom nav, not as an extra Today block.
       const environment = page.locator('.environment-rail');
-      const entry = page.locator('.atlas-plan-entry');
       await expectBeforeInDom(decision, environment, 'decision before environment');
-      await expectBeforeInDom(environment, entry, 'environment before the Planla entry');
-      await expect(entry).toBeVisible();
+      await expect(page.locator('.atlas-plan-entry')).toHaveCount(0);
       // Plan panels are not part of the main flow; they live in the hidden Planla view.
       const plan = page.locator('.atlas-plan-view');
       await expect(plan).toBeHidden();

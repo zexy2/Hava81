@@ -51,10 +51,9 @@
     min-width: 0;
   }
 
-  /* ── Today (desktop): the weather field keeps its natural height and stays in view ──
-     It is not stretched to the hourly atlas (that left an empty panel). Instead it sticks
-     below the header while the rhythm column scrolls beside it; the space under it shows
-     the living sky, not a blank box. */
+  /* ── Today (desktop): the weather field fills its row beside the hourly atlas ──
+     Its reading stays at the top and the metric row is pinned to the bottom, so the
+     column has no empty gap under the card. */
 
   /* On phones and tablets the rail is layout-neutral: the field stays a direct grid item. */
   .app .atlas-dashboard__field-rail {
@@ -62,8 +61,7 @@
   }
 
   @media (min-width: 64rem) {
-    /* The rail fills the row beside the atlas; the field sticks only inside it, so it stops
-       with the atlas instead of sliding under the decision summary. */
+    /* The rail fills the row beside the atlas and the field stretches with it. */
     .app .atlas-dashboard__field-rail {
       display: block;
       grid-column: 1;
@@ -83,8 +81,7 @@
 
     /* The decision summary and everything below scroll over the pinned weather field. */
     .app .atlas-dashboard:not(.atlas-dashboard--plan) .atlas-dashboard__primary > .decision-glance,
-    .app .atlas-dashboard:not(.atlas-dashboard--plan) > .environment-rail,
-    .app .atlas-dashboard:not(.atlas-dashboard--plan) > .atlas-plan-entry {
+    .app .atlas-dashboard:not(.atlas-dashboard--plan) > .environment-rail {
       position: relative;
       z-index: 2;
     }
@@ -529,7 +526,6 @@
     /* Below the first view, sections ride in as they enter the viewport. */
     @supports (animation-timeline: view()) {
       .app .environment-rail,
-      .app .atlas-plan-entry,
       .app .atlas-plan-view__columns > *,
       .app .atlas-plan-view__main > *,
       .app .atlas-plan-view__aside > *,

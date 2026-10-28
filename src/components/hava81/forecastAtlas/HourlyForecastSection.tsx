@@ -83,10 +83,8 @@ export function HourlyForecastSection({
   );
   const hourlySummary = useMemo(() => buildHourlySummary(hourlyHorizonData), [hourlyHorizonData]);
 
-  const trackWidth = `max(100%, ${Math.max(
-    MIN_CHART_WIDTH,
-    hourlyData.length * MIN_DISPLAY_COLUMN_WIDTH + TRACK_GUTTER
-  )}px)`;
+  // Columns narrow on desktop (CSS sets --hourly-column) so more hours fit.
+  const trackWidth = `max(100%, ${MIN_CHART_WIDTH}px, calc(${hourlyData.length} * var(--hourly-column, ${MIN_DISPLAY_COLUMN_WIDTH}px) + ${TRACK_GUTTER}px))`;
   const { hourlyScroll, visibleWindow } = useHourlyViewport(
     hourlyViewportRef,
     hoursRef,
