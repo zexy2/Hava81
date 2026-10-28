@@ -52,8 +52,8 @@
   }
 
   /* ── Today (desktop): the weather field fills its row beside the hourly atlas ──
-     Its reading stays at the top and the metric row is pinned to the bottom, so the
-     column has no empty gap under the card. */
+     Spare height is shared between its blocks, so neither the column nor the card
+     shows one large empty gap. */
 
   /* On phones and tablets the rail is layout-neutral: the field stays a direct grid item. */
   .app .atlas-dashboard__field-rail {
@@ -76,15 +76,20 @@
       .hava81-decision-field {
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
       height: 100%;
     }
 
-    /* The metric row sits at the foot of the stretched card. */
-    .app
-      .atlas-dashboard:not(.atlas-dashboard--plan)
-      .atlas-dashboard__field-rail
-      .hava81-decision-field__rail {
-      margin-top: auto;
+    /* A weather warning spans the page right above the decision summary, which moves
+       down one row only when the warning is present. */
+    .app .atlas-dashboard__primary > .severe-weather-banner {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-block-end: 0;
+    }
+
+    .app .atlas-dashboard__primary:has(> .severe-weather-banner) > .decision-glance {
+      grid-row: 3;
     }
 
     /* Later sections stack above the field's sky layers. */
@@ -161,11 +166,11 @@
 
   /* Near an edge the label anchors to that edge so it is never cut off. */
   .app .hava81-decision-field__trend-peak.is-start {
-    translate: -0.3rem calc(-100% - 0.45rem);
+    translate: 0 calc(-100% - 0.45rem);
   }
 
   .app .hava81-decision-field__trend-peak.is-end {
-    translate: calc(-100% + 0.3rem) calc(-100% - 0.45rem);
+    translate: -100% calc(-100% - 0.45rem);
   }
 
   /* ── Activity cards: the name never breaks inside a word ──

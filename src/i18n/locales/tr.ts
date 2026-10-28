@@ -189,8 +189,9 @@ export const tr = {
         outdoor:
           '{{time}} civarı hava açısından dışarıda olmak için daha sakin bir pencere görünüyor.',
         outdoorRange: '{{range}} dışarıda olmak için en sakin pencere görünüyor.',
-        stable: 'Yakın tahmin aralığında belirgin bir hava riski görünmüyor.',
-        stableLightRain: 'Hafif yağış ihtimali dışında belirgin bir hava riski görünmüyor.',
+        stable: 'Önümüzdeki 12 saatte belirgin bir hava riski görünmüyor.',
+        stableLightRain:
+          'Hafif yağış ihtimali dışında önümüzdeki 12 saatte belirgin bir risk görünmüyor.',
         unavailable: 'Yakın saatler için karar verisi henüz hazır değil.',
       },
       compactActions: {
@@ -204,8 +205,8 @@ export const tr = {
         uv: 'UV model zirvesi {{uv}} · Korunma planla',
         outdoor: 'Daha sakin hava · {{time}} civarı',
         outdoorRange: 'En sakin pencere · {{range}}',
-        stable: 'Belirgin hava riski görünmüyor',
-        stableLightRain: 'Hafif yağış dışında belirgin risk yok',
+        stable: '12 saat · belirgin risk yok',
+        stableLightRain: '12 saat · hafif yağış dışında risk yok',
         unavailable: 'Karar verisi hazırlanıyor',
       },
       notAvailable: '—',

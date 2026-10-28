@@ -1,4 +1,9 @@
 @layer editorial {
+  /* Spans both columns of the tablet grid too. */
+  .app .atlas-dashboard__primary > .severe-weather-banner {
+    grid-column: 1 / -1;
+  }
+
   .app .severe-weather-banner {
     display: flex;
     flex-wrap: wrap;

@@ -188,8 +188,9 @@ export const en = {
         uv: 'The modeled UV maximum for the next 24 hours is {{uv}}; plan sun protection.',
         outdoor: 'Around {{time}} looks like a calmer weather window for being outdoors.',
         outdoorRange: '{{range}} looks like the calmest window for being outdoors.',
-        stable: 'No material weather risk stands out in the near forecast.',
-        stableLightRain: 'Apart from a chance of light rain, no material weather risk stands out.',
+        stable: 'No material weather risk stands out in the next 12 hours.',
+        stableLightRain:
+          'Apart from a chance of light rain, nothing stands out in the next 12 hours.',
         unavailable: 'Near-term decision data is not ready yet.',
       },
       compactActions: {
@@ -203,8 +204,8 @@ export const en = {
         uv: 'Modeled UV peak {{uv}} · Plan sun protection',
         outdoor: 'Calmer weather · Around {{time}}',
         outdoorRange: 'Calmest window · {{range}}',
-        stable: 'No material weather risk stands out',
-        stableLightRain: 'No material risk beyond light rain',
+        stable: 'Next 12 h · no material risk',
+        stableLightRain: 'Next 12 h · only light rain',
         unavailable: 'Decision data is being prepared',
       },
       notAvailable: '—',
