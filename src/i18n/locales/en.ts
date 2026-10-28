@@ -78,6 +78,9 @@ export const en = {
       tomorrow: 'tomorrow',
       weekday: 'on {{weekday}}',
       percent: '{{percent}}%',
+      chanceLabel: 'chance',
+      amountLabel: 'rain',
+      severity: { warning: 'Advisory', severe: 'Severe' },
     },
     glance: {
       bestLabel: 'Best time',
@@ -95,6 +98,7 @@ export const en = {
       umbrellaAdvised: 'Umbrella advised.',
       bestHours: 'Highest-scoring weather window in the next 12 hours: {{hours}}',
       score: 'Hava81 Score',
+      scoreAria: 'Hava81 score: {{score}} out of 100',
       umbrella: 'Umbrella: {{advice}}',
       details: 'See why this score',
     },

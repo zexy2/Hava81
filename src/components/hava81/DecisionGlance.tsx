@@ -8,6 +8,9 @@ import { formatBestWindowTime } from '../../utils/formatBestWindowTime';
 import { capitalizeFirst, formatCityDateLabel } from '../../utils/format';
 import { withAtlasView } from '../../utils/atlasView';
 import { WeatherSymbol } from './WeatherSymbol';
+import { ScoreGauge } from './instruments/ScoreGauge';
+import { ClockGlyph, UmbrellaGlyph } from './instruments/glyphs';
+import './instruments/instruments.css';
 import type {
   AirQuality,
   AirQualityHourly,
@@ -186,13 +189,17 @@ export const DecisionGlance = memo(function DecisionGlance({
             {t('hava81.glance.bestHours', { hours: bestHours })}
           </p>
         ) : null}
-        <div className="decision-glance__quick-list">
-          <div className="decision-glance__quick">
+        <div
+          className="decision-glance__quick-list"
+          role="list"
+          data-testid="decision-timeline"
+        >
+          <div className="decision-glance__quick" role="listitem">
             <span
               className="decision-glance__quick-icon decision-glance__quick-icon--time"
               aria-hidden="true"
             >
-              ◷
+              <ClockGlyph />
             </span>
             <span>
               <small>{t('hava81.glance.bestLabel')}</small>
@@ -206,19 +213,19 @@ export const DecisionGlance = memo(function DecisionGlance({
               </strong>
             </span>
           </div>
-          <div className="decision-glance__quick">
+          <div className="decision-glance__quick" role="listitem">
             <span
               className="decision-glance__quick-icon decision-glance__quick-icon--umbrella"
               aria-hidden="true"
             >
-              ☂
+              <UmbrellaGlyph />
             </span>
             <span>
               <small>{t('hava81.glance.umbrellaLabel')}</small>
               <strong>{umbrellaAdvice}</strong>
             </span>
           </div>
-          <div className="decision-glance__quick">
+          <div className="decision-glance__quick" role="listitem">
             <span
               className="decision-glance__quick-icon decision-glance__quick-icon--weather"
               aria-hidden="true"
@@ -237,15 +244,14 @@ export const DecisionGlance = memo(function DecisionGlance({
           <>
             <div
               className={`decision-glance__score decision-glance__score--${plan.band}`}
-              style={
-                {
-                  '--glance-target': `${plan.score}%`,
-                  background:
-                    'conic-gradient(var(--decision-ring) var(--glance-fill, var(--glance-target)), var(--decision-ring-track) 0)',
-                } as React.CSSProperties
-              }
+              data-testid="score-gauge"
             >
-              <strong>
+              <ScoreGauge
+                score={plan.score}
+                band={plan.band}
+                label={t('hava81.glance.scoreAria', { score: plan.score })}
+              />
+              <strong data-gauge-value="">
                 {plan.score}
                 <span>/100</span>
               </strong>

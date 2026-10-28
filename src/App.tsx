@@ -857,7 +857,7 @@ const App: React.FC = () => {
             )}
           </main>
 
-          <footer className="atlas-footer">
+          <footer className="atlas-footer" data-testid="app-footer">
             <span>Hava81 · {t('hava81.tagline')}</span>
             <span className="atlas-footer__shortcuts">
               <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}

@@ -78,6 +78,9 @@ export const tr = {
       tomorrow: 'Yarın',
       weekday: '{{weekday}}',
       percent: '%{{percent}}',
+      chanceLabel: 'olasılık',
+      amountLabel: 'yağış',
+      severity: { warning: 'Dikkat', severe: 'Şiddetli' },
     },
     glance: {
       bestLabel: 'En uygun saatler',
@@ -95,6 +98,7 @@ export const tr = {
       umbrellaAdvised: 'Şemsiye önerilir.',
       bestHours: 'Önümüzdeki 12 saatte hava açısından en yüksek puanlı saatler: {{hours}}',
       score: 'Hava81 Skoru',
+      scoreAria: 'Hava81 skoru: 100 üzerinden {{score}}',
       umbrella: 'Şemsiye: {{advice}}',
       details: 'Skorun nedenini gör',
     },

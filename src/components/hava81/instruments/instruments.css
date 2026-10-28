@@ -1,0 +1,566 @@
+@layer editorial {
+  /* ── Lower Today surfaces: decision summary, environment instruments, footer ──
+     One ink family (deep navy, white type, hairlines) and one paper family (the
+     instrument cards). Display type is the serif; data is tabular sans. */
+
+  /* ── Decision summary ── */
+
+  .app .atlas-dashboard .decision-glance {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2rem 3rem;
+    padding: clamp(1.5rem, 1rem + 2vw, 3rem);
+    border-radius: var(--radius-xl);
+  }
+
+  .app .atlas-dashboard .decision-glance__main {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  .app .atlas-dashboard .decision-glance__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .app .atlas-dashboard .decision-glance__date {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgb(255 255 255 / 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .app .atlas-dashboard .decision-glance__message {
+    max-width: 20ch;
+    color: rgb(255 255 255);
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 1rem + 2.4vw, 3.25rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .app .atlas-dashboard .decision-glance__window {
+    color: rgb(255 255 255 / 0.78);
+    font-size: 1rem;
+  }
+
+  /* Facts: one row of hairline-divided columns with line icons. */
+  .app .atlas-dashboard .decision-glance .decision-glance__quick-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__quick {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-height: 0;
+    padding: 0 1.25rem;
+    border: 0;
+    border-inline-start: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__quick:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__quick-icon {
+    display: grid;
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 50%;
+    color: rgb(146 212 255);
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__quick-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__quick small {
+    display: block;
+    color: rgb(255 255 255 / 0.68);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__quick strong {
+    display: block;
+    margin-top: 0.15rem;
+    color: rgb(255 255 255);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  /* Score: an instrument dial with the number set in its centre. */
+  .app .atlas-dashboard .decision-glance__side {
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__score {
+    position: relative;
+    display: grid;
+    width: 11rem;
+    height: 11rem;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__score::before,
+  .app .atlas-dashboard .decision-glance .decision-glance__score::after {
+    display: none;
+  }
+
+  .app .score-gauge {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .app .score-gauge__track,
+  .app .score-gauge__progress {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
+
+  .app .score-gauge__track {
+    stroke: rgb(255 255 255 / 0.1);
+  }
+
+  .app .score-gauge__progress {
+    stroke: rgb(94 224 168);
+  }
+
+  .app .score-gauge[data-band='fair'] .score-gauge__progress {
+    stroke: rgb(246 200 92);
+  }
+
+  .app .score-gauge[data-band='poor'] .score-gauge__progress {
+    stroke: rgb(255 128 108);
+  }
+
+  .app .score-gauge__tick {
+    stroke: rgb(255 255 255 / 0.22);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+  }
+
+  .app .score-gauge__tick[data-major='true'] {
+    stroke-width: 1.8;
+  }
+
+  .app .score-gauge__tick[data-lit='true'] {
+    stroke: rgb(255 255 255 / 0.62);
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__score [data-gauge-value] {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    color: rgb(255 255 255);
+    font-family: var(--font-display);
+    font-size: 3.25rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__score [data-gauge-value] span {
+    margin-top: 0.3rem;
+    color: rgb(255 255 255 / 0.62);
+    font-family: var(--font-ui);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .app .atlas-dashboard .decision-glance__score-label {
+    color: rgb(255 255 255 / 0.78);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__details {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 1.1rem;
+    border: 1px solid rgb(255 255 255 / 0.22);
+    border-radius: 999px;
+    color: rgb(255 255 255);
+    background: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .app .atlas-dashboard .decision-glance .decision-glance__details:hover {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-dashboard .decision-glance {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+
+    .app .atlas-dashboard .decision-glance .decision-glance__quick-list {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.9rem;
+    }
+
+    .app .atlas-dashboard .decision-glance .decision-glance__quick {
+      padding: 0;
+      border-inline-start: 0;
+    }
+
+    .app .atlas-dashboard .decision-glance__side {
+      grid-template-columns: auto minmax(0, 1fr);
+      justify-items: start;
+      align-items: center;
+      column-gap: 1.25rem;
+    }
+
+    .app .atlas-dashboard .decision-glance .decision-glance__score {
+      grid-row: span 2;
+      width: 7.5rem;
+      height: 7.5rem;
+    }
+
+    .app .atlas-dashboard .decision-glance .decision-glance__score [data-gauge-value] {
+      font-size: 2.25rem;
+    }
+
+    .app .atlas-dashboard .decision-glance .decision-glance__details {
+      max-width: 100%;
+      white-space: normal;
+    }
+  }
+
+  /* ── Environment instruments ── */
+
+  .app .atlas-dashboard .environment-rail {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__module {
+    display: grid;
+    grid-template-rows: auto 4.5rem auto 1fr;
+    align-content: start;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 1.25rem 1.25rem 1.1rem;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-lg);
+    color: var(--color-atlas-ink);
+    background: var(--color-atlas-paper);
+    box-shadow: 0 14px 36px rgb(8 28 54 / 0.14);
+    text-align: start;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__label {
+    grid-row: 1;
+    color: var(--color-atlas-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__icon,
+  .app .atlas-dashboard .environment-rail .environment-rail__module:nth-child(n) .environment-rail__icon {
+    position: static;
+    display: flex;
+    grid-row: 2;
+    align-items: center;
+    width: 100%;
+    height: 4.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: inherit;
+    background: none;
+    box-shadow: none;
+    opacity: 1;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__value {
+    grid-row: 3;
+    color: var(--color-atlas-ink);
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__module--action .environment-rail__value {
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__detail {
+    grid-row: 4;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__module--action {
+    cursor: pointer;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__module--action:hover {
+    border-color: color-mix(in srgb, var(--color-aegean, rgb(20 107 115)) 55%, transparent);
+    box-shadow: 0 18px 44px rgb(8 28 54 / 0.2);
+  }
+
+  @media (max-width: 63.99rem) {
+    .app .atlas-dashboard .environment-rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .app .atlas-dashboard .environment-rail .environment-rail__value {
+      font-size: 1.6rem;
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .app .atlas-dashboard .environment-rail .environment-rail__module {
+      padding: 1rem 0.9rem;
+    }
+
+    .app .atlas-dashboard .environment-rail .environment-rail__value {
+      font-size: 1.35rem;
+    }
+  }
+
+  /* Instruments draw in the card's ink with one accent each. */
+
+  .app .instrument-sun,
+  .app .instrument-wind,
+  .app .instrument-map {
+    display: block;
+    height: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .app .instrument-sun__horizon {
+    stroke: var(--color-atlas-line);
+    stroke-width: 1;
+  }
+
+  .app .instrument-sun__track {
+    fill: none;
+    stroke: var(--color-atlas-line);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 4;
+  }
+
+  .app .instrument-sun__elapsed {
+    fill: none;
+    stroke: rgb(214 140 30);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .app .instrument-sun__sun {
+    fill: rgb(240 168 48);
+    stroke: var(--color-atlas-paper);
+    stroke-width: 2.5;
+  }
+
+  .app .instrument-sun__sun[data-night='true'] {
+    fill: rgb(120 138 168);
+  }
+
+  .app .instrument-wind__ring {
+    fill: none;
+    stroke: var(--color-atlas-line);
+    stroke-width: 1;
+  }
+
+  .app .instrument-wind__tick {
+    stroke: var(--color-atlas-muted);
+    stroke-width: 0.8;
+    opacity: 0.5;
+  }
+
+  .app .instrument-wind__tick[data-major='true'] {
+    stroke-width: 1.4;
+    opacity: 1;
+  }
+
+  .app .instrument-wind__cardinal {
+    fill: var(--color-atlas-muted);
+    font-size: 7px;
+    font-weight: 700;
+  }
+
+  .app .instrument-wind__needle {
+    fill: none;
+    stroke: var(--color-aegean, rgb(20 107 115));
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .app .instrument-wind__needle circle {
+    fill: var(--color-atlas-paper);
+  }
+
+  .app .instrument-aqi {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.3rem;
+    width: 100%;
+    align-self: center;
+  }
+
+  .app .instrument-aqi__segment {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-atlas-line);
+  }
+
+  .app .instrument-aqi__segment[data-aqi-segment='1'] { --aqi: rgb(46 170 110); }
+  .app .instrument-aqi__segment[data-aqi-segment='2'] { --aqi: rgb(132 190 64); }
+  .app .instrument-aqi__segment[data-aqi-segment='3'] { --aqi: rgb(232 176 40); }
+  .app .instrument-aqi__segment[data-aqi-segment='4'] { --aqi: rgb(230 112 50); }
+  .app .instrument-aqi__segment[data-aqi-segment='5'] { --aqi: rgb(176 60 120); }
+
+  .app .instrument-aqi__segment[data-passed='true'] {
+    background: color-mix(in srgb, var(--aqi) 35%, var(--color-atlas-line));
+  }
+
+  .app .instrument-aqi__segment[data-active='true'] {
+    height: 0.9rem;
+    background: var(--aqi);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--aqi) 22%, transparent);
+  }
+
+  .app .instrument-map__land {
+    fill: color-mix(in srgb, var(--color-atlas-ink) 9%, transparent);
+    stroke: color-mix(in srgb, var(--color-atlas-ink) 32%, transparent);
+    stroke-width: 1;
+    stroke-linejoin: round;
+  }
+
+  .app .instrument-map__halo {
+    fill: color-mix(in srgb, var(--color-aegean, rgb(20 107 115)) 22%, transparent);
+  }
+
+  .app .instrument-map__dot {
+    fill: var(--color-aegean, rgb(20 107 115));
+    stroke: var(--color-atlas-paper);
+    stroke-width: 2;
+  }
+
+  /* ── Footer: one quiet line ── */
+
+  .app .atlas-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    min-height: 3.5rem;
+    padding-block: 1rem;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+  }
+
+  .app .atlas-footer kbd {
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-xs);
+    background: var(--color-atlas-paper);
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+  }
+
+  /* ── Motion: the dial and the sun draw in once; nothing moves for reduced motion ── */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .app .score-gauge__progress {
+      animation: gauge-draw 1100ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+    }
+
+    .app .instrument-sun__sun,
+    .app .instrument-wind__needle {
+      transition: transform 400ms ease;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .severe-weather-banner,
+    .app .severe-weather-banner *,
+    .app .decision-glance,
+    .app .decision-glance *,
+    .app .decision-glance *::before,
+    .app .decision-glance *::after,
+    .app .environment-rail,
+    .app .environment-rail *,
+    .app .atlas-footer,
+    .app .atlas-footer * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+@keyframes gauge-draw {
+  from {
+    stroke-dashoffset: var(--gauge-length, 400);
+  }
+}

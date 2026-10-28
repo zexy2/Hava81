@@ -6,6 +6,9 @@ import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
 import { getCityMetadata } from '../../constants/cityMetadata';
 import { formatCityClock } from '../../utils/format';
+import { AqiScale, SunArc, WindCompass } from './instruments/EnvironmentInstruments';
+import { TurkeyLocator } from './instruments/TurkeyLocator';
+import './instruments/instruments.css';
 import './EnvironmentRail.css';
 
 const WIND_DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
@@ -14,47 +17,6 @@ export interface EnvironmentRailProps {
   airQuality?: AirQuality;
   onOpenMap: () => void;
   mapExpanded: boolean;
-}
-
-function DaylightIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M3 18.5h18" />
-      <path d="M7.5 18.5a4.5 4.5 0 0 1 9 0" />
-      <path d="M12 4.5v3M5.6 8.1l2.1 2.1M18.4 8.1l-2.1 2.1" />
-    </svg>
-  );
-}
-
-function WindIcon({ direction }: { direction: number }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <circle cx="12" cy="12" r="8.5" />
-      <g transform={`rotate(${direction} 12 12)`}>
-        <path d="M12 4v15" />
-        <path d="m8.8 7.5 3.2-3.5 3.2 3.5" />
-      </g>
-    </svg>
-  );
-}
-
-function AirIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M3.5 8.5h10.8c1.8 0 2.7-1 2.7-2.2 0-1.1-.8-2-2-2" />
-      <path d="M3.5 12h15.2c1.2 0 2.3.9 2.3 2.1 0 1.3-1 2.4-2.5 2.4" />
-      <path d="M3.5 15.5h8.8c1.6 0 2.7 1 2.7 2.3 0 1.2-.9 2.2-2.2 2.2" />
-    </svg>
-  );
-}
-
-function MapIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="m3.5 6 5-2.5 7 2.5 5-2.5v14.5l-5 2.5-7-2.5-5 2.5z" />
-      <path d="M8.5 3.5v14.5M15.5 6v14.5" />
-    </svg>
-  );
 }
 
 function isValidDate(value: Date): boolean {
@@ -172,6 +134,12 @@ export function EnvironmentRail({
     ? timeFormatter.format(atLocationTime(nextSunrise))
     : t('weather.noData');
 
+  const daylightProgress = hasValidDaylight
+    ? (nowMs - weather.sunrise.getTime()) / (weather.sunset.getTime() - weather.sunrise.getTime())
+    : 0;
+  const cityMetadata = getCityMetadata(weather.cityName);
+  const cityCoordinates = cityMetadata?.coordinates ?? weather.coordinates;
+
   const daylightLength = useMemo(() => {
     if (!hasValidDaylight) return t('weather.noData');
 
@@ -219,9 +187,9 @@ export function EnvironmentRail({
 
   return (
     <section className="environment-rail" aria-label={sectionLabel}>
-      <div className="environment-rail__module">
+      <div className="environment-rail__module" data-testid="instrument-daylight">
         <span className="environment-rail__icon">
-          <DaylightIcon />
+          <SunArc progress={daylightProgress} night={showSunrise} />
         </span>
         <span className="environment-rail__label">
           {showSunrise ? t('daylight.nextSunrise') : t('daylight.sunset')}
@@ -258,9 +226,9 @@ export function EnvironmentRail({
         </span>
       </div>
 
-      <div className="environment-rail__module">
+      <div className="environment-rail__module" data-testid="instrument-wind">
         <span className="environment-rail__icon">
-          <WindIcon direction={normalizedDirection} />
+          <WindCompass direction={normalizedDirection} active={hasValidWind} />
         </span>
         <span className="environment-rail__label">{t('weather.wind')}</span>
         <strong className="environment-rail__value">
@@ -281,9 +249,9 @@ export function EnvironmentRail({
         </span>
       </div>
 
-      <div className="environment-rail__module">
+      <div className="environment-rail__module" data-testid="instrument-aqi">
         <span className="environment-rail__icon">
-          <AirIcon />
+          <AqiScale aqi={airQualityLabelKey && freshAirQuality ? freshAirQuality.aqi : null} />
         </span>
         <span className="environment-rail__label">{t('weather.airQuality')}</span>
         <strong className="environment-rail__value">
@@ -318,16 +286,19 @@ export function EnvironmentRail({
         onClick={onOpenMap}
         aria-expanded={mapExpanded}
         aria-controls={mapExpanded ? 'weather-map-region' : undefined}
+        data-testid="instrument-map"
       >
         <span className="environment-rail__icon">
-          <MapIcon />
+          {cityCoordinates ? (
+            <TurkeyLocator lat={cityCoordinates.lat} lon={cityCoordinates.lon} />
+          ) : null}
         </span>
         <span className="environment-rail__label">{t('common.map')}</span>
         <strong className="environment-rail__value">
           {mapExpanded ? t('weather.hideMap') : t('weather.showMap')}
         </strong>
         <span className="environment-rail__detail">
-          {getCityMetadata(weather.cityName)?.name ?? weather.cityName}
+          {cityMetadata?.name ?? weather.cityName}
         </span>
       </button>
     </section>
