@@ -127,9 +127,26 @@
   .app .settings-panel .settings-panel__content {
     display: grid;
     gap: 0;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 0.5rem 1.25rem 0.75rem;
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+
+  /* Only the preferences scroll; title, preview and version stay put. */
+  .app .settings-panel .settings-panel__header,
+  .app .settings-panel__preview,
+  .app .settings-panel .settings-panel__footer,
+  .app .settings-panel__handle {
+    flex: none;
+  }
+
+  /* Very short screens keep every pixel for the choices. */
+  @media (max-height: 28rem) {
+    .app .settings-panel__preview {
+      display: none;
+    }
   }
 
   /* Each preference: a label on the left of a hairline row, the control below it. */
