@@ -19,7 +19,12 @@ export function SunArc({ progress, night }: SunArcProps) {
   const arc = `M ${CX - R} ${BASE} A ${R} ${R} 0 0 1 ${CX + R} ${BASE}`;
   const length = Math.PI * R;
   return (
-    <svg className="instrument-sun" viewBox={`0 0 ${W} ${H + 2}`} aria-hidden="true" focusable="false">
+    <svg
+      className="instrument-sun"
+      viewBox={`0 0 ${W} ${H + 2}`}
+      aria-hidden="true"
+      focusable="false"
+    >
       <line className="instrument-sun__horizon" x1="2" y1={BASE} x2={W - 2} y2={BASE} />
       <path className="instrument-sun__track" d={arc} />
       <path
@@ -43,10 +48,12 @@ interface WindCompassProps {
   /** Meteorological direction the wind blows from, degrees. */
   direction: number;
   active: boolean;
+  /** Localized letter for north (N / K). */
+  northLabel?: string;
 }
 
 /** Compass rose; the needle points the way the air moves (from → to). */
-export function WindCompass({ direction, active }: WindCompassProps) {
+export function WindCompass({ direction, active, northLabel = 'N' }: WindCompassProps) {
   const rotation = Math.round(((direction % 360) + 360) % 360);
   const ticks = Array.from({ length: 24 }, (_, index) => index * 15);
   return (
@@ -65,7 +72,7 @@ export function WindCompass({ direction, active }: WindCompassProps) {
         />
       ))}
       <text className="instrument-wind__cardinal" x="32" y="-2" textAnchor="middle">
-        N
+        {northLabel}
       </text>
       {active ? (
         <g

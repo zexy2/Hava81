@@ -228,7 +228,11 @@ export function EnvironmentRail({
 
       <div className="environment-rail__module" data-testid="instrument-wind">
         <span className="environment-rail__icon">
-          <WindCompass direction={normalizedDirection} active={hasValidWind} />
+          <WindCompass
+            direction={normalizedDirection}
+            active={hasValidWind}
+            northLabel={t('wind.directions.N')}
+          />
         </span>
         <span className="environment-rail__label">{t('weather.wind')}</span>
         <strong className="environment-rail__value">
@@ -297,9 +301,7 @@ export function EnvironmentRail({
         <strong className="environment-rail__value">
           {mapExpanded ? t('weather.hideMap') : t('weather.showMap')}
         </strong>
-        <span className="environment-rail__detail">
-          {cityMetadata?.name ?? weather.cityName}
-        </span>
+        <span className="environment-rail__detail">{cityMetadata?.name ?? weather.cityName}</span>
       </button>
     </section>
   );
