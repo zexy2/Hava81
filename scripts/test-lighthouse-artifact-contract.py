@@ -62,8 +62,21 @@ assert "run: node scripts/test-lighthouse-weather-readiness.mjs" in job, (
 assert "run: node scripts/test-live-weather-payload.mjs" in job, (
     "Live provider payload integrity regressions must run in CI"
 )
-assert 'node scripts/lib/live-weather-payload.mjs "$weather_file"' in job, (
-    "The real provider response must pass timestamp, city, provider and freshness validation"
+assert "run: node scripts/test-lighthouse-live-weather-preflight.mjs" in job, (
+    "Bounded live-weather retry behavior must run in CI"
+)
+assert "node scripts/lighthouse-live-weather-preflight.mjs" in job, (
+    "The real provider response must use the bounded, fail-closed preflight helper"
+)
+preflight = Path("scripts/lighthouse-live-weather-preflight.mjs").read_text(encoding="utf-8")
+assert "validateLiveWeatherPayload" in preflight and "return validate(payload)" in preflight, (
+    "Retries must not bypass city, timestamp, provider or freshness validation"
+)
+assert "RETRYABLE_HTTP_STATUSES" in preflight and "attempts = 2" in preflight, (
+    "Live-weather retry count and transient status policy must remain bounded"
+)
+assert "429" not in preflight.split("const RETRYABLE_HTTP_STATUSES", 1)[1].split(";", 1)[0], (
+    "Rate-limit responses must not be amplified by automatic retries"
 )
 run_index = job.find("npm run lighthouse")
 assert run_index >= 0, "Lighthouse command is missing from the job"

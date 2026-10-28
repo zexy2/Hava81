@@ -179,6 +179,8 @@ jobs:
         run: node scripts/test-lighthouse-weather-readiness.mjs
       - name: Validate live-weather payload integrity
         run: node scripts/test-live-weather-payload.mjs
+      - name: Validate bounded live-weather preflight retry contract
+        run: node scripts/test-lighthouse-live-weather-preflight.mjs
       - name: Validate Lighthouse preview API proxy contract
         run: node scripts/test-lighthouse-preview-proxy.mjs
       - name: Validate Lighthouse workflow artifact contract
@@ -193,7 +195,6 @@ jobs:
 
           api_log="$RUNNER_TEMP/hava81-lighthouse-api.log"
           ready_file="$RUNNER_TEMP/hava81-lighthouse-api-ready.json"
-          weather_file="$RUNNER_TEMP/hava81-lighthouse-api-weather.json"
           OPENWEATHER_API_KEY="$OPENWEATHER_API_KEY" \
             NODE_ENV=production HOST=127.0.0.1 PORT=4000 \
             CORS_ORIGINS=http://127.0.0.1:4173 \
@@ -227,19 +228,16 @@ jobs:
             exit 1
           fi
 
-          # Prime and validate the real provider response before browser measurement.
-          # Lighthouse still enforces its own successful current-weather request gate.
-          if ! curl --silent --show-error --fail --max-time 20 \
-            'http://127.0.0.1:4000/api/v1/weather/current?city=Istanbul&units=metric&lang=en' \
-            -o "$weather_file"; then
-            echo "Local API could not return live current weather from OpenWeather." >&2
+          # Prime and validate real provider data before browser measurement. Only
+          # transient transport/5xx failures receive one bounded retry; malformed
+          # payloads and rate limits fail closed, with no synthetic fallback.
+          if ! node scripts/lighthouse-live-weather-preflight.mjs \
+            'http://127.0.0.1:4000/api/v1/weather/current?city=Istanbul&units=metric&lang=en'; then
+            echo "Local API could not return valid live current weather after bounded transient retries." >&2
             tail -n 30 "$api_log" | sed -E 's/(appid=)[^&[:space:]]+/\1[redacted]/g'
             exit 1
           fi
-          if ! node scripts/lib/live-weather-payload.mjs "$weather_file"; then
-            echo "Live weather preflight response did not satisfy the current-weather integrity contract." >&2
-            exit 1
-          fi
+          # Lighthouse still enforces its own successful current-weather request gate.
           npm run lighthouse
         env:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
