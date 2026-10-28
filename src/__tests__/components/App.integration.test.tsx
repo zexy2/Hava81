@@ -360,7 +360,8 @@ describe('Hava81 app integration', () => {
       'Hava81 tarafından biçimlendirildi'
     );
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
-    expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();
+    // Air quality is shown once, in the environment rail.
+    expect(screen.getByText('3 / 5')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hava81' })).toHaveAttribute('href', '/');
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
@@ -384,7 +385,9 @@ describe('Hava81 app integration', () => {
     expect(container.querySelector('.decision-alerts')).not.toBeNull();
     const user = userEvent.setup();
     expect(container.querySelector('.atlas-plan-entry')).toBeNull();
-    await user.click(container.querySelector<HTMLButtonElement>('.atlas-plan-button') as HTMLButtonElement);
+    await user.click(
+      container.querySelector<HTMLButtonElement>('.atlas-plan-button') as HTMLButtonElement
+    );
     expect(
       await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
     ).toBeInTheDocument();

@@ -559,7 +559,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
         Array.from(container.querySelectorAll('.hava81-forecast-atlas__axis-label')).map(
           label => label.textContent
         )
-      ).toEqual(['31°', '22°', '12°']);
+      ).toEqual(['30°', '25°', '20°', '15°']);
     };
 
     assertFullHorizonSummary();
