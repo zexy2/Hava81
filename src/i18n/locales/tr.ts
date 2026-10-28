@@ -205,7 +205,7 @@ export const tr = {
         uv: 'UV model zirvesi {{uv}} · Korunma planla',
         outdoor: 'Daha sakin hava · {{time}} civarı',
         outdoorRange: 'En sakin pencere · {{range}}',
-        stable: '12 saat · belirgin risk yok',
+        stable: '12 saatte belirgin hava riski görünmüyor',
         stableLightRain: '12 saat · hafif yağış dışında risk yok',
         unavailable: 'Karar verisi hazırlanıyor',
       },

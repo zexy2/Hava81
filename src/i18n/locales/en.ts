@@ -204,7 +204,7 @@ export const en = {
         uv: 'Modeled UV peak {{uv}} · Plan sun protection',
         outdoor: 'Calmer weather · Around {{time}}',
         outdoorRange: 'Calmest window · {{range}}',
-        stable: 'Next 12 h · no material risk',
+        stable: 'No weather risk stands out in 12 h',
         stableLightRain: 'Next 12 h · only light rain',
         unavailable: 'Decision data is being prepared',
       },
