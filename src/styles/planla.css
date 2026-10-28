@@ -1293,7 +1293,10 @@
     color: rgb(255 255 255 / 62%);
   }
 
+  /* The night label spans the quiet night columns to its right instead of being clipped. */
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot-flag.is-night {
+    justify-self: start;
+    overflow: visible;
     color: rgb(255 255 255 / 62%);
   }
 
