@@ -177,6 +177,8 @@ jobs:
         run: node scripts/test-lighthouse-target-url.mjs
       - name: Validate real-weather readiness and bounded confirmation
         run: node scripts/test-lighthouse-weather-readiness.mjs
+      - name: Validate target-based Lighthouse performance confirmation
+        run: node scripts/test-lighthouse-performance-confirmation.mjs
       - name: Validate live-weather payload integrity
         run: node scripts/test-live-weather-payload.mjs
       - name: Validate Lighthouse preview API proxy contract

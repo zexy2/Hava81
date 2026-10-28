@@ -54,7 +54,19 @@ assert "withLighthouseWeatherReadinessConfirmation(" in runner, (
     "Lighthouse must retry one failed real-weather readiness measurement without bypassing the gate"
 )
 assert "assertLighthouseWeatherReady(report)" in runner, (
-    "Lighthouse performance confirmation must still reject a report that never loaded current weather"
+    "Lighthouse must explicitly validate the selected report's real current-weather request"
+)
+assert "shouldRepeatPerformanceMeasurement" in runner, (
+    "Lighthouse must repeat measurements below the performance target, not only below the hard floor"
+)
+assert "medianCategoryScore" in runner and "Lighthouse performance samples" in runner, (
+    "Lighthouse must report and budget the median when a performance confirmation is available"
+)
+assert "lhr-performance-repeat.json" in runner, (
+    "The performance confirmation must be preserved as a distinct raw report"
+)
+assert "run: node scripts/test-lighthouse-performance-confirmation.mjs" in job, (
+    "The target-based performance confirmation contract must run in CI"
 )
 assert "run: node scripts/test-lighthouse-weather-readiness.mjs" in job, (
     "The bounded weather-readiness retry contract must run in CI"
