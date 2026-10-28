@@ -1347,17 +1347,21 @@ def frontend_deployment_state(frontend_revision: dict[str, Any], main_branch: di
     # for older callers/tests, but production status must not compare against an
     # arbitrarily older successful Actions run.
     main_revision = None
-    if isinstance(main_branch, dict):
+    main_branch_known = isinstance(main_branch, dict) and main_branch.get('known') is not False
+    if main_branch_known:
         main_revision = main_branch.get('sha') or main_branch.get('head_sha')
     known = frontend_revision.get('known') is True
     consistent = frontend_revision.get('consistent') is True
     deployed_revision = frontend_revision.get('root') if known and consistent else None
     comparable = isinstance(main_revision, str) and bool(main_revision) and isinstance(deployed_revision, str)
-    matches_main = bool(comparable and deployed_revision == main_revision)
+    revision_parity_known = bool(comparable)
+    matches_main = deployed_revision == main_revision if comparable else None
+    pending = not matches_main if comparable else None
     return {
         'main_revision': main_revision,
+        'revision_parity_known': revision_parity_known,
         'matches_main': matches_main,
-        'pending': bool(comparable and not matches_main),
+        'pending': pending,
     }
 
 
@@ -1455,6 +1459,19 @@ def pr_gate_state(pr: dict[str, Any]) -> str:
     return 'unknown'
 
 
+def github_state_blocker(github: dict[str, Any]) -> str:
+    """Distinguish an exhausted REST quota from other unavailable GitHub state."""
+    error = str(github.get('error') or '').lower()
+    remaining = github.get('rate_limit_remaining')
+    try:
+        rate_limit_exhausted = int(remaining) <= 0
+    except (TypeError, ValueError):
+        rate_limit_exhausted = False
+    if rate_limit_exhausted or 'rate limit' in error:
+        return 'github_rate_limited'
+    return 'github_state_unknown'
+
+
 def merge_readiness(github: dict[str, Any]) -> dict[str, Any]:
     """Report candidates only when owner policy and exact-head GitHub state are known.
 
@@ -1470,7 +1487,7 @@ def merge_readiness(github: dict[str, Any]) -> dict[str, Any]:
     elif policy.get('paused') is True:
         reasons.append('owner_directive_paused')
     if github.get('ok') is not True:
-        reasons.append('github_state_unknown')
+        reasons.append(github_state_blocker(github))
     elif policy.get('known') is True and policy.get('paused') is False and not github_signals.get('ci_merge_candidates'):
         reasons.append('no_green_merge_candidate')
     return {'ok': not reasons, 'blocking_reasons': reasons}
@@ -1489,7 +1506,9 @@ def frontend_deploy_readiness(
     if production.get('healthy') is not True:
         reasons.append('production_unhealthy')
     if github.get('ok') is not True:
-        reasons.append('github_state_unknown')
+        reasons.append(github_state_blocker(github))
+    if frontend_revision.get('revision_parity_known') is False:
+        reasons.append('frontend_revision_parity_unknown')
     if frontend_revision.get('pending') is True:
         reasons.append('frontend_deploy_pending')
     if nginx.get('preferred_ok') is False:
@@ -1584,7 +1603,7 @@ def state_signature(state: dict[str, Any]) -> dict[str, Any]:
         'main_pipeline': github.get('main_pipeline'),
         'frontend_revision': {
             key: (production.get('frontend_revision') or {}).get(key)
-            for key in ('root', 'city', 'english_city', 'known', 'consistent', 'main_revision', 'matches_main', 'pending')
+            for key in ('root', 'city', 'english_city', 'known', 'consistent', 'main_revision', 'revision_parity_known', 'matches_main', 'pending')
         },
         'api_deployment': {
             key: (github.get('api_deployment') or {}).get(key)
