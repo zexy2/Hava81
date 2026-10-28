@@ -38,6 +38,11 @@ interface Props {
   forecastMeta: ForecastMeta | null;
 }
 
+const COMMUTE_PRESETS = [
+  { key: 'office', start: '08:30', end: '18:00' },
+  { key: 'school', start: '07:45', end: '16:00' },
+] as const;
+
 export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
   const { t, i18n } = useTranslation();
   const { convertTemperature, convertWindSpeed, getTemperatureSymbol, getWindSpeedSymbol } =
@@ -124,7 +129,9 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
     const hasAmount = typeof amount === 'number' && Number.isFinite(amount) && amount >= 0;
     if (!hasProbability && !hasAmount) return t('hava81.commute.precipitationUnknown');
 
-    const probabilityPercent = hasProbability ? Math.round((probability as number) * 100) : undefined;
+    const probabilityPercent = hasProbability
+      ? Math.round((probability as number) * 100)
+      : undefined;
     const parts: string[] = [];
     if (probabilityPercent !== undefined && probabilityPercent > 0) {
       parts.push(
@@ -167,6 +174,34 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
           </button>
         ) : null}
       </header>
+
+      {/* One tap to a common routine, so the card is useful before anything is typed. */}
+      <div
+        className="commute-plan__presets"
+        role="group"
+        aria-label={t('hava81.commute.presetsLabel')}
+      >
+        {COMMUTE_PRESETS.map(preset => {
+          const active = profile.commuteStart === preset.start && profile.commuteEnd === preset.end;
+          return (
+            <button
+              key={preset.key}
+              type="button"
+              className="commute-plan__preset"
+              aria-pressed={active}
+              onClick={() => {
+                setCommuteTime('start', preset.start);
+                setCommuteTime('end', preset.end);
+              }}
+            >
+              <span>{t(`hava81.commute.presets.${preset.key}`)}</span>
+              <small>
+                {preset.start} → {preset.end}
+              </small>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="commute-plan__times" role="group" aria-label={t('hava81.commute.timesLabel')}>
         <label>
@@ -262,7 +297,11 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                     <div>
                       <dt>{t('hava81.commute.wind')}</dt>
                       <dd>
-                        {formatWithUnit(convertWindSpeed(window.windSpeed), getWindSpeedSymbol(), i18n.language)}
+                        {formatWithUnit(
+                          convertWindSpeed(window.windSpeed),
+                          getWindSpeedSymbol(),
+                          i18n.language
+                        )}
                       </dd>
                     </div>
                     <div>

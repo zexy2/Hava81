@@ -129,7 +129,7 @@ export const en = {
       open: 'Open Plan',
     },
     scoreScope: {
-      day: 'Hava81 Score',
+      day: 'Overall outdoor score',
       activity: 'For this activity',
       hourly: 'Hourly suitability',
       route: 'Route suitability',
@@ -258,6 +258,7 @@ export const en = {
       intentAria: 'Coming days: {{name}}',
       window: 'Best {{start}}–{{end}}',
       noWindow: 'No suitable window',
+      thunder: 'Thunderstorm · around {{times}}. Lightning risk: do not wait in open ground.',
       confidence: { medium: 'forecast', low: 'uncertain forecast' },
       note: 'Same decision engine: each day is judged on its own hours only. Forecasts further out can change.',
     },
@@ -312,10 +313,26 @@ export const en = {
           'Weather conditions look more comfortable from around {{time}}, when the best window of the next 12 hours starts.',
         now: 'Weather conditions put right now inside the best window of the next 12 hours.',
         similar: 'There is no meaningful weather advantage between the next few hours.',
+        even: 'The next 12 hours look alike for the weather; there is no clear best window.',
       },
       bestWindow: 'Best-looking weather time in the next 12 hours: {{time}}',
       bestRange: 'Best-looking weather range in the next 12 hours: {{start}}–{{end}}',
       scoreRange: 'Depends on the rain: {{low}} if it rains, {{high}} if it stays dry.',
+      weakHours: 'Weaker hours: {{times}}.',
+      whyWeak: {
+        thermal:
+          'Why weaker? Around {{time}} it feels like {{worst}}{{unit}}, {{best}}{{unit}} at other hours.',
+        precipitation:
+          'Why weaker? Around {{time}} the rain chance is {{worst}}%, {{best}}% at other hours.',
+        'precipitation-mm':
+          'Why weaker? Around {{time}} {{worst}} mm of rain is expected, {{best}} mm at other hours.',
+        wind: 'Why weaker? Around {{time}} wind reaches {{worst}} {{unit}}, {{best}} {{unit}} at other hours.',
+        uv: 'Why weaker? Around {{time}} UV is {{worst}}, {{best}} at other hours.',
+        visibility:
+          'Why weaker? Around {{time}} visibility is {{worst}} km, {{best}} km at other hours.',
+        'air-quality': 'Why weaker? Air quality dips around {{time}}.',
+        'severe-weather': 'Why weaker? Severe weather is expected around {{time}}.',
+      },
       why: {
         thermal:
           'Why this range? Around {{time}} it feels like {{worst}}{{unit}}, here {{best}}{{unit}}.',
@@ -331,6 +348,7 @@ export const en = {
       },
       quickLabel: 'Practical weather decisions',
       quick: {
+        airAround: 'around {{times}}',
         umbrella: {
           label: 'Umbrella',
           yes: 'Yes',
@@ -409,6 +427,8 @@ export const en = {
       subtitle:
         'Save when you leave and return; Hava81 will compare those two windows and tell you what is worth carrying today.',
       timesLabel: 'Departure and return times',
+      presetsLabel: 'Common routines',
+      presets: { office: 'Office', school: 'School' },
       outbound: 'Leave',
       return: 'Return',
       reset: 'Clear times',
@@ -482,6 +502,13 @@ export const en = {
       },
       bestTime: 'Best weather time: {{time}}',
       bestRange: 'Best weather range: {{start}}–{{end}}',
+      anyTime: 'Any time between {{start}} and {{end}} works today.',
+      vsGeneral: '{{delta}} vs the overall score: {{why}}',
+      vsGeneralWhy: {
+        up: 'the weather suits this activity better',
+        down: 'this activity is more weather-sensitive',
+      },
+      darkness: 'The suggested hours are after dark: pick a lit route and visible clothing.',
       fullDuration: 'Suitable for the full planned {{minutes}} minutes.',
       alternatives: 'Other good windows: {{list}}',
       score: {
@@ -552,7 +579,7 @@ export const en = {
     context: {
       eyebrow: 'Local context',
       title: 'Sun, dust, pollen and sea',
-      uv: 'UV · 24h modeled maximum',
+      uv: 'UV · 24-hour high',
       uvLevels: {
         low: 'Low',
         moderate: 'Moderate',
@@ -565,11 +592,12 @@ export const en = {
       uvNormal: 'The modeled UV maximum stays low over the next 24 hours.',
       dust: 'Dust model',
       pollen: 'Pollen model',
+      pollenUnit: 'grains/m³',
       pollenNote: 'Higher modeled maximum across grass/olive pollen over the next 24 hours.',
-      sea: 'Nearby coast',
+      sea: 'Sea water',
       wave: 'Wave: {{height}} {{unit}}',
       waveDetails:
-        'Wave {{height}} {{unit}} · period {{period}} {{periodUnit}} · direction {{direction}}{{directionUnit}}',
+        'Wave {{height}} {{unit}} · period {{period}} {{periodUnit}} · from the {{direction}}',
       sourceModified: 'summarized by Hava81',
       fetchedAt: 'data fetched {{time}}',
       waveUnavailable: 'Wave data unavailable',

@@ -129,7 +129,7 @@ export const tr = {
       open: 'Planla’yı aç',
     },
     scoreScope: {
-      day: 'Hava81 Skoru',
+      day: 'Genel dışarı skoru',
       activity: 'Bu aktivite için',
       hourly: 'Saatlik uygunluk',
       route: 'Rota uygunluğu',
@@ -259,6 +259,7 @@ export const tr = {
       intentAria: 'Önümüzdeki günler: {{name}}',
       window: 'En uygun {{start}}–{{end}}',
       noWindow: 'Uygun pencere yok',
+      thunder: 'Gök gürültülü fırtına · {{times}} civarı. Yıldırım riski: açık alanda bekleme.',
       confidence: { medium: 'tahmini', low: 'belirsiz tahmin' },
       note: 'Aynı karar motoru: her gün yalnızca o günün saatleriyle değerlendirilir. Uzak günlerde tahmin değişebilir.',
     },
@@ -315,10 +316,26 @@ export const tr = {
           'Önümüzdeki 12 saatin hava açısından en uygun aralığı {{time}} civarı başlıyor; hava koşulları şu ana göre daha elverişli görünüyor.',
         now: 'Hava koşulları açısından şu an, önümüzdeki 12 saatin en uygun aralığının içinde.',
         similar: 'Yakın saatler arasında hava açısından belirgin bir avantaj görünmüyor.',
+        even: 'Önümüzdeki 12 saat hava açısından benzer; belirgin bir en iyi aralık yok.',
       },
       bestWindow: 'Hava açısından önümüzdeki 12 saatte en iyi görünen saat: {{time}}',
       bestRange: 'Hava açısından önümüzdeki 12 saatte en uygun görünen aralık: {{start}}–{{end}}',
       scoreRange: 'Yağışa bağlı: yağarsa {{low}}, yağmazsa {{high}}.',
+      weakHours: 'Daha zayıf saatler: {{times}}.',
+      whyWeak: {
+        thermal:
+          'Neden daha zayıf? {{time}} civarı hissedilen {{worst}}{{unit}}, diğer saatlerde {{best}}{{unit}}.',
+        precipitation:
+          'Neden daha zayıf? {{time}} civarı yağış ihtimali %{{worst}}, diğer saatlerde %{{best}}.',
+        'precipitation-mm':
+          'Neden daha zayıf? {{time}} civarı {{worst}} mm yağış bekleniyor, diğer saatlerde {{best}} mm.',
+        wind: 'Neden daha zayıf? {{time}} civarı rüzgâr {{worst}} {{unit}}, diğer saatlerde {{best}} {{unit}}.',
+        uv: 'Neden daha zayıf? {{time}} civarı UV {{worst}}, diğer saatlerde {{best}}.',
+        visibility:
+          'Neden daha zayıf? {{time}} civarı görüş {{worst}} km, diğer saatlerde {{best}} km.',
+        'air-quality': 'Neden daha zayıf? {{time}} civarı hava kalitesi düşüyor.',
+        'severe-weather': 'Neden daha zayıf? {{time}} civarı şiddetli hava bekleniyor.',
+      },
       why: {
         thermal:
           'Neden bu aralık? {{time}} civarı hissedilen {{worst}}{{unit}}, bu aralıkta {{best}}{{unit}}.',
@@ -334,6 +351,7 @@ export const tr = {
       },
       quickLabel: 'Pratik hava kararları',
       quick: {
+        airAround: '{{times}} civarı',
         umbrella: {
           label: 'Şemsiye',
           yes: 'Evet',
@@ -412,6 +430,8 @@ export const tr = {
       subtitle:
         'Evden çıkış ve dönüş saatini kaydet; Hava81 o iki pencereye göre bugün neyi yanında bulundurman gerektiğini söylesin.',
       timesLabel: 'Çıkış ve dönüş saatleri',
+      presetsLabel: 'Hazır rutinler',
+      presets: { office: 'Ofis', school: 'Okul' },
       outbound: 'Çıkış',
       return: 'Dönüş',
       reset: 'Saatleri temizle',
@@ -485,6 +505,14 @@ export const tr = {
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
       bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
+      anyTime: 'Bugün {{start}}–{{end}} arasında herhangi bir saat uygun.',
+      vsGeneral: 'Genel skordan {{delta}}: {{why}}',
+      vsGeneralWhy: {
+        up: 'bu aktivitenin konfor aralığına daha uygun',
+        down: 'bu aktivite havaya daha hassas',
+      },
+      darkness:
+        'Önerilen saatler hava karardıktan sonra: aydınlık bir rota ve görünür kıyafet seç.',
       fullDuration: 'Planlanan {{minutes}} dakikanın tamamı uygun koşullarda.',
       alternatives: 'Diğer uygun aralıklar: {{list}}',
       score: {
@@ -556,7 +584,7 @@ export const tr = {
     context: {
       eyebrow: 'Türkiye bağlamı',
       title: 'Güneş, toz, polen ve deniz',
-      uv: 'UV · 24s model maksimumu',
+      uv: 'UV · 24 saat en yüksek',
       uvLevels: {
         low: 'Düşük',
         moderate: 'Orta',
@@ -569,12 +597,13 @@ export const tr = {
       uvNormal: 'Önümüzdeki 24 saatin UV model maksimumu düşük seviyede.',
       dust: 'Toz modeli',
       pollen: 'Polen modeli',
+      pollenUnit: 'tane/m³',
       pollenNote:
         'Önümüzdeki 24 saatte çim/zeytin poleni model maksimumlarından yüksek olan değer.',
-      sea: 'Yakın kıyı',
+      sea: 'Deniz suyu',
       wave: 'Dalga: {{height}} {{unit}}',
       waveDetails:
-        'Dalga {{height}} {{unit}} · periyot {{period}} {{periodUnit}} · yön {{direction}}{{directionUnit}}',
+        'Dalga {{height}} {{unit}} · periyot {{period}} {{periodUnit}} · {{direction}} yönünden',
       sourceModified: 'Hava81 tarafından özetlendi',
       fetchedAt: 'veri alındı {{time}}',
       waveUnavailable: 'Dalga verisi yok',

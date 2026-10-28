@@ -50,7 +50,33 @@ export interface DayOutlook {
   usableHours: number;
   /** Wet / dry score when open rain chances move it by at least 8 points. */
   scoreRange?: ScoreRange;
+  /** Hours with a thunderstorm weather code (WMO 95–99): named, never folded into "rain". */
+  thunderHours: Date[];
+  /** The day's most frequent icon and its temperature range, for an at-a-glance row. */
+  icon?: string;
+  tempMin?: number;
+  tempMax?: number;
 }
+
+const isThunder = (code: number | undefined) =>
+  Number.isFinite(code) && (code as number) >= 95 && (code as number) <= 99;
+
+/** Thunder hours, dominant icon and temperature range of one local day's raw points. */
+const dayFacts = (points: readonly HourlyForecast[]) => {
+  const temps = points.map(point => point.temp).filter(Number.isFinite);
+  const iconCounts = new Map<string, number>();
+  points.forEach(point => {
+    if (point.icon) iconCounts.set(point.icon, (iconCounts.get(point.icon) ?? 0) + 1);
+  });
+  const icon = [...iconCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return {
+    thunderHours: points
+      .filter(point => isThunder((point as HourlyForecast & { weatherCode?: number }).weatherCode))
+      .map(point => point.time),
+    icon,
+    ...(temps.length ? { tempMin: Math.min(...temps), tempMax: Math.max(...temps) } : {}),
+  };
+};
 
 export interface BuildDayOutlookInput {
   weather: NormalizedWeatherData;
@@ -77,8 +103,11 @@ const topReasons = (slots: readonly ScoredWeatherWindow[]): DecisionReasonCode[]
   slots.forEach(slot =>
     slot.reasons.forEach(reason => counts.set(reason, (counts.get(reason) ?? 0) + 1))
   );
+  // Severity before frequency: two thunderstorm hours outrank fifteen showery ones, so a
+  // stormy day is never summarised as merely "rain risk".
+  const rank = (reason: DecisionReasonCode) => (reason === 'severe-weather' ? 1 : 0);
   return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => rank(b[0]) - rank(a[0]) || b[1] - a[1])
     .slice(0, 2)
     .map(([reason]) => reason);
 };
@@ -165,6 +194,7 @@ export const buildDayOutlook = ({
         confidence: getPlanConfidence((peak.time.getTime() - now.getTime()) / HOUR_MS, 1),
         usableHours,
         scoreRange: plan.scoreRange,
+        ...dayFacts(points),
       });
       continue;
     }
@@ -221,6 +251,7 @@ export const buildDayOutlook = ({
       confidence: getPlanConfidence((peak.time.getTime() - now.getTime()) / HOUR_MS, 1),
       usableHours,
       scoreRange,
+      ...dayFacts(points),
     });
   }
   return days;

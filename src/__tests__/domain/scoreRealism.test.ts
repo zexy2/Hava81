@@ -394,10 +394,13 @@ describe('scenario: a plan needs the whole activity duration (F1)', () => {
   });
 
   it('offers non-overlapping alternatives, best first', () => {
+    // Three good stretches separated by rainy hours: real alternatives, not slices of one block.
     const plan = buildActivityPlan({
       activity: 'run',
       weather: weather(),
-      hourly: hours(7, 19),
+      hourly: hours(7, 19, h =>
+        [10, 11, 14, 15].includes(h) ? { pop: 0.9, precipitationMm: 3 } : {}
+      ),
       now: local(7),
     });
     const all = [plan.bestWindowRange!, ...plan.alternativeWindows];
@@ -408,6 +411,41 @@ describe('scenario: a plan needs the whole activity duration (F1)', () => {
         expect(overlap).toBe(false);
       }
     }
+  });
+
+  it('never lists a block touching the best one as an alternative', () => {
+    const plan = buildActivityPlan({
+      activity: 'run',
+      weather: weather(),
+      hourly: hours(7, 19, h =>
+        [10, 11, 14, 15].includes(h) ? { pop: 0.9, precipitationMm: 3 } : {}
+      ),
+      now: local(7),
+    });
+    const all = [plan.bestWindowRange!, ...plan.alternativeWindows];
+    for (let i = 0; i < all.length; i += 1) {
+      for (let j = i + 1; j < all.length; j += 1) {
+        const gap = Math.max(
+          all[j].start.time.getTime() - all[i].endTime.getTime(),
+          all[i].start.time.getTime() - all[j].endTime.getTime()
+        );
+        expect(gap).toBeGreaterThanOrEqual(60 * 60 * 1000);
+      }
+    }
+  });
+
+  it('calls an even day "any time" and lists no alternatives', () => {
+    const plan = buildActivityPlan({
+      activity: 'run',
+      weather: weather(),
+      hourly: hours(7, 19),
+      now: local(7),
+    });
+    expect(plan.evenDay).toBeDefined();
+    expect(plan.alternativeWindows).toHaveLength(0);
+    expect(plan.suitableSpan).toBeDefined();
+    const spanMs = plan.suitableSpan!.endTime.getTime() - plan.suitableSpan!.start.time.getTime();
+    expect(spanMs).toBeGreaterThan(4 * 60 * 60 * 1000);
   });
 
   it('returns no full-duration window when no block fits, instead of a too-short one', () => {

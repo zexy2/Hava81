@@ -136,7 +136,7 @@ test.describe('Planla view', () => {
     await expect(page.locator('.daily-plan__slots-caption')).toHaveText(
       'Saatlik uygunluk · 0–100 · yüksek daha uygun'
     );
-    await expect(page.locator('.daily-plan__score small')).toContainText('Hava81 Skoru');
+    await expect(page.locator('.daily-plan__score small')).toContainText('Genel dışarı skoru');
     const cards = page.locator('.activity-card');
     await expect(cards).toHaveCount(2);
     for (const card of await cards.all())

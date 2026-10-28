@@ -108,7 +108,9 @@ function FreshDailyPlanPanel({
       ? Math.round((probability as number) * 100)
       : undefined;
     const parts: string[] = [];
-    if (probabilityPercent !== undefined && probabilityPercent > 0) {
+    // Under 10% is "no rain expected" in plain language; a bare "%3" next to a dry hour read
+    // as two different states.
+    if (probabilityPercent !== undefined && probabilityPercent >= 10) {
       parts.push(
         i18n.language.startsWith('en') ? `${probabilityPercent}%` : `%${probabilityPercent}`
       );
@@ -137,8 +139,14 @@ function FreshDailyPlanPanel({
     });
   }, [plan.band, plan.score, weather.cityName, weather.meta.fetchedAt]);
 
-  const nowOrLaterText =
-    plan.nowOrLater.kind === 'later'
+  // An even day promotes no window (domain: assessEvenDay); the copy says so plainly and
+  // names only the clearly weaker hours.
+  const evenDay = plan.evenDay;
+  const weakSlots = evenDay?.weakSlots ?? [];
+  const weakTimes = new Set(weakSlots.map(slot => slot.time.getTime()));
+  const nowOrLaterText = evenDay
+    ? t('hava81.dailyPlan.nowOrLater.even')
+    : plan.nowOrLater.kind === 'later'
       ? t('hava81.dailyPlan.nowOrLater.later', { time: formatTime(plan.nowOrLater.targetTime) })
       : plan.nowOrLater.kind === 'now'
         ? t('hava81.dailyPlan.nowOrLater.now')
@@ -158,6 +166,15 @@ function FreshDailyPlanPanel({
     return plan.slots.filter(slot => slot.time.getTime() < end);
   }, [plan.slots]);
 
+  // A single poor hour sets the day's worst air level; when only a few hours carry it, say
+  // which ones instead of implying the whole day is affected.
+  const airAffected = timelineSlots.filter(slot =>
+    slot.reasons.some(reason => reason === 'poor-air-quality' || reason === 'sensitive-air-quality')
+  );
+  const airAffectedTimes =
+    airAffected.length && airAffected.length <= timelineSlots.length / 2
+      ? airAffected.map(slot => formatTime(slot.time))
+      : [];
   const localDateKey = (date: Date) =>
     new Date(date.getTime() + timezoneOffsetMs).toISOString().slice(0, 10);
 
@@ -256,7 +273,15 @@ function FreshDailyPlanPanel({
       <div className="daily-plan__decision">
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         <strong>{nowOrLaterText}</strong>
-        {bestWindowRange ? (
+        {evenDay ? (
+          weakSlots.length ? (
+            <small>
+              {t('hava81.dailyPlan.weakHours', {
+                times: weakSlots.map(slot => formatTime(slot.time)).join(', '),
+              })}
+            </small>
+          ) : null
+        ) : bestWindowRange ? (
           <small>
             {t('hava81.dailyPlan.bestRange', {
               start: formatTime(bestWindowRange.start.time),
@@ -264,7 +289,11 @@ function FreshDailyPlanPanel({
             })}
           </small>
         ) : null}
-        {bestWindowRange && windowWhy(plan?.explanation) ? (
+        {evenDay ? (
+          windowWhy(plan?.explanation, 'weak') ? (
+            <small className="daily-plan__why">{windowWhy(plan?.explanation, 'weak')}</small>
+          ) : null
+        ) : bestWindowRange && windowWhy(plan?.explanation) ? (
           <small className="daily-plan__why">{windowWhy(plan?.explanation)}</small>
         ) : null}
         {plan?.scoreRange ? (
@@ -313,7 +342,12 @@ function FreshDailyPlanPanel({
         </div>
         <div>
           <span>{t('hava81.dailyPlan.quick.air.label')}</span>
-          <strong>{t(`hava81.dailyPlan.quick.air.${plan.airQuality}`)}</strong>
+          <strong>
+            {t(`hava81.dailyPlan.quick.air.${plan.airQuality}`)}
+            {airAffectedTimes.length
+              ? ` · ${t('hava81.dailyPlan.quick.airAround', { times: airAffectedTimes.join(', ') })}`
+              : ''}
+          </strong>
         </div>
       </div>
 
@@ -332,7 +366,9 @@ function FreshDailyPlanPanel({
             previous && localDateKey(previous.time) !== localDateKey(slot.time)
           );
           // Highlight the actual recommendation interval; this only affects presentation.
+          const isWeak = weakTimes.has(slot.time.getTime());
           const isBestWindow = Boolean(
+            !evenDay &&
             bestWindowRange &&
             slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
             slot.time.getTime() <= bestWindowRange.end.time.getTime()
@@ -357,7 +393,7 @@ function FreshDailyPlanPanel({
             .join(', ');
           return (
             <div
-              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}`}
+              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}${isWeak ? ' is-weak' : ''}`}
               style={
                 { '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%` } as CSSProperties
               }

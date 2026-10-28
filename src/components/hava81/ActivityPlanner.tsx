@@ -414,13 +414,36 @@ export function ActivityPlanner({
                     </div>
                   </header>
                   <p>
-                    {bestRange
-                      ? t('hava81.activities.bestRange', {
-                          start: formatTime(bestRange.start.time),
-                          end: formatTime(bestRange.endTime),
+                    {plan.suitableSpan
+                      ? t('hava81.activities.anyTime', {
+                          start: formatTime(plan.suitableSpan.start.time),
+                          end: formatTime(plan.suitableSpan.endTime),
                         })
-                      : t('hava81.activities.noWindow')}
+                      : bestRange
+                        ? t('hava81.activities.bestRange', {
+                            start: formatTime(bestRange.start.time),
+                            end: formatTime(bestRange.endTime),
+                          })
+                        : t('hava81.activities.noWindow')}
                   </p>
+                  {!plan.windowUnavailable && Math.abs(plan.activityImpact) >= 3 ? (
+                    <small className="activity-card__vs-general">
+                      {t('hava81.activities.vsGeneral', {
+                        delta:
+                          plan.activityImpact > 0
+                            ? `+${plan.activityImpact}`
+                            : `${plan.activityImpact}`,
+                        why: t(
+                          `hava81.activities.vsGeneralWhy.${plan.activityImpact > 0 ? 'up' : 'down'}`
+                        ),
+                      })}
+                    </small>
+                  ) : null}
+                  {plan.inDarkness && !plan.windowUnavailable ? (
+                    <small className="activity-card__darkness">
+                      {t('hava81.activities.darkness')}
+                    </small>
+                  ) : null}
                   {plan.scoreRange && !plan.windowUnavailable ? (
                     <small className="activity-card__range">
                       {t('hava81.dailyPlan.scoreRange', {
@@ -429,8 +452,10 @@ export function ActivityPlanner({
                       })}
                     </small>
                   ) : null}
-                  {windowWhy(plan.explanation) ? (
-                    <small className="activity-card__why">{windowWhy(plan.explanation)}</small>
+                  {windowWhy(plan.explanation, plan.evenDay ? 'weak' : 'window') ? (
+                    <small className="activity-card__why">
+                      {windowWhy(plan.explanation, plan.evenDay ? 'weak' : 'window')}
+                    </small>
                   ) : null}
                   {plan.bestWindowScore !== undefined ? (
                     <small className="activity-card__duration">

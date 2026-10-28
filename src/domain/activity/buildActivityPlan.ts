@@ -15,8 +15,9 @@ import {
   weightHorizonSlots,
 } from '../decision/aggregateHorizon';
 import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
-import { findBestWindowRange } from '../decision/bestWindowRange';
-import { explainWindow } from '../decision/explain';
+import { isDaylightPoint } from '../decision/eligibility';
+import { assessEvenDay, findBestWindowRange } from '../decision/bestWindowRange';
+import { explainContrast, explainWindow } from '../decision/explain';
 import { getScoreBand } from '../decision/scoreWeatherWindow';
 import type { DecisionReasonCode, Hava81ScoreFactor, ScoreFactorImpact } from '../decision/types';
 import { findWindows } from '../plan/findWindows';
@@ -290,6 +291,9 @@ export const buildActivityPlan = ({
           {
             durationMinutes,
             timezoneOffsetSeconds,
+            // More candidates than we show: the alternatives below keep only one per stretch, so
+            // three equally good blocks from one morning must not crowd out the afternoon.
+            maxWindows: 12,
             availability: windowApplied
               ? { startTime: windowApplied.start, endTime: windowApplied.end }
               : undefined,
@@ -328,7 +332,31 @@ export const buildActivityPlan = ({
     : hourlyCadence
       ? undefined
       : findBestWindowRange(candidateSlots, undefined, isEligible);
-  const alternativeWindows = ranked.slice(1, 3).map(toRange);
+  // Alternatives must be genuinely different stretches: two blocks with only usable hours
+  // between them (12:00–13:00 next to 13:00–14:00, or 07:00 and 09:00 in one dry morning) are
+  // the same option. A gated hour between them (rain, storm, darkness) makes them distinct.
+  // Number each run of usable hours; every gated hour starts a new run.
+  const stretchOf = new Map<number, number>();
+  let stretch = 0;
+  let inStretch = false;
+  for (const slot of [...slots].sort((x, y) => x.time.getTime() - y.time.getTime())) {
+    if (slot.eligible === false) {
+      inStretch = false;
+      continue;
+    }
+    if (!inStretch) stretch += 1;
+    inStretch = true;
+    stretchOf.set(slot.time.getTime(), stretch);
+  }
+  const stretchOfWindow = (window: PlanWindow) => stretchOf.get(window.start.getTime());
+  const sameStretch = (a: PlanWindow, b: PlanWindow) =>
+    stretchOfWindow(a) !== undefined && stretchOfWindow(a) === stretchOfWindow(b);
+  const chosen: PlanWindow[] = ranked.length ? [ranked[0]] : [];
+  for (const window of ranked.slice(1)) {
+    if (chosen.length >= 3) break;
+    if (chosen.every(other => !sameStretch(window, other))) chosen.push(window);
+  }
+  const alternativeWindows = chosen.slice(1).map(toRange);
   const bestWindow = bestWindowRange?.peak;
 
   // Same rule as the day plan: the headline reads the hours of day this activity can use
@@ -355,9 +383,25 @@ export const buildActivityPlan = ({
     )
   );
   // Compare against the hours of day the activity could use in the same search window.
-  const explanation = bestWindowRange
-    ? explainWindow(bestWindowRange, windowPool.filter(usableTime))
-    : undefined;
+  const usablePool = windowPool.filter(usableTime);
+  const evenDay = assessEvenDay(usablePool, undefined, isEligible);
+  // On an even day the honest headline is the whole suitable stretch around the best block.
+  const suitableSpan =
+    evenDay.even && bestWindowRange
+      ? findBestWindowRange(usablePool, undefined, isEligible, Number.POSITIVE_INFINITY)
+      : undefined;
+  const weakSet = new Set(evenDay.weakSlots);
+  const explanation = evenDay.even
+    ? bestWindowRange
+      ? explainContrast(
+          usablePool.filter(slot => !weakSet.has(slot)),
+          evenDay.weakSlots,
+          bestWindowRange.peak
+        )
+      : undefined
+    : bestWindowRange
+      ? explainWindow(bestWindowRange, usablePool)
+      : undefined;
   const reasonCounts = new Map<DecisionReasonCode, number>();
   scoringSlots.forEach(slot =>
     slot.reasons.forEach(reason => reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1))
@@ -377,7 +421,20 @@ export const buildActivityPlan = ({
     bestWindow,
     bestWindowRange,
     bestWindowScore: ranked[0]?.score,
-    alternativeWindows,
+    alternativeWindows: evenDay.even ? [] : alternativeWindows,
+    // Walking or running after dark is allowed but deserves a visibility note.
+    inDarkness: Boolean(
+      bestWindowRange &&
+      slots.some(
+        slot =>
+          slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
+          slot.time.getTime() < bestWindowRange.endTime.getTime() &&
+          pointOf.get(slot) !== undefined &&
+          !isDaylightPoint(pointOf.get(slot)!)
+      )
+    ),
+    ...(suitableSpan ? { suitableSpan } : {}),
+    ...(evenDay.even ? { evenDay: { weakSlots: evenDay.weakSlots } } : {}),
     durationMinutes,
     explanation,
     scoreRange,
