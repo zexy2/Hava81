@@ -32,9 +32,18 @@
   /* ── Curve markers: only now, the first low and the first high stay visible ── */
   /* The entry animation fills forwards with opacity 1, so the hidden hours drop it and
      use visibility instead; the hovered hour still shows its marker. */
-  .app .hava81-forecast-atlas .hava81-forecast-atlas__point:not(.is-current, .is-extreme, .is-active) {
+  .app
+    .hava81-forecast-atlas
+    .hava81-forecast-atlas__point:not(.is-current, .is-extreme, .is-active) {
     animation: none;
     visibility: hidden;
+  }
+
+  /* The few markers that remain carry the reading, so they land at once, not in a slow
+     hour-by-hour stagger. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__point:is(.is-current, .is-extreme) {
+    animation-delay: 0ms;
+    animation-duration: 240ms;
   }
 
   /* ── Scrolling: the arrows are enough; the hint text and progress bar go ── */
