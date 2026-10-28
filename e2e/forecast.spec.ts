@@ -404,7 +404,7 @@ test.describe('five-day forecast', () => {
       await ensureForecastAtlasLoaded(page);
       const days = page.locator('.hava81-forecast-atlas__days');
       await expect(page.locator('.hava81-forecast-atlas__description')).toHaveCount(2);
-      await expect(days.getByText('gök gürültülü fırtına', { exact: true })).toBeVisible();
+      await expect(days.getByText('Gök gürültülü fırtına', { exact: true })).toBeVisible();
       for (const [width, scale] of [
         [1280, 100],
         [1024, 100],
