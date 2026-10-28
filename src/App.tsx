@@ -888,7 +888,15 @@ const App: React.FC = () => {
                 </div>
               }
             >
-              <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
+              <SettingsPanel
+                isOpen={isSettingsOpen}
+                onClose={closeSettings}
+                preview={
+                  weather
+                    ? { temperature: weather.temperature, windSpeed: weather.windSpeed }
+                    : null
+                }
+              />
             </Suspense>
           ) : null}
         </div>
