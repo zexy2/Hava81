@@ -9,8 +9,7 @@ export const SearchIcon = () => (
 
 export const LocationIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+    <path d="M20 4 4 10.6l7 2.4 2.4 7Z" />
   </svg>
 );
 
@@ -21,10 +20,12 @@ export const MapIcon = () => (
   </svg>
 );
 
+/** Sliders: reads as "preferences", not as weather. */
 export const SettingsIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" />
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="17" r="2" />
   </svg>
 );
 

@@ -70,6 +70,9 @@ export const en = {
     temperatureHot: 'Very warm (>{{thirty}}{{unit}})',
   },
   hava81: {
+    header: {
+      home: 'Hava81 home',
+    },
     severe: {
       label: 'Weather warning',
       storm: 'Thunderstorm expected {{day}}',

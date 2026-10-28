@@ -70,6 +70,9 @@ export const tr = {
     temperatureHot: 'Çok sıcak (>{{thirty}}{{unit}})',
   },
   hava81: {
+    header: {
+      home: 'Hava81 ana sayfa',
+    },
     severe: {
       label: 'Hava uyarısı',
       storm: '{{day}} gök gürültülü fırtına bekleniyor',

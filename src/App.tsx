@@ -19,6 +19,7 @@ import { ApiError } from './api/errors/ApiError';
 import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
+import { getCurrentWeatherFreshness } from './utils/currentWeatherFreshness';
 import { NotFoundState } from './components/app/NotFoundState';
 import { DeferredForecastAtlas } from './components/app/DeferredForecastAtlas';
 import { isHomePathname, isUnknownPathname } from './utils/cityRoute';
@@ -477,6 +478,18 @@ const App: React.FC = () => {
             onSelectFavorite={handleSelectFavorite}
             onRemoveFavorite={handleRemoveFavorite}
             onAddFavorite={handleAddFavorite}
+            activeView={currentView}
+            onNavigate={handleBottomNav}
+            searchShortcutLabel={searchShortcutLabel}
+            context={
+              weather
+                ? {
+                    cityName: weather.cityName,
+                    temperature: weather.temperature,
+                    fresh: getCurrentWeatherFreshness(weather.meta).fresh,
+                  }
+                : null
+            }
           />
 
           {weather || favorites.length > 0 ? (

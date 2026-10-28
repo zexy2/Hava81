@@ -1,0 +1,336 @@
+@layer editorial {
+  /* ── Masthead ──
+     A newspaper-style nameplate: one serif wordmark, the app's views as a quiet
+     text navigation, a search field among peers and a small tool group. Smoked
+     glass over the sky; on scroll it tightens and a live context line takes the
+     place the hero card just left. */
+
+  .app .atlas-header {
+    --masthead-ink: rgb(255 255 255);
+    --masthead-muted: rgb(255 255 255 / 0.72);
+    --masthead-line: rgb(255 255 255 / 0.14);
+    --masthead-hover: rgb(255 255 255 / 0.08);
+
+    border-bottom: 1px solid var(--masthead-line);
+  }
+
+  .app[data-living-sky='true'] .atlas-header[data-condensed='true'] {
+    background: rgb(8 22 42 / 0.88);
+    box-shadow: 0 10px 30px rgb(2 10 24 / 0.28);
+  }
+
+  /* Wordmark: "Hava" in the display serif, "81" as a lighter numeral. */
+  .app .atlas-header .atlas-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--masthead-ink);
+    text-decoration: none;
+  }
+
+  .app .atlas-header .atlas-brand__name {
+    font-family: var(--font-display);
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .app .atlas-header .atlas-brand__name em {
+    margin-inline-start: 0.06em;
+    color: rgb(146 212 255);
+    font-style: normal;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tools: borderless round glyph buttons; only the active state gets a fill. */
+  .app .atlas-header .atlas-icon-button,
+  .app .atlas-header .atlas-settings-button {
+    display: inline-grid;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: var(--masthead-ink);
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-header .atlas-icon-button:hover:not(:disabled),
+  .app .atlas-header .atlas-settings-button:hover {
+    background: var(--masthead-hover);
+  }
+
+  .app .atlas-header .atlas-icon-button[aria-pressed='true'] {
+    color: rgb(255 214 120);
+  }
+
+  .app .atlas-header .atlas-icon-button svg,
+  .app .atlas-header .atlas-settings-button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .app .atlas-header .atlas-icon-button svg.is-filled {
+    fill: currentColor;
+  }
+
+  /* The settings tool shows the active language as a small superscript, not a pill. */
+  .app .atlas-header .atlas-settings-button {
+    position: relative;
+  }
+
+  .app .atlas-header .atlas-settings-button__language {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.1rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--masthead-muted);
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .app .atlas-header__nav,
+  .app .atlas-header__context {
+    display: none;
+  }
+
+  .app .atlas-header__shortcut {
+    display: none;
+  }
+
+  @media (min-width: 64rem) {
+    .app .atlas-header .atlas-header__inner {
+      grid-template-columns: auto auto minmax(0, 1fr) minmax(15rem, 25rem) auto;
+      align-items: center;
+      gap: 0 1.75rem;
+      min-height: 4.5rem;
+      transition: min-height 220ms ease;
+    }
+
+    .app .atlas-header[data-condensed='true'] .atlas-header__inner {
+      min-height: 3.5rem;
+    }
+
+    /* Primary navigation: text links with an underline for the current view. */
+    .app .atlas-header__nav {
+      display: flex;
+      grid-column: 2;
+      grid-row: 1;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .app .atlas-header .atlas-nav-link {
+      position: relative;
+      display: inline-flex;
+      width: auto;
+      min-width: 0;
+      height: 2.5rem;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0 0.85rem;
+      border: 0;
+      border-radius: 999px;
+      color: var(--masthead-muted);
+      background: none;
+      box-shadow: none;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .app .atlas-header .atlas-nav-link:hover {
+      color: var(--masthead-ink);
+      background: var(--masthead-hover);
+    }
+
+    .app .atlas-header .atlas-nav-link[aria-current='page'] {
+      color: var(--masthead-ink);
+      font-weight: 600;
+    }
+
+    .app .atlas-header .atlas-nav-link[aria-current='page']::after {
+      position: absolute;
+      right: 0.85rem;
+      bottom: 0.2rem;
+      left: 0.85rem;
+      height: 2px;
+      border-radius: 999px;
+      background: rgb(146 212 255);
+      content: '';
+    }
+
+    .app .atlas-header .atlas-nav-link__count {
+      display: inline-grid;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      place-items: center;
+      border-radius: 999px;
+      color: rgb(8 28 54);
+      background: rgb(146 212 255);
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
+
+    /* Context line: city and temperature once the hero has scrolled away. */
+    .app .atlas-header__context {
+      display: flex;
+      grid-column: 3;
+      grid-row: 1;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.6rem;
+      min-width: 0;
+      margin: 0;
+      color: var(--masthead-ink);
+      opacity: 0;
+      visibility: hidden;
+      translate: 0 0.35rem;
+      transition:
+        opacity 220ms ease,
+        translate 220ms ease,
+        visibility 0s linear 220ms;
+    }
+
+    .app .atlas-header[data-condensed='true'] .atlas-header__context {
+      opacity: 1;
+      visibility: visible;
+      translate: 0 0;
+      transition:
+        opacity 220ms ease,
+        translate 220ms ease,
+        visibility 0s;
+    }
+
+    .app .atlas-header__context-city {
+      overflow: hidden;
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .app .atlas-header__context-temp {
+      color: rgb(146 212 255);
+      font-size: 1.125rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Search: a dark field with the shortcut set inside it. */
+    .app .atlas-header .atlas-header__search {
+      position: relative;
+      grid-column: 4;
+      grid-row: 1;
+      width: 100%;
+      max-width: 25rem;
+      justify-self: end;
+    }
+
+    .app .atlas-header .search-bar__controls {
+      height: 2.75rem;
+      border: 1px solid var(--masthead-line);
+      border-radius: 999px;
+      background: rgb(255 255 255 / 0.06);
+      box-shadow: none;
+    }
+
+    .app .atlas-header .search-bar__controls:focus-within {
+      border-color: rgb(146 212 255 / 0.7);
+      background: rgb(255 255 255 / 0.1);
+    }
+
+    .app .atlas-header .search-bar__input {
+      height: 100%;
+      padding-inline: 1rem 4.5rem;
+      border: 0;
+      color: var(--masthead-ink);
+      background: none;
+      font-size: 0.9375rem;
+    }
+
+    .app .atlas-header .search-bar__input::placeholder {
+      color: var(--masthead-muted);
+    }
+
+    /* The submit stays for keyboard and assistive tech; visually it is the field's icon. */
+    .app .atlas-header .search-bar__submit {
+      width: 2.5rem;
+      min-width: 0;
+      height: 2.5rem;
+      margin: 0.125rem;
+      padding: 0;
+      border-radius: 50%;
+      color: var(--masthead-ink);
+      background: none;
+      box-shadow: none;
+      font-size: 0;
+    }
+
+    .app .atlas-header .search-bar__submit:hover:not(:disabled) {
+      background: var(--masthead-hover);
+    }
+
+    .app .atlas-header .search-bar__submit-icon {
+      display: inline-grid;
+      font-size: 1rem;
+    }
+
+    .app .atlas-header .atlas-header__shortcut {
+      position: absolute;
+      top: 50%;
+      right: 3rem;
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border: 1px solid var(--masthead-line);
+      border-radius: var(--radius-xs);
+      color: var(--masthead-muted);
+      background: none;
+      font-family: var(--font-ui);
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      translate: 0 -50%;
+      pointer-events: none;
+    }
+
+    .app .atlas-header .atlas-header__search:focus-within .atlas-header__shortcut {
+      opacity: 0;
+    }
+
+    .app .atlas-header .atlas-header__actions {
+      grid-column: 5;
+      grid-row: 1;
+      gap: 0.125rem;
+    }
+
+    /* The search toggle is for phones; on desktop the field is always there. */
+    .app .atlas-header .atlas-icon-button--search {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .atlas-header,
+    .app .atlas-header * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}

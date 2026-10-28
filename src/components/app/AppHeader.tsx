@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../context';
+import { getCityMetadata } from '../../constants/cityMetadata';
+import type { AtlasView } from '../../utils/atlasView';
+import './AppHeader.css';
 import { SearchBar } from '../SearchBar';
 import { CityTabs } from '../CityTabs';
 import type { FavoriteCity } from '../../types/weather.types';
-import { LocationIcon, MapIcon, SearchIcon, SettingsIcon, StarIcon } from './AppIcons';
+import { LocationIcon, SearchIcon, SettingsIcon, StarIcon } from './AppIcons';
 
 export interface AppHeaderProps {
   /** Mobile search sheet state (the search region is always rendered). */
@@ -40,6 +44,37 @@ export interface AppHeaderProps {
   onSelectFavorite: (favorite: FavoriteCity) => void;
   onRemoveFavorite: (name: string) => void;
   onAddFavorite: () => void;
+  /** Current view, for the desktop primary navigation. */
+  activeView?: AtlasView;
+  onNavigate?: (view: AtlasView) => void;
+  /** Shortcut hint shown inside the search field (⌘K / Ctrl+K). */
+  searchShortcutLabel?: string;
+  /** Live reading for the condensed masthead; null until weather is known. */
+  context?: { cityName: string; temperature: number; fresh: boolean } | null;
+}
+
+/** Scroll depth after which the masthead condenses and shows the context line. */
+const CONDENSE_AT = 160;
+
+function useCondensed(threshold: number) {
+  const [condensed, setCondensed] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setCondensed(window.scrollY > threshold);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [threshold]);
+  return condensed;
 }
 
 /** Navy app header: brand, search, quick actions and the saved-city rail (Faz 3.4). */
@@ -76,20 +111,91 @@ export function AppHeader({
   onSelectFavorite,
   onRemoveFavorite,
   onAddFavorite,
+  activeView = 'today',
+  onNavigate,
+  searchShortcutLabel,
+  context = null,
 }: AppHeaderProps) {
   const { t } = useTranslation();
+  const { settings, convertTemperature } = useSettings();
+  const condensed = useCondensed(CONDENSE_AT);
+  const contextTemperature =
+    context && context.fresh
+      ? new Intl.NumberFormat(settings.language === 'en' ? 'en-US' : 'tr-TR').format(
+          Math.round(convertTemperature(context.temperature))
+        )
+      : null;
+  const contextCity = context ? (getCityMetadata(context.cityName)?.name ?? context.cityName) : '';
   const favoriteLabel = isFavorite ? t('weather.removeFromFavorites') : t('weather.addToFavorites');
   const mapLabel = showMap ? t('weather.hideMap') : t('weather.showMap');
 
   return (
-    <header className={`atlas-header${isMobileSearchOpen ? ' atlas-header--search-open' : ''}`}>
+    <header
+      className={`atlas-header${isMobileSearchOpen ? ' atlas-header--search-open' : ''}`}
+      data-condensed={condensed}
+    >
       <div className="atlas-header__inner">
-        <a className="atlas-brand" href="/">
-          <span className="atlas-brand__name">Hava81</span>
-          <span className="atlas-brand__index" aria-hidden="true">
-            <b>81</b>
+        <a className="atlas-brand" href="/" aria-label={t('hava81.header.home')}>
+          <span className="atlas-brand__name">
+            Hava<em>81</em>
           </span>
         </a>
+
+        {hasWeather ? (
+          <nav className="atlas-header__nav" aria-label={t('navigation.label')}>
+            <button
+              type="button"
+              className="atlas-nav-link"
+              onClick={() => onNavigate?.('today')}
+              aria-current={activeView === 'today' ? 'page' : undefined}
+            >
+              {t('navigation.today')}
+            </button>
+            <button
+              type="button"
+              className="atlas-nav-link atlas-plan-button"
+              onClick={onOpenPlan}
+              aria-current={isPlanView ? 'page' : undefined}
+            >
+              {t('navigation.plan')}
+            </button>
+            <button
+              type="button"
+              className="atlas-nav-link atlas-icon-button--map"
+              onClick={onToggleMap}
+              aria-expanded={showMap}
+              aria-controls={showMap ? 'weather-map-region' : undefined}
+              aria-current={activeView === 'map' ? 'page' : undefined}
+              title={mapLabel}
+            >
+              {t('navigation.map')}
+            </button>
+            {favorites.length >= 2 && (
+              <button
+                type="button"
+                className="atlas-nav-link atlas-compare-button"
+                onClick={onOpenCompare}
+                aria-current={isCompareActive ? 'page' : undefined}
+              >
+                {t('hava81.compare.action')}
+                <span className="atlas-nav-link__count" aria-hidden="true">
+                  {favorites.length}
+                </span>
+              </button>
+            )}
+          </nav>
+        ) : null}
+
+        <p className="atlas-header__context" data-testid="header-context" aria-hidden={!condensed}>
+          {context ? (
+            <>
+              <span className="atlas-header__context-city">{contextCity}</span>
+              {contextTemperature !== null ? (
+                <span className="atlas-header__context-temp">{contextTemperature}°</span>
+              ) : null}
+            </>
+          ) : null}
+        </p>
 
         <div className="atlas-header__search" id="atlas-search-region">
           <SearchBar
@@ -107,6 +213,11 @@ export function AppHeader({
             suggestionsLabel={t('weather.citySuggestions')}
             onDismiss={isMobileSearchOpen ? onCloseSearch : undefined}
           />
+          {searchShortcutLabel ? (
+            <kbd className="atlas-header__shortcut" aria-hidden="true">
+              {searchShortcutLabel}
+            </kbd>
+          ) : null}
           {searchNotFound && (
             <p className="atlas-search-inline-error" role="alert">
               {t('weather.searchNotFound', { query: failedQuery })}{' '}
@@ -163,39 +274,6 @@ export function AppHeader({
             title={favoriteLabel}
           >
             <StarIcon filled={isFavorite} />
-          </button>
-          {hasWeather && (
-            <button
-              type="button"
-              className="atlas-plan-button"
-              onClick={onOpenPlan}
-              aria-current={isPlanView ? 'page' : undefined}
-            >
-              {t('navigation.plan')}
-            </button>
-          )}
-          {favorites.length >= 2 && (
-            <button
-              type="button"
-              className="atlas-compare-button"
-              onClick={onOpenCompare}
-              aria-current={isCompareActive ? 'page' : undefined}
-            >
-              {t('hava81.compare.action')}
-              <span aria-hidden="true">{favorites.length}</span>
-            </button>
-          )}
-          <button
-            type="button"
-            className="atlas-icon-button atlas-icon-button--map"
-            onClick={onToggleMap}
-            disabled={!hasWeather}
-            aria-expanded={showMap}
-            aria-controls={showMap ? 'weather-map-region' : undefined}
-            aria-label={mapLabel}
-            title={mapLabel}
-          >
-            <MapIcon />
           </button>
           <button
             type="button"
