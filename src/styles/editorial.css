@@ -74,12 +74,20 @@
       .atlas-dashboard:not(.atlas-dashboard--plan)
       .atlas-dashboard__field-rail
       .hava81-decision-field {
-      position: sticky;
-      top: 6.5rem;
-      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
-    /* The decision summary and everything below scroll over the pinned weather field. */
+    /* The metric row sits at the foot of the stretched card. */
+    .app
+      .atlas-dashboard:not(.atlas-dashboard--plan)
+      .atlas-dashboard__field-rail
+      .hava81-decision-field__rail {
+      margin-top: auto;
+    }
+
+    /* Later sections stack above the field's sky layers. */
     .app .atlas-dashboard:not(.atlas-dashboard--plan) .atlas-dashboard__primary > .decision-glance,
     .app .atlas-dashboard:not(.atlas-dashboard--plan) > .environment-rail {
       position: relative;

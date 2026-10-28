@@ -796,15 +796,14 @@ describe('WeatherDecisionField daily range', () => {
       </SettingsProvider>
     );
 
-    const airQualityLabel = screen.getByText('Hava Kalitesi', { selector: 'dt' });
-    expect(airQualityLabel.parentElement).toHaveTextContent('4/5');
+    // The AQI value lives in the environment rail, not the hero metric row.
+    expect(screen.queryByText('Hava Kalitesi', { selector: 'dt' })).not.toBeInTheDocument();
     expect(screen.getByText(/Hava kalitesi zayıf \(AQI 4\/5\)/i)).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_200);
     });
 
-    expect(airQualityLabel.parentElement).toHaveTextContent('—');
     expect(screen.queryByText(/Hava kalitesi zayıf \(AQI 4\/5\)/i)).not.toBeInTheDocument();
   });
 });
