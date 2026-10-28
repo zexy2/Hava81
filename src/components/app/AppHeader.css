@@ -11,19 +11,25 @@
     --masthead-line: rgb(255 255 255 / 0.14);
     --masthead-hover: rgb(255 255 255 / 0.08);
 
-    border-bottom: 1px solid var(--masthead-line);
+    /* A hairline that takes no layout space. */
+    box-shadow: inset 0 -1px 0 var(--masthead-line);
+    /* Keep the existing safety-layout containers alongside our own. */
+    container-name: masthead hava81-header hava81-phone-header;
+    container-type: inline-size;
   }
 
   .app[data-living-sky='true'] .atlas-header[data-condensed='true'] {
     background: rgb(8 22 42 / 0.88);
-    box-shadow: 0 10px 30px rgb(2 10 24 / 0.28);
+    box-shadow:
+      inset 0 -1px 0 var(--masthead-line),
+      0 10px 30px rgb(2 10 24 / 0.28);
   }
 
   /* Wordmark: "Hava" in the display serif, "81" as a lighter numeral. */
   .app .atlas-header .atlas-brand {
     display: inline-flex;
     align-items: center;
-    min-height: 2.75rem;
+    min-height: 44px;
     padding: 0;
     border: 0;
     background: none;
@@ -50,10 +56,11 @@
   /* Tools: borderless round glyph buttons; only the active state gets a fill. */
   .app .atlas-header .atlas-icon-button,
   .app .atlas-header .atlas-settings-button {
+    /* Pixel-sized: enlarged text must not push the tool group off narrow screens. */
     display: inline-grid;
-    width: 2.75rem;
-    min-width: 2.75rem;
-    height: 2.75rem;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
     place-items: center;
     padding: 0;
     border: 0;
@@ -74,8 +81,8 @@
 
   .app .atlas-header .atlas-icon-button svg,
   .app .atlas-header .atlas-settings-button svg {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 20px;
+    height: 20px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.7;
@@ -100,7 +107,7 @@
     border: 0;
     background: none;
     color: var(--masthead-muted);
-    font-size: 0.5625rem;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.04em;
   }
@@ -110,15 +117,15 @@
     display: none;
   }
 
-  /* Phones and tablets: one 56px row; the search sheet opens below it on demand. */
-  @media (max-width: 63.99rem) {
-    .app .atlas-header .atlas-header__inner {
+  /* Phones: one 56px row; the search sheet opens below it on demand. */
+  @media (max-width: 47.99rem) {
+    .app .atlas-header:not(.atlas-header--search-open) .atlas-header__inner {
       min-height: 3.5rem;
       padding-block: 0.25rem;
     }
 
     .app .atlas-header .atlas-brand__name {
-      font-size: 1.375rem;
+      font-size: 22px;
     }
   }
 
@@ -126,25 +133,33 @@
     display: none;
   }
 
-  @media (min-width: 64rem) {
+  /* Tablet and up: one wrapping row. With enlarged text the search drops to its own
+     line instead of pushing the tools off screen. */
+  @media (min-width: 48rem) {
     .app .atlas-header .atlas-header__inner {
-      grid-template-columns: auto auto minmax(0, 1fr) minmax(15rem, 25rem) auto;
+      display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 0 1.75rem;
+      gap: 0.5rem 1.5rem;
       min-height: 4.5rem;
-      padding-block: 0;
+      padding-block: 0.875rem;
       transition: min-height 220ms ease;
+    }
+
+    .app .atlas-header .atlas-brand {
+      flex: none;
     }
 
     .app .atlas-header[data-condensed='true'] .atlas-header__inner {
       min-height: 3.5rem;
+      padding-block: 0.375rem;
     }
 
     /* Primary navigation: text links with an underline for the current view. */
     .app .atlas-header__nav {
       display: flex;
-      grid-column: 2;
-      grid-row: 1;
+      flex: none;
+      flex-wrap: wrap;
       align-items: center;
       gap: 0.25rem;
     }
@@ -204,8 +219,7 @@
     /* Context line: city and temperature once the hero has scrolled away. */
     .app .atlas-header__context {
       display: flex;
-      grid-column: 3;
-      grid-row: 1;
+      flex: 1 1 0;
       align-items: baseline;
       justify-content: center;
       gap: 0.6rem;
@@ -250,15 +264,15 @@
     /* Search: a dark field with the shortcut set inside it. */
     .app .atlas-header .atlas-header__search {
       position: relative;
-      grid-column: 4;
-      grid-row: 1;
-      width: 100%;
+      flex: 1 1 15rem;
+      width: auto;
+      min-width: min(15rem, 100%);
       max-width: 25rem;
-      justify-self: end;
     }
 
     .app .atlas-header .search-bar__controls {
-      height: 2.75rem;
+      height: 44px;
+      min-height: 0;
       border: 1px solid var(--masthead-line);
       border-radius: 999px;
       background: rgb(255 255 255 / 0.06);
@@ -270,8 +284,13 @@
       background: rgb(255 255 255 / 0.1);
     }
 
+    .app .atlas-header .search-bar__field {
+      min-height: 0;
+    }
+
     .app .atlas-header .search-bar__input {
       height: 100%;
+      min-height: 0;
       padding-inline: 1rem 4.5rem;
       border: 0;
       color: var(--masthead-ink);
@@ -285,9 +304,10 @@
 
     /* The submit stays for keyboard and assistive tech; visually it is the field's icon. */
     .app .atlas-header .search-bar__submit {
-      width: 2.5rem;
+      width: 40px;
       min-width: 0;
-      height: 2.5rem;
+      height: 40px;
+      min-height: 0;
       margin: 0.125rem;
       padding: 0;
       border-radius: 50%;
@@ -328,14 +348,67 @@
     }
 
     .app .atlas-header .atlas-header__actions {
-      grid-column: 5;
-      grid-row: 1;
+      flex: none;
       gap: 0.125rem;
+      margin-inline-start: auto;
     }
 
     /* The search toggle is for phones; on desktop the field is always there. */
     .app .atlas-header .atlas-icon-button--search {
       display: none;
+    }
+  }
+
+  /* Container queries follow enlarged text (rem resolves against the real root size),
+     so the masthead tightens when the text grows, not only when the window shrinks. */
+  @media (min-width: 48rem) {
+    /* Not enough room for one row: brand, views and tools stay on top and the search
+       takes a full-width second row, so its placeholder stays readable. */
+    @container masthead (max-width: 60rem) {
+      .app .atlas-header .atlas-header__inner {
+        gap: 0.5rem 0.75rem;
+      }
+
+      .app .atlas-header .atlas-header__context,
+      .app .atlas-header .atlas-header__shortcut {
+        display: none;
+      }
+
+      .app .atlas-header .atlas-header__search {
+        flex: 1 1 100%;
+        max-width: none;
+        order: 10;
+      }
+
+      .app .atlas-header .atlas-nav-link {
+        padding-inline: 0.6rem;
+      }
+    }
+  }
+
+  /* Short viewports budget the suggestions popup against a one-row header
+     (App.css: 100dvh − 164/184px). Keep the search on the first row there and let
+     the views wrap below it instead, and keep phone tools at 40px. */
+  @media (min-width: 48rem) and (max-height: 28rem) {
+    @container masthead (max-width: 60rem) {
+      .app .atlas-header .atlas-header__search {
+        flex: 1 1 0;
+        min-width: 0;
+        order: 0;
+      }
+
+      .app .atlas-header .atlas-header__nav {
+        order: 10;
+      }
+    }
+  }
+
+  @media (max-width: 47.99rem) and (max-height: 28rem) {
+    .app .atlas-header .atlas-icon-button,
+    .app .atlas-header .atlas-settings-button {
+      width: 40px;
+      min-width: 40px;
+      height: 40px;
     }
   }
 

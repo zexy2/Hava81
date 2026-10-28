@@ -156,7 +156,7 @@ test.describe('map view', () => {
     async ({ page }) => {
       await setWidth(page, 320, 720);
       await page.goto('/istanbul');
-      await page.getByRole('button', { name: 'Harita' }).click();
+      await page.getByRole('button', { name: 'Harita', exact: true }).click();
 
       const bursaMarker = page.locator('.weather-map__plate-marker').filter({ hasText: '16' });
       await expect(bursaMarker).toBeVisible();

@@ -181,7 +181,7 @@ export function AppHeader({
         </nav>
 
         <p className="atlas-header__context" data-testid="header-context" aria-hidden={!condensed}>
-          {context ? (
+          {context && condensed ? (
             <>
               <span className="atlas-header__context-city">{contextCity}</span>
               {contextTemperature !== null ? (
