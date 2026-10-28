@@ -78,8 +78,13 @@ test.describe('first screen composition (Faz 2)', () => {
       const value = field.locator('.hava81-decision-field__temperature-value');
       const symbol = field.locator('.hava81-decision-field__symbol');
       await expect(value).toBeVisible();
-      // On desktop the live sky behind the field shows the condition; the icon steps aside.
-      await expect(symbol).toBeHidden();
+      // The condition icon sits beside the temperature on desktop too, without overlapping it.
+      await expect(symbol).toBeVisible();
+      await expectNoOverlap(
+        symbol,
+        field.locator('.hava81-decision-field__temperature'),
+        'desktop weather icon vs temperature'
+      );
       await expectReadable(page, field.locator('.hava81-decision-field__reading'), 'reading block');
       await expectContainedIn(value, field, 'temperature');
       await expectReadable(
