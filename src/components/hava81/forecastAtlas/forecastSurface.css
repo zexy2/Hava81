@@ -1,0 +1,162 @@
+@layer editorial {
+  /* ── Forecast: one chart that speaks, then the week as its own quiet surface ──
+     Hierarchy comes from type and space, not from uppercase kickers. Rain is drawn only
+     where it matters; the curve marks only now, the low and the high. */
+
+  /* Section titles: sentence case, one size below the card title. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__section-title {
+    margin: 0;
+    color: var(--color-atlas-ink);
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
+  }
+
+  .app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__section-title {
+    color: rgb(240 246 252);
+  }
+
+  /* The unit is already in every value and in the settings. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__unit {
+    display: none;
+  }
+
+  /* Any remaining label inside the card reads in sentence case. */
+  .app .hava81-forecast-atlas :is(span, small, strong, p, h3, h4, time, b) {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  /* ── Curve markers: only now, the first low and the first high stay visible ── */
+  /* The entry animation fills forwards with opacity 1, so the hidden hours drop it and
+     use visibility instead; the hovered hour still shows its marker. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__point:not(.is-current, .is-extreme, .is-active) {
+    animation: none;
+    visibility: hidden;
+  }
+
+  /* ── Scrolling: the arrows are enough; the hint text and progress bar go ── */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__scroll-hint,
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__scroll-progress {
+    display: none;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__scroll-navigation {
+    justify-content: flex-end;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__hourly-viewport {
+    scrollbar-width: none;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__hourly-viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ── Attribution: a footnote at the end of the hourly section ── */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__source {
+    margin-top: 0.75rem;
+    color: var(--color-atlas-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__source * {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  /* ── The week: its own inset surface under the chart ── */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__daily {
+    margin-top: 1.75rem;
+    padding: 1.25rem 1.25rem 0.5rem;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-xl);
+    background: color-mix(in srgb, var(--color-atlas-ink) 3%, var(--color-atlas-paper));
+  }
+
+  .app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__daily {
+    border-color: rgb(255 255 255 / 0.08);
+    background: rgb(255 255 255 / 0.03);
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__daily .hava81-forecast-atlas__section-title {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Day name: the weekday leads, the date follows small. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-name {
+    display: grid;
+    gap: 0.1rem;
+    font-weight: 600;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-date {
+    color: var(--color-atlas-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  /* Icons: full-size and legible, no empty ring around them. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-symbol,
+  .app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__day-symbol {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-symbol svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Range bar: the fill is this day's slice of the week, coloured by its real °C. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-range {
+    position: relative;
+    height: 0.4rem;
+    overflow: visible;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-range::after {
+    display: none;
+  }
+
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-range-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--range-lo, 0%);
+    width: calc(var(--range-hi, 100%) - var(--range-lo, 0%));
+    min-width: 0.4rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--range-lo-light), var(--range-hi-light));
+  }
+
+  .app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__day-range-fill {
+    background: linear-gradient(90deg, var(--range-lo-dark), var(--range-hi-dark));
+  }
+
+  /* Now on today's bar: a ringed dot riding the fill. */
+  .app .hava81-forecast-atlas .hava81-forecast-atlas__day-now {
+    position: absolute;
+    top: 50%;
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 2px solid var(--color-atlas-paper);
+    border-radius: 50%;
+    background: var(--color-atlas-ink);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-atlas-ink) 30%, transparent);
+    translate: -50% -50%;
+  }
+
+  .app[data-color-mode='dark'] .hava81-forecast-atlas .hava81-forecast-atlas__day-now {
+    border-color: rgb(16 28 48);
+    background: rgb(255 255 255);
+  }
+}

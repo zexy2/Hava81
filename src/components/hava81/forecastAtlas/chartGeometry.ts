@@ -5,6 +5,8 @@ import {
   CHART_COLUMN_UNITS,
   CHART_HEIGHT,
   CHART_TOP,
+  HOURLY_RAIN_CHANCE,
+  HOURLY_RAIN_MM,
   PRECIPITATION_THRESHOLD,
   RAIN_GAUGE_CELLS,
   TRACK_GUTTER,
@@ -81,7 +83,8 @@ const rainAmountLevel = (mm: number) =>
 
 export const rainGaugeLevel = (probability: number, mm: number | null | undefined) => {
   const amount = typeof mm === 'number' && Number.isFinite(mm) ? mm : 0;
-  if (probability < 0.05 && amount <= 0) return 0;
+  // Below the hourly threshold the gauge stays dark: low chances are noise, not rain.
+  if (probability < HOURLY_RAIN_CHANCE && amount < HOURLY_RAIN_MM) return 0;
   const chanceLevel = Math.ceil(Math.min(1, Math.max(0, probability)) * RAIN_GAUGE_CELLS);
   return Math.min(RAIN_GAUGE_CELLS, Math.max(chanceLevel, rainAmountLevel(amount)));
 };
@@ -131,6 +134,8 @@ export const buildRhythmChart = (
   const path = buildSmoothPath(points);
   const areaPath = `${path} L ${points[points.length - 1].x} ${AREA_BASELINE} L ${points[0].x} ${AREA_BASELINE} Z`;
   const firstPrecipitation = points.find(point => point.isRainSignal);
+  const minIndex = points.findIndex(point => point.convertedTemp === min);
+  const maxIndex = points.findIndex(point => point.convertedTemp === max);
   const tickValues = buildNiceTicks(min, max);
   const yTicks = tickValues.map(value => ({
     value,
@@ -197,7 +202,9 @@ export const buildRhythmChart = (
     count,
     firstPrecipitation,
     max,
+    maxIndex,
     min,
+    minIndex,
     nightRuns,
     path,
     points,

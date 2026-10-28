@@ -3,7 +3,16 @@ import { capitalizeFirst } from '../../../utils/format';
 import { formatPrecipitationAmount } from '../../../utils/precipitation';
 import { WeatherSymbol } from '../WeatherSymbol';
 import { PRECIPITATION_THRESHOLD } from './constants';
+import {
+  TEMPERATURE_SCALE_DARK,
+  TEMPERATURE_SCALE_LIGHT,
+  temperatureColor,
+} from './temperatureColor';
 import type { DailyDatum, ForecastAtlasClock } from './types';
+
+/** A day's rain is worth a line from this chance or this amount (mm) up. */
+const DAILY_RAIN_CHANCE = 0.2;
+const DAILY_RAIN_MM = 1;
 
 interface DailyForecastSectionProps {
   /** Forecast Atlas instance id (from `useId`). */
@@ -11,6 +20,8 @@ interface DailyForecastSectionProps {
   dailyData: readonly DailyDatum[];
   preciseTemperatureFormatter: Intl.NumberFormat;
   clock: ForecastAtlasClock;
+  /** Current temperature in the display unit, marked on today's range bar. */
+  nowTemperature?: number;
 }
 
 /** Daily rows: day, symbol, description, rain and the high/low range. */
@@ -19,6 +30,7 @@ export function DailyForecastSection({
   dailyData,
   preciseTemperatureFormatter,
   clock,
+  nowTemperature,
 }: DailyForecastSectionProps) {
   const { t, i18n } = useTranslation();
   const { currentLocationDateKey, formatDay, locale, temperatureSymbol } = clock;
@@ -26,9 +38,21 @@ export function DailyForecastSection({
   const weekMin = Math.min(...dailyData.map(day => day.convertedMinExact));
   const weekMax = Math.max(...dailyData.map(day => day.convertedMaxExact));
   const weekSpan = Math.max(weekMax - weekMin, 1);
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' });
+  const shortDate = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  });
+  const position = (value: number) =>
+    `${Math.min(100, Math.max(0, ((value - weekMin) / weekSpan) * 100))}%`;
 
   return (
-    <section className="hava81-forecast-atlas__section" aria-labelledby={`${id}-daily-title`}>
+    <section
+      className="hava81-forecast-atlas__section hava81-forecast-atlas__daily"
+      data-surface="daily"
+      aria-labelledby={`${id}-daily-title`}
+    >
       <h3 id={`${id}-daily-title`} className="hava81-forecast-atlas__section-title">
         {t('weather.forecast')}
       </h3>
@@ -52,9 +76,15 @@ export function DailyForecastSection({
             typeof day.precipitationMm === 'number' &&
             Number.isFinite(day.precipitationMm) &&
             day.precipitationMm >= 0;
-          const hasPrecipitation = (precipitation ?? 0) > 0 || Boolean(precipitationAmount);
+          // Single-digit chances and trace amounts are not news on a day row.
+          const hasPrecipitation =
+            (probability ?? 0) >= DAILY_RAIN_CHANCE || (day.precipitationMm ?? 0) >= DAILY_RAIN_MM;
           const precipitationUnknown = precipitation === undefined && !hasAmountEvidence;
           const isCurrentDate = day.date.toISOString().slice(0, 10) === currentLocationDateKey;
+          // Today and tomorrow keep their words; other days lead with the weekday.
+          const relative = formatDay(day.date);
+          const dayLabel =
+            relative === t('days.today') || relative === t('days.tomorrow') ? relative : null;
           const roundedRangeCollapsed =
             day.convertedMax === day.convertedMin &&
             Math.abs(day.convertedMaxExact - day.convertedMinExact) >= 0.1;
@@ -70,8 +100,14 @@ export function DailyForecastSection({
               key={`day-${day.timestamp}`}
               style={
                 {
-                  '--range-lo': `${((day.convertedMinExact - weekMin) / weekSpan) * 100}%`,
-                  '--range-hi': `${((day.convertedMaxExact - weekMin) / weekSpan) * 100}%`,
+                  '--range-lo': position(day.convertedMinExact),
+                  '--range-hi': position(day.convertedMaxExact),
+                  // Absolute colours from the day's own °C low and high, so equal ranges
+                  // look equal and a cold week reads cold.
+                  '--range-lo-light': temperatureColor(day.tempMin, TEMPERATURE_SCALE_LIGHT),
+                  '--range-hi-light': temperatureColor(day.tempMax, TEMPERATURE_SCALE_LIGHT),
+                  '--range-lo-dark': temperatureColor(day.tempMin, TEMPERATURE_SCALE_DARK),
+                  '--range-hi-dark': temperatureColor(day.tempMax, TEMPERATURE_SCALE_DARK),
                 } as React.CSSProperties
               }
             >
@@ -80,11 +116,20 @@ export function DailyForecastSection({
                 dateTime={day.date.toISOString().slice(0, 10)}
                 aria-current={isCurrentDate ? 'date' : undefined}
               >
-                {formatDay(day.date)}
+                {dayLabel === null ? (
+                  <>
+                    {capitalizeFirst(weekday.format(day.date), i18n.language)}
+                    <small className="hava81-forecast-atlas__day-date">
+                      {shortDate.format(day.date)}
+                    </small>
+                  </>
+                ) : (
+                  dayLabel
+                )}
               </time>
               <WeatherSymbol
                 code={day.icon}
-                size={28}
+                size={36}
                 className="hava81-forecast-atlas__day-symbol"
               />
               {/* Description and rain read as one detail line under the day name. */}
@@ -140,7 +185,16 @@ export function DailyForecastSection({
                   </span>
                 )}
               </span>
-              <span className="hava81-forecast-atlas__day-range" aria-hidden="true" />
+              <span className="hava81-forecast-atlas__day-range" aria-hidden="true">
+                <span className="hava81-forecast-atlas__day-range-fill" />
+                {isCurrentDate && typeof nowTemperature === 'number' ? (
+                  <span
+                    className="hava81-forecast-atlas__day-now"
+                    data-now-marker=""
+                    style={{ left: position(nowTemperature) }}
+                  />
+                ) : null}
+              </span>
               <span
                 className="hava81-forecast-atlas__day-temperatures"
                 role="group"

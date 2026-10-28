@@ -381,7 +381,8 @@ export function ForecastChartPlot({
       <div className="hava81-forecast-atlas__marks" aria-hidden="true">
         {chart.points.map((point, index) => {
           const isCurrentPoint = isCurrentHourPoint(point, clock);
-          const isExtrema = point.convertedTemp === chart.min || point.convertedTemp === chart.max;
+          // One low and one high are marked, not every hour that ties with them.
+          const isExtrema = point.index === chart.minIndex || point.index === chart.maxIndex;
           const isActive = activeHourIndex === point.index;
           const classes = [
             'hava81-forecast-atlas__point',
@@ -395,6 +396,7 @@ export function ForecastChartPlot({
             <span
               key={`point-${point.timestamp}`}
               className={classes}
+              data-temp={point.convertedTemp}
               style={
                 {
                   left: `${point.xPercent}%`,

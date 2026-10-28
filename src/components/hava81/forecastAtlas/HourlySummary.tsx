@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { formatPrecipitationSummary } from '../../../utils/precipitation';
 import type { HourlySummaryData } from './hourlySummaryData';
 import type { ForecastAtlasClock } from './types';
+import { HOURLY_RAIN_CHANCE, HOURLY_RAIN_MM } from './constants';
 
 interface HourlySummaryProps {
   summary: HourlySummaryData;
@@ -20,9 +21,10 @@ export function HourlySummary({ summary: hourlySummary, clock }: HourlySummaryPr
       peakRainProbability >= 0 &&
       peakRainProbability <= 1) ||
     (typeof peakRainAmount === 'number' && Number.isFinite(peakRainAmount) && peakRainAmount >= 0);
+  // A single-digit chance is not a "peak": below the threshold the tile reads "none".
   const hasHourlyPrecipitationSignal = Boolean(
-    (typeof peakRainProbability === 'number' && peakRainProbability > 0) ||
-    (typeof peakRainAmount === 'number' && peakRainAmount > 0)
+    (typeof peakRainProbability === 'number' && peakRainProbability >= HOURLY_RAIN_CHANCE) ||
+    (typeof peakRainAmount === 'number' && peakRainAmount >= HOURLY_RAIN_MM)
   );
   const renderSummaryWhen = (hour: { time: Date } | null) => {
     if (!hour) return null;
@@ -102,7 +104,9 @@ export function HourlySummary({ summary: hourlySummary, clock }: HourlySummaryPr
       >
         <span>{t('hava81.forecastAtlas.summaryRain')}</span>
         <strong>
-          {hasPeakRainEvidence
+          {hasPeakRainEvidence && !hasHourlyPrecipitationSignal
+            ? t('hava81.forecastAtlas.precipitationNone')
+            : hasPeakRainEvidence
             ? formatPrecipitationSummary(
                 hourlySummary.peakPrecipitation.precipitation ?? Number.NaN,
                 hourlySummary.peakPrecipitation.precipitationMm,

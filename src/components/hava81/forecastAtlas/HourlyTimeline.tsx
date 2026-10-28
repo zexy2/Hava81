@@ -4,7 +4,7 @@ import { useSettings } from '../../../context';
 import { capitalizeFirst } from '../../../utils/format';
 import { formatPrecipitationAmount } from '../../../utils/precipitation';
 import { WeatherSymbol } from '../WeatherSymbol';
-import { PRECIPITATION_THRESHOLD } from './constants';
+import { HOURLY_RAIN_CHANCE, HOURLY_RAIN_MM, PRECIPITATION_THRESHOLD } from './constants';
 import type { ForecastAtlasCurrent } from './ForecastAtlasCurrent';
 import type { ForecastAtlasClock, HourlyDatum } from './types';
 
@@ -105,7 +105,8 @@ export function HourlyTimeline({
                 : hour.convertedTemp}
               °
             </strong>
-            {(precipitation ?? 0) > 0 || precipitationAmount ? (
+            {(precipitation ?? 0) >= HOURLY_RAIN_CHANCE * 100 ||
+            (hour.precipitationMm ?? 0) >= HOURLY_RAIN_MM ? (
               <span
                 className={
                   (precipitation ?? 0) >= PRECIPITATION_THRESHOLD * 100 ||
