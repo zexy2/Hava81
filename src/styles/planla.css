@@ -1287,6 +1287,7 @@
   /* Night: scored, never recommended — drawn quietly. */
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot.is-night {
     --bar: rgb(255 255 255 / 34%);
+    overflow: visible;
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot.is-night > :is(strong, time, small) {
