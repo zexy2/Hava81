@@ -292,6 +292,7 @@
 
   .app .atlas-dashboard .environment-rail .environment-rail__module {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 4.5rem auto 1fr;
     align-content: start;
     gap: 0.6rem;
@@ -312,6 +313,11 @@
     font-weight: 600;
     letter-spacing: 0;
     text-transform: none;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__module > * {
+    grid-column: 1;
+    justify-self: stretch;
   }
 
   .app .atlas-dashboard .environment-rail .environment-rail__icon,
@@ -374,6 +380,12 @@
     }
   }
 
+  @media (max-width: 47.99rem) {
+    .app .atlas-footer {
+      width: calc(100% - 2rem);
+    }
+  }
+
   @media (max-width: 24rem) {
     .app .atlas-dashboard .environment-rail .environment-rail__module {
       padding: 1rem 0.9rem;
@@ -386,13 +398,20 @@
 
   /* Instruments draw in the card's ink with one accent each. */
 
-  .app .instrument-sun,
-  .app .instrument-wind,
-  .app .instrument-map {
+  .app .atlas-dashboard .environment-rail .environment-rail__icon .instrument-sun,
+  .app .atlas-dashboard .environment-rail .environment-rail__icon .instrument-wind,
+  .app .atlas-dashboard .environment-rail .environment-rail__icon .instrument-map {
     display: block;
+    width: auto;
     height: 100%;
     max-width: 100%;
     overflow: visible;
+  }
+
+  .app .atlas-dashboard .environment-rail .environment-rail__icon .instrument-sun {
+    width: min(100%, 10rem);
+    height: auto;
+    max-height: 100%;
   }
 
   .app .instrument-sun__horizon {
@@ -508,7 +527,15 @@
 
   /* ── Footer: one quiet line ── */
 
+  /* A paper band, so the line stays readable over any sky. */
   .app .atlas-footer {
+    width: min(calc(100% - 4rem), 90rem);
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-inline: clamp(1rem, 3vw, 1.5rem);
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-atlas-paper) 92%, transparent);
     display: flex;
     flex-wrap: wrap;
     align-items: center;

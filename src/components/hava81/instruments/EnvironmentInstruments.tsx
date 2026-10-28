@@ -50,7 +50,7 @@ export function WindCompass({ direction, active }: WindCompassProps) {
   const rotation = Math.round(((direction % 360) + 360) % 360);
   const ticks = Array.from({ length: 24 }, (_, index) => index * 15);
   return (
-    <svg className="instrument-wind" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <svg className="instrument-wind" viewBox="-2 -9 68 75" aria-hidden="true" focusable="false">
       <circle className="instrument-wind__ring" cx="32" cy="32" r="27" />
       {ticks.map(angle => (
         <line
@@ -64,7 +64,7 @@ export function WindCompass({ direction, active }: WindCompassProps) {
           transform={`rotate(${angle} 32 32)`}
         />
       ))}
-      <text className="instrument-wind__cardinal" x="32" y="17" textAnchor="middle">
+      <text className="instrument-wind__cardinal" x="32" y="-2" textAnchor="middle">
         N
       </text>
       {active ? (
