@@ -28,6 +28,80 @@ const weather: NormalizedWeatherData = {
 };
 
 describe('EnvironmentRail', () => {
+  it('labels the wind direction instead of printing raw degrees', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-08-28T15:00:00Z'));
+      render(
+        <SettingsProvider>
+          <EnvironmentRail
+            weather={{
+              ...weather,
+              windDirection: 19,
+              meta: { ...weather.meta, fetchedAt: new Date() },
+            }}
+            onOpenMap={vi.fn()}
+            mapExpanded={false}
+          />
+        </SettingsProvider>
+      );
+      expect(screen.getByText('Kuzeyden · 19°')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows the sunset during daylight', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-08-28T15:00:00Z'));
+      render(
+        <SettingsProvider>
+          <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
+        </SettingsProvider>
+      );
+      expect(screen.getByText('Batış')).toBeInTheDocument();
+      expect(screen.queryByText('Gün doğumu')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('switches to the next sunrise after sunset', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-08-28T18:00:00Z')); // 21:00 local, after sunset
+      render(
+        <SettingsProvider>
+          <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
+        </SettingsProvider>
+      );
+      expect(screen.getByText('Gün doğumu')).toBeInTheDocument();
+      const value = screen.getByText('Gün doğumu').nextElementSibling;
+      expect(value?.querySelector('time')).toHaveAttribute('datetime', '2026-08-29T03:00:00.000Z');
+      expect(value).toHaveTextContent('06:00');
+      expect(value?.nextElementSibling).toHaveTextContent('Batış 19:30');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows today's sunrise before dawn", () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-08-28T01:00:00Z')); // 04:00 local
+      render(
+        <SettingsProvider>
+          <EnvironmentRail weather={weather} onOpenMap={vi.fn()} mapExpanded={false} />
+        </SettingsProvider>
+      );
+      const value = screen.getByText('Gün doğumu').nextElementSibling;
+      expect(value?.querySelector('time')).toHaveAttribute('datetime', '2026-08-28T03:00:00.000Z');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('references the map region only while the map disclosure is expanded', () => {
     const { rerender } = render(
       <SettingsProvider>
