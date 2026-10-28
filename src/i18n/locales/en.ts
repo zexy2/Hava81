@@ -295,6 +295,17 @@ export const en = {
       bestTime: 'Best weather time',
     },
     dailyPlan: {
+      headline: {
+        best: 'Best time {{start}}–{{end}}',
+        even: 'Much the same all day',
+      },
+      nightFlag: 'Night',
+      bestFlag: 'Best',
+      legend: {
+        good: 'Good',
+        caution: 'Caution',
+        difficult: 'Hard',
+      },
       eyebrow: 'Hava81 decision engine',
       title: 'Day plan',
       forecastStale:

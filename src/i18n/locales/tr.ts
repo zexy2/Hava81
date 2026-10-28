@@ -298,6 +298,17 @@ export const tr = {
       bestTime: 'En iyi hava saati',
     },
     dailyPlan: {
+      headline: {
+        best: 'En iyi zaman {{start}}–{{end}}',
+        even: 'Gün boyu benzer',
+      },
+      nightFlag: 'Gece',
+      bestFlag: 'En iyi',
+      legend: {
+        good: 'Uygun',
+        caution: 'Dikkat',
+        difficult: 'Zor',
+      },
       eyebrow: 'Hava81 karar motoru',
       title: 'Gün planı',
       forecastStale:
