@@ -57,7 +57,7 @@ type AtlasNavItem = AtlasView;
 
 const App: React.FC = () => {
   const { t } = useTranslation();
-  const { settings } = useSettings();
+  const { settings, convertTemperature } = useSettings();
   useEffect(() => {
     document.documentElement.lang = settings.language;
   }, [settings.language]);
@@ -485,8 +485,11 @@ const App: React.FC = () => {
               weather
                 ? {
                     cityName: weather.cityName,
-                    temperature: weather.temperature,
-                    fresh: getCurrentWeatherFreshness(weather.meta).fresh,
+                    temperatureLabel: getCurrentWeatherFreshness(weather.meta).fresh
+                      ? new Intl.NumberFormat(
+                          settings.language === 'en' ? 'en-US' : 'tr-TR'
+                        ).format(Math.round(convertTemperature(weather.temperature)))
+                      : null,
                   }
                 : null
             }
@@ -691,7 +694,6 @@ const App: React.FC = () => {
                         </Suspense>
                       </section>
                     )}
-
                   </>
                 )}
 

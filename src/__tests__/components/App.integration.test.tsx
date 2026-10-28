@@ -366,8 +366,15 @@ describe('Hava81 app integration', () => {
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
     ).toBeInTheDocument();
-    expect(screen.getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
-    expect(screen.getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
+    // The search shortcut is advertised in the footer and inside the header search field.
+    const footer = screen.getByTestId('app-footer');
+    expect(within(footer).getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
+    expect(within(footer).getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
+    expect(
+      within(document.querySelector('.atlas-header') as HTMLElement).getByText('Ctrl+K', {
+        selector: 'kbd',
+      })
+    ).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(
       41.01,
       28.97,

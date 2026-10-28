@@ -71,7 +71,7 @@ export const en = {
   },
   hava81: {
     header: {
-      home: 'Hava81 home',
+      views: 'Views',
     },
     severe: {
       label: 'Weather warning',

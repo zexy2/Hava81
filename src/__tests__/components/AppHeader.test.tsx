@@ -54,12 +54,17 @@ const renderHeader = (overrides: Partial<AppHeaderProps> = {}) => {
 afterEach(() => unmountStyles());
 
 describe('AppHeader', () => {
-  it('exposes quick actions as a named group instead of a navigation landmark', () => {
+  it('exposes quick actions as a named group, separate from the views navigation', () => {
     renderHeader();
     const header = screen.getByRole('banner');
     const group = within(header).getByRole('group', { name: i18n.t('weather.quickActions') });
     expect(group).toHaveClass('atlas-header__actions');
-    expect(within(header).queryByRole('navigation')).not.toBeInTheDocument();
+    // The only landmark is the views navigation, and the tool group is not inside it.
+    const navigation = within(header).getByRole('navigation', {
+      name: i18n.t('hava81.header.views'),
+    });
+    expect(within(header).getAllByRole('navigation')).toHaveLength(1);
+    expect(navigation).not.toContainElement(group);
   });
 
   it('marks the saved comparison view as the current page, not a pressed toggle', () => {

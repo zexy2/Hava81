@@ -71,7 +71,7 @@ export const tr = {
   },
   hava81: {
     header: {
-      home: 'Hava81 ana sayfa',
+      views: 'Görünümler',
     },
     severe: {
       label: 'Hava uyarısı',

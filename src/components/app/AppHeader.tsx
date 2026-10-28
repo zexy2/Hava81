@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSettings } from '../../context';
 import { getCityMetadata } from '../../constants/cityMetadata';
 import type { AtlasView } from '../../utils/atlasView';
 import './AppHeader.css';
@@ -50,7 +49,7 @@ export interface AppHeaderProps {
   /** Shortcut hint shown inside the search field (⌘K / Ctrl+K). */
   searchShortcutLabel?: string;
   /** Live reading for the condensed masthead; null until weather is known. */
-  context?: { cityName: string; temperature: number; fresh: boolean } | null;
+  context?: { cityName: string; temperatureLabel: string | null } | null;
 }
 
 /** Scroll depth after which the masthead condenses and shows the context line. */
@@ -117,14 +116,8 @@ export function AppHeader({
   context = null,
 }: AppHeaderProps) {
   const { t } = useTranslation();
-  const { settings, convertTemperature } = useSettings();
   const condensed = useCondensed(CONDENSE_AT);
-  const contextTemperature =
-    context && context.fresh
-      ? new Intl.NumberFormat(settings.language === 'en' ? 'en-US' : 'tr-TR').format(
-          Math.round(convertTemperature(context.temperature))
-        )
-      : null;
+  const contextTemperature = context?.temperatureLabel ?? null;
   const contextCity = context ? (getCityMetadata(context.cityName)?.name ?? context.cityName) : '';
   const favoriteLabel = isFavorite ? t('weather.removeFromFavorites') : t('weather.addToFavorites');
   const mapLabel = showMap ? t('weather.hideMap') : t('weather.showMap');
@@ -135,22 +128,22 @@ export function AppHeader({
       data-condensed={condensed}
     >
       <div className="atlas-header__inner">
-        <a className="atlas-brand" href="/" aria-label={t('hava81.header.home')}>
+        <a className="atlas-brand" href="/">
           <span className="atlas-brand__name">
             Hava<em>81</em>
           </span>
         </a>
 
-        {hasWeather ? (
-          <nav className="atlas-header__nav" aria-label={t('navigation.label')}>
-            <button
-              type="button"
-              className="atlas-nav-link"
-              onClick={() => onNavigate?.('today')}
-              aria-current={activeView === 'today' ? 'page' : undefined}
-            >
-              {t('navigation.today')}
-            </button>
+        <nav className="atlas-header__nav" aria-label={t('hava81.header.views')}>
+          <button
+            type="button"
+            className="atlas-nav-link"
+            onClick={() => onNavigate?.('today')}
+            aria-current={activeView === 'today' ? 'page' : undefined}
+          >
+            {t('navigation.today')}
+          </button>
+          {hasWeather && (
             <button
               type="button"
               className="atlas-nav-link atlas-plan-button"
@@ -159,32 +152,33 @@ export function AppHeader({
             >
               {t('navigation.plan')}
             </button>
+          )}
+          <button
+            type="button"
+            className="atlas-nav-link atlas-icon-button--map"
+            onClick={onToggleMap}
+            disabled={!hasWeather}
+            aria-expanded={showMap}
+            aria-controls={showMap ? 'weather-map-region' : undefined}
+            aria-current={activeView === 'map' ? 'page' : undefined}
+            aria-label={mapLabel}
+          >
+            {t('navigation.map')}
+          </button>
+          {favorites.length >= 2 && (
             <button
               type="button"
-              className="atlas-nav-link atlas-icon-button--map"
-              onClick={onToggleMap}
-              aria-expanded={showMap}
-              aria-controls={showMap ? 'weather-map-region' : undefined}
-              aria-current={activeView === 'map' ? 'page' : undefined}
-              title={mapLabel}
+              className="atlas-nav-link atlas-compare-button"
+              onClick={onOpenCompare}
+              aria-current={isCompareActive ? 'page' : undefined}
             >
-              {t('navigation.map')}
+              {t('hava81.compare.action')}
+              <span className="atlas-nav-link__count" aria-hidden="true">
+                {favorites.length}
+              </span>
             </button>
-            {favorites.length >= 2 && (
-              <button
-                type="button"
-                className="atlas-nav-link atlas-compare-button"
-                onClick={onOpenCompare}
-                aria-current={isCompareActive ? 'page' : undefined}
-              >
-                {t('hava81.compare.action')}
-                <span className="atlas-nav-link__count" aria-hidden="true">
-                  {favorites.length}
-                </span>
-              </button>
-            )}
-          </nav>
-        ) : null}
+          )}
+        </nav>
 
         <p className="atlas-header__context" data-testid="header-context" aria-hidden={!condensed}>
           {context ? (
