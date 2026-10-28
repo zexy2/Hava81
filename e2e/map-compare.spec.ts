@@ -70,7 +70,7 @@ test.describe('map view', () => {
     async ({ page }) => {
       await mockMapTiles(page);
       await page.goto('/istanbul');
-      await page.getByRole('button', { name: 'Harita' }).click();
+      await page.getByRole('button', { name: 'Harita', exact: true }).click();
 
       const map = page.locator('#weather-map-region');
       await expect(map).toBeVisible();
