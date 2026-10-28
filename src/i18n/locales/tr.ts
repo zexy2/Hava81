@@ -602,6 +602,8 @@ export const tr = {
         'Önümüzdeki 24 saatte çim/zeytin poleni model maksimumlarından yüksek olan değer.',
       sea: 'Deniz suyu',
       wave: 'Dalga: {{height}} {{unit}}',
+      wavePeriod: 'periyot {{period}} {{unit}}',
+      waveFrom: '{{direction}} yönünden',
       waveDetails:
         'Dalga {{height}} {{unit}} · periyot {{period}} {{periodUnit}} · {{direction}} yönünden',
       sourceModified: 'Hava81 tarafından özetlendi',

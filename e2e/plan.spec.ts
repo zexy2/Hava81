@@ -365,11 +365,18 @@ test.describe('daily plan', () => {
       });
       expect(state.metersMatch).toBe(true);
       expect(state.best).toBeGreaterThan(0);
-      // Twelve hours do not fit: the timeline scrolls on its own, the page does not.
-      await timeline.evaluate(element => {
-        element.scrollLeft = 200;
-      });
-      expect(await timeline.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+      // The strip either fits all twelve hours or scrolls on its own; the page never does.
+      const overflows = await timeline.evaluate(
+        element => element.scrollWidth > element.clientWidth + 1
+      );
+      if (overflows) {
+        await timeline.evaluate(element => {
+          element.scrollLeft = 200;
+        });
+        expect(await timeline.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+      } else {
+        await expect(slots.last()).toBeInViewport();
+      }
       await expectNoHorizontalScroll(page);
     }
   );

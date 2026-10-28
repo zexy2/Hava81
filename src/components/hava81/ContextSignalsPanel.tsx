@@ -196,20 +196,27 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
             <strong>{formattedSeaSurfaceTemperature}</strong>
             <p>
               {signals.marine?.waveHeight !== undefined
-                ? t('hava81.context.waveDetails', {
-                    height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
-                    unit: signals.units.waveHeight ?? '',
-                    period:
-                      (signals.marine.wavePeriod != null
-                        ? formatFixed(signals.marine.wavePeriod, i18n.language, 1)
-                        : null) ?? '—',
-                    periodUnit: signals.units.wavePeriod ?? '',
-                    // "KD (40°)": a compass point first, the raw bearing in brackets.
-                    direction:
-                      signals.marine.waveDirection !== undefined
-                        ? `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`
-                        : '—',
-                  })
+                ? [
+                    t('hava81.context.wave', {
+                      height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
+                      unit: signals.units.waveHeight ?? '',
+                    }),
+                    // Period and direction are optional in the model; a missing part is left
+                    // out rather than printed as a dash.
+                    signals.marine.wavePeriod != null
+                      ? t('hava81.context.wavePeriod', {
+                          period: formatFixed(signals.marine.wavePeriod, i18n.language, 1),
+                          unit: signals.units.wavePeriod ?? '',
+                        })
+                      : null,
+                    signals.marine.waveDirection !== undefined
+                      ? t('hava81.context.waveFrom', {
+                          direction: `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`,
+                        })
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
                 : t('hava81.context.waveUnavailable')}
             </p>
           </article>

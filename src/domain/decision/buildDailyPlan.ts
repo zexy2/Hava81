@@ -156,15 +156,13 @@ const LATER_MIN_IMPROVEMENT = 10;
 const buildNowOrLater = (
   slots: ScoredWeatherWindow[],
   bestWindowRange: BestWindowRange | undefined,
-  isEligible: (slot: ScoredWeatherWindow) => boolean = () => true,
-  evenDay = false
+  isEligible: (slot: ScoredWeatherWindow) => boolean = () => true
 ): NowOrLaterAdvice => {
   const current = slots[0];
   if (!current) {
     return { kind: 'similar', currentScore: 0, targetScore: 0, reasons: [] };
   }
-  // An even day promotes no window: "now" and "later" would both overstate a 1–3 point gap.
-  if (!bestWindowRange || evenDay) {
+  if (!bestWindowRange) {
     return {
       kind: 'similar',
       currentScore: current.score,
@@ -333,7 +331,8 @@ export const buildDailyPlan = ({
     umbrella: pickUmbrellaAdvice(slots),
     wind: pickWindAdvice(slots),
     airQuality: pickAirQualityAdvice(slotAqi.slice(0, horizonSlots.length)),
-    nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible, evenDay.even),
+    // The verdict itself is shared with Today; `evenDay` only changes how Planla words it.
+    nowOrLater: buildNowOrLater(slots, bestWindowRange, isEligible),
     ...(evenDay.even ? { evenDay: { weakSlots: evenDay.weakSlots } } : {}),
     impacts: aggregateImpacts(weighted),
     // Confidence must describe the same forecast horizon that contributes to the score.

@@ -1,0 +1,667 @@
+/*
+ * Planla — one calm surface instead of stacked dark bands and boxes in boxes.
+ * Same language as Today: a single hero band, glass sections divided by hairlines, values
+ * carried by type rather than tiles. Layered in `editorial`, so component styles stay
+ * untouched and this file can be read on its own.
+ */
+@layer editorial {
+  .app .atlas-plan-view {
+    --plan-line: color-mix(in srgb, var(--color-atlas-ink) 12%, transparent);
+    --plan-soft: var(--color-atlas-muted);
+    --plan-accent: var(--color-aegean);
+    --plan-gap: clamp(1.25rem, 2.4vw, 2rem);
+  }
+
+  /* ── 1. One hero band: the day plan header. Painted rings removed. ── */
+
+  .app .atlas-plan-view .daily-plan__header,
+  .app[data-color-mode='dark'] .atlas-plan-view .daily-plan__header {
+    min-height: 0;
+    padding: clamp(1.25rem, 2.6vw, 2rem);
+    background: linear-gradient(115deg, rgb(12 34 60) 0%, rgb(16 52 86) 62%, rgb(20 92 112) 100%);
+  }
+
+  .app .atlas-plan-view .daily-plan__header::before,
+  .app .atlas-plan-view .daily-plan__header::after,
+  .app .atlas-plan-view .daily-plan__decision::before,
+  .app .atlas-plan-view .daily-plan__decision::after,
+  .app .atlas-plan-view .activity-planner__header::before,
+  .app .atlas-plan-view .activity-planner__header::after,
+  .app .atlas-plan-view .activity-card::before,
+  .app .atlas-plan-view .activity-card::after {
+    content: none;
+  }
+
+  /* The other two "bands" become plain section headings on the page surface. */
+  .app .atlas-plan-view .activity-planner__header,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__header {
+    padding: 0 0 var(--plan-gap);
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--color-atlas-ink);
+  }
+
+  .app
+    .atlas-plan-view
+    .activity-planner__header
+    :is(h2, h3, p, .atlas-kicker, label, span, small) {
+    color: inherit;
+  }
+
+  .app .atlas-plan-view .activity-planner__header :is(p, small, .atlas-kicker) {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .route-weather > summary,
+  .app[data-color-mode='dark'] .atlas-plan-view .route-weather > summary {
+    min-height: 0;
+    padding: var(--plan-gap);
+    background: none;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .atlas-plan-view .route-weather > summary :is(h2, h3, p, span, small) {
+    color: inherit;
+  }
+
+  .app .atlas-plan-view .route-weather > summary p {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .route-weather__chevron {
+    border: 1px solid var(--plan-line);
+    background: none;
+    color: var(--plan-accent);
+  }
+
+  /* ── 2. Day plan: decision as a statement, quick facts as one line, no half-empty tiles ── */
+
+  .app .atlas-plan-view .daily-plan__decision {
+    padding: var(--plan-gap) 0 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .daily-plan__decision > strong {
+    font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+    line-height: 1.3;
+  }
+
+  .app .atlas-plan-view .daily-plan__decision > small {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .daily-plan__explain {
+    border: 0;
+    border-top: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /* Umbrella / wind / air: three one-word facts on a single ruled row. */
+  .app .atlas-plan-view .daily-plan__quick {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0;
+    border-block: 1px solid var(--plan-line);
+  }
+
+  .app .atlas-plan-view .daily-plan__quick > * {
+    min-height: 0;
+    padding: 0.85rem 1rem;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .daily-plan__quick > * + * {
+    border-inline-start: 1px solid var(--plan-line);
+  }
+
+  /* Score breakdown: a single disclosure row, not a half-empty two-column tile. */
+  .app .atlas-plan-view .daily-plan__explain-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+  }
+
+  .app .atlas-plan-view .activity-planner__score-explanation,
+  .app .atlas-plan-view .activity-planner .activity-planner__sensitivity,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner .activity-planner__sensitivity {
+    padding: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .atlas-plan-view .activity-planner__sensitivity :is(label, span, small, p) {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .activity-planner__score-explanation {
+    border-block: 1px solid var(--plan-line);
+  }
+
+  /* ── 3. Hourly suitability: one heat strip instead of twelve big tiles ── */
+
+  .app .atlas-plan-view .daily-plan__slots {
+    display: grid;
+    grid-auto-columns: minmax(3.25rem, 1fr);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    gap: 2px;
+    padding: 0;
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    scroll-snap-type: none;
+  }
+
+  .app .atlas-plan-view .daily-plan__slot,
+  .app .atlas-plan-view .daily-plan__slot.is-best-window {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 0.15rem;
+    min-width: 0;
+    min-height: 0;
+    padding: 0.55rem 0.35rem 0.6rem;
+    border: 0;
+    border-radius: 0;
+    /* Opaque plain rgb() fills (not color-mix, which contrast checkers cannot read): dark text
+       stays far above 4.5:1. The best hour is a touch deeper; weak hours turn warm. */
+    background: rgb(218 232 250);
+    color: var(--color-atlas-ink);
+    box-shadow: none;
+    text-align: center;
+  }
+
+  .app .atlas-plan-view .daily-plan__slot::before,
+  .app .atlas-plan-view .daily-plan__slot::after {
+    content: none;
+  }
+
+  .app .atlas-plan-view .daily-plan__slot.is-best-window {
+    background: rgb(200 222 248);
+    box-shadow: inset 0 -3px 0 var(--plan-accent);
+  }
+
+  .app[data-color-mode='dark'] .atlas-plan-view .daily-plan__slot {
+    background: rgb(22 44 74);
+  }
+
+  .app[data-color-mode='dark'] .atlas-plan-view .daily-plan__slot.is-best-window {
+    background: rgb(28 58 96);
+  }
+
+  .app[data-color-mode='dark'] .atlas-plan-view .daily-plan__slot.is-weak {
+    background: rgb(70 52 24);
+  }
+
+  /* Dark mode: light text on the dark strip (≥ 7:1 on every fill above). */
+  .app[data-color-mode='dark'] .atlas-plan-view .daily-plan__slot :is(time, time span, strong, em),
+  .app[data-color-mode='dark'] .atlas-plan-view .daily-plan__slots-caption {
+    color: rgb(232 240 250);
+  }
+
+  /* Selected activity chip: white text on the accent fill in both modes. */
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__chips button.is-active,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__chips button.is-active * {
+    background-color: rgb(30 96 200);
+    color: rgb(255 255 255);
+  }
+
+  .app .atlas-plan-view .daily-plan__slot.is-weak,
+  .app
+    .atlas-plan-view
+    .daily-plan__slot:is(.daily-plan__slot--caution, .daily-plan__slot--difficult) {
+    background: rgb(250 234 206);
+  }
+
+  .app .atlas-plan-view .daily-plan__slot :is(time, time span) {
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .atlas-plan-view .daily-plan__slot > strong {
+    color: var(--color-atlas-ink);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The hour's main risk stays visible as a short tag (risk first); temperature and rain
+     detail live in the accessible label. */
+  .app .atlas-plan-view .daily-plan__slot > em {
+    font-size: 0.6875rem;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .atlas-plan-view .daily-plan__slot > small {
+    display: none;
+  }
+
+  .app .atlas-plan-view .daily-plan__slots-caption {
+    color: var(--color-atlas-ink);
+  }
+
+  /* Source and safety notes: secondary, smaller, one block. */
+  .app
+    .atlas-plan-view
+    :is(
+      .daily-plan__notes,
+      .daily-plan__note,
+      .daily-plan__safety,
+      .activity-planner__note,
+      .context-signals__note,
+      .commute-plan__note
+    ) {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--plan-soft);
+  }
+
+  /* ── 4. Activity planner: preferences as a calm form, chips that read as chosen ── */
+
+  .app .atlas-plan-view .activity-planner__personal,
+  .app .atlas-plan-view .activity-planner__window {
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view :is(.activity-planner, .commute-plan) :is(select, input[type='time']) {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-atlas-paper) 70%, transparent);
+    color: var(--color-atlas-ink);
+    font: inherit;
+  }
+
+  /* Keep the component's 44 px checkbox; only tint it. */
+  .app .atlas-plan-view .activity-planner input[type='checkbox'] {
+    accent-color: var(--plan-accent);
+  }
+
+  /* The whole "pollen allergy" label is the 44 px target, not the 20 px box alone. */
+  .app .atlas-plan-view .activity-planner__allergy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    cursor: pointer;
+  }
+
+  .app .atlas-plan-view .activity-planner__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .app .atlas-plan-view .activity-planner__chips button {
+    border: 1px solid var(--plan-line);
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .activity-planner__chips button.is-active,
+  .app .atlas-plan-view .activity-planner__chips button.is-active *,
+  .app .atlas-plan-view .activity-planner__chips button[aria-pressed='true'] *,
+  .app .atlas-plan-view .activity-planner__chips button[aria-pressed='true'] {
+    border-color: var(--plan-accent);
+    background: var(--plan-accent);
+    color: rgb(255 255 255);
+  }
+
+  /* Cards: identity, score and the answer on the glass; no strip, no inner panels. */
+  .app .atlas-plan-view .activity-card {
+    border: 0;
+    border-top: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    padding-inline: 0;
+  }
+
+  .app .atlas-plan-view .activity-card__score,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-card__score {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--color-atlas-ink);
+    text-align: end;
+  }
+
+  .app .atlas-plan-view .activity-card__score :is(strong, small, span) {
+    color: inherit;
+  }
+
+  .app .atlas-plan-view .activity-card__score small {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .activity-card__score strong {
+    font-size: 2.25rem;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+  }
+
+  .app .atlas-plan-view .activity-card > p {
+    margin: 0.75rem 0 0.25rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .app
+    .atlas-plan-view
+    .activity-card
+    :is(
+      .activity-card__why,
+      .activity-card__duration,
+      .activity-card__alternatives,
+      .activity-card__vs-general
+    ) {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .activity-card__darkness {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .atlas-plan-view .activity-card__darkness::before {
+    content: '';
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-saffron);
+  }
+
+  .app .atlas-plan-view .activity-card__conditions span {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    padding: 0;
+  }
+
+  .app .atlas-plan-view .activity-card__conditions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
+
+  /* "Score detail" reads as a control, not stray text. */
+  .app .atlas-plan-view .activity-card__details > summary {
+    color: var(--plan-accent);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ── 5. Right column: day rows with icon and range, quiet context values ── */
+
+  .app .atlas-plan-view .day-outlook__day {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'symbol name temps score'
+      'symbol window window window'
+      'symbol meta meta meta';
+    column-gap: 0.75rem;
+    row-gap: 0.15rem;
+    align-items: center;
+    padding: 0.85rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .day-outlook__symbol {
+    grid-area: symbol;
+    align-self: start;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .app .atlas-plan-view .day-outlook__name {
+    grid-area: name;
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .day-outlook__temps {
+    grid-area: temps;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .day-outlook__temps span {
+    color: var(--plan-soft);
+    font-weight: 500;
+  }
+
+  .app .atlas-plan-view .day-outlook__score {
+    grid-area: score;
+    justify-self: end;
+  }
+
+  .app .atlas-plan-view .day-outlook__window {
+    grid-area: window;
+  }
+
+  .app .atlas-plan-view :is(.day-outlook__meta, .day-outlook__thunder) {
+    grid-column: 2 / -1;
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
+
+  /* A thunderstorm day is the one row that must stand out. */
+  .app .atlas-plan-view .day-outlook__thunder {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    color: var(--color-atlas-ink);
+    font-weight: 600;
+  }
+
+  .app .atlas-plan-view .day-outlook__thunder::before {
+    content: '';
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-vermilion);
+  }
+
+  .app .atlas-plan-view .context-signals__grid {
+    gap: 0;
+    border-top: 1px solid var(--plan-line);
+  }
+
+  .app .atlas-plan-view .context-signal {
+    padding: 1rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .context-signal strong {
+    font-size: 1.6rem;
+    font-weight: 600;
+  }
+
+  .app .atlas-plan-view .context-signal p {
+    font-size: 0.8125rem;
+    color: var(--plan-soft);
+  }
+
+  /* ── 6. Notifications and routine: compact when there is nothing to configure ── */
+
+  /* One column: the action sits under its explanation instead of floating in an empty half. */
+  .app .atlas-plan-view .decision-alerts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .app .atlas-plan-view .decision-alerts > * {
+    grid-column: 1;
+    justify-self: start;
+    max-width: 40rem;
+  }
+
+  .app .atlas-plan-view .decision-alerts :is(button[disabled], button[aria-disabled='true']) {
+    border-style: solid;
+  }
+
+  .app .atlas-plan-view .commute-plan__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block: 0.75rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset {
+    display: grid;
+    gap: 0.1rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--color-atlas-ink);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset small {
+    color: var(--plan-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset[aria-pressed='true'] {
+    border-color: var(--plan-accent);
+    box-shadow: inset 0 0 0 1px var(--plan-accent);
+  }
+
+  .app .atlas-plan-view .commute-plan__times {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  /* The page header: no meaningless "second step" kicker. */
+  .app .atlas-plan-view__header .atlas-kicker {
+    display: none;
+  }
+
+  /* Preferences: plain rows on the glass, not a framed sub-panel. */
+  .app .atlas-plan-view .activity-planner .activity-planner__personal {
+    padding: var(--plan-gap) 0;
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /* "96 /100" reads as one number: the denominator follows the digits, the label wraps below. */
+  .app .atlas-plan-view .daily-plan__score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.3rem;
+  }
+
+  .app .atlas-plan-view .daily-plan__score > small {
+    flex-basis: 100%;
+  }
+
+  /* The score sits in the band as type, not as a second framed box. */
+  .app .atlas-plan-view .daily-plan__score {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* Phones: tighter strip, day rows keep their icon, score and share share one row. */
+  @media (max-width: 47.99rem) {
+    /* Score left, Share right, on one row; earlier mobile rules wrapped or padded them. */
+    .app .atlas-plan-view .daily-plan__header .daily-plan__header-actions {
+      display: flex;
+      flex-direction: row-reverse;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .app .atlas-plan-view .daily-plan__header .daily-plan__score {
+      flex: 1 1 auto;
+      justify-items: start;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    .app .atlas-plan-view .daily-plan__header .daily-plan__share {
+      flex: none;
+      padding-inline: 1rem;
+      white-space: nowrap;
+    }
+
+    .app .atlas-plan-view .daily-plan__header .daily-plan__score small {
+      text-align: start;
+    }
+
+    .app .atlas-plan-view .daily-plan__slots {
+      grid-auto-columns: minmax(2.9rem, 1fr);
+    }
+
+    .app .atlas-plan-view .daily-plan__quick > * + * {
+      border-inline-start: 0;
+      border-top: 1px solid var(--plan-line);
+    }
+  }
+}

@@ -368,7 +368,6 @@ function FreshDailyPlanPanel({
           // Highlight the actual recommendation interval; this only affects presentation.
           const isWeak = weakTimes.has(slot.time.getTime());
           const isBestWindow = Boolean(
-            !evenDay &&
             bestWindowRange &&
             slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
             slot.time.getTime() <= bestWindowRange.end.time.getTime()
@@ -395,7 +394,9 @@ function FreshDailyPlanPanel({
             <div
               className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}${isWeak ? ' is-weak' : ''}`}
               style={
-                { '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%` } as CSSProperties
+                {
+                  '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%`,
+                } as CSSProperties
               }
               key={slot.time.toISOString()}
               role="listitem"

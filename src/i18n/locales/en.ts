@@ -596,6 +596,8 @@ export const en = {
       pollenNote: 'Higher modeled maximum across grass/olive pollen over the next 24 hours.',
       sea: 'Sea water',
       wave: 'Wave: {{height}} {{unit}}',
+      wavePeriod: 'period {{period}} {{unit}}',
+      waveFrom: 'from the {{direction}}',
       waveDetails:
         'Wave {{height}} {{unit}} · period {{period}} {{periodUnit}} · from the {{direction}}',
       sourceModified: 'summarized by Hava81',
