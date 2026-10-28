@@ -12,6 +12,11 @@ import {
   assertLighthouseWeatherReady,
   withLighthouseWeatherReadinessConfirmation,
 } from './lib/lighthouse-weather-readiness.mjs';
+import {
+  medianAuditNumericValue,
+  medianCategoryScore,
+  shouldRepeatPerformanceMeasurement,
+} from './lib/lighthouse-performance-confirmation.mjs';
 
 const host = '127.0.0.1';
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -36,7 +41,9 @@ const tempPrefix = 'hava81-lighthouse-';
 const staleTempAgeMs = 6 * 60 * 60 * 1000;
 const resultDir = '.lighthouse-results';
 const resultPath = `${resultDir}/lhr.json`;
-const confirmResultPath = `${resultDir}/lhr-confirm.json`;
+const weatherConfirmResultPath = `${resultDir}/lhr-weather-confirm.json`;
+const performanceRepeatResultPath = `${resultDir}/lhr-performance-repeat.json`;
+const performanceRepeatWeatherConfirmResultPath = `${resultDir}/lhr-performance-weather-confirm.json`;
 const lighthouseCli = new URL('../node_modules/lighthouse/cli/index.js', import.meta.url).pathname;
 const viteCli = new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname;
 
@@ -237,55 +244,116 @@ let exitCode = 0;
 try {
   console.log(`[lighthouse] target ${targetUrl}`);
   await waitForPreview(preview);
-  let report = await withLighthouseWeatherReadinessConfirmation(
+  const report = await withLighthouseWeatherReadinessConfirmation(
     await runLighthouseWithStartupRetry(resultPath, runEnv),
     async () => {
       console.warn(
         'Lighthouse did not observe real current weather on the first measurement; retrying readiness once with a fresh report.'
       );
       await sleep(1_500);
-      return runLighthouseWithStartupRetry(confirmResultPath, runEnv);
+      return runLighthouseWithStartupRetry(weatherConfirmResultPath, runEnv);
     }
   );
+  assertLighthouseWeatherReady(report);
   const performanceThreshold = thresholds.find(threshold => threshold.key === 'performance');
+  const performanceReports = [report];
   const firstPerformanceScore = report.categories?.performance?.score;
   if (
     performanceThreshold &&
-    typeof firstPerformanceScore === 'number' &&
-    firstPerformanceScore < performanceThreshold.floor
+    shouldRepeatPerformanceMeasurement(firstPerformanceScore, performanceThreshold.target)
   ) {
     console.warn(
-      `Lighthouse performance ${Math.round(firstPerformanceScore * 100)} is below the hard floor; ` +
-        'running one confirmation measurement to distinguish a persistent regression from runner contention.'
+      `Lighthouse performance ${(firstPerformanceScore * 100).toFixed(1)} is below target ${Math.round(performanceThreshold.target * 100)}; ` +
+        'running one confirmation measurement and using the median score to reduce runner-contention noise.'
     );
-    report = await runLighthouseWithStartupRetry(confirmResultPath, runEnv);
-    assertLighthouseWeatherReady(report);
+    const repeatReport = await withLighthouseWeatherReadinessConfirmation(
+      await runLighthouseWithStartupRetry(performanceRepeatResultPath, runEnv),
+      async () => {
+        console.warn(
+          'Lighthouse performance confirmation did not observe real current weather; retrying readiness once with a fresh report.'
+        );
+        await sleep(1_500);
+        return runLighthouseWithStartupRetry(performanceRepeatWeatherConfirmResultPath, runEnv);
+      }
+    );
+    assertLighthouseWeatherReady(repeatReport);
+    const repeatScore = repeatReport.categories?.performance?.score;
+    if (typeof repeatScore !== 'number' || !Number.isFinite(repeatScore)) {
+      throw new Error('Lighthouse performance confirmation did not produce a valid category score.');
+    }
+    performanceReports.push(repeatReport);
+  }
+  const performanceScoreMedian = medianCategoryScore(performanceReports, 'performance');
+  if (performanceScoreMedian === null) {
+    throw new Error('Lighthouse did not produce a valid performance score for the usable report.');
+  }
+  const performanceDiagnosticReport = performanceReports.reduce((lowest, candidate) => {
+    const candidateScore = candidate.categories?.performance?.score;
+    const lowestScore = lowest.categories?.performance?.score;
+    return typeof candidateScore === 'number' &&
+      (typeof lowestScore !== 'number' || candidateScore < lowestScore)
+      ? candidate
+      : lowest;
+  }, performanceReports[0]);
+  if (performanceReports.length > 1) {
+    const sampleScores = performanceReports.map(item =>
+      (item.categories.performance.score * 100).toFixed(1)
+    );
+    console.log(
+      `Lighthouse performance samples: ${sampleScores.join(', ')}; median ${(performanceScoreMedian * 100).toFixed(1)}`
+    );
   }
   let hasError = false;
   for (const threshold of thresholds) {
-    const score = report.categories?.[threshold.key]?.score;
+    const score = threshold.key === 'performance'
+      ? performanceScoreMedian
+      : report.categories?.[threshold.key]?.score;
     if (typeof score !== 'number') {
       console.error(`Lighthouse category ${threshold.key} did not produce a score.`);
       hasError = true;
       continue;
     }
-    const percent = Math.round(score * 100);
+    const percent = threshold.key === 'performance'
+      ? (score * 100).toFixed(1)
+      : Math.round(score * 100);
     const floor = Math.round(threshold.floor * 100);
     const target = Math.round(threshold.target * 100);
     console.log(`Lighthouse ${threshold.key}: ${percent} (floor ${floor}, target ${target})`);
     if (score < threshold.floor) {
       console.error(`ERROR: ${threshold.key} score ${percent} is below hard floor ${floor}`);
-      printCategoryAuditFailures(report, threshold.key);
+      printCategoryAuditFailures(
+        threshold.key === 'performance' ? performanceDiagnosticReport : report,
+        threshold.key
+      );
       hasError = true;
     } else if (score < threshold.target) {
       console.warn(`WARN: ${threshold.key} score ${percent} is below target ${target}`);
     }
   }
 
+  const formatMetricValue = (auditKey, value) => {
+    if (!Number.isFinite(value)) return 'unknown';
+    if (auditKey === 'cumulative-layout-shift') return value.toFixed(3);
+    if (auditKey === 'total-blocking-time') return `${Math.round(value)} ms`;
+    return `${(value / 1000).toFixed(2)} s`;
+  };
   for (const [auditKey, label] of performanceMetrics) {
     const audit = report.audits?.[auditKey];
     if (!audit) continue;
     const value = audit.displayValue ?? audit.numericValue;
+    if (performanceReports.length > 1) {
+      const sampleValues = performanceReports.map(item => item.audits?.[auditKey]?.numericValue);
+      const medianValue = medianAuditNumericValue(performanceReports, auditKey);
+      if (sampleValues.every(sample => typeof sample === 'number' && Number.isFinite(sample)) && medianValue !== null) {
+        const samples = sampleValues.map((sample, index) =>
+          `sample ${index + 1} ${formatMetricValue(auditKey, sample)}`
+        ).join(', ');
+        console.log(
+          `Lighthouse metric ${label}: ${samples}; median ${formatMetricValue(auditKey, medianValue)}`
+        );
+        continue;
+      }
+    }
     if (value !== undefined && value !== null) {
       console.log(`Lighthouse metric ${label}: ${value}`);
     }
