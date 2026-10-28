@@ -94,6 +94,25 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn('github_api_action: configure the documented repository-scoped read-only token', output.getvalue())
         self.assertNotIn('token=', output.getvalue())
 
+    def test_main_prints_owner_policy_mode_and_fail_closed_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / 'state.json'
+            state_path.write_text(
+                json.dumps({
+                    'collected_at': datetime.now(timezone.utc).isoformat(),
+                    'github': {'owner_policy': {'known': False, 'mode': 'unknown', 'paused': True, 'error': 'owner_policy_fetch_failed:503'}},
+                    'worker': {'can_merge': False, 'merge_blocking_reasons': ['owner_policy_unknown']},
+                }),
+                encoding='utf-8',
+            )
+            output = StringIO()
+            with patch.object(status, 'STATE_FILE', state_path), redirect_stdout(output):
+                exit_code = status.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn('owner_policy: known=False mode=unknown paused=True error=owner_policy_fetch_failed:503', output.getvalue())
+        self.assertIn("merge_ready: False blockers=['owner_policy_unknown']", output.getvalue())
+
     def test_status_distinguishes_process_host_from_snapshot_disk_host(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             state_path = Path(tmp) / 'state.json'
@@ -168,6 +187,8 @@ class WorkerStatusScriptTests(unittest.TestCase):
         self.assertIn("sig.get('ci_merge_candidates', [])", status_script)
         self.assertIn('merge_deploy_ready:', status_script)
         self.assertIn("worker.get('can_merge_or_deploy')", status_script)
+        self.assertIn("gh.get('owner_policy')", status_script)
+        self.assertIn('owner_policy: known=', status_script)
         self.assertIn("worker.get('merge_deploy_blocking_reasons', [])", status_script)
         self.assertIn("worker.get('writes_repository')", status_script)
 

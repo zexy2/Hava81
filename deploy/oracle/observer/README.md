@@ -20,6 +20,20 @@ After any observer deployment, inspect `state.json` and confirm the expected new
 
 Repository smoke test: `python3 deploy/oracle/observer/test_observer.py`. It covers timestamp parsing, blue/green Nginx state, disk guards and API deployment-tree drift detection.
 
+## Owner-policy and merge-candidate readiness
+
+The observer reads `docs/AUTONOMOUS_DECISIONS.md` from `raw.githubusercontent.com` pinned to the
+current `main` SHA. The file must contain exactly one machine-readable marker:
+`<!-- hava81-autonomous-policy: active -->` or `<!-- hava81-autonomous-policy: paused -->`.
+Missing, ambiguous, malformed, or unreachable policy fails closed: `owner_policy.known=false`,
+`can_merge=false`, and the candidate list is empty. A paused marker likewise clears all merge
+candidates. Under active policy, candidates must additionally have exact-head CI/CD, Ops and CodeQL
+success, target `main` at the current `main` SHA, be non-draft, and have GitHub `mergeable=true`;
+unknown mergeability or a stale base is not a candidate. This is readiness telemetry only: the
+observer never writes to GitHub, and any merge still requires a fresh direct review of head/base,
+mergeability, approvals and required checks. The status command prints the policy state and error
+so a failed policy fetch cannot be mistaken for an ordinary empty queue.
+
 ## GitHub REST authentication
 
 The five-minute observer can use an optional read-only GitHub token from `/etc/hava81-worker/github.env`. The file is loaded by systemd when the oneshot service starts; its only supported variable is `HAVA81_GITHUB_TOKEN`. Use a fine-grained token restricted to `zexy2/Hava81` with **Contents: read-only**, **Actions: read-only**, and **Pull requests: read-only** permissions, and set an expiry/rotation reminder. Keep the file root-owned and mode `0600`; never commit it, print its contents, or reuse the OpenWeather production credential. The request client attaches the token only to HTTPS requests whose exact host is `api.github.com`; it uses an unredirected Authorization header so urllib cannot forward the token to a different redirect host.

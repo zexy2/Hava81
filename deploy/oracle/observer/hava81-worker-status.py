@@ -77,6 +77,11 @@ def main() -> int:
     print(f"frontend_deploy_ready: {worker.get('can_deploy_frontend')} blockers={worker.get('frontend_deploy_blocking_reasons', [])}")
     print(f"api_deploy_ready: {worker.get('can_deploy_api')} blockers={worker.get('api_deploy_blocking_reasons', [])}")
     print(f"merge_candidates: {sig.get('ci_merge_candidates', [])}")
+    owner_policy = gh.get('owner_policy') if isinstance(gh.get('owner_policy'), dict) else {}
+    print(
+        f"owner_policy: known={owner_policy.get('known')} mode={owner_policy.get('mode', 'unknown')} "
+        f"paused={owner_policy.get('paused')} error={owner_policy.get('error')}"
+    )
     print(f"merge_deploy_ready: {worker.get('can_merge_or_deploy')} blockers={worker.get('merge_deploy_blocking_reasons', [])} observer_writes={worker.get('writes_repository')}")
     print(f"production: {'HEALTHY' if prod.get('healthy') else 'UNHEALTHY'} issues={prod.get('issues', [])}")
     host = s.get('host', {})

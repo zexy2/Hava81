@@ -70,6 +70,7 @@ class ObserverGitHubAuthenticationTests(unittest.TestCase):
             for url in (
                 'https://api.hava81.zekiakgul.dev/api/v1/health',
                 'https://api.github.com.evil.example/repos/zexy2/Hava81',
+                'https://raw.githubusercontent.com/zexy2/Hava81/main/docs/AUTONOMOUS_DECISIONS.md',
             ):
                 with mock.patch.object(observer.urllib.request, 'urlopen', return_value=self._response()) as urlopen:
                     result = observer.http_get(url)
@@ -2378,6 +2379,7 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
             {'healthy': True, 'disk': {'ok': True, 'api_build_headroom_ok': True}},
             {
                 'ok': True,
+                'owner_policy': {'known': True, 'mode': 'active', 'paused': False, 'error': None},
                 'signals': {
                     'ci_green_prs': [1440],
                     'ci_merge_candidates': [1440],
@@ -2429,7 +2431,11 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         self.assertIn('api_build_headroom_low', api_deploy['blocking_reasons'])
 
     def test_merge_candidate_requires_exact_head_green_checks_and_main_target(self) -> None:
-        github = {'ok': True, 'signals': {'ci_green_prs': [], 'ci_merge_candidates': []}}
+        github = {
+            'ok': True,
+            'owner_policy': {'known': True, 'mode': 'active', 'paused': False, 'error': None},
+            'signals': {'ci_green_prs': [], 'ci_merge_candidates': []},
+        }
         result = observer.merge_readiness(github)
         self.assertFalse(result['ok'])
         self.assertEqual(result['blocking_reasons'], ['no_green_merge_candidate'])
@@ -2438,6 +2444,22 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         result = observer.merge_readiness(github)
         self.assertFalse(result['ok'])
         self.assertEqual(result['blocking_reasons'], ['github_state_unknown'])
+
+    def test_merge_readiness_fails_closed_for_paused_or_unknown_owner_policy(self) -> None:
+        github = {
+            'ok': True,
+            'owner_policy': {'known': True, 'mode': 'paused', 'paused': True, 'error': None},
+            'signals': {'ci_merge_candidates': [1440]},
+        }
+        result = observer.merge_readiness(github)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['owner_directive_paused'])
+
+        github['owner_policy'] = {'known': False, 'mode': 'unknown', 'paused': True, 'error': 'fetch failed'}
+        result = observer.merge_readiness(github)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['blocking_reasons'], ['owner_policy_unknown'])
+
 
     def test_deploy_fails_closed_when_preferred_api_port_is_unknown(self) -> None:
         production, _, github, frontend = self.healthy_inputs()
@@ -2475,6 +2497,104 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         result = observer.merge_deploy_readiness(production, host, github, frontend)
         self.assertFalse(result['ok'])
         self.assertEqual(result['blocking_reasons'], ['github_state_unknown', 'api_deploy_unknown'])
+
+
+class ObserverOwnerPolicyTests(unittest.TestCase):
+    def test_parse_owner_policy_requires_one_explicit_marker(self) -> None:
+        active = observer.parse_owner_policy('<!-- hava81-autonomous-policy: active -->\n# Decisions\n')
+        self.assertEqual(active, {'known': True, 'mode': 'active', 'paused': False, 'error': None})
+        paused = observer.parse_owner_policy('<!-- hava81-autonomous-policy: paused -->\n')
+        self.assertEqual(paused, {'known': True, 'mode': 'paused', 'paused': True, 'error': None})
+        malformed_values = (
+            None,
+            '',
+            '# missing marker',
+            '<!-- hava81-autonomous-policy: active -->\n<!-- hava81-autonomous-policy: paused -->',
+        )
+        for malformed in malformed_values:
+            with self.subTest(malformed=malformed):
+                state = observer.parse_owner_policy(malformed)
+                self.assertFalse(state['known'])
+                self.assertTrue(state['paused'])
+
+    def test_repository_decision_document_has_one_valid_policy_marker(self) -> None:
+        repository_root = Path(__file__).resolve().parents[3]
+        text = (repository_root / 'docs' / 'AUTONOMOUS_DECISIONS.md').read_text(encoding='utf-8')
+        state = observer.parse_owner_policy(text)
+        self.assertEqual(state, {'known': True, 'mode': 'active', 'paused': False, 'error': None})
+
+    def test_owner_policy_fetch_is_pinned_to_current_main_sha(self) -> None:
+        original_http_get = observer.http_get
+        requested: list[str] = []
+
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            requested.append(url)
+            return {'ok': True, 'status': 200, 'text': '<!-- hava81-autonomous-policy: active -->', 'error': None}
+
+        try:
+            observer.http_get = fake_http_get
+            state = observer.collect_owner_policy('main-sha')
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertEqual(state['mode'], 'active')
+        self.assertEqual(requested, ['https://raw.githubusercontent.com/zexy2/Hava81/main-sha/docs/AUTONOMOUS_DECISIONS.md'])
+
+    def test_active_policy_filters_stale_base_and_unmergeable_prs(self) -> None:
+        original_http_get = observer.http_get
+        def fake_http_get(url: str, *, headers=None, timeout=6.0):  # noqa: ANN001, ARG001
+            return {'ok': True, 'status': 200, 'text': '<!-- hava81-autonomous-policy: active -->', 'error': None}
+
+        github = {
+            'main_branch': {'known': True, 'sha': 'main-sha'},
+            'signals': {'ci_merge_candidates': [1440, 1441, 1442]},
+            'open_automation_prs': [
+                {'number': 1440, 'base_ref': 'main', 'base_sha': 'main-sha', 'mergeable': True},
+                {'number': 1441, 'base_ref': 'main', 'base_sha': 'stale-sha', 'mergeable': True},
+                {'number': 1442, 'base_ref': 'main', 'base_sha': 'main-sha', 'mergeable': False},
+            ],
+        }
+        try:
+            observer.http_get = fake_http_get
+            observer.apply_owner_policy(github)
+        finally:
+            observer.http_get = original_http_get
+
+        self.assertEqual(github['signals']['ci_merge_candidates'], [1440])
+        self.assertTrue(github['owner_policy']['known'])
+
+    def test_paused_or_unavailable_policy_removes_all_merge_candidates(self) -> None:
+        original_http_get = observer.http_get
+        for response in (
+            {'ok': True, 'status': 200, 'text': '<!-- hava81-autonomous-policy: paused -->', 'error': None},
+            {'ok': False, 'status': 503, 'text': None, 'error': 'HTTP 503'},
+        ):
+            github = {
+                'main_branch': {'known': True, 'sha': 'main-sha'},
+                'signals': {'ci_merge_candidates': [1440]},
+                'open_automation_prs': [{'number': 1440, 'base_ref': 'main', 'base_sha': 'main-sha', 'mergeable': True}],
+            }
+            try:
+                observer.http_get = lambda *args, _response=response, **kwargs: _response
+                observer.apply_owner_policy(github)
+            finally:
+                observer.http_get = original_http_get
+            self.assertEqual(github['signals']['ci_merge_candidates'], [])
+            self.assertTrue(github['owner_policy']['paused'])
+
+    def test_state_signature_tracks_owner_policy_transition(self) -> None:
+        base = {
+            'github': {'owner_policy': {'known': True, 'mode': 'active', 'paused': False, 'error': None}},
+            'production': {},
+            'host': {},
+        }
+        changed = {
+            'github': {'owner_policy': {'known': True, 'mode': 'paused', 'paused': True, 'error': None}},
+            'production': {},
+            'host': {},
+        }
+        self.assertNotEqual(observer.state_signature(base), observer.state_signature(changed))
+
 
 
 class ObserverStateSignatureTests(unittest.TestCase):

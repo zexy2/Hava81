@@ -1,10 +1,22 @@
 # Hava81 autonomous decisions
 
-## OWNER DIRECTIVE — 2026-10-28 — autonomous code changes are paused (read first)
+<!-- hava81-autonomous-policy: active -->
 
-The repository owner (Zeki Akgül) now develops Hava81 with two interactive agents in parallel.
-A third, autonomous code workstream causes merge conflicts and edits code those agents are
-actively changing. Effective immediately and until the owner removes this section:
+## CURRENT OWNER DIRECTIVE — 2026-10-28 10:41 TRT — isolated autonomous work resumes
+
+The current scheduled owner instruction resumes autonomous improvements and operations. Work only
+in dedicated branches/worktrees based on the latest `origin/main`; never mutate a pending PR branch
+from another workstream, and continue independent bounded work while CI/deploys are pending. Merge
+only after exact-head required checks are green and current GitHub mergeability/review/base checks
+pass. Keep API port 4002 primary and port 4001 for rollback/canary. The API-build disk reserve is
+still a hard gate; do not build/deploy API images until the fresh observer confirms headroom. Do not
+delete shared caches, active worktrees, Docker assets or volumes without path-specific safety review.
+
+## SUPERSEDED OWNER DIRECTIVE — 2026-10-28 — autonomous code changes were temporarily paused (historical)
+
+The repository owner (Zeki Akgül) temporarily paused the third autonomous code workstream while two
+interactive agents were active. That temporary pause is superseded by the current directive above;
+its original constraints are retained below as historical context, not current operating policy.
 
 - **Do not change application or test code.** No new branches, commits, pushes or PRs that touch
   `src/`, `e2e/`, `apps/`, `public/`, `scripts/`, `.github/`, `package*.json` or styles.
