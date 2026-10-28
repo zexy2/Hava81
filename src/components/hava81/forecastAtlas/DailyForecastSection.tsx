@@ -171,6 +171,20 @@ export function DailyForecastSection({
                     ) : null}
                     {precipitationAmount ? <span>{precipitationAmount}</span> : null}
                   </span>
+                ) : (precipitation ?? 0) > 0 || precipitationAmount ? (
+                  // A trace day: no visible line, but assistive tech still hears the truth.
+                  <span
+                    className="hava81-forecast-atlas__sr-only"
+                    role="group"
+                    aria-label={
+                      precipitationAmount
+                        ? t('hava81.forecastAtlas.dailyPrecipitationAmount', {
+                            day: formatDay(day.date),
+                            amount: precipitationAmount,
+                          })
+                        : `${t('weather.precipitation')}: ${precipitation}%`
+                    }
+                  />
                 ) : precipitationUnknown ? (
                   <span
                     className="hava81-forecast-atlas__day-pop"

@@ -56,17 +56,18 @@ describe('ForecastAtlas hourly rhythm', () => {
     expect(hours[3]).toHaveClass('is-night');
   });
 
-  it('reads rain chance as a five-cell gauge that lights at least one cell for any chance', () => {
+  it('reads rain chance as a five-cell gauge that stays dark below the 20% rain threshold', () => {
     const { container } = renderRhythm();
 
     const gauges = container.querySelectorAll('.hava81-forecast-atlas__rain-gauge');
     expect(gauges).toHaveLength(24);
-    // 60% lights three of five cells; 10% still lights one; dry hours stay empty.
+    // 60% lights three of five cells; 10% is below the threshold and stays dark like dry hours.
     expect(gauges[13]).toHaveAttribute('data-level', '3');
-    expect(gauges[14]).toHaveAttribute('data-level', '1');
+    expect(gauges[14]).toHaveAttribute('data-level', '0');
+    expect(gauges[14]).toHaveClass('is-dry');
     expect(gauges[0]).toHaveClass('is-dry');
     expect(gauges[13].querySelectorAll('.is-lit')).toHaveLength(3);
-    expect(gauges[14].querySelectorAll('.is-lit')).toHaveLength(1);
+    expect(gauges[14].querySelectorAll('.is-lit')).toHaveLength(0);
     expect(container.querySelectorAll('.hava81-forecast-atlas__rain-gauge.is-signal')).toHaveLength(
       1
     );

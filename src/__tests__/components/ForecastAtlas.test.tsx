@@ -192,11 +192,12 @@ describe('ForecastAtlas current-hour marker', () => {
 });
 
 describe('ForecastAtlas hourly precipitation labels', () => {
-  it('omits repetitive zero-rain labels from each dry hourly slot', () => {
+  it('omits zero and below-threshold rain labels from hourly slots', () => {
     renderAtlas();
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
     expect(within(region).queryByText('0%')).not.toBeInTheDocument();
-    expect(within(region).getByText('15%')).toBeInTheDocument();
+    // 15% is under the 20% hourly threshold: not a label worth reading per hour.
+    expect(within(region).queryByText('15%')).not.toBeInTheDocument();
     expect(within(region).queryByText(/00:00 saatinde yağış beklenmiyor/i)).not.toBeInTheDocument();
   });
 
@@ -396,7 +397,7 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows trace hourly accumulation without pretending it is zero rain', () => {
+  it('keeps trace hourly accumulation quiet without pretending it is zero rain', () => {
     render(
       <SettingsProvider>
         <ForecastAtlas
@@ -423,8 +424,10 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     );
 
     const region = screen.getByRole('region', { name: /kaydırılabilir saatlik tahmin/i });
-    expect(within(region).getByText('<0,1 mm')).toBeInTheDocument();
-    expect(within(region).getByText('1%')).toBeInTheDocument();
+    // A 1% / <0.1 mm hour is below the threshold: no label, and never a fake "0 mm".
+    expect(within(region).queryByText('<0,1 mm')).not.toBeInTheDocument();
+    expect(within(region).queryByText('1%')).not.toBeInTheDocument();
+    expect(within(region).queryByText('0 mm')).not.toBeInTheDocument();
   });
 
   it('keeps the available horizon without a sampling-interval control', () => {
@@ -646,7 +649,8 @@ describe('ForecastAtlas hourly precipitation labels', () => {
     );
 
     const days = screen.getAllByRole('listitem');
-    expect(days[0]).toHaveTextContent('0,4 mm');
+    // 0.4 mm at 0% is a trace day: no rain line, and no invented 0% either.
+    expect(days[0]).not.toHaveTextContent('0,4 mm');
     expect(days[0]).not.toHaveTextContent('0%');
     expect(
       within(days[0]).getByRole('group', { name: /günlük toplam yağış 0,4 mm/i })
