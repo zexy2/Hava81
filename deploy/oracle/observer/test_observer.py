@@ -2430,8 +2430,30 @@ class ObserverFrontendDeploymentStateTests(unittest.TestCase):
             {'known': True, 'consistent': False, 'root': 'a' * 40, 'city': 'b' * 40},
             {'head_sha': 'c' * 40, 'status': 'completed'},
         )
-        self.assertFalse(state['matches_main'])
-        self.assertFalse(state['pending'])
+        self.assertFalse(state['revision_parity_known'])
+        self.assertIsNone(state['matches_main'])
+        self.assertIsNone(state['pending'])
+
+    def test_missing_main_sha_is_unknown_not_confirmed_frontend_drift(self) -> None:
+        revision = 'a' * 40
+        state = observer.frontend_deployment_state(
+            {'known': True, 'consistent': True, 'root': revision, 'city': revision},
+            {'known': False, 'sha': None, 'head_sha': None},
+        )
+        self.assertIsNone(state['main_revision'])
+        self.assertFalse(state['revision_parity_known'])
+        self.assertIsNone(state['matches_main'])
+        self.assertIsNone(state['pending'])
+
+    def test_missing_frontend_revision_is_unknown_not_confirmed_drift(self) -> None:
+        state = observer.frontend_deployment_state(
+            {'known': False, 'consistent': False, 'root': None, 'city': None},
+            {'known': True, 'sha': 'b' * 40},
+        )
+        self.assertEqual(state['main_revision'], 'b' * 40)
+        self.assertFalse(state['revision_parity_known'])
+        self.assertIsNone(state['matches_main'])
+        self.assertIsNone(state['pending'])
 
 
 class ObserverMergeDeployReadinessTests(unittest.TestCase):
@@ -2506,6 +2528,23 @@ class ObserverMergeDeployReadinessTests(unittest.TestCase):
         result = observer.merge_readiness(github)
         self.assertFalse(result['ok'])
         self.assertEqual(result['blocking_reasons'], ['github_state_unknown'])
+
+    def test_rate_limited_github_state_has_a_distinct_fail_closed_blocker(self) -> None:
+        production, _, github, frontend = self.healthy_inputs()
+        github.update({'ok': False, 'error': 'HTTP 403', 'auth_mode': 'anonymous', 'rate_limit_remaining': '0'})
+        merge = observer.merge_readiness(github)
+        deploy = observer.frontend_deploy_readiness(
+            production,
+            github,
+            {**frontend, 'revision_parity_known': False, 'matches_main': None, 'pending': None},
+        )
+        self.assertFalse(merge['ok'])
+        self.assertEqual(merge['blocking_reasons'], ['github_rate_limited'])
+        self.assertFalse(deploy['ok'])
+        self.assertEqual(
+            deploy['blocking_reasons'],
+            ['github_rate_limited', 'frontend_revision_parity_unknown'],
+        )
 
     def test_merge_readiness_fails_closed_for_paused_or_unknown_owner_policy(self) -> None:
         github = {
@@ -2697,7 +2736,7 @@ class ObserverStateSignatureTests(unittest.TestCase):
                 'healthy': True, 'issues': [], 'nginx': {'port': 4001},
                 'frontend_revision': {
                     'root': 'a' * 40, 'city': 'a' * 40, 'english_city': 'a' * 40, 'known': True, 'consistent': True,
-                    'main_revision': 'b' * 40, 'matches_main': False, 'pending': True,
+                    'main_revision': 'b' * 40, 'revision_parity_known': True, 'matches_main': False, 'pending': True,
                 },
             },
             'host': {'disk': {'ok': True}},
@@ -2708,7 +2747,7 @@ class ObserverStateSignatureTests(unittest.TestCase):
                 **base['production'],
                 'frontend_revision': {
                     'root': 'b' * 40, 'city': 'b' * 40, 'english_city': 'b' * 40, 'known': True, 'consistent': True,
-                    'main_revision': 'b' * 40, 'matches_main': True, 'pending': False,
+                    'main_revision': 'b' * 40, 'revision_parity_known': True, 'matches_main': True, 'pending': False,
                 },
             },
         }
