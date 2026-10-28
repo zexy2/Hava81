@@ -359,6 +359,140 @@
     }
   }
 
+  /* ── Suggestions: one row per place with its icon, the typed letters marked and the
+     plate code and region on the right (from data-meta, so the option name stays the
+     city for assistive tech). ── */
+  .app .atlas-header .search-bar__suggestion {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .app .atlas-header .search-bar__suggestion[data-meta]::after {
+    margin-inline-start: auto;
+    padding-inline-start: 1rem;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    content: attr(data-meta);
+  }
+
+  .app .atlas-header .search-bar__place-icon,
+  .app .atlas-header .search-bar__recent-icon {
+    display: inline-grid;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 50%;
+    color: color-mix(in srgb, currentColor 70%, transparent);
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+
+  .app .atlas-header .search-bar__place-icon svg,
+  .app .atlas-header .search-bar__recent-icon svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .app .atlas-header .search-bar__suggestion-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app .atlas-header .search-bar__match {
+    padding: 0;
+    color: inherit;
+    background: none;
+    font-weight: 700;
+  }
+
+  @media (min-width: 48rem) {
+    /* One pill: input and submit share a single rounded field; the list hangs from it. */
+    .app .atlas-header .search-bar__controls {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0;
+      overflow: visible;
+    }
+
+    /* The input spans the whole pill and the submit sits inside it, so the app-wide
+       focus ring (an !important rule in the components layer) outlines the pill
+       itself instead of drawing a second box inside it. */
+    .app .atlas-header .search-bar__field {
+      position: static;
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 100%;
+    }
+
+    .app .atlas-header .search-bar__input {
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+    }
+
+    .app .atlas-header .search-bar__submit {
+      position: absolute;
+      top: 50%;
+      right: 2px;
+      flex: none;
+      margin: 0;
+      border: 0;
+      translate: 0 -50%;
+    }
+
+    .app .atlas-header .search-bar__suggestions {
+      top: calc(100% + 8px);
+      right: 0;
+      left: 0;
+      padding: 6px;
+      border: 1px solid rgb(255 255 255 / 0.14);
+      border-radius: var(--radius-lg);
+      color: rgb(255 255 255);
+      background: rgb(14 28 50 / 0.97);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 24px 48px rgb(2 10 24 / 0.4);
+    }
+
+    .app .atlas-header .search-bar__suggestion {
+      color: rgb(255 255 255);
+      background: none;
+    }
+
+    .app .atlas-header .search-bar__suggestion.is-active,
+    .app .atlas-header .search-bar__suggestion:hover {
+      background: rgb(255 255 255 / 0.09);
+    }
+
+    .app .atlas-header .search-bar__suggestion.is-active .search-bar__place-icon {
+      color: rgb(14 28 50);
+      background: rgb(146 212 255);
+    }
+
+    .app .atlas-header .search-bar__match {
+      color: rgb(146 212 255);
+    }
+  }
+
   /* Container queries follow enlarged text (rem resolves against the real root size),
      so the masthead tightens when the text grows, not only when the window shrinks. */
   @media (min-width: 48rem) {
