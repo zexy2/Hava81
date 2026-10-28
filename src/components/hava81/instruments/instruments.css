@@ -47,6 +47,8 @@
     line-height: 1.08;
     letter-spacing: -0.02em;
     text-wrap: balance;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 
   .app .atlas-dashboard .decision-glance__window {
@@ -126,10 +128,12 @@
   }
 
   .app .atlas-dashboard .decision-glance .decision-glance__score {
+    /* Pixel-sized: enlarged text must not grow the dial past its column. */
     position: relative;
     display: grid;
-    width: 11rem;
-    height: 11rem;
+    width: min(176px, 100%);
+    height: auto;
+    aspect-ratio: 1;
     place-items: center;
     padding: 0;
     border: 0;
@@ -194,7 +198,7 @@
     justify-items: center;
     color: rgb(255 255 255);
     font-family: var(--font-display);
-    font-size: 3.25rem;
+    font-size: 52px;
     font-weight: 600;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -237,20 +241,10 @@
     background: rgb(255 255 255 / 0.08);
   }
 
-  @media (max-width: 47.99rem) {
+  @media (max-width: 63.99rem) {
     .app .atlas-dashboard .decision-glance {
       grid-template-columns: minmax(0, 1fr);
       gap: 1.5rem;
-    }
-
-    .app .atlas-dashboard .decision-glance .decision-glance__quick-list {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0.9rem;
-    }
-
-    .app .atlas-dashboard .decision-glance .decision-glance__quick {
-      padding: 0;
-      border-inline-start: 0;
     }
 
     .app .atlas-dashboard .decision-glance__side {
@@ -262,12 +256,23 @@
 
     .app .atlas-dashboard .decision-glance .decision-glance__score {
       grid-row: span 2;
-      width: 7.5rem;
-      height: 7.5rem;
+      width: min(128px, 40vw);
     }
 
     .app .atlas-dashboard .decision-glance .decision-glance__score [data-gauge-value] {
-      font-size: 2.25rem;
+      font-size: 36px;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-dashboard .decision-glance .decision-glance__quick-list {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.9rem;
+    }
+
+    .app .atlas-dashboard .decision-glance .decision-glance__quick {
+      padding: 0;
+      border-inline-start: 0;
     }
 
     .app .atlas-dashboard .decision-glance .decision-glance__details {
@@ -321,7 +326,11 @@
   }
 
   .app .atlas-dashboard .environment-rail .environment-rail__icon,
-  .app .atlas-dashboard .environment-rail .environment-rail__module:nth-child(n) .environment-rail__icon {
+  .app
+    .atlas-dashboard
+    .environment-rail
+    .environment-rail__module:nth-child(n)
+    .environment-rail__icon {
     position: static;
     display: flex;
     grid-row: 2;
@@ -348,7 +357,11 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .app .atlas-dashboard .environment-rail .environment-rail__module--action .environment-rail__value {
+  .app
+    .atlas-dashboard
+    .environment-rail
+    .environment-rail__module--action
+    .environment-rail__value {
     font-size: 1.25rem;
     letter-spacing: -0.01em;
   }
@@ -362,7 +375,9 @@
 
   .app .atlas-dashboard .environment-rail .environment-rail__module--action {
     cursor: pointer;
-    transition: border-color 180ms ease, box-shadow 180ms ease;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease;
   }
 
   .app .atlas-dashboard .environment-rail .environment-rail__module--action:hover {
@@ -492,11 +507,21 @@
     background: var(--color-atlas-line);
   }
 
-  .app .instrument-aqi__segment[data-aqi-segment='1'] { --aqi: rgb(46 170 110); }
-  .app .instrument-aqi__segment[data-aqi-segment='2'] { --aqi: rgb(132 190 64); }
-  .app .instrument-aqi__segment[data-aqi-segment='3'] { --aqi: rgb(232 176 40); }
-  .app .instrument-aqi__segment[data-aqi-segment='4'] { --aqi: rgb(230 112 50); }
-  .app .instrument-aqi__segment[data-aqi-segment='5'] { --aqi: rgb(176 60 120); }
+  .app .instrument-aqi__segment[data-aqi-segment='1'] {
+    --aqi: rgb(46 170 110);
+  }
+  .app .instrument-aqi__segment[data-aqi-segment='2'] {
+    --aqi: rgb(132 190 64);
+  }
+  .app .instrument-aqi__segment[data-aqi-segment='3'] {
+    --aqi: rgb(232 176 40);
+  }
+  .app .instrument-aqi__segment[data-aqi-segment='4'] {
+    --aqi: rgb(230 112 50);
+  }
+  .app .instrument-aqi__segment[data-aqi-segment='5'] {
+    --aqi: rgb(176 60 120);
+  }
 
   .app .instrument-aqi__segment[data-passed='true'] {
     background: color-mix(in srgb, var(--aqi) 35%, var(--color-atlas-line));
