@@ -810,8 +810,10 @@
       border-inline-start: 1px solid var(--plan-line);
     }
 
-    .app .atlas-plan-view :is(.activity-planner, .commute-plan, .day-outlook, .context-signals) {
-      padding-block: 1rem;
+    .app
+      .atlas-plan-view
+      :is(.activity-planner, .commute-plan, .day-outlook, .context-signals, .decision-alerts) {
+      padding-block: 0.75rem;
     }
 
     /* Activity choice as an even grid: every option visible; columns follow the text size. */
@@ -840,6 +842,39 @@
 
     .app .atlas-plan-view .day-outlook__day {
       padding-block: 0.6rem;
+    }
+
+    .app .atlas-plan-view .activity-planner__chips button {
+      padding-block: 0.375rem;
+    }
+
+    .app .atlas-plan-view .activity-planner__chips .activity-glyph {
+      inline-size: 1.75rem;
+      block-size: 1.75rem;
+    }
+
+    /* Sensitivity: label beside its select instead of above it; the hint spans below. */
+    .app .atlas-plan-view .activity-planner__sensitivity {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 0.375rem 0.75rem;
+    }
+
+    .app .atlas-plan-view .activity-planner__sensitivity > :not(span:first-child, select) {
+      grid-column: 1 / -1;
+    }
+
+    /* Wind and rain tolerance side by side: two short selects, one row. */
+    .app .atlas-plan-view .activity-planner__personal {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+      column-gap: 0.75rem;
+      row-gap: 0.75rem;
+    }
+
+    .app .atlas-plan-view .activity-planner__personal > :not(.activity-planner__tolerance) {
+      grid-column: 1 / -1;
     }
   }
 
