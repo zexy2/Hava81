@@ -1926,7 +1926,8 @@
     font-size: 0.875rem;
   }
 
-  .app .atlas-plan-view .activity-card__answer {
+  .app .atlas-plan-view .activity-card > .activity-card__answer,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-card > .activity-card__answer {
     margin: 0;
     font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
     font-weight: 400;
