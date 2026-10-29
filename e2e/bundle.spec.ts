@@ -87,6 +87,12 @@ test.describe('map live province temperatures', () => {
       { plate: 41, name: 'Kocaeli', lat: 40.77, lon: 29.94, temperature: 15.2 },
     ]);
     await setWidth(page, 390, 844);
+    // The map layers request the province readings as soon as the map opens, so listen
+    // before navigating; the markers still appear only at atlas zoom.
+    const provinceResponse = page.waitForResponse(response => {
+      const { pathname } = new URL(response.url());
+      return pathname.endsWith('/api/v1/weather/provinces') && response.ok();
+    });
     await page.goto('/istanbul/?view=map');
 
     // The all-province atlas is intentionally hidden at the default zoom (6).
@@ -95,10 +101,6 @@ test.describe('map live province temperatures', () => {
     const zoomHint = page.locator('.weather-map__zoom-hint');
     await expect(zoomIn).toBeVisible();
     await expect(zoomHint).toBeVisible();
-    const provinceResponse = page.waitForResponse(response => {
-      const { pathname } = new URL(response.url());
-      return pathname.endsWith('/api/v1/weather/provinces') && response.ok();
-    });
 
     // Wait for each Leaflet zoom animation before the next click; a rapid second
     // click can be ignored while the first zoom is still in flight.

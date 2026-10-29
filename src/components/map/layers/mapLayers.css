@@ -191,8 +191,10 @@
       flex: 1 1 0;
     }
 
+    /* The note sits left of the zoom column so it never covers a control. */
     .app[data-active-nav='map'] .map-layers__note {
-      max-width: none;
+      align-self: flex-start;
+      max-width: calc(100% - 4.5rem);
     }
 
     /* Zoom steps down under the layer rail. */
