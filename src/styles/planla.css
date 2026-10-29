@@ -3133,6 +3133,35 @@
     justify-self: end;
     min-block-size: 2.75rem;
   }
+
+  /* Narrow sections (phones, large text): stack instead of squeezing. */
+  .app .atlas-plan-view .commute-plan {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 26rem) {
+    .app .atlas-plan-view .commute-plan__header {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .app .atlas-plan-view .commute-plan__header > .atlas-text-button {
+      justify-self: start;
+    }
+
+    .app .atlas-plan-view .commute-plan__windows > .commute-window,
+    .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__windows > .commute-window {
+      grid-template-columns: minmax(0, 1fr) max-content;
+      grid-template-areas:
+        'when verdict'
+        'facts facts'
+        'source source';
+      row-gap: 0.25rem;
+    }
+
+    .app .atlas-plan-view .commute-window > dl {
+      flex-direction: column;
+    }
+  }
 }
 
 @keyframes planla-bar {
