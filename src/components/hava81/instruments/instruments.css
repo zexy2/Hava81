@@ -572,43 +572,6 @@
 
   /* ── Footer: one quiet line ── */
 
-  /* A colophon: one hairline and one line of type, set on the content's own edges. */
-  .app .atlas-footer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem 1.5rem;
-    width: auto;
-    min-height: 0;
-    margin: 2.5rem 0 0;
-    padding: 1.1rem 0 0.25rem;
-    border: 0;
-    border-top: 1px solid var(--color-atlas-line);
-    border-radius: 0;
-    color: rgb(28 44 66);
-    background: transparent;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    /* The colophon sits on the live sky, so a soft halo keeps it legible over any light. */
-    text-shadow: 0 0 14px rgb(255 255 255 / 0.65);
-  }
-
-  .app[data-color-mode='dark'] .atlas-footer {
-    border-top-color: rgb(255 255 255 / 0.22);
-    color: rgb(236 243 250);
-    text-shadow:
-      0 1px 2px rgb(6 16 30 / 0.6),
-      0 0 16px rgb(6 16 30 / 0.45);
-  }
-
-  /* Keyboard hints mean nothing on a touch screen. */
-  @media (hover: none) and (pointer: coarse) {
-    .app .atlas-footer__shortcuts {
-      display: none;
-    }
-  }
-
   .app .atlas-footer kbd {
     padding: 0.1rem 0.4rem;
     border: 1px solid var(--color-atlas-line);
@@ -663,16 +626,6 @@
     .app[data-active-nav='map'] .atlas-dashboard > :not(.atlas-map-panel) {
       display: none;
     }
-
-    .app[data-active-nav='map'] .atlas-map-panel .weather-map__container {
-      height: calc(100dvh - 16.5rem);
-      min-height: 26rem;
-      /* Full bleed regardless of the panel's own padding and border. */
-      width: 100vw;
-      margin-inline: calc(50% - 50vw);
-      border-inline: 0;
-      border-radius: 0;
-    }
   }
 
   /* Tile seams on high-density screens have two causes in Leaflet's own stylesheet:
@@ -698,39 +651,5 @@
     display: inline-flex;
     align-items: center;
     min-height: 24px;
-  }
-
-  /* Phone map header: a title row and a close action, no kicker card. */
-  @media (max-width: 47.99rem) {
-    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header {
-      align-items: center;
-      padding: 0.25rem 0 0.75rem;
-      border: 0;
-      background: none;
-      box-shadow: none;
-    }
-
-    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header .atlas-kicker {
-      display: none;
-    }
-
-    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header h1 {
-      margin: 0;
-      font-size: 1.5rem;
-    }
-
-    .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      margin: 0.5rem 0 0;
-      font-size: 0.75rem;
-      line-height: 1.4;
-    }
-
-    /* Touch targets on phones: every attribution link is a full 44px row. */
-    .app .weather-map__attribution a {
-      min-height: 44px;
-    }
   }
 }

@@ -1,0 +1,397 @@
+@layer editorial {
+  /* ── Footer: an editorial close ──
+     The wordmark carries the end of the page; credits and shortcuts sit beside it on one
+     calm line on wide screens, and stack on phones. It sits on the live sky, so type gets
+     a theme-aware colour and a soft halo instead of a box. */
+  .app .atlas-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    min-height: 0;
+    margin: 3rem 0 0;
+    padding: 1.25rem 0 0.5rem;
+    border: 0;
+    border-top: 1px solid rgb(20 40 64 / 0.24);
+    border-radius: 0;
+    color: rgb(24 40 62);
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-shadow: 0 0 14px rgb(255 255 255 / 0.7);
+  }
+
+  .app[data-color-mode='dark'] .atlas-footer {
+    border-top-color: rgb(255 255 255 / 0.24);
+    color: rgb(238 244 250);
+    text-shadow:
+      0 1px 2px rgb(6 16 30 / 0.65),
+      0 0 16px rgb(6 16 30 / 0.5);
+  }
+
+  .app .atlas-footer > p {
+    margin: 0;
+  }
+
+  .app .atlas-footer__brand {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    min-width: 0;
+  }
+
+  .app .atlas-footer__wordmark {
+    flex: none;
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .app .atlas-footer__wordmark em {
+    color: rgb(14 96 128);
+    font-style: normal;
+  }
+
+  .app[data-color-mode='dark'] .atlas-footer__wordmark em {
+    color: rgb(140 214 240);
+  }
+
+  .app .atlas-footer__tagline {
+    min-width: 0;
+    opacity: 0.92;
+  }
+
+  .app .atlas-footer__credits {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.35rem;
+  }
+
+  .app .atlas-footer__credits a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  .app .atlas-footer__shortcuts {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Keyboard hints mean nothing on a touch screen. */
+  @media (hover: none) and (pointer: coarse) {
+    .app .atlas-footer__shortcuts {
+      display: none;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .app .atlas-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin-top: 2.5rem;
+      padding-bottom: 1rem;
+    }
+
+    .app .atlas-footer__brand {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+
+    .app .atlas-footer__wordmark {
+      font-size: 2rem;
+    }
+
+    .app .atlas-footer__credits a {
+      min-height: 44px;
+    }
+  }
+
+  /* ── Phone map: the whole screen between the header and the bottom bar ──
+     The page stops scrolling, so a swipe only ever moves the map. Title and close float
+     on the map; legend, hint and credits ride in one glass stack above the bottom bar,
+     which stays so the reader is never trapped in the map. */
+  @media (max-width: 47.99rem) {
+    .app[data-active-nav='map'] {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+
+    .app[data-active-nav='map'] .atlas-header {
+      flex: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-bottom-nav {
+      display: flex;
+    }
+
+    .app[data-active-nav='map'] .atlas-main {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .app[data-active-nav='map'] .atlas-main > :not(.atlas-dashboard),
+    .app[data-active-nav='map'] .atlas-footer {
+      display: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-dashboard {
+      height: 100%;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel {
+      position: relative;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map {
+      position: absolute;
+      inset: 0;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__container {
+      position: absolute;
+      inset: 0;
+      width: auto;
+      height: auto;
+      min-height: 0;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__container::before,
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__container::after {
+      display: none;
+    }
+
+    /* Floating title and close. */
+    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header {
+      position: absolute;
+      z-index: 1000;
+      top: 0.75rem;
+      right: 0.75rem;
+      left: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0;
+      border: 0;
+      background: none;
+      box-shadow: none;
+      pointer-events: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header > * {
+      pointer-events: auto;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header .atlas-kicker {
+      display: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header h1,
+    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header .atlas-text-button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      margin: 0;
+      padding: 0 1rem;
+      border: 1px solid rgb(255 255 255 / 0.5);
+      border-radius: 999px;
+      color: rgb(16 30 48);
+      background: rgb(255 255 255 / 0.88);
+      box-shadow: 0 6px 20px rgb(8 24 44 / 0.18);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header .atlas-text-button {
+      min-width: 44px;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .app[data-color-mode='dark'][data-active-nav='map']
+      .atlas-map-panel
+      .atlas-map-panel__header
+      h1,
+    .app[data-color-mode='dark'][data-active-nav='map']
+      .atlas-map-panel
+      .atlas-map-panel__header
+      .atlas-text-button {
+      border-color: rgb(255 255 255 / 0.14);
+      color: rgb(238 244 250);
+      background: rgb(16 28 46 / 0.86);
+    }
+
+    /* Zoom moves under the title, on the right where the thumb is. */
+    .app[data-active-nav='map'] .leaflet-top.leaflet-left {
+      top: 4.25rem;
+      right: 0.75rem;
+      left: auto;
+    }
+
+    .app[data-active-nav='map'] .leaflet-top.leaflet-left .leaflet-control {
+      margin: 0;
+    }
+
+    /* The glass stack: hint, legend strip and credits, above the bottom bar. */
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint,
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__legend,
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
+      position: absolute;
+      z-index: 1000;
+      right: 0.75rem;
+      left: 0.75rem;
+      margin: 0;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__legend {
+      bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+      padding: 0.4rem;
+      border: 1px solid rgb(255 255 255 / 0.5);
+      border-radius: var(--radius-lg);
+      background: rgb(255 255 255 / 0.9);
+      box-shadow: 0 8px 24px rgb(8 24 44 / 0.18);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__legend-item {
+      flex: 1 1 0;
+      justify-content: center;
+      gap: 0.3rem;
+      min-width: 0;
+      min-height: 2rem;
+      padding: 0 0.25rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      color: rgb(16 30 48);
+      background: none;
+      box-shadow: none;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__legend-full {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint {
+      bottom: calc(9.6rem + env(safe-area-inset-bottom, 0px));
+      justify-self: start;
+      width: fit-content;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      color: rgb(16 30 48);
+      background: rgb(255 255 255 / 0.88);
+      box-shadow: 0 4px 14px rgb(8 24 44 / 0.14);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
+      top: 4.25rem;
+      right: auto;
+      bottom: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      width: fit-content;
+      max-width: calc(100% - 5rem);
+      padding: 0 0.6rem;
+      border-radius: var(--radius-md);
+      color: rgb(16 30 48);
+      background: rgb(255 255 255 / 0.82);
+      font-size: 0.6875rem;
+      line-height: 1.3;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution > span {
+      display: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution a {
+      min-height: 44px;
+      color: inherit;
+    }
+
+    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__legend,
+    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint,
+    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
+      border-color: rgb(255 255 255 / 0.12);
+      color: rgb(238 244 250);
+      background: rgb(16 28 46 / 0.86);
+    }
+
+    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__legend-item {
+      color: rgb(238 244 250);
+    }
+  }
+
+  /* Outside the phone map the short legend text stays hidden and the full label reads. */
+  .app .weather-map__legend-short {
+    display: none;
+  }
+
+  @media (max-width: 47.99rem) {
+    .app[data-active-nav='map'] .weather-map__legend-short {
+      display: inline;
+    }
+  }
+
+  /* Province markers read as real Turkish plates: a white plate with a blue TR strip and
+     dark numerals. A later blue fill had put dark numerals on blue, which failed contrast. */
+  .app .weather-map__plate-marker span {
+    border: 1px solid rgb(11 27 46);
+    border-radius: var(--radius-xs);
+    color: rgb(11 27 46);
+    background: rgb(255 255 255);
+  }
+
+  .app .weather-map__plate-marker span i {
+    color: rgb(255 255 255);
+    background: rgb(24 82 168);
+  }
+}

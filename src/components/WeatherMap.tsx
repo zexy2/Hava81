@@ -476,22 +476,28 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         <p className="weather-map__zoom-hint">{t('weather.mapZoomHint')}</p>
       ) : null}
 
+      {/* Each step shows its short range and names the full band for assistive tech. */}
       <div className="weather-map__legend" role="list" aria-label={t('weather.temperatureLegend')}>
-        <span className="weather-map__legend-item weather-map__legend-item--cold" role="listitem">
-          {t('weather.temperatureCold', legendThresholds)}
-        </span>
-        <span className="weather-map__legend-item weather-map__legend-item--cool" role="listitem">
-          {t('weather.temperatureCool', legendThresholds)}
-        </span>
-        <span className="weather-map__legend-item weather-map__legend-item--mild" role="listitem">
-          {t('weather.temperatureMild', legendThresholds)}
-        </span>
-        <span className="weather-map__legend-item weather-map__legend-item--warm" role="listitem">
-          {t('weather.temperatureWarm', legendThresholds)}
-        </span>
-        <span className="weather-map__legend-item weather-map__legend-item--hot" role="listitem">
-          {t('weather.temperatureHot', legendThresholds)}
-        </span>
+        {(
+          [
+            ['cold', 'temperatureCold', `<${legendThresholds.zero}°`],
+            ['cool', 'temperatureCool', `${legendThresholds.zero}–${legendThresholds.ten}°`],
+            ['mild', 'temperatureMild', `${legendThresholds.ten}–${legendThresholds.twenty}°`],
+            ['warm', 'temperatureWarm', `${legendThresholds.twenty}–${legendThresholds.thirty}°`],
+            ['hot', 'temperatureHot', `>${legendThresholds.thirty}°`],
+          ] as const
+        ).map(([tone, key, short]) => (
+          <span
+            key={tone}
+            className={`weather-map__legend-item weather-map__legend-item--${tone}`}
+            role="listitem"
+          >
+            <span className="weather-map__legend-full">{t(`weather.${key}`, legendThresholds)}</span>
+            <span className="weather-map__legend-short" aria-hidden="true">
+              {short}
+            </span>
+          </span>
+        ))}
       </div>
     </div>
   );

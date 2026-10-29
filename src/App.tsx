@@ -31,6 +31,7 @@ import { trackProductEvent } from './analytics/productEvents';
 import { resolveSkyScene } from './components/sky/skyScene';
 import './styles/App.css';
 import './styles/editorial.css';
+import './components/app/mapFooter.css';
 // Glass and hero styles load with the page, not with the lazy sky chunks: a late
 // stylesheet re-lays out the weather field after first paint (a layout shift).
 import './components/sky/LivingSky.css';
@@ -872,7 +873,22 @@ const App: React.FC = () => {
             )}
             {/* Inside main so the colophon shares the content's width and padding. */}
             <footer className="atlas-footer" data-testid="app-footer">
-              <span>Hava81 · {t('hava81.tagline')}</span>
+              <p className="atlas-footer__brand">
+                <span className="atlas-footer__wordmark" data-footer-wordmark="">
+                  Hava<em>81</em>
+                </span>
+                <span className="atlas-footer__tagline">{t('hava81.tagline')}</span>
+              </p>
+              <p className="atlas-footer__credits">
+                <span>{t('hava81.footerData')}</span>{' '}
+                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+                  Open-Meteo
+                </a>
+                <span aria-hidden="true"> · </span>
+                <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+                  OpenStreetMap
+                </a>
+              </p>
               <span className="atlas-footer__shortcuts">
                 <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
                 <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}

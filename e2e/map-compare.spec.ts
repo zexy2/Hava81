@@ -40,7 +40,8 @@ test.describe('map view', () => {
     const bottomNav = page.locator('.atlas-bottom-nav');
     await expect(mapRegion).toBeVisible();
     await expect(mapRegion).toBeFocused();
-    await expect(bottomNav).toBeHidden();
+    // The bottom bar stays visible on the map, with the map tab marked current.
+    await expect(bottomNav).toBeVisible();
 
     await setTextScale(page, 200);
 
@@ -80,7 +81,13 @@ test.describe('map view', () => {
       await expect(page.locator('.atlas-dashboard__primary')).toBeHidden();
       await expect(page.locator('.daily-plan')).toBeHidden();
       await expect(page.locator('.app')).toHaveAttribute('data-active-nav', 'map');
-      await expect(page.locator('.atlas-bottom-nav')).toBeHidden();
+      // The bottom bar stays on the map so the reader is never trapped in it.
+      const bottomNav = page.locator('.atlas-bottom-nav');
+      await expect(bottomNav).toBeVisible();
+      await expect(bottomNav.getByRole('button', { name: 'Harita', exact: true })).toHaveAttribute(
+        'aria-current',
+        'page'
+      );
       await expect(map).toBeInViewport();
       await expectWithinViewportWidth(map, 'map');
       await expectNoHorizontalScroll(page);

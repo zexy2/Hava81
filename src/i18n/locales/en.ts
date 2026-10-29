@@ -107,6 +107,7 @@ export const en = {
     },
     closeSearch: 'Close city search',
     tagline: 'Decision-first weather guidance for all 81 provinces',
+    footerData: 'Data and maps',
     homeLabel: 'Hava81 home view',
     systemStatus: 'Hava81 · System status',
     cityDocumentTitle: '{{city}} weather — Hava81',

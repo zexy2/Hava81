@@ -107,6 +107,7 @@ export const tr = {
     },
     closeSearch: 'Şehir aramasını kapat',
     tagline: 'Havaya göre ne yapacağını söyleyen 81 il rehberi',
+    footerData: 'Veri ve harita',
     homeLabel: 'Hava81 ana görünüm',
     systemStatus: 'Hava81 · Sistem durumu',
     cityDocumentTitle: '{{city}} hava durumu — Hava81',
