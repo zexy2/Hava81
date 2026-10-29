@@ -854,3 +854,26 @@ test.describe('route weather', () => {
     }
   );
 });
+
+test.describe('my plans (Planlarım)', () => {
+  test('a template becomes a saved plan that survives a reload', MOBILE, async ({ page }) => {
+    await page.goto(PLAN);
+    await page.evaluate(() =>
+      localStorage.setItem('hava81.routines.v1', JSON.stringify({ schemaVersion: 1, routines: [] }))
+    );
+    await page.reload();
+    const list = page.getByRole('region', { name: 'Planlarım' });
+    await list.getByRole('button', { name: /Akşam koşusu/ }).click();
+    const row = list.getByRole('button', { name: /Koşu planını düzenle/ });
+    await expect(row).toBeVisible();
+
+    await page.reload();
+    await expect(row).toBeVisible();
+    await expect(row.locator('.routine-row__when')).toContainText('18:30');
+    await expectNoHorizontalScroll(page);
+
+    await row.click();
+    await list.getByRole('button', { name: 'Planı sil' }).click();
+    await expect(row).toHaveCount(0);
+  });
+});
