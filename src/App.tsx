@@ -870,15 +870,15 @@ const App: React.FC = () => {
                 )}
               </section>
             )}
+            {/* Inside main so the colophon shares the content's width and padding. */}
+            <footer className="atlas-footer" data-testid="app-footer">
+              <span>Hava81 · {t('hava81.tagline')}</span>
+              <span className="atlas-footer__shortcuts">
+                <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
+                <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
+              </span>
+            </footer>
           </main>
-
-          <footer className="atlas-footer" data-testid="app-footer">
-            <span>Hava81 · {t('hava81.tagline')}</span>
-            <span className="atlas-footer__shortcuts">
-              <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
-              <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
-            </span>
-          </footer>
 
           {isSettingsOpen ? (
             <Suspense

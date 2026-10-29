@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next';
@@ -166,7 +166,8 @@ const useProvinceTemperatures = (enabled: boolean, language: string) => {
     const now = Date.now();
     const expiries = Array.from(data.byPlate.values())
       .map(province => {
-        const observedAtMs = province.observedAt instanceof Date ? province.observedAt.getTime() : NaN;
+        const observedAtMs =
+          province.observedAt instanceof Date ? province.observedAt.getTime() : NaN;
         if (!Number.isFinite(observedAtMs)) return null;
         const remainingMs = observedAtMs + MAX_PROVINCE_OBSERVATION_AGE_MS - now;
         return remainingMs > 0 ? remainingMs + PROVINCE_EXPIRY_CUSHION_MS : null;
@@ -199,10 +200,12 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   // Leaflet can display markers before the raster map loads. Keep an honest
   // loading state instead of showing an unexplained blank grey map.
   const [tilesLoading, setTilesLoading] = useState(true);
+  const tilesLoadedOnceRef = useRef(false);
   const [tilesFailed, setTilesFailed] = useState(false);
   const [tileAttempt, setTileAttempt] = useState(0);
 
   const retryTiles = () => {
+    tilesLoadedOnceRef.current = false;
     setTilesFailed(false);
     setTilesLoading(true);
     setFallbackTiles(false);
@@ -245,9 +248,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   const provinceNow = Date.now();
   const hasFreshProvinceTemperatures = Boolean(
     provinceTemperatures &&
-      Array.from(provinceTemperatures.byPlate.values()).some(province =>
-        isFreshProvinceObservation(province, provinceNow)
-      )
+    Array.from(provinceTemperatures.byPlate.values()).some(province =>
+      isFreshProvinceObservation(province, provinceNow)
+    )
   );
   const featuredCities = useMemo(
     () =>
@@ -303,10 +306,15 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             key={`${fallbackTiles ? 'osmde' : 'osmfr'}-${tileAttempt}`}
             url={tileUrl}
             eventHandlers={{
+              // Only the first paint announces loading; panning and zooming fetch tiles
+              // quietly instead of flashing the status over a map that is already there.
               loading: () => {
-                if (!tilesFailed) setTilesLoading(true);
+                if (!tilesFailed && !tilesLoadedOnceRef.current) setTilesLoading(true);
               },
-              load: () => setTilesLoading(false),
+              load: () => {
+                tilesLoadedOnceRef.current = true;
+                setTilesLoading(false);
+              },
               tileerror: () => {
                 if (fallbackTiles) {
                   // Both independent providers failed: do not keep showing a
@@ -362,7 +370,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
               ? provinceTemperatures?.byPlate.get(featuredCity.plateCode)
               : undefined;
             const live =
-              candidate && isFreshProvinceObservation(candidate, provinceNow) ? candidate : undefined;
+              candidate && isFreshProvinceObservation(candidate, provinceNow)
+                ? candidate
+                : undefined;
             const liveDisplay = live ? Math.round(convertTemperature(live.temperature)) : null;
             const markerName = `${featuredCity.name}: ${t('hava81.decision.plateCodeLabel', {
               code: String(featuredCity.plateCode).padStart(2, '0'),

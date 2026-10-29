@@ -159,7 +159,6 @@ export function EnvironmentRail({
     Number.isFinite(weather.windSpeed);
   const normalizedDirection = hasValidWind ? ((weather.windDirection % 360) + 360) % 360 : 0;
   const directionKey = WIND_DIRECTION_KEYS[Math.round(normalizedDirection / 45) % 8];
-  const directionLabel = hasValidWind ? t(`wind.directions.${directionKey}`) : t('weather.noData');
   const windSpeed = hasValidWind
     ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${getWindSpeedSymbol()}`
     : t('weather.noData');
@@ -235,9 +234,8 @@ export function EnvironmentRail({
           />
         </span>
         <span className="environment-rail__label">{t('weather.wind')}</span>
-        <strong className="environment-rail__value">
-          {directionLabel} · {windSpeed}
-        </strong>
+        {/* The speed leads; the direction is spelled out below, never a lone letter. */}
+        <strong className="environment-rail__value">{windSpeed}</strong>
         <span
           className="environment-rail__detail"
           role={currentFreshness.fresh ? undefined : 'status'}
@@ -259,12 +257,12 @@ export function EnvironmentRail({
         </span>
         <span className="environment-rail__label">{t('weather.airQuality')}</span>
         <strong className="environment-rail__value">
-          {airQualityLabelKey ? `${freshAirQuality?.aqi} / 5` : '—'}
+          {airQualityLabelKey ? airQualityLabel : '—'}
         </strong>
         <span className="environment-rail__detail" role={airQualityIsStale ? 'status' : undefined}>
           {freshAirQuality && airQualityLabelKey ? (
             <>
-              {`${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
+              {`${t('airQuality.index')} ${freshAirQuality.aqi}/5 · ${t('airQuality.pm25')} ${numberFormatter.format(
                 freshAirQuality.pm25
               )} µg/m³`}
               {airQualityObservedTime && airQualityObservedAt ? (

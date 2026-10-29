@@ -283,14 +283,18 @@
 
   /* ── Environment instruments ── */
 
+  /* One instrument panel: four readings on a single surface, split by hairlines, the way
+     a cockpit cluster or a watch face groups its dials. No floating cards. */
   .app .atlas-dashboard .environment-rail {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0;
     padding: 0;
-    border: 0;
-    background: none;
-    box-shadow: none;
+    overflow: hidden;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-xl);
+    background: var(--color-atlas-paper);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -302,22 +306,32 @@
     align-content: start;
     gap: 0.6rem;
     min-width: 0;
-    padding: 1.25rem 1.25rem 1.1rem;
-    border: 1px solid var(--color-atlas-line);
-    border-radius: var(--radius-lg);
+    min-height: 0;
+    margin: 0;
+    padding: 1.5rem 1.5rem 1.35rem;
+    border: 0;
+    border-radius: 0;
     color: var(--color-atlas-ink);
-    background: var(--color-atlas-paper);
-    box-shadow: 0 14px 36px rgb(8 28 54 / 0.14);
+    background: transparent;
+    box-shadow: none;
     text-align: start;
+  }
+
+  /* Hairlines between readings: vertical in the row, plus a horizontal one in 2 × 2. */
+  .app .atlas-dashboard .environment-rail .environment-rail__module + .environment-rail__module {
+    border-inline-start: 1px solid var(--color-atlas-line);
   }
 
   .app .atlas-dashboard .environment-rail .environment-rail__label {
     grid-row: 1;
+    overflow: hidden;
     color: var(--color-atlas-muted);
     font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: 0;
+    text-overflow: ellipsis;
     text-transform: none;
+    white-space: nowrap;
   }
 
   .app .atlas-dashboard .environment-rail .environment-rail__module > * {
@@ -375,19 +389,25 @@
 
   .app .atlas-dashboard .environment-rail .environment-rail__module--action {
     cursor: pointer;
-    transition:
-      border-color 180ms ease,
-      box-shadow 180ms ease;
+    transition: background-color 180ms ease;
   }
 
+  /* The map reading is the one action: it lights from inside instead of lifting. */
   .app .atlas-dashboard .environment-rail .environment-rail__module--action:hover {
-    border-color: color-mix(in srgb, var(--color-aegean, rgb(20 107 115)) 55%, transparent);
-    box-shadow: 0 18px 44px rgb(8 28 54 / 0.2);
+    background: color-mix(in srgb, var(--color-aegean, rgb(20 107 115)) 8%, transparent);
   }
 
   @media (max-width: 63.99rem) {
     .app .atlas-dashboard .environment-rail {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .app .atlas-dashboard .environment-rail .environment-rail__module:nth-child(odd) {
+      border-inline-start: 0;
+    }
+
+    .app .atlas-dashboard .environment-rail .environment-rail__module:nth-child(n + 3) {
+      border-top: 1px solid var(--color-atlas-line);
     }
 
     .app .atlas-dashboard .environment-rail .environment-rail__value {
@@ -396,8 +416,8 @@
   }
 
   @media (max-width: 47.99rem) {
-    .app .atlas-footer {
-      width: calc(100% - 2rem);
+    .app .atlas-dashboard .environment-rail .environment-rail__module {
+      padding: 1.15rem 1.1rem 1.05rem;
     }
   }
 
@@ -552,24 +572,30 @@
 
   /* ── Footer: one quiet line ── */
 
-  /* A paper band, so the line stays readable over any sky. */
+  /* A colophon: one hairline and one line of type, set on the content's own edges. */
   .app .atlas-footer {
-    width: min(calc(100% - 4rem), 90rem);
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-    padding-inline: clamp(1rem, 3vw, 1.5rem);
-    border: 1px solid var(--color-atlas-line);
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--color-atlas-paper) 92%, transparent);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem 1.5rem;
-    min-height: 3.5rem;
-    padding-block: 1rem;
+    width: auto;
+    min-height: 0;
+    margin: 2.5rem 0 0;
+    padding: 1.1rem 0 0.25rem;
+    border: 0;
+    border-top: 1px solid var(--color-atlas-line);
+    border-radius: 0;
     color: var(--color-atlas-muted);
+    background: transparent;
     font-size: 0.8125rem;
+  }
+
+  /* Keyboard hints mean nothing on a touch screen. */
+  @media (hover: none) and (pointer: coarse) {
+    .app .atlas-footer__shortcuts {
+      display: none;
+    }
   }
 
   .app .atlas-footer kbd {
@@ -614,5 +640,33 @@
 @keyframes gauge-draw {
   from {
     stroke-dashoffset: var(--gauge-length, 400);
+  }
+}
+
+@layer editorial {
+  /* ── Phone map: a full screen of its own ──
+     The today content steps aside (the editorial rail rule must not keep it on screen),
+     the map runs edge to edge between the header and the bottom bar, so a swipe on it
+     only ever moves the map. */
+  @media (max-width: 47.99rem) {
+    .app[data-active-nav='map'] .atlas-dashboard > :not(.atlas-map-panel) {
+      display: none;
+    }
+
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__container {
+      height: calc(100dvh - 16.5rem);
+      min-height: 26rem;
+      /* Full bleed regardless of the panel's own padding and border. */
+      width: 100vw;
+      margin-inline: calc(50% - 50vw);
+      border-inline: 0;
+      border-radius: 0;
+    }
+  }
+
+  /* Leaflet smooths tiles on Safari with -webkit-optimize-contrast, which leaves hairline
+     seams between tiles on high-density screens. Plain rendering keeps them flush. */
+  .app .leaflet-container .leaflet-tile {
+    image-rendering: auto;
   }
 }

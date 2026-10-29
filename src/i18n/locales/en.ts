@@ -691,6 +691,7 @@ export const en = {
     poor: 'Poor',
     veryPoor: 'Very Poor',
     pm25: 'PM2.5',
+    index: 'Index',
     pm10: 'PM10',
     ozone: 'Ozone',
     observedAt: 'Observed {{time}}',

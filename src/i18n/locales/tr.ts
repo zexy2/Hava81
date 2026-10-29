@@ -696,6 +696,7 @@ export const tr = {
     poor: 'Kötü',
     veryPoor: 'Çok kötü',
     pm25: 'PM2.5',
+    index: 'Endeks',
     pm10: 'PM10',
     ozone: 'Ozon',
     observedAt: 'Gözlem {{time}}',
