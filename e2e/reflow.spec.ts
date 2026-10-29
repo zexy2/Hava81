@@ -53,7 +53,7 @@ const CASES: ReflowCase[] = [
     widths: [320, 390, 1024, 1280],
   },
   { name: 'environment rail', region: '.environment-rail', widths: [320, 768, 1440] },
-  { name: 'Planla entry', region: '.atlas-plan-entry', widths: [320, 768, 1280] },
+  { name: 'header Planla entry', region: '.atlas-header', widths: [320, 768, 1280] },
   {
     name: 'Planla header',
     region: '.atlas-plan-view__header',
@@ -161,7 +161,7 @@ test.describe('200% text reflow', () => {
         if (view === 'plan') {
           await setTextScale(page, 100);
           await setWidth(page, 1280, 900);
-          await page.getByRole('button', { name: /Planla’yı aç/ }).click();
+          await page.getByRole('button', { name: 'Planla', exact: true }).click();
           await expect(page.locator('.atlas-plan-view .daily-plan')).toBeVisible();
         }
         for (const width of [320, 390, 768, 1024, 1280]) {

@@ -35,12 +35,11 @@ test.describe('first screen composition (Faz 2)', () => {
       await expectNoOverlap(decision, rhythm, 'decision field vs rhythm chart');
       await expect(decision.locator('.hava81-decision-field__next-change')).toBeVisible();
 
-      // Reading order: Karar → Ritim → one environmental surface → a single Planla entry.
+      // Reading order: Karar → Ritim → one environmental surface. Planla lives in the
+      // header and bottom nav, not as an extra Today block.
       const environment = page.locator('.environment-rail');
-      const entry = page.locator('.atlas-plan-entry');
       await expectBeforeInDom(decision, environment, 'decision before environment');
-      await expectBeforeInDom(environment, entry, 'environment before the Planla entry');
-      await expect(entry).toBeVisible();
+      await expect(page.locator('.atlas-plan-entry')).toHaveCount(0);
       // Plan panels are not part of the main flow; they live in the hidden Planla view.
       const plan = page.locator('.atlas-plan-view');
       await expect(plan).toBeHidden();
@@ -79,8 +78,13 @@ test.describe('first screen composition (Faz 2)', () => {
       const value = field.locator('.hava81-decision-field__temperature-value');
       const symbol = field.locator('.hava81-decision-field__symbol');
       await expect(value).toBeVisible();
-      // On desktop the live sky behind the field shows the condition; the icon steps aside.
-      await expect(symbol).toBeHidden();
+      // The condition icon sits beside the temperature on desktop too, without overlapping it.
+      await expect(symbol).toBeVisible();
+      await expectNoOverlap(
+        symbol,
+        field.locator('.hava81-decision-field__temperature'),
+        'desktop weather icon vs temperature'
+      );
       await expectReadable(page, field.locator('.hava81-decision-field__reading'), 'reading block');
       await expectContainedIn(value, field, 'temperature');
       await expectReadable(
@@ -354,9 +358,11 @@ test.describe('decision hero (Karar özeti)', () => {
 
     await page.goto('/istanbul/');
     const hero = page.locator('.decision-glance');
-    const windowCopy = hero.locator('.decision-glance__window');
+    // A later window is named in the headline itself; the separate window line is not repeated.
+    const windowCopy = hero.locator('.decision-glance__message');
     await expect(windowCopy).toContainText('Yarın');
     await expect(windowCopy).not.toContainText(/Yarın 0[0-6]:/);
+    await expect(hero.locator('.decision-glance__window')).toHaveCount(0);
     await expect(hero.locator('.decision-glance__quick').first()).toContainText('Yarın');
     await setWidth(page, 320, 844);
     await expectNoHorizontalScroll(page, '320px');

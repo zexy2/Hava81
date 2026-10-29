@@ -1,4 +1,3 @@
-import { precipitationSignalSeverity } from '../../../utils/precipitation';
 import type { HourlyDatum } from './types';
 
 export interface HourlySummaryData {
@@ -14,10 +13,9 @@ export const buildHourlySummary = (
   hourlyHorizonData: readonly HourlyDatum[]
 ): HourlySummaryData | null => {
   if (hourlyHorizonData.length === 0) return null;
-  // Keep probability and amount tied to one real hour, but rank both together.
-  // A lower-probability hour with a large modeled amount can be more actionable
-  // than a high-probability drizzle; use the same severity formula as other rain
-  // decisions instead of letting probability always win first.
+  // Keep probability and amount tied to one real hour. The peak is the hour with
+  // the highest probability (ties broken by larger modeled amount); when no hour
+  // carries a probability, fall back to the hour with the largest amount.
   const hasRainEvidence = (hour: HourlyDatum) =>
     (typeof hour.precipitation === 'number' &&
       Number.isFinite(hour.precipitation) &&
@@ -28,12 +26,16 @@ export const buildHourlySummary = (
       hour.precipitationMm >= 0);
   const evidenceHours = hourlyHorizonData.filter(hasRainEvidence);
   const candidates = evidenceHours.length > 0 ? evidenceHours : hourlyHorizonData;
-  const peakPrecipitation = candidates.reduce((peak, hour) =>
-    precipitationSignalSeverity(hour.precipitation, hour.precipitationMm) >
-    precipitationSignalSeverity(peak.precipitation, peak.precipitationMm)
-      ? hour
-      : peak
-  );
+  const prob = (hour: HourlyDatum) =>
+    Number.isFinite(hour.precipitation)
+      ? Math.min(1, Math.max(0, hour.precipitation as number))
+      : 0;
+  const mm = (hour: HourlyDatum) =>
+    Number.isFinite(hour.precipitationMm) ? Math.max(0, hour.precipitationMm as number) : 0;
+  const peakPrecipitation = candidates.reduce((peak, hour) => {
+    if (prob(hour) !== prob(peak)) return prob(hour) > prob(peak) ? hour : peak;
+    return mm(hour) > mm(peak) ? hour : peak;
+  });
   const min = Math.min(...hourlyHorizonData.map(hour => hour.convertedTemp));
   const max = Math.max(...hourlyHorizonData.map(hour => hour.convertedTemp));
   return {

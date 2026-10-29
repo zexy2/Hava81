@@ -1,0 +1,205 @@
+@layer editorial {
+  /* ── Map layers: a glass control rail on the map, a field drawn from our own data ── */
+
+  .app .weather-map__container {
+    position: relative;
+  }
+
+  /* The field is a coarse interpolation: a soft blur reads it like radar, without pixels
+     or a hard coastline edge. */
+  .app .weather-map__field {
+    pointer-events: none;
+    filter: blur(6px) saturate(1.1);
+  }
+
+  .app .map-layers {
+    position: absolute;
+    z-index: 1000;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    max-width: calc(100% - 5rem);
+    pointer-events: none;
+  }
+
+  .app .map-layers > * {
+    pointer-events: auto;
+  }
+
+  .app .map-layers__switch,
+  .app .map-layers__time {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid rgb(255 255 255 / 0.55);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.9);
+    box-shadow: 0 8px 24px rgb(8 24 44 / 0.18);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
+  .app .map-layers__option,
+  .app .map-layers__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 0.9rem;
+    border: 0;
+    border-radius: 999px;
+    color: rgb(22 38 58);
+    background: transparent;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .app .map-layers__option svg {
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .app .map-layers__option:hover,
+  .app .map-layers__step:hover {
+    background: rgb(16 30 48 / 0.06);
+  }
+
+  .app .map-layers__option[aria-pressed='true'],
+  .app .map-layers__step[aria-pressed='true'] {
+    color: rgb(255 255 255);
+    background: rgb(16 34 58);
+  }
+
+  .app .map-layers__step {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .map-layers__note {
+    max-width: 18rem;
+    margin: 0;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius-md);
+    color: rgb(16 30 48);
+    background: rgb(255 255 255 / 0.92);
+    box-shadow: 0 4px 14px rgb(8 24 44 / 0.14);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .app[data-color-mode='dark'] .map-layers__switch,
+  .app[data-color-mode='dark'] .map-layers__time,
+  .app[data-color-mode='dark'] .map-layers__note {
+    border-color: rgb(255 255 255 / 0.12);
+    color: rgb(238 244 250);
+    background: rgb(16 28 46 / 0.86);
+  }
+
+  .app[data-color-mode='dark'] .map-layers__option,
+  .app[data-color-mode='dark'] .map-layers__step {
+    color: rgb(226 236 248);
+  }
+
+  .app[data-color-mode='dark'] .map-layers__option:hover,
+  .app[data-color-mode='dark'] .map-layers__step:hover {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .app[data-color-mode='dark'] .map-layers__option[aria-pressed='true'],
+  .app[data-color-mode='dark'] .map-layers__step[aria-pressed='true'] {
+    color: rgb(12 22 38);
+    background: rgb(236 244 252);
+  }
+
+  /* Ramp legend dots take their colour from the layer scale. */
+  .app .weather-map__legend-item--ramp::before {
+    background: var(--legend-color) !important;
+  }
+
+  .app .weather-map__popup-layer {
+    margin: 0.15rem 0 0;
+    font-weight: 600;
+  }
+
+  /* Wind: downwind arrows, weight by speed, with a halo so they read on any tile. */
+  .app .weather-map__wind {
+    background: none;
+    border: 0;
+  }
+
+  .app .weather-map__wind-arrow {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    rotate: var(--wind-rotation, 0deg);
+  }
+
+  .app .weather-map__wind-arrow svg {
+    overflow: visible;
+    fill: none;
+    stroke: rgb(16 34 58);
+    stroke-width: var(--wind-weight, 2);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 2px rgb(255 255 255)) drop-shadow(0 0 1px rgb(255 255 255));
+  }
+
+  /* ── Phone map: layers along the top, time above the legend ── */
+  @media (max-width: 47.99rem) {
+    .app[data-active-nav='map'] .map-layers {
+      top: 4.25rem;
+      right: 0.75rem;
+      left: 0.75rem;
+      align-items: stretch;
+      max-width: none;
+    }
+
+    .app[data-active-nav='map'] .map-layers__switch {
+      justify-content: space-between;
+    }
+
+    .app[data-active-nav='map'] .map-layers__option {
+      flex: 1 1 0;
+      gap: 0.3rem;
+      padding: 0 0.4rem;
+      font-size: 0.75rem;
+    }
+
+    .app[data-active-nav='map'] .map-layers__time {
+      position: fixed;
+      right: 0.75rem;
+      bottom: calc(12.3rem + env(safe-area-inset-bottom, 0px));
+      left: 0.75rem;
+      justify-content: space-between;
+    }
+
+    .app[data-active-nav='map'] .map-layers__step {
+      flex: 1 1 0;
+    }
+
+    /* The note sits left of the zoom column so it never covers a control. */
+    .app[data-active-nav='map'] .map-layers__note {
+      align-self: flex-start;
+      max-width: calc(100% - 4.5rem);
+    }
+
+    /* Zoom steps down under the layer rail. */
+    .app[data-active-nav='map'] .leaflet-top.leaflet-left {
+      top: 8.25rem;
+    }
+  }
+}

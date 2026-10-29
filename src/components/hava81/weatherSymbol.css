@@ -1,0 +1,192 @@
+@layer editorial {
+  /* ── Atlas symbol set: two-tone, colour-coded by element ──
+     Sun is amber, rain is Aegean blue, the bolt is saffron, snow is ice; clouds are a
+     soft filled shape with a darker outline, heavier and darker as the sky closes in. */
+
+  .app svg.hava81-weather-symbol {
+    --sym-sun: rgb(247 172 46);
+    --sym-sun-line: rgb(212 124 18);
+    --sym-moon: rgb(206 214 240);
+    --sym-moon-line: rgb(104 118 172);
+    --sym-cloud: rgb(240 244 249);
+    --sym-cloud-line: rgb(110 130 154);
+    --sym-cloud-heavy: rgb(212 221 232);
+    --sym-cloud-heavy-line: rgb(90 108 132);
+    --sym-cloud-storm: rgb(158 170 189);
+    --sym-cloud-storm-line: rgb(70 84 108);
+    --sym-drop: rgb(44 124 214);
+    --sym-bolt: rgb(246 184 34);
+    --sym-bolt-line: rgb(196 126 8);
+    --sym-flake: rgb(96 146 206);
+
+    overflow: visible;
+  }
+
+  .app[data-color-mode='dark'] svg.hava81-weather-symbol {
+    --sym-sun: rgb(255 196 84);
+    --sym-sun-line: rgb(255 174 52);
+    --sym-moon: rgb(226 231 252);
+    --sym-moon-line: rgb(170 182 228);
+    --sym-cloud: rgb(62 82 108);
+    --sym-cloud-line: rgb(198 212 230);
+    --sym-cloud-heavy: rgb(50 66 90);
+    --sym-cloud-heavy-line: rgb(176 192 214);
+    --sym-cloud-storm: rgb(34 44 62);
+    --sym-cloud-storm-line: rgb(150 164 190);
+    --sym-drop: rgb(112 180 255);
+    --sym-bolt: rgb(255 202 64);
+    --sym-bolt-line: rgb(255 176 24);
+    --sym-flake: rgb(222 236 255);
+  }
+
+  .app svg.hava81-weather-symbol [data-part='sun'] {
+    fill: var(--sym-sun);
+    stroke: var(--sym-sun-line);
+    stroke-width: 1.5;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='ray'] {
+    stroke: var(--sym-sun-line);
+    stroke-width: 2.2;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='moon'] {
+    fill: var(--sym-moon);
+    stroke: var(--sym-moon-line);
+    stroke-width: 1.5;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='star'] {
+    fill: var(--sym-moon-line);
+    stroke: none;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='cloud'] {
+    fill: var(--sym-cloud);
+    stroke: var(--sym-cloud-line);
+    stroke-width: 1.8;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='cloud'][data-tone='heavy'] {
+    fill: var(--sym-cloud-heavy);
+    stroke: var(--sym-cloud-heavy-line);
+  }
+
+  .app svg.hava81-weather-symbol [data-part='cloud'][data-tone='storm'] {
+    fill: var(--sym-cloud-storm);
+    stroke: var(--sym-cloud-storm-line);
+  }
+
+  /* The back cloud is an open arc: outline only, a step quieter than the front. */
+  .app svg.hava81-weather-symbol [data-part='cloud'][data-tone='back'] {
+    fill: none;
+    stroke: var(--sym-cloud-line);
+    stroke-width: 1.6;
+    opacity: 0.6;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='drop'] {
+    fill: var(--sym-drop);
+    stroke: none;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='bolt'] {
+    fill: var(--sym-bolt);
+    stroke: var(--sym-bolt-line);
+    stroke-width: 1.2;
+  }
+
+  .app svg.hava81-weather-symbol [data-part='flake'] {
+    stroke: var(--sym-flake);
+    stroke-width: 1.8;
+  }
+
+  /* ── Motion: only the symbol that stands for "now" ── */
+  @media (prefers-reduced-motion: no-preference) {
+    .app svg.hava81-weather-symbol.is-animated .weather-symbol__rays {
+      transform-box: view-box;
+      animation: weather-symbol-turn 24s linear infinite;
+    }
+
+    .app svg.hava81-weather-symbol.is-animated .weather-symbol__drop {
+      animation: weather-symbol-fall 1.4s cubic-bezier(0.45, 0, 0.7, 1) infinite;
+    }
+
+    .app svg.hava81-weather-symbol.is-animated .weather-symbol__flake {
+      animation: weather-symbol-drift 2.8s ease-in-out infinite;
+    }
+
+    .app svg.hava81-weather-symbol.is-animated .weather-symbol__bolt {
+      animation: weather-symbol-flash 3.2s ease-out infinite;
+    }
+
+    .app svg.hava81-weather-symbol.is-animated .weather-symbol__star {
+      animation: weather-symbol-twinkle 3s ease-in-out infinite;
+    }
+  }
+
+  @keyframes weather-symbol-turn {
+    to {
+      rotate: 1turn;
+    }
+  }
+
+  @keyframes weather-symbol-fall {
+    0% {
+      opacity: 0;
+      translate: 0 -3px;
+    }
+
+    25%,
+    70% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+      translate: 0 4px;
+    }
+  }
+
+  @keyframes weather-symbol-drift {
+    0%,
+    100% {
+      translate: 0 -1px;
+    }
+
+    50% {
+      translate: 1.5px 2px;
+    }
+  }
+
+  @keyframes weather-symbol-flash {
+    0%,
+    82%,
+    100% {
+      opacity: 1;
+    }
+
+    86% {
+      opacity: 0.35;
+    }
+
+    90% {
+      opacity: 1;
+    }
+
+    94% {
+      opacity: 0.55;
+    }
+  }
+
+  @keyframes weather-symbol-twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.35;
+    }
+  }
+}

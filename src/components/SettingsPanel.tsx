@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useSettings,
@@ -9,10 +9,37 @@ import {
 } from '../context';
 import packageMeta from '../../package.json';
 import './SettingsPanel.css';
+import './settings/SettingsSurface.css';
 
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Current reading for the live preview; a neutral sample is used without one. */
+  preview?: { temperature: number; windSpeed: number } | null;
+}
+
+/** Sample shown before any weather is loaded (°C, m/s). */
+const SAMPLE_PREVIEW = { temperature: 20, windSpeed: 4 };
+
+/** Places the desktop popover under the settings button that opened it. */
+function useAnchor(isOpen: boolean) {
+  const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const measure = () => {
+      const trigger = document.querySelector<HTMLElement>('.atlas-settings-button');
+      if (!trigger) return setAnchor(null);
+      const rect = trigger.getBoundingClientRect();
+      setAnchor({
+        top: Math.round(rect.bottom + 8),
+        right: Math.max(8, Math.round(window.innerWidth - rect.right)),
+      });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isOpen]);
+  return anchor;
 }
 
 const AutoThemeIcon = () => (
@@ -35,9 +62,23 @@ const DarkThemeIcon = () => (
   </svg>
 );
 
-export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, preview }) => {
   const { t, i18n } = useTranslation();
-  const { settings, updateSetting } = useSettings();
+  const {
+    settings,
+    updateSetting,
+    convertTemperature,
+    convertWindSpeed,
+    getTemperatureSymbol,
+    getWindSpeedSymbol,
+  } = useSettings();
+  const anchor = useAnchor(isOpen);
+  const reading = preview ?? SAMPLE_PREVIEW;
+  const numberFormat = new Intl.NumberFormat(settings.language === 'en' ? 'en-US' : 'tr-TR', {
+    maximumFractionDigits: 1,
+  });
+  const previewTemperature = `${Math.round(convertTemperature(reading.temperature))}${getTemperatureSymbol()}`;
+  const previewWind = `${numberFormat.format(convertWindSpeed(reading.windSpeed))} ${getWindSpeedSymbol()}`;
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -133,7 +174,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             aria-modal="true"
             aria-labelledby="settings-panel-title"
             tabIndex={-1}
+            style={
+              anchor
+                ? ({
+                    '--settings-anchor-top': `${anchor.top}px`,
+                    '--settings-anchor-right': `${anchor.right}px`,
+                  } as React.CSSProperties)
+                : undefined
+            }
           >
+            <span className="settings-panel__handle" data-sheet-handle="" aria-hidden="true" />
             <div className="settings-panel__header">
               <h2 id="settings-panel-title">{t('settings.title')}</h2>
               <button
@@ -158,6 +208,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
               </button>
             </div>
 
+            <p className="settings-panel__preview" data-testid="settings-preview">
+              <span>{preview ? t('settings.previewNow') : t('settings.previewSample')}</span>
+              <strong>
+                {previewTemperature} · {previewWind}
+              </strong>
+            </p>
+
             <div className="settings-panel__content">
               {/* Language Setting */}
               <section className="settings-section">
@@ -175,9 +232,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     onClick={() => handleLanguageChange('tr')}
                     aria-pressed={settings.language === 'tr'}
                   >
-                    <span className="settings-option__flag" aria-hidden="true">
-                      TR
-                    </span>
                     <span>Türkçe</span>
                   </button>
                   <button
@@ -186,9 +240,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     onClick={() => handleLanguageChange('en')}
                     aria-pressed={settings.language === 'en'}
                   >
-                    <span className="settings-option__flag" aria-hidden="true">
-                      EN
-                    </span>
                     <span>English</span>
                   </button>
                 </div>

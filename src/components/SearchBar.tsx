@@ -18,6 +18,7 @@ import React, {
   type ChangeEvent,
 } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
+import { getCityMetadata } from '../constants/cityMetadata';
 import { normalizeCitySearchText, TURKIYE_SEHIRLERI } from '../constants/cities';
 
 interface SearchBarProps {
@@ -46,6 +47,39 @@ const ClockIcon = () => (
     <path d="M12 7v5l3 2" />
   </svg>
 );
+
+const PinIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11Z" />
+    <circle cx="12" cy="10" r="2.3" />
+  </svg>
+);
+
+/** "34 · Marmara" for a province; shown visually only, so the option name stays the city. */
+function suggestionMeta(city: string): string | undefined {
+  const metadata = getCityMetadata(city);
+  return metadata
+    ? `${String(metadata.plateCode).padStart(2, '0')} · ${metadata.region}`
+    : undefined;
+}
+
+/** Wraps the part of `text` that matches `query` (accent- and case-insensitive) in <mark>. */
+function highlightMatch(text: string, query: string): React.ReactNode {
+  const needle = normalizeCitySearchText(query.trim());
+  if (!needle) return text;
+  // Normalization keeps one character per character for Turkish names, so indices line up.
+  const haystack = normalizeCitySearchText(text);
+  const start = haystack.indexOf(needle);
+  if (start < 0 || haystack.length !== text.length) return text;
+  const end = start + needle.length;
+  return (
+    <>
+      {text.slice(0, start)}
+      <mark className="search-bar__match">{text.slice(start, end)}</mark>
+      {text.slice(end)}
+    </>
+  );
+}
 
 const SearchIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
@@ -316,18 +350,22 @@ const SearchBarComponent = forwardRef<HTMLInputElement, SearchBarProps>(function
                   } ${item.isRecent ? 'is-recent' : ''}`}
                   role="option"
                   aria-selected={index === highlightedIndex}
+                  data-meta={suggestionMeta(item.city)}
                   onPointerDown={event => {
                     event.preventDefault();
                     selectItem(item.city, item.isRecent);
                   }}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
-                  {item.isRecent && (
-                    <span className="search-bar__recent-icon" aria-hidden="true">
-                      <ClockIcon />
-                    </span>
-                  )}
-                  {item.city}
+                  <span
+                    className={item.isRecent ? 'search-bar__recent-icon' : 'search-bar__place-icon'}
+                    aria-hidden="true"
+                  >
+                    {item.isRecent ? <ClockIcon /> : <PinIcon />}
+                  </span>
+                  <span className="search-bar__suggestion-name">
+                    {highlightMatch(item.city, value)}
+                  </span>
                 </li>
               ))}
             </ul>

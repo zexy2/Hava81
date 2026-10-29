@@ -88,7 +88,11 @@ export const buildDecisionSnapshot = (
   };
 };
 
-export const getDecisionSnapshot = (input: DecisionSnapshotInput): DecisionSnapshot => {
+export const getDecisionSnapshot = (
+  input: DecisionSnapshotInput,
+  /** Reference instant; defaults to the wall clock. Pass the rendered clock to stay in sync. */
+  nowMs: number = Date.now()
+): DecisionSnapshot => {
   const airKey = (input.airQuality as object | undefined) ?? NO_AIR;
   const hourlyAirKey = (input.airQualityHourly as object | undefined) ?? NO_HOURLY_AIR;
   let byHourly = cache.get(input.weather);
@@ -97,7 +101,7 @@ export const getDecisionSnapshot = (input: DecisionSnapshotInput): DecisionSnaps
   if (!byAir) byHourly.set(input.hourly, (byAir = new WeakMap()));
   let byHourlyAir = byAir.get(airKey);
   if (!byHourlyAir) byAir.set(airKey, (byHourlyAir = new WeakMap()));
-  const now = Date.now();
+  const now = nowMs;
   const cached = byHourlyAir.get(hourlyAirKey);
   if (cached && (cached.expiresAt === null || now < cached.expiresAt)) return cached.snapshot;
 

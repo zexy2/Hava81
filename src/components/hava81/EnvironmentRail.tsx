@@ -4,6 +4,11 @@ import { useSettings } from '../../context';
 import type { AirQuality, NormalizedWeatherData } from '../../types';
 import { getOpenWeatherAqiLabelKey } from '../../utils/airQuality';
 import { getCurrentWeatherFreshness } from '../../utils/currentWeatherFreshness';
+import { getCityMetadata } from '../../constants/cityMetadata';
+import { formatCityClock } from '../../utils/format';
+import { AqiScale, SunArc, WindCompass } from './instruments/EnvironmentInstruments';
+import { TurkeyLocator } from './instruments/TurkeyLocator';
+import './instruments/instruments.css';
 import './EnvironmentRail.css';
 
 const WIND_DIRECTION_KEYS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
@@ -12,47 +17,6 @@ export interface EnvironmentRailProps {
   airQuality?: AirQuality;
   onOpenMap: () => void;
   mapExpanded: boolean;
-}
-
-function DaylightIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M3 18.5h18" />
-      <path d="M7.5 18.5a4.5 4.5 0 0 1 9 0" />
-      <path d="M12 4.5v3M5.6 8.1l2.1 2.1M18.4 8.1l-2.1 2.1" />
-    </svg>
-  );
-}
-
-function WindIcon({ direction }: { direction: number }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <circle cx="12" cy="12" r="8.5" />
-      <g transform={`rotate(${direction} 12 12)`}>
-        <path d="M12 4v15" />
-        <path d="m8.8 7.5 3.2-3.5 3.2 3.5" />
-      </g>
-    </svg>
-  );
-}
-
-function AirIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M3.5 8.5h10.8c1.8 0 2.7-1 2.7-2.2 0-1.1-.8-2-2-2" />
-      <path d="M3.5 12h15.2c1.2 0 2.3.9 2.3 2.1 0 1.3-1 2.4-2.5 2.4" />
-      <path d="M3.5 15.5h8.8c1.6 0 2.7 1 2.7 2.3 0 1.2-.9 2.2-2.2 2.2" />
-    </svg>
-  );
-}
-
-function MapIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="m3.5 6 5-2.5 7 2.5 5-2.5v14.5l-5 2.5-7-2.5-5 2.5z" />
-      <path d="M8.5 3.5v14.5M15.5 6v14.5" />
-    </svg>
-  );
 }
 
 function isValidDate(value: Date): boolean {
@@ -136,15 +100,10 @@ export function EnvironmentRail({
     weather.meta.timezoneOffsetSeconds,
   ]);
 
-  const timeFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'UTC',
-      }),
-    [locale]
-  );
+  const timeFormatter = {
+    format: (date: Date) =>
+      formatCityClock(date, { language: settings.language, timezoneOffsetSeconds: 0 }),
+  };
 
   const numberFormatter = useMemo(
     () =>
@@ -162,6 +121,25 @@ export function EnvironmentRail({
     ? timeFormatter.format(atLocationTime(weather.sunset))
     : t('weather.noData');
 
+  // Outside daylight the useful next event is the sunrise, not a sunset that already passed.
+  // Only today's pair is known, so after sunset the next sunrise is approximated as +24h.
+  const nowMs = Date.now();
+  const showSunrise =
+    hasValidDaylight && (nowMs >= weather.sunset.getTime() || nowMs < weather.sunrise.getTime());
+  const nextSunrise =
+    showSunrise && nowMs >= weather.sunset.getTime()
+      ? new Date(weather.sunrise.getTime() + 86_400_000)
+      : weather.sunrise;
+  const nextSunriseTime = hasValidDaylight
+    ? timeFormatter.format(atLocationTime(nextSunrise))
+    : t('weather.noData');
+
+  const daylightProgress = hasValidDaylight
+    ? (nowMs - weather.sunrise.getTime()) / (weather.sunset.getTime() - weather.sunrise.getTime())
+    : 0;
+  const cityMetadata = getCityMetadata(weather.cityName);
+  const cityCoordinates = cityMetadata?.coordinates ?? weather.coordinates;
+
   const daylightLength = useMemo(() => {
     if (!hasValidDaylight) return t('weather.noData');
 
@@ -176,10 +154,11 @@ export function EnvironmentRail({
   }, [hasValidDaylight, t, weather.sunrise, weather.sunset]);
 
   const hasValidWind =
-    currentFreshness.fresh && Number.isFinite(weather.windDirection) && Number.isFinite(weather.windSpeed);
+    currentFreshness.fresh &&
+    Number.isFinite(weather.windDirection) &&
+    Number.isFinite(weather.windSpeed);
   const normalizedDirection = hasValidWind ? ((weather.windDirection % 360) + 360) % 360 : 0;
   const directionKey = WIND_DIRECTION_KEYS[Math.round(normalizedDirection / 45) % 8];
-  const directionLabel = hasValidWind ? t(`wind.directions.${directionKey}`) : t('weather.noData');
   const windSpeed = hasValidWind
     ? `${numberFormatter.format(convertWindSpeed(weather.windSpeed))} ${getWindSpeedSymbol()}`
     : t('weather.noData');
@@ -207,13 +186,17 @@ export function EnvironmentRail({
 
   return (
     <section className="environment-rail" aria-label={sectionLabel}>
-      <div className="environment-rail__module">
+      <div className="environment-rail__module" data-testid="instrument-daylight">
         <span className="environment-rail__icon">
-          <DaylightIcon />
+          <SunArc progress={daylightProgress} night={showSunrise} />
         </span>
-        <span className="environment-rail__label">{t('daylight.sunset')}</span>
+        <span className="environment-rail__label">
+          {showSunrise ? t('daylight.nextSunrise') : t('daylight.sunset')}
+        </span>
         <strong className="environment-rail__value">
-          {hasValidDaylight ? (
+          {showSunrise ? (
+            <time dateTime={nextSunrise.toISOString()}>{nextSunriseTime}</time>
+          ) : hasValidDaylight ? (
             <time dateTime={weather.sunset.toISOString()}>{sunsetTime}</time>
           ) : (
             sunsetTime
@@ -222,6 +205,12 @@ export function EnvironmentRail({
         <span className="environment-rail__detail" role={daylightIsStale ? 'status' : undefined}>
           {daylightIsStale ? (
             t('daylight.stale')
+          ) : showSunrise ? (
+            <>
+              {t('daylight.sunset')}{' '}
+              <time dateTime={weather.sunset.toISOString()}>{sunsetTime}</time> ·{' '}
+              {t('daylight.dayLength')} · {daylightLength}
+            </>
           ) : (
             <>
               {t('daylight.sunrise')}{' '}
@@ -236,41 +225,44 @@ export function EnvironmentRail({
         </span>
       </div>
 
-      <div className="environment-rail__module">
+      <div className="environment-rail__module" data-testid="instrument-wind">
         <span className="environment-rail__icon">
-          <WindIcon direction={normalizedDirection} />
+          <WindCompass
+            direction={normalizedDirection}
+            active={hasValidWind}
+            northLabel={t('wind.directions.N')}
+          />
         </span>
         <span className="environment-rail__label">{t('weather.wind')}</span>
-        <strong className="environment-rail__value">
-          {directionLabel} · {windSpeed}
-        </strong>
+        {/* The speed leads; the direction is spelled out below, never a lone letter. */}
+        <strong className="environment-rail__value">{windSpeed}</strong>
         <span
           className="environment-rail__detail"
           role={currentFreshness.fresh ? undefined : 'status'}
         >
           {hasValidWind
-            ? `${Math.round(normalizedDirection)}°`
+            ? t('wind.fromDirection', {
+                direction: t(`wind.from.${directionKey}`),
+                degrees: Math.round(normalizedDirection),
+              })
             : currentFreshness.fresh
               ? t('weather.noData')
               : t('weather.staleCurrentData')}
         </span>
       </div>
 
-      <div className="environment-rail__module">
+      <div className="environment-rail__module" data-testid="instrument-aqi">
         <span className="environment-rail__icon">
-          <AirIcon />
+          <AqiScale aqi={airQualityLabelKey && freshAirQuality ? freshAirQuality.aqi : null} />
         </span>
         <span className="environment-rail__label">{t('weather.airQuality')}</span>
         <strong className="environment-rail__value">
-          {airQualityLabelKey ? `${freshAirQuality?.aqi} / 5` : '—'}
+          {airQualityLabelKey ? airQualityLabel : '—'}
         </strong>
-        <span
-          className="environment-rail__detail"
-          role={airQualityIsStale ? 'status' : undefined}
-        >
+        <span className="environment-rail__detail" role={airQualityIsStale ? 'status' : undefined}>
           {freshAirQuality && airQualityLabelKey ? (
             <>
-              {`${airQualityLabel} · ${t('airQuality.pm25')} ${numberFormatter.format(
+              {`${t('airQuality.index')} ${freshAirQuality.aqi}/5 · ${t('airQuality.pm25')} ${numberFormatter.format(
                 freshAirQuality.pm25
               )} µg/m³`}
               {airQualityObservedTime && airQualityObservedAt ? (
@@ -296,15 +288,18 @@ export function EnvironmentRail({
         onClick={onOpenMap}
         aria-expanded={mapExpanded}
         aria-controls={mapExpanded ? 'weather-map-region' : undefined}
+        data-testid="instrument-map"
       >
         <span className="environment-rail__icon">
-          <MapIcon />
+          {cityCoordinates ? (
+            <TurkeyLocator lat={cityCoordinates.lat} lon={cityCoordinates.lon} />
+          ) : null}
         </span>
         <span className="environment-rail__label">{t('common.map')}</span>
         <strong className="environment-rail__value">
           {mapExpanded ? t('weather.hideMap') : t('weather.showMap')}
         </strong>
-        <span className="environment-rail__detail">{weather.cityName}</span>
+        <span className="environment-rail__detail">{cityMetadata?.name ?? weather.cityName}</span>
       </button>
     </section>
   );

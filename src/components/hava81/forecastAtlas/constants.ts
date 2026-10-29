@@ -17,3 +17,7 @@ export const PRECIPITATION_THRESHOLD = 0.35;
 export const HOUR_MS = 60 * 60_000;
 export const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 export const RAIN_GAUGE_CELLS = 5;
+
+/** Hourly rain becomes visible (gauge, label, summary) from this chance or amount (mm) up. */
+export const HOURLY_RAIN_CHANCE = 0.2;
+export const HOURLY_RAIN_MM = 0.2;

@@ -1,3 +1,5 @@
+import { formatCityClock } from './format';
+
 interface BestWindowTimeOptions {
   start: Date;
   end: Date;
@@ -31,22 +33,15 @@ export function formatBestWindowTime({
   const tomorrowKey = new Date(Date.parse(`${todayKey}T00:00:00.000Z`) + DAY_MS)
     .toISOString()
     .slice(0, 10);
-  // Other English hourly cards display 12-hour clocks (e.g. 11 PM).
-  // Use the same clock here while preserving tr-TR's 24-hour format and
-  // the en-GB style already used for explicit calendar dates.
+  // One clock style everywhere: TR "10:00", EN compact "10 AM".
   const english = language.startsWith('en');
-  const timeFormatter = new Intl.DateTimeFormat(english ? 'en-US' : 'tr-TR', {
-    hour: english ? 'numeric' : '2-digit',
-    minute: '2-digit',
-    hour12: english,
-    timeZone: 'UTC',
-  });
   const dateFormatter = new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'short',
     timeZone: 'UTC',
   });
-  const clock = (date: Date) => timeFormatter.format(local(date));
+  const clock = (date: Date) => formatCityClock(date, { language, timezoneOffsetSeconds });
+  const period = (date: Date) => (local(date).getUTCHours() < 12 ? 'AM' : 'PM');
   const prefix = (date: Date) => {
     const key = dayKey(date);
     if (key === todayKey) return todayLabel;
@@ -61,9 +56,7 @@ export function formatBestWindowTime({
   const startsToday = dayKey(start) === todayKey;
   // Repeating AM/PM needlessly wraps the narrow hero chip. Omit it from the
   // first clock only when both endpoints share the same local day and period.
-  const samePeriod = english && sameLocalDay &&
-    timeFormatter.formatToParts(local(start)).find(part => part.type === 'dayPeriod')?.value ===
-      timeFormatter.formatToParts(local(end)).find(part => part.type === 'dayPeriod')?.value;
+  const samePeriod = english && sameLocalDay && period(start) === period(end);
   const conciseStart = samePeriod ? startTime.replace(/\s*(?:AM|PM)$/, '') : startTime;
 
   if (sameInstant) return startsToday ? startTime : `${prefix(start)} ${startTime}`;

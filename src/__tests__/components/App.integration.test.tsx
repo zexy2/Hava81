@@ -346,12 +346,14 @@ describe('Hava81 app integration', () => {
         { timeout: 5_000 }
       )
     ).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'açık' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'çoğunlukla açık' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
-      'href',
-      'https://open-meteo.com/'
-    );
+    expect(screen.getByRole('img', { name: 'Açık' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Çoğunlukla açık' })).toBeInTheDocument();
+    // Credited in the source line and in the footer: every credit points at the provider.
+    const openMeteoLinks = screen.getAllByRole('link', { name: 'Open-Meteo' });
+    expect(openMeteoLinks.length).toBeGreaterThanOrEqual(1);
+    for (const link of openMeteoLinks) {
+      expect(link).toHaveAttribute('href', 'https://open-meteo.com/');
+    }
     expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
       'href',
       'https://creativecommons.org/licenses/by/4.0/'
@@ -360,13 +362,21 @@ describe('Hava81 app integration', () => {
       'Hava81 tarafından biçimlendirildi'
     );
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
-    expect(screen.getByText('3/5 · Orta')).toBeInTheDocument();
+    // Air quality is shown once, in the environment rail.
+    expect(screen.getByText(/Endeks 3\/5/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hava81' })).toHaveAttribute('href', '/');
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
     ).toBeInTheDocument();
-    expect(screen.getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
-    expect(screen.getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
+    // The search shortcut is advertised in the footer and inside the header search field.
+    const footer = screen.getByTestId('app-footer');
+    expect(within(footer).getByText('Ctrl+K', { selector: 'kbd' })).toBeInTheDocument();
+    expect(within(footer).getByText('Ctrl+,', { selector: 'kbd' })).toBeInTheDocument();
+    expect(
+      within(document.querySelector('.atlas-header') as HTMLElement).getByText('Ctrl+K', {
+        selector: 'kbd',
+      })
+    ).toBeInTheDocument();
     expect(service.getForecast).toHaveBeenCalledWith(
       41.01,
       28.97,
@@ -383,7 +393,10 @@ describe('Hava81 app integration', () => {
     // The lightweight alert engine stays mounted so opted-in notifications keep running on Today.
     expect(container.querySelector('.decision-alerts')).not.toBeNull();
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /planla’yı aç/i }));
+    expect(container.querySelector('.atlas-plan-entry')).toBeNull();
+    await user.click(
+      container.querySelector<HTMLButtonElement>('.atlas-plan-button') as HTMLButtonElement
+    );
     expect(
       await screen.findByRole('heading', { name: /gün planı/i }, { timeout: 3_000 })
     ).toBeInTheDocument();
