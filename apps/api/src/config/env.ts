@@ -23,6 +23,13 @@ export const envSchema = z.object({
   MET_NORWAY_FORECAST_URL: z
     .url()
     .default('https://api.met.no/weatherapi/locationforecast/2.0/complete'),
+  // Copernicus dust, pollen and sea grid published by .github/workflows/context-grid.yml.
+  // Empty turns it off; context then reports UV only.
+  CONTEXT_GRID_URL: z
+    .union([z.literal(''), z.url()])
+    .default(
+      'https://github.com/zexy2/Hava81/releases/download/context-grid-latest/context-grid.json'
+    ),
   OPEN_METEO_FORECAST_BASE_URL: z.url().default('https://api.open-meteo.com'),
   OPEN_METEO_AIR_QUALITY_BASE_URL: z.url().default('https://air-quality-api.open-meteo.com'),
   OPEN_METEO_MARINE_BASE_URL: z.url().default('https://marine-api.open-meteo.com'),

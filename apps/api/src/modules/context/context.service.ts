@@ -124,7 +124,7 @@ export const finiteMaxForWindow = (
 };
 
 export interface ContextSignals {
-  provider: 'Open-Meteo' | 'MET Norway';
+  provider: 'Open-Meteo' | 'MET Norway' | 'MET Norway + Copernicus';
   fetchedAt: string;
   attribution: string;
   uvIndexMax?: number;
