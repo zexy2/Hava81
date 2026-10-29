@@ -42,6 +42,9 @@ interface Props {
   contextSignals?: ContextSignals | null;
 }
 
+const groupOf = (activity: ActivityKind) =>
+  ACTIVITY_GROUPS.find(group => group.activities.includes(activity))?.id;
+
 /** Every activity, in its group order; the sea group appears only where there is a sea. */
 const ACTIVITY_GROUPS: ReadonlyArray<{ id: string; activities: ActivityKind[] }> = [
   { id: 'move', activities: ['walk', 'run', 'bike', 'dog'] },
@@ -270,6 +273,15 @@ export function ActivityPlanner({
     profile.activities.length === 0 && freshness.fresh && !periodEnded
       ? rankActivityPlans(availableActivities.map(planFor))
           .filter(plan => !plan.windowUnavailable && plan.bestWindowRange)
+          // A real choice: the best of each group first (move, outdoors, home, road).
+          .map((plan, index, ranked) => ({
+            plan,
+            repeat: ranked
+              .slice(0, index)
+              .some(other => groupOf(other.activity) === groupOf(plan.activity)),
+          }))
+          .sort((x, y) => Number(x.repeat) - Number(y.repeat))
+          .map(entry => entry.plan)
           .slice(0, 3)
       : [];
   // What the personal settings change: the same plans with the default preferences.
