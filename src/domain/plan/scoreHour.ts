@@ -8,6 +8,9 @@ import {
   scoreWeatherWindow,
   SEVERE_WEATHER_PENALTY,
   wmoSeverityPenalty,
+  applyWarningCaps,
+  CAUTION_MAX,
+  GOOD_MAX,
 } from '../decision/scoreWeatherWindow';
 import { getPlanConfidence } from './confidence';
 import { getPlanProfile } from './profiles';
@@ -370,6 +373,17 @@ export const scoreHour = ({
       return !profile.heatIsBeneficial || apparent >= 40;
     return true;
   });
+  // "Doesn't bother me": the mild wind/rain notices go, the serious ones always stay.
+  if (tolerance.wind === 'high') {
+    for (const mild of ['windy', 'gusty-wind'] as const) {
+      const at = reasons.indexOf(mild);
+      if (at >= 0) reasons.splice(at, 1);
+    }
+  }
+  if (tolerance.rain === 'high') {
+    const at = reasons.indexOf('rain-risk');
+    if (at >= 0) reasons.splice(at, 1);
+  }
   if (muggyPenalty >= 6) reasons.push('muggy');
   if (dustPenalty > 0 && (dustUgM3 as number) >= DUST_EVENT_UGM3) reasons.push('dust');
   if (pollenPenalty > 0 && (pollenGrainsM3 as number) >= POLLEN_HIGH) reasons.push('pollen');
@@ -409,9 +423,20 @@ export const scoreHour = ({
   // Intent weighting must not erase the shared model's evidence-completeness cap. A finite but
   // invalid ratio/amount is unknown, just like a missing field, and cannot support an excellent
   // hour. For a rain-only plan (laundry, picnic) unknown rain cannot even look good.
-  if (!hasRainEvidence) score = Math.min(score, profile.requiresRainEvidence ? 74 : 89);
-  // Match the shared model's label invariant even when intent weighting softens a surfaced risk.
-  if (reasons.length > 0) score = Math.min(score, 96);
+  if (!hasRainEvidence)
+    score = Math.min(score, profile.requiresRainEvidence ? CAUTION_MAX : GOOD_MAX);
+  // Same rule as the shared model: the band never contradicts the warning beside it. A
+  // personal tolerance softens comfort penalties, never the band a named risk belongs to.
+  score = applyWarningCaps(score, {
+    apparentTemperature: apparent,
+    precipitationProbability: base.precipitationProbability,
+    precipitationMm: base.precipitationMm,
+    weatherCode: point.weatherCode,
+    // Laundry: heat dries clothes; the warning stays visible, it just does not set the band.
+    reasons: profile.heatIsBeneficial
+      ? [...new Set(reasons)].filter(reason => reason !== 'extreme-heat' && reason !== 'heat')
+      : [...new Set(reasons)],
+  });
 
   return {
     intent,

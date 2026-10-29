@@ -40,7 +40,8 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
       precipitation: 0.9,
       wind: 1.1,
       'air-quality': 1.45,
-      uv: 1.15,
+      // The general UV penalty is halved (mitigable); running keeps its former UV weight.
+      uv: 2.3,
     },
     maxWindSpeedMs: 12,
     maxWindGustMs: 18,
@@ -100,7 +101,8 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
       precipitation: 1.25,
       wind: 1.15,
       'air-quality': 1.5,
-      uv: 1.25,
+      // Children cannot judge sun exposure themselves: keep their former UV weight.
+      uv: 2.5,
       'severe-weather': 1.4,
     },
     maxWindSpeedMs: 10,

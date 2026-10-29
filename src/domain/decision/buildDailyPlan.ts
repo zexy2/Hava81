@@ -288,7 +288,7 @@ export const buildDailyPlan = ({
   const eligibleHorizon = horizonSlots.filter(isEligible);
   const scoringSlots = eligibleHorizon.length ? eligibleHorizon : horizonSlots;
   const cadenceMs = forecastCadenceMs(slots);
-  const weighted = weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs);
+  const weighted = weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs, now?.getTime());
   const score = aggregateHorizonScore(weighted);
   // "Depends on the rain": the same scoring hours under both outcomes of the open showers.
   const indexOf = new Map(slots.map((slot, index) => [slot, index]));

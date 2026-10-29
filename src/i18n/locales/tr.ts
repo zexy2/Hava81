@@ -301,6 +301,7 @@ export const tr = {
       bestTime: 'En iyi hava saati',
     },
     dailyPlan: {
+      scoreScope12h: 'Önümüzdeki 12 saat · genel',
       headline: {
         best: 'En iyi zaman {{start}}–{{end}}',
         even: 'Gün boyu benzer',
@@ -504,6 +505,7 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     activities: {
+      personalEffect: 'Tercihlerinle {{value}}',
       eyebrow: 'Kişisel plan',
       title: 'Bugün ne yapacaksın?',
       subtitle: 'En fazla üç aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',

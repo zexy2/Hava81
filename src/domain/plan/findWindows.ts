@@ -1,4 +1,4 @@
-import { getScoreBand } from '../decision/scoreWeatherWindow';
+import { getScoreBand, GOOD_MAX } from '../decision/scoreWeatherWindow';
 import { worstPlanConfidence } from './confidence';
 import type { PlanAvailability, PlanHourScore, PlanWindow } from './types';
 
@@ -131,7 +131,7 @@ export const findWindows = (
     const reasons = [...new Set(slots.flatMap(slot => slot.reasons))];
     // A window aggregates multiple hours; one risky slot must not disappear in the average and
     // let the entire window receive the excellent band.
-    const score = reasons.length > 0 ? Math.min(96, averageScore) : averageScore;
+    const score = reasons.length > 0 ? Math.min(GOOD_MAX, averageScore) : averageScore;
     candidates.push({
       start,
       end,

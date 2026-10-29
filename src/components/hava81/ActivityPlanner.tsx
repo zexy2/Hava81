@@ -180,6 +180,31 @@ export function ActivityPlanner({
         })
       )
     : [];
+  // What the personal settings change: the same plans with the default preferences.
+  const hasPersonalSettings =
+    profile.temperatureSensitivity !== 'balanced' ||
+    (profile.windTolerance ?? 'normal') !== 'normal' ||
+    (profile.rainTolerance ?? 'normal') !== 'normal' ||
+    profile.pollenAllergy === true;
+  const defaultScoreOf = new Map(
+    hasPersonalSettings && freshness.fresh
+      ? plans.map(plan => [
+          plan.activity,
+          buildActivityPlan({
+            activity: plan.activity,
+            weather,
+            hourly,
+            airQuality,
+            airQualityHourly,
+            sensitivity: 'balanced',
+            preferredStart: profile.activityStart,
+            preferredEnd: profile.activityEnd,
+            now: new Date(),
+            contextSignals,
+          }).score,
+        ])
+      : []
+  );
 
   useEffect(() => {
     const resyncFreshness = () => setFreshnessRevision(value => value + 1);
@@ -480,6 +505,17 @@ export function ActivityPlanner({
                           })
                         : t('hava81.activities.noWindow')}
                   </p>
+                  {(() => {
+                    const baseline = defaultScoreOf.get(plan.activity);
+                    const delta = baseline === undefined ? 0 : plan.score - baseline;
+                    return Math.abs(delta) >= 2 && !plan.windowUnavailable ? (
+                      <small className="activity-card__personal">
+                        {t('hava81.activities.personalEffect', {
+                          value: `${delta > 0 ? '+' : '−'}${Math.abs(delta)}`,
+                        })}
+                      </small>
+                    ) : null;
+                  })()}
                   {!plan.windowUnavailable && Math.abs(plan.activityImpact) >= 3 ? (
                     <small className="activity-card__vs-general">
                       {t('hava81.activities.vsGeneral', {

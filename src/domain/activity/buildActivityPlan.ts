@@ -18,7 +18,7 @@ import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
 import { isDaylightPoint } from '../decision/eligibility';
 import { assessEvenDay, findBestWindowRange } from '../decision/bestWindowRange';
 import { explainContrast, explainWindow } from '../decision/explain';
-import { getScoreBand } from '../decision/scoreWeatherWindow';
+import { getScoreBand, GOOD_MAX } from '../decision/scoreWeatherWindow';
 import type { DecisionReasonCode, Hava81ScoreFactor, ScoreFactorImpact } from '../decision/types';
 import { findWindows } from '../plan/findWindows';
 import { PLAN_PROFILES } from '../plan/profiles';
@@ -367,7 +367,9 @@ export const buildActivityPlan = ({
   const usableEvaluated = evaluatedSlots.filter(usableTime);
   const scoringSlots = usableEvaluated.length ? usableEvaluated : evaluatedSlots;
   const cadenceMs = forecastCadenceMs(slots);
-  const rawScore = aggregateHorizonScore(weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs));
+  const rawScore = aggregateHorizonScore(
+    weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs, scoringNow.getTime())
+  );
   const pointOf = new Map(slots.map((slot, index) => [slot, points[index]]));
   const scoreRange = rainScenarioRange(
     scoringSlots.map(slot => pointOf.get(slot)!),
@@ -379,7 +381,8 @@ export const buildActivityPlan = ({
     weightHorizonSlots(
       scoringSlots.map(slot => ({ time: slot.time, score: slot.baselineScore })),
       horizonEndMs,
-      cadenceMs
+      cadenceMs,
+      scoringNow.getTime()
     )
   );
   // Compare against the hours of day the activity could use in the same search window.
@@ -410,7 +413,7 @@ export const buildActivityPlan = ({
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason]) => reason);
-  const score = reasons.length > 0 ? Math.min(rawScore, 96) : rawScore;
+  const score = reasons.length > 0 ? Math.min(rawScore, GOOD_MAX) : rawScore;
 
   return {
     activity,

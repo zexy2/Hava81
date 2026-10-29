@@ -302,7 +302,8 @@ function FreshDailyPlanPanel({
             <strong>{plan.score}</strong>
             <span>/100</span>
             <small>
-              {t('hava81.scoreScope.day')} · {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
+              {t('hava81.dailyPlan.scoreScope12h')} ·{' '}
+              {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
             </small>
           </div>
         </div>

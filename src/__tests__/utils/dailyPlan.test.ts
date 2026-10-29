@@ -127,7 +127,7 @@ describe('Hava81 daily decision engine v2', () => {
     });
 
     expect(unknownRain.precipitationProbability).toBeUndefined();
-    expect(unknownRain.score).toBe(89);
+    expect(unknownRain.score).toBe(84);
     expect(unknownRain.band).toBe('good');
     expect(probabilityOnly.score).toBe(100);
     expect(probabilityOnly.band).toBe('excellent');

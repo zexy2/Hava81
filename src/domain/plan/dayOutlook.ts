@@ -230,7 +230,9 @@ export const buildDayOutlook = ({
     const usableHours = usable.length * (cadenceMs / HOUR_MS);
     if (usableHours < MIN_USABLE_HOURS) continue;
     const dayEndMs = start.getTime() + DAY_MS;
-    const score = aggregateHorizonScore(weightHorizonSlots(usable, dayEndMs, cadenceMs));
+    const score = aggregateHorizonScore(
+      weightHorizonSlots(usable, dayEndMs, cadenceMs, now.getTime())
+    );
     const pointOf = new Map(slots.map((slot, index) => [slot, points[index]]));
     const scoreRange = rainScenarioRange(
       usable.map(slot => pointOf.get(slot)!),

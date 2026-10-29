@@ -1913,7 +1913,12 @@
   .app
     .atlas-plan-view
     .activity-card
-    :is(.activity-card__impact, .activity-card__why, .activity-card__vs-general) {
+    :is(
+      .activity-card__impact,
+      .activity-card__why,
+      .activity-card__vs-general,
+      .activity-card__personal
+    ) {
     margin: 0;
     color: var(--plan-soft);
     font-size: 0.875rem;

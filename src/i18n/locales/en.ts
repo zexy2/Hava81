@@ -298,6 +298,7 @@ export const en = {
       bestTime: 'Best weather time',
     },
     dailyPlan: {
+      scoreScope12h: 'Next 12 hours · overall',
       headline: {
         best: 'Best time {{start}}–{{end}}',
         even: 'Much the same all day',
@@ -501,6 +502,7 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     activities: {
+      personalEffect: 'With your preferences {{value}}',
       eyebrow: 'Personal plan',
       title: 'What are you doing today?',
       subtitle:
