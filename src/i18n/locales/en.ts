@@ -502,6 +502,11 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     activities: {
+      compare: {
+        title: 'Side by side',
+        none: 'No good hour',
+        axis: 'Each square is an hour · faded ones are not recommended',
+      },
       period: {
         label: 'When?',
         now: 'Now',
@@ -527,8 +532,7 @@ export const en = {
       personalEffect: 'With your preferences {{value}}',
       eyebrow: 'Personal plan',
       title: 'What are you doing today?',
-      subtitle:
-        'Pick up to three activities and Hava81 will re-score the same weather for your plan.',
+      subtitle: 'Pick activities and Hava81 re-scores the same weather for your plan.',
       choose: 'Activity selection',
       forecastStale:
         'Forecast data is no longer fresh. Activity recommendations are hidden until new data arrives.',

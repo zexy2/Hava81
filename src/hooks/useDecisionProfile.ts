@@ -46,7 +46,7 @@ const deserializeDecisionProfile = (serialized: string): DecisionProfile => {
   let activities = DEFAULT_PROFILE.activities;
   if (Array.isArray(candidate.activities)) {
     const validActivities = candidate.activities.filter(isActivityKind);
-    const uniqueActivities = [...new Set(validActivities)].slice(0, 3);
+    const uniqueActivities = [...new Set(validActivities)];
     activities =
       candidate.activities.length === 0 || uniqueActivities.length > 0
         ? uniqueActivities
@@ -82,7 +82,6 @@ export function useDecisionProfile() {
     (activity: ActivityKind) => {
       setProfile(current => {
         const exists = current.activities.includes(activity);
-        if (!exists && current.activities.length >= 3) return current;
         const activities = exists
           ? current.activities.filter(item => item !== activity)
           : [...current.activities, activity];

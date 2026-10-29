@@ -505,6 +505,11 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     activities: {
+      compare: {
+        title: 'Yan yana',
+        none: 'Uygun saat yok',
+        axis: 'Her kare bir saat · soluk kareler önerilmez',
+      },
       period: {
         label: 'Ne zaman?',
         now: 'Şimdi',
@@ -530,7 +535,7 @@ export const tr = {
       personalEffect: 'Tercihlerinle {{value}}',
       eyebrow: 'Kişisel plan',
       title: 'Bugün ne yapacaksın?',
-      subtitle: 'En fazla üç aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
+      subtitle: 'Aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
       choose: 'Aktivite seçimi',
       forecastStale:
         'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar aktivite önerileri gösterilmiyor.',

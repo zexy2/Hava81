@@ -1,3 +1,4 @@
+import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
 import { supportsMarineContext } from '../../utils/marineCities';
 import { formatCityTime, formatNumber } from '../../utils/format';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
@@ -461,15 +462,16 @@ export function ActivityPlanner({
         ))}
       </div>
 
+      {profile.activities.length === 0 ? suggestionsView : null}
+
       <div
         className="activity-planner__chips"
         role="group"
         aria-label={t('hava81.activities.choose')}
-        aria-describedby={profile.activities.length >= 3 ? 'activity-selection-limit' : undefined}
       >
         {availableActivities.map(activity => {
           const active = profile.activities.includes(activity);
-          const disabled = !active && profile.activities.length >= 3;
+          const disabled = false;
           return (
             <button
               key={activity}
@@ -598,14 +600,42 @@ export function ActivityPlanner({
           </div>
         </div>
       </details>
-      {profile.activities.length >= 3 ? (
-        <p
-          id="activity-selection-limit"
-          className="activity-planner__selection-limit"
-          role="status"
-        >
-          {t('hava81.activities.limitReached')}
-        </p>
+      {plans.length > 1 ? (
+        <section className="activity-compare" aria-labelledby="activity-compare-title">
+          <h3 id="activity-compare-title">{t('hava81.activities.compare.title')}</h3>
+          <ol>
+            {rankActivityPlans(plans).map(plan => (
+              <li key={plan.activity} className="activity-compare__row">
+                <ActivityGlyph kind={plan.activity} />
+                <span className="activity-compare__name">
+                  {t(`hava81.activities.names.${plan.activity}`)}
+                </span>
+                <span className="activity-compare__strip" aria-hidden="true">
+                  {plan.slots.slice(0, 24).map(slot => (
+                    <span
+                      key={slot.time.getTime()}
+                      className={`activity-compare__cell activity-compare__cell--${
+                        slot.eligible === false ? 'off' : getScoreBand(slot.score)
+                      }`}
+                    />
+                  ))}
+                </span>
+                <span className="activity-compare__range">
+                  {plan.bestWindowRange && !plan.windowUnavailable
+                    ? `${formatDayTime(plan.bestWindowRange.start.time)}–${formatTime(plan.bestWindowRange.endTime)}`
+                    : t('hava81.activities.compare.none')}
+                </span>
+                <span className="activity-compare__score">{plan.score}</span>
+              </li>
+            ))}
+          </ol>
+          {plans[0]?.slots[0] ? (
+            <p className="activity-compare__axis" aria-hidden="true">
+              <span>{formatDayTime(plans[0].slots[0].time)}</span>
+              <span>{t('hava81.activities.compare.axis')}</span>
+            </p>
+          ) : null}
+        </section>
       ) : null}
 
       {!freshness.fresh && profile.activities.length > 0 ? (
@@ -786,9 +816,7 @@ export function ActivityPlanner({
             })}
           </div>
         </>
-      ) : (
-        suggestionsView
-      )}
+      ) : null}
       <p className="activity-planner__note">{t('hava81.activities.note')}</p>
       {airQualityHourly && showHourlyAqiSource ? (
         <p className="activity-planner__note">
