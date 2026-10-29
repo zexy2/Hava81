@@ -959,6 +959,25 @@
     background: rgb(10 24 42 / 92%);
   }
 
+  @media (min-width: 64rem) {
+    .app .atlas-plan-view > .atlas-plan-view__header > div {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.25rem 1.25rem;
+    }
+
+    .app .atlas-plan-view > .atlas-plan-view__header h1 {
+      font-size: 1.75rem;
+    }
+
+    .app .atlas-plan-view > .atlas-plan-view__header p {
+      max-inline-size: 40rem;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+  }
+
   @media (max-width: 47.99rem) {
     .app .atlas-plan-view > .atlas-plan-view__header {
       display: flex;
