@@ -2068,6 +2068,47 @@
     aspect-ratio: auto;
     border-radius: var(--radius-lg);
   }
+
+  /* ══ 14. Ten activities and narrow outlook rows ══════════════════════════════════ */
+
+  /* Narrow screens: name and score share the top line, the range bar gets its own. */
+  @media (max-width: 63.99rem) {
+    .app .atlas-plan-view .day-outlook__day {
+      grid-template-columns: 2rem minmax(0, 1fr) auto;
+      grid-template-areas:
+        'symbol name score'
+        'symbol temps temps'
+        'symbol window window'
+        'symbol meta meta';
+    }
+
+    .app .atlas-plan-view .day-outlook__temps {
+      justify-self: start;
+      grid-template-columns: 2.25rem minmax(6rem, 10rem) 2.25rem;
+    }
+
+    /* Two columns of low, horizontal tiles: ten choices without half a screen of buttons. */
+    .app .atlas-plan-view .activity-planner__chips {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .app .atlas-plan-view .activity-planner__chips button {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 0.5rem;
+      min-block-size: 2.75rem;
+      padding: 0.375rem 0.625rem;
+      text-align: start;
+    }
+  }
+
+  /* Wide screens: five columns, two even rows. */
+  @media (min-width: 64rem) {
+    .app .atlas-plan-view .activity-planner__chips {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
 }
 
 @keyframes planla-bar {
