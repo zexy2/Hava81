@@ -3262,14 +3262,18 @@
   }
 
   .app .atlas-plan-view .decision-alerts > button {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    max-inline-size: 100%;
     min-block-size: 2.75rem;
-    padding: 0 1.125rem;
-    white-space: nowrap;
+    padding: 0.375rem 1.125rem;
+    white-space: normal;
+    text-align: start;
   }
 
   .app .atlas-plan-view .decision-alerts__how > summary {
+    flex-wrap: wrap;
     gap: 0.5rem;
+    min-inline-size: 0;
     color: var(--plan-soft);
     font-size: 0.875rem;
     list-style: none;
