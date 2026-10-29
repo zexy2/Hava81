@@ -65,14 +65,14 @@ describe('EnvironmentRail air-quality freshness', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText('2 / 5')).toBeInTheDocument();
+    expect(screen.getByText(/Endeks 2\/5/)).toBeInTheDocument();
     expect(screen.getByText(/PM2\.5 11,2 µg\/m³/i)).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_200);
     });
 
-    expect(screen.queryByText('2 / 5')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Endeks 2\/5/)).not.toBeInTheDocument();
     expect(screen.queryByText(/PM2\.5 11,2 µg\/m³/i)).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
   });
@@ -109,14 +109,14 @@ describe('EnvironmentRail air-quality freshness', () => {
       </SettingsProvider>
     );
 
-    expect(screen.getByText('2 / 5')).toBeInTheDocument();
+    expect(screen.getByText(/Endeks 2\/5/)).toBeInTheDocument();
     expect(screen.getByText(/PM2\.5 11,2 µg\/m³/i)).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(150);
     });
 
-    expect(screen.queryByText('2 / 5')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Endeks 2\/5/)).not.toBeInTheDocument();
     expect(screen.queryByText(/PM2\.5 11,2 µg\/m³/i)).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
   });

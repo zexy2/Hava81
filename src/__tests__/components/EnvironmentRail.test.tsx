@@ -144,13 +144,13 @@ describe('EnvironmentRail', () => {
         </SettingsProvider>
       );
 
-      expect(screen.getByText(/GD ·/i)).toBeInTheDocument();
+      expect(screen.getByText(/dan · \d+°/i)).toBeInTheDocument();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_200);
       });
 
-      expect(screen.queryByText(/GD ·/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/dan · \d+°/i)).not.toBeInTheDocument();
       expect(screen.getByRole('status')).toHaveTextContent('Anlık veri güncel değil');
     } finally {
       vi.useRealTimers();

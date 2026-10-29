@@ -361,7 +361,7 @@ describe('Hava81 app integration', () => {
     );
     expect(screen.getByText('OpenWeather')).toBeInTheDocument();
     // Air quality is shown once, in the environment rail.
-    expect(screen.getByText('3 / 5')).toBeInTheDocument();
+    expect(screen.getByText(/Endeks 3\/5/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hava81' })).toHaveAttribute('href', '/');
     expect(
       screen.getByRole('button', { name: 'HaritaHaritayı gösterİstanbul' })
