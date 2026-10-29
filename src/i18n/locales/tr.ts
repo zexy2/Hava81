@@ -505,6 +505,25 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     activities: {
+      period: {
+        label: 'Ne zaman?',
+        now: 'Şimdi',
+        evening: 'Bu akşam',
+        tomorrow: 'Yarın',
+        weekend: 'Hafta sonu',
+        ended: 'Bu akşam bitti; Yarın veya Hafta sonu seçebilirsin.',
+      },
+      suggest: {
+        title: {
+          now: 'Şimdi ne yapsan iyi olur',
+          evening: 'Bu akşam ne yapsan iyi olur',
+          tomorrow: 'Yarın için en iyiler',
+          weekend: 'Hafta sonu için en iyiler',
+        },
+        add: '{{name}} planıma ekle',
+        hint: 'Bir aktiviteyi ekle; saat saat ayrıntısı ve kendi tercihlerinle yeniden puanlanır.',
+        none: 'Bu dönemde hiçbir aktivite için uygun pencere yok. Başka bir zaman seç.',
+      },
       seaNotSuitable: 'Deniz şu an yüzmeye uygun görünmüyor (su {{sea}}{{wave}}).',
       seaWave: ', dalga {{value}} m',
       seaUnknown: 'Deniz verisi yok; plaj için öneri yapılmıyor.',

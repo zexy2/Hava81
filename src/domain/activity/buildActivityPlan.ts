@@ -70,6 +70,11 @@ export interface BuildActivityPlanInput {
   contextSignals?: ContextSignals | null;
   /** Personal wind / rain tolerance and pollen allergy. */
   tolerance?: PersonalTolerance;
+  /**
+   * Asked period ("this evening", "the weekend"): only these slots are evaluated, the forecast
+   * is not cut at 48 hours, and there is no 24-hour fallback. Absent: the next 12 hours.
+   */
+  period?: { startMs: number; endMs: number };
 }
 
 /** Context peaks cover the 24 hours after the fetch; outside that, or stale, they are unknown. */
@@ -178,11 +183,12 @@ export const buildActivityPlan = ({
   now,
   contextSignals,
   tolerance,
+  period,
 }: BuildActivityPlanInput): ActivityPlan => {
   const valid = [...hourly]
     .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
     .sort((a, b) => a.time.getTime() - b.time.getTime());
-  const source = dropElapsedSlots(valid, now).slice(0, 48);
+  const source = dropElapsedSlots(valid, now).slice(0, period ? undefined : 48);
   // Without hourly data only the current observation remains; rain stays unknown on purpose.
   const points: HourlyForecast[] = source.length
     ? source
@@ -265,10 +271,11 @@ export const buildActivityPlan = ({
 
   const firstMs = slots[0].time.getTime();
   const horizonHours = windowApplied ? 24 : HORIZON_HOURS;
-  const horizonEndMs = firstMs + horizonHours * HOUR_MS;
+  const horizonEndMs = period ? period.endMs : firstMs + horizonHours * HOUR_MS;
   const evaluatedSlots = slots.filter(
     slot =>
       slot.time.getTime() < horizonEndMs &&
+      (!period || slot.time.getTime() >= period.startMs) &&
       (!windowApplied ||
         clockInRange(
           localClockMinutes(slot.time, timezoneOffsetSeconds),
@@ -286,7 +293,7 @@ export const buildActivityPlan = ({
   // showing no window at all.
   const nextDayEndMs = firstMs + 24 * HOUR_MS;
   const candidateSlots =
-    !windowApplied && !evaluatedSlots.some(isEligible)
+    !windowApplied && !period && !evaluatedSlots.some(isEligible)
       ? slots.filter(slot => slot.time.getTime() < nextDayEndMs)
       : evaluatedSlots;
   // A plan needs the whole activity, not one good clock tick: choose the best block in which

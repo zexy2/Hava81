@@ -4,6 +4,12 @@ import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
 import { getOptionalEvidenceFreshness } from '../../utils/optionalEvidenceFreshness';
 import { useEffect, useState } from 'react';
+import {
+  PLAN_PERIODS,
+  rankActivityPlans,
+  resolvePlanPeriod,
+  type PlanPeriodId,
+} from '../../domain/activity/periods';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
 import {
@@ -181,6 +187,7 @@ export function ActivityPlanner({
     clearActivityWindow,
   } = useDecisionProfile();
   const [, setFreshnessRevision] = useState(0);
+  const [periodId, setPeriodId] = useState<PlanPeriodId>('now');
   const freshness = getForecastFreshness(forecastMeta);
   const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
   const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
@@ -200,23 +207,48 @@ export function ActivityPlanner({
   const showHourlyAqiSource = Boolean(
     airQualityHourly && hourlyAqiFreshness.fresh && hourlyAqiEvidence.usesHourlyAqi
   );
-  const plans = freshness.fresh
-    ? profile.activities.map(activity =>
-        buildActivityPlan({
-          activity,
-          weather,
-          hourly,
-          airQuality,
-          airQualityHourly,
-          sensitivity: profile.temperatureSensitivity,
-          preferredStart: profile.activityStart,
-          preferredEnd: profile.activityEnd,
-          now: new Date(),
-          contextSignals,
-          tolerance: toleranceOf(profile),
-        })
-      )
-    : [];
+  // The asked period; null when it has already ended today (evening after 23:00).
+  const resolvedPeriod = resolvePlanPeriod(
+    periodId,
+    Date.now(),
+    weather.meta.timezoneOffsetSeconds
+  );
+  const period = resolvedPeriod ?? undefined;
+  const periodEnded = resolvedPeriod === null;
+  const planFor = (activity: ActivityKind) =>
+    buildActivityPlan({
+      activity,
+      weather,
+      hourly,
+      airQuality,
+      airQualityHourly,
+      sensitivity: profile.temperatureSensitivity,
+      preferredStart: profile.activityStart,
+      preferredEnd: profile.activityEnd,
+      now: new Date(),
+      contextSignals,
+      tolerance: toleranceOf(profile),
+      period,
+    });
+  const plans =
+    freshness.fresh && !periodEnded
+      ? profile.activities.map(activity =>
+          buildActivityPlan({
+            activity,
+            weather,
+            hourly,
+            airQuality,
+            airQualityHourly,
+            sensitivity: profile.temperatureSensitivity,
+            preferredStart: profile.activityStart,
+            preferredEnd: profile.activityEnd,
+            now: new Date(),
+            contextSignals,
+            tolerance: toleranceOf(profile),
+            period,
+          })
+        )
+      : [];
   // Why the beach has no window: name the sea values instead of a generic "no window".
   const marine = contextFreshness.fresh ? contextSignals?.marine : undefined;
   const seaNote =
@@ -233,6 +265,13 @@ export function ActivityPlanner({
   const availableActivities = ACTIVITY_GROUPS.flatMap(group => group.activities).filter(
     activity => activity !== 'beach' || hasSea
   );
+  // Nothing chosen yet: the page answers anyway with the three best activities for the period.
+  const suggestions =
+    profile.activities.length === 0 && freshness.fresh && !periodEnded
+      ? rankActivityPlans(availableActivities.map(planFor))
+          .filter(plan => !plan.windowUnavailable && plan.bestWindowRange)
+          .slice(0, 3)
+      : [];
   // What the personal settings change: the same plans with the default preferences.
   const hasPersonalSettings =
     profile.temperatureSensitivity !== 'balanced' ||
@@ -254,6 +293,7 @@ export function ActivityPlanner({
             preferredEnd: profile.activityEnd,
             now: new Date(),
             contextSignals,
+            period,
           }).score,
         ])
       : []
@@ -293,6 +333,16 @@ export function ActivityPlanner({
   ]);
   const offset = weather.meta.timezoneOffsetSeconds * 1000;
   const formatTime = (date?: Date) => formatCityTime(date, offset / 1000, i18n.language);
+  // Suggestions beyond today name the day: "Cmt 10:00".
+  const formatDayTime = (date: Date) => {
+    const dayOf = (ms: number) => Math.floor((ms + offset) / 86_400_000);
+    if (dayOf(date.getTime()) === dayOf(Date.now())) return formatTime(date);
+    const weekday = new Intl.DateTimeFormat(i18n.language, {
+      weekday: 'short',
+      timeZone: 'UTC',
+    }).format(new Date(date.getTime() + offset));
+    return `${weekday} ${formatTime(date)}`;
+  };
   const windowWhy = useWindowWhy(date => formatTime(date));
   const hasWindow = Boolean(profile.activityStart && profile.activityEnd);
   const hasPartialWindow = Boolean(profile.activityStart) !== Boolean(profile.activityEnd);
@@ -325,6 +375,53 @@ export function ActivityPlanner({
     .filter(Boolean)
     .join(' · ');
 
+  const suggestionsView = periodEnded ? (
+    <p className="activity-planner__empty" role="status">
+      {t('hava81.activities.period.ended')}
+    </p>
+  ) : suggestions.length > 0 ? (
+    <section className="activity-suggestions" aria-labelledby="activity-suggestions-title">
+      <h3 id="activity-suggestions-title">{t(`hava81.activities.suggest.title.${periodId}`)}</h3>
+      <ol>
+        {suggestions.map(plan => (
+          <li
+            key={plan.activity}
+            className={`activity-suggestion activity-suggestion--${plan.band}`}
+          >
+            <ActivityGlyph kind={plan.activity} />
+            <span className="activity-suggestion__copy">
+              <strong>{t(`hava81.activities.names.${plan.activity}`)}</strong>
+              <span>
+                {plan.bestWindowRange
+                  ? `${formatDayTime(plan.bestWindowRange.start.time)}–${formatTime(plan.bestWindowRange.endTime)}`
+                  : null}
+              </span>
+            </span>
+            <span className="activity-suggestion__score">
+              {plan.score}
+              <small>{t(`hava81.dailyPlan.bands.${plan.band}`)}</small>
+            </span>
+            <button
+              type="button"
+              className="activity-suggestion__add"
+              onClick={() => toggleActivity(plan.activity)}
+              aria-label={t('hava81.activities.suggest.add', {
+                name: t(`hava81.activities.names.${plan.activity}`),
+              })}
+            >
+              +
+            </button>
+          </li>
+        ))}
+      </ol>
+      <p className="activity-suggestions__hint">{t('hava81.activities.suggest.hint')}</p>
+    </section>
+  ) : (
+    <p className="activity-planner__empty">
+      {freshness.fresh ? t('hava81.activities.suggest.none') : t('hava81.activities.empty')}
+    </p>
+  );
+
   return (
     <section className="activity-planner" aria-labelledby="activity-planner-title">
       <header className="activity-planner__header">
@@ -334,6 +431,23 @@ export function ActivityPlanner({
           <p>{t('hava81.activities.subtitle')}</p>
         </div>
       </header>
+
+      <div
+        className="activity-planner__periods"
+        role="group"
+        aria-label={t('hava81.activities.period.label')}
+      >
+        {PLAN_PERIODS.map(id => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={periodId === id}
+            onClick={() => setPeriodId(id)}
+          >
+            {t(`hava81.activities.period.${id}`)}
+          </button>
+        ))}
+      </div>
 
       <div
         className="activity-planner__chips"
@@ -661,7 +775,7 @@ export function ActivityPlanner({
           </div>
         </>
       ) : (
-        <p className="activity-planner__empty">{t('hava81.activities.empty')}</p>
+        suggestionsView
       )}
       <p className="activity-planner__note">{t('hava81.activities.note')}</p>
       {airQualityHourly && showHourlyAqiSource ? (

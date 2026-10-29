@@ -502,6 +502,25 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     activities: {
+      period: {
+        label: 'When?',
+        now: 'Now',
+        evening: 'This evening',
+        tomorrow: 'Tomorrow',
+        weekend: 'Weekend',
+        ended: 'This evening is over; pick Tomorrow or Weekend.',
+      },
+      suggest: {
+        title: {
+          now: 'Good things to do now',
+          evening: 'Good things to do this evening',
+          tomorrow: 'Best for tomorrow',
+          weekend: 'Best for the weekend',
+        },
+        add: 'Add {{name}} to my plan',
+        hint: 'Add an activity to see it hour by hour, scored with your own preferences.',
+        none: 'No activity has a good window in this period. Try another time.',
+      },
       seaNotSuitable: 'The sea does not look right for swimming now (water {{sea}}{{wave}}).',
       seaWave: ', waves {{value}} m',
       seaUnknown: 'No sea data; no beach suggestion.',
