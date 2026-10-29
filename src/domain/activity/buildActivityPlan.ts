@@ -300,10 +300,12 @@ export const buildActivityPlan = ({
   const firstMs = slots[0].time.getTime();
   const horizonHours = windowApplied ? 24 : HORIZON_HOURS;
   const horizonEndMs = period ? period.endMs : firstMs + horizonHours * HOUR_MS;
+  const periodCadenceMs = forecastCadenceMs(slots);
   const evaluatedSlots = slots.filter(
     slot =>
       slot.time.getTime() < horizonEndMs &&
-      (!period || slot.time.getTime() >= period.startMs) &&
+      // A slot counts when it overlaps the period: 07:00–08:00 covers a 07:30 start.
+      (!period || slot.time.getTime() + periodCadenceMs > period.startMs) &&
       (!windowApplied ||
         clockInRange(
           localClockMinutes(slot.time, timezoneOffsetSeconds),

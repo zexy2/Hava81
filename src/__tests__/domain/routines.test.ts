@@ -146,6 +146,15 @@ describe('evaluateRoutine', () => {
     expect(result.status === 'scored' && result.better).toBeFalsy();
   });
 
+  it('a half-hour start is scored from the hour that covers it, never empty', () => {
+    const dog = routine({ kind: 'fixed', days: [5], start: '07:30', durationMinutes: 30 }, 'dog');
+    const result = evaluateRoutine(dog, input(hours(() => false)));
+    expect(result.status).toBe('scored');
+    if (result.status !== 'scored') return;
+    expect(result.plan.score).toBeGreaterThan(50);
+    expect(result.plan.windowUnavailable).toBeFalsy();
+  });
+
   it('beyond the hourly forecast there is no number yet', () => {
     const later = routine({
       kind: 'fixed',
