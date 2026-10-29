@@ -215,13 +215,6 @@
     color: rgb(232 240 250);
   }
 
-  /* Selected activity chip: white text on the accent fill in both modes. */
-  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__chips button.is-active,
-  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__chips button.is-active * {
-    background-color: rgb(30 96 200);
-    color: rgb(255 255 255);
-  }
-
   .app .atlas-plan-view .daily-plan__slot.is-weak,
   .app
     .atlas-plan-view
@@ -322,15 +315,6 @@
     border: 1px solid var(--plan-line);
     background: none;
     box-shadow: none;
-  }
-
-  .app .atlas-plan-view .activity-planner__chips button.is-active,
-  .app .atlas-plan-view .activity-planner__chips button.is-active *,
-  .app .atlas-plan-view .activity-planner__chips button[aria-pressed='true'] *,
-  .app .atlas-plan-view .activity-planner__chips button[aria-pressed='true'] {
-    border-color: var(--plan-accent);
-    background: var(--plan-accent);
-    color: rgb(255 255 255);
   }
 
   /* Cards: identity, score and the answer on the glass; no strip, no inner panels. */
