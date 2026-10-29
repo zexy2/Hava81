@@ -559,6 +559,8 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     routines: {
+      scope:
+        'Saatler yalnızca havaya göre seçilir; yol, trafik ve güvenlik koşullarını sen değerlendir.',
       answer: {
         best: '{{day}} en iyi {{start}}–{{end}}',
         none: '{{day}} uygun saat yok',
@@ -736,7 +738,7 @@ export const tr = {
         photo: 'Altın saat',
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
-      bestRange: 'En iyi {{start}}–{{end}}',
+      bestRange: 'Hava açısından en uygun aralık {{start}}–{{end}}',
       anyTime: '{{start}}–{{end}} her saat iyi',
       vsGeneral: 'Genel skordan {{delta}}: {{why}}',
       vsGeneralWhy: {

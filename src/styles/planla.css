@@ -2805,20 +2805,13 @@
     font-weight: 600;
   }
 
-  /* One row of choices that scrolls sideways; labels never break mid-word. */
+  /* Choices as a calm wrap of pills: every choice visible at any text size, labels never
+     break mid-word (a sideways scroller hid most of them at 200% text). */
   .app .atlas-plan-view .activity-planner__chips {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 0.375rem;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
     padding-block: 0.25rem;
-  }
-
-  .app .atlas-plan-view .activity-planner__chips::-webkit-scrollbar {
-    display: none;
   }
 
   .app .atlas-plan-view .activity-planner__chips button,
@@ -2828,7 +2821,7 @@
     gap: 0.375rem;
     min-block-size: 2.75rem;
     padding: 0.25rem 0.875rem;
-    scroll-snap-align: start;
+    max-inline-size: 100%;
     white-space: nowrap;
     hyphens: none;
     word-break: keep-all;
@@ -2928,6 +2921,12 @@
 
   .app .atlas-plan-view .daily-plan__reasoning > * {
     margin: 0;
+  }
+
+  .app .atlas-plan-view .routine-list__scope {
+    margin: 0.25rem 0 0;
+    color: var(--plan-soft);
+    font-size: 0.8125rem;
   }
 }
 

@@ -171,6 +171,10 @@ export function RoutineList({
         ) : null}
       </header>
 
+      {routines.length > 0 ? (
+        <p className="routine-list__scope">{t('hava81.routines.scope')}</p>
+      ) : null}
+
       {editing === 'new' ? (
         <RoutineEditor
           availableActivities={availableActivities}

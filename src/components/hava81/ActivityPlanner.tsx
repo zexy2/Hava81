@@ -605,6 +605,9 @@ export function ActivityPlanner({
                     <details className="activity-card__details">
                       <summary>{t('hava81.activities.score.detailsTitle')}</summary>
                       <div className="activity-card__details-body">
+                        <small className="activity-card__explain">
+                          {t('hava81.activities.score.explanation')}
+                        </small>
                         <small className="activity-card__scope">
                           <span className="activity-card__score-scope">
                             {t('hava81.scoreScope.activity')}

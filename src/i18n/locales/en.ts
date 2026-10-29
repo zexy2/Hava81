@@ -556,6 +556,7 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     routines: {
+      scope: 'Times are chosen by the weather only; judge roads, traffic and safety yourself.',
       answer: {
         best: '{{day}} best {{start}}–{{end}}',
         none: '{{day}} no good hour',
@@ -731,7 +732,7 @@ export const en = {
         photo: 'Golden hour',
       },
       bestTime: 'Best weather time: {{time}}',
-      bestRange: 'Best {{start}}–{{end}}',
+      bestRange: 'Best weather range {{start}}–{{end}}',
       anyTime: 'Any time {{start}}–{{end}}',
       vsGeneral: '{{delta}} vs the overall score: {{why}}',
       vsGeneralWhy: {
