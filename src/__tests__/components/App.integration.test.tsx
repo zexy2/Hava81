@@ -348,10 +348,12 @@ describe('Hava81 app integration', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Açık' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Çoğunlukla açık' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open-Meteo' })).toHaveAttribute(
-      'href',
-      'https://open-meteo.com/'
-    );
+    // Credited in the source line and in the footer: every credit points at the provider.
+    const openMeteoLinks = screen.getAllByRole('link', { name: 'Open-Meteo' });
+    expect(openMeteoLinks.length).toBeGreaterThanOrEqual(1);
+    for (const link of openMeteoLinks) {
+      expect(link).toHaveAttribute('href', 'https://open-meteo.com/');
+    }
     expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
       'href',
       'https://creativecommons.org/licenses/by/4.0/'

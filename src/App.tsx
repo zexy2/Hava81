@@ -871,8 +871,15 @@ const App: React.FC = () => {
                 )}
               </section>
             )}
-            {/* Inside main so the colophon shares the content's width and padding. */}
-            <footer className="atlas-footer" data-testid="app-footer">
+            {/* Inside main so the colophon shares the content's width and padding. It stays
+                invisible until the first reading: on the short loading page it would sit
+                mid-screen and count as a layout shift when the content pushes it down. */}
+            <footer
+              className="atlas-footer"
+              data-testid="app-footer"
+              data-pending={!weather && !error ? '' : undefined}
+              aria-hidden={!weather && !error ? true : undefined}
+            >
               <p className="atlas-footer__brand">
                 <span className="atlas-footer__wordmark" data-footer-wordmark="">
                   Hava<em>81</em>

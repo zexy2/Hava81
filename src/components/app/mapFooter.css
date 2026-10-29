@@ -30,6 +30,10 @@
       0 0 16px rgb(6 16 30 / 0.5);
   }
 
+  .app .atlas-footer[data-pending] {
+    visibility: hidden;
+  }
+
   .app .atlas-footer > p {
     margin: 0;
   }
@@ -344,7 +348,7 @@
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
       bottom: calc(9.4rem + env(safe-area-inset-bottom, 0px));
       display: flex;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       align-items: center;
       gap: 0 0.6rem;
       padding: 0 0.25rem;
@@ -352,7 +356,6 @@
       color: rgb(16 30 48);
       background: none;
       font-size: 0.625rem;
-      white-space: nowrap;
       font-weight: 600;
       line-height: 1.2;
       text-shadow:
