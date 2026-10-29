@@ -86,7 +86,14 @@
     text-underline-offset: 0.2em;
   }
 
-  /* OpenWeather's licence asks for its logo next to the credit; one variant per theme. */
+  /* OpenWeather's licence asks for its logo next to the credit; one variant per theme.
+     The link sits on the text line wherever it appears (footer, hourly source line). */
+  .app .data-credit {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+  }
+
   .app .atlas-footer__credits .data-credit--openweather {
     text-decoration: none;
   }
