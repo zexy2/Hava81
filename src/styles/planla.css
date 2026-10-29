@@ -1832,6 +1832,208 @@
       animation: planla-headline-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
   }
+
+  /* ══ 12. Activities: one control language, Hava81 glyphs, the answer first ══════════ */
+
+  /* One quiet pill for every choice on the page (activities and outlook intents). */
+  .app .atlas-plan-view :is(.activity-planner__chips button, .day-outlook__intents button),
+  .app[data-color-mode='dark']
+    .atlas-plan-view
+    :is(.activity-planner__chips button, .day-outlook__intents button) {
+    border: 1px solid var(--plan-line);
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-weight: 600;
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .app .atlas-plan-view .activity-planner__chips button {
+    border-radius: var(--radius-lg);
+  }
+
+  .app
+    .atlas-plan-view
+    :is(
+      .activity-planner__chips button.is-active,
+      .day-outlook__intents button[aria-pressed='true']
+    ),
+  .app[data-color-mode='dark']
+    .atlas-plan-view
+    :is(
+      .activity-planner__chips button.is-active,
+      .day-outlook__intents button[aria-pressed='true']
+    ) {
+    border-color: var(--plan-accent);
+    background: color-mix(in srgb, var(--plan-accent) 14%, transparent);
+    color: inherit;
+  }
+
+  .app
+    .atlas-plan-view
+    :is(.activity-planner__chips button, .day-outlook__intents button):not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--plan-accent) 60%, var(--plan-line));
+  }
+
+  /* Glyphs stand on their own: no tile, accent colour when chosen. */
+  .app .atlas-plan-view .activity-glyph,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-glyph,
+  .app[data-color-mode='dark']
+    .atlas-plan-view
+    .activity-planner__chips
+    button:not(.is-active)
+    .activity-glyph,
+  .app .atlas-plan-view .activity-planner__chips button.is-active .activity-glyph {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: currentcolor;
+  }
+
+  .app .atlas-plan-view .activity-planner__chips button.is-active .activity-glyph {
+    color: var(--plan-accent);
+  }
+
+  .app .atlas-plan-view .activity-glyph svg {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+  }
+
+  /* Card: who, then when (the answer), then why; the score is supporting, not the headline. */
+  .app .atlas-plan-view .activity-card__identity .activity-glyph {
+    inline-size: auto;
+    block-size: auto;
+    color: var(--plan-accent);
+  }
+
+  .app .atlas-plan-view .activity-card__identity .activity-glyph svg {
+    inline-size: 2rem;
+    block-size: 2rem;
+  }
+
+  .app .atlas-plan-view .activity-card__score strong {
+    font-size: 1.75rem;
+    font-weight: 400;
+  }
+
+  .app .atlas-plan-view .activity-card__range {
+    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .app
+    .atlas-plan-view
+    .activity-card
+    :is(.activity-card__impact, .activity-card__why, .activity-card__vs-general) {
+    margin: 0;
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
+
+  /* Disclosures: our chevron, not the browser triangle. */
+  .app
+    .atlas-plan-view
+    :is(.activity-planner__score-explanation, .activity-card__details)
+    > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .app
+    .atlas-plan-view
+    :is(.activity-planner__score-explanation, .activity-card__details)
+    > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .app
+    .atlas-plan-view
+    :is(.activity-planner__score-explanation, .activity-card__details)
+    > summary::after {
+    content: '';
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    margin-inline-start: auto;
+    border: solid currentcolor;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 200ms ease;
+  }
+
+  .app
+    .atlas-plan-view
+    :is(.activity-planner__score-explanation, .activity-card__details)[open]
+    > summary::after {
+    transform: rotate(-135deg) translateY(-2px);
+  }
+
+  .app .atlas-plan-view .activity-planner__prefs-edit::after {
+    content: '';
+    display: inline-block;
+    inline-size: 0.4rem;
+    block-size: 0.4rem;
+    margin-inline-start: 0.4rem;
+    border: solid currentcolor;
+    border-width: 1.5px 1.5px 0 0;
+    transform: rotate(45deg) translateY(-1px);
+  }
+
+  .app .atlas-plan-view .activity-planner__prefs[open] .activity-planner__prefs-edit::after {
+    transform: rotate(135deg) translateY(1px);
+  }
+
+  /* Even rhythm in the planner: no 80 px hole under the choices. */
+  .app .atlas-plan-view .activity-planner :is(.activity-planner__chips, .activity-planner__prefs) {
+    margin-block: 0;
+    padding-block: 1rem;
+  }
+
+  /* Outlook: low — range bar on a shared scale — high, like a weather app's 10-day list. */
+  .app .atlas-plan-view .day-outlook__temps {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(3.5rem, 6rem) 2.25rem;
+    align-items: center;
+    gap: 0.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .day-outlook__lo {
+    color: var(--plan-soft);
+    text-align: end;
+  }
+
+  .app .atlas-plan-view .day-outlook__hi {
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .day-outlook__range {
+    position: relative;
+    block-size: 0.3125rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentcolor 14%, transparent);
+  }
+
+  .app .atlas-plan-view .day-outlook__range::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--range-from);
+    inline-size: max(0.3125rem, calc(var(--range-to) - var(--range-from)));
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--range-cold), var(--range-warm));
+  }
 }
 
 @keyframes planla-bar {

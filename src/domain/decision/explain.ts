@@ -85,27 +85,79 @@ export const explainContrast = (
 ): WindowExplanation | undefined => {
   if (!good.length || !weak.length) return undefined;
 
-  let best: { factor: Hava81ScoreFactor; gap: number; worst: ScoredWeatherWindow } | undefined;
+  // Factors whose penalty separates the sets, strongest first.
+  const candidates: Array<{ factor: Hava81ScoreFactor; gap: number; worst: ScoredWeatherWindow }> =
+    [];
   for (const factor of EXPLAINABLE) {
     const goodWorst = Math.max(...good.map(slot => penaltyOf(slot, factor)));
     const worst = weak.reduce((a, b) => (penaltyOf(b, factor) > penaltyOf(a, factor) ? b : a));
     const gap = penaltyOf(worst, factor) - goodWorst;
-    if (gap >= MIN_PENALTY_GAP && (!best || gap > best.gap)) best = { factor, gap, worst };
+    if (gap >= MIN_PENALTY_GAP) candidates.push({ factor, gap, worst });
   }
-  if (!best) return undefined;
+  candidates.sort((a, b) => b.gap - a.gap);
 
-  const atWorst = measured(best.worst, best.factor);
-  const atWindow = measured(reference, best.factor);
-  // Precipitation is described in one unit on both sides; fall back to mm only when the
-  // probability is unknown for either slot.
-  const sameUnit = atWorst.factor === atWindow.factor;
-  const factor = sameUnit ? atWorst.factor : 'precipitation-mm';
-  return {
-    factor,
-    worstTime: best.worst.time,
-    worstValue: sameUnit ? atWorst.value : best.worst.precipitationMm,
-    windowValue: sameUnit ? atWindow.value : reference.precipitationMm,
-  };
+  // The penalty can combine inputs (rain = probability and amount), but the copy shows one
+  // measurement. Only state a contrast the shown numbers actually support — never
+  // "22:00 is 53 %, this window 63 %" as a reason to prefer the window.
+  for (const { factor, worst } of candidates) {
+    const explained = coherentContrast(factor, worst, reference);
+    if (explained) return explained;
+  }
+  return undefined;
+};
+
+const coherentContrast = (
+  factor: Hava81ScoreFactor,
+  worst: ScoredWeatherWindow,
+  reference: ScoredWeatherWindow
+): WindowExplanation | undefined => {
+  const base = { worstTime: worst.time };
+  const atWorst = measured(worst, factor);
+  const atWindow = measured(reference, factor);
+  switch (factor) {
+    case 'precipitation': {
+      const probability = (slot: ScoredWeatherWindow) =>
+        finite(slot.precipitationProbability)
+          ? Math.round(slot.precipitationProbability * 100)
+          : undefined;
+      const worstP = probability(worst);
+      const windowP = probability(reference);
+      if (finite(worstP) && finite(windowP) && worstP > windowP)
+        return { ...base, factor: 'precipitation', worstValue: worstP, windowValue: windowP };
+      const worstMm = worst.precipitationMm;
+      const windowMm = reference.precipitationMm;
+      if (finite(worstMm) && finite(windowMm) && worstMm > windowMm)
+        return { ...base, factor: 'precipitation-mm', worstValue: worstMm, windowValue: windowMm };
+      return undefined;
+    }
+    case 'wind':
+    case 'uv':
+      return finite(atWorst.value) && finite(atWindow.value) && atWorst.value > atWindow.value
+        ? {
+            ...base,
+            factor: atWorst.factor,
+            worstValue: atWorst.value,
+            windowValue: atWindow.value,
+          }
+        : undefined;
+    case 'visibility':
+      return finite(atWorst.value) && finite(atWindow.value) && atWorst.value < atWindow.value
+        ? {
+            ...base,
+            factor: atWorst.factor,
+            worstValue: atWorst.value,
+            windowValue: atWindow.value,
+          }
+        : undefined;
+    case 'thermal':
+      // Comfort is two-sided (too cold or too hot); the values only need to differ.
+      return finite(atWorst.value) && finite(atWindow.value) && atWorst.value !== atWindow.value
+        ? { ...base, factor: 'thermal', worstValue: atWorst.value, windowValue: atWindow.value }
+        : undefined;
+    default:
+      // Air quality and severe weather are named without a number.
+      return { ...base, factor: atWorst.factor };
+  }
 };
 
 export const explainWindow = (

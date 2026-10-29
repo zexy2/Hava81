@@ -37,56 +37,84 @@ interface Props {
 
 const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
 
-function ActivityGlyph({ kind }: { kind: ActivityKind }) {
-  const shapes: Record<ActivityKind, string[]> = {
-    walk: [
-      'M13 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
-      'm11 10-2 5-5 3',
-      'm11 10 5 3 4 1',
-      'm9 15 5 2 1 4',
-    ],
-    run: [
-      'M14 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
-      'm11 10 4-1 3 4',
-      'm12 11-4 4-5 1',
-      'm8 15 5 2-1 5',
-      'm15 10 4-1 2 2',
-    ],
-    picnic: [
-      'M4 13h16l-2 8H6l-2-8Z',
-      'M8 13c0-5 2-7 4-7s4 2 4 7',
-      'M4 17h16',
-      'M10 14v6',
-      'M14 14v6',
-    ],
-    children: [
-      'M12 2 21 11 12 20 3 11 12 2Z',
-      'M12 20v3',
-      'm12 23 3-2',
-      'M7 7l10 10',
-      'M17 7 7 17',
-    ],
-    motorcycle: [
-      'M6 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
-      'M19 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
-      'm6 17 5-7 4 7h4',
-      'm11 10 4-1 3 2',
-      'M8 7h3',
-    ],
-    laundry: ['M5 5h14l2 5-4 3v8H7v-8l-4-3 2-5Z', 'M9 5c0 4 6 4 6 0', 'M10 16h4', 'M10 19h4'],
-  };
+/** A circle as a path, so every glyph is one list of strokes. */
+const ring = (cx: number, cy: number, r: number) =>
+  `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0`;
 
+/**
+ * Hava81's own activity set: one 24-unit grid, one 1.5 stroke, round ends, figures drawn
+ * so that walking and running read apart at a glance (upright stride vs. forward lean).
+ */
+const GLYPHS: Record<ActivityKind, string[]> = {
+  walk: [
+    ring(12, 4.5, 1.75),
+    'M12 7.25 11.5 12.5',
+    'M11.5 12.5 9.25 16.25 8.5 20.25',
+    'M11.5 12.5 13.75 16 15.25 20.25',
+    'M11.9 8.75 9.25 11',
+    'M11.9 8.75 14.75 11.25',
+  ],
+  run: [
+    ring(16, 4.25, 1.75),
+    'M15 6.75 11.75 12',
+    'M11.75 12 14.75 15 13.25 20.25',
+    'M11.75 12 8.25 14.25 5.25 13.25',
+    'M14.25 8 17.25 9.25 18.75 7.5',
+    'M13.75 8.25 10.75 9.5 9.25 8',
+    'M2.75 9.75h3',
+    'M2.25 12.75h2',
+  ],
+  picnic: [
+    'M3 20.25 5.75 16.75h12.5l2.75 3.5Z',
+    'M8 13h8l-1.25 3.75h-5.5Z',
+    'M9.75 13c0-3.25 4.5-3.25 4.5 0',
+    ring(18.75, 5.25, 1.5),
+    'M18.75 1.75v.75',
+    'M18.75 8v.75',
+    'M15.25 5.25h.75',
+    'M21.5 5.25h.75',
+  ],
+  children: [
+    ring(8.5, 4.5, 1.75),
+    'M8.5 7.25v6.75',
+    'M8.5 14 7 20.25',
+    'M8.5 14 10 20.25',
+    'M8.5 9.25 12.75 12.25 15.75 12.75',
+    ring(16.25, 10, 1.4),
+    'M16.25 11.9v4.1',
+    'M16.25 16 15.25 20.25',
+    'M16.25 16 17.25 20.25',
+  ],
+  motorcycle: [
+    ring(5.5, 16.75, 3),
+    ring(18.5, 16.75, 3),
+    'M5.5 16.75 8.75 12h5.5l1.5 2.5',
+    'M8.75 12 7.75 9.75h5',
+    'M9.5 14.5h4.25v2.25H9.5Z',
+    'M18.5 16.75 15.75 9.25',
+    'M14.5 9h2.75',
+  ],
+  laundry: [
+    'M2.75 5.5Q12 8.5 21.25 5.5',
+    'M8.25 7.25 5.75 10l2 1.5v8.75h8.5V11.5l2-1.5-2.5-2.75',
+    'M8.25 7.25c.75 1.5 6.75 1.5 7.5 0',
+    'M8.25 6v2',
+    'M15.75 6v2',
+  ],
+};
+
+function ActivityGlyph({ kind }: { kind: ActivityKind }) {
   return (
     <span className="activity-glyph" aria-hidden="true">
       <svg
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        {shapes[kind].map((shape, index) => (
+        {GLYPHS[kind].map((shape, index) => (
           <path key={index} d={shape} />
         ))}
       </svg>

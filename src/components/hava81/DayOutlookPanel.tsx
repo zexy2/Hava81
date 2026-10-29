@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { TEMPERATURE_SCALE_DARK, temperatureColor } from './forecastAtlas/temperatureColor';
 import { useTranslation } from 'react-i18next';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import type { ActivityKind } from '../../domain/activity/types';
@@ -90,6 +91,19 @@ export function DayOutlookPanel({
 
   const time = (date: Date) => formatCityTime(date, offsetSeconds, i18n.language);
   const degrees = (value: number) => `${Math.round(convertTemperature(value))}°`;
+  // One temperature scale across the listed days, so each bar sits where its day really is.
+  const tempValues = days.flatMap(day =>
+    day.tempMin !== undefined && day.tempMax !== undefined ? [day.tempMin, day.tempMax] : []
+  );
+  const scaleLow = tempValues.length ? Math.min(...tempValues) : 0;
+  const scaleSpan = tempValues.length ? Math.max(Math.max(...tempValues) - scaleLow, 1) : 1;
+  const rangeStyle = (low: number, high: number) =>
+    ({
+      '--range-from': `${((low - scaleLow) / scaleSpan) * 100}%`,
+      '--range-to': `${((high - scaleLow) / scaleSpan) * 100}%`,
+      '--range-cold': temperatureColor(low, TEMPERATURE_SCALE_DARK),
+      '--range-warm': temperatureColor(high, TEMPERATURE_SCALE_DARK),
+    }) as CSSProperties;
 
   return (
     <section className="day-outlook" aria-labelledby="day-outlook-title">
@@ -131,8 +145,24 @@ export function DayOutlookPanel({
             {day.icon ? <WeatherSymbol code={day.icon} className="day-outlook__symbol" /> : null}
             <span className="day-outlook__name">{t(outlookDayLabelKey(day, offsetSeconds))}</span>
             {day.tempMax !== undefined && day.tempMin !== undefined ? (
-              <span className="day-outlook__temps">
-                {degrees(day.tempMax)} <span>{degrees(day.tempMin)}</span>
+              <span
+                className="day-outlook__temps"
+                aria-label={t('hava81.outlook.tempRange', {
+                  low: degrees(day.tempMin),
+                  high: degrees(day.tempMax),
+                })}
+              >
+                <span className="day-outlook__lo" aria-hidden="true">
+                  {degrees(day.tempMin)}
+                </span>
+                <span
+                  className="day-outlook__range"
+                  aria-hidden="true"
+                  style={rangeStyle(day.tempMin, day.tempMax)}
+                />
+                <span className="day-outlook__hi" aria-hidden="true">
+                  {degrees(day.tempMax)}
+                </span>
               </span>
             ) : null}
             <strong className="day-outlook__score">
@@ -140,11 +170,18 @@ export function DayOutlookPanel({
               <small>/100 · {t(`hava81.dailyPlan.bands.${day.band}`)}</small>
             </strong>
             <span className="day-outlook__window">
+              {/* Say whose best time this is: the general score and an activity can differ. */}
               {day.bestWindowRange
-                ? t('hava81.outlook.window', {
-                    start: time(day.bestWindowRange.start.time),
-                    end: time(day.bestWindowRange.endTime),
-                  })
+                ? activity
+                  ? t('hava81.outlook.windowFor', {
+                      activity: t(`hava81.activities.names.${activity}`),
+                      start: time(day.bestWindowRange.start.time),
+                      end: time(day.bestWindowRange.endTime),
+                    })
+                  : t('hava81.outlook.windowGeneral', {
+                      start: time(day.bestWindowRange.start.time),
+                      end: time(day.bestWindowRange.endTime),
+                    })
                 : t('hava81.outlook.noWindow')}
             </span>
             {day.thunderHours.length ? (
