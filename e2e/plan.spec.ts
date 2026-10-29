@@ -510,9 +510,9 @@ test.describe('activities', () => {
       await picnic.click();
       await expect(picnic).toHaveAttribute('aria-pressed', 'true');
       await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
-      await expect(page.getByText(/Üç aktivite seçtin/i)).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeDisabled();
-      await expect(page.getByRole('button', { name: 'Çamaşır', exact: true })).toBeDisabled();
+      // No selection limit: the other activities stay available.
+      await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeEnabled();
+      await expect(page.getByRole('heading', { name: 'Yan yana' })).toBeVisible();
 
       // Preferences live in their own disclosure since the Planla redesign.
       await page.locator('.activity-planner__prefs > summary').click();

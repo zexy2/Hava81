@@ -2117,12 +2117,13 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1.25rem;
-    margin-block: 0.5rem 0.75rem;
+    margin-block: 0.25rem 0.5rem;
     border-bottom: 1px solid var(--plan-line);
   }
 
   .app .atlas-plan-view .activity-planner__periods button {
     min-block-size: 2.75rem;
+    min-inline-size: 2.75rem;
     padding: 0;
     border: 0;
     border-bottom: 2px solid transparent;
@@ -2229,7 +2230,7 @@
     grid-template-areas: 'glyph name strip range score';
     align-items: center;
     gap: 0.75rem;
-    padding-block: 0.625rem;
+    padding-block: 0.375rem;
     border-bottom: 1px solid var(--plan-line);
   }
 
@@ -2323,10 +2324,15 @@
 
   /* ══ 17. Calendar and "how was it?" ═══════════════════════════════════════════════ */
 
+  /* Sits at the end of the answer line: no extra row. */
   .app .atlas-plan-view .activity-card__calendar {
-    justify-self: start;
-    min-block-size: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: baseline;
+    min-block-size: 1.5rem;
+    margin-inline-start: 0.75rem;
     padding: 0;
+    font-size: 0.875rem;
     border: 0;
     background: none;
     box-shadow: none;
@@ -2334,6 +2340,13 @@
     font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 0.2em;
+  }
+
+  /* Phones: a full touch target. */
+  @media (max-width: 63.99rem) {
+    .app .atlas-plan-view .activity-card__calendar {
+      min-block-size: 2.75rem;
+    }
   }
 
   .app .atlas-plan-view .plan-feedback {

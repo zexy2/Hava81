@@ -726,7 +726,8 @@ export function ActivityPlanner({
           </div>
         </div>
       </details>
-      {plans.length > 1 ? (
+      {/* Two cards already sit side by side; the strip earns its place from three on. */}
+      {plans.length > 2 ? (
         <section className="activity-compare" aria-labelledby="activity-compare-title">
           <h3 id="activity-compare-title">{t('hava81.activities.compare.title')}</h3>
           <ol>
@@ -847,16 +848,17 @@ export function ActivityPlanner({
                           })
                         : (nextWindowText(plan.activity) ??
                           (plan.activity === 'beach' ? seaNote : t('hava81.activities.noWindow')))}
+                    {bestRange && !plan.windowUnavailable ? (
+                      <button
+                        type="button"
+                        className="activity-card__calendar"
+                        onClick={() => addToCalendar(plan.activity, plan.score, bestRange)}
+                      >
+                        {t('hava81.activities.calendar.add')}
+                      </button>
+                    ) : null}
                   </p>
-                  {bestRange && !plan.windowUnavailable ? (
-                    <button
-                      type="button"
-                      className="activity-card__calendar"
-                      onClick={() => addToCalendar(plan.activity, plan.score, bestRange)}
-                    >
-                      {t('hava81.activities.calendar.add')}
-                    </button>
-                  ) : null}
+
                   {(() => {
                     const baseline = defaultScoreOf.get(plan.activity);
                     const delta = baseline === undefined ? 0 : plan.score - baseline;
