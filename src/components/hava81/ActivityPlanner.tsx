@@ -388,6 +388,29 @@ export function ActivityPlanner({
     .filter(Boolean)
     .join(' · ');
 
+  // Side by side: every row shows the same 24 clock hours from the first plan's first slot, so a
+  // column means the same hour in each row.
+  const compareStartMs = plans[0]?.slots[0]?.time.getTime();
+  const compareSlots = (plan: (typeof plans)[number]) =>
+    compareStartMs === undefined
+      ? []
+      : plan.slots.filter(
+          slot =>
+            slot.time.getTime() >= compareStartMs &&
+            slot.time.getTime() < compareStartMs + 24 * 3_600_000
+        );
+  const inBest = (plan: (typeof plans)[number], slot: (typeof plans)[number]['slots'][number]) =>
+    Boolean(
+      plan.bestWindowRange &&
+      !plan.windowUnavailable &&
+      slot.time.getTime() >= plan.bestWindowRange.start.time.getTime() &&
+      slot.time.getTime() < plan.bestWindowRange.endTime.getTime()
+    );
+  const compareAxis =
+    compareStartMs === undefined
+      ? []
+      : [0, 6, 12, 18].map(hours => new Date(compareStartMs + hours * 3_600_000));
+
   const suggestionsView = periodEnded ? (
     <p className="activity-planner__empty" role="status">
       {t('hava81.activities.period.ended')}
@@ -611,12 +634,16 @@ export function ActivityPlanner({
                   {t(`hava81.activities.names.${plan.activity}`)}
                 </span>
                 <span className="activity-compare__strip" aria-hidden="true">
-                  {plan.slots.slice(0, 24).map(slot => (
+                  {compareSlots(plan).map(slot => (
                     <span
                       key={slot.time.getTime()}
-                      className={`activity-compare__cell activity-compare__cell--${
-                        slot.eligible === false ? 'off' : getScoreBand(slot.score)
-                      }`}
+                      className={[
+                        'activity-compare__cell',
+                        `activity-compare__cell--${slot.eligible === false ? 'off' : getScoreBand(slot.score)}`,
+                        inBest(plan, slot) ? 'activity-compare__cell--best' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     />
                   ))}
                 </span>
@@ -629,11 +656,14 @@ export function ActivityPlanner({
               </li>
             ))}
           </ol>
-          {plans[0]?.slots[0] ? (
-            <p className="activity-compare__axis" aria-hidden="true">
-              <span>{formatDayTime(plans[0].slots[0].time)}</span>
-              <span>{t('hava81.activities.compare.axis')}</span>
-            </p>
+          {compareAxis.length > 0 ? (
+            <div className="activity-compare__row activity-compare__row--axis" aria-hidden="true">
+              <span className="activity-compare__axis">
+                {compareAxis.map(time => (
+                  <span key={time.getTime()}>{formatDayTime(time)}</span>
+                ))}
+              </span>
+            </div>
           ) : null}
         </section>
       ) : null}
