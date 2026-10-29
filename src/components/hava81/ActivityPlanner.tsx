@@ -424,7 +424,6 @@ export function ActivityPlanner({
           </li>
         ))}
       </ol>
-      <p className="activity-suggestions__hint">{t('hava81.activities.suggest.hint')}</p>
     </section>
   ) : (
     <p className="activity-planner__empty">

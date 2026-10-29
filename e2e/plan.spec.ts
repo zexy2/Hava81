@@ -26,6 +26,25 @@ const { current, hourlyForecast, now: fixtureNow } = fixtures;
 // desktop header or `?view=plan`; the panel tests open that view directly.
 const PLAN = '/istanbul/?view=plan';
 
+// These tests were written for the activity cards: start every test with walk and run picked
+// and no saved plans (unless the test sets its own).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('hava81-decision-profile-v1')) {
+      localStorage.setItem(
+        'hava81-decision-profile-v1',
+        JSON.stringify({ activities: ['walk', 'run'], temperatureSensitivity: 'balanced' })
+      );
+    }
+    if (!localStorage.getItem('hava81.routines.v1')) {
+      localStorage.setItem(
+        'hava81.routines.v1',
+        JSON.stringify({ schemaVersion: 1, routines: [] })
+      );
+    }
+  });
+});
+
 test.describe('Planla view', () => {
   test('?view=plan opens Planla on load and Today leaves it', async ({ page }) => {
     await page.goto(PLAN);

@@ -395,6 +395,8 @@ test.describe('forced colors', () => {
       'bottom navigation'
     );
     await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Planla' }).click();
+    // Nothing is pre-selected for a new user: pick one so both states are on screen.
+    await page.locator('.activity-planner__chips button').first().click();
     await expectSelectedStateDistinct(
       page.locator('.activity-planner__chips button[aria-pressed="true"]').first(),
       page.locator('.activity-planner__chips button[aria-pressed="false"]').first(),
