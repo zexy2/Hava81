@@ -451,7 +451,6 @@ export function ActivityPlanner({
           <div>
             <span className="atlas-kicker">{t('hava81.activities.eyebrow')}</span>
             <h2 id="activity-planner-title">{t('hava81.activities.title')}</h2>
-            <p>{t('hava81.activities.subtitle')}</p>
           </div>
         </header>
 

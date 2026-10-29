@@ -132,7 +132,7 @@ export function RoutineList({
     <section className="routine-list" aria-labelledby="routine-list-title">
       <header className="routine-list__header">
         <h2 id="routine-list-title">{t('hava81.routines.title')}</h2>
-        {editing === null && routines.length > 0 ? (
+        {editing === null ? (
           <button type="button" className="routine-list__add" onClick={() => setEditing('new')}>
             {t('hava81.routines.add')}
           </button>
@@ -165,9 +165,6 @@ export function RoutineList({
               </li>
             ))}
           </ul>
-          <button type="button" className="routine-list__custom" onClick={() => setEditing('new')}>
-            {t('hava81.routines.custom')}
-          </button>
         </div>
       ) : null}
 

@@ -94,7 +94,7 @@ describe('My plans', () => {
     localStorage.setItem(ROUTINES_KEY, JSON.stringify({ schemaVersion: 1, routines: [] }));
     renderPlanner();
     const list = screen.getByRole('region', { name: 'Planlarım' });
-    fireEvent.click(within(list).getByRole('button', { name: 'Kendi planımı kur' }));
+    fireEvent.click(within(list).getByRole('button', { name: 'Plan ekle' }));
     const editor = within(list).getByRole('form', { name: 'Yeni plan' });
     fireEvent.click(within(editor).getByRole('button', { name: /Bisiklet/ }));
     fireEvent.click(within(editor).getByRole('button', { name: 'Hafta sonu' }));
@@ -129,7 +129,7 @@ describe('My plans', () => {
     localStorage.setItem(ROUTINES_KEY, JSON.stringify({ schemaVersion: 1, routines: [] }));
     renderPlanner();
     const list = screen.getByRole('region', { name: 'Planlarım' });
-    fireEvent.click(within(list).getByRole('button', { name: 'Kendi planımı kur' }));
+    fireEvent.click(within(list).getByRole('button', { name: 'Plan ekle' }));
     const editor = within(list).getByRole('form', { name: 'Yeni plan' });
     // Default walk is every day: turn all seven off.
     for (const day of ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']) {
