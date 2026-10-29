@@ -317,14 +317,18 @@
       white-space: nowrap;
     }
 
+    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
+      color: rgb(16 30 48);
+    }
+
     /* Loading and retry status rides above the stack, clear of the floating bottom bar. */
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__tile-status {
       z-index: 1001;
-      bottom: calc(12.6rem + env(safe-area-inset-bottom, 0px));
+      bottom: calc(15rem + env(safe-area-inset-bottom, 0px));
     }
 
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint {
-      bottom: calc(9.6rem + env(safe-area-inset-bottom, 0px));
+      bottom: calc(12.4rem + env(safe-area-inset-bottom, 0px));
       justify-self: start;
       width: fit-content;
       padding: 0.35rem 0.75rem;
@@ -336,22 +340,24 @@
       font-weight: 600;
     }
 
+    /* Credits: a quiet caption just above the legend strip, no box, 44px targets. */
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
-      top: 4.25rem;
-      right: auto;
-      bottom: auto;
+      bottom: calc(9.4rem + env(safe-area-inset-bottom, 0px));
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0;
-      width: fit-content;
-      max-width: calc(100% - 5rem);
-      padding: 0 0.6rem;
-      border-radius: var(--radius-md);
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0 0.6rem;
+      padding: 0 0.25rem;
+      border: 0;
       color: rgb(16 30 48);
-      background: rgb(255 255 255 / 0.82);
-      font-size: 0.6875rem;
-      line-height: 1.3;
+      background: none;
+      font-size: 0.625rem;
+      white-space: nowrap;
+      font-weight: 600;
+      line-height: 1.2;
+      text-shadow:
+        0 0 6px rgb(255 255 255),
+        0 0 12px rgb(255 255 255);
     }
 
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__attribution > span {
@@ -364,8 +370,7 @@
     }
 
     .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__legend,
-    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint,
-    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__attribution {
+    .app[data-color-mode='dark'][data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint {
       border-color: rgb(255 255 255 / 0.12);
       color: rgb(238 244 250);
       background: rgb(16 28 46 / 0.86);
