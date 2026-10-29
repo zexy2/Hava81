@@ -236,7 +236,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
             aria-live="polite"
             aria-atomic="true"
           >
-            <span>{t('hava81.commute.verdictLabel')}</span>
+            <span className="sr-only">{t('hava81.commute.verdictLabel')}</span>
             <small className="commute-plan__verdict-window">
               {t('hava81.commute.planWindow', {
                 outbound: formatLocalWindowTime(plan.outbound.targetTime),
