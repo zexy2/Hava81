@@ -2,24 +2,31 @@ import L from 'leaflet';
 import { useEffect, useMemo, useRef } from 'react';
 import { ImageOverlay, Marker } from 'react-leaflet';
 import type { ProvinceTemperature } from '../../../api/weatherService';
-import { downwindRotation, layerSamples, type LayerHour, type MapLayer } from './layerModel';
+import {
+  downwindRotation,
+  layerSamples,
+  type LayerHour,
+  type MapLayer,
+  type PrecipitationMeasure,
+} from './layerModel';
 import { FIELD_BOUNDS, renderField } from './renderField';
 
 interface FieldLayerProps {
   provinces: Iterable<ProvinceTemperature>;
   layer: MapLayer;
   hour: LayerHour;
+  measure?: PrecipitationMeasure;
 }
 
 /**
  * The drawn field for the active layer, laid over the base map and under the markers.
  * The image is ours: interpolated from the 81-province readings, clipped to the outline.
  */
-export function FieldLayer({ provinces, layer, hour }: FieldLayerProps) {
+export function FieldLayer({ provinces, layer, hour, measure = 'chance' }: FieldLayerProps) {
   const overlayRef = useRef<L.ImageOverlay | null>(null);
   const url = useMemo(
-    () => renderField(layerSamples(provinces, layer, hour), layer),
-    [provinces, layer, hour]
+    () => renderField(layerSamples(provinces, layer, hour, measure), layer, measure),
+    [provinces, layer, hour, measure]
   );
 
   useEffect(() => {

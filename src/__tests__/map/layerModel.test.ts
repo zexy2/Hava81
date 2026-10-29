@@ -10,6 +10,7 @@ import {
   layerValue,
   mercatorY,
   pointInRing,
+  precipitationMeasure,
   rampColor,
 } from '../../components/map/layers/layerModel';
 
@@ -104,5 +105,44 @@ describe('map layer model', () => {
     const stops = LAYER_RAMPS.temperature;
     expect(rampColor('temperature', -60)).toEqual(stops[0][1]);
     expect(rampColor('temperature', 80)).toEqual(stops[stops.length - 1][1]);
+  });
+});
+
+describe('precipitation measure', () => {
+  // MET Norway gives an amount but no chance of rain; the layer must still draw rain.
+  const metReading = (overrides: Partial<ProvinceTemperature> = {}) =>
+    province({
+      precipitationProbability: undefined,
+      precipitation: 1.6,
+      outlook: [
+        { hourOffset: 3, precipitation: 0.4, temperature: 18 },
+        { hourOffset: 6, precipitation: 0, temperature: 15 },
+      ],
+      ...overrides,
+    });
+
+  it('reads the chance whenever any province reports it', () => {
+    expect(precipitationMeasure([province(), metReading()])).toBe('chance');
+  });
+
+  it('falls back to the amount when no province reports a chance', () => {
+    const provinces = [metReading(), metReading({ plate: 6, precipitation: 0 })];
+    expect(precipitationMeasure(provinces)).toBe('amount');
+    expect(layerValue(provinces[0], 'precipitation', 0, 'amount')).toBe(1.6);
+    expect(layerValue(provinces[0], 'precipitation', 3, 'amount')).toBe(0.4);
+    // A dry hour is a real 0 mm reading, not a missing one.
+    expect(layerValue(provinces[1], 'precipitation', 0, 'amount')).toBe(0);
+    expect(layerSamples(provinces, 'precipitation', 6, 'amount')).toHaveLength(2);
+  });
+
+  it('keeps reading the chance by default', () => {
+    expect(layerValue(metReading(), 'precipitation', 0)).toBeNull();
+  });
+
+  it('fades dry ground out and deepens heavy rain on the amount ramp', () => {
+    expect(rampColor('precipitation', 0, 'amount')[3]).toBe(0);
+    expect(rampColor('precipitation', 5, 'amount')[3]).toBeGreaterThan(
+      rampColor('precipitation', 0.5, 'amount')[3]
+    );
   });
 });

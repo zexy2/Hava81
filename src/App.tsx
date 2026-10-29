@@ -19,6 +19,7 @@ import { ApiError } from './api/errors/ApiError';
 import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
+import { DataCredits } from './components/app/DataCredits';
 import { getCurrentWeatherFreshness } from './utils/currentWeatherFreshness';
 import { NotFoundState } from './components/app/NotFoundState';
 import { DeferredForecastAtlas } from './components/app/DeferredForecastAtlas';
@@ -887,16 +888,7 @@ const App: React.FC = () => {
                 </span>
                 <span className="atlas-footer__tagline">{t('hava81.tagline')}</span>
               </p>
-              <p className="atlas-footer__credits">
-                <span>{t('hava81.footerData')}</span>{' '}
-                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-                  Open-Meteo
-                </a>
-                <span aria-hidden="true"> · </span>
-                <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-                  OpenStreetMap
-                </a>
-              </p>
+              <DataCredits forecastProvider={(forecast.displayMeta ?? forecast.meta)?.provider} />
               <span className="atlas-footer__shortcuts">
                 <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
                 <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}

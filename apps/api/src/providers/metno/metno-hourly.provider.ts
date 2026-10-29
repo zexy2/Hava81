@@ -121,8 +121,14 @@ export class MetNorwayHourlyProvider implements HourlyForecastProvider {
         'Saatlik tahmin verisi şu anda kesintisiz kullanılamıyor.'
       );
     }
+    // The 3-hour list starts at the next slot boundary, so the current hour or two precede it;
+    // they take the first slot, which is at most three hours ahead.
+    const firstSlot = slots?.list[0];
     const slotAt = (time: number) =>
-      slots?.list.find(slot => slot.dt * 1_000 <= time && time < slot.dt * 1_000 + SLOT_MS);
+      slots?.list.find(slot => slot.dt * 1_000 <= time && time < slot.dt * 1_000 + SLOT_MS) ??
+      (firstSlot && time < firstSlot.dt * 1_000 && firstSlot.dt * 1_000 - time <= SLOT_MS
+        ? firstSlot
+        : undefined);
     const timezoneOffsetSeconds = slots?.city?.timezone ?? offsetFromLongitude(query.lon);
 
     const enriched = timeline.map(hour => {
