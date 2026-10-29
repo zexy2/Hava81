@@ -2320,6 +2320,53 @@
       row-gap: 0.375rem;
     }
   }
+
+  /* ══ 17. Calendar and "how was it?" ═══════════════════════════════════════════════ */
+
+  .app .atlas-plan-view .activity-card__calendar {
+    justify-self: start;
+    min-block-size: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--color-aegean);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .app .atlas-plan-view .plan-feedback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-block: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .app .atlas-plan-view .plan-feedback p {
+    flex: 1 1 12rem;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .app .atlas-plan-view .plan-feedback button {
+    min-block-size: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .plan-feedback__record {
+    margin-block: 0.5rem;
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
 }
 
 @keyframes planla-bar {

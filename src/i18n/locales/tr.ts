@@ -507,6 +507,17 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     activities: {
+      calendar: {
+        add: 'Takvime ekle',
+        title: '{{name}} · Hava81',
+        body: 'Hava81 bu saatleri {{score}}/100 ile önerdi. Çıkmadan önce son tahmine bak.',
+      },
+      feedback: {
+        question: '{{name}}, {{start}}–{{end}} nasıldı?',
+        good: 'İyiydi',
+        bad: 'Değildi',
+        record: 'Takvime eklediğin son {{total}} planın {{good}} tanesi iyi geçti.',
+      },
       nextWindow: 'Bu dönemde uygun saat yok · sonraki iyi zaman: {{start}}–{{end}}',
       compare: {
         title: 'Yan yana',

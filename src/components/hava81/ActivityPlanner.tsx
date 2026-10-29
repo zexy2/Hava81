@@ -1,3 +1,12 @@
+import { buildCalendarEvent } from '../../utils/calendarEvent';
+import {
+  addPendingPlan,
+  duePendingPlan,
+  planTrackRecord,
+  readPlanFeedback,
+  recordPlanFeedback,
+  removePendingPlan,
+} from '../../utils/planFeedback';
 import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
 import { supportsMarineContext } from '../../utils/marineCities';
 import { formatCityTime, formatNumber } from '../../utils/format';
@@ -198,6 +207,21 @@ export function ActivityPlanner({
   } = useDecisionProfile();
   const [, setFreshnessRevision] = useState(0);
   const [periodId, setPeriodId] = useState<PlanPeriodId>('now');
+  const [duePlan, setDuePlan] = useState(() => duePendingPlan(Date.now()));
+  const [track, setTrack] = useState(() => planTrackRecord(readPlanFeedback()));
+  const answerDuePlan = (good: boolean) => {
+    if (!duePlan) return;
+    const entries = recordPlanFeedback({
+      id: duePlan.id,
+      activity: duePlan.activity,
+      score: duePlan.score,
+      good,
+      answeredAt: Date.now(),
+    });
+    removePendingPlan(duePlan.id);
+    setTrack(planTrackRecord(entries));
+    setDuePlan(duePendingPlan(Date.now()));
+  };
   const freshness = getForecastFreshness(forecastMeta);
   const hourlyAqiFreshness = getOptionalEvidenceFreshness(airQualityHourly?.meta);
   const currentAqiFreshness = getOptionalEvidenceFreshness(airQuality?.meta);
@@ -441,6 +465,33 @@ export function ActivityPlanner({
       : undefined;
   };
 
+  // Calendar: the reminder lives in the user's own calendar app, also when Hava81 is closed.
+  const addToCalendar = (
+    activity: ActivityKind,
+    score: number,
+    range: NonNullable<(typeof plans)[number]['bestWindowRange']>
+  ) => {
+    const startMs = range.start.time.getTime();
+    const endMs = range.endTime.getTime();
+    const id = `${activity}:${startMs}`;
+    const name = t(`hava81.activities.names.${activity}`);
+    const ics = buildCalendarEvent({
+      title: t('hava81.activities.calendar.title', { name }),
+      description: t('hava81.activities.calendar.body', { score }),
+      location: weather.cityName,
+      start: range.start.time,
+      end: range.endTime,
+      uid: `${id}@hava81`,
+    });
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `hava81-${activity}.ics`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    addPendingPlan({ id, activity, score, startMs, endMs });
+  };
+
   const suggestionsView = periodEnded ? (
     <p className="activity-planner__empty" role="status">
       {t('hava81.activities.period.ended')}
@@ -497,6 +548,28 @@ export function ActivityPlanner({
           <p>{t('hava81.activities.subtitle')}</p>
         </div>
       </header>
+
+      {duePlan ? (
+        <div className="plan-feedback" role="group" aria-labelledby="plan-feedback-question">
+          <p id="plan-feedback-question">
+            {t('hava81.activities.feedback.question', {
+              name: t(`hava81.activities.names.${duePlan.activity}`),
+              start: formatDayTime(new Date(duePlan.startMs)),
+              end: formatTime(new Date(duePlan.endMs)),
+            })}
+          </p>
+          <button type="button" onClick={() => answerDuePlan(true)}>
+            {t('hava81.activities.feedback.good')}
+          </button>
+          <button type="button" onClick={() => answerDuePlan(false)}>
+            {t('hava81.activities.feedback.bad')}
+          </button>
+        </div>
+      ) : track.total >= 3 ? (
+        <p className="plan-feedback__record">
+          {t('hava81.activities.feedback.record', { good: track.good, total: track.total })}
+        </p>
+      ) : null}
 
       <div
         className="activity-planner__periods"
@@ -775,6 +848,15 @@ export function ActivityPlanner({
                         : (nextWindowText(plan.activity) ??
                           (plan.activity === 'beach' ? seaNote : t('hava81.activities.noWindow')))}
                   </p>
+                  {bestRange && !plan.windowUnavailable ? (
+                    <button
+                      type="button"
+                      className="activity-card__calendar"
+                      onClick={() => addToCalendar(plan.activity, plan.score, bestRange)}
+                    >
+                      {t('hava81.activities.calendar.add')}
+                    </button>
+                  ) : null}
                   {(() => {
                     const baseline = defaultScoreOf.get(plan.activity);
                     const delta = baseline === undefined ? 0 : plan.score - baseline;

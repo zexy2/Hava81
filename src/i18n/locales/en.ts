@@ -504,6 +504,17 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     activities: {
+      calendar: {
+        add: 'Add to calendar',
+        title: '{{name}} · Hava81',
+        body: 'Hava81 suggested these hours at {{score}}/100. Check the latest forecast before you go.',
+      },
+      feedback: {
+        question: 'How was {{name}}, {{start}}–{{end}}?',
+        good: 'Good',
+        bad: 'Not good',
+        record: '{{good}} of the last {{total}} plans you added went well.',
+      },
       nextWindow: 'No good hour in this period · next good time: {{start}}–{{end}}',
       compare: {
         title: 'Side by side',
