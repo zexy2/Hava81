@@ -145,13 +145,13 @@ export function DayOutlookPanel({
             {day.icon ? <WeatherSymbol code={day.icon} className="day-outlook__symbol" /> : null}
             <span className="day-outlook__name">{t(outlookDayLabelKey(day, offsetSeconds))}</span>
             {day.tempMax !== undefined && day.tempMin !== undefined ? (
-              <span
-                className="day-outlook__temps"
-                aria-label={t('hava81.outlook.tempRange', {
-                  low: degrees(day.tempMin),
-                  high: degrees(day.tempMax),
-                })}
-              >
+              <span className="day-outlook__temps">
+                <span className="sr-only">
+                  {t('hava81.outlook.tempRange', {
+                    low: degrees(day.tempMin),
+                    high: degrees(day.tempMax),
+                  })}
+                </span>
                 <span className="day-outlook__lo" aria-hidden="true">
                   {degrees(day.tempMin)}
                 </span>

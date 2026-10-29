@@ -336,7 +336,7 @@ export const tr = {
       },
       bestWindow: 'Hava açısından önümüzdeki 12 saatte en iyi görünen saat: {{time}}',
       bestRange: 'Hava açısından önümüzdeki 12 saatte en uygun görünen aralık: {{start}}–{{end}}',
-      scoreRange: 'Yağışa bağlı: yağarsa {{low}}, yağmazsa {{high}}.',
+      scoreRange: 'Yağmur yağarsa puan {{low}}, yağmazsa {{high}} olur.',
       weakHours: 'Daha zayıf saatler: {{times}}.',
       whyWeak: {
         thermal:
@@ -530,7 +530,7 @@ export const tr = {
       },
       darkness:
         'Önerilen saatler hava karardıktan sonra: aydınlık bir rota ve görünür kıyafet seç.',
-      fullDuration: 'Planlanan {{minutes}} dakikanın tamamı uygun koşullarda.',
+      fullDuration: '{{minutes}} dakikalık tipik süre bu aralığa tamamen sığıyor.',
       alternatives: 'Diğer uygun aralıklar: {{list}}',
       score: {
         default: '12 saatlik uygunluk',

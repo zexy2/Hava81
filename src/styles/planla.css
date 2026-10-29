@@ -1677,24 +1677,14 @@
   }
 
   @media (max-width: 47.99rem) {
-    .app .atlas-plan-view .activity-planner__prefs > summary {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
-      grid-template-areas:
-        'title edit'
-        'summary summary';
-    }
-
-    .app .atlas-plan-view .activity-planner__prefs-title {
-      grid-area: title;
+    /* Phones: title and action on one line when they fit, the summary underneath. */
+    .app .atlas-plan-view .activity-planner__prefs-summary {
+      flex-basis: 100%;
+      order: 3;
     }
 
     .app .atlas-plan-view .activity-planner__prefs-edit {
-      grid-area: edit;
-    }
-
-    .app .atlas-plan-view .activity-planner__prefs-summary {
-      grid-area: summary;
+      margin-inline-start: auto;
     }
 
     /* Phones: facts as label/value rows, the way a settings list reads. */
@@ -1934,10 +1924,13 @@
     .atlas-plan-view
     :is(.activity-planner__score-explanation, .activity-card__details)
     > summary {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    position: relative;
+    display: block;
     min-block-size: 2.75rem;
+    padding-block: 0.75rem;
+    padding-inline-end: 1.75rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
     cursor: pointer;
     list-style: none;
   }
@@ -1954,9 +1947,11 @@
     :is(.activity-planner__score-explanation, .activity-card__details)
     > summary::after {
     content: '';
+    position: absolute;
+    inset-block-start: 1.15rem;
+    inset-inline-end: 0.25rem;
     inline-size: 0.5rem;
     block-size: 0.5rem;
-    margin-inline-start: auto;
     border: solid currentcolor;
     border-width: 0 1.5px 1.5px 0;
     transform: rotate(45deg) translateY(-2px);

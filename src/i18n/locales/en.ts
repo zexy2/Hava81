@@ -333,7 +333,7 @@ export const en = {
       },
       bestWindow: 'Best-looking weather time in the next 12 hours: {{time}}',
       bestRange: 'Best-looking weather range in the next 12 hours: {{start}}–{{end}}',
-      scoreRange: 'Depends on the rain: {{low}} if it rains, {{high}} if it stays dry.',
+      scoreRange: 'If it rains the score is {{low}}; if it stays dry, {{high}}.',
       weakHours: 'Weaker hours: {{times}}.',
       whyWeak: {
         thermal:
