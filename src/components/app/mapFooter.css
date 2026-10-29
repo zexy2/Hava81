@@ -328,11 +328,11 @@
     /* Loading and retry status rides above the stack, clear of the floating bottom bar. */
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__tile-status {
       z-index: 1001;
-      bottom: calc(15rem + env(safe-area-inset-bottom, 0px));
+      bottom: calc(18.6rem + env(safe-area-inset-bottom, 0px));
     }
 
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint {
-      bottom: calc(12.4rem + env(safe-area-inset-bottom, 0px));
+      bottom: calc(15.8rem + env(safe-area-inset-bottom, 0px));
       justify-self: start;
       width: fit-content;
       padding: 0.35rem 0.75rem;

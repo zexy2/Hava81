@@ -13,8 +13,28 @@ export interface ProvinceCurrentObservation {
   isDay: boolean;
   /** Rüzgâr hızı, m/s. */
   windSpeed?: number;
+  /** Rüzgârın geldiği yön, derece (meteorolojik). */
+  windDirection?: number;
+  /** Bulutluluk, %. */
+  cloudCover?: number;
+  /** Son saatteki yağış, mm. */
+  precipitation?: number;
+  /** İçinde bulunulan saatin yağış olasılığı, %. */
+  precipitationProbability?: number;
+  /** Harita zaman şeridi için +3 ve +6 saatlik görünüm. */
+  outlook?: ProvinceOutlookPoint[];
   /** Gözlem zamanı (ISO 8601, UTC). */
   observedAt: string;
+}
+
+export interface ProvinceOutlookPoint {
+  hourOffset: number;
+  /** % */
+  precipitationProbability?: number;
+  /** mm */
+  precipitation?: number;
+  /** °C */
+  temperature?: number;
 }
 
 /** 81 il gibi çok sayıda nokta için tek upstream çağrısıyla güncel durum getirir. */
@@ -26,6 +46,8 @@ export interface ProvinceCurrentProvider {
 
 const nullableNumber = z.number().nullable().optional();
 const MAX_WIND_SPEED_MS = 150;
+/** Hours ahead shown on the map's time scrubber. */
+export const PROVINCE_OUTLOOK_HOURS = [3, 6] as const;
 const SUPPORTED_WEATHER_CODES = new Set([
   0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
   85, 86, 95, 96, 99,
@@ -38,9 +60,66 @@ const locationSchema = z.object({
       weather_code: nullableNumber,
       is_day: nullableNumber,
       wind_speed_10m: nullableNumber,
+      wind_direction_10m: nullableNumber,
+      cloud_cover: nullableNumber,
+      precipitation: nullableNumber,
+    })
+    .optional(),
+  hourly: z
+    .object({
+      time: z.array(z.number().int().nonnegative()),
+      precipitation_probability: z.array(z.number().nullable()).optional(),
+      precipitation: z.array(z.number().nullable()).optional(),
+      temperature_2m: z.array(z.number().nullable()).optional(),
     })
     .optional(),
 });
+
+type LocationReading = z.infer<typeof locationSchema>;
+
+const inRange = (value: number | null | undefined, min: number, max: number): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
+
+/** The hourly slot containing `seconds`, or -1. Open-Meteo slots start on the hour. */
+const slotIndex = (times: readonly number[], seconds: number) => {
+  for (let index = times.length - 1; index >= 0; index -= 1) {
+    if (times[index] <= seconds) return index;
+  }
+  return -1;
+};
+
+/**
+ * Optional layer readings for one location. Each value is checked on its own, so a bad
+ * cloud figure drops only that figure, never the province or its temperature.
+ */
+const layerReadings = (location: LocationReading, observedSeconds: number) => {
+  const current = location.current;
+  const readings: Partial<ProvinceCurrentObservation> = {};
+  if (inRange(current?.wind_direction_10m, 0, 360)) readings.windDirection = current.wind_direction_10m % 360;
+  if (inRange(current?.cloud_cover, 0, 100)) readings.cloudCover = current.cloud_cover;
+  if (inRange(current?.precipitation, 0, 500)) readings.precipitation = current.precipitation;
+
+  const hourly = location.hourly;
+  if (!hourly) return readings;
+  const base = slotIndex(hourly.time, observedSeconds);
+  if (base < 0) return readings;
+  const pop = hourly.precipitation_probability ?? [];
+  const mm = hourly.precipitation ?? [];
+  const temperature = hourly.temperature_2m ?? [];
+  if (inRange(pop[base], 0, 100)) readings.precipitationProbability = pop[base];
+  const outlook: ProvinceOutlookPoint[] = [];
+  for (const hourOffset of PROVINCE_OUTLOOK_HOURS) {
+    const index = base + hourOffset;
+    if (index >= hourly.time.length) continue;
+    const point: ProvinceOutlookPoint = { hourOffset };
+    if (inRange(pop[index], 0, 100)) point.precipitationProbability = pop[index];
+    if (inRange(mm[index], 0, 500)) point.precipitation = mm[index];
+    if (inRange(temperature[index], -100, 100)) point.temperature = Math.round(temperature[index] * 10) / 10;
+    if (Object.keys(point).length > 1) outlook.push(point);
+  }
+  if (outlook.length) readings.outlook = outlook;
+  return readings;
+};
 
 /**
  * Open-Meteo birden çok koordinatı virgülle ayrılmış tek istekte kabul eder ve her
@@ -63,7 +142,13 @@ export class OpenMeteoProvincesProvider implements ProvinceCurrentProvider {
     const url = new URL('/v1/forecast', this.baseUrl);
     url.searchParams.set('latitude', points.map(point => String(point.lat)).join(','));
     url.searchParams.set('longitude', points.map(point => String(point.lon)).join(','));
-    url.searchParams.set('current', 'temperature_2m,weather_code,is_day,wind_speed_10m');
+    url.searchParams.set(
+      'current',
+      'temperature_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m,cloud_cover,precipitation',
+    );
+    // Map layers: the current hour plus the scrubber's +3 h and +6 h, in the same request.
+    url.searchParams.set('hourly', 'precipitation_probability,precipitation,temperature_2m');
+    url.searchParams.set('forecast_hours', String(Math.max(...PROVINCE_OUTLOOK_HOURS) + 2));
     url.searchParams.set('timeformat', 'unixtime');
     url.searchParams.set('timezone', 'GMT');
     url.searchParams.set('temperature_unit', 'celsius');
@@ -122,6 +207,7 @@ export class OpenMeteoProvincesProvider implements ProvinceCurrentProvider {
           ...(typeof wind === 'number' && Number.isFinite(wind) && wind >= 0 && wind <= MAX_WIND_SPEED_MS
             ? { windSpeed: wind }
             : {}),
+          ...layerReadings(location, current.time),
           observedAt: new Date(observedAtMs).toISOString(),
         };
       });

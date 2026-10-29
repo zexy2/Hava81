@@ -456,6 +456,77 @@ describe('weatherService.getProvinceTemperatures', () => {
     expect(result?.attribution).toBe('Open-Meteo · CC BY 4.0');
   });
 
+  it('keeps plausible map-layer readings and drops implausible ones one by one', async () => {
+    const recent = new Date(Date.now() - 20 * 60_000).toISOString();
+    const base = {
+      lat: 41,
+      lon: 29,
+      temperature: 16,
+      weatherCode: 61,
+      icon: '10d',
+      description: 'yağmurlu',
+      observedAt: recent,
+    };
+    mockGet.mockResolvedValue({
+      provinces: [
+        {
+          ...base,
+          plate: 34,
+          name: 'İstanbul',
+          windSpeed: 6,
+          windDirection: 360,
+          cloudCover: 90,
+          precipitation: 2.4,
+          precipitationProbability: 70,
+          outlook: [
+            { hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 },
+            { hourOffset: 0, precipitationProbability: 20 },
+            { hourOffset: 6, precipitationProbability: 140, temperature: 15 },
+          ],
+        },
+        {
+          ...base,
+          plate: 6,
+          name: 'Ankara',
+          windSpeed: -1,
+          windDirection: 400,
+          cloudCover: 101,
+          precipitation: -2,
+          precipitationProbability: 'yüksek',
+          outlook: 'none',
+        },
+      ],
+      meta: { provider: 'Open-Meteo', fetchedAt: new Date().toISOString() },
+    });
+
+    const result = await weatherService.getProvinceTemperatures('tr');
+
+    expect(result?.byPlate.get(34)).toMatchObject({
+      windSpeed: 6,
+      windDirection: 0,
+      cloudCover: 90,
+      precipitation: 2.4,
+      precipitationProbability: 70,
+      outlook: [
+        { hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 },
+        { hourOffset: 6, temperature: 15 },
+      ],
+    });
+    // Ankara keeps its temperature; every bad layer reading is simply left out.
+    const ankara = result?.byPlate.get(6);
+    expect(ankara?.temperature).toBe(16);
+    for (const field of [
+      'windSpeed',
+      'windDirection',
+      'cloudCover',
+      'precipitation',
+      'precipitationProbability',
+      'outlook',
+    ]) {
+      expect(ankara).not.toHaveProperty(field);
+    }
+  });
+
   it('returns null when the endpoint is missing and remembers it', async () => {
     mockGet.mockRejectedValue(ApiError.fromHttpStatus(404));
 

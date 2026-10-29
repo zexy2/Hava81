@@ -98,16 +98,21 @@ const renderMap = (props: Partial<Parameters<typeof WeatherMap>[0]> = {}) => {
 };
 
 const provinceTemperatures = (observedAt = new Date()) => ({
-  byPlate: new Map([[6, {
-    plate: 6,
-    name: 'Ankara',
-    lat: 39.93,
-    lon: 32.85,
-    temperature: 18,
-    icon: '02d',
-    description: 'parçalı bulutlu',
-    observedAt,
-  }]]),
+  byPlate: new Map([
+    [
+      6,
+      {
+        plate: 6,
+        name: 'Ankara',
+        lat: 39.93,
+        lon: 32.85,
+        temperature: 18,
+        icon: '02d',
+        description: 'parçalı bulutlu',
+        observedAt,
+      },
+    ],
+  ]),
   provider: 'Open-Meteo',
   fetchedAt: new Date(),
 });
@@ -168,18 +173,18 @@ describe('WeatherMap', () => {
     expect(screen.getByTestId('tiles').getAttribute('data-url')).toBe(primary);
   });
 
-  it('reveals all 81 provinces only after zooming beyond the initial map view', async () => {
+  it('loads province readings with the map but reveals all 81 markers only at atlas zoom', async () => {
     service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures());
     renderMap();
     const before = screen.getAllByTestId('marker').length;
-    expect(service.getProvinceTemperatures).not.toHaveBeenCalled();
+    // The map layers draw from all 81 readings, so they are requested with the map...
+    await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalled());
 
+    // ...but the 81 province markers still wait for the atlas zoom.
     act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
-    expect(service.getProvinceTemperatures).not.toHaveBeenCalled();
     expect(screen.getAllByTestId('marker').length).toBe(before);
 
     act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
-    await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalled());
     expect(screen.getAllByTestId('marker').length).toBeGreaterThan(before);
     await waitFor(() =>
       expect(
@@ -203,9 +208,10 @@ describe('WeatherMap', () => {
         await Promise.resolve();
       });
 
-      const ankara = () => screen.getAllByTestId('marker').find(marker =>
-        marker.getAttribute('title')?.startsWith('Ankara:')
-      );
+      const ankara = () =>
+        screen
+          .getAllByTestId('marker')
+          .find(marker => marker.getAttribute('title')?.startsWith('Ankara:'));
       expect(ankara()?.getAttribute('title')).toMatch(/18°C$/);
 
       await act(async () => {
@@ -248,9 +254,10 @@ describe('WeatherMap', () => {
         await Promise.resolve();
       });
 
-      const markerFor = (name: string) => screen.getAllByTestId('marker').find(marker =>
-        marker.getAttribute('title')?.startsWith(`${name}:`)
-      );
+      const markerFor = (name: string) =>
+        screen
+          .getAllByTestId('marker')
+          .find(marker => marker.getAttribute('title')?.startsWith(`${name}:`));
       expect(markerFor('Ankara')?.getAttribute('title')).toMatch(/18°C$/);
       expect(markerFor('Bursa')?.getAttribute('title')).toMatch(/24°C$/);
 
@@ -285,9 +292,9 @@ describe('WeatherMap', () => {
         await Promise.resolve();
       });
 
-      const ankara = screen.getAllByTestId('marker').find(marker =>
-        marker.getAttribute('title')?.startsWith('Ankara:')
-      );
+      const ankara = screen
+        .getAllByTestId('marker')
+        .find(marker => marker.getAttribute('title')?.startsWith('Ankara:'));
       expect(ankara?.getAttribute('title')).not.toMatch(/18°C$/);
       expect(screen.queryByText(/Open-Meteo/)).not.toBeInTheDocument();
     } finally {
