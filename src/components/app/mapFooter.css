@@ -317,6 +317,12 @@
       white-space: nowrap;
     }
 
+    /* Loading and retry status rides above the stack, clear of the floating bottom bar. */
+    .app[data-active-nav='map'] .atlas-map-panel .weather-map__tile-status {
+      z-index: 1001;
+      bottom: calc(12.6rem + env(safe-area-inset-bottom, 0px));
+    }
+
     .app[data-active-nav='map'] .atlas-map-panel .weather-map__zoom-hint {
       bottom: calc(9.6rem + env(safe-area-inset-bottom, 0px));
       justify-self: start;
