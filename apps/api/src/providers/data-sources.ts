@@ -1,4 +1,5 @@
 import type { AppConfig } from '../config/env';
+import { CopernicusContextGrid } from './copernicus/context-grid';
 import { ContextSignalsService, type ContextSignalsSource } from '../modules/context/context.service';
 import { MetNorwayContextService } from './metno/metno-context.service';
 import { MetNorwayHourlyProvider } from './metno/metno-hourly.provider';
@@ -66,6 +67,11 @@ export const createDataSources = (env: AppConfig, fetchImpl: typeof fetch = fetc
       timeoutMs: env.OPENWEATHER_TIMEOUT_MS,
     }),
     provincesProvider: new MetNorwayProvincesProvider(fetchImpl, met),
-    contextService: new MetNorwayContextService(fetchImpl, met),
+    contextService: new MetNorwayContextService(fetchImpl, {
+      ...met,
+      grid: env.CONTEXT_GRID_URL
+        ? new CopernicusContextGrid(fetchImpl, { url: env.CONTEXT_GRID_URL })
+        : undefined,
+    }),
   };
 };
