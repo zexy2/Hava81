@@ -50,6 +50,39 @@ test('81 province list covers every plate exactly once inside Turkey bounds', ()
   }
 });
 
+test('provinces endpoint carries map-layer readings all the way to the HTTP response', async t => {
+  const provincesProvider: ProvinceCurrentProvider = {
+    name: 'FakeMeteo',
+    async getCurrent(points) {
+      return points.map(() => ({
+        temperature: 16,
+        weatherCode: 61,
+        isDay: true,
+        windSpeed: 6,
+        windDirection: 180,
+        cloudCover: 90,
+        precipitation: 2.4,
+        precipitationProbability: 70,
+        outlook: [{ hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 }],
+        observedAt: '2026-10-21T12:00:00.000Z',
+      }));
+    },
+  };
+  const app = await buildApp({ env, provider: unusedProvider, provincesProvider, logger: false });
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: 'GET', url: '/api/v1/weather/provinces' });
+
+  assert.equal(response.statusCode, 200);
+  const [first] = response.json().provinces;
+  // The JSON response schema serializes only declared fields, so each one must be listed.
+  assert.equal(first.windDirection, 180);
+  assert.equal(first.cloudCover, 90);
+  assert.equal(first.precipitation, 2.4);
+  assert.equal(first.precipitationProbability, 70);
+  assert.deepEqual(first.outlook, [{ hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 }]);
+});
+
 test('provinces endpoint returns live temperatures with one cached upstream call', async t => {
   const provincesProvider = new FakeProvinces();
   const budget = new UpstreamBudget(10);
