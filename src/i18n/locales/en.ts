@@ -733,7 +733,7 @@ export const en = {
       },
       bestTime: 'Best weather time: {{time}}',
       bestRange: 'Best {{start}}–{{end}}',
-      anyTime: 'Any time between {{start}} and {{end}} works today.',
+      anyTime: 'Any time {{start}}–{{end}}',
       vsGeneral: '{{delta}} vs the overall score: {{why}}',
       vsGeneralWhy: {
         up: 'the weather suits this activity better',
@@ -862,6 +862,7 @@ export const en = {
       unavailable: 'Sharing unavailable',
     },
     alerts: {
+      how: 'How it works',
       eyebrow: 'Hava81 notifications',
       title: 'Notify me when the decision changes',
       description:

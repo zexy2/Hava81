@@ -738,7 +738,7 @@ export const tr = {
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
       bestRange: 'En iyi {{start}}–{{end}}',
-      anyTime: 'Bugün {{start}}–{{end}} arasında herhangi bir saat uygun.',
+      anyTime: '{{start}}–{{end}} her saat iyi',
       vsGeneral: 'Genel skordan {{delta}}: {{why}}',
       vsGeneralWhy: {
         up: 'bu aktivitenin konfor aralığına daha uygun',
@@ -872,6 +872,7 @@ export const tr = {
       unavailable: 'Paylaşım kullanılamıyor',
     },
     alerts: {
+      how: 'Nasıl çalışır?',
       eyebrow: 'Hava81 bildirimleri',
       title: 'Karar değişince haber ver',
       description:

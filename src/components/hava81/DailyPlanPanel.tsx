@@ -322,14 +322,6 @@ function FreshDailyPlanPanel({
                 })
               : nowOrLaterText}
         </strong>
-        {evenDay || bestWindowRange ? (
-          <p className="daily-plan__sentence">{nowOrLaterText}</p>
-        ) : null}
-        {nightOutscoresBest ? (
-          <p className="daily-plan__night-note">
-            {t('hava81.dailyPlan.nightNote', { range: nightRange })}
-          </p>
-        ) : null}
         {evenDay ? (
           weakSlots.length ? (
             <small>
@@ -346,21 +338,6 @@ function FreshDailyPlanPanel({
             })}
           </small>
         ) : null}
-        {evenDay ? (
-          windowWhy(plan?.explanation, 'weak') ? (
-            <small className="daily-plan__why">{windowWhy(plan?.explanation, 'weak')}</small>
-          ) : null
-        ) : bestWindowRange && windowWhy(plan?.explanation) ? (
-          <small className="daily-plan__why">{windowWhy(plan?.explanation)}</small>
-        ) : null}
-        {plan?.scoreRange ? (
-          <small className="daily-plan__range">
-            {t('hava81.dailyPlan.scoreRange', {
-              low: plan.scoreRange.low,
-              high: plan.scoreRange.high,
-            })}
-          </small>
-        ) : null}
       </div>
 
       <details className="daily-plan__explain">
@@ -373,6 +350,32 @@ function FreshDailyPlanPanel({
             {t(`hava81.dailyPlan.confidence.${plan.confidence}`)}
           </small>
         </summary>
+        {/* The why behind the answer; the card itself only says when. */}
+        <div className="daily-plan__reasoning">
+          {evenDay || bestWindowRange ? (
+            <p className="daily-plan__sentence">{nowOrLaterText}</p>
+          ) : null}
+          {nightOutscoresBest ? (
+            <p className="daily-plan__night-note">
+              {t('hava81.dailyPlan.nightNote', { range: nightRange })}
+            </p>
+          ) : null}
+          {evenDay ? (
+            windowWhy(plan?.explanation, 'weak') ? (
+              <small className="daily-plan__why">{windowWhy(plan?.explanation, 'weak')}</small>
+            ) : null
+          ) : bestWindowRange && windowWhy(plan?.explanation) ? (
+            <small className="daily-plan__why">{windowWhy(plan?.explanation)}</small>
+          ) : null}
+          {plan?.scoreRange ? (
+            <small className="daily-plan__range">
+              {t('hava81.dailyPlan.scoreRange', {
+                low: plan.scoreRange.low,
+                high: plan.scoreRange.high,
+              })}
+            </small>
+          ) : null}
+        </div>
         {plan.impacts.length ? (
           <ul className="daily-plan__impacts">
             {plan.impacts.slice(0, 3).map(impact => (

@@ -367,10 +367,13 @@ export function DecisionAlertsPanel({
         <span className="atlas-kicker">{t('hava81.alerts.eyebrow')}</span>
         <h2 id="decision-alerts-title">{t('hava81.alerts.title')}</h2>
         <p>{t('hava81.alerts.description')}</p>
-        <small>{t('hava81.alerts.quietHours')}</small>
         <small className="decision-alerts__modeled-note">
           {t('hava81.alerts.modeledDisclosure')}
         </small>
+        <details className="decision-alerts__how">
+          <summary>{t('hava81.alerts.how')}</summary>
+          <small>{t('hava81.alerts.quietHours')}</small>
+        </details>
         {enabled && permission === 'granted' && !alertEvidenceFresh ? (
           <small role="status">{t('hava81.alerts.freshnessPaused')}</small>
         ) : null}
