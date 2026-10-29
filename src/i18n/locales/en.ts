@@ -166,8 +166,7 @@ export const en = {
       eyebrow: 'Next step',
       title: 'Plan',
       titleWithCity: 'Plan · {{city}}',
-      intro:
-        'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.',
+      intro: 'Tell Hava81 once what you do and when; it finds the best time for you every day.',
       back: 'Back to Today',
       asideLabel: 'Days, local context and notifications',
       entryEyebrow: 'Next step',

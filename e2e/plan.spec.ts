@@ -187,8 +187,8 @@ test.describe('Planla view', () => {
         await expect(intro).toBeVisible();
         await expect(intro).toHaveText(
           language === 'en'
-            ? 'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.'
-            : 'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.'
+            ? 'Tell Hava81 once what you do and when; it finds the best time for you every day.'
+            : 'Ne zaman ne yaptığını bir kez söyle; Hava81 her gün senin için en iyi saati bulsun.'
         );
         const metrics = await intro.evaluate(element => ({
           height: element.getBoundingClientRect().height,

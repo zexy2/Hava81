@@ -166,8 +166,7 @@ export const tr = {
       eyebrow: 'İkinci adım',
       title: 'Planla',
       titleWithCity: 'Planla · {{city}}',
-      intro:
-        'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.',
+      intro: 'Ne zaman ne yaptığını bir kez söyle; Hava81 her gün senin için en iyi saati bulsun.',
       back: 'Bugüne dön',
       asideLabel: 'Günler, yerel bağlam ve bildirimler',
       entryEyebrow: 'Sıradaki adım',
