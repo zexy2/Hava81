@@ -724,8 +724,13 @@
       flex-wrap: wrap;
       gap: 0.25rem;
       margin: 0.5rem 0 0;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       line-height: 1.4;
+    }
+
+    /* Touch targets on phones: every attribution link is a full 44px row. */
+    .app .weather-map__attribution a {
+      min-height: 44px;
     }
   }
 }
