@@ -59,7 +59,8 @@ export function getDailyPlanAirQualityEvidence({
     return hourlyAqiByTime.get(time.getTime()) !== undefined;
   };
   const usesHourlyAqi = forecastTimes.some(hasExactHourlyValue);
-  const usesCurrentAqiFallback = Boolean(currentAirQuality) && forecastTimes.some(time => !hasExactHourlyValue(time));
+  const usesCurrentAqiFallback =
+    Boolean(currentAirQuality) && forecastTimes.some(time => !hasExactHourlyValue(time));
 
   return {
     currentAirQuality,

@@ -58,6 +58,8 @@ const emptyPenalties: PlanPenalties = {
   muggy: 0,
   dust: 0,
   pollen: 0,
+  sea: 0,
+  sky: 0,
   compound: 0,
   comfort: 0,
   total: 0,

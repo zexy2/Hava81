@@ -306,10 +306,15 @@ export const tr = {
       dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
     outlook: {
+      approx: '(tahmini)',
+      approxScore: 'Yaklaşık {{score}}/100, {{band}}; tahmin henüz kesin değil',
       title: 'Önümüzdeki günler',
       intentLabel: 'Hangi plan için?',
       general: 'Genel',
       intentAria: 'Önümüzdeki günler: {{name}}',
+      tempRange: 'En düşük {{low}}, en yüksek {{high}}',
+      windowGeneral: 'Genel olarak en uygun {{start}}–{{end}}',
+      windowFor: '{{activity}} için en uygun {{start}}–{{end}}',
       window: 'En uygun {{start}}–{{end}}',
       noWindow: 'Uygun pencere yok',
       thunder: 'Gök gürültülü fırtına · {{times}} civarı. Yıldırım riski: açık alanda bekleme.',
@@ -351,6 +356,20 @@ export const tr = {
       bestTime: 'En iyi hava saati',
     },
     dailyPlan: {
+      scoreScope12h: 'Önümüzdeki 12 saat · genel',
+      headline: {
+        best: 'En iyi zaman {{start}}–{{end}}',
+        even: 'Gün boyu benzer',
+      },
+      nightFlag: 'Gece',
+      nightNote:
+        'Gece saatleri ({{range}}) daha yüksek puanlı, ama öneriler 07:00–23:00 arasından seçilir.',
+      bestFlag: 'En iyi',
+      legend: {
+        good: 'Uygun',
+        caution: 'Dikkat',
+        difficult: 'Zor',
+      },
       eyebrow: 'Hava81 karar motoru',
       title: 'Gün planı',
       forecastStale:
@@ -373,7 +392,7 @@ export const tr = {
       },
       bestWindow: 'Hava açısından önümüzdeki 12 saatte en iyi görünen saat: {{time}}',
       bestRange: 'Hava açısından önümüzdeki 12 saatte en uygun görünen aralık: {{start}}–{{end}}',
-      scoreRange: 'Yağışa bağlı: yağarsa {{low}}, yağmazsa {{high}}.',
+      scoreRange: 'Yağmur yağarsa puan {{low}}, yağmazsa {{high}} olur.',
       weakHours: 'Daha zayıf saatler: {{times}}.',
       whyWeak: {
         thermal:
@@ -508,7 +527,8 @@ export const tr = {
         no: 'Tahmine göre gerek görünmüyor',
       },
       change: {
-        'rain-increase': 'Dönüşte yağmur riski çıkışa göre yaklaşık {{value}} puan artıyor.',
+        'rain-increase':
+          'Dönüşte yağış ihtimali çıkışa göre yaklaşık {{value}} yüzde puanı yüksek.',
         'precipitation-unknown':
           'Yağış verisi bir veya iki pencerede yok; yağış değişimi karşılaştırılamıyor.',
         'rain-amount-increase':
@@ -539,10 +559,135 @@ export const tr = {
         'Seçtiğin çıkış ve dönüş saatlerine yeterince yakın tahmin henüz yok. Tahmin kapsamı genişlediğinde plan otomatik olarak hesaplanacak.',
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
+    routines: {
+      title: 'Planlarım',
+      add: 'Plan ekle',
+      custom: 'Kendi planımı kur',
+      emptyLead:
+        'Ne zaman ne yaptığını bir kez söyle; Hava81 her açtığında planlarının havasını gösterir.',
+      newTitle: 'Yeni plan',
+      editTitle: 'Planı düzenle',
+      editLabel: '{{name}} planını düzenle',
+      what: 'Ne yapacaksın?',
+      when: 'Ne zaman?',
+      daysLabel: 'Günler',
+      kindLabel: 'Saat',
+      kind: {
+        fixed: 'Saati ben seçerim',
+        flexible: 'En iyi saati sen bul',
+      },
+      presets: {
+        every: 'Her gün',
+        weekdays: 'Hafta içi',
+        weekend: 'Hafta sonu',
+      },
+      days: {
+        '0': 'Pz',
+        '1': 'Pt',
+        '2': 'Sa',
+        '3': 'Ça',
+        '4': 'Pe',
+        '5': 'Cu',
+        '6': 'Ct',
+      },
+      daysLong: {
+        '0': 'Pazar',
+        '1': 'Pazartesi',
+        '2': 'Salı',
+        '3': 'Çarşamba',
+        '4': 'Perşembe',
+        '5': 'Cuma',
+        '6': 'Cumartesi',
+      },
+      start: 'Başlangıç',
+      from: 'En erken',
+      to: 'En geç',
+      duration: 'Süre',
+      minutes_one: '{{count}} dk',
+      minutes_other: '{{count}} dk',
+      more: 'Ad ve tercihler',
+      name: 'Plan adı',
+      windTolerance: 'Rüzgâr',
+      rainTolerance: 'Yağmur',
+      useGeneral: 'Genel tercihim',
+      pickDay: 'En az bir gün seç.',
+      save: 'Kaydet',
+      cancel: 'Vazgeç',
+      delete: 'Planı sil',
+      today: 'Bugün',
+      tomorrow: 'Yarın',
+      flexibleRange: '{{from}}–{{to}} arası',
+      pending_one: 'Tahmin {{count}} gün kala netleşir',
+      pending_other: 'Tahmin {{count}} gün kala netleşir',
+      noOccurrence: 'Yakında tekrar yok',
+      better: '{{start}}–{{end}} daha iyi · {{score}}',
+      bestInside: 'En iyi zaman {{start}}–{{end}}',
+      notSuitable: 'Bu saatlerde uygun değil',
+      clear: 'Belirgin risk yok',
+      noScore: 'Henüz yok',
+      templates: {
+        'evening-run': {
+          name: 'Akşam koşusu',
+          when: 'Hafta içi 18:30 · 45 dk',
+        },
+        'morning-dog': {
+          name: 'Sabah köpek',
+          when: 'Her gün 07:30 · 30 dk',
+        },
+        'weekend-picnic': {
+          name: 'Hafta sonu piknik',
+          when: 'Ct–Pz, en iyi 2 saat',
+        },
+        'laundry-day': {
+          name: 'Çamaşır günü',
+          when: 'Her gün, en kuru 3 saat',
+        },
+      },
+    },
     activities: {
-      eyebrow: 'Kişisel plan',
-      title: 'Bugün ne yapacaksın?',
-      subtitle: 'En fazla üç aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
+      calendar: {
+        add: 'Takvime ekle',
+        title: '{{name}} · Hava81',
+        body: 'Hava81 bu saatleri {{score}}/100 ile önerdi. Çıkmadan önce son tahmine bak.',
+      },
+      feedback: {
+        question: '{{name}}, {{start}}–{{end}} nasıldı?',
+        good: 'İyiydi',
+        bad: 'Değildi',
+        record: 'Takvime eklediğin son {{total}} planın {{good}} tanesi iyi geçti.',
+      },
+      nextWindow: 'Bu dönemde uygun saat yok · sonraki iyi zaman: {{start}}–{{end}}',
+      compare: {
+        title: 'Yan yana',
+        none: 'Uygun saat yok',
+        axis: 'Her kare bir saat · soluk kareler önerilmez',
+      },
+      period: {
+        label: 'Ne zaman?',
+        now: 'Şimdi',
+        evening: 'Bu akşam',
+        tomorrow: 'Yarın',
+        weekend: 'Hafta sonu',
+        ended: 'Bu akşam bitti; Yarın veya Hafta sonu seçebilirsin.',
+      },
+      suggest: {
+        title: {
+          now: 'Şimdi ne yapsan iyi olur',
+          evening: 'Bu akşam ne yapsan iyi olur',
+          tomorrow: 'Yarın için en iyiler',
+          weekend: 'Hafta sonu için en iyiler',
+        },
+        add: '{{name}} planıma ekle',
+        hint: 'Bir aktiviteyi ekle; saat saat ayrıntısı ve kendi tercihlerinle yeniden puanlanır.',
+        none: 'Bu dönemde hiçbir aktivite için uygun pencere yok. Başka bir zaman seç.',
+      },
+      seaNotSuitable: 'Deniz şu an yüzmeye uygun görünmüyor (su {{sea}}{{wave}}).',
+      seaWave: ', dalga {{value}} m',
+      seaUnknown: 'Deniz verisi yok; plaj için öneri yapılmıyor.',
+      personalEffect: 'Tercihlerinle {{value}}',
+      eyebrow: 'Keşfet',
+      title: 'Başka ne yapabilirsin?',
+      subtitle: 'Aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
       choose: 'Aktivite seçimi',
       forecastStale:
         'Tahmin verisi güncelliğini yitirdi. Yeni veri gelene kadar aktivite önerileri gösterilmiyor.',
@@ -555,6 +700,11 @@ export const tr = {
         children: 'Çocukla dışarı',
         motorcycle: 'Motosiklet',
         laundry: 'Çamaşır',
+        bike: 'Bisiklet',
+        dog: 'Köpek gezdirme',
+        beach: 'Plaj ve yüzme',
+        garden: 'Balkon ve bahçe',
+        photo: 'Altın saat',
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
       bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
@@ -566,7 +716,7 @@ export const tr = {
       },
       darkness:
         'Önerilen saatler hava karardıktan sonra: aydınlık bir rota ve görünür kıyafet seç.',
-      fullDuration: 'Planlanan {{minutes}} dakikanın tamamı uygun koşullarda.',
+      fullDuration: '{{minutes}} dakikalık tipik süre bu aralığa tamamen sığıyor.',
       alternatives: 'Diğer uygun aralıklar: {{list}}',
       score: {
         default: '12 saatlik uygunluk',
@@ -605,6 +755,14 @@ export const tr = {
           'Çocukla dışarıda {{minimum}}–{{maximum}}{{unit}}, iyi hava kalitesi ve düşük UV daha önemlidir.',
         motorcycle: 'Motosiklette yağış, kuvvetli rüzgâr ve düşük görüş daha ağır cezalandırılır.',
         laundry: 'Çamaşırda yağışsız, daha kuru ve hafif rüzgârlı saatler avantajlıdır.',
+        bike: 'Bisiklette rüzgâr, hamle ve ıslak zemin belirleyicidir; görüş düşükse saat önerilmez.',
+        dog: 'Köpekler insanlardan önce ısınır ve sıcak asfalt patileri yakar: serin saatler avantajlıdır.',
+        beach:
+          'Plajda ılık hava, yağışsız saatler, 22 °C ve üzeri su ve sakin deniz aranır; dalga 1,5 m üstündeyse önerilmez.',
+        garden:
+          'Balkon ve bahçe işinde yağışsız, ılık ve çok rüzgârlı olmayan gündüz saatleri avantajlıdır.',
+        photo:
+          'Altın saatte gün doğumu ve batımı çevresindeki ışık önemlidir: kapalı gökyüzü, sis ve yağmur ışığı söndürür.',
       },
       mainRisk: 'Öne çıkan risk: {{risk}}',
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',
@@ -612,6 +770,11 @@ export const tr = {
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
       hourlyAqiSource:
         'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+      prefs: {
+        title: 'Tercihler',
+        edit: 'Düzenle',
+        pollenOn: 'Polen alerjisi',
+      },
       tolerance: {
         label: 'Kişisel tolerans',
         wind: 'Rüzgâr',

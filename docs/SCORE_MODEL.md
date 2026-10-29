@@ -19,7 +19,7 @@ The existing OpenWeather three-hour forecast remains the resilient fallback. Mis
 
 ## Thermal stress
 
-Provider apparent temperature is preferred. If it is unavailable, Hava81 derives a fallback using the US National Weather Service heat-index approach for hot/humid conditions (simple Steadman formula below 80 °F, Rothfusz regression above) and the NWS wind-chill equation for cold/windy conditions. The score uses smooth curves around the comfort range rather than abrupt temperature thresholds. A slot with a broken temperature or wind value never produces NaN: missing wind counts as calm and a missing temperature caps the hour at 89 (incomplete evidence).
+Provider apparent temperature is preferred. If it is unavailable, Hava81 derives a fallback using the US National Weather Service heat-index approach for hot/humid conditions (simple Steadman formula below 80 °F, Rothfusz regression above) and the NWS wind-chill equation for cold/windy conditions. The score uses smooth curves around the comfort range rather than abrupt temperature thresholds. A slot with a broken temperature or wind value never produces NaN: missing wind counts as calm and a missing temperature caps the hour at 84 (incomplete evidence). In the cold, when the provider's feels-like already includes wind chill, only three quarters of the wind penalty is added, so the chill is not counted twice.
 
 References:
 
@@ -28,7 +28,7 @@ References:
 
 ## Rain
 
-Probability and intensity are deliberately separate. A high chance of a trace amount is not treated like a lower-probability multi-millimeter downpour. When hourly precipitation amount is unavailable, probability alone provides a weaker fallback signal. When only the amount is known, it is full rain evidence: an unknown probability is never read as a 0 % chance. If both probability and amount are missing, rain is **unknown**, not dry: the individual hour is capped at 89 (good at most), and the day-plan confidence cannot count that hour as high-quality evidence. This is an evidence-completeness policy, not a claim that rain is likely.
+Probability and intensity are deliberately separate. A high chance of a trace amount is not treated like a lower-probability multi-millimeter downpour. The amount curve is full at 3 mm/h (steady 1 mm/h already spoils a walk) and rain can cost up to 46 points. When hourly precipitation amount is unavailable, probability alone provides a weaker fallback signal. When only the amount is known, it is full rain evidence: an unknown probability is never read as a 0 % chance. If both probability and amount are missing, rain is **unknown**, not dry: the individual hour is capped at 84 (good at most), and the day-plan confidence cannot count that hour as high-quality evidence. This is an evidence-completeness policy, not a claim that rain is likely.
 
 ## Wind
 
@@ -36,7 +36,7 @@ Sustained wind and gusts are evaluated together. Gusts can therefore reduce suit
 
 ## UV
 
-UV starts contributing from UVI 3 and becomes progressively more important toward very-high/extreme values. This follows the WHO framing that protection is needed from UVI 3 upward and extra protection is needed at UVI 8+.
+UV starts contributing from UVI 3 and becomes progressively more important toward very-high/extreme values. This follows the WHO framing that protection is needed from UVI 3 upward and extra protection is needed at UVI 8+. UV is a mitigable risk (shade, sunscreen), so the general penalty is at most 10 points and the high-UV warning carries the advice; running and children weight UV up (×2.3 / ×2.5) because exposure is harder to manage there.
 
 Reference: https://www.who.int/news-room/questions-and-answers/item/radiation-the-ultraviolet-(uv)-index
 
@@ -45,7 +45,8 @@ Reference: https://www.who.int/news-room/questions-and-answers/item/radiation-th
 Low visibility contributes continuously below 5 km. One WMO table (`WMO_SEVERITY` in `scoreWeatherWindow.ts`) drives the score, the reason codes and the plan gates:
 
 - 28 points, score capped at 25: thunderstorm with hail (96, 99), freezing rain (66, 67), dense freezing drizzle (57);
-- 20 points, named `severe-weather`, blocks plan windows: thunderstorm (95), light freezing drizzle (56), heavy snow (75, 86), heavy rain / violent showers (65, 82);
+- thunderstorm (95): 20 points, named `severe-weather`, blocks plan windows and is a hazard hour (capped at 25) — lightning is not a "caution" hour;
+- 20 points, named `severe-weather`, blocks plan windows, score at most 54: light freezing drizzle (56), heavy snow (75, 86), heavy rain / violent showers (65, 82);
 - 14 / 12 / 8 points: moderate snow (73), snow showers (85, also blocks plan windows), slight snow and snow grains (71, 77);
 - fog (45, 48): 6 / 8 points.
 
@@ -61,16 +62,25 @@ The headline score covers the next 12 hours and is **time weighted**, so the sam
 
 The score reads the **hours you could use**: the same recommendable hours (see below) the best window is chosen from, so a cold 03:00 cannot drag down an evening plan. Weather does not remove an hour from the score — a storm hour is not recommendable, but it still counts. Umbrella and wind advice read every hour of the horizon, because the walk home at night still matters.
 
-Hazard hours (hour score ≤ 25) limit the headline: any hazard hour caps it at 74 (caution); three or more hazard hours cap it at 54 (difficult). One thunderstorm hour is therefore a "plan around it" day, not a lost day. The day plan, activities and compare share this rule (`src/domain/decision/aggregateHorizon.ts`).
+Hazard hours (hour score ≤ 25) limit the headline: any hazard hour caps it at 69 (caution); three or more hazard hours cap it at 54 (difficult). One thunderstorm hour is therefore a "plan around it" day, not a lost day. The day plan, activities and compare share this rule (`src/domain/decision/aggregateHorizon.ts`).
 
-Forecast steps that already ended are dropped before scoring: at 14:20 the 14:00 slot is "now", the 13:00 slot is gone.
+Forecast steps that already ended are dropped before scoring: at 14:20 the 14:00 slot is "now", the 13:00 slot is gone. The step in progress only weighs the part that is still ahead (at 14:50 the 14:00 slot counts for ten minutes).
 
 Current bands (`getScoreBand` in `src/domain/decision/scoreWeatherWindow.ts`; this list is checked against the code by `src/__tests__/docs.scoreModel.test.ts`):
 
-- 97–100: Very good / Excellent (Çok uygun). Any named risk caps an hour at 96, so this band means "no warning at all".
-- 75–96: Good (Uygun)
-- 55–74: Caution (Dikkat)
+- 85–100: Very good / Excellent (Çok uygun). Any named risk keeps an hour at 84 or below, so this band means "no warning at all".
+- 70–84: Good (Uygun)
+- 55–69: Caution (Dikkat)
 - 0–54: Difficult (Zorlayıcı)
+
+## The band agrees with the warning
+
+A score next to a warning must not contradict it ("Uygun · kötü hava kalitesi"). `applyWarningCaps` (`scoreWeatherWindow.ts`), used by the general and every activity score:
+
+- any named warning: at most 84 (good). Scores 70–100 of warned hours map linearly onto 70–84, so their order (and personal tolerance) survives;
+- certain rain (≥ 0.5 mm/h or ≥ 70 % with the rain warning), strong wind, poor air quality, low visibility, freezing: at most 69 (caution);
+- moderate rain (≥ 2.5 mm/h), extreme heat, severe weather codes: at most 54 (difficult);
+- thunderstorm (95): at most 25 (hazard).
 
 The UI shows the band word next to the score, not the numeric range.
 
@@ -105,12 +115,14 @@ Umbrella, wind, heat/cold and air-quality verdicts come from one file, `src/doma
 
 - Daily plan, compare, activity and commute use the same base slot scorer.
 - Activity scores come from one intent scorer (`src/domain/plan/scoreHour.ts`) with per-activity profiles (`profiles.ts`). The profile **re-weights** the base penalties and replaces the general 22 °C comfort centre with its own comfort range; it never adds a second rain/wind/heat model on top, so no weather factor is counted twice. Personal temperature sensitivity shifts the comfort range.
-- Profile gates decide which hours an activity may recommend: daylight / active hours, rain and wind limits (a slot is gated when it goes **above** the limit), and the absolute safety limits (gated **at or above**). Laundry and picnic also need rain evidence: with unknown precipitation they are not recommended and stay out of the good band (≤ 74).
+- Profile gates decide which hours an activity may recommend: daylight / active hours, rain and wind limits (a slot is gated when it goes **above** the limit), and the absolute safety limits (gated **at or above**). Laundry and picnic also need rain evidence: with unknown precipitation they are not recommended and stay out of the good band (≤ 69).
 - Laundry is about drying: heat and UV are not penalties. Drying power is the vapour-pressure deficit from temperature and dew point (Tetens; relative humidity is the fallback) plus the hour's sunshine duration: damp air costs up to 22 points, a sunless hour up to 8. Without humidity evidence no drying claim is made. Laundry keeps every safety cap except the human heat-exposure one.
 - Mugginess: a high dew point (18 → 24 °C) costs running up to 12 points and children half of that, named "muggy" from about 20 °C. Apparent temperature alone understates how heavy humid air feels during exertion. Walking is not affected.
 - Saharan dust: the context endpoint's 24-hour dust peak (µg/m³) counts for running, children (full weight) and walking (0.6) above the WHO PM10 guideline of 45 µg/m³ (up to 18 points at 200), named "dust" from 100 µg/m³. It is applied only while the context evidence is fresh and only to slots inside the 24 hours after the fetch. Laundry and motorcycle ignore it.
 - Pollen is scored only for people who switch on "I have a pollen allergy": the higher of the fresh 24-hour grass and olive pollen peaks costs running, picnic and children up to 18 points (walking 0.8 of that) from 20 grains/m³, named "high pollen" from 50. Laundry and motorcycle ignore it, and without the setting pollen changes no score.
-- Personal wind and rain tolerance ("I mind it" / balanced / "doesn't bother me") multiply only the comfort penalties for wind and rain (×1.3 / ×1 / ×0.7). Safety caps, the absolute gates and each activity's wind and rain limits are the same for everyone.
+- Personal wind and rain tolerance ("I mind it" / balanced / "doesn't bother me") multiply only the comfort penalties for wind and rain (×1.3 / ×1 / ×0.7). "Doesn't bother me" also drops the mild notices (windy, gusty, possible rain); strong wind and certain rain always stay, with their band caps. Safety caps, the absolute gates and each activity's wind and rain limits are the same for everyone.
+- Laundry: heat helps drying, so the heat warning stays visible but does not set the band.
+- Commute: rain is compared on its own (probability, amount); the comfort comparison uses the same hours scored as dry, so rain is not counted twice.
 - Recommended windows fit the activity's whole duration (walk 60, run 45, picnic 120, children 60, laundry 90, motorcycle 45 minutes): every slot of the block must pass the gates. With hourly data, no fitting block means no window rather than a shorter one; three-hourly data falls back to the near-best range. Up to two non-overlapping alternatives are shown.
 - "Why this range?" names the factor whose penalty most separates the window from the plan's other usable hours (at least 6 points), with the measured values on both sides; when no factor separates them, no reason is shown.
 - Compare prefers the real one-hour data and falls back to the three-hour series if needed.

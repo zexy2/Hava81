@@ -36,7 +36,7 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   const dailyPlan = page.locator('.daily-plan');
   await expect(dailyPlan).toContainText('%45 · 0,2 mm');
   await expect(dailyPlan.getByText('Makul', { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Bugün ne yapacaksın/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Başka ne yapabilirsin/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
   await expect(page.getByText('UV · 24 saat en yüksek', { exact: true })).toBeVisible();
   await expect(page.getByText('Rota havası', { exact: true })).toBeVisible();

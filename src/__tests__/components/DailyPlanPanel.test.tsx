@@ -215,7 +215,7 @@ describe('DailyPlanPanel sharing', () => {
       screen.getByText('hava81.scoreScope.hourly · hava81.scoreScope.scale')
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/^hava81\.scoreScope\.day · hava81\.dailyPlan\.bands\./)
+      screen.getByText(/^hava81\.dailyPlan\.scoreScope12h · hava81\.dailyPlan\.bands\./)
     ).toBeInTheDocument();
     const timeline = screen.getByRole('list', { name: 'hava81.dailyPlan.timelineLabel' });
     for (const slot of within(timeline).getAllByRole('listitem')) {
@@ -286,7 +286,7 @@ describe('DailyPlanPanel sharing', () => {
       )
     ).toHaveLength(3);
     expect(
-      unknownSlots.every(slot => /\b89\/100\b/.test(slot.getAttribute('aria-label') ?? ''))
+      unknownSlots.every(slot => /\b84\/100\b/.test(slot.getAttribute('aria-label') ?? ''))
     ).toBe(true);
     expect(screen.getByText('hava81.dailyPlan.precipitationEvidenceNote')).toBeVisible();
     expect(unknownSlots[0]).toHaveAccessibleName(/hava81\.dailyPlan\.precipitationUnknown/);

@@ -127,6 +127,41 @@ describe('explainContrast', () => {
   it('returns nothing without both sides', () => {
     expect(explainContrast([], [slot(19, 70)], slot(13, 92))).toBeUndefined();
   });
+
+  // Seen live: "22:00 civarı yağış ihtimali %53, bu aralıkta %63" — the rain penalty came from
+  // the amount, but the copy showed probability, so the reason contradicted the advice.
+  it('shows the amount when probability would contradict the rain contrast', () => {
+    const good = {
+      ...slot(12, 70),
+      impacts: [{ factor: 'precipitation', penalty: 8 }],
+      precipitationProbability: 0.63,
+      precipitationMm: 0.2,
+    } as unknown as ScoredWeatherWindow;
+    const weak = {
+      ...slot(22, 50),
+      impacts: [{ factor: 'precipitation', penalty: 30 }],
+      precipitationProbability: 0.53,
+      precipitationMm: 4.5,
+    } as unknown as ScoredWeatherWindow;
+    const result = explainContrast([good], [weak], good);
+    expect(result?.factor).toBe('precipitation-mm');
+    expect(result?.worstValue).toBe(4.5);
+    expect(result?.windowValue).toBe(0.2);
+  });
+
+  it('says nothing rather than a reason its own numbers contradict', () => {
+    const good = {
+      ...slot(12, 70),
+      impacts: [{ factor: 'wind', penalty: 2 }],
+      windSpeed: 9,
+    } as unknown as ScoredWeatherWindow;
+    const weak = {
+      ...slot(22, 50),
+      impacts: [{ factor: 'wind', penalty: 20 }],
+      windSpeed: 6,
+    } as unknown as ScoredWeatherWindow;
+    expect(explainContrast([good], [weak], good)).toBeUndefined();
+  });
 });
 
 describe('activity notes', () => {
