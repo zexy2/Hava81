@@ -1,3 +1,4 @@
+import { supportsMarineContext } from '../../utils/marineCities';
 import { formatCityTime, formatNumber } from '../../utils/format';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
@@ -35,7 +36,13 @@ interface Props {
   contextSignals?: ContextSignals | null;
 }
 
-const activities: ActivityKind[] = ['walk', 'run', 'picnic', 'children', 'motorcycle', 'laundry'];
+/** Every activity, in its group order; the sea group appears only where there is a sea. */
+const ACTIVITY_GROUPS: ReadonlyArray<{ id: string; activities: ActivityKind[] }> = [
+  { id: 'move', activities: ['walk', 'run', 'bike', 'dog'] },
+  { id: 'outdoors', activities: ['picnic', 'children', 'beach'] },
+  { id: 'home', activities: ['garden', 'laundry'] },
+  { id: 'road', activities: ['motorcycle'] },
+];
 
 /** A circle as a path, so every glyph is one list of strokes. */
 const ring = (cx: number, cy: number, r: number) =>
@@ -63,6 +70,36 @@ const GLYPHS: Record<ActivityKind, string[]> = {
     'M13.75 8.25 10.75 9.5 9.25 8',
     'M2.75 9.75h3',
     'M2.25 12.75h2',
+  ],
+  bike: [
+    ring(5.5, 16.5, 3.25),
+    ring(18.5, 16.5, 3.25),
+    'M5.5 16.5 9.5 9.5h6.25L18.5 16.5',
+    'M9.5 9.5 12.25 16.5h-6.75',
+    'M15.75 9.5 14.75 6.75h2.25',
+    'M8.75 7.75h2',
+  ],
+  dog: [
+    'M5.25 13.25h9.25l1.75-3.25 2.25.75 1.25 2-1.5 1.25-1.5-.25-1.5 2.75v4',
+    'M7.25 13.25v7',
+    'M10.5 16.25v4',
+    'M5.25 13.25 3.5 10.75',
+    'M17.75 9.5 18.5 7.75',
+    'M14.5 13.25c-2-3.5-5-6.5-8.75-8.25',
+  ],
+  beach: [
+    'M3.5 11.5a7.5 7.5 0 0 1 14.5-2.5Z',
+    'M10.75 10.25 13.25 19',
+    'M2.75 20.25c1.5-1.25 3-1.25 4.5 0s3 1.25 4.5 0 3-1.25 4.5 0 3 1.25 4.5 0',
+    ring(19.25, 4.75, 1.5),
+  ],
+  garden: [
+    'M12 20.25v-8',
+    'M12 14c-3.75 0-5.5-2.5-5.5-5.75 3.5 0 5.5 2.25 5.5 5.75Z',
+    'M12 12.25c0-3.25 1.75-5.5 5.25-5.5 0 3.25-2 5.5-5.25 5.5Z',
+    'M4 20.25h16',
+    'M19.25 20.25v-4.5',
+    'M18 15.75h2.5',
   ],
   picnic: [
     'M3 20.25 5.75 16.75h12.5l2.75 3.5Z',
@@ -180,6 +217,22 @@ export function ActivityPlanner({
         })
       )
     : [];
+  // Why the beach has no window: name the sea values instead of a generic "no window".
+  const marine = contextFreshness.fresh ? contextSignals?.marine : undefined;
+  const seaNote =
+    marine && Number.isFinite(marine.seaSurfaceTemperature)
+      ? t('hava81.activities.seaNotSuitable', {
+          sea: `${Math.round(convertTemperature(marine.seaSurfaceTemperature as number))}${getTemperatureSymbol()}`,
+          wave: Number.isFinite(marine.waveHeight)
+            ? t('hava81.activities.seaWave', { value: (marine.waveHeight as number).toFixed(1) })
+            : '',
+        })
+      : t('hava81.activities.seaUnknown');
+  // Sea plans need the marine context; inland cities do not offer them.
+  const hasSea = supportsMarineContext(weather.cityName);
+  const availableActivities = ACTIVITY_GROUPS.flatMap(group => group.activities).filter(
+    activity => activity !== 'beach' || hasSea
+  );
   // What the personal settings change: the same plans with the default preferences.
   const hasPersonalSettings =
     profile.temperatureSensitivity !== 'balanced' ||
@@ -288,7 +341,7 @@ export function ActivityPlanner({
         aria-label={t('hava81.activities.choose')}
         aria-describedby={profile.activities.length >= 3 ? 'activity-selection-limit' : undefined}
       >
-        {activities.map(activity => {
+        {availableActivities.map(activity => {
           const active = profile.activities.includes(activity);
           const disabled = !active && profile.activities.length >= 3;
           return (
@@ -503,7 +556,9 @@ export function ActivityPlanner({
                             start: formatTime(bestRange.start.time),
                             end: formatTime(bestRange.endTime),
                           })
-                        : t('hava81.activities.noWindow')}
+                        : plan.activity === 'beach'
+                          ? seaNote
+                          : t('hava81.activities.noWindow')}
                   </p>
                   {(() => {
                     const baseline = defaultScoreOf.get(plan.activity);

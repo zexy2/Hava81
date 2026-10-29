@@ -505,6 +505,9 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     activities: {
+      seaNotSuitable: 'Deniz şu an yüzmeye uygun görünmüyor (su {{sea}}{{wave}}).',
+      seaWave: ', dalga {{value}} m',
+      seaUnknown: 'Deniz verisi yok; plaj için öneri yapılmıyor.',
       personalEffect: 'Tercihlerinle {{value}}',
       eyebrow: 'Kişisel plan',
       title: 'Bugün ne yapacaksın?',
@@ -521,6 +524,10 @@ export const tr = {
         children: 'Çocukla dışarı',
         motorcycle: 'Motosiklet',
         laundry: 'Çamaşır',
+        bike: 'Bisiklet',
+        dog: 'Köpek gezdirme',
+        beach: 'Plaj ve yüzme',
+        garden: 'Balkon ve bahçe',
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
       bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
@@ -571,6 +578,12 @@ export const tr = {
           'Çocukla dışarıda {{minimum}}–{{maximum}}{{unit}}, iyi hava kalitesi ve düşük UV daha önemlidir.',
         motorcycle: 'Motosiklette yağış, kuvvetli rüzgâr ve düşük görüş daha ağır cezalandırılır.',
         laundry: 'Çamaşırda yağışsız, daha kuru ve hafif rüzgârlı saatler avantajlıdır.',
+        bike: 'Bisiklette rüzgâr, hamle ve ıslak zemin belirleyicidir; görüş düşükse saat önerilmez.',
+        dog: 'Köpekler insanlardan önce ısınır ve sıcak asfalt patileri yakar: serin saatler avantajlıdır.',
+        beach:
+          'Plajda ılık hava, yağışsız saatler, 22 °C ve üzeri su ve sakin deniz aranır; dalga 1,5 m üstündeyse önerilmez.',
+        garden:
+          'Balkon ve bahçe işinde yağışsız, ılık ve çok rüzgârlı olmayan gündüz saatleri avantajlıdır.',
       },
       mainRisk: 'Öne çıkan risk: {{risk}}',
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',

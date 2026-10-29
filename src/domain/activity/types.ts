@@ -8,7 +8,17 @@ import type {
   ScoredWeatherWindow,
 } from '../decision/types';
 
-export type ActivityKind = 'walk' | 'run' | 'picnic' | 'children' | 'motorcycle' | 'laundry';
+export type ActivityKind =
+  | 'walk'
+  | 'run'
+  | 'bike'
+  | 'dog'
+  | 'picnic'
+  | 'children'
+  | 'beach'
+  | 'garden'
+  | 'motorcycle'
+  | 'laundry';
 export type TemperatureSensitivity = 'cold' | 'balanced' | 'heat';
 
 export interface DecisionProfile {

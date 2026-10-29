@@ -17,6 +17,7 @@ import {
 } from '../decision/aggregateHorizon';
 import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
 import { findBestWindowRange } from '../decision/bestWindowRange';
+import { GOOD_MAX } from '../decision/scoreWeatherWindow';
 import { isRecommendableHour } from '../decision/eligibility';
 import { getScoreBand, scoreWeatherWindow } from '../decision/scoreWeatherWindow';
 import type {
@@ -187,8 +188,7 @@ export const buildDayOutlook = ({
         dateKey,
         start,
         dayOffset,
-        score: plan.score,
-        band: plan.band,
+        ...dayScore(plan.score, plan.reasons.slice(0, 2)),
         bestWindowRange: plan.bestWindowRange,
         reasons: plan.reasons.slice(0, 2),
         confidence: getPlanConfidence((peak.time.getTime() - now.getTime()) / HOUR_MS, 1),
@@ -246,8 +246,7 @@ export const buildDayOutlook = ({
       dateKey,
       start,
       dayOffset,
-      score,
-      band: getScoreBand(score),
+      ...dayScore(score, topReasons(usable)),
       bestWindowRange,
       reasons: topReasons(usable),
       confidence: getPlanConfidence((peak.time.getTime() - now.getTime()) / HOUR_MS, 1),
@@ -258,6 +257,12 @@ export const buildDayOutlook = ({
   }
   return days;
 };
+
+/** A day row never reads "Çok uygun" next to the risk it names (same rule as the hours). */
+function dayScore(score: number, reasons: readonly unknown[]) {
+  const capped = reasons.length > 0 ? Math.min(score, GOOD_MAX) : score;
+  return { score: capped, band: getScoreBand(capped) };
+}
 
 const WEEKDAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 

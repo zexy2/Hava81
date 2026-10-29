@@ -26,6 +26,11 @@ import type {
 const HOUR_MS = 60 * 60 * 1000;
 
 const LOW_VISIBILITY_METERS = 1_000;
+/** Sea plans: comfortable water from 22 °C, no swimming recommendation below 18 °C. */
+const SEA_COMFORT_C = 22;
+const SEA_MIN_C = 18;
+/** Waves above 1.5 m are not a swimming sea. */
+const SEA_MAX_WAVE_M = 1.5;
 // Snow showers are below the named severe-weather level but still block outdoor plans: sudden
 // snow and slippery ground make the hour unsuitable as a recommendation.
 const GATED_SNOW_SHOWER_CODES: ReadonlySet<number> = new Set([85]);
@@ -114,12 +119,16 @@ const emptyPenalties = (total: number): PlanPenalties => ({
   muggy: 0,
   dust: 0,
   pollen: 0,
+  sea: 0,
   compound: 0,
   comfort: 0,
   total,
 });
 
 export interface ScoreHourInput {
+  /** Sea plans: fresh marine context for this slot (sea surface °C, wave height m). */
+  seaTemperatureC?: number;
+  waveHeightM?: number;
   intent: PlanIntent;
   point: HourlyForecast;
   timezoneOffsetSeconds: number;
@@ -150,6 +159,8 @@ export const scoreHour = ({
   sensitivity = 'balanced',
   dustUgM3,
   pollenGrainsM3,
+  seaTemperatureC,
+  waveHeightM,
   tolerance = {},
 }: ScoreHourInput): PlanHourScore => {
   const profile = getPlanProfile(intent);
@@ -232,6 +243,16 @@ export const scoreHour = ({
       ? 18 * smoothstep(dustUgM3 as number, DUST_GUIDELINE_UGM3, 200) * profile.dustWeight
       : 0;
 
+  // Sea plans: cold water and waves. The wave curve starts at a choppy 0.6 m.
+  const seaPenalty = profile.seaModel
+    ? (Number.isFinite(seaTemperatureC)
+        ? 24 * smoothstep(SEA_COMFORT_C - (seaTemperatureC as number), 0, 6)
+        : 0) +
+      (Number.isFinite(waveHeightM)
+        ? 26 * smoothstep(waveHeightM as number, 0.6, SEA_MAX_WAVE_M)
+        : 0)
+    : 0;
+
   const weighted: PlanPenalties = {
     thermal: (stress + comfort) * w.thermal,
     precipitation: (raw?.precipitation ?? 0) * w.precipitation * rainTolerance,
@@ -244,6 +265,7 @@ export const scoreHour = ({
     muggy: muggyPenalty,
     dust: dustPenalty,
     pollen: pollenPenalty,
+    sea: seaPenalty,
     compound: 0,
     comfort: roundPenalty(comfort),
     total: 0,
@@ -262,6 +284,7 @@ export const scoreHour = ({
     weighted.muggy,
     weighted.dust,
     weighted.pollen,
+    weighted.sea,
   ].filter(value => value >= MATERIAL_RISK_PENALTY).length;
   weighted.compound = (materialRisks >= 2 ? Math.min(12, (materialRisks - 1) * 4) : 0) * w.compound;
 
@@ -277,6 +300,7 @@ export const scoreHour = ({
     'muggy',
     'dust',
     'pollen',
+    'sea',
     'compound',
   ] as const) {
     weighted[key] = roundPenalty(weighted[key]);
@@ -293,6 +317,7 @@ export const scoreHour = ({
       weighted.muggy +
       weighted.dust +
       weighted.pollen +
+      weighted.sea +
       weighted.compound
   );
 
@@ -312,6 +337,14 @@ export const scoreHour = ({
     gateReasons.push('precipitation-limit');
   }
   if (profile.requiresRainEvidence && !hasRainEvidence) gateReasons.push('precipitation-unknown');
+  if (
+    profile.seaModel &&
+    (!Number.isFinite(seaTemperatureC) ||
+      (seaTemperatureC as number) < SEA_MIN_C ||
+      (Number.isFinite(waveHeightM) && (waveHeightM as number) > SEA_MAX_WAVE_M))
+  ) {
+    gateReasons.push('sea-conditions');
+  }
   if (base.windSpeed > profile.maxWindSpeedMs || (base.windGust ?? 0) > profile.maxWindGustMs) {
     gateReasons.push('wind-limit');
   }

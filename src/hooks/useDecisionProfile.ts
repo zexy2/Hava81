@@ -16,8 +16,12 @@ const DEFAULT_PROFILE: DecisionProfile = {
 const ACTIVITY_KINDS: readonly ActivityKind[] = [
   'walk',
   'run',
+  'bike',
+  'dog',
   'picnic',
   'children',
+  'beach',
+  'garden',
   'motorcycle',
   'laundry',
 ];

@@ -2036,6 +2036,38 @@
     border-radius: inherit;
     background: linear-gradient(90deg, var(--range-cold), var(--range-warm));
   }
+
+  /* ══ 13. Outlook row and chip fixes ════════════════════════════════════════════ */
+
+  /* Name keeps its own column; the range bar never runs into it ("Cumartesi15°"). */
+  .app .atlas-plan-view .day-outlook__day {
+    grid-template-columns: 2rem minmax(6.5rem, 1fr) auto auto;
+  }
+
+  .app .atlas-plan-view .day-outlook__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The band word sits under the number instead of widening the row. */
+  .app .atlas-plan-view .day-outlook__score {
+    display: grid;
+    justify-items: end;
+    line-height: 1.15;
+  }
+
+  .app .atlas-plan-view .day-outlook__score small {
+    display: block;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  /* Activity choices are tiles with soft corners, never circles. */
+  .app .atlas-plan-view .activity-planner__chips button,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__chips button {
+    aspect-ratio: auto;
+    border-radius: var(--radius-lg);
+  }
 }
 
 @keyframes planla-bar {

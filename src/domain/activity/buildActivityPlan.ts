@@ -233,6 +233,18 @@ export const buildActivityPlan = ({
         point.time,
         scoringNow.getTime()
       ),
+      seaTemperatureC: contextPeakForSlot(
+        contextSignals,
+        contextSignals?.marine?.seaSurfaceTemperature,
+        point.time,
+        scoringNow.getTime()
+      ),
+      waveHeightM: contextPeakForSlot(
+        contextSignals,
+        contextSignals?.marine?.waveHeight,
+        point.time,
+        scoringNow.getTime()
+      ),
       tolerance,
     });
   const hourScores = points.map(scorePoint);
