@@ -685,6 +685,21 @@
     mix-blend-mode: normal;
   }
 
+  /* On phones the panel is read while the thumb is still scrolling, so it does not ride a
+     scroll-linked rise: readings stay where the eye lands. */
+  @media (max-width: 47.99rem) {
+    .app .atlas-dashboard .environment-rail {
+      animation: none;
+    }
+  }
+
+  /* Attribution links are real targets: at least 24px tall (WCAG 2.2 target size). */
+  .app .weather-map__attribution a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+  }
+
   /* Phone map header: a title row and a close action, no kicker card. */
   @media (max-width: 47.99rem) {
     .app[data-active-nav='map'] .atlas-map-panel .atlas-map-panel__header {
