@@ -541,7 +541,7 @@ test.describe('activities', () => {
       await setWidth(page, 320, 720);
       await page.goto(PLAN);
       await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'What are you doing today?' })).toBeAttached();
+      await expect(page.getByRole('heading', { name: 'What else could you do?' })).toBeAttached();
       await expect(page.locator('.daily-plan__quick > *')).toHaveCount(3);
 
       await page.locator('.activity-planner__prefs > summary').click();
