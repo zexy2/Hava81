@@ -1,3 +1,4 @@
+import { DUST_EVENT_UGM3, DUST_GUIDELINE_UGM3 } from '../../domain/plan/scoreHour';
 import { formatFixed } from '../../utils/format';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +30,12 @@ const uvLevel = (uv?: number): Level | undefined =>
           : uv >= 3
             ? 'moderate'
             : 'low';
+
+/** Same thresholds as the score engine: no penalty below the WHO guideline, a warning at 100. */
+const dustLevel = (value: number) =>
+  value >= DUST_EVENT_UGM3 ? 'high' : value >= DUST_GUIDELINE_UGM3 ? 'moderate' : 'low';
+/** Same thresholds as the beach plan: cold below 18 °C, comfortable from 22 °C. */
+const seaLevel = (celsius: number) => (celsius >= 22 ? 'warm' : celsius >= 18 ? 'cool' : 'cold');
 
 export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const { t, i18n } = useTranslation();
@@ -158,20 +165,34 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
       </header>
       {/* The numbers matter to some; a one-line summary is enough for everyone else. */}
       <details className="context-signals__more">
-        <summary>
-          {[
-            signals.uvIndexMax !== undefined
-              ? `${t('hava81.context.short.uv')} ${formatFixed(signals.uvIndexMax, i18n.language, 1)}`
-              : null,
-            signals.dustMax !== undefined
-              ? `${t('hava81.context.short.dust')} ${Math.round(signals.dustMax)}`
-              : null,
-            signals.marine?.seaSurfaceTemperature !== undefined
-              ? `${t('hava81.context.short.sea')} ${Math.round(signals.marine.seaSurfaceTemperature)}°`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || t('hava81.context.short.more')}
+        <summary className="context-signals__summary">
+          {signals.uvIndexMax !== undefined ? (
+            <span className="context-stat">
+              <small>{t('hava81.context.short.uv')}</small>
+              <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
+              <span>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</span>
+            </span>
+          ) : null}
+          {signals.dustMax !== undefined ? (
+            <span className="context-stat">
+              <small>{t('hava81.context.short.dust')}</small>
+              <strong>{Math.round(signals.dustMax)}</strong>
+              <span>{t(`hava81.context.levels.${dustLevel(signals.dustMax)}`)}</span>
+            </span>
+          ) : null}
+          {signals.marine?.seaSurfaceTemperature !== undefined ? (
+            <span className="context-stat">
+              <small>{t('hava81.context.short.sea')}</small>
+              <strong>
+                {Math.round(convertTemperature(signals.marine.seaSurfaceTemperature))}°
+              </strong>
+              <span>
+                {t(`hava81.context.seaFeel.${seaLevel(signals.marine.seaSurfaceTemperature)}`)}
+              </span>
+            </span>
+          ) : null}
+          <span className="context-signals__open" aria-hidden="true" />
+          <span className="sr-only">{t('hava81.context.short.more')}</span>
         </summary>
         <div className="context-signals__grid">
           {signals.uvIndexMax !== undefined ? (

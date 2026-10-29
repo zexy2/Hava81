@@ -80,7 +80,7 @@ const TOLERANCE_WEIGHT: Readonly<Record<WeatherTolerance, number>> = {
 export const MUGGY_DEW_POINT_C = 20;
 const OPPRESSIVE_DEW_POINT_C = 24;
 /** WHO 24-h PM10 guideline (µg/m³): dust below it is not a plan factor. */
-const DUST_GUIDELINE_UGM3 = 45;
+export const DUST_GUIDELINE_UGM3 = 45;
 /** Daily dust peak named as a Saharan-dust day. */
 export const DUST_EVENT_UGM3 = 100;
 

@@ -318,7 +318,7 @@ export const tr = {
       noWindow: 'Uygun pencere yok',
       thunder: 'Gök gürültülü fırtına · {{times}} civarı. Yıldırım riski: açık alanda bekleme.',
       confidence: { medium: 'tahmini', low: 'belirsiz tahmin' },
-      note: 'Aynı karar motoru: her gün yalnızca o günün saatleriyle değerlendirilir. Uzak günlerde tahmin değişebilir.',
+      note: 'Uzak günlerde tahmin değişebilir.',
     },
     compare: {
       emptyTitle: 'İki şehir, tek karar',
@@ -828,6 +828,16 @@ export const tr = {
       },
     },
     context: {
+      levels: {
+        low: 'Düşük',
+        moderate: 'Orta',
+        high: 'Yüksek',
+      },
+      seaFeel: {
+        warm: 'Yüzmelik',
+        cool: 'Serin',
+        cold: 'Soğuk',
+      },
       short: {
         uv: 'UV',
         dust: 'Toz',

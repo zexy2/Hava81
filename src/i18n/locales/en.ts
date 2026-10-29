@@ -317,7 +317,7 @@ export const en = {
       noWindow: 'No suitable window',
       thunder: 'Thunderstorm · around {{times}}. Lightning risk: do not wait in open ground.',
       confidence: { medium: 'forecast', low: 'uncertain forecast' },
-      note: 'Same decision engine: each day is judged on its own hours only. Forecasts further out can change.',
+      note: 'Forecasts further out can change.',
     },
     compare: {
       emptyTitle: 'Two cities, one clear choice',
@@ -819,6 +819,16 @@ export const en = {
       },
     },
     context: {
+      levels: {
+        low: 'Low',
+        moderate: 'Moderate',
+        high: 'High',
+      },
+      seaFeel: {
+        warm: 'Swimmable',
+        cool: 'Cool',
+        cold: 'Cold',
+      },
       short: {
         uv: 'UV',
         dust: 'Dust',
