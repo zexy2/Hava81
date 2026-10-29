@@ -38,6 +38,8 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(dailyPlan.getByText('Makul', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Başka ne yapabilirsin/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Güneş, toz, polen ve deniz/i })).toBeVisible();
+  // The instruments sit behind a one-line summary.
+  await page.locator('.context-signals__more > summary').click();
   await expect(page.getByText('UV · 24 saat en yüksek', { exact: true })).toBeVisible();
   await expect(page.getByText('Rota havası', { exact: true })).toBeVisible();
 });
@@ -62,7 +64,9 @@ test.describe('routing and location', () => {
       // A local preview may use its own origin, while SEO audits deliberately keep the
       // public production canonical. Accept only those two exact root URLs, never a third host.
       const canonicalHref = await page.locator('link[rel="canonical"]').getAttribute('href');
-      expect([new URL('/', page.url()).href, 'https://hava81.zekiakgul.dev/']).toContain(canonicalHref);
+      expect([new URL('/', page.url()).href, 'https://hava81.zekiakgul.dev/']).toContain(
+        canonicalHref
+      );
     }
   );
 
