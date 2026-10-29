@@ -242,6 +242,15 @@ test.describe('contrast', () => {
         await page.locator('.atlas-settings-button').click();
         const dialog = page.getByRole('dialog', { name: /ayarlar|settings/i });
         await expect(dialog).toBeVisible();
+        // Audit the settled dialog: mid-way through its open animation (opacity) or a colour
+        // transition, axe measures blended colours and reports contrast that users never see.
+        await dialog.evaluate(element =>
+          Promise.all(
+            [element, ...element.querySelectorAll('*')].flatMap(node =>
+              node.getAnimations().map(animation => animation.finished.catch(() => undefined))
+            )
+          )
+        );
         await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
 
         const failures = await page.evaluate(async () => {
