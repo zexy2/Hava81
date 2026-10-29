@@ -629,7 +629,7 @@ export const en = {
       seaWave: ', waves {{value}} m',
       seaUnknown: 'No sea data; no beach suggestion.',
       personalEffect: 'With your preferences {{value}}',
-      eyebrow: 'Personal plan',
+      eyebrow: 'Explore',
       title: 'What else could you do?',
       subtitle: 'Pick activities and Hava81 re-scores the same weather for your plan.',
       choose: 'Activity selection',

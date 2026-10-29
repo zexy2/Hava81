@@ -632,7 +632,7 @@ export const tr = {
       seaWave: ', dalga {{value}} m',
       seaUnknown: 'Deniz verisi yok; plaj için öneri yapılmıyor.',
       personalEffect: 'Tercihlerinle {{value}}',
-      eyebrow: 'Kişisel plan',
+      eyebrow: 'Keşfet',
       title: 'Başka ne yapabilirsin?',
       subtitle: 'Aktivite seç; Hava81 aynı havayı planına göre yeniden değerlendirsin.',
       choose: 'Aktivite seçimi',
