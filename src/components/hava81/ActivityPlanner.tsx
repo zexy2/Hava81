@@ -467,7 +467,7 @@ export function ActivityPlanner({
                       </strong>
                     </div>
                   </header>
-                  <p>
+                  <p className="activity-card__answer">
                     {plan.suitableSpan
                       ? t('hava81.activities.anyTime', {
                           start: formatTime(plan.suitableSpan.start.time),

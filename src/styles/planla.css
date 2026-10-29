@@ -1922,6 +1922,12 @@
   }
 
   .app .atlas-plan-view .activity-card__range {
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
+
+  .app .atlas-plan-view .activity-card__answer {
+    margin: 0;
     font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
     font-weight: 400;
     line-height: 1.2;
@@ -2007,6 +2013,17 @@
     align-items: center;
     gap: 0.5rem;
     font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .day-outlook__name {
+    min-inline-size: 0;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 64rem) {
+    .app .atlas-plan-view .day-outlook__temps {
+      grid-template-columns: 2rem minmax(2.5rem, 4.5rem) 2rem;
+    }
   }
 
   .app .atlas-plan-view .day-outlook__lo {
