@@ -2859,6 +2859,27 @@
     font-size: 0.9375rem;
     font-weight: 700;
   }
+
+  .app .atlas-plan-view .activity-card__score-number {
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .activity-card__answer {
+    font-size: 1.0625rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Context: a one-line summary that opens to the instruments. */
+  .app .atlas-plan-view .context-signals__more > summary {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @keyframes planla-bar {

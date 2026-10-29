@@ -732,7 +732,7 @@ export const en = {
         photo: 'Golden hour',
       },
       bestTime: 'Best weather time: {{time}}',
-      bestRange: 'Best weather range: {{start}}–{{end}}',
+      bestRange: 'Best {{start}}–{{end}}',
       anyTime: 'Any time between {{start}} and {{end}} works today.',
       vsGeneral: '{{delta}} vs the overall score: {{why}}',
       vsGeneralWhy: {
@@ -820,6 +820,12 @@ export const en = {
       },
     },
     context: {
+      short: {
+        uv: 'UV',
+        dust: 'Dust',
+        sea: 'Sea',
+        more: 'See details',
+      },
       eyebrow: 'Local context',
       title: 'Sun, dust, pollen and sea',
       uv: 'UV · 24-hour high',

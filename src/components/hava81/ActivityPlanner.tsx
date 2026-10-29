@@ -137,9 +137,12 @@ export function ActivityPlanner({
       tolerance: toleranceOf(profile),
       period,
     });
+  // "What else?": activities that are already a routine are answered in Your plans.
+  const routineActivities = new Set(routineStore.routines.map(routine => routine.activity));
+  const exploring = profile.activities.filter(activity => !routineActivities.has(activity));
   const plans =
     freshness.fresh && !periodEnded
-      ? profile.activities.map(activity =>
+      ? exploring.map(activity =>
           buildActivityPlan({
             activity,
             weather,
@@ -172,10 +175,11 @@ export function ActivityPlanner({
   const availableActivities = ACTIVITY_GROUPS.flatMap(group => group.activities).filter(
     activity => activity !== 'beach' || hasSea
   );
+  const exploreChoices = availableActivities.filter(activity => !routineActivities.has(activity));
   // Nothing chosen yet: the page answers anyway with the three best activities for the period.
   const suggestions =
-    profile.activities.length === 0 && freshness.fresh && !periodEnded
-      ? rankActivityPlans(availableActivities.map(planFor))
+    exploring.length === 0 && freshness.fresh && !periodEnded
+      ? rankActivityPlans(exploreChoices.map(planFor))
           .filter(plan => !plan.windowUnavailable && plan.bestWindowRange)
           // A real choice: the best of each group first (move, outdoors, home, road).
           .map((plan, index, ranked) => ({
@@ -473,14 +477,14 @@ export function ActivityPlanner({
           </p>
         ) : null}
 
-        {profile.activities.length === 0 ? suggestionsView : null}
+        {exploring.length === 0 ? suggestionsView : null}
 
         <div
           className="activity-planner__chips"
           role="group"
           aria-label={t('hava81.activities.choose')}
         >
-          {availableActivities.map(activity => {
+          {exploreChoices.map(activity => {
             const active = profile.activities.includes(activity);
             const disabled = false;
             return (
@@ -551,13 +555,8 @@ export function ActivityPlanner({
                         <strong className="activity-card__verdict">
                           {plan.windowUnavailable ? '—' : t(`hava81.routines.verdict.${plan.band}`)}
                         </strong>
-                        <small>
-                          <span className="activity-card__score-scope">
-                            {t('hava81.scoreScope.activity')}
-                          </span>
-                          {scoreLabel} · {scoreBandLabel} ·{' '}
+                        <small className="activity-card__score-number">
                           {plan.windowUnavailable ? '—' : plan.score}
-                          <span>/100</span>
                         </small>
                       </div>
                     </header>
@@ -606,6 +605,13 @@ export function ActivityPlanner({
                     <details className="activity-card__details">
                       <summary>{t('hava81.activities.score.detailsTitle')}</summary>
                       <div className="activity-card__details-body">
+                        <small className="activity-card__scope">
+                          <span className="activity-card__score-scope">
+                            {t('hava81.scoreScope.activity')}
+                          </span>
+                          {scoreLabel} · {scoreBandLabel} ·{' '}
+                          {plan.windowUnavailable ? '—' : plan.score}/100
+                        </small>
                         {(() => {
                           const baseline = defaultScoreOf.get(plan.activity);
                           const delta = baseline === undefined ? 0 : plan.score - baseline;

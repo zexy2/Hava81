@@ -737,7 +737,7 @@ export const tr = {
         photo: 'Altın saat',
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
-      bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
+      bestRange: 'En iyi {{start}}–{{end}}',
       anyTime: 'Bugün {{start}}–{{end}} arasında herhangi bir saat uygun.',
       vsGeneral: 'Genel skordan {{delta}}: {{why}}',
       vsGeneralWhy: {
@@ -828,6 +828,12 @@ export const tr = {
       },
     },
     context: {
+      short: {
+        uv: 'UV',
+        dust: 'Toz',
+        sea: 'Deniz',
+        more: 'Ayrıntıyı gör',
+      },
       eyebrow: 'Türkiye bağlamı',
       title: 'Güneş, toz, polen ve deniz',
       uv: 'UV · 24 saat en yüksek',

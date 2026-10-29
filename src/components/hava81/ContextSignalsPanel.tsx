@@ -156,78 +156,99 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           ) : null}
         </small>
       </header>
-      <div className="context-signals__grid">
-        {signals.uvIndexMax !== undefined ? (
-          <article className={`context-signal context-signal--${uv}`}>
-            <span>{t('hava81.context.uv')}</span>
-            <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
-            <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
-            <p>
-              {uv && uv !== 'low' ? t('hava81.context.uvProtection') : t('hava81.context.uvNormal')}
-            </p>
-          </article>
+      {/* The numbers matter to some; a one-line summary is enough for everyone else. */}
+      <details className="context-signals__more">
+        <summary>
+          {[
+            signals.uvIndexMax !== undefined
+              ? `${t('hava81.context.short.uv')} ${formatFixed(signals.uvIndexMax, i18n.language, 1)}`
+              : null,
+            signals.dustMax !== undefined
+              ? `${t('hava81.context.short.dust')} ${Math.round(signals.dustMax)}`
+              : null,
+            signals.marine?.seaSurfaceTemperature !== undefined
+              ? `${t('hava81.context.short.sea')} ${Math.round(signals.marine.seaSurfaceTemperature)}°`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · ') || t('hava81.context.short.more')}
+        </summary>
+        <div className="context-signals__grid">
+          {signals.uvIndexMax !== undefined ? (
+            <article className={`context-signal context-signal--${uv}`}>
+              <span>{t('hava81.context.uv')}</span>
+              <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
+              <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
+              <p>
+                {uv && uv !== 'low'
+                  ? t('hava81.context.uvProtection')
+                  : t('hava81.context.uvNormal')}
+              </p>
+            </article>
+          ) : null}
+          {signals.dustMax !== undefined ? (
+            <article className="context-signal">
+              <span>{t('hava81.context.dust')}</span>
+              <strong>
+                {Math.round(signals.dustMax)}{' '}
+                <small>{normalizeMicroUnit(signals.units.dust)}</small>
+              </strong>
+              <p>{t('hava81.context.next24h')}</p>
+            </article>
+          ) : null}
+          {hasPollen ? (
+            <article className="context-signal">
+              <span>{t('hava81.context.pollen')}</span>
+              <strong>
+                {pollen ? formatFixed(pollen.value, i18n.language, 1) : null}{' '}
+                <small>
+                  {/^grains\/m[³3]$/.test(pollen?.unit ?? '')
+                    ? t('hava81.context.pollenUnit')
+                    : normalizeMicroUnit(pollen?.unit)}
+                </small>
+              </strong>
+              <p>{t('hava81.context.pollenNote')}</p>
+            </article>
+          ) : null}
+          {hasMarine ? (
+            <article className="context-signal context-signal--marine">
+              <span>{t('hava81.context.sea')}</span>
+              <strong>{formattedSeaSurfaceTemperature}</strong>
+              <p>
+                {signals.marine?.waveHeight !== undefined
+                  ? [
+                      t('hava81.context.wave', {
+                        height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
+                        unit: signals.units.waveHeight ?? '',
+                      }),
+                      // Period and direction are optional in the model; a missing part is left
+                      // out rather than printed as a dash.
+                      signals.marine.wavePeriod != null
+                        ? t('hava81.context.wavePeriod', {
+                            period: formatFixed(signals.marine.wavePeriod, i18n.language, 1),
+                            unit: signals.units.wavePeriod ?? '',
+                          })
+                        : null,
+                      signals.marine.waveDirection !== undefined
+                        ? t('hava81.context.waveFrom', {
+                            direction: `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`,
+                          })
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : t('hava81.context.waveUnavailable')}
+              </p>
+            </article>
+          ) : null}
+        </div>
+        {hasStaleMarine ? (
+          <p className="context-signals__note" role="status">
+            {t('hava81.context.marineStale')}
+          </p>
         ) : null}
-        {signals.dustMax !== undefined ? (
-          <article className="context-signal">
-            <span>{t('hava81.context.dust')}</span>
-            <strong>
-              {Math.round(signals.dustMax)} <small>{normalizeMicroUnit(signals.units.dust)}</small>
-            </strong>
-            <p>{t('hava81.context.next24h')}</p>
-          </article>
-        ) : null}
-        {hasPollen ? (
-          <article className="context-signal">
-            <span>{t('hava81.context.pollen')}</span>
-            <strong>
-              {pollen ? formatFixed(pollen.value, i18n.language, 1) : null}{' '}
-              <small>
-                {/^grains\/m[³3]$/.test(pollen?.unit ?? '')
-                  ? t('hava81.context.pollenUnit')
-                  : normalizeMicroUnit(pollen?.unit)}
-              </small>
-            </strong>
-            <p>{t('hava81.context.pollenNote')}</p>
-          </article>
-        ) : null}
-        {hasMarine ? (
-          <article className="context-signal context-signal--marine">
-            <span>{t('hava81.context.sea')}</span>
-            <strong>{formattedSeaSurfaceTemperature}</strong>
-            <p>
-              {signals.marine?.waveHeight !== undefined
-                ? [
-                    t('hava81.context.wave', {
-                      height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
-                      unit: signals.units.waveHeight ?? '',
-                    }),
-                    // Period and direction are optional in the model; a missing part is left
-                    // out rather than printed as a dash.
-                    signals.marine.wavePeriod != null
-                      ? t('hava81.context.wavePeriod', {
-                          period: formatFixed(signals.marine.wavePeriod, i18n.language, 1),
-                          unit: signals.units.wavePeriod ?? '',
-                        })
-                      : null,
-                    signals.marine.waveDirection !== undefined
-                      ? t('hava81.context.waveFrom', {
-                          direction: `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`,
-                        })
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')
-                : t('hava81.context.waveUnavailable')}
-            </p>
-          </article>
-        ) : null}
-      </div>
-      {hasStaleMarine ? (
-        <p className="context-signals__note" role="status">
-          {t('hava81.context.marineStale')}
-        </p>
-      ) : null}
-      <p className="context-signals__note">{t('hava81.context.note')}</p>
+        <p className="context-signals__note">{t('hava81.context.note')}</p>
+      </details>
     </section>
   );
 }
