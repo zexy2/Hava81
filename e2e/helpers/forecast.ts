@@ -34,9 +34,9 @@ export async function ensureForecastAtlasLoaded(page: Page) {
       undefined,
       { timeout: 1_000 }
     );
-  } catch (error) {
-    if (await atlas.count().catch(() => 0)) return;
-    throw error;
+  } catch {
+    // The placeholder was swapped out mid-call: the chart is mounting, so wait for it below
+    // instead of failing on the race.
   }
   await expect(atlas, 'approaching the forecast slot should mount the chart').toHaveCount(1, {
     timeout: 15_000,

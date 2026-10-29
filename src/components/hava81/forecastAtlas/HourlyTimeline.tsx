@@ -93,6 +93,7 @@ export function HourlyTimeline({
             <WeatherSymbol
               code={isCurrentHour && current ? current.icon : hour.icon}
               size={28}
+              animated={isCurrentHour}
               label={capitalizeFirst(
                 isCurrentHour && current ? current.description : hour.description,
                 i18n.language
