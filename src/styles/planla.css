@@ -2225,7 +2225,7 @@
 
   .app .atlas-plan-view .activity-compare__row {
     display: grid;
-    grid-template-columns: auto minmax(5.5rem, 8rem) minmax(0, 1fr) auto 2.5rem;
+    grid-template-columns: 1.75rem minmax(5.5rem, 8rem) minmax(0, 1fr) auto 2.5rem;
     grid-template-areas: 'glyph name strip range score';
     align-items: center;
     gap: 0.75rem;
@@ -2273,7 +2273,7 @@
 
   /* The best range: a mark under its hours, so the eye finds it on the strip. */
   .app .atlas-plan-view .activity-compare__cell--best {
-    box-shadow: 0 3px 0 -1px var(--plan-ink);
+    box-shadow: 0 4px 0 -1px var(--plan-ink);
   }
 
   .app .atlas-plan-view .activity-compare__cell--off {
@@ -2313,7 +2313,7 @@
   /* Phones: name, range and score on top, the hours under them. */
   @media (max-width: 63.99rem) {
     .app .atlas-plan-view .activity-compare__row {
-      grid-template-columns: auto minmax(0, 1fr) auto 2.5rem;
+      grid-template-columns: 1.75rem minmax(0, 1fr) auto 2.5rem;
       grid-template-areas:
         'glyph name range score'
         'strip strip strip strip';
