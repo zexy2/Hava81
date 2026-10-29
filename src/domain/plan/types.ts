@@ -9,6 +9,7 @@ export type PlanIntent =
   | 'children'
   | 'beach'
   | 'garden'
+  | 'photo'
   | 'laundry'
   | 'motorcycle';
 export type PlanConfidence = 'high' | 'medium' | 'low';
@@ -52,6 +53,8 @@ export interface PlanProfile {
    * a penalty and gate the hour, and a city without marine data cannot recommend it.
    */
   seaModel?: boolean;
+  /** Golden-hour plan: only the hour around sunrise or sunset, scored by the light. */
+  goldenHourOnly?: boolean;
   /** Exertion plans feel a high dew point beyond apparent temperature (running). 0–1. */
   mugginessWeight?: number;
   /** Breathing-heavy plans react to Saharan dust (daily peak, µg/m³). 0–1. */
@@ -86,6 +89,7 @@ export type PlanGateReason =
   | 'severe-weather'
   | 'outside-availability'
   | 'sea-conditions'
+  | 'outside-golden-hour'
   | 'invalid-weather-data';
 
 export interface PlanPenalties {
@@ -105,6 +109,8 @@ export interface PlanPenalties {
   pollen: number;
   /** Sea plans: cold water and waves (marine context). */
   sea: number;
+  /** Golden-hour plans: overcast, fog or no sun hides the light. */
+  sky: number;
   compound: number;
   /** Comfort-range penalty is included in thermal. This field exposes its contribution. */
   comfort: number;

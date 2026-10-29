@@ -121,6 +121,20 @@ export const PLAN_PROFILES: Readonly<Record<PlanIntent, PlanProfile>> = {
     activeHoursOnly: false,
     pollenWeight: 0.8,
   },
+  photo: {
+    intent: 'photo',
+    durationMinutes: 60,
+    // The light is the point: wide comfort range, the sky and rain decide.
+    comfortRangeC: [2, 32],
+    weights: { ...sharedWeights, precipitation: 1.4, visibility: 1.6, uv: 0, wind: 0.7 },
+    maxWindSpeedMs: 14,
+    maxWindGustMs: 20,
+    maxPrecipitationProbability: 0.5,
+    maxPrecipitationMm: 0.5,
+    requiresDaylight: false,
+    activeHoursOnly: false,
+    goldenHourOnly: true,
+  },
   picnic: {
     intent: 'picnic',
     durationMinutes: 120,

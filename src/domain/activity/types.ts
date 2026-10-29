@@ -17,6 +17,7 @@ export type ActivityKind =
   | 'children'
   | 'beach'
   | 'garden'
+  | 'photo'
   | 'motorcycle'
   | 'laundry';
 export type TemperatureSensitivity = 'cold' | 'balanced' | 'heat';

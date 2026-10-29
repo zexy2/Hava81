@@ -74,4 +74,14 @@ describe('new activities', () => {
     expect(score('garden', hour(22)).gateReasons).toContain('daylight-required');
     expect(score('garden', hour(10)).eligible).toBe(true);
   });
+
+  it('golden hour: only the hour next to dark; overcast hides the light', () => {
+    const golden = hour(18, { weatherCode: 1, sunshineDuration: 3600 });
+    expect(score('photo', golden, { goldenHour: true }).eligible).toBe(true);
+    expect(score('photo', hour(13)).gateReasons).toContain('outside-golden-hour');
+    const overcast = hour(18, { weatherCode: 3, sunshineDuration: 0 });
+    expect(score('photo', overcast, { goldenHour: true }).score).toBeLessThan(
+      score('photo', golden, { goldenHour: true }).score - 15
+    );
+  });
 });

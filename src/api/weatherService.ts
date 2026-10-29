@@ -524,7 +524,25 @@ const validateContextSignalsPayload = (
     }
   }
 
-  return { ...data, fetchedAt };
+  return { ...data, fetchedAt, marineHourly: parseMarineHourly(data.marineHourly) };
+};
+
+/** Hourly sea forecast: bad hours are dropped, not the whole context. */
+const parseMarineHourly = (value: unknown): ContextSignals['marineHourly'] => {
+  if (!Array.isArray(value)) return undefined;
+  const rows = value.flatMap(row => {
+    if (!isRecord(row) || typeof row.time !== 'string') return [];
+    const time = new Date(row.time);
+    if (!Number.isFinite(time.getTime())) return [];
+    const waveHeight =
+      isFiniteNumber(row.waveHeight) && row.waveHeight >= 0 ? row.waveHeight : undefined;
+    const seaSurfaceTemperature = isFiniteNumber(row.seaSurfaceTemperature)
+      ? row.seaSurfaceTemperature
+      : undefined;
+    if (waveHeight === undefined && seaSurfaceTemperature === undefined) return [];
+    return [{ time, waveHeight, seaSurfaceTemperature }];
+  });
+  return rows.length > 0 ? rows : undefined;
 };
 
 /**

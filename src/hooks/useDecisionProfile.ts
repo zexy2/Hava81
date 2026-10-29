@@ -22,6 +22,7 @@ const ACTIVITY_KINDS: readonly ActivityKind[] = [
   'children',
   'beach',
   'garden',
+  'photo',
   'motorcycle',
   'laundry',
 ];

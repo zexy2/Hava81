@@ -120,6 +120,7 @@ const emptyPenalties = (total: number): PlanPenalties => ({
   dust: 0,
   pollen: 0,
   sea: 0,
+  sky: 0,
   compound: 0,
   comfort: 0,
   total,
@@ -129,6 +130,8 @@ export interface ScoreHourInput {
   /** Sea plans: fresh marine context for this slot (sea surface °C, wave height m). */
   seaTemperatureC?: number;
   waveHeightM?: number;
+  /** Golden-hour plans: this slot is the hour around sunrise or sunset. */
+  goldenHour?: boolean;
   intent: PlanIntent;
   point: HourlyForecast;
   timezoneOffsetSeconds: number;
@@ -161,6 +164,7 @@ export const scoreHour = ({
   pollenGrainsM3,
   seaTemperatureC,
   waveHeightM,
+  goldenHour,
   tolerance = {},
 }: ScoreHourInput): PlanHourScore => {
   const profile = getPlanProfile(intent);
@@ -253,6 +257,16 @@ export const scoreHour = ({
         : 0)
     : 0;
 
+  // Golden hour: an overcast sky or fog hides the light; known sunshine refines it.
+  const code = point.weatherCode;
+  const sunshine = point.sunshineDuration;
+  const skyPenalty = profile.goldenHourOnly
+    ? Math.max(
+        code === 45 || code === 48 ? 30 : code === 3 ? 22 : code === 2 ? 6 : 0,
+        Number.isFinite(sunshine) ? 22 * (1 - Math.min(1, (sunshine as number) / 1800)) : 0
+      )
+    : 0;
+
   const weighted: PlanPenalties = {
     thermal: (stress + comfort) * w.thermal,
     precipitation: (raw?.precipitation ?? 0) * w.precipitation * rainTolerance,
@@ -266,6 +280,7 @@ export const scoreHour = ({
     dust: dustPenalty,
     pollen: pollenPenalty,
     sea: seaPenalty,
+    sky: skyPenalty,
     compound: 0,
     comfort: roundPenalty(comfort),
     total: 0,
@@ -285,6 +300,7 @@ export const scoreHour = ({
     weighted.dust,
     weighted.pollen,
     weighted.sea,
+    weighted.sky,
   ].filter(value => value >= MATERIAL_RISK_PENALTY).length;
   weighted.compound = (materialRisks >= 2 ? Math.min(12, (materialRisks - 1) * 4) : 0) * w.compound;
 
@@ -301,6 +317,7 @@ export const scoreHour = ({
     'dust',
     'pollen',
     'sea',
+    'sky',
     'compound',
   ] as const) {
     weighted[key] = roundPenalty(weighted[key]);
@@ -318,6 +335,7 @@ export const scoreHour = ({
       weighted.dust +
       weighted.pollen +
       weighted.sea +
+      weighted.sky +
       weighted.compound
   );
 
@@ -337,6 +355,7 @@ export const scoreHour = ({
     gateReasons.push('precipitation-limit');
   }
   if (profile.requiresRainEvidence && !hasRainEvidence) gateReasons.push('precipitation-unknown');
+  if (profile.goldenHourOnly && goldenHour !== true) gateReasons.push('outside-golden-hour');
   if (
     profile.seaModel &&
     (!Number.isFinite(seaTemperatureC) ||

@@ -252,6 +252,8 @@ export const en = {
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },
     outlook: {
+      approx: '(rough)',
+      approxScore: 'About {{score}}/100, {{band}}; the forecast is not settled yet',
       title: 'Coming days',
       intentLabel: 'For which plan?',
       general: 'General',
@@ -502,6 +504,7 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     activities: {
+      nextWindow: 'No good hour in this period · next good time: {{start}}–{{end}}',
       compare: {
         title: 'Side by side',
         none: 'No good hour',
@@ -548,6 +551,7 @@ export const en = {
         dog: 'Dog walk',
         beach: 'Beach & swim',
         garden: 'Garden & balcony',
+        photo: 'Golden hour',
       },
       bestTime: 'Best weather time: {{time}}',
       bestRange: 'Best weather range: {{start}}–{{end}}',
@@ -601,6 +605,8 @@ export const en = {
         beach:
           'For the beach: warm dry hours, water of 22 °C or more and a calm sea; not suggested above 1.5 m waves.',
         garden: 'For garden and balcony work: dry, mild daylight hours without strong wind.',
+        photo:
+          'Golden hour is about the light around sunrise and sunset: overcast skies, fog and rain take it away.',
       },
       mainRisk: 'Main risk: {{risk}}',
       noWindow: 'No clearly good window in the near forecast.',

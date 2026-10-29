@@ -91,6 +91,17 @@ const contextPeakForSlot = (
   return slotMs >= fetchedMs - HOUR_MS && slotMs < fetchedMs + 24 * HOUR_MS ? value : undefined;
 };
 
+/** The sea forecast hour that covers this slot, while the context is fresh. */
+const marineHourFor = (signals: ContextSignals | null | undefined, time: Date, nowMs: number) => {
+  if (!signals?.marineHourly || !getOptionalEvidenceFreshness(signals, nowMs).fresh) {
+    return undefined;
+  }
+  const slotMs = time.getTime();
+  return signals.marineHourly.find(
+    row => slotMs >= row.time.getTime() && slotMs < row.time.getTime() + HOUR_MS
+  );
+};
+
 /** The worse of the two seasonal pollens Open-Meteo reports for Türkiye (grass, olive). */
 const pollenPeak = (signals: ContextSignals | null | undefined) => {
   const values = [signals?.grassPollenMax, signals?.olivePollenMax].filter(
@@ -217,8 +228,20 @@ export const buildActivityPlan = ({
   });
   const scoringNow = now ?? new Date();
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
+  // Golden hour: the daylight hour next to a dark one (around sunrise and sunset).
+  const goldenHours = new Set(
+    points
+      .filter((point, index) => {
+        if (point.isDay !== true) return false;
+        const before = points[index - 1];
+        const after = points[index + 1];
+        return before?.isDay === false || after?.isDay === false;
+      })
+      .map(point => point.time.getTime())
+  );
   const scorePoint = (point: HourlyForecast) =>
     scoreHour({
+      goldenHour: goldenHours.has(point.time.getTime()),
       intent: activity,
       point,
       timezoneOffsetSeconds,
@@ -239,18 +262,23 @@ export const buildActivityPlan = ({
         point.time,
         scoringNow.getTime()
       ),
-      seaTemperatureC: contextPeakForSlot(
-        contextSignals,
-        contextSignals?.marine?.seaSurfaceTemperature,
-        point.time,
-        scoringNow.getTime()
-      ),
-      waveHeightM: contextPeakForSlot(
-        contextSignals,
-        contextSignals?.marine?.waveHeight,
-        point.time,
-        scoringNow.getTime()
-      ),
+      // The slot's own sea forecast hour; the current observation only covers the next day.
+      seaTemperatureC:
+        marineHourFor(contextSignals, point.time, scoringNow.getTime())?.seaSurfaceTemperature ??
+        contextPeakForSlot(
+          contextSignals,
+          contextSignals?.marine?.seaSurfaceTemperature,
+          point.time,
+          scoringNow.getTime()
+        ),
+      waveHeightM:
+        marineHourFor(contextSignals, point.time, scoringNow.getTime())?.waveHeight ??
+        contextPeakForSlot(
+          contextSignals,
+          contextSignals?.marine?.waveHeight,
+          point.time,
+          scoringNow.getTime()
+        ),
       tolerance,
     });
   const hourScores = points.map(scorePoint);

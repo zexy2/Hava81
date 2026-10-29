@@ -165,9 +165,23 @@ export function DayOutlookPanel({
                 </span>
               </span>
             ) : null}
-            <strong className="day-outlook__score">
-              {day.score}
-              <small>/100 · {t(`hava81.dailyPlan.bands.${day.band}`)}</small>
+            {/* Three days out the number is a direction, not a measurement. */}
+            <strong
+              className="day-outlook__score"
+              aria-label={
+                day.confidence === 'low'
+                  ? t('hava81.outlook.approxScore', {
+                      score: day.score,
+                      band: t(`hava81.dailyPlan.bands.${day.band}`),
+                    })
+                  : undefined
+              }
+            >
+              {day.confidence === 'low' ? `≈${day.score}` : day.score}
+              <small>
+                /100 · {t(`hava81.dailyPlan.bands.${day.band}`)}
+                {day.confidence === 'low' ? ` ${t('hava81.outlook.approx')}` : ''}
+              </small>
             </strong>
             <span className="day-outlook__window">
               {/* Say whose best time this is: the general score and an activity can differ. */}

@@ -253,6 +253,8 @@ export const tr = {
       dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
     outlook: {
+      approx: '(tahmini)',
+      approxScore: 'Yaklaşık {{score}}/100, {{band}}; tahmin henüz kesin değil',
       title: 'Önümüzdeki günler',
       intentLabel: 'Hangi plan için?',
       general: 'Genel',
@@ -505,6 +507,7 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     activities: {
+      nextWindow: 'Bu dönemde uygun saat yok · sonraki iyi zaman: {{start}}–{{end}}',
       compare: {
         title: 'Yan yana',
         none: 'Uygun saat yok',
@@ -552,6 +555,7 @@ export const tr = {
         dog: 'Köpek gezdirme',
         beach: 'Plaj ve yüzme',
         garden: 'Balkon ve bahçe',
+        photo: 'Altın saat',
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
       bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
@@ -608,6 +612,8 @@ export const tr = {
           'Plajda ılık hava, yağışsız saatler, 22 °C ve üzeri su ve sakin deniz aranır; dalga 1,5 m üstündeyse önerilmez.',
         garden:
           'Balkon ve bahçe işinde yağışsız, ılık ve çok rüzgârlı olmayan gündüz saatleri avantajlıdır.',
+        photo:
+          'Altın saatte gün doğumu ve batımı çevresindeki ışık önemlidir: kapalı gökyüzü, sis ve yağmur ışığı söndürür.',
       },
       mainRisk: 'Öne çıkan risk: {{risk}}',
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',

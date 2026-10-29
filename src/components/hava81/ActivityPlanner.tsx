@@ -51,6 +51,7 @@ const ACTIVITY_GROUPS: ReadonlyArray<{ id: string; activities: ActivityKind[] }>
   { id: 'move', activities: ['walk', 'run', 'bike', 'dog'] },
   { id: 'outdoors', activities: ['picnic', 'children', 'beach'] },
   { id: 'home', activities: ['garden', 'laundry'] },
+  { id: 'photo', activities: ['photo'] },
   { id: 'road', activities: ['motorcycle'] },
 ];
 
@@ -110,6 +111,11 @@ const GLYPHS: Record<ActivityKind, string[]> = {
     'M4 20.25h16',
     'M19.25 20.25v-4.5',
     'M18 15.75h2.5',
+  ],
+  photo: [
+    'M3.5 8.25h3.25l1.5-2.25h7.5l1.5 2.25h3.25v10.5h-17Z',
+    ring(12, 13.25, 3.5),
+    'M17.5 10.75h.01',
   ],
   picnic: [
     'M3 20.25 5.75 16.75h12.5l2.75 3.5Z',
@@ -410,6 +416,30 @@ export function ActivityPlanner({
     compareStartMs === undefined
       ? []
       : [0, 6, 12, 18].map(hours => new Date(compareStartMs + hours * 3_600_000));
+
+  // No window in the asked period: say when it does work, from the next three days.
+  const nextWindowText = (activity: ActivityKind) => {
+    const startMs = period?.endMs ?? Date.now() + 12 * 3_600_000;
+    const later = buildActivityPlan({
+      activity,
+      weather,
+      hourly,
+      airQuality,
+      airQualityHourly,
+      sensitivity: profile.temperatureSensitivity,
+      now: new Date(),
+      contextSignals,
+      tolerance: toleranceOf(profile),
+      period: { startMs, endMs: startMs + 72 * 3_600_000 },
+    });
+    const range = later.windowUnavailable ? undefined : later.bestWindowRange;
+    return range
+      ? t('hava81.activities.nextWindow', {
+          start: formatDayTime(range.start.time),
+          end: formatTime(range.endTime),
+        })
+      : undefined;
+  };
 
   const suggestionsView = periodEnded ? (
     <p className="activity-planner__empty" role="status">
@@ -742,9 +772,8 @@ export function ActivityPlanner({
                             start: formatTime(bestRange.start.time),
                             end: formatTime(bestRange.endTime),
                           })
-                        : plan.activity === 'beach'
-                          ? seaNote
-                          : t('hava81.activities.noWindow')}
+                        : (nextWindowText(plan.activity) ??
+                          (plan.activity === 'beach' ? seaNote : t('hava81.activities.noWindow')))}
                   </p>
                   {(() => {
                     const baseline = defaultScoreOf.get(plan.activity);
