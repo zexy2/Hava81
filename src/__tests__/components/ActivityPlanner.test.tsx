@@ -173,7 +173,7 @@ describe('ActivityPlanner time range', () => {
     expect(screen.queryByText(/Koşuda 10–22°C/i)).not.toBeInTheDocument();
   });
 
-  it('disables unselected activities when three are already selected instead of replacing one', () => {
+  it('has no selection limit and compares several activities side by side', () => {
     render(
       <SettingsProvider>
         <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
@@ -181,23 +181,18 @@ describe('ActivityPlanner time range', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Piknik' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Motosiklet' }));
 
-    const limitStatus = screen.getByText(/Üç aktivite seçtin/i);
-    expect(limitStatus).toBeVisible();
-    expect(limitStatus).toHaveAttribute('role', 'status');
-    expect(screen.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
+    expect(screen.queryByText(/Üç aktivite seçtin/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Motosiklet' })).toHaveAttribute(
-      'aria-describedby',
-      limitStatus.id
+      'aria-pressed',
+      'true'
     );
-    expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Çamaşır' })).toHaveAttribute(
-      'aria-describedby',
-      limitStatus.id
-    );
-    expect(screen.getByRole('button', { name: 'Yürüyüş' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Koşu' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Piknik' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeEnabled();
+    expect(screen.getByRole('heading', { name: 'Yan yana' })).toBeInTheDocument();
+    expect(
+      document.querySelectorAll('.activity-compare__row:not(.activity-compare__row--axis)')
+    ).toHaveLength(4);
   });
 
   it('keeps advanced time-range behavior behind an explicit help disclosure', () => {
