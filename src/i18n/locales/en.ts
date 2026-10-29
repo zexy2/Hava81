@@ -493,10 +493,9 @@ export const en = {
       note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Fresh European AQI samples are used only for forecast hours with an exact timestamp match. A fresh current reading is a fallback for unmatched hours; if both are unavailable or stale, no AQI risk is inferred. Other missing fields reduce data coverage rather than being invented.',
     },
     commute: {
-      eyebrow: 'Personal routine',
+      eyebrow: 'Every day',
       title: 'Out-and-back plan',
-      subtitle:
-        'Save when you leave and return; Hava81 will compare those two windows and tell you what is worth carrying today.',
+      subtitle: 'Pick when you leave and come back; we tell you what to take.',
       timesLabel: 'Departure and return times',
       presetsLabel: 'Common routines',
       presets: { office: 'Office', school: 'School' },

@@ -496,10 +496,9 @@ export const tr = {
       note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Taze Avrupa AQI örnekleri yalnızca tahmin saatleriyle zaman damgası tam eşleştiğinde kullanılır. Eşleşmeyen saatlerde taze güncel ölçüm yedek olabilir; ikisi de eksik veya eskiyse AQI riski çıkarılmaz. Diğer eksik alanlar uydurulmaz, veri kapsamını düşürür.',
     },
     commute: {
-      eyebrow: 'Kişisel rutin',
+      eyebrow: 'Her gün',
       title: 'Çıkış planı',
-      subtitle:
-        'Evden çıkış ve dönüş saatini kaydet; Hava81 o iki pencereye göre bugün neyi yanında bulundurman gerektiğini söylesin.',
+      subtitle: 'Çıkış ve dönüş saatini seç; yanına ne alacağını söyleyelim.',
       timesLabel: 'Çıkış ve dönüş saatleri',
       presetsLabel: 'Hazır rutinler',
       presets: { office: 'Ofis', school: 'Okul' },

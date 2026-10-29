@@ -2940,6 +2940,173 @@
       display: none;
     }
   }
+
+  /* ══ 20. Commute: two taps to an answer ═════════════════════════════════════════ */
+
+  .app .atlas-plan-view .commute-plan__header p {
+    max-inline-size: 36rem;
+  }
+
+  /* Presets are pills, like every other choice on the page. */
+  .app .atlas-plan-view .commute-plan__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset,
+  .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__preset {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    padding: 4px 14px;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset small {
+    color: var(--plan-soft);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset[aria-pressed='true'] {
+    border-color: currentColor;
+  }
+
+  /* Times: two small fields on one line, an arrow between them. */
+  .app .atlas-plan-view .commute-plan__times,
+  .app .commute-plan__times {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__times label {
+    display: grid;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .app .atlas-plan-view .commute-plan__times input,
+  .app .commute-plan__times input {
+    inline-size: 8.5rem;
+    min-block-size: 2.75rem;
+    padding: 0 0.625rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-plan__arrow {
+    padding-block-end: 0.625rem;
+    color: var(--plan-soft);
+  }
+
+  /* The answer and its two windows read as one surface: a verdict and two rows. */
+  .app .atlas-plan-view .commute-plan__windows {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .app .atlas-plan-view .commute-plan__windows > .commute-window,
+  .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__windows > .commute-window {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'when facts verdict'
+      'when source verdict';
+    align-items: center;
+    column-gap: 1rem;
+    padding: 0.625rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .commute-window > header {
+    grid-area: when;
+    display: grid;
+    gap: 0;
+  }
+
+  .app .atlas-plan-view .commute-window > header strong {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-window > p {
+    grid-area: source;
+    margin: 0;
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+  }
+
+  .app .atlas-plan-view .commute-window > dl {
+    grid-area: facts;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    margin: 0;
+  }
+
+  .app .atlas-plan-view .commute-window > dl div {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .app .atlas-plan-view .commute-window > dl dt {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .commute-window > dl dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The hourly score is in the verdict word; its row would only repeat it. */
+  .app .atlas-plan-view .commute-window > dl div:last-child {
+    display: none;
+  }
+
+  .app .atlas-plan-view .commute-window__verdict {
+    grid-area: verdict;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .commute-window--excellent .commute-window__verdict {
+    color: var(--color-aegean-deep);
+  }
+
+  .app .atlas-plan-view .commute-window--good .commute-window__verdict {
+    color: var(--color-aegean);
+  }
+
+  .app .atlas-plan-view .commute-window--caution .commute-window__verdict {
+    color: var(--color-saffron-ink);
+  }
+
+  .app .atlas-plan-view .commute-window--difficult .commute-window__verdict {
+    color: var(--color-vermilion);
+  }
 }
 
 @keyframes planla-bar {

@@ -213,6 +213,9 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
             onChange={event => setCommuteTime('start', event.target.value || undefined)}
           />
         </label>
+        <span className="commute-plan__arrow" aria-hidden="true">
+          →
+        </span>
         <label>
           <span>{t('hava81.commute.return')}</span>
           <input
@@ -272,6 +275,9 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                       <time dateTime={window.targetTime.toISOString()}>{window.targetClock}</time>
                     </strong>
                   </header>
+                  <span className="commute-window__verdict">
+                    {t(`hava81.routines.verdict.${window.band}`)}
+                  </span>
                   <p>
                     {t('hava81.commute.forecastUsed', {
                       time: formatLocalWindowTime(window.forecastTime),
@@ -316,7 +322,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
             )}
           </div>
         </>
-      ) : (
+      ) : !profile.commuteStart && !profile.commuteEnd ? null : (
         <p
           id={commuteIncompleteId}
           className="commute-plan__empty"
