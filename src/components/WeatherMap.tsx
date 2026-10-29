@@ -10,6 +10,8 @@ import {
   LEGEND_STEPS,
   layerHasOutlook,
   layerValue,
+  PRECIPITATION_AMOUNT_LEGEND_STEPS,
+  precipitationMeasure,
   rampColor,
   type LayerHour,
   type MapLayer,
@@ -309,7 +311,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           Math.abs(province.lon - weather.coordinates.lon) < 0.3
       ))
     : undefined;
-  const currentLayerValue = currentProvince ? layerValue(currentProvince, layer, layerHour) : null;
+  // MET Norway reports how much rain falls but not how likely it is; the layer then reads mm.
+  const measure = useMemo(() => precipitationMeasure(freshProvinces), [freshProvinces]);
+  const readsAmount = layer === 'precipitation' && measure === 'amount';
+  const currentLayerValue = currentProvince
+    ? layerValue(currentProvince, layer, layerHour, measure)
+    : null;
+  const formatAmount = (millimetres: number) =>
+    `${millimetres.toLocaleString(settings.language === 'en' ? 'en' : 'tr', {
+      maximumFractionDigits: 1,
+    })} ${t('weather.mapLayers.amountUnit')}`;
   const featuredCities = useMemo(
     () =>
       TURKISH_CITIES.filter(
@@ -389,7 +400,12 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           />
 
           {freshProvinces.length > 0 ? (
-            <FieldLayer provinces={freshProvinces} layer={layer} hour={layerHour} />
+            <FieldLayer
+              provinces={freshProvinces}
+              layer={layer}
+              hour={layerHour}
+              measure={measure}
+            />
           ) : null}
           {layer === 'wind' && freshProvinces.length > 0 ? (
             <WindLayer provinces={freshProvinces} />
@@ -424,12 +440,16 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                       <p className="weather-map__popup-desc">{weather.description}</p>
                       {currentLayerValue !== null && layer !== 'temperature' ? (
                         <p className="weather-map__popup-layer">
-                          {t(`weather.mapLayers.popup.${layer}`, {
-                            value:
-                              layer === 'wind'
-                                ? `${Math.round(convertWindSpeed(currentLayerValue) * 10) / 10} ${getWindSpeedSymbol()}`
-                                : Math.round(currentLayerValue),
-                          })}
+                          {readsAmount
+                            ? t('weather.mapLayers.popup.precipitationAmount', {
+                                value: formatAmount(currentLayerValue),
+                              })
+                            : t(`weather.mapLayers.popup.${layer}`, {
+                                value:
+                                  layer === 'wind'
+                                    ? `${Math.round(convertWindSpeed(currentLayerValue) * 10) / 10} ${getWindSpeedSymbol()}`
+                                    : Math.round(currentLayerValue),
+                              })}
                         </p>
                       ) : null}
                     </>
@@ -564,8 +584,13 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       <div
         className="weather-map__legend"
         role="list"
-        aria-label={t(`weather.mapLayers.legend.${layer}`)}
+        aria-label={
+          readsAmount
+            ? t('weather.mapLayers.legend.precipitationAmount')
+            : t(`weather.mapLayers.legend.${layer}`)
+        }
         data-layer={layer}
+        data-measure={layer === 'precipitation' ? measure : undefined}
       >
         {layer === 'temperature'
           ? (
@@ -594,10 +619,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                 </span>
               </span>
             ))
-          : LEGEND_STEPS[layer].map(step => {
-              const [red, green, blue] = rampColor(layer, step);
-              const value =
-                layer === 'wind'
+          : (readsAmount ? PRECIPITATION_AMOUNT_LEGEND_STEPS : LEGEND_STEPS[layer]).map(step => {
+              const [red, green, blue] = rampColor(layer, step, measure);
+              const value = readsAmount
+                ? formatAmount(step)
+                : layer === 'wind'
                   ? `${Math.round(convertWindSpeed(step))} ${getWindSpeedSymbol()}`
                   : settings.language === 'en'
                     ? `${step}%`
@@ -612,7 +638,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                   }
                 >
                   <span className="weather-map__legend-full">
-                    {t(`weather.mapLayers.step.${layer}`, { value })}
+                    {readsAmount
+                      ? t('weather.mapLayers.step.precipitationAmount', { value })
+                      : t(`weather.mapLayers.step.${layer}`, { value })}
                   </span>
                   <span className="weather-map__legend-short" aria-hidden="true">
                     {value}

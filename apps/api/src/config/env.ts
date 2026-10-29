@@ -14,6 +14,15 @@ export const envSchema = z.object({
   OPENWEATHER_API_KEY: z.string().min(1, 'OPENWEATHER_API_KEY is required'),
   OPENWEATHER_BASE_URL: z.url().default('https://api.openweathermap.org/data/2.5'),
   OPENWEATHER_TIMEOUT_MS: integerFromEnv(8_000, 500, 30_000),
+  // Forecast, provinces and context source. `metno` (MET Norway, CC BY 4.0, plus OpenWeather's
+  // free plan) is licensed for commercial use; Open-Meteo's free API is non-commercial only, so
+  // `openmeteo` is for a paid Open-Meteo plan (set OPEN_METEO_API_KEY) or local comparison.
+  WEATHER_DATA_SOURCE: z.enum(['metno', 'openmeteo']).default('metno'),
+  // MET Norway's terms require an identifying User-Agent with a contact point.
+  UPSTREAM_USER_AGENT: z.string().min(8).default('Hava81/2.1 (+https://hava81.zekiakgul.dev)'),
+  MET_NORWAY_FORECAST_URL: z
+    .url()
+    .default('https://api.met.no/weatherapi/locationforecast/2.0/complete'),
   OPEN_METEO_FORECAST_BASE_URL: z.url().default('https://api.open-meteo.com'),
   OPEN_METEO_AIR_QUALITY_BASE_URL: z.url().default('https://air-quality-api.open-meteo.com'),
   OPEN_METEO_MARINE_BASE_URL: z.url().default('https://marine-api.open-meteo.com'),

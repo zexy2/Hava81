@@ -744,7 +744,7 @@ export function WeatherDecisionField({
         <p className="hava81-decision-field__source-note">
           {t('hava81.decision.sourceDifference', {
             currentProvider: weather.meta.provider,
-            forecastProvider: forecastMeta?.provider ?? 'Open-Meteo',
+            forecastProvider: forecastMeta?.provider ?? t('hava81.decision.forecastSourceFallback'),
           })}
         </p>
       )}

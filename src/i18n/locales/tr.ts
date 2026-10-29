@@ -66,19 +66,23 @@ export const tr = {
       now: 'Şimdi',
       ahead: '+{{hours}} sa',
       unavailable: 'Katman verisi şu an yok; harita ve şehirler çalışmaya devam ediyor.',
+      amountUnit: 'mm/sa',
       legend: {
         precipitation: 'Yağış olasılığı ölçeği',
+        precipitationAmount: 'Saatlik yağış miktarı ölçeği',
         temperature: 'Sıcaklık ölçeği',
         wind: 'Rüzgâr hızı ölçeği',
         cloud: 'Bulutluluk ölçeği',
       },
       step: {
         precipitation: 'Yağış olasılığı {{value}}',
+        precipitationAmount: 'Saatlik yağış {{value}}',
         wind: 'Rüzgâr {{value}}',
         cloud: 'Bulutluluk {{value}}',
       },
       popup: {
         precipitation: 'Yağış olasılığı %{{value}}',
+        precipitationAmount: 'Saatlik yağış {{value}}',
         wind: 'Rüzgâr {{value}}',
         cloud: 'Bulutluluk %{{value}}',
       },
@@ -208,6 +212,7 @@ export const tr = {
       feelsLike: 'Hissedilen {{temperature}}',
       nextChange: 'Plan için öne çıkanlar',
       forecastHighLow: 'Yüksek / düşük',
+      forecastSourceFallback: 'tahmin kaynağı',
       sourceDifference:
         'Anlık ölçüm ({{currentProvider}}) ve günlük tahmin ({{forecastProvider}}) farklı kaynak veya zamanlardan gelebilir.',
       actions: {
@@ -286,6 +291,7 @@ export const tr = {
       formattedByHava81: 'Hava81 tarafından biçimlendirildi',
       intervalForecast: '{{hours}} saat aralıklarla tahmin',
       hourlySource: 'Kaynak:',
+      chanceOfRainSource: 'Yağış olasılığı:',
       scrollNavigation: 'Saatlik tahminde gezin',
       scrollHint: 'Diğer saatleri görüntüle',
       scrollPrevious: 'Önceki saatleri göster',
@@ -801,6 +807,7 @@ export const tr = {
       eyebrow: 'Türkiye bağlamı',
       title: 'Güneş, toz, polen ve deniz',
       uv: 'UV · 24 saat en yüksek',
+      uvEstimated: 'Tahmini UV · 24 saat en yüksek',
       uvLevels: {
         low: 'Düşük',
         moderate: 'Orta',
@@ -829,6 +836,8 @@ export const tr = {
         'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
+      noteMetNorway:
+        'UV, MET Norway açık gökyüzü UV tahmininin bulutlulukla azaltılmış hâlidir; yerel ölçüm değildir. Toz, polen ve deniz verisi için ticari kullanıma uygun ücretsiz bir kaynak bulunmadığından bu sinyaller gösterilmiyor.',
     },
     share: {
       action: 'Paylaş',

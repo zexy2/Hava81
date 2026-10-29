@@ -7,6 +7,7 @@ import {
   rampColor,
   type LayerSample,
   type MapLayer,
+  type PrecipitationMeasure,
 } from './layerModel';
 
 /** Lat/lon corners of the drawn field, in Leaflet's [[south, west], [north, east]] order. */
@@ -23,7 +24,11 @@ const FIELD_WIDTH = 520;
  * pixels outside the country stay transparent. Returns null when there is nothing to draw
  * or no canvas (tests, very old browsers).
  */
-export function renderField(samples: readonly LayerSample[], layer: MapLayer): string | null {
+export function renderField(
+  samples: readonly LayerSample[],
+  layer: MapLayer,
+  measure: PrecipitationMeasure = 'chance'
+): string | null {
   if (samples.length === 0 || typeof document === 'undefined') return null;
   const top = mercatorY(TURKEY_BOUNDS.north);
   const bottom = mercatorY(TURKEY_BOUNDS.south);
@@ -46,7 +51,7 @@ export function renderField(samples: readonly LayerSample[], layer: MapLayer): s
       if (!pointInRing(lon, lat, ANATOLIA) && !pointInRing(lon, lat, THRACE)) continue;
       const value = interpolate(samples, lat, lon);
       if (value === null) continue;
-      const [red, green, blue, alpha] = rampColor(layer, value);
+      const [red, green, blue, alpha] = rampColor(layer, value, measure);
       const offset = (row * FIELD_WIDTH + column) * 4;
       image.data[offset] = red;
       image.data[offset + 1] = green;

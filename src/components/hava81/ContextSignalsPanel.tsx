@@ -143,6 +143,14 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
               {' · '}
               {t('hava81.context.sourceModified')}
             </>
+          ) : signals.provider === 'MET Norway' ? (
+            <>
+              <a href="https://api.met.no/">MET Norway</a>
+              {' · '}
+              <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+              {' · '}
+              {t('hava81.context.sourceModified')}
+            </>
           ) : (
             signals.attribution
           )}
@@ -159,7 +167,11 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
       <div className="context-signals__grid">
         {signals.uvIndexMax !== undefined ? (
           <article className={`context-signal context-signal--${uv}`}>
-            <span>{t('hava81.context.uv')}</span>
+            <span>
+              {signals.provider === 'MET Norway'
+                ? t('hava81.context.uvEstimated')
+                : t('hava81.context.uv')}
+            </span>
             <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
             <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
             <p>
@@ -227,7 +239,9 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           {t('hava81.context.marineStale')}
         </p>
       ) : null}
-      <p className="context-signals__note">{t('hava81.context.note')}</p>
+      <p className="context-signals__note">
+        {signals.provider === 'MET Norway' ? t('hava81.context.noteMetNorway') : t('hava81.context.note')}
+      </p>
     </section>
   );
 }

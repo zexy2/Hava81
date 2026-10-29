@@ -18,23 +18,47 @@ export interface LayerSample {
 }
 
 /**
+ * What the precipitation layer reads. The chance of rain (%) when the provider reports it;
+ * otherwise the hourly amount (mm), which MET Norway publishes for Türkiye but not a chance.
+ */
+export type PrecipitationMeasure = 'chance' | 'amount';
+
+export const precipitationMeasure = (
+  provinces: Iterable<ProvinceTemperature>
+): PrecipitationMeasure => {
+  for (const province of provinces) {
+    if (typeof province.precipitationProbability === 'number') return 'chance';
+    if (province.outlook?.some(point => typeof point.precipitationProbability === 'number')) {
+      return 'chance';
+    }
+  }
+  return 'amount';
+};
+
+/**
  * One province's value for a layer at an hour, or null when the reading is missing.
- * Precipitation reads the chance (%); temperature °C; cloud %; wind m/s.
+ * Precipitation reads the chance (%) or the amount (mm/h); temperature °C; cloud %; wind m/s.
  */
 export const layerValue = (
   province: ProvinceTemperature,
   layer: MapLayer,
-  hour: LayerHour
+  hour: LayerHour,
+  measure: PrecipitationMeasure = 'chance'
 ): number | null => {
   if (hour !== 0 && layerHasOutlook(layer)) {
     const point = province.outlook?.find(item => item.hourOffset === hour);
     if (!point) return null;
-    const value = layer === 'precipitation' ? point.precipitationProbability : point.temperature;
+    const value =
+      layer === 'precipitation'
+        ? measure === 'amount'
+          ? point.precipitation
+          : point.precipitationProbability
+        : point.temperature;
     return typeof value === 'number' ? value : null;
   }
   switch (layer) {
     case 'precipitation':
-      return province.precipitationProbability ?? null;
+      return (measure === 'amount' ? province.precipitation : province.precipitationProbability) ?? null;
     case 'temperature':
       return province.temperature;
     case 'cloud':
@@ -47,11 +71,12 @@ export const layerValue = (
 export const layerSamples = (
   provinces: Iterable<ProvinceTemperature>,
   layer: MapLayer,
-  hour: LayerHour
+  hour: LayerHour,
+  measure: PrecipitationMeasure = 'chance'
 ): LayerSample[] => {
   const samples: LayerSample[] = [];
   for (const province of provinces) {
-    const value = layerValue(province, layer, hour);
+    const value = layerValue(province, layer, hour, measure);
     if (value !== null) samples.push({ lat: province.lat, lon: province.lon, value });
   }
   return samples;
@@ -151,8 +176,26 @@ export const LAYER_RAMPS: Record<MapLayer, readonly Stop[]> = {
   ],
 };
 
-export const rampColor = (layer: MapLayer, value: number) => {
-  const stops = LAYER_RAMPS[layer];
+/**
+ * Hourly amount (mm/h), on the usual intensity bands: trace 0.1, light 1, moderate 4,
+ * heavy 10 and very heavy 25+. Dry ground stays transparent, as on the chance ramp.
+ */
+export const PRECIPITATION_AMOUNT_RAMP: readonly Stop[] = [
+  [0, [70, 140, 220, 0]],
+  [0.1, [70, 150, 230, 0.14]],
+  [1, [52, 132, 226, 0.38]],
+  [4, [36, 98, 210, 0.56]],
+  [10, [70, 48, 190, 0.68]],
+  [25, [118, 34, 170, 0.75]],
+];
+
+export const rampColor = (
+  layer: MapLayer,
+  value: number,
+  measure: PrecipitationMeasure = 'chance'
+) => {
+  const stops =
+    layer === 'precipitation' && measure === 'amount' ? PRECIPITATION_AMOUNT_RAMP : LAYER_RAMPS[layer];
   if (value <= stops[0][0]) return stops[0][1];
   for (let index = 1; index < stops.length; index += 1) {
     const [upper, upperColor] = stops[index];
@@ -170,6 +213,8 @@ export const rampColor = (layer: MapLayer, value: number) => {
 };
 
 /** Legend steps per layer: the value shown and the colour it maps to. */
+export const PRECIPITATION_AMOUNT_LEGEND_STEPS: readonly number[] = [0.5, 1, 4, 10, 25];
+
 export const LEGEND_STEPS: Record<MapLayer, readonly number[]> = {
   precipitation: [10, 30, 50, 70, 90],
   temperature: [0, 10, 20, 30, 40],

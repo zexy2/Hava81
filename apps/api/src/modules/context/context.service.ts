@@ -124,7 +124,7 @@ export const finiteMaxForWindow = (
 };
 
 export interface ContextSignals {
-  provider: 'Open-Meteo';
+  provider: 'Open-Meteo' | 'MET Norway';
   fetchedAt: string;
   attribution: string;
   uvIndexMax?: number;
@@ -149,6 +149,11 @@ export interface ContextSignals {
   };
   /** Hourly sea forecast for the next three days (UTC ISO times); missing hours are dropped. */
   marineHourly?: Array<{ time: string; waveHeight?: number; seaSurfaceTemperature?: number }>;
+}
+
+/** Anything that can answer the context endpoint (Open-Meteo or MET Norway). */
+export interface ContextSignalsSource {
+  get(lat: number, lon: number, includeMarine: boolean): Promise<ContextSignals>;
 }
 
 const getJson = async (url: URL, fetchImpl: typeof fetch, timeoutMs = 8_000) => {
@@ -185,7 +190,7 @@ const defaultOpenMeteoContextConfig: OpenMeteoContextConfig = {
   marineBaseUrl: 'https://marine-api.open-meteo.com',
 };
 
-export class ContextSignalsService {
+export class ContextSignalsService implements ContextSignalsSource {
   constructor(
     private readonly fetchImpl: typeof fetch = fetch,
     private readonly openMeteo: OpenMeteoContextConfig = defaultOpenMeteoContextConfig
