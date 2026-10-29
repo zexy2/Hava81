@@ -24,6 +24,24 @@ const provinceItemJsonSchema = {
     icon: { type: 'string' },
     description: { type: 'string' },
     windSpeed: { type: 'number', minimum: 0, maximum: 150, description: 'm/s' },
+    windDirection: { type: 'number', minimum: 0, maximum: 360, description: 'derece, rüzgârın geldiği yön' },
+    cloudCover: { type: 'number', minimum: 0, maximum: 100, description: '%' },
+    precipitation: { type: 'number', minimum: 0, maximum: 500, description: 'mm, son saat' },
+    precipitationProbability: { type: 'number', minimum: 0, maximum: 100, description: '%, içinde bulunulan saat' },
+    outlook: {
+      type: 'array',
+      description: 'Harita zaman şeridi: +3 ve +6 saat',
+      items: {
+        type: 'object',
+        required: ['hourOffset'],
+        properties: {
+          hourOffset: { type: 'integer', minimum: 1, maximum: 48 },
+          precipitationProbability: { type: 'number', minimum: 0, maximum: 100 },
+          precipitation: { type: 'number', minimum: 0, maximum: 500 },
+          temperature: { type: 'number', minimum: -100, maximum: 100 },
+        },
+      },
+    },
     observedAt: { type: 'string', format: 'date-time' },
   },
 } as const;

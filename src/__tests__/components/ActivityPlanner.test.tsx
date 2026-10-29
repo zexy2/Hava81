@@ -78,6 +78,11 @@ const hourly: HourlyForecast[] = [
 describe('ActivityPlanner time range', () => {
   beforeEach(() => {
     localStorage.clear();
+    // These tests are about the cards: start from the two activities they were written for.
+    localStorage.setItem(
+      'hava81-decision-profile-v1',
+      JSON.stringify({ activities: ['walk', 'run'], temperatureSensitivity: 'balanced' })
+    );
     // The plan drops forecast steps that already ended; pin the clock to the fixture morning.
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-08-29T06:00:00Z'));
@@ -173,7 +178,7 @@ describe('ActivityPlanner time range', () => {
     expect(screen.queryByText(/Koşuda 10–22°C/i)).not.toBeInTheDocument();
   });
 
-  it('disables unselected activities when three are already selected instead of replacing one', () => {
+  it('has no selection limit and compares several activities side by side', () => {
     render(
       <SettingsProvider>
         <ActivityPlanner weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
@@ -181,23 +186,18 @@ describe('ActivityPlanner time range', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Piknik' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Motosiklet' }));
 
-    const limitStatus = screen.getByText(/Üç aktivite seçtin/i);
-    expect(limitStatus).toBeVisible();
-    expect(limitStatus).toHaveAttribute('role', 'status');
-    expect(screen.getByRole('button', { name: 'Motosiklet' })).toBeDisabled();
+    expect(screen.queryByText(/Üç aktivite seçtin/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Motosiklet' })).toHaveAttribute(
-      'aria-describedby',
-      limitStatus.id
+      'aria-pressed',
+      'true'
     );
-    expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Çamaşır' })).toHaveAttribute(
-      'aria-describedby',
-      limitStatus.id
-    );
-    expect(screen.getByRole('button', { name: 'Yürüyüş' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Koşu' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Piknik' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeEnabled();
+    expect(screen.getByRole('heading', { name: 'Yan yana' })).toBeInTheDocument();
+    expect(
+      document.querySelectorAll('.activity-compare__row:not(.activity-compare__row--axis)')
+    ).toHaveLength(4);
   });
 
   it('keeps advanced time-range behavior behind an explicit help disclosure', () => {
@@ -207,6 +207,8 @@ describe('ActivityPlanner time range', () => {
       </SettingsProvider>
     );
 
+    // Preferences live in their own disclosure; open it before reaching the time range.
+    fireEvent.click(screen.getByText('Tercihler'));
     const helpSummary = screen.getByText('Nasıl çalışır?');
     const helpDetails = helpSummary.closest('details');
     expect(helpDetails).not.toBeNull();
@@ -609,6 +611,7 @@ describe('ActivityPlanner time range', () => {
       </SettingsProvider>
     );
 
+    fireEvent.click(screen.getByText('Tercihler'));
     const select = screen.getByRole('combobox', { name: 'Sıcaklık hassasiyeti' });
     const label = document.getElementById(select.getAttribute('aria-labelledby') ?? '');
     const help = document.getElementById(select.getAttribute('aria-describedby') ?? '');

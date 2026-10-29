@@ -31,12 +31,19 @@ export interface ScoreWeatherWindowInput {
   weatherCode?: number;
 }
 
+/** Band floors. Even-sized bands, so good days do not all collapse into one "Uygun" label. */
+export const BAND_EXCELLENT_MIN = 85;
+export const BAND_GOOD_MIN = 70;
+export const BAND_CAUTION_MIN = 55;
+/** Highest score of each band, used by the warning caps below. */
+export const GOOD_MAX = BAND_EXCELLENT_MIN - 1;
+export const CAUTION_MAX = BAND_GOOD_MIN - 1;
+export const DIFFICULT_MAX = BAND_CAUTION_MIN - 1;
+
 export const getScoreBand = (score: number): Hava81ScoreBand => {
-  // Reserve the top label for genuinely near-ideal windows; 90–96 is still good weather,
-  // but calling the whole range “excellent” makes normal hourly variation disappear.
-  if (score >= 97) return 'excellent';
-  if (score >= 75) return 'good';
-  if (score >= 55) return 'caution';
+  if (score >= BAND_EXCELLENT_MIN) return 'excellent';
+  if (score >= BAND_GOOD_MIN) return 'good';
+  if (score >= BAND_CAUTION_MIN) return 'caution';
   return 'difficult';
 };
 
@@ -130,7 +137,8 @@ export const thermalComponents = (apparent: number) => {
   // hour-to-hour separation while preserving the previous extreme-heat/cold ceiling.
   const centre = 4 * smoothstep(Math.abs(apparent - 22), 0, 4);
   if (apparent > 25)
-    return { centre, stress: 54 * smoothstep(apparent, 25, 43), side: 'heat' as const };
+    // Steeper than before: feels-like 33 °C reads as caution for being outside, without a cliff.
+    return { centre, stress: 58 * smoothstep(apparent, 25, 41), side: 'heat' as const };
   if (apparent < 18)
     return { centre, stress: 51 * smoothstep(18 - apparent, 0, 28), side: 'cold' as const };
   return { centre, stress: 0, side: 'none' as const };
@@ -149,8 +157,9 @@ const precipitationPenalty = (probability?: number, amount?: number) => {
   const chancePart = 20 * smoothstep(pop, 0.12, 0.75);
   // An unknown probability is not a 0% chance: a forecast amount alone is full rain evidence.
   const amountConfidence = hasProbability ? 0.55 + 0.45 * pop : 1;
-  const amountPart = 30 * smoothstep(mm, 0.2, 6) * amountConfidence;
-  return Math.min(38, chancePart + amountPart);
+  // Steady 1 mm/h already spoils a walk; the amount curve is full by 3 mm/h, not 6.
+  const amountPart = 34 * smoothstep(mm, 0.1, 3) * amountConfidence;
+  return Math.min(46, chancePart + amountPart);
 };
 
 const windPenalty = (speed: number, gust?: number) => {
@@ -171,7 +180,9 @@ const airQualityPenalty = (aqi?: number) => {
 
 const uvPenalty = (uv?: number) => {
   if (!Number.isFinite(uv) || (uv as number) < 3) return 0;
-  return 20 * smoothstep(uv as number, 3, 11);
+  // UV is a mitigable risk (shade, sunscreen): a moderate general penalty plus the warning.
+  // Running and children weight it up in their profiles.
+  return 10 * smoothstep(uv as number, 3, 11);
 };
 
 const visibilityPenalty = (visibility?: number) => {
@@ -271,6 +282,53 @@ export const applySafetyCaps = (
   return capped;
 };
 
+/** Moderate rain from this amount makes an hour difficult, whatever else it offers. */
+export const MODERATE_RAIN_MM = 2.5;
+
+export interface WarningCapInput {
+  apparentTemperature: number;
+  precipitationProbability?: number;
+  precipitationMm?: number;
+  weatherCode?: number;
+  reasons: readonly DecisionReasonCode[];
+}
+
+/**
+ * The band must agree with the warning shown next to it: "Uygun · kötü hava kalitesi" reads as
+ * a contradiction. Each named risk caps the score at the top of the band it belongs to.
+ */
+export const applyWarningCaps = (score: number, input: WarningCapInput): number => {
+  const { reasons } = input;
+  let capped = score;
+  // Any named warning keeps the hour out of the top band, but the order between hours (and
+  // between personal tolerances) survives: 70–100 maps linearly onto 70–84 (monotonic).
+  if (reasons.length > 0 && capped > BAND_GOOD_MIN) {
+    capped = Math.round(
+      BAND_GOOD_MIN +
+        ((capped - BAND_GOOD_MIN) * (GOOD_MAX - BAND_GOOD_MIN)) / (100 - BAND_GOOD_MIN)
+    );
+  }
+  const mm = input.precipitationMm ?? 0;
+  const pop = input.precipitationProbability ?? 0;
+  const certainRain = reasons.includes('heavy-rain') && (mm >= 0.5 || pop >= 0.7);
+  if (
+    certainRain ||
+    reasons.includes('strong-wind') ||
+    reasons.includes('poor-air-quality') ||
+    reasons.includes('low-visibility') ||
+    reasons.includes('freezing')
+  ) {
+    capped = Math.min(capped, CAUTION_MAX);
+  }
+  if (mm >= MODERATE_RAIN_MM || reasons.includes('extreme-heat')) {
+    capped = Math.min(capped, DIFFICULT_MAX);
+  }
+  if (reasons.includes('severe-weather')) capped = Math.min(capped, DIFFICULT_MAX);
+  // Lightning: a hazard hour, the same as hail (see `applySafetyCaps`).
+  if (input.weatherCode === 95) capped = Math.min(capped, 25);
+  return capped;
+};
+
 export const scoreWeatherWindow = ({
   time,
   temperature,
@@ -308,9 +366,12 @@ export const scoreWeatherWindow = ({
   const reasons: DecisionReasonCode[] = [];
 
   const thermalParts = thermalComponents(apparent);
+  // The provider's feels-like already includes wind chill in the cold; count the wind's chill
+  // there and keep only part of the wind penalty (gustiness, handling) here.
+  const chillCounted = Number.isFinite(resolved) && apparent < 10 && apparent < temperature - 1;
   const thermal = Number.isFinite(resolved) ? thermalParts.centre + thermalParts.stress : 0;
   const rain = precipitationPenalty(validPrecipitationProbability, validPrecipitationMm);
-  const windRiskPenalty = windPenalty(wind, gust);
+  const windRiskPenalty = windPenalty(wind, gust) * (chillCounted ? 0.75 : 1);
   const air = airQualityPenalty(airQualityIndex);
   const uv = uvPenalty(uvIndex);
   const visibilityRisk = visibilityPenalty(visibility);
@@ -366,17 +427,22 @@ export const scoreWeatherWindow = ({
     weatherCode,
   });
   // An hour without a temperature is incomplete evidence, never an ideal hour.
-  if (!temperatureKnown || !Number.isFinite(resolved)) score = Math.min(score, 89);
+  if (!temperatureKnown || !Number.isFinite(resolved)) score = Math.min(score, GOOD_MAX);
 
   // Missing rain evidence is not evidence of dry weather. Keep an otherwise ideal-looking
   // hour out of the excellent band until at least probability or measured amount is known.
   const hasPrecipitationEvidence =
     validPrecipitationProbability !== undefined || validPrecipitationMm !== undefined;
-  if (!hasPrecipitationEvidence) score = Math.min(score, 89);
+  if (!hasPrecipitationEvidence) score = Math.min(score, GOOD_MAX);
 
-  // A named material risk and the “very suitable” label should never coexist. The score
-  // remains continuous, but the top band is reserved for windows with no surfaced warning.
-  if (reasons.length > 0) score = Math.min(score, 96);
+  // The band never contradicts the warning beside it.
+  score = applyWarningCaps(score, {
+    apparentTemperature: apparent,
+    precipitationProbability: validPrecipitationProbability,
+    precipitationMm: validPrecipitationMm,
+    weatherCode,
+    reasons,
+  });
 
   return {
     time,

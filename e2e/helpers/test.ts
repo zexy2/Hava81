@@ -20,8 +20,18 @@ type Options = {
   mockApi: boolean;
 };
 
+/**
+ * Specs that inject axe-core with `addScriptTag` (an inline script the page CSP blocks). The
+ * frozen design contract cannot carry its own `test.use({ bypassCSP: true })` like
+ * a11y.spec.ts does, so the audit bypass is granted here. The app's CSP is unchanged.
+ */
+const AXE_INJECTING_SPECS = ['home-design-contract.spec.ts'];
+
 export const test = base.extend<Options & { _apiMocks: void }>({
   mockApi: [true, { option: true }],
+  bypassCSP: async ({ bypassCSP }, provide, testInfo) => {
+    await provide(bypassCSP || AXE_INJECTING_SPECS.some(spec => testInfo.file.endsWith(spec)));
+  },
   _apiMocks: [
     async ({ page, mockApi }, use) => {
       if (mockApi) await mockWeatherApi(page);

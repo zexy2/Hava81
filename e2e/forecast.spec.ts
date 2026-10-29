@@ -103,7 +103,7 @@ test.describe('hourly atlas', () => {
       await page.goto('/istanbul');
       await ensureForecastAtlasLoaded(page);
       await expect(page.getByRole('heading', { name: /3 saat aralıklarla tahmin/i })).toBeVisible();
-      await page.getByRole('button', { name: /Planla’yı aç/ }).click();
+      await page.getByRole('button', { name: 'Planla', exact: true }).click();
       await expect(page.getByRole('heading', { name: /Gün planı/i })).toBeVisible();
     }
   );
@@ -404,7 +404,7 @@ test.describe('five-day forecast', () => {
       await ensureForecastAtlasLoaded(page);
       const days = page.locator('.hava81-forecast-atlas__days');
       await expect(page.locator('.hava81-forecast-atlas__description')).toHaveCount(2);
-      await expect(page.getByText('gök gürültülü fırtına')).toBeVisible();
+      await expect(days.getByText('Gök gürültülü fırtına', { exact: true })).toBeVisible();
       for (const [width, scale] of [
         [1280, 100],
         [1024, 100],

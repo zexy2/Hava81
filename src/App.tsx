@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { suggestCity } from './utils/citySuggestion';
 import { formatCityTime } from './utils/format';
+import { getCityMetadata } from './constants/cityMetadata';
 import { WeatherDecisionField } from './components/hava81/WeatherDecisionField';
 import { AtlasBottomNav } from './components/hava81/AtlasBottomNav';
 import { useWeather } from './hooks/useWeather';
@@ -18,6 +19,7 @@ import { ApiError } from './api/errors/ApiError';
 import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
+import { getCurrentWeatherFreshness } from './utils/currentWeatherFreshness';
 import { NotFoundState } from './components/app/NotFoundState';
 import { DeferredForecastAtlas } from './components/app/DeferredForecastAtlas';
 import { isHomePathname, isUnknownPathname } from './utils/cityRoute';
@@ -30,6 +32,7 @@ import { resolveSkyScene } from './components/sky/skyScene';
 import './styles/App.css';
 import './styles/editorial.css';
 import './styles/planla.css';
+import './components/app/mapFooter.css';
 // Glass and hero styles load with the page, not with the lazy sky chunks: a late
 // stylesheet re-lays out the weather field after first paint (a layout shift).
 import './components/sky/LivingSky.css';
@@ -37,6 +40,7 @@ import './components/sky/HeroSky.css';
 
 const WeatherMap = lazy(() => import('./components/WeatherMap'));
 const DecisionGlance = lazy(() => import('./components/hava81/DecisionGlance'));
+const SevereWeatherBanner = lazy(() => import('./components/hava81/SevereWeatherBanner'));
 const DailyPlanPanel = lazy(() => import('./components/hava81/DailyPlanPanel'));
 const CommutePlanPanel = lazy(() => import('./components/hava81/CommutePlanPanel'));
 const EnvironmentRail = lazy(() => import('./components/hava81/EnvironmentRail'));
@@ -55,7 +59,7 @@ type AtlasNavItem = AtlasView;
 
 const App: React.FC = () => {
   const { t } = useTranslation();
-  const { settings } = useSettings();
+  const { settings, convertTemperature } = useSettings();
   useEffect(() => {
     document.documentElement.lang = settings.language;
   }, [settings.language]);
@@ -476,6 +480,21 @@ const App: React.FC = () => {
             onSelectFavorite={handleSelectFavorite}
             onRemoveFavorite={handleRemoveFavorite}
             onAddFavorite={handleAddFavorite}
+            activeView={currentView}
+            onNavigate={handleBottomNav}
+            searchShortcutLabel={searchShortcutLabel}
+            context={
+              weather
+                ? {
+                    cityName: weather.cityName,
+                    temperatureLabel: getCurrentWeatherFreshness(weather.meta).fresh
+                      ? new Intl.NumberFormat(
+                          settings.language === 'en' ? 'en-US' : 'tr-TR'
+                        ).format(Math.round(convertTemperature(weather.temperature)))
+                      : null,
+                  }
+                : null
+            }
           />
 
           {weather || favorites.length > 0 ? (
@@ -570,6 +589,10 @@ const App: React.FC = () => {
                         />
                       </div>
                       <Suspense fallback={null}>
+                        <SevereWeatherBanner
+                          daily={forecast.daily}
+                          timezoneOffsetSeconds={weather.meta.timezoneOffsetSeconds}
+                        />
                         <DecisionGlance
                           weather={weather}
                           hourly={forecast.hourly}
@@ -673,21 +696,6 @@ const App: React.FC = () => {
                         </Suspense>
                       </section>
                     )}
-
-                    <section className="atlas-plan-entry" aria-labelledby="atlas-plan-entry-title">
-                      <div>
-                        <span className="atlas-kicker">{t('hava81.planView.entryEyebrow')}</span>
-                        <h2 id="atlas-plan-entry-title">{t('hava81.planView.title')}</h2>
-                        <p>{t('hava81.planView.entryBody')}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="atlas-button atlas-button--primary"
-                        onClick={() => handleBottomNav('plan')}
-                      >
-                        {t('hava81.planView.open')} <span aria-hidden="true">→</span>
-                      </button>
-                    </section>
                   </>
                 )}
 
@@ -703,7 +711,9 @@ const App: React.FC = () => {
                     <div>
                       <span className="atlas-kicker">{t('hava81.planView.eyebrow')}</span>
                       <h1 id="atlas-plan-view-title">
-                        {t('hava81.planView.titleWithCity', { city: weather.cityName })}
+                        {t('hava81.planView.titleWithCity', {
+                          city: getCityMetadata(weather.cityName)?.name ?? weather.cityName,
+                        })}
                       </h1>
                       <p>{t('hava81.planView.intro')}</p>
                     </div>
@@ -862,15 +872,37 @@ const App: React.FC = () => {
                 )}
               </section>
             )}
+            {/* Inside main so the colophon shares the content's width and padding. It stays
+                invisible until the first reading: on the short loading page it would sit
+                mid-screen and count as a layout shift when the content pushes it down. */}
+            <footer
+              className="atlas-footer"
+              data-testid="app-footer"
+              data-pending={!weather && !error ? '' : undefined}
+              aria-hidden={!weather && !error ? true : undefined}
+            >
+              <p className="atlas-footer__brand">
+                <span className="atlas-footer__wordmark" data-footer-wordmark="">
+                  Hava<em>81</em>
+                </span>
+                <span className="atlas-footer__tagline">{t('hava81.tagline')}</span>
+              </p>
+              <p className="atlas-footer__credits">
+                <span>{t('hava81.footerData')}</span>{' '}
+                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+                  Open-Meteo
+                </a>
+                <span aria-hidden="true"> · </span>
+                <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+                  OpenStreetMap
+                </a>
+              </p>
+              <span className="atlas-footer__shortcuts">
+                <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
+                <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
+              </span>
+            </footer>
           </main>
-
-          <footer className="atlas-footer">
-            <span>Hava81 · {t('hava81.tagline')}</span>
-            <span className="atlas-footer__shortcuts">
-              <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
-              <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
-            </span>
-          </footer>
 
           {isSettingsOpen ? (
             <Suspense
@@ -880,7 +912,15 @@ const App: React.FC = () => {
                 </div>
               }
             >
-              <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
+              <SettingsPanel
+                isOpen={isSettingsOpen}
+                onClose={closeSettings}
+                preview={
+                  weather
+                    ? { temperature: weather.temperature, windSpeed: weather.windSpeed }
+                    : null
+                }
+              />
             </Suspense>
           ) : null}
         </div>

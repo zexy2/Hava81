@@ -50,6 +50,39 @@ test('81 province list covers every plate exactly once inside Turkey bounds', ()
   }
 });
 
+test('provinces endpoint carries map-layer readings all the way to the HTTP response', async t => {
+  const provincesProvider: ProvinceCurrentProvider = {
+    name: 'FakeMeteo',
+    async getCurrent(points) {
+      return points.map(() => ({
+        temperature: 16,
+        weatherCode: 61,
+        isDay: true,
+        windSpeed: 6,
+        windDirection: 180,
+        cloudCover: 90,
+        precipitation: 2.4,
+        precipitationProbability: 70,
+        outlook: [{ hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 }],
+        observedAt: '2026-10-21T12:00:00.000Z',
+      }));
+    },
+  };
+  const app = await buildApp({ env, provider: unusedProvider, provincesProvider, logger: false });
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: 'GET', url: '/api/v1/weather/provinces' });
+
+  assert.equal(response.statusCode, 200);
+  const [first] = response.json().provinces;
+  // The JSON response schema serializes only declared fields, so each one must be listed.
+  assert.equal(first.windDirection, 180);
+  assert.equal(first.cloudCover, 90);
+  assert.equal(first.precipitation, 2.4);
+  assert.equal(first.precipitationProbability, 70);
+  assert.deepEqual(first.outlook, [{ hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 }]);
+});
+
 test('provinces endpoint returns live temperatures with one cached upstream call', async t => {
   const provincesProvider = new FakeProvinces();
   const budget = new UpstreamBudget(10);
@@ -155,6 +188,85 @@ test('Open-Meteo provinces provider omits invalid WMO codes, day flags, and time
       new Response(JSON.stringify([{ current: item.current }]), { status: 200 })) as typeof fetch;
     const provider = new OpenMeteoProvincesProvider(fetchImpl, 1_000, 'https://meteo.test');
     assert.deepEqual(await provider.getCurrent([{ lat: 41, lon: 29 }]), [null], item.name);
+  }
+});
+
+test('Open-Meteo provinces provider adds map-layer readings and a +3/+6 h outlook from the same request', async () => {
+  const requests: URL[] = [];
+  const hour = 1_792_000_800; // on the hour
+  const fetchImpl = (async (input: Parameters<typeof fetch>[0]) => {
+    requests.push(new URL(String(input)));
+    return new Response(
+      JSON.stringify({
+        current: {
+          time: hour + 900,
+          temperature_2m: 16,
+          weather_code: 61,
+          is_day: 1,
+          wind_speed_10m: 6,
+          wind_direction_10m: 180,
+          cloud_cover: 90,
+          precipitation: 2.4,
+        },
+        hourly: {
+          time: Array.from({ length: 8 }, (_, index) => hour + index * 3_600),
+          precipitation_probability: [70, 60, 50, 30, 20, 15, 50, 40],
+          precipitation: [2.4, 1, 0.5, 0, 0, 0, 0.5, 0],
+          temperature_2m: [16, 16.5, 17, 18.04, 17, 16, 15, 14],
+        },
+      }),
+      { status: 200 },
+    );
+  }) as typeof fetch;
+  const provider = new OpenMeteoProvincesProvider(fetchImpl, 1_000, 'https://meteo.test');
+
+  const [reading] = await provider.getCurrent([{ lat: 41.01, lon: 28.97 }]);
+
+  const current = requests[0]?.searchParams.get('current') ?? '';
+  for (const field of ['wind_direction_10m', 'cloud_cover', 'precipitation']) {
+    assert.ok(current.split(',').includes(field), field);
+  }
+  assert.equal(requests[0]?.searchParams.get('hourly'), 'precipitation_probability,precipitation,temperature_2m');
+  assert.equal(requests[0]?.searchParams.get('forecast_hours'), '8');
+  assert.equal(reading?.windDirection, 180);
+  assert.equal(reading?.cloudCover, 90);
+  assert.equal(reading?.precipitation, 2.4);
+  // The slot that contains the observation is "now"; +3 h and +6 h count from it.
+  assert.equal(reading?.precipitationProbability, 70);
+  assert.deepEqual(reading?.outlook, [
+    { hourOffset: 3, precipitationProbability: 30, precipitation: 0, temperature: 18 },
+    { hourOffset: 6, precipitationProbability: 50, precipitation: 0.5, temperature: 15 },
+  ]);
+});
+
+test('Open-Meteo provinces provider drops out-of-range layer readings one by one', async () => {
+  const hour = 1_792_000_800;
+  const fetchImpl = (async () =>
+    new Response(
+      JSON.stringify({
+        current: {
+          time: hour,
+          temperature_2m: 12,
+          weather_code: 3,
+          is_day: 1,
+          wind_direction_10m: 361,
+          cloud_cover: 101,
+          precipitation: -1,
+        },
+        hourly: {
+          time: [hour, hour + 3_600, hour + 7_200],
+          precipitation_probability: [120, null, null],
+        },
+      }),
+      { status: 200 },
+    )) as typeof fetch;
+  const provider = new OpenMeteoProvincesProvider(fetchImpl, 1_000, 'https://meteo.test');
+
+  const [reading] = await provider.getCurrent([{ lat: 39.9, lon: 32.8 }]);
+
+  assert.equal(reading?.temperature, 12);
+  for (const field of ['windDirection', 'cloudCover', 'precipitation', 'precipitationProbability', 'outlook']) {
+    assert.equal(field in (reading ?? {}), false, field);
   }
 });
 

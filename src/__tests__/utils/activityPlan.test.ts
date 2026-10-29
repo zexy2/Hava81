@@ -299,9 +299,9 @@ describe('activity plans', () => {
     });
 
     expect(currentOnly.slots[0]?.precipitationProbability).toBeUndefined();
-    expect(currentOnly.slots[0]?.score).toBe(89);
+    expect(currentOnly.slots[0]?.score).toBe(84);
     expect(currentOnly.slots[0]?.band).toBe('good');
-    expect(currentOnly.score).toBeLessThanOrEqual(89);
+    expect(currentOnly.score).toBeLessThanOrEqual(84);
   });
 
   it('does not award dry-weather activity benefits when precipitation is unknown', () => {

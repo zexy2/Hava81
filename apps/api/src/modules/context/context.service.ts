@@ -24,9 +24,33 @@ const marineSchema = z.object({
       sea_surface_temperature: z.number().nullable().optional(),
     })
     .optional(),
+  hourly: z
+    .object({
+      time: z.array(z.string()),
+      wave_height: z.array(z.number().nullable()).optional(),
+      sea_surface_temperature: z.array(z.number().nullable()).optional(),
+    })
+    .optional(),
 });
 
 const HOUR_MS = 60 * 60_000;
+
+const finiteOrUndefined = (value: number | null | undefined) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+/** Hourly sea values with a valid time and at least one number; undefined when none remain. */
+const marineHourlyOf = (hourly: z.infer<typeof marineSchema>['hourly']) => {
+  if (!hourly) return undefined;
+  const rows = hourly.time.flatMap((time, index) => {
+    const ms = parseGmtModelTime(time);
+    const waveHeight = finiteOrUndefined(hourly.wave_height?.[index]);
+    const seaSurfaceTemperature = finiteOrUndefined(hourly.sea_surface_temperature?.[index]);
+    if (!Number.isFinite(ms) || (waveHeight === undefined && seaSurfaceTemperature === undefined))
+      return [];
+    return [{ time: new Date(ms).toISOString(), waveHeight, seaSurfaceTemperature }];
+  });
+  return rows.length > 0 ? rows : undefined;
+};
 const CONTEXT_WINDOW_HOURS = 24;
 
 const GMT_MODEL_TIME_PATTERN =
@@ -48,13 +72,7 @@ export const parseGmtModelTime = (value: string): number => {
   const second = Number(secondText ?? '0');
   const millisecond = Number((fractionText ?? '').padEnd(3, '0') || '0');
 
-  if (
-    month < 1 || month > 12 ||
-    day < 1 || day > 31 ||
-    hour > 23 ||
-    minute > 59 ||
-    second > 59
-  ) {
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59 || second > 59) {
     return Number.NaN;
   }
 
@@ -80,11 +98,7 @@ export const parseGmtModelTime = (value: string): number => {
     if (!offset) return Number.NaN;
     const offsetHours = Number(offset[2]);
     const offsetMinutes = Number(offset[3]);
-    if (
-      offsetHours > 14 ||
-      offsetMinutes > 59 ||
-      (offsetHours === 14 && offsetMinutes !== 0)
-    ) {
+    if (offsetHours > 14 || offsetMinutes > 59 || (offsetHours === 14 && offsetMinutes !== 0)) {
       return Number.NaN;
     }
   }
@@ -133,6 +147,8 @@ export interface ContextSignals {
     wavePeriod?: number;
     seaSurfaceTemperature?: number;
   };
+  /** Hourly sea forecast for the next three days (UTC ISO times); missing hours are dropped. */
+  marineHourly?: Array<{ time: string; waveHeight?: number; seaSurfaceTemperature?: number }>;
 }
 
 const getJson = async (url: URL, fetchImpl: typeof fetch, timeoutMs = 8_000) => {
@@ -208,7 +224,8 @@ export class ContextSignalsService {
       const parsedTimes = air.hourly.time.map(parseGmtModelTime);
       const firstRequiredHour = Math.ceil(requestedAt.getTime() / HOUR_MS) * HOUR_MS;
       const lastRequiredHour =
-        Math.floor((requestedAt.getTime() + CONTEXT_WINDOW_HOURS * HOUR_MS - 1) / HOUR_MS) * HOUR_MS;
+        Math.floor((requestedAt.getTime() + CONTEXT_WINDOW_HOURS * HOUR_MS - 1) / HOUR_MS) *
+        HOUR_MS;
       const timelineInvalid =
         parsedTimes.length === 0 ||
         parsedTimes.some(time => !Number.isFinite(time)) ||
@@ -233,6 +250,8 @@ export class ContextSignalsService {
             'current',
             'wave_height,wave_direction,wave_period,sea_surface_temperature'
           );
+          marineUrl.searchParams.set('hourly', 'wave_height,sea_surface_temperature');
+          marineUrl.searchParams.set('forecast_days', '3');
           // Emit an unambiguous source timestamp; the frontend must not guess the provider's
           // location-local wall clock from the browser timezone.
           marineUrl.searchParams.set('timezone', 'GMT');
@@ -244,7 +263,9 @@ export class ContextSignalsService {
       : Promise.resolve(null);
 
     const [air, marine] = await Promise.all([airPromise, marinePromise]);
-    const marineObservedAtMs = marine?.current ? parseGmtModelTime(marine.current.time) : Number.NaN;
+    const marineObservedAtMs = marine?.current
+      ? parseGmtModelTime(marine.current.time)
+      : Number.NaN;
     const marineCurrent =
       marine?.current && Number.isFinite(marineObservedAtMs)
         ? {
@@ -273,6 +294,7 @@ export class ContextSignalsService {
         seaSurfaceTemperature: marine?.current_units?.sea_surface_temperature,
       },
       marine: marineCurrent,
+      marineHourly: marineHourlyOf(marine?.hourly),
     };
   }
 }

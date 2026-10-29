@@ -18,7 +18,7 @@ import { getDailyPlanAirQualityEvidence } from '../decision/airQualityEvidence';
 import { isDaylightPoint } from '../decision/eligibility';
 import { assessEvenDay, findBestWindowRange } from '../decision/bestWindowRange';
 import { explainContrast, explainWindow } from '../decision/explain';
-import { getScoreBand } from '../decision/scoreWeatherWindow';
+import { getScoreBand, GOOD_MAX } from '../decision/scoreWeatherWindow';
 import type { DecisionReasonCode, Hava81ScoreFactor, ScoreFactorImpact } from '../decision/types';
 import { findWindows } from '../plan/findWindows';
 import { PLAN_PROFILES } from '../plan/profiles';
@@ -70,6 +70,11 @@ export interface BuildActivityPlanInput {
   contextSignals?: ContextSignals | null;
   /** Personal wind / rain tolerance and pollen allergy. */
   tolerance?: PersonalTolerance;
+  /**
+   * Asked period ("this evening", "the weekend"): only these slots are evaluated, the forecast
+   * is not cut at 48 hours, and there is no 24-hour fallback. Absent: the next 12 hours.
+   */
+  period?: { startMs: number; endMs: number };
 }
 
 /** Context peaks cover the 24 hours after the fetch; outside that, or stale, they are unknown. */
@@ -84,6 +89,17 @@ const contextPeakForSlot = (
   const fetchedMs = signals.fetchedAt.getTime();
   const slotMs = time.getTime();
   return slotMs >= fetchedMs - HOUR_MS && slotMs < fetchedMs + 24 * HOUR_MS ? value : undefined;
+};
+
+/** The sea forecast hour that covers this slot, while the context is fresh. */
+const marineHourFor = (signals: ContextSignals | null | undefined, time: Date, nowMs: number) => {
+  if (!signals?.marineHourly || !getOptionalEvidenceFreshness(signals, nowMs).fresh) {
+    return undefined;
+  }
+  const slotMs = time.getTime();
+  return signals.marineHourly.find(
+    row => slotMs >= row.time.getTime() && slotMs < row.time.getTime() + HOUR_MS
+  );
 };
 
 /** The worse of the two seasonal pollens Open-Meteo reports for Türkiye (grass, olive). */
@@ -178,11 +194,12 @@ export const buildActivityPlan = ({
   now,
   contextSignals,
   tolerance,
+  period,
 }: BuildActivityPlanInput): ActivityPlan => {
   const valid = [...hourly]
     .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
     .sort((a, b) => a.time.getTime() - b.time.getTime());
-  const source = dropElapsedSlots(valid, now).slice(0, 48);
+  const source = dropElapsedSlots(valid, now).slice(0, period ? undefined : 48);
   // Without hourly data only the current observation remains; rain stays unknown on purpose.
   const points: HourlyForecast[] = source.length
     ? source
@@ -211,8 +228,20 @@ export const buildActivityPlan = ({
   });
   const scoringNow = now ?? new Date();
   const timezoneOffsetSeconds = weather.meta.timezoneOffsetSeconds;
+  // Golden hour: the daylight hour next to a dark one (around sunrise and sunset).
+  const goldenHours = new Set(
+    points
+      .filter((point, index) => {
+        if (point.isDay !== true) return false;
+        const before = points[index - 1];
+        const after = points[index + 1];
+        return before?.isDay === false || after?.isDay === false;
+      })
+      .map(point => point.time.getTime())
+  );
   const scorePoint = (point: HourlyForecast) =>
     scoreHour({
+      goldenHour: goldenHours.has(point.time.getTime()),
       intent: activity,
       point,
       timezoneOffsetSeconds,
@@ -233,6 +262,23 @@ export const buildActivityPlan = ({
         point.time,
         scoringNow.getTime()
       ),
+      // The slot's own sea forecast hour; the current observation only covers the next day.
+      seaTemperatureC:
+        marineHourFor(contextSignals, point.time, scoringNow.getTime())?.seaSurfaceTemperature ??
+        contextPeakForSlot(
+          contextSignals,
+          contextSignals?.marine?.seaSurfaceTemperature,
+          point.time,
+          scoringNow.getTime()
+        ),
+      waveHeightM:
+        marineHourFor(contextSignals, point.time, scoringNow.getTime())?.waveHeight ??
+        contextPeakForSlot(
+          contextSignals,
+          contextSignals?.marine?.waveHeight,
+          point.time,
+          scoringNow.getTime()
+        ),
       tolerance,
     });
   const hourScores = points.map(scorePoint);
@@ -253,10 +299,13 @@ export const buildActivityPlan = ({
 
   const firstMs = slots[0].time.getTime();
   const horizonHours = windowApplied ? 24 : HORIZON_HOURS;
-  const horizonEndMs = firstMs + horizonHours * HOUR_MS;
+  const horizonEndMs = period ? period.endMs : firstMs + horizonHours * HOUR_MS;
+  const periodCadenceMs = forecastCadenceMs(slots);
   const evaluatedSlots = slots.filter(
     slot =>
       slot.time.getTime() < horizonEndMs &&
+      // A slot counts when it overlaps the period: 07:00–08:00 covers a 07:30 start.
+      (!period || slot.time.getTime() + periodCadenceMs > period.startMs) &&
       (!windowApplied ||
         clockInRange(
           localClockMinutes(slot.time, timezoneOffsetSeconds),
@@ -274,7 +323,7 @@ export const buildActivityPlan = ({
   // showing no window at all.
   const nextDayEndMs = firstMs + 24 * HOUR_MS;
   const candidateSlots =
-    !windowApplied && !evaluatedSlots.some(isEligible)
+    !windowApplied && !period && !evaluatedSlots.some(isEligible)
       ? slots.filter(slot => slot.time.getTime() < nextDayEndMs)
       : evaluatedSlots;
   // A plan needs the whole activity, not one good clock tick: choose the best block in which
@@ -367,7 +416,9 @@ export const buildActivityPlan = ({
   const usableEvaluated = evaluatedSlots.filter(usableTime);
   const scoringSlots = usableEvaluated.length ? usableEvaluated : evaluatedSlots;
   const cadenceMs = forecastCadenceMs(slots);
-  const rawScore = aggregateHorizonScore(weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs));
+  const rawScore = aggregateHorizonScore(
+    weightHorizonSlots(scoringSlots, horizonEndMs, cadenceMs, scoringNow.getTime())
+  );
   const pointOf = new Map(slots.map((slot, index) => [slot, points[index]]));
   const scoreRange = rainScenarioRange(
     scoringSlots.map(slot => pointOf.get(slot)!),
@@ -379,7 +430,8 @@ export const buildActivityPlan = ({
     weightHorizonSlots(
       scoringSlots.map(slot => ({ time: slot.time, score: slot.baselineScore })),
       horizonEndMs,
-      cadenceMs
+      cadenceMs,
+      scoringNow.getTime()
     )
   );
   // Compare against the hours of day the activity could use in the same search window.
@@ -410,7 +462,7 @@ export const buildActivityPlan = ({
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason]) => reason);
-  const score = reasons.length > 0 ? Math.min(rawScore, 96) : rawScore;
+  const score = reasons.length > 0 ? Math.min(rawScore, GOOD_MAX) : rawScore;
 
   return {
     activity,

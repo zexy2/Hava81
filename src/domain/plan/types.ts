@@ -1,6 +1,17 @@
 import type { DecisionReasonCode, Hava81ScoreBand } from '../decision/types';
 
-export type PlanIntent = 'walk' | 'run' | 'bike' | 'picnic' | 'children' | 'laundry' | 'motorcycle';
+export type PlanIntent =
+  | 'walk'
+  | 'run'
+  | 'bike'
+  | 'dog'
+  | 'picnic'
+  | 'children'
+  | 'beach'
+  | 'garden'
+  | 'photo'
+  | 'laundry'
+  | 'motorcycle';
 export type PlanConfidence = 'high' | 'medium' | 'low';
 export type PlanFactor =
   | 'thermal'
@@ -37,6 +48,13 @@ export interface PlanProfile {
    * dew point (relative humidity as fallback) and sunshine — instead of human comfort.
    */
   dryingModel?: boolean;
+  /**
+   * Sea plan (beach, swimming): needs the marine context; water temperature and wave height add
+   * a penalty and gate the hour, and a city without marine data cannot recommend it.
+   */
+  seaModel?: boolean;
+  /** Golden-hour plan: only the hour around sunrise or sunset, scored by the light. */
+  goldenHourOnly?: boolean;
   /** Exertion plans feel a high dew point beyond apparent temperature (running). 0–1. */
   mugginessWeight?: number;
   /** Breathing-heavy plans react to Saharan dust (daily peak, µg/m³). 0–1. */
@@ -70,6 +88,8 @@ export type PlanGateReason =
   | 'low-visibility'
   | 'severe-weather'
   | 'outside-availability'
+  | 'sea-conditions'
+  | 'outside-golden-hour'
   | 'invalid-weather-data';
 
 export interface PlanPenalties {
@@ -87,6 +107,10 @@ export interface PlanPenalties {
   dust: number;
   /** Pollen exposure, only with a declared allergy. */
   pollen: number;
+  /** Sea plans: cold water and waves (marine context). */
+  sea: number;
+  /** Golden-hour plans: overcast, fog or no sun hides the light. */
+  sky: number;
   compound: number;
   /** Comfort-range penalty is included in thermal. This field exposes its contribution. */
   comfort: number;

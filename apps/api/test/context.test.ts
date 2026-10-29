@@ -7,9 +7,12 @@ import {
 } from '../src/modules/context/context.service';
 
 const HOUR_MS = 60 * 60_000;
+let parsedUrlHourly: string | null = null;
 const buildHourlyTimeline = (length = 25) => {
   const start = Math.floor(Date.now() / HOUR_MS) * HOUR_MS;
-  return Array.from({ length }, (_, index) => new Date(start + index * HOUR_MS).toISOString().slice(0, 16));
+  return Array.from({ length }, (_, index) =>
+    new Date(start + index * HOUR_MS).toISOString().slice(0, 16)
+  );
 };
 const values = (length: number, value: number) => Array.from({ length }, () => value);
 
@@ -38,6 +41,7 @@ const fakeFetch = (async (input: Parameters<typeof fetch>[0]) => {
   }
   const parsedUrl = new URL(url);
   assert.equal(parsedUrl.searchParams.get('timezone'), 'GMT');
+  parsedUrlHourly = parsedUrl.searchParams.get('hourly');
   return new Response(
     JSON.stringify({
       current_units: {
@@ -52,6 +56,11 @@ const fakeFetch = (async (input: Parameters<typeof fetch>[0]) => {
         wave_direction: 315,
         wave_period: 4.8,
         sea_surface_temperature: 25.1,
+      },
+      hourly: {
+        time: ['2026-08-28T03:00', '2026-08-28T04:00', 'bad', '2026-08-28T05:00'],
+        wave_height: [0.4, 1.9, 0.5, null],
+        sea_surface_temperature: [25.1, 25.0, 24.9, null],
       },
     }),
     { status: 200, headers: { 'content-type': 'application/json' } }
@@ -69,6 +78,12 @@ test('context service normalizes UV, dust, pollen and marine signals', async () 
   assert.equal(result.marine?.waveDirection, 315);
   assert.equal(result.marine?.wavePeriod, 4.8);
   assert.equal(result.marine?.seaSurfaceTemperature, 25.1);
+  // Hourly sea forecast: valid hours only; an hour with no values is dropped.
+  assert.equal(parsedUrlHourly, 'wave_height,sea_surface_temperature');
+  assert.deepEqual(result.marineHourly, [
+    { time: '2026-08-28T03:00:00.000Z', waveHeight: 0.4, seaSurfaceTemperature: 25.1 },
+    { time: '2026-08-28T04:00:00.000Z', waveHeight: 1.9, seaSurfaceTemperature: 25 },
+  ]);
 });
 
 test('context service omits marine values when the provider returns an impossible calendar timestamp', async () => {
@@ -94,10 +109,7 @@ test('context service omits marine values when the provider returns an impossibl
 });
 
 test('GMT model timestamps are parsed as UTC even without an explicit offset', () => {
-  assert.equal(
-    parseGmtModelTime('2026-08-28T11:00'),
-    Date.parse('2026-08-28T11:00:00Z')
-  );
+  assert.equal(parseGmtModelTime('2026-08-28T11:00'), Date.parse('2026-08-28T11:00:00Z'));
   assert.equal(
     parseGmtModelTime('2026-08-28T11:00:00+03:00'),
     Date.parse('2026-08-28T11:00:00+03:00')
@@ -128,20 +140,12 @@ test('GMT model timestamps reject impossible calendar, clock and offset fields',
 
 test('context maxima ignore values attached to impossible provider calendar dates', () => {
   const now = new Date('2026-08-28T10:00:00Z');
-  assert.equal(
-    finiteMaxForWindow(['2026-02-30T11:00', '2026-08-28T11:00'], [99, 4], now),
-    4
-  );
+  assert.equal(finiteMaxForWindow(['2026-02-30T11:00', '2026-08-28T11:00'], [99, 4], now), 4);
 });
 
 test('context 24h maxima exclude past and beyond-window GMT model slots', () => {
   const now = new Date('2026-08-28T10:00:00Z');
-  const times = [
-    '2026-08-28T09:00',
-    '2026-08-28T11:00',
-    '2026-08-29T09:00',
-    '2026-08-29T11:00',
-  ];
+  const times = ['2026-08-28T09:00', '2026-08-28T11:00', '2026-08-29T09:00', '2026-08-29T11:00'];
   assert.equal(finiteMaxForWindow(times, [99, 4, 8, 77], now), 8);
 });
 
@@ -271,7 +275,6 @@ test('invalid marine physical domains fail closed to air-only context', async ()
   assert.equal(result.marine, undefined);
   assert.equal(result.uvIndexMax, 7);
 });
-
 
 test('context service supports customer-prefixed Open-Meteo hosts and API keys', async () => {
   const requested: URL[] = [];

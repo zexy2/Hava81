@@ -6,6 +6,7 @@ import {
 } from '../../providers/openmeteo/openmeteo-hourly.provider';
 import type {
   ProvinceCurrentObservation,
+  ProvinceOutlookPoint,
   ProvinceCurrentProvider,
 } from '../../providers/openmeteo/openmeteo-provinces.provider';
 import type { WeatherLanguage } from '../../providers/weather-provider';
@@ -21,6 +22,11 @@ export interface ProvinceTemperatureDto {
   icon: string;
   description: string;
   windSpeed?: number;
+  windDirection?: number;
+  cloudCover?: number;
+  precipitation?: number;
+  precipitationProbability?: number;
+  outlook?: ProvinceOutlookPoint[];
   observedAt: string;
 }
 
@@ -83,6 +89,13 @@ export class ProvincesService {
           icon: iconForCode(observation.weatherCode, observation.isDay),
           description: descriptionForCode(observation.weatherCode, lang),
           ...(observation.windSpeed === undefined ? {} : { windSpeed: observation.windSpeed }),
+          ...(observation.windDirection === undefined ? {} : { windDirection: observation.windDirection }),
+          ...(observation.cloudCover === undefined ? {} : { cloudCover: observation.cloudCover }),
+          ...(observation.precipitation === undefined ? {} : { precipitation: observation.precipitation }),
+          ...(observation.precipitationProbability === undefined
+            ? {}
+            : { precipitationProbability: observation.precipitationProbability }),
+          ...(observation.outlook === undefined ? {} : { outlook: observation.outlook }),
           observedAt: observation.observedAt,
         },
       ];

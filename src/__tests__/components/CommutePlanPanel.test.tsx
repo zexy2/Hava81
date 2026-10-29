@@ -71,7 +71,7 @@ describe('CommutePlanPanel', () => {
     expect(verdict).toHaveTextContent('Şemsiyeyi al');
     expect(screen.getByText('Şemsiyeyi al')).toBeInTheDocument();
     expect(screen.getByText(/Planlanan pencere:/)).toHaveTextContent('Cmt 08:30 → Cmt 18:00');
-    expect(screen.getByText(/Dönüşte yağmur riski/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dönüşte yağış ihtimali/i)).toBeInTheDocument();
     const windows = screen.getByRole('list', { name: 'Çıkış ve dönüş hava pencereleri' });
     expect(windows).toBeInTheDocument();
     expect(windows).toHaveTextContent(/\d+\/100 · (Çok uygun|Uygun|Dikkat|Zorlayıcı)/);
@@ -155,13 +155,29 @@ describe('CommutePlanPanel', () => {
 
   it('shows unknown precipitation and does not give dry umbrella advice when rain evidence is missing', () => {
     const unknownRain = [
-      { time: new Date('2026-08-29T09:00:00Z'), temp: 22, pop: Number.NaN, windSpeed: 3, icon: '01d' as const },
-      { time: new Date('2026-08-29T12:00:00Z'), temp: 22, pop: Number.NaN, windSpeed: 3, icon: '01d' as const },
+      {
+        time: new Date('2026-08-29T09:00:00Z'),
+        temp: 22,
+        pop: Number.NaN,
+        windSpeed: 3,
+        icon: '01d' as const,
+      },
+      {
+        time: new Date('2026-08-29T12:00:00Z'),
+        temp: 22,
+        pop: Number.NaN,
+        windSpeed: 3,
+        icon: '01d' as const,
+      },
     ] as HourlyForecast[];
 
     render(
       <SettingsProvider>
-        <CommutePlanPanel weather={weather} hourly={unknownRain} forecastMeta={freshForecastMeta()} />
+        <CommutePlanPanel
+          weather={weather}
+          hourly={unknownRain}
+          forecastMeta={freshForecastMeta()}
+        />
       </SettingsProvider>
     );
 
@@ -169,7 +185,9 @@ describe('CommutePlanPanel', () => {
     fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '15:00' } });
 
     expect(screen.getAllByText('Yağış verisi yok')).toHaveLength(2);
-    expect(screen.getByRole('status')).toHaveTextContent('Yağış verisi yok; şemsiye kararı verilemiyor');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Yağış verisi yok; şemsiye kararı verilemiyor'
+    );
     expect(screen.getByRole('status')).toHaveTextContent('Yağış verisi bir veya iki pencerede yok');
     expect(screen.getByRole('status')).not.toHaveTextContent('Tahmine göre gerek görünmüyor');
   });

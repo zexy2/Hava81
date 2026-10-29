@@ -117,15 +117,7 @@ const hasValidIsoCalendarDateTime = (value: string): boolean => {
   const minute = Number(minuteText);
   const second = Number(secondText);
 
-  if (
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > 31 ||
-    hour > 23 ||
-    minute > 59 ||
-    second > 59
-  ) {
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59 || second > 59) {
     return false;
   }
 
@@ -273,10 +265,7 @@ const reviveForecastDate = (value: string, field: string, dateOnly = false): Dat
   }
 
   const date = new Date(dateOnly ? `${value}T12:00:00.000Z` : value);
-  if (
-    Number.isNaN(date.getTime()) ||
-    (!dateOnly && !hasValidIsoCalendarDateTime(value))
-  ) {
+  if (Number.isNaN(date.getTime()) || (!dateOnly && !hasValidIsoCalendarDateTime(value))) {
     return invalidForecastPayload(field);
   }
   if (dateOnly && date.toISOString().slice(0, 10) !== value) {
@@ -347,10 +336,7 @@ const validateForecastMeta = (meta: SerializedForecast['meta'], field: string): 
   );
 };
 
-const reviveForecastMeta = (
-  meta: SerializedForecast['meta'],
-  field: string
-): ForecastMeta => {
+const reviveForecastMeta = (meta: SerializedForecast['meta'], field: string): ForecastMeta => {
   validateForecastMeta(meta, field);
   const fetchedAt = reviveForecastDate(meta.fetchedAt, `${field}.fetchedAt`);
   if (fetchedAt.getTime() > Date.now() + MAX_FORECAST_FUTURE_SKEW_MS) {
@@ -393,18 +379,43 @@ const validateHourlyForecastItem = (
   };
   invalid(!isPlausibleTemperature(item.temp, units), 'temp');
   invalid(typeof item.icon !== 'string' || !WEATHER_ICON_CODE_PATTERN.test(item.icon), 'icon');
-  invalid(item.description !== undefined && (!item.description || !item.description.trim()), 'description');
+  invalid(
+    item.description !== undefined && (!item.description || !item.description.trim()),
+    'description'
+  );
   invalid(!isFiniteNumber(item.windSpeed) || item.windSpeed < 0, 'windSpeed');
   invalid(
-    item.apparentTemperature !== undefined && !isPlausibleTemperature(item.apparentTemperature, units),
+    item.apparentTemperature !== undefined &&
+      !isPlausibleTemperature(item.apparentTemperature, units),
     'apparentTemperature'
   );
-  invalid(item.humidity !== undefined && (!isFiniteNumber(item.humidity) || item.humidity < 0 || item.humidity > 100), 'humidity');
-  invalid(item.precipitationMm !== undefined && (!isFiniteNumber(item.precipitationMm) || item.precipitationMm < 0), 'precipitationMm');
-  invalid(item.windGust !== undefined && (!isFiniteNumber(item.windGust) || item.windGust < 0), 'windGust');
-  invalid(item.uvIndex !== undefined && (!isFiniteNumber(item.uvIndex) || item.uvIndex < 0), 'uvIndex');
-  invalid(item.visibility !== undefined && (!isFiniteNumber(item.visibility) || item.visibility < 0), 'visibility');
-  invalid(item.weatherCode !== undefined && (!Number.isInteger(item.weatherCode) || item.weatherCode < 0 || item.weatherCode > 99), 'weatherCode');
+  invalid(
+    item.humidity !== undefined &&
+      (!isFiniteNumber(item.humidity) || item.humidity < 0 || item.humidity > 100),
+    'humidity'
+  );
+  invalid(
+    item.precipitationMm !== undefined &&
+      (!isFiniteNumber(item.precipitationMm) || item.precipitationMm < 0),
+    'precipitationMm'
+  );
+  invalid(
+    item.windGust !== undefined && (!isFiniteNumber(item.windGust) || item.windGust < 0),
+    'windGust'
+  );
+  invalid(
+    item.uvIndex !== undefined && (!isFiniteNumber(item.uvIndex) || item.uvIndex < 0),
+    'uvIndex'
+  );
+  invalid(
+    item.visibility !== undefined && (!isFiniteNumber(item.visibility) || item.visibility < 0),
+    'visibility'
+  );
+  invalid(
+    item.weatherCode !== undefined &&
+      (!Number.isInteger(item.weatherCode) || item.weatherCode < 0 || item.weatherCode > 99),
+    'weatherCode'
+  );
   invalid(item.isDay !== undefined && typeof item.isDay !== 'boolean', 'isDay');
 };
 
@@ -524,7 +535,25 @@ const validateContextSignalsPayload = (
     }
   }
 
-  return { ...data, fetchedAt };
+  return { ...data, fetchedAt, marineHourly: parseMarineHourly(data.marineHourly) };
+};
+
+/** Hourly sea forecast: bad hours are dropped, not the whole context. */
+const parseMarineHourly = (value: unknown): ContextSignals['marineHourly'] => {
+  if (!Array.isArray(value)) return undefined;
+  const rows = value.flatMap(row => {
+    if (!isRecord(row) || typeof row.time !== 'string') return [];
+    const time = new Date(row.time);
+    if (!Number.isFinite(time.getTime())) return [];
+    const waveHeight =
+      isFiniteNumber(row.waveHeight) && row.waveHeight >= 0 ? row.waveHeight : undefined;
+    const seaSurfaceTemperature = isFiniteNumber(row.seaSurfaceTemperature)
+      ? row.seaSurfaceTemperature
+      : undefined;
+    if (waveHeight === undefined && seaSurfaceTemperature === undefined) return [];
+    return [{ time, waveHeight, seaSurfaceTemperature }];
+  });
+  return rows.length > 0 ? rows : undefined;
 };
 
 /**
@@ -540,7 +569,10 @@ const parseAirQualityHourlyPayload = (value: unknown): AirQualityHourly => {
     invalidWeatherPayload('airQualityHourly.meta.provider');
   }
   const fetchedAt = typeof meta.fetchedAt === 'string' ? new Date(meta.fetchedAt) : new Date(NaN);
-  if (!Number.isFinite(fetchedAt.getTime()) || fetchedAt.getTime() > Date.now() + MAX_AIR_QUALITY_FUTURE_SKEW_MS) {
+  if (
+    !Number.isFinite(fetchedAt.getTime()) ||
+    fetchedAt.getTime() > Date.now() + MAX_AIR_QUALITY_FUTURE_SKEW_MS
+  ) {
     invalidWeatherPayload('airQualityHourly.meta.fetchedAt');
   }
   const hours: AirQualityHour[] = [];
@@ -552,7 +584,8 @@ const parseAirQualityHourlyPayload = (value: unknown): AirQualityHourly => {
       !isFiniteNumber(item.europeanAqi) ||
       item.europeanAqi < 0 ||
       item.europeanAqi > MAX_EUROPEAN_AQI
-    ) continue;
+    )
+      continue;
     const hour: AirQualityHour = { time, europeanAqi: item.europeanAqi };
     if (isFiniteNumber(item.pm25) && item.pm25 >= 0) hour.pm25 = item.pm25;
     hours.push(hour);
@@ -567,7 +600,9 @@ const parseAirQualityHourlyPayload = (value: unknown): AirQualityHourly => {
       ...(typeof meta.attribution === 'string' ? { attribution: meta.attribution } : {}),
       ...(typeof meta.sourceUrl === 'string' ? { sourceUrl: meta.sourceUrl } : {}),
       ...(isFiniteNumber(meta.intervalHours) ? { intervalHours: meta.intervalHours } : {}),
-      ...(meta.cacheStatus === 'HIT' || meta.cacheStatus === 'MISS' || meta.cacheStatus === 'COALESCED'
+      ...(meta.cacheStatus === 'HIT' ||
+      meta.cacheStatus === 'MISS' ||
+      meta.cacheStatus === 'COALESCED'
         ? { cacheStatus: meta.cacheStatus }
         : {}),
       ...(isFiniteNumber(meta.freshForSeconds) && meta.freshForSeconds > 0
@@ -655,7 +690,10 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
       `${prefix}.fraction`
     );
     invalid(!isFiniteNumber(segment.lat) || segment.lat < -90 || segment.lat > 90, `${prefix}.lat`);
-    invalid(!isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180, `${prefix}.lon`);
+    invalid(
+      !isFiniteNumber(segment.lon) || segment.lon < -180 || segment.lon > 180,
+      `${prefix}.lon`
+    );
     invalid(!validDateString(segment.eta), `${prefix}.eta`);
     if (validDateString(segment.eta)) {
       const expectedEtaMs =
@@ -678,7 +716,10 @@ const validateRouteWeatherPayload = (data: RouteWeatherResult): RouteWeatherResu
       `${prefix}.precipitationMm`
     );
     invalid(!isFiniteNumber(segment.windSpeed) || segment.windSpeed < 0, `${prefix}.windSpeed`);
-    invalid(typeof segment.description !== 'string' || !segment.description.trim(), `${prefix}.description`);
+    invalid(
+      typeof segment.description !== 'string' || !segment.description.trim(),
+      `${prefix}.description`
+    );
     invalid(!validScore(segment.score), `${prefix}.score`);
     invalid(!['low', 'caution', 'high'].includes(segment.risk), `${prefix}.risk`);
   }
@@ -765,14 +806,18 @@ const reviveCurrentMeta = (
   // The current-weather contract already carries the provider sample time as `timestamp`.
   // Use it when older BFF responses omit meta.observedAt so a fresh fetch/cache timestamp
   // cannot make an old observation look current.
-  const sourceObservedAt = observedAt === undefined
-    ? fallbackObservedAt
-    : reviveCurrentWeatherTimestamp(observedAt, 'current.meta.observedAt');
+  const sourceObservedAt =
+    observedAt === undefined
+      ? fallbackObservedAt
+      : reviveCurrentWeatherTimestamp(observedAt, 'current.meta.observedAt');
   const now = Date.now();
   if (sourceObservedAt.getTime() > now + MAX_CURRENT_WEATHER_FUTURE_SKEW_MS) {
     invalidWeatherPayload('current.meta.observedAt');
   }
-  if (Math.abs(sourceObservedAt.getTime() - fallbackObservedAt.getTime()) > MAX_CURRENT_OBSERVATION_MISMATCH_MS) {
+  if (
+    Math.abs(sourceObservedAt.getTime() - fallbackObservedAt.getTime()) >
+    MAX_CURRENT_OBSERVATION_MISMATCH_MS
+  ) {
     invalidWeatherPayload('current.meta.observedAt');
   }
   return { ...rest, fetchedAt, observedAt: sourceObservedAt };
@@ -808,7 +853,6 @@ const reviveWeatherDates = (
   };
 };
 
-
 const parseForecastResponse = (rawResponse: unknown): ParsedForecast => {
   const response = validateForecastEnvelope(rawResponse, 'forecast') as SerializedForecast;
 
@@ -816,9 +860,11 @@ const parseForecastResponse = (rawResponse: unknown): ParsedForecast => {
   response.daily.forEach((item, index) =>
     validateDailyForecastItem(item, `forecast.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
   );
-  response.hourly.slice(0, 8).forEach((item, index) =>
-    validateHourlyForecastItem(item, `forecast.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
-  );
+  response.hourly
+    .slice(0, 8)
+    .forEach((item, index) =>
+      validateHourlyForecastItem(item, `forecast.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
 
   return {
     // The 3-hour forecast has no daylight bounds; only the hourly part carries them.
@@ -865,14 +911,22 @@ const reviveHourlyItem = (item: SerializedHourlyForecast['hourly'][number]): Hou
 };
 
 const parseHourlyResponse = (rawResponse: unknown): ParsedHourlyForecast => {
-  const response = validateForecastEnvelope(rawResponse, 'hourly', true) as SerializedHourlyForecast;
+  const response = validateForecastEnvelope(
+    rawResponse,
+    'hourly',
+    true
+  ) as SerializedHourlyForecast;
   const meta = reviveForecastMeta(response.meta, 'hourly.meta');
-  response.daily?.slice(0, 5).forEach((item, index) =>
-    validateDailyForecastItem(item, `hourly.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
-  );
-  response.hourly.slice(0, PLAN_HOURLY_HOURS).forEach((item, index) =>
-    validateHourlyForecastItem(item, `hourly.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
-  );
+  response.daily
+    ?.slice(0, 5)
+    .forEach((item, index) =>
+      validateDailyForecastItem(item, `hourly.daily.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
+  response.hourly
+    .slice(0, PLAN_HOURLY_HOURS)
+    .forEach((item, index) =>
+      validateHourlyForecastItem(item, `hourly.hourly.${index}`, DEFAULT_WEATHER_PARAMS.units)
+    );
   const planHourly = response.hourly.slice(0, PLAN_HOURLY_HOURS).map(reviveHourlyItem);
 
   return {
@@ -924,7 +978,64 @@ export interface ProvinceTemperature {
   icon: string;
   description: string;
   observedAt: Date;
+  /** m/s */
+  windSpeed?: number;
+  /** Meteorological degrees: where the wind comes from. */
+  windDirection?: number;
+  /** % */
+  cloudCover?: number;
+  /** mm in the last hour */
+  precipitation?: number;
+  /** % for the hour in progress */
+  precipitationProbability?: number;
+  /** +3 h and +6 h readings for the map's time scrubber. */
+  outlook?: ProvinceOutlookPoint[];
 }
+
+export interface ProvinceOutlookPoint {
+  hourOffset: number;
+  precipitationProbability?: number;
+  precipitation?: number;
+  temperature?: number;
+}
+
+const boundedNumber = (value: unknown, min: number, max: number): number | undefined =>
+  isFiniteNumber(value) && value >= min && value <= max ? value : undefined;
+
+/** Optional map-layer readings: each one is kept only when it is physically plausible. */
+const parseProvinceLayers = (item: Record<string, unknown>): Partial<ProvinceTemperature> => {
+  const layers: Partial<ProvinceTemperature> = {};
+  const windSpeed = boundedNumber(item.windSpeed, 0, 150);
+  const windDirection = boundedNumber(item.windDirection, 0, 360);
+  const cloudCover = boundedNumber(item.cloudCover, 0, 100);
+  const precipitation = boundedNumber(item.precipitation, 0, 500);
+  const precipitationProbability = boundedNumber(item.precipitationProbability, 0, 100);
+  if (windSpeed !== undefined) layers.windSpeed = windSpeed;
+  if (windDirection !== undefined) layers.windDirection = windDirection % 360;
+  if (cloudCover !== undefined) layers.cloudCover = cloudCover;
+  if (precipitation !== undefined) layers.precipitation = precipitation;
+  if (precipitationProbability !== undefined)
+    layers.precipitationProbability = precipitationProbability;
+  if (Array.isArray(item.outlook)) {
+    const outlook = item.outlook
+      .filter(isRecord)
+      .map(point => {
+        const hourOffset = boundedNumber(point.hourOffset, 1, 48);
+        if (hourOffset === undefined) return null;
+        const parsed: ProvinceOutlookPoint = { hourOffset };
+        const pop = boundedNumber(point.precipitationProbability, 0, 100);
+        const mm = boundedNumber(point.precipitation, 0, 500);
+        const temperature = boundedNumber(point.temperature, -100, 100);
+        if (pop !== undefined) parsed.precipitationProbability = pop;
+        if (mm !== undefined) parsed.precipitation = mm;
+        if (temperature !== undefined) parsed.temperature = temperature;
+        return parsed;
+      })
+      .filter((point): point is ProvinceOutlookPoint => point !== null);
+    if (outlook.length) layers.outlook = outlook;
+  }
+  return layers;
+};
 
 export interface ProvinceTemperatures {
   byPlate: ReadonlyMap<number, ProvinceTemperature>;
@@ -963,7 +1074,17 @@ const parseProvinceTemperatures = (raw: unknown): ProvinceTemperatures | null =>
     ) {
       continue;
     }
-    byPlate.set(plate, { plate, name, lat, lon, temperature, icon, description, observedAt });
+    byPlate.set(plate, {
+      plate,
+      name,
+      lat,
+      lon,
+      temperature,
+      icon,
+      description,
+      observedAt,
+      ...parseProvinceLayers(item),
+    });
   }
   return {
     byPlate,
@@ -1126,7 +1247,10 @@ export const weatherService = {
     lat: number,
     lon: number,
     lang = DEFAULT_WEATHER_PARAMS.lang,
-    options: WeatherRequestOptions & { marine?: boolean; parts?: readonly ForecastBundlePart[] } = {}
+    options: WeatherRequestOptions & {
+      marine?: boolean;
+      parts?: readonly ForecastBundlePart[];
+    } = {}
   ): Promise<ForecastBundle> => {
     if (bundleUnsupported) throw new BundleUnavailableError('unsupported');
     const parts = options.parts ?? FORECAST_BUNDLE_PARTS;
@@ -1162,7 +1286,10 @@ export const weatherService = {
     }
 
     const errors = isRecord(raw.errors) ? raw.errors : {};
-    const settle = <T,>(part: ForecastBundlePart, parse: (value: unknown) => T): BundlePartResult<T> | undefined => {
+    const settle = <T>(
+      part: ForecastBundlePart,
+      parse: (value: unknown) => T
+    ): BundlePartResult<T> | undefined => {
       if (!parts.includes(part)) return undefined;
       const value = raw[part];
       if (value === null || value === undefined) {

@@ -262,6 +262,8 @@ export interface ContextSignals {
     wavePeriod?: number;
     seaSurfaceTemperature?: number;
   };
+  /** Hourly sea forecast (three days); beach plans use the slot's own hour. */
+  marineHourly?: Array<{ time: Date; waveHeight?: number; seaSurfaceTemperature?: number }>;
   cacheStatus?: 'HIT' | 'MISS' | 'COALESCED';
   freshForSeconds?: number;
 }

@@ -26,6 +26,25 @@ const { current, hourlyForecast, now: fixtureNow } = fixtures;
 // desktop header or `?view=plan`; the panel tests open that view directly.
 const PLAN = '/istanbul/?view=plan';
 
+// These tests were written for the activity cards: start every test with walk and run picked
+// and no saved plans (unless the test sets its own).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('hava81-decision-profile-v1')) {
+      localStorage.setItem(
+        'hava81-decision-profile-v1',
+        JSON.stringify({ activities: ['walk', 'run'], temperatureSensitivity: 'balanced' })
+      );
+    }
+    if (!localStorage.getItem('hava81.routines.v1')) {
+      localStorage.setItem(
+        'hava81.routines.v1',
+        JSON.stringify({ schemaVersion: 1, routines: [] })
+      );
+    }
+  });
+});
+
 test.describe('Planla view', () => {
   test('?view=plan opens Planla on load and Today leaves it', async ({ page }) => {
     await page.goto(PLAN);
@@ -136,7 +155,9 @@ test.describe('Planla view', () => {
     await expect(page.locator('.daily-plan__slots-caption')).toHaveText(
       'Saatlik uygunluk · 0–100 · yüksek daha uygun'
     );
-    await expect(page.locator('.daily-plan__score small')).toContainText('Genel dışarı skoru');
+    await expect(page.locator('.daily-plan__score small')).toContainText(
+      'Önümüzdeki 12 saat · genel'
+    );
     const cards = page.locator('.activity-card');
     await expect(cards).toHaveCount(2);
     for (const card of await cards.all())
@@ -336,6 +357,8 @@ test.describe('daily plan', () => {
           ...morning.hourlyForecast.hourly[index],
           time: new Date(hour.getTime() + index * 60 * 60_000).toISOString(),
           temp: 21 - Math.floor(index / 6),
+          // A wet afternoon: the morning is clearly better, so a best window exists.
+          ...(index >= 4 ? { pop: 80, precipitationMm: 2.5 } : { pop: 0, precipitationMm: 0 }),
           apparentTemperature: 20,
           humidity: 55,
           windGust: 5,
@@ -419,7 +442,8 @@ test.describe('daily plan', () => {
       await expect(breakdown).not.toHaveAttribute('open');
 
       const chips = page.locator('.activity-planner__chips');
-      await expect(chips.locator('button')).toHaveCount(6);
+      // Ten activities; the sea one only where there is a sea (the fixture city is coastal or not).
+      expect(await chips.locator('button').count()).toBeGreaterThanOrEqual(9);
       for (const [width, scale] of [
         [390, 100],
         [320, 200],
@@ -505,10 +529,12 @@ test.describe('activities', () => {
       await picnic.click();
       await expect(picnic).toHaveAttribute('aria-pressed', 'true');
       await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
-      await expect(page.getByText(/Üç aktivite seçtin/i)).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeDisabled();
-      await expect(page.getByRole('button', { name: 'Çamaşır', exact: true })).toBeDisabled();
+      // No selection limit: the other activities stay available.
+      await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeEnabled();
+      await expect(page.getByRole('heading', { name: 'Yan yana' })).toBeVisible();
 
+      // Preferences live in their own disclosure since the Planla redesign.
+      await page.locator('.activity-planner__prefs > summary').click();
       await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
       await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
       await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
@@ -534,9 +560,10 @@ test.describe('activities', () => {
       await setWidth(page, 320, 720);
       await page.goto(PLAN);
       await expect(page.getByRole('heading', { name: 'Day plan' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'What are you doing today?' })).toBeAttached();
+      await expect(page.getByRole('heading', { name: 'What else could you do?' })).toBeAttached();
       await expect(page.locator('.daily-plan__quick > *')).toHaveCount(3);
 
+      await page.locator('.activity-planner__prefs > summary').click();
       const windowHelp = page.locator('.activity-planner__window-help');
       await expect(windowHelp.locator('summary')).toHaveText('How it works');
       await expect(windowHelp.locator('p')).toBeHidden();
@@ -615,10 +642,13 @@ test.describe('activities', () => {
       await setWidth(page, 320, 760);
       await setTextScale(page, 200);
       const header = planner.locator('.activity-planner__header');
+      const prefs = planner.locator('.activity-planner__prefs');
+      await prefs.locator(':scope > summary').click();
       const sensitivity = planner.locator('.activity-planner__sensitivity');
       await expectReadable(page, header, 'planner header at 320px/200%');
       await expectContainedIn(header, planner, 'planner header');
-      await expectContainedIn(sensitivity, header, 'sensitivity panel');
+      await expectReadable(page, prefs, 'preferences at 320px/200%');
+      await expectContainedIn(sensitivity, prefs, 'sensitivity panel');
       expect(await sensitivity.evaluate(element => getComputedStyle(element).flexBasis)).toBe(
         'auto'
       );
@@ -639,6 +669,7 @@ test.describe('activities', () => {
 
   test('activity disclosures keep a visible keyboard focus ring', DESKTOP, async ({ page }) => {
     await page.goto(PLAN);
+    await page.locator('.activity-planner__prefs > summary').click();
     for (const summary of [
       page.locator('.activity-planner__window-help summary'),
       page.locator('.activity-planner__score-explanation summary'),
@@ -841,4 +872,27 @@ test.describe('route weather', () => {
       await expectNoHorizontalScroll(page);
     }
   );
+});
+
+test.describe('my plans (Planlarım)', () => {
+  test('a template becomes a saved plan that survives a reload', MOBILE, async ({ page }) => {
+    await page.goto(PLAN);
+    await page.evaluate(() =>
+      localStorage.setItem('hava81.routines.v1', JSON.stringify({ schemaVersion: 1, routines: [] }))
+    );
+    await page.reload();
+    const list = page.getByRole('region', { name: 'Planlarım' });
+    await list.getByRole('button', { name: /Akşam koşusu/ }).click();
+    const row = list.getByRole('button', { name: /Koşu planını düzenle/ });
+    await expect(row).toBeVisible();
+
+    await page.reload();
+    await expect(row).toBeVisible();
+    await expect(row.locator('.routine-row__when')).toContainText('18:30');
+    await expectNoHorizontalScroll(page);
+
+    await row.click();
+    await list.getByRole('button', { name: 'Planı sil' }).click();
+    await expect(row).toHaveCount(0);
+  });
 });

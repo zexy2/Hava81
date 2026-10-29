@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ForecastAtlasProps } from '../hava81/ForecastAtlas';
 import { ForecastLoadingCard } from './AppSkeletons';
@@ -17,13 +17,15 @@ const ForecastAtlas = lazy(async () => {
 export function DeferredForecastAtlas(props: ForecastAtlasProps) {
   const { t } = useTranslation();
   const [isNearViewport, setIsNearViewport] = useState(false);
-  const placeholderRef = useRef<HTMLElement>(null);
+  // A callback ref, so a re-created placeholder is observed again: an effect that ran once
+  // would keep watching the detached node and the chart would never mount.
+  const [placeholder, setPlaceholder] = useState<HTMLElement | null>(null);
   const activate = useCallback(() => setIsNearViewport(true), []);
 
   useEffect(() => {
     if (isNearViewport) return undefined;
 
-    const target = placeholderRef.current;
+    const target = placeholder;
     if (!target) return undefined;
 
     if (typeof window.IntersectionObserver !== 'function') {
@@ -42,14 +44,14 @@ export function DeferredForecastAtlas(props: ForecastAtlasProps) {
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [isNearViewport]);
+  }, [isNearViewport, placeholder]);
 
   if (!isNearViewport) {
     return (
       <ForecastLoadingCard
         title={t('hava81.forecastAtlas.title')}
         label={t('hava81.forecastAtlas.deferred')}
-        anchorRef={placeholderRef}
+        anchorRef={setPlaceholder}
         onActivate={activate}
         reserveLoadedHeight
       />

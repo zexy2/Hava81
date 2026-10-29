@@ -497,6 +497,11 @@
     color: #fff;
     box-shadow: 0 7px 14px rgb(11 46 86 / 0.13);
   }
+  /* Separator lives with the scope label, so hiding the label never leaves a stray dot. */
+  .app .activity-card__score-scope::after {
+    content: ' · ';
+  }
+
   .app .activity-card__score small {
     color: #d0eaff;
     font-size: 0.8125rem;

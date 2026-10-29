@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 import type { NormalizedWeatherData } from '../types/weather.types';
+import { getCityMetadata } from '../constants/cityMetadata';
 import { districtFromQuery } from '../utils/appRoute';
 import type { AtlasView } from '../utils/atlasView';
 import { withAtlasView } from '../utils/atlasView';
@@ -178,10 +179,7 @@ export function useAppRouting({
       const targetPath = cityPath(pendingNavigationCity, language);
       const weatherPath = cityPath(weather.cityName, language);
       if (targetPath && weatherPath && targetPath !== weatherPath) {
-        setAlternates(
-          cityPath(pendingNavigationCity, 'tr'),
-          cityPath(pendingNavigationCity, 'en')
-        );
+        setAlternates(cityPath(pendingNavigationCity, 'tr'), cityPath(pendingNavigationCity, 'en'));
         updateCityMetadata(pendingNavigationCity, targetPath);
         return;
       }
@@ -285,7 +283,7 @@ export function useAppRouting({
         previousCity && previousCity !== weather.cityName ? 'pushState' : 'replaceState';
       window.history[historyMethod]({ city: weather.cityName }, '', path);
     }
-    updateCityMetadata(weather.cityName, path);
+    updateCityMetadata(getCityMetadata(weather.cityName)?.name ?? weather.cityName, path);
   }, [language, routeRevision, t, weather]);
 
   useEffect(() => {

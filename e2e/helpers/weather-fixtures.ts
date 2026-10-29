@@ -13,21 +13,19 @@ export function createWeatherFixtures(now = Date.now()) {
     new Date(now + offsetHours * 60 * 60_000).toISOString();
   const localDate = (offsetDays = 0) =>
     new Date(now + 3 * 60 * 60_000 + offsetDays * 24 * 60 * 60_000).toISOString().slice(0, 10);
-  const locationDateKey = (date: Date) =>
-    new Date(date.getTime() + 3 * 60 * 60_000).toISOString().slice(0, 10);
   const locationTime = (hour: number, minute = 0) => {
     const [year, month, day] = localDate().split('-').map(Number);
     return new Date(Date.UTC(year, month - 1, day, hour - 3, minute));
   };
-  const todayAtLocation = localDate();
-  const sunriseCandidate = new Date(now - 6 * 60 * 60_000);
-  const sunrise =
-    locationDateKey(sunriseCandidate) === todayAtLocation ? sunriseCandidate : locationTime(6);
-  const sunsetCandidate = new Date(now + 6 * 60 * 60_000);
-  const sunset =
-    locationDateKey(sunsetCandidate) === todayAtLocation && sunsetCandidate > sunrise
-      ? sunsetCandidate
-      : locationTime(19, 30);
+  // Daylight is centred on `now` and stays inside today's calendar day (the app requires
+  // sunrise and sunset on the same date): up to 6 h either side, less near midnight. The sun
+  // is then about halfway whatever time the suite runs; snapping to 06:00/19:30 made evening
+  // runs see the sun already set.
+  const dayStart = locationTime(0).getTime();
+  const dayEnd = dayStart + 24 * 60 * 60_000 - 60_000;
+  const halfDaylight = Math.max(60_000, Math.min(6 * 60 * 60_000, now - dayStart, dayEnd - now));
+  const sunrise = new Date(now - halfDaylight);
+  const sunset = new Date(now + halfDaylight);
   const nowIso = new Date(now).toISOString();
 
   const current = {

@@ -3,6 +3,8 @@
  * hours can never produce different headline logic on different cards.
  */
 
+import { CAUTION_MAX, DIFFICULT_MAX } from './scoreWeatherWindow';
+
 const HOUR_MS = 60 * 60 * 1000;
 
 export interface HorizonScoredSlot {
@@ -62,7 +64,9 @@ export const dropElapsedSlots = <T extends { time: Date }>(
 export const weightHorizonSlots = <T extends HorizonScoredSlot>(
   slots: readonly T[],
   horizonEndMs: number,
-  cadenceMs: number
+  cadenceMs: number,
+  /** When known, the step in progress only counts for the part that is still ahead. */
+  nowMs?: number
 ): WeightedHorizonSlot<T>[] => {
   const ordered = [...slots]
     .filter(slot => slot.time.getTime() < horizonEndMs)
@@ -71,7 +75,8 @@ export const weightHorizonSlots = <T extends HorizonScoredSlot>(
     const current = slot.time.getTime();
     const next = ordered[index + 1]?.time.getTime() ?? Number.POSITIVE_INFINITY;
     const end = Math.min(next, current + cadenceMs, horizonEndMs);
-    return { slot, weightHours: Math.max(0.01, (end - current) / HOUR_MS) };
+    const start = Number.isFinite(nowMs) ? Math.max(current, nowMs as number) : current;
+    return { slot, weightHours: Math.max(0.01, (end - start) / HOUR_MS) };
   });
 };
 
@@ -114,8 +119,8 @@ export const aggregateHorizonScore = (
   const hazardHours = entries
     .filter(entry => entry.slot.score <= HAZARD_HOUR_SCORE)
     .reduce((sum, entry) => sum + entry.weightHours, 0);
-  if (hazardHours >= SUSTAINED_HAZARD_HOURS) score = Math.min(score, 54);
-  else if (hazardHours > 0) score = Math.min(score, 74);
+  if (hazardHours >= SUSTAINED_HAZARD_HOURS) score = Math.min(score, DIFFICULT_MAX);
+  else if (hazardHours > 0) score = Math.min(score, CAUTION_MAX);
   return Math.max(0, Math.min(100, score));
 };
 

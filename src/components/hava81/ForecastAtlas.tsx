@@ -11,6 +11,7 @@ import type { ForecastAtlasClock } from './forecastAtlas/types';
 import { useForecastClock } from './forecastAtlas/useForecastClock';
 import { useForecastFormatters } from './forecastAtlas/useForecastFormatters';
 import './ForecastAtlas.css';
+import './forecastAtlas/forecastSurface.css';
 
 export interface ForecastAtlasProps {
   daily: DailyForecast[];
@@ -50,6 +51,8 @@ export function ForecastAtlas({
   const atLocationTime = (date: Date): Date => new Date(date.getTime() + timezoneOffsetMs);
 
   const intervalHours = meta.intervalHours;
+  const currentHourKey = new Date(currentTimeMs + timezoneOffsetMs).toISOString().slice(0, 13);
+  const currentTemperature = current?.temperature;
 
   const hourlyHorizonData = useMemo(() => {
     const source =
@@ -57,13 +60,23 @@ export function ForecastAtlas({
         ? hourly.slice(0, REAL_HOURLY_HORIZON)
         : hourly.slice(0, LEGACY_HOUR_LIMIT);
 
-    return source.map(hour => ({
-      ...hour,
-      timestamp: hour.time.getTime(),
-      convertedTemp: Math.round(convertTemperature(hour.temp)),
-      precipitation: normalizeOptionalPrecipitationRatio(hour.pop),
-    }));
-  }, [convertTemperature, hourly, intervalHours]);
+    return source.map(hour => {
+      // One "now" on screen: the hour in progress carries the observed temperature, so the
+      // curve, the hour strip and the summary agree with the main card.
+      const isCurrentHour =
+        typeof currentTemperature === 'number' &&
+        new Date(hour.time.getTime() + timezoneOffsetMs).toISOString().slice(0, 13) ===
+          currentHourKey;
+      return {
+        ...hour,
+        timestamp: hour.time.getTime(),
+        convertedTemp: Math.round(
+          convertTemperature(isCurrentHour ? (currentTemperature as number) : hour.temp)
+        ),
+        precipitation: normalizeOptionalPrecipitationRatio(hour.pop),
+      };
+    });
+  }, [convertTemperature, currentHourKey, currentTemperature, hourly, intervalHours, timezoneOffsetMs]);
 
   // Every forecast hour is shown, like Apple and Google weather: the strip scrolls through
   // the next 24 hours instead of thinning them out to every 2nd, 3rd … 12th hour.
@@ -161,6 +174,7 @@ export function ForecastAtlas({
           dailyData={dailyData}
           preciseTemperatureFormatter={preciseTemperatureFormatter}
           clock={clock}
+          nowTemperature={current ? convertTemperature(current.temperature) : undefined}
         />
       ) : null}
     </section>

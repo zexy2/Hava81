@@ -8,6 +8,9 @@ import {
   scoreWeatherWindow,
   SEVERE_WEATHER_PENALTY,
   wmoSeverityPenalty,
+  applyWarningCaps,
+  CAUTION_MAX,
+  GOOD_MAX,
 } from '../decision/scoreWeatherWindow';
 import { getPlanConfidence } from './confidence';
 import { getPlanProfile } from './profiles';
@@ -23,6 +26,11 @@ import type {
 const HOUR_MS = 60 * 60 * 1000;
 
 const LOW_VISIBILITY_METERS = 1_000;
+/** Sea plans: comfortable water from 22 °C, no swimming recommendation below 18 °C. */
+const SEA_COMFORT_C = 22;
+const SEA_MIN_C = 18;
+/** Waves above 1.5 m are not a swimming sea. */
+const SEA_MAX_WAVE_M = 1.5;
 // Snow showers are below the named severe-weather level but still block outdoor plans: sudden
 // snow and slippery ground make the hour unsuitable as a recommendation.
 const GATED_SNOW_SHOWER_CODES: ReadonlySet<number> = new Set([85]);
@@ -111,12 +119,19 @@ const emptyPenalties = (total: number): PlanPenalties => ({
   muggy: 0,
   dust: 0,
   pollen: 0,
+  sea: 0,
+  sky: 0,
   compound: 0,
   comfort: 0,
   total,
 });
 
 export interface ScoreHourInput {
+  /** Sea plans: fresh marine context for this slot (sea surface °C, wave height m). */
+  seaTemperatureC?: number;
+  waveHeightM?: number;
+  /** Golden-hour plans: this slot is the hour around sunrise or sunset. */
+  goldenHour?: boolean;
   intent: PlanIntent;
   point: HourlyForecast;
   timezoneOffsetSeconds: number;
@@ -147,6 +162,9 @@ export const scoreHour = ({
   sensitivity = 'balanced',
   dustUgM3,
   pollenGrainsM3,
+  seaTemperatureC,
+  waveHeightM,
+  goldenHour,
   tolerance = {},
 }: ScoreHourInput): PlanHourScore => {
   const profile = getPlanProfile(intent);
@@ -229,6 +247,26 @@ export const scoreHour = ({
       ? 18 * smoothstep(dustUgM3 as number, DUST_GUIDELINE_UGM3, 200) * profile.dustWeight
       : 0;
 
+  // Sea plans: cold water and waves. The wave curve starts at a choppy 0.6 m.
+  const seaPenalty = profile.seaModel
+    ? (Number.isFinite(seaTemperatureC)
+        ? 24 * smoothstep(SEA_COMFORT_C - (seaTemperatureC as number), 0, 6)
+        : 0) +
+      (Number.isFinite(waveHeightM)
+        ? 26 * smoothstep(waveHeightM as number, 0.6, SEA_MAX_WAVE_M)
+        : 0)
+    : 0;
+
+  // Golden hour: an overcast sky or fog hides the light; known sunshine refines it.
+  const code = point.weatherCode;
+  const sunshine = point.sunshineDuration;
+  const skyPenalty = profile.goldenHourOnly
+    ? Math.max(
+        code === 45 || code === 48 ? 30 : code === 3 ? 22 : code === 2 ? 6 : 0,
+        Number.isFinite(sunshine) ? 22 * (1 - Math.min(1, (sunshine as number) / 1800)) : 0
+      )
+    : 0;
+
   const weighted: PlanPenalties = {
     thermal: (stress + comfort) * w.thermal,
     precipitation: (raw?.precipitation ?? 0) * w.precipitation * rainTolerance,
@@ -241,6 +279,8 @@ export const scoreHour = ({
     muggy: muggyPenalty,
     dust: dustPenalty,
     pollen: pollenPenalty,
+    sea: seaPenalty,
+    sky: skyPenalty,
     compound: 0,
     comfort: roundPenalty(comfort),
     total: 0,
@@ -259,6 +299,8 @@ export const scoreHour = ({
     weighted.muggy,
     weighted.dust,
     weighted.pollen,
+    weighted.sea,
+    weighted.sky,
   ].filter(value => value >= MATERIAL_RISK_PENALTY).length;
   weighted.compound = (materialRisks >= 2 ? Math.min(12, (materialRisks - 1) * 4) : 0) * w.compound;
 
@@ -274,6 +316,8 @@ export const scoreHour = ({
     'muggy',
     'dust',
     'pollen',
+    'sea',
+    'sky',
     'compound',
   ] as const) {
     weighted[key] = roundPenalty(weighted[key]);
@@ -290,6 +334,8 @@ export const scoreHour = ({
       weighted.muggy +
       weighted.dust +
       weighted.pollen +
+      weighted.sea +
+      weighted.sky +
       weighted.compound
   );
 
@@ -309,6 +355,15 @@ export const scoreHour = ({
     gateReasons.push('precipitation-limit');
   }
   if (profile.requiresRainEvidence && !hasRainEvidence) gateReasons.push('precipitation-unknown');
+  if (profile.goldenHourOnly && goldenHour !== true) gateReasons.push('outside-golden-hour');
+  if (
+    profile.seaModel &&
+    (!Number.isFinite(seaTemperatureC) ||
+      (seaTemperatureC as number) < SEA_MIN_C ||
+      (Number.isFinite(waveHeightM) && (waveHeightM as number) > SEA_MAX_WAVE_M))
+  ) {
+    gateReasons.push('sea-conditions');
+  }
   if (base.windSpeed > profile.maxWindSpeedMs || (base.windGust ?? 0) > profile.maxWindGustMs) {
     gateReasons.push('wind-limit');
   }
@@ -370,6 +425,17 @@ export const scoreHour = ({
       return !profile.heatIsBeneficial || apparent >= 40;
     return true;
   });
+  // "Doesn't bother me": the mild wind/rain notices go, the serious ones always stay.
+  if (tolerance.wind === 'high') {
+    for (const mild of ['windy', 'gusty-wind'] as const) {
+      const at = reasons.indexOf(mild);
+      if (at >= 0) reasons.splice(at, 1);
+    }
+  }
+  if (tolerance.rain === 'high') {
+    const at = reasons.indexOf('rain-risk');
+    if (at >= 0) reasons.splice(at, 1);
+  }
   if (muggyPenalty >= 6) reasons.push('muggy');
   if (dustPenalty > 0 && (dustUgM3 as number) >= DUST_EVENT_UGM3) reasons.push('dust');
   if (pollenPenalty > 0 && (pollenGrainsM3 as number) >= POLLEN_HIGH) reasons.push('pollen');
@@ -409,9 +475,20 @@ export const scoreHour = ({
   // Intent weighting must not erase the shared model's evidence-completeness cap. A finite but
   // invalid ratio/amount is unknown, just like a missing field, and cannot support an excellent
   // hour. For a rain-only plan (laundry, picnic) unknown rain cannot even look good.
-  if (!hasRainEvidence) score = Math.min(score, profile.requiresRainEvidence ? 74 : 89);
-  // Match the shared model's label invariant even when intent weighting softens a surfaced risk.
-  if (reasons.length > 0) score = Math.min(score, 96);
+  if (!hasRainEvidence)
+    score = Math.min(score, profile.requiresRainEvidence ? CAUTION_MAX : GOOD_MAX);
+  // Same rule as the shared model: the band never contradicts the warning beside it. A
+  // personal tolerance softens comfort penalties, never the band a named risk belongs to.
+  score = applyWarningCaps(score, {
+    apparentTemperature: apparent,
+    precipitationProbability: base.precipitationProbability,
+    precipitationMm: base.precipitationMm,
+    weatherCode: point.weatherCode,
+    // Laundry: heat dries clothes; the warning stays visible, it just does not set the band.
+    reasons: profile.heatIsBeneficial
+      ? [...new Set(reasons)].filter(reason => reason !== 'extreme-heat' && reason !== 'heat')
+      : [...new Set(reasons)],
+  });
 
   return {
     intent,

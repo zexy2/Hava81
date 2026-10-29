@@ -10,6 +10,8 @@ export interface NextChange {
   time: Date | null;
   /** Temperature at that hour (°C), for warmer/cooler. */
   temp: number | null;
+  /** Rain probability (0–1) of the triggering hour for rain changes; null otherwise or unknown. */
+  pop?: number | null;
 }
 
 const TEMP_STEP = 3;
@@ -62,7 +64,12 @@ export function getNextChange(
   for (const hour of upcoming) {
     const wet = rainStateForHour(hour);
     if (wet !== undefined && previousWet !== undefined && wet !== previousWet) {
-      return { kind: wet ? 'rainStarts' : 'rainStops', time: hour.time, temp: hour.temp };
+      return {
+        kind: wet ? 'rainStarts' : 'rainStops',
+        time: hour.time,
+        temp: hour.temp,
+        pop: Number.isFinite(hour.pop) && hour.pop >= 0 && hour.pop <= 1 ? hour.pop : null,
+      };
     }
     if (wet !== undefined) previousWet = wet;
     if (hour.temp - currentTemp >= TEMP_STEP)

@@ -19,6 +19,9 @@ import type {
   NormalizedWeatherData,
 } from '../../types';
 import { getDailyPlanAirQualityEvidence } from '../../domain/decision/airQualityEvidence';
+import { isWithinActiveHours } from '../../domain/decision/eligibility';
+import HeroSky from '../sky/HeroSky';
+import { resolveSkyScene } from '../sky/skyScene';
 import './DailyPlanPanel.css';
 
 interface DailyPlanPanelProps {
@@ -72,6 +75,11 @@ function FreshDailyPlanPanel({
     return getDecisionSnapshot({ weather, hourly, airQuality, airQualityHourly });
   }, [airQuality, airQualityHourly, freshnessRevision, hourly, weather]);
   const plan = snapshot.plan;
+  // Same scene as the Today field, so both pages show the same sky for the same data.
+  const heroScene = useMemo(() => {
+    void freshnessRevision;
+    return resolveSkyScene(weather, hourly, Date.now());
+  }, [freshnessRevision, hourly, weather]);
   const hasUnknownPrecipitation = plan.slots.some(
     slot =>
       !Number.isFinite(slot.precipitationProbability) && !Number.isFinite(slot.precipitationMm)
@@ -171,10 +179,39 @@ function FreshDailyPlanPanel({
   const airAffected = timelineSlots.filter(slot =>
     slot.reasons.some(reason => reason === 'poor-air-quality' || reason === 'sensitive-air-quality')
   );
-  const airAffectedTimes =
-    airAffected.length && airAffected.length <= timelineSlots.length / 2
-      ? airAffected.map(slot => formatTime(slot.time))
-      : [];
+  // Consecutive hours read as one range: "07:00–10:00", not four separate times.
+  const airAffectedTimes: string[] = [];
+  if (airAffected.length && airAffected.length <= timelineSlots.length / 2) {
+    let runStart = airAffected[0];
+    let runEnd = airAffected[0];
+    const flush = () =>
+      airAffectedTimes.push(
+        runStart === runEnd
+          ? formatTime(runStart.time)
+          : `${formatTime(runStart.time)}–${formatTime(runEnd.time)}`
+      );
+    for (const slot of airAffected.slice(1)) {
+      if (slot.time.getTime() - runEnd.time.getTime() <= 60 * 60_000) runEnd = slot;
+      else {
+        flush();
+        runStart = slot;
+        runEnd = slot;
+      }
+    }
+    flush();
+  }
+  // Night hours are scored but never recommended (07–23 rule). When one outscores the best
+  // window, say so — otherwise "best 07:00" next to a 92 at 03:00 reads as a contradiction.
+  const offsetSeconds = weather.meta.timezoneOffsetSeconds;
+  const nightSlots = timelineSlots.filter(slot => !isWithinActiveHours(slot.time, offsetSeconds));
+  const nightOutscoresBest = Boolean(
+    !evenDay && bestWindowRange && nightSlots.some(slot => slot.score > bestWindowRange.start.score)
+  );
+  const nightRange = nightSlots.length
+    ? nightSlots.length === 1
+      ? formatTime(nightSlots[0].time)
+      : `${formatTime(nightSlots[0].time)}–${formatTime(nightSlots[nightSlots.length - 1].time)}`
+    : '';
   const localDateKey = (date: Date) =>
     new Date(date.getTime() + timezoneOffsetMs).toISOString().slice(0, 10);
 
@@ -231,7 +268,8 @@ function FreshDailyPlanPanel({
   };
 
   return (
-    <section className="daily-plan" aria-labelledby="daily-plan-title">
+    <section className="daily-plan daily-plan--sky" aria-labelledby="daily-plan-title">
+      <HeroSky scene={heroScene} />
       <header className="daily-plan__header">
         <div>
           <span className="atlas-kicker">{t('hava81.dailyPlan.eyebrow')}</span>
@@ -264,7 +302,8 @@ function FreshDailyPlanPanel({
             <strong>{plan.score}</strong>
             <span>/100</span>
             <small>
-              {t('hava81.scoreScope.day')} · {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
+              {t('hava81.dailyPlan.scoreScope12h')} ·{' '}
+              {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
             </small>
           </div>
         </div>
@@ -272,7 +311,25 @@ function FreshDailyPlanPanel({
 
       <div className="daily-plan__decision">
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
-        <strong>{nowOrLaterText}</strong>
+        {/* The answer first, in a few words; the engine's full sentence follows it. */}
+        <strong className="daily-plan__headline">
+          {evenDay
+            ? t('hava81.dailyPlan.headline.even')
+            : bestWindowRange
+              ? t('hava81.dailyPlan.headline.best', {
+                  start: formatTime(bestWindowRange.start.time),
+                  end: formatTime(bestWindowRange.endTime),
+                })
+              : nowOrLaterText}
+        </strong>
+        {evenDay || bestWindowRange ? (
+          <p className="daily-plan__sentence">{nowOrLaterText}</p>
+        ) : null}
+        {nightOutscoresBest ? (
+          <p className="daily-plan__night-note">
+            {t('hava81.dailyPlan.nightNote', { range: nightRange })}
+          </p>
+        ) : null}
         {evenDay ? (
           weakSlots.length ? (
             <small>
@@ -282,7 +339,7 @@ function FreshDailyPlanPanel({
             </small>
           ) : null
         ) : bestWindowRange ? (
-          <small>
+          <small className="sr-only">
             {t('hava81.dailyPlan.bestRange', {
               start: formatTime(bestWindowRange.start.time),
               end: formatTime(bestWindowRange.endTime),
@@ -351,9 +408,16 @@ function FreshDailyPlanPanel({
         </div>
       </div>
 
-      <p className="daily-plan__slots-caption">
-        {t('hava81.scoreScope.hourly')} · {t('hava81.scoreScope.scale')}
-      </p>
+      <div className="daily-plan__chart-head">
+        <p className="daily-plan__slots-caption">
+          {t('hava81.scoreScope.hourly')} · {t('hava81.scoreScope.scale')}
+        </p>
+        <ul className="daily-plan__legend" aria-hidden="true">
+          <li className="is-good">{t('hava81.dailyPlan.legend.good')}</li>
+          <li className="is-caution">{t('hava81.dailyPlan.legend.caution')}</li>
+          <li className="is-difficult">{t('hava81.dailyPlan.legend.difficult')}</li>
+        </ul>
+      </div>
       <div
         className="daily-plan__slots"
         role="list"
@@ -367,11 +431,27 @@ function FreshDailyPlanPanel({
           );
           // Highlight the actual recommendation interval; this only affects presentation.
           const isWeak = weakTimes.has(slot.time.getTime());
+          // On an even day there is no best window to mark: the headline says so.
           const isBestWindow = Boolean(
+            !evenDay &&
             bestWindowRange &&
             slot.time.getTime() >= bestWindowRange.start.time.getTime() &&
             slot.time.getTime() <= bestWindowRange.end.time.getTime()
           );
+          const previousIsBest = Boolean(
+            !evenDay &&
+            previous &&
+            bestWindowRange &&
+            previous.time.getTime() >= bestWindowRange.start.time.getTime() &&
+            previous.time.getTime() <= bestWindowRange.end.time.getTime()
+          );
+          const isBestStart = isBestWindow && !previousIsBest;
+          // Night hours are scored but never recommended (07–23 rule); show that, so a high
+          // night score next to an earlier "best time" does not read as a contradiction.
+          const isNight = !isWithinActiveHours(slot.time, weather.meta.timezoneOffsetSeconds);
+          const isNightStart =
+            isNight &&
+            !(previous && !isWithinActiveHours(previous.time, weather.meta.timezoneOffsetSeconds));
           const primaryReason = slot.reasons[0];
           const primaryReasonText = primaryReason
             ? t(`hava81.dailyPlan.reasons.${reasonKey[primaryReason]}`)
@@ -392,18 +472,26 @@ function FreshDailyPlanPanel({
             .join(', ');
           return (
             <div
-              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}${isWeak ? ' is-weak' : ''}`}
+              className={`daily-plan__slot daily-plan__slot--${slot.band}${isDayBoundary ? ' is-day-boundary' : ''}${isBestWindow ? ' is-best-window' : ''}${isWeak ? ' is-weak' : ''}${isNight ? ' is-night' : ''}`}
               style={
                 {
                   '--hour-score': `${Math.min(100, Math.max(0, slot.score))}%`,
-                  // 50–100 mapped to 0–1: the bar under the hour that the strip reads as a chart.
-                  '--bar-scale': Math.min(1, Math.max(0.08, (slot.score - 50) / 50)).toFixed(2),
+                  '--slot-index': index,
+                  // Full 0–100 scale: a 48 is visibly half a bar, never a stub.
+                  '--bar-scale': Math.min(1, Math.max(0.04, slot.score / 100)).toFixed(2),
                 } as CSSProperties
               }
               key={slot.time.toISOString()}
               role="listitem"
               aria-label={slotAriaLabel}
             >
+              {isBestStart ? (
+                <span className="daily-plan__slot-flag">{t('hava81.dailyPlan.bestFlag')}</span>
+              ) : isNightStart ? (
+                <span className="daily-plan__slot-flag is-night">
+                  {t('hava81.dailyPlan.nightFlag')}
+                </span>
+              ) : null}
               <time dateTime={slot.time.toISOString()}>
                 {isDayBoundary ? (
                   <span className="daily-plan__slot-day">{t('hava81.dailyPlan.tomorrow')}</span>

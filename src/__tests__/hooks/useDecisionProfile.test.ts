@@ -11,7 +11,7 @@ describe('useDecisionProfile persistence', () => {
     const { result } = renderHook(() => useDecisionProfile());
 
     expect(result.current.profile).toEqual({
-      activities: ['walk', 'run'],
+      activities: [],
       temperatureSensitivity: 'balanced',
     });
   });
@@ -33,7 +33,7 @@ describe('useDecisionProfile persistence', () => {
     const { result } = renderHook(() => useDecisionProfile());
 
     expect(result.current.profile).toEqual({
-      activities: ['walk', 'laundry', 'run'],
+      activities: ['walk', 'laundry', 'run', 'picnic'],
       temperatureSensitivity: 'heat',
       commuteStart: '08:30',
       activityStart: '23:15',
@@ -54,7 +54,7 @@ describe('useDecisionProfile persistence', () => {
     });
   });
 
-  it('does not silently replace a selected activity when the three-activity limit is reached', () => {
+  it('adds a fourth activity without replacing a selected one (no selection limit)', () => {
     localStorage.setItem(
       'hava81-decision-profile-v1',
       JSON.stringify({ activities: ['walk', 'run', 'picnic'], temperatureSensitivity: 'balanced' })
@@ -63,7 +63,7 @@ describe('useDecisionProfile persistence', () => {
 
     act(() => result.current.toggleActivity('motorcycle'));
 
-    expect(result.current.profile.activities).toEqual(['walk', 'run', 'picnic']);
+    expect(result.current.profile.activities).toEqual(['walk', 'run', 'picnic', 'motorcycle']);
   });
 
   it('rejects invalid clock values before persisting commute or activity windows', () => {
@@ -75,7 +75,7 @@ describe('useDecisionProfile persistence', () => {
     });
 
     expect(result.current.profile).toEqual({
-      activities: ['walk', 'run'],
+      activities: [],
       temperatureSensitivity: 'balanced',
     });
     expect(JSON.parse(localStorage.getItem('hava81-decision-profile-v1') ?? 'null')).toBeNull();

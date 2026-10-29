@@ -48,6 +48,8 @@ export interface CommuteWindow {
   windSpeed: number;
   windGust?: number;
   score: number;
+  /** The same hour scored as dry: comfort without rain, which has its own comparison. */
+  comfortScore: number;
   band: Hava81ScoreBand;
 }
 
@@ -146,6 +148,18 @@ const buildWindow = (
     windSpeed: point.windSpeed,
     windGust: point.windGust,
     score: scored.score,
+    comfortScore: scoreWeatherWindow({
+      time: point.time,
+      temperature: point.temp,
+      apparentTemperature: point.apparentTemperature,
+      humidity: point.humidity,
+      precipitationProbability: 0,
+      precipitationMm: 0,
+      windSpeed: point.windSpeed,
+      windGust: point.windGust,
+      uvIndex: point.uvIndex,
+      visibility: point.visibility,
+    }).score,
     band: getScoreBand(scored.score),
   };
 };
@@ -157,7 +171,8 @@ const isAmountEvidence = (value: number | undefined): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
 const hasRainEvidence = (window: CommuteWindow): boolean =>
-  isProbabilityEvidence(window.precipitationProbability) || isAmountEvidence(window.precipitationMm);
+  isProbabilityEvidence(window.precipitationProbability) ||
+  isAmountEvidence(window.precipitationMm);
 
 const effectiveWind = (window: CommuteWindow) =>
   Math.max(
@@ -205,22 +220,13 @@ export const buildCommutePlan = ({
     return null;
   }
 
-  const outbound = buildWindow(
-    outboundPoint,
-    commuteStart!,
-    startTarget,
-    timezoneOffsetSeconds
-  );
-  const returnWindow = buildWindow(
-    returnPoint,
-    commuteEnd!,
-    endTarget,
-    timezoneOffsetSeconds
-  );
+  const outbound = buildWindow(outboundPoint, commuteStart!, startTarget, timezoneOffsetSeconds);
+  const returnWindow = buildWindow(returnPoint, commuteEnd!, endTarget, timezoneOffsetSeconds);
 
-  const knownProbabilities = [outbound.precipitationProbability, returnWindow.precipitationProbability].filter(
-    isProbabilityEvidence
-  );
+  const knownProbabilities = [
+    outbound.precipitationProbability,
+    returnWindow.precipitationProbability,
+  ].filter(isProbabilityEvidence);
   const knownAmounts = [outbound.precipitationMm, returnWindow.precipitationMm].filter(
     isAmountEvidence
   );
@@ -265,7 +271,8 @@ export const buildCommutePlan = ({
     ? (returnWindow.precipitationMm as number) - (outbound.precipitationMm as number)
     : undefined;
   const temperatureDelta = returnWindow.apparentTemperature - outbound.apparentTemperature;
-  const scoreDelta = returnWindow.score - outbound.score;
+  // Rain is compared on its own above; the comfort delta must not count it a second time.
+  const scoreDelta = returnWindow.comfortScore - outbound.comfortScore;
 
   let change: CommuteChangeKind = 'stable';
   let changeValue: number | undefined;
