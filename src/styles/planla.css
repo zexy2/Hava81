@@ -3120,6 +3120,19 @@
     font-size: 1.375rem;
     line-height: 1.25;
   }
+
+  /* "Clear times" stays at the top right, beside the title, on every width. */
+  .app .atlas-plan-view .commute-plan__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.5rem 1rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__header > .atlas-text-button {
+    justify-self: end;
+    min-block-size: 2.75rem;
+  }
 }
 
 @keyframes planla-bar {
