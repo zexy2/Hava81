@@ -11,7 +11,7 @@ describe('useDecisionProfile persistence', () => {
     const { result } = renderHook(() => useDecisionProfile());
 
     expect(result.current.profile).toEqual({
-      activities: ['walk', 'run'],
+      activities: [],
       temperatureSensitivity: 'balanced',
     });
   });
@@ -75,7 +75,7 @@ describe('useDecisionProfile persistence', () => {
     });
 
     expect(result.current.profile).toEqual({
-      activities: ['walk', 'run'],
+      activities: [],
       temperatureSensitivity: 'balanced',
     });
     expect(JSON.parse(localStorage.getItem('hava81-decision-profile-v1') ?? 'null')).toBeNull();

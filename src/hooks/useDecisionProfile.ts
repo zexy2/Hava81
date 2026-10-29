@@ -9,7 +9,7 @@ import type { PersonalTolerance, WeatherTolerance } from '../domain/plan/types';
 import { trackProductEvent } from '../analytics/productEvents';
 
 const DEFAULT_PROFILE: DecisionProfile = {
-  activities: ['walk', 'run'],
+  activities: [],
   temperatureSensitivity: 'balanced',
 };
 

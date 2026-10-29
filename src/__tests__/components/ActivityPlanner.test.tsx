@@ -78,6 +78,11 @@ const hourly: HourlyForecast[] = [
 describe('ActivityPlanner time range', () => {
   beforeEach(() => {
     localStorage.clear();
+    // These tests are about the cards: start from the two activities they were written for.
+    localStorage.setItem(
+      'hava81-decision-profile-v1',
+      JSON.stringify({ activities: ['walk', 'run'], temperatureSensitivity: 'balanced' })
+    );
     // The plan drops forecast steps that already ended; pin the clock to the fixture morning.
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-08-29T06:00:00Z'));

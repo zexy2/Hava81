@@ -422,10 +422,13 @@ describe('Hava81 app integration', () => {
     );
     const activityPlanner = container.querySelector<HTMLElement>('.activity-planner');
     expect(activityPlanner).not.toBeNull();
-    const walking = within(activityPlanner!).getByRole('button', { name: /yürüyüş/i });
-    expect(walking).toHaveAttribute('aria-pressed', 'true');
-    await user.click(walking);
+    const walking = within(
+      within(activityPlanner!).getByRole('group', { name: 'Aktivite seçimi' })
+    ).getByRole('button', { name: /yürüyüş/i });
+    // Nothing is pre-selected: Planla answers with suggestions until the user picks.
     expect(walking).toHaveAttribute('aria-pressed', 'false');
+    await user.click(walking);
+    expect(walking).toHaveAttribute('aria-pressed', 'true');
 
     await user.click(screen.getByRole('button', { name: /bugüne dön/i }));
     expect(await screen.findByRole('heading', { name: 'İstanbul', level: 1 })).toBeInTheDocument();
@@ -441,11 +444,14 @@ describe('Hava81 app integration', () => {
     expect(
       await screen.findByRole('heading', { name: 'Planla · İstanbul', level: 1 })
     ).toBeInTheDocument();
+    // The choice made before leaving is kept.
     expect(
-      within(container.querySelector<HTMLElement>('.activity-planner')!).getByRole('button', {
-        name: /yürüyüş/i,
-      })
-    ).toHaveAttribute('aria-pressed', 'false');
+      within(
+        within(container.querySelector<HTMLElement>('.activity-planner')!).getByRole('group', {
+          name: 'Aktivite seçimi',
+        })
+      ).getByRole('button', { name: /yürüyüş/i })
+    ).toHaveAttribute('aria-pressed', 'true');
     await waitFor(() => expect(window.location.search).toBe('?view=plan'));
   }, 12_000);
 

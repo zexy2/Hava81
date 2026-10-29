@@ -2103,11 +2103,11 @@
     }
   }
 
-  /* Wide screens: five columns, two even rows of low horizontal tiles. */
+  /* Wide screens: up to eleven activities in two rows of low horizontal tiles. */
   @media (min-width: 64rem) {
     .app .atlas-plan-view .activity-planner__chips {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 
     .app .atlas-plan-view .activity-planner__chips button {
