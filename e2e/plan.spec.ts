@@ -539,6 +539,8 @@ test.describe('activities', () => {
       await page.locator('.activity-planner__prefs > summary').click();
       await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
       await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
+      // The range-scoped label sits in the card's score details.
+      await page.locator('.activity-card__details > summary').first().click();
       await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
       const runCard = page
         .locator('.activity-card')
