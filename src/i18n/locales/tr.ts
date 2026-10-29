@@ -302,7 +302,7 @@ export const tr = {
         best: 'En iyi zaman {{start}}–{{end}}',
         even: 'Gün boyu benzer',
       },
-      nightFlag: 'Gece · önerilmez',
+      nightFlag: 'Gece',
       nightNote:
         'Gece saatleri ({{range}}) daha yüksek puanlı, ama öneriler 07:00–23:00 arasından seçilir.',
       bestFlag: 'En iyi',

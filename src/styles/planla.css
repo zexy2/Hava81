@@ -985,8 +985,8 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    gap: clamp(0.75rem, 1.4vw, 1.125rem);
-    padding: clamp(1.25rem, 2.6vw, 2.25rem);
+    gap: clamp(0.625rem, 1vw, 0.875rem);
+    padding: clamp(1.25rem, 2.2vw, 1.875rem);
     border: 0;
     border-radius: var(--radius-xl);
     background: rgb(9 27 48);
@@ -1115,7 +1115,9 @@
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__score strong {
     color: rgb(255 255 255);
+    font-size: clamp(2.5rem, 1.8rem + 2vw, 3.5rem);
     font-weight: 300;
+    line-height: 1;
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__share {
@@ -1263,7 +1265,7 @@
   .app[data-color-mode='dark'] .atlas-plan-view .daily-plan--sky .daily-plan__slot {
     position: relative;
     display: grid;
-    grid-template-rows: 1rem auto 4.5rem auto auto;
+    grid-template-rows: 1rem auto 3.75rem auto auto;
     justify-items: center;
     gap: 0.3rem;
     min-inline-size: 0;
@@ -1296,10 +1298,6 @@
 
   /* The night label spans the quiet night columns to its right instead of being clipped. */
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot-flag.is-night {
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline-start: 0;
-    z-index: 2;
     color: rgb(255 255 255 / 62%);
   }
 
@@ -1443,7 +1441,7 @@
 
   .app .atlas-plan-view .atlas-plan-view__columns {
     gap: 0;
-    padding: clamp(1.25rem, 3vw, 2.5rem);
+    padding: clamp(1.25rem, 2.4vw, 2rem);
     border: 1px solid color-mix(in srgb, var(--color-atlas-ink) 8%, transparent);
     border-radius: var(--radius-xl);
     background: color-mix(in srgb, var(--color-atlas-paper, rgb(255 255 255)) 90%, transparent);
