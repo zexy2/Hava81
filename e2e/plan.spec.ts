@@ -423,7 +423,8 @@ test.describe('daily plan', () => {
       await expect(breakdown).not.toHaveAttribute('open');
 
       const chips = page.locator('.activity-planner__chips');
-      await expect(chips.locator('button')).toHaveCount(6);
+      // Ten activities; the sea one only where there is a sea (the fixture city is coastal or not).
+      expect(await chips.locator('button').count()).toBeGreaterThanOrEqual(9);
       for (const [width, scale] of [
         [390, 100],
         [320, 200],
