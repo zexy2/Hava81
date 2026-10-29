@@ -3,6 +3,7 @@ import type { ProvinceTemperature } from '../../api/weatherService';
 import {
   downwindRotation,
   interpolate,
+  LAYER_RAMPS,
   latFromMercatorY,
   layerHasOutlook,
   layerSamples,
@@ -100,7 +101,8 @@ describe('map layer model', () => {
     expect(rampColor('precipitation', 90)[3]).toBeGreaterThan(rampColor('precipitation', 40)[3]);
     expect(rampColor('cloud', 0)[3]).toBe(0);
     // Clamped outside the scale.
-    expect(rampColor('temperature', -40)).toEqual(rampColor('temperature', -15));
-    expect(rampColor('temperature', 60)).toEqual(rampColor('temperature', 40));
+    const stops = LAYER_RAMPS.temperature;
+    expect(rampColor('temperature', -60)).toEqual(stops[0][1]);
+    expect(rampColor('temperature', 80)).toEqual(stops[stops.length - 1][1]);
   });
 });

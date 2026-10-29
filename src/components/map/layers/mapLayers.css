@@ -5,9 +5,11 @@
     position: relative;
   }
 
+  /* The field is a coarse interpolation: a soft blur reads it like radar, without pixels
+     or a hard coastline edge. */
   .app .weather-map__field {
     pointer-events: none;
-    filter: saturate(1.08);
+    filter: blur(6px) saturate(1.1);
   }
 
   .app .map-layers {

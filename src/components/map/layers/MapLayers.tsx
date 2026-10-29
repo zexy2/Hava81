@@ -55,7 +55,8 @@ const arrowIcon = (plate: number, rotation: number, speed: number) =>
   L.divIcon({
     className: 'weather-map__wind',
     iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    // Sits just above the province marker instead of under it.
+    iconAnchor: [18, 50],
     // Stroke weight grows with speed, so strong wind reads before any number does.
     html: `<span class="weather-map__wind-arrow" data-wind-province="${plate}" data-rotation="${rotation}" style="--wind-rotation:${rotation}deg;--wind-weight:${Math.min(3.2, 1.4 + speed / 8).toFixed(2)}"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 20V5M6.5 10.5 12 5l5.5 5.5"/></svg></span>`,
   });

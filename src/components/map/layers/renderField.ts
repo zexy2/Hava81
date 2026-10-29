@@ -15,7 +15,7 @@ export const FIELD_BOUNDS: [[number, number], [number, number]] = [
   [TURKEY_BOUNDS.north, TURKEY_BOUNDS.east],
 ];
 
-const FIELD_WIDTH = 380;
+const FIELD_WIDTH = 520;
 
 /**
  * Paints one layer as a soft field clipped to Türkiye's outline and returns it as a PNG
