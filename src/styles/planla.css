@@ -3519,6 +3519,8 @@
   }
 
   .app .atlas-plan-view .route-weather__body {
+    /* One bounded column: children can never widen the section past the page. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
     padding: 0 clamp(1.25rem, 2.4vw, 2rem) clamp(1.25rem, 2.4vw, 2rem);
     border: 0;
