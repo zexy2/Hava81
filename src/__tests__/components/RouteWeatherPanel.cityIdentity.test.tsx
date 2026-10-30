@@ -26,7 +26,7 @@ describe('RouteWeatherPanel city identity', () => {
 
   it('maps an ASCII provider city label to the canonical province option', async () => {
     const user = userEvent.setup();
-    renderPanel("Istanbul");
+    renderPanel('Istanbul');
 
     await user.click(screen.getByText('Rota havası'));
 

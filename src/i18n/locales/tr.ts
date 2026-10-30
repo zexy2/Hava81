@@ -163,11 +163,12 @@ export const tr = {
       privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
     },
     planView: {
+      footnote:
+        'Hava81 yalnızca havaya bakar; yol, trafik, sağlık ve güvenlik kararını sen verirsin. Resmî uyarılar için MGM MeteoUyarı.',
       eyebrow: 'İkinci adım',
       title: 'Planla',
       titleWithCity: 'Planla · {{city}}',
-      intro:
-        'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.',
+      intro: 'Ne zaman ne yaptığını bir kez söyle; Hava81 her gün senin için en iyi saati bulsun.',
       back: 'Bugüne dön',
       asideLabel: 'Günler, yerel bağlam ve bildirimler',
       entryEyebrow: 'Sıradaki adım',
@@ -319,7 +320,7 @@ export const tr = {
       noWindow: 'Uygun pencere yok',
       thunder: 'Gök gürültülü fırtına · {{times}} civarı. Yıldırım riski: açık alanda bekleme.',
       confidence: { medium: 'tahmini', low: 'belirsiz tahmin' },
-      note: 'Aynı karar motoru: her gün yalnızca o günün saatleriyle değerlendirilir. Uzak günlerde tahmin değişebilir.',
+      note: 'Uzak günlerde tahmin değişebilir.',
     },
     compare: {
       emptyTitle: 'İki şehir, tek karar',
@@ -356,8 +357,11 @@ export const tr = {
       bestTime: 'En iyi hava saati',
     },
     dailyPlan: {
+      scoreFor: '{{name}} için',
       scoreScope12h: 'Önümüzdeki 12 saat · genel',
       headline: {
+        personal: '{{name}} · {{day}} {{when}}',
+        general: 'Genel {{score}} · {{answer}}',
         best: 'En iyi zaman {{start}}–{{end}}',
         even: 'Gün boyu benzer',
       },
@@ -492,15 +496,14 @@ export const tr = {
       },
       safetyNote: 'Yalnız hava koşullarına dayalı karar desteğidir; güvenlik garantisi değildir.',
       hourlyAqiSource:
-        'Saatlik hava kalitesi {{source}} modelini yalnızca tahminle aynı zaman damgası eşleştiğinde kullanır. Eşleşmeyen saatlerde güncel AQI yalnızca tazeyse yedek olur; değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+        'Saatlik hava kalitesi: {{source}}. Eşleşmeyen saatlerde yalnızca taze güncel değer kullanılır.',
       methodDetails: 'Veri kapsamı ve yöntem',
       note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Taze Avrupa AQI örnekleri yalnızca tahmin saatleriyle zaman damgası tam eşleştiğinde kullanılır. Eşleşmeyen saatlerde taze güncel ölçüm yedek olabilir; ikisi de eksik veya eskiyse AQI riski çıkarılmaz. Diğer eksik alanlar uydurulmaz, veri kapsamını düşürür.',
     },
     commute: {
-      eyebrow: 'Kişisel rutin',
+      eyebrow: 'Her gün',
       title: 'Çıkış planı',
-      subtitle:
-        'Evden çıkış ve dönüş saatini kaydet; Hava81 o iki pencereye göre bugün neyi yanında bulundurman gerektiğini söylesin.',
+      subtitle: 'Çıkış ve dönüş saatini seç; yanına ne alacağını söyleyelim.',
       timesLabel: 'Çıkış ve dönüş saatleri',
       presetsLabel: 'Hazır rutinler',
       presets: { office: 'Ofis', school: 'Okul' },
@@ -518,7 +521,7 @@ export const tr = {
         'strong-wind': 'Rüzgâr/hamle {{wind}} {{windUnit}}; açık alanda dikkat',
         'wind-caution': 'Rüzgâr {{wind}} {{windUnit}}; planında hesaba kat',
         'poor-air': 'Hava kalitesi AQI {{aqi}}/5; uzun dış aktiviteyi azalt',
-        stable: 'Yağış, sıcaklık ve rüzgâr için ek hazırlık sinyali yok',
+        stable: 'Ekstra bir şey gerekmiyor',
       },
       planWindow: 'Planlanan pencere: {{outbound}} → {{return}}',
       umbrella: {
@@ -560,11 +563,29 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     routines: {
-      title: 'Planlarım',
-      add: 'Plan ekle',
+      scope:
+        'Saatler yalnızca havaya göre seçilir; yol, trafik ve güvenlik koşullarını sen değerlendir.',
+      answer: {
+        best: '{{day}} en iyi {{start}}–{{end}}',
+        none: '{{day}} uygun saat yok',
+        fixed: '{{day}} {{time}}',
+        fixedBetter: '{{day}} {{time}} · {{better}} daha iyi',
+        pending_one: '{{day}} · tahmin {{count}} gün kala',
+        pending_other: '{{day}} · tahmin {{count}} gün kala',
+        pendingAt_one: '{{day}} {{time}} · tahmin {{count}} gün kala',
+        pendingAt_other: '{{day}} {{time}} · tahmin {{count}} gün kala',
+      },
+      verdict: {
+        excellent: 'Çok uygun',
+        good: 'Uygun',
+        caution: 'Dikkat',
+        difficult: 'Zorlayıcı',
+      },
+      title: 'Planların',
+      add: 'Rutin ekle',
       custom: 'Kendi planımı kur',
       emptyLead:
-        'Ne zaman ne yaptığını bir kez söyle; Hava81 her açtığında planlarının havasını gösterir.',
+        'Ne zaman ne yaptığını bir kez söyle; Hava81 her gün senin için en iyi saati bulsun.',
       newTitle: 'Yeni plan',
       editTitle: 'Planı düzenle',
       editLabel: '{{name}} planını düzenle',
@@ -645,6 +666,20 @@ export const tr = {
       },
     },
     activities: {
+      short: {
+        walk: 'Yürüyüş',
+        run: 'Koşu',
+        bike: 'Bisiklet',
+        dog: 'Köpek',
+        picnic: 'Piknik',
+        children: 'Çocukla',
+        beach: 'Plaj',
+        garden: 'Bahçe',
+        photo: 'Altın saat',
+        motorcycle: 'Motosiklet',
+        laundry: 'Çamaşır',
+      },
+      makeRoutine: 'Rutin yap',
       calendar: {
         add: 'Takvime ekle',
         title: '{{name}} · Hava81',
@@ -707,8 +742,8 @@ export const tr = {
         photo: 'Altın saat',
       },
       bestTime: 'Hava açısından en iyi saat: {{time}}',
-      bestRange: 'Hava açısından en uygun aralık: {{start}}–{{end}}',
-      anyTime: 'Bugün {{start}}–{{end}} arasında herhangi bir saat uygun.',
+      bestRange: 'Hava açısından en uygun aralık {{start}}–{{end}}',
+      anyTime: '{{start}}–{{end}} her saat iyi',
       vsGeneral: 'Genel skordan {{delta}}: {{why}}',
       vsGeneralWhy: {
         up: 'bu aktivitenin konfor aralığına daha uygun',
@@ -769,7 +804,7 @@ export const tr = {
       empty: 'Kişisel skor görmek için en az bir aktivite seç.',
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
       hourlyAqiSource:
-        'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+        'Saatlik hava kalitesi tahmini {{source}}; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. Resmî uyarı değil model rehberliğidir.',
       prefs: {
         title: 'Tercihler',
         edit: 'Düzenle',
@@ -798,6 +833,22 @@ export const tr = {
       },
     },
     context: {
+      levels: {
+        low: 'Düşük',
+        moderate: 'Orta',
+        high: 'Yüksek',
+      },
+      seaFeel: {
+        warm: 'Yüzmelik',
+        cool: 'Serin',
+        cold: 'Soğuk',
+      },
+      short: {
+        uv: 'UV',
+        dust: 'Toz',
+        sea: 'Deniz',
+        more: 'Ayrıntıyı gör',
+      },
       eyebrow: 'Türkiye bağlamı',
       title: 'Güneş, toz, polen ve deniz',
       uv: 'UV · 24 saat en yüksek',
@@ -836,6 +887,7 @@ export const tr = {
       unavailable: 'Paylaşım kullanılamıyor',
     },
     alerts: {
+      how: 'Nasıl çalışır?',
       eyebrow: 'Hava81 bildirimleri',
       title: 'Karar değişince haber ver',
       description:
@@ -873,11 +925,17 @@ export const tr = {
       destination: 'Varış',
       swap: 'Yönü değiştir',
       sameCity: 'Başlangıç ve varış için farklı şehirler seç.',
+      day: 'Gün',
+      at: 'Saat',
+      today: 'Bugün',
+      tomorrow: 'Yarın',
+      durationHours: '{{hours}} sa {{minutes}} dk',
+      durationMinutes: '{{minutes}} dk',
       departure: 'Kalkış zamanı · Türkiye saati',
       departureHelp: 'Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.',
       check: 'Koridoru kontrol et',
       corridor: 'Yaklaşık hava koridoru',
-      estimate: 'Yaklaşık {{distance}} km · {{minutes}} dk',
+      estimate: 'Yaklaşık {{distance}} km · {{duration}}',
       better:
         '{{time}} civarı kalkış hava açısından yaklaşık {{improvement}} puan daha iyi görünüyor.',
       betterAction:

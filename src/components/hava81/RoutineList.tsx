@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActivityKind, TemperatureSensitivity } from '../../domain/activity/types';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
+import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
 import type { PersonalTolerance } from '../../domain/plan/types';
 import { evaluateRoutine, type RoutineEvaluation } from '../../domain/routines/evaluateRoutine';
 import type { Routine } from '../../domain/routines/types';
@@ -89,43 +90,82 @@ export function RoutineList({
     setEditing(null);
   };
 
-  const statusLine = (routine: Routine, result: RoutineEvaluation) => {
+  // One answer per plan: the day and the time to go, and a better time when there is one.
+  const answerLine = (routine: Routine, result: RoutineEvaluation) => {
+    if (result.status === 'none') return t('hava81.routines.noOccurrence');
+    const day = dayLabel(result.occurrence.startMs);
     if (result.status === 'pending') {
-      return t('hava81.routines.pending', { count: result.daysUntilForecast });
+      return routine.schedule.kind === 'fixed'
+        ? t('hava81.routines.answer.pendingAt', {
+            day,
+            time: time(result.occurrence.startMs),
+            count: result.daysUntilForecast,
+          })
+        : t('hava81.routines.answer.pending', { day, count: result.daysUntilForecast });
     }
-    if (result.status !== 'scored') return t('hava81.routines.noOccurrence');
     const { plan, better } = result;
-    if (better) {
-      return t('hava81.routines.better', {
-        start: time(better.startMs),
-        end: time(better.endMs),
-        score: better.score,
-      });
+    if (routine.schedule.kind === 'fixed') {
+      const at = time(result.occurrence.startMs);
+      return better
+        ? t('hava81.routines.answer.fixedBetter', { day, time: at, better: time(better.startMs) })
+        : t('hava81.routines.answer.fixed', { day, time: at });
     }
-    if (routine.schedule.kind === 'flexible' && plan.bestWindowRange && !plan.windowUnavailable) {
-      return t('hava81.routines.bestInside', {
-        start: time(plan.bestWindowRange.start.time.getTime()),
-        end: time(plan.bestWindowRange.endTime.getTime()),
-      });
+    if (plan.windowUnavailable || !plan.bestWindowRange) {
+      return t('hava81.routines.answer.none', { day });
     }
-    if (plan.windowUnavailable) return t('hava81.routines.notSuitable');
-    const reason = plan.reasons[0];
-    return reason
-      ? t(`hava81.dailyPlan.reasons.${REASON_I18N_KEY[reason]}`)
-      : t('hava81.routines.clear');
+    return t('hava81.routines.answer.best', {
+      day,
+      start: time(plan.bestWindowRange.start.time.getTime()),
+      end: time(plan.bestWindowRange.endTime.getTime()),
+    });
   };
 
-  const whenLine = (routine: Routine, result: RoutineEvaluation) => {
-    if (result.status === 'none') return t('hava81.routines.noOccurrence');
-    const { occurrence } = result;
-    const range =
-      routine.schedule.kind === 'fixed'
-        ? `${time(occurrence.startMs)}–${time(occurrence.endMs)}`
-        : t('hava81.routines.flexibleRange', {
-            from: time(occurrence.startMs),
-            to: time(occurrence.endMs),
-          });
-    return `${dayLabel(occurrence.startMs)} · ${range}`;
+  // Only a risk earns a second line; a clear day says nothing more.
+  const riskLine = (result: RoutineEvaluation) => {
+    if (result.status !== 'scored') return null;
+    const reason = result.plan.reasons[0];
+    return reason ? t(`hava81.dailyPlan.reasons.${REASON_I18N_KEY[reason]}`) : null;
+  };
+
+  /** The plan's own hours, best ones marked: the answer at a glance. */
+  const strip = (result: RoutineEvaluation) => {
+    if (result.status !== 'scored') return null;
+    const { plan, occurrence } = result;
+    const range = plan.windowUnavailable ? undefined : plan.bestWindowRange;
+    const cells = plan.slots.filter(
+      slot =>
+        slot.time.getTime() + 3_600_000 > occurrence.startMs &&
+        slot.time.getTime() < occurrence.endMs
+    );
+    if (cells.length < 2) return null;
+    const first = cells[0].time.getTime();
+    const last = cells[cells.length - 1].time.getTime() + 3_600_000;
+    return (
+      <span className="routine-row__timeline" aria-hidden="true">
+        <span className="routine-row__strip">
+          {cells.map(slot => {
+            const ms = slot.time.getTime();
+            const best = range && ms >= range.start.time.getTime() && ms < range.endTime.getTime();
+            return (
+              <span
+                key={ms}
+                className={[
+                  'routine-row__cell',
+                  `routine-row__cell--${slot.eligible === false ? 'off' : getScoreBand(slot.score)}`,
+                  best ? 'routine-row__cell--best' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              />
+            );
+          })}
+        </span>
+        <span className="routine-row__axis">
+          <span>{time(Math.max(first, occurrence.startMs))}</span>
+          <span>{time(Math.min(last, occurrence.endMs))}</span>
+        </span>
+      </span>
+    );
   };
 
   return (
@@ -138,6 +178,10 @@ export function RoutineList({
           </button>
         ) : null}
       </header>
+
+      {routines.length > 0 ? (
+        <p className="routine-list__scope">{t('hava81.routines.scope')}</p>
+      ) : null}
 
       {editing === 'new' ? (
         <RoutineEditor
@@ -202,19 +246,22 @@ export function RoutineList({
                     <strong>
                       {routine.name ?? t(`hava81.activities.names.${routine.activity}`)}
                     </strong>
-                    <span className="routine-row__when">{whenLine(routine, result)}</span>
-                    <span className="routine-row__status">{statusLine(routine, result)}</span>
+                    <span className="routine-row__answer">{answerLine(routine, result)}</span>
+                    {riskLine(result) ? (
+                      <span className="routine-row__risk">{riskLine(result)}</span>
+                    ) : null}
                   </span>
-                  <span className="routine-row__score">
+                  <span className="routine-row__verdict">
                     {result.status === 'scored' ? (
                       <>
-                        {result.plan.score}
-                        <small>{t(`hava81.dailyPlan.bands.${result.plan.band}`)}</small>
+                        <strong>{t(`hava81.routines.verdict.${result.plan.band}`)}</strong>
+                        <small>{result.plan.score}</small>
                       </>
                     ) : (
                       <small>{t('hava81.routines.noScore')}</small>
                     )}
                   </span>
+                  {strip(result)}
                 </button>
               </li>
             )

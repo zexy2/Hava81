@@ -812,6 +812,11 @@ const App: React.FC = () => {
                     </div>
 
                     {hasOpenedPlan && <RouteWeatherPanel currentCityName={weather.cityName} />}
+                    {/* One footnote for the page, instead of a disclaimer under every section.
+                        Inside the boundary so it appears with the sections, never above them. */}
+                    <footer className="atlas-plan-view__footnote">
+                      <p>{t('hava81.planView.footnote')}</p>
+                    </footer>
                   </Suspense>
                 </section>
               </div>

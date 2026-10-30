@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { saveRoutines } from '../../storage/routineStore';
 import { DailyPlanPanel } from '../../components/hava81/DailyPlanPanel';
 import type {
   AirQualityHourly,
@@ -526,5 +527,69 @@ describe('DailyPlanPanel sharing', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('DailyPlanPanel with a saved plan', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-28T06:00:00.000Z'));
+    localStorage.clear();
+  });
+  afterEach(() => {
+    localStorage.clear();
+    vi.useRealTimers();
+  });
+
+  const savePlan = () => {
+    const now = Date.now();
+    saveRoutines([
+      {
+        id: 'run',
+        activity: 'run',
+        schedule: {
+          kind: 'fixed',
+          days: [0, 1, 2, 3, 4, 5, 6],
+          start: '12:00',
+          durationMinutes: 60,
+        },
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+  };
+
+  it('answers the next plan first and keeps the general day as one line', () => {
+    savePlan();
+    const { container } = render(
+      <DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
+    );
+
+    expect(container.querySelector('.daily-plan__headline')).toHaveTextContent(
+      'hava81.dailyPlan.headline.personal'
+    );
+    expect(container.querySelector('.daily-plan__general')).toHaveTextContent(
+      'hava81.dailyPlan.headline.general'
+    );
+    // The big number belongs to the plan it answers.
+    expect(container.querySelector('.daily-plan__score small')).toHaveTextContent(
+      'hava81.dailyPlan.scoreFor'
+    );
+  });
+
+  it('switches to the plan answer when a plan is saved while the card is open', () => {
+    const { container } = render(
+      <DailyPlanPanel weather={weather} hourly={hourly} forecastMeta={freshForecastMeta()} />
+    );
+    expect(container.querySelector('.daily-plan__general')).toBeNull();
+    expect(container.querySelector('.daily-plan__score small')).toHaveTextContent(
+      'hava81.dailyPlan.scoreScope12h'
+    );
+
+    act(() => savePlan());
+
+    expect(container.querySelector('.daily-plan__headline')).toHaveTextContent(
+      'hava81.dailyPlan.headline.personal'
+    );
   });
 });

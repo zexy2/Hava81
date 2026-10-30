@@ -281,7 +281,10 @@
     box-shadow: none;
   }
 
-  .app .atlas-plan-view :is(.activity-planner, .commute-plan) :is(select, input[type='time']) {
+  .app
+    .atlas-plan-view
+    :is(.activity-planner, .commute-plan)
+    :is(select, input[type='time'], input[inputmode='numeric']) {
     min-height: 2.75rem;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--plan-line);
@@ -2396,7 +2399,7 @@
 
   /* ══ 18. My plans: the first thing Planla answers ═══════════════════════════════ */
 
-  .app .atlas-plan-view .routine-list {
+  .app .atlas-plan-view :is(.routine-list, .route-weather) {
     --routine-excellent: var(--color-aegean-deep);
     --routine-good: var(--color-aegean);
     --routine-caution: var(--color-saffron);
@@ -2637,7 +2640,7 @@
     font-size: 0.875rem;
   }
 
-  .app .atlas-plan-view .routine-editor input[type='time'],
+  .app .atlas-plan-view .routine-editor input[inputmode='numeric'],
   .app .atlas-plan-view .routine-editor input[type='text'],
   .app .atlas-plan-view .routine-editor select {
     min-block-size: 2.75rem;
@@ -2695,6 +2698,1103 @@
     margin-inline-start: auto;
     border-color: transparent;
     color: var(--color-vermilion);
+  }
+
+  /* ══ 19. Simple Planla: one answer per plan, one row of choices ════════════════ */
+
+  /* Plan row: name, answer and verdict on top, the plan's own hours under them. */
+  .app .atlas-plan-view .routine-row__button {
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'glyph copy verdict'
+      '. strip strip';
+    row-gap: 0.5rem;
+  }
+
+  .app .atlas-plan-view .routine-row__button > .activity-glyph {
+    grid-area: glyph;
+  }
+
+  .app .atlas-plan-view .routine-row__copy {
+    grid-area: copy;
+  }
+
+  .app .atlas-plan-view .routine-row__answer {
+    font-size: 1.0625rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .routine-row__risk {
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
+
+  .app .atlas-plan-view .routine-row__verdict {
+    grid-area: verdict;
+    display: grid;
+    justify-items: end;
+    gap: 0.125rem;
+  }
+
+  .app .atlas-plan-view .routine-row__verdict strong {
+    color: var(--routine-accent, inherit);
+    font-size: 1.25rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .app .atlas-plan-view .routine-row__verdict small {
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .routine-row__strip {
+    grid-area: strip;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 2px;
+    block-size: 0.5rem;
+    max-inline-size: 28rem;
+  }
+
+  .app .atlas-plan-view .routine-row__cell {
+    border-radius: var(--radius-xs);
+    background: var(--plan-line);
+  }
+
+  .app .atlas-plan-view .routine-row__cell--excellent {
+    background: var(--routine-excellent);
+  }
+
+  .app .atlas-plan-view .routine-row__cell--good {
+    background: var(--routine-good);
+  }
+
+  .app .atlas-plan-view .routine-row__cell--caution {
+    background: var(--routine-caution);
+  }
+
+  .app .atlas-plan-view .routine-row__cell--difficult {
+    background: var(--routine-difficult);
+  }
+
+  .app .atlas-plan-view .routine-row__cell--off {
+    opacity: 0.4;
+  }
+
+  .app .atlas-plan-view .routine-row__cell--best {
+    box-shadow: 0 3px 0 -1px var(--plan-ink);
+  }
+
+  /* "What else?": the period is a small select beside the heading. */
+  .app .atlas-plan-view .activity-planner__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+
+  .app .atlas-plan-view .activity-planner__period select {
+    min-block-size: 2.75rem;
+    padding: 0 2rem 0 0.75rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background-color: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+  }
+
+  /* Choices as a calm wrap of pills: every choice visible at any text size, labels never
+     break mid-word (a sideways scroller hid most of them at 200% text). */
+  .app .atlas-plan-view .activity-planner__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding-block: 0.25rem;
+  }
+
+  .app .atlas-plan-view .activity-planner__chips button,
+  .app[data-color-mode='dark'] .atlas-plan-view .activity-planner__chips button {
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 6px;
+    min-block-size: 2.75rem;
+    /* Fixed px padding: at 200% text the label gets the room, not the padding. */
+    padding: 4px 12px;
+    max-inline-size: 100%;
+    white-space: nowrap;
+    hyphens: none;
+    word-break: keep-all;
+  }
+
+  /* Card: the answer and two actions; everything else lives in its details. */
+  .app .atlas-plan-view .activity-card__verdict {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .app .atlas-plan-view .activity-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+  }
+
+  .app .atlas-plan-view .activity-card__actions .activity-card__calendar,
+  .app .atlas-plan-view .activity-card__routine {
+    min-block-size: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--color-aegean);
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .activity-card__score-number {
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .activity-card__answer {
+    font-size: 1.0625rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Context: a one-line summary that opens to the instruments. */
+  .app .atlas-plan-view .context-signals__more > summary {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .activity-card--excellent {
+    --card-accent: var(--color-aegean-deep);
+  }
+
+  .app .atlas-plan-view .activity-card--good {
+    --card-accent: var(--color-aegean);
+  }
+
+  .app .atlas-plan-view .activity-card--caution {
+    --card-accent: var(--color-saffron-ink);
+  }
+
+  .app .atlas-plan-view .activity-card--difficult {
+    --card-accent: var(--color-vermilion);
+  }
+
+  .app .atlas-plan-view .activity-card .activity-card__verdict {
+    color: var(--card-accent, inherit);
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .activity-card__actions .activity-card__calendar {
+    text-decoration: none;
+  }
+
+  /* Verdict words need text contrast: the caution hue is for squares, its ink for words. */
+  .app .atlas-plan-view .routine-row--caution .routine-row__verdict strong {
+    color: var(--color-saffron-ink);
+  }
+
+  .app .atlas-plan-view .decision-alerts__how > summary {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  /* The reasoning behind the day answer, inside "What affects it?". */
+  .app .atlas-plan-view .daily-plan__reasoning {
+    display: grid;
+    gap: 0.375rem;
+    margin-block: 0.5rem 0.75rem;
+  }
+
+  .app .atlas-plan-view .daily-plan__reasoning > * {
+    margin: 0;
+  }
+
+  .app .atlas-plan-view .routine-list__scope {
+    margin: 0.25rem 0 0;
+    color: var(--plan-soft);
+    font-size: 0.8125rem;
+  }
+
+  /* Very narrow columns (large text on a phone): the label alone carries the choice. */
+  .app .atlas-plan-view .activity-planner__chips {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 15rem) {
+    .app .atlas-plan-view .activity-planner__chips button .activity-glyph {
+      display: none;
+    }
+  }
+
+  /* ══ 20. Commute: two taps to an answer ═════════════════════════════════════════ */
+
+  .app .atlas-plan-view .commute-plan__header p {
+    max-inline-size: 36rem;
+  }
+
+  /* Presets are pills, like every other choice on the page. */
+  .app .atlas-plan-view .commute-plan__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset,
+  .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__preset {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    padding: 4px 14px;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset small {
+    color: var(--plan-soft);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-plan__preset[aria-pressed='true'] {
+    border-color: currentColor;
+  }
+
+  /* Times: two small fields on one line, an arrow between them. */
+  .app .atlas-plan-view .commute-plan__times,
+  .app .commute-plan__times {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__times label {
+    display: grid;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .app .atlas-plan-view .commute-plan__times input,
+  .app .commute-plan__times input {
+    inline-size: 8.5rem;
+    min-block-size: 2.75rem;
+    padding: 0 0.625rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-plan__arrow {
+    padding-block-end: 0.625rem;
+    color: var(--plan-soft);
+  }
+
+  /* The answer and its two windows read as one surface: a verdict and two rows. */
+  .app .atlas-plan-view .commute-plan__windows {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .app .atlas-plan-view .commute-plan__windows > .commute-window,
+  .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__windows > .commute-window {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) max-content;
+    grid-template-areas:
+      'when facts verdict'
+      'when source verdict';
+    box-sizing: border-box;
+    max-inline-size: 100%;
+    align-items: center;
+    column-gap: 1rem;
+    padding: 0.625rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--plan-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .commute-window > header {
+    grid-area: when;
+    display: grid;
+    gap: 0;
+  }
+
+  .app .atlas-plan-view .commute-window > header strong {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .commute-window > p {
+    grid-area: source;
+    margin: 0;
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+  }
+
+  .app .atlas-plan-view .commute-window > dl {
+    grid-area: facts;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    margin: 0;
+  }
+
+  .app .atlas-plan-view .commute-window > dl div {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .app .atlas-plan-view .commute-window > dl dt {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .commute-window > dl dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The hourly score is in the verdict word; its row would only repeat it. */
+  .app .atlas-plan-view .commute-window > dl div:last-child {
+    display: none;
+  }
+
+  .app .atlas-plan-view .commute-window__verdict {
+    grid-area: verdict;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  .app .atlas-plan-view .commute-window--excellent .commute-window__verdict {
+    color: var(--color-aegean-deep);
+  }
+
+  .app .atlas-plan-view .commute-window--good .commute-window__verdict {
+    color: var(--color-aegean);
+  }
+
+  .app .atlas-plan-view .commute-window--caution .commute-window__verdict {
+    color: var(--color-saffron-ink);
+  }
+
+  .app .atlas-plan-view .commute-window--difficult .commute-window__verdict {
+    color: var(--color-vermilion);
+  }
+
+  /* The verdict leads; the planned window is a small reference line under it. */
+  .app .atlas-plan-view .commute-plan__verdict-window {
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__verdict strong {
+    font-size: 1.375rem;
+    line-height: 1.25;
+  }
+
+  /* "Clear times" stays at the top right, beside the title, on every width. */
+  .app .atlas-plan-view .commute-plan__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.5rem 1rem;
+  }
+
+  .app .atlas-plan-view .commute-plan__header > .atlas-text-button {
+    justify-self: end;
+    min-block-size: 2.75rem;
+  }
+
+  /* Narrow sections (phones, large text): stack instead of squeezing. */
+  .app .atlas-plan-view .commute-plan {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 26rem) {
+    .app .atlas-plan-view .commute-plan__header {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .app .atlas-plan-view .commute-plan__header > .atlas-text-button {
+      justify-self: start;
+    }
+
+    .app .atlas-plan-view .commute-plan__windows > .commute-window,
+    .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__windows > .commute-window {
+      grid-template-columns: minmax(0, 1fr) max-content;
+      grid-template-areas:
+        'when verdict'
+        'facts facts'
+        'source source';
+      row-gap: 0.25rem;
+    }
+
+    .app .atlas-plan-view .commute-window > dl {
+      flex-direction: column;
+    }
+  }
+
+  /* ══ 21. Aside: context at a glance, alerts as one switch ═══════════════════════ */
+
+  .app .atlas-plan-view .day-outlook__note {
+    margin-block: 0.5rem 0;
+    color: var(--plan-soft);
+    font-size: 0.8125rem;
+  }
+
+  /* Context: three readings with their meaning; the whole row opens the details. */
+  .app .atlas-plan-view .context-signals__more > summary.context-signals__summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) 1.5rem;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block-start: 0.75rem;
+    padding: 0.75rem 0;
+    border-block: 1px solid var(--plan-line);
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .app .atlas-plan-view .context-signals__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .app .atlas-plan-view .context-stat {
+    display: grid;
+    gap: 0.125rem;
+    min-inline-size: 0;
+  }
+
+  .app .atlas-plan-view .context-stat small {
+    color: var(--plan-soft);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .app .atlas-plan-view .context-stat strong {
+    font-size: 1.5rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .context-stat > span {
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+  }
+
+  /* A chevron that turns when the details open (transform only). */
+  .app .atlas-plan-view :is(.context-signals__open, .decision-alerts__how > summary)::after {
+    content: '';
+    display: inline-block;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-inline-end: 2px solid currentColor;
+    border-block-end: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 160ms ease;
+  }
+
+  .app .atlas-plan-view .context-signals__open {
+    justify-self: end;
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .context-signals__more[open] .context-signals__open::after,
+  .app .atlas-plan-view .decision-alerts__how[open] > summary::after {
+    transform: rotate(-135deg);
+  }
+
+  /* Alerts: what it does on the left, one switch on the right; it wraps under the text in a
+     narrow column. */
+  .app .atlas-plan-view .decision-alerts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .app .atlas-plan-view .decision-alerts > div {
+    display: grid;
+    flex: 1 1 16rem;
+    gap: 0.375rem;
+    min-inline-size: 0;
+  }
+
+  .app .atlas-plan-view .decision-alerts > div > p,
+  .app .atlas-plan-view .decision-alerts > div > small {
+    margin: 0;
+  }
+
+  .app .atlas-plan-view .decision-alerts__modeled-note {
+    color: var(--plan-soft);
+    font-size: 0.8125rem;
+  }
+
+  .app .atlas-plan-view .decision-alerts > button {
+    flex: 0 1 auto;
+    max-inline-size: 100%;
+    min-block-size: 2.75rem;
+    padding: 0.375rem 1.125rem;
+    white-space: normal;
+    text-align: start;
+  }
+
+  .app .atlas-plan-view .decision-alerts__how > summary {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    color: var(--plan-soft);
+    font-size: 0.875rem;
+    list-style: none;
+  }
+
+  .app .atlas-plan-view .decision-alerts__how > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .app .atlas-plan-view .decision-alerts__how > summary::after {
+    margin-inline-start: 0.25rem;
+    transform: rotate(45deg) translate(-2px, -2px);
+  }
+
+  /* 24-hour clock fields: tabular digits, sized for "00:00". */
+  .app .atlas-plan-view input[inputmode='numeric'] {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  .app .atlas-plan-view input[inputmode='numeric'][aria-invalid='true'] {
+    border-color: var(--color-vermilion);
+  }
+
+  /* The page's single footnote: quiet, centred under the last section. */
+  .app .atlas-plan-view__footnote {
+    max-inline-size: 44rem;
+    margin: 1.5rem auto 0;
+    padding-inline: 1rem;
+    text-align: center;
+  }
+
+  .app .atlas-plan-view__footnote p {
+    margin: 0;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  /* ══ 22. First view on phones: the answer before anything else ═════════════════ */
+
+  /* Someone with saved plans already knows what Planla does: the intro steps aside. */
+  .app .atlas-plan-view:has(.routine-row) .atlas-plan-view__header p {
+    display: none;
+  }
+
+  @media (max-width: 63.99rem) {
+    /* Title and "Back to Today" share one line. */
+    .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header,
+    .app .atlas-plan-view__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem 1rem;
+      padding-block: 0.75rem;
+    }
+
+    .app .atlas-plan-view__header > div,
+    .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header > div {
+      flex: 1 1 auto;
+      inline-size: auto;
+      min-inline-size: 0;
+    }
+
+    .app .atlas-plan-view__header .atlas-plan-view__back {
+      min-block-size: 2.75rem;
+    }
+
+    /* Umbrella, wind and air read across one row instead of three. */
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick,
+    .app .atlas-plan-view .daily-plan__quick {
+      display: grid;
+      /* Umbrella gets the room its careful wording needs; air quality takes its own row. */
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: 0.625rem 1rem;
+    }
+
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick > div:nth-child(3),
+    .app .atlas-plan-view .daily-plan__quick > div:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick > div,
+    .app .atlas-plan-view .daily-plan__quick > div {
+      display: grid;
+      align-content: start;
+      gap: 0.125rem;
+      min-inline-size: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick strong,
+    .app .atlas-plan-view .daily-plan__quick strong {
+      font-size: 0.875rem;
+      line-height: 1.3;
+      text-align: start;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  /* ══ 23. One accent language, readable strips, quieter spacing ═════════════════ */
+
+  /* The coloured verdict word is the accent; side rules on rows and answers go. */
+  .app .atlas-plan-view .routine-row__button {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .app .atlas-plan-view .commute-plan__verdict,
+  .app[data-color-mode='dark'] .atlas-plan-view .commute-plan__verdict {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+    background: none;
+  }
+
+  /* Plan strip: start and end under the bar, so the squares read as hours. */
+  .app .atlas-plan-view .routine-row__timeline {
+    grid-area: strip;
+    display: grid;
+    gap: 0.25rem;
+    max-inline-size: 28rem;
+  }
+
+  .app .atlas-plan-view .routine-row__axis {
+    display: flex;
+    justify-content: space-between;
+    color: var(--plan-soft);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Answers are times: tabular figures, tighter tracking, one weight. */
+  .app
+    .atlas-plan-view
+    :is(
+      .daily-plan__headline,
+      .routine-row__answer,
+      .activity-card__answer,
+      .commute-window > header strong
+    ) {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Quieter gaps around the explore tools. */
+  .app .atlas-plan-view .activity-planner__prefs {
+    margin-block: 0.5rem 0;
+  }
+
+  .app .atlas-plan-view .activity-card__details {
+    margin-block-end: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* Plans settle in, and their hours rise one after another. */
+    .app .atlas-plan-view .routine-row {
+      animation: planla-settle 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .app .atlas-plan-view .routine-row:nth-child(2) {
+      animation-delay: 60ms;
+    }
+
+    .app .atlas-plan-view .routine-row:nth-child(3) {
+      animation-delay: 120ms;
+    }
+
+    .app .atlas-plan-view .routine-row__cell {
+      transform-origin: bottom;
+      animation: planla-bar-rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .app .atlas-plan-view .routine-row__cell:nth-child(2n) {
+      animation-delay: 40ms;
+    }
+
+    .app .atlas-plan-view .routine-row__cell:nth-child(3n) {
+      animation-delay: 80ms;
+    }
+
+    /* A verdict that changes (another period, another plan) fades in instead of jumping. */
+    .app .atlas-plan-view :is(.routine-row__verdict strong, .activity-card__verdict) {
+      animation: planla-headline-in 320ms ease-out both;
+    }
+  }
+
+  /* Inside the timeline the strip is a plain row: the grid area belongs to the timeline. */
+  .app .atlas-plan-view .routine-row__timeline > .routine-row__strip {
+    grid-area: auto;
+    max-inline-size: none;
+  }
+
+  /* ══ 24. Route weather: same surface, same field, same verdict language ════════════ */
+
+  .app .atlas-plan-view .route-weather,
+  .app[data-color-mode='dark'] .atlas-plan-view .route-weather,
+  .app[data-living-sky='true'] .atlas-plan-view .route-weather {
+    overflow: visible;
+    border: 0;
+    background: var(--color-atlas-paper);
+    box-shadow: none;
+  }
+
+  .app[data-color-mode='dark'] .atlas-plan-view .route-weather {
+    background: var(--color-atlas-paper);
+  }
+
+  /* Title row: reads like the other section headings, no tinted band. */
+  .app .atlas-plan-view .route-weather > summary,
+  .app[data-color-mode='dark'] .atlas-plan-view .route-weather > summary,
+  .app .atlas-plan-view .route-weather[open] > summary {
+    min-block-size: 0;
+    padding: clamp(1.25rem, 2.4vw, 2rem);
+    background: none;
+    background-image: none;
+    color: var(--color-atlas-ink);
+  }
+
+  .app .atlas-plan-view .route-weather > summary b {
+    font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+    letter-spacing: -0.03em;
+  }
+
+  .app .atlas-plan-view .route-weather > summary small {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .route-weather__chevron,
+  .app .atlas-plan-view .route-weather[open] .route-weather__chevron {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    flex-basis: 2.75rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    box-shadow: none;
+    color: var(--plan-accent);
+  }
+
+  .app .atlas-plan-view .route-weather__body {
+    /* One bounded column: children can never widen the section past the page. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    padding: 0 clamp(1.25rem, 2.4vw, 2rem) clamp(1.25rem, 2.4vw, 2rem);
+    border: 0;
+    background: none;
+  }
+
+  /* The form reads as one sentence: from ⇄ to · day · time · check. */
+  /* Wraps instead of a fixed grid: at larger text the fields step onto new lines. */
+  .app .atlas-plan-view .route-weather__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .app .atlas-plan-view .route-weather__form > label {
+    flex: 1 1 8.5rem;
+    min-inline-size: 0;
+  }
+
+  .app .atlas-plan-view .route-weather__form > .route-weather__when {
+    flex: 1.4 1 13rem;
+  }
+
+  .app .atlas-plan-view .route-weather__form > button:last-child {
+    flex: 0 1 auto;
+  }
+
+  /* The component's own sheet pins items to fixed grid cells; in Planla they flow. */
+  .app .atlas-plan-view .route-weather__form > * {
+    grid-area: auto;
+  }
+
+  .app .atlas-plan-view .route-weather__when {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-inline-size: 0;
+  }
+
+  .app .atlas-plan-view .route-weather__when > label {
+    flex: 1 1 7rem;
+    min-inline-size: 0;
+  }
+
+  .app .atlas-plan-view .route-weather__when > label:last-child {
+    flex: 0 1 6rem;
+  }
+
+  .app .atlas-plan-view .route-weather__when label {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .app .atlas-plan-view .route-weather__form :is(select, input) {
+    min-block-size: 2.75rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-md);
+    background: transparent;
+    box-shadow: none;
+    color: var(--color-atlas-ink);
+    font-weight: 600;
+  }
+
+  .app .atlas-plan-view .route-weather__form .route-weather__swap {
+    justify-self: center;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    inline-size: 2.75rem;
+    min-block-size: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--plan-accent);
+  }
+
+  /* The swap's words stay for assistive tech; the glyph says it on screen. */
+  .app .atlas-plan-view .route-weather__swap > span:last-child {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .app .atlas-plan-view .route-weather__hint {
+    margin: -0.5rem 0 0;
+    color: var(--plan-soft);
+  }
+
+  /* Result: the verdict first, as in every Planla answer; no nested card. */
+  .app .atlas-plan-view .route-weather__result {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--plan-line);
+  }
+
+  .app .atlas-plan-view .route-weather__announcement {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .route-weather__announcement > header > * {
+    min-inline-size: 0;
+  }
+
+  .app .atlas-plan-view .route-weather__announcement > header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+  }
+
+  .app .atlas-plan-view .route-weather__announcement h3 {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.375rem, 2vw, 1.75rem);
+    letter-spacing: -0.02em;
+  }
+
+  .app .atlas-plan-view .route-weather__announcement header p {
+    margin: 0.25rem 0 0;
+    color: var(--plan-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .route-weather__score {
+    --route-accent: var(--routine-good);
+
+    display: grid;
+    justify-items: end;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    text-align: end;
+  }
+
+  .app .atlas-plan-view .route-weather__score--excellent {
+    --route-accent: var(--routine-excellent);
+  }
+
+  .app .atlas-plan-view .route-weather__score--caution {
+    --route-accent: var(--routine-caution);
+  }
+
+  .app .atlas-plan-view .route-weather__score--difficult {
+    --route-accent: var(--routine-difficult);
+  }
+
+  .app .atlas-plan-view .route-weather__score b {
+    color: var(--route-accent);
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: 750;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .app .atlas-plan-view .route-weather__score strong {
+    color: var(--color-atlas-ink);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .route-weather__score small {
+    color: var(--plan-soft);
+  }
+
+  .app .atlas-plan-view .route-weather__better {
+    justify-self: start;
+    min-block-size: 2.75rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--plan-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    box-shadow: none;
+    color: var(--plan-accent);
+    font-weight: 650;
+  }
+
+  /* Along the way: a timeline of stops, not a row of cards. */
+  .app .atlas-plan-view .route-weather__segments {
+    display: grid;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(10rem, 1fr);
+    grid-auto-flow: column;
+    gap: 0;
+    padding: 0;
+    border-block: 1px solid var(--plan-line);
+  }
+
+  .app .atlas-plan-view .route-segment {
+    --route-accent: var(--routine-good);
+
+    flex: none;
+    min-inline-size: 0;
+
+    display: grid;
+    align-content: start;
+    gap: 0.25rem;
+    padding: 0.875rem 1rem 0.875rem 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .app .atlas-plan-view .route-segment + .route-segment {
+    padding-inline-start: 1rem;
+    border-inline-start: 1px solid var(--plan-line);
+  }
+
+  .app .atlas-plan-view .route-segment--excellent {
+    --route-accent: var(--routine-excellent);
+  }
+
+  .app .atlas-plan-view .route-segment--caution {
+    --route-accent: var(--routine-caution);
+  }
+
+  .app .atlas-plan-view .route-segment--difficult {
+    --route-accent: var(--routine-difficult);
+  }
+
+  .app .atlas-plan-view .route-segment time {
+    color: var(--color-atlas-ink);
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .atlas-plan-view .route-segment strong {
+    color: var(--route-accent);
+    font-size: 0.875rem;
+  }
+
+  .app .atlas-plan-view .route-segment :is(span, small) {
+    color: var(--plan-soft);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .app .atlas-plan-view .route-weather__disclaimer {
+    color: var(--plan-soft);
+  }
+
+  @media (max-width: 63.99rem) {
+    /* Phone: day, time and the action each take the full line. */
+    .app .atlas-plan-view .route-weather__form > :is(.route-weather__when, button:last-child) {
+      flex-basis: 100%;
+    }
+
+    .app .atlas-plan-view .route-weather__form > label {
+      flex-basis: 7.5rem;
+    }
+
+    .app .atlas-plan-view .route-weather__segments {
+      grid-auto-columns: minmax(9rem, 42%);
+    }
+
+    .app .atlas-plan-view .route-weather__score {
+      justify-items: start;
+      text-align: start;
+    }
   }
 }
 

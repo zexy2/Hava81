@@ -76,7 +76,7 @@ describe('My plans', () => {
     // A brand-new user: no old profile to migrate.
     localStorage.setItem(ROUTINES_KEY, JSON.stringify({ schemaVersion: 1, routines: [] }));
     renderPlanner();
-    const list = screen.getByRole('region', { name: 'Planlarım' });
+    const list = screen.getByRole('region', { name: 'Planların' });
     fireEvent.click(within(list).getByRole('button', { name: /Hafta sonu piknik/ }));
 
     const row = within(list).getByRole('button', { name: /Piknik planını düzenle/ });
@@ -93,8 +93,8 @@ describe('My plans', () => {
   it('builds a custom plan in the editor, then deletes it', () => {
     localStorage.setItem(ROUTINES_KEY, JSON.stringify({ schemaVersion: 1, routines: [] }));
     renderPlanner();
-    const list = screen.getByRole('region', { name: 'Planlarım' });
-    fireEvent.click(within(list).getByRole('button', { name: 'Plan ekle' }));
+    const list = screen.getByRole('region', { name: 'Planların' });
+    fireEvent.click(within(list).getByRole('button', { name: 'Rutin ekle' }));
     const editor = within(list).getByRole('form', { name: 'Yeni plan' });
     fireEvent.click(within(editor).getByRole('button', { name: /Bisiklet/ }));
     fireEvent.click(within(editor).getByRole('button', { name: 'Hafta sonu' }));
@@ -118,7 +118,7 @@ describe('My plans', () => {
       JSON.stringify({ activities: ['walk', 'dog'], temperatureSensitivity: 'balanced' })
     );
     renderPlanner();
-    const list = screen.getByRole('region', { name: 'Planlarım' });
+    const list = screen.getByRole('region', { name: 'Planların' });
     expect(within(list).getByRole('button', { name: /Yürüyüş planını düzenle/ })).toBeVisible();
     expect(
       within(list).getByRole('button', { name: /Köpek gezdirme planını düzenle/ })
@@ -128,8 +128,8 @@ describe('My plans', () => {
   it('a day is required before saving', () => {
     localStorage.setItem(ROUTINES_KEY, JSON.stringify({ schemaVersion: 1, routines: [] }));
     renderPlanner();
-    const list = screen.getByRole('region', { name: 'Planlarım' });
-    fireEvent.click(within(list).getByRole('button', { name: 'Plan ekle' }));
+    const list = screen.getByRole('region', { name: 'Planların' });
+    fireEvent.click(within(list).getByRole('button', { name: 'Rutin ekle' }));
     const editor = within(list).getByRole('form', { name: 'Yeni plan' });
     // Default walk is every day: turn all seven off.
     for (const day of ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']) {

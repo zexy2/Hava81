@@ -1,3 +1,4 @@
+import { TimeField } from './TimeField';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActivityKind } from '../../domain/activity/types';
@@ -169,33 +170,28 @@ export function RoutineEditor({ initial, availableActivities, onSave, onCancel, 
           {schedule.kind === 'fixed' ? (
             <label>
               <span>{t('hava81.routines.start')}</span>
-              <input
-                type="time"
+              <TimeField
                 value={schedule.start}
                 required
-                onChange={event => event.target.value && setSchedule({ start: event.target.value })}
+                onChange={value => value && setSchedule({ start: value })}
               />
             </label>
           ) : (
             <>
               <label>
                 <span>{t('hava81.routines.from')}</span>
-                <input
-                  type="time"
+                <TimeField
                   value={schedule.from}
                   required
-                  onChange={event =>
-                    event.target.value && setSchedule({ from: event.target.value })
-                  }
+                  onChange={value => value && setSchedule({ from: value })}
                 />
               </label>
               <label>
                 <span>{t('hava81.routines.to')}</span>
-                <input
-                  type="time"
+                <TimeField
                   value={schedule.to}
                   required
-                  onChange={event => event.target.value && setSchedule({ to: event.target.value })}
+                  onChange={value => value && setSchedule({ to: value })}
                 />
               </label>
             </>

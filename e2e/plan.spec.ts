@@ -160,8 +160,9 @@ test.describe('Planla view', () => {
     );
     const cards = page.locator('.activity-card');
     await expect(cards).toHaveCount(2);
+    // The activity scope label lives in each card's score details.
     for (const card of await cards.all())
-      await expect(card.locator('.activity-card__score')).toContainText('Bu aktivite için');
+      await expect(card.locator('.activity-card__scope')).toContainText('Bu aktivite için');
   });
 
   test('English Planla uses "Plan" and labels activity scores', DESKTOP, async ({ page }) => {
@@ -172,7 +173,7 @@ test.describe('Planla view', () => {
     await expect(page.locator('.daily-plan__slots-caption')).toHaveText(
       'Hourly suitability · 0–100 · higher is better'
     );
-    await expect(page.locator('.activity-card__score').first()).toContainText('For this activity');
+    await expect(page.locator('.activity-card__scope').first()).toContainText('For this activity');
   });
 
   test(
@@ -187,8 +188,8 @@ test.describe('Planla view', () => {
         await expect(intro).toBeVisible();
         await expect(intro).toHaveText(
           language === 'en'
-            ? 'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.'
-            : 'Aktivitelerini ve rotalarını hava durumuna göre planla. Günlük skor Bugün’de; aktivite puanları burada.'
+            ? 'Tell Hava81 once what you do and when; it finds the best time for you every day.'
+            : 'Ne zaman ne yaptığını bir kez söyle; Hava81 her gün senin için en iyi saati bulsun.'
         );
         const metrics = await intro.evaluate(element => ({
           height: element.getBoundingClientRect().height,
@@ -531,12 +532,15 @@ test.describe('activities', () => {
       await expect(page.getByRole('heading', { name: 'Piknik' })).toBeVisible();
       // No selection limit: the other activities stay available.
       await expect(page.getByRole('button', { name: 'Motosiklet', exact: true })).toBeEnabled();
-      await expect(page.getByRole('heading', { name: 'Yan yana' })).toBeVisible();
+      // Each chosen activity answers in its own card.
+      await expect(page.locator('.activity-card')).toHaveCount(3);
 
       // Preferences live in their own disclosure since the Planla redesign.
       await page.locator('.activity-planner__prefs > summary').click();
       await page.getByRole('textbox', { name: 'Başlangıç' }).fill('18:00');
       await page.getByRole('textbox', { name: 'Bitiş' }).fill('20:00');
+      // The range-scoped label sits in the card's score details.
+      await page.locator('.activity-card__details > summary').first().click();
       await expect(page.getByText('18:00–20:00 uygunluğu').first()).toBeVisible();
       const runCard = page
         .locator('.activity-card')
@@ -652,9 +656,6 @@ test.describe('activities', () => {
       expect(await sensitivity.evaluate(element => getComputedStyle(element).flexBasis)).toBe(
         'auto'
       );
-      await planner.locator('.activity-planner__score-explanation').evaluate(element => {
-        (element as HTMLDetailsElement).open = true;
-      });
       await planner.locator('.activity-card__details').evaluateAll(elements => {
         elements.forEach(element => {
           (element as HTMLDetailsElement).open = true;
@@ -672,7 +673,8 @@ test.describe('activities', () => {
     await page.locator('.activity-planner__prefs > summary').click();
     for (const summary of [
       page.locator('.activity-planner__window-help summary'),
-      page.locator('.activity-planner__score-explanation summary'),
+      page.locator('.context-signals__more > summary'),
+      page.locator('.decision-alerts__how > summary'),
       page.locator('.activity-card__details summary').first(),
     ]) {
       await expect(summary).toBeVisible();
@@ -881,14 +883,14 @@ test.describe('my plans (Planlarım)', () => {
       localStorage.setItem('hava81.routines.v1', JSON.stringify({ schemaVersion: 1, routines: [] }))
     );
     await page.reload();
-    const list = page.getByRole('region', { name: 'Planlarım' });
+    const list = page.getByRole('region', { name: 'Planların' });
     await list.getByRole('button', { name: /Akşam koşusu/ }).click();
     const row = list.getByRole('button', { name: /Koşu planını düzenle/ });
     await expect(row).toBeVisible();
 
     await page.reload();
     await expect(row).toBeVisible();
-    await expect(row.locator('.routine-row__when')).toContainText('18:30');
+    await expect(row.locator('.routine-row__answer')).toContainText('18:30');
     await expectNoHorizontalScroll(page);
 
     await row.click();
