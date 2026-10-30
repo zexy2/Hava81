@@ -74,7 +74,6 @@ vi.mock('../../components/map/MapSurface', () => ({
     </div>
   ),
   MapZoomControls: () => null,
-  useMapSurface: () => null,
 }));
 
 const weather: NormalizedWeatherData = {

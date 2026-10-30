@@ -106,10 +106,6 @@ for (const width of [390, 1280]) {
     const tileGate = new Promise<void>(resolve => {
       releaseTiles = resolve;
     });
-    const tile = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==',
-      'base64'
-    );
     let waitingRequests = 0;
     await mockMapTiles(page);
     await page.route(MAP_STYLE_ROUTE, async route => {
