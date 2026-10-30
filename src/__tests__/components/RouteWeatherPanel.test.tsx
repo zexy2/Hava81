@@ -12,6 +12,8 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../api/weatherService', () => ({ weatherService: api }));
 
+const tomorrowOption = () => (screen.getByLabelText('Gün') as HTMLSelectElement).options[1].value;
+
 const renderPanel = () =>
   render(
     <SettingsProvider>
@@ -40,7 +42,29 @@ describe('RouteWeatherPanel', () => {
     expect(departureHelp).toHaveAttribute('id', 'route-weather-departure-help');
   });
 
-  it('refreshes the native departure bounds when the control is focused later', async () => {
+  it('offers today and tomorrow in Türkiye time with a 24-hour clock', async () => {
+    const nowSpy = vi
+      .spyOn(Date, 'now')
+      .mockReturnValue(new Date('2026-09-01T09:00:00.000Z').getTime());
+
+    renderPanel();
+    const user = userEvent.setup();
+    await user.click(screen.getByText('Rota havası'));
+
+    const day = screen.getByLabelText('Gün');
+    expect(day).toHaveValue('2026-09-01');
+    expect(
+      Array.from((day as HTMLSelectElement).options).map(option => [option.value, option.text])
+    ).toEqual([
+      ['2026-09-01', 'Bugün'],
+      ['2026-09-02', 'Yarın'],
+    ]);
+    // One hour from now, as a 24-hour clock: 09:00Z is 12:00 in Türkiye.
+    expect(screen.getByLabelText('Kalkış zamanı · Türkiye saati')).toHaveValue('13:00');
+    nowSpy.mockRestore();
+  });
+
+  it('refreshes a stale default departure when the control is focused later', async () => {
     const initialNow = new Date('2026-09-01T09:00:00.000Z').getTime();
     const laterNow = new Date('2026-09-01T12:30:00.000Z').getTime();
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(initialNow);
@@ -49,15 +73,13 @@ describe('RouteWeatherPanel', () => {
     const user = userEvent.setup();
     await user.click(screen.getByText('Rota havası'));
     const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
-    expect(departureInput).toHaveAttribute('min', '2026-09-01T12:00');
-    expect(departureInput).toHaveAttribute('max', '2026-09-02T06:00');
+    expect(departureInput).toHaveValue('13:00');
 
     nowSpy.mockReturnValue(laterNow);
     fireEvent.focus(departureInput);
 
-    expect(departureInput).toHaveAttribute('min', '2026-09-01T15:30');
-    expect(departureInput).toHaveAttribute('max', '2026-09-02T09:30');
-    expect(departureInput).toHaveValue('2026-09-01T16:30');
+    expect(departureInput).toHaveValue('16:30');
+    expect(screen.getByLabelText('Gün')).toHaveValue('2026-09-01');
     nowSpy.mockRestore();
   });
 
@@ -70,13 +92,14 @@ describe('RouteWeatherPanel', () => {
     const user = userEvent.setup();
     await user.click(screen.getByText('Rota havası'));
     const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
-    fireEvent.change(departureInput, { target: { value: '2026-09-01T14:00' } });
+    fireEvent.change(departureInput, { target: { value: '14:00' } });
 
     nowSpy.mockReturnValue(laterNow);
     fireEvent.focus(departureInput);
 
-    expect(departureInput).toHaveValue('2026-09-01T14:00');
-    expect(departureInput).toHaveAttribute('min', '2026-09-01T15:30');
+    // An explicit choice is never rewritten; submitting it reports the range instead.
+    expect(departureInput).toHaveValue('14:00');
+    expect(screen.getByLabelText('Gün')).toHaveValue('2026-09-01');
     nowSpy.mockRestore();
   });
 
@@ -292,9 +315,7 @@ describe('RouteWeatherPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
     expect(await screen.findByRole('status')).toHaveTextContent('78/100');
 
-    fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
-      target: { value: '2026-08-29T10:00' },
-    });
+    await user.selectOptions(screen.getByLabelText('Gün'), tomorrowOption());
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
@@ -317,9 +338,7 @@ describe('RouteWeatherPanel', () => {
     expect(loadingButton).toHaveAttribute('aria-busy', 'true');
     expect(document.querySelector('.route-weather__body')).toHaveAttribute('aria-busy', 'true');
 
-    fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
-      target: { value: '2026-08-29T10:00' },
-    });
+    fireEvent.change(screen.getByLabelText('Gün'), { target: { value: tomorrowOption() } });
     const readyButton = screen.getByRole('button', { name: 'Koridoru kontrol et' });
     expect(readyButton).toBeEnabled();
     expect(readyButton).toHaveAttribute('aria-busy', 'false');
@@ -460,8 +479,10 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
+    // Tomorrow 23:59 is always more than 18 hours away.
+    await user.selectOptions(screen.getByLabelText('Gün'), tomorrowOption());
     fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
-      target: { value: '2099-01-01T12:00' },
+      target: { value: '23:59' },
     });
     await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
 

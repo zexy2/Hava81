@@ -3763,6 +3763,11 @@
     .app .atlas-plan-view .route-weather__segments {
       grid-auto-columns: minmax(9rem, 42%);
     }
+
+    .app .atlas-plan-view .route-weather__score {
+      justify-items: start;
+      text-align: start;
+    }
   }
 }
 
