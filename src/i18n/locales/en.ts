@@ -163,6 +163,8 @@ export const en = {
       privacy: 'Your location is used only to load nearby weather data.',
     },
     planView: {
+      footnote:
+        'Hava81 looks at the weather only; roads, traffic, health and safety are your call. For official warnings, see MGM MeteoUyarı.',
       eyebrow: 'Next step',
       title: 'Plan',
       titleWithCity: 'Plan · {{city}}',
@@ -490,7 +492,7 @@ export const en = {
       },
       safetyNote: 'Weather-based decision support only; it is not a safety guarantee.',
       hourlyAqiSource:
-        'Hourly air quality uses the {{source}} model only for exact matching forecast hours. Unmatched hours use the current AQI only while fresh; otherwise no AQI risk is inferred. This is modeled guidance, not an official warning.',
+        'Hourly air quality: {{source}}. Unmatched hours use only a fresh current value.',
       methodDetails: 'Data coverage and method',
       note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Fresh European AQI samples are used only for forecast hours with an exact timestamp match. A fresh current reading is a fallback for unmatched hours; if both are unavailable or stale, no AQI risk is inferred. Other missing fields reduce data coverage rather than being invented.',
     },
@@ -791,8 +793,7 @@ export const en = {
       noWindow: 'No clearly good window in the near forecast.',
       empty: 'Select at least one activity to see personal scores.',
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
-      hourlyAqiSource:
-        'Hourly air-quality outlook uses the {{source}} model. For unmatched hours, the current AQI is used only while fresh; if it is stale too, no AQI risk is inferred for that hour. This is modeled guidance, not an official warning.',
+      hourlyAqiSource: 'Hourly air-quality outlook {{source}}.',
       prefs: {
         title: 'Preferences',
         edit: 'Edit',

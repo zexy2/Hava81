@@ -163,6 +163,8 @@ export const tr = {
       privacy: 'Konum yalnızca yakınındaki hava verisini getirmek için kullanılır.',
     },
     planView: {
+      footnote:
+        'Hava81 yalnızca havaya bakar; yol, trafik, sağlık ve güvenlik kararını sen verirsin. Resmî uyarılar için MGM MeteoUyarı.',
       eyebrow: 'İkinci adım',
       title: 'Planla',
       titleWithCity: 'Planla · {{city}}',
@@ -493,7 +495,7 @@ export const tr = {
       },
       safetyNote: 'Yalnız hava koşullarına dayalı karar desteğidir; güvenlik garantisi değildir.',
       hourlyAqiSource:
-        'Saatlik hava kalitesi {{source}} modelini yalnızca tahminle aynı zaman damgası eşleştiğinde kullanır. Eşleşmeyen saatlerde güncel AQI yalnızca tazeyse yedek olur; değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+        'Saatlik hava kalitesi: {{source}}. Eşleşmeyen saatlerde yalnızca taze güncel değer kullanılır.',
       methodDetails: 'Veri kapsamı ve yöntem',
       note: 'Hava81 Skoru; hissedilen sıcaklık, yağış olasılığı ve miktarı, rüzgâr ve hamleleri, hava kalitesi, UV, görüş ve şiddetli hava sinyallerini birlikte değerlendirir. Taze Avrupa AQI örnekleri yalnızca tahmin saatleriyle zaman damgası tam eşleştiğinde kullanılır. Eşleşmeyen saatlerde taze güncel ölçüm yedek olabilir; ikisi de eksik veya eskiyse AQI riski çıkarılmaz. Diğer eksik alanlar uydurulmaz, veri kapsamını düşürür.',
     },
@@ -800,8 +802,7 @@ export const tr = {
       noWindow: 'Yakın tahminde belirgin iyi pencere yok.',
       empty: 'Kişisel skor görmek için en az bir aktivite seç.',
       note: 'Aktivite skorları hava koşullarına göre karar desteğidir; trafik, yol, sağlık ve yerel güvenlik koşullarının yerine geçmez.',
-      hourlyAqiSource:
-        'Saatlik hava kalitesi tahmini {{source}} model çıktısını kullanır; eşleşen saat yoksa güncel AQI yalnızca tazeyse kullanılır. O da taze değilse o saat için AQI riski çıkarılmaz. Bu, resmî uyarı değil model rehberliğidir.',
+      hourlyAqiSource: 'Saatlik hava kalitesi tahmini {{source}}.',
       prefs: {
         title: 'Tercihler',
         edit: 'Düzenle',

@@ -3300,6 +3300,21 @@
   .app .atlas-plan-view input[inputmode='numeric'][aria-invalid='true'] {
     border-color: var(--color-vermilion);
   }
+
+  /* The page's single footnote: quiet, centred under the last section. */
+  .app .atlas-plan-view__footnote {
+    max-inline-size: 44rem;
+    margin: 1.5rem auto 0;
+    padding-inline: 1rem;
+    text-align: center;
+  }
+
+  .app .atlas-plan-view__footnote p {
+    margin: 0;
+    color: var(--color-atlas-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
 }
 
 @keyframes planla-bar {

@@ -821,7 +821,6 @@ export function ActivityPlanner({
             </div>
           </div>
         </details>
-        <p className="activity-planner__note">{t('hava81.activities.note')}</p>
         {airQualityHourly && showHourlyAqiSource ? (
           <p className="activity-planner__note">
             {t('hava81.activities.hourlyAqiSource', {

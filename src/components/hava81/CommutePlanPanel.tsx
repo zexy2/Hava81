@@ -336,8 +336,6 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
               : t('hava81.commute.empty')}
         </p>
       )}
-
-      <p className="commute-plan__note">{t('hava81.commute.note')}</p>
     </section>
   );
 }

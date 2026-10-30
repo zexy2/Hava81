@@ -564,7 +564,6 @@ function FreshDailyPlanPanel({
       </div>
 
       <footer className="daily-plan__notes">
-        <p className="daily-plan__safety">{t('hava81.dailyPlan.safetyNote')}</p>
         {hasUnknownPrecipitation ? (
           <p className="daily-plan__safety">{t('hava81.dailyPlan.precipitationEvidenceNote')}</p>
         ) : null}
