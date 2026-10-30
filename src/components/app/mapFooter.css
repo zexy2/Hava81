@@ -286,14 +286,10 @@
     }
 
     /* Zoom moves under the title, on the right where the thumb is. */
-    .app[data-active-nav='map'] .leaflet-top.leaflet-left {
+    .app[data-active-nav='map'] .weather-map__zoom {
       top: 4.25rem;
       right: 0.75rem;
       left: auto;
-    }
-
-    .app[data-active-nav='map'] .leaflet-top.leaflet-left .leaflet-control {
-      margin: 0;
     }
 
     /* The glass stack: hint, legend strip and credits, above the bottom bar. */
