@@ -64,6 +64,10 @@ jobs:
         run: node --test scripts/test-verify-public-seo.mjs
       - name: Verify Lighthouse report artifact retention contract
         run: python3 scripts/test-lighthouse-artifact-contract.py
+      - name: Verify Copernicus context grid builder
+        run: |
+          python3 -m pip install --quiet 'numpy>=2,<3'
+          cd scripts/context-grid && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_build_grid
       - name: Verify Lighthouse preview API proxy
         run: node scripts/test-lighthouse-preview-proxy.mjs
       - name: Verify Lighthouse refuses to score unavailable weather data

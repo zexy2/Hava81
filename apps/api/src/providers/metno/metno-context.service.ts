@@ -8,7 +8,12 @@ import {
   type ContextGridSnapshot,
   type CopernicusContextGrid,
 } from '../copernicus/context-grid';
-import { estimatedUvIndex, expandToHours, fetchMetNorwayForecast, MET_NORWAY_ATTRIBUTION } from './metno-client';
+import {
+  estimatedUvIndex,
+  expandToHours,
+  fetchMetNorwayForecast,
+  MET_NORWAY_ATTRIBUTION,
+} from './metno-client';
 import { isDaylightHour } from './solar';
 
 const HOUR_MS = 3_600_000;
@@ -101,7 +106,8 @@ export class MetNorwayContextService implements ContextSignalsSource {
     const dustMax = peak('dust');
     const grassPollenMax = peak('grassPollen');
     const olivePollenMax = peak('olivePollen');
-    const usedAir = dustMax !== undefined || grassPollenMax !== undefined || olivePollenMax !== undefined;
+    const usedAir =
+      dustMax !== undefined || grassPollenMax !== undefined || olivePollenMax !== undefined;
     if (dustMax !== undefined) {
       signals.dustMax = dustMax;
       signals.units.dust = units.dust;
@@ -117,7 +123,10 @@ export class MetNorwayContextService implements ContextSignalsSource {
 
     let usedMarine = false;
     if (includeMarine) {
-      const at = (field: 'waveHeight' | 'waveDirection' | 'wavePeriod' | 'seaSurfaceTemperature', index: number) => {
+      const at = (
+        field: 'waveHeight' | 'waveDirection' | 'wavePeriod' | 'seaSurfaceTemperature',
+        index: number
+      ) => {
         const value = series[field]?.[index];
         return value === null || value === undefined || !units[field] ? undefined : round2(value);
       };
@@ -129,8 +138,16 @@ export class MetNorwayContextService implements ContextSignalsSource {
       };
       if (current.waveHeight !== undefined || current.seaSurfaceTemperature !== undefined) {
         usedMarine = true;
-        signals.marine = { observedAt: new Date(snapshot.times[startIndex]).toISOString(), ...current };
-        for (const field of ['waveHeight', 'waveDirection', 'wavePeriod', 'seaSurfaceTemperature'] as const) {
+        signals.marine = {
+          observedAt: new Date(snapshot.times[startIndex]).toISOString(),
+          ...current,
+        };
+        for (const field of [
+          'waveHeight',
+          'waveDirection',
+          'wavePeriod',
+          'seaSurfaceTemperature',
+        ] as const) {
           if (current[field] !== undefined) signals.units[field] = units[field];
         }
         const hourly: NonNullable<ContextSignals['marineHourly']> = [];
@@ -139,7 +156,11 @@ export class MetNorwayContextService implements ContextSignalsSource {
           const waveHeight = at('waveHeight', index);
           const seaSurfaceTemperature = at('seaSurfaceTemperature', index);
           if (waveHeight === undefined && seaSurfaceTemperature === undefined) continue;
-          hourly.push({ time: new Date(snapshot.times[index]).toISOString(), waveHeight, seaSurfaceTemperature });
+          hourly.push({
+            time: new Date(snapshot.times[index]).toISOString(),
+            waveHeight,
+            seaSurfaceTemperature,
+          });
         }
         if (hourly.length > 0) signals.marineHourly = hourly;
       }

@@ -1,12 +1,18 @@
 import type { AppConfig } from '../config/env';
 import { CopernicusContextGrid } from './copernicus/context-grid';
-import { ContextSignalsService, type ContextSignalsSource } from '../modules/context/context.service';
+import {
+  ContextSignalsService,
+  type ContextSignalsSource,
+} from '../modules/context/context.service';
 import { MetNorwayContextService } from './metno/metno-context.service';
 import { MetNorwayHourlyProvider } from './metno/metno-hourly.provider';
 import { MetNorwayProvincesProvider } from './metno/metno-provinces.provider';
 import { OpenMeteoAirQualityHourlyProvider } from './openmeteo/openmeteo-air-quality-hourly.provider';
 import { OpenMeteoHourlyProvider } from './openmeteo/openmeteo-hourly.provider';
-import { OpenMeteoProvincesProvider, type ProvinceCurrentProvider } from './openmeteo/openmeteo-provinces.provider';
+import {
+  OpenMeteoProvincesProvider,
+  type ProvinceCurrentProvider,
+} from './openmeteo/openmeteo-provinces.provider';
 import { OpenWeatherAirQualityHourlyProvider } from './openweather/openweather-air-quality-hourly.provider';
 import type { AirQualityHourlyProvider, HourlyForecastProvider } from './weather-provider';
 

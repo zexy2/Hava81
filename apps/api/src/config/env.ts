@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 const integerFromEnv = (fallback: number, min: number, max: number) =>
   z.preprocess(
-    (value) => (value === undefined || value === '' ? fallback : Number(value)),
-    z.number().int().min(min).max(max),
+    value => (value === undefined || value === '' ? fallback : Number(value)),
+    z.number().int().min(min).max(max)
   );
 
 export const envSchema = z.object({
@@ -42,7 +42,12 @@ export const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3000')
-    .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean)),
+    .transform(value =>
+      value
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean)
+    ),
   RATE_LIMIT_MAX: integerFromEnv(60, 1, 10_000),
   UPSTREAM_MAX_PER_MINUTE: integerFromEnv(300, 1, 100_000),
   CACHE_MAX_ENTRIES: integerFromEnv(500, 10, 10_000),
@@ -53,8 +58,8 @@ export const envSchema = z.object({
   // build-arg. Surfaced on /api/v1/health so CI can verify which build serves
   // production traffic. Local/dev runs report "unknown".
   HAVA81_API_REVISION: z.preprocess(
-    (value) => (typeof value === 'string' && value.trim() !== '' ? value.trim() : 'unknown'),
-    z.string().regex(/^[0-9A-Za-z._-]{1,64}$/, 'HAVA81_API_REVISION must be a short revision id'),
+    value => (typeof value === 'string' && value.trim() !== '' ? value.trim() : 'unknown'),
+    z.string().regex(/^[0-9A-Za-z._-]{1,64}$/, 'HAVA81_API_REVISION must be a short revision id')
   ),
   // 81 il tek Open-Meteo isteğiyle alınır ama Open-Meteo bunu 81 çağrı sayar; 30 dk
   // varsayılanı günde ~3.900 çağrı demektir (ücretsiz katman 10.000/gün).
@@ -68,7 +73,7 @@ export const parseEnv = (source: NodeJS.ProcessEnv = process.env): AppConfig => 
 
   if (!result.success) {
     const summary = result.error.issues
-      .map((issue) => `${issue.path.join('.') || 'environment'}: ${issue.message}`)
+      .map(issue => `${issue.path.join('.') || 'environment'}: ${issue.message}`)
       .join('; ');
 
     throw new Error(`Invalid API environment: ${summary}`);
