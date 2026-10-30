@@ -794,7 +794,8 @@ export const en = {
       noWindow: 'No clearly good window in the near forecast.',
       empty: 'Select at least one activity to see personal scores.',
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
-      hourlyAqiSource: 'Hourly air-quality outlook {{source}}.',
+      hourlyAqiSource:
+        'Hourly air-quality outlook {{source}}; for unmatched hours, the current AQI is used only while fresh. Modeled guidance, not an official warning.',
       prefs: {
         title: 'Preferences',
         edit: 'Edit',

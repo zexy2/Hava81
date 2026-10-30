@@ -579,6 +579,8 @@ function FreshDailyPlanPanel({
       </div>
 
       <footer className="daily-plan__notes">
+        {/* The card is shared as an image, so it carries its own safety boundary. */}
+        <p className="daily-plan__safety">{t('hava81.dailyPlan.safetyNote')}</p>
         {hasUnknownPrecipitation ? (
           <p className="daily-plan__safety">{t('hava81.dailyPlan.precipitationEvidenceNote')}</p>
         ) : null}
