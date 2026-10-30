@@ -11,7 +11,8 @@
  * - connect-src and img-src: OpenFreeMap (https://tiles.openfreemap.org), whose style,
  *   vector tiles, fonts, sprites and relief images MapLibre fetches for the map
  *   (src/components/map/MapSurface.tsx); data:/blob: for inline SVG backgrounds, the drawn
- *   weather field and generated share images.
+ *   weather field and generated share images. connect-src also allows data: because
+ *   MapLibre loads that locally drawn field image with fetch.
  * - worker-src: MapLibre's module worker is a same-origin file in the build ('self').
  * - script-src: bundled modules from 'self' plus the per-page sha256 of each
  *   inline bootstrap script that scripts/lib/city-pages.mjs writes into the
@@ -57,7 +58,8 @@ export function inlineScriptHashes(html) {
 }
 
 export function buildCsp({ scriptHashes = [], apiOrigin = null } = {}) {
-  const connect = ["'self'", DEFAULT_API_ORIGIN, ...MAP_TILE_ORIGINS];
+  // data: lets MapLibre read the weather field the page draws itself; it opens no network path.
+  const connect = ["'self'", 'data:', DEFAULT_API_ORIGIN, ...MAP_TILE_ORIGINS];
   if (apiOrigin && !connect.includes(apiOrigin)) connect.push(apiOrigin);
   const directives = [
     ["default-src", ["'self'"]],

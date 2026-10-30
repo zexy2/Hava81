@@ -692,6 +692,15 @@
     pointer-events: none;
   }
 
+  /* The sea in the map's own Aegean tone (read by MapSurface into the water layers). */
+  .weather-map__leaflet[data-map-surface] {
+    --map-sea: color-mix(in srgb, var(--color-aegean) 22%, var(--color-atlas-paper));
+  }
+
+  .app[data-color-mode='dark'] .weather-map__leaflet[data-map-surface] {
+    --map-sea: color-mix(in srgb, var(--color-aegean) 26%, var(--color-atlas-paper));
+  }
+
   /* Before the style paints, the map surface stays transparent over the panel. */
 
   .app .atlas-map-panel .weather-map__leaflet[data-map-surface] {

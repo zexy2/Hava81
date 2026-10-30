@@ -12,6 +12,24 @@ type LngLat = [lon: number, lat: number];
 
 maplibregl.setWorkerUrl(workerUrl);
 
+/**
+ * Any CSS colour (rgb(), color(srgb …), oklch() …) as rgb(), which MapLibre's style spec
+ * accepts. Painting one pixel lets the browser do the conversion it already knows.
+ */
+const toRgb = (cssColor: string): string | null => {
+  if (!cssColor) return null;
+  if (/^rgba?\(/.test(cssColor)) return cssColor;
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.fillStyle = cssColor;
+  context.fillRect(0, 0, 1, 1);
+  const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+  return `rgb(${red}, ${green}, ${blue})`;
+};
+
 const supportsWebGL = () => {
   try {
     const canvas = document.createElement('canvas');
@@ -99,6 +117,25 @@ export function MapSurface({
     });
     instance.touchZoomRotate.disableRotation();
     instance.keyboard.disableRotation();
+    // OpenFreeMap paints water grey (light) or near-black (dark). Hava81 reads the sea in its
+    // own Aegean tone, taken from the design tokens so it follows the theme.
+    const tintWater = () => {
+      // Resolve the token (it may be a color-mix) to an rgb() MapLibre understands.
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--map-sea)';
+      probe.style.display = 'none';
+      container.appendChild(probe);
+      const computed = getComputedStyle(probe).color;
+      probe.remove();
+      const sea = toRgb(computed);
+      if (!sea) return;
+      for (const id of ['water', 'waterway']) {
+        if (!instance.getLayer(id)) continue;
+        const property = instance.getLayer(id)?.type === 'line' ? 'line-color' : 'fill-color';
+        instance.setPaintProperty(id, property, sea);
+      }
+    };
+    instance.on('styledata', tintWater);
     instance.on('load', () => setMap(instance));
     instance.on('idle', () => {
       if (!loadedOnce && instance.areTilesLoaded()) {
