@@ -52,8 +52,15 @@ test('policy allows exactly the app origins', () => {
   const csp = buildCsp({ scriptHashes: ["'sha256-x'"], apiOrigin: 'https://api.example.test' });
   assert.equal(directive(csp, 'default-src'), "default-src 'self'");
   assert.equal(directive(csp, 'script-src'), "script-src 'self' 'sha256-x'");
-  assert.equal(directive(csp, 'connect-src'), `connect-src 'self' ${DEFAULT_API_ORIGIN} https://api.example.test`);
+  assert.equal(
+    directive(csp, 'connect-src'),
+    `connect-src 'self' data: ${DEFAULT_API_ORIGIN} ${MAP_TILE_ORIGINS.join(' ')} https://api.example.test`
+  );
+  // MapLibre fetches the OpenFreeMap style and tiles, and reads the locally drawn weather
+  // field (a data: image) with fetch; its worker is a same-origin file.
+  assert.deepEqual(MAP_TILE_ORIGINS, ['https://tiles.openfreemap.org']);
   for (const origin of MAP_TILE_ORIGINS) assert.match(directive(csp, 'img-src'), new RegExp(origin.replaceAll('.', '\\.')));
+  assert.equal(directive(csp, 'worker-src'), "worker-src 'self'");
   assert.equal(directive(csp, 'object-src'), "object-src 'none'");
   assert.doesNotMatch(csp, /unsafe-eval/);
   assert.doesNotMatch(directive(csp, 'script-src'), /unsafe-inline/);

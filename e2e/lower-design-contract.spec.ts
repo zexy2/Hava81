@@ -121,7 +121,7 @@ test.describe('instruments, footer and phone map contract', () => {
     test('the map card opens a full-screen map, not a box inside the page', MOBILE, async ({ page }) => {
       const rail = await openToday(page);
       await rail.getByTestId('instrument-map').click();
-      const map = page.locator('.leaflet-container');
+      const map = page.locator('[data-map-surface]');
       await expect(map).toBeVisible({ timeout: 15_000 });
       await expect(page).toHaveURL(/view=map/);
       await page.waitForTimeout(500);
@@ -137,11 +137,11 @@ test.describe('instruments, footer and phone map contract', () => {
     test('map tiles render seamlessly and loading is not repeated on pan', MOBILE, async ({ page }) => {
       const rail = await openToday(page);
       await rail.getByTestId('instrument-map').click();
-      const map = page.locator('.leaflet-container');
+      const map = page.locator('[data-map-surface]');
       await expect(map).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('img.leaflet-tile-loaded').first()).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('[data-map-surface][data-map-tiles="loaded"]')).toBeVisible({ timeout: 15_000 });
       const rendering = await page
-        .locator('img.leaflet-tile')
+        .locator('[data-map-surface] canvas')
         .first()
         .evaluate(tile => getComputedStyle(tile).imageRendering);
       expect(rendering, 'no seam-prone tile smoothing on phones').toBe('auto');
@@ -188,7 +188,7 @@ test.describe('instruments, footer and phone map contract', () => {
         });
       expect(await run(), `${themeMode} today`).toEqual([]);
       await rail.getByTestId('instrument-map').click();
-      await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('[data-map-surface]')).toBeVisible({ timeout: 15_000 });
       await page.waitForTimeout(600);
       expect(await run(), `${themeMode} map`).toEqual([]);
     }

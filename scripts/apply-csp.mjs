@@ -8,13 +8,17 @@
  * Origins (keep in sync when adding a third-party request):
  * - connect-src: the API (https://api.hava81.zekiakgul.dev, or the origin of
  *   VITE_API_BASE_URL when it is absolute). Relative /api/v1 stays 'self'.
- * - img-src: OpenStreetMap raster tiles used by the map (src/components/WeatherMap.tsx),
- *   data:/blob: for inline SVG backgrounds and generated share images.
+ * - connect-src and img-src: OpenFreeMap (https://tiles.openfreemap.org), whose style,
+ *   vector tiles, fonts, sprites and relief images MapLibre fetches for the map
+ *   (src/components/map/MapSurface.tsx); data:/blob: for inline SVG backgrounds, the drawn
+ *   weather field and generated share images. connect-src also allows data: because
+ *   MapLibre loads that locally drawn field image with fetch.
+ * - worker-src: MapLibre's module worker is a same-origin file in the build ('self').
  * - script-src: bundled modules from 'self' plus the per-page sha256 of each
  *   inline bootstrap script that scripts/lib/city-pages.mjs writes into the
  *   province pages. JSON-LD data blocks are not executed and need no hash.
  * - style-src: 'unsafe-inline' because the static province summary and
- *   Leaflet use style attributes. Fonts are self-hosted (@fontsource).
+ *   MapLibre's markers use style attributes. Fonts are self-hosted (@fontsource).
  *
  * Usage: node scripts/apply-csp.mjs [distDir]
  */
@@ -24,7 +28,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const DEFAULT_API_ORIGIN = 'https://api.hava81.zekiakgul.dev';
-export const MAP_TILE_ORIGINS = ['https://a.tile.openstreetmap.fr', 'https://a.tile.openstreetmap.de'];
+export const MAP_TILE_ORIGINS = ['https://tiles.openfreemap.org'];
 const CSP_META_PATTERN = /\s*<meta\s+http-equiv=["']Content-Security-Policy["'][^>]*>/gi;
 const SCRIPT_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script[^>]*>/gi;
 const NON_EXECUTABLE_TYPE = /\btype\s*=\s*["']?(?!module\b|text\/javascript\b|application\/javascript\b)[^"'\s>]+/i;
@@ -54,7 +58,8 @@ export function inlineScriptHashes(html) {
 }
 
 export function buildCsp({ scriptHashes = [], apiOrigin = null } = {}) {
-  const connect = ["'self'", DEFAULT_API_ORIGIN];
+  // data: lets MapLibre read the weather field the page draws itself; it opens no network path.
+  const connect = ["'self'", 'data:', DEFAULT_API_ORIGIN, ...MAP_TILE_ORIGINS];
   if (apiOrigin && !connect.includes(apiOrigin)) connect.push(apiOrigin);
   const directives = [
     ["default-src", ["'self'"]],

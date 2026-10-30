@@ -8,17 +8,13 @@ import type { NormalizedWeatherData } from '../../types';
 import { WeatherMap } from '../../components/WeatherMap';
 
 /**
- * Faz 3.4: WeatherMap is rendered with a thin react-leaflet stand-in (jsdom has no layout or
- * canvas), so its own DOM — heading, region, markers, popups, tile status — is tested directly.
+ * Faz 3.4: WeatherMap is rendered with a thin MapSurface stand-in (jsdom has no layout or
+ * WebGL), so its own DOM — heading, region, markers, popups, tile status — is tested directly.
  */
-const leaflet = vi.hoisted(() => ({
-  tileHandlers: {} as Record<string, () => void>,
-  mapHandlers: {} as Record<string, (event: { target: { getZoom: () => number } }) => void>,
-  map: {
-    getContainer: () => ({ clientWidth: 1024 }),
-    setView: vi.fn(),
-    flyTo: vi.fn(),
-  },
+const surface = vi.hoisted(() => ({
+  onTiles: (_state: 'loading' | 'loaded' | 'failed') => {},
+  onZoom: (_zoom: number) => {},
+  props: { center: { lat: 0, lon: 0 }, focusZoom: 0, attempt: 0 },
 }));
 
 const service = vi.hoisted(() => ({
@@ -31,33 +27,53 @@ vi.mock('../../api/weatherService', () => ({
   MAX_PROVINCE_OBSERVATION_AGE_MS: 3 * 60 * 60_000,
 }));
 
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children, className }: { children: ReactNode; className?: string }) => (
-    <div className={className} data-testid="leaflet-map">
-      {children}
-    </div>
-  ),
-  TileLayer: ({
-    url,
-    eventHandlers,
+vi.mock('../../components/map/MapSurface', () => ({
+  MapSurface: ({
+    children,
+    className,
+    center,
+    focusZoom,
+    attempt,
+    onTiles,
+    onZoom,
   }: {
-    url: string;
-    eventHandlers: Record<string, () => void>;
+    children: ReactNode;
+    className?: string;
+    center: { lat: number; lon: number };
+    focusZoom: number;
+    attempt: number;
+    onTiles: (state: 'loading' | 'loaded' | 'failed') => void;
+    onZoom: (zoom: number) => void;
   }) => {
-    leaflet.tileHandlers = eventHandlers;
-    return <div data-testid="tiles" data-url={url} />;
+    surface.onTiles = onTiles;
+    surface.onZoom = onZoom;
+    surface.props = { center, focusZoom, attempt };
+    return (
+      <div className={className} data-testid="map-surface" data-attempt={attempt}>
+        {children}
+      </div>
+    );
   },
-  Marker: ({ title, children }: { title: string; children: ReactNode }) => (
-    <div data-testid="marker" title={title}>
+  MapMarker: ({
+    label,
+    children,
+    onActivate,
+  }: {
+    label: string;
+    children: ReactNode;
+    onActivate?: () => void;
+  }) => (
+    <button type="button" data-testid="marker" title={label} onClick={onActivate}>
+      {children}
+    </button>
+  ),
+  MapPopup: ({ children, onClose }: { children: ReactNode; onClose: () => void }) => (
+    <div className="popup" data-testid="popup">
+      <button type="button" aria-label="close" onClick={onClose} />
       {children}
     </div>
   ),
-  Popup: ({ children }: { children: ReactNode }) => <div className="popup">{children}</div>,
-  useMap: () => leaflet.map,
-  useMapEvents: (handlers: typeof leaflet.mapHandlers) => {
-    leaflet.mapHandlers = handlers;
-    return leaflet.map;
-  },
+  MapZoomControls: () => null,
 }));
 
 const weather: NormalizedWeatherData = {
@@ -128,7 +144,7 @@ describe('WeatherMap', () => {
     const heading = screen.getByRole('heading', { level: 2, name: i18n.t('weather.mapTitle') });
     const region = screen.getByRole('region', { name: i18n.t('weather.mapTitle') });
     expect(region).toHaveAttribute('aria-labelledby', heading.id);
-    expect(region).toContainElement(screen.getByTestId('leaflet-map'));
+    expect(region).toContainElement(screen.getByTestId('map-surface'));
   });
 
   it('labels the current city marker with its temperature and offers featured provinces', () => {
@@ -143,34 +159,39 @@ describe('WeatherMap', () => {
       )
     ).toBe(false);
 
+    // A province's popup opens from its marker and offers that city's page.
+    fireEvent.click(ankara!);
     fireEvent.click(
-      within(ankara!).getByRole('button', { name: i18n.t('weather.viewCityWeather') })
+      within(screen.getByTestId('popup')).getByRole('button', {
+        name: i18n.t('weather.viewCityWeather'),
+      })
     );
     expect(onCitySelect).toHaveBeenCalledWith(expect.objectContaining({ name: 'Ankara' }));
   });
 
-  it('flies to the selected city when it changes', () => {
+  it('centres the map on the selected city', () => {
     renderMap();
-    expect(leaflet.map.flyTo).toHaveBeenCalledWith([38.42, 27.14], 8, { duration: 0.4 });
+    expect(surface.props.center).toEqual({ lat: 38.42, lon: 27.14 });
+    expect(surface.props.focusZoom).toBeGreaterThanOrEqual(6);
   });
 
-  it('keeps an honest tile status: loading, loaded, failed on both providers, retry', () => {
+  it('keeps an honest tile status: loading, loaded, failed, retry', () => {
     renderMap();
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
-    act(() => leaflet.tileHandlers.load());
+    act(() => surface.onTiles('loaded'));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
-    const primary = screen.getByTestId('tiles').getAttribute('data-url');
-    act(() => leaflet.tileHandlers.tileerror());
-    expect(screen.getByTestId('tiles').getAttribute('data-url')).not.toBe(primary);
-    act(() => leaflet.tileHandlers.tileerror());
+    act(() => surface.onTiles('failed'));
     const alert = screen.getByRole('alert');
     expect(alert).toHaveAttribute('aria-live', 'assertive');
     expect(alert).toHaveTextContent(i18n.t('weather.mapTilesUnavailable'));
 
+    const attempt = surface.props.attempt;
     fireEvent.click(within(alert).getByRole('button', { name: i18n.t('weather.mapTilesRetry') }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getByTestId('tiles').getAttribute('data-url')).toBe(primary);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    // Retry re-creates the map rather than waiting on the broken one.
+    expect(surface.props.attempt).toBe(attempt + 1);
   });
 
   it('loads province readings with the map but reveals all 81 markers only at atlas zoom', async () => {
@@ -181,10 +202,10 @@ describe('WeatherMap', () => {
     await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalled());
 
     // ...but the 81 province markers still wait for the atlas zoom.
-    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 7 } }));
+    act(() => surface.onZoom(6));
     expect(screen.getAllByTestId('marker').length).toBe(before);
 
-    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
+    act(() => surface.onZoom(7));
     expect(screen.getAllByTestId('marker').length).toBeGreaterThan(before);
     await waitFor(() =>
       expect(
@@ -201,7 +222,7 @@ describe('WeatherMap', () => {
     try {
       service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures(new Date()));
       renderMap();
-      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
+      act(() => surface.onZoom(7));
       await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
@@ -247,7 +268,7 @@ describe('WeatherMap', () => {
         .mockResolvedValueOnce({ ...initial, byPlate })
         .mockRejectedValue(new Error('temporary refresh failure'));
       renderMap();
-      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
+      act(() => surface.onZoom(7));
       await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
@@ -285,7 +306,7 @@ describe('WeatherMap', () => {
         provinceTemperatures(new Date(Date.now() + 2 * 60_000))
       );
       renderMap();
-      act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
+      act(() => surface.onZoom(7));
       await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
@@ -305,7 +326,7 @@ describe('WeatherMap', () => {
   it('refreshes province observations when a backgrounded map becomes visible again', async () => {
     service.getProvinceTemperatures.mockResolvedValue(provinceTemperatures());
     renderMap();
-    act(() => leaflet.mapHandlers.zoomend({ target: { getZoom: () => 8 } }));
+    act(() => surface.onZoom(7));
     await waitFor(() => expect(service.getProvinceTemperatures).toHaveBeenCalledTimes(1));
 
     act(() => document.dispatchEvent(new Event('visibilitychange')));

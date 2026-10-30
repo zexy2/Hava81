@@ -1,4 +1,4 @@
-@import 'leaflet/dist/leaflet.css' layer(vendor);
+@import 'maplibre-gl/dist/maplibre-gl.css' layer(vendor);
 
 @layer components {
   /* Aşağıdaki görünüm bölümleri bileşenin temel kurallarından ÖNCE gelir (eski yükleme sırası korunur;
@@ -128,14 +128,14 @@
     box-shadow: 0 0 0 1px rgb(29 59 79 / 0.16);
   }
 
-  .app .weather-map .leaflet-control-zoom {
+  .app .weather-map__zoom {
     overflow: hidden;
     border: 1px solid #a9cee5;
     border-radius: 14px;
     box-shadow: 0 8px 20px rgb(20 54 91 / 0.19);
   }
 
-  .app .weather-map .leaflet-control-zoom a {
+  .app .weather-map__zoom button {
     color: #153c66;
     background: #fff;
     border-color: #d8e8f6;
@@ -307,9 +307,13 @@
   }
 
   .weather-map__marker,
+  /* The hit area is at least 44 px tall, as Leaflet's icon box was; the plate sits centred. */
   .weather-map__plate-marker {
-    display: grid !important;
-    place-items: center;
+    display: flex !important;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 44px;
+    min-height: 44px;
     background: transparent !important;
     border: 0 !important;
   }
@@ -360,20 +364,100 @@
     font-weight: 700;
   }
 
-  .weather-map__popup .leaflet-popup-content-wrapper,
-  .weather-map__popup .leaflet-popup-tip {
-    color: var(--color-atlas-ink, #142524);
-    background: var(--color-atlas-paper, #fff);
-  }
-
-  .weather-map__popup .leaflet-popup-content-wrapper {
-    border: 1px solid var(--color-atlas-line, #c8d6d2);
+  .weather-map__popup .maplibregl-popup-content {
+    position: relative;
+    padding: 0.85rem 0.95rem;
+    color: var(--color-atlas-ink);
+    background: var(--color-atlas-paper);
+    border: 1px solid var(--color-atlas-line);
     border-radius: var(--radius-md, 8px);
     box-shadow: var(--shadow-overlay, 0 16px 48px rgb(14 44 50 / 0.16));
   }
 
-  .weather-map__popup .leaflet-popup-content {
-    margin: 0;
+  .weather-map__popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+    border-top-color: var(--color-atlas-paper);
+  }
+
+  .weather-map__popup.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+    border-bottom-color: var(--color-atlas-paper);
+  }
+
+  .weather-map__popup-close {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+  }
+
+  .weather-map__popup-close:focus-visible {
+    outline: 2px solid var(--color-aegean);
+    outline-offset: 1px;
+  }
+
+  /* The zoom pair sits in the map's top-left corner, as the old control did. */
+  .weather-map__zoom {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--color-atlas-line);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .weather-map__zoom button {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    font-size: 1.25rem;
+    line-height: 1;
+    border: 0;
+    border-bottom: 1px solid var(--color-atlas-line);
+    cursor: pointer;
+  }
+
+  .weather-map__zoom button:last-child {
+    border-bottom: 0;
+  }
+
+  .weather-map__zoom button:focus-visible {
+    outline: 2px solid var(--color-aegean);
+    outline-offset: -2px;
+  }
+
+  /* Markers are buttons now; keep them looking like the map's own badges. */
+  .weather-map__marker,
+  .weather-map__plate-marker {
+    padding: 0;
+    font: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  /* The drawn field is painted by the map; this mirror stays out of sight and layout. */
+  .weather-map__field-image {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    pointer-events: none;
   }
 
   .weather-map__popup-content {
@@ -487,13 +571,13 @@
     --legend-color: #d6543d;
   }
 
-  .weather-map .leaflet-control-zoom a {
+  .weather-map__zoom button {
     color: var(--color-atlas-ink, #142524);
     background: var(--color-atlas-paper, #fff);
     border-color: var(--color-atlas-line, #c8d6d2);
   }
 
-  .weather-map .leaflet-control-zoom a:hover {
+  .weather-map__zoom button:hover {
     color: var(--color-aegean, #146b73);
     background: var(--color-atlas-field, #f3f6f4);
   }
@@ -527,10 +611,9 @@
       padding-inline: 0;
     }
 
-    .weather-map .leaflet-control-zoom a {
+    .weather-map__zoom button {
       width: 44px;
       height: 44px;
-      line-height: 44px;
     }
 
     .weather-map__attribution {
@@ -547,10 +630,9 @@
       min-height: 44px;
     }
 
-    .weather-map a.leaflet-popup-close-button {
+    .weather-map__popup-close {
       width: 44px;
       height: 44px;
-      line-height: 44px;
     }
 
     .weather-map__popup-content {
@@ -610,10 +692,18 @@
     pointer-events: none;
   }
 
-  /* Leaflet's default opaque gray fills an unloaded tile canvas. Only its
- * background becomes transparent; actual raster tile images stay opaque. */
+  /* The sea in the map's own Aegean tone (read by MapSurface into the water layers). */
+  .weather-map__leaflet[data-map-surface] {
+    --map-sea: color-mix(in srgb, var(--color-aegean) 22%, var(--color-atlas-paper));
+  }
 
-  .app .atlas-map-panel .weather-map__leaflet.leaflet-container {
+  .app[data-color-mode='dark'] .weather-map__leaflet[data-map-surface] {
+    --map-sea: color-mix(in srgb, var(--color-aegean) 26%, var(--color-atlas-paper));
+  }
+
+  /* Before the style paints, the map surface stays transparent over the panel. */
+
+  .app .atlas-map-panel .weather-map__leaflet[data-map-surface] {
     position: relative;
     z-index: 1;
     background: transparent;
