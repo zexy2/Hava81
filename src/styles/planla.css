@@ -3464,6 +3464,12 @@
       animation: planla-headline-in 320ms ease-out both;
     }
   }
+
+  /* Inside the timeline the strip is a plain row: the grid area belongs to the timeline. */
+  .app .atlas-plan-view .routine-row__timeline > .routine-row__strip {
+    grid-area: auto;
+    max-inline-size: none;
+  }
 }
 
 @keyframes planla-bar {
