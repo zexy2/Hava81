@@ -87,6 +87,7 @@ export const en = {
         cloud: 'Cloud cover {{value}}%',
       },
     },
+    mapCanvasLabel: 'Interactive map',
     mapZoomIn: 'Zoom in',
     mapZoomOut: 'Zoom out',
     mapDataFrom: 'Data from',
