@@ -296,4 +296,53 @@ describe('ContextSignalsPanel', () => {
     expect(time).not.toBeNull();
     expect(time).toHaveTextContent(/veri alındı 09:00/i);
   });
+
+  it('credits MET Norway and Copernicus and brings dust, pollen and the sea back', () => {
+    renderPanel({
+      provider: 'MET Norway + Copernicus',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'MET Norway · CC BY 4.0 · CAMS · Copernicus Marine',
+      uvIndexMax: 6.2,
+      dustMax: 48,
+      grassPollenMax: 12,
+      units: {
+        dust: 'µg/m³',
+        grassPollen: 'grains/m³',
+        waveHeight: 'm',
+        seaSurfaceTemperature: '°C',
+      },
+      marine: {
+        observedAt: '2026-08-28T06:00:00.000Z',
+        waveHeight: 0.6,
+        seaSurfaceTemperature: 24.3,
+      },
+    });
+    for (const [name, href] of [
+      ['MET Norway', 'https://api.met.no/'],
+      ['CAMS', 'https://atmosphere.copernicus.eu/'],
+      ['Copernicus Marine', 'https://marine.copernicus.eu/'],
+    ]) {
+      expect(screen.getByRole('link', { name })).toHaveAttribute('href', href);
+    }
+    expect(screen.getByText('Tahmini UV · 24 saat en yüksek')).toBeInTheDocument();
+    expect(screen.getByText('Toz modeli')).toBeInTheDocument();
+    expect(screen.getByText('Polen modeli')).toBeInTheDocument();
+    expect(screen.getByText('Deniz suyu')).toBeInTheDocument();
+    expect(screen.getByText('24,3°C')).toBeInTheDocument();
+    expect(screen.getByText(/Copernicus CAMS/)).toBeInTheDocument();
+  });
+
+  it('keeps MET-only context to UV with an honest note', () => {
+    renderPanel({
+      provider: 'MET Norway',
+      fetchedAt: new Date('2026-08-28T06:00:00Z'),
+      attribution: 'MET Norway · CC BY 4.0',
+      uvIndexMax: 6.2,
+      units: {},
+    });
+    expect(screen.queryByRole('link', { name: 'CAMS' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Toz modeli')).not.toBeInTheDocument();
+    expect(screen.queryByText('Polen modeli')).not.toBeInTheDocument();
+    expect(screen.getByText(/ticari kullanıma uygun ücretsiz bir kaynak/)).toBeInTheDocument();
+  });
 });

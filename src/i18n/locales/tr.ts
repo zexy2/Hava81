@@ -836,6 +836,8 @@ export const tr = {
         'Deniz modeli verisi güncel değil; dalga ve deniz yüzeyi değerleri gösterilmiyor.',
       next24h: 'Önümüzdeki 24 saatin model maksimumu.',
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
+      noteCopernicus:
+        'UV, MET Norway açık gökyüzü UV tahmininin bulutlulukla azaltılmış hâlidir. Toz ve polen Copernicus CAMS, dalga ve deniz sıcaklığı Copernicus Marine model çıktılarıdır (E.U. Copernicus Marine Service Information). Yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
       noteMetNorway:
         'UV, MET Norway açık gökyüzü UV tahmininin bulutlulukla azaltılmış hâlidir; yerel ölçüm değildir. Toz, polen ve deniz verisi için ticari kullanıma uygun ücretsiz bir kaynak bulunmadığından bu sinyaller gösterilmiyor.',
     },

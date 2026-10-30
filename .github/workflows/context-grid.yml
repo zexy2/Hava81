@@ -1,0 +1,49 @@
+name: Copernicus context grid
+
+# Publishes the Türkiye dust, pollen and sea grid the API reads for /weather/context:
+# CAMS European air quality forecast (CC BY 4.0) and Copernicus Marine Mediterranean and
+# Black Sea forecasts (free, commercial use with credit). CAMS' 00 UTC run is usually
+# available by mid-morning; the evening run picks up the newest Copernicus Marine forecast.
+# Output: release `context-grid-latest`, asset `context-grid.json` (overwritten each run).
+
+on:
+  schedule:
+    - cron: '40 8 * * *'
+    - cron: '40 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hava81-context-grid
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and publish the grid
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install grid dependencies
+        run: |
+          python3 -m pip install --quiet --upgrade pip
+          python3 -m pip install --quiet -r scripts/context-grid/requirements.txt
+      - name: Unit tests
+        run: cd scripts/context-grid && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest test_build_grid
+      - name: Build grid
+        env:
+          CAMS_ADS_API_KEY: ${{ secrets.CAMS_ADS_API_KEY }}
+          COPERNICUS_MARINE_USERNAME: ${{ secrets.COPERNICUS_MARINE_USERNAME }}
+          COPERNICUS_MARINE_PASSWORD: ${{ secrets.COPERNICUS_MARINE_PASSWORD }}
+        run: python3 scripts/context-grid/build_grid.py out/context-grid.json
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view context-grid-latest >/dev/null 2>&1; then
+            gh release create context-grid-latest --title 'Copernicus context grid' --latest=false \
+              --notes 'Rolling Türkiye dust, pollen and sea grid for the Hava81 API. Contains modified Copernicus Atmosphere Monitoring Service information (CC BY 4.0). Generated using E.U. Copernicus Marine Service Information.'
+          fi
+          gh release upload context-grid-latest out/context-grid.json --clobber

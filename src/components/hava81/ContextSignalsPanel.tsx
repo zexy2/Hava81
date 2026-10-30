@@ -127,6 +127,10 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
         ? `${Math.round(convertTemperature(seaSurfaceTemperature))}${getTemperatureSymbol()}`
         : `${formatFixed(seaSurfaceTemperature, i18n.language, 1)}${getTemperatureSymbol()}`;
 
+  // MET Norway supplies UV; Copernicus (CAMS, Copernicus Marine) dust, pollen and the sea.
+  const usesMetNorway = signals.provider.startsWith('MET Norway');
+  const usesCopernicus = signals.provider.includes('Copernicus');
+
   return (
     <section className="context-signals" aria-labelledby="context-signals-title">
       <header>
@@ -143,9 +147,17 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
               {' · '}
               {t('hava81.context.sourceModified')}
             </>
-          ) : signals.provider === 'MET Norway' ? (
+          ) : usesMetNorway ? (
             <>
               <a href="https://api.met.no/">MET Norway</a>
+              {usesCopernicus ? (
+                <>
+                  {' · '}
+                  <a href="https://atmosphere.copernicus.eu/">CAMS</a>
+                  {' · '}
+                  <a href="https://marine.copernicus.eu/">Copernicus Marine</a>
+                </>
+              ) : null}
               {' · '}
               <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
               {' · '}
@@ -167,11 +179,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
       <div className="context-signals__grid">
         {signals.uvIndexMax !== undefined ? (
           <article className={`context-signal context-signal--${uv}`}>
-            <span>
-              {signals.provider === 'MET Norway'
-                ? t('hava81.context.uvEstimated')
-                : t('hava81.context.uv')}
-            </span>
+            <span>{usesMetNorway ? t('hava81.context.uvEstimated') : t('hava81.context.uv')}</span>
             <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
             <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
             <p>
@@ -240,7 +248,11 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
         </p>
       ) : null}
       <p className="context-signals__note">
-        {signals.provider === 'MET Norway' ? t('hava81.context.noteMetNorway') : t('hava81.context.note')}
+        {usesCopernicus
+          ? t('hava81.context.noteCopernicus')
+          : usesMetNorway
+            ? t('hava81.context.noteMetNorway')
+            : t('hava81.context.note')}
       </p>
     </section>
   );

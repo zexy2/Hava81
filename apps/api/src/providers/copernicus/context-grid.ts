@@ -44,7 +44,10 @@ const documentSchema = z.object({
     rows: z.number().int().positive().max(2_000),
     cols: z.number().int().positive().max(2_000),
   }),
-  times: z.array(z.string().datetime({ offset: true })).min(1).max(240),
+  times: z
+    .array(z.string().datetime({ offset: true }))
+    .min(1)
+    .max(240),
   // Every field is always present; a source that failed contributes nulls, not a gap.
   fields: z.object(
     Object.fromEntries(CONTEXT_GRID_FIELDS.map(name => [name, fieldSchema])) as Record<
@@ -109,7 +112,10 @@ export class CopernicusContextGrid {
 
   private async load(): Promise<ContextGridSnapshot | null> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    );
     try {
       const response = await this.fetchImpl(this.options.url, {
         headers: { accept: 'application/json' },
@@ -119,7 +125,10 @@ export class CopernicusContextGrid {
       if (!response.ok) return this.keepPrevious();
       const parsed = documentSchema.safeParse(await response.json());
       if (!parsed.success || !shapeMatches(parsed.data)) return this.keepPrevious();
-      this.snapshot = { document: parsed.data, times: parsed.data.times.map(time => Date.parse(time)) };
+      this.snapshot = {
+        document: parsed.data,
+        times: parsed.data.times.map(time => Date.parse(time)),
+      };
       this.fetchedAt = this.now().getTime();
       return this.snapshot;
     } catch {
