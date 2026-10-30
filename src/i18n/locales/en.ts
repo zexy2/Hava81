@@ -827,6 +827,8 @@ export const en = {
       marineStale: 'Marine model data is stale; wave and sea-surface values are hidden.',
       next24h: 'Model maximum over the next 24 hours.',
       note: 'UV, dust, pollen and marine values are Open-Meteo model outputs; they are not local measurements or health/navigation safety guarantees.',
+      noteCopernicus:
+        "UV is MET Norway's clear-sky UV forecast reduced for cloud cover. Dust and pollen are Copernicus CAMS model output; waves and sea temperature are Copernicus Marine model output (generated using E.U. Copernicus Marine Service Information). They are not local measurements or health/navigation safety guarantees.",
       noteMetNorway:
         "UV is MET Norway's clear-sky UV forecast reduced for cloud cover; it is not a local measurement. Dust, pollen and marine signals are not shown because no free source licensed for commercial use provides them.",
     },
