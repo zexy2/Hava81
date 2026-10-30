@@ -13,6 +13,7 @@ import {
   parseTurkeyLocalInputValue,
   toTurkeyLocalInputValue,
 } from '../../utils/turkeyTime';
+import { TimeField } from './TimeField';
 import './RouteWeatherPanel.css';
 
 interface Props {
@@ -27,6 +28,12 @@ const ROUTE_RESULT_MAX_AGE_MS = 5 * 60_000;
 const canonicalProvinceName = (name: string): string => {
   const slug = citySlug(name);
   return TURKISH_CITIES.find(city => citySlug(city.name) === slug)?.name ?? name;
+};
+
+/** "2026-09-01T14:00" → ["2026-09-01", "14:00"]. */
+const splitDeparture = (value: string): [string, string] => {
+  const [day = '', clock = ''] = value.split('T');
+  return [day, clock];
 };
 
 export function RouteWeatherPanel({ currentCityName }: Props) {
@@ -127,6 +134,34 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
     setError(null);
     setLoading(false);
   }, [i18n.language]);
+
+  // Departures stay within 18 hours, so a day is always "today" or "tomorrow" in Türkiye.
+  const [departureDay, departureClock] = splitDeparture(departure);
+  const dayOptions = (() => {
+    const today = splitDeparture(toTurkeyLocalInputValue(new Date(departureBoundsNow)))[0];
+    const tomorrow = splitDeparture(
+      toTurkeyLocalInputValue(new Date(departureBoundsNow + 24 * 60 * 60_000))
+    )[0];
+    const options = [
+      { value: today, label: t('hava81.route.today') },
+      { value: tomorrow, label: t('hava81.route.tomorrow') },
+    ];
+    return options.some(option => option.value === departureDay) || !departureDay
+      ? options
+      : [...options, { value: departureDay, label: departureDay }];
+  })();
+  const setDeparturePart = (day: string, clock: string) => {
+    setDepartureEdited(true);
+    setDeparture(`${day}T${clock}`);
+    invalidateRequest();
+  };
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const rest = Math.round(minutes % 60);
+    return hours
+      ? t('hava81.route.durationHours', { hours, minutes: rest })
+      : t('hava81.route.durationMinutes', { minutes: rest });
+  };
 
   const submit = async () => {
     if (!origin || !destination || origin.name === destination.name) return;
@@ -253,24 +288,34 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
               ))}
             </select>
           </label>
-          <label>
-            {t('hava81.route.departure')}
-            <input
-              ref={departureInputRef}
-              type="datetime-local"
-              value={departure}
-              min={toTurkeyLocalInputValue(new Date(departureBoundsNow))}
-              max={toTurkeyLocalInputValue(new Date(departureBoundsNow + ROUTE_MAX_DEPARTURE_MS))}
-              aria-label={t('hava81.route.departure')}
-              aria-describedby="route-weather-departure-help"
-              onFocus={refreshDepartureBounds}
-              onChange={e => {
-                setDepartureEdited(true);
-                setDeparture(e.target.value);
-                invalidateRequest();
-              }}
-            />
-          </label>
+          <div className="route-weather__when">
+            <label>
+              <span>{t('hava81.route.day')}</span>
+              <select
+                value={departureDay}
+                onFocus={refreshDepartureBounds}
+                onChange={e => setDeparturePart(e.target.value, departureClock)}
+              >
+                {dayOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>{t('hava81.route.at')}</span>
+              <TimeField
+                inputRef={departureInputRef}
+                value={departureClock}
+                required
+                aria-label={t('hava81.route.departure')}
+                aria-describedby="route-weather-departure-help"
+                onFocus={refreshDepartureBounds}
+                onChange={clock => clock && setDeparturePart(departureDay, clock)}
+              />
+            </label>
+          </div>
           <button
             type="button"
             disabled={loading || originName === destinationName}
@@ -313,24 +358,25 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                   <h3>
                     {originName} → {destinationName}
                   </h3>
+                  <p>
+                    {t('hava81.route.estimate', {
+                      distance: numberFormatter.format(result.estimatedDistanceKm),
+                      duration: formatDuration(result.estimatedDurationMinutes),
+                    })}
+                  </p>
                 </div>
-                <div className="route-weather__score">
-                  <small>
-                    {t('hava81.scoreScope.route')} ·{' '}
-                    {t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}
-                  </small>
+                {/* The verdict word leads, as everywhere in Planla; the number backs it up. */}
+                <div
+                  className={`route-weather__score route-weather__score--${getScoreBand(result.score)}`}
+                >
+                  <b>{t(`hava81.dailyPlan.bands.${getScoreBand(result.score)}`)}</b>
                   <strong>
                     {result.score}
                     <span>/100</span>
                   </strong>
+                  <small>{t('hava81.scoreScope.route')}</small>
                 </div>
               </header>
-              <p>
-                {t('hava81.route.estimate', {
-                  distance: result.estimatedDistanceKm,
-                  minutes: result.estimatedDurationMinutes,
-                })}
-              </p>
             </div>
             {result.betterDeparture ? (
               <button
@@ -364,7 +410,7 @@ export function RouteWeatherPanel({ currentCityName }: Props) {
                 <div
                   role="listitem"
                   key={`${segment.fraction}-${index}`}
-                  className={`route-segment route-segment--${segment.risk}`}
+                  className={`route-segment route-segment--${segment.risk} route-segment--${getScoreBand(segment.score)}`}
                 >
                   <time dateTime={segment.eta}>{formatTime(segment.eta)}</time>
                   <strong>

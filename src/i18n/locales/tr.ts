@@ -925,11 +925,17 @@ export const tr = {
       destination: 'Varış',
       swap: 'Yönü değiştir',
       sameCity: 'Başlangıç ve varış için farklı şehirler seç.',
+      day: 'Gün',
+      at: 'Saat',
+      today: 'Bugün',
+      tomorrow: 'Yarın',
+      durationHours: '{{hours}} sa {{minutes}} dk',
+      durationMinutes: '{{minutes}} dk',
       departure: 'Kalkış zamanı · Türkiye saati',
       departureHelp: 'Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.',
       check: 'Koridoru kontrol et',
       corridor: 'Yaklaşık hava koridoru',
-      estimate: 'Yaklaşık {{distance}} km · {{minutes}} dk',
+      estimate: 'Yaklaşık {{distance}} km · {{duration}}',
       better:
         '{{time}} civarı kalkış hava açısından yaklaşık {{improvement}} puan daha iyi görünüyor.',
       betterAction:
