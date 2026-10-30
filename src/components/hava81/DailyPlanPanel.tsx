@@ -1,3 +1,4 @@
+import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
 import { toleranceOf, useDecisionProfile } from '../../hooks/useDecisionProfile';
 import { useNextRoutine } from '../../hooks/useNextRoutine';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -283,7 +284,7 @@ function FreshDailyPlanPanel({
     [weather, hourly, airQuality, airQualityHourly, profile]
   );
   const next = useNextRoutine(routineInput);
-  const personalHeadline = (() => {
+  const personal = (() => {
     if (!next) return null;
     const { routine, evaluation } = next;
     const offsetMs = weather.meta.timezoneOffsetSeconds * 1000;
@@ -299,8 +300,16 @@ function FreshDailyPlanPanel({
         : range
           ? `${formatTime(range.start.time)}–${formatTime(range.endTime)}`
           : null;
-    return when ? t('hava81.dailyPlan.headline.personal', { name, day, when }) : null;
+    if (!when) return null;
+    const score = evaluation.better?.score ?? evaluation.plan.score;
+    return {
+      headline: t('hava81.dailyPlan.headline.personal', { name, day, when }),
+      name,
+      score,
+      band: getScoreBand(score),
+    };
   })();
+  const personalHeadline = personal?.headline ?? null;
 
   return (
     <section className="daily-plan daily-plan--sky" aria-labelledby="daily-plan-title">
@@ -333,12 +342,17 @@ function FreshDailyPlanPanel({
                 ? t('hava81.share.unavailable')
                 : ''}
           </span>
-          <div className={`daily-plan__score daily-plan__score--${plan.band}`}>
-            <strong>{plan.score}</strong>
+          {/* The big number belongs to the answer above it: the plan's, or the general day's. */}
+          <div
+            className={`daily-plan__score daily-plan__score--${personal ? personal.band : plan.band}`}
+          >
+            <strong>{personal ? personal.score : plan.score}</strong>
             <span>/100</span>
             <small>
-              {t('hava81.dailyPlan.scoreScope12h')} ·{' '}
-              {t(`hava81.dailyPlan.bands.${bandKey[plan.band]}`)}
+              {personal
+                ? t('hava81.dailyPlan.scoreFor', { name: personal.name })
+                : t('hava81.dailyPlan.scoreScope12h')}{' '}
+              · {t(`hava81.dailyPlan.bands.${personal ? personal.band : bandKey[plan.band]}`)}
             </small>
           </div>
         </div>
@@ -362,6 +376,7 @@ function FreshDailyPlanPanel({
         {personalHeadline ? (
           <p className="daily-plan__general">
             {t('hava81.dailyPlan.headline.general', {
+              score: plan.score,
               answer: evenDay
                 ? t('hava81.dailyPlan.headline.even').toLocaleLowerCase(i18n.language)
                 : bestWindowRange

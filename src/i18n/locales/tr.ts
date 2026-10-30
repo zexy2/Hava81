@@ -357,10 +357,11 @@ export const tr = {
       bestTime: 'En iyi hava saati',
     },
     dailyPlan: {
+      scoreFor: '{{name}} için',
       scoreScope12h: 'Önümüzdeki 12 saat · genel',
       headline: {
         personal: '{{name}} · {{day}} {{when}}',
-        general: 'Genel: {{answer}}',
+        general: 'Genel {{score}} · {{answer}}',
         best: 'En iyi zaman {{start}}–{{end}}',
         even: 'Gün boyu benzer',
       },

@@ -354,10 +354,11 @@ export const en = {
       bestTime: 'Best weather time',
     },
     dailyPlan: {
+      scoreFor: 'For {{name}}',
       scoreScope12h: 'Next 12 hours · overall',
       headline: {
         personal: '{{name}} · {{day}} {{when}}',
-        general: 'Overall: {{answer}}',
+        general: 'Overall {{score}} · {{answer}}',
         best: 'Best time {{start}}–{{end}}',
         even: 'Much the same all day',
       },

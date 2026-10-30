@@ -3315,6 +3315,58 @@
     font-size: 0.8125rem;
     line-height: 1.5;
   }
+
+  /* ══ 22. First view on phones: the answer before anything else ═════════════════ */
+
+  /* Someone with saved plans already knows what Planla does: the intro steps aside. */
+  .app .atlas-plan-view:has(.routine-row) .atlas-plan-view__header p {
+    display: none;
+  }
+
+  @media (max-width: 63.99rem) {
+    /* Title and "Back to Today" share one line. */
+    .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header,
+    .app .atlas-plan-view__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem 1rem;
+      padding-block: 0.75rem;
+    }
+
+    .app .atlas-plan-view__header > div {
+      flex: 1 1 12rem;
+      min-inline-size: 0;
+    }
+
+    .app .atlas-plan-view__header .atlas-plan-view__back {
+      min-block-size: 2.75rem;
+    }
+
+    /* Umbrella, wind and air read across one row instead of three. */
+    .app .atlas-plan-view .daily-plan__quick {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .app .atlas-plan-view .daily-plan__quick > div {
+      display: grid;
+      align-content: start;
+      gap: 0.125rem;
+      min-inline-size: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .app .atlas-plan-view .daily-plan__quick strong {
+      font-size: 0.875rem;
+      line-height: 1.3;
+      text-align: start;
+      overflow-wrap: anywhere;
+    }
+  }
 }
 
 @keyframes planla-bar {
