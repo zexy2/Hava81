@@ -434,6 +434,7 @@ const App: React.FC = () => {
           data-active-nav={activeNav}
           data-has-bottom-nav={weather || favorites.length > 0 ? 'true' : 'false'}
           data-living-sky={skyScene ? 'true' : undefined}
+          data-sky-phase={skyScene?.phase}
         >
           {skyScene ? (
             <Suspense fallback={null}>
