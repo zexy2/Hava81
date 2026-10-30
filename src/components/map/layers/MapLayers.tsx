@@ -21,7 +21,12 @@ interface FieldLayerProps {
 }
 
 /** Image corners in MapLibre's order: top-left, top-right, bottom-right, bottom-left. */
-const fieldCoordinates = (): [[number, number], [number, number], [number, number], [number, number]] => {
+const fieldCoordinates = (): [
+  [number, number],
+  [number, number],
+  [number, number],
+  [number, number],
+] => {
   const [[south, west], [north, east]] = FIELD_BOUNDS;
   return [
     [west, north],
@@ -49,7 +54,8 @@ export function FieldLayer({ provinces, layer, hour, measure = 'chance' }: Field
     const surface = map.getContainer();
     const apply = () => {
       if (!map.isStyleLoaded()) return;
-      const existing = map.getSource(FIELD_SOURCE) as { updateImage?: (options: { url: string }) => void } | undefined;
+      const existing = map.getSource(FIELD_SOURCE) as
+        { updateImage?: (options: { url: string }) => void } | undefined;
       if (!url) {
         if (map.getLayer(FIELD_LAYER)) map.removeLayer(FIELD_LAYER);
         if (existing) map.removeSource(FIELD_SOURCE);
@@ -68,7 +74,11 @@ export function FieldLayer({ provinces, layer, hour, measure = 'chance' }: Field
             id: FIELD_LAYER,
             type: 'raster',
             source: FIELD_SOURCE,
-            paint: { 'raster-opacity': 1, 'raster-fade-duration': 0, 'raster-resampling': 'linear' },
+            paint: {
+              'raster-opacity': 1,
+              'raster-fade-duration': 0,
+              'raster-resampling': 'linear',
+            },
           },
           firstLabel
         );
@@ -95,7 +105,15 @@ export function FieldLayer({ provinces, layer, hour, measure = 'chance' }: Field
   );
 
   if (!url) return null;
-  return <img className="weather-map__field-image" src={url} alt="" aria-hidden="true" data-map-layer={layer} />;
+  return (
+    <img
+      className="weather-map__field-image"
+      src={url}
+      alt=""
+      aria-hidden="true"
+      data-map-layer={layer}
+    />
+  );
 }
 
 interface WindLayerProps {
@@ -127,7 +145,19 @@ export function WindLayer({ provinces }: WindLayerProps) {
   );
 }
 
-function WindArrow({ plate, lat, lon, rotation, weight }: { plate: number; lat: number; lon: number; rotation: number; weight: string }) {
+function WindArrow({
+  plate,
+  lat,
+  lon,
+  rotation,
+  weight,
+}: {
+  plate: number;
+  lat: number;
+  lon: number;
+  rotation: number;
+  weight: string;
+}) {
   const attributes = useMemo(() => ({ 'data-wind-marker': '' }), []);
   return (
     <MapMarker
@@ -145,7 +175,9 @@ function WindArrow({ plate, lat, lon, rotation, weight }: { plate: number; lat: 
         className="weather-map__wind-arrow"
         data-wind-province={plate}
         data-rotation={rotation}
-        style={{ '--wind-rotation': `${rotation}deg`, '--wind-weight': weight } as React.CSSProperties}
+        style={
+          { '--wind-rotation': `${rotation}deg`, '--wind-weight': weight } as React.CSSProperties
+        }
       >
         <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
           <path d="M12 20V5M6.5 10.5 12 5l5.5 5.5" />

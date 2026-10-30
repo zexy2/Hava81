@@ -138,7 +138,7 @@ test.describe('visual comparisons', VISUAL, () => {
     const map = page.locator('#weather-map-region');
     await expect(map).toBeVisible();
     await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
-    await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
+    await expect(page.locator('[data-map-surface]')).toHaveAttribute('data-map-tiles', 'loaded');
     await expect(map).toHaveScreenshot('map-view-mobile-390.png', { mask: volatile(page) });
   });
 });

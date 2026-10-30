@@ -71,7 +71,10 @@ const getTemperatureMarkerColors = (celsius: number) => {
 
 const markerColorStyle = (celsius: number) => {
   const colors = getTemperatureMarkerColors(celsius);
-  return { '--marker-bg': colors.background, '--marker-fg': colors.foreground } as React.CSSProperties;
+  return {
+    '--marker-bg': colors.background,
+    '--marker-fg': colors.foreground,
+  } as React.CSSProperties;
 };
 
 /**
@@ -294,7 +297,10 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           onTiles={setTileState}
           onBackgroundClick={() => setOpenPopup(null)}
         >
-          <MapZoomControls zoomInLabel={t('weather.mapZoomIn')} zoomOutLabel={t('weather.mapZoomOut')} />
+          <MapZoomControls
+            zoomInLabel={t('weather.mapZoomIn')}
+            zoomOutLabel={t('weather.mapZoomOut')}
+          />
           {freshProvinces.length > 0 ? (
             <FieldLayer
               provinces={freshProvinces}
@@ -317,7 +323,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                   currentFreshness.fresh ? 'weather-map__marker' : 'weather-map__plate-marker'
                 }
                 zIndex={3}
-                onActivate={() => setOpenPopup(previous => (previous === 'current' ? null : 'current'))}
+                onActivate={() =>
+                  setOpenPopup(previous => (previous === 'current' ? null : 'current'))
+                }
               >
                 {currentFreshness.fresh ? (
                   <span
@@ -405,7 +413,10 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                     {String(featuredCity.plateCode).padStart(2, '0')}
                   </span>
                   {live && liveDisplay !== null ? (
-                    <b className="weather-map__plate-temp" style={markerColorStyle(live.temperature)}>
+                    <b
+                      className="weather-map__plate-temp"
+                      style={markerColorStyle(live.temperature)}
+                    >
                       {liveDisplay}°
                     </b>
                   ) : null}
