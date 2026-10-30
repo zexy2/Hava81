@@ -31,7 +31,7 @@ const inside = (
 async function openPhoneMap(page: Page) {
   await mockMapTiles(page);
   await page.goto('/izmir/?view=map');
-  const map = page.locator('.leaflet-container');
+  const map = page.locator('[data-map-surface]');
   await expect(map).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(600);
   return map;

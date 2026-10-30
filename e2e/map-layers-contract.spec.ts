@@ -184,7 +184,7 @@ async function openMap(page: Page, path = '/istanbul/?view=map') {
   await mockMapTiles(page);
   await mockLayerData(page);
   await page.goto(path);
-  const map = page.locator('.leaflet-container');
+  const map = page.locator('[data-map-surface]');
   await expect(map).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(500);
   return map;
@@ -198,7 +198,7 @@ async function box(locator: Locator) {
 
 const layers = (page: Page) => page.getByRole('group', { name: /Harita katmanı|Map layer/i });
 const times = (page: Page) => page.getByRole('group', { name: /Zaman|Time/i });
-const field = (page: Page) => page.locator('img.leaflet-image-layer[data-map-layer]');
+const field = (page: Page) => page.locator('img[data-map-layer]');
 
 test.describe('map layers contract', () => {
   test('four layers, one active, precipitation first', DESKTOP, async ({ page }) => {
@@ -285,20 +285,20 @@ test.describe('map layers contract', () => {
   test("the city's popup reads the active layer value", DESKTOP, async ({ page }) => {
     await openMap(page);
     await page.locator('.weather-map__marker').first().click();
-    const popup = page.locator('.leaflet-popup');
+    const popup = page.locator('[data-map-popup]');
     await expect(popup).toBeVisible();
     await expect(popup).toContainText('%70');
     await page.keyboard.press('Escape');
     await layers(page).getByRole('button', { name: 'Bulut', exact: true }).click();
     await page.locator('.weather-map__marker').first().click();
-    await expect(page.locator('.leaflet-popup')).toContainText('%90');
+    await expect(page.locator('[data-map-popup]')).toContainText('%90');
   });
 
   test('layers degrade quietly when province data is missing', DESKTOP, async ({ page }) => {
     await mockMapTiles(page);
     await overrideApiJson(page, 'provinces', { statusCode: 404, message: 'Route not found' }, 404);
     await page.goto('/istanbul/?view=map');
-    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-map-surface]')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Katman verisi şu an yok|Layer data is unavailable/i)).toBeVisible({
       timeout: 10_000,
     });
