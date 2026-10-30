@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { ContextSignalsPanel } from '../../components/hava81/ContextSignalsPanel';
@@ -11,6 +11,10 @@ const renderPanel = (signals: ContextSignals, timezoneOffsetSeconds = 3 * 60 * 6
       <ContextSignalsPanel signals={signals} timezoneOffsetSeconds={timezoneOffsetSeconds} />
     </SettingsProvider>
   );
+
+/** The detail card of one reading, found by its label. */
+const signalCard = (label: string) =>
+  screen.getByText(label).closest('.context-signal') as HTMLElement;
 
 describe('ContextSignalsPanel', () => {
   beforeEach(() => {
@@ -215,7 +219,7 @@ describe('ContextSignalsPanel', () => {
       units: {},
     });
 
-    expect(screen.getByText('Orta')).toBeInTheDocument();
+    expect(within(signalCard('UV · 24 saat en yüksek')).getByText('Orta')).toBeInTheDocument();
     expect(screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)).toBeInTheDocument();
   });
 
@@ -228,7 +232,7 @@ describe('ContextSignalsPanel', () => {
       units: {},
     });
 
-    expect(screen.getByText('Aşırı')).toBeInTheDocument();
+    expect(within(signalCard('UV · 24 saat en yüksek')).getByText('Aşırı')).toBeInTheDocument();
     expect(screen.getByText(/WHO UV İndeksi rehberinde 3 ve üzeri/i)).toBeInTheDocument();
   });
 
@@ -273,13 +277,15 @@ describe('ContextSignalsPanel', () => {
     });
 
     expect(screen.getByText('UV · 24 saat en yüksek')).toBeInTheDocument();
-    expect(screen.getByText('18')).toBeInTheDocument();
+    expect(within(signalCard('Toz modeli')).getByText('18')).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_200);
     });
 
     expect(screen.queryByText('UV · 24 saat en yüksek')).not.toBeInTheDocument();
+    // The one-line summary must not keep showing the expired readings either.
+    expect(document.querySelector('.context-signals__summary .context-stat')).toBeNull();
     expect(screen.queryByText('18')).not.toBeInTheDocument();
     expect(screen.queryByText(/Hava81 tarafından özetlendi/)).not.toBeInTheDocument();
   });
@@ -296,4 +302,25 @@ describe('ContextSignalsPanel', () => {
     expect(time).not.toBeNull();
     expect(time).toHaveTextContent(/veri alındı 09:00/i);
   });
+
+  it.each([
+    [20, 17, 'Düşük', 'Soğuk'],
+    [45, 18, 'Orta', 'Serin'],
+    [100, 22, 'Yüksek', 'Yüzmelik'],
+  ])(
+    'the summary names dust %s µg/m³ and sea %s °C with the score engine thresholds',
+    (dust, sea, dustWord, seaWord) => {
+      renderPanel({
+        provider: 'Open-Meteo',
+        fetchedAt: new Date(),
+        attribution: 'Open-Meteo · CC BY 4.0',
+        dustMax: dust,
+        units: { dust: 'µg/m³', seaSurfaceTemperature: '°C' },
+        marine: { observedAt: new Date().toISOString(), seaSurfaceTemperature: sea },
+      });
+      const summary = document.querySelector('.context-signals__summary') as HTMLElement;
+      expect(within(summary).getByText(dustWord)).toBeInTheDocument();
+      expect(within(summary).getByText(seaWord)).toBeInTheDocument();
+    }
+  );
 });
