@@ -36,6 +36,8 @@ interface MapSurfaceProps {
   onTiles: (state: TileState) => void;
   /** Called when a click lands on the map itself (not on a marker). */
   onBackgroundClick?: () => void;
+  /** Accessible name of the map canvas; MapLibre's default "Map" would repeat the page's. */
+  canvasLabel: string;
   children?: React.ReactNode;
 }
 
@@ -54,6 +56,7 @@ export function MapSurface({
   onZoom,
   onTiles,
   onBackgroundClick,
+  canvasLabel,
   children,
 }: MapSurfaceProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -88,6 +91,7 @@ export function MapSurface({
       minZoom: 4,
       maxZoom: 14,
       attributionControl: false,
+      locale: { 'Map.Title': canvasLabel },
       dragRotate: false,
       pitchWithRotate: false,
       touchPitch: false,
@@ -120,6 +124,10 @@ export function MapSurface({
     // `attempt` re-creates the map for the retry button; other props are applied below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt, noWebGL]);
+
+  useEffect(() => {
+    map?.getCanvas().setAttribute('aria-label', canvasLabel);
+  }, [canvasLabel, map]);
 
   // Follow the selected city: fly there, or jump when the reader prefers less motion.
   const isFirstCenter = useRef(true);

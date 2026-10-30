@@ -87,6 +87,7 @@ export const tr = {
         cloud: 'Bulutluluk %{{value}}',
       },
     },
+    mapCanvasLabel: 'Etkileşimli harita',
     mapZoomIn: 'Yakınlaştır',
     mapZoomOut: 'Uzaklaştır',
     mapDataFrom: 'Veri:',

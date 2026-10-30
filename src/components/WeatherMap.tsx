@@ -296,6 +296,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           onZoom={setZoom}
           onTiles={setTileState}
           onBackgroundClick={() => setOpenPopup(null)}
+          canvasLabel={t('weather.mapCanvasLabel')}
         >
           <MapZoomControls
             zoomInLabel={t('weather.mapZoomIn')}
