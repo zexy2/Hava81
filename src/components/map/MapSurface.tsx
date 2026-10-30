@@ -2,25 +2,15 @@ import * as maplibregl from 'maplibre-gl';
 // MapLibre 6 runs its tile parsing in a module worker shipped as a separate file; Vite copies
 // it into the build and hands back its same-origin URL (covered by worker-src 'self').
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-// OpenFreeMap: free vector tiles, commercial use allowed, no key (https://openfreemap.org).
-// Positron reads quietly under weather layers; Dark keeps the same structure at night.
-export const OPENFREEMAP_STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/positron',
-  dark: 'https://tiles.openfreemap.org/styles/dark',
-} as const;
-export type MapTheme = keyof typeof OPENFREEMAP_STYLES;
+import { MapContext, useMapSurface } from './mapContext';
+import { OPENFREEMAP_STYLES, type MapTheme } from './mapStyles';
 
 type LngLat = [lon: number, lat: number];
 
 maplibregl.setWorkerUrl(workerUrl);
-
-const MapContext = createContext<maplibregl.Map | null>(null);
-
-/** The live map for children; null until the style has loaded. */
-export const useMapSurface = () => useContext(MapContext);
 
 const supportsWebGL = () => {
   try {
@@ -200,17 +190,21 @@ export function MapMarker({
   children,
 }: MapMarkerProps) {
   const map = useMapSurface();
-  const [element] = useState<HTMLElement>(() => {
-    if (!interactive) {
+  // The marker's DOM node is a handle MapLibre positions, not React state.
+  const elementRef = useRef<HTMLElement | null>(null);
+  if (!elementRef.current) {
+    if (interactive) {
+      const node = document.createElement('button');
+      node.type = 'button';
+      node.setAttribute('data-map-marker', '');
+      elementRef.current = node;
+    } else {
       const node = document.createElement('span');
       node.setAttribute('aria-hidden', 'true');
-      return node;
+      elementRef.current = node;
     }
-    const node = document.createElement('button');
-    node.type = 'button';
-    node.setAttribute('data-map-marker', '');
-    return node;
-  });
+  }
+  const element = elementRef.current;
   const activate = useRef(onActivate);
   activate.current = onActivate;
   const markerRef = useRef<maplibregl.Marker | null>(null);
@@ -274,12 +268,14 @@ interface MapPopupProps {
 /** One popup at a time, anchored above its point, closed by its button or Escape. */
 export function MapPopup({ lat, lon, className, onClose, closeLabel, children }: MapPopupProps) {
   const map = useMapSurface();
-  const [element] = useState(() => {
+  const elementRef = useRef<HTMLDivElement | null>(null);
+  if (!elementRef.current) {
     const node = document.createElement('div');
     node.setAttribute('data-map-popup', '');
     node.setAttribute('role', 'dialog');
-    return node;
-  });
+    elementRef.current = node;
+  }
+  const element = elementRef.current;
   const close = useRef(onClose);
   close.current = onClose;
 

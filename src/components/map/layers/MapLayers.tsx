@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import type { ProvinceTemperature } from '../../../api/weatherService';
-import { MapMarker, useMapSurface } from '../MapSurface';
+import { useMapSurface } from '../mapContext';
+import { MapMarker } from '../MapSurface';
 import {
   downwindRotation,
   layerSamples,
