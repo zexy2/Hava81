@@ -3619,6 +3619,7 @@
   /* Result: the verdict first, as in every Planla answer; no nested card. */
   .app .atlas-plan-view .route-weather__result {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     padding-block-start: 1.25rem;
     border-block-start: 1px solid var(--plan-line);
