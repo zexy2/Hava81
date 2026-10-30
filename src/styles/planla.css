@@ -3335,8 +3335,10 @@
       padding-block: 0.75rem;
     }
 
-    .app .atlas-plan-view__header > div {
-      flex: 1 1 12rem;
+    .app .atlas-plan-view__header > div,
+    .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header > div {
+      flex: 1 1 auto;
+      inline-size: auto;
       min-inline-size: 0;
     }
 
@@ -3345,12 +3347,14 @@
     }
 
     /* Umbrella, wind and air read across one row instead of three. */
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick,
     .app .atlas-plan-view .daily-plan__quick {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.5rem;
     }
 
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick > div,
     .app .atlas-plan-view .daily-plan__quick > div {
       display: grid;
       align-content: start;
@@ -3360,6 +3364,7 @@
       border: 0;
     }
 
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick strong,
     .app .atlas-plan-view .daily-plan__quick strong {
       font-size: 0.875rem;
       line-height: 1.3;

@@ -388,7 +388,7 @@ function FreshDailyPlanPanel({
             })}
           </p>
         ) : null}
-        {evenDay ? (
+        {evenDay && !personal ? (
           weakSlots.length ? (
             <small>
               {t('hava81.dailyPlan.weakHours', {
