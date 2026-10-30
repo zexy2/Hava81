@@ -22,7 +22,10 @@
     text-shadow: 0 0 14px rgb(255 255 255 / 0.7);
   }
 
-  .app[data-color-mode='dark'] .atlas-footer {
+  /* The footer has no box: on the night sky the light theme's dark type would vanish, so it
+     reads the sky the way the dark theme does. Dusk stays dark-on-warm: its sky is still light. */
+  .app[data-color-mode='dark'] .atlas-footer,
+  .app[data-color-mode='light'][data-sky-phase='night'] .atlas-footer {
     border-top-color: rgb(255 255 255 / 0.24);
     color: rgb(238 244 250);
     text-shadow:
@@ -59,7 +62,8 @@
     font-style: normal;
   }
 
-  .app[data-color-mode='dark'] .atlas-footer__wordmark em {
+  .app[data-color-mode='dark'] .atlas-footer__wordmark em,
+  .app[data-color-mode='light'][data-sky-phase='night'] .atlas-footer__wordmark em {
     color: rgb(140 214 240);
   }
 
@@ -105,11 +109,13 @@
   }
 
   .app .data-credit__logo--dark,
-  .app[data-color-mode='dark'] .data-credit__logo--light {
+  .app[data-color-mode='dark'] .data-credit__logo--light,
+  .app[data-color-mode='light'][data-sky-phase='night'] .atlas-footer .data-credit__logo--light {
     display: none;
   }
 
-  .app[data-color-mode='dark'] .data-credit__logo--dark {
+  .app[data-color-mode='dark'] .data-credit__logo--dark,
+  .app[data-color-mode='light'][data-sky-phase='night'] .atlas-footer .data-credit__logo--dark {
     display: block;
   }
 
