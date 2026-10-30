@@ -3558,6 +3558,8 @@
   }
 
   .app .atlas-plan-view .route-weather__form .route-weather__swap {
+    justify-self: center;
+    width: 2.75rem;
     inline-size: 2.75rem;
     min-block-size: 2.75rem;
     padding: 0;
@@ -3675,6 +3677,7 @@
   /* Along the way: a timeline of stops, not a row of cards. */
   .app .atlas-plan-view .route-weather__segments {
     display: grid;
+    grid-template-columns: none;
     grid-auto-columns: minmax(10rem, 1fr);
     grid-auto-flow: column;
     gap: 0;
@@ -3684,6 +3687,9 @@
 
   .app .atlas-plan-view .route-segment {
     --route-accent: var(--routine-good);
+
+    flex: none;
+    min-inline-size: 0;
 
     display: grid;
     align-content: start;
