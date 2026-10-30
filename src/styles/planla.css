@@ -3464,6 +3464,19 @@
       animation: planla-headline-in 320ms ease-out both;
     }
   }
+
+  /* Desktop: the reference column stays in view while the tools scroll beside it, instead of
+     ending halfway down the page. Only when it fits the screen, so nothing is cut off. */
+  @media (min-width: 64rem) and (min-height: 52rem) {
+    .app .atlas-plan-view .atlas-plan-view__columns {
+      align-items: start;
+    }
+
+    .app .atlas-plan-view .atlas-plan-view__aside {
+      position: sticky;
+      top: 5.5rem;
+    }
+  }
 }
 
 @keyframes planla-bar {
