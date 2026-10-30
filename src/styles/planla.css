@@ -3536,6 +3536,11 @@
     background: none;
   }
 
+  /* The component's own sheet pins items to fixed grid cells; in Planla they flow. */
+  .app .atlas-plan-view .route-weather__form > * {
+    grid-area: auto;
+  }
+
   .app .atlas-plan-view .route-weather__when {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 6rem);
@@ -3560,6 +3565,7 @@
   .app .atlas-plan-view .route-weather__form .route-weather__swap {
     justify-self: center;
     width: 2.75rem;
+    min-width: 2.75rem;
     inline-size: 2.75rem;
     min-block-size: 2.75rem;
     padding: 0;
