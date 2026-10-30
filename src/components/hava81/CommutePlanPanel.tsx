@@ -1,3 +1,4 @@
+import { TimeField } from './TimeField';
 import { formatNumber, formatWithUnit } from '../../utils/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -206,11 +207,10 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
       <div className="commute-plan__times" role="group" aria-label={t('hava81.commute.timesLabel')}>
         <label>
           <span>{t('hava81.commute.outbound')}</span>
-          <input
-            type="time"
-            value={profile.commuteStart ?? ''}
+          <TimeField
+            value={profile.commuteStart}
             aria-describedby={commuteIncompleteId}
-            onChange={event => setCommuteTime('start', event.target.value || undefined)}
+            onChange={value => setCommuteTime('start', value)}
           />
         </label>
         <span className="commute-plan__arrow" aria-hidden="true">
@@ -218,11 +218,10 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
         </span>
         <label>
           <span>{t('hava81.commute.return')}</span>
-          <input
-            type="time"
-            value={profile.commuteEnd ?? ''}
+          <TimeField
+            value={profile.commuteEnd}
             aria-describedby={commuteIncompleteId}
-            onChange={event => setCommuteTime('end', event.target.value || undefined)}
+            onChange={value => setCommuteTime('end', value)}
           />
         </label>
       </div>

@@ -571,10 +571,10 @@ export const tr = {
         pendingAt_other: '{{day}} {{time}} · tahmin {{count}} gün kala',
       },
       verdict: {
-        excellent: 'Çok iyi',
-        good: 'İyi',
+        excellent: 'Çok uygun',
+        good: 'Uygun',
         caution: 'Dikkat',
-        difficult: 'Zor',
+        difficult: 'Zorlayıcı',
       },
       title: 'Planların',
       add: 'Rutin ekle',

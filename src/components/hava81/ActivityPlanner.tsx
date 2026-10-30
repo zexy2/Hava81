@@ -1,3 +1,4 @@
+import { TimeField } from './TimeField';
 import { defaultDraft, useRoutines } from '../../hooks/useRoutines';
 import { RoutineList } from './RoutineList';
 import { ActivityGlyph } from './activityGlyphs';
@@ -789,20 +790,18 @@ export function ActivityPlanner({
               </div>
               <label>
                 <span>{t('hava81.activities.window.start')}</span>
-                <input
-                  type="time"
-                  value={profile.activityStart ?? ''}
+                <TimeField
+                  value={profile.activityStart}
                   aria-describedby={activityWindowStatusId}
-                  onChange={event => setActivityWindow('start', event.target.value || undefined)}
+                  onChange={value => setActivityWindow('start', value)}
                 />
               </label>
               <label>
                 <span>{t('hava81.activities.window.end')}</span>
-                <input
-                  type="time"
-                  value={profile.activityEnd ?? ''}
+                <TimeField
+                  value={profile.activityEnd}
                   aria-describedby={activityWindowStatusId}
-                  onChange={event => setActivityWindow('end', event.target.value || undefined)}
+                  onChange={value => setActivityWindow('end', value)}
                 />
               </label>
               {hasPartialWindow ? (

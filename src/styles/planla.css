@@ -281,7 +281,10 @@
     box-shadow: none;
   }
 
-  .app .atlas-plan-view :is(.activity-planner, .commute-plan) :is(select, input[type='time']) {
+  .app
+    .atlas-plan-view
+    :is(.activity-planner, .commute-plan)
+    :is(select, input[type='time'], input[inputmode='numeric']) {
     min-height: 2.75rem;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--plan-line);
@@ -2637,7 +2640,7 @@
     font-size: 0.875rem;
   }
 
-  .app .atlas-plan-view .routine-editor input[type='time'],
+  .app .atlas-plan-view .routine-editor input[inputmode='numeric'],
   .app .atlas-plan-view .routine-editor input[type='text'],
   .app .atlas-plan-view .routine-editor select {
     min-block-size: 2.75rem;
@@ -3286,6 +3289,16 @@
   .app .atlas-plan-view .decision-alerts__how > summary::after {
     margin-inline-start: 0.25rem;
     transform: rotate(45deg) translate(-2px, -2px);
+  }
+
+  /* 24-hour clock fields: tabular digits, sized for "00:00". */
+  .app .atlas-plan-view input[inputmode='numeric'] {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  .app .atlas-plan-view input[inputmode='numeric'][aria-invalid='true'] {
+    border-color: var(--color-vermilion);
   }
 }
 
