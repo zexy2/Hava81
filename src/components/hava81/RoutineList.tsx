@@ -138,24 +138,32 @@ export function RoutineList({
         slot.time.getTime() < occurrence.endMs
     );
     if (cells.length < 2) return null;
+    const first = cells[0].time.getTime();
+    const last = cells[cells.length - 1].time.getTime() + 3_600_000;
     return (
-      <span className="routine-row__strip" aria-hidden="true">
-        {cells.map(slot => {
-          const ms = slot.time.getTime();
-          const best = range && ms >= range.start.time.getTime() && ms < range.endTime.getTime();
-          return (
-            <span
-              key={ms}
-              className={[
-                'routine-row__cell',
-                `routine-row__cell--${slot.eligible === false ? 'off' : getScoreBand(slot.score)}`,
-                best ? 'routine-row__cell--best' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            />
-          );
-        })}
+      <span className="routine-row__timeline" aria-hidden="true">
+        <span className="routine-row__strip">
+          {cells.map(slot => {
+            const ms = slot.time.getTime();
+            const best = range && ms >= range.start.time.getTime() && ms < range.endTime.getTime();
+            return (
+              <span
+                key={ms}
+                className={[
+                  'routine-row__cell',
+                  `routine-row__cell--${slot.eligible === false ? 'off' : getScoreBand(slot.score)}`,
+                  best ? 'routine-row__cell--best' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              />
+            );
+          })}
+        </span>
+        <span className="routine-row__axis">
+          <span>{time(Math.max(first, occurrence.startMs))}</span>
+          <span>{time(Math.min(last, occurrence.endMs))}</span>
+        </span>
       </span>
     );
   };
