@@ -3350,8 +3350,14 @@
     .app .atlas-plan-view .daily-plan--sky .daily-plan__quick,
     .app .atlas-plan-view .daily-plan__quick {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.5rem;
+      /* Umbrella gets the room its careful wording needs; air quality takes its own row. */
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: 0.625rem 1rem;
+    }
+
+    .app .atlas-plan-view .daily-plan--sky .daily-plan__quick > div:nth-child(3),
+    .app .atlas-plan-view .daily-plan__quick > div:nth-child(3) {
+      grid-column: 1 / -1;
     }
 
     .app .atlas-plan-view .daily-plan--sky .daily-plan__quick > div,
