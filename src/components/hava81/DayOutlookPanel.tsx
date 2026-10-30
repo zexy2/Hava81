@@ -1,3 +1,4 @@
+import { useRoutineActivities } from '../../hooks/useRoutineActivities';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { TEMPERATURE_SCALE_DARK, temperatureColor } from './forecastAtlas/temperatureColor';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +41,9 @@ export function DayOutlookPanel({
   const { t, i18n } = useTranslation();
   const { convertTemperature } = useSettings();
   const { profile } = useDecisionProfile();
+  // Your plans first, then what you are exploring: the outlook answers the same questions.
+  const routineActivities = useRoutineActivities();
+  const intents = [...new Set([...routineActivities, ...profile.activities])];
   const [intent, setIntent] = useState<ActivityKind | 'general'>('general');
   const [, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
@@ -62,8 +66,7 @@ export function DayOutlookPanel({
     };
   }, [forecastMeta, freshness.expiresInMs]);
   const offsetSeconds = weather.meta.timezoneOffsetSeconds;
-  const activity =
-    intent === 'general' || !profile.activities.includes(intent) ? undefined : intent;
+  const activity = intent === 'general' || !intents.includes(intent) ? undefined : intent;
   const { windTolerance, rainTolerance, pollenAllergy } = profile;
   // Only the tolerance fields matter; the rest of the profile must not rebuild the outlook.
   const tolerance = useMemo(
@@ -109,13 +112,13 @@ export function DayOutlookPanel({
     <section className="day-outlook" aria-labelledby="day-outlook-title">
       <header className="day-outlook__header">
         <h2 id="day-outlook-title">{t('hava81.outlook.title')}</h2>
-        {profile.activities.length ? (
+        {intents.length ? (
           <div
             className="day-outlook__intents"
             role="group"
             aria-label={t('hava81.outlook.intentLabel')}
           >
-            {(['general', ...profile.activities] as const).map(option => (
+            {(['general', ...intents] as const).map(option => (
               <button
                 key={option}
                 type="button"
@@ -130,7 +133,7 @@ export function DayOutlookPanel({
               >
                 {option === 'general'
                   ? t('hava81.outlook.general')
-                  : t(`hava81.activities.names.${option}`)}
+                  : t(`hava81.activities.short.${option}`)}
               </button>
             ))}
           </div>

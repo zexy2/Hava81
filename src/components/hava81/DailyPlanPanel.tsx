@@ -1,3 +1,5 @@
+import { toleranceOf, useDecisionProfile } from '../../hooks/useDecisionProfile';
+import { useNextRoutine } from '../../hooks/useNextRoutine';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import { useTranslation } from 'react-i18next';
@@ -267,6 +269,39 @@ function FreshDailyPlanPanel({
     }
   };
 
+  // The next saved plan, today or tomorrow, leads the card.
+  const { profile } = useDecisionProfile();
+  const routineInput = useMemo(
+    () => ({
+      weather,
+      hourly,
+      airQuality,
+      airQualityHourly,
+      sensitivity: profile.temperatureSensitivity,
+      tolerance: toleranceOf(profile),
+    }),
+    [weather, hourly, airQuality, airQualityHourly, profile]
+  );
+  const next = useNextRoutine(routineInput);
+  const personalHeadline = (() => {
+    if (!next) return null;
+    const { routine, evaluation } = next;
+    const offsetMs = weather.meta.timezoneOffsetSeconds * 1000;
+    const dayOf = (ms: number) => Math.floor((ms + offsetMs) / 86_400_000);
+    const diff = dayOf(evaluation.occurrence.startMs) - dayOf(Date.now());
+    if (diff > 1) return null;
+    const day = t(diff === 0 ? 'hava81.routines.today' : 'hava81.routines.tomorrow');
+    const name = routine.name ?? t(`hava81.activities.names.${routine.activity}`);
+    const range = evaluation.plan.windowUnavailable ? undefined : evaluation.plan.bestWindowRange;
+    const when =
+      routine.schedule.kind === 'fixed'
+        ? formatTime(new Date(evaluation.better?.startMs ?? evaluation.occurrence.startMs))
+        : range
+          ? `${formatTime(range.start.time)}–${formatTime(range.endTime)}`
+          : null;
+    return when ? t('hava81.dailyPlan.headline.personal', { name, day, when }) : null;
+  })();
+
   return (
     <section className="daily-plan daily-plan--sky" aria-labelledby="daily-plan-title">
       <HeroSky scene={heroScene} />
@@ -312,16 +347,32 @@ function FreshDailyPlanPanel({
       <div className="daily-plan__decision">
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         {/* The answer first, in a few words; the engine's full sentence follows it. */}
+        {/* With a saved plan the card answers it first; the general day follows in one line. */}
         <strong className="daily-plan__headline">
-          {evenDay
-            ? t('hava81.dailyPlan.headline.even')
-            : bestWindowRange
-              ? t('hava81.dailyPlan.headline.best', {
-                  start: formatTime(bestWindowRange.start.time),
-                  end: formatTime(bestWindowRange.endTime),
-                })
-              : nowOrLaterText}
+          {personalHeadline ??
+            (evenDay
+              ? t('hava81.dailyPlan.headline.even')
+              : bestWindowRange
+                ? t('hava81.dailyPlan.headline.best', {
+                    start: formatTime(bestWindowRange.start.time),
+                    end: formatTime(bestWindowRange.endTime),
+                  })
+                : nowOrLaterText)}
         </strong>
+        {personalHeadline ? (
+          <p className="daily-plan__general">
+            {t('hava81.dailyPlan.headline.general', {
+              answer: evenDay
+                ? t('hava81.dailyPlan.headline.even').toLocaleLowerCase(i18n.language)
+                : bestWindowRange
+                  ? t('hava81.dailyPlan.headline.best', {
+                      start: formatTime(bestWindowRange.start.time),
+                      end: formatTime(bestWindowRange.endTime),
+                    }).toLocaleLowerCase(i18n.language)
+                  : nowOrLaterText,
+            })}
+          </p>
+        ) : null}
         {evenDay ? (
           weakSlots.length ? (
             <small>

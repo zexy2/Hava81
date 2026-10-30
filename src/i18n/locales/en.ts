@@ -354,6 +354,8 @@ export const en = {
     dailyPlan: {
       scoreScope12h: 'Next 12 hours · overall',
       headline: {
+        personal: '{{name}} · {{day}} {{when}}',
+        general: 'Overall: {{answer}}',
         best: 'Best time {{start}}–{{end}}',
         even: 'Much the same all day',
       },

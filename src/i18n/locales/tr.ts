@@ -357,6 +357,8 @@ export const tr = {
     dailyPlan: {
       scoreScope12h: 'Önümüzdeki 12 saat · genel',
       headline: {
+        personal: '{{name}} · {{day}} {{when}}',
+        general: 'Genel: {{answer}}',
         best: 'En iyi zaman {{start}}–{{end}}',
         even: 'Gün boyu benzer',
       },
