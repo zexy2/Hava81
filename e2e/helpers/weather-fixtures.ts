@@ -394,11 +394,72 @@ export const TILE_PNG = Buffer.from(
 );
 
 /** Answers both OSM tile hosts (primary `hot`, backup `osmde`) with a local PNG. */
+/** Minimal OpenFreeMap-shaped style: background, water and one label layer. */
+export const mapStyleFixture = (theme: 'positron' | 'dark') => ({
+  version: 8,
+  sources: {
+    openmaptiles: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
+  },
+  glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      paint: { 'background-color': theme === 'dark' ? 'rgb(12,16,24)' : 'rgb(242,243,240)' },
+    },
+    {
+      id: 'water',
+      type: 'fill',
+      source: 'openmaptiles',
+      'source-layer': 'water',
+      paint: { 'fill-color': theme === 'dark' ? 'rgb(24,34,48)' : 'rgb(194,200,202)' },
+    },
+    {
+      id: 'place_label',
+      type: 'symbol',
+      source: 'openmaptiles',
+      'source-layer': 'place',
+      layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'] },
+    },
+  ],
+});
+
+/** OpenFreeMap style URLs (light and dark); a test can delay or fail them to drive map states. */
+export const MAP_STYLE_ROUTE = 'https://tiles.openfreemap.org/styles/**';
+
+/** Every OpenFreeMap request answered locally: style, TileJSON, empty tiles, fonts, sprites. */
 export async function mockMapTiles(page: Page) {
-  await page.route('**/hot/**', route =>
-    route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG })
-  );
-  await page.route('**/tiles/osmde/**', route =>
-    route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG })
-  );
+  await page.route('https://tiles.openfreemap.org/**', route => {
+    const url = new URL(route.request().url());
+    const theme = url.pathname.endsWith('/dark') ? 'dark' : 'positron';
+    if (url.pathname.startsWith('/styles/')) {
+      return route.fulfill({ json: mapStyleFixture(theme) });
+    }
+    if (url.pathname === '/planet') {
+      return route.fulfill({
+        json: {
+          tilejson: '3.0.0',
+          tiles: ['https://tiles.openfreemap.org/planet/test/{z}/{x}/{y}.pbf'],
+          minzoom: 0,
+          maxzoom: 14,
+          vector_layers: [
+            { id: 'water', fields: {} },
+            { id: 'place', fields: { name: 'String' } },
+          ],
+        },
+      });
+    }
+    // Vector tiles and glyph ranges: an empty protobuf is a valid, blank answer.
+    if (url.pathname.endsWith('.pbf')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/x-protobuf',
+        body: Buffer.alloc(0),
+      });
+    }
+    if (url.pathname.endsWith('.png')) {
+      return route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG });
+    }
+    return route.fulfill({ json: {} });
+  });
 }

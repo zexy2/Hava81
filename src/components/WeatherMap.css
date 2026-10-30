@@ -307,9 +307,13 @@
   }
 
   .weather-map__marker,
+  /* The hit area is at least 44 px tall, as Leaflet's icon box was; the plate sits centred. */
   .weather-map__plate-marker {
-    display: grid !important;
-    place-items: center;
+    display: flex !important;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 44px;
+    min-height: 44px;
     background: transparent !important;
     border: 0 !important;
   }
@@ -444,10 +448,6 @@
     background: none;
     border: 0;
     cursor: pointer;
-  }
-
-  .weather-map__marker-body {
-    display: contents;
   }
 
   /* The drawn field is painted by the map; this mirror stays out of sight and layout. */

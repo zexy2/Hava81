@@ -56,10 +56,10 @@ test('policy allows exactly the app origins', () => {
     directive(csp, 'connect-src'),
     `connect-src 'self' ${DEFAULT_API_ORIGIN} ${MAP_TILE_ORIGINS.join(' ')} https://api.example.test`
   );
-  // MapLibre fetches the OpenFreeMap style and tiles and starts its workers from blob: URLs.
+  // MapLibre fetches the OpenFreeMap style and tiles; its worker is a same-origin file.
   assert.deepEqual(MAP_TILE_ORIGINS, ['https://tiles.openfreemap.org']);
   for (const origin of MAP_TILE_ORIGINS) assert.match(directive(csp, 'img-src'), new RegExp(origin.replaceAll('.', '\\.')));
-  assert.equal(directive(csp, 'worker-src'), "worker-src 'self' blob:");
+  assert.equal(directive(csp, 'worker-src'), "worker-src 'self'");
   assert.equal(directive(csp, 'object-src'), "object-src 'none'");
   assert.doesNotMatch(csp, /unsafe-eval/);
   assert.doesNotMatch(directive(csp, 'script-src'), /unsafe-inline/);

@@ -12,7 +12,7 @@
  *   vector tiles, fonts, sprites and relief images MapLibre fetches for the map
  *   (src/components/map/MapSurface.tsx); data:/blob: for inline SVG backgrounds, the drawn
  *   weather field and generated share images.
- * - worker-src: MapLibre starts its tile workers from a blob: URL.
+ * - worker-src: MapLibre's module worker is a same-origin file in the build ('self').
  * - script-src: bundled modules from 'self' plus the per-page sha256 of each
  *   inline bootstrap script that scripts/lib/city-pages.mjs writes into the
  *   province pages. JSON-LD data blocks are not executed and need no hash.
@@ -67,7 +67,7 @@ export function buildCsp({ scriptHashes = [], apiOrigin = null } = {}) {
     ['font-src', ["'self'", 'data:']],
     ['connect-src', connect],
     ['manifest-src', ["'self'"]],
-    ['worker-src', ["'self'", 'blob:']],
+    ['worker-src', ["'self'"]],
     ['object-src', ["'none'"]],
     ['base-uri', ["'self'"]],
     ['form-action', ["'self'"]],

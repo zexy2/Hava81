@@ -1,4 +1,7 @@
 import * as maplibregl from 'maplibre-gl';
+// MapLibre 6 runs its tile parsing in a module worker shipped as a separate file; Vite copies
+// it into the build and hands back its same-origin URL (covered by worker-src 'self').
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -11,6 +14,8 @@ export const OPENFREEMAP_STYLES = {
 export type MapTheme = keyof typeof OPENFREEMAP_STYLES;
 
 type LngLat = [lon: number, lat: number];
+
+maplibregl.setWorkerUrl(workerUrl);
 
 const MapContext = createContext<maplibregl.Map | null>(null);
 
@@ -239,20 +244,22 @@ export function MapMarker({
       element.title = label;
     }
     element.style.zIndex = zIndex === undefined ? '' : String(zIndex);
-    for (const [name, value] of Object.entries(dataAttributes ?? {})) element.setAttribute(name, value);
+    for (const [name, value] of Object.entries(dataAttributes ?? {}))
+      element.setAttribute(name, value);
   }, [className, dataAttributes, element, label, zIndex]);
 
   useEffect(() => {
     markerRef.current?.setLngLat([lon, lat]);
   }, [lat, lon]);
 
+  useEffect(() => {
+    for (const [name, value] of Object.entries(style ?? {})) {
+      element.style.setProperty(name, String(value));
+    }
+  }, [element, style]);
+
   if (!map) return null;
-  return createPortal(
-    <span className="weather-map__marker-body" style={style}>
-      {children}
-    </span>,
-    element
-  );
+  return createPortal(children, element);
 }
 
 interface MapPopupProps {
@@ -318,15 +325,31 @@ export function MapPopup({ lat, lon, className, onClose, closeLabel, children }:
 }
 
 /** Zoom buttons in the map's corner, sized for touch. */
-export function MapZoomControls({ zoomInLabel, zoomOutLabel }: { zoomInLabel: string; zoomOutLabel: string }) {
+export function MapZoomControls({
+  zoomInLabel,
+  zoomOutLabel,
+}: {
+  zoomInLabel: string;
+  zoomOutLabel: string;
+}) {
   const map = useMapSurface();
   if (!map) return null;
   return (
     <div className="weather-map__zoom" data-map-zoom="">
-      <button type="button" data-map-zoom-in="" aria-label={zoomInLabel} onClick={() => map.zoomIn()}>
+      <button
+        type="button"
+        data-map-zoom-in=""
+        aria-label={zoomInLabel}
+        onClick={() => map.zoomIn()}
+      >
         <span aria-hidden="true">+</span>
       </button>
-      <button type="button" data-map-zoom-out="" aria-label={zoomOutLabel} onClick={() => map.zoomOut()}>
+      <button
+        type="button"
+        data-map-zoom-out=""
+        aria-label={zoomOutLabel}
+        onClick={() => map.zoomOut()}
+      >
         <span aria-hidden="true">−</span>
       </button>
     </div>
