@@ -198,7 +198,7 @@
     }
 
     /* Zoom steps down under the layer rail. */
-    .app[data-active-nav='map'] .leaflet-top.leaflet-left {
+    .app[data-active-nav='map'] .weather-map__zoom {
       top: 8.25rem;
     }
   }

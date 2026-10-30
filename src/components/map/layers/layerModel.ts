@@ -104,7 +104,7 @@ export const interpolate = (samples: readonly LayerSample[], lat: number, lon: n
   return weighted / weights;
 };
 
-/** Web Mercator y for a latitude, so canvas rows land where Leaflet draws them. */
+/** Web Mercator y for a latitude, so canvas rows land where the map draws them. */
 export const mercatorY = (lat: number) => {
   const radians = (lat * Math.PI) / 180;
   return Math.log(Math.tan(Math.PI / 4 + radians / 2));

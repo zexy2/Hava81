@@ -10,7 +10,7 @@ import {
   type PrecipitationMeasure,
 } from './layerModel';
 
-/** Lat/lon corners of the drawn field, in Leaflet's [[south, west], [north, east]] order. */
+/** Lat/lon corners of the drawn field as [[south, west], [north, east]]. */
 export const FIELD_BOUNDS: [[number, number], [number, number]] = [
   [TURKEY_BOUNDS.south, TURKEY_BOUNDS.west],
   [TURKEY_BOUNDS.north, TURKEY_BOUNDS.east],
@@ -20,7 +20,7 @@ const FIELD_WIDTH = 520;
 
 /**
  * Paints one layer as a soft field clipped to Türkiye's outline and returns it as a PNG
- * data URL. Rows are sampled in Web Mercator so the image sits exactly on Leaflet's map;
+ * data URL. Rows are sampled in Web Mercator so the image sits exactly on the map's projection;
  * pixels outside the country stay transparent. Returns null when there is nothing to draw
  * or no canvas (tests, very old browsers).
  */
