@@ -7,7 +7,10 @@ import { z } from 'zod';
 
 const HOUR_MS = 3_600_000;
 const DEFAULT_REFRESH_MS = 30 * 60_000;
+// After a failed fetch: retry soon, doubling up to the normal refresh interval.
+const DEFAULT_RETRY_MS = 2 * 60_000;
 // Two missed runs: the job publishes twice a day, so anything older is not today's forecast.
+// Applies to the grid build and, separately, to each source's own model run.
 const DEFAULT_MAX_AGE_MS = 36 * HOUR_MS;
 const DEFAULT_TIMEOUT_MS = 10_000;
 // One cell (~28 km at 0.25°) reaches a coastal city's nearest sea or land value without
@@ -69,6 +72,8 @@ export interface ContextGridSnapshot {
 export interface ContextGridOptions {
   url: string;
   refreshMs?: number;
+  /** First retry delay after a failed fetch; doubles on each failure up to `refreshMs`. */
+  retryMs?: number;
   maxAgeMs?: number;
   timeoutMs?: number;
   now?: () => Date;
@@ -77,9 +82,24 @@ export interface ContextGridOptions {
 /** Hourly series for one field at one point, aligned with the snapshot's `times`. */
 export type PointSeries = Array<number | null>;
 
+export type ContextGridSource = ContextGridDocument['sources'][number];
+
+/** Fields each source fills; a source's values are only used while its own run is fresh. */
+const CAMS_FIELDS: readonly ContextGridField[] = ['dust', 'grassPollen', 'olivePollen'];
+const MARINE_FIELDS: readonly ContextGridField[] = [
+  'waveHeight',
+  'waveDirection',
+  'wavePeriod',
+  'seaSurfaceTemperature',
+];
+export const isMarineSource = (source: ContextGridSource) => /marine/i.test(source.name);
+export const isCamsSource = (source: ContextGridSource) => /CAMS|atmosphere/i.test(source.name);
+
 export class CopernicusContextGrid {
   private snapshot: ContextGridSnapshot | null = null;
-  private fetchedAt = 0;
+  /** When the next fetch may start; set from the last attempt, success or failure. */
+  private nextAttemptAt = 0;
+  private failures = 0;
   private inflight: Promise<ContextGridSnapshot | null> | null = null;
   private readonly now: () => Date;
 
@@ -93,8 +113,7 @@ export class CopernicusContextGrid {
   /** The current grid, or null when it is unavailable, malformed or too old to trust. */
   async current(): Promise<ContextGridSnapshot | null> {
     const now = this.now().getTime();
-    const refreshMs = this.options.refreshMs ?? DEFAULT_REFRESH_MS;
-    if (this.fetchedAt > 0 && now - this.fetchedAt < refreshMs) return this.fresh(this.snapshot);
+    if (now < this.nextAttemptAt) return this.fresh(this.snapshot);
     if (!this.inflight) {
       this.inflight = this.load().finally(() => {
         this.inflight = null;
@@ -107,7 +126,32 @@ export class CopernicusContextGrid {
   private fresh(snapshot: ContextGridSnapshot | null) {
     if (!snapshot) return null;
     const age = this.now().getTime() - Date.parse(snapshot.document.generatedAt);
-    return age <= (this.options.maxAgeMs ?? DEFAULT_MAX_AGE_MS) ? snapshot : null;
+    return age <= this.maxAgeMs ? snapshot : null;
+  }
+
+  private get maxAgeMs() {
+    return this.options.maxAgeMs ?? DEFAULT_MAX_AGE_MS;
+  }
+
+  /**
+   * Whether a source's own model run is recent enough to show its values. A source without a
+   * verifiable run time is never fresh: the grid's build time says nothing about the forecast.
+   */
+  sourceIsFresh(source: ContextGridSource | undefined): source is ContextGridSource & { run: string } {
+    if (!source?.run) return false;
+    const run = Date.parse(source.run);
+    return Number.isFinite(run) && this.now().getTime() - run <= this.maxAgeMs;
+  }
+
+  /** Fields whose source run is fresh in this snapshot. */
+  freshFields(snapshot: ContextGridSnapshot): Set<ContextGridField> {
+    const fields = new Set<ContextGridField>();
+    for (const source of snapshot.document.sources) {
+      if (!this.sourceIsFresh(source)) continue;
+      if (isCamsSource(source)) CAMS_FIELDS.forEach(field => fields.add(field));
+      if (isMarineSource(source)) MARINE_FIELDS.forEach(field => fields.add(field));
+    }
+    return fields;
   }
 
   private async load(): Promise<ContextGridSnapshot | null> {
@@ -129,7 +173,8 @@ export class CopernicusContextGrid {
         document: parsed.data,
         times: parsed.data.times.map(time => Date.parse(time)),
       };
-      this.fetchedAt = this.now().getTime();
+      this.failures = 0;
+      this.nextAttemptAt = this.now().getTime() + (this.options.refreshMs ?? DEFAULT_REFRESH_MS);
       return this.snapshot;
     } catch {
       return this.keepPrevious();
@@ -138,9 +183,15 @@ export class CopernicusContextGrid {
     }
   }
 
-  /** A failed refresh keeps the last good grid; `fresh` still drops it once it is too old. */
+  /**
+   * A failed refresh keeps the last good grid without renewing its age (`fresh` and the source
+   * runs still drop it once too old) and retries soon, backing off up to the refresh interval.
+   */
   private keepPrevious() {
-    this.fetchedAt = this.now().getTime();
+    const refreshMs = this.options.refreshMs ?? DEFAULT_REFRESH_MS;
+    const retryMs = this.options.retryMs ?? DEFAULT_RETRY_MS;
+    this.nextAttemptAt = this.now().getTime() + Math.min(refreshMs, retryMs * 2 ** this.failures);
+    this.failures += 1;
     return this.snapshot;
   }
 }

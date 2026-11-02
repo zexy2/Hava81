@@ -1,7 +1,9 @@
 import type { ContextSignals, ContextSignalsSource } from '../../modules/context/context.service';
+import { AppError } from '../../core/errors';
 import {
   CONTEXT_GRID_FIELDS,
   hourIndexAt,
+  isMarineSource,
   round2,
   seriesAt,
   windowMax,
@@ -30,9 +32,10 @@ export interface MetNorwayContextOptions {
 /**
  * Credits for the published grid, in the wording each licence asks for: CAMS (CC BY 4.0)
  * and "Generated using E.U. Copernicus Marine Service Information" with the product DOIs.
+ * Sources whose run is not fresh are left out: none of their values are shown.
  */
-const gridCredits = (snapshot: ContextGridSnapshot) =>
-  snapshot.document.sources.map(source => {
+const gridCredits = (snapshot: ContextGridSnapshot, used: (source: ContextGridSnapshot['document']['sources'][number]) => boolean) =>
+  snapshot.document.sources.filter(used).map(source => {
     if (/marine/i.test(source.name)) {
       const links = (source.dois ?? []).map(doi => `https://doi.org/${doi}`).join(', ');
       return `Generated using E.U. Copernicus Marine Service Information${links ? `; ${links}` : ''}`;
@@ -70,29 +73,44 @@ export class MetNorwayContextService implements ContextSignalsSource {
   async get(lat: number, lon: number, includeMarine: boolean): Promise<ContextSignals> {
     const nowMs = this.now().getTime();
     const start = Math.floor(nowMs / HOUR_MS) * HOUR_MS;
-    const [forecast, snapshot] = await Promise.all([
+    // MET (UV) and the Copernicus grid are independent: one being down must not hide the other.
+    const [metResult, gridResult] = await Promise.allSettled([
       this.transport.forecast(lat, lon),
       this.options.grid ? this.options.grid.current() : Promise.resolve(null),
     ]);
-    const window = expandToHours(forecast, start).slice(0, CONTEXT_WINDOW_HOURS);
+    const forecast = metResult.status === 'fulfilled' ? metResult.value : null;
+    const snapshot = gridResult.status === 'fulfilled' ? gridResult.value : null;
+    const grid = this.options.grid;
+    const freshFields = snapshot && grid ? grid.freshFields(snapshot) : new Set();
+    if (!forecast && freshFields.size === 0) {
+      if (metResult.status === 'rejected') throw metResult.reason;
+      throw new AppError(502, 'CONTEXT_PROVIDER_ERROR', 'Bağlam verisi şu anda kullanılamıyor.');
+    }
+
+    const window = forecast ? expandToHours(forecast, start).slice(0, CONTEXT_WINDOW_HOURS) : [];
     const uvValues = window
       .filter(hour => isDaylightHour(lat, lon, new Date(hour.time)))
       .map(hour => estimatedUvIndex(hour.uvClearSky, hour.cloudCover))
       .filter((value): value is number => value !== undefined);
 
     const signals: ContextSignals = {
-      provider: 'MET Norway',
+      provider: forecast ? 'MET Norway' : 'Copernicus',
       fetchedAt: new Date().toISOString(),
+      // Replaced by the grid credits below; this only stands when MET is the sole source.
       attribution: MET_NORWAY_ATTRIBUTION,
       uvIndexMax: uvValues.length > 0 ? Math.max(...uvValues) : undefined,
       units: {},
     };
-    if (!snapshot) return signals;
+    if (!snapshot || freshFields.size === 0) return signals;
 
     const startIndex = hourIndexAt(snapshot, nowMs);
     if (startIndex < 0) return signals;
+    // A field is read only while the source that fills it has a fresh, verifiable model run.
     const series = Object.fromEntries(
-      CONTEXT_GRID_FIELDS.map(field => [field, seriesAt(snapshot, field, lat, lon)])
+      CONTEXT_GRID_FIELDS.map(field => [
+        field,
+        freshFields.has(field) ? seriesAt(snapshot, field, lat, lon) : null,
+      ])
     ) as Record<(typeof CONTEXT_GRID_FIELDS)[number], ReturnType<typeof seriesAt>>;
     const units = snapshot.document.units;
     const peak = (field: 'dust' | 'grassPollen' | 'olivePollen') => {
@@ -136,8 +154,14 @@ export class MetNorwayContextService implements ContextSignalsSource {
       };
       if (current.waveHeight !== undefined || current.seaSurfaceTemperature !== undefined) {
         usedMarine = true;
+        const validAt = new Date(snapshot.times[startIndex]).toISOString();
+        const marineRun = snapshot.document.sources.find(isMarineSource)?.run;
         signals.marine = {
-          observedAt: new Date(snapshot.times[startIndex]).toISOString(),
+          // Model values for the current hour, not an in-situ observation. `observedAt` is
+          // kept for older clients and carries the same valid time.
+          observedAt: validAt,
+          validAt,
+          ...(marineRun ? { modelRunAt: new Date(marineRun).toISOString() } : {}),
           ...current,
         };
         for (const field of [
@@ -165,8 +189,10 @@ export class MetNorwayContextService implements ContextSignalsSource {
     }
 
     if (usedAir || usedMarine) {
-      signals.provider = 'MET Norway + Copernicus';
-      signals.attribution = [MET_NORWAY_ATTRIBUTION, ...gridCredits(snapshot)].join(' · ');
+      signals.provider = forecast ? 'MET Norway + Copernicus' : 'Copernicus';
+      // Every source with a fresh run is credited, as the grid's licences ask.
+      const credits = gridCredits(snapshot, source => grid?.sourceIsFresh(source) ?? false);
+      signals.attribution = [...(forecast ? [MET_NORWAY_ATTRIBUTION] : []), ...credits].join(' · ');
     }
     return signals;
   }

@@ -40,3 +40,7 @@ yarn-error.log*
 
 # Local Playwright browser binaries for isolated visual QA worktrees
 /.pw-browsers/
+
+# Python
+__pycache__/
+*.pyc

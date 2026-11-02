@@ -521,6 +521,14 @@ const validateContextSignalsPayload = (
         !isFiniteNumber(data.marine.seaSurfaceTemperature),
       'context.marine.seaSurfaceTemperature'
     );
+    for (const field of ['validAt', 'modelRunAt'] as const) {
+      const value = data.marine[field];
+      invalid(
+        value !== undefined &&
+          (typeof value !== 'string' || !Number.isFinite(new Date(value).getTime())),
+        `context.marine.${field}`
+      );
+    }
     for (const field of [
       'waveHeight',
       'waveDirection',

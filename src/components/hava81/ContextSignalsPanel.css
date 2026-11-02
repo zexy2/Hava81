@@ -133,6 +133,12 @@
     margin: 0;
     font-size: 0.83rem;
   }
+  /* Model caveats (experimental pollen, sea model time): quieter than the reading itself. */
+  .context-signal .context-signal__caveat {
+    margin-top: 0.25rem;
+    color: var(--color-atlas-muted);
+    font-size: 0.75rem;
+  }
   .context-signal--high > strong,
   .context-signal--veryHigh > strong,
   .context-signal--extreme > strong {

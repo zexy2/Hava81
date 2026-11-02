@@ -16,6 +16,29 @@ import numpy as np
 import build_grid as bg
 
 
+class CatalogueUpdatedAtTests(unittest.TestCase):
+    """#1742: the Marine run time comes from the catalogue, never from the build clock."""
+
+    @staticmethod
+    def _catalogue(*dates: str | None):
+        from types import SimpleNamespace as N
+
+        parts = [N(arco_updated_date=date) for date in dates]
+        return N(products=[N(datasets=[N(versions=[N(parts=parts)])])])
+
+    def test_oldest_part_sets_the_age(self) -> None:
+        updated = bg.catalogue_updated_at(self._catalogue('2026-10-30T06:00:00Z', '2026-10-29T18:00:00+00:00'))
+        self.assertEqual(updated, datetime(2026, 10, 29, 18, tzinfo=timezone.utc))
+
+    def test_no_parseable_date_means_no_verifiable_run(self) -> None:
+        self.assertIsNone(bg.catalogue_updated_at(self._catalogue(None, 'not a date')))
+        self.assertIsNone(bg.catalogue_updated_at(object()))
+
+    def test_naive_dates_are_read_as_utc(self) -> None:
+        updated = bg.catalogue_updated_at(self._catalogue('2026-10-30T06:00:00'))
+        self.assertEqual(updated, datetime(2026, 10, 30, 6, tzinfo=timezone.utc))
+
+
 class RegridTests(unittest.TestCase):
     def test_block_mean_ignores_nan_and_keeps_empty_cells_empty(self) -> None:
         # Source: 0.125° cells over 40.0–40.5°N × 28.0–28.5°E, 4×4 cells → target 0.25° (2×2).

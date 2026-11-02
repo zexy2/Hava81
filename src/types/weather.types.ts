@@ -257,6 +257,10 @@ export interface ContextSignals {
   };
   marine?: {
     observedAt: string;
+    /** Model valid time, when the values come from a forecast model (not an observation). */
+    validAt?: string;
+    /** When the model behind the values last ran or was refreshed. */
+    modelRunAt?: string;
     waveHeight?: number;
     waveDirection?: number;
     wavePeriod?: number;

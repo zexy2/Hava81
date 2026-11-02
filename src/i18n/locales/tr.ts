@@ -823,6 +823,11 @@ export const tr = {
       pollenUnit: 'tane/m³',
       pollenNote:
         'Önümüzdeki 24 saatte çim/zeytin poleni model maksimumlarından yüksek olan değer.',
+      pollenExperimental:
+        'CAMS polen tahmini deneyseldir ve doğrulanmamıştır; tıbbi bir eşik ya da alerji uyarısı değildir.',
+      seaModelRun: 'Bu saat için model değeri · model güncellemesi',
+      seaModelNoRun: 'Bu saat için model değeri',
+      marineDois: 'Copernicus Marine ürünleri:',
       sea: 'Deniz suyu',
       wave: 'Dalga: {{height}} {{unit}}',
       wavePeriod: 'periyot {{period}} {{unit}}',
@@ -838,6 +843,8 @@ export const tr = {
       note: 'UV, toz, polen ve deniz verileri Open-Meteo model çıktılarıdır; yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
       noteCopernicus:
         'UV, MET Norway açık gökyüzü UV tahmininin bulutlulukla azaltılmış hâlidir. Toz ve polen Copernicus CAMS, dalga ve deniz sıcaklığı Copernicus Marine model çıktılarıdır (E.U. Copernicus Marine Service Information). Yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
+      noteCopernicusOnly:
+        'MET Norway şu anda yanıt vermediği için UV gösterilmiyor. Toz ve polen Copernicus CAMS, dalga ve deniz sıcaklığı Copernicus Marine model çıktılarıdır (E.U. Copernicus Marine Service Information). Yerel ölçüm veya sağlık/denizcilik güvenlik garantisi değildir.',
       noteMetNorway:
         'UV, MET Norway açık gökyüzü UV tahmininin bulutlulukla azaltılmış hâlidir; yerel ölçüm değildir. Toz, polen ve deniz verisi için ticari kullanıma uygun ücretsiz bir kaynak bulunmadığından bu sinyaller gösterilmiyor.',
     },

@@ -124,7 +124,8 @@ export const finiteMaxForWindow = (
 };
 
 export interface ContextSignals {
-  provider: 'Open-Meteo' | 'MET Norway' | 'MET Norway + Copernicus';
+  /** `Copernicus` alone when MET Norway (UV) is down but the grid is fresh. */
+  provider: 'Open-Meteo' | 'MET Norway' | 'MET Norway + Copernicus' | 'Copernicus';
   fetchedAt: string;
   attribution: string;
   uvIndexMax?: number;
@@ -143,7 +144,12 @@ export interface ContextSignals {
     seaSurfaceTemperature?: string;
   };
   marine?: {
+    /** Sample time of the reading; for model sources the valid time (see `validAt`). */
     observedAt: string;
+    /** Model valid time of the values, when they come from a forecast model, not an observation. */
+    validAt?: string;
+    /** When the model behind the values last ran or was refreshed. */
+    modelRunAt?: string;
     waveHeight?: number;
     waveDirection?: number;
     wavePeriod?: number;

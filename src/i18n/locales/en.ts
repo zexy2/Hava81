@@ -815,6 +815,11 @@ export const en = {
       pollen: 'Pollen model',
       pollenUnit: 'grains/m³',
       pollenNote: 'Higher modeled maximum across grass/olive pollen over the next 24 hours.',
+      pollenExperimental:
+        'The CAMS pollen forecast is experimental and not validated; it is not a medical threshold or an allergy warning.',
+      seaModelRun: 'Model value for this hour · model updated',
+      seaModelNoRun: 'Model value for this hour',
+      marineDois: 'Copernicus Marine products:',
       sea: 'Sea water',
       wave: 'Wave: {{height}} {{unit}}',
       wavePeriod: 'period {{period}} {{unit}}',
@@ -829,6 +834,8 @@ export const en = {
       note: 'UV, dust, pollen and marine values are Open-Meteo model outputs; they are not local measurements or health/navigation safety guarantees.',
       noteCopernicus:
         "UV is MET Norway's clear-sky UV forecast reduced for cloud cover. Dust and pollen are Copernicus CAMS model output; waves and sea temperature are Copernicus Marine model output (generated using E.U. Copernicus Marine Service Information). They are not local measurements or health/navigation safety guarantees.",
+      noteCopernicusOnly:
+        'MET Norway is not responding, so UV is not shown. Dust and pollen are Copernicus CAMS, waves and sea temperature Copernicus Marine model output (E.U. Copernicus Marine Service Information). Not a local measurement or a health or marine safety guarantee.',
       noteMetNorway:
         "UV is MET Norway's clear-sky UV forecast reduced for cloud cover; it is not a local measurement. Dust, pollen and marine signals are not shown because no free source licensed for commercial use provides them.",
     },

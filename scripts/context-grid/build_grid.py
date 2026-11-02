@@ -145,6 +145,29 @@ def align_to_hours(values: np.ndarray, src_times: Sequence[datetime], hours: Seq
     return out
 
 
+def catalogue_updated_at(catalogue: Any) -> datetime | None:
+    """Oldest `arco_updated_date` across the parts of a `copernicusmarine.describe()` result.
+
+    That is when the served data was last refreshed, i.e. how current the forecast is. The
+    oldest part is used so a single stale part cannot hide behind a fresh one. None when no
+    part reports a parseable date: the source then has no verifiable run time.
+    """
+    dates: list[datetime] = []
+    for product in getattr(catalogue, 'products', None) or []:
+        for dataset in getattr(product, 'datasets', None) or []:
+            for version in getattr(dataset, 'versions', None) or []:
+                for part in getattr(version, 'parts', None) or []:
+                    raw = getattr(part, 'arco_updated_date', None)
+                    if not raw:
+                        continue
+                    try:
+                        parsed = datetime.fromisoformat(str(raw).replace('Z', '+00:00'))
+                    except ValueError:
+                        continue
+                    dates.append(parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc))
+    return min(dates) if dates else None
+
+
 def _iso(t: datetime) -> str:
     return t.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
@@ -295,8 +318,15 @@ def fetch_marine(hours: list[datetime], workdir: Path) -> tuple[dict[str, np.nda
     north, west, south, east = BBOX
     collected: dict[str, list[np.ndarray]] = {}
     dois: list[str] = []
+    updated: list[datetime] = []
     for dataset_id, variables, doi in MARINE:
         try:
+            # When the data was last refreshed; without it the source has no verifiable run.
+            catalogue = copernicusmarine.describe(dataset_id=dataset_id, disable_progress_bar=True)
+            dataset_updated = catalogue_updated_at(catalogue)
+            if dataset_updated is None:
+                print(f'marine: {dataset_id} has no update date; skipping', file=sys.stderr)
+                continue
             path = copernicusmarine.subset(
                 dataset_id=dataset_id,
                 variables=list(variables),
@@ -314,6 +344,8 @@ def fetch_marine(hours: list[datetime], workdir: Path) -> tuple[dict[str, np.nda
                 output_filename=f'{dataset_id}.nc',
                 overwrite=True,
                 disable_progress_bar=True,
+                # Refuse a window that overlaps data still being updated rather than publish it.
+                raise_if_updating=True,
             )
         except Exception as error:  # noqa: BLE001 - the toolbox raises many types; one dataset may fail alone
             print(f'marine: {dataset_id} unavailable ({type(error).__name__})', file=sys.stderr)
@@ -334,6 +366,7 @@ def fetch_marine(hours: list[datetime], workdir: Path) -> tuple[dict[str, np.nda
                 values = data.transpose('time', 'latitude', 'longitude').values.astype(float)
                 collected.setdefault(field, []).append(align_to_hours(regrid(values, lat, lon, TURKEY_GRID), steps, hours))
         dois.append(doi)
+        updated.append(dataset_updated)
     if not collected:
         return {}, None
     fields = {field: merge_valid(parts) for field, parts in collected.items()}
@@ -341,7 +374,8 @@ def fetch_marine(hours: list[datetime], workdir: Path) -> tuple[dict[str, np.nda
         'name': 'E.U. Copernicus Marine Service',
         'licence': 'Copernicus Marine licence',
         'dois': dois,
-        'run': _iso(datetime.now(timezone.utc)),
+        # The oldest dataset sets the age: never claim the grid is newer than its oldest part.
+        'run': _iso(min(updated)),
     }
 
 

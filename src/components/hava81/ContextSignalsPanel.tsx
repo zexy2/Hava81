@@ -83,6 +83,15 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           minute: '2-digit',
           timeZone: 'UTC',
         });
+  // Local time of the sea model run, in the forecast location's timezone.
+  const marineRunAt = signals.marine?.modelRunAt;
+  const marineRunTime =
+    marineRunAt && Number.isFinite(Date.parse(marineRunAt))
+      ? new Date(Date.parse(marineRunAt) + timezoneOffsetSeconds * 1000).toLocaleString(
+          i18n.language,
+          { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+        )
+      : null;
   const uv = uvLevel(signals.uvIndexMax);
   const pollen = useMemo(() => {
     const grass = signals.grassPollenMax;
@@ -128,8 +137,13 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
         : `${formatFixed(seaSurfaceTemperature, i18n.language, 1)}${getTemperatureSymbol()}`;
 
   // MET Norway supplies UV; Copernicus (CAMS, Copernicus Marine) dust, pollen and the sea.
+  // `Copernicus` alone means MET Norway did not answer and UV is unknown.
   const usesMetNorway = signals.provider.startsWith('MET Norway');
   const usesCopernicus = signals.provider.includes('Copernicus');
+  // Copernicus Marine asks for its product DOIs; the API puts them in the attribution.
+  const marineDois = usesCopernicus
+    ? [...new Set(signals.attribution.match(/10\.\d{4,9}\/[\w.-]+/g) ?? [])]
+    : [];
 
   return (
     <section className="context-signals" aria-labelledby="context-signals-title">
@@ -147,12 +161,12 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
               {' · '}
               {t('hava81.context.sourceModified')}
             </>
-          ) : usesMetNorway ? (
+          ) : usesMetNorway || usesCopernicus ? (
             <>
-              <a href="https://api.met.no/">MET Norway</a>
+              {usesMetNorway ? <a href="https://api.met.no/">MET Norway</a> : null}
               {usesCopernicus ? (
                 <>
-                  {' · '}
+                  {usesMetNorway ? ' · ' : null}
                   <a href="https://atmosphere.copernicus.eu/">CAMS</a>
                   {' · '}
                   <a href="https://marine.copernicus.eu/">Copernicus Marine</a>
@@ -162,6 +176,18 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
               <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
               {' · '}
               {t('hava81.context.sourceModified')}
+              {marineDois.length > 0 ? (
+                <>
+                  {' · '}
+                  {t('hava81.context.marineDois')}{' '}
+                  {marineDois.map((doi, index) => (
+                    <span key={doi}>
+                      {index > 0 ? ', ' : null}
+                      <a href={`https://doi.org/${doi}`}>{doi}</a>
+                    </span>
+                  ))}
+                </>
+              ) : null}
             </>
           ) : (
             signals.attribution
@@ -208,6 +234,9 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
               </small>
             </strong>
             <p>{t('hava81.context.pollenNote')}</p>
+            {usesCopernicus ? (
+              <p className="context-signal__caveat">{t('hava81.context.pollenExperimental')}</p>
+            ) : null}
           </article>
         ) : null}
         {hasMarine ? (
@@ -239,6 +268,18 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
                     .join(' · ')
                 : t('hava81.context.waveUnavailable')}
             </p>
+            {signals.marine?.validAt ? (
+              <p className="context-signal__caveat">
+                {marineRunTime && marineRunAt ? (
+                  <>
+                    {t('hava81.context.seaModelRun')}{' '}
+                    <time dateTime={new Date(marineRunAt).toISOString()}>{marineRunTime}</time>
+                  </>
+                ) : (
+                  t('hava81.context.seaModelNoRun')
+                )}
+              </p>
+            ) : null}
           </article>
         ) : null}
       </div>
@@ -249,7 +290,9 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
       ) : null}
       <p className="context-signals__note">
         {usesCopernicus
-          ? t('hava81.context.noteCopernicus')
+          ? usesMetNorway
+            ? t('hava81.context.noteCopernicus')
+            : t('hava81.context.noteCopernicusOnly')
           : usesMetNorway
             ? t('hava81.context.noteMetNorway')
             : t('hava81.context.note')}
