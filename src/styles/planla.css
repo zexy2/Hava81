@@ -2158,6 +2158,7 @@
   .app .atlas-plan-view .activity-suggestions h3 {
     margin: 0.75rem 0 0.125rem;
     font-size: 1.125rem;
+    overflow-wrap: anywhere;
   }
 
   .app .atlas-plan-view .activity-suggestions ol {

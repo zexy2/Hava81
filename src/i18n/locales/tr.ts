@@ -711,7 +711,7 @@ export const tr = {
       },
       suggest: {
         title: {
-          now: 'Önümüzdeki 12 saatte en iyiler',
+          now: '12 saatin en iyileri',
           evening: 'Bu akşam ne yapsan iyi olur',
           tomorrow: 'Yarın için en iyiler',
           weekend: 'Hafta sonu için en iyiler',
