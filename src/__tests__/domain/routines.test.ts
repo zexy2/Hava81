@@ -268,6 +268,20 @@ describe('evaluateRoutineOn', () => {
     expect(result.plan.bestWindowRange!.start.time.getTime()).toBeGreaterThanOrEqual(at);
   });
 
+  it('a window outside the plan hours is no answer for that day', () => {
+    // Late in the plan, rough weather on what is left: the engine may look into tomorrow.
+    const at = local(29, 16);
+    const rough = hours(hour => hour >= 16 && hour < 18);
+    const result = evaluateRoutineOn(picnic, { ...input(rough), now: new Date(at) }, '2026-10-29');
+    expect(result.status).toBe('scored');
+    if (result.status !== 'scored') return;
+    const range = result.plan.bestWindowRange;
+    if (range) {
+      expect(range.start.time.getTime()).toBeGreaterThanOrEqual(at);
+      expect(range.endTime.getTime()).toBeLessThanOrEqual(local(29, 18));
+    }
+  });
+
   it('has no answer on a day the plan does not run', () => {
     const weekdays = routine({
       kind: 'fixed',

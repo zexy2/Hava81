@@ -350,9 +350,10 @@ export const buildActivityPlan = ({
         );
   // No full block in the next 12 hours (a 21:00 picnic with one bright hour before 09:00):
   // the honest next answer is tomorrow's block, not "nothing".
+  // An asked period ("Saturday 10:00–18:00") is a promise: never answer it from another day.
   let windowPool = candidateSlots;
   let windows = blocksIn(windowPool);
-  if (!windows.length && !windowApplied) {
+  if (!windows.length && !windowApplied && !period) {
     windowPool = slots.filter(slot => slot.time.getTime() < nextDayEndMs);
     windows = blocksIn(windowPool);
   }
@@ -374,8 +375,11 @@ export const buildActivityPlan = ({
   });
   // With hourly data, "no block fits the whole activity" is the honest answer; a shorter range
   // would promise a 2-hour picnic in a 1-hour gap.
+  // Measure the cadence where the answer comes from: a far period arrives in three-hour steps
+  // even when the next hours are hourly.
+  const cadencePool = period ? candidateSlots : slots;
   const hourlyCadence =
-    !instantWindow && forecastCadenceMs(slots) <= 1.5 * HOUR_MS && slots.length > 1;
+    !instantWindow && forecastCadenceMs(cadencePool) <= 1.5 * HOUR_MS && cadencePool.length > 1;
   const bestWindowRange = ranked.length
     ? toRange(ranked[0])
     : hourlyCadence

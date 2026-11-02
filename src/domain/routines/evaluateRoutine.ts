@@ -138,10 +138,17 @@ function withinOccurrence(
   if (!range) return plan;
   // Today's window never starts in the past: a 10:00–18:00 picnic at 15:20 starts at 15:20.
   const earliestMs = Math.max(occurrence.startMs, Math.ceil(nowMs / 60_000) * 60_000);
-  const startMs = Math.max(range.start.time.getTime(), earliestMs);
+  const rangeStartMs = range.start.time.getTime();
+  const rangeEndMs = range.endTime.getTime();
+  // A window that does not overlap the plan's own hours (the engine looked past an empty
+  // evening into tomorrow) is not an answer for this day: there is no good time in the plan.
+  if (rangeEndMs <= earliestMs || rangeStartMs >= occurrence.endMs) {
+    return { ...plan, bestWindowRange: undefined };
+  }
+  const startMs = Math.max(rangeStartMs, earliestMs);
   const minEndMs = Math.min(startMs + durationMinutes * 60_000, occurrence.endMs);
-  const endMs = Math.max(Math.min(range.endTime.getTime(), occurrence.endMs), minEndMs);
-  if (startMs === range.start.time.getTime() && endMs === range.endTime.getTime()) return plan;
+  const endMs = Math.max(Math.min(rangeEndMs, occurrence.endMs), minEndMs);
+  if (startMs === rangeStartMs && endMs === rangeEndMs) return plan;
   return {
     ...plan,
     bestWindowRange: {
