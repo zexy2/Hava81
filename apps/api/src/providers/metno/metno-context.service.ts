@@ -1,5 +1,5 @@
 import type { ContextSignals, ContextSignalsSource } from '../../modules/context/context.service';
-import { estimatedUvIndex, expandToHours, MET_NORWAY_ATTRIBUTION, MetNorwayTransport } from './metno-client';
+import { estimatedUvIndex, expandToHours, MET_NORWAY_ATTRIBUTION, MetNorwayTransport, modelUpdatedAt } from './metno-client';
 import { isDaylightHour } from './solar';
 
 const HOUR_MS = 3_600_000;
@@ -50,6 +50,7 @@ export class MetNorwayContextService implements ContextSignalsSource {
       fetchedAt: new Date().toISOString(),
       attribution: MET_NORWAY_ATTRIBUTION,
       uvIndexMax: uvValues.length > 0 ? Math.max(...uvValues) : undefined,
+      ...(forecast && modelUpdatedAt(forecast) ? { modelUpdatedAt: modelUpdatedAt(forecast) } : {}),
       units: {},
     };
   }

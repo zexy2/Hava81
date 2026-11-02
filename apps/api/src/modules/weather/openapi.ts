@@ -195,6 +195,8 @@ export const airQualityHourlyResponseJsonSchema = {
         properties: {
           time: { type: 'string', format: 'date-time' },
           europeanAqi: { type: 'number', minimum: 0 },
+          aqiPartial: { type: 'boolean', description: 'Beş kirleticinin hepsi yok; değer bir alt sınırdır' },
+          aqiPollutants: { type: 'array', items: { type: 'string' } },
           pm25: { type: 'number', minimum: 0 },
         },
       },

@@ -90,6 +90,10 @@ export interface AirQualityHourlyProviderResult {
     time: string;
     europeanAqi: number;
     pm25?: number;
+    /** True when the AQI is from fewer than all five pollutants: a lower bound, not complete. */
+    aqiPartial?: boolean;
+    /** Pollutants a partial AQI was computed from. */
+    aqiPollutants?: string[];
   }>;
 }
 

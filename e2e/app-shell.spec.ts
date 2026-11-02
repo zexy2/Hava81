@@ -10,7 +10,8 @@ test('core city experience renders and uses a shareable city URL', async ({ page
   await expect(page.getByRole('heading', { name: 'İstanbul', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page).toHaveURL(/\/istanbul\/$/);
-  await expect(page.getByText(/OpenWeather/)).toBeVisible();
+  // The source appears both in the decision panel and in the visible footer credit.
+  await expect(page.getByText(/OpenWeather/).first()).toBeVisible();
   await ensureForecastAtlasLoaded(page);
   const hourlySection = page.getByRole('region', { name: /Saatlik tahmin · sonraki 24 saat/i });
   await expect(

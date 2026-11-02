@@ -17,8 +17,8 @@ export function OpenWeatherCredit() {
       href={OPENWEATHER_URL}
       target="_blank"
       rel="noreferrer"
-      title="Weather data provided by OpenWeather"
     >
+      <span className="data-credit__text">Weather data provided by OpenWeather</span>
       <img
         className="data-credit__logo data-credit__logo--light"
         src="/attribution/openweather-logo.webp"

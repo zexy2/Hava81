@@ -128,6 +128,8 @@ export interface ContextSignals {
   fetchedAt: string;
   attribution: string;
   uvIndexMax?: number;
+  /** When the model behind the UV value last ran (MET `meta.updated_at`), not the fetch time. */
+  modelUpdatedAt?: string;
   dustMax?: number;
   grassPollenMax?: number;
   olivePollenMax?: number;

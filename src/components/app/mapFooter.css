@@ -91,6 +91,7 @@
   .app .data-credit {
     display: inline-flex;
     align-items: center;
+    gap: 0.4em;
     vertical-align: middle;
   }
 

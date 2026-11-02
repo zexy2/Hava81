@@ -70,6 +70,20 @@ export function europeanAqiFromComponents(
   return worst === null ? null : Math.round(worst);
 }
 
+/**
+ * Which pollutants a European AQI was computed from. The index is the worst pollutant, so a
+ * missing one could be higher: anything short of all five is a partial, lower-bound value.
+ */
+export const europeanAqiCoverage = (
+  components: Partial<Record<Pollutant, number | null | undefined>>
+): { complete: boolean; pollutants: Pollutant[] } => {
+  const pollutants = (Object.keys(BANDS) as Pollutant[]).filter(pollutant => {
+    const value = components[pollutant];
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+  });
+  return { complete: pollutants.length === Object.keys(BANDS).length, pollutants };
+};
+
 const concentration = z.number().finite().min(0).max(100_000).optional();
 const airForecastSchema = z.object({
   list: z.array(
@@ -129,10 +143,12 @@ export class OpenWeatherAirQualityHourlyProvider implements AirQualityHourlyProv
       for (const entry of parsed.data.list) {
         const europeanAqi = europeanAqiFromComponents(entry.components);
         if (europeanAqi === null) continue;
+        const coverage = europeanAqiCoverage(entry.components);
         hourly.push({
           time: new Date(entry.dt * 1_000).toISOString(),
           europeanAqi,
           pm25: entry.components.pm2_5,
+          ...(coverage.complete ? {} : { aqiPartial: true, aqiPollutants: coverage.pollutants }),
         });
       }
       return { hourly };
