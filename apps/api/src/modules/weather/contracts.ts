@@ -134,6 +134,16 @@ export interface HourlyForecastDto {
     dewPoint?: number;
     /** Seconds of sunshine within the preceding hour, 0–3600 (Open-Meteo `sunshine_duration`). */
     sunshineDuration?: number;
+    /** Length of the source step `pop` belongs to, when it is not this hour alone. */
+    popIntervalHours?: number;
+    /** Start of the source step `pop` belongs to, when it is not this hour. */
+    popValidFrom?: string;
+    /** Resolution of the source data behind this row, in hours. */
+    sourceIntervalHours?: number;
+    /** True when the row sits between source steps and is interpolated. */
+    interpolated?: boolean;
+    /** Total of the multi-hour source period that covers this hour, mm. */
+    periodPrecipitationMm?: number;
   }>;
   meta: DataMetaDto;
 }

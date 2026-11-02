@@ -56,6 +56,16 @@ export interface HourlyForecastProviderResult {
     uvIndex?: number;
     visibility?: number;
     weatherCode?: number;
+    /** Length of the source step `pop` belongs to, when it is not this hour alone (3 = OpenWeather). */
+    popIntervalHours?: number;
+    /** Start of the source step `pop` belongs to (ISO-8601 UTC), when it is not this hour. */
+    popValidFrom?: string;
+    /** Resolution of the source data behind this row: 1 = MET hourly step, 6 = six-hour step. */
+    sourceIntervalHours?: number;
+    /** True when the row sits between source steps and its instant values are interpolated. */
+    interpolated?: boolean;
+    /** Total of the multi-hour source period that covers this hour, mm (not this hour's amount). */
+    periodPrecipitationMm?: number;
     /** True when the hour is in daylight (Open-Meteo `is_day`). */
     isDay?: boolean;
     /** Dew point at 2 m in °C (Open-Meteo `dew_point_2m`). */

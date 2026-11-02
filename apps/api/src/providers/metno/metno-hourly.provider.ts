@@ -16,7 +16,7 @@ import {
   round1,
   type MetHour,
 } from './metno-client';
-import { dailyCodeFor, symbolHasPrecipitation, weatherCodeForSymbol } from './metno-symbols';
+import { dailyCodeFor, weatherCodeForSymbol } from './metno-symbols';
 import { isDaylightHour, sunTimes } from './solar';
 
 const HOUR_MS = 3_600_000;
@@ -25,7 +25,8 @@ const DEFAULT_TIMEOUT_MS = 8_000;
 
 // OpenWeather 5 day / 3 hour forecast (free plan, commercial use allowed):
 // https://openweathermap.org/forecast5. MET Norway has no chance of rain, gusts or
-// visibility for Turkey, so those come from here.
+// visibility for Turkey, so those come from here. `pop` is the probability for a 3-hour step;
+// gust and visibility are values at the step time (`dt`), not hourly measurements.
 const openWeatherForecastSchema = z.object({
   list: z.array(
     z.object({
@@ -39,6 +40,8 @@ const openWeatherForecastSchema = z.object({
 });
 
 type OpenWeatherSlots = z.infer<typeof openWeatherForecastSchema>;
+type OpenWeatherSlot = OpenWeatherSlots['list'][number];
+const OPENWEATHER_STEP_HOURS = 3;
 
 export interface MetNorwayHourlyOptions {
   userAgent: string;
@@ -56,17 +59,6 @@ export const UNKNOWN_WEATHER = { tr: 'Hava durumu bilinmiyor', en: 'Weather unkn
 const UNKNOWN_ICON = '03';
 
 /**
- * Honest fallback when OpenWeather is unavailable: MET only says how much falls, so map the
- * amount to a coarse likelihood. Dry hours stay at 0 % rather than a guessed residual.
- */
-const popFromAmount = (hour: MetHour) => {
-  const amount = hour.precipitationMm ?? 0;
-  if (amount >= 1) return 80;
-  if (amount >= 0.1) return 60;
-  return hour.symbol !== undefined && symbolHasPrecipitation(hour.symbol) ? 30 : 0;
-};
-
-/**
  * Türkiye time (Europe/Istanbul, UTC+3 all year since 2016) when OpenWeather does not send
  * the zone. Hava81 only serves Türkiye; a longitude guess put the west of the country at UTC+2.
  */
@@ -78,6 +70,20 @@ const turkeyOffsetSeconds = (at: Date): number => {
   if (!match) return 3 * 3_600;
   const sign = match[1] === '-' ? -1 : 1;
   return sign * (Number(match[2]) * 3_600 + Number(match[3] ?? 0) * 60);
+};
+
+/**
+ * The day's precipitation: one-hour amounts as they are, a six-hour period by the share of its
+ * hours that fall in the day. Left out when any hour of the day has no known amount.
+ */
+const dayTotal = (hours: readonly MetHour[]): { precipitationMm?: number } => {
+  let total = 0;
+  for (const hour of hours) {
+    const share = hour.precipitationMm ?? (hour.period?.amountMm === undefined ? undefined : hour.period.amountMm / 6);
+    if (share === undefined) return {};
+    total += share;
+  }
+  return { precipitationMm: Math.round(total * 10) / 10 };
 };
 
 export class MetNorwayHourlyProvider implements HourlyForecastProvider {
@@ -143,65 +149,90 @@ export class MetNorwayHourlyProvider implements HourlyForecastProvider {
         'Saatlik tahmin verisi şu anda kesintisiz kullanılamıyor.'
       );
     }
-    // The 3-hour list starts at the next slot boundary, so the current hour or two precede it;
-    // they take the first slot, which is at most three hours ahead.
-    const firstSlot = slots?.list[0];
-    const slotAt = (time: number) =>
-      slots?.list.find(slot => slot.dt * 1_000 <= time && time < slot.dt * 1_000 + SLOT_MS) ??
+    // MET has no chance of rain for Türkiye, so every hour's `pop` is OpenWeather's 3-hour
+    // step probability, labelled as such. The list starts at the next step boundary, so the
+    // current hour or two take the first step (at most three hours ahead) and name it in
+    // `popValidFrom`. Nothing is made up: without a covering step the forecast is unavailable.
+    const list = slots?.list ?? [];
+    const firstSlot = list[0];
+    const popSlotAt = (time: number): OpenWeatherSlot | undefined =>
+      list.find(slot => slot.dt * 1_000 <= time && time < slot.dt * 1_000 + SLOT_MS) ??
       (firstSlot && time < firstSlot.dt * 1_000 && firstSlot.dt * 1_000 - time <= SLOT_MS
         ? firstSlot
         : undefined);
+    // Gust and visibility only where an OpenWeather step falls exactly on the hour (#1776).
+    const pointAt = (time: number) => list.find(slot => slot.dt * 1_000 === time);
+    const covered = timeline.slice(0, HOURLY_FORECAST_HOURS);
+    if (covered.some(hour => popSlotAt(hour.time)?.pop === undefined)) {
+      throw new AppError(
+        502,
+        'HOURLY_PRECIPITATION_PROBABILITY_UNAVAILABLE',
+        'Saatlik yağış olasılığı şu anda kullanılamıyor.'
+      );
+    }
     const timezoneOffsetSeconds = slots?.city?.timezone ?? turkeyOffsetSeconds(new Date(start));
 
-    const enriched = timeline.map(hour => {
-      const slot = slotAt(hour.time);
+    const rows = timeline.flatMap(hour => {
+      const slot = popSlotAt(hour.time);
+      // Past OpenWeather's five days there is no probability; those hours are left out.
+      if (slot?.pop === undefined) return [];
+      const point = pointAt(hour.time);
       const isDay = isDaylightHour(query.lat, query.lon, new Date(hour.time));
       const code = hour.symbol === undefined ? null : weatherCodeForSymbol(hour.symbol);
-      const pop = slot?.pop !== undefined ? Math.round(slot.pop * 100) : popFromAmount(hour);
-      return {
+      return [{
+        hour,
+        row: {
         time: new Date(hour.time).toISOString(),
         temp: round1(hour.temperature),
         icon: code === null ? `${UNKNOWN_ICON}${isDay ? 'd' : 'n'}` : iconForCode(code, isDay),
         isDay,
         description: code === null ? UNKNOWN_WEATHER[query.lang] : descriptionForCode(code, query.lang),
-        pop: Math.max(0, Math.min(100, pop)),
+        pop: Math.max(0, Math.min(100, Math.round(slot.pop * 100))),
+        popIntervalHours: OPENWEATHER_STEP_HOURS,
+        popValidFrom: new Date(slot.dt * 1_000).toISOString(),
         windSpeed: round1(hour.windSpeed),
         apparentTemperature: hour.apparentTemperature === undefined ? undefined : round1(hour.apparentTemperature),
         humidity: hour.humidity === undefined ? undefined : Math.round(hour.humidity),
         precipitationMm:
           hour.precipitationMm === undefined ? undefined : Math.round(hour.precipitationMm * 100) / 100,
-        windGust: slot?.wind?.gust,
+        windGust: point?.wind?.gust,
         uvIndex: isDay ? estimatedUvIndex(hour.uvClearSky, hour.cloudCover) : 0,
-        visibility: slot?.visibility,
+        visibility: point?.visibility,
         dewPoint: hour.dewPoint === undefined ? undefined : round1(hour.dewPoint),
         weatherCode: code ?? undefined,
-      };
+        sourceIntervalHours: hour.periodHours ?? (hour.interpolated ? 6 : 1),
+        ...(hour.interpolated ? { interpolated: true } : {}),
+        ...(hour.period?.amountMm === undefined
+          ? {}
+          : { periodPrecipitationMm: Math.round(hour.period.amountMm * 100) / 100 }),
+      }}];
     });
 
     const updatedAt = modelUpdatedAt(forecast);
     return {
       timezoneOffsetSeconds,
       ...(updatedAt ? { modelUpdatedAt: updatedAt } : {}),
-      hourly: enriched.slice(0, HOURLY_FORECAST_HOURS),
-      daily: this.daily(enriched, timezoneOffsetSeconds, query),
+      hourly: rows.slice(0, HOURLY_FORECAST_HOURS).map(entry => entry.row),
+      daily: this.daily(rows, timezoneOffsetSeconds, query),
     };
   }
 
-  /** Local-day summaries over the whole MET horizon (up to ~9 days). */
+  /** Local-day summaries over the hours that have a chance of rain (OpenWeather's ~5 days). */
   private daily(
-    hours: HourlyForecastProviderResult['hourly'],
+    rows: Array<{ hour: MetHour; row: HourlyForecastProviderResult['hourly'][number] }>,
     offsetSeconds: number,
     query: HourlyForecastQuery
   ): NonNullable<HourlyForecastProviderResult['daily']> {
-    const byDay = new Map<string, HourlyForecastProviderResult['hourly']>();
-    for (const hour of hours) {
-      const date = new Date(Date.parse(hour.time) + offsetSeconds * 1_000).toISOString().slice(0, 10);
-      byDay.set(date, [...(byDay.get(date) ?? []), hour]);
+    const byDay = new Map<string, typeof rows>();
+    for (const entry of rows) {
+      const date = new Date(entry.hour.time + offsetSeconds * 1_000).toISOString().slice(0, 10);
+      byDay.set(date, [...(byDay.get(date) ?? []), entry]);
     }
     const days: NonNullable<HourlyForecastProviderResult['daily']> = [];
-    for (const [date, dayHours] of byDay) {
+    for (const [date, entries] of byDay) {
       // A day needs enough hours to describe it; drop the trailing stub of the horizon.
-      if (dayHours.length < 6) continue;
+      if (entries.length < 6) continue;
+      const dayHours = entries.map(entry => entry.row);
       const temps = dayHours.map(hour => hour.temp);
       // The most consequential known weather of the daylight hours (a severity table: WMO
       // codes are categories, not a scale). Unknown when no hour has a known code.
@@ -220,8 +251,7 @@ export class MetNorwayHourlyProvider implements HourlyForecastProvider {
         icon: code === null ? `${UNKNOWN_ICON}d` : iconForCode(code, true),
         description: code === null ? UNKNOWN_WEATHER[query.lang] : descriptionForCode(code, query.lang),
         pop: Math.max(...dayHours.map(hour => hour.pop)),
-        precipitationMm:
-          Math.round(dayHours.reduce((sum, hour) => sum + (hour.precipitationMm ?? 0), 0) * 10) / 10,
+        ...dayTotal(entries.map(entry => entry.hour)),
         ...(sun.sunrise && sun.sunset
           ? { sunrise: sun.sunrise.toISOString(), sunset: sun.sunset.toISOString() }
           : {}),

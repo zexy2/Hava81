@@ -72,10 +72,14 @@ export interface MetHour {
   cloudCover?: number;
   uvClearSky?: number;
   /**
-   * Precipitation in this hour, mm; six-hour totals are spread evenly over their hours.
-   * Undefined when MET gives no amount for the period: unknown, never assumed dry.
+   * Precipitation in this hour, mm, from MET's own one-hour block. Undefined when MET gives no
+   * one-hour amount: unknown, never assumed dry, and never a share of a six-hour total.
    */
   precipitationMm?: number;
+  /** The six-hour period covering this hour, when only a six-hour block describes it. */
+  period?: { start: number; amountMm?: number };
+  /** True when the hour is between MET steps and its instant values are interpolated. */
+  interpolated?: boolean;
   /** MET symbol for the period; undefined when the period is missing. */
   symbol?: string;
   /** Length of the MET period the amount and symbol come from; undefined when none covers the hour. */
@@ -225,8 +229,8 @@ const lerp = (from: number | undefined, to: number | undefined, ratio: number) =
 /**
  * Expands MET's timeline (hourly for ~2.5 days, then 6-hourly) into contiguous hours from
  * `start`. Instant values are interpolated linearly between steps, which stays inside the
- * bracket of the neighbouring values; precipitation comes from the period that covers the
- * hour, split evenly so totals are preserved.
+ * bracket of the neighbouring values, and such hours are marked `interpolated`. A six-hour
+ * amount stays a six-hour amount (`period`): it is not split into invented hourly amounts.
  */
 export const expandToHours = (
   forecast: MetNorwayForecast,
@@ -257,14 +261,12 @@ export const expandToHours = (
     // covers it. A missing block or field stays undefined: no amount means unknown, not 0.
     const ownHour = time === previous.at ? previous.data.next_1_hours : undefined;
     const sixHours = ownHour ? undefined : previous.data.next_6_hours;
-    const sixHourAmount = sixHours?.details?.precipitation_amount;
-    const precipitationMm = ownHour
-      ? ownHour.details?.precipitation_amount
-      : sixHourAmount !== undefined
-        ? sixHourAmount / 6
-        : undefined;
+    const precipitationMm = ownHour?.details?.precipitation_amount;
     const symbol = ownHour ? ownHour.summary?.symbol_code : sixHours?.summary?.symbol_code;
     const periodHours = ownHour ? 1 : sixHours ? 6 : undefined;
+    const period = sixHours
+      ? { start: previous.at, amountMm: sixHours.details?.precipitation_amount }
+      : undefined;
 
     hours.push({
       time,
@@ -280,6 +282,8 @@ export const expandToHours = (
       precipitationMm,
       symbol,
       periodHours,
+      ...(period ? { period } : {}),
+      ...(time === previous.at ? {} : { interpolated: true }),
     });
   }
   return hours;
