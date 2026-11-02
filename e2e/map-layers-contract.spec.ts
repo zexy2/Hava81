@@ -7,6 +7,7 @@
  */
 import type { Locator, Page } from '@playwright/test';
 import { DESKTOP, MOBILE, expect, test } from './helpers/test';
+import { TURKISH_CITIES } from '../src/constants/cities';
 import { mockMapTiles, overrideApiJson, seedSettings } from './helpers/weather-fixtures';
 
 test.use({ bypassCSP: true });
@@ -14,7 +15,7 @@ test.use({ bypassCSP: true });
 const IPHONE_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
 
-const PROVINCES = [
+const NAMED_PROVINCES = [
   {
     plate: 34,
     name: 'İstanbul',
@@ -135,6 +136,27 @@ const PROVINCES = [
     dir: 330,
     wind: 5,
   },
+];
+
+// Owner-approved (2026-11-02, #1720): the field needs real coverage to be drawn, so the other
+// 70 provinces join the 11 named above at their real positions with calm, neutral readings.
+// The named provinces, every step and every expectation are unchanged.
+const PROVINCES = [
+  ...NAMED_PROVINCES,
+  ...TURKISH_CITIES.filter(city => !NAMED_PROVINCES.some(named => named.plate === city.plateCode)).map(
+    city => ({
+      plate: city.plateCode,
+      name: city.name,
+      lat: city.coordinates.lat,
+      lon: city.coordinates.lon,
+      temperature: 14,
+      pop: 10,
+      mm: 0,
+      cloud: 40,
+      dir: 0,
+      wind: 3,
+    })
+  ),
 ];
 
 async function mockLayerData(page: Page) {
