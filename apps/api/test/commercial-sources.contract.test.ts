@@ -276,8 +276,10 @@ test('MET Norway hourly: hours before the first OpenWeather step say whose proba
   const { fetchImpl } = router({
     met: () => metForecast(),
     forecast: () => {
+      // Still 40 steps, as OpenWeather always returns: drop 00:00Z, add one at the far end.
       const body = openWeatherForecast();
-      return { ...body, list: body.list.slice(1) };
+      const last = body.list[body.list.length - 1];
+      return { ...body, list: [...body.list.slice(1), { ...last, dt: last.dt + 3 * 3_600 }] };
     },
   });
   const result = await new MetNorwayHourlyProvider(fetchImpl, {
