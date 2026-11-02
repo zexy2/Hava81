@@ -209,12 +209,21 @@ test('MET Norway hourly: 120 contiguous hours with temperature from MET and chan
   assert.equal(result.timezoneOffsetSeconds, 10_800);
   const h5 = result.hourly[5];
   assert.equal(h5.temp, Math.round((16 - Math.sin(5 / 4)) * 10) / 10);
-  // OpenWeather slot 1 covers 03:00–06:00Z at 75 %.
+  // OpenWeather slot 1 covers 03:00–06:00Z at 75 %. #1706: the value is a 3-hour step
+  // probability and every hour says so, with the step it came from.
   assert.equal(h5.pop, 75);
+  assert.equal(h5.popIntervalHours, 3);
+  assert.equal(h5.popValidFrom, new Date(T0 + 3 * HOUR).toISOString());
   assert.equal(result.hourly[0].pop, 4);
-  assert.equal(h5.windGust, 12.4);
-  assert.equal(h5.visibility, 4_000);
+  // #1776: gust and visibility are OpenWeather point values at the slot time only.
+  assert.equal(result.hourly[3].windGust, 12.4);
+  assert.equal(result.hourly[3].visibility, 4_000);
+  assert.equal(result.hourly[4].windGust, undefined);
+  assert.equal(h5.windGust, undefined);
+  assert.equal(h5.visibility, undefined);
   assert.equal(h5.precipitationMm, 3.2);
+  assert.equal(h5.sourceIntervalHours, 1);
+  assert.equal(h5.interpolated, undefined);
   assert.equal(h5.humidity, 70);
   assert.equal(h5.dewPoint, 10.5);
   assert.equal(h5.windSpeed, 6);
@@ -228,7 +237,7 @@ test('MET Norway hourly: 120 contiguous hours with temperature from MET and chan
   }
 });
 
-test('MET Norway hourly: the 6-hourly tail becomes hourly without inventing extremes', async () => {
+test('MET Norway hourly: the 6-hourly tail is marked as interpolated and keeps its six-hour amount', async () => {
   const { fetchImpl } = router({
     met: () => metForecast({ temperature: hour => (hour < 64 ? 10 : 22) }),
     forecast: openWeatherForecast,
@@ -245,11 +254,49 @@ test('MET Norway hourly: the 6-hourly tail becomes hourly without inventing extr
   assert.deepEqual(tail[0], 10);
   assert.deepEqual(tail[3], 22);
   assert.ok(tail[1] > 10 && tail[1] < 22 && tail[2] > tail[1] && tail[2] < 22);
-  // A six-hour amount is spread over its hours, not repeated in each.
-  const sixHour = result.hourly
-    .slice(66, 72)
-    .reduce((sum, hour) => sum + (hour.precipitationMm ?? 0), 0);
-  assert.ok(Math.abs(sixHour - 1.2) < 0.05, `6 h total ${sixHour}`);
+  // #1707: hours between MET steps are filled, and say so; the native hourly part does not.
+  assert.equal(result.hourly[10].interpolated, undefined);
+  assert.equal(result.hourly[64].interpolated, true);
+  assert.equal(result.hourly[66].interpolated, undefined, '66 h is a native MET step');
+  assert.equal(result.hourly[67].interpolated, true);
+  // A six-hour amount is not split into invented hourly amounts: the hours of the period carry
+  // the period total and its length, and the hourly amount stays unknown.
+  for (const hour of result.hourly.slice(66, 72)) {
+    assert.equal(hour.precipitationMm, undefined, hour.time);
+    assert.equal(hour.periodPrecipitationMm, 1.2, hour.time);
+    assert.equal(hour.sourceIntervalHours, 6, hour.time);
+  }
+  // The daily total still adds up the six-hour amounts.
+  const day = (result.daily ?? []).find(entry => entry.date === '2026-11-02');
+  assert.ok(day && typeof day.precipitationMm === 'number' && day.precipitationMm > 0, 'day total');
+});
+
+test('MET Norway hourly: hours before the first OpenWeather step say whose probability they show', async () => {
+  // OpenWeather's list starts at the next 3-hour boundary: at 01:20Z the first step is 03:00Z.
+  const { fetchImpl } = router({
+    met: () => metForecast(),
+    forecast: () => {
+      const body = openWeatherForecast();
+      return { ...body, list: body.list.slice(1) };
+    },
+  });
+  const result = await new MetNorwayHourlyProvider(fetchImpl, {
+    userAgent: USER_AGENT,
+    openWeatherApiKey: 'k',
+    openWeatherBaseUrl: 'https://api.openweathermap.org/data/2.5',
+    now: () => new Date(T0 + HOUR + 20 * 60_000),
+  }).getHourly({ lat: 41.0082, lon: 28.9784, lang: 'tr' });
+
+  const [first, second, third] = result.hourly;
+  assert.equal(first.time, new Date(T0 + HOUR).toISOString());
+  // #1706: the 01:00 and 02:00 rows take the 03:00 step's value, and name that step.
+  assert.equal(first.pop, 75);
+  assert.equal(first.popValidFrom, new Date(T0 + 3 * HOUR).toISOString());
+  assert.equal(second.popValidFrom, new Date(T0 + 3 * HOUR).toISOString());
+  // #1776: a future point value is not copied back into earlier hours.
+  assert.equal(first.windGust, undefined);
+  assert.equal(first.visibility, undefined);
+  assert.equal(third.windGust, 12.4);
 });
 
 test('MET Norway hourly: day/night and daily sunrise/sunset come from the solar position', async () => {
@@ -299,17 +346,18 @@ test('MET Norway hourly: UV is the clear-sky index damped by cloud, never above 
   assert.equal(result.hourly[2].uvIndex ?? 0, 0);
 });
 
-test('MET Norway hourly: attribution names both sources and survives a missing OpenWeather', async () => {
+test('MET Norway hourly: attribution names both sources; no chance of rain is invented without OpenWeather', async () => {
   const provider = hourlyProvider(router({ met: () => metForecast() }).fetchImpl);
 
   assert.match(provider.attribution ?? '', /MET Norway/);
   assert.match(provider.attribution ?? '', /OpenWeather/);
-  const result = await provider.getHourly({ lat: 41.0082, lon: 28.9784, lang: 'tr' });
-  // Without the chance-of-rain source the forecast still renders, with an honest 0 % floor
-  // only where MET shows no precipitation, and a rain hour reads as likely.
-  assert.equal(result.hourly.length, 120);
-  assert.ok(result.hourly[5].pop >= 50, `rain hour pop ${result.hourly[5].pop}`);
-  assert.equal(result.hourly[0].pop, 0);
+  // #1706: MET has no probability for Türkiye. Without OpenWeather the hourly forecast is
+  // unavailable rather than showing a percentage made up from the amount.
+  await assert.rejects(
+    () => provider.getHourly({ lat: 41.0082, lon: 28.9784, lang: 'tr' }),
+    (error: { statusCode?: number; code?: string }) =>
+      error.statusCode === 502 && error.code === 'HOURLY_PRECIPITATION_PROBABILITY_UNAVAILABLE'
+  );
 });
 
 test('MET symbol codes map onto the WMO codes the app already understands', () => {
