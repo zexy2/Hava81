@@ -307,6 +307,10 @@ export const tr = {
       dailySingleTemperature: 'Günlük sıcaklık {{value}}{{unit}}',
     },
     outlook: {
+      planAnswer: '{{name}} {{when}} · {{band}}',
+      planOff: '{{name}} bu gün planlı değil',
+      planPending: '{{name}} · tahmin henüz yok',
+      planNoWindow: '{{name}} için uygun saat yok',
       approx: '(tahmini)',
       approxScore: 'Yaklaşık {{score}}/100, {{band}}; tahmin henüz kesin değil',
       title: 'Önümüzdeki günler',

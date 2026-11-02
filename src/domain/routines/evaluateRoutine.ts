@@ -42,11 +42,30 @@ export type RoutineEvaluation =
   | { status: 'none' };
 
 export function evaluateRoutine(routine: Routine, input: RoutineWeatherInput): RoutineEvaluation {
+  const offset = input.weather.meta.timezoneOffsetSeconds;
+  const occurrence = nextOccurrences(routine, input.now.getTime(), offset, 1)[0];
+  return occurrence ? scoreOccurrence(routine, input, occurrence) : { status: 'none' };
+}
+
+/** The plan on one local day (YYYY-MM-DD), for the day-by-day outlook; none when it does not run. */
+export function evaluateRoutineOn(
+  routine: Routine,
+  input: RoutineWeatherInput,
+  date: string
+): RoutineEvaluation {
+  const offset = input.weather.meta.timezoneOffsetSeconds;
+  const occurrence = nextOccurrences(routine, input.now.getTime(), offset, 16).find(
+    candidate => candidate.date === date
+  );
+  return occurrence ? scoreOccurrence(routine, input, occurrence) : { status: 'none' };
+}
+
+function scoreOccurrence(
+  routine: Routine,
+  input: RoutineWeatherInput,
+  occurrence: RoutineOccurrence
+): RoutineEvaluation {
   const { weather, hourly, now } = input;
-  const offset = weather.meta.timezoneOffsetSeconds;
-  const occurrences = nextOccurrences(routine, now.getTime(), offset, 1);
-  const occurrence = occurrences[0];
-  if (!occurrence) return { status: 'none' };
 
   const lastHourMs = hourly.reduce(
     (latest, point) => Math.max(latest, point.time.getTime() + HOUR_MS),

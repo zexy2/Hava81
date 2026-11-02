@@ -142,13 +142,15 @@ export function RoutineList({
     const last = cells[cells.length - 1].time.getTime() + 3_600_000;
     return (
       <span className="routine-row__timeline" aria-hidden="true">
-        <span className="routine-row__strip">
+        {/* A flexible plan's best window stands out; the other hours step back. */}
+        <span className={`routine-row__strip${range ? ' routine-row__strip--ranged' : ''}`}>
           {cells.map(slot => {
             const ms = slot.time.getTime();
             const best = range && ms >= range.start.time.getTime() && ms < range.endTime.getTime();
             return (
               <span
                 key={ms}
+                title={`${time(ms)} · ${slot.score} · ${t(`hava81.dailyPlan.bands.${getScoreBand(slot.score)}`)}`}
                 className={[
                   'routine-row__cell',
                   `routine-row__cell--${slot.eligible === false ? 'off' : getScoreBand(slot.score)}`,

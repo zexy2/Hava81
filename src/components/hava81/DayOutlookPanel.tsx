@@ -1,9 +1,13 @@
-import { useRoutineActivities } from '../../hooks/useRoutineActivities';
+import { useSavedRoutines } from '../../hooks/useRoutineActivities';
+import { evaluateRoutineOn } from '../../domain/routines/evaluateRoutine';
+import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
+import { toleranceOf } from '../../hooks/useDecisionProfile';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { TEMPERATURE_SCALE_DARK, temperatureColor } from './forecastAtlas/temperatureColor';
 import { useTranslation } from 'react-i18next';
 import { REASON_I18N_KEY } from '../../domain/decision/reasonKeys';
 import type { ActivityKind } from '../../domain/activity/types';
+import type { Routine } from '../../domain/routines/types';
 import { buildDayOutlook, outlookDayLabelKey } from '../../domain/plan/dayOutlook';
 import { useDecisionProfile } from '../../hooks/useDecisionProfile';
 import type {
@@ -42,8 +46,10 @@ export function DayOutlookPanel({
   const { convertTemperature } = useSettings();
   const { profile } = useDecisionProfile();
   // Your plans first, then what you are exploring: the outlook answers the same questions.
-  const routineActivities = useRoutineActivities();
-  const intents = [...new Set([...routineActivities, ...profile.activities])];
+  const routines = useSavedRoutines();
+  const intents = [
+    ...new Set([...routines.map(routine => routine.activity), ...profile.activities]),
+  ];
   const [intent, setIntent] = useState<ActivityKind | 'general'>('general');
   const [, setFreshnessRevision] = useState(0);
   const freshness = getForecastFreshness(forecastMeta);
@@ -90,9 +96,56 @@ export function DayOutlookPanel({
         : [],
     [fresh, weather, hourly, airQuality, airQualityHourly, contextSignals, activity, tolerance]
   );
+  // A tab that is one of your plans answers that plan on each day, not the whole day.
+  const routine = activity
+    ? routines.find(candidate => candidate.activity === activity)
+    : undefined;
+  const planByDay = useMemo(() => {
+    if (!routine || !fresh) return null;
+    const input = {
+      weather,
+      hourly,
+      airQuality,
+      airQualityHourly,
+      contextSignals,
+      sensitivity: profile.temperatureSensitivity,
+      tolerance: toleranceOf(profile),
+      now: new Date(),
+    };
+    return new Map(days.map(day => [day.dateKey, evaluateRoutineOn(routine, input, day.dateKey)]));
+  }, [
+    routine,
+    fresh,
+    days,
+    weather,
+    hourly,
+    airQuality,
+    airQualityHourly,
+    contextSignals,
+    profile,
+  ]);
   if (days.length < 2) return null;
 
   const time = (date: Date) => formatCityTime(date, offsetSeconds, i18n.language);
+  const planAnswer = (result: ReturnType<typeof evaluateRoutineOn> | undefined, plan: Routine) => {
+    const name = plan.name ?? t(`hava81.activities.names.${plan.activity}`);
+    if (!result || result.status === 'none') return t('hava81.outlook.planOff', { name });
+    if (result.status === 'pending') return t('hava81.outlook.planPending', { name });
+    const range = result.plan.windowUnavailable ? undefined : result.plan.bestWindowRange;
+    const when =
+      plan.schedule.kind === 'fixed'
+        ? time(new Date(result.occurrence.startMs))
+        : range
+          ? `${time(range.start.time)}–${time(range.endTime)}`
+          : null;
+    if (!when) return t('hava81.outlook.planNoWindow', { name });
+    const score = result.plan.score;
+    return t('hava81.outlook.planAnswer', {
+      name,
+      when,
+      band: t(`hava81.dailyPlan.bands.${getScoreBand(score)}`),
+    });
+  };
   const degrees = (value: number) => `${Math.round(convertTemperature(value))}°`;
   // One temperature scale across the listed days, so each bar sits where its day really is.
   const tempValues = days.flatMap(day =>
@@ -140,92 +193,103 @@ export function DayOutlookPanel({
         ) : null}
       </header>
       <ol className="day-outlook__days">
-        {days.map(day => (
-          <li
-            key={day.dateKey}
-            className={`day-outlook__day is-${day.band}${day.thunderHours.length ? ' has-thunder' : ''}`}
-          >
-            {day.icon ? <WeatherSymbol code={day.icon} className="day-outlook__symbol" /> : null}
-            <span className="day-outlook__name">{t(outlookDayLabelKey(day, offsetSeconds))}</span>
-            {day.tempMax !== undefined && day.tempMin !== undefined ? (
-              <span className="day-outlook__temps">
-                <span className="sr-only">
-                  {t('hava81.outlook.tempRange', {
-                    low: degrees(day.tempMin),
-                    high: degrees(day.tempMax),
+        {days.map(day => {
+          // On a plan tab the number belongs to the plan, like the sentence beside it.
+          const planResult = planByDay?.get(day.dateKey);
+          const scored = planResult?.status === 'scored' ? planResult.plan.score : undefined;
+          const score = scored ?? day.score;
+          const band = scored === undefined ? day.band : getScoreBand(scored);
+          // Far days stay approximate for the plan too: same forecast, same uncertainty.
+          const confidence = day.confidence;
+          return (
+            <li
+              key={day.dateKey}
+              className={`day-outlook__day is-${band}${day.thunderHours.length ? ' has-thunder' : ''}`}
+            >
+              {day.icon ? <WeatherSymbol code={day.icon} className="day-outlook__symbol" /> : null}
+              <span className="day-outlook__name">{t(outlookDayLabelKey(day, offsetSeconds))}</span>
+              {day.tempMax !== undefined && day.tempMin !== undefined ? (
+                <span className="day-outlook__temps">
+                  <span className="sr-only">
+                    {t('hava81.outlook.tempRange', {
+                      low: degrees(day.tempMin),
+                      high: degrees(day.tempMax),
+                    })}
+                  </span>
+                  <span className="day-outlook__lo" aria-hidden="true">
+                    {degrees(day.tempMin)}
+                  </span>
+                  <span
+                    className="day-outlook__range"
+                    aria-hidden="true"
+                    style={rangeStyle(day.tempMin, day.tempMax)}
+                  />
+                  <span className="day-outlook__hi" aria-hidden="true">
+                    {degrees(day.tempMax)}
+                  </span>
+                </span>
+              ) : null}
+              {/* Three days out the number is a direction, not a measurement. */}
+              <strong
+                className="day-outlook__score"
+                aria-label={
+                  confidence === 'low'
+                    ? t('hava81.outlook.approxScore', {
+                        score: score,
+                        band: t(`hava81.dailyPlan.bands.${band}`),
+                      })
+                    : undefined
+                }
+              >
+                {confidence === 'low' ? `≈${score}` : score}
+                <small>
+                  /100 · {t(`hava81.dailyPlan.bands.${band}`)}
+                  {confidence === 'low' ? ` ${t('hava81.outlook.approx')}` : ''}
+                </small>
+              </strong>
+              <span className="day-outlook__window">
+                {/* Say whose best time this is: the general score and an activity can differ. */}
+                {planByDay && routine
+                  ? planAnswer(planByDay.get(day.dateKey), routine)
+                  : day.bestWindowRange
+                    ? activity
+                      ? t('hava81.outlook.windowFor', {
+                          activity: t(`hava81.activities.names.${activity}`),
+                          start: time(day.bestWindowRange.start.time),
+                          end: time(day.bestWindowRange.endTime),
+                        })
+                      : t('hava81.outlook.windowGeneral', {
+                          start: time(day.bestWindowRange.start.time),
+                          end: time(day.bestWindowRange.endTime),
+                        })
+                    : t('hava81.outlook.noWindow')}
+              </span>
+              {day.thunderHours.length ? (
+                <span className="day-outlook__thunder" role="note">
+                  {t('hava81.outlook.thunder', {
+                    times: day.thunderHours.map(time).join(', '),
                   })}
                 </span>
-                <span className="day-outlook__lo" aria-hidden="true">
-                  {degrees(day.tempMin)}
-                </span>
-                <span
-                  className="day-outlook__range"
-                  aria-hidden="true"
-                  style={rangeStyle(day.tempMin, day.tempMax)}
-                />
-                <span className="day-outlook__hi" aria-hidden="true">
-                  {degrees(day.tempMax)}
-                </span>
-              </span>
-            ) : null}
-            {/* Three days out the number is a direction, not a measurement. */}
-            <strong
-              className="day-outlook__score"
-              aria-label={
-                day.confidence === 'low'
-                  ? t('hava81.outlook.approxScore', {
-                      score: day.score,
-                      band: t(`hava81.dailyPlan.bands.${day.band}`),
-                    })
-                  : undefined
-              }
-            >
-              {day.confidence === 'low' ? `≈${day.score}` : day.score}
-              <small>
-                /100 · {t(`hava81.dailyPlan.bands.${day.band}`)}
-                {day.confidence === 'low' ? ` ${t('hava81.outlook.approx')}` : ''}
-              </small>
-            </strong>
-            <span className="day-outlook__window">
-              {/* Say whose best time this is: the general score and an activity can differ. */}
-              {day.bestWindowRange
-                ? activity
-                  ? t('hava81.outlook.windowFor', {
-                      activity: t(`hava81.activities.names.${activity}`),
-                      start: time(day.bestWindowRange.start.time),
-                      end: time(day.bestWindowRange.endTime),
-                    })
-                  : t('hava81.outlook.windowGeneral', {
-                      start: time(day.bestWindowRange.start.time),
-                      end: time(day.bestWindowRange.endTime),
-                    })
-                : t('hava81.outlook.noWindow')}
-            </span>
-            {day.thunderHours.length ? (
-              <span className="day-outlook__thunder" role="note">
-                {t('hava81.outlook.thunder', {
-                  times: day.thunderHours.map(time).join(', '),
-                })}
-              </span>
-            ) : null}
-            <span className="day-outlook__meta">
-              {day.reasons[0]
-                ? t(`hava81.dailyPlan.reasons.${REASON_I18N_KEY[day.reasons[0]]}`)
-                : t('hava81.dailyPlan.reasons.clear')}
-              {day.confidence !== 'high'
-                ? ` · ${t(`hava81.outlook.confidence.${day.confidence}`)}`
-                : ''}
-            </span>
-            {day.scoreRange ? (
+              ) : null}
               <span className="day-outlook__meta">
-                {t('hava81.dailyPlan.scoreRange', {
-                  low: day.scoreRange.low,
-                  high: day.scoreRange.high,
-                })}
+                {day.reasons[0]
+                  ? t(`hava81.dailyPlan.reasons.${REASON_I18N_KEY[day.reasons[0]]}`)
+                  : t('hava81.dailyPlan.reasons.clear')}
+                {day.confidence !== 'high'
+                  ? ` · ${t(`hava81.outlook.confidence.${day.confidence}`)}`
+                  : ''}
               </span>
-            ) : null}
-          </li>
-        ))}
+              {day.scoreRange ? (
+                <span className="day-outlook__meta">
+                  {t('hava81.dailyPlan.scoreRange', {
+                    low: day.scoreRange.low,
+                    high: day.scoreRange.high,
+                  })}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
       <p className="day-outlook__note">{t('hava81.outlook.note')}</p>
     </section>

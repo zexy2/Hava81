@@ -306,6 +306,10 @@ export const en = {
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },
     outlook: {
+      planAnswer: '{{name}} {{when}} · {{band}}',
+      planOff: 'No {{name}} planned this day',
+      planPending: '{{name}} · no forecast yet',
+      planNoWindow: 'No good time for {{name}}',
       approx: '(rough)',
       approxScore: 'About {{score}}/100, {{band}}; the forecast is not settled yet',
       title: 'Coming days',
