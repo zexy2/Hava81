@@ -3327,19 +3327,33 @@
     /* Title and "Back to Today" share one line. */
     .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header,
     .app .atlas-plan-view__header {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
       gap: 0.25rem 1rem;
       padding-block: 0.75rem;
     }
 
+    /* Title and back share row one; the intro, when shown, spans row two. */
     .app .atlas-plan-view__header > div,
     .app .atlas-dashboard .atlas-plan-view > .atlas-plan-view__header > div {
-      flex: 1 1 auto;
-      inline-size: auto;
+      display: contents;
+    }
+
+    .app .atlas-plan-view__header > div > :is(.atlas-kicker, h1) {
+      grid-column: 1;
       min-inline-size: 0;
+    }
+
+    .app .atlas-plan-view__header > div > p {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin: 0;
+    }
+
+    .app .atlas-plan-view__header .atlas-plan-view__back {
+      grid-column: 2;
+      grid-row: 1;
     }
 
     .app .atlas-plan-view__header .atlas-plan-view__back {
@@ -3794,6 +3808,14 @@
     .app .atlas-plan-view .route-weather__score {
       justify-items: start;
       text-align: start;
+    }
+  }
+
+  /* ══ 25. First visit: four templates as a balanced 2 × 2, not 3 + 1 ═══════════════ */
+
+  @media (min-width: 40rem) {
+    .app .atlas-plan-view .routine-templates {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }

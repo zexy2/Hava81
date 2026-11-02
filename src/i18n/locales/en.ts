@@ -357,6 +357,9 @@ export const en = {
       scoreFor: 'For {{name}}',
       scoreScope12h: 'Next 12 hours · overall',
       headline: {
+        now: 'Now is a good time',
+        later: 'Better around {{time}}',
+        similar: 'Now or later, about the same',
         personal: '{{name}} · {{day}} {{when}}',
         general: 'Overall {{score}} · {{answer}}',
         best: 'Best time {{start}}–{{end}}',
@@ -369,7 +372,7 @@ export const en = {
       legend: {
         good: 'Good',
         caution: 'Caution',
-        difficult: 'Hard',
+        difficult: 'Difficult',
       },
       eyebrow: 'Hava81 decision engine',
       title: 'Day plan',
@@ -560,7 +563,6 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     routines: {
-      scope: 'Times are chosen by the weather only; judge roads, traffic and safety yourself.',
       answer: {
         best: '{{day}} best {{start}}–{{end}}',
         none: '{{day}} no good hour',
@@ -580,7 +582,7 @@ export const en = {
       title: 'Your plans',
       add: 'Add routine',
       custom: 'Set up my own plan',
-      emptyLead: 'Tell Hava81 once what you do and when; it finds the best time for you every day.',
+      emptyLead: 'Tap one to add it now. You can change the time later.',
       newTitle: 'New plan',
       editTitle: 'Edit plan',
       editLabel: 'Edit {{name}}',

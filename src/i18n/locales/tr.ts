@@ -360,6 +360,9 @@ export const tr = {
       scoreFor: '{{name}} için',
       scoreScope12h: 'Önümüzdeki 12 saat · genel',
       headline: {
+        now: 'Şimdi iyi bir zaman',
+        later: '{{time}} civarı daha iyi',
+        similar: 'Şimdi de olur, sonra da',
         personal: '{{name}} · {{day}} {{when}}',
         general: 'Genel {{score}} · {{answer}}',
         best: 'En iyi zaman {{start}}–{{end}}',
@@ -372,7 +375,7 @@ export const tr = {
       legend: {
         good: 'Uygun',
         caution: 'Dikkat',
-        difficult: 'Zor',
+        difficult: 'Zorlayıcı',
       },
       eyebrow: 'Hava81 karar motoru',
       title: 'Gün planı',
@@ -563,8 +566,6 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     routines: {
-      scope:
-        'Saatler yalnızca havaya göre seçilir; yol, trafik ve güvenlik koşullarını sen değerlendir.',
       answer: {
         best: '{{day}} en iyi {{start}}–{{end}}',
         none: '{{day}} uygun saat yok',
@@ -584,8 +585,7 @@ export const tr = {
       title: 'Planların',
       add: 'Rutin ekle',
       custom: 'Kendi planımı kur',
-      emptyLead:
-        'Ne zaman ne yaptığını bir kez söyle; Hava81 her gün senin için en iyi saati bulsun.',
+      emptyLead: 'Birine dokun, hemen eklenir. Saatini sonra değiştirebilirsin.',
       newTitle: 'Yeni plan',
       editTitle: 'Planı düzenle',
       editLabel: '{{name}} planını düzenle',

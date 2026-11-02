@@ -163,6 +163,20 @@ function FreshDailyPlanPanel({
         ? t('hava81.dailyPlan.nowOrLater.now')
         : t('hava81.dailyPlan.nowOrLater.similar');
 
+  // The headline answers in a few words; the full sentence stays in the reasoning below.
+  const generalHeadline = evenDay
+    ? t('hava81.dailyPlan.headline.even')
+    : bestWindowRange
+      ? t('hava81.dailyPlan.headline.best', {
+          start: formatTime(bestWindowRange.start.time),
+          end: formatTime(bestWindowRange.endTime),
+        })
+      : plan.nowOrLater.kind === 'later'
+        ? t('hava81.dailyPlan.headline.later', { time: formatTime(plan.nowOrLater.targetTime) })
+        : plan.nowOrLater.kind === 'now'
+          ? t('hava81.dailyPlan.headline.now')
+          : t('hava81.dailyPlan.headline.similar');
+
   const bestWindowShareText = bestWindowRange
     ? `${formatTime(bestWindowRange.start.time)}–${formatTime(bestWindowRange.endTime)}`
     : undefined;
@@ -362,29 +376,12 @@ function FreshDailyPlanPanel({
         <span>{t('hava81.dailyPlan.nowOrLater.label')}</span>
         {/* The answer first, in a few words; the engine's full sentence follows it. */}
         {/* With a saved plan the card answers it first; the general day follows in one line. */}
-        <strong className="daily-plan__headline">
-          {personalHeadline ??
-            (evenDay
-              ? t('hava81.dailyPlan.headline.even')
-              : bestWindowRange
-                ? t('hava81.dailyPlan.headline.best', {
-                    start: formatTime(bestWindowRange.start.time),
-                    end: formatTime(bestWindowRange.endTime),
-                  })
-                : nowOrLaterText)}
-        </strong>
+        <strong className="daily-plan__headline">{personalHeadline ?? generalHeadline}</strong>
         {personalHeadline ? (
           <p className="daily-plan__general">
             {t('hava81.dailyPlan.headline.general', {
               score: plan.score,
-              answer: evenDay
-                ? t('hava81.dailyPlan.headline.even').toLocaleLowerCase(i18n.language)
-                : bestWindowRange
-                  ? t('hava81.dailyPlan.headline.best', {
-                      start: formatTime(bestWindowRange.start.time),
-                      end: formatTime(bestWindowRange.endTime),
-                    }).toLocaleLowerCase(i18n.language)
-                  : nowOrLaterText,
+              answer: generalHeadline.toLocaleLowerCase(i18n.language),
             })}
           </p>
         ) : null}
@@ -418,9 +415,7 @@ function FreshDailyPlanPanel({
         </summary>
         {/* The why behind the answer; the card itself only says when. */}
         <div className="daily-plan__reasoning">
-          {evenDay || bestWindowRange ? (
-            <p className="daily-plan__sentence">{nowOrLaterText}</p>
-          ) : null}
+          <p className="daily-plan__sentence">{nowOrLaterText}</p>
           {nightOutscoresBest ? (
             <p className="daily-plan__night-note">
               {t('hava81.dailyPlan.nightNote', { range: nightRange })}
