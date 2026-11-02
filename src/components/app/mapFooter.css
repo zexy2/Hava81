@@ -99,6 +99,14 @@
     text-decoration: none;
   }
 
+  /* The phrase OpenWeather's terms require, visible but set as a quiet caption so the footer
+     stays one row on desktop (#1711; frozen footer contracts). */
+  .app .data-credit__text {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
   .app .data-credit__logo {
     display: block;
     width: auto;
