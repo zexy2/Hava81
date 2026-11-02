@@ -10,7 +10,7 @@ import {
   type ContextGridSnapshot,
   type CopernicusContextGrid,
 } from '../copernicus/context-grid';
-import { estimatedUvIndex, expandToHours, MET_NORWAY_ATTRIBUTION, MetNorwayTransport } from './metno-client';
+import { estimatedUvIndex, expandToHours, MET_NORWAY_ATTRIBUTION, MetNorwayTransport, modelUpdatedAt } from './metno-client';
 import { isDaylightHour } from './solar';
 
 const HOUR_MS = 3_600_000;
@@ -99,6 +99,8 @@ export class MetNorwayContextService implements ContextSignalsSource {
       // Replaced by the grid credits below; this only stands when MET is the sole source.
       attribution: MET_NORWAY_ATTRIBUTION,
       uvIndexMax: uvValues.length > 0 ? Math.max(...uvValues) : undefined,
+      // #1766: the age of the UV forecast is the MET model run, not the fetch.
+      ...(forecast && modelUpdatedAt(forecast) ? { modelUpdatedAt: modelUpdatedAt(forecast) } : {}),
       units: {},
     };
     if (!snapshot || freshFields.size === 0) return signals;
