@@ -3835,6 +3835,77 @@
   .app .atlas-plan-view .day-outlook__score--none {
     color: var(--plan-soft);
   }
+
+  /* ══ 27. Desktop rhythm: shorter columns, same content ═══════════════════════════ */
+
+  @media (min-width: 64rem) {
+    /* Presets and the two clocks are one choice: read them on one line. */
+    .app .atlas-plan-view .commute-plan {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: end;
+      column-gap: 1.5rem;
+    }
+
+    .app .atlas-plan-view .commute-plan > :not(.commute-plan__presets, .commute-plan__times) {
+      grid-column: 1 / -1;
+    }
+
+    .app .atlas-plan-view .commute-plan__presets {
+      margin-block: 0;
+    }
+
+    .app .atlas-plan-view .commute-plan__times {
+      justify-self: end;
+    }
+
+    .app .atlas-plan-view .activity-planner {
+      row-gap: 1rem;
+    }
+  }
+
+  /* ══ 28. Phone rhythm: commute reads in fewer lines ═════════════════════════════ */
+
+  @media (max-width: 63.99rem) {
+    /* Title and "Clear times" share the first line; the lead sentence follows. */
+    .app .atlas-plan-view .commute-plan__header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      column-gap: 0.75rem;
+    }
+
+    .app .atlas-plan-view .commute-plan__header > button {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: start;
+    }
+
+    /* Office and School side by side. */
+    .app .atlas-plan-view .commute-plan__presets {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .app .atlas-plan-view .commute-plan__presets > button {
+      inline-size: 100%;
+      min-inline-size: 0;
+    }
+
+    /* Feels-like, rain and wind flow as one line instead of three. */
+    .app .atlas-plan-view .commute-window > dl {
+      display: flex;
+      flex-flow: row wrap;
+      gap: 0.125rem 0.875rem;
+    }
+
+    .app .atlas-plan-view .commute-window > dl > div {
+      display: inline-flex;
+      gap: 0.25rem;
+      align-items: baseline;
+    }
+  }
 }
 
 @keyframes planla-bar {
