@@ -322,9 +322,11 @@ test('MET symbol codes map onto the WMO codes the app already understands', () =
   assert.equal(weatherCodeForSymbol('heavyrain'), 65);
   assert.equal(weatherCodeForSymbol('rainshowers_day'), 80);
   assert.equal(weatherCodeForSymbol('snow'), 73);
-  assert.equal(weatherCodeForSymbol('sleet'), 66);
+  // #1729: sleet is rain and snow mixed (WMO 68), not freezing rain.
+  assert.equal(weatherCodeForSymbol('sleet'), 68);
   assert.equal(weatherCodeForSymbol('rainandthunder'), 95);
-  assert.equal(weatherCodeForSymbol('unknown_symbol'), 3);
+  // #1712 #1726: an unknown symbol stays unknown instead of becoming overcast.
+  assert.equal(weatherCodeForSymbol('unknown_symbol'), null);
 });
 
 test('solar times match MET Norway sunrise/3.0 for İstanbul and Erzurum within five minutes', () => {
@@ -339,14 +341,14 @@ test('solar times match MET Norway sunrise/3.0 for İstanbul and Erzurum within 
 });
 
 test('European AQI is computed from pollutant concentrations with the EEA bands', () => {
-  // The index is the worst pollutant: O3 40.54 µg/m³ in 0–50 → 0–20 gives 16, above
-  // PM2.5 5.78 (12), PM10 6.31 (6), NO2 6.53 (3) and SO2 2.04 (0).
+  // #1730: EEA bands revised in 2024. The index is the worst pollutant: PM2.5 5.78 µg/m³ in
+  // 5–15 → 20–40 gives 22, above NO2 6.53 (13), O3 40.54 (14), PM10 6.31 (8) and SO2 2.04 (2).
   assert.equal(
     europeanAqiFromComponents({ pm2_5: 5.78, pm10: 6.31, no2: 6.53, o3: 40.54, so2: 2.04 }),
-    16
+    22
   );
-  assert.equal(europeanAqiFromComponents({ pm2_5: 5.78 }), 12);
-  // NO2 100 µg/m³ falls in 90–120 → 40–60.
+  assert.equal(europeanAqiFromComponents({ pm2_5: 5.78 }), 22);
+  // NO2 100 µg/m³ is the top of 60–100 → 80 (poor), above every other pollutant here.
   const no2 = europeanAqiFromComponents({
     pm2_5: 5.78,
     pm10: 6.31,
@@ -354,7 +356,7 @@ test('European AQI is computed from pollutant concentrations with the EEA bands'
     o3: 40.54,
     so2: 2.04,
   });
-  assert.ok(no2 > 40 && no2 < 60, `no2 ${no2}`);
+  assert.equal(no2, 80, `no2 ${no2}`);
   assert.equal(europeanAqiFromComponents({}), null);
 });
 
@@ -369,9 +371,9 @@ test('OpenWeather air pollution forecast feeds the hourly European AQI', async (
 
   assert.equal(requests[0].url.pathname, '/data/2.5/air_pollution/forecast');
   assert.equal(result.hourly.length, 96);
-  assert.equal(result.hourly[0].europeanAqi, 16);
+  assert.equal(result.hourly[0].europeanAqi, 22);
   assert.equal(result.hourly[0].pm25, 5.78);
-  assert.ok(result.hourly[2].europeanAqi > 40);
+  assert.ok(result.hourly[2].europeanAqi >= 80);
   assert.match(provider.attribution ?? '', /OpenWeather/);
 });
 
