@@ -1,4 +1,5 @@
-export type CacheStatus = 'HIT' | 'MISS' | 'COALESCED';
+/** `STALE`: the refresh failed and the last good value is served while it is still usable. */
+export type CacheStatus = 'HIT' | 'MISS' | 'COALESCED' | 'STALE';
 
 export interface CacheResult<T> {
   value: T;

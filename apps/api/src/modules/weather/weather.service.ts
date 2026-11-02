@@ -138,6 +138,7 @@ export class WeatherService {
           sourceUrl: this.hourlyProvider.sourceUrl,
           fetchedAt: new Date().toISOString(),
           timezoneOffsetSeconds: result.timezoneOffsetSeconds,
+          ...(result.modelUpdatedAt ? { modelUpdatedAt: result.modelUpdatedAt } : {}),
           intervalHours: 1,
         },
       };

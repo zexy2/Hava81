@@ -1,5 +1,6 @@
 import type { AppConfig } from '../config/env';
 import { ContextSignalsService, type ContextSignalsSource } from '../modules/context/context.service';
+import { MetNorwayTransport } from './metno/metno-client';
 import { MetNorwayContextService } from './metno/metno-context.service';
 import { MetNorwayHourlyProvider } from './metno/metno-hourly.provider';
 import { MetNorwayProvincesProvider } from './metno/metno-provinces.provider';
@@ -23,6 +24,12 @@ export interface DataSources {
  */
 export const createDataSources = (env: AppConfig, fetchImpl: typeof fetch = fetch): DataSources => {
   if (env.WEATHER_DATA_SOURCE === 'openmeteo') {
+    // The keyless Open-Meteo endpoint is non-commercial: production must run on a paid plan.
+    if (env.NODE_ENV === 'production' && !env.OPEN_METEO_API_KEY) {
+      throw new Error(
+        'WEATHER_DATA_SOURCE=openmeteo requires OPEN_METEO_API_KEY in production (paid commercial plan).'
+      );
+    }
     return {
       hourlyProvider: new OpenMeteoHourlyProvider(
         fetchImpl,
@@ -49,11 +56,13 @@ export const createDataSources = (env: AppConfig, fetchImpl: typeof fetch = fetc
       }),
     };
   }
-  const met = {
+  const metClient = {
     userAgent: env.UPSTREAM_USER_AGENT,
     timeoutMs: env.OPENWEATHER_TIMEOUT_MS,
     metBaseUrl: env.MET_NORWAY_FORECAST_URL,
   };
+  // One MET client for the whole API: a single request pace and one revalidation store.
+  const met = { ...metClient, transport: new MetNorwayTransport(fetchImpl, metClient) };
   return {
     hourlyProvider: new MetNorwayHourlyProvider(fetchImpl, {
       ...met,

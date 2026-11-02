@@ -10,12 +10,13 @@ import type {
 import {
   estimatedUvIndex,
   expandToHours,
-  fetchMetNorwayForecast,
   MET_NORWAY_SOURCE_URL,
+  MetNorwayTransport,
+  modelUpdatedAt,
   round1,
   type MetHour,
 } from './metno-client';
-import { symbolHasPrecipitation, weatherCodeForSymbol } from './metno-symbols';
+import { dailyCodeFor, symbolHasPrecipitation, weatherCodeForSymbol } from './metno-symbols';
 import { isDaylightHour, sunTimes } from './solar';
 
 const HOUR_MS = 3_600_000;
@@ -46,33 +47,61 @@ export interface MetNorwayHourlyOptions {
   timeoutMs?: number;
   metBaseUrl?: string;
   now?: () => Date;
+  /** Shared MET client so every provider counts against the same request pace. */
+  transport?: MetNorwayTransport;
 }
+
+/** Shown, with a neutral icon and no weather code, when MET's symbol is missing or unmapped. */
+export const UNKNOWN_WEATHER = { tr: 'Hava durumu bilinmiyor', en: 'Weather unknown' } as const;
+const UNKNOWN_ICON = '03';
 
 /**
  * Honest fallback when OpenWeather is unavailable: MET only says how much falls, so map the
  * amount to a coarse likelihood. Dry hours stay at 0 % rather than a guessed residual.
  */
 const popFromAmount = (hour: MetHour) => {
-  if (hour.precipitationMm >= 1) return 80;
-  if (hour.precipitationMm >= 0.1) return 60;
-  return symbolHasPrecipitation(hour.symbol) ? 30 : 0;
+  const amount = hour.precipitationMm ?? 0;
+  if (amount >= 1) return 80;
+  if (amount >= 0.1) return 60;
+  return hour.symbol !== undefined && symbolHasPrecipitation(hour.symbol) ? 30 : 0;
 };
 
-/** Fixed-offset fallback when OpenWeather does not supply the zone (Turkey is UTC+3). */
-const offsetFromLongitude = (lon: number) => Math.round(lon / 15) * 3_600;
+/**
+ * Türkiye time (Europe/Istanbul, UTC+3 all year since 2016) when OpenWeather does not send
+ * the zone. Hava81 only serves Türkiye; a longitude guess put the west of the country at UTC+2.
+ */
+const turkeyOffsetSeconds = (at: Date): number => {
+  const zoneName = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Istanbul', timeZoneName: 'shortOffset' })
+    .formatToParts(at)
+    .find(part => part.type === 'timeZoneName')?.value;
+  const match = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(zoneName ?? '');
+  if (!match) return 3 * 3_600;
+  const sign = match[1] === '-' ? -1 : 1;
+  return sign * (Number(match[2]) * 3_600 + Number(match[3] ?? 0) * 60);
+};
 
 export class MetNorwayHourlyProvider implements HourlyForecastProvider {
   readonly name = 'MET Norway';
+  // CC BY 4.0 asks to say the material was changed: Hava81 fills the hours, maps symbols and
+  // estimates UV from MET's data. Not an endorsement by MET Norway.
   readonly attribution =
-    'MET Norway · CC BY 4.0 · Yağış olasılığı: Weather data provided by OpenWeather';
+    'MET Norway verisi, Hava81 tarafından işlendi · CC BY 4.0 · Yağış olasılığı: Weather data provided by OpenWeather';
   readonly sourceUrl = MET_NORWAY_SOURCE_URL;
   private readonly now: () => Date;
+  private readonly transport: MetNorwayTransport;
 
   constructor(
     private readonly fetchImpl: typeof fetch,
     private readonly options: MetNorwayHourlyOptions
   ) {
     this.now = options.now ?? (() => new Date());
+    this.transport =
+      options.transport ??
+      new MetNorwayTransport(fetchImpl, {
+        userAgent: options.userAgent,
+        timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        metBaseUrl: options.metBaseUrl,
+      });
   }
 
   private async openWeatherSlots(query: HourlyForecastQuery): Promise<OpenWeatherSlots | null> {
@@ -102,14 +131,7 @@ export class MetNorwayHourlyProvider implements HourlyForecastProvider {
   async getHourly(query: HourlyForecastQuery): Promise<HourlyForecastProviderResult> {
     const start = Math.floor(this.now().getTime() / HOUR_MS) * HOUR_MS;
     const [forecast, slots] = await Promise.all([
-      fetchMetNorwayForecast(
-        this.fetchImpl,
-        this.options.userAgent,
-        query.lat,
-        query.lon,
-        this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-        this.options.metBaseUrl
-      ),
+      this.transport.forecast(query.lat, query.lon),
       this.openWeatherSlots(query),
     ]);
 
@@ -129,34 +151,37 @@ export class MetNorwayHourlyProvider implements HourlyForecastProvider {
       (firstSlot && time < firstSlot.dt * 1_000 && firstSlot.dt * 1_000 - time <= SLOT_MS
         ? firstSlot
         : undefined);
-    const timezoneOffsetSeconds = slots?.city?.timezone ?? offsetFromLongitude(query.lon);
+    const timezoneOffsetSeconds = slots?.city?.timezone ?? turkeyOffsetSeconds(new Date(start));
 
     const enriched = timeline.map(hour => {
       const slot = slotAt(hour.time);
       const isDay = isDaylightHour(query.lat, query.lon, new Date(hour.time));
-      const code = weatherCodeForSymbol(hour.symbol);
+      const code = hour.symbol === undefined ? null : weatherCodeForSymbol(hour.symbol);
       const pop = slot?.pop !== undefined ? Math.round(slot.pop * 100) : popFromAmount(hour);
       return {
         time: new Date(hour.time).toISOString(),
         temp: round1(hour.temperature),
-        icon: iconForCode(code, isDay),
+        icon: code === null ? `${UNKNOWN_ICON}${isDay ? 'd' : 'n'}` : iconForCode(code, isDay),
         isDay,
-        description: descriptionForCode(code, query.lang),
+        description: code === null ? UNKNOWN_WEATHER[query.lang] : descriptionForCode(code, query.lang),
         pop: Math.max(0, Math.min(100, pop)),
         windSpeed: round1(hour.windSpeed),
         apparentTemperature: hour.apparentTemperature === undefined ? undefined : round1(hour.apparentTemperature),
         humidity: hour.humidity === undefined ? undefined : Math.round(hour.humidity),
-        precipitationMm: Math.round(hour.precipitationMm * 100) / 100,
+        precipitationMm:
+          hour.precipitationMm === undefined ? undefined : Math.round(hour.precipitationMm * 100) / 100,
         windGust: slot?.wind?.gust,
         uvIndex: isDay ? estimatedUvIndex(hour.uvClearSky, hour.cloudCover) : 0,
         visibility: slot?.visibility,
         dewPoint: hour.dewPoint === undefined ? undefined : round1(hour.dewPoint),
-        weatherCode: code,
+        weatherCode: code ?? undefined,
       };
     });
 
+    const updatedAt = modelUpdatedAt(forecast);
     return {
       timezoneOffsetSeconds,
+      ...(updatedAt ? { modelUpdatedAt: updatedAt } : {}),
       hourly: enriched.slice(0, HOURLY_FORECAST_HOURS),
       daily: this.daily(enriched, timezoneOffsetSeconds, query),
     };
@@ -178,17 +203,22 @@ export class MetNorwayHourlyProvider implements HourlyForecastProvider {
       // A day needs enough hours to describe it; drop the trailing stub of the horizon.
       if (dayHours.length < 6) continue;
       const temps = dayHours.map(hour => hour.temp);
-      // The most significant weather of the daylight hours, as WMO codes rise with severity.
+      // The most consequential known weather of the daylight hours (a severity table: WMO
+      // codes are categories, not a scale). Unknown when no hour has a known code.
       const daylight = dayHours.filter(hour => hour.isDay);
-      const code = Math.max(...(daylight.length > 0 ? daylight : dayHours).map(hour => hour.weatherCode ?? 3));
+      const code = dailyCodeFor(
+        (daylight.length > 0 ? daylight : dayHours).flatMap(hour =>
+          hour.weatherCode === undefined ? [] : [hour.weatherCode]
+        )
+      );
       const localNoonUtc = new Date(Date.parse(`${date}T12:00:00Z`) - offsetSeconds * 1_000);
       const sun = sunTimes(query.lat, query.lon, localNoonUtc);
       days.push({
         date,
         tempMin: Math.min(...temps),
         tempMax: Math.max(...temps),
-        icon: iconForCode(code, true),
-        description: descriptionForCode(code, query.lang),
+        icon: code === null ? `${UNKNOWN_ICON}d` : iconForCode(code, true),
+        description: code === null ? UNKNOWN_WEATHER[query.lang] : descriptionForCode(code, query.lang),
         pop: Math.max(...dayHours.map(hour => hour.pop)),
         precipitationMm:
           Math.round(dayHours.reduce((sum, hour) => sum + (hour.precipitationMm ?? 0), 0) * 10) / 10,

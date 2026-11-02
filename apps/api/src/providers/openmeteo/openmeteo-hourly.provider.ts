@@ -14,7 +14,7 @@ const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
 const providerTimestampSchema = z.number().int().nonnegative().max(MAX_DATE_UNIX_SECONDS);
 const providerTimezoneOffsetSchema = z.number().int().min(-43_200).max(50_400);
 const supportedWeatherCodes = new Set([
-  0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+  0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 68, 69, 71, 73, 75, 77, 80, 81, 82,
   85, 86, 95, 96, 99,
 ]);
 const providerWeatherCodeSchema = z
@@ -76,6 +76,9 @@ export const descriptionForCode = (code: number, lang: WeatherLanguage): string 
   if ([61, 63].includes(code)) return tr ? "yağmurlu" : "rain";
   if (code === 65) return tr ? "kuvvetli yağmur" : "heavy rain";
   if ([66, 67].includes(code)) return tr ? "dondurucu yağmur" : "freezing rain";
+  // 68/69: rain and snow mixed (MET Norway "sleet").
+  if (code === 68) return tr ? "karla karışık yağmur" : "sleet";
+  if (code === 69) return tr ? "yoğun karla karışık yağmur" : "heavy sleet";
   if ([71, 73].includes(code)) return tr ? "karlı" : "snow";
   if (code === 75) return tr ? "yoğun kar" : "heavy snow";
   if (code === 77) return tr ? "kar taneleri" : "snow grains";
@@ -96,7 +99,7 @@ export const iconForCode = (code: number, isDay: boolean): string => {
   if (code === 45 || code === 48) return `50${suffix}`;
   if ([51, 53, 55, 56, 57, 80, 81, 82].includes(code)) return `09${suffix}`;
   if ([61, 63, 65, 66, 67].includes(code)) return `10${suffix}`;
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return `13${suffix}`;
+  if ([68, 69, 71, 73, 75, 77, 85, 86].includes(code)) return `13${suffix}`;
   if ([95, 96, 99].includes(code)) return `11${suffix}`;
   return `03${suffix}`;
 };

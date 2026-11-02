@@ -15,6 +15,7 @@ const metaSchema = {
     provider: { type: 'string' },
     fetchedAt: { type: 'string', format: 'date-time' },
     observedAt: { type: 'string', format: 'date-time' },
+    modelUpdatedAt: { type: 'string', format: 'date-time' },
     timezoneOffsetSeconds: { type: 'number' },
     intervalHours: { type: 'number' },
     attribution: { type: 'string' },

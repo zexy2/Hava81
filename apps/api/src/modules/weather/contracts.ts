@@ -65,6 +65,8 @@ export interface DataMetaDto {
   fetchedAt: string;
   /** Original provider sample time, distinct from the time this server fetched it. */
   observedAt?: string;
+  /** When the source model last ran, for forecasts; age of the forecast, not of the fetch. */
+  modelUpdatedAt?: string;
   timezoneOffsetSeconds?: number;
   intervalHours?: number;
   attribution?: string;

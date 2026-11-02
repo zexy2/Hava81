@@ -29,6 +29,7 @@ const periodSchema = z
 
 const forecastSchema = z.object({
   properties: z.object({
+    meta: z.object({ updated_at: z.string().datetime({ offset: true }) }).partial().optional(),
     timeseries: z
       .array(
         z.object({
@@ -70,14 +71,141 @@ export interface MetHour {
   windDirection?: number;
   cloudCover?: number;
   uvClearSky?: number;
-  /** Precipitation in this hour, mm; six-hour totals are spread evenly over their hours. */
-  precipitationMm: number;
-  symbol: string;
+  /**
+   * Precipitation in this hour, mm; six-hour totals are spread evenly over their hours.
+   * Undefined when MET gives no amount for the period: unknown, never assumed dry.
+   */
+  precipitationMm?: number;
+  /** MET symbol for the period; undefined when the period is missing. */
+  symbol?: string;
+  /** Length of the MET period the amount and symbol come from; undefined when none covers the hour. */
+  periodHours?: 1 | 6;
 }
+
+export type MetNorwayForecast = z.infer<typeof forecastSchema>;
+
+/** When MET last ran the model behind this forecast (`meta.updated_at`), as ISO-8601 UTC. */
+export const modelUpdatedAt = (forecast: MetNorwayForecast): string | undefined => {
+  const updated = forecast.properties.meta?.updated_at;
+  const at = updated === undefined ? Number.NaN : Date.parse(updated);
+  return Number.isFinite(at) ? new Date(at).toISOString() : undefined;
+};
 
 /** Four decimals at most, as the terms of service ask (≈11 m, plenty for a forecast). */
 const coordinate = (value: number) => String(Math.round(value * 10_000) / 10_000);
 
+export interface MetNorwayTransportOptions {
+  userAgent: string;
+  timeoutMs?: number;
+  metBaseUrl?: string;
+  /** Requests started per second for the whole application; MET asks for fewer than 20. */
+  maxRequestsPerSecond?: number;
+  /** Stored responses kept for conditional revalidation. */
+  maxStoredResponses?: number;
+}
+
+interface StoredResponse {
+  lastModified: string;
+  expiresAt: number;
+  body: unknown;
+}
+
+const DEFAULT_REQUESTS_PER_SECOND = 10;
+const DEFAULT_STORED_RESPONSES = 200;
+
+/**
+ * The one way the API talks to MET Locationforecast. Every request takes a turn on a shared
+ * pace (default 10/s), a response is reused until its `Expires`, and after that it is
+ * revalidated with `If-Modified-Since` so an unchanged forecast costs a 304, not a download.
+ * Share one instance between the hourly, province and context providers.
+ */
+export class MetNorwayTransport {
+  private nextStartAt = 0;
+  private readonly stored = new Map<string, StoredResponse>();
+
+  constructor(
+    private readonly fetchImpl: typeof fetch,
+    private readonly options: MetNorwayTransportOptions
+  ) {}
+
+  /** Waits for the next free start slot so requests never exceed the configured rate. */
+  private async takeTurn(): Promise<void> {
+    const interval = 1_000 / Math.max(1, this.options.maxRequestsPerSecond ?? DEFAULT_REQUESTS_PER_SECOND);
+    const now = Date.now();
+    const startAt = Math.max(now, this.nextStartAt);
+    this.nextStartAt = startAt + interval;
+    if (startAt > now) await new Promise(resolve => setTimeout(resolve, startAt - now));
+  }
+
+  private remember(key: string, entry: StoredResponse) {
+    this.stored.delete(key);
+    this.stored.set(key, entry);
+    const limit = this.options.maxStoredResponses ?? DEFAULT_STORED_RESPONSES;
+    while (this.stored.size > limit) {
+      const oldest = this.stored.keys().next().value;
+      if (oldest === undefined) break;
+      this.stored.delete(oldest);
+    }
+  }
+
+  async forecast(lat: number, lon: number): Promise<MetNorwayForecast> {
+    const url = new URL(this.options.metBaseUrl ?? MET_NORWAY_FORECAST_URL);
+    url.searchParams.set('lat', coordinate(lat));
+    url.searchParams.set('lon', coordinate(lon));
+    const key = url.toString();
+    const stored = this.stored.get(key);
+    // HTTP caching runs on the wall clock, whatever clock the forecast logic is given.
+    if (stored && stored.expiresAt > Date.now()) return parseForecast(stored.body);
+
+    await this.takeTurn();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    try {
+      const response = await this.fetchImpl(url, {
+        headers: {
+          accept: 'application/json',
+          'user-agent': this.options.userAgent,
+          ...(stored ? { 'if-modified-since': stored.lastModified } : {}),
+        },
+        signal: controller.signal,
+      });
+      const expiresAt = Date.parse(response.headers.get('expires') ?? '');
+      if (response.status === 304 && stored) {
+        this.remember(key, { ...stored, expiresAt: Number.isFinite(expiresAt) ? expiresAt : 0 });
+        return parseForecast(stored.body);
+      }
+      if (!response.ok) {
+        throw new AppError(502, 'HOURLY_PROVIDER_ERROR', 'MET Norway tahmin servisi yanıt vermedi.');
+      }
+      const body: unknown = await response.json();
+      const forecast = parseForecast(body);
+      const lastModified = response.headers.get('last-modified');
+      if (lastModified) {
+        this.remember(key, { lastModified, expiresAt: Number.isFinite(expiresAt) ? expiresAt : 0, body });
+      }
+      return forecast;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(502, 'HOURLY_PROVIDER_ERROR', 'MET Norway tahmin servisine ulaşılamadı.');
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+const parseForecast = (body: unknown): MetNorwayForecast => {
+  const parsed = forecastSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new AppError(
+      502,
+      'INVALID_HOURLY_PROVIDER_RESPONSE',
+      'MET Norway tahmin servisi beklenmeyen bir cevap döndürdü.'
+    );
+  }
+  return parsed.data;
+};
+
+/** One-off request through a private transport; prefer a shared `MetNorwayTransport`. */
 export const fetchMetNorwayForecast = async (
   fetchImpl: typeof fetch,
   userAgent: string,
@@ -85,36 +213,8 @@ export const fetchMetNorwayForecast = async (
   lon: number,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   baseUrl = MET_NORWAY_FORECAST_URL
-): Promise<z.infer<typeof forecastSchema>> => {
-  const url = new URL(baseUrl);
-  url.searchParams.set('lat', coordinate(lat));
-  url.searchParams.set('lon', coordinate(lon));
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetchImpl(url, {
-      headers: { accept: 'application/json', 'user-agent': userAgent },
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      throw new AppError(502, 'HOURLY_PROVIDER_ERROR', 'MET Norway tahmin servisi yanıt vermedi.');
-    }
-    const parsed = forecastSchema.safeParse(await response.json());
-    if (!parsed.success) {
-      throw new AppError(
-        502,
-        'INVALID_HOURLY_PROVIDER_RESPONSE',
-        'MET Norway tahmin servisi beklenmeyen bir cevap döndürdü.'
-      );
-    }
-    return parsed.data;
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError(502, 'HOURLY_PROVIDER_ERROR', 'MET Norway tahmin servisine ulaşılamadı.');
-  } finally {
-    clearTimeout(timeout);
-  }
-};
+): Promise<MetNorwayForecast> =>
+  new MetNorwayTransport(fetchImpl, { userAgent, timeoutMs, metBaseUrl: baseUrl }).forecast(lat, lon);
 
 const lerp = (from: number | undefined, to: number | undefined, ratio: number) => {
   if (from === undefined) return to;
@@ -129,7 +229,7 @@ const lerp = (from: number | undefined, to: number | undefined, ratio: number) =
  * hour, split evenly so totals are preserved.
  */
 export const expandToHours = (
-  forecast: z.infer<typeof forecastSchema>,
+  forecast: MetNorwayForecast,
   start: number
 ): MetHour[] => {
   const steps = forecast.properties.timeseries
@@ -153,16 +253,18 @@ export const expandToHours = (
     const windSpeed = lerp(a.wind_speed, b.wind_speed, ratio);
     if (temperature === undefined || windSpeed === undefined) continue;
 
+    // The hour's own one-hour block when MET has one; otherwise the six-hour period that
+    // covers it. A missing block or field stays undefined: no amount means unknown, not 0.
     const ownHour = time === previous.at ? previous.data.next_1_hours : undefined;
-    const sixHours = previous.data.next_6_hours;
+    const sixHours = ownHour ? undefined : previous.data.next_6_hours;
     const sixHourAmount = sixHours?.details?.precipitation_amount;
-    const precipitationMm =
-      ownHour?.details?.precipitation_amount ?? (sixHourAmount !== undefined ? sixHourAmount / 6 : 0);
-    const symbol =
-      ownHour?.summary?.symbol_code ??
-      sixHours?.summary?.symbol_code ??
-      previous.data.next_12_hours?.summary?.symbol_code ??
-      'cloudy';
+    const precipitationMm = ownHour
+      ? ownHour.details?.precipitation_amount
+      : sixHourAmount !== undefined
+        ? sixHourAmount / 6
+        : undefined;
+    const symbol = ownHour ? ownHour.summary?.symbol_code : sixHours?.summary?.symbol_code;
+    const periodHours = ownHour ? 1 : sixHours ? 6 : undefined;
 
     hours.push({
       time,
@@ -177,6 +279,7 @@ export const expandToHours = (
       uvClearSky: lerp(a.ultraviolet_index_clear_sky, b.ultraviolet_index_clear_sky, ratio),
       precipitationMm,
       symbol,
+      periodHours,
     });
   }
   return hours;

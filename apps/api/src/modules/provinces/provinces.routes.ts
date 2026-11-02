@@ -16,7 +16,7 @@ const provinceItemJsonSchema = {
     weatherCode: {
       type: 'integer',
       enum: [
-        0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+        0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 68, 69, 71, 73, 75, 77, 80, 81, 82,
         85, 86, 95, 96, 99,
       ],
       description: 'WMO hava kodu',
@@ -26,7 +26,12 @@ const provinceItemJsonSchema = {
     windSpeed: { type: 'number', minimum: 0, maximum: 150, description: 'm/s' },
     windDirection: { type: 'number', minimum: 0, maximum: 360, description: 'derece, rüzgârın geldiği yön' },
     cloudCover: { type: 'number', minimum: 0, maximum: 100, description: '%' },
-    precipitation: { type: 'number', minimum: 0, maximum: 500, description: 'mm, son saat' },
+    precipitation: {
+      type: 'number',
+      minimum: 0,
+      maximum: 500,
+      description: 'mm; sağlayıcıya göre son saat (Open-Meteo) ya da gelecek saatin tahmini (MET Norway, bkz. precipitationPeriod)',
+    },
     precipitationProbability: { type: 'number', minimum: 0, maximum: 100, description: '%, içinde bulunulan saat' },
     outlook: {
       type: 'array',
@@ -43,6 +48,18 @@ const provinceItemJsonSchema = {
       },
     },
     observedAt: { type: 'string', format: 'date-time' },
+    validAt: { type: 'string', format: 'date-time', description: 'Tahminin geçerli olduğu an; gözlem değildir' },
+    modelUpdatedAt: { type: 'string', format: 'date-time', description: 'Kaynak modelin son çalıştığı an' },
+    precipitationPeriod: {
+      type: 'object',
+      required: ['amountMm', 'validFrom', 'validTo'],
+      description: 'İleriye dönük yağış tahmini ve geçerli olduğu aralık',
+      properties: {
+        amountMm: { type: 'number', minimum: 0, maximum: 500 },
+        validFrom: { type: 'string', format: 'date-time' },
+        validTo: { type: 'string', format: 'date-time' },
+      },
+    },
   },
 } as const;
 
@@ -60,7 +77,7 @@ export const provincesResponseJsonSchema = {
         fetchedAt: { type: 'string', format: 'date-time' },
         units: { type: 'string', enum: ['metric'] },
         total: { type: 'integer' },
-        cacheStatus: { type: 'string', enum: ['HIT', 'MISS', 'COALESCED'] },
+        cacheStatus: { type: 'string', enum: ['HIT', 'MISS', 'COALESCED', 'STALE'] },
         freshForSeconds: { type: 'number' },
       },
     },

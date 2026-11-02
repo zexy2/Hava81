@@ -5,13 +5,13 @@ import {
   type ProvinceCurrentProvider,
   type ProvincePoint,
 } from '../openmeteo/openmeteo-provinces.provider';
-import { expandToHours, fetchMetNorwayForecast, MET_NORWAY_ATTRIBUTION, round1 } from './metno-client';
+import { expandToHours, MET_NORWAY_ATTRIBUTION, MetNorwayTransport, modelUpdatedAt, round1 } from './metno-client';
 import { weatherCodeForSymbol } from './metno-symbols';
 import { isDaylightHour } from './solar';
 
 const HOUR_MS = 3_600_000;
-// MET Norway asks for fewer than 20 requests/s per application; four in flight at a time
-// with ~0.3 s per response keeps 81 provinces well under that and finishes in a few seconds.
+// Requests in flight at a time. The rate itself is held below MET's 20/s by the transport's
+// pace, so fast responses cannot push the 81-province refresh over the limit.
 const DEFAULT_CONCURRENCY = 4;
 
 export interface MetNorwayProvincesOptions {
@@ -20,6 +20,10 @@ export interface MetNorwayProvincesOptions {
   timeoutMs?: number;
   metBaseUrl?: string;
   now?: () => Date;
+  /** Requests started per second when this provider builds its own transport. */
+  maxRequestsPerSecond?: number;
+  /** Shared MET client so every provider counts against the same request pace. */
+  transport?: MetNorwayTransport;
 }
 
 /**
@@ -31,43 +35,72 @@ export class MetNorwayProvincesProvider implements ProvinceCurrentProvider {
   readonly name = 'MET Norway';
   readonly attribution = MET_NORWAY_ATTRIBUTION;
   private readonly now: () => Date;
+  private readonly transport: MetNorwayTransport;
 
   constructor(
-    private readonly fetchImpl: typeof fetch,
+    fetchImpl: typeof fetch,
     private readonly options: MetNorwayProvincesOptions
   ) {
     this.now = options.now ?? (() => new Date());
+    this.transport =
+      options.transport ??
+      new MetNorwayTransport(fetchImpl, {
+        userAgent: options.userAgent,
+        timeoutMs: options.timeoutMs,
+        metBaseUrl: options.metBaseUrl,
+        maxRequestsPerSecond: options.maxRequestsPerSecond,
+      });
   }
 
   private async observe(point: ProvincePoint, start: number): Promise<ProvinceCurrentObservation | null> {
     try {
-      const forecast = await fetchMetNorwayForecast(
-        this.fetchImpl,
-        this.options.userAgent,
-        point.lat,
-        point.lon,
-        this.options.timeoutMs,
-        this.options.metBaseUrl
-      );
+      const forecast = await this.transport.forecast(point.lat, point.lon);
       const hours = expandToHours(forecast, start);
       const current = hours[0];
       if (!current || current.time !== start) return null;
+      // An unknown or missing symbol leaves the province blank rather than guessing a category.
+      const weatherCode = current.symbol === undefined ? null : weatherCodeForSymbol(current.symbol);
+      if (weatherCode === null) return null;
+      const validAt = new Date(current.time).toISOString();
+      const updatedAt = modelUpdatedAt(forecast);
+      const ownHourAmount =
+        current.periodHours === 1 && current.precipitationMm !== undefined
+          ? Math.round(current.precipitationMm * 100) / 100
+          : undefined;
       const outlook = PROVINCE_OUTLOOK_HOURS.flatMap(hourOffset => {
         const hour = hours.find(candidate => candidate.time === start + hourOffset * HOUR_MS);
         return hour
-          ? [{ hourOffset, temperature: round1(hour.temperature), precipitation: round1(hour.precipitationMm) }]
+          ? [
+              {
+                hourOffset,
+                temperature: round1(hour.temperature),
+                ...(hour.precipitationMm === undefined ? {} : { precipitation: round1(hour.precipitationMm) }),
+              },
+            ]
           : [];
       });
       return {
         temperature: round1(current.temperature),
-        weatherCode: weatherCodeForSymbol(current.symbol),
+        weatherCode,
         isDay: isDaylightHour(point.lat, point.lon, new Date(current.time)),
         windSpeed: round1(current.windSpeed),
         windDirection: current.windDirection,
         cloudCover: current.cloudCover === undefined ? undefined : Math.round(current.cloudCover),
-        precipitation: round1(current.precipitationMm),
+        // The coming hour's forecast amount (MET has no observed past hour); see the period.
+        ...(ownHourAmount === undefined ? {} : { precipitation: round1(ownHourAmount) }),
+        ...(ownHourAmount === undefined
+          ? {}
+          : {
+              precipitationPeriod: {
+                amountMm: ownHourAmount,
+                validFrom: validAt,
+                validTo: new Date(current.time + HOUR_MS).toISOString(),
+              },
+            }),
         outlook,
-        observedAt: new Date(current.time).toISOString(),
+        observedAt: validAt,
+        validAt,
+        ...(updatedAt ? { modelUpdatedAt: updatedAt } : {}),
       };
     } catch {
       return null;

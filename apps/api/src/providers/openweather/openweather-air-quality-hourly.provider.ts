@@ -16,16 +16,17 @@ export const OPENWEATHER_SOURCE_URL = 'https://openweathermap.org/';
 
 type Pollutant = 'pm2_5' | 'pm10' | 'no2' | 'o3' | 'so2';
 
-// European Air Quality Index bands (EEA; the same breakpoints Open-Meteo's `european_aqi`
-// uses), µg/m³ upper bounds for index 20, 40, 60, 80, 100 and the extremely-poor ceiling.
+// European Air Quality Index, EEA bands revised in 2024 (https://airindex.eea.europa.eu/AQI/;
+// the same table Open-Meteo documents for `european_aqi`). Upper bounds in µg/m³ of hourly
+// concentrations for index 20, 40, 60, 80 and 100.
 const BANDS: Record<Pollutant, readonly number[]> = {
-  pm2_5: [10, 20, 25, 50, 75, 800],
-  pm10: [20, 40, 50, 100, 150, 1_200],
-  no2: [40, 90, 120, 230, 340, 1_000],
-  o3: [50, 100, 130, 240, 380, 800],
-  so2: [100, 200, 350, 500, 750, 1_250],
+  pm2_5: [5, 15, 50, 90, 140],
+  pm10: [15, 45, 120, 195, 270],
+  no2: [10, 25, 60, 100, 150],
+  o3: [60, 100, 120, 160, 180],
+  so2: [20, 40, 125, 190, 275],
 };
-const INDEX_STEPS = [20, 40, 60, 80, 100, 200] as const;
+const INDEX_STEPS = [20, 40, 60, 80, 100] as const;
 
 const subIndex = (pollutant: Pollutant, concentration: number) => {
   const bands = BANDS[pollutant];
@@ -40,12 +41,17 @@ const subIndex = (pollutant: Pollutant, concentration: number) => {
     lower = upper;
     lowerIndex = upperIndex;
   }
-  return INDEX_STEPS[INDEX_STEPS.length - 1];
+  // Extremely poor has no upper bound: keep rising at the slope of the last band, so the
+  // index exceeds 100 instead of being clipped to it.
+  const last = bands[bands.length - 1];
+  const previous = bands[bands.length - 2];
+  return 100 + ((concentration - last) / (last - previous)) * 20;
 };
 
 /**
  * European AQI from hourly concentrations: the worst pollutant's sub-index, linearly
- * interpolated inside its band. `null` when no pollutant is reported.
+ * interpolated inside its band; above 100 when a pollutant is extremely poor. `null` when no
+ * pollutant is reported.
  */
 export function europeanAqiFromComponents(components: Record<Pollutant, number>): number;
 export function europeanAqiFromComponents(

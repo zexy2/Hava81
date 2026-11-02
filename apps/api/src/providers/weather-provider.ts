@@ -27,6 +27,8 @@ export interface HourlyForecastQuery extends CoordinateQuery {
 
 export interface HourlyForecastProviderResult {
   timezoneOffsetSeconds: number;
+  /** When the source model last ran (ISO-8601 UTC), distinct from the time it was fetched. */
+  modelUpdatedAt?: string;
   daily?: Array<{
     date: string;
     tempMin: number;

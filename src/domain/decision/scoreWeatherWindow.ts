@@ -213,7 +213,10 @@ const WMO_SEVERITY: Readonly<
   // Heavy rain / violent showers: the measured amount already carries this risk.
   65: { penalty: 20, covers: 'precipitation' },
   82: { penalty: 20, covers: 'precipitation' },
+  // Rain and snow mixed (sleet): slush and ice on the ground, like snow of the same strength.
+  69: { penalty: 20 },
   73: { penalty: 14 },
+  68: { penalty: 12 },
   85: { penalty: 12 },
   71: { penalty: 8 },
   77: { penalty: 8 },
