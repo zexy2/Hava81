@@ -75,6 +75,8 @@ export interface BuildActivityPlanInput {
    * is not cut at 48 hours, and there is no 24-hour fallback. Absent: the next 12 hours.
    */
   period?: { startMs: number; endMs: number };
+  /** Activity length; defaults to the plan profile's duration. */
+  durationMinutes?: number;
 }
 
 /** Context peaks cover the 24 hours after the fetch; outside that, or stale, they are unknown. */
@@ -195,6 +197,7 @@ export const buildActivityPlan = ({
   contextSignals,
   tolerance,
   period,
+  durationMinutes: durationOverride,
 }: BuildActivityPlanInput): ActivityPlan => {
   const valid = [...hourly]
     .filter(point => point.time instanceof Date && Number.isFinite(point.time.getTime()))
@@ -300,12 +303,24 @@ export const buildActivityPlan = ({
   const firstMs = slots[0].time.getTime();
   const horizonHours = windowApplied ? 24 : HORIZON_HOURS;
   const horizonEndMs = period ? period.endMs : firstMs + horizonHours * HOUR_MS;
-  const periodCadenceMs = forecastCadenceMs(slots);
+  // Each slot covers until the next one (the last keeps the previous step): a three-hourly
+  // 09:00 step covers 09–12 even when the first two days are hourly.
+  const slotStepMs = (index: number) => {
+    const next = slots[index + 1] ?? slots[index];
+    const prev = slots[index - 1];
+    const step = slots[index + 1]
+      ? next.time.getTime() - slots[index].time.getTime()
+      : prev
+        ? slots[index].time.getTime() - prev.time.getTime()
+        : HOUR_MS;
+    return step > 0 ? step : HOUR_MS;
+  };
+  const stepBySlot = new Map(slots.map((slot, index) => [slot, slotStepMs(index)]));
   const evaluatedSlots = slots.filter(
     slot =>
       slot.time.getTime() < horizonEndMs &&
       // A slot counts when it overlaps the period: 07:00–08:00 covers a 07:30 start.
-      (!period || slot.time.getTime() + periodCadenceMs > period.startMs) &&
+      (!period || slot.time.getTime() + stepBySlot.get(slot)! > period.startMs) &&
       (!windowApplied ||
         clockInRange(
           localClockMinutes(slot.time, timezoneOffsetSeconds),
@@ -329,7 +344,10 @@ export const buildActivityPlan = ({
   // A plan needs the whole activity, not one good clock tick: choose the best block in which
   // every slot of the activity's duration is recommendable (a 2-hour picnic needs 2 dry hours).
   // Sparse three-hourly data cannot prove a continuous block; it keeps the near-best range.
-  const durationMinutes = PLAN_PROFILES[activity].durationMinutes;
+  const durationMinutes =
+    durationOverride !== undefined && Number.isFinite(durationOverride) && durationOverride > 0
+      ? durationOverride
+      : PLAN_PROFILES[activity].durationMinutes;
   // A selected single instant ("18:00–18:00") asks about that moment, not a block.
   const instantWindow = Boolean(windowApplied && startMinutes === endMinutes);
   const blocksIn = (pool: ActivityWindowScore[]) =>
@@ -377,14 +395,44 @@ export const buildActivityPlan = ({
   // would promise a 2-hour picnic in a 1-hour gap.
   // Measure the cadence where the answer comes from: a far period arrives in three-hour steps
   // even when the next hours are hourly.
-  const cadencePool = period ? candidateSlots : slots;
+  // A one-slot period (22:30–23:00) has no cadence of its own: use the slots around it.
+  const nearPeriod = period
+    ? slots.filter(
+        slot =>
+          slot.time.getTime() >= period.startMs - 3 * HOUR_MS && slot.time.getTime() <= period.endMs
+      )
+    : [];
+  const cadencePool = period ? (nearPeriod.length >= 2 ? nearPeriod : slots) : slots;
   const hourlyCadence =
     !instantWindow && forecastCadenceMs(cadencePool) <= 1.5 * HOUR_MS && cadencePool.length > 1;
-  const bestWindowRange = ranked.length
-    ? toRange(ranked[0])
+  // A slot can start before the asked period (a 22:00 hour for 22:30, a 09:00 step for 10:00):
+  // the answer starts with the period. With hourly data a clipped range shorter than the
+  // activity is not a window.
+  const clipToPeriod = (
+    range: BestWindowRange<ActivityWindowScore> | undefined
+  ): BestWindowRange<ActivityWindowScore> | undefined => {
+    if (!range || !period || range.start.time.getTime() >= period.startMs) return range;
+    // A coarse last step covers until the next one (09:00 covers 09–12).
+    const endMs = Math.max(
+      range.endTime.getTime(),
+      range.end.time.getTime() + (stepBySlot.get(range.end) ?? 0)
+    );
+    if (endMs <= period.startMs) return undefined;
+    const clippedEndMs = Math.min(endMs, period.endMs);
+    if (hourlyCadence && clippedEndMs - period.startMs < durationMinutes * 60_000) return undefined;
+    return {
+      ...range,
+      start: { ...range.start, time: new Date(period.startMs) },
+      endTime: new Date(clippedEndMs),
+    };
+  };
+  // The best block that still fits once clipped (13:00–15:00 at 13:20 gives way to 14:00–16:00).
+  const bestRanked = ranked.find(window => clipToPeriod(toRange(window)) !== undefined);
+  const bestWindowRange = bestRanked
+    ? clipToPeriod(toRange(bestRanked))
     : hourlyCadence
       ? undefined
-      : findBestWindowRange(candidateSlots, undefined, isEligible);
+      : clipToPeriod(findBestWindowRange(candidateSlots, undefined, isEligible));
   // Alternatives must be genuinely different stretches: two blocks with only usable hours
   // between them (12:00–13:00 next to 13:00–14:00, or 07:00 and 09:00 in one dry morning) are
   // the same option. A gated hour between them (rain, storm, darkness) makes them distinct.
@@ -404,8 +452,8 @@ export const buildActivityPlan = ({
   const stretchOfWindow = (window: PlanWindow) => stretchOf.get(window.start.getTime());
   const sameStretch = (a: PlanWindow, b: PlanWindow) =>
     stretchOfWindow(a) !== undefined && stretchOfWindow(a) === stretchOfWindow(b);
-  const chosen: PlanWindow[] = ranked.length ? [ranked[0]] : [];
-  for (const window of ranked.slice(1)) {
+  const chosen: PlanWindow[] = bestRanked ? [bestRanked] : [];
+  for (const window of ranked.filter(window => window !== bestRanked)) {
     if (chosen.length >= 3) break;
     if (chosen.every(other => !sameStretch(window, other))) chosen.push(window);
   }
@@ -476,7 +524,7 @@ export const buildActivityPlan = ({
     band: getScoreBand(score),
     bestWindow,
     bestWindowRange,
-    bestWindowScore: ranked[0]?.score,
+    bestWindowScore: bestWindowRange ? bestRanked?.score : undefined,
     alternativeWindows: evenDay.even ? [] : alternativeWindows,
     // Walking or running after dark is allowed but deserves a visibility note.
     inDarkness: Boolean(

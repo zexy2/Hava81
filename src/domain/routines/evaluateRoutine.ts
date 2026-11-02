@@ -98,6 +98,7 @@ function scoreOccurrence(
         rain: routine.rainTolerance ?? input.tolerance.rain,
       },
       period: { startMs: Math.max(startMs, now.getTime()), endMs },
+      durationMinutes: routine.schedule.durationMinutes,
     });
 
   const plan = planIn(occurrence.startMs, occurrence.endMs);
@@ -148,6 +149,8 @@ function withinOccurrence(
   const startMs = Math.max(rangeStartMs, earliestMs);
   const minEndMs = Math.min(startMs + durationMinutes * 60_000, occurrence.endMs);
   const endMs = Math.max(Math.min(rangeEndMs, occurrence.endMs), minEndMs);
+  // Not enough of the plan's own hours left for the whole activity: no window.
+  if (endMs - startMs < durationMinutes * 60_000) return { ...plan, bestWindowRange: undefined };
   if (startMs === rangeStartMs && endMs === rangeEndMs) return plan;
   return {
     ...plan,

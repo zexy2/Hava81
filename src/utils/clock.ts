@@ -3,6 +3,10 @@ export const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 /** Digits typed in any common way ("830", "0830", "8:30", "08.30") → "08:30", or null. */
 export function normalizeClock(raw: string): string | null {
   const text = raw.trim().replace(/[.,\s]/g, ':');
+  // "1:2:3" is not a clock time.
+  if ((text.match(/:/g) ?? []).length > 1) return null;
+  // Midnight typed as the end of the day.
+  if (/^24:?00$/.test(text)) return '00:00';
   if (CLOCK_PATTERN.test(text)) return text;
   const digits = text.replace(/\D/g, '');
   if (/^\d{1,2}:\d{2}$/.test(text)) {

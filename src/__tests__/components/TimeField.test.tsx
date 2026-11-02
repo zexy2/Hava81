@@ -12,11 +12,14 @@ describe('normalizeClock', () => {
     ['08.30', '08:30'],
     ['8', '08:00'],
     ['23:59', '23:59'],
+    // Midnight typed as the end of the day.
+    ['24:00', '00:00'],
+    ['2400', '00:00'],
   ])('reads %s as %s', (raw, clock) => {
     expect(normalizeClock(raw)).toBe(clock);
   });
 
-  it.each(['24:00', '12:60', '9999', 'ab', '', '12345'])('rejects %s', raw => {
+  it.each(['1:2:3', '12:30:00', '24:30', '12:60', '9999', 'ab', '', '12345'])('rejects %s', raw => {
     expect(normalizeClock(raw)).toBeNull();
   });
 });

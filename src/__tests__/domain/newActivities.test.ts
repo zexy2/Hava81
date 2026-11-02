@@ -36,9 +36,11 @@ describe('new activities', () => {
     expect(score('dog', hot).score).toBeLessThan(score('walk', hot).score);
   });
 
-  it('dog walk: night is a valid hour; a walk keeps the 07–23 rule', () => {
+  // Suggestions are only chosen between 07:00 and 23:00 (dailyPlan.nightNote), dog walks too.
+  it('dog walk: like a walk, a night hour is scored but never recommended', () => {
     const night = hour(0, { temp: 18, apparentTemperature: 18, uvIndex: 0 });
-    expect(score('dog', night).eligible).toBe(true);
+    expect(score('dog', night).eligible).toBe(false);
+    expect(score('dog', night).gateReasons).toContain('outside-active-hours');
     expect(score('walk', night).gateReasons).toContain('outside-active-hours');
   });
 
