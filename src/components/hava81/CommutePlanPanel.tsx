@@ -1,5 +1,5 @@
 import { TimeField } from './TimeField';
-import { formatNumber, formatWithUnit } from '../../utils/format';
+import { formatNumber, formatWithUnit, formatCityTime } from '../../utils/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
@@ -115,12 +115,10 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
   }, [plan, profile.commuteEnd, profile.commuteStart, weather.cityName]);
 
   const formatLocalWindowTime = (date: Date) =>
-    new Date(date.getTime() + timezoneOffsetSeconds * 1000).toLocaleString(i18n.language, {
+    `${new Date(date.getTime() + timezoneOffsetSeconds * 1000).toLocaleDateString(i18n.language, {
       weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
       timeZone: 'UTC',
-    });
+    })} ${formatCityTime(date, timezoneOffsetSeconds, i18n.language)}`;
   const formatPrecipitation = (probability: number | undefined, amount?: number) => {
     const hasProbability =
       typeof probability === 'number' &&

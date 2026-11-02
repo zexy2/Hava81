@@ -1,3 +1,4 @@
+import { formatCityTime } from '../../utils/format';
 import { getScoreBand } from '../../domain/decision/scoreWeatherWindow';
 import { toleranceOf, useDecisionProfile } from '../../hooks/useDecisionProfile';
 import { useNextRoutine } from '../../hooks/useNextRoutine';
@@ -101,14 +102,9 @@ function FreshDailyPlanPanel({
   const formatTemperature = (temperature: number) =>
     `${Math.round(convertTemperature(temperature))}${temperatureSymbol}`;
 
-  const formatTime = (date?: Date) => {
-    if (!date) return '—';
-    return new Date(date.getTime() + timezoneOffsetMs).toLocaleTimeString(i18n.language, {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'UTC',
-    });
-  };
+  // One clock for the whole app: TR "16:00", EN "4 PM".
+  const formatTime = (date?: Date) =>
+    date ? formatCityTime(date, timezoneOffsetMs / 1000, i18n.language) : '—';
   const windowWhy = useWindowWhy(date => formatTime(date));
   const formatSlotPrecipitation = (probability: number | undefined, amount?: number) => {
     const hasProbability = Number.isFinite(probability);

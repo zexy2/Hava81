@@ -569,7 +569,7 @@ export const en = {
     routines: {
       answer: {
         best: '{{day}} best {{start}}–{{end}}',
-        none: '{{day}} no good hour',
+        none: '{{day}}: no good time',
         fixed: '{{day}} {{time}}',
         fixedBetter: '{{day}} {{time}} · {{better}} is better',
         pending_one: '{{day}} · forecast in {{count}} day',

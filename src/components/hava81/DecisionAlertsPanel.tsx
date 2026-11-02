@@ -1,3 +1,4 @@
+import { formatCityTime } from '../../utils/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
@@ -113,11 +114,7 @@ const inQuietHours = (timezoneOffsetSeconds = 0) => {
 };
 
 const formatLocationTime = (date: Date, timezoneOffsetSeconds: number, language: string): string =>
-  new Intl.DateTimeFormat(language.startsWith('en') ? 'en-US' : 'tr-TR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-  }).format(new Date(date.getTime() + timezoneOffsetSeconds * 1000));
+  formatCityTime(date, timezoneOffsetSeconds, language);
 
 const millisecondsUntilQuietHoursEnd = (timezoneOffsetSeconds = 0): number | null => {
   const shiftedNowMs = Date.now() + timezoneOffsetSeconds * 1000;

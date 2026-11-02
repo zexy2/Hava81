@@ -1,5 +1,5 @@
 import { DUST_EVENT_UGM3, DUST_GUIDELINE_UGM3 } from '../../domain/plan/scoreHour';
-import { formatFixed } from '../../utils/format';
+import { formatFixed, formatCityTime } from '../../utils/format';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
@@ -85,11 +85,7 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const fetchedTime =
     freshness.status === 'unknown'
       ? null
-      : new Date(fetchedAtMs + timezoneOffsetSeconds * 1000).toLocaleTimeString(i18n.language, {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'UTC',
-        });
+      : formatCityTime(new Date(fetchedAtMs), timezoneOffsetSeconds, i18n.language);
   const uv = uvLevel(signals.uvIndexMax);
   const pollen = useMemo(() => {
     const grass = signals.grassPollenMax;
