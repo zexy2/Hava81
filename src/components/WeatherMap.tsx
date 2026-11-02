@@ -536,6 +536,17 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             </span>
             {layer === 'precipitation' ? <span>{t('weather.mapLayers.notRadar')}</span> : null}
             <span>·</span>
+            {showAllProvinces ? (
+              <>
+                {/* The 81 province markers show temperatures, whatever layer is drawn. */}
+                <span>
+                  {t('weather.mapLiveProvinces', {
+                    provider: provinceTemperatures.attribution ?? provinceTemperatures.provider,
+                  })}
+                </span>
+                <span>·</span>
+              </>
+            ) : null}
           </>
         )}
         <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">
