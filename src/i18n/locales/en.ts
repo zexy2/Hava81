@@ -66,6 +66,19 @@ export const en = {
       now: 'Now',
       ahead: '+{{hours}} h',
       unavailable: 'Layer data is unavailable right now; the map and cities still work.',
+      // Shown under the map for the layer and hour on screen.
+      credit: {
+        precipitation: 'chance of rain',
+        precipitationAmount: 'hourly rain amount',
+        temperature: 'temperature',
+        wind: 'wind',
+        cloud: 'cloud cover',
+      },
+      creditLine: '{{layer}} from province forecasts ({{when}}): {{provider}}',
+      notRadar: 'Interpolated from province values; not radar.',
+      coveragePartial:
+        '{{layer}} is available for only {{available}}/{{total}} provinces, so the map is not shaded; province values are on the markers.',
+      coverageNone: 'No {{layer}} for any province right now; this layer is empty.',
       amountUnit: 'mm/h',
       legend: {
         precipitation: 'Chance of rain scale',

@@ -66,6 +66,19 @@ export const tr = {
       now: 'Şimdi',
       ahead: '+{{hours}} sa',
       unavailable: 'Katman verisi şu an yok; harita ve şehirler çalışmaya devam ediyor.',
+      // Shown under the map for the layer and hour on screen.
+      credit: {
+        precipitation: 'yağış olasılığı',
+        precipitationAmount: 'saatlik yağış miktarı',
+        temperature: 'sıcaklık',
+        wind: 'rüzgâr',
+        cloud: 'bulutluluk',
+      },
+      creditLine: 'İl tahminlerinden {{layer}} ({{when}}): {{provider}}',
+      notRadar: 'İllerin değerlerinden ara değerle çizilir; radar değildir.',
+      coveragePartial:
+        '{{layer}} yalnızca {{available}}/{{total}} ilde var; harita bu yüzden boyanmadı, il değerleri işaretlerde.',
+      coverageNone: '{{layer}} şu an hiçbir ilde yok; harita bu katmanda boş.',
       amountUnit: 'mm/sa',
       legend: {
         precipitation: 'Yağış olasılığı ölçeği',

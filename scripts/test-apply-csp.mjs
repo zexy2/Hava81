@@ -7,6 +7,7 @@ import test from 'node:test';
 import {
   DEFAULT_API_ORIGIN,
   MAP_TILE_ORIGINS,
+  mapOriginFrom,
   apiOriginFrom,
   applyCspToDist,
   applyCspToHtml,
@@ -92,4 +93,17 @@ test('applies to every HTML file in dist', async t => {
   assert.equal(directive(home, 'script-src'), "script-src 'self'");
   assert.match(directive(city, 'script-src'), /^script-src 'self' 'sha256-[A-Za-z0-9+/=]+'$/);
   assert.equal(await readFile(join(dist, 'app.js'), 'utf8'), 'console.log(1)');
+});
+
+test('#1757 a configured map host replaces OpenFreeMap in the policy, and only that host', () => {
+  const csp = buildCsp({ mapOrigin: 'https://tiles.example.test' });
+  assert.match(directive(csp, 'connect-src'), /https:\/\/tiles\.example\.test/);
+  assert.match(directive(csp, 'img-src'), /https:\/\/tiles\.example\.test/);
+  assert.doesNotMatch(csp, /tiles\.openfreemap\.org/);
+  // Without one, the default stays OpenFreeMap.
+  assert.match(directive(buildCsp(), 'connect-src'), /tiles\.openfreemap\.org/);
+  // A relative or malformed value is ignored rather than opening the policy.
+  assert.equal(mapOriginFrom('/tiles'), null);
+  assert.equal(mapOriginFrom('not a url'), null);
+  assert.equal(mapOriginFrom('https://tiles.example.test/styles'), 'https://tiles.example.test');
 });

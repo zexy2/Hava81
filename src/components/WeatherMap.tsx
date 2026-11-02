@@ -10,6 +10,7 @@ import {
   layerHasOutlook,
   layerValue,
   PRECIPITATION_AMOUNT_LEGEND_STEPS,
+  layerCoverage,
   precipitationMeasure,
   rampColor,
   type LayerHour,
@@ -246,6 +247,25 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   // MET Norway reports how much rain falls but not how likely it is; the layer then reads mm.
   const measure = useMemo(() => precipitationMeasure(freshProvinces), [freshProvinces]);
   const readsAmount = layer === 'precipitation' && measure === 'amount';
+  // How many provinces this layer and hour actually have. A thin or one-sided set is not drawn
+  // as a country-wide field; the map says how many it has instead (#1720 #1728 #1732).
+  const coverage = useMemo(
+    () => layerCoverage(freshProvinces, layer, layerHour, measure),
+    [freshProvinces, layer, layerHour, measure]
+  );
+  const coverageState: 'full' | 'partial' | 'none' =
+    coverage.available === 0
+      ? 'none'
+      : coverage.drawable && coverage.missing === 0
+        ? 'full'
+        : 'partial';
+  const layerName = readsAmount
+    ? t('weather.mapLayers.credit.precipitationAmount')
+    : t(`weather.mapLayers.credit.${layer}`);
+  const layerWhen =
+    layerHour === 0
+      ? t('weather.mapLayers.now')
+      : t('weather.mapLayers.ahead', { hours: layerHour });
   const currentLayerValue = currentProvince
     ? layerValue(currentProvince, layer, layerHour, measure)
     : null;
@@ -302,7 +322,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             zoomInLabel={t('weather.mapZoomIn')}
             zoomOutLabel={t('weather.mapZoomOut')}
           />
-          {freshProvinces.length > 0 ? (
+          {freshProvinces.length > 0 && coverage.drawable ? (
             <FieldLayer
               provinces={freshProvinces}
               layer={layer}
@@ -343,6 +363,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                 <MapPopup
                   lat={weather.coordinates.lat}
                   lon={weather.coordinates.lon}
+                  label={weather.cityName}
                   className="weather-map__popup"
                   closeLabel={t('common.close')}
                   onClose={() => setOpenPopup(null)}
@@ -426,6 +447,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                   <MapPopup
                     lat={featuredCity.coordinates.lat}
                     lon={featuredCity.coordinates.lon}
+                    label={featuredCity.name}
                     className="weather-map__popup"
                     closeLabel={t('common.close')}
                     onClose={() => setOpenPopup(null)}
@@ -465,6 +487,17 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           onHourChange={setLayerHour}
           unavailable={layersUnavailable}
         />
+        {!layersUnavailable && provincesSettled && coverageState !== 'full' ? (
+          <p className="weather-map__coverage" role="status">
+            {coverageState === 'none'
+              ? t('weather.mapLayers.coverageNone', { layer: layerName })
+              : t('weather.mapLayers.coveragePartial', {
+                  layer: layerName,
+                  available: coverage.available,
+                  total: coverage.total,
+                })}
+          </p>
+        ) : null}
         {(tilesLoading || tilesFailed) && (
           <div
             className={`weather-map__tile-status${tilesFailed ? ' weather-map__tile-status--failed' : ''}`}
@@ -488,14 +521,20 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         )}
       </div>
 
-      <p className="weather-map__attribution">
-        {showAllProvinces && provinceTemperatures && hasFreshProvinceTemperatures && (
+      <p
+        className="weather-map__attribution"
+        data-layer-coverage={provincesSettled && !layersUnavailable ? coverageState : undefined}
+      >
+        {provinceTemperatures && hasFreshProvinceTemperatures && (
           <>
             <span>
-              {t('weather.mapLiveProvinces', {
+              {t('weather.mapLayers.creditLine', {
+                layer: layerName,
+                when: layerWhen,
                 provider: provinceTemperatures.attribution ?? provinceTemperatures.provider,
               })}
             </span>
+            {layer === 'precipitation' ? <span>{t('weather.mapLayers.notRadar')}</span> : null}
             <span>·</span>
           </>
         )}

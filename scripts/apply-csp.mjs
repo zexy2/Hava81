@@ -43,6 +43,14 @@ export function apiOriginFrom(apiBaseUrl) {
   }
 }
 
+/**
+ * Origin of an absolute `VITE_MAP_STYLE_BASE_URL` (a self-hosted OpenFreeMap or another
+ * provider), or null. The same variable sets the app's style URLs, so app and policy agree.
+ */
+export function mapOriginFrom(mapStyleBaseUrl) {
+  return apiOriginFrom(mapStyleBaseUrl);
+}
+
 /** sha256 CSP sources for inline, executable scripts (no src, not a data block). */
 export function inlineScriptHashes(html) {
   const hashes = [];
@@ -57,15 +65,16 @@ export function inlineScriptHashes(html) {
   return hashes;
 }
 
-export function buildCsp({ scriptHashes = [], apiOrigin = null } = {}) {
+export function buildCsp({ scriptHashes = [], apiOrigin = null, mapOrigin = null } = {}) {
+  const tiles = mapOrigin ? [mapOrigin] : MAP_TILE_ORIGINS;
   // data: lets MapLibre read the weather field the page draws itself; it opens no network path.
-  const connect = ["'self'", 'data:', DEFAULT_API_ORIGIN, ...MAP_TILE_ORIGINS];
+  const connect = ["'self'", 'data:', DEFAULT_API_ORIGIN, ...tiles];
   if (apiOrigin && !connect.includes(apiOrigin)) connect.push(apiOrigin);
   const directives = [
     ["default-src", ["'self'"]],
     ['script-src', ["'self'", ...scriptHashes]],
     ['style-src', ["'self'", "'unsafe-inline'"]],
-    ['img-src', ["'self'", 'data:', 'blob:', ...MAP_TILE_ORIGINS]],
+    ['img-src', ["'self'", 'data:', 'blob:', ...tiles]],
     ['font-src', ["'self'", 'data:']],
     ['connect-src', connect],
     ['manifest-src', ["'self'"]],
@@ -78,9 +87,9 @@ export function buildCsp({ scriptHashes = [], apiOrigin = null } = {}) {
 }
 
 /** Inserts (or replaces) the CSP meta right after <meta charset>, before any script. */
-export function applyCspToHtml(html, { apiOrigin = null } = {}) {
+export function applyCspToHtml(html, { apiOrigin = null, mapOrigin = null } = {}) {
   const withoutOld = html.replace(CSP_META_PATTERN, '');
-  const csp = buildCsp({ scriptHashes: inlineScriptHashes(withoutOld), apiOrigin });
+  const csp = buildCsp({ scriptHashes: inlineScriptHashes(withoutOld), apiOrigin, mapOrigin });
   const meta = `<meta http-equiv="Content-Security-Policy" content="${csp}" />`;
   const charset = /<meta\s+charset=["']?[^"'>\s]+["']?\s*\/?>/i;
   if (charset.test(withoutOld)) {
@@ -104,13 +113,20 @@ async function listHtmlFiles(dir) {
   return files.flat();
 }
 
-export async function applyCspToDist(distDir, { apiBaseUrl = process.env.VITE_API_BASE_URL } = {}) {
+export async function applyCspToDist(
+  distDir,
+  {
+    apiBaseUrl = process.env.VITE_API_BASE_URL,
+    mapStyleBaseUrl = process.env.VITE_MAP_STYLE_BASE_URL,
+  } = {}
+) {
   const apiOrigin = apiOriginFrom(apiBaseUrl);
+  const mapOrigin = mapOriginFrom(mapStyleBaseUrl);
   const files = await listHtmlFiles(distDir);
   if (files.length === 0) throw new Error(`No HTML files found in ${distDir}`);
   for (const file of files) {
     const html = await readFile(file, 'utf8');
-    await writeFile(file, applyCspToHtml(html, { apiOrigin }));
+    await writeFile(file, applyCspToHtml(html, { apiOrigin, mapOrigin }));
   }
   return files.length;
 }

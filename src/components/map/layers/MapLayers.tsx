@@ -85,12 +85,24 @@ export function FieldLayer({ provinces, layer, hour, measure = 'chance' }: Field
         );
       }
     };
+    // `data-map-field` says whether the browser actually decoded the field image, which a CSP
+    // that blocks `data:` would prevent; the e2e contract reads it with the CSP enforced.
+    const markLoaded = () => {
+      if (map.getSource(FIELD_SOURCE) && map.isSourceLoaded(FIELD_SOURCE)) {
+        surface.setAttribute('data-map-field', 'loaded');
+      }
+    };
+    if (url) surface.setAttribute('data-map-field', 'loading');
+    else surface.removeAttribute('data-map-field');
     apply();
     map.on('styledata', apply);
+    map.on('sourcedata', markLoaded);
+    markLoaded();
     if (url) surface.setAttribute('data-map-layer', layer);
     else surface.removeAttribute('data-map-layer');
     return () => {
       map.off('styledata', apply);
+      map.off('sourcedata', markLoaded);
     };
   }, [layer, map, url]);
 
@@ -98,6 +110,7 @@ export function FieldLayer({ provinces, layer, hour, measure = 'chance' }: Field
     () => () => {
       if (!map) return;
       map.getContainer().removeAttribute('data-map-layer');
+      map.getContainer().removeAttribute('data-map-field');
       if (!map.getStyle()) return;
       if (map.getLayer(FIELD_LAYER)) map.removeLayer(FIELD_LAYER);
       if (map.getSource(FIELD_SOURCE)) map.removeSource(FIELD_SOURCE);

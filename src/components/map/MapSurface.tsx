@@ -304,6 +304,8 @@ export function MapMarker({
 interface MapPopupProps {
   lat: number;
   lon: number;
+  /** Accessible name of the popup dialog, e.g. the place it describes. */
+  label: string;
   className?: string;
   onClose: () => void;
   closeLabel: string;
@@ -311,7 +313,15 @@ interface MapPopupProps {
 }
 
 /** One popup at a time, anchored above its point, closed by its button or Escape. */
-export function MapPopup({ lat, lon, className, onClose, closeLabel, children }: MapPopupProps) {
+export function MapPopup({
+  lat,
+  lon,
+  label,
+  className,
+  onClose,
+  closeLabel,
+  children,
+}: MapPopupProps) {
   const map = useMapSurface();
   const elementRef = useRef<HTMLDivElement | null>(null);
   if (!elementRef.current) {
@@ -321,6 +331,7 @@ export function MapPopup({ lat, lon, className, onClose, closeLabel, children }:
     elementRef.current = node;
   }
   const element = elementRef.current;
+  element.setAttribute('aria-label', label);
   const close = useRef(onClose);
   close.current = onClose;
 
