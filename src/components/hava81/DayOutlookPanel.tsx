@@ -204,7 +204,7 @@ export function DayOutlookPanel({
           return (
             <li
               key={day.dateKey}
-              className={`day-outlook__day is-${band}${day.thunderHours.length ? ' has-thunder' : ''}`}
+              className={`day-outlook__day is-${planByDay && scored === undefined ? 'none' : band}${day.thunderHours.length ? ' has-thunder' : ''}`}
             >
               {day.icon ? <WeatherSymbol code={day.icon} className="day-outlook__symbol" /> : null}
               <span className="day-outlook__name">{t(outlookDayLabelKey(day, offsetSeconds))}</span>
@@ -229,24 +229,31 @@ export function DayOutlookPanel({
                   </span>
                 </span>
               ) : null}
-              {/* Three days out the number is a direction, not a measurement. */}
-              <strong
-                className="day-outlook__score"
-                aria-label={
-                  confidence === 'low'
-                    ? t('hava81.outlook.approxScore', {
-                        score: score,
-                        band: t(`hava81.dailyPlan.bands.${band}`),
-                      })
-                    : undefined
-                }
-              >
-                {confidence === 'low' ? `≈${score}` : score}
-                <small>
-                  /100 · {t(`hava81.dailyPlan.bands.${band}`)}
-                  {confidence === 'low' ? ` ${t('hava81.outlook.approx')}` : ''}
-                </small>
-              </strong>
+              {/* A plan with no number that day shows none, never the general day's. */}
+              {planByDay && scored === undefined ? (
+                <strong className="day-outlook__score day-outlook__score--none">
+                  <span aria-hidden="true">—</span>
+                </strong>
+              ) : (
+                // Three days out the number is a direction, not a measurement.
+                <strong
+                  className="day-outlook__score"
+                  aria-label={
+                    confidence === 'low'
+                      ? t('hava81.outlook.approxScore', {
+                          score: score,
+                          band: t(`hava81.dailyPlan.bands.${band}`),
+                        })
+                      : undefined
+                  }
+                >
+                  {confidence === 'low' ? `≈${score}` : score}
+                  <small>
+                    /100 · {t(`hava81.dailyPlan.bands.${band}`)}
+                    {confidence === 'low' ? ` ${t('hava81.outlook.approx')}` : ''}
+                  </small>
+                </strong>
+              )}
               <span className="day-outlook__window">
                 {/* Say whose best time this is: the general score and an activity can differ. */}
                 {planByDay && routine

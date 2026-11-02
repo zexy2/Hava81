@@ -101,7 +101,13 @@ function scoreOccurrence(
     });
 
   const plan = planIn(occurrence.startMs, occurrence.endMs);
-  if (routine.schedule.kind === 'flexible') return { status: 'scored', occurrence, plan };
+  if (routine.schedule.kind === 'flexible') {
+    return {
+      status: 'scored',
+      occurrence,
+      plan: withinOccurrence(plan, occurrence, routine.schedule.durationMinutes),
+    };
+  }
 
   const wider = planIn(
     occurrence.startMs - ALTERNATIVE_REACH_MS,
@@ -115,4 +121,30 @@ function scoreOccurrence(
       ? { startMs: range.start.time.getTime(), endMs: range.endTime.getTime(), score: wider.score }
       : undefined;
   return { status: 'scored', occurrence, plan, better };
+}
+
+/**
+ * Coarse forecast steps (3 h) can start before the plan: an 08:00 step overlaps a 10:00 start.
+ * The answer must stay inside the plan's own hours, so the best window is clipped to them and
+ * keeps at least the plan's duration.
+ */
+function withinOccurrence(
+  plan: ActivityPlan,
+  occurrence: RoutineOccurrence,
+  durationMinutes: number
+): ActivityPlan {
+  const range = plan.bestWindowRange;
+  if (!range) return plan;
+  const startMs = Math.max(range.start.time.getTime(), occurrence.startMs);
+  const minEndMs = Math.min(startMs + durationMinutes * 60_000, occurrence.endMs);
+  const endMs = Math.max(Math.min(range.endTime.getTime(), occurrence.endMs), minEndMs);
+  if (startMs === range.start.time.getTime() && endMs === range.endTime.getTime()) return plan;
+  return {
+    ...plan,
+    bestWindowRange: {
+      ...range,
+      start: { ...range.start, time: new Date(startMs) },
+      endTime: new Date(endMs),
+    },
+  };
 }

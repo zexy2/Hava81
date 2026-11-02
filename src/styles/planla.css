@@ -3831,6 +3831,10 @@
   .app .atlas-plan-view .routine-row__strip--ranged .routine-row__cell--best {
     box-shadow: none;
   }
+
+  .app .atlas-plan-view .day-outlook__score--none {
+    color: var(--plan-soft);
+  }
 }
 
 @keyframes planla-bar {
