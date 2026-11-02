@@ -708,7 +708,7 @@ export const en = {
       },
       suggest: {
         title: {
-          now: 'Good things to do now',
+          now: 'Best in the next 12 hours',
           evening: 'Good things to do this evening',
           tomorrow: 'Best for tomorrow',
           weekend: 'Best for the weekend',
