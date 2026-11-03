@@ -60,7 +60,8 @@ test('policy allows exactly the app origins', () => {
   // MapLibre fetches the OpenFreeMap style and tiles, and reads the locally drawn weather
   // field (a data: image) with fetch; its worker is a same-origin file.
   assert.deepEqual(MAP_TILE_ORIGINS, ['https://tiles.openfreemap.org']);
-  for (const origin of MAP_TILE_ORIGINS) assert.match(directive(csp, 'img-src'), new RegExp(origin.replaceAll('.', '\\.')));
+  // Exact source match, not a regular expression: a host is an exact token in the directive.
+  for (const origin of MAP_TILE_ORIGINS) assert.ok(directive(csp, 'img-src').split(' ').includes(origin));
   assert.equal(directive(csp, 'worker-src'), "worker-src 'self'");
   assert.equal(directive(csp, 'object-src'), "object-src 'none'");
   assert.doesNotMatch(csp, /unsafe-eval/);
