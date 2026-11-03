@@ -125,7 +125,7 @@ describe('RouteWeatherPanel', () => {
 
     const origin = screen.getByLabelText('Başlangıç');
     const destination = screen.getByLabelText('Varış');
-    const check = screen.getByRole('button', { name: 'Koridoru kontrol et' });
+    const check = screen.getByRole('button', { name: 'Rotayı kontrol et' });
     expect(check).toBeDisabled();
     expect(origin).toHaveAttribute('aria-describedby', 'route-weather-same-city');
     expect(destination).toHaveAttribute('aria-describedby', 'route-weather-same-city');
@@ -163,7 +163,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     const announcement = await screen.findByRole('status');
     expect(announcement).toHaveAttribute('aria-live', 'polite');
@@ -208,7 +208,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     await screen.findByRole('status');
     const result = document.querySelector('.route-weather__result');
@@ -244,7 +244,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     const segments = await screen.findByRole('list', { name: 'Rota boyunca hava örnekleri' });
     expect(segments).toHaveTextContent('Yağış verisi yok');
@@ -288,7 +288,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     await screen.findByRole('status');
     const result = document.querySelector('.route-weather__result');
@@ -312,7 +312,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
     expect(await screen.findByRole('status')).toHaveTextContent('78/100');
 
     await user.selectOptions(screen.getByLabelText('Gün'), tomorrowOption());
@@ -332,14 +332,14 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
     const loadingButton = screen.getByRole('button', { name: 'Yükleniyor...' });
     expect(loadingButton).toBeDisabled();
     expect(loadingButton).toHaveAttribute('aria-busy', 'true');
     expect(document.querySelector('.route-weather__body')).toHaveAttribute('aria-busy', 'true');
 
     fireEvent.change(screen.getByLabelText('Gün'), { target: { value: tomorrowOption() } });
-    const readyButton = screen.getByRole('button', { name: 'Koridoru kontrol et' });
+    const readyButton = screen.getByRole('button', { name: 'Rotayı kontrol et' });
     expect(readyButton).toBeEnabled();
     expect(readyButton).toHaveAttribute('aria-busy', 'false');
     expect(document.querySelector('.route-weather__body')).toHaveAttribute('aria-busy', 'false');
@@ -372,7 +372,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
     expect(api.getRouteWeather).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
@@ -385,7 +385,7 @@ describe('RouteWeatherPanel', () => {
       await i18n.changeLanguage('en');
     });
 
-    expect(screen.getByRole('button', { name: 'Check corridor' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Check route' })).toBeEnabled();
 
     await act(async () => {
       resolveRoute({
@@ -433,7 +433,7 @@ describe('RouteWeatherPanel', () => {
       renderPanel();
       fireEvent.click(screen.getByText('Rota havası'));
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
         await Promise.resolve();
       });
       expect(screen.getByRole('status')).toHaveTextContent('78/100');
@@ -463,7 +463,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    const check = screen.getByRole('button', { name: 'Koridoru kontrol et' });
+    const check = screen.getByRole('button', { name: 'Rotayı kontrol et' });
     await user.click(check);
     expect(await screen.findByRole('status')).toHaveTextContent('78/100');
 
@@ -484,7 +484,7 @@ describe('RouteWeatherPanel', () => {
     fireEvent.change(screen.getByLabelText('Kalkış zamanı · Türkiye saati'), {
       target: { value: '23:59' },
     });
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     expect(api.getRouteWeather).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent(
@@ -500,7 +500,7 @@ describe('RouteWeatherPanel', () => {
 
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Rota hava verisi alınamadı.');

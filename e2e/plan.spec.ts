@@ -819,7 +819,7 @@ test.describe('route weather', () => {
   test('route weather renders a transparent corridor result', DESKTOP, async ({ page }) => {
     await page.goto(PLAN);
     await page.getByText('Rota havası', { exact: true }).click();
-    await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+    await page.getByRole('button', { name: /rotayı kontrol et/i }).click();
     await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
     await expect(page.getByText(/gerçek yol\/navigasyon rotası değildir/i)).toBeVisible();
     await expect(
@@ -861,7 +861,7 @@ test.describe('route weather', () => {
     async ({ page }) => {
       await page.goto(PLAN);
       await page.getByText('Rota havası', { exact: true }).click();
-      await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+      await page.getByRole('button', { name: /rotayı kontrol et/i }).click();
       await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
       const segments = page.locator('.route-weather__segments');
       expect(await segments.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(

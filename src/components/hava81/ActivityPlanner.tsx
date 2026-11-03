@@ -348,7 +348,7 @@ export function ActivityPlanner({
     addPendingPlan({ id, activity, score, startMs, endMs });
   };
 
-  // "Make it a routine": the activity's usual plan, once; then show it in Your plans.
+  // "Save as plan": the activity's usual plan, once; then show it in Your plans.
   const saveAsRoutine = (activity: ActivityKind) => {
     if (!routineStore.routines.some(routine => routine.activity === activity)) {
       routineStore.addRoutine(defaultDraft(activity));

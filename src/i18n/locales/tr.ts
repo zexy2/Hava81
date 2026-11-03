@@ -110,7 +110,7 @@ export const tr = {
       percent: '%{{percent}}',
       chanceLabel: 'olasılık',
       amountLabel: 'yağış',
-      severity: { warning: 'Dikkat', severe: 'Şiddetli' },
+      severity: { warning: 'Uyarı', severe: 'Şiddetli' },
     },
     glance: {
       bestLabel: 'En uygun saatler',
@@ -308,7 +308,7 @@ export const tr = {
     },
     outlook: {
       planAnswer: '{{name}} {{when}} · {{band}}',
-      planOff: '{{name}} bu gün planlı değil',
+      planOff: 'O gün {{name}} yok',
       planPending: '{{name}} · tahmin henüz yok',
       planNoWindow: '{{name}} için uygun saat yok',
       approx: '(tahmini)',
@@ -442,10 +442,10 @@ export const tr = {
           no: 'Tahmine göre gerek görünmüyor',
           unknown: 'Veri yok',
         },
-        wind: { label: 'Rüzgâr', strong: 'Güçlü', caution: 'Dikkat', normal: 'Normal' },
+        wind: { label: 'Rüzgâr', strong: 'Güçlü', caution: 'Uyarı', normal: 'Normal' },
         air: {
           label: 'Hava kalitesi',
-          poor: 'Dikkat',
+          poor: 'Uyarı',
           sensitive: 'Hassas gruplar dikkat',
           fair: 'Makul',
           good: 'İyi',
@@ -512,7 +512,7 @@ export const tr = {
       title: 'Çıkış planı',
       subtitle: 'Çıkış ve dönüş saatini seç; yanına ne alacağını söyleyelim.',
       timesLabel: 'Çıkış ve dönüş saatleri',
-      presetsLabel: 'Hazır rutinler',
+      presetsLabel: 'Hazır planlar',
       presets: { office: 'Ofis', school: 'Okul' },
       outbound: 'Çıkış',
       return: 'Dönüş',
@@ -591,7 +591,7 @@ export const tr = {
         difficult: 'Zorlayıcı',
       },
       title: 'Planların',
-      add: 'Rutin ekle',
+      add: 'Plan ekle',
       custom: 'Kendi planımı kur',
       emptyLead: 'Birine dokun, hemen eklenir. Saatini sonra değiştirebilirsin.',
       newTitle: 'Yeni plan',
@@ -660,7 +660,7 @@ export const tr = {
           when: 'Hafta içi 18:30 · 45 dk',
         },
         'morning-dog': {
-          name: 'Sabah köpek',
+          name: 'Sabah köpek gezdirme',
           when: 'Her gün 07:30 · 30 dk',
         },
         'weekend-picnic': {
@@ -687,7 +687,7 @@ export const tr = {
         motorcycle: 'Motosiklet',
         laundry: 'Çamaşır',
       },
-      makeRoutine: 'Rutin yap',
+      makeRoutine: 'Plan olarak kaydet',
       calendar: {
         add: 'Takvime ekle',
         title: '{{name}} · Hava81',
@@ -929,7 +929,7 @@ export const tr = {
     route: {
       announcement: '{{origin}} → {{destination}}: {{band}}, {{score}}/100',
       title: 'Rota havası',
-      summary: 'İki şehir arasındaki yaklaşık hava koridorunu kontrol et.',
+      summary: 'İki şehir arasındaki rota boyunca yaklaşık havayı kontrol et.',
       origin: 'Başlangıç',
       destination: 'Varış',
       swap: 'Yönü değiştir',
@@ -942,8 +942,8 @@ export const tr = {
       durationMinutes: '{{minutes}} dk',
       departure: 'Kalkış zamanı · Türkiye saati',
       departureHelp: 'Şimdi ile önümüzdeki 18 saat arasından bir kalkış seç.',
-      check: 'Koridoru kontrol et',
-      corridor: 'Yaklaşık hava koridoru',
+      check: 'Rotayı kontrol et',
+      corridor: 'Yol boyunca yaklaşık hava',
       estimate: 'Yaklaşık {{distance}} km · {{duration}}',
       better:
         '{{time}} civarı kalkış hava açısından yaklaşık {{improvement}} puan daha iyi görünüyor.',
@@ -952,7 +952,7 @@ export const tr = {
       segments: 'Rota boyunca hava örnekleri',
       departureRangeError: 'Kalkış zamanı şimdi ile önümüzdeki 18 saat arasında olmalı.',
       resultExpired:
-        'Bu rota tahmininin güncelliği doldu. Güncel koşullar için koridoru tekrar kontrol et.',
+        'Bu rota tahmininin güncelliği doldu. Güncel koşullar için rotayı tekrar kontrol et.',
       error: 'Rota hava verisi alınamadı.',
       noRain: 'Yağış yok',
       precipitationUnknown: 'Yağış verisi yok',

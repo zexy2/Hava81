@@ -46,7 +46,7 @@ describe('RouteWeatherPanel better-departure action', () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     const recommendation = await screen.findByRole('button', {
       name: /yaklaşık 16 puan daha iyi görünüyor · bu saati kullan/i,

@@ -50,7 +50,7 @@ describe('RouteWeatherPanel city identity', () => {
 
     expect(screen.getByLabelText('Başlangıç')).toHaveValue('Ankara');
     expect(screen.getByLabelText('Varış')).toHaveValue('İstanbul');
-    expect(screen.getByRole('button', { name: 'Koridoru kontrol et' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Rotayı kontrol et' })).toBeEnabled();
   });
 
   it('updates the route origin when the active weather city changes', async () => {

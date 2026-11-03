@@ -205,7 +205,7 @@ test.describe('200% text reflow', () => {
   test('route corridor result stays readable at 200% text', DESKTOP, async ({ page }) => {
     await page.goto('/istanbul/?view=plan');
     await openRoute(page);
-    await page.getByRole('button', { name: /koridoru kontrol et/i }).click();
+    await page.getByRole('button', { name: /rotayı kontrol et/i }).click();
     await expect(page.getByRole('heading', { name: /İstanbul → Ankara/i })).toBeVisible();
     await setTextScale(page, 200);
     for (const width of [1280, 390]) {

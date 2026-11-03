@@ -279,7 +279,7 @@ describe('coming days on a plan tab', () => {
     expect(days[0]).toHaveTextContent('Koşu 18:30');
     expect(days[1]).toHaveTextContent('Koşu 18:30');
     const saturday = days.find(day => day.textContent?.startsWith('Cumartesi'))!;
-    expect(saturday).toHaveTextContent('Koşu bu gün planlı değil');
+    expect(saturday).toHaveTextContent('O gün Koşu yok');
     expect(saturday.querySelector('.day-outlook__score--none')).not.toBeNull();
   });
 
