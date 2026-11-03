@@ -387,10 +387,11 @@
     color: rgb(255 255 255);
   }
 
-  /* Curve 3.5rem + tick gap 0.45rem + tick row 1.1rem, with the curve block's margins. */
+  /* The curve's own 0.75rem top margin + curve 3.5rem + tick gap 0.45rem + tick row 1.1rem,
+     with the curve block's margins: 92.8 px, the same box the trend takes (#1782). */
   .app[data-living-sky='true'] .hava81-decision-field__trend-placeholder {
     justify-self: stretch;
-    height: 5.05rem;
+    height: 5.8rem;
     margin-block: calc(var(--hero-gap) + 1rem) 1.75rem;
     border-radius: 0;
     background: none;
@@ -420,6 +421,12 @@
 
   .app[data-living-sky='true'] .hava81-decision-field__change-title {
     margin: 0;
+  }
+
+  /* The list loads with one placeholder line and usually settles on two items: hold two
+     lines so their arrival does not push the rail down (#1782). 1.55 is the items' line height. */
+  .app[data-living-sky='true'] .hava81-decision-field__decision-list {
+    min-height: calc(2 * 1.55em);
   }
 
   .app[data-living-sky='true'] .hava81-decision-field__decision-list li {
