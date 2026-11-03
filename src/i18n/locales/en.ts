@@ -567,6 +567,10 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     routines: {
+      timeInvalid: 'Use 24-hour time, e.g. 18:30',
+      saved: 'Plan saved',
+      deleted: 'Plan deleted',
+      stripSummary: '{{start}}–{{end}}, {{duration}} minutes',
       answer: {
         best: '{{day}} best {{start}}–{{end}}',
         none: '{{day}}: no good time',
@@ -916,6 +920,7 @@ export const en = {
         "Today's Hava81 Score is {{score}}/100 · {{band}}. Adjust your plan for the weather risks.",
     },
     route: {
+      announcement: '{{origin}} → {{destination}}: {{band}}, {{score}}/100',
       title: 'Route weather',
       summary: 'Check an approximate weather corridor between two cities.',
       origin: 'Origin',

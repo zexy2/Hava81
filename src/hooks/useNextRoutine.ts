@@ -44,10 +44,17 @@ export function useNextRoutine(
     };
   }, []);
 
+  // A minute tick, so a plan that has started gives way to the next one.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return useMemo(() => {
     void revision;
     if (!input || input.hourly.length === 0) return null;
-    const now = new Date();
+    const now = new Date(nowMs);
     let best: {
       routine: Routine;
       evaluation: Extract<RoutineEvaluation, { status: 'scored' }>;
@@ -60,5 +67,5 @@ export function useNextRoutine(
       }
     }
     return best;
-  }, [input, revision]);
+  }, [input, revision, nowMs]);
 }

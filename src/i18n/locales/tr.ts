@@ -570,6 +570,10 @@ export const tr = {
       note: 'Saatine en yakın mevcut tahmin penceresi kullanılır; bu özellik trafik, yol güvenliği veya resmî uyarı yerine geçmez.',
     },
     routines: {
+      timeInvalid: '24 saat biçiminde yaz, ör. 18:30',
+      saved: 'Plan kaydedildi',
+      deleted: 'Plan silindi',
+      stripSummary: '{{start}}–{{end}}, {{duration}} dakika',
       answer: {
         best: '{{day}} en iyi {{start}}–{{end}}',
         none: '{{day}} uygun saat yok',
@@ -923,6 +927,7 @@ export const tr = {
         'Bugünün Hava81 Skoru {{score}}/100 · {{band}}. Planını hava risklerine göre ayarla.',
     },
     route: {
+      announcement: '{{origin}} → {{destination}}: {{band}}, {{score}}/100',
       title: 'Rota havası',
       summary: 'İki şehir arasındaki yaklaşık hava koridorunu kontrol et.',
       origin: 'Başlangıç',

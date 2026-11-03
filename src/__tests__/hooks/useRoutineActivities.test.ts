@@ -40,4 +40,23 @@ describe('useRoutineActivities', () => {
     });
     expect(result.current).toEqual(['bike']);
   });
+
+  it('keeps the same array between renders while plans are unchanged', () => {
+    saveRoutines([routine('a', 'run')]);
+    const { result, rerender } = renderHook(() => useRoutineActivities());
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
+  it('resyncs when another tab clears storage (key === null)', () => {
+    saveRoutines([routine('a', 'run')]);
+    const { result } = renderHook(() => useRoutineActivities());
+    expect(result.current).toEqual(['run']);
+    localStorage.clear();
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: null }));
+    });
+    expect(result.current).toEqual([]);
+  });
 });

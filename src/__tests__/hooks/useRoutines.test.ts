@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { StrictMode, createElement, type ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROUTINE_TEMPLATES, defaultDraft, useRoutines } from '../../hooks/useRoutines';
+import * as routineStore from '../../storage/routineStore';
 import { ROUTINES_KEY } from '../../storage/routineStore';
 
 const empty = () =>
@@ -125,5 +127,20 @@ describe('useRoutines', () => {
       expect(draft.schedule.days.length).toBeGreaterThan(0);
       expect(draft.schedule.durationMinutes).toBeGreaterThanOrEqual(15);
     }
+  });
+
+  it('saves once per change, outside the state updater (StrictMode-safe)', () => {
+    const spy = vi.spyOn(routineStore, 'saveRoutines');
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(StrictMode, null, children);
+    const { result } = renderHook(() => useRoutines(), { wrapper });
+    act(() => {
+      result.current.addRoutine(defaultDraft('run'));
+      result.current.addRoutine(defaultDraft('dog'));
+    });
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(result.current.routines.map(r => r.activity)).toEqual(['run', 'dog']);
+    expect(JSON.parse(localStorage.getItem(ROUTINES_KEY) ?? '{}').routines).toHaveLength(2);
+    spy.mockRestore();
   });
 });

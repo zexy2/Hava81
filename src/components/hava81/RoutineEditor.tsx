@@ -1,5 +1,5 @@
 import { TimeField } from './TimeField';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActivityKind } from '../../domain/activity/types';
 import type { WeatherTolerance } from '../../domain/plan/types';
@@ -28,6 +28,9 @@ interface Props {
 export function RoutineEditor({ initial, availableActivities, onSave, onCancel, onDelete }: Props) {
   const { t } = useTranslation();
   const id = useId();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  // Opening the editor moves focus into it, so keyboard and screen-reader users land on it.
+  useEffect(() => headingRef.current?.focus(), []);
   const [draft, setDraft] = useState<RoutineDraft>(() =>
     initial
       ? {
@@ -84,12 +87,18 @@ export function RoutineEditor({ initial, availableActivities, onSave, onCancel, 
     <form
       className="routine-editor"
       aria-labelledby={`${id}-title`}
+      onKeyDown={event => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        onCancel();
+      }}
       onSubmit={event => {
         event.preventDefault();
         if (valid) onSave({ ...draft, name: draft.name?.trim() || undefined });
       }}
     >
-      <h3 id={`${id}-title`}>
+      <h3 id={`${id}-title`} ref={headingRef} tabIndex={-1}>
         {initial ? t('hava81.routines.editTitle') : t('hava81.routines.newTitle')}
       </h3>
 

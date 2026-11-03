@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { TimeField } from '../../components/hava81/TimeField';
 import { normalizeClock } from '../../utils/clock';
+import '../../i18n';
 
 describe('normalizeClock', () => {
   it.each([
@@ -57,13 +58,40 @@ describe('TimeField', () => {
     expect(input).toHaveValue('08:30');
   });
 
-  it('marks nonsense invalid and restores the saved value on blur', () => {
+  it('keeps nonsense on blur, flagged, with an inline error linked to the field', () => {
     const { input, onChange } = setup('07:00');
     fireEvent.change(input, { target: { value: '99' } });
     expect(input).toHaveAttribute('aria-invalid', 'true');
     fireEvent.blur(input);
     expect(onChange).not.toHaveBeenCalled();
-    expect(input).toHaveValue('07:00');
+    expect(input).toHaveValue('99');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    const describedBy = input.getAttribute('aria-describedby') ?? '';
+    const error = document.getElementById(describedBy.split(' ').pop()!);
+    expect(error).toHaveTextContent('24 saat biçiminde yaz, ör. 18:30');
+    fireEvent.change(input, { target: { value: '18:30' } });
+    expect(onChange).toHaveBeenCalledWith('18:30');
+    expect(input).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('merges a passed aria-describedby with the error and trims padded input', () => {
+    const onChange = vi.fn();
+    render(
+      <>
+        <p id="help">Yardım</p>
+        <TimeField value="07:00" aria-label="Saat" aria-describedby="help" onChange={onChange} />
+      </>
+    );
+    const input = screen.getByRole('textbox', { name: 'Saat' });
+    expect(input).toHaveAttribute('maxlength', '8');
+    expect(input).toHaveAttribute('aria-describedby', 'help');
+    fireEvent.change(input, { target: { value: 'ab' } });
+    fireEvent.blur(input);
+    expect(input.getAttribute('aria-describedby')).toMatch(/^help \S+$/);
+    fireEvent.change(input, { target: { value: '  9:15  ' } });
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenLastCalledWith('09:15');
+    expect(input).toHaveValue('09:15');
   });
 
   it('clears an optional clock but keeps a required one', () => {
