@@ -173,6 +173,24 @@ async function runLighthouse(outputPath, env) {
   return JSON.parse(await readFile(outputPath, 'utf8'));
 }
 
+/**
+ * One unscored pass before the measured ones. On a cold runner the first Lighthouse run pays
+ * for Chrome start-up, its own evaluation script and the preview's first responses, and that
+ * lands in TBT (locally: 452 ms on the first run, 0 ms on the second, with the app's own
+ * scripting unchanged). Its report is discarded; a failure only warns, never blocks.
+ */
+async function warmUpLighthouse(env) {
+  const warmUpPath = join(resultDir, 'lighthouse-warmup.json');
+  try {
+    await runLighthouse(warmUpPath, env);
+    console.log('[lighthouse] warm-up pass done (not scored)');
+  } catch (error) {
+    console.warn(`[lighthouse] warm-up pass failed, measuring anyway: ${error instanceof Error ? error.message : error}`);
+  } finally {
+    await rm(warmUpPath, { force: true }).catch(() => undefined);
+  }
+}
+
 async function runLighthouseWithStartupRetry(outputPath, env) {
   try {
     return await runLighthouse(outputPath, env);
@@ -244,6 +262,7 @@ let exitCode = 0;
 try {
   console.log(`[lighthouse] target ${targetUrl}`);
   await waitForPreview(preview);
+  await warmUpLighthouse(runEnv);
   const report = await withLighthouseWeatherReadinessConfirmation(
     await runLighthouseWithStartupRetry(resultPath, runEnv),
     async () => {
