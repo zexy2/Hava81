@@ -587,6 +587,7 @@ const App: React.FC = () => {
                           airQuality={freshAirQuality}
                           airQualityHourly={freshAirQualityHourly}
                           uvIndexMax={freshUvIndexMax}
+                          uvPending={!forecast.secondarySettled}
                           forecastMeta={forecast.displayMeta ?? forecast.meta}
                         />
                       </div>
