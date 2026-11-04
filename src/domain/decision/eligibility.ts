@@ -5,7 +5,9 @@ import type { ActivityKind } from '../activity/types';
  *
  * Owner decision (2026-10-22): picnic, children/park and laundry (and beach, later) never
  * recommend a dark hour; walking and running (and the general Hava81 day plan, which uses
- * the walking rule) only consider hours inside the 07–23 local window. Night hours still get
+ * the walking rule) only consider hours inside the 07–23 local window. 2026-11: every other
+ * activity follows the same 07–23 rule; the UI promises suggestions between 07:00 and 23:00
+ * (dailyPlan.nightNote), so none is night-capable. Night hours still get
  * scored and shown on the timeline; they just cannot become "the best time".
  */
 
@@ -19,7 +21,6 @@ const DAYLIGHT_ONLY: ReadonlySet<ActivityKind> = new Set<ActivityKind>([
   'children',
   'laundry',
 ]);
-const ACTIVE_HOURS_ONLY: ReadonlySet<ActivityKind> = new Set<ActivityKind>(['walk', 'run']);
 
 /**
  * Daylight flag: API `isDay` first, then the icon's `d`/`n` suffix. Unknown is not daylight: a
@@ -54,9 +55,6 @@ export const isRecommendableHour = (
   timezoneOffsetSeconds: number,
   activity?: ActivityKind
 ): boolean => {
-  if (activity && DAYLIGHT_ONLY.has(activity)) return isDaylightPoint(point);
-  if (!activity || ACTIVE_HOURS_ONLY.has(activity)) {
-    return isWithinActiveHours(point.time, timezoneOffsetSeconds);
-  }
-  return true;
+  if (activity && DAYLIGHT_ONLY.has(activity) && !isDaylightPoint(point)) return false;
+  return isWithinActiveHours(point.time, timezoneOffsetSeconds);
 };

@@ -109,7 +109,11 @@ describe('eligibility helpers', () => {
       expect(isRecommendableHour(at(23, false), OFFSET, activity)).toBe(false);
       expect(isRecommendableHour(at(2, false), OFFSET, activity)).toBe(false);
     }
-    expect(isRecommendableHour(at(2, false), OFFSET, 'motorcycle')).toBe(true);
+    // No activity recommends a night hour (dailyPlan.nightNote: suggestions are 07–23).
+    for (const activity of ['motorcycle', 'bike', 'dog', 'photo'] as ActivityKind[]) {
+      expect(isRecommendableHour(at(2, false), OFFSET, activity)).toBe(false);
+      expect(isRecommendableHour(at(22, false), OFFSET, activity)).toBe(true);
+    }
   });
 });
 

@@ -147,9 +147,7 @@ describe('CommutePlanPanel', () => {
     fireEvent.change(screen.getByLabelText('Çıkış'), { target: { value: '09:00' } });
     fireEvent.change(screen.getByLabelText('Dönüş'), { target: { value: '12:00' } });
 
-    expect(
-      screen.getByText('Yağış, sıcaklık ve rüzgâr için ek hazırlık sinyali yok')
-    ).toBeVisible();
+    expect(screen.getByText('Ekstra bir şey gerekmiyor')).toBeVisible();
     expect(screen.queryByText('Ekstra hava hazırlığı gerekmiyor')).not.toBeInTheDocument();
   });
 

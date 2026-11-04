@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateRoutine } from '../../domain/routines/evaluateRoutine';
+import { evaluateRoutine, evaluateRoutineOn } from '../../domain/routines/evaluateRoutine';
 import { nextOccurrences } from '../../domain/routines/occurrences';
 import type { Routine } from '../../domain/routines/types';
 import {
@@ -221,3 +221,76 @@ function run(id: string) {
     updatedAt: 1,
   };
 }
+
+describe('evaluateRoutineOn', () => {
+  const picnic = routine(
+    {
+      kind: 'flexible',
+      days: [0, 1, 2, 3, 4, 5, 6],
+      from: '10:00',
+      to: '18:00',
+      durationMinutes: 120,
+    },
+    'picnic'
+  );
+  /** Tomorrow in three-hour steps, as far days arrive: 08:00, 11:00, 14:00, 17:00, 20:00. */
+  const coarse: HourlyForecast[] = [...hours(() => false).slice(0, 14)].concat(
+    [8, 11, 14, 17, 20].map(hour => ({
+      ...hours(() => false)[0],
+      time: new Date(local(30, hour)),
+      isDay: hour < 18,
+      icon: hour < 18 ? '01d' : '01n',
+    }))
+  );
+
+  it('keeps a flexible answer inside the plan hours even with three-hour steps', () => {
+    const result = evaluateRoutineOn(picnic, input(coarse), '2026-10-30');
+    expect(result.status).toBe('scored');
+    if (result.status !== 'scored') return;
+    const range = result.plan.bestWindowRange!;
+    expect(range.start.time.getTime()).toBeGreaterThanOrEqual(local(30, 10));
+    expect(range.endTime.getTime()).toBeLessThanOrEqual(local(30, 18));
+    expect(range.endTime.getTime() - range.start.time.getTime()).toBeGreaterThanOrEqual(
+      2 * HOUR_MS
+    );
+  });
+
+  it('today, a window never starts in the past', () => {
+    // NOW is 10:00; at 13:20 the picnic still runs until 18:00.
+    const at = local(29, 13, 20);
+    const result = evaluateRoutineOn(
+      picnic,
+      { ...input(hours(() => false)), now: new Date(at) },
+      '2026-10-29'
+    );
+    expect(result.status).toBe('scored');
+    if (result.status !== 'scored') return;
+    expect(result.plan.bestWindowRange!.start.time.getTime()).toBeGreaterThanOrEqual(at);
+  });
+
+  it('a window outside the plan hours is no answer for that day', () => {
+    // Late in the plan, rough weather on what is left: the engine may look into tomorrow.
+    const at = local(29, 16);
+    const rough = hours(hour => hour >= 16 && hour < 18);
+    const result = evaluateRoutineOn(picnic, { ...input(rough), now: new Date(at) }, '2026-10-29');
+    expect(result.status).toBe('scored');
+    if (result.status !== 'scored') return;
+    const range = result.plan.bestWindowRange;
+    if (range) {
+      expect(range.start.time.getTime()).toBeGreaterThanOrEqual(at);
+      expect(range.endTime.getTime()).toBeLessThanOrEqual(local(29, 18));
+    }
+  });
+
+  it('has no answer on a day the plan does not run', () => {
+    const weekdays = routine({
+      kind: 'fixed',
+      days: [1, 2, 3, 4, 5],
+      start: '18:30',
+      durationMinutes: 45,
+    });
+    expect(evaluateRoutineOn(weekdays, input(hours(() => false)), '2026-10-31').status).toBe(
+      'none'
+    );
+  });
+});

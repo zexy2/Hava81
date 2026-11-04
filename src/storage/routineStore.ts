@@ -28,6 +28,7 @@ export const localStorageAdapter: RoutineStorageAdapter = {
 };
 
 export const ROUTINES_KEY = 'hava81.routines.v1';
+export const ROUTINES_CHANGED_EVENT = 'hava81:routines-changed';
 const LEGACY_PROFILE_KEY = 'hava81-decision-profile-v1';
 const MAX_ROUTINES = 30;
 
@@ -221,4 +222,6 @@ export function saveRoutines(
   adapter: RoutineStorageAdapter = localStorageAdapter
 ) {
   adapter.write(ROUTINES_KEY, serializeRoutines(routines));
+  // Same-tab listeners (the day card, the Today page); other tabs get the storage event.
+  globalThis.dispatchEvent?.(new Event(ROUTINES_CHANGED_EVENT));
 }
