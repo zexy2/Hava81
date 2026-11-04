@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { AsyncCache, CacheResult, CacheStatus } from '../../core/cache';
 import { AppError } from '../../core/errors';
 import { loadContextSignals } from '../context/context.routes';
-import type { ContextSignalsService } from '../context/context.service';
+import type { ContextSignalsSource } from '../context/context.service';
 import { bundleQuerySchema, type BundlePart } from './contracts';
 import { bundleQueryJsonSchema, bundleResponseJsonSchema } from './openapi';
 import type { WeatherService } from './weather.service';
@@ -30,7 +30,7 @@ const toPartError = (error: unknown): PartError =>
 
 export interface BundleDependencies {
   weather: WeatherService;
-  context: ContextSignalsService;
+  context: ContextSignalsSource;
   cache: AsyncCache;
 }
 

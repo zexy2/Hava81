@@ -46,7 +46,7 @@ describe('RouteWeatherPanel better-departure action', () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(screen.getByText('Rota havası'));
-    await user.click(screen.getByRole('button', { name: 'Koridoru kontrol et' }));
+    await user.click(screen.getByRole('button', { name: 'Rotayı kontrol et' }));
 
     const recommendation = await screen.findByRole('button', {
       name: /yaklaşık 16 puan daha iyi görünüyor · bu saati kullan/i,
@@ -58,7 +58,8 @@ describe('RouteWeatherPanel better-departure action', () => {
     await user.click(recommendation);
 
     const departureInput = screen.getByLabelText('Kalkış zamanı · Türkiye saati');
-    expect(departureInput).toHaveValue('2026-09-04T14:00');
+    expect(departureInput).toHaveValue('14:00');
+    expect(screen.getByLabelText('Gün')).toHaveValue('2026-09-04');
     expect(departureInput).toHaveFocus();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     nowSpy.mockRestore();

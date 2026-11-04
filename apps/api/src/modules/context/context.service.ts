@@ -124,10 +124,13 @@ export const finiteMaxForWindow = (
 };
 
 export interface ContextSignals {
-  provider: 'Open-Meteo';
+  /** `Copernicus` alone when MET Norway (UV) is down but the grid is fresh. */
+  provider: 'Open-Meteo' | 'MET Norway' | 'MET Norway + Copernicus' | 'Copernicus';
   fetchedAt: string;
   attribution: string;
   uvIndexMax?: number;
+  /** When the model behind the UV value last ran (MET `meta.updated_at`), not the fetch time. */
+  modelUpdatedAt?: string;
   dustMax?: number;
   grassPollenMax?: number;
   olivePollenMax?: number;
@@ -141,7 +144,12 @@ export interface ContextSignals {
     seaSurfaceTemperature?: string;
   };
   marine?: {
+    /** Sample time of the reading; for model sources the valid time (see `validAt`). */
     observedAt: string;
+    /** Model valid time of the values, when they come from a forecast model, not an observation. */
+    validAt?: string;
+    /** When the model behind the values last ran or was refreshed. */
+    modelRunAt?: string;
     waveHeight?: number;
     waveDirection?: number;
     wavePeriod?: number;
@@ -149,6 +157,11 @@ export interface ContextSignals {
   };
   /** Hourly sea forecast for the next three days (UTC ISO times); missing hours are dropped. */
   marineHourly?: Array<{ time: string; waveHeight?: number; seaSurfaceTemperature?: number }>;
+}
+
+/** Anything that can answer the context endpoint (Open-Meteo or MET Norway). */
+export interface ContextSignalsSource {
+  get(lat: number, lon: number, includeMarine: boolean): Promise<ContextSignals>;
 }
 
 const getJson = async (url: URL, fetchImpl: typeof fetch, timeoutMs = 8_000) => {
@@ -185,7 +198,7 @@ const defaultOpenMeteoContextConfig: OpenMeteoContextConfig = {
   marineBaseUrl: 'https://marine-api.open-meteo.com',
 };
 
-export class ContextSignalsService {
+export class ContextSignalsService implements ContextSignalsSource {
   constructor(
     private readonly fetchImpl: typeof fetch = fetch,
     private readonly openMeteo: OpenMeteoContextConfig = defaultOpenMeteoContextConfig

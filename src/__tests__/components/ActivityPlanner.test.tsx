@@ -83,6 +83,8 @@ describe('ActivityPlanner time range', () => {
       'hava81-decision-profile-v1',
       JSON.stringify({ activities: ['walk', 'run'], temperatureSensitivity: 'balanced' })
     );
+    // No saved routines: walk and run are explored here, as cards.
+    localStorage.setItem('hava81.routines.v1', JSON.stringify({ schemaVersion: 1, routines: [] }));
     // The plan drops forecast steps that already ended; pin the clock to the fixture morning.
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-08-29T06:00:00Z'));
@@ -103,11 +105,10 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getAllByText('Bu aktivite için').length).toBe(
       document.querySelectorAll('.activity-card').length
     );
-    const scoreExplanation = screen.getByText('Skorlar neden farklı?');
-    expect(scoreExplanation).toBeInTheDocument();
-    fireEvent.click(scoreExplanation);
+    // Why activity scores differ lives in each card's score details.
+    fireEvent.click(screen.getAllByText('Skor detayı')[0]);
     expect(
-      screen.getByText(/aynı hava saatleri her aktivitenin kendi eşik ve ağırlıklarıyla/i)
+      screen.getAllByText(/aynı hava saatleri her aktivitenin kendi eşik ve ağırlıklarıyla/i)[0]
     ).toBeVisible();
 
     fireEvent.change(screen.getByLabelText('Başlangıç'), { target: { value: '18:00' } });
@@ -194,10 +195,8 @@ describe('ActivityPlanner time range', () => {
       'true'
     );
     expect(screen.getByRole('button', { name: 'Çamaşır' })).toBeEnabled();
-    expect(screen.getByRole('heading', { name: 'Yan yana' })).toBeInTheDocument();
-    expect(
-      document.querySelectorAll('.activity-compare__row:not(.activity-compare__row--axis)')
-    ).toHaveLength(4);
+    // Each chosen activity answers in its own card.
+    expect(document.querySelectorAll('.activity-card')).toHaveLength(4);
   });
 
   it('keeps advanced time-range behavior behind an explicit help disclosure', () => {
@@ -381,7 +380,7 @@ describe('ActivityPlanner time range', () => {
     expect(screen.getByText('Standart konfor aralıkları kullanılır.')).toBeInTheDocument();
     expect(
       // A flat 18:00–21:00 plateau: the plan picks a block as long as the activity (walk: 60 min).
-      screen.getAllByText('Hava açısından en uygun aralık: 18:00–19:00').length
+      screen.getAllByText('Hava açısından en uygun aralık 18:00–19:00').length
     ).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Sıcaklık hassasiyeti' }), {
@@ -528,7 +527,7 @@ describe('ActivityPlanner time range', () => {
         screen.getByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
       ).toBeInTheDocument();
       const scoresBeforeExpiry = Array.from(
-        document.querySelectorAll('.activity-card__score strong')
+        document.querySelectorAll('.activity-card__score-number')
       ).map(element => Number.parseInt(element.textContent ?? '', 10));
       expect(scoresBeforeExpiry.length).toBeGreaterThan(0);
       expect(scoresBeforeExpiry.some(score => score < 60)).toBe(true);
@@ -540,7 +539,7 @@ describe('ActivityPlanner time range', () => {
         screen.queryByText(/Saatlik hava kalitesi tahmini Open-Meteo · CC BY 4.0 · CAMS/i)
       ).not.toBeInTheDocument();
       const scoresAfterExpiry = Array.from(
-        document.querySelectorAll('.activity-card__score strong')
+        document.querySelectorAll('.activity-card__score-number')
       ).map(element => Number.parseInt(element.textContent ?? '', 10));
       expect(scoresAfterExpiry.some((score, index) => score > scoresBeforeExpiry[index])).toBe(
         true
@@ -586,7 +585,7 @@ describe('ActivityPlanner time range', () => {
       const runCard = screen.getByRole('heading', { name: 'Koşu' }).closest('.activity-card');
       const runScore = () =>
         Number.parseInt(
-          runCard?.querySelector('.activity-card__score strong')?.textContent ?? '',
+          runCard?.querySelector('.activity-card__score-number')?.textContent ?? '',
           10
         );
       const scoreBeforeExpiry = runScore();

@@ -1,8 +1,7 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TURKISH_CITIES, type TurkishCity } from '../constants/cities';
+import { MapMarker, MapPopup, MapSurface, MapZoomControls, type TileState } from './map/MapSurface';
 import { LayerControls } from './map/layers/LayerControls';
 import './map/layers/mapLayers.css';
 import { FieldLayer, WindLayer } from './map/layers/MapLayers';
@@ -10,11 +9,15 @@ import {
   LEGEND_STEPS,
   layerHasOutlook,
   layerValue,
+  PRECIPITATION_AMOUNT_LEGEND_STEPS,
+  layerCoverage,
+  precipitationMeasure,
   rampColor,
   type LayerHour,
   type MapLayer,
 } from './map/layers/layerModel';
 import { useSettings } from '../context/SettingsContext';
+import { useResolvedColorMode } from '../hooks/useResolvedColorMode';
 import type { NormalizedWeatherData } from '../types/weather.types';
 import { getCurrentWeatherFreshness } from '../utils/currentWeatherFreshness';
 import {
@@ -32,7 +35,7 @@ interface WeatherMapProps {
   className?: string;
 }
 
-const DEFAULT_CENTER: [number, number] = [39, 35];
+const DEFAULT_CENTER = { lat: 39, lon: 35 };
 const FEATURED_CITY_NAMES = new Set([
   'İstanbul',
   'Ankara',
@@ -47,7 +50,8 @@ const FEATURED_CITY_NAMES = new Set([
 ]);
 
 /** Faz 2.5: the atlas reveals all 81 provinces once the user zooms in. */
-const ATLAS_ZOOM = 8;
+// MapLibre zoom 7 (512 px tiles) is the scale Leaflet showed at 8.
+const ATLAS_ZOOM = 7;
 const PROVINCE_REFRESH_INTERVAL_MS = 30 * 60_000;
 const PROVINCE_EXPIRY_CUSHION_MS = 100;
 
@@ -58,27 +62,6 @@ const isFreshProvinceObservation = (province: ProvinceTemperature, now = Date.no
   return ageMs <= MAX_PROVINCE_OBSERVATION_AGE_MS && ageMs >= -MAX_FORECAST_FUTURE_SKEW_MS;
 };
 
-const ZoomWatcher: React.FC<{ onZoom: (zoom: number) => void }> = ({ onZoom }) => {
-  useMapEvents({ zoomend: event => onZoom(event.target.getZoom()) });
-  return null;
-};
-
-const MapController: React.FC<{ center: [number, number] }> = ({ center }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const targetZoom = map.getContainer().clientWidth < 768 ? 7 : 8;
-    if (reduceMotion) {
-      map.setView(center, targetZoom);
-      return;
-    }
-    map.flyTo(center, targetZoom, { duration: 0.4 });
-  }, [center, map]);
-
-  return null;
-};
-
 const getTemperatureMarkerColors = (celsius: number) => {
   if (celsius >= 30) return { background: '#D6543D', foreground: '#FFFFFF' };
   if (celsius >= 20) return { background: '#E7A531', foreground: '#142524' };
@@ -87,46 +70,12 @@ const getTemperatureMarkerColors = (celsius: number) => {
   return { background: '#0E2C32', foreground: '#FFFFFF' };
 };
 
-const createTemperatureIcon = (celsius: number, displayTemperature: number): L.DivIcon => {
+const markerColorStyle = (celsius: number) => {
   const colors = getTemperatureMarkerColors(celsius);
-  return L.divIcon({
-    className: 'weather-map__marker',
-    html: `<div class="weather-map__marker-content" style="--marker-bg:${colors.background};--marker-fg:${colors.foreground}"><span>${Math.round(displayTemperature)}°</span></div>`,
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
-  });
-};
-
-const createUnavailableObservationIcon = (): L.DivIcon =>
-  L.divIcon({
-    className: 'weather-map__plate-marker',
-    html: '<span>—</span>',
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
-  });
-
-const createPlateIcon = (
-  plateCode: number,
-  liveTemperature?: { celsius: number; display: number }
-): L.DivIcon => {
-  const plate = `<span><i aria-hidden="true">TR</i>${String(plateCode).padStart(2, '0')}</span>`;
-  if (!liveTemperature) {
-    return L.divIcon({
-      className: 'weather-map__plate-marker',
-      html: plate,
-      iconSize: [60, 44],
-      iconAnchor: [30, 22],
-    });
-  }
-  // Faz 3.2 / 2.5: canlı il sıcaklığı plakanın yanında ayrı, yuvarlak bir rozet; plaka
-  // numarasıyla karışmasın diye kendi renk ölçeğini (lejant) kullanır.
-  const colors = getTemperatureMarkerColors(liveTemperature.celsius);
-  return L.divIcon({
-    className: 'weather-map__plate-marker weather-map__plate-marker--live',
-    html: `${plate}<b class="weather-map__plate-temp" style="--marker-bg:${colors.background};--marker-fg:${colors.foreground}">${Math.round(liveTemperature.display)}°</b>`,
-    iconSize: [92, 44],
-    iconAnchor: [30, 22],
-  });
+  return {
+    '--marker-bg': colors.background,
+    '--marker-fg': colors.foreground,
+  } as React.CSSProperties;
 };
 
 /**
@@ -199,19 +148,6 @@ const useProvinceTemperatures = (enabled: boolean, language: string) => {
   return { data, settled };
 };
 
-/** A popup that belongs to the previous layer would show a stale reading: close it. */
-const PopupCloser = ({ layer }: { layer: MapLayer }) => {
-  const map = useMap();
-  useEffect(() => {
-    map.closePopup?.();
-  }, [layer, map]);
-  return null;
-};
-
-const labelMarker = (marker: L.Marker | null, accessibleName: string) => {
-  marker?.getElement()?.setAttribute('aria-label', accessibleName);
-};
-
 export const WeatherMap: React.FC<WeatherMapProps> = ({
   weather,
   onCitySelect,
@@ -226,22 +162,19 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     getWindSpeedSymbol,
   } = useSettings();
   const mapTitleId = useId();
-  const [fallbackTiles, setFallbackTiles] = useState(false);
-  // Leaflet can display markers before the raster map loads. Keep an honest
-  // loading state instead of showing an unexplained blank grey map.
-  const [tilesLoading, setTilesLoading] = useState(true);
-  const tilesLoadedOnceRef = useRef(false);
-  const [tilesFailed, setTilesFailed] = useState(false);
-  const [tileAttempt, setTileAttempt] = useState(0);
-
+  const colorMode = useResolvedColorMode(settings.themeMode);
+  // MapLibre can show markers before the base map has painted. Keep an honest loading state
+  // instead of an unexplained blank map; a failed style offers a retry.
+  const [tileState, setTileState] = useState<TileState>('loading');
+  const [mapAttempt, setMapAttempt] = useState(0);
+  const tilesLoading = tileState === 'loading';
+  const tilesFailed = tileState === 'failed';
   const retryTiles = () => {
-    tilesLoadedOnceRef.current = false;
-    setTilesFailed(false);
-    setTilesLoading(true);
-    setFallbackTiles(false);
-    // A different key forces a fresh TileLayer even if it was on the primary.
-    setTileAttempt(previous => previous + 1);
+    setTileState('loading');
+    setMapAttempt(previous => previous + 1);
   };
+  // One popup at a time: the current city or a province plate.
+  const [openPopup, setOpenPopup] = useState<number | 'current' | null>(null);
   const [, setFreshnessRevision] = useState(0);
   const currentFreshness = getCurrentWeatherFreshness(weather?.meta ?? null);
 
@@ -262,10 +195,10 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     };
   }, [currentFreshness.expiresInMs, weather?.meta.fetchedAt, weather?.meta.freshForSeconds]);
 
-  const center = useMemo<[number, number]>(() => {
+  const center = useMemo(() => {
     const lat = weather?.coordinates.lat;
     const lon = weather?.coordinates.lon;
-    return lat !== undefined && lon !== undefined ? [lat, lon] : DEFAULT_CENTER;
+    return lat !== undefined && lon !== undefined ? { lat, lon } : DEFAULT_CENTER;
   }, [weather?.coordinates.lat, weather?.coordinates.lon]);
 
   const [zoom, setZoom] = useState(6);
@@ -281,6 +214,8 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   const changeLayer = (next: MapLayer) => {
     setLayer(next);
     if (!layerHasOutlook(next)) setLayerHour(0);
+    // A popup that belongs to the previous layer would show a stale reading.
+    setOpenPopup(null);
   };
   const provinceNow = Date.now();
   const hasFreshProvinceTemperatures = Boolean(
@@ -309,7 +244,35 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           Math.abs(province.lon - weather.coordinates.lon) < 0.3
       ))
     : undefined;
-  const currentLayerValue = currentProvince ? layerValue(currentProvince, layer, layerHour) : null;
+  // MET Norway reports how much rain falls but not how likely it is; the layer then reads mm.
+  const measure = useMemo(() => precipitationMeasure(freshProvinces), [freshProvinces]);
+  const readsAmount = layer === 'precipitation' && measure === 'amount';
+  // How many provinces this layer and hour actually have. A thin or one-sided set is not drawn
+  // as a country-wide field; the map says how many it has instead (#1720 #1728 #1732).
+  const coverage = useMemo(
+    () => layerCoverage(freshProvinces, layer, layerHour, measure),
+    [freshProvinces, layer, layerHour, measure]
+  );
+  const coverageState: 'full' | 'partial' | 'none' =
+    coverage.available === 0
+      ? 'none'
+      : coverage.drawable && coverage.missing === 0
+        ? 'full'
+        : 'partial';
+  const layerName = readsAmount
+    ? t('weather.mapLayers.credit.precipitationAmount')
+    : t(`weather.mapLayers.credit.${layer}`);
+  const layerWhen =
+    layerHour === 0
+      ? t('weather.mapLayers.now')
+      : t('weather.mapLayers.ahead', { hours: layerHour });
+  const currentLayerValue = currentProvince
+    ? layerValue(currentProvince, layer, layerHour, measure)
+    : null;
+  const formatAmount = (millimetres: number) =>
+    `${millimetres.toLocaleString(settings.language === 'en' ? 'en' : 'tr', {
+      maximumFractionDigits: 1,
+    })} ${t('weather.mapLayers.amountUnit')}`;
   const featuredCities = useMemo(
     () =>
       TURKISH_CITIES.filter(
@@ -320,13 +283,6 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     [showAllProvinces, weather?.cityName]
   );
 
-  // CARTO's old anonymous raster endpoint now returns a successful HTTP response
-  // containing 'API KEY REQUIRED' watermark tiles. Use usable OSM raster sources.
-  // Both sources require OSM attribution; the fallback prevents a single host outage
-  // from blanking the interactive map.
-  const tileUrl = fallbackTiles
-    ? 'https://a.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png'
-    : 'https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
   const temperatureSymbol = getTemperatureSymbol();
   const currentMarkerName = weather
     ? currentFreshness.fresh
@@ -350,95 +306,98 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       </h2>
 
       <div className="weather-map__container" role="region" aria-labelledby={mapTitleId}>
-        <MapContainer
+        <MapSurface
           center={center}
-          zoom={6}
-          scrollWheelZoom
-          attributionControl={false}
+          focusZoom={typeof window !== 'undefined' && window.innerWidth < 768 ? 6 : 6.5}
+          initialZoom={5.2}
+          theme={colorMode}
+          attempt={mapAttempt}
           className="weather-map__leaflet"
+          onZoom={setZoom}
+          onTiles={setTileState}
+          onBackgroundClick={() => setOpenPopup(null)}
+          canvasLabel={t('weather.mapCanvasLabel')}
         >
-          <MapController center={center} />
-          <ZoomWatcher onZoom={setZoom} />
-
-          <TileLayer
-            key={`${fallbackTiles ? 'osmde' : 'osmfr'}-${tileAttempt}`}
-            url={tileUrl}
-            eventHandlers={{
-              // Only the first paint announces loading; panning and zooming fetch tiles
-              // quietly instead of flashing the status over a map that is already there.
-              loading: () => {
-                if (!tilesFailed && !tilesLoadedOnceRef.current) setTilesLoading(true);
-              },
-              load: () => {
-                tilesLoadedOnceRef.current = true;
-                setTilesLoading(false);
-              },
-              tileerror: () => {
-                if (fallbackTiles) {
-                  // Both independent providers failed: do not keep showing a
-                  // spinner indefinitely or claim the map is still loading.
-                  setTilesFailed(true);
-                  setTilesLoading(false);
-                } else {
-                  setTilesLoading(true);
-                  setFallbackTiles(true);
-                }
-              },
-            }}
-            maxZoom={18}
+          <MapZoomControls
+            zoomInLabel={t('weather.mapZoomIn')}
+            zoomOutLabel={t('weather.mapZoomOut')}
           />
-
-          {freshProvinces.length > 0 ? (
-            <FieldLayer provinces={freshProvinces} layer={layer} hour={layerHour} />
+          {freshProvinces.length > 0 && coverage.drawable ? (
+            <FieldLayer
+              provinces={freshProvinces}
+              layer={layer}
+              hour={layerHour}
+              measure={measure}
+            />
           ) : null}
           {layer === 'wind' && freshProvinces.length > 0 ? (
             <WindLayer provinces={freshProvinces} />
           ) : null}
-          <PopupCloser layer={layer} />
 
           {weather && (
-            <Marker
-              position={[weather.coordinates.lat, weather.coordinates.lon]}
-              ref={marker => labelMarker(marker, currentMarkerName)}
-              title={currentMarkerName}
-              icon={
-                currentFreshness.fresh
-                  ? createTemperatureIcon(
-                      weather.temperature,
-                      convertTemperature(weather.temperature)
-                    )
-                  : createUnavailableObservationIcon()
-              }
-              eventHandlers={{
-                add: event => labelMarker(event.target as L.Marker, currentMarkerName),
-              }}
-            >
-              <Popup className="weather-map__popup">
-                <div className="weather-map__popup-content">
-                  <h3>{weather.cityName}</h3>
-                  {currentFreshness.fresh ? (
-                    <>
-                      <p className="weather-map__popup-temp">
-                        {convertTemperature(weather.temperature)} {getTemperatureSymbol()}
-                      </p>
-                      <p className="weather-map__popup-desc">{weather.description}</p>
-                      {currentLayerValue !== null && layer !== 'temperature' ? (
-                        <p className="weather-map__popup-layer">
-                          {t(`weather.mapLayers.popup.${layer}`, {
-                            value:
-                              layer === 'wind'
-                                ? `${Math.round(convertWindSpeed(currentLayerValue) * 10) / 10} ${getWindSpeedSymbol()}`
-                                : Math.round(currentLayerValue),
-                          })}
+            <>
+              <MapMarker
+                lat={weather.coordinates.lat}
+                lon={weather.coordinates.lon}
+                label={currentMarkerName}
+                className={
+                  currentFreshness.fresh ? 'weather-map__marker' : 'weather-map__plate-marker'
+                }
+                zIndex={3}
+                onActivate={() =>
+                  setOpenPopup(previous => (previous === 'current' ? null : 'current'))
+                }
+              >
+                {currentFreshness.fresh ? (
+                  <span
+                    className="weather-map__marker-content"
+                    style={markerColorStyle(weather.temperature)}
+                  >
+                    <span>{Math.round(convertTemperature(weather.temperature))}°</span>
+                  </span>
+                ) : (
+                  <span>—</span>
+                )}
+              </MapMarker>
+              {openPopup === 'current' ? (
+                <MapPopup
+                  lat={weather.coordinates.lat}
+                  lon={weather.coordinates.lon}
+                  label={weather.cityName}
+                  className="weather-map__popup"
+                  closeLabel={t('common.close')}
+                  onClose={() => setOpenPopup(null)}
+                >
+                  <div className="weather-map__popup-content">
+                    <h3>{weather.cityName}</h3>
+                    {currentFreshness.fresh ? (
+                      <>
+                        <p className="weather-map__popup-temp">
+                          {convertTemperature(weather.temperature)} {getTemperatureSymbol()}
                         </p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <p className="weather-map__popup-desc">{t('weather.staleCurrentData')}</p>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
+                        <p className="weather-map__popup-desc">{weather.description}</p>
+                        {currentLayerValue !== null && layer !== 'temperature' ? (
+                          <p className="weather-map__popup-layer">
+                            {readsAmount
+                              ? t('weather.mapLayers.popup.precipitationAmount', {
+                                  value: formatAmount(currentLayerValue),
+                                })
+                              : t(`weather.mapLayers.popup.${layer}`, {
+                                  value:
+                                    layer === 'wind'
+                                      ? `${Math.round(convertWindSpeed(currentLayerValue) * 10) / 10} ${getWindSpeedSymbol()}`
+                                      : Math.round(currentLayerValue),
+                                })}
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <p className="weather-map__popup-desc">{t('weather.staleCurrentData')}</p>
+                    )}
+                  </div>
+                </MapPopup>
+              ) : null}
+            </>
           )}
 
           {featuredCities.map(featuredCity => {
@@ -453,51 +412,74 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
             const markerName = `${featuredCity.name}: ${t('hava81.decision.plateCodeLabel', {
               code: String(featuredCity.plateCode).padStart(2, '0'),
             })}${live ? `, ${liveDisplay}${temperatureSymbol}` : ''}`;
+            const isOpen = openPopup === featuredCity.plateCode;
 
             return (
-              <Marker
-                key={featuredCity.plateCode}
-                ref={marker => labelMarker(marker, markerName)}
-                position={[featuredCity.coordinates.lat, featuredCity.coordinates.lon]}
-                title={markerName}
-                icon={createPlateIcon(
-                  featuredCity.plateCode,
-                  live && liveDisplay !== null
-                    ? { celsius: live.temperature, display: liveDisplay }
-                    : undefined
-                )}
-                eventHandlers={{
-                  add: event => labelMarker(event.target as L.Marker, markerName),
-                }}
-              >
-                <Popup className="weather-map__popup">
-                  <div className="weather-map__popup-content">
-                    <span className="weather-map__popup-plate">
-                      {String(featuredCity.plateCode).padStart(2, '0')}
-                    </span>
-                    <h3>{featuredCity.name}</h3>
-                    {live && (
-                      <>
-                        <p className="weather-map__popup-temp">
-                          {liveDisplay} {temperatureSymbol}
-                        </p>
-                        <p className="weather-map__popup-desc">{live.description}</p>
-                      </>
-                    )}
-                    <p className="weather-map__popup-region">{featuredCity.region}</p>
-                    <button
-                      type="button"
-                      className="weather-map__popup-btn"
-                      onClick={() => onCitySelect(featuredCity)}
+              <React.Fragment key={featuredCity.plateCode}>
+                <MapMarker
+                  lat={featuredCity.coordinates.lat}
+                  lon={featuredCity.coordinates.lon}
+                  label={markerName}
+                  className={`weather-map__plate-marker${live ? ' weather-map__plate-marker--live' : ''}`}
+                  // The plate sits on the point; a live temperature badge extends to its right.
+                  anchorOffset={live ? [16, 0] : undefined}
+                  zIndex={2}
+                  onActivate={() =>
+                    setOpenPopup(previous =>
+                      previous === featuredCity.plateCode ? null : featuredCity.plateCode
+                    )
+                  }
+                >
+                  <span>
+                    <i aria-hidden="true">TR</i>
+                    {String(featuredCity.plateCode).padStart(2, '0')}
+                  </span>
+                  {live && liveDisplay !== null ? (
+                    <b
+                      className="weather-map__plate-temp"
+                      style={markerColorStyle(live.temperature)}
                     >
-                      {t('weather.viewCityWeather')}
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
+                      {liveDisplay}°
+                    </b>
+                  ) : null}
+                </MapMarker>
+                {isOpen ? (
+                  <MapPopup
+                    lat={featuredCity.coordinates.lat}
+                    lon={featuredCity.coordinates.lon}
+                    label={featuredCity.name}
+                    className="weather-map__popup"
+                    closeLabel={t('common.close')}
+                    onClose={() => setOpenPopup(null)}
+                  >
+                    <div className="weather-map__popup-content">
+                      <span className="weather-map__popup-plate">
+                        {String(featuredCity.plateCode).padStart(2, '0')}
+                      </span>
+                      <h3>{featuredCity.name}</h3>
+                      {live && (
+                        <>
+                          <p className="weather-map__popup-temp">
+                            {liveDisplay} {temperatureSymbol}
+                          </p>
+                          <p className="weather-map__popup-desc">{live.description}</p>
+                        </>
+                      )}
+                      <p className="weather-map__popup-region">{featuredCity.region}</p>
+                      <button
+                        type="button"
+                        className="weather-map__popup-btn"
+                        onClick={() => onCitySelect(featuredCity)}
+                      >
+                        {t('weather.viewCityWeather')}
+                      </button>
+                    </div>
+                  </MapPopup>
+                ) : null}
+              </React.Fragment>
             );
           })}
-        </MapContainer>
+        </MapSurface>
         <LayerControls
           layer={layer}
           hour={layerHour}
@@ -505,6 +487,17 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           onHourChange={setLayerHour}
           unavailable={layersUnavailable}
         />
+        {!layersUnavailable && provincesSettled && coverageState !== 'full' ? (
+          <p className="weather-map__coverage" role="status">
+            {coverageState === 'none'
+              ? t('weather.mapLayers.coverageNone', { layer: layerName })
+              : t('weather.mapLayers.coveragePartial', {
+                  layer: layerName,
+                  available: coverage.available,
+                  total: coverage.total,
+                })}
+          </p>
+        ) : null}
         {(tilesLoading || tilesFailed) && (
           <div
             className={`weather-map__tile-status${tilesFailed ? ' weather-map__tile-status--failed' : ''}`}
@@ -528,31 +521,44 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         )}
       </div>
 
-      <p className="weather-map__attribution">
-        {showAllProvinces && provinceTemperatures && hasFreshProvinceTemperatures && (
+      <p
+        className="weather-map__attribution"
+        data-layer-coverage={provincesSettled && !layersUnavailable ? coverageState : undefined}
+      >
+        {provinceTemperatures && hasFreshProvinceTemperatures && (
           <>
             <span>
-              {t('weather.mapLiveProvinces', {
+              {t('weather.mapLayers.creditLine', {
+                layer: layerName,
+                when: layerWhen,
                 provider: provinceTemperatures.attribution ?? provinceTemperatures.provider,
               })}
             </span>
+            {layer === 'precipitation' ? <span>{t('weather.mapLayers.notRadar')}</span> : null}
             <span>·</span>
+            {showAllProvinces ? (
+              <>
+                {/* The 81 province markers show temperatures, whatever layer is drawn. */}
+                <span>
+                  {t('weather.mapLiveProvinces', {
+                    provider: provinceTemperatures.attribution ?? provinceTemperatures.provider,
+                  })}
+                </span>
+                <span>·</span>
+              </>
+            ) : null}
           </>
         )}
-        <span>©</span>
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-          OpenStreetMap contributors
+        <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">
+          OpenFreeMap
         </a>
-        <span>·</span>
-        {fallbackTiles ? (
-          <a href="https://www.openstreetmap.de/" target="_blank" rel="noreferrer">
-            OpenStreetMap Deutschland
-          </a>
-        ) : (
-          <a href="https://www.openstreetmap.fr/" target="_blank" rel="noreferrer">
-            Humanitarian style · OpenStreetMap France
-          </a>
-        )}
+        <a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">
+          © OpenMapTiles
+        </a>
+        <span>{t('weather.mapDataFrom')}</span>
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+          OpenStreetMap
+        </a>
       </p>
 
       {!showAllProvinces ? (
@@ -564,8 +570,13 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       <div
         className="weather-map__legend"
         role="list"
-        aria-label={t(`weather.mapLayers.legend.${layer}`)}
+        aria-label={
+          readsAmount
+            ? t('weather.mapLayers.legend.precipitationAmount')
+            : t(`weather.mapLayers.legend.${layer}`)
+        }
         data-layer={layer}
+        data-measure={layer === 'precipitation' ? measure : undefined}
       >
         {layer === 'temperature'
           ? (
@@ -594,10 +605,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                 </span>
               </span>
             ))
-          : LEGEND_STEPS[layer].map(step => {
-              const [red, green, blue] = rampColor(layer, step);
-              const value =
-                layer === 'wind'
+          : (readsAmount ? PRECIPITATION_AMOUNT_LEGEND_STEPS : LEGEND_STEPS[layer]).map(step => {
+              const [red, green, blue] = rampColor(layer, step, measure);
+              const value = readsAmount
+                ? formatAmount(step)
+                : layer === 'wind'
                   ? `${Math.round(convertWindSpeed(step))} ${getWindSpeedSymbol()}`
                   : settings.language === 'en'
                     ? `${step}%`
@@ -612,7 +624,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
                   }
                 >
                   <span className="weather-map__legend-full">
-                    {t(`weather.mapLayers.step.${layer}`, { value })}
+                    {readsAmount
+                      ? t('weather.mapLayers.step.precipitationAmount', { value })
+                      : t(`weather.mapLayers.step.${layer}`, { value })}
                   </span>
                   <span className="weather-map__legend-short" aria-hidden="true">
                     {value}

@@ -2,7 +2,8 @@ name: API container verification
 
 on:
   pull_request:
-    branches: [main]
+    # Stacked PRs target another agent branch; their exact head needs the same checks (#1745 #1763).
+    branches: [main, 'agent2/**', 'agentA/**']
     paths:
       - 'apps/api/**'
       - '.github/workflows/api-image-check.yml'

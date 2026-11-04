@@ -8,6 +8,7 @@ import type {
   ProvinceCurrentObservation,
   ProvinceOutlookPoint,
   ProvinceCurrentProvider,
+  ProvincePrecipitationPeriod,
 } from '../../providers/openmeteo/openmeteo-provinces.provider';
 import type { WeatherLanguage } from '../../providers/weather-provider';
 import { PROVINCES } from './provinces.data';
@@ -28,6 +29,9 @@ export interface ProvinceTemperatureDto {
   precipitationProbability?: number;
   outlook?: ProvinceOutlookPoint[];
   observedAt: string;
+  validAt?: string;
+  modelUpdatedAt?: string;
+  precipitationPeriod?: ProvincePrecipitationPeriod;
 }
 
 export interface ProvinceTemperaturesDto {
@@ -46,34 +50,75 @@ interface RawProvinceSnapshot {
   observations: Array<ProvinceCurrentObservation | null>;
 }
 
+export interface ProvincesServiceOptions {
+  /** How long after its fetch the last good map may still be served when a refresh fails. */
+  maxStaleMs?: number;
+  now?: () => number;
+}
+
+const DEFAULT_MAX_STALE_MS = 3 * 60 * 60 * 1_000;
+/** Browsers retry soon while the map is stale. */
+const STALE_MAX_AGE_SECONDS = 60;
+
 /**
  * 81 ilin güncel sıcaklığını tek upstream çağrısıyla getirir. Ham sonuç dile bağlı
  * değildir; bu yüzden tek bir cache anahtarı tutulur ve açıklama/ikon istek dilinde
  * üretilir. Cache kaçırıldığında upstream bütçesinden yalnızca 1 hak düşer.
  */
 export class ProvincesService {
+  private lastGood: RawProvinceSnapshot | null = null;
+  private readonly maxStaleMs: number;
+  private readonly now: () => number;
+
   constructor(
     private readonly provider: ProvinceCurrentProvider,
     private readonly cache: AsyncCache,
     private readonly ttlMs: number,
-  ) {}
+    options: ProvincesServiceOptions = {},
+  ) {
+    this.maxStaleMs = options.maxStaleMs ?? DEFAULT_MAX_STALE_MS;
+    this.now = options.now ?? Date.now;
+  }
+
+  /**
+   * A failed refresh keeps serving the last good map (status `STALE`) until it is older than
+   * `maxStaleMs`; only then does the error reach the client.
+   */
+  private async snapshot(): Promise<CacheResult<RawProvinceSnapshot>> {
+    try {
+      const result = await this.cache.getOrLoad<RawProvinceSnapshot>(
+        'provinces:current:v1',
+        this.ttlMs,
+        async () => {
+          const observations = await this.provider.getCurrent(PROVINCES);
+          if (!observations.some(Boolean)) {
+            throw new AppError(
+              502,
+              'EMPTY_PROVINCES_PROVIDER_RESPONSE',
+              'İl sıcaklıkları şu anda kullanılamıyor.',
+            );
+          }
+          return { fetchedAt: new Date(this.now()).toISOString(), observations };
+        },
+      );
+      this.lastGood = result.value;
+      return result;
+    } catch (error) {
+      const lastGood = this.lastGood;
+      if (lastGood && this.now() - Date.parse(lastGood.fetchedAt) <= this.maxStaleMs) {
+        return {
+          value: lastGood,
+          status: 'STALE',
+          freshForSeconds: 0,
+          cacheMaxAgeSeconds: STALE_MAX_AGE_SECONDS,
+        };
+      }
+      throw error;
+    }
+  }
 
   async getAll(lang: WeatherLanguage): Promise<CacheResult<ProvinceTemperaturesDto>> {
-    const result = await this.cache.getOrLoad<RawProvinceSnapshot>(
-      'provinces:current:v1',
-      this.ttlMs,
-      async () => {
-        const observations = await this.provider.getCurrent(PROVINCES);
-        if (!observations.some(Boolean)) {
-          throw new AppError(
-            502,
-            'EMPTY_PROVINCES_PROVIDER_RESPONSE',
-            'İl sıcaklıkları şu anda kullanılamıyor.',
-          );
-        }
-        return { fetchedAt: new Date().toISOString(), observations };
-      },
-    );
+    const result = await this.snapshot();
 
     const provinces = PROVINCES.flatMap((province, index) => {
       const observation = result.value.observations[index];
@@ -97,6 +142,11 @@ export class ProvincesService {
             : { precipitationProbability: observation.precipitationProbability }),
           ...(observation.outlook === undefined ? {} : { outlook: observation.outlook }),
           observedAt: observation.observedAt,
+          ...(observation.validAt === undefined ? {} : { validAt: observation.validAt }),
+          ...(observation.modelUpdatedAt === undefined ? {} : { modelUpdatedAt: observation.modelUpdatedAt }),
+          ...(observation.precipitationPeriod === undefined
+            ? {}
+            : { precipitationPeriod: observation.precipitationPeriod }),
         },
       ];
     });

@@ -1,4 +1,5 @@
-import { formatFixed } from '../../utils/format';
+import { DUST_EVENT_UGM3, DUST_GUIDELINE_UGM3 } from '../../domain/plan/scoreHour';
+import { formatFixed, formatCityTime } from '../../utils/format';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context';
@@ -29,6 +30,12 @@ const uvLevel = (uv?: number): Level | undefined =>
           : uv >= 3
             ? 'moderate'
             : 'low';
+
+/** Same thresholds as the score engine: no penalty below the WHO guideline, a warning at 100. */
+const dustLevel = (value: number) =>
+  value >= DUST_EVENT_UGM3 ? 'high' : value >= DUST_GUIDELINE_UGM3 ? 'moderate' : 'low';
+/** Same thresholds as the beach plan: cold below 18 °C, comfortable from 22 °C. */
+const seaLevel = (celsius: number) => (celsius >= 22 ? 'warm' : celsius >= 18 ? 'cool' : 'cold');
 
 export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const { t, i18n } = useTranslation();
@@ -78,11 +85,16 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
   const fetchedTime =
     freshness.status === 'unknown'
       ? null
-      : new Date(fetchedAtMs + timezoneOffsetSeconds * 1000).toLocaleTimeString(i18n.language, {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'UTC',
-        });
+      : formatCityTime(new Date(fetchedAtMs), timezoneOffsetSeconds, i18n.language);
+  // Local time of the sea model run, in the forecast location's timezone.
+  const marineRunAt = signals.marine?.modelRunAt;
+  const marineRunTime =
+    marineRunAt && Number.isFinite(Date.parse(marineRunAt))
+      ? new Date(Date.parse(marineRunAt) + timezoneOffsetSeconds * 1000).toLocaleString(
+          i18n.language,
+          { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+        )
+      : null;
   const uv = uvLevel(signals.uvIndexMax);
   const pollen = useMemo(() => {
     const grass = signals.grassPollenMax;
@@ -127,6 +139,15 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
         ? `${Math.round(convertTemperature(seaSurfaceTemperature))}${getTemperatureSymbol()}`
         : `${formatFixed(seaSurfaceTemperature, i18n.language, 1)}${getTemperatureSymbol()}`;
 
+  // MET Norway supplies UV; Copernicus (CAMS, Copernicus Marine) dust, pollen and the sea.
+  // `Copernicus` alone means MET Norway did not answer and UV is unknown.
+  const usesMetNorway = signals.provider.startsWith('MET Norway');
+  const usesCopernicus = signals.provider.includes('Copernicus');
+  // Copernicus Marine asks for its product DOIs; the API puts them in the attribution.
+  const marineDois = usesCopernicus
+    ? [...new Set(signals.attribution.match(/10\.\d{4,9}\/[\w.-]+/g) ?? [])]
+    : [];
+
   return (
     <section className="context-signals" aria-labelledby="context-signals-title">
       <header>
@@ -143,6 +164,34 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
               {' · '}
               {t('hava81.context.sourceModified')}
             </>
+          ) : usesMetNorway || usesCopernicus ? (
+            <>
+              {usesMetNorway ? <a href="https://api.met.no/">MET Norway</a> : null}
+              {usesCopernicus ? (
+                <>
+                  {usesMetNorway ? ' · ' : null}
+                  <a href="https://atmosphere.copernicus.eu/">CAMS</a>
+                  {' · '}
+                  <a href="https://marine.copernicus.eu/">Copernicus Marine</a>
+                </>
+              ) : null}
+              {' · '}
+              <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+              {' · '}
+              {t('hava81.context.sourceModified')}
+              {marineDois.length > 0 ? (
+                <>
+                  {' · '}
+                  {t('hava81.context.marineDois')}{' '}
+                  {marineDois.map((doi, index) => (
+                    <span key={doi}>
+                      {index > 0 ? ', ' : null}
+                      <a href={`https://doi.org/${doi}`}>{doi}</a>
+                    </span>
+                  ))}
+                </>
+              ) : null}
+            </>
           ) : (
             signals.attribution
           )}
@@ -156,78 +205,138 @@ export function ContextSignalsPanel({ signals, timezoneOffsetSeconds }: Props) {
           ) : null}
         </small>
       </header>
-      <div className="context-signals__grid">
-        {signals.uvIndexMax !== undefined ? (
-          <article className={`context-signal context-signal--${uv}`}>
-            <span>{t('hava81.context.uv')}</span>
-            <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
-            <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
-            <p>
-              {uv && uv !== 'low' ? t('hava81.context.uvProtection') : t('hava81.context.uvNormal')}
-            </p>
-          </article>
+      {/* The numbers matter to some; a one-line summary is enough for everyone else. */}
+      <details className="context-signals__more">
+        <summary className="context-signals__summary">
+          {signals.uvIndexMax !== undefined ? (
+            <span className="context-stat">
+              <small>{t('hava81.context.short.uv')}</small>
+              <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
+              <span>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</span>
+            </span>
+          ) : null}
+          {signals.dustMax !== undefined ? (
+            <span className="context-stat">
+              <small>{t('hava81.context.short.dust')}</small>
+              <strong>{Math.round(signals.dustMax)}</strong>
+              <span>{t(`hava81.context.levels.${dustLevel(signals.dustMax)}`)}</span>
+            </span>
+          ) : null}
+          {signals.marine?.seaSurfaceTemperature !== undefined ? (
+            <span className="context-stat">
+              <small>{t('hava81.context.short.sea')}</small>
+              <strong>
+                {Math.round(convertTemperature(signals.marine.seaSurfaceTemperature))}°
+              </strong>
+              <span>
+                {t(`hava81.context.seaFeel.${seaLevel(signals.marine.seaSurfaceTemperature)}`)}
+              </span>
+            </span>
+          ) : null}
+          <span className="context-signals__open" aria-hidden="true" />
+          <span className="sr-only">{t('hava81.context.short.more')}</span>
+        </summary>
+        <div className="context-signals__grid">
+          {signals.uvIndexMax !== undefined ? (
+            <article className={`context-signal context-signal--${uv}`}>
+              <span>
+                {usesMetNorway ? t('hava81.context.uvEstimated') : t('hava81.context.uv')}
+              </span>
+              <strong>{formatFixed(signals.uvIndexMax, i18n.language, 1)}</strong>
+              <small>{uv ? t(`hava81.context.uvLevels.${uv}`) : '—'}</small>
+              <p>
+                {uv && uv !== 'low'
+                  ? t('hava81.context.uvProtection')
+                  : t('hava81.context.uvNormal')}
+              </p>
+            </article>
+          ) : null}
+          {signals.dustMax !== undefined ? (
+            <article className="context-signal">
+              <span>{t('hava81.context.dust')}</span>
+              <strong>
+                {Math.round(signals.dustMax)}{' '}
+                <small>{normalizeMicroUnit(signals.units.dust)}</small>
+              </strong>
+              <p>{t('hava81.context.next24h')}</p>
+            </article>
+          ) : null}
+          {hasPollen ? (
+            <article className="context-signal">
+              <span>{t('hava81.context.pollen')}</span>
+              <strong>
+                {pollen ? formatFixed(pollen.value, i18n.language, 1) : null}{' '}
+                <small>
+                  {/^grains\/m[³3]$/.test(pollen?.unit ?? '')
+                    ? t('hava81.context.pollenUnit')
+                    : normalizeMicroUnit(pollen?.unit)}
+                </small>
+              </strong>
+              <p>{t('hava81.context.pollenNote')}</p>
+              {usesCopernicus ? (
+                <p className="context-signal__caveat">{t('hava81.context.pollenExperimental')}</p>
+              ) : null}
+            </article>
+          ) : null}
+          {hasMarine ? (
+            <article className="context-signal context-signal--marine">
+              <span>{t('hava81.context.sea')}</span>
+              <strong>{formattedSeaSurfaceTemperature}</strong>
+              <p>
+                {signals.marine?.waveHeight !== undefined
+                  ? [
+                      t('hava81.context.wave', {
+                        height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
+                        unit: signals.units.waveHeight ?? '',
+                      }),
+                      // Period and direction are optional in the model; a missing part is left
+                      // out rather than printed as a dash.
+                      signals.marine.wavePeriod != null
+                        ? t('hava81.context.wavePeriod', {
+                            period: formatFixed(signals.marine.wavePeriod, i18n.language, 1),
+                            unit: signals.units.wavePeriod ?? '',
+                          })
+                        : null,
+                      signals.marine.waveDirection !== undefined
+                        ? t('hava81.context.waveFrom', {
+                            direction: `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`,
+                          })
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : t('hava81.context.waveUnavailable')}
+              </p>
+              {signals.marine?.validAt ? (
+                <p className="context-signal__caveat">
+                  {marineRunTime && marineRunAt ? (
+                    <>
+                      {t('hava81.context.seaModelRun')}{' '}
+                      <time dateTime={new Date(marineRunAt).toISOString()}>{marineRunTime}</time>
+                    </>
+                  ) : (
+                    t('hava81.context.seaModelNoRun')
+                  )}
+                </p>
+              ) : null}
+            </article>
+          ) : null}
+        </div>
+        {hasStaleMarine ? (
+          <p className="context-signals__note" role="status">
+            {t('hava81.context.marineStale')}
+          </p>
         ) : null}
-        {signals.dustMax !== undefined ? (
-          <article className="context-signal">
-            <span>{t('hava81.context.dust')}</span>
-            <strong>
-              {Math.round(signals.dustMax)} <small>{normalizeMicroUnit(signals.units.dust)}</small>
-            </strong>
-            <p>{t('hava81.context.next24h')}</p>
-          </article>
-        ) : null}
-        {hasPollen ? (
-          <article className="context-signal">
-            <span>{t('hava81.context.pollen')}</span>
-            <strong>
-              {pollen ? formatFixed(pollen.value, i18n.language, 1) : null}{' '}
-              <small>
-                {/^grains\/m[³3]$/.test(pollen?.unit ?? '')
-                  ? t('hava81.context.pollenUnit')
-                  : normalizeMicroUnit(pollen?.unit)}
-              </small>
-            </strong>
-            <p>{t('hava81.context.pollenNote')}</p>
-          </article>
-        ) : null}
-        {hasMarine ? (
-          <article className="context-signal context-signal--marine">
-            <span>{t('hava81.context.sea')}</span>
-            <strong>{formattedSeaSurfaceTemperature}</strong>
-            <p>
-              {signals.marine?.waveHeight !== undefined
-                ? [
-                    t('hava81.context.wave', {
-                      height: formatFixed(signals.marine.waveHeight, i18n.language, 2),
-                      unit: signals.units.waveHeight ?? '',
-                    }),
-                    // Period and direction are optional in the model; a missing part is left
-                    // out rather than printed as a dash.
-                    signals.marine.wavePeriod != null
-                      ? t('hava81.context.wavePeriod', {
-                          period: formatFixed(signals.marine.wavePeriod, i18n.language, 1),
-                          unit: signals.units.wavePeriod ?? '',
-                        })
-                      : null,
-                    signals.marine.waveDirection !== undefined
-                      ? t('hava81.context.waveFrom', {
-                          direction: `${t(`wind.directions.${compassKey(signals.marine.waveDirection)}`)} (${Math.round(signals.marine.waveDirection)}°)`,
-                        })
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')
-                : t('hava81.context.waveUnavailable')}
-            </p>
-          </article>
-        ) : null}
-      </div>
-      {hasStaleMarine ? (
-        <p className="context-signals__note" role="status">
-          {t('hava81.context.marineStale')}
+        <p className="context-signals__note">
+          {usesCopernicus
+            ? usesMetNorway
+              ? t('hava81.context.noteCopernicus')
+              : t('hava81.context.noteCopernicusOnly')
+            : usesMetNorway
+              ? t('hava81.context.noteMetNorway')
+              : t('hava81.context.note')}
         </p>
-      ) : null}
-      <p className="context-signals__note">{t('hava81.context.note')}</p>
+      </details>
     </section>
   );
 }

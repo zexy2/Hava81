@@ -1,4 +1,5 @@
-import { formatNumber, formatWithUnit } from '../../utils/format';
+import { TimeField } from './TimeField';
+import { formatNumber, formatWithUnit, formatCityTime } from '../../utils/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackProductEvent } from '../../analytics/productEvents';
@@ -114,12 +115,10 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
   }, [plan, profile.commuteEnd, profile.commuteStart, weather.cityName]);
 
   const formatLocalWindowTime = (date: Date) =>
-    new Date(date.getTime() + timezoneOffsetSeconds * 1000).toLocaleString(i18n.language, {
+    `${new Date(date.getTime() + timezoneOffsetSeconds * 1000).toLocaleDateString(i18n.language, {
       weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
       timeZone: 'UTC',
-    });
+    })} ${formatCityTime(date, timezoneOffsetSeconds, i18n.language)}`;
   const formatPrecipitation = (probability: number | undefined, amount?: number) => {
     const hasProbability =
       typeof probability === 'number' &&
@@ -206,20 +205,21 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
       <div className="commute-plan__times" role="group" aria-label={t('hava81.commute.timesLabel')}>
         <label>
           <span>{t('hava81.commute.outbound')}</span>
-          <input
-            type="time"
-            value={profile.commuteStart ?? ''}
+          <TimeField
+            value={profile.commuteStart}
             aria-describedby={commuteIncompleteId}
-            onChange={event => setCommuteTime('start', event.target.value || undefined)}
+            onChange={value => setCommuteTime('start', value)}
           />
         </label>
+        <span className="commute-plan__arrow" aria-hidden="true">
+          →
+        </span>
         <label>
           <span>{t('hava81.commute.return')}</span>
-          <input
-            type="time"
-            value={profile.commuteEnd ?? ''}
+          <TimeField
+            value={profile.commuteEnd}
             aria-describedby={commuteIncompleteId}
-            onChange={event => setCommuteTime('end', event.target.value || undefined)}
+            onChange={value => setCommuteTime('end', value)}
           />
         </label>
       </div>
@@ -233,7 +233,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
             aria-live="polite"
             aria-atomic="true"
           >
-            <span>{t('hava81.commute.verdictLabel')}</span>
+            <span className="sr-only">{t('hava81.commute.verdictLabel')}</span>
             <small className="commute-plan__verdict-window">
               {t('hava81.commute.planWindow', {
                 outbound: formatLocalWindowTime(plan.outbound.targetTime),
@@ -272,6 +272,9 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
                       <time dateTime={window.targetTime.toISOString()}>{window.targetClock}</time>
                     </strong>
                   </header>
+                  <span className="commute-window__verdict">
+                    {t(`hava81.routines.verdict.${window.band}`)}
+                  </span>
                   <p>
                     {t('hava81.commute.forecastUsed', {
                       time: formatLocalWindowTime(window.forecastTime),
@@ -316,7 +319,7 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
             )}
           </div>
         </>
-      ) : (
+      ) : !profile.commuteStart && !profile.commuteEnd ? null : (
         <p
           id={commuteIncompleteId}
           className="commute-plan__empty"
@@ -331,8 +334,6 @@ export function CommutePlanPanel({ weather, hourly, forecastMeta }: Props) {
               : t('hava81.commute.empty')}
         </p>
       )}
-
-      <p className="commute-plan__note">{t('hava81.commute.note')}</p>
     </section>
   );
 }

@@ -66,23 +66,44 @@ export const en = {
       now: 'Now',
       ahead: '+{{hours}} h',
       unavailable: 'Layer data is unavailable right now; the map and cities still work.',
+      // Shown under the map for the layer and hour on screen.
+      credit: {
+        precipitation: 'chance of rain',
+        precipitationAmount: 'hourly rain amount',
+        temperature: 'temperature',
+        wind: 'wind',
+        cloud: 'cloud cover',
+      },
+      creditLine: '{{layer}} from province forecasts ({{when}}): {{provider}}',
+      notRadar: 'Interpolated from province values; not radar.',
+      coveragePartial:
+        '{{layer}} is available for only {{available}}/{{total}} provinces, so the map is not shaded; province values are on the markers.',
+      coverageNone: 'No {{layer}} for any province right now; this layer is empty.',
+      amountUnit: 'mm/h',
       legend: {
         precipitation: 'Chance of rain scale',
+        precipitationAmount: 'Hourly precipitation scale',
         temperature: 'Temperature scale',
         wind: 'Wind speed scale',
         cloud: 'Cloud cover scale',
       },
       step: {
         precipitation: 'Chance of rain {{value}}',
+        precipitationAmount: 'Hourly precipitation {{value}}',
         wind: 'Wind {{value}}',
         cloud: 'Cloud cover {{value}}',
       },
       popup: {
         precipitation: 'Chance of rain {{value}}%',
+        precipitationAmount: 'Hourly precipitation {{value}}',
         wind: 'Wind {{value}}',
         cloud: 'Cloud cover {{value}}%',
       },
     },
+    mapCanvasLabel: 'Interactive map',
+    mapZoomIn: 'Zoom in',
+    mapZoomOut: 'Zoom out',
+    mapDataFrom: 'Data from',
     mapTilesLoading: 'Loading map tiles',
     mapTilesUnavailable: 'Map tiles unavailable. City markers still work.',
     mapLiveProvinces: 'Live temperatures for 81 provinces: {{provider}}',
@@ -163,11 +184,12 @@ export const en = {
       privacy: 'Your location is used only to load nearby weather data.',
     },
     planView: {
+      footnote:
+        'Hava81 looks at the weather only; roads, traffic, health and safety are your call. For official warnings, see MGM MeteoUyarı.',
       eyebrow: 'Next step',
       title: 'Plan',
       titleWithCity: 'Plan · {{city}}',
-      intro:
-        'Plan activities and routes around the weather. The daily score is on Today; activity scores are here.',
+      intro: 'Tell Hava81 once what you do and when; it finds the best time for you every day.',
       back: 'Back to Today',
       asideLabel: 'Days, local context and notifications',
       entryEyebrow: 'Next step',
@@ -208,6 +230,7 @@ export const en = {
       feelsLike: 'Feels like {{temperature}}',
       nextChange: 'Planning signals',
       forecastHighLow: 'High / low',
+      forecastSourceFallback: 'forecast source',
       sourceDifference:
         'The live observation ({{currentProvider}}) and daily forecast ({{forecastProvider}}) may use different sources or times.',
       actions: {
@@ -285,6 +308,7 @@ export const en = {
       formattedByHava81: 'Formatted by Hava81',
       intervalForecast: 'Forecast every {{hours}} hours',
       hourlySource: 'Source:',
+      chanceOfRainSource: 'Chance of rain:',
       scrollNavigation: 'Navigate hourly forecast',
       scrollHint: 'Explore more hours',
       scrollPrevious: 'Show previous hours',
@@ -305,6 +329,10 @@ export const en = {
       dailySingleTemperature: 'Daily temperature {{value}}{{unit}}',
     },
     outlook: {
+      planAnswer: '{{name}} {{when}} · {{band}}',
+      planOff: 'No {{name}} that day',
+      planPending: '{{name}} · no forecast yet',
+      planNoWindow: 'No good time for {{name}}',
       approx: '(rough)',
       approxScore: 'About {{score}}/100, {{band}}; the forecast is not settled yet',
       title: 'Coming days',
@@ -318,7 +346,7 @@ export const en = {
       noWindow: 'No suitable window',
       thunder: 'Thunderstorm · around {{times}}. Lightning risk: do not wait in open ground.',
       confidence: { medium: 'forecast', low: 'uncertain forecast' },
-      note: 'Same decision engine: each day is judged on its own hours only. Forecasts further out can change.',
+      note: 'Forecasts further out can change.',
     },
     compare: {
       emptyTitle: 'Two cities, one clear choice',
@@ -353,8 +381,14 @@ export const en = {
       bestTime: 'Best weather time',
     },
     dailyPlan: {
+      scoreFor: 'For {{name}}',
       scoreScope12h: 'Next 12 hours · overall',
       headline: {
+        now: 'Now is a good time',
+        later: 'Better around {{time}}',
+        similar: 'Now or later, about the same',
+        personal: '{{name}} · {{day}} {{when}}',
+        general: 'Overall {{score}} · {{answer}}',
         best: 'Best time {{start}}–{{end}}',
         even: 'Much the same all day',
       },
@@ -365,7 +399,7 @@ export const en = {
       legend: {
         good: 'Good',
         caution: 'Caution',
-        difficult: 'Hard',
+        difficult: 'Difficult',
       },
       eyebrow: 'Hava81 decision engine',
       title: 'Day plan',
@@ -428,10 +462,10 @@ export const en = {
           no: 'Forecast suggests no need',
           unknown: 'No data',
         },
-        wind: { label: 'Wind', strong: 'Strong', caution: 'Caution', normal: 'Normal' },
+        wind: { label: 'Wind', strong: 'Strong', caution: 'Advisory', normal: 'Normal' },
         air: {
           label: 'Air quality',
-          poor: 'Caution',
+          poor: 'Advisory',
           sensitive: 'Sensitive groups take care',
           fair: 'Fair',
           good: 'Good',
@@ -489,17 +523,16 @@ export const en = {
       },
       safetyNote: 'Weather-based decision support only; it is not a safety guarantee.',
       hourlyAqiSource:
-        'Hourly air quality uses the {{source}} model only for exact matching forecast hours. Unmatched hours use the current AQI only while fresh; otherwise no AQI risk is inferred. This is modeled guidance, not an official warning.',
+        'Hourly air quality: {{source}}. Unmatched hours use only a fresh current value.',
       methodDetails: 'Data coverage and method',
       note: 'The Hava81 Score combines feels-like temperature, precipitation probability and amount, sustained wind and gusts, air quality, UV, visibility and severe-weather signals. Fresh European AQI samples are used only for forecast hours with an exact timestamp match. A fresh current reading is a fallback for unmatched hours; if both are unavailable or stale, no AQI risk is inferred. Other missing fields reduce data coverage rather than being invented.',
     },
     commute: {
-      eyebrow: 'Personal routine',
+      eyebrow: 'Every day',
       title: 'Out-and-back plan',
-      subtitle:
-        'Save when you leave and return; Hava81 will compare those two windows and tell you what is worth carrying today.',
+      subtitle: 'Pick when you leave and come back; we tell you what to take.',
       timesLabel: 'Departure and return times',
-      presetsLabel: 'Common routines',
+      presetsLabel: 'Common plans',
       presets: { office: 'Office', school: 'School' },
       outbound: 'Leave',
       return: 'Return',
@@ -515,7 +548,7 @@ export const en = {
         'strong-wind': 'Wind/gusts reach {{wind}} {{windUnit}}; use extra care outdoors',
         'wind-caution': 'Wind reaches {{wind}} {{windUnit}}; factor it into your plan',
         'poor-air': 'Air quality is AQI {{aqi}}/5; reduce prolonged outdoor activity',
-        stable: 'No extra preparation signal from rain, temperature or wind',
+        stable: 'Nothing extra needed',
       },
       planWindow: 'Planned window: {{outbound}} → {{return}}',
       umbrella: {
@@ -557,11 +590,30 @@ export const en = {
       note: 'The nearest available forecast window is used; this does not replace traffic, road-safety or official warning information.',
     },
     routines: {
-      title: 'My plans',
+      timeInvalid: 'Use 24-hour time, e.g. 18:30',
+      saved: 'Plan saved',
+      deleted: 'Plan deleted',
+      stripSummary: '{{start}}–{{end}}, {{duration}} minutes',
+      answer: {
+        best: '{{day}} best {{start}}–{{end}}',
+        none: '{{day}}: no good time',
+        fixed: '{{day}} {{time}}',
+        fixedBetter: '{{day}} {{time}} · {{better}} is better',
+        pending_one: '{{day}} · forecast in {{count}} day',
+        pending_other: '{{day}} · forecast in {{count}} days',
+        pendingAt_one: '{{day}} {{time}} · forecast in {{count}} day',
+        pendingAt_other: '{{day}} {{time}} · forecast in {{count}} days',
+      },
+      verdict: {
+        excellent: 'Very suitable',
+        good: 'Suitable',
+        caution: 'Caution',
+        difficult: 'Difficult',
+      },
+      title: 'Your plans',
       add: 'Add plan',
       custom: 'Set up my own plan',
-      emptyLead:
-        'Tell Hava81 once what you do and when; every time you open it you see the weather for your plans.',
+      emptyLead: 'Tap one to add it now. You can change the time later.',
       newTitle: 'New plan',
       editTitle: 'Edit plan',
       editLabel: 'Edit {{name}}',
@@ -642,6 +694,20 @@ export const en = {
       },
     },
     activities: {
+      short: {
+        walk: 'Walk',
+        run: 'Run',
+        bike: 'Cycling',
+        dog: 'Dog',
+        picnic: 'Picnic',
+        children: 'Children',
+        beach: 'Beach',
+        garden: 'Garden',
+        photo: 'Golden hour',
+        motorcycle: 'Motorcycle',
+        laundry: 'Laundry',
+      },
+      makeRoutine: 'Save as plan',
       calendar: {
         add: 'Add to calendar',
         title: '{{name}} · Hava81',
@@ -669,7 +735,7 @@ export const en = {
       },
       suggest: {
         title: {
-          now: 'Good things to do now',
+          now: 'Best of the next 12 hours',
           evening: 'Good things to do this evening',
           tomorrow: 'Best for tomorrow',
           weekend: 'Best for the weekend',
@@ -703,8 +769,8 @@ export const en = {
         photo: 'Golden hour',
       },
       bestTime: 'Best weather time: {{time}}',
-      bestRange: 'Best weather range: {{start}}–{{end}}',
-      anyTime: 'Any time between {{start}} and {{end}} works today.',
+      bestRange: 'Best weather range {{start}}–{{end}}',
+      anyTime: 'Any time {{start}}–{{end}}',
       vsGeneral: '{{delta}} vs the overall score: {{why}}',
       vsGeneralWhy: {
         up: 'the weather suits this activity better',
@@ -762,7 +828,7 @@ export const en = {
       empty: 'Select at least one activity to see personal scores.',
       note: 'Activity scores are weather-based decision support and do not replace traffic, road, health or local safety information.',
       hourlyAqiSource:
-        'Hourly air-quality outlook uses the {{source}} model. For unmatched hours, the current AQI is used only while fresh; if it is stale too, no AQI risk is inferred for that hour. This is modeled guidance, not an official warning.',
+        'Hourly air-quality outlook {{source}}; for unmatched hours, the current AQI is used only while fresh. Modeled guidance, not an official warning.',
       prefs: {
         title: 'Preferences',
         edit: 'Edit',
@@ -791,9 +857,26 @@ export const en = {
       },
     },
     context: {
+      levels: {
+        low: 'Low',
+        moderate: 'Moderate',
+        high: 'High',
+      },
+      seaFeel: {
+        warm: 'Swimmable',
+        cool: 'Cool',
+        cold: 'Cold',
+      },
+      short: {
+        uv: 'UV',
+        dust: 'Dust',
+        sea: 'Sea',
+        more: 'See details',
+      },
       eyebrow: 'Local context',
       title: 'Sun, dust, pollen and sea',
       uv: 'UV · 24-hour high',
+      uvEstimated: 'Estimated UV · 24-hour high',
       uvLevels: {
         low: 'Low',
         moderate: 'Moderate',
@@ -808,6 +891,11 @@ export const en = {
       pollen: 'Pollen model',
       pollenUnit: 'grains/m³',
       pollenNote: 'Higher modeled maximum across grass/olive pollen over the next 24 hours.',
+      pollenExperimental:
+        'The CAMS pollen forecast is experimental and not validated; it is not a medical threshold or an allergy warning.',
+      seaModelRun: 'Model value for this hour · model updated',
+      seaModelNoRun: 'Model value for this hour',
+      marineDois: 'Copernicus Marine products:',
       sea: 'Sea water',
       wave: 'Wave: {{height}} {{unit}}',
       wavePeriod: 'period {{period}} {{unit}}',
@@ -820,6 +908,12 @@ export const en = {
       marineStale: 'Marine model data is stale; wave and sea-surface values are hidden.',
       next24h: 'Model maximum over the next 24 hours.',
       note: 'UV, dust, pollen and marine values are Open-Meteo model outputs; they are not local measurements or health/navigation safety guarantees.',
+      noteCopernicus:
+        "UV is MET Norway's clear-sky UV forecast reduced for cloud cover. Dust and pollen are Copernicus CAMS model output; waves and sea temperature are Copernicus Marine model output (generated using E.U. Copernicus Marine Service Information). They are not local measurements or health/navigation safety guarantees.",
+      noteCopernicusOnly:
+        'MET Norway is not responding, so UV is not shown. Dust and pollen are Copernicus CAMS, waves and sea temperature Copernicus Marine model output (E.U. Copernicus Marine Service Information). Not a local measurement or a health or marine safety guarantee.',
+      noteMetNorway:
+        "UV is MET Norway's clear-sky UV forecast reduced for cloud cover; it is not a local measurement. Dust, pollen and marine signals are not shown because no free source licensed for commercial use provides them.",
     },
     share: {
       action: 'Share',
@@ -827,6 +921,7 @@ export const en = {
       unavailable: 'Sharing unavailable',
     },
     alerts: {
+      how: 'How it works',
       eyebrow: 'Hava81 notifications',
       title: 'Notify me when the decision changes',
       description:
@@ -860,24 +955,31 @@ export const en = {
         "Today's Hava81 Score is {{score}}/100 · {{band}}. Adjust your plan for the weather risks.",
     },
     route: {
+      announcement: '{{origin}} → {{destination}}: {{band}}, {{score}}/100',
       title: 'Route weather',
-      summary: 'Check an approximate weather corridor between two cities.',
+      summary: 'Check approximate weather along the route between two cities.',
       origin: 'Origin',
       destination: 'Destination',
       swap: 'Swap direction',
       sameCity: 'Choose different cities for origin and destination.',
+      day: 'Day',
+      at: 'Time',
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      durationHours: '{{hours}} h {{minutes}} min',
+      durationMinutes: '{{minutes}} min',
       departure: 'Departure time · Türkiye time',
       departureHelp: 'Choose a departure between now and the next 18 hours.',
-      check: 'Check corridor',
-      corridor: 'Approximate weather corridor',
-      estimate: 'Approx. {{distance}} km · {{minutes}} min',
+      check: 'Check route',
+      corridor: 'Approximate weather along the route',
+      estimate: 'Approx. {{distance}} km · {{duration}}',
       better: 'Leaving around {{time}} looks about {{improvement}} points better for weather.',
       betterAction:
         'Leaving around {{time}} looks about {{improvement}} points better · Use this time',
-      segments: 'Weather samples along the corridor',
+      segments: 'Weather samples along the route',
       departureRangeError: 'Departure must be between now and the next 18 hours.',
       resultExpired:
-        'This route estimate is no longer fresh. Check the corridor again for current guidance.',
+        'This route estimate is no longer fresh. Check the route again for current guidance.',
       error: 'Route weather data could not be loaded.',
       noRain: 'No precipitation',
       precipitationUnknown: 'Precipitation data unavailable',

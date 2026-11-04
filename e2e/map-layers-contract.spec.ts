@@ -7,6 +7,7 @@
  */
 import type { Locator, Page } from '@playwright/test';
 import { DESKTOP, MOBILE, expect, test } from './helpers/test';
+import { TURKISH_CITIES } from '../src/constants/cities';
 import { mockMapTiles, overrideApiJson, seedSettings } from './helpers/weather-fixtures';
 
 test.use({ bypassCSP: true });
@@ -14,7 +15,7 @@ test.use({ bypassCSP: true });
 const IPHONE_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
 
-const PROVINCES = [
+const NAMED_PROVINCES = [
   {
     plate: 34,
     name: 'İstanbul',
@@ -137,6 +138,27 @@ const PROVINCES = [
   },
 ];
 
+// Owner-approved (2026-11-02, #1720): the field needs real coverage to be drawn, so the other
+// 70 provinces join the 11 named above at their real positions with calm, neutral readings.
+// The named provinces, every step and every expectation are unchanged.
+const PROVINCES = [
+  ...NAMED_PROVINCES,
+  ...TURKISH_CITIES.filter(city => !NAMED_PROVINCES.some(named => named.plate === city.plateCode)).map(
+    city => ({
+      plate: city.plateCode,
+      name: city.name,
+      lat: city.coordinates.lat,
+      lon: city.coordinates.lon,
+      temperature: 14,
+      pop: 10,
+      mm: 0,
+      cloud: 40,
+      dir: 0,
+      wind: 3,
+    })
+  ),
+];
+
 async function mockLayerData(page: Page) {
   const observedAt = new Date(Date.now() - 10 * 60_000).toISOString();
   await overrideApiJson(page, 'provinces', {
@@ -184,7 +206,7 @@ async function openMap(page: Page, path = '/istanbul/?view=map') {
   await mockMapTiles(page);
   await mockLayerData(page);
   await page.goto(path);
-  const map = page.locator('.leaflet-container');
+  const map = page.locator('[data-map-surface]');
   await expect(map).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(500);
   return map;
@@ -198,7 +220,7 @@ async function box(locator: Locator) {
 
 const layers = (page: Page) => page.getByRole('group', { name: /Harita katmanı|Map layer/i });
 const times = (page: Page) => page.getByRole('group', { name: /Zaman|Time/i });
-const field = (page: Page) => page.locator('img.leaflet-image-layer[data-map-layer]');
+const field = (page: Page) => page.locator('img[data-map-layer]');
 
 test.describe('map layers contract', () => {
   test('four layers, one active, precipitation first', DESKTOP, async ({ page }) => {
@@ -285,20 +307,20 @@ test.describe('map layers contract', () => {
   test("the city's popup reads the active layer value", DESKTOP, async ({ page }) => {
     await openMap(page);
     await page.locator('.weather-map__marker').first().click();
-    const popup = page.locator('.leaflet-popup');
+    const popup = page.locator('[data-map-popup]');
     await expect(popup).toBeVisible();
     await expect(popup).toContainText('%70');
     await page.keyboard.press('Escape');
     await layers(page).getByRole('button', { name: 'Bulut', exact: true }).click();
     await page.locator('.weather-map__marker').first().click();
-    await expect(page.locator('.leaflet-popup')).toContainText('%90');
+    await expect(page.locator('[data-map-popup]')).toContainText('%90');
   });
 
   test('layers degrade quietly when province data is missing', DESKTOP, async ({ page }) => {
     await mockMapTiles(page);
     await overrideApiJson(page, 'provinces', { statusCode: 404, message: 'Route not found' }, 404);
     await page.goto('/istanbul/?view=map');
-    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-map-surface]')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Katman verisi şu an yok|Layer data is unavailable/i)).toBeVisible({
       timeout: 10_000,
     });

@@ -8,7 +8,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AsyncCache } from '../../core/cache';
-import type { ContextSignalsService } from './context.service';
+import type { ContextSignalsSource } from './context.service';
 
 const querySchema = z.object({
   lat: turkeyLatitudeSchema,
@@ -25,7 +25,7 @@ export const CONTEXT_CACHE_TTL_MS = 30 * 60 * 1000;
 /** Bağlam sinyallerini cache + upstream bütçesi üzerinden yükler (tekil uç nokta ve bundle ortak). */
 export const loadContextSignals = (
   cache: AsyncCache,
-  service: ContextSignalsService,
+  service: ContextSignalsSource,
   lat: number,
   lon: number,
   marine: boolean
@@ -36,7 +36,7 @@ export const loadContextSignals = (
 
 export const registerContextRoutes = async (
   app: FastifyInstance,
-  service: ContextSignalsService,
+  service: ContextSignalsSource,
   cache: AsyncCache
 ) => {
   app.get(

@@ -410,8 +410,9 @@ test('bundle and provinces are documented in the OpenAPI schema', async t => {
       .provinces.items.properties;
   assert.equal(provinceItem.temperature.minimum, -100);
   assert.equal(provinceItem.temperature.maximum, 100);
+  // 68/69: rain and snow mixed, which MET Norway reports as sleet (#1729).
   assert.deepEqual(provinceItem.weatherCode.enum, [
-    0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82,
+    0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 68, 69, 71, 73, 75, 77, 80, 81, 82,
     85, 86, 95, 96, 99,
   ]);
   assert.equal(provinceItem.windSpeed.minimum, 0);

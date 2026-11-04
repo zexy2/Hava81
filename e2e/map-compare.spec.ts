@@ -14,9 +14,9 @@ import {
   setWidth,
 } from './helpers/layout';
 import {
-  TILE_PNG,
   TWO_FAVORITES,
   fixtures,
+  MAP_STYLE_ROUTE,
   mockMapTiles,
   overrideApi,
   seedFavorites,
@@ -45,7 +45,7 @@ test.describe('map view', () => {
 
     await setTextScale(page, 200);
 
-    const zoomIn = mapRegion.locator('.leaflet-control-zoom-in');
+    const zoomIn = mapRegion.getByRole('button', { name: 'Yakınlaştır' });
     const attribution = mapRegion.locator('.weather-map__attribution a').first();
     await expect(zoomIn).toBeVisible();
     await expect(attribution).toBeVisible();
@@ -92,7 +92,7 @@ test.describe('map view', () => {
       await expectWithinViewportWidth(map, 'map');
       await expectNoHorizontalScroll(page);
 
-      await expect(page.locator('.leaflet-control-zoom-in')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Yakınlaştır' })).toBeVisible();
       expect(
         await page.locator('.weather-map__marker, .weather-map__plate-marker').count()
       ).toBeGreaterThanOrEqual(3);
@@ -100,13 +100,15 @@ test.describe('map view', () => {
         await findUndersizedTargets(map),
         'map controls, attribution and markers are 44px targets'
       ).toEqual([]);
-      await expect(page.locator('.leaflet-control-attribution')).toHaveCount(0);
+      // The library's own credit box stays off; the map credits itself below the map.
+      await expect(page.locator('.maplibregl-ctrl-attrib')).toHaveCount(0);
       const attribution = page.locator('.weather-map__attribution');
-      await expect(attribution).toContainText('OpenStreetMap contributors');
-      await expect(attribution).toContainText(/OpenStreetMap France|OpenStreetMap Deutschland/);
+      await expect(attribution).toContainText('OpenFreeMap');
+      await expect(attribution).toContainText('OpenMapTiles');
+      await expect(attribution).toContainText('OpenStreetMap');
 
       await page.locator('.weather-map__marker').click();
-      const popupClose = page.locator('.leaflet-popup-close-button');
+      const popupClose = page.locator('.weather-map__popup-close');
       await expect(popupClose).toBeVisible();
       await expectTouchTarget(popupClose, 'popup close');
       await expectNoOverlap(
@@ -213,12 +215,11 @@ test.describe('map view', () => {
         releaseTiles = resolve;
       });
       let intercepted = 0;
-      await page.route('**/hot/**', async route => {
+      await mockMapTiles(page);
+      await page.route(MAP_STYLE_ROUTE, async route => {
         intercepted += 1;
         await tileGate;
-        await route
-          .fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG })
-          .catch(() => {});
+        await route.fallback().catch(() => {});
       });
 
       try {
@@ -239,47 +240,23 @@ test.describe('map view', () => {
         releaseTiles?.();
       }
       await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
-      await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
+      await expect(page.locator('[data-map-surface]')).toHaveAttribute('data-map-tiles', 'loaded');
     }
   );
 
-  test(
-    'map tile loading switches to backup tiles if the primary host fails',
-    MOBILE,
-    async ({ page }) => {
-      let backupRequests = 0;
-      await page.route('**/hot/**', route => route.fulfill({ status: 503, body: 'Unavailable' }));
-      await page.route('**/tiles/osmde/**', route => {
-        backupRequests += 1;
-        return route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG });
-      });
-      await page.goto('/istanbul/');
-      await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Harita' }).click();
-      await expect.poll(() => backupRequests).toBeGreaterThan(0);
-      await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
-      await expect(page.locator('.weather-map__attribution')).toContainText(
-        'OpenStreetMap Deutschland'
-      );
-      await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible();
-    }
-  );
-
-  test('map reports dual provider failure and retry recovers tiles', MOBILE, async ({ page }) => {
-    let firstHostIsDown = true;
-    let backupFailures = 0;
-    await page.route('**/hot/**', route =>
-      firstHostIsDown
-        ? route.fulfill({ status: 503, body: 'Primary unavailable' })
-        : route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG })
-    );
-    await page.route('**/tiles/osmde/**', route => {
-      backupFailures += 1;
-      return route.fulfill({ status: 503, body: 'Secondary unavailable' });
+  test('map reports a failed style and retry recovers it', MOBILE, async ({ page }) => {
+    let styleIsDown = true;
+    let failures = 0;
+    await mockMapTiles(page);
+    await page.route(MAP_STYLE_ROUTE, route => {
+      if (!styleIsDown) return route.fallback();
+      failures += 1;
+      return route.fulfill({ status: 503, body: 'Style unavailable' });
     });
 
     await page.goto('/istanbul/');
     await page.locator('.atlas-bottom-nav').getByRole('button', { name: 'Harita' }).click();
-    await expect.poll(() => backupFailures).toBeGreaterThan(0);
+    await expect.poll(() => failures).toBeGreaterThan(0);
 
     const failed = page.locator('.weather-map__tile-status--failed');
     await expect(failed).toBeVisible();
@@ -290,13 +267,13 @@ test.describe('map view', () => {
     await expect(retry).toBeEnabled();
     await expectTouchTarget(retry, 'retry');
     await expectNoHorizontalScroll(page);
-    await expect(page.locator('.leaflet-marker-icon').first()).toBeVisible();
 
-    firstHostIsDown = false;
+    styleIsDown = false;
     await retry.click();
     await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
-    await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
-    await expect(page.locator('.weather-map__attribution')).toContainText('OpenStreetMap France');
+    await expect(page.locator('[data-map-surface]')).toHaveAttribute('data-map-tiles', 'loaded');
+    await expect(page.locator('[data-map-marker]').first()).toBeVisible();
+    await expect(page.locator('.weather-map__attribution')).toContainText('OpenFreeMap');
   });
 });
 

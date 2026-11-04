@@ -10,9 +10,10 @@
     contain-intrinsic-size: auto 97rem;
   }
 
+  /* Readings collapse to one summary row; the guess matches the closed section. */
   .atlas-dashboard .context-signals {
     content-visibility: auto;
-    contain-intrinsic-size: auto 38rem;
+    contain-intrinsic-size: auto 18rem;
   }
 
   .atlas-dashboard .decision-alerts {
@@ -36,7 +37,7 @@
     }
 
     .atlas-dashboard .context-signals {
-      contain-intrinsic-size: auto 43rem;
+      contain-intrinsic-size: auto 20rem;
     }
   }
 }

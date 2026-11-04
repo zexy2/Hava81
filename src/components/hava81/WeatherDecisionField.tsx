@@ -37,6 +37,8 @@ export interface WeatherDecisionFieldProps {
   airQuality?: AirQuality;
   airQualityHourly?: AirQualityHourly;
   uvIndexMax?: number;
+  /** UV is still on its way (context signals load after the forecast); hold its row. */
+  uvPending?: boolean;
   forecastMeta?: ForecastMeta | null;
   className?: string;
 }
@@ -48,6 +50,7 @@ export function WeatherDecisionField({
   airQuality,
   airQualityHourly,
   uvIndexMax,
+  uvPending = false,
   forecastMeta,
   className = '',
 }: WeatherDecisionFieldProps) {
@@ -738,13 +741,21 @@ export function WeatherDecisionField({
             <dt>{t('weather.uvIndex')}</dt>
             <dd>{uvFormatter.format(uvIndexMax)}</dd>
           </div>
+        ) : !forecastMeta || uvPending ? (
+          // UV comes from the context signals, which land after the forecast. Holding its row
+          // until they have keeps the rail the same height, so the value lands in place
+          // instead of pushing the page down (#1782).
+          <div className="hava81-decision-field__metric">
+            <dt>{t('weather.uvIndex')}</dt>
+            <dd>—</dd>
+          </div>
         ) : null}
       </dl>
       {outsideForecastRange && (
         <p className="hava81-decision-field__source-note">
           {t('hava81.decision.sourceDifference', {
             currentProvider: weather.meta.provider,
-            forecastProvider: forecastMeta?.provider ?? 'Open-Meteo',
+            forecastProvider: forecastMeta?.provider ?? t('hava81.decision.forecastSourceFallback'),
           })}
         </p>
       )}

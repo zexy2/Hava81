@@ -807,3 +807,16 @@ describe('WeatherDecisionField daily range', () => {
     expect(screen.queryByText(/Hava kalitesi zayıf \(AQI 4\/5\)/i)).not.toBeInTheDocument();
   });
 });
+
+describe('WeatherDecisionField UV row while the forecast loads', () => {
+  it('#1782 holds the UV row when the app passes a null forecast meta', () => {
+    render(
+      <SettingsProvider>
+        <WeatherDecisionField weather={weather} hourly={[]} forecastMeta={null} />
+      </SettingsProvider>
+    );
+    const rail = document.querySelector('.hava81-decision-field__rail') as HTMLElement;
+    expect(rail.querySelectorAll('.hava81-decision-field__metric')).toHaveLength(3);
+    expect(screen.getByText('UV İndeksi')).toBeInTheDocument();
+  });
+});

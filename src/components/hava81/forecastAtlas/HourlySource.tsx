@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { ForecastMeta } from '../../../types';
+import { OpenWeatherCredit } from '../../app/DataCredits';
 import { OPEN_METEO_LICENSE_URL } from './constants';
 
 /** Hourly data provider, licence and attribution line. */
@@ -17,6 +18,15 @@ export function HourlySource({ meta }: { meta: ForecastMeta }) {
           <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
           {' · '}
           {t('hava81.forecastAtlas.formattedByHava81')}
+        </>
+      ) : meta.provider === 'MET Norway' ? (
+        <>
+          {' · '}
+          <a href={OPEN_METEO_LICENSE_URL}>CC BY 4.0</a>
+          {' · '}
+          {t('hava81.forecastAtlas.formattedByHava81')}
+          {' · '}
+          {t('hava81.forecastAtlas.chanceOfRainSource')} <OpenWeatherCredit />
         </>
       ) : meta.attribution && meta.attribution !== meta.provider ? (
         <> · {meta.attribution}</>

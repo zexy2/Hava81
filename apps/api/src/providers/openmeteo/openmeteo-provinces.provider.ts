@@ -23,8 +23,20 @@ export interface ProvinceCurrentObservation {
   precipitationProbability?: number;
   /** Harita zaman şeridi için +3 ve +6 saatlik görünüm. */
   outlook?: ProvinceOutlookPoint[];
-  /** Gözlem zamanı (ISO 8601, UTC). */
+  /** Gözlem zamanı (ISO 8601, UTC). Tahmin sağlayıcılarında verinin geçerli olduğu saat. */
   observedAt: string;
+  /** Tahminin geçerli olduğu an (ISO 8601, UTC); gözlem değildir. */
+  validAt?: string;
+  /** Kaynak modelin son çalıştığı an (ISO 8601, UTC). */
+  modelUpdatedAt?: string;
+  /** İleriye dönük yağış tahmini ve geçerli olduğu aralık; geçmiş saatin gözlemi değildir. */
+  precipitationPeriod?: ProvincePrecipitationPeriod;
+}
+
+export interface ProvincePrecipitationPeriod {
+  amountMm: number;
+  validFrom: string;
+  validTo: string;
 }
 
 export interface ProvinceOutlookPoint {

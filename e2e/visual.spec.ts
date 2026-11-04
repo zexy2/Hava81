@@ -96,9 +96,17 @@ test.describe('visual comparisons', VISUAL, () => {
       '.context-signals',
       '.route-weather',
     ]) {
+      // Lower panels mount only when they near the viewport.
+      await plan
+        .locator(panel)
+        .scrollIntoViewIfNeeded()
+        .catch(() => {});
+      await page.mouse.wheel(0, 600);
       await expect(plan.locator(panel)).toBeVisible();
     }
-    await expect(plan.locator('.activity-card')).toHaveCount(2);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    // A new user sees suggestions instead of activity cards.
+    await expect(plan.locator('.activity-card')).toHaveCount(0);
     // Capture Planla from its heading down to the route panel. The collapsed route
     // disclosure at the bottom settles its height asynchronously, so it is left out.
     // Wait until the section stops growing (lazy panels, fonts, charts).
@@ -138,7 +146,7 @@ test.describe('visual comparisons', VISUAL, () => {
     const map = page.locator('#weather-map-region');
     await expect(map).toBeVisible();
     await expect(page.locator('.weather-map__tile-status')).toBeHidden({ timeout: 15_000 });
-    await expect.poll(() => page.locator('.leaflet-tile-loaded').count()).toBeGreaterThan(0);
+    await expect(page.locator('[data-map-surface]')).toHaveAttribute('data-map-tiles', 'loaded');
     await expect(map).toHaveScreenshot('map-view-mobile-390.png', { mask: volatile(page) });
   });
 });

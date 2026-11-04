@@ -7,6 +7,7 @@ import test from 'node:test';
 import {
   DEFAULT_API_ORIGIN,
   MAP_TILE_ORIGINS,
+  mapOriginFrom,
   apiOriginFrom,
   applyCspToDist,
   applyCspToHtml,
@@ -52,8 +53,16 @@ test('policy allows exactly the app origins', () => {
   const csp = buildCsp({ scriptHashes: ["'sha256-x'"], apiOrigin: 'https://api.example.test' });
   assert.equal(directive(csp, 'default-src'), "default-src 'self'");
   assert.equal(directive(csp, 'script-src'), "script-src 'self' 'sha256-x'");
-  assert.equal(directive(csp, 'connect-src'), `connect-src 'self' ${DEFAULT_API_ORIGIN} https://api.example.test`);
-  for (const origin of MAP_TILE_ORIGINS) assert.match(directive(csp, 'img-src'), new RegExp(origin.replaceAll('.', '\\.')));
+  assert.equal(
+    directive(csp, 'connect-src'),
+    `connect-src 'self' data: ${DEFAULT_API_ORIGIN} ${MAP_TILE_ORIGINS.join(' ')} https://api.example.test`
+  );
+  // MapLibre fetches the OpenFreeMap style and tiles, and reads the locally drawn weather
+  // field (a data: image) with fetch; its worker is a same-origin file.
+  assert.deepEqual(MAP_TILE_ORIGINS, ['https://tiles.openfreemap.org']);
+  // Exact source match, not a regular expression: a host is an exact token in the directive.
+  for (const origin of MAP_TILE_ORIGINS) assert.ok(directive(csp, 'img-src').split(' ').includes(origin));
+  assert.equal(directive(csp, 'worker-src'), "worker-src 'self'");
   assert.equal(directive(csp, 'object-src'), "object-src 'none'");
   assert.doesNotMatch(csp, /unsafe-eval/);
   assert.doesNotMatch(directive(csp, 'script-src'), /unsafe-inline/);
@@ -85,4 +94,17 @@ test('applies to every HTML file in dist', async t => {
   assert.equal(directive(home, 'script-src'), "script-src 'self'");
   assert.match(directive(city, 'script-src'), /^script-src 'self' 'sha256-[A-Za-z0-9+/=]+'$/);
   assert.equal(await readFile(join(dist, 'app.js'), 'utf8'), 'console.log(1)');
+});
+
+test('#1757 a configured map host replaces OpenFreeMap in the policy, and only that host', () => {
+  const csp = buildCsp({ mapOrigin: 'https://tiles.example.test' });
+  assert.match(directive(csp, 'connect-src'), /https:\/\/tiles\.example\.test/);
+  assert.match(directive(csp, 'img-src'), /https:\/\/tiles\.example\.test/);
+  assert.doesNotMatch(csp, /tiles\.openfreemap\.org/);
+  // Without one, the default stays OpenFreeMap.
+  assert.match(directive(buildCsp(), 'connect-src'), /tiles\.openfreemap\.org/);
+  // A relative or malformed value is ignored rather than opening the policy.
+  assert.equal(mapOriginFrom('/tiles'), null);
+  assert.equal(mapOriginFrom('not a url'), null);
+  assert.equal(mapOriginFrom('https://tiles.example.test/styles'), 'https://tiles.example.test');
 });

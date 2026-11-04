@@ -5,6 +5,7 @@ import { DayOutlookPanel } from '../../components/hava81/DayOutlookPanel';
 import { SettingsProvider } from '../../context';
 import type { HourlyForecast, NormalizedWeatherData } from '../../types';
 import '../../i18n';
+import { saveRoutines } from '../../storage/routineStore';
 
 const api = vi.hoisted(() => ({
   getCurrentWeather: vi.fn(),
@@ -238,5 +239,78 @@ describe('coming days and weekend compare (F4)', () => {
     // "Now" metrics (current temperature, wind) are not shown next to a Saturday verdict.
     expect(screen.queryAllByText('Sıcaklık')).toHaveLength(0);
     expect(screen.getAllByText('Günün başlıca etkeni')).toHaveLength(2);
+  });
+});
+
+describe('coming days on a plan tab', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(NOW));
+  });
+  afterEach(() => {
+    localStorage.clear();
+    vi.useRealTimers();
+  });
+
+  it('answers the saved plan on each day, and says when it does not run', () => {
+    saveRoutines([
+      {
+        id: 'run',
+        activity: 'run',
+        schedule: { kind: 'fixed', days: [1, 2, 3, 4, 5], start: '18:30', durationMinutes: 45 },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    ]);
+    render(
+      <SettingsProvider>
+        <DayOutlookPanel
+          weather={weatherFor('İstanbul')}
+          hourly={series(() => false)}
+          forecastMeta={meta()}
+        />
+      </SettingsProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Koşu/ }));
+    const days = within(screen.getByRole('list')).getAllByRole('listitem');
+    // Wednesday and Thursday run at 18:30; Saturday is not a plan day.
+    expect(days[0]).toHaveTextContent('Koşu 18:30');
+    expect(days[1]).toHaveTextContent('Koşu 18:30');
+    const saturday = days.find(day => day.textContent?.startsWith('Cumartesi'))!;
+    expect(saturday).toHaveTextContent('O gün Koşu yok');
+    expect(saturday.querySelector('.day-outlook__score--none')).not.toBeNull();
+  });
+
+  it('says a plan beyond the hourly forecast has no number yet', () => {
+    saveRoutines([
+      {
+        id: 'run',
+        activity: 'run',
+        schedule: {
+          kind: 'fixed',
+          days: [0, 1, 2, 3, 4, 5, 6],
+          start: '18:30',
+          durationMinutes: 45,
+        },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    ]);
+    render(
+      <SettingsProvider>
+        <DayOutlookPanel
+          weather={weatherFor('İstanbul')}
+          // Tomorrow's forecast ends at 14:00, before the 18:30 run.
+          hourly={series(() => false).slice(0, 30)}
+          forecastMeta={meta()}
+        />
+      </SettingsProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Koşu/ }));
+    const days = within(screen.getByRole('list')).getAllByRole('listitem');
+    expect(days.some(day => day.textContent?.includes('Koşu · tahmin henüz yok'))).toBe(true);
   });
 });

@@ -628,16 +628,6 @@
     }
   }
 
-  /* Tile seams on high-density screens have two causes in Leaflet's own stylesheet:
-     Safari smooths tiles with -webkit-optimize-contrast, and every tile is drawn with
-     mix-blend-mode: plus-lighter, which adds the overlapping edge pixels of neighbouring
-     tiles into a bright hairline at fractional device pixels. Opaque raster tiles need
-     neither, so both go back to normal. */
-  .app .leaflet-container img.leaflet-tile {
-    image-rendering: auto;
-    mix-blend-mode: normal;
-  }
-
   /* On phones the panel is read while the thumb is still scrolling, so it does not ride a
      scroll-linked rise: readings stay where the eye lands. */
   @media (max-width: 47.99rem) {

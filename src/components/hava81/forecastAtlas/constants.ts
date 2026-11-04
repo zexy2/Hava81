@@ -15,6 +15,7 @@ export const RAIN_BASELINE = 180;
 export const TRACK_GUTTER = 44;
 export const PRECIPITATION_THRESHOLD = 0.35;
 export const HOUR_MS = 60 * 60_000;
+/** CC BY 4.0: the licence of both Open-Meteo and MET Norway data. */
 export const OPEN_METEO_LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 export const RAIN_GAUGE_CELLS = 5;
 

@@ -14,7 +14,7 @@ import { UpstreamBudget, withUpstreamBudget } from './core/upstream-budget';
 import { ResilientWeatherProvider } from './core/resilient-provider';
 import { registerHealthRoutes } from './modules/health/health.routes';
 import { registerContextRoutes } from './modules/context/context.routes';
-import { ContextSignalsService } from './modules/context/context.service';
+import type { ContextSignalsSource } from './modules/context/context.service';
 import { registerWeatherRoutes } from './modules/weather/weather.routes';
 import { registerRouteWeatherRoutes } from './modules/route/route-weather.routes';
 import { RouteWeatherService } from './modules/route/route-weather.service';
@@ -23,11 +23,9 @@ import { registerBundleRoutes } from './modules/weather/bundle.routes';
 import { registerProvinceRoutes } from './modules/provinces/provinces.routes';
 import { ProvincesService } from './modules/provinces/provinces.service';
 import {
-  OpenMeteoProvincesProvider,
   type ProvinceCurrentProvider,
 } from './providers/openmeteo/openmeteo-provinces.provider';
-import { OpenMeteoHourlyProvider } from './providers/openmeteo/openmeteo-hourly.provider';
-import { OpenMeteoAirQualityHourlyProvider } from './providers/openmeteo/openmeteo-air-quality-hourly.provider';
+import { createDataSources } from './providers/data-sources';
 import { OpenWeatherProvider } from './providers/openweather/openweather.provider';
 import type {
   AirQualityHourlyProvider,
@@ -41,7 +39,7 @@ export interface BuildAppOptions {
   hourlyProvider?: HourlyForecastProvider;
   airQualityHourlyProvider?: AirQualityHourlyProvider;
   provincesProvider?: ProvinceCurrentProvider;
-  contextService?: ContextSignalsService;
+  contextService?: ContextSignalsSource;
   cache?: AsyncCache;
   upstreamBudget?: UpstreamBudget;
   logger?: boolean;
@@ -200,22 +198,10 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
         resetMs: env.PROVIDER_CIRCUIT_RESET_MS,
       });
     })();
-  const hourlyProvider =
-    options.hourlyProvider ??
-    new OpenMeteoHourlyProvider(
-      fetch,
-      env.OPENWEATHER_TIMEOUT_MS,
-      env.OPEN_METEO_FORECAST_BASE_URL,
-      env.OPEN_METEO_API_KEY
-    );
+  const dataSources = createDataSources(env);
+  const hourlyProvider = options.hourlyProvider ?? dataSources.hourlyProvider;
   const airQualityHourlyProvider =
-    options.airQualityHourlyProvider ??
-    new OpenMeteoAirQualityHourlyProvider(
-      fetch,
-      env.OPENWEATHER_TIMEOUT_MS,
-      env.OPEN_METEO_AIR_QUALITY_BASE_URL,
-      env.OPEN_METEO_API_KEY
-    );
+    options.airQualityHourlyProvider ?? dataSources.airQualityHourlyProvider;
   const weatherService = new WeatherService(
     provider,
     cache,
@@ -223,21 +209,9 @@ export const buildApp = async (options: BuildAppOptions = {}): Promise<FastifyIn
     hourlyProvider,
     airQualityHourlyProvider
   );
-  const contextService =
-    options.contextService ??
-    new ContextSignalsService(fetch, {
-      airQualityBaseUrl: env.OPEN_METEO_AIR_QUALITY_BASE_URL,
-      marineBaseUrl: env.OPEN_METEO_MARINE_BASE_URL,
-      apiKey: env.OPEN_METEO_API_KEY,
-    });
+  const contextService = options.contextService ?? dataSources.contextService;
   const provincesService = new ProvincesService(
-    options.provincesProvider ??
-      new OpenMeteoProvincesProvider(
-        fetch,
-        env.OPENWEATHER_TIMEOUT_MS,
-        env.OPEN_METEO_FORECAST_BASE_URL,
-        env.OPEN_METEO_API_KEY
-      ),
+    options.provincesProvider ?? dataSources.provincesProvider,
     cache,
     env.CACHE_PROVINCES_TTL_MS
   );

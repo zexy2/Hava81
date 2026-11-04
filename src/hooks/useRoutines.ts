@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActivityKind } from '../domain/activity/types';
 import { PLAN_PROFILES } from '../domain/plan/profiles';
 import type { Weekday } from '../domain/routines/types';
@@ -120,13 +120,16 @@ export function defaultDraft(activity: ActivityKind): RoutineDraft {
 
 export function useRoutines() {
   const [routines, setRoutines] = useState<Routine[]>(() => loadRoutines());
+  // The latest list, so an edit can be computed and saved outside a state updater
+  // (updaters must stay pure: StrictMode runs them twice).
+  const routinesRef = useRef(routines);
+  routinesRef.current = routines;
 
   const commit = useCallback((update: (current: Routine[]) => Routine[]) => {
-    setRoutines(current => {
-      const next = update(current);
-      saveRoutines(next);
-      return next;
-    });
+    const next = update(routinesRef.current);
+    routinesRef.current = next;
+    saveRoutines(next);
+    setRoutines(next);
   }, []);
 
   // Another tab changed the plans: follow it.

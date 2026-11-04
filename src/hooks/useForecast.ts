@@ -44,6 +44,11 @@ interface UseForecastReturn {
   contextSignals: ContextSignals | null;
   meta: ForecastMeta | null;
   isLoading: boolean;
+  /**
+   * False while air quality and context signals (UV) are still on their way after the forecast;
+   * true once they arrived or failed. Lets the page hold their rows instead of shifting.
+   */
+  secondarySettled: boolean;
   error: Error | null;
   fetch: (coords: Coordinates, cityName?: string) => Promise<void>;
 }
@@ -59,6 +64,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
   const [contextSignals, setContextSignals] = useState<ContextSignals | null>(null);
   const [meta, setMeta] = useState<ForecastMeta | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [secondarySettled, setSecondarySettled] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -153,6 +159,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       abortControllerRef.current = controller;
       const { signal } = controller;
       setIsLoading(true);
+      setSecondarySettled(false);
       setError(null);
       const previousRequest = lastSuccessfulRequestRef.current;
       const isSameSuccessfulRequest =
@@ -200,7 +207,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
                 ? { kind: 'legacy' as const }
                 : { kind: 'error' as const, error: error as unknown }
           );
-        const fromBundle = <T,>(
+        const fromBundle = <T>(
           pick: (bundle: ForecastBundle) => Settled<T> | undefined,
           legacy: () => Promise<T>
         ): Promise<Settled<T>> =>
@@ -231,14 +238,17 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         );
         const airQualityHourlyRequest = bundleOutcome.then(outcome => {
           if (outcome.kind === 'bundle') {
-            return outcome.bundle.airQualityHourly ?? {
-              ok: false as const,
-              error: new Error('Hourly air-quality part was not returned'),
-            };
+            return (
+              outcome.bundle.airQualityHourly ?? {
+                ok: false as const,
+                error: new Error('Hourly air-quality part was not returned'),
+              }
+            );
           }
           return {
             ok: false as const,
-            error: outcome.kind === 'error' ? outcome.error : new BundleUnavailableError('unsupported'),
+            error:
+              outcome.kind === 'error' ? outcome.error : new BundleUnavailableError('unsupported'),
           };
         });
 
@@ -277,7 +287,9 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
         if (requestId !== requestIdRef.current) return;
         const firstAppliedBaseline = firstCoreResult.source === 'baseline' && firstCoreResult.ok;
         const firstAppliedHourly =
-          firstCoreResult.source === 'hourly' && firstCoreResult.ok && firstCoreResult.value.hourly.length > 0;
+          firstCoreResult.source === 'hourly' &&
+          firstCoreResult.ok &&
+          firstCoreResult.value.hourly.length > 0;
         if (firstAppliedBaseline) applyBaseline(firstCoreResult.value);
         if (firstAppliedHourly) applyHourly(firstCoreResult.value, true);
 
@@ -348,6 +360,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
       } finally {
         if (requestId === requestIdRef.current) {
           setIsLoading(false);
+          setSecondarySettled(true);
           if (abortControllerRef.current === controller) abortControllerRef.current = null;
         }
       }
@@ -366,6 +379,7 @@ export function useForecast(language: 'tr' | 'en' = 'tr'): UseForecastReturn {
     contextSignals,
     meta,
     isLoading,
+    secondarySettled,
     error,
     fetch,
   };

@@ -1,4 +1,5 @@
 import type { ProvinceTemperature } from '../../../api/weatherService';
+import { TURKISH_CITIES } from '../../../constants/cities';
 
 export type MapLayer = 'precipitation' | 'temperature' | 'wind' | 'cloud';
 export const MAP_LAYERS: readonly MapLayer[] = ['precipitation', 'temperature', 'wind', 'cloud'];
@@ -18,23 +19,58 @@ export interface LayerSample {
 }
 
 /**
+ * What the precipitation layer reads: the chance of rain (%) or the hourly amount (mm), which
+ * MET Norway publishes for Türkiye but not a chance. One scale per layer, never both mixed.
+ */
+export type PrecipitationMeasure = 'chance' | 'amount';
+
+/**
+ * The chance when at least half the provinces report one, so a single province with a chance
+ * cannot hide eighty that only report an amount. Otherwise the amount.
+ */
+export const precipitationMeasure = (
+  provinces: Iterable<ProvinceTemperature>
+): PrecipitationMeasure => {
+  let total = 0;
+  let withChance = 0;
+  for (const province of provinces) {
+    total += 1;
+    if (
+      typeof province.precipitationProbability === 'number' ||
+      province.outlook?.some(point => typeof point.precipitationProbability === 'number')
+    ) {
+      withChance += 1;
+    }
+  }
+  return total > 0 && withChance * 2 >= total ? 'chance' : 'amount';
+};
+
+/**
  * One province's value for a layer at an hour, or null when the reading is missing.
- * Precipitation reads the chance (%); temperature °C; cloud %; wind m/s.
+ * Precipitation reads the chance (%) or the amount (mm/h); temperature °C; cloud %; wind m/s.
  */
 export const layerValue = (
   province: ProvinceTemperature,
   layer: MapLayer,
-  hour: LayerHour
+  hour: LayerHour,
+  measure: PrecipitationMeasure = 'chance'
 ): number | null => {
   if (hour !== 0 && layerHasOutlook(layer)) {
     const point = province.outlook?.find(item => item.hourOffset === hour);
     if (!point) return null;
-    const value = layer === 'precipitation' ? point.precipitationProbability : point.temperature;
+    const value =
+      layer === 'precipitation'
+        ? measure === 'amount'
+          ? point.precipitation
+          : point.precipitationProbability
+        : point.temperature;
     return typeof value === 'number' ? value : null;
   }
   switch (layer) {
     case 'precipitation':
-      return province.precipitationProbability ?? null;
+      return (
+        (measure === 'amount' ? province.precipitation : province.precipitationProbability) ?? null
+      );
     case 'temperature':
       return province.temperature;
     case 'cloud':
@@ -47,39 +83,93 @@ export const layerValue = (
 export const layerSamples = (
   provinces: Iterable<ProvinceTemperature>,
   layer: MapLayer,
-  hour: LayerHour
+  hour: LayerHour,
+  measure: PrecipitationMeasure = 'chance'
 ): LayerSample[] => {
   const samples: LayerSample[] = [];
   for (const province of provinces) {
-    const value = layerValue(province, layer, hour);
+    const value = layerValue(province, layer, hour, measure);
     if (value !== null) samples.push({ lat: province.lat, lon: province.lon, value });
   }
   return samples;
+};
+
+/** Provinces in Türkiye; the denominator of a layer's coverage. */
+export const PROVINCE_COUNT = 81;
+/** Below these a field would be a guess from a few points or from one corner of the country. */
+export const MIN_FIELD_SAMPLES = 20;
+export const MIN_FIELD_REGIONS = 4;
+/**
+ * A pixel is drawn only within this ground distance (degrees, ~165 km) of its nearest
+ * province. Neighbouring province centres are well inside it; a distant value is not copied.
+ */
+export const FIELD_MAX_DISTANCE_DEGREES = 1.5;
+
+const REGION_BY_PLATE = new Map(TURKISH_CITIES.map(city => [city.plateCode, city.region]));
+
+export interface LayerCoverage {
+  /** Provinces with a value for this layer and hour. */
+  available: number;
+  /** Provinces without one; shown as unknown, never filled in. */
+  missing: number;
+  total: number;
+  /** Geographic regions with at least one value. */
+  regions: number;
+  /** Enough provinces over enough regions to draw an interpolated field. */
+  drawable: boolean;
+}
+
+export const layerCoverage = (
+  provinces: Iterable<ProvinceTemperature>,
+  layer: MapLayer,
+  hour: LayerHour,
+  measure: PrecipitationMeasure = 'chance'
+): LayerCoverage => {
+  let available = 0;
+  const regions = new Set<string>();
+  for (const province of provinces) {
+    if (layerValue(province, layer, hour, measure) === null) continue;
+    available += 1;
+    const region = REGION_BY_PLATE.get(province.plate);
+    if (region) regions.add(region);
+  }
+  return {
+    available,
+    missing: Math.max(0, PROVINCE_COUNT - available),
+    total: PROVINCE_COUNT,
+    regions: regions.size,
+    drawable: available >= MIN_FIELD_SAMPLES && regions.size >= MIN_FIELD_REGIONS,
+  };
 };
 
 /**
  * Inverse-distance weighting with power 2: a smooth field between stations that still
  * passes exactly through each one. Distances are in degrees, scaled for longitude so a
  * degree east weighs the same ground distance as a degree north at Türkiye's latitude.
+ * Null when the nearest sample is farther than `FIELD_MAX_DISTANCE_DEGREES`: that area has no
+ * reading, and the field leaves it empty rather than copying a distant province's value.
  */
 export const interpolate = (samples: readonly LayerSample[], lat: number, lon: number) => {
   if (samples.length === 0) return null;
   const lonScale = Math.cos((lat * Math.PI) / 180);
+  const maxDistanceSquared = FIELD_MAX_DISTANCE_DEGREES ** 2;
   let weighted = 0;
   let weights = 0;
+  let nearest = Number.POSITIVE_INFINITY;
   for (const sample of samples) {
     const dx = (sample.lon - lon) * lonScale;
     const dy = sample.lat - lat;
     const distanceSquared = dx * dx + dy * dy;
     if (distanceSquared < 1e-9) return sample.value;
+    nearest = Math.min(nearest, distanceSquared);
     const weight = 1 / distanceSquared;
     weighted += weight * sample.value;
     weights += weight;
   }
-  return weighted / weights;
+  return nearest > maxDistanceSquared ? null : weighted / weights;
 };
 
-/** Web Mercator y for a latitude, so canvas rows land where Leaflet draws them. */
+/** Web Mercator y for a latitude, so canvas rows land where the map draws them. */
 export const mercatorY = (lat: number) => {
   const radians = (lat * Math.PI) / 180;
   return Math.log(Math.tan(Math.PI / 4 + radians / 2));
@@ -151,8 +241,28 @@ export const LAYER_RAMPS: Record<MapLayer, readonly Stop[]> = {
   ],
 };
 
-export const rampColor = (layer: MapLayer, value: number) => {
-  const stops = LAYER_RAMPS[layer];
+/**
+ * Hourly amount (mm/h), on the usual intensity bands: trace 0.1, light 1, moderate 4,
+ * heavy 10 and very heavy 25+. Dry ground stays transparent, as on the chance ramp.
+ */
+export const PRECIPITATION_AMOUNT_RAMP: readonly Stop[] = [
+  [0, [70, 140, 220, 0]],
+  [0.1, [70, 150, 230, 0.14]],
+  [1, [52, 132, 226, 0.38]],
+  [4, [36, 98, 210, 0.56]],
+  [10, [70, 48, 190, 0.68]],
+  [25, [118, 34, 170, 0.75]],
+];
+
+export const rampColor = (
+  layer: MapLayer,
+  value: number,
+  measure: PrecipitationMeasure = 'chance'
+) => {
+  const stops =
+    layer === 'precipitation' && measure === 'amount'
+      ? PRECIPITATION_AMOUNT_RAMP
+      : LAYER_RAMPS[layer];
   if (value <= stops[0][0]) return stops[0][1];
   for (let index = 1; index < stops.length; index += 1) {
     const [upper, upperColor] = stops[index];
@@ -170,6 +280,8 @@ export const rampColor = (layer: MapLayer, value: number) => {
 };
 
 /** Legend steps per layer: the value shown and the colour it maps to. */
+export const PRECIPITATION_AMOUNT_LEGEND_STEPS: readonly number[] = [0.5, 1, 4, 10, 25];
+
 export const LEGEND_STEPS: Record<MapLayer, readonly number[]> = {
   precipitation: [10, 30, 50, 70, 90],
   temperature: [0, 10, 20, 30, 40],

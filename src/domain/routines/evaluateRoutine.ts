@@ -42,11 +42,30 @@ export type RoutineEvaluation =
   | { status: 'none' };
 
 export function evaluateRoutine(routine: Routine, input: RoutineWeatherInput): RoutineEvaluation {
+  const offset = input.weather.meta.timezoneOffsetSeconds;
+  const occurrence = nextOccurrences(routine, input.now.getTime(), offset, 1)[0];
+  return occurrence ? scoreOccurrence(routine, input, occurrence) : { status: 'none' };
+}
+
+/** The plan on one local day (YYYY-MM-DD), for the day-by-day outlook; none when it does not run. */
+export function evaluateRoutineOn(
+  routine: Routine,
+  input: RoutineWeatherInput,
+  date: string
+): RoutineEvaluation {
+  const offset = input.weather.meta.timezoneOffsetSeconds;
+  const occurrence = nextOccurrences(routine, input.now.getTime(), offset, 16).find(
+    candidate => candidate.date === date
+  );
+  return occurrence ? scoreOccurrence(routine, input, occurrence) : { status: 'none' };
+}
+
+function scoreOccurrence(
+  routine: Routine,
+  input: RoutineWeatherInput,
+  occurrence: RoutineOccurrence
+): RoutineEvaluation {
   const { weather, hourly, now } = input;
-  const offset = weather.meta.timezoneOffsetSeconds;
-  const occurrences = nextOccurrences(routine, now.getTime(), offset, 1);
-  const occurrence = occurrences[0];
-  if (!occurrence) return { status: 'none' };
 
   const lastHourMs = hourly.reduce(
     (latest, point) => Math.max(latest, point.time.getTime() + HOUR_MS),
@@ -79,10 +98,17 @@ export function evaluateRoutine(routine: Routine, input: RoutineWeatherInput): R
         rain: routine.rainTolerance ?? input.tolerance.rain,
       },
       period: { startMs: Math.max(startMs, now.getTime()), endMs },
+      durationMinutes: routine.schedule.durationMinutes,
     });
 
   const plan = planIn(occurrence.startMs, occurrence.endMs);
-  if (routine.schedule.kind === 'flexible') return { status: 'scored', occurrence, plan };
+  if (routine.schedule.kind === 'flexible') {
+    return {
+      status: 'scored',
+      occurrence,
+      plan: withinOccurrence(plan, occurrence, routine.schedule.durationMinutes, now.getTime()),
+    };
+  }
 
   const wider = planIn(
     occurrence.startMs - ALTERNATIVE_REACH_MS,
@@ -96,4 +122,42 @@ export function evaluateRoutine(routine: Routine, input: RoutineWeatherInput): R
       ? { startMs: range.start.time.getTime(), endMs: range.endTime.getTime(), score: wider.score }
       : undefined;
   return { status: 'scored', occurrence, plan, better };
+}
+
+/**
+ * Coarse forecast steps (3 h) can start before the plan: an 08:00 step overlaps a 10:00 start.
+ * The answer must stay inside the plan's own hours (and after now), so the best window is
+ * clipped to them and keeps at least the plan's duration when there is room for it.
+ */
+function withinOccurrence(
+  plan: ActivityPlan,
+  occurrence: RoutineOccurrence,
+  durationMinutes: number,
+  nowMs: number
+): ActivityPlan {
+  const range = plan.bestWindowRange;
+  if (!range) return plan;
+  // Today's window never starts in the past: a 10:00–18:00 picnic at 15:20 starts at 15:20.
+  const earliestMs = Math.max(occurrence.startMs, Math.ceil(nowMs / 60_000) * 60_000);
+  const rangeStartMs = range.start.time.getTime();
+  const rangeEndMs = range.endTime.getTime();
+  // A window that does not overlap the plan's own hours (the engine looked past an empty
+  // evening into tomorrow) is not an answer for this day: there is no good time in the plan.
+  if (rangeEndMs <= earliestMs || rangeStartMs >= occurrence.endMs) {
+    return { ...plan, bestWindowRange: undefined };
+  }
+  const startMs = Math.max(rangeStartMs, earliestMs);
+  const minEndMs = Math.min(startMs + durationMinutes * 60_000, occurrence.endMs);
+  const endMs = Math.max(Math.min(rangeEndMs, occurrence.endMs), minEndMs);
+  // Not enough of the plan's own hours left for the whole activity: no window.
+  if (endMs - startMs < durationMinutes * 60_000) return { ...plan, bestWindowRange: undefined };
+  if (startMs === rangeStartMs && endMs === rangeEndMs) return plan;
+  return {
+    ...plan,
+    bestWindowRange: {
+      ...range,
+      start: { ...range.start, time: new Date(startMs) },
+      endTime: new Date(endMs),
+    },
+  };
 }

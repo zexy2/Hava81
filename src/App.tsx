@@ -19,6 +19,7 @@ import { ApiError } from './api/errors/ApiError';
 import { resolveInitialCity } from './utils/appRoute';
 import { useAppRouting } from './hooks/useAppRouting';
 import { AppHeader } from './components/app/AppHeader';
+import { DataCredits } from './components/app/DataCredits';
 import { getCurrentWeatherFreshness } from './utils/currentWeatherFreshness';
 import { NotFoundState } from './components/app/NotFoundState';
 import { DeferredForecastAtlas } from './components/app/DeferredForecastAtlas';
@@ -433,6 +434,7 @@ const App: React.FC = () => {
           data-active-nav={activeNav}
           data-has-bottom-nav={weather || favorites.length > 0 ? 'true' : 'false'}
           data-living-sky={skyScene ? 'true' : undefined}
+          data-sky-phase={skyScene?.phase}
         >
           {skyScene ? (
             <Suspense fallback={null}>
@@ -585,6 +587,7 @@ const App: React.FC = () => {
                           airQuality={freshAirQuality}
                           airQualityHourly={freshAirQualityHourly}
                           uvIndexMax={freshUvIndexMax}
+                          uvPending={!forecast.secondarySettled}
                           forecastMeta={forecast.displayMeta ?? forecast.meta}
                         />
                       </div>
@@ -812,6 +815,11 @@ const App: React.FC = () => {
                     </div>
 
                     {hasOpenedPlan && <RouteWeatherPanel currentCityName={weather.cityName} />}
+                    {/* One footnote for the page, instead of a disclaimer under every section.
+                        Inside the boundary so it appears with the sections, never above them. */}
+                    <footer className="atlas-plan-view__footnote">
+                      <p>{t('hava81.planView.footnote')}</p>
+                    </footer>
                   </Suspense>
                 </section>
               </div>
@@ -887,16 +895,7 @@ const App: React.FC = () => {
                 </span>
                 <span className="atlas-footer__tagline">{t('hava81.tagline')}</span>
               </p>
-              <p className="atlas-footer__credits">
-                <span>{t('hava81.footerData')}</span>{' '}
-                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-                  Open-Meteo
-                </a>
-                <span aria-hidden="true"> · </span>
-                <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-                  OpenStreetMap
-                </a>
-              </p>
+              <DataCredits forecastProvider={(forecast.displayMeta ?? forecast.meta)?.provider} />
               <span className="atlas-footer__shortcuts">
                 <kbd>{searchShortcutLabel}</kbd> {t('common.keyboardSearch')}{' '}
                 <kbd>{settingsShortcutLabel}</kbd> {t('common.keyboardSettings')}
