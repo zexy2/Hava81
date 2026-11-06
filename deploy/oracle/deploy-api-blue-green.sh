@@ -221,7 +221,9 @@ from pathlib import Path
 payload = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
 meta = payload.get('meta') or {}
 hourly = payload.get('hourly') or []
-if meta.get('provider') != 'Open-Meteo' or meta.get('intervalHours') != 1 or not hourly:
+# MET Norway is the default hourly source since the commercial-sources change;
+# Open-Meteo remains a supported fallback.
+if meta.get('provider') not in ('MET Norway', 'Open-Meteo') or meta.get('intervalHours') != 1 or not hourly:
     raise SystemExit('hourly provider smoke failed')
 print(f"[api] hourly smoke ok provider={meta.get('provider')} points={len(hourly)}")
 PY
