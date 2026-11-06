@@ -10,6 +10,13 @@
     --plan-soft: var(--color-atlas-muted);
     --plan-accent: var(--color-aegean);
     --plan-gap: clamp(1.25rem, 2.4vw, 2rem);
+    /* One six-step type scale for every Planla label, body, value and heading. */
+    --plan-fs-xs: 0.75rem;
+    --plan-fs-sm: 0.875rem;
+    --plan-fs-md: 1rem;
+    --plan-fs-lg: 1.25rem;
+    --plan-fs-xl: 1.75rem;
+    --plan-fs-display: clamp(2.25rem, 1.6rem + 1.6vw, 2.75rem);
   }
 
   /* ── 1. One hero band: the day plan header. Painted rings removed. ── */
@@ -88,7 +95,7 @@
   }
 
   .app .atlas-plan-view .daily-plan__decision > strong {
-    font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+    font-size: var(--plan-fs-lg);
     line-height: 1.3;
   }
 
@@ -223,14 +230,14 @@
   }
 
   .app .atlas-plan-view .daily-plan__slot :is(time, time span) {
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-variant-numeric: tabular-nums;
     color: var(--color-atlas-ink);
   }
 
   .app .atlas-plan-view .daily-plan__slot > strong {
     color: var(--color-atlas-ink);
-    font-size: 1.15rem;
+    font-size: var(--plan-fs-lg);
     font-weight: 700;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -239,7 +246,7 @@
   /* The hour's main risk stays visible as a short tag (risk first); temperature and rain
      detail live in the accessible label. */
   .app .atlas-plan-view .daily-plan__slot > em {
-    font-size: 0.6875rem;
+    font-size: var(--plan-fs-xs);
     font-style: normal;
     font-weight: 700;
     line-height: 1.2;
@@ -265,7 +272,7 @@
       .context-signals__note,
       .commute-plan__note
     ) {
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
     line-height: 1.45;
     color: var(--plan-soft);
   }
@@ -349,7 +356,7 @@
   }
 
   .app .atlas-plan-view .activity-card__score strong {
-    font-size: 2.25rem;
+    font-size: var(--plan-fs-display);
     font-weight: 300;
     letter-spacing: -0.03em;
   }
@@ -360,7 +367,7 @@
     border: 0;
     background: none;
     box-shadow: none;
-    font-size: 1.05rem;
+    font-size: var(--plan-fs-md);
     font-weight: 700;
   }
 
@@ -404,7 +411,7 @@
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* "Score detail" reads as a control, not stray text. */
@@ -469,7 +476,7 @@
   .app .atlas-plan-view :is(.day-outlook__meta, .day-outlook__thunder) {
     grid-column: 2 / -1;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* A thunderstorm day is the one row that must stand out. */
@@ -505,12 +512,12 @@
   }
 
   .app .atlas-plan-view .context-signal strong {
-    font-size: 1.6rem;
+    font-size: var(--plan-fs-xl);
     font-weight: 600;
   }
 
   .app .atlas-plan-view .context-signal p {
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
     color: var(--plan-soft);
   }
 
@@ -655,7 +662,7 @@
   /* ── 7. One type scale: every section heading is the same size ── */
 
   .app .atlas-plan-view h2 {
-    font-size: 1.75rem;
+    font-size: var(--plan-fs-xl);
     line-height: 1.15;
     letter-spacing: -0.02em;
   }
@@ -746,7 +753,7 @@
   .app .atlas-plan-view .activity-card__score small {
     order: 2;
     white-space: nowrap;
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
   }
 
   .app .atlas-plan-view .activity-card__score-scope {
@@ -765,7 +772,7 @@
 
   /* Cards: the duration line is a footnote, not a paragraph. */
   .app .atlas-plan-view .activity-card__duration {
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* Phones: card header on one row; quick facts as three compact columns. */
@@ -787,7 +794,7 @@
     }
 
     .app .atlas-plan-view .activity-card__score strong {
-      font-size: 2rem;
+      font-size: var(--plan-fs-xl);
     }
 
     .app .atlas-plan-view .activity-card {
@@ -955,13 +962,14 @@
     }
 
     .app .atlas-plan-view > .atlas-plan-view__header h1 {
-      font-size: 1.75rem;
+      font-size: var(--plan-fs-display);
+      line-height: 1.1;
     }
 
     .app .atlas-plan-view > .atlas-plan-view__header p {
       max-inline-size: 40rem;
       margin: 0;
-      font-size: 0.875rem;
+      font-size: var(--plan-fs-sm);
     }
   }
 
@@ -974,13 +982,13 @@
     }
 
     .app .atlas-plan-view > .atlas-plan-view__header h1 {
-      font-size: 1.375rem;
+      font-size: var(--plan-fs-lg);
     }
 
     .app .atlas-plan-view > .atlas-plan-view__header p {
       flex-basis: 100%;
       margin: 0;
-      font-size: 0.8125rem;
+      font-size: var(--plan-fs-sm);
       line-height: 1.4;
     }
   }
@@ -1092,13 +1100,13 @@
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__decision > span {
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
     letter-spacing: 0.04em;
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__decision > strong {
     color: rgb(255 255 255);
-    font-size: clamp(1.75rem, 1.1rem + 2.6vw, 3.25rem);
+    font-size: var(--plan-fs-display);
     font-weight: 300;
     line-height: 1.08;
     letter-spacing: -0.02em;
@@ -1106,7 +1114,7 @@
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__decision > small {
-    font-size: 1rem;
+    font-size: var(--plan-fs-md);
     line-height: 1.45;
   }
 
@@ -1121,7 +1129,7 @@
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__score strong {
     color: rgb(255 255 255);
-    font-size: clamp(2.5rem, 1.8rem + 2vw, 3.5rem);
+    font-size: var(--plan-fs-display);
     font-weight: 300;
     line-height: 1;
   }
@@ -1184,14 +1192,14 @@
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__explain-head > div > span {
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__explain-head > div > strong {
     color: rgb(255 255 255);
-    font-size: 0.9375rem;
+    font-size: var(--plan-fs-md);
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__explain {
@@ -1226,7 +1234,7 @@
     margin: 0;
     padding: 0;
     color: rgb(255 255 255 / 80%);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     list-style: none;
   }
 
@@ -1310,7 +1318,7 @@
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot-flag {
     grid-row: 1;
     color: var(--chart-good);
-    font-size: 0.6875rem;
+    font-size: var(--plan-fs-xs);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1320,7 +1328,7 @@
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot > strong {
     grid-row: 2;
     color: rgb(255 255 255);
-    font-size: 0.9375rem;
+    font-size: var(--plan-fs-md);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
@@ -1364,7 +1372,7 @@
     padding-block-end: 0.25rem;
     border-bottom: 2px solid transparent;
     color: rgb(255 255 255 / 86%);
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
     font-variant-numeric: tabular-nums;
   }
 
@@ -1378,7 +1386,7 @@
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot > small {
     grid-row: 5;
     color: rgb(255 255 255 / 76%);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
   }
 
   /* Reasons are announced in the slot label; visually they would crowd a 52px column. */
@@ -1393,7 +1401,7 @@
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__slot-day {
     color: var(--chart-caution);
-    font-size: 0.6875rem;
+    font-size: var(--plan-fs-xs);
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -1412,13 +1420,13 @@
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__decision > .daily-plan__headline {
-    font-size: clamp(2rem, 1.2rem + 3.2vw, 3.75rem);
+    font-size: var(--plan-fs-display);
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__night-note {
     margin: 0;
     color: rgb(255 255 255 / 76%);
-    font-size: 0.9375rem;
+    font-size: var(--plan-fs-md);
     line-height: 1.45;
   }
 
@@ -1426,7 +1434,7 @@
     max-inline-size: 48rem;
     margin: 0;
     color: rgb(255 255 255 / 86%);
-    font-size: 1.0625rem;
+    font-size: var(--plan-fs-md);
     line-height: 1.45;
   }
 
@@ -1434,13 +1442,13 @@
   .app .atlas-plan-view .daily-plan--sky .daily-plan__notes > .daily-plan__safety {
     margin: 0;
     color: rgb(255 255 255 / 66%);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     line-height: 1.5;
   }
 
   .app .atlas-plan-view .daily-plan--sky .daily-plan__notes {
     padding: 0;
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* ── Below the hero: one glass sheet, sections as rows divided by hairlines ── */
@@ -1519,7 +1527,7 @@
   .app .atlas-plan-view .decision-alerts > div > small:not([role='status']) {
     display: inline;
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     line-height: 1.5;
   }
 
@@ -1534,7 +1542,7 @@
 
   .app .atlas-plan-view .commute-plan__note {
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
   }
 
   /* Narrow column: the source note sits under the title instead of squeezing it to 3 lines. */
@@ -1556,7 +1564,7 @@
     .app .atlas-plan-view .atlas-plan-view__aside .context-signal p,
     .app .atlas-plan-view .atlas-plan-view__aside :is(.day-outlook, .context-signals) > p,
     .app .atlas-plan-view .atlas-plan-view__aside .decision-alerts p {
-      font-size: 0.8125rem;
+      font-size: var(--plan-fs-sm);
       line-height: 1.45;
     }
   }
@@ -1661,7 +1669,7 @@
   .app .atlas-plan-view .activity-planner__prefs-summary {
     flex: 1 1 12rem;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .activity-planner__prefs-edit {
@@ -1894,19 +1902,19 @@
   }
 
   .app .atlas-plan-view .activity-card__score strong {
-    font-size: 1.75rem;
+    font-size: var(--plan-fs-xl);
     font-weight: 400;
   }
 
   .app .atlas-plan-view .activity-card__range {
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .activity-card > .activity-card__answer,
   .app[data-color-mode='dark'] .atlas-plan-view .activity-card > .activity-card__answer {
     margin: 0;
-    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
+    font-size: var(--plan-fs-lg);
     font-weight: 400;
     line-height: 1.2;
     letter-spacing: -0.01em;
@@ -1924,7 +1932,7 @@
     ) {
     margin: 0;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* Disclosures: our chevron, not the browser triangle. */
@@ -2060,7 +2068,7 @@
 
   .app .atlas-plan-view .day-outlook__score small {
     display: block;
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     white-space: nowrap;
   }
 
@@ -2157,7 +2165,7 @@
 
   .app .atlas-plan-view .activity-suggestions h3 {
     margin: 0.75rem 0 0.125rem;
-    font-size: 1.125rem;
+    font-size: var(--plan-fs-lg);
     overflow-wrap: anywhere;
   }
 
@@ -2189,7 +2197,7 @@
   .app .atlas-plan-view .activity-suggestion__score {
     display: grid;
     justify-items: end;
-    font-size: 1.375rem;
+    font-size: var(--plan-fs-lg);
     font-weight: 700;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -2197,7 +2205,7 @@
 
   .app .atlas-plan-view .activity-suggestion__score small {
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-weight: 500;
     white-space: nowrap;
   }
@@ -2210,13 +2218,13 @@
     border-radius: var(--radius-lg);
     background: none;
     box-shadow: none;
-    font-size: 1.25rem;
+    font-size: var(--plan-fs-lg);
   }
 
   .app .atlas-plan-view .activity-suggestions__hint {
     margin-block: 0.5rem 0;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* ══ 16. Side by side: one row per activity, one square per hour ═══════════════ */
@@ -2232,7 +2240,7 @@
 
   .app .atlas-plan-view .activity-compare h3 {
     margin: 0 0 0.25rem;
-    font-size: 1.125rem;
+    font-size: var(--plan-fs-lg);
   }
 
   .app .atlas-plan-view .activity-compare ol {
@@ -2307,7 +2315,7 @@
 
   .app .atlas-plan-view .activity-compare__score {
     grid-area: score;
-    font-size: 1.25rem;
+    font-size: var(--plan-fs-lg);
     font-weight: 700;
     text-align: end;
     font-variant-numeric: tabular-nums;
@@ -2324,7 +2332,7 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-variant-numeric: tabular-nums;
   }
 
@@ -2349,7 +2357,7 @@
     min-block-size: 1.5rem;
     margin-inline-start: 0.75rem;
     padding: 0;
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
     border: 0;
     background: none;
     box-shadow: none;
@@ -2395,7 +2403,7 @@
   .app .atlas-plan-view .plan-feedback__record {
     margin-block: 0.5rem;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* ══ 18. My plans: the first thing Planla answers ═══════════════════════════════ */
@@ -2481,7 +2489,7 @@
   }
 
   .app .atlas-plan-view .routine-row__copy strong {
-    font-size: 1.0625rem;
+    font-size: var(--plan-fs-md);
   }
 
   .app .atlas-plan-view .routine-row__when {
@@ -2490,13 +2498,13 @@
 
   .app .atlas-plan-view .routine-row__status {
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .routine-row__score {
     display: grid;
     justify-items: end;
-    font-size: 1.75rem;
+    font-size: var(--plan-fs-xl);
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -2505,7 +2513,7 @@
   .app .atlas-plan-view .routine-row__score small {
     margin-block-start: 0.25rem;
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-weight: 500;
     white-space: nowrap;
   }
@@ -2579,7 +2587,7 @@
 
   .app .atlas-plan-view .routine-editor h3 {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: var(--plan-fs-lg);
   }
 
   .app .atlas-plan-view .routine-editor fieldset {
@@ -2638,7 +2646,7 @@
   .app .atlas-plan-view .routine-editor__tolerance {
     display: grid;
     gap: 0.25rem;
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .routine-editor input[inputmode='numeric'],
@@ -2721,13 +2729,13 @@
   }
 
   .app .atlas-plan-view .routine-row__answer {
-    font-size: 1.0625rem;
+    font-size: var(--plan-fs-md);
     font-variant-numeric: tabular-nums;
   }
 
   .app .atlas-plan-view .routine-row__risk {
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .routine-row__verdict {
@@ -2739,14 +2747,14 @@
 
   .app .atlas-plan-view .routine-row__verdict strong {
     color: var(--routine-accent, inherit);
-    font-size: 1.25rem;
+    font-size: var(--plan-fs-lg);
     font-weight: 700;
     white-space: nowrap;
   }
 
   .app .atlas-plan-view .routine-row__verdict small {
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-variant-numeric: tabular-nums;
   }
 
@@ -2834,7 +2842,7 @@
 
   /* Card: the answer and two actions; everything else lives in its details. */
   .app .atlas-plan-view .activity-card__verdict {
-    font-size: 1.5rem;
+    font-size: var(--plan-fs-xl);
     font-weight: 700;
     line-height: 1;
   }
@@ -2854,18 +2862,18 @@
     background: none;
     box-shadow: none;
     color: var(--color-aegean);
-    font-size: 0.9375rem;
+    font-size: var(--plan-fs-md);
     font-weight: 700;
   }
 
   .app .atlas-plan-view .activity-card__score-number {
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-variant-numeric: tabular-nums;
   }
 
   .app .atlas-plan-view .activity-card__answer {
-    font-size: 1.0625rem;
+    font-size: var(--plan-fs-md);
     font-variant-numeric: tabular-nums;
   }
 
@@ -2931,7 +2939,7 @@
   .app .atlas-plan-view .routine-list__scope {
     margin: 0.25rem 0 0;
     color: var(--plan-soft);
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* Very narrow columns (large text on a phone): the label alone carries the choice. */
@@ -2998,7 +3006,7 @@
     display: grid;
     gap: 0.25rem;
     flex: 0 0 auto;
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
     font-weight: 600;
   }
 
@@ -3012,7 +3020,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: 1.125rem;
+    font-size: var(--plan-fs-lg);
     font-variant-numeric: tabular-nums;
   }
 
@@ -3054,7 +3062,7 @@
   }
 
   .app .atlas-plan-view .commute-window > header strong {
-    font-size: 1.25rem;
+    font-size: var(--plan-fs-lg);
     font-variant-numeric: tabular-nums;
   }
 
@@ -3062,7 +3070,7 @@
     grid-area: source;
     margin: 0;
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
   }
 
   .app .atlas-plan-view .commute-window > dl {
@@ -3094,7 +3102,7 @@
 
   .app .atlas-plan-view .commute-window__verdict {
     grid-area: verdict;
-    font-size: 1.125rem;
+    font-size: var(--plan-fs-lg);
     font-weight: 700;
   }
 
@@ -3117,11 +3125,11 @@
   /* The verdict leads; the planned window is a small reference line under it. */
   .app .atlas-plan-view .commute-plan__verdict-window {
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
   }
 
   .app .atlas-plan-view .commute-plan__verdict strong {
-    font-size: 1.375rem;
+    font-size: var(--plan-fs-lg);
     line-height: 1.25;
   }
 
@@ -3172,7 +3180,7 @@
   .app .atlas-plan-view .day-outlook__note {
     margin-block: 0.5rem 0;
     color: var(--plan-soft);
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* Context: three readings with their meaning; the whole row opens the details. */
@@ -3200,21 +3208,21 @@
 
   .app .atlas-plan-view .context-stat small {
     color: var(--plan-soft);
-    font-size: 0.75rem;
+    font-size: var(--plan-fs-xs);
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
   .app .atlas-plan-view .context-stat strong {
-    font-size: 1.5rem;
+    font-size: var(--plan-fs-xl);
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }
 
   .app .atlas-plan-view .context-stat > span {
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   /* A chevron that turns when the details open (transform only). */
@@ -3262,7 +3270,7 @@
 
   .app .atlas-plan-view .decision-alerts__modeled-note {
     color: var(--plan-soft);
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .decision-alerts > button {
@@ -3279,7 +3287,7 @@
     gap: 0.5rem;
     min-inline-size: 0;
     color: var(--plan-soft);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
     list-style: none;
   }
 
@@ -3313,7 +3321,7 @@
   .app .atlas-plan-view__footnote p {
     margin: 0;
     color: var(--color-atlas-muted);
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
     line-height: 1.5;
   }
 
@@ -3387,7 +3395,7 @@
 
     .app .atlas-plan-view .daily-plan--sky .daily-plan__quick strong,
     .app .atlas-plan-view .daily-plan__quick strong {
-      font-size: 0.875rem;
+      font-size: var(--plan-fs-sm);
       line-height: 1.3;
       text-align: start;
       overflow-wrap: anywhere;
@@ -3421,7 +3429,7 @@
     display: flex;
     justify-content: space-between;
     color: var(--plan-soft);
-    font-size: 0.6875rem;
+    font-size: var(--plan-fs-xs);
     font-variant-numeric: tabular-nums;
   }
 
@@ -3513,7 +3521,7 @@
   }
 
   .app .atlas-plan-view .route-weather > summary b {
-    font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+    font-size: var(--plan-fs-xl);
     letter-spacing: -0.03em;
   }
 
@@ -3661,7 +3669,7 @@
 
   .app .atlas-plan-view .route-weather__announcement h3 {
     margin: 0.25rem 0 0;
-    font-size: clamp(1.375rem, 2vw, 1.75rem);
+    font-size: var(--plan-fs-xl);
     letter-spacing: -0.02em;
   }
 
@@ -3698,7 +3706,7 @@
 
   .app .atlas-plan-view .route-weather__score b {
     color: var(--route-accent);
-    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-size: var(--plan-fs-xl);
     font-weight: 750;
     line-height: 1.1;
     letter-spacing: -0.02em;
@@ -3706,7 +3714,7 @@
 
   .app .atlas-plan-view .route-weather__score strong {
     color: var(--color-atlas-ink);
-    font-size: 1rem;
+    font-size: var(--plan-fs-md);
     font-variant-numeric: tabular-nums;
   }
 
@@ -3772,19 +3780,19 @@
 
   .app .atlas-plan-view .route-segment time {
     color: var(--color-atlas-ink);
-    font-size: 1.125rem;
+    font-size: var(--plan-fs-lg);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
   .app .atlas-plan-view .route-segment strong {
     color: var(--route-accent);
-    font-size: 0.875rem;
+    font-size: var(--plan-fs-sm);
   }
 
   .app .atlas-plan-view .route-segment :is(span, small) {
     color: var(--plan-soft);
-    font-size: 0.8125rem;
+    font-size: var(--plan-fs-sm);
     line-height: 1.4;
   }
 
@@ -3910,6 +3918,50 @@
       display: inline-flex;
       gap: 0.25rem;
       align-items: baseline;
+    }
+  }
+
+  /* ── Type hierarchy: one weight for every section heading; the page title leads. ── */
+  .app .atlas-plan-view.atlas-plan-view h2 {
+    font-size: var(--plan-fs-xl);
+    font-weight: 700;
+  }
+
+  /* Snap inherited in-between sizes (13 px meta, 16.5–18.4 px values) onto the scale. */
+  .app .atlas-plan-view :where(small, time, .atlas-kicker, .context-signals__source a) {
+    font-size: var(--plan-fs-xs);
+  }
+
+  .app
+    .atlas-plan-view
+    :where(
+      label,
+      summary,
+      .route-weather__hint,
+      .daily-plan__slots-caption,
+      .activity-planner__window-help p,
+      .activity-planner__sensitivity span,
+      .context-signal span
+    ) {
+    font-size: var(--plan-fs-sm);
+  }
+
+  .app .atlas-plan-view :where(strong) {
+    font-size: var(--plan-fs-md);
+  }
+
+  /* Desktop: tighter main-column sections bring the two columns level and the page shorter. */
+  @media (min-width: 64rem) {
+    .app .atlas-plan-view .atlas-plan-view__columns {
+      padding: var(--space-lg) var(--space-xl);
+    }
+
+    .app .atlas-plan-view .atlas-plan-view__main > :is(.activity-planner, .commute-plan) {
+      padding-block: var(--space-lg);
+    }
+
+    .app .atlas-plan-view .activity-planner__header {
+      padding-bottom: var(--space-sm);
     }
   }
 }
