@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "retentionMinutes": 30,
-  "generatedAt": "2026-11-04T10:19:59Z",
+  "generatedAt": "2026-11-06T09:24:43Z",
   "generations": [
     {
-      "publishedAt": "2026-11-04T10:19:59Z",
+      "publishedAt": "2026-11-06T09:24:43Z",
       "files": [
         "assets/ActivityPlanner-BCOhtUM0.js",
         "assets/ActivityPlanner-BzLyU6rp.css",
