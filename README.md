@@ -14,9 +14,9 @@ Decision-first weather intelligence for all 81 provinces of Türkiye.
 
 </div>
 
-![Hava81 desktop interface showing the İstanbul decision field, hourly forecast and environmental context](docs/images/hava81-desktop.png)
+![Hava81 desktop interface in English showing İstanbul current conditions, planning signals, hourly forecast and 5-day forecast](docs/images/hava81-desktop.png)
 
-<sub>Product UI snapshot captured 25 October 2026; weather values are live at capture time and may change.</sub>
+<sub>Product UI snapshot captured 27 November 2026 (night in İstanbul); weather values are live at capture time and may change.</sub>
 
 ## Why Hava81?
 
@@ -46,10 +46,10 @@ It combines current conditions, hourly and daily forecasts, air quality and envi
 ### Mobile
 
 <p align="center">
-  <img src="docs/images/hava81-mobile.png" width="390" alt="Hava81 mobile interface showing the İstanbul weather decision view and bottom navigation" />
+  <img src="docs/images/hava81-mobile.png" width="390" alt="Hava81 mobile interface showing İstanbul current conditions, planning signals and bottom navigation" />
 </p>
 
-<p align="center"><sub>Captured 25 October 2026; live weather values may change.</sub></p>
+<p align="center"><sub>Captured 27 November 2026; live weather values may change.</sub></p>
 
 ## Live Surfaces
 
